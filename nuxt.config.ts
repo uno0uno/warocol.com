@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     apiKey: process.env.NUXT_API_KEY || '',
     public: {
-      baseUrl: process.env.NUXT_BASE_URL || 'https://warocol.com'
+      baseUrl: process.env.NUXT_BASE_URL || 'http://warocol.com'
     }
   },
   app: {
@@ -29,7 +29,7 @@ export default defineNuxtConfig({
     '@nuxtjs/robots'
   ],
   site: {
-    url: 'https://warocol.com'
+    url: 'http://warocol.com'
   },
   robots: {
     credits: false,
