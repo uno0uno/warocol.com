@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: warolabs-nuxt
+    container_name: warocol-nuxt
     ports:
       - "3001:3001"
     environment:
