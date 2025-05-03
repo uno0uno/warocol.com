@@ -27,7 +27,7 @@ const tableHtml = `
         ${routes.map((route, index) => `
         <tr class="${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100">
             <td class="border border-gray-300 px-4 py-2">
-                <a href="http://warocol.com${route.loc}" target="_blank" class="text-blue-600 hover:underline">${route.loc}</a>
+                <a href="https://warocol.com${route.loc}" target="_blank" class="text-blue-600 hover:underline">${route.loc}</a>
             </td>
             <td class="border border-gray-300 px-4 py-2">${route.lastmod}</td>
             <td class="border border-gray-300 px-4 py-2">${route.changefreq}</td>
