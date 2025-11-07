@@ -9,6 +9,7 @@ export default defineNuxtConfig({
             ? 'http://localhost:9999/auth/**'
             : 'https://api.warolabs.com/auth/**',
           changeOrigin: true,
+          followRedirects: true,
           ...(process.env.NODE_ENV === 'development' && {
             headers: {
               'X-Forwarded-Host': 'localhost:8080'
@@ -26,6 +27,7 @@ export default defineNuxtConfig({
             ? 'http://localhost:9999/**' 
             : 'https://api.warolabs.com/**',
           changeOrigin: true,
+          followRedirects: true,
           ...(process.env.NODE_ENV === 'development' && {
             headers: {
               'X-Forwarded-Host': 'localhost:8080'
