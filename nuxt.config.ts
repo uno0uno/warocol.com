@@ -9,6 +9,10 @@ export default defineNuxtConfig({
             ? 'http://localhost:9999/auth/**'
             : 'https://api.warolabs.com/auth/**',
           changeOrigin: true,
+          cookieDomainRewrite: process.env.NODE_ENV === 'development' 
+            ? 'localhost' 
+            : 'warocol.com',
+          cookiePathRewrite: '/',
           ...(process.env.NODE_ENV === 'development' && {
             headers: {
               'X-Forwarded-Host': 'localhost:8080'
