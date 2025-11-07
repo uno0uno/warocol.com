@@ -1,18 +1,21 @@
 export default defineNuxtConfig({
   ssr: true,
+  devServer: {
+    port: parseInt(process.env.PORT || '8080')
+  },
   nitro: {
     preset: 'node-server',
     routeRules: {
       '/api/auth/**': { 
         proxy: {
           to: process.env.NODE_ENV === 'development' 
-            ? 'http://localhost:9999/auth/**'
+            ? `${process.env.NUXT_PUBLIC_WAROLABS_API_URL || 'http://localhost:9999'}/auth/**`
             : 'https://api.warolabs.com/auth/**',
           changeOrigin: true,
           followRedirects: true,
           ...(process.env.NODE_ENV === 'development' && {
             headers: {
-              'X-Forwarded-Host': 'localhost:8080'
+              'X-Forwarded-Host': `localhost:${process.env.PORT || '8080'}`
             }
           })
         },
@@ -24,13 +27,13 @@ export default defineNuxtConfig({
       '/api/**': { 
         proxy: {
           to: process.env.NODE_ENV === 'development' 
-            ? 'http://localhost:9999/**' 
+            ? `${process.env.NUXT_PUBLIC_WAROLABS_API_URL || 'http://localhost:9999'}/**`
             : 'https://api.warolabs.com/**',
           changeOrigin: true,
           followRedirects: true,
           ...(process.env.NODE_ENV === 'development' && {
             headers: {
-              'X-Forwarded-Host': 'localhost:8080'
+              'X-Forwarded-Host': `localhost:${process.env.PORT || '8080'}`
             }
           })
         },
@@ -88,7 +91,10 @@ export default defineNuxtConfig({
   head: {
     link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }]
   },
-  devtools: { enabled: true },
+  devtools: { 
+    enabled: true,
+    port: 8080
+  },
   css: ['~/assets/css/main.scss', '~/assets/css/design-system.css', '~/assets/css/design-tokens.css'],
   postcss: {
     plugins: {
