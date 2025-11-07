@@ -292,13 +292,16 @@ const sortField = ref('month')
 const sortDirection = ref('asc') // 'asc' | 'desc'
 
 // Fetch data using useAsyncData for proper loading states (without await to show loading)
-const { data: tirApiData, pending: isLoading, error: fetchError, refresh } = useAsyncData(() => `tir-metrics-${currentTenant.value?.id || 'default'}`, () => {
+const { data: tirApiData, pending: isLoading, error: fetchError, refresh } = useAsyncData(`tir-metrics-${currentTenant.value?.id || 'default'}`, () => {
+  console.log('🔍 Fetching TIR data for tenant:', currentTenant.value?.id)
   return $fetch('/api/finance/tir-metrics', {
     query: { limit: 12 }
   })
 }, {
   server: false,
   client: true,
+  lazy: true,
+  dedupe: 'defer',
   default: () => ({ 
     current: {
       tir_actual: 0,

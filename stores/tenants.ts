@@ -62,10 +62,18 @@ export const useTenantsStore = defineStore('tenants', () => {
   }
 
   const selectTenant = async (tenant: Tenant) => {
+    console.log(`🎯 selectTenant called with: ${tenant.slug}, current: ${selectedTenant.value?.slug}`)
+    
     // Check if already on the selected tenant
     if (selectedTenant.value?.slug === tenant.slug) {
       console.log(`✅ Already on tenant ${tenant.slug}, skipping switch`)
       return true
+    }
+    
+    // Check if already loading to prevent concurrent calls
+    if (isLoading.value) {
+      console.log(`⏳ Already loading tenant switch, skipping`)
+      return false
     }
     
     isLoading.value = true
