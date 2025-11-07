@@ -363,10 +363,8 @@ watch(fetchError, (newError) => {
   }
 })
 
-// Watch for tenant changes and refresh data automatically
-onTenantChange(async () => {
-  await fetchTirData()
-})
+// Tenant change is already handled by useAsyncData key reactivity
+// No need for manual refresh as the key includes currentTenant.value?.id
 
 
 // Function to refresh data
