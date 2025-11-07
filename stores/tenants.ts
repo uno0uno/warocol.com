@@ -66,8 +66,15 @@ export const useTenantsStore = defineStore('tenants', () => {
     error.value = null
     
     try {
+      // Import encryption utility
+      const { getEncryptedOrigin } = await import('~/utils/encryption.js')
+      const encryptedOrigin = getEncryptedOrigin()
+      
       const response = await $fetch('/api/auth/switch-tenant', {
         method: 'POST',
+        headers: {
+          ...(encryptedOrigin && { 'X-Encrypted-Origin': encryptedOrigin })
+        },
         body: { tenantSlug: tenant.slug }
       })
       
