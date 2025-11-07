@@ -62,10 +62,18 @@ export const useTenantsStore = defineStore('tenants', () => {
   }
 
   const selectTenant = async (tenant: Tenant) => {
+    // Check if already on the selected tenant
+    if (selectedTenant.value?.slug === tenant.slug) {
+      console.log(`✅ Already on tenant ${tenant.slug}, skipping switch`)
+      return true
+    }
+    
     isLoading.value = true
     error.value = null
     
     try {
+      console.log(`🔄 Switching from ${selectedTenant.value?.slug || 'none'} to ${tenant.slug}`)
+      
       // Import encryption utility
       const { getEncryptedOrigin } = await import('~/utils/encryption.js')
       const encryptedOrigin = getEncryptedOrigin()
@@ -81,6 +89,7 @@ export const useTenantsStore = defineStore('tenants', () => {
       if (response.success) {
         selectedTenant.value = tenant
         tenantChangeCounter.value++ // Increment counter to trigger reactivity globally
+        console.log(`✅ Successfully switched to tenant ${tenant.slug}`)
         return true
       } else {
         error.value = response.message || 'Error switching tenant'
