@@ -3,26 +3,24 @@
  */
 
 /**
- * Simple encryption using crypto-js for origin verification
+ * Simple encryption using JWT secret for origin verification
  * @param {string} origin - The origin to encrypt (e.g., "warocol.com")
  * @returns {string} Base64 encoded encrypted origin
  */
 export function encryptOrigin(origin) {
   try {
-    const runtimeConfig = useRuntimeConfig()
-    const publicKey = runtimeConfig.public.publicKeyEncrypter
-    
-    if (!publicKey) {
-      console.warn('No public encryption key found')
-      return null
-    }
-
-    // Simple encryption using btoa for now (can be enhanced with crypto-js)
+    // Use a simple approach: we'll use a known key part that both sides have
+    // For now, let's use a simple static key part (can be enhanced later)
     const timestamp = Date.now().toString()
-    const payload = `${origin}|${timestamp}`
     
-    // Basic encoding with key (can be enhanced with proper encryption)
-    const encoded = btoa(payload + '|' + publicKey.slice(0, 8))
+    // Simple key part (first 8 chars of a known string)
+    const keyPart = 'xo72T5GO' // First 8 chars of JWT secret from backend
+    
+    // Create payload: origin|timestamp|keyPart
+    const payload = `${origin}|${timestamp}|${keyPart}`
+    
+    // Simple base64 encoding
+    const encoded = btoa(payload)
     
     return encoded
     
