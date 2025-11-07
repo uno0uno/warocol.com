@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 
 export const useThemeStore = defineStore('theme', {
   state: () => ({
-    isDarkMode: true,
+    isDarkMode: false,
     isInitialized: false
   }),
 
@@ -53,9 +53,8 @@ export const useThemeStore = defineStore('theme', {
         if (savedTheme) {
           this.isDarkMode = savedTheme === 'dark'
         } else {
-          // Use system preference
-          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-          this.isDarkMode = prefersDark
+          // Default to light mode instead of system preference
+          this.isDarkMode = false
         }
         
         this.isInitialized = true
