@@ -47,7 +47,8 @@ export default defineNuxtConfig({
       baseUrl: process.env.NUXT_BASE_URL || '',
       warolabsApiUrl: process.env.NUXT_PUBLIC_WAROLABS_API_URL || 'http://localhost:9999',
       organizationName: process.env.NUXT_PUBLIC_ORGANIZATION_NAME || '',
-      defaultRedirectUrl: process.env.NUXT_PUBLIC_DEFAULT_REDIRECT_URL || '/dashboard'
+      defaultRedirectUrl: process.env.NUXT_PUBLIC_DEFAULT_REDIRECT_URL || '/dashboard',
+      publicKeyEncrypter: process.env.NUXT_PUBLIC_PUBLIC_KEY_ENCRYPTER || ''
     }
   },
   app: {
