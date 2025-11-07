@@ -3,6 +3,7 @@
       <NuxtLayout>
         <NuxtPage />
       </NuxtLayout>
+      <CommonsToastContainer />
     </div>
 </template>
 

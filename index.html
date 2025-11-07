@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>raindrop - Find Issues</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quantico:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: hsl(220, 14%, 97%); /* Titan 100 - Fondo claro neutral */
+            color: hsl(250, 30%, 16%); /* Ebony 900 - Texto oscuro con alto contraste */
+            overflow-x: hidden;
+        }
+
+        /* Background text effect */
+        .bg-text {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            font-size: 18px;
+            line-height: 2;
+            color: #000000;
+            padding: 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Animated Food Background */
+        .food-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .food-item {
+            position: absolute;
+            font-size: 50px;
+            opacity: 0.08;
+            filter: grayscale(100%) brightness(0.7);
+        }
+
+        /* Patrón de cuadrícula tipo papel de restaurante */
+        .food-item:nth-child(1) { left: 5%; top: 10%; }
+        .food-item:nth-child(2) { left: 15%; top: 10%; }
+        .food-item:nth-child(3) { left: 25%; top: 10%; }
+        .food-item:nth-child(4) { left: 35%; top: 10%; }
+        .food-item:nth-child(5) { left: 45%; top: 10%; }
+        .food-item:nth-child(6) { left: 55%; top: 10%; }
+        .food-item:nth-child(7) { left: 65%; top: 10%; }
+        .food-item:nth-child(8) { left: 75%; top: 10%; }
+        .food-item:nth-child(9) { left: 85%; top: 10%; }
+        .food-item:nth-child(10) { left: 95%; top: 10%; }
+
+        .food-item:nth-child(11) { left: 5%; top: 25%; }
+        .food-item:nth-child(12) { left: 15%; top: 25%; }
+        .food-item:nth-child(13) { left: 25%; top: 25%; }
+        .food-item:nth-child(14) { left: 35%; top: 25%; }
+        .food-item:nth-child(15) { left: 45%; top: 25%; }
+        .food-item:nth-child(16) { left: 55%; top: 25%; }
+        .food-item:nth-child(17) { left: 65%; top: 25%; }
+        .food-item:nth-child(18) { left: 75%; top: 25%; }
+        .food-item:nth-child(19) { left: 85%; top: 25%; }
+        .food-item:nth-child(20) { left: 95%; top: 25%; }
+
+        .food-item:nth-child(21) { left: 5%; top: 40%; }
+        .food-item:nth-child(22) { left: 15%; top: 40%; }
+        .food-item:nth-child(23) { left: 25%; top: 40%; }
+        .food-item:nth-child(24) { left: 35%; top: 40%; }
+        .food-item:nth-child(25) { left: 45%; top: 40%; }
+        .food-item:nth-child(26) { left: 55%; top: 40%; }
+        .food-item:nth-child(27) { left: 65%; top: 40%; }
+        .food-item:nth-child(28) { left: 75%; top: 40%; }
+        .food-item:nth-child(29) { left: 85%; top: 40%; }
+        .food-item:nth-child(30) { left: 95%; top: 40%; }
+
+        .food-item:nth-child(31) { left: 5%; top: 55%; }
+        .food-item:nth-child(32) { left: 15%; top: 55%; }
+        .food-item:nth-child(33) { left: 25%; top: 55%; }
+        .food-item:nth-child(34) { left: 35%; top: 55%; }
+        .food-item:nth-child(35) { left: 45%; top: 55%; }
+        .food-item:nth-child(36) { left: 55%; top: 55%; }
+        .food-item:nth-child(37) { left: 65%; top: 55%; }
+        .food-item:nth-child(38) { left: 75%; top: 55%; }
+        .food-item:nth-child(39) { left: 85%; top: 55%; }
+        .food-item:nth-child(40) { left: 95%; top: 55%; }
+
+        @keyframes float-food {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-5px) rotate(2deg);
+            }
+        }
+
+        /* Header */
+        header {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 60px;
+            background: hsla(0, 0%, 100%, 0.95); /* Blanco puro con transparencia */
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid hsl(220, 11%, 90%); /* Titan 300 - Borde sutil */
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-image-header {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        nav {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: hsl(220, 13%, 28%); /* Ebony 600 - Mejor contraste y legibilidad */
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: hsl(262, 83%, 58%); /* Crocus 600 - Acento púrpura */
+        }
+
+        .btn-get-started-header {
+            padding: 10px 24px;
+            background: white;
+            border: 2px solid hsl(262, 83%, 58%); /* Crocus 600 */
+            color: hsl(262, 83%, 58%); /* Crocus 600 */
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-get-started-header:hover {
+            background: hsl(262, 83%, 58%); /* Crocus 600 */
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            padding: 120px 20px 8px;
+        }
+
+        h1 {
+            font-family: 'Quantico', sans-serif;
+            font-size: 80px;
+            font-weight: 900;
+            color: hsl(250, 30%, 16%); /* Ebony 900 */
+            letter-spacing: -2px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 0.9;
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: hsl(220, 13%, 28%); /* Ebony 600 - Texto medio con buen contraste */
+            margin-bottom: 50px;
+            font-weight: 400;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .subtitle em {
+            color: hsl(250, 30%, 16%); /* Ebony 900 - Resaltar texto en cursiva */
+            font-style: italic;
+        }
+
+        /* CTA Buttons */
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 100px;
+        }
+
+        .btn {
+            padding: 16px 40px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: hsl(250, 30%, 16%); /* Ebony 900 - Negro profundo */
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: hsl(243, 26%, 23%); /* Ebony 800 - Ligeramente más claro al hover */
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: hsl(262, 83%, 58%); /* Crocus 600 */
+            border: 2px solid hsl(262, 83%, 58%); /* Crocus 600 */
+        }
+
+        .btn-secondary:hover {
+            background: hsl(262, 83%, 58%); /* Crocus 600 */
+            color: white;
+        }
+
+        /* Trust Section */
+        .trust-section {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+        }
+
+        .trust-title {
+            font-size: 12px;
+            color: hsl(220, 8%, 51%); /* Ebony 400 - Mayor contraste para legibilidad */
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 40px;
+            font-weight: 600;
+        }
+
+        .logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 60px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            color: hsl(220, 13%, 28%); /* Ebony 600 - Mejor contraste */
+            font-weight: 600;
+            opacity: 0.7;
+        }
+
+        .company-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .company-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: hsl(220, 13%, 28%); /* Ebony 600 */
+        }
+
+        .logo-image {
+            height: 90px;
+            width: auto;
+            object-fit: contain;
+            filter: grayscale(100%) brightness(0.5) contrast(1.2);
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 60px;
+            }
+
+            header {
+                padding: 20px 30px;
+            }
+
+            nav {
+                gap: 20px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .logos {
+                gap: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Food Background -->
+    <div class="food-bg">
+        <div class="food-item">🍞</div>
+        <div class="food-item">🥖</div>
+        <div class="food-item">🥐</div>
+        <div class="food-item">🍕</div>
+        <div class="food-item">🍔</div>
+        <div class="food-item">🌮</div>
+        <div class="food-item">🍟</div>
+        <div class="food-item">🥪</div>
+        <div class="food-item">🌭</div>
+        <div class="food-item">🍖</div>
+        <div class="food-item">🥙</div>
+        <div class="food-item">🍗</div>
+        <div class="food-item">🥓</div>
+        <div class="food-item">🥩</div>
+        <div class="food-item">🍳</div>
+        <div class="food-item">🧀</div>
+        <div class="food-item">🥚</div>
+        <div class="food-item">🍱</div>
+        <div class="food-item">🥗</div>
+        <div class="food-item">🍝</div>
+        <div class="food-item">🍜</div>
+        <div class="food-item">🍲</div>
+        <div class="food-item">🍛</div>
+        <div class="food-item">🍣</div>
+        <div class="food-item">🍤</div>
+        <div class="food-item">🥟</div>
+        <div class="food-item">🥡</div>
+        <div class="food-item">🦐</div>
+        <div class="food-item">🦞</div>
+        <div class="food-item">🦀</div>
+        <div class="food-item">🐟</div>
+        <div class="food-item">🥘</div>
+        <div class="food-item">🍚</div>
+        <div class="food-item">🥫</div>
+        <div class="food-item">🧆</div>
+        <div class="food-item">🥧</div>
+        <div class="food-item">🧁</div>
+        <div class="food-item">🍰</div>
+        <div class="food-item">🎂</div>
+        <div class="food-item">🍪</div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <img src="logo_waro_10_octubre.png" alt="Waro" class="logo-image-header">
+            </div>
+            <nav>
+                <a href="#blog">BLOG</a>
+                <a href="#login">INGRESAR</a>
+                <button class="btn-get-started-header">COMENZAR</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>CERO MISTERIO EN TU RESTAURANTE.</h1>
+        <p class="subtitle">Desde el precio de un plato hasta el turno de un empleado. Ponemos a tu alcance la tecnología que convierte tus datos en decisiones certeras. <em>Nosotros te guiamos para que sea fácil.</em></p>
+        
+        <div class="cta-buttons">
+            <button class="btn btn-primary">COMENZAR</button>
+            <button class="btn btn-secondary">HABLA CON NOSOTROS</button>
+        </div>
+    </section>
+
+    <!-- Trust Section -->
+    <section class="trust-section">
+        <div class="trust-title">MARCAS QUE HAN CONFIADO EN NOSOTROS</div>
+        <div class="logos">
+            <div class="logo-item">
+                <img src="https://www.publicrelations-germany.com/wp-content/uploads/2013/10/Logo-Selina-1170x658.png" alt="Selina" class="logo-image">
+            </div>
+            <div class="logo-item">
+                <img src="https://spotty.yurbban.com/wp-content/uploads/2024/02/Logo-SPOTTY-principal-.png" alt="Spotty" class="logo-image">
+            </div>
+            <div class="logo-item">
+                <img src="logo_01.png" alt="Armelo Perro" class="logo-image">
+            </div>
+            <div class="logo-item">
+                <img src="logo-02.png" alt="Sonidero Bogotano" class="logo-image">
+            </div>
+            <div class="logo-item">
+                <img src="logo-03.png" alt="DJ CAS" class="logo-image">
+            </div>
+        </div>
+    </section>
+
+    <!-- Hot Reload Script -->
+    <script>
+        let lastModified = document.lastModified;
+        
+        setInterval(async () => {
+            try {
+                const response = await fetch(window.location.href, {
+                    method: 'HEAD',
+                    cache: 'no-cache'
+                });
+                const modified = response.headers.get('last-modified');
+                
+                if (modified && modified !== lastModified) {
+                    console.log('Cambios detectados, recargando...');
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.log('Verificando cambios...');
+            }
+        }, 1000); // Revisa cada segundo
+    </script>
+    
+</body>
+</html>

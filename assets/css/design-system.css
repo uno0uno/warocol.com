@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Tema por defecto aplicado al html */
+  html {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Mejoras para elementos específicos del sistema de diseño */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-foreground;
+    font-weight: 600;
+  }
+  
+  /* Buttons con el nuevo sistema de colores */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+    @apply border border-primary;
+    @apply transition-all duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+    @apply border border-border;
+    @apply transition-all duration-200;
+  }
+  
+  .btn-accent {
+    @apply bg-accent text-accent-foreground hover:bg-accent/90;
+    @apply border border-accent;
+    @apply transition-all duration-200;
+  }
+  
+  /* Cards mejoradas */
+  .card-base {
+    @apply bg-card text-card-foreground;
+    @apply border border-border rounded-lg;
+    @apply shadow-sm;
+  }
+  
+  /* Badges del nuevo sistema */
+  .badge-primary {
+    @apply bg-primary/10 text-primary border border-primary/20;
+    @apply px-2 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .badge-secondary {
+    @apply bg-secondary text-secondary-foreground border border-border;
+    @apply px-2 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .badge-accent {
+    @apply bg-accent/10 text-accent border border-accent/20;
+    @apply px-2 py-1 rounded-full text-sm font-medium;
+  }
+  
+  /* Inputs mejorados */
+  .input-base {
+    @apply bg-input border border-border rounded-md;
+    @apply text-foreground placeholder:text-muted-foreground;
+    @apply focus:ring-2 focus:ring-ring focus:border-ring;
+    @apply transition-all duration-200;
+  }
+  
+  /* Superficies del sistema Warocol */
+  .surface-primary {
+    @apply bg-surface text-text-primary;
+  }
+  
+  .surface-secondary {
+    @apply bg-surface-secondary text-text-secondary;
+  }
+  
+  .surface-tertiary {
+    @apply bg-surface-tertiary text-text-tertiary;
+  }
+  
+  /* Estados de feedback */
+  .state-success {
+    @apply bg-success/10 text-success border border-success/20;
+  }
+  
+  .state-warning {
+    @apply bg-warning/10 text-warning border border-warning/20;
+  }
+  
+  .state-info {
+    @apply bg-info/10 text-info border border-info/20;
+  }
+  
+  .state-destructive {
+    @apply bg-destructive/10 text-destructive border border-destructive/20;
+  }
+}
+
+@layer components {
+  /* Componentes usando las nuevas paletas directamente */
+  .titan-theme {
+    @apply bg-titan-100 text-ebony-900;
+  }
+  
+  .crocus-theme {
+    @apply bg-crocus-500 text-white;
+  }
+  
+  .ebony-theme {
+    @apply bg-ebony-800 text-titan-100;
+  }
+  
+  /* Gradientes del sistema */
+  .gradient-titan {
+    background: linear-gradient(135deg, theme('colors.titan.200'), theme('colors.titan.400'));
+  }
+  
+  .gradient-crocus {
+    background: linear-gradient(135deg, theme('colors.crocus.400'), theme('colors.crocus.600'));
+  }
+  
+  .gradient-ebony {
+    background: linear-gradient(135deg, theme('colors.ebony.700'), theme('colors.ebony.900'));
+  }
+  
+  /* Texto con las nuevas paletas */
+  .text-titan {
+    @apply text-titan-700;
+  }
+  
+  .text-crocus {
+    @apply text-crocus-600;
+  }
+  
+  .text-ebony {
+    @apply text-ebony-700;
+  }
+}
+
+@layer utilities {
+  /* Utilidades de animación para transiciones de tema */
+  .theme-transition {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Shadow personalizadas para cada paleta */
+  .shadow-titan {
+    box-shadow: 0 4px 6px -1px rgba(117, 128, 140, 0.1), 0 2px 4px -1px rgba(117, 128, 140, 0.06);
+  }
+  
+  .shadow-crocus {
+    box-shadow: 0 4px 6px -1px rgba(150, 135, 245, 0.2), 0 2px 4px -1px rgba(150, 135, 245, 0.1);
+  }
+  
+  .shadow-ebony {
+    box-shadow: 0 4px 6px -1px rgba(31, 29, 53, 0.3), 0 2px 4px -1px rgba(31, 29, 53, 0.2);
+  }
+}

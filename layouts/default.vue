@@ -1,14 +1,19 @@
 <template>
-  <div class="pb-4">
-
+  <div class="w-screen h-screen flex flex-col">
+    
     <NuxtLoadingIndicator />
-
-    <div class="pb-2 px-4 md:px-16 2xl:px-[30rem]">
-      <slot />
+    <div class="flex flex-col pb-2 px-4 md:px-16 2xl:px-[30rem] w-full h-full">
+      <Header />
+      <div class="flex-1 pb-8">
+        <slot />
+      </div>
+      <Footer />
     </div>
 
   </div>
 </template>
 
 <script setup>
+import Header from '~/components/layout/Header.vue'
+import Footer from '~/components/layout/Footer.vue'
 </script>

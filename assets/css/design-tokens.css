@@ -1,0 +1,185 @@
+/* Warocol Design System - Purple Theme Tokens */
+:root {
+  /* === TITAN WHITE (Grises Claros) - HSL Tokens === */
+  --titan-50: 0 0% 100%; /* #FFFFFF */
+  --titan-100: 220 14% 97%; /* #F8F9FA */
+  --titan-200: 240 100% 96%; /* #EBF0FF */
+  --titan-300: 220 11% 90%; /* #E0E5EB */
+  --titan-400: 220 8% 85%; /* #D5DBE1 */
+  --titan-500: 220 7% 80%; /* #C9D0D8 */
+  --titan-600: 220 8% 72%; /* #B4BCC5 */
+  --titan-700: 220 7% 65%; /* #9FA8B2 */
+  --titan-800: 220 7% 57%; /* #8A949F */
+  --titan-900: 220 8% 50%; /* #75808C */
+
+  /* === CROCUS PURPLE (Púrpura) - HSL Tokens === */
+  --crocus-50: 250 100% 98%; /* #F5F3FF */
+  --crocus-100: 251 91% 95%; /* #EDE9FE */
+  --crocus-200: 251 95% 92%; /* #DDD6FE */
+  --crocus-300: 252 87% 85%; /* #C4B5FD */
+  --crocus-400: 253 91% 78%; /* #A78BFA */
+  --crocus-500: 254 83% 75%; /* #9687F5 */
+  --crocus-600: 262 83% 58%; /* #7C3AED */
+  --crocus-700: 263 70% 50%; /* #6D28D9 */
+  --crocus-800: 262 72% 42%; /* #5B21B6 */
+  --crocus-900: 263 69% 34%; /* #4C1D95 */
+
+  /* === EBONY CLAY (Grises Oscuros) - HSL Tokens === */
+  --ebony-50: 220 13% 95%; /* #F0F1F3 */
+  --ebony-100: 220 11% 88%; /* #DBDDE2 */
+  --ebony-200: 220 8% 75%; /* #B7BBC4 */
+  --ebony-300: 220 8% 64%; /* #9399A6 */
+  --ebony-400: 220 8% 51%; /* #6F7788 */
+  --ebony-500: 220 15% 34%; /* #4B5565 */
+  --ebony-600: 220 13% 28%; /* #3D4555 */
+  --ebony-700: 220 10% 24%; /* #323845 */
+  --ebony-800: 243 26% 23%; /* #2D284B */
+  --ebony-900: 250 30% 16%; /* #1F1D35 */
+
+  /* === TEMA CLARO (Titan White Base) === */
+  --background: var(--titan-200); /* Fondo claro suave */
+  --foreground: var(--ebony-900); /* Texto oscuro */
+  
+  --card: 0 0% 100%; /* Tarjetas blancas */
+  --card-foreground: var(--ebony-900); /* Texto en tarjetas */
+  
+  --popover: 0 0% 100%; /* Popovers blancos */
+  --popover-foreground: var(--ebony-900); /* Texto en popovers */
+  
+  --primary: var(--crocus-500); /* Púrpura principal */
+  --primary-foreground: 0 0% 100%; /* Texto en botones primarios */
+  
+  --secondary: var(--titan-400); /* Gris claro secundario */
+  --secondary-foreground: var(--ebony-900); /* Texto secundario */
+  
+  --muted: var(--titan-300); /* Elementos silenciados */
+  --muted-foreground: var(--ebony-600); /* Texto silenciado */
+  
+  --accent: var(--crocus-500); /* Acentos púrpura */
+  --accent-foreground: 0 0% 100%; /* Texto en acentos */
+  
+  --destructive: 0 84% 60%; /* Rojo para destructivo */
+  --destructive-foreground: 0 0% 100%; /* Texto destructivo */
+  
+  --border: var(--titan-400); /* Bordes grises claros */
+  --input: 0 0% 100%; /* Inputs blancos */
+  --ring: var(--crocus-500); /* Anillos de foco púrpura */
+  
+  --radius: 0.5rem; /* Border radius */
+
+  /* === TOKENS EXTENDIDOS WAROCOL === */
+  --surface: 0 0% 100%; /* Superficie principal blanca */
+  --surface-secondary: var(--titan-200); /* Superficie secundaria */
+  --surface-tertiary: var(--titan-300); /* Superficie terciaria */
+  
+  --text-primary: var(--ebony-900); /* Texto principal */
+  --text-secondary: var(--ebony-600); /* Texto secundario */
+  --text-tertiary: var(--ebony-500); /* Texto terciario */
+  
+  --success: 142 71% 45%; /* Verde éxito */
+  --success-foreground: 0 0% 100%; /* Texto éxito */
+  
+  --warning: 38 92% 50%; /* Naranja advertencia */
+  --warning-foreground: 0 0% 0%; /* Texto advertencia */
+  
+  --info: var(--crocus-600); /* Azul información púrpura */
+  --info-foreground: 0 0% 100%; /* Texto información */
+}
+
+/* === TEMA OSCURO (Ebony Clay Base) === */
+.dark {
+  --background: var(--ebony-900); /* Fondo oscuro */
+  --foreground: var(--titan-100); /* Texto claro */
+  
+  --card: var(--ebony-800); /* Tarjetas oscuras */
+  --card-foreground: var(--titan-100); /* Texto en tarjetas */
+  
+  --popover: var(--ebony-800); /* Popovers oscuros */
+  --popover-foreground: var(--titan-100); /* Texto en popovers */
+  
+  --primary: var(--crocus-400); /* Púrpura más claro para contraste */
+  --primary-foreground: var(--ebony-900); /* Texto oscuro en botones */
+  
+  --secondary: var(--ebony-600); /* Gris oscuro secundario */
+  --secondary-foreground: var(--titan-200); /* Texto claro secundario */
+  
+  --muted: var(--ebony-600); /* Elementos silenciados */
+  --muted-foreground: var(--titan-500); /* Texto silenciado */
+  
+  --accent: var(--crocus-400); /* Acentos púrpura claro */
+  --accent-foreground: var(--ebony-900); /* Texto en acentos */
+  
+  --destructive: 0 62% 51%; /* Rojo más suave para tema oscuro */
+  --destructive-foreground: var(--titan-100); /* Texto destructivo */
+  
+  --border: var(--ebony-600); /* Bordes grises oscuros */
+  --input: var(--ebony-800); /* Inputs oscuros */
+  --ring: var(--crocus-400); /* Anillos de foco púrpura claro */
+
+  /* === TOKENS EXTENDIDOS OSCUROS === */
+  --surface: var(--ebony-800); /* Superficie principal oscura */
+  --surface-secondary: var(--ebony-700); /* Superficie secundaria */
+  --surface-tertiary: var(--ebony-600); /* Superficie terciaria */
+  
+  --text-primary: var(--titan-100); /* Texto principal claro */
+  --text-secondary: var(--titan-400); /* Texto secundario */
+  --text-tertiary: var(--titan-500); /* Texto terciario */
+  
+  --success: 142 71% 45%; /* Verde éxito */
+  --success-foreground: var(--titan-100); /* Texto éxito */
+  
+  --warning: 38 92% 50%; /* Naranja advertencia */
+  --warning-foreground: var(--ebony-900); /* Texto advertencia */
+  
+  --info: var(--crocus-400); /* Información púrpura clara */
+  --info-foreground: var(--ebony-900); /* Texto información */
+}
+
+/* === TEMA CLARO EXPLÍCITO === */
+.light {
+  --background: var(--titan-100); /* Fondo claro */
+  --foreground: var(--ebony-900); /* Texto oscuro */
+  
+  --card: var(--titan-50); /* Tarjetas blanco puro */
+  --card-foreground: var(--ebony-900); /* Texto en tarjetas */
+  
+  --popover: var(--titan-50); /* Popovers blancos */
+  --popover-foreground: var(--ebony-900); /* Texto en popovers */
+  
+  --primary: var(--crocus-600); /* Púrpura más intenso */
+  --primary-foreground: var(--titan-50); /* Texto blanco en botones */
+  
+  --secondary: var(--titan-300); /* Gris claro secundario */
+  --secondary-foreground: var(--ebony-800); /* Texto oscuro secundario */
+  
+  --muted: var(--titan-300); /* Elementos silenciados */
+  --muted-foreground: var(--ebony-600); /* Texto silenciado */
+  
+  --accent: var(--crocus-600); /* Acentos púrpura intenso */
+  --accent-foreground: var(--titan-50); /* Texto en acentos */
+  
+  --destructive: 0 84% 60%; /* Rojo destructivo */
+  --destructive-foreground: var(--titan-50); /* Texto destructivo */
+  
+  --border: var(--titan-400); /* Bordes grises claros */
+  --input: var(--titan-50); /* Inputs blancos */
+  --ring: var(--crocus-600); /* Anillos de foco púrpura */
+
+  /* === TOKENS EXTENDIDOS CLAROS === */
+  --surface: var(--titan-50); /* Superficie principal blanca */
+  --surface-secondary: var(--titan-200); /* Superficie secundaria */
+  --surface-tertiary: var(--titan-300); /* Superficie terciaria */
+  
+  --text-primary: var(--ebony-900); /* Texto principal */
+  --text-secondary: var(--ebony-600); /* Texto secundario */
+  --text-tertiary: var(--ebony-500); /* Texto terciario */
+  
+  --success: 142 71% 45%; /* Verde éxito */
+  --success-foreground: var(--titan-50); /* Texto éxito */
+  
+  --warning: 38 92% 50%; /* Naranja advertencia */
+  --warning-foreground: var(--ebony-900); /* Texto advertencia */
+  
+  --info: var(--crocus-600); /* Información púrpura */
+  --info-foreground: var(--titan-50); /* Texto información */
+}
