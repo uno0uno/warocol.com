@@ -18,233 +18,105 @@
 
     <!-- Main Content -->
     <div v-else>
-      <!-- Metrics Cards -->
+      <!-- Metrics Cards using new MetricCard component -->
       <div class="grid grid-cols-4 gap-5 mb-8">
         <!-- TIR Actual -->
-        <div class="bg-white border border-crocus-500 rounded-xl px-8 py-4 shadow-sm">
-        <div class="mb-2">
-          <div class="text-base text-ebony-800 font-medium tracking-wide">TIR Actual (12 meses)</div>
-        </div>
-        <div class="flex items-end justify-between mb-2">
-          <div class="text-4xl font-bold text-crocus-600">{{ tirApiData.current.tir_actual.toFixed(2) }}%</div>
-        </div>
-        <div class="text-xs text-ebony-600 mb-2">Anualizado desde inicio</div>
-        </div>
+        <SharedMetricCard
+          variant="primary"
+          title="TIR Actual (12 meses)"
+          :value="tirApiData.current.tir_actual"
+          format="percentage"
+          :precision="2"
+          subtitle="Anualizado desde inicio"
+        />
 
         <!-- Recuperación Inversión -->
-        <div class="bg-white border border-crocus-500 rounded-xl px-8 py-4 shadow-sm">
-        <div class="mb-2">
-          <div class="text-base text-ebony-800 font-medium tracking-wide">Investment Recovery</div>
-        </div>
-        <div class="flex items-end justify-between mb-0">
-          <div class="text-4xl font-bold text-crocus-600">{{ tirApiData.current.recovery_months.toFixed(2) }}</div>
-        </div>
-        <div class="text-base text-ebony-600 -mt-2 mb-2">months</div>
-        <div class="text-xs text-ebony-600 mb-2">Estimated time</div>
-        </div>
+        <SharedMetricCard
+          variant="primary"
+          title="Investment Recovery"
+          :value="tirApiData.current.recovery_months"
+          format="decimal"
+          :precision="2"
+          unit="months"
+          subtitle="Estimated time"
+        />
 
         <!-- TIR Proyectada -->
-        <div class="bg-white border border-titan-500 rounded-xl px-8 py-4 shadow-sm">
-        <div class="mb-2">
-          <div class="text-base text-ebony-800 font-medium tracking-wide">TIR Proyectada (12 meses)</div>
-        </div>
-        <div class="flex items-end justify-between mb-2">
-          <div class="text-4xl font-bold text-ebony-800">{{ tirApiData.current.tir_projected.toFixed(2) }}%</div>
-        </div>
-        <div class="text-xs text-ebony-600 mb-2">Proyección futura</div>
-        </div>
+        <SharedMetricCard
+          variant="secondary"
+          title="TIR Proyectada (12 meses)"
+          :value="tirApiData.current.tir_projected"
+          format="percentage"
+          :precision="2"
+          subtitle="Proyección futura"
+        />
 
         <!-- Recuperación Proyectada -->
-        <div class="bg-white border border-titan-500 rounded-xl px-8 py-4 shadow-sm">
-        <div class="mb-2">
-          <div class="text-base text-ebony-800 font-medium tracking-wide">Projected Recovery</div>
-        </div>
-        <div class="flex items-end justify-between mb-0">
-          <div class="text-4xl font-bold text-ebony-800">{{ (tirApiData.current.recovery_months * 0.92).toFixed(2) }}</div>
-        </div>
-        <div class="text-base text-ebony-600 -mt-2 mb-2">months</div>
-        <div class="text-xs text-ebony-600 mb-2">With current projection</div>
-        </div>
+        <SharedMetricCard
+          variant="secondary"
+          title="Projected Recovery"
+          :value="(tirApiData.current.recovery_months * 0.92)"
+          format="decimal"
+          :precision="2"
+          unit="months"
+          subtitle="With current projection"
+        />
       </div><!-- End Metrics Cards Grid -->
 
 
 
-    <!-- Unified TIR Table -->
-    <div class="bg-white border border-titan-300 rounded-xl p-6 shadow-sm">
-      <h3 class="text-lg font-bold text-ebony-800 mb-4">Análisis TIR - Actual vs Proyectada</h3>
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead>
-            <tr class="bg-titan-100 border-b border-titan-200">
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('month')"
-                  class="text-sm text-ebony-800 font-bold flex items-center gap-1"
-                >
-                  Month 
-                  <component :is="getSortIconComponent('month')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('investment')"
-                  class="text-sm text-ebony-800 font-bold flex items-center gap-1"
-                >
-                  Initial Investment 
-                  <component :is="getSortIconComponent('investment')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('monthly_revenue')"
-                  class="text-sm text-ebony-800 font-bold flex items-center gap-1"
-                >
-                  Current Revenue 
-                  <component :is="getSortIconComponent('monthly_revenue')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('projected_revenue')"
-                  class="text-sm text-ebony-800 font-bold flex items-center gap-1"
-                >
-                  Projected Revenue 
-                  <component :is="getSortIconComponent('projected_revenue')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('costs')"
-                  class="text-sm text-ebony-800 font-bold flex items-center gap-1"
-                >
-                  Operational Costs 
-                  <component :is="getSortIconComponent('costs')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('product_costs')"
-                  class="text-sm text-ebony-800 font-bold flex items-center gap-1"
-                >
-                  Product Costs 
-                  <component :is="getSortIconComponent('product_costs')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('products_sold')"
-                  class="text-sm text-ebony-800 font-bold flex items-center gap-1"
-                >
-                  Units Sold 
-                  <component :is="getSortIconComponent('products_sold')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('projected_costs')"
-                  class="text-sm text-ebony-800 font-bold flex items-center gap-1"
-                >
-                  Projected Costs 
-                  <component :is="getSortIconComponent('projected_costs')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('return')"
-                  class="text-sm text-ebony-800 font-bold flex items-center gap-1"
-                >
-                  Current Profit 
-                  <component :is="getSortIconComponent('return')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('projected_return')"
-                  class="text-sm text-ebony-800 font-bold flex items-center gap-1"
-                >
-                  Projected Profit 
-                  <component :is="getSortIconComponent('projected_return')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('tir_actual')"
-                  class="text-sm text-ebony-800 font-bold flex items-center gap-1"
-                >
-                  TIR Actual 
-                  <component :is="getSortIconComponent('tir_actual')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('tir_projected')"
-                  class="text-sm text-ebony-800 font-bold flex items-center gap-1"
-                >
-                  TIR Proyectada 
-                  <component :is="getSortIconComponent('tir_projected')" class="w-3 h-3" />
-                </button>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="month in sortedActualData" :key="month.month" class="border-b border-titan-100 hover:bg-gray-200 transition-colors duration-200">
-              <td class="py-4 px-2 text-sm text-ebony-800 font-medium">{{ month.month }}</td>
-              <td class="py-4 px-2 text-sm text-ebony-800">{{ (month.investment || 0).toLocaleString() }}</td>
-              <td class="py-4 px-2 text-sm text-ebony-800">{{ (month.monthlyRevenue || 0).toLocaleString() }}</td>
-              <td class="py-4 px-2 text-sm text-ebony-600">{{ (getProjectedData(month.month)?.monthlyRevenue || 0).toLocaleString() }}</td>
-              <td class="py-4 px-2 text-sm text-ebony-800">{{ (month.costs || 0).toLocaleString() }}</td>
-              <td class="py-4 px-2 text-sm text-ebony-800">{{ (month.monthly_product_costs || 0).toLocaleString() }}</td>
-              <td class="py-4 px-2 text-sm text-ebony-800">{{ (month.products_sold_count || 0).toLocaleString() }}</td>
-              <td class="py-4 px-2 text-sm text-ebony-800">{{ (getProjectedData(month.month)?.costs || 0).toLocaleString() }}</td>
-              <td class="py-4 px-2 text-sm text-ebony-800">{{ (month.profit || month.return || 0).toLocaleString() }}</td>
-              <td class="py-4 px-2 text-sm text-ebony-800">{{ (getProjectedData(month.month)?.profit || getProjectedData(month.month)?.return || 0).toLocaleString() }}</td>
-              <td class="py-4 px-2 text-sm font-semibold" :class="month.tir >= 0 ? 'text-green-600' : 'text-red-600'">{{ month.tir }}%</td>
-              <td class="py-4 px-2 text-sm font-semibold" :class="(getProjectedData(month.month)?.tir || 0) >= 0 ? 'text-green-600' : 'text-red-600'">{{ getProjectedData(month.month)?.tir || 0 }}%</td>
-            </tr>
-            
-            <!-- Fila de totales -->
-            <tr v-if="tirApiData.tables.totals" class="bg-titan-100 border-t-2 border-titan-300 font-semibold">
-              <td class="py-4 px-2 text-sm text-ebony-800 font-medium">
-                <span class="font-bold">total</span>
-              </td>
-              <td class="py-4 px-2 text-sm text-ebony-800">
-                {{ (tirApiData.tables.totals?.actual.total_investment || 0).toLocaleString() }}
-              </td>
-              <td class="py-4 px-2 text-sm text-ebony-800">
-                {{ (tirApiData.tables.totals?.actual.total_revenue || 0).toLocaleString() }}
-              </td>
-              <td class="py-4 px-2 text-sm text-ebony-600">
-                {{ (tirApiData.tables.totals?.projected.total_revenue || 0).toLocaleString() }}
-              </td>
-              <td class="py-4 px-2 text-sm text-ebony-800">
-                {{ (tirApiData.tables.totals?.actual.total_costs || 0).toLocaleString() }}
-              </td>
-              <td class="py-4 px-2 text-sm text-ebony-800">
-                {{ (tirApiData.tables.totals?.actual.total_product_costs || 0).toLocaleString() }}
-              </td>
-              <td class="py-4 px-2 text-sm text-ebony-800">
-                {{ (tirApiData.tables.totals?.actual.total_products_sold || 0).toLocaleString() }}
-              </td>
-              <td class="py-4 px-2 text-sm text-ebony-800">
-                {{ (tirApiData.tables.totals?.projected.total_costs || 0).toLocaleString() }}
-              </td>
-              <td class="py-4 px-2 text-sm text-ebony-800">
-                {{ (tirApiData.tables.totals?.actual.total_profit || tirApiData.tables.totals?.actual.total_return || 0).toLocaleString() }}
-              </td>
-              <td class="py-4 px-2 text-sm text-ebony-800">
-                {{ (tirApiData.tables.totals?.projected.total_profit || tirApiData.tables.totals?.projected.total_return || 0).toLocaleString() }}
-              </td>
-              <td class="py-4 px-2 text-sm font-semibold" :class="(tirApiData.tables.totals?.actual.tir_average || 0) >= 0 ? 'text-green-600' : 'text-red-600'">
-                {{ tirApiData.tables.totals?.actual.tir_average?.toFixed(2) || '0.00' }}%
-              </td>
-              <td class="py-4 px-2 text-sm font-semibold" :class="(tirApiData.tables.totals?.projected.tir_average || 0) >= 0 ? 'text-green-600' : 'text-red-600'">
-                {{ tirApiData.tables.totals?.projected.tir_average?.toFixed(2) || '0.00' }}%
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <!-- Unified TIR Table using DataTable component -->
+    <UiDataTable
+      title="Análisis TIR - Actual vs Proyectada"
+      :columns="tirTableColumns"
+      :data="sortedActualData"
+      :sort-field="sortField"
+      :sort-direction="sortDirection"
+      :show-footer="!!tirApiData.tables.totals"
+      :totals-data="totalsData"
+      variant="default"
+      @sort="sortTable"
+    >
+      <!-- Custom slots for TIR values with StatusBadge -->
+      <template #cell-tir_actual="{ value, row }">
+        <UiStatusBadge
+          :value="value || row.tir"
+          format="percentage"
+          :auto-color="true"
+          size="sm"
+        />
+      </template>
+      
+      <template #cell-tir_projected="{ value, row }">
+        <UiStatusBadge
+          :value="value || getProjectedData(row.month)?.tir || 0"
+          format="percentage"
+          :auto-color="true"
+          size="sm"
+        />
+      </template>
+      
+      <!-- Custom totals with StatusBadge -->
+      <template #total-tir_actual="{ value }">
+        <UiStatusBadge
+          :value="value"
+          format="percentage"
+          :auto-color="true"
+          size="sm"
+          :precision="2"
+        />
+      </template>
+      
+      <template #total-tir_projected="{ value }">
+        <UiStatusBadge
+          :value="value"
+          format="percentage"
+          :auto-color="true"
+          size="sm"
+          :precision="2"
+        />
+      </template>
+    </UiDataTable>
 
     
     </div><!-- End Main Content -->
@@ -291,8 +163,8 @@ const { onTenantChange, currentTenant } = useTenantReactive()
 const sortField = ref('month')
 const sortDirection = ref('asc') // 'asc' | 'desc'
 
-// Fetch data using useAsyncData for proper loading states (without await to show loading)
-const { data: tirApiData, pending: isLoading, error: fetchError, refresh } = await useAsyncData(`tir-metrics-${currentTenant.value?.id || 'default'}`, () => {
+// Fetch data using useAsyncData for proper loading states (NO await to show loading)
+const { data: tirApiData, pending: isLoading, error: fetchError, refresh } = useAsyncData(`tir-metrics-${currentTenant.value?.id || 'default'}`, () => {
   console.log('🔍 Fetching TIR data for tenant:', currentTenant.value?.id)
   return $fetch('/api/finance/tir-metrics', {
     query: { limit: 12 }
@@ -366,6 +238,126 @@ watch(fetchError, (newError) => {
 
 // Tenant change is handled by useAsyncData watch: [currentTenant]
 
+// Table columns definition for DataTable
+const tirTableColumns = [
+  {
+    key: 'month',
+    title: 'Month',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'investment',
+    title: 'Initial Investment',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'monthlyRevenue',
+    title: 'Current Revenue',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'projected_revenue',
+    title: 'Projected Revenue',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'costs',
+    title: 'Operational Costs',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'monthly_product_costs',
+    title: 'Product Costs',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'products_sold_count',
+    title: 'Units Sold',
+    sortable: true,
+    format: 'number',
+    align: 'right'
+  },
+  {
+    key: 'projected_costs',
+    title: 'Projected Costs',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'profit',
+    title: 'Current Profit',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'projected_return',
+    title: 'Projected Profit',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'tir_actual',
+    title: 'TIR Actual',
+    sortable: true,
+    format: 'percentage',
+    align: 'center'
+  },
+  {
+    key: 'tir_projected',
+    title: 'TIR Proyectada',
+    sortable: true,
+    format: 'percentage',
+    align: 'center'
+  }
+]
+
+// Totals data for footer
+const totalsData = computed(() => {
+  if (!tirApiData.value.tables.totals) return null
+  
+  return {
+    month: 'Total',
+    investment: tirApiData.value.tables.totals.actual.total_investment,
+    monthlyRevenue: tirApiData.value.tables.totals.actual.total_revenue,
+    projected_revenue: tirApiData.value.tables.totals.projected.total_revenue,
+    costs: tirApiData.value.tables.totals.actual.total_costs,
+    monthly_product_costs: tirApiData.value.tables.totals.actual.total_product_costs,
+    products_sold_count: tirApiData.value.tables.totals.actual.total_products_sold,
+    projected_costs: tirApiData.value.tables.totals.projected.total_costs,
+    profit: tirApiData.value.tables.totals.actual.total_profit || tirApiData.value.tables.totals.actual.total_return,
+    projected_return: tirApiData.value.tables.totals.projected.total_profit || tirApiData.value.tables.totals.projected.total_return,
+    tir_actual: tirApiData.value.tables.totals.actual.tir_average,
+    tir_projected: tirApiData.value.tables.totals.projected.tir_average
+  }
+})
+
+// Enhanced data with proper field mapping
+const enhancedData = computed(() => {
+  return tirApiData.value.tables.actual.map(month => ({
+    ...month,
+    profit: month.profit || month.return || 0,
+    tir_actual: month.tir,
+    tir_projected: getProjectedData(month.month)?.tir || 0,
+    projected_revenue: getProjectedData(month.month)?.monthlyRevenue || 0,
+    projected_costs: getProjectedData(month.month)?.costs || 0,
+    projected_return: getProjectedData(month.month)?.profit || getProjectedData(month.month)?.return || 0
+  }))
+})
 
 // Function to refresh data
 async function fetchTirData(limit = 12) {
@@ -395,9 +387,9 @@ function getProjectedData(monthName) {
 
 // Computed sorted data
 const sortedActualData = computed(() => {
-  if (!sortField.value) return tirApiData.value.tables.actual
+  if (!sortField.value) return enhancedData.value
 
-  return [...tirApiData.value.tables.actual].sort((a, b) => {
+  return [...enhancedData.value].sort((a, b) => {
     let aValue, bValue
 
     switch (sortField.value) {
