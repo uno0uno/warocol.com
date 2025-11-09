@@ -123,6 +123,7 @@ module.exports = {
       fontFamily: {
         principal: ['Lato'],
         sans: ['Lato', 'sans-serif'],
+        quantico: ['Quantico', 'Lato', 'sans-serif'],
       },
       keyframes: {
         "accordion-down": {

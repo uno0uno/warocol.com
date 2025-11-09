@@ -1,5 +1,4 @@
 <template>
-  <div class="bg-titan-50 min-h-full">
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
@@ -17,9 +16,9 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else>
+    <div class="flex flex-col gap-4" v-else>
       <!-- Metrics Cards using new MetricCard component -->
-      <div class="grid grid-cols-4 gap-5 mb-8">
+      <div class="grid grid-cols-4 gap-5">
         <!-- TIR Actual -->
         <SharedMetricCard
           variant="primary"
@@ -37,13 +36,12 @@
           :value="tirApiData.current.recovery_months"
           format="decimal"
           :precision="2"
-          unit="months"
-          subtitle="Estimated time"
+          subtitle="months"
         />
 
         <!-- TIR Proyectada -->
         <SharedMetricCard
-          variant="secondary"
+          variant="primary"
           title="TIR Proyectada (12 meses)"
           :value="tirApiData.current.tir_projected"
           format="percentage"
@@ -53,13 +51,12 @@
 
         <!-- Recuperación Proyectada -->
         <SharedMetricCard
-          variant="secondary"
+          variant="primary"
           title="Projected Recovery"
           :value="(tirApiData.current.recovery_months * 0.92)"
           format="decimal"
           :precision="2"
           unit="months"
-          subtitle="With current projection"
         />
       </div><!-- End Metrics Cards Grid -->
 
@@ -117,10 +114,8 @@
         />
       </template>
     </UiDataTable>
+</div>
 
-    
-    </div><!-- End Main Content -->
-  </div>
 </template>
 
 <script setup>

@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen bg-titan-100 flex overflow-hidden">
+  <div class="h-screen flex overflow-hidden">
     <!-- Dashboard Sidebar - Fixed Viewport Height -->
     <DashboardSidebar :active-page="activePage" />
 
@@ -93,6 +93,51 @@ const getPageConfig = () => {
       pageSubtitle: undefined,
       searchPlaceholder: 'Buscar obstáculos...',
       activePage: 'financiero' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined
+    }
+  } else if (path === '/abastecimiento' || path === '/abastecimiento/') {
+    return {
+      pageTitle: 'Dashboard - Abastecimiento',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar en abastecimiento...',
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined
+    }
+  } else if (path === '/abastecimiento/proveedores') {
+    return {
+      pageTitle: 'Gestión de Proveedores',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar proveedores...',
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined
+    }
+  } else if (path === '/abastecimiento/precios') {
+    return {
+      pageTitle: 'Lista de Precios',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar precios...',
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined
+    }
+  } else if (path === '/abastecimiento/compras') {
+    return {
+      pageTitle: 'Órdenes de Compra',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar órdenes...',
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined
+    }
+  } else if (path === '/abastecimiento/inventario') {
+    return {
+      pageTitle: 'Control de Inventario',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar inventario...',
+      activePage: 'abastecimiento' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined
     }

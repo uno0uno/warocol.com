@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-titan-50 min-h-full animate-page-enter">
+  <div class="min-h-full animate-page-enter">
 
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">

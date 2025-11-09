@@ -47,7 +47,7 @@
 
     <!-- Hero Section -->
     <section class="hero">
-        <h1>CERO MISTERIO EN TU RESTAURANTE.</h1>
+        <h1 class="font-quantico">CERO MISTERIO EN TU RESTAURANTE.</h1>
         <p class="subtitle">Desde el precio de un plato hasta el turno de un empleado. Ponemos a tu alcance la tecnología que convierte tus datos en decisiones certeras. <em>Nosotros te guiamos para que sea fácil.</em></p>
         
         <div class="cta-buttons">
@@ -82,22 +82,8 @@
 
 <script setup>
 useHead({
-  title: 'raindrop - Find Issues',
-  link: [
-    {
-      rel: 'preconnect',
-      href: 'https://fonts.googleapis.com'
-    },
-    {
-      rel: 'preconnect',
-      href: 'https://fonts.gstatic.com',
-      crossorigin: true
-    },
-    {
-      rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Quantico:wght@400;700&display=swap'
-    }
-  ]
+  title: 'raindrop - Find Issues'
+  // Quantico font now loaded locally via assets/css/fonts.css
 })
 </script>
 
@@ -196,7 +182,6 @@ useHead({
 }
 
 h1 {
-    font-family: 'Quantico', sans-serif;
     font-size: clamp(2.5rem, 5vw, 5rem);
     font-weight: 900;
     color: hsl(250, 30%, 16%); /* Ebony 900 */

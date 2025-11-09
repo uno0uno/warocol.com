@@ -95,7 +95,7 @@ export default defineNuxtConfig({
     enabled: true,
     port: 8080
   },
-  css: ['~/assets/css/main.scss', '~/assets/css/design-system.css', '~/assets/css/design-tokens.css'],
+  css: ['~/assets/css/main.scss', '~/assets/css/design-system.css', '~/assets/css/design-tokens.css', '~/assets/css/fonts.css'],
   postcss: {
     plugins: {
       tailwindcss: {},
