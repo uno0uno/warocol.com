@@ -50,51 +50,6 @@
       </div>
 
 
-    <!-- Filter Controls -->
-    <div class="bg-white rounded-xl p-6 border border-titan-300 shadow-sm">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-ebony-800">Analysis Filters</h2>
-        <button class="px-3 py-1 bg-crocus-500 text-white text-xs rounded-lg">Export Analysis</button>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-ebony-600 mb-1">Category</label>
-          <select v-model="selectedCategory" class="w-full p-2 border border-titan-300 rounded-lg text-sm text-ebony-800 bg-white">
-            <option value="">All categories</option>
-            <option v-for="category in availableCategories" :key="category" :value="category">
-              {{ category }}
-            </option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-ebony-600 mb-1">Minimum Margin</label>
-          <select v-model="minMargin" class="w-full p-2 border border-titan-300 rounded-lg text-sm text-ebony-800 bg-white">
-            <option value="">No filter</option>
-            <option value="50">50%+</option>
-            <option value="60">60%+</option>
-            <option value="70">70%+</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-ebony-600 mb-1">Period</label>
-          <select v-model="period" class="w-full p-2 border border-titan-300 rounded-lg text-sm text-ebony-800 bg-white">
-            <option value="30">Last 30 days</option>
-            <option value="90">Last 3 months</option>
-            <option value="180">Last 6 months</option>
-            <option value="365">Full year (Current)</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-ebony-600 mb-1">Sort by</label>
-          <select v-model="sortBy" class="w-full p-2 border border-titan-300 rounded-lg text-sm text-ebony-800 bg-white">
-            <option value="margin">Margin %</option>
-            <option value="sales">Sales</option>
-            <option value="profit">Profit</option>
-            <option value="impact">TIR Impact</option>
-          </select>
-        </div>
-      </div>
-    </div>
 
     <!-- Products Analysis Table using DataTable -->
     <UiDataTable
