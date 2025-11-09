@@ -1,4 +1,5 @@
 <template>
+  <div class="min-h-full animate-page-enter">
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
@@ -16,7 +17,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="flex flex-col gap-4" v-else>
+    <div v-else class="flex flex-col gap-4">
       <!-- Metrics Cards using new MetricCard component -->
       <div class="grid grid-cols-4 gap-5">
         <!-- TIR Actual -->
@@ -114,8 +115,8 @@
         />
       </template>
     </UiDataTable>
-</div>
-
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -222,16 +223,20 @@ const { data: tirApiData, pending: isLoading, error: fetchError, refresh } = use
   }
 })
 
+// Watch for loading state changes
+watch(isLoading, (newLoadingState) => {
+  console.log('🔄 TIR Loading state changed:', newLoadingState)
+}, { immediate: true })
+
 // Watch for errors and update error state
 watch(fetchError, (newError) => {
   if (newError) {
     error.value = 'Error loading financial data'
+    console.error('❌ TIR API Error:', newError)
   } else {
     error.value = null
   }
-})
-
-// Tenant change is handled by useAsyncData watch: [currentTenant]
+}, { immediate: true })
 
 // Table columns definition for DataTable
 const tirTableColumns = [

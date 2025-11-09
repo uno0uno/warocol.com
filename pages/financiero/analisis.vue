@@ -221,16 +221,19 @@ const analysisTableColumns = [
 const { onTenantChange, currentTenant } = useTenantReactive()
 
 // Fetch data using useAsyncData for proper loading states (without await to show loading)
-const { data: analysisApiData, pending: isLoading, error: fetchError, refresh } = useAsyncData('products-analysis', () => $fetch('/api/finance/products-analysis', {
-  query: { 
-    period: period.value,
-    category: selectedCategory.value || undefined,
-    min_margin: minMargin.value || undefined,
-    sort_by: sortBy.value
-  }
-}), {
+const { data: analysisApiData, pending: isLoading, error: fetchError, refresh } = useAsyncData(`products-analysis-${currentTenant.value?.id || 'default'}`, () => {
+  console.log('🔍 Fetching products analysis data for tenant:', currentTenant.value?.id)
+  return $fetch('/api/finance/products-analysis', {
+    query: { 
+      period: period.value,
+      category: selectedCategory.value || undefined,
+      min_margin: minMargin.value || undefined,
+      sort_by: sortBy.value
+    }
+  })
+}, {
   server: false,
-  client: true,
+  watch: [currentTenant],
   default: () => ({ 
     categories: [],
     metrics: {
@@ -287,6 +290,21 @@ watch(fetchError, (newError) => {
     error.value = null
   }
 })
+
+// Watch for loading state changes
+watch(isLoading, (newLoadingState) => {
+  console.log('🔄 Analysis Loading state changed:', newLoadingState)
+}, { immediate: true })
+
+// Watch for errors and update error state
+watch(fetchError, (newError) => {
+  if (newError) {
+    error.value = 'Error loading analysis data'
+    console.error('❌ Analysis API Error:', newError)
+  } else {
+    error.value = null
+  }
+}, { immediate: true })
 
 // Extract data from useAsyncData response
 const products = computed(() => analysisApiData.value?.products || [])

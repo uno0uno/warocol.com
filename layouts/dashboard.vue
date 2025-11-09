@@ -132,15 +132,6 @@ const getPageConfig = () => {
       showBreadcrumb: false,
       breadcrumbPage: undefined
     }
-  } else if (path === '/abastecimiento/inventario') {
-    return {
-      pageTitle: 'Control de Inventario',
-      pageSubtitle: undefined,
-      searchPlaceholder: 'Buscar inventario...',
-      activePage: 'abastecimiento' as const,
-      showBreadcrumb: false,
-      breadcrumbPage: undefined
-    }
   } else if (path.includes('/analytics')) {
     return {
       pageTitle: 'Dashboard - Analytics',

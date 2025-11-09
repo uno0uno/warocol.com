@@ -113,13 +113,16 @@ const selectedPeriod = ref('30')
 const { onTenantChange, currentTenant } = useTenantReactive()
 
 // Fetch data using useAsyncData for proper loading states
-const { data: obstaclesApiData, pending: isLoading, error, refresh } = useAsyncData('obstacles-analysis', () => $fetch('/api/finance/obstacles-analysis', {
-  query: { 
-    period: selectedPeriod.value
-  }
-}), {
+const { data: obstaclesApiData, pending: isLoading, error, refresh } = useAsyncData(`obstacles-analysis-${currentTenant.value?.id || 'default'}`, () => {
+  console.log('🔍 Fetching obstacles analysis data for tenant:', currentTenant.value?.id)
+  return $fetch('/api/finance/obstacles-analysis', {
+    query: { 
+      period: selectedPeriod.value
+    }
+  })
+}, {
   server: false,
-  client: true,
+  watch: [currentTenant],
   default: () => ({ 
     data: {
       metrics: {},
@@ -128,6 +131,13 @@ const { data: obstaclesApiData, pending: isLoading, error, refresh } = useAsyncD
     }
   })
 })
+
+// Watch for errors
+watch(error, (newError) => {
+  if (newError) {
+    console.error('Error loading obstacles data:', newError)
+  }
+}, { immediate: true })
 
 // React to tenant changes
 onTenantChange(async () => {

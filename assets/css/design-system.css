@@ -105,6 +105,11 @@
 }
 
 @layer components {
+  /* Layout Components */
+  .page-layout {
+    @apply flex flex-col gap-4;
+  }
+  
   /* Componentes usando las nuevas paletas directamente */
   .titan-theme {
     @apply bg-titan-100 text-ebony-900;

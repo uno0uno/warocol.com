@@ -1,43 +1,9 @@
 <template>
-  <div>
-    <!-- Header section matching warocol style -->
-    <div class="bg-white">
-      <div class="p-6">
-        <!-- Navigation area -->
-        <div class="">
-          <nav class="flex space-x-8">
-            <NuxtLink to="/abastecimiento/proveedores" :class="[
-              $route.path === '/abastecimiento/proveedores'
-                ? 'text-crocus-600 font-medium border-b-2 border-crocus-600 pb-3'
-                : 'text-titan-600 hover:text-crocus-600 pb-3']"
-              class="text-sm transition-colors">
-              Proveedores
-            </NuxtLink>
-            <NuxtLink to="/abastecimiento/precios" :class="[
-              $route.path.includes('/precios')
-                ? 'text-crocus-600 font-medium border-b-2 border-crocus-600 pb-3'
-                : 'text-titan-600 hover:text-crocus-600 pb-3']"
-              class="text-sm transition-colors">
-              Lista de Precios
-            </NuxtLink>
-            <NuxtLink to="/abastecimiento/compras" :class="[
-              $route.path.includes('/compras')
-                ? 'text-crocus-600 font-medium border-b-2 border-crocus-600 pb-3'
-                : 'text-titan-600 hover:text-crocus-600 pb-3']"
-              class="text-sm transition-colors">
-              Órdenes de Compra
-            </NuxtLink>
-            <NuxtLink to="/abastecimiento/inventario" :class="[
-              $route.path.includes('/inventario')
-                ? 'text-crocus-600 font-medium border-b-2 border-crocus-600 pb-3'
-                : 'text-titan-600 hover:text-crocus-600 pb-3']"
-              class="text-sm transition-colors">
-              Inventario
-            </NuxtLink>
-          </nav>
-        </div>
-      </div>
-    </div>
+  <div class="page-layout">
+    <!-- Navigation -->
+    <UiModuleNavigation 
+      :navigation-items="navigationItems"
+    />
 
     <!-- Content -->
     <Transition enter-active-class="transition-all duration-400 ease-out"
@@ -58,11 +24,18 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+// Navigation configuration
+const navigationItems = [
+  { to: '/abastecimiento/proveedores', label: 'Proveedores' },
+  { to: '/abastecimiento/precios', label: 'Lista de Precios', matchPath: '/precios' },
+  { to: '/abastecimiento/compras', label: 'Órdenes de Compra', matchPath: '/compras' }
+]
+
 // Meta tags
 useHead({
   title: 'Abastecimiento - Warocol',
   meta: [
-    { name: 'description', content: 'Gestión de proveedores, compras e inventario para Warocol' }
+    { name: 'description', content: 'Gestión de proveedores, compras y precios para Warocol' }
   ]
 })
 </script>
