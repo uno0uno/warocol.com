@@ -10,6 +10,7 @@
 - Use `!important` to force styles
 - Mix semantic and palette tokens in the same component context
 - Create theme-specific code without token abstraction
+- **Apply colors to table numbers/monetary values directly** (except via badges)
 
 ### ✅ ALWAYS DO
 - Use semantic design tokens (`--primary`, `--secondary`, `--background`)
@@ -19,6 +20,7 @@
 - Use `cn()` utility for className composition
 - Follow CVA (Class Variance Authority) pattern for variants
 - Test components in both theme modes
+- **Keep all table numbers black** (`text-text-primary`) - use StatusBadge for colored indicators
 
 ## Component Creation Rules
 
@@ -113,6 +115,10 @@
 .dark .my-component {
   background: #333;
 }
+
+/* ❌ Colored table numbers */
+<td class="text-success font-semibold">${{ value }}</td>
+<td class="text-destructive">{{ profit }}</td>
 ```
 
 ### Acceptable Patterns
@@ -126,6 +132,10 @@
 
 /* ✅ Semantic Tailwind classes */
 <div class="bg-primary text-primary-foreground border-border">
+
+/* ✅ Black table numbers with badges for status */
+<td class="text-text-primary font-medium">{{ value }}</td>
+<td><UiStatusBadge :value="profit" format="currency" :auto-color="true" /></td>
 ```
 
 ## Enforcement Strategy

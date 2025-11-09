@@ -42,6 +42,13 @@
 - Error/Destructive: `--destructive` with `--destructive-foreground`
 - Info: `--info` with `--info-foreground`
 
+#### 📊 Data Tables - SPECIAL RULES
+- **ALL table numbers**: MUST use `--text-primary` (black text)
+- **NO colored numbers**: Never apply status colors directly to table cell values
+- **Badges only**: Use `UiStatusBadge` component for colored status indicators
+- **Monetary values**: Always black with optional StatusBadge for status indication
+- **TIR/Percentages**: Black text with StatusBadge when color coding is needed
+
 #### Borders and Outlines
 - Default borders: `--border`
 - Focus states: `--ring`
@@ -94,6 +101,8 @@
 - ❌ `bg-purple-500` (arbitrary color)
 - ❌ Theme-specific overrides without semantic meaning
 - ❌ Using palette colors directly in components (`--crocus-500`) unless for branding
+- ❌ **Applying colors to table numbers**: `<td class="text-success">${{ profit }}</td>`
+- ❌ **Direct value coloring**: `<span :class="value > 0 ? 'text-green-500' : 'text-red-500'">`
 
 ### Review Checklist
 - [ ] Uses semantic tokens appropriately
@@ -102,3 +111,5 @@
 - [ ] Uses consistent spacing and radius values
 - [ ] Interactive states are properly defined
 - [ ] No hardcoded color values
+- [ ] **Table numbers are black** (only badges have colors)
+- [ ] **StatusBadge used** for colored indicators in tables

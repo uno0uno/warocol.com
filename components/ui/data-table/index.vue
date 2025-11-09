@@ -168,14 +168,9 @@ function handleSort(column: TableColumn) {
   emit('sort', column.key)
 }
 
-// Get cell color for financial values
+// All table cell values should be black (governance rule)
 function getCellColor(value: any, column: TableColumn): string {
-  // Only apply colors to percentage columns (TIR values)
-  if (column.format === 'percentage') {
-    const numValue = typeof value === 'string' ? parseFloat(value) : value
-    return numValue >= 0 ? 'text-success' : 'text-destructive'
-  }
-  // All other columns stay black
+  // All numbers must be black - use StatusBadge for colored indicators
   return 'text-text-primary'
 }
 </script>

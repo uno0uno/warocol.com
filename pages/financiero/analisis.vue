@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-titan-50 min-h-full animate-page-enter">
+  <div class="min-h-full animate-page-enter">
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
@@ -17,46 +17,41 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else>
-      <!-- Products Analysis Metrics -->
-      <div class="grid grid-cols-3 gap-5 mb-8">
+    <div v-else class="flex flex-col gap-4">
+      <!-- Products Analysis Metrics using MetricCard -->
+      <div class="grid grid-cols-3 gap-5">
         <!-- Mejor Margen -->
-        <div class="bg-white border border-titan-300 rounded-xl px-8 py-4 shadow-sm">
-          <div class="mb-2">
-            <div class="text-base text-ebony-400 font-medium tracking-wide">Best Margin</div>
-          </div>
-          <div class="flex items-end justify-between mb-2">
-            <div class="text-4xl font-bold text-ebony-800">{{ (parseFloat(metricsData.best_margin?.percentage) || 0).toFixed(1) }}%</div>
-          </div>
-          <div class="text-xs text-ebony-400 mb-2">{{ metricsData.best_margin?.product_name || 'N/A' }}</div>
-        </div>
+        <SharedMetricCard
+          variant="primary"
+          title="Best Margin"
+          :value="parseFloat(metricsData.best_margin?.percentage) || 0"
+          format="percentage"
+          :precision="1"
+          :subtitle="metricsData.best_margin?.product_name || 'N/A'"
+        />
 
         <!-- Productos Activos -->
-        <div class="bg-white border border-titan-300 rounded-xl px-8 py-4 shadow-sm">
-          <div class="mb-2">
-            <div class="text-base text-ebony-400 font-medium tracking-wide">Active Products</div>
-          </div>
-          <div class="flex items-end justify-between mb-2">
-            <div class="text-4xl font-bold text-ebony-800">{{ metricsData.active_products || 0 }}</div>
-          </div>
-          <div class="text-xs text-ebony-400 mb-2">Total products: {{ filteredProducts.length }}</div>
-        </div>
+        <SharedMetricCard
+          variant="primary"
+          title="Active Products"
+          :value="metricsData.active_products || 0"
+          format="number"
+          :subtitle="`Total products: ${filteredProducts.length}`"
+        />
 
         <!-- Low Performance -->
-        <div class="bg-white border border-titan-300 rounded-xl px-8 py-4 shadow-sm">
-          <div class="mb-2">
-            <div class="text-base text-ebony-400 font-medium tracking-wide">Low Performance</div>
-          </div>
-          <div class="flex items-end justify-between mb-2">
-            <div class="text-4xl font-bold text-ebony-800">{{ metricsData.low_performance_count || 0 }}</div>
-          </div>
-          <div class="text-xs text-ebony-400 mb-2">Products need optimization</div>
-        </div>
+        <SharedMetricCard
+          variant="primary"
+          title="Low Performance"
+          :value="metricsData.low_performance_count || 0"
+          format="number"
+          subtitle="Products need optimization"
+        />
       </div>
 
 
     <!-- Filter Controls -->
-    <div class="bg-white rounded-xl p-6 border border-titan-300 shadow-sm mb-8">
+    <div class="bg-white rounded-xl p-6 border border-titan-300 shadow-sm">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-ebony-800">Analysis Filters</h2>
         <button class="px-3 py-1 bg-crocus-500 text-white text-xs rounded-lg">Export Analysis</button>
@@ -101,170 +96,67 @@
       </div>
     </div>
 
-    <!-- Products Analysis Table -->
-    <div class="bg-white rounded-xl p-6 border border-titan-300 shadow-sm mb-8">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-semibold text-ebony-800">Detailed Product Analysis</h2>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead>
-            <tr class="border-b border-titan-200">
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('name')"
-                  class="text-sm text-ebony-400 font-medium hover:text-ebony-600 flex items-center gap-1 transition-colors"
-                >
-                  Product 
-                  <component :is="getSortIconComponent('name')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('category')"
-                  class="text-sm text-ebony-400 font-medium hover:text-ebony-600 flex items-center gap-1 transition-colors"
-                >
-                  Category 
-                  <component :is="getSortIconComponent('category')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('margin')"
-                  class="text-sm text-ebony-400 font-medium hover:text-ebony-600 flex items-center gap-1 transition-colors"
-                >
-                  Margin % 
-                  <component :is="getSortIconComponent('margin')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('sales')"
-                  class="text-sm text-ebony-400 font-medium hover:text-ebony-600 flex items-center gap-1 transition-colors"
-                >
-                  Sales/Month 
-                  <component :is="getSortIconComponent('sales')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('cost')"
-                  class="text-sm text-ebony-400 font-medium hover:text-ebony-600 flex items-center gap-1 transition-colors"
-                >
-                  Total Cost 
-                  <component :is="getSortIconComponent('cost')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('profit')"
-                  class="text-sm text-ebony-400 font-medium hover:text-ebony-600 flex items-center gap-1 transition-colors"
-                >
-                  Profit 
-                  <component :is="getSortIconComponent('profit')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('tirImpact')"
-                  class="text-sm text-ebony-400 font-bold hover:text-ebony-600 flex items-center gap-1 transition-colors"
-                >
-                  TIR Impact 
-                  <component :is="getSortIconComponent('tirImpact')" class="w-3 h-3" />
-                </button>
-              </th>
-              <th class="text-left py-3 px-2">
-                <button 
-                  @click="sortTable('classification')"
-                  class="text-sm text-ebony-400 font-medium hover:text-ebony-600 flex items-center gap-1 transition-colors"
-                >
-                  Classification 
-                  <component :is="getSortIconComponent('classification')" class="w-3 h-3" />
-                </button>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(product, index) in filteredProducts" :key="index" class="border-b border-titan-100 hover:bg-titan-25 transition-colors">
-              <td class="py-4 px-2">
-                <span class="font-semibold text-sm text-ebony-800">{{ product.name }}</span>
-              </td>
-              <td class="py-4 px-2 text-sm text-ebony-600">{{ product.category }}</td>
-              <td class="py-4 px-2">
-                <span class="px-2 py-1 rounded-full text-xs font-bold" :class="getMarginBadgeClass(product.margin)">
-                  {{ product.margin }}%
-                </span>
-              </td>
-              <td class="py-4 px-2 text-sm text-ebony-800">{{ product.sales }} units</td>
-              <td class="py-4 px-2 text-sm text-ebony-800">${{ product.cost.toLocaleString() }}</td>
-              <td class="py-4 px-2 text-sm font-semibold" :class="product.profit >= 0 ? 'text-crocus-600' : 'text-ebony-600'">
-                ${{ product.profit.toLocaleString() }}
-              </td>
-              <td class="py-4 px-2 text-sm font-semibold" :class="product.tirImpact >= 0 ? 'text-crocus-600' : 'text-ebony-600'">
-                {{ product.tirImpact > 0 ? '+' : '' }}{{ product.tirImpact }}%
-              </td>
-              <td class="py-4 px-2">
-                <span class="px-2 py-1 rounded-full text-xs font-bold" :class="getClassificationBadge(product.classification)">
-                  {{ product.classification }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <!-- Products Analysis Table using DataTable -->
+    <UiDataTable
+      title="Detailed Product Analysis"
+      :columns="analysisTableColumns"
+      :data="sortedProducts"
+      :sort-field="sortField"
+      :sort-direction="sortDirection"
+      variant="default"
+      @sort="sortTable"
+    >
+      <!-- Custom slots for special columns -->
+      <template #cell-name="{ value }">
+        <span class="font-semibold text-sm">{{ value }}</span>
+      </template>
+      
+      <template #cell-margin="{ value }">
+        <UiStatusBadge
+          :value="value"
+          format="percentage"
+          :auto-color="true"
+          size="sm"
+          :threshold="{ success: 60, warning: 50 }"
+        />
+      </template>
+      
+      <template #cell-sales="{ value }">
+        {{ value }} units
+      </template>
+      
+      <template #cell-cost="{ value }">
+        <span class="text-text-primary font-medium">
+          {{ value.toLocaleString('es-CO') }}
+        </span>
+      </template>
+      
+      <template #cell-profit="{ value }">
+        <span class="text-text-primary font-medium">
+          {{ value.toLocaleString('es-CO') }}
+        </span>
+      </template>
+      
+      <template #cell-tirImpact="{ value }">
+        <UiStatusBadge
+          :value="value"
+          format="percentage"
+          :auto-color="true"
+          size="sm"
+          :precision="1"
+        />
+      </template>
+      
+      <template #cell-classification="{ value }">
+        <UiStatusBadge
+          :value="value"
+          format="text"
+          :variant="getClassificationVariant(value)"
+          size="sm"
+        />
+      </template>
+    </UiDataTable>
 
-    <!-- Insights and Recommendations -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      <div class="bg-crocus-50/30 rounded-xl p-6 border border-titan-300">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 bg-crocus-50 rounded-lg flex items-center justify-center">
-            <StarIcon class="w-5 h-5 text-crocus-600" />
-          </div>
-          <h3 class="font-bold text-ebony-800">Star Products</h3>
-        </div>
-        <p class="text-sm text-ebony-600 mb-4">
-          <strong>{{ insightsData.star_products?.count || 0 }} products</strong> generate {{ insightsData.star_products?.revenue_percentage || 0 }}% of total profit. 
-          <span v-if="insightsData.star_products?.top_product !== 'N/A'">{{ insightsData.star_products?.top_product }} leads.</span>
-        </p>
-        <div class="text-xs text-ebony-600">
-          <strong>Recommendation:</strong> Promote these products and increase their visibility in the menu.
-        </div>
-      </div>
-
-      <div class="bg-yellow-50/30 rounded-xl p-6 border border-titan-300">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center">
-            <ExclamationTriangleIcon class="w-5 h-5 text-yellow-600" />
-          </div>
-          <h3 class="font-bold text-ebony-800">Need Optimization</h3>
-        </div>
-        <p class="text-sm text-ebony-600 mb-4">
-          <strong>{{ insightsData.optimization_needed?.count || 0 }} products</strong> have margin <60%. 
-          <span v-if="insightsData.optimization_needed?.lowest_margin_product">
-            {{ insightsData.optimization_needed.lowest_margin_product.name }} only generates {{ (parseFloat(insightsData.optimization_needed.lowest_margin_product.estimated_margin) || 0).toFixed(1) }}% margin.
-          </span>
-        </p>
-        <div class="text-xs text-ebony-600">
-          <strong>Solution:</strong> Reformulate ingredients or adjust prices to reach 60% minimum.
-        </div>
-      </div>
-
-      <div class="bg-red-50/30 rounded-xl p-6 border border-titan-300">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
-            <ChartBarIcon class="w-5 h-5 text-red-600" />
-          </div>
-          <h3 class="font-bold text-ebony-800">Low Performance</h3>
-        </div>
-        <p class="text-sm text-ebony-600 mb-4">
-          <strong>{{ insightsData.low_performance?.count || 0 }} products</strong> have negative impact on TIR. Consider removing them from the menu.
-        </p>
-        <div class="text-xs text-ebony-600">
-          <strong>Impact:</strong> Removing them could improve TIR by +{{ (parseFloat(insightsData.low_performance?.potential_tir_improvement) || 0).toFixed(1) }}%.
-        </div>
-      </div>
-    </div>
 
     </div><!-- End Main Content -->
   </div>
@@ -307,8 +199,68 @@ const period = ref('365')
 const sortBy = ref('impact') // Default to TIR Impact
 
 // Table sorting states
-const tableSortField = ref('tirImpact') // Default to TIR Impact
-const tableSortDirection = ref('desc') // Best TIR first
+const sortField = ref('tirImpact') // Default to TIR Impact - renamed for DataTable  
+const sortDirection = ref('desc') // Best TIR first - renamed for DataTable
+
+// Table columns definition for DataTable
+const analysisTableColumns = [
+  {
+    key: 'name',
+    title: 'Product',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'category',
+    title: 'Category',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'margin',
+    title: 'Margin %',
+    sortable: true,
+    format: 'percentage',
+    align: 'center'
+  },
+  {
+    key: 'sales',
+    title: 'Sales/Month',
+    sortable: true,
+    format: 'number',
+    align: 'right'
+  },
+  {
+    key: 'cost',
+    title: 'Total Cost',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'profit',
+    title: 'Profit',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'tirImpact',
+    title: 'TIR Impact',
+    sortable: true,
+    format: 'percentage',
+    align: 'center'
+  },
+  {
+    key: 'classification',
+    title: 'Classification',
+    sortable: true,
+    format: 'text',
+    align: 'center'
+  }
+]
 
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
@@ -392,26 +344,26 @@ watch([selectedCategory, minMargin, period, sortBy], async () => {
   await refresh()
 }, { deep: true })
 
-// Computed filtered and sorted products
-const filteredProducts = computed(() => {
+// Computed sorted products for DataTable
+const sortedProducts = computed(() => {
   const productsList = products.value || []
   
   // Sort products based on table sorting
   return [...productsList].sort((a, b) => {
     let aValue, bValue
 
-    switch (tableSortField.value) {
+    switch (sortField.value) {
       case 'name':
         aValue = a.name?.toLowerCase() || ''
         bValue = b.name?.toLowerCase() || ''
-        return tableSortDirection.value === 'asc' 
+        return sortDirection.value === 'asc' 
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue)
       
       case 'category':
         aValue = a.category?.toLowerCase() || ''
         bValue = b.category?.toLowerCase() || ''
-        return tableSortDirection.value === 'asc' 
+        return sortDirection.value === 'asc' 
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue)
       
@@ -443,7 +395,7 @@ const filteredProducts = computed(() => {
       case 'classification':
         aValue = a.classification?.toLowerCase() || ''
         bValue = b.classification?.toLowerCase() || ''
-        return tableSortDirection.value === 'asc' 
+        return sortDirection.value === 'asc' 
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue)
       
@@ -452,13 +404,16 @@ const filteredProducts = computed(() => {
     }
 
     // For numeric values
-    if (tableSortDirection.value === 'asc') {
+    if (sortDirection.value === 'asc') {
       return aValue - bValue
     } else {
       return bValue - aValue
     }
   })
 })
+
+// Keep filteredProducts for backwards compatibility
+const filteredProducts = computed(() => sortedProducts.value)
 
 // Helper functions
 function getStatusColor(margin) {
@@ -494,21 +449,41 @@ function getClassificationBadge(classification) {
   }
 }
 
+// Helper function for classification variants
+function getClassificationVariant(classification) {
+  switch (classification) {
+    case 'Estrella':
+    case 'Star':
+      return 'success'
+    case 'Potencial':
+    case 'Potential':
+      return 'info'
+    case 'Problemático':
+    case 'Problematic':
+      return 'warning'
+    case 'Bajo Rendimiento':
+    case 'Low Performance':
+      return 'destructive'
+    default:
+      return 'secondary'
+  }
+}
+
 // Table sorting functions
 function sortTable(field) {
-  if (tableSortField.value === field) {
+  if (sortField.value === field) {
     // Toggle direction if same field
-    tableSortDirection.value = tableSortDirection.value === 'asc' ? 'desc' : 'asc'
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
     // New field, default to desc for TIR Impact (best first), asc for others
-    tableSortField.value = field
-    tableSortDirection.value = field === 'tirImpact' ? 'desc' : 'asc'
+    sortField.value = field
+    sortDirection.value = field === 'tirImpact' ? 'desc' : 'asc'
   }
 }
 
 function getSortIconComponent(field) {
-  if (tableSortField.value !== field) return ChevronUpDownIcon
-  return tableSortDirection.value === 'asc' ? ChevronUpIcon : ChevronDownIcon
+  if (sortField.value !== field) return ChevronUpDownIcon
+  return sortDirection.value === 'asc' ? ChevronUpIcon : ChevronDownIcon
 }
 
 // Initialize chart when component mounts (data is handled by useAsyncData)
