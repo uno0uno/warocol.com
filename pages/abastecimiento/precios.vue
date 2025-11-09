@@ -102,15 +102,6 @@
         />
       </template>
       
-      <template #cell-actions="{ row }">
-        <div class="flex justify-center space-x-2">
-          <button @click="editPrecio(row)"
-            class="text-crocus-600 hover:text-crocus-900 transition-colors"
-            title="Editar precio">
-            <PencilIcon class="h-4 w-4" />
-          </button>
-        </div>
-      </template>
     </UiDataTable>
 
     <!-- Pagination -->
@@ -157,7 +148,6 @@ import {
   CurrencyDollarIcon,
   ScaleIcon,
   ArrowUpTrayIcon,
-  PencilIcon,
   DocumentDuplicateIcon,
   ChevronLeftIcon,
   ChevronRightIcon
@@ -287,13 +277,6 @@ const preciosTableColumns = [
     format: 'text',
     align: 'center'
   },
-  {
-    key: 'actions',
-    title: 'Acciones',
-    sortable: false,
-    format: 'text',
-    align: 'center'
-  }
 ]
 
 // Helper functions for status badges
@@ -367,14 +350,6 @@ const topComparisons = computed(() => {
   return comparisons
 })
 
-// Methods
-const editPrecio = (precio) => {
-  console.log('Editar precio:', precio)
-}
-
-const duplicatePrecio = (precio) => {
-  console.log('Duplicar precio:', precio)
-}
 
 useHead({
   title: 'Lista de Precios - Abastecimiento'

@@ -85,11 +85,23 @@
 
     <!-- Orders Table -->
     <UiDataTable
-      title="Órdenes de Compra"
       :columns="ordenesTableColumns"
       :data="filteredOrdenes"
       variant="default"
     >
+      <!-- Custom header with title and create button -->
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-bold text-text-primary">
+            Órdenes de Compra
+          </h3>
+          <NuxtLink 
+            to="/abastecimiento/compra/crear" 
+            class="btn-primary px-6 py-2 rounded-lg text-sm font-medium">
+            + Nueva Orden
+          </NuxtLink>
+        </div>
+      </template>
       <!-- Custom slots for special columns -->
       <template #cell-numero="{ value, row }">
         <div>
@@ -464,7 +476,8 @@ const openActionsMenu = (orden) => {
 
 // Funciones mantenidas para futura implementación
 const editOrder = (orden) => {
-  console.log('Editar orden:', orden)
+  // Navegar a la página de editar usando path parameter
+  navigateTo(`/abastecimiento/compra/${orden.id}`)
 }
 
 const receiveOrder = (orden) => {

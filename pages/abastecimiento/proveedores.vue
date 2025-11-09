@@ -39,11 +39,23 @@
 
     <!-- Suppliers Table -->
     <UiDataTable
-      title="Proveedores"
       :columns="proveedoresTableColumns"
       :data="filteredProveedores"
       variant="default"
     >
+      <!-- Custom header with title and create button -->
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-bold text-text-primary">
+            Proveedores
+          </h3>
+          <NuxtLink 
+            to="/abastecimiento/proveedor/crear" 
+            class="btn-primary px-6 py-2 rounded-lg text-sm font-medium">
+            + Nuevo Proveedor
+          </NuxtLink>
+        </div>
+      </template>
       <!-- Custom slots for special columns -->
       <template #cell-name="{ value, row }">
         <div class="flex items-center">
@@ -290,8 +302,8 @@ const filteredProveedores = computed(() => {
 
 // Methods
 const editProveedor = (proveedor) => {
-  console.log('Editar proveedor:', proveedor)
-  // Aquí iría la lógica para abrir modal de edición
+  // Navegar a la página de editar usando path parameter
+  navigateTo(`/abastecimiento/proveedor/${proveedor.id}`)
 }
 
 const toggleStatus = (proveedor) => {
