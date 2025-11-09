@@ -128,108 +128,87 @@
     </div>
 
     <!-- Inventory Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-titan-200 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-titan-200">
-          <thead class="bg-titan-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Ingrediente
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Stock Actual
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Stock Mínimo
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Último Movimiento
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Costo Promedio
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Estado
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-titan-200">
-            <tr v-for="item in filteredInventario" :key="item.id" 
-              :class="[
-                'hover:bg-titan-50',
-                item.estado === 'critical' || item.estado === 'out' ? 'bg-red-50' : ''
-              ]">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 h-8 w-8">
-                    <div :class="[
-                      'h-8 w-8 rounded-lg flex items-center justify-center',
-                      getIngredientColor(item.categoria)
-                    ]">
-                      <span class="text-xs font-medium">
-                        {{ item.nombre.charAt(0).toUpperCase() }}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="ml-3">
-                    <div class="text-sm font-medium text-ebony-800">{{ item.nombre }}</div>
-                    <div class="text-xs text-titan-600">{{ item.categoria }}</div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-ebony-800">
-                  {{ item.stockActual.toLocaleString() }}{{ item.unidad }}
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-titan-600">
-                  {{ item.stockMinimo.toLocaleString() }}{{ item.unidad }}
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-titan-600">
-                <div>{{ item.ultimoMovimiento.tipo }}</div>
-                <div>{{ formatDate(item.ultimoMovimiento.fecha) }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-ebony-800">
-                  ${{ item.costoPromedio.toLocaleString() }}
-                </div>
-                <div class="text-xs text-titan-600">por {{ item.unidad }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="[
-                  'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                  getStatusColor(item.estado)
-                ]">
-                  {{ getStatusText(item.estado) }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="flex space-x-2">
-                  <button @click="viewMovements(item)"
-                    class="text-blue-600 hover:text-blue-900 transition-colors">
-                    <ClockIcon class="h-4 w-4" />
-                  </button>
-                  <button @click="adjustStock(item)"
-                    class="text-crocus-600 hover:text-crocus-900 transition-colors">
-                    <AdjustmentsHorizontalIcon class="h-4 w-4" />
-                  </button>
-                  <button v-if="item.estado === 'low' || item.estado === 'critical'" 
-                    @click="createOrderForItem(item)"
-                    class="text-green-600 hover:text-green-900 transition-colors">
-                    <ShoppingCartIcon class="h-4 w-4" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <UiDataTable
+      title="Inventario de Ingredientes"
+      :columns="inventarioTableColumns"
+      :data="filteredInventario"
+      variant="default"
+    >
+      <!-- Custom slots for special columns -->
+      <template #cell-nombre="{ value, row }">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 h-8 w-8">
+            <div :class="[
+              'h-8 w-8 rounded-lg flex items-center justify-center',
+              getIngredientColor(row.categoria)
+            ]">
+              <span class="text-xs font-medium">
+                {{ value.charAt(0).toUpperCase() }}
+              </span>
+            </div>
+          </div>
+          <div class="ml-3">
+            <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
+            <div class="text-xs text-titan-600">{{ row.categoria }}</div>
+          </div>
+        </div>
+      </template>
+      
+      <template #cell-stockActual="{ value, row }">
+        <span class="text-sm font-medium text-ebony-800">
+          {{ value.toLocaleString() }}{{ row.unidad }}
+        </span>
+      </template>
+      
+      <template #cell-stockMinimo="{ value, row }">
+        <span class="text-sm text-titan-600">
+          {{ value.toLocaleString() }}{{ row.unidad }}
+        </span>
+      </template>
+      
+      <template #cell-ultimoMovimiento="{ row }">
+        <div class="text-sm text-titan-600">
+          <div>{{ row.ultimoMovimiento.tipo }}</div>
+          <div>{{ formatDate(row.ultimoMovimiento.fecha) }}</div>
+        </div>
+      </template>
+      
+      <template #cell-costoPromedio="{ value, row }">
+        <div>
+          <div class="text-sm font-medium text-ebony-800">
+            ${{ value.toLocaleString() }}
+          </div>
+          <div class="text-xs text-titan-600">por {{ row.unidad }}</div>
+        </div>
+      </template>
+      
+      <template #cell-estado="{ value }">
+        <UiStatusBadge
+          :value="getStatusText(value)"
+          format="text"
+          :variant="getStatusVariant(value)"
+          size="sm"
+        />
+      </template>
+      
+      <template #cell-actions="{ row }">
+        <div class="flex justify-center space-x-2">
+          <button @click="viewMovements(row)"
+            class="text-blue-600 hover:text-blue-900 transition-colors">
+            <ClockIcon class="h-4 w-4" />
+          </button>
+          <button @click="adjustStock(row)"
+            class="text-crocus-600 hover:text-crocus-900 transition-colors">
+            <AdjustmentsHorizontalIcon class="h-4 w-4" />
+          </button>
+          <button v-if="row.estado === 'low' || row.estado === 'critical'" 
+            @click="createOrderForItem(row)"
+            class="text-green-600 hover:text-green-900 transition-colors">
+            <ShoppingCartIcon class="h-4 w-4" />
+          </button>
+        </div>
+      </template>
+    </UiDataTable>
 
     <!-- Recent Movements -->
     <div class="bg-white rounded-lg shadow-sm border border-titan-200 p-6">
@@ -457,6 +436,59 @@ const movimientosRecientes = ref([
   }
 ])
 
+// DataTable configuration
+const inventarioTableColumns = [
+  {
+    key: 'nombre',
+    title: 'Ingrediente',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'stockActual',
+    title: 'Stock Actual',
+    sortable: true,
+    format: 'number',
+    align: 'right'
+  },
+  {
+    key: 'stockMinimo',
+    title: 'Stock Mínimo',
+    sortable: true,
+    format: 'number',
+    align: 'right'
+  },
+  {
+    key: 'ultimoMovimiento',
+    title: 'Último Movimiento',
+    sortable: false,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'costoPromedio',
+    title: 'Costo Promedio',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'estado',
+    title: 'Estado',
+    sortable: true,
+    format: 'text',
+    align: 'center'
+  },
+  {
+    key: 'actions',
+    title: 'Acciones',
+    sortable: false,
+    format: 'text',
+    align: 'center'
+  }
+]
+
 // Computed properties
 const filteredInventario = computed(() => {
   return inventario.value.filter(item => {
@@ -481,14 +513,20 @@ const formatDate = (dateString) => {
   })
 }
 
-const getStatusColor = (status) => {
-  const colors = {
-    normal: 'bg-green-100 text-green-800',
-    low: 'bg-yellow-100 text-yellow-800',
-    critical: 'bg-red-100 text-red-800',
-    out: 'bg-gray-100 text-gray-800'
+// Helper function for status variants
+function getStatusVariant(status) {
+  switch (status) {
+    case 'normal':
+      return 'success'
+    case 'low':
+      return 'warning'
+    case 'critical':
+      return 'destructive'
+    case 'out':
+      return 'secondary'
+    default:
+      return 'secondary'
   }
-  return colors[status] || 'bg-gray-100 text-gray-800'
 }
 
 const getStatusText = (status) => {

@@ -7,7 +7,7 @@
         title="Total de Órdenes"
         :value="stats.total"
         subtitle="Órdenes registradas"
-        variant="info"
+        variant="primary"
         :show-icon="false"
       />
       
@@ -15,7 +15,7 @@
         title="Órdenes Pendientes"
         :value="stats.pendientes"
         subtitle="Esperando procesamiento"
-        variant="warning"
+        variant="primary"
         :show-icon="false"
       />
       
@@ -23,7 +23,7 @@
         title="Órdenes Recibidas"
         :value="stats.recibidas"
         subtitle="Completadas exitosamente"
-        variant="success"
+        variant="primary"
         :show-icon="false"
       />
       
@@ -31,7 +31,7 @@
         title="Órdenes Vencidas"
         :value="stats.vencidas"
         subtitle="Fuera de tiempo"
-        variant="danger"
+        variant="primary"
         :show-icon="false"
       />
       
@@ -84,139 +84,81 @@
     </div>
 
     <!-- Orders Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-titan-200 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-titan-200">
-          <thead class="bg-titan-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Número
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Proveedor
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Fecha
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Valor Total
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Items
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Estado
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Entrega
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-titan-200">
-            <tr v-for="orden in filteredOrdenes" :key="orden.id" class="hover:bg-titan-50">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-ebony-800">{{ orden.numero }}</div>
-                <div class="text-xs text-titan-600">{{ orden.invoice_number || 'Sin factura' }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 h-8 w-8">
-                    <div class="h-8 w-8 rounded-full bg-crocus-100 flex items-center justify-center">
-                      <span class="text-crocus-600 font-medium text-xs">
-                        {{ orden.proveedor.charAt(0).toUpperCase() }}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="ml-3">
-                    <div class="text-sm font-medium text-ebony-800">{{ orden.proveedor }}</div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-titan-600">
-                {{ formatDate(orden.fecha) }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-ebony-800">${{ orden.valorTotal.toLocaleString() }}</div>
-                <div class="text-xs text-titan-600">+${{ orden.impuestos.toLocaleString() }} IVA</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  {{ orden.totalItems }} items
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="[
-                  'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                  getStatusColor(orden.estado)
-                ]">
-                  {{ getStatusText(orden.estado) }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-titan-600">
-                <div v-if="orden.fechaEntrega">{{ formatDate(orden.fechaEntrega) }}</div>
-                <div v-else class="text-titan-400">Sin programar</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="flex space-x-2">
-                  <button @click="viewOrder(orden)"
-                    class="text-blue-600 hover:text-blue-900 transition-colors">
-                    <EyeIcon class="h-4 w-4" />
-                  </button>
-                  <button @click="editOrder(orden)"
-                    class="text-crocus-600 hover:text-crocus-900 transition-colors"
-                    :disabled="orden.estado === 'received' || orden.estado === 'invoiced'">
-                    <PencilIcon class="h-4 w-4" />
-                  </button>
-                  <button v-if="orden.estado === 'sent'" @click="receiveOrder(orden)"
-                    class="text-green-600 hover:text-green-900 transition-colors">
-                    <CheckIcon class="h-4 w-4" />
-                  </button>
-                  <button @click="downloadOrder(orden)"
-                    class="text-purple-600 hover:text-purple-900 transition-colors">
-                    <ArrowDownTrayIcon class="h-4 w-4" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="bg-white rounded-lg shadow-sm border border-titan-200 p-6">
-      <h3 class="text-lg font-semibold text-ebony-800 mb-4">Actividad Reciente</h3>
-      <div class="space-y-4">
-        <div v-for="actividad in actividadReciente" :key="actividad.id"
-          class="flex items-center space-x-4 pb-4 border-b border-titan-200 last:border-b-0 last:pb-0">
-          <div class="flex-shrink-0">
-            <div :class="[
-              'p-2 rounded-lg',
-              actividad.tipo === 'created' ? 'bg-blue-100' : 
-              actividad.tipo === 'sent' ? 'bg-orange-100' :
-              actividad.tipo === 'received' ? 'bg-green-100' : 'bg-purple-100'
-            ]">
-              <component :is="actividad.icono" :class="[
-                'h-5 w-5',
-                actividad.tipo === 'created' ? 'text-blue-600' : 
-                actividad.tipo === 'sent' ? 'text-orange-600' :
-                actividad.tipo === 'received' ? 'text-green-600' : 'text-purple-600'
-              ]" />
+    <UiDataTable
+      title="Órdenes de Compra"
+      :columns="ordenesTableColumns"
+      :data="filteredOrdenes"
+      variant="default"
+    >
+      <!-- Custom slots for special columns -->
+      <template #cell-numero="{ value, row }">
+        <div>
+          <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
+          <div class="text-xs text-titan-600">{{ row.invoice_number || 'Sin factura' }}</div>
+        </div>
+      </template>
+      
+      <template #cell-proveedor="{ value }">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 h-8 w-8">
+            <div class="h-8 w-8 rounded-full bg-crocus-100 flex items-center justify-center">
+              <span class="text-crocus-600 font-medium text-xs">
+                {{ value.charAt(0).toUpperCase() }}
+              </span>
             </div>
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-ebony-800">{{ actividad.descripcion }}</p>
-            <p class="text-xs text-titan-600">{{ actividad.tiempo }} • {{ actividad.usuario }}</p>
-          </div>
-          <div class="text-sm font-medium text-titan-600">
-            {{ actividad.orden }}
+          <div class="ml-3">
+            <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
           </div>
         </div>
-      </div>
-    </div>
+      </template>
+      
+      <template #cell-fecha="{ value }">
+        <span class="text-sm text-ebony-800"">{{ formatDate(value) }}</span>
+      </template>
+      
+      <template #cell-valorTotal="{ value, row }">
+        <div>
+          <div class="text-sm font-medium text-ebony-800">${{ value.toLocaleString() }}</div>
+          <div class="text-xs text-titan-600">+${{ row.impuestos.toLocaleString() }} IVA</div>
+        </div>
+      </template>
+      
+      <template #cell-totalItems="{ value }">
+        <UiStatusBadge
+          :value="`${value} items`"
+          format="text"
+          variant="info"
+          size="sm"
+        />
+      </template>
+      
+      <template #cell-estado="{ value }">
+        <UiStatusBadge
+          :value="getStatusText(value)"
+          format="text"
+          :variant="getStatusVariant(value)"
+          size="sm"
+        />
+      </template>
+      
+      <template #cell-fechaEntrega="{ value }">
+        <div class="text-sm text-ebony-800">
+          <div v-if="value">{{ formatDate(value) }}</div>
+          <div v-else class="text-ebony-800"">Sin programar</div>
+        </div>
+      </template>
+      
+      <template #cell-actions="{ row }">
+        <div class="flex justify-center space-x-2">
+          <button @click="editOrder(row)"
+            class="text-crocus-600 hover:text-crocus-900 transition-colors"
+            title="Editar orden">
+            <PencilIcon class="h-4 w-4" />
+          </button>
+        </div>
+      </template>
+    </UiDataTable>
 
     <!-- Pagination -->
     <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
@@ -269,7 +211,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   TruckIcon,
-  DocumentCheckIcon
+  DocumentCheckIcon,
+  EllipsisHorizontalIcon
 } from '@heroicons/vue/24/outline'
 
 // Reactive state
@@ -391,6 +334,66 @@ const actividadReciente = ref([
   }
 ])
 
+// DataTable configuration
+const ordenesTableColumns = [
+  {
+    key: 'numero',
+    title: 'Número',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'proveedor',
+    title: 'Proveedor',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'fecha',
+    title: 'Fecha',
+    sortable: true,
+    format: 'date',
+    align: 'center'
+  },
+  {
+    key: 'valorTotal',
+    title: 'Valor Total',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'totalItems',
+    title: 'Items',
+    sortable: true,
+    format: 'number',
+    align: 'right'
+  },
+  {
+    key: 'estado',
+    title: 'Estado',
+    sortable: true,
+    format: 'text',
+    align: 'center'
+  },
+  {
+    key: 'fechaEntrega',
+    title: 'Entrega',
+    sortable: true,
+    format: 'date',
+    align: 'center'
+  },
+  {
+    key: 'actions',
+    title: 'Acciones',
+    sortable: false,
+    format: 'text',
+    align: 'center'
+  }
+]
+
 // Computed properties
 const proveedoresUnicos = computed(() => {
   return [...new Set(ordenes.value.map(o => o.proveedor))].sort()
@@ -419,15 +422,22 @@ const formatDate = (dateString) => {
   })
 }
 
-const getStatusColor = (status) => {
-  const colors = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    sent: 'bg-blue-100 text-blue-800',
-    received: 'bg-green-100 text-green-800',
-    invoiced: 'bg-purple-100 text-purple-800',
-    overdue: 'bg-red-100 text-red-800'
+// Helper function for status variants
+function getStatusVariant(status) {
+  switch (status) {
+    case 'pending':
+      return 'warning'
+    case 'sent':
+      return 'info'
+    case 'received':
+      return 'success'
+    case 'invoiced':
+      return 'secondary'
+    case 'overdue':
+      return 'destructive'
+    default:
+      return 'secondary'
   }
-  return colors[status] || 'bg-gray-100 text-gray-800'
 }
 
 const getStatusText = (status) => {
@@ -442,10 +452,17 @@ const getStatusText = (status) => {
 }
 
 // Methods
-const viewOrder = (orden) => {
-  console.log('Ver orden:', orden)
+const viewOrderDetails = (orden) => {
+  // Navegar a página de detalles de la orden
+  navigateTo(`/abastecimiento/compras/${orden.numero}`)
 }
 
+const openActionsMenu = (orden) => {
+  // TODO: Implementar modal con acciones (editar, recibir, descargar, etc.)
+  console.log('Abrir menú de acciones para:', orden.numero)
+}
+
+// Funciones mantenidas para futura implementación
 const editOrder = (orden) => {
   console.log('Editar orden:', orden)
 }
@@ -462,4 +479,4 @@ const downloadOrder = (orden) => {
 useHead({
   title: 'Órdenes de Compra - Abastecimiento'
 })
-</script>s
+</script>

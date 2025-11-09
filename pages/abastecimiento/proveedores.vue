@@ -7,7 +7,7 @@
         title="Proveedores Activos"
         :value="stats.activos"
         subtitle="Estado operativo"
-        variant="success"
+        variant="primary"
         :show-icon="false"
       />
       
@@ -15,7 +15,7 @@
         title="Proveedores Inactivos"
         :value="stats.inactivos"
         subtitle="Pausados o desactivados"
-        variant="danger"
+        variant="primary"
         :show-icon="false"
       />
       
@@ -32,129 +32,74 @@
         title="Con Entregas Programadas"
         :value="stats.conEntregas"
         subtitle="Proveedores con entregas"
-        variant="secondary"
+        variant="primary"
         :show-icon="false"
       />
     </div>
 
-    <!-- Filters and Search -->
-    <div class="bg-white rounded-lg shadow-sm border border-titan-200 p-6">
-      <div class="flex flex-col sm:flex-row gap-4">
-        <div class="flex-1">
-          <div class="relative">
-            <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
-            <input
-              v-model="searchTerm"
-              type="text"
-              placeholder="Buscar proveedores..."
-              class="w-full pl-10 pr-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500"
-            />
+    <!-- Suppliers Table -->
+    <UiDataTable
+      title="Proveedores"
+      :columns="proveedoresTableColumns"
+      :data="filteredProveedores"
+      variant="default"
+    >
+      <!-- Custom slots for special columns -->
+      <template #cell-name="{ value, row }">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 h-10 w-10">
+            <div class="h-10 w-10 rounded-full bg-crocus-100 flex items-center justify-center">
+              <span class="text-crocus-600 font-medium text-sm">
+                {{ value.charAt(0).toUpperCase() }}
+              </span>
+            </div>
+          </div>
+          <div class="ml-4">
+            <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
+            <div class="text-sm text-titan-600">{{ row.tax_id }}</div>
           </div>
         </div>
-        <select v-model="statusFilter" 
-          class="px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
-          <option value="">Todos los estados</option>
-          <option value="active">Activos</option>
-          <option value="inactive">Inactivos</option>
-        </select>
-        <select v-model="categoryFilter" 
-          class="px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
-          <option value="">Todas las categorías</option>
-          <option value="alimentos">Alimentos</option>
-          <option value="bebidas">Bebidas</option>
-          <option value="empaques">Empaques</option>
-          <option value="limpieza">Limpieza</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Suppliers Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-titan-200 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-titan-200">
-          <thead class="bg-titan-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Proveedor
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Contacto
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Términos de Pago
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Productos
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Estado
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-titan-500 uppercase tracking-wider">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-titan-200">
-            <tr v-for="proveedor in filteredProveedores" :key="proveedor.id" class="hover:bg-titan-50">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 h-10 w-10">
-                    <div class="h-10 w-10 rounded-full bg-crocus-100 flex items-center justify-center">
-                      <span class="text-crocus-600 font-medium text-sm">
-                        {{ proveedor.name.charAt(0).toUpperCase() }}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="ml-4">
-                    <div class="text-sm font-medium text-ebony-800">{{ proveedor.name }}</div>
-                    <div class="text-sm text-titan-600">{{ proveedor.tax_id }}</div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-ebony-800">{{ proveedor.email || 'No especificado' }}</div>
-                <div class="text-sm text-titan-600">{{ proveedor.phone || 'No especificado' }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-ebony-800">
-                {{ proveedor.payment_terms || 'Contado' }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  {{ proveedor.productos_count }} productos
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="[
-                  'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                  proveedor.is_active 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                ]">
-                  {{ proveedor.is_active ? 'Activo' : 'Inactivo' }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="flex space-x-2">
-                  <button @click="editProveedor(proveedor)"
-                    class="text-crocus-600 hover:text-crocus-900 transition-colors">
-                    <PencilIcon class="h-4 w-4" />
-                  </button>
-                  <button @click="toggleStatus(proveedor)"
-                    :class="[
-                      'transition-colors',
-                      proveedor.is_active 
-                        ? 'text-red-600 hover:text-red-900' 
-                        : 'text-green-600 hover:text-green-900'
-                    ]">
-                    <component :is="proveedor.is_active ? EyeSlashIcon : EyeIcon" class="h-4 w-4" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+      </template>
+      
+      <template #cell-contact="{ row }">
+        <div>
+          <div class="text-sm text-ebony-800">{{ row.email || 'No especificado' }}</div>
+          <div class="text-sm text-titan-600">{{ row.phone || 'No especificado' }}</div>
+        </div>
+      </template>
+      
+      <template #cell-payment_terms="{ value }">
+        <span class="text-sm text-ebony-800">{{ value || 'Contado' }}</span>
+      </template>
+      
+      <template #cell-productos_count="{ value }">
+        <UiStatusBadge
+          :value="`${value} productos`"
+          format="text"
+          variant="info"
+          size="sm"
+        />
+      </template>
+      
+      <template #cell-is_active="{ value }">
+        <UiStatusBadge
+          :value="value ? 'Activo' : 'Inactivo'"
+          format="text"
+          :variant="value ? 'success' : 'destructive'"
+          size="sm"
+        />
+      </template>
+      
+      <template #cell-actions="{ row }">
+        <div class="flex justify-center space-x-2">
+          <button @click="editProveedor(row)"
+            class="text-crocus-600 hover:text-crocus-900 transition-colors"
+            title="Editar proveedor">
+            <PencilIcon class="h-4 w-4" />
+          </button>
+        </div>
+      </template>
+    </UiDataTable>
 
     <!-- Pagination -->
     <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
@@ -278,6 +223,52 @@ const proveedores = ref([
     categoria: 'alimentos'
   }
 ])
+
+// DataTable configuration
+const proveedoresTableColumns = [
+  {
+    key: 'name',
+    title: 'Proveedor',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'contact',
+    title: 'Contacto',
+    sortable: false,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'payment_terms',
+    title: 'Términos de Pago',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'productos_count',
+    title: 'Productos',
+    sortable: true,
+    format: 'number',
+    align: 'right'
+  },
+  {
+    key: 'is_active',
+    title: 'Estado',
+    sortable: true,
+    format: 'boolean',
+    align: 'center'
+  },
+  {
+    key: 'actions',
+    title: 'Acciones',
+    sortable: false,
+    format: 'text',
+    align: 'center'
+  }
+]
 
 // Computed para filtrar proveedores
 const filteredProveedores = computed(() => {

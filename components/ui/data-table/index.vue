@@ -109,6 +109,9 @@ export interface DataTableProps {
   showFooter?: boolean
   totalsData?: Record<string, any>
   
+  // Header alignment (deprecated - headers should match content alignment)
+  centerHeaders?: boolean
+  
   class?: string
 }
 
@@ -119,7 +122,8 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   emptyMessage: 'No data available',
   sortDirection: 'asc',
-  showFooter: false
+  showFooter: false,
+  centerHeaders: false
 })
 
 const emit = defineEmits<{
@@ -204,7 +208,7 @@ function getCellColor(value: any, column: TableColumn): string {
               v-for="column in columns" 
               :key="column.key"
               :class="cn(
-                'py-3 px-2',
+                'py-3 px-2 border-r border-dashed border-border/60 last:border-r-0',
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
                 column.class
@@ -216,7 +220,8 @@ function getCellColor(value: any, column: TableColumn): string {
                 v-if="column.sortable"
                 @click="handleSort(column)"
                 :class="cn(
-                  'text-sm text-text-primary font-bold flex items-center gap-1 transition-colors hover:text-primary',
+                  'text-sm text-text-primary font-bold flex items-center gap-1 transition-colors hover:text-primary w-full',
+                  column.align === 'left' && 'justify-start',
                   column.align === 'center' && 'justify-center',
                   column.align === 'right' && 'justify-end'
                 )"
@@ -233,9 +238,10 @@ function getCellColor(value: any, column: TableColumn): string {
               <span 
                 v-else
                 :class="cn(
-                  'text-sm text-text-primary font-bold',
-                  column.align === 'center' && 'block text-center',
-                  column.align === 'right' && 'block text-right'
+                  'text-sm text-text-primary font-bold block',
+                  column.align === 'left' && 'text-left',
+                  column.align === 'center' && 'text-center',
+                  column.align === 'right' && 'text-right'
                 )"
               >
                 {{ column.title }}
@@ -264,7 +270,7 @@ function getCellColor(value: any, column: TableColumn): string {
               v-for="column in columns"
               :key="column.key"
               :class="cn(
-                'py-4 px-2 text-sm font-medium',
+                'py-4 px-2 text-sm font-medium border-r border-dashed border-border/60 last:border-r-0',
                 getCellColor(row[column.key], column),
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
@@ -292,7 +298,7 @@ function getCellColor(value: any, column: TableColumn): string {
               v-for="column in columns"
               :key="`total-${column.key}`"
               :class="cn(
-                'py-4 px-2 text-sm text-text-primary font-semibold',
+                'py-4 px-2 text-sm text-text-primary font-semibold border-r border-dashed border-border/60 last:border-r-0',
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
                 column.class

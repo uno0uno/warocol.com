@@ -18,109 +18,46 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else-if="obstaclesData">
+    <div v-else-if="obstaclesData" class="flex flex-col gap-4">
 
-      <!-- Obstacles Analysis Table -->
-      <div class="bg-white rounded-xl p-6 border border-titan-300 shadow-sm mb-8">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-semibold text-ebony-800">Detailed Obstacles Analysis</h2>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b border-titan-200">
-                <th class="text-left py-3 px-2 text-sm text-ebony-400 font-medium">Obstacle</th>
-                <th class="text-left py-3 px-2 text-sm text-ebony-400 font-medium">Current Value</th>
-                <th class="text-left py-3 px-2 text-sm text-ebony-400 font-medium">Optimal Range</th>
-                <th class="text-left py-3 px-2 text-sm text-ebony-400 font-medium">Deviation</th>
-                <th class="text-left py-3 px-2 text-sm text-ebony-400 font-medium">Business Impact</th>
-                <th class="text-left py-3 px-2 text-sm text-ebony-400 font-medium">Priority</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Payment Processing Obstacle -->
-              <tr class="border-b border-titan-100 hover:bg-titan-25 transition-colors">
-                <td class="py-4 px-2">
-                  <span class="font-semibold text-sm text-ebony-800">Payment Processing</span>
-                </td>
-                <td class="py-4 px-2 text-sm text-ebony-800">{{ (100 - parseFloat(metricsData.payment_failure_rate || 0)).toFixed(1) }}% success</td>
-                <td class="py-4 px-2 text-sm text-ebony-600">≥95%</td>
-                <td class="py-4 px-2">
-                  <span class="px-2 py-1 rounded-full text-xs font-bold" :class="getPaymentDeviationBadge()">
-                    {{ getPaymentDeviation() }}
-                  </span>
-                </td>
-                <td class="py-4 px-2 text-sm font-semibold text-ebony-600">${{ metricsData.lost_revenue_payments?.toLocaleString() || 0 }} lost</td>
-                <td class="py-4 px-2">
-                  <span class="px-2 py-1 rounded-full text-xs font-bold" :class="getPaymentPriorityBadge()">
-                    {{ getPaymentPriority() }}
-                  </span>
-                </td>
-              </tr>
-
-              <!-- Inventory Management Obstacle -->
-              <tr class="border-b border-titan-100 hover:bg-titan-25 transition-colors">
-                <td class="py-4 px-2">
-                  <span class="font-semibold text-sm text-ebony-800">Inventory Management</span>
-                </td>
-                <td class="py-4 px-2 text-sm text-ebony-800">{{ (100 - parseFloat(metricsData.stock_risk_percentage || 0)).toFixed(1) }}% healthy</td>
-                <td class="py-4 px-2 text-sm text-ebony-600">≥90%</td>
-                <td class="py-4 px-2">
-                  <span class="px-2 py-1 rounded-full text-xs font-bold" :class="getInventoryDeviationBadge()">
-                    {{ getInventoryDeviation() }}
-                  </span>
-                </td>
-                <td class="py-4 px-2 text-sm font-semibold text-ebony-600">{{ metricsData.out_of_stock_count || 0 }} out of stock</td>
-                <td class="py-4 px-2">
-                  <span class="px-2 py-1 rounded-full text-xs font-bold" :class="getInventoryPriorityBadge()">
-                    {{ getInventoryPriority() }}
-                  </span>
-                </td>
-              </tr>
-
-              <!-- Order Fulfillment Obstacle -->
-              <tr class="border-b border-titan-100 hover:bg-titan-25 transition-colors">
-                <td class="py-4 px-2">
-                  <span class="font-semibold text-sm text-ebony-800">Order Fulfillment</span>
-                </td>
-                <td class="py-4 px-2 text-sm text-ebony-800">{{ parseFloat(metricsData.order_success_rate || 0).toFixed(1) }}% success</td>
-                <td class="py-4 px-2 text-sm text-ebony-600">≥95%</td>
-                <td class="py-4 px-2">
-                  <span class="px-2 py-1 rounded-full text-xs font-bold" :class="getOrderDeviationBadge()">
-                    {{ getOrderDeviation() }}
-                  </span>
-                </td>
-                <td class="py-4 px-2 text-sm font-semibold text-ebony-600">{{ metricsData.cancelled_orders_count || 0 }} cancelled</td>
-                <td class="py-4 px-2">
-                  <span class="px-2 py-1 rounded-full text-xs font-bold" :class="getOrderPriorityBadge()">
-                    {{ getOrderPriority() }}
-                  </span>
-                </td>
-              </tr>
-
-              <!-- Operational Efficiency Obstacle -->
-              <tr class="border-b border-titan-100 hover:bg-titan-25 transition-colors">
-                <td class="py-4 px-2">
-                  <span class="font-semibold text-sm text-ebony-800">Operational Efficiency</span>
-                </td>
-                <td class="py-4 px-2 text-sm text-ebony-800">{{ metricsData.stuck_orders_count || 0 }} stuck orders</td>
-                <td class="py-4 px-2 text-sm text-ebony-600">0 stuck</td>
-                <td class="py-4 px-2">
-                  <span class="px-2 py-1 rounded-full text-xs font-bold" :class="getEfficiencyDeviationBadge()">
-                    {{ getEfficiencyDeviation() }}
-                  </span>
-                </td>
-                <td class="py-4 px-2 text-sm font-semibold text-ebony-600">{{ metricsData.delayed_orders_count || 0 }} delayed</td>
-                <td class="py-4 px-2">
-                  <span class="px-2 py-1 rounded-full text-xs font-bold" :class="getEfficiencyPriorityBadge()">
-                    {{ getEfficiencyPriority() }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <!-- Obstacles Analysis Table using DataTable -->
+      <UiDataTable
+        title="Detailed Obstacles Analysis"
+        :columns="obstaclesTableColumns"
+        :data="obstaclesTableData"
+        variant="default"
+      >
+        <!-- Custom slots for badges -->
+        <template #cell-obstacle="{ value }">
+          <span class="font-semibold text-sm">{{ value }}</span>
+        </template>
+        
+        <template #cell-current_value="{ value }">
+          <span class="text-text-primary font-medium">{{ value }}</span>
+        </template>
+        
+        <template #cell-deviation="{ value, row }">
+          <UiStatusBadge
+            :value="value"
+            format="text"
+            :variant="getDeviationVariant(row.obstacle)"
+            size="sm"
+          />
+        </template>
+        
+        <template #cell-business_impact="{ value }">
+          <span class="text-text-primary font-medium">{{ value }}</span>
+        </template>
+        
+        <template #cell-priority="{ value }">
+          <UiStatusBadge
+            :value="value"
+            format="text"
+            :variant="getPriorityVariant(value)"
+            size="sm"
+          />
+        </template>
+      </UiDataTable>
 
       <!-- Knowledge Resources -->
       <div v-if="recommendedResources.length > 0" class="bg-white rounded-xl p-6 border border-titan-300 shadow-sm mb-8">
@@ -201,6 +138,103 @@ onTenantChange(async () => {
 // Computed properties
 const obstaclesData = computed(() => obstaclesApiData.value?.data || null)
 const metricsData = computed(() => obstaclesData.value?.metrics || {})
+
+// DataTable configuration
+const obstaclesTableColumns = [
+  {
+    key: 'obstacle',
+    title: 'Obstacle',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'target',
+    title: 'Target',
+    sortable: true,
+    format: 'text',
+    align: 'center'
+  },
+  {
+    key: 'current_value',
+    title: 'Current Value',
+    sortable: true,
+    format: 'text',
+    align: 'center'
+  },
+  {
+    key: 'deviation',
+    title: 'Deviation',
+    sortable: true,
+    format: 'text',
+    align: 'center'
+  },
+  {
+    key: 'business_impact',
+    title: 'Business Impact',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'priority',
+    title: 'Priority',
+    sortable: true,
+    format: 'text',
+    align: 'center'
+  }
+]
+
+// DataTable data
+const obstaclesTableData = computed(() => {
+  const obstacles = []
+  
+  // Payment Processing Issues
+  const paymentRate = 100 - parseFloat(metricsData.value.payment_failure_rate || 0)
+  obstacles.push({
+    obstacle: 'Payment Processing',
+    target: '≥95%',
+    current_value: `${paymentRate.toFixed(1)}%`,
+    deviation: getPaymentDeviation(),
+    business_impact: 'Lost sales due to failed transactions',
+    priority: getPaymentPriority()
+  })
+  
+  // Inventory Management
+  const inventoryRate = 100 - parseFloat(metricsData.value.stock_risk_percentage || 0)
+  obstacles.push({
+    obstacle: 'Inventory Stock Levels',
+    target: '≥90%',
+    current_value: `${inventoryRate.toFixed(1)}%`,
+    deviation: getInventoryDeviation(),
+    business_impact: 'Stockouts affecting customer satisfaction',
+    priority: getInventoryPriority()
+  })
+  
+  // Order Success Rate
+  const orderRate = parseFloat(metricsData.value.order_success_rate || 0)
+  obstacles.push({
+    obstacle: 'Order Fulfillment',
+    target: '≥95%',
+    current_value: `${orderRate.toFixed(1)}%`,
+    deviation: getOrderDeviation(),
+    business_impact: 'Customer cancellations and refunds',
+    priority: getOrderPriority()
+  })
+  
+  // Operational Efficiency
+  const stuckOrders = parseInt(metricsData.value.stuck_orders_count || 0)
+  obstacles.push({
+    obstacle: 'Process Efficiency',
+    target: '0 stuck orders',
+    current_value: `${stuckOrders} orders`,
+    deviation: getEfficiencyDeviation(),
+    business_impact: 'Delayed deliveries and resource waste',
+    priority: getEfficiencyPriority()
+  })
+  
+  return obstacles
+})
 
 // Dynamic resource recommendations based on actual obstacles detected
 const recommendedResources = computed(() => {
@@ -421,21 +455,51 @@ const orderHealthColor = computed(() => {
   return 'text-red-600'
 })
 
+// Helper functions for DataTable badges
+function getDeviationVariant(obstacle) {
+  switch (obstacle) {
+    case 'Payment Processing':
+      const paymentRate = 100 - parseFloat(metricsData.value.payment_failure_rate || 0)
+      return paymentRate < 95 ? 'destructive' : 'success'
+    case 'Inventory Stock Levels':
+      const inventoryRate = 100 - parseFloat(metricsData.value.stock_risk_percentage || 0)
+      return inventoryRate < 90 ? 'destructive' : 'success'
+    case 'Order Fulfillment':
+      const orderRate = parseFloat(metricsData.value.order_success_rate || 0)
+      return orderRate < 95 ? 'destructive' : 'success'
+    case 'Process Efficiency':
+      const stuck = parseInt(metricsData.value.stuck_orders_count || 0)
+      return stuck > 0 ? 'destructive' : 'success'
+    default:
+      return 'secondary'
+  }
+}
+
+function getPriorityVariant(priority) {
+  switch (priority) {
+    case 'CRITICAL':
+      return 'destructive'
+    case 'HIGH':
+      return 'warning'
+    case 'MEDIUM':
+      return 'info'
+    case 'LOW':
+      return 'success'
+    default:
+      return 'secondary'
+  }
+}
+
 // Methods
 const refreshData = async () => {
   await refresh()
 }
 
-// Helper functions for table calculations
+// Helper functions for calculations
 const getPaymentDeviation = () => {
   const rate = 100 - parseFloat(metricsData.value.payment_failure_rate || 0)
   const deviation = 95 - rate
   return deviation > 0 ? `-${deviation.toFixed(1)}%` : `+${Math.abs(deviation).toFixed(1)}%`
-}
-
-const getPaymentDeviationBadge = () => {
-  const rate = 100 - parseFloat(metricsData.value.payment_failure_rate || 0)
-  return rate < 95 ? 'bg-titan-100 text-ebony-700' : 'bg-crocus-100 text-crocus-700'
 }
 
 const getPaymentPriority = () => {
@@ -445,22 +509,10 @@ const getPaymentPriority = () => {
   return 'LOW'
 }
 
-const getPaymentPriorityBadge = () => {
-  const priority = getPaymentPriority()
-  if (priority === 'CRITICAL') return 'bg-titan-100 text-ebony-700'
-  if (priority === 'HIGH') return 'bg-crocus-100 text-crocus-700'
-  return 'bg-crocus-100 text-crocus-700'
-}
-
 const getInventoryDeviation = () => {
   const rate = 100 - parseFloat(metricsData.value.stock_risk_percentage || 0)
   const deviation = 90 - rate
   return deviation > 0 ? `-${deviation.toFixed(1)}%` : `+${Math.abs(deviation).toFixed(1)}%`
-}
-
-const getInventoryDeviationBadge = () => {
-  const rate = 100 - parseFloat(metricsData.value.stock_risk_percentage || 0)
-  return rate < 90 ? 'bg-titan-100 text-ebony-700' : 'bg-crocus-100 text-crocus-700'
 }
 
 const getInventoryPriority = () => {
@@ -470,22 +522,10 @@ const getInventoryPriority = () => {
   return 'LOW'
 }
 
-const getInventoryPriorityBadge = () => {
-  const priority = getInventoryPriority()
-  if (priority === 'CRITICAL') return 'bg-titan-100 text-ebony-700'
-  if (priority === 'HIGH') return 'bg-crocus-100 text-crocus-700'
-  return 'bg-crocus-100 text-crocus-700'
-}
-
 const getOrderDeviation = () => {
   const rate = parseFloat(metricsData.value.order_success_rate || 0)
   const deviation = 95 - rate
   return deviation > 0 ? `-${deviation.toFixed(1)}%` : `+${Math.abs(deviation).toFixed(1)}%`
-}
-
-const getOrderDeviationBadge = () => {
-  const rate = parseFloat(metricsData.value.order_success_rate || 0)
-  return rate < 95 ? 'bg-titan-100 text-ebony-700' : 'bg-crocus-100 text-crocus-700'
 }
 
 const getOrderPriority = () => {
@@ -495,21 +535,9 @@ const getOrderPriority = () => {
   return 'LOW'
 }
 
-const getOrderPriorityBadge = () => {
-  const priority = getOrderPriority()
-  if (priority === 'CRITICAL') return 'bg-titan-100 text-ebony-700'
-  if (priority === 'HIGH') return 'bg-crocus-100 text-crocus-700'
-  return 'bg-crocus-100 text-crocus-700'
-}
-
 const getEfficiencyDeviation = () => {
   const stuck = parseInt(metricsData.value.stuck_orders_count || 0)
   return stuck > 0 ? `+${stuck} orders` : 'Optimal'
-}
-
-const getEfficiencyDeviationBadge = () => {
-  const stuck = parseInt(metricsData.value.stuck_orders_count || 0)
-  return stuck > 0 ? 'bg-titan-100 text-ebony-700' : 'bg-crocus-100 text-crocus-700'
 }
 
 const getEfficiencyPriority = () => {
@@ -518,13 +546,6 @@ const getEfficiencyPriority = () => {
   if (stuck > 2 || delayed > 5) return 'HIGH'
   if (stuck > 0 || delayed > 0) return 'MEDIUM'
   return 'LOW'
-}
-
-const getEfficiencyPriorityBadge = () => {
-  const priority = getEfficiencyPriority()
-  if (priority === 'HIGH') return 'bg-titan-100 text-ebony-700'
-  if (priority === 'MEDIUM') return 'bg-crocus-100 text-crocus-700'
-  return 'bg-crocus-100 text-crocus-700'
 }
 
 // Watch for period changes
