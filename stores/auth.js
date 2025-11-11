@@ -65,6 +65,21 @@ export const useAuthStore = defineStore('auth', () => {
     }
   })
 
+  // Check if current session is valid (not expired)
+  const isSessionValid = computed(() => {
+    if (!session.value || !user.value) return false
+
+    // Check if session has expiration data
+    const expiresAt = session.value.session?.expiresAt || session.value.expiresAt
+    if (!expiresAt) return false
+
+    // Check if session has expired
+    const expirationDate = new Date(expiresAt)
+    const now = new Date()
+
+    return expirationDate > now
+  })
+
   // Actions
   function setUser(userData) {
     user.value = userData
@@ -110,14 +125,15 @@ export const useAuthStore = defineStore('auth', () => {
     session: readonly(session),
     profileData: readonly(profileData),
     isLoading: readonly(isLoading),
-    
+
     // Computed
     profile,
     roleSpecificData,
     hasProfile,
     profileTags,
     displayUser,
-    
+    isSessionValid,
+
     // Actions
     setUser,
     setSession,

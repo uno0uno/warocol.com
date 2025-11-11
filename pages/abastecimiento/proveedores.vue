@@ -214,7 +214,8 @@ import {
 
 import { ref, computed, watch } from 'vue'
 
-
+// Tenant reactivity
+const { onTenantChange, currentTenant } = useTenantReactive()
 
 // Reactive state for API parameters
 
@@ -234,9 +235,10 @@ const apiPaymentTerms = ref(null);
 
 const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
 
-  'suppliers',
+  `suppliers-${currentTenant.value?.id || 'default'}`,
 
   () => {
+    console.log('🔍 Fetching suppliers data for tenant:', currentTenant.value?.id)
 
     const params = {
 
@@ -254,7 +256,7 @@ const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = 
 
 
 
-    return $fetch('/api/suppliers/', { params });
+    return $fetch('/api/suppliers', { params });
 
   },
 
@@ -262,7 +264,7 @@ const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = 
 
     server: false, // Fetch on client side
 
-    watch: [currentPage, itemsPerPage, apiSearchTerm, apiIsActive, apiPaymentTerms],
+    watch: [currentTenant, currentPage, itemsPerPage, apiSearchTerm, apiIsActive, apiPaymentTerms],
 
     default: () => ({ data: [], total: 0 }),
 
