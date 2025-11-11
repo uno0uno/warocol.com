@@ -231,54 +231,32 @@ const apiPaymentTerms = ref(null);
 
 
 
-// useAsyncData for fetching suppliers
-
-const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-
-  `suppliers-${currentTenant.value?.id || 'default'}`,
-
-  () => {
-    console.log('🔍 Fetching suppliers data for tenant:', currentTenant.value?.id)
-
+// useFetch without caching for suppliers
+const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = await useFetch('/api/suppliers', {
+  server: false,
+  immediate: true,
+  watch: [currentTenant, currentPage, itemsPerPage, apiSearchTerm, apiIsActive, apiPaymentTerms],
+  query: computed(() => {
     const params = {
-
       page: currentPage.value,
-
       limit: itemsPerPage.value,
-
     };
-
     if (apiSearchTerm.value) params.search = apiSearchTerm.value;
-
     if (apiIsActive.value !== null) params.is_active = apiIsActive.value;
-
     if (apiPaymentTerms.value) params.payment_terms = apiPaymentTerms.value;
 
-
-
-    return $fetch('/api/suppliers', { params });
-
-  },
-
-  {
-
-    server: false, // Fetch on client side
-
-    watch: [currentTenant, currentPage, itemsPerPage, apiSearchTerm, apiIsActive, apiPaymentTerms],
-
-    default: () => ({ data: [], total: 0 }),
-
-    transform: (response) => ({
-
-      data: response.data || [],
-
-      total: response.total || 0,
-
-    }),
-
-  }
-
-);
+    console.log('🔍 Fetching suppliers for tenant:', currentTenant.value?.id, 'with params:', params)
+    return params;
+  }),
+  default: () => ({ data: [], total: 0 }),
+  transform: (response) => ({
+    data: response.data || [],
+    total: response.total || 0,
+  }),
+  // IMPORTANT: Disable caching to always fetch fresh data
+  key: null,
+  getCachedData: () => undefined
+});
 
 
 
