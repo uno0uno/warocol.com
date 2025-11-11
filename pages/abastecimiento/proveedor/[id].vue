@@ -101,39 +101,22 @@
             <div>
               <h3 class="text-lg font-semibold text-text-primary mb-4">Términos Comerciales</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label class="block text-sm font-medium text-text-primary mb-2">
-                    Términos de Pago
-                  </label>
-                  <select
-                    v-model="form.payment_terms"
-                    class="input-base w-full px-4 py-2"
-                  >
-                    <option value="">Seleccionar términos</option>
-                    <option value="Contado">Contado</option>
-                    <option value="15 días">15 días</option>
-                    <option value="30 días">30 días</option>
-                    <option value="45 días">45 días</option>
-                    <option value="60 días">60 días</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label class="block text-sm font-medium text-text-primary mb-2">
-                    Categoría
-                  </label>
-                  <select
-                    v-model="form.categoria"
-                    class="input-base w-full px-4 py-2"
-                  >
-                    <option value="">Seleccionar categoría</option>
-                    <option value="alimentos">Alimentos</option>
-                    <option value="bebidas">Bebidas</option>
-                    <option value="empaques">Empaques</option>
-                    <option value="servicios">Servicios</option>
-                  </select>
-                </div>
-              </div>
+                              <div>
+                                <label class="block text-sm font-medium text-text-primary mb-2">
+                                  Términos de Pago
+                                </label>
+                                <select
+                                  v-model="form.payment_terms"
+                                  class="input-base w-full px-4 py-2"
+                                >
+                                  <option value="">Seleccionar términos</option>
+                                  <option value="Contado">Contado</option>
+                                  <option value="15 días">15 días</option>
+                                  <option value="30 días">30 días</option>
+                                  <option value="45 días">45 días</option>
+                                  <option value="60 días">60 días</option>
+                                </select>
+                              </div>              </div>
             </div>
 
             <!-- Estado -->
@@ -185,26 +168,28 @@
 </template>
 
 <script setup>
+import { ref, reactive } from 'vue'
+import { useRoute, useRouter, navigateTo } from '#app'
+
 definePageMeta({
   layout: 'dashboard'
 })
 
-// Get provider ID from route
 const route = useRoute()
-const providerId = route.params.id
+const router = useRouter()
+const supplierId = route.params.id
 
 useHead({
-  title: `Editar Proveedor ${providerId} - Abastecimiento`
+  title: `Editar Proveedor - Abastecimiento`
 })
 
-// Form state
-const form = ref({
+// Use reactive for the form object
+const form = reactive({
   name: '',
   tax_id: '',
   email: '',
   phone: '',
   payment_terms: '',
-  categoria: '',
   is_active: true
 })
 
@@ -212,81 +197,37 @@ const isSubmitting = ref(false)
 const isDeleting = ref(false)
 
 // Fetch provider data
-const { data: providerData, pending: isLoading, error, refresh } = useAsyncData(`provider-${providerId}`, () => {
-  console.log('🔍 Fetching provider data for ID:', providerId)
-  
-  // TODO: Replace with actual API call
-  // For now, simulate with mock data based on ID
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Find mock provider data (simulate API response)
-      const mockProviders = [
-        {
-          id: 1,
-          name: 'Frutas del Valle',
-          tax_id: '900123456-7',
-          email: 'contacto@frutasdelvalle.com',
-          phone: '+57 300 123 4567',
-          payment_terms: '30 días',
-          is_active: true,
-          productos_count: 15,
-          categoria: 'alimentos',
-          created_at: '2024-01-15',
-          last_order: '2024-11-01'
-        },
-        {
-          id: 2,
-          name: 'COCA COLA FEMSA',
-          tax_id: '800987654-3',
-          email: 'ventas@cocacolafemsa.com',
-          phone: '+57 310 987 6543',
-          payment_terms: '45 días',
-          is_active: true,
-          productos_count: 8,
-          categoria: 'bebidas',
-          created_at: '2024-02-20',
-          last_order: '2024-10-28'
-        }
-      ]
-      
-      const provider = mockProviders.find(p => p.id == providerId)
-      if (provider) {
-        resolve({ success: true, data: provider })
-      } else {
-        throw new Error('Proveedor no encontrado')
+const { data: supplierData, pending: isLoading, error, refresh } = useAsyncData(
+  `supplier-${supplierId}`,
+  () => $fetch(`/api/suppliers/${supplierId}/`),
+  {
+    server: false,
+    transform: (response) => {
+      if (response?.data) {
+        // Populate form with existing data
+        Object.assign(form, response.data)
+        return response.data
       }
-    }, 500)
-  })
-}, {
-  server: false,
-  transform: (response) => {
-    if (response?.success && response.data) {
-      // Populate form with existing data
-      Object.assign(form.value, response.data)
-      return response.data
+      throw new Error('Error loading supplier data')
     }
-    throw new Error('Error loading provider data')
   }
-})
+)
 
-
-// Handle form submission
+// Handle form submission (Update)
 const handleSubmit = async () => {
+  isSubmitting.value = true
   try {
-    isSubmitting.value = true
+    await $fetch(`/api/suppliers/${supplierId}/`, {
+      method: 'PUT',
+      body: form,
+    })
     
-    // TODO: API call to update provider
-    console.log('Updating provider:', { id: providerId, ...form.value })
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Redirect back to providers list
+    console.log('Proveedor actualizado exitosamente!') // Temporary feedback
     await navigateTo('/abastecimiento/proveedores')
     
-  } catch (error) {
-    console.error('Error updating provider:', error)
-    // TODO: Show error message
+  } catch (err) {
+    console.error('Error updating supplier:', err)
+    alert('Error al actualizar el proveedor.') // Temporary feedback
   } finally {
     isSubmitting.value = false
   }
@@ -298,21 +239,18 @@ const handleDelete = async () => {
     return
   }
   
+  isDeleting.value = true
   try {
-    isDeleting.value = true
+    await $fetch(`/api/suppliers/${supplierId}/`, {
+      method: 'DELETE',
+    })
     
-    // TODO: API call to delete provider
-    console.log('Deleting provider:', providerId)
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Redirect back to providers list
+    console.log('Proveedor eliminado exitosamente!') // Temporary feedback
     await navigateTo('/abastecimiento/proveedores')
     
-  } catch (error) {
-    console.error('Error deleting provider:', error)
-    // TODO: Show error message
+  } catch (err) {
+    console.error('Error deleting supplier:', err)
+    alert('Error al eliminar el proveedor.') // Temporary feedback
   } finally {
     isDeleting.value = false
   }

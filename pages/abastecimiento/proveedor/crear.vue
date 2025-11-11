@@ -97,22 +97,6 @@
                   <option value="60 días">60 días</option>
                 </select>
               </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Categoría
-                </label>
-                <select
-                  v-model="form.categoria"
-                  class="input-base w-full px-4 py-2"
-                >
-                  <option value="">Seleccionar categoría</option>
-                  <option value="alimentos">Alimentos</option>
-                  <option value="bebidas">Bebidas</option>
-                  <option value="empaques">Empaques</option>
-                  <option value="servicios">Servicios</option>
-                </select>
-              </div>
             </div>
           </div>
 
@@ -153,6 +137,8 @@
 </template>
 
 <script setup>
+import { ref, reactive } from 'vue'
+
 definePageMeta({
   layout: 'dashboard'
 })
@@ -162,37 +148,52 @@ useHead({
 })
 
 // Form state
-const form = ref({
+const form = reactive({
   name: '',
   tax_id: '',
   email: '',
   phone: '',
   payment_terms: '30 días',
-  categoria: 'alimentos',
-  is_active: true
+  is_active: true,
+  contact_info: null,
+  address: null,
 })
 
 const isSubmitting = ref(false)
 
+// Setup useAsyncData for the POST request
+const { execute: createSupplier, error: createError } = useAsyncData(
+  'create-supplier-call', // Unique key
+  () => $fetch('/api/suppliers/', {
+    method: 'POST',
+    body: form,
+  }),
+  {
+    immediate: false, // Don't run on component load
+    watch: false,     // We are triggering it manually
+  }
+)
+
 // Handle form submission
 const handleSubmit = async () => {
+  isSubmitting.value = true;
   try {
-    isSubmitting.value = true
-    
-    // TODO: API call to create provider
-    console.log('Creating provider:', form.value)
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Redirect back to providers list
+    await createSupplier() // Execute the request
+
+    if (createError.value) {
+      // Throw the error to be caught by the catch block
+      throw createError.value
+    }
+
+    // If there was no error, navigate away.
     await navigateTo('/abastecimiento/proveedores')
-    
-  } catch (error) {
-    console.error('Error creating provider:', error)
-    // TODO: Show error message
+
+  } catch (err) {
+    console.error('Error creating provider:', err)
+    // TODO: Show a toast notification
+    alert('Error al crear el proveedor. Por favor, intente de nuevo.')
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
 }
 </script>
