@@ -1,6 +1,23 @@
 <template>
   <div class="page-layout">
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
+    </div>
 
+    <!-- Error State -->
+    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
+      <div class="text-center">
+        <p class="text-xl font-semibold text-ebony-800 mb-2">Error al cargar las órdenes.</p>
+        <p class="text-sm text-ebony-600">{{ fetchError.message }}</p>
+        <button @click="refresh" class="mt-4 px-4 py-2 bg-crocus-500 text-white rounded-lg hover:bg-crocus-600">
+          Reintentar
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div v-else>
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-5 gap-5">
       <SharedMetricCard
@@ -204,6 +221,7 @@
         </div>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
@@ -233,79 +251,64 @@ const proveedorFilter = ref('')
 const statusFilter = ref('')
 const dateRange = ref('')
 const showCreateModal = ref(false)
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+
+// Tenant reactivity
+const { onTenantChange, currentTenant } = useTenantReactive()
+
+// Fetch data using useAsyncData for proper loading states (NO await to show loading)
+const { data: purchasesData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
+  `purchases-${currentTenant.value?.id || 'default'}`,
+  () => {
+    const params = {
+      page: currentPage.value,
+      limit: itemsPerPage.value,
+    };
+    if (searchTerm.value) params.search = searchTerm.value;
+    if (statusFilter.value) params.status = statusFilter.value;
+    if (proveedorFilter.value) params.supplier_id = proveedorFilter.value;
+
+    return $fetch('/api/suppliers/purchases', {
+      query: params
+    });
+  },
+  {
+    server: false,
+    watch: [currentTenant, currentPage, itemsPerPage, searchTerm, statusFilter, proveedorFilter],
+    default: () => ({ data: [], total: 0 }),
+    transform: (response) => ({
+      data: response.data || [],
+      total: response.total || 0,
+    })
+  }
+);
+
+// Computed properties for data
+const ordenes = computed(() => purchasesData.value.data.map(purchase => ({
+  id: purchase.id,
+  numero: purchase.purchase_number || `PO-${purchase.id.substring(0, 8)}`,
+  proveedor: 'Proveedor', // TODO: Fetch supplier name
+  fecha: purchase.purchase_date,
+  fechaEntrega: purchase.delivery_date,
+  valorTotal: parseFloat(purchase.total_amount || 0),
+  impuestos: parseFloat(purchase.tax_amount || 0),
+  totalItems: purchase.items?.length || 0,
+  estado: purchase.status,
+  invoice_number: purchase.invoice_number
+})))
 
 // Stats
-const stats = ref({
-  total: 47,
-  pendientes: 5,
-  recibidas: 38,
-  vencidas: 2,
-  valorTotal: 24.6
-})
-
-// Mock data para órdenes
-const ordenes = ref([
-  {
-    id: 1,
-    numero: 'PO-2025-001',
-    proveedor: 'Frutas del Valle',
-    fecha: '2025-11-01',
-    fechaEntrega: '2025-11-08',
-    valorTotal: 1250000,
-    impuestos: 237500,
-    totalItems: 8,
-    estado: 'received',
-    invoice_number: 'FV-001234'
-  },
-  {
-    id: 2,
-    numero: 'PO-2025-002',
-    proveedor: 'COCA COLA FEMSA',
-    fecha: '2025-11-03',
-    fechaEntrega: '2025-11-10',
-    valorTotal: 3200000,
-    impuestos: 608000,
-    totalItems: 15,
-    estado: 'sent',
-    invoice_number: null
-  },
-  {
-    id: 3,
-    numero: 'PO-2025-003',
-    proveedor: 'Calypso del Caribe',
-    fecha: '2025-11-05',
-    fechaEntrega: null,
-    valorTotal: 890000,
-    impuestos: 169100,
-    totalItems: 6,
-    estado: 'pending',
-    invoice_number: null
-  },
-  {
-    id: 4,
-    numero: 'PO-2025-004',
-    proveedor: 'Abastos San Martín',
-    fecha: '2025-10-28',
-    fechaEntrega: '2025-11-05',
-    valorTotal: 750000,
-    impuestos: 142500,
-    totalItems: 12,
-    estado: 'overdue',
-    invoice_number: null
-  },
-  {
-    id: 5,
-    numero: 'PO-2025-005',
-    proveedor: 'Desechables Pradera',
-    fecha: '2025-11-06',
-    fechaEntrega: '2025-11-13',
-    valorTotal: 420000,
-    impuestos: 79800,
-    totalItems: 4,
-    estado: 'sent',
-    invoice_number: null
+const stats = computed(() => {
+  const all = ordenes.value
+  return {
+    total: all.length,
+    pendientes: all.filter(o => o.estado === 'pending').length,
+    recibidas: all.filter(o => o.estado === 'received').length,
+    vencidas: all.filter(o => o.estado === 'overdue').length,
+    valorTotal: (all.reduce((sum, o) => sum + o.valorTotal, 0) / 1000000).toFixed(1)
   }
-])
+})
 
 const actividadReciente = ref([
   {

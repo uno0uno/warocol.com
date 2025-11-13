@@ -199,7 +199,7 @@ const isDeleting = ref(false)
 // Fetch provider data
 const { data: supplierData, pending: isLoading, error, refresh } = useAsyncData(
   `supplier-${supplierId}`,
-  () => $fetch(`/api/suppliers/${supplierId}`),
+  () => $fetch(`/api/suppliers/providers/${supplierId}`),
   {
     server: false,
     transform: (response) => {
@@ -217,7 +217,7 @@ const { data: supplierData, pending: isLoading, error, refresh } = useAsyncData(
 const handleSubmit = async () => {
   isSubmitting.value = true
   try {
-    await $fetch(`/api/suppliers/${supplierId}`, {
+    await $fetch(`/api/suppliers/providers/${supplierId}`, {
       method: 'PUT',
       body: form,
     })
@@ -241,7 +241,7 @@ const handleDelete = async () => {
   
   isDeleting.value = true
   try {
-    await $fetch(`/api/suppliers/${supplierId}`, {
+    await $fetch(`/api/suppliers/providers/${supplierId}`, {
       method: 'DELETE',
     })
     

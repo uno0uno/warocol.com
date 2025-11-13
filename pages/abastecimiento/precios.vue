@@ -1,138 +1,111 @@
 <template>
   <div class="page-layout">
-
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
-      <SharedMetricCard
-        title="Total de Precios"
-        :value="summary.totalPrecios"
-        subtitle="Precios configurados"
-        variant="primary"
-        :show-icon="false"
-      />
-      
-      <SharedMetricCard
-        title="Precios Activos"
-        :value="summary.activos"
-        subtitle="Vigentes actualmente"
-        variant="primary"
-        :show-icon="false"
-      />
-      
-      <SharedMetricCard
-        title="Por Vencer"
-        :value="summary.porVencer"
-        subtitle="Próximos a expirar"
-        variant="primary"
-        :show-icon="false"
-      />
-      
-      <SharedMetricCard
-        title="Ingredientes con Precios"
-        :value="summary.ingredientes"
-        subtitle="Productos configurados"
-        variant="primary"
-        :show-icon="false"
-      />
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Price Comparison (when enabled) -->
-    <div v-if="showComparison" class="bg-white rounded-lg shadow-sm border border-titan-200 p-6">
-      <h3 class="text-lg font-semibold text-ebony-800 mb-4">Comparación de Precios</h3>
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div v-for="item in topComparisons" :key="item.ingrediente" 
-          class="border border-titan-200 rounded-lg p-4">
-          <h4 class="font-medium text-ebony-800 mb-3">{{ item.ingrediente }}</h4>
-          <div class="space-y-2">
-            <div v-for="precio in item.precios" :key="precio.proveedor"
-              :class="[
-                'flex justify-between items-center p-2 rounded text-sm',
-                precio.esMenor ? 'bg-green-50 border border-green-200' : 'bg-titan-50'
-              ]">
-              <span class="font-medium">{{ precio.proveedor }}</span>
-              <span :class="precio.esMenor ? 'text-green-700 font-semibold' : 'text-titan-700'">
-                ${{ precio.precio }}/{{ precio.unidad }}
-              </span>
+    <!-- Error State -->
+    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
+      <div class="text-center">
+        <p class="text-xl font-semibold text-ebony-800 mb-2">Error al cargar los precios.</p>
+        <p class="text-sm text-ebony-600">{{ fetchError.message }}</p>
+        <button @click="refresh" class="mt-4 px-4 py-2 bg-crocus-500 text-white rounded-lg hover:bg-crocus-600">
+          Reintentar
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div v-else>
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+        <SharedMetricCard
+          title="Total de Ingredientes"
+          :value="summary.ingredientes"
+          subtitle="Ingredientes configurados"
+          variant="primary"
+          :show-icon="false"
+        />
+        
+        <SharedMetricCard
+          title="Categorías"
+          :value="uniqueCategoriesCount"
+          subtitle="Categorías de ingredientes"
+          variant="primary"
+          :show-icon="false"
+        />
+        
+        <SharedMetricCard
+          title="Precio Promedio"
+          :value="averagePrice"
+          subtitle="Promedio de precios"
+          variant="info"
+          format="currency"
+          :show-icon="false"
+        />
+      </div>
+
+      <!-- Prices Table -->
+      <UiDataTable
+        title="Lista de Precios de Ingredientes"
+        :columns="preciosTableColumns"
+        :data="ingredients"
+        variant="default"
+      >
+        <!-- Custom slots for special columns -->
+        <template #cell-name="{ value, row }">
+          <div class="flex items-center">
+            <div class="ml-3">
+              <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
+              <div class="text-sm text-titan-600">{{ row.category || 'Sin categoría' }}</div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </template>
+        
+        <template #cell-price="{ value }">
+          <span class="text-sm font-medium text-ebony-800">${{ (value || 0).toLocaleString() }}</span>
+        </template>
+        
+        <template #cell-unit="{ value }">
+          <span class="text-sm text-ebony-800">{{ value }}</span>
+        </template>
+      </UiDataTable>
 
-    <!-- Prices Table -->
-    <UiDataTable
-      title="Lista de Precios"
-      :columns="preciosTableColumns"
-      :data="filteredPrecios"
-      variant="default"
-    >
-      <!-- Custom slots for special columns -->
-      <template #cell-ingrediente="{ value }">
-        <div class="flex items-center">
-          <div class="ml-3">
-            <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
+      <!-- Pagination -->
+      <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
+        <div class="flex-1 flex justify-between sm:hidden">
+          <button @click="prevPage" :disabled="currentPage === 1" class="relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
+            Anterior
+          </button>
+          <button @click="nextPage" :disabled="currentPage === totalPages" class="ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
+            Siguiente
+          </button>
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm text-titan-700">
+              Mostrando <span class="font-medium">{{ startIndex }}</span> a <span class="font-medium">{{ endIndex }}</span> de{' '}
+              <span class="font-medium">{{ totalIngredients }}</span> resultados
+            </p>
           </div>
-        </div>
-      </template>
-      
-      <template #cell-proveedor="{ value }">
-        <span class="text-sm text-ebony-800">{{ value }}</span>
-      </template>
-      
-      <template #cell-precio="{ value }">
-        <span class="text-sm font-medium text-ebony-800">${{ value.toLocaleString() }}</span>
-      </template>
-      
-      <template #cell-unidad="{ value }">
-        <span class="text-sm text-ebony-800">{{ value }}</span>
-      </template>
-      
-      <template #cell-vigencia="{ row }">
-        <div class="text-sm text-ebony-800">
-          <div >{{ row.vigenciaInicio }}</div>
-        </div>
-      </template>
-      
-      <template #cell-estado="{ value }">
-        <UiStatusBadge
-          :value="getEstadoText(value)"
-          format="text"
-          :variant="getEstadoVariant(value)"
-          size="sm"
-        />
-      </template>
-      
-    </UiDataTable>
-
-    <!-- Pagination -->
-    <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
-      <div class="flex-1 flex justify-between sm:hidden">
-        <button class="relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
-          Anterior
-        </button>
-        <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
-          Siguiente
-        </button>
-      </div>
-      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-        <div>
-          <p class="text-sm text-titan-700">
-            Mostrando <span class="font-medium">1</span> a <span class="font-medium">15</span> de{' '}
-            <span class="font-medium">{{ filteredPrecios.length }}</span> resultados
-          </p>
-        </div>
-        <div>
-          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-            <button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
-              <ChevronLeftIcon class="h-5 w-5" />
-            </button>
-            <button class="relative inline-flex items-center px-4 py-2 border border-titan-300 bg-white text-sm font-medium text-titan-700 hover:bg-titan-50">
-              1
-            </button>
-            <button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
-              <ChevronRightIcon class="h-5 w-5" />
-            </button>
-          </nav>
+          <div>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+              <button @click="prevPage" :disabled="currentPage === 1" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
+                <ChevronLeftIcon class="h-5 w-5" />
+              </button>
+              <button v-for="page in totalPages" :key="page" @click="goToPage(page)"
+                :class="[
+                  'relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium',
+                  currentPage === page ? 'bg-crocus-50 border-crocus-500 text-crocus-600' : 'bg-white text-titan-700 hover:bg-titan-50'
+                ]">
+                {{ page }}
+              </button>
+              <button @click="nextPage" :disabled="currentPage === totalPages" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
+                <ChevronRightIcon class="h-5 w-5" />
+              </button>
+            </nav>
+          </div>
         </div>
       </div>
     </div>
@@ -141,215 +114,115 @@
 
 <script setup>
 import { 
-  PlusIcon, 
-  MagnifyingGlassIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  CurrencyDollarIcon,
-  ScaleIcon,
-  ArrowUpTrayIcon,
-  DocumentDuplicateIcon,
   ChevronLeftIcon,
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
+import { ref, computed } from 'vue'
 
-// Reactive state
-const searchTerm = ref('')
-const proveedorFilter = ref('')
-const statusFilter = ref('')
-const showComparison = ref(false)
-const showCreateModal = ref(false)
-const showImportModal = ref(false)
+// Tenant reactivity
+const { onTenantChange, currentTenant } = useTenantReactive()
 
-// Summary data
+// Reactive state for API parameters
+const currentPage = ref(1);
+const itemsPerPage = ref(15);
+const apiSearchTerm = ref('');
+const apiCategory = ref(null);
+const apiSupplierId = ref(null);
+
+// useFetch for ingredients
+const { data: ingredientsData, pending: isLoading, error: fetchError, refresh } = useFetch('/api/suppliers/ingredients', {
+  server: false,
+  immediate: true,
+  watch: [currentTenant, currentPage, itemsPerPage, apiSearchTerm, apiCategory, apiSupplierId],
+  query: computed(() => {
+    const params = {
+      page: currentPage.value,
+      limit: itemsPerPage.value,
+    };
+    if (apiSearchTerm.value) params.search = apiSearchTerm.value;
+    if (apiCategory.value) params.category = apiCategory.value;
+    if (apiSupplierId.value) params.supplier_id = apiSupplierId.value;
+    return params;
+  }),
+  default: () => ({ data: [], total: 0 }),
+  transform: (response) => ({
+    data: response.data || [],
+    total: response.total || 0,
+  }),
+});
+
+// Computed properties for data
+const ingredients = computed(() => ingredientsData.value?.data || []);
+const totalIngredients = computed(() => ingredientsData.value?.total || 0);
+
+// Summary data (can be computed from fetched data later)
 const summary = ref({
-  totalPrecios: 728,
-  activos: 692,
-  porVencer: 28,
-  ingredientes: 52
+  totalPrecios: totalIngredients,
+  porVencer: 0, // This logic needs to be defined based on an expiration date
+  ingredientes: totalIngredients
 })
-
-// Mock data para precios
-const precios = ref([
-  {
-    id: 1,
-    ingrediente: 'Jalapeños',
-    proveedor: 'Abastos',
-    precio: 8,
-    unidad: 'gr',
-    vigenciaInicio: '2025-11-05',
-    vigenciaFin: null,
-    estado: 'active'
-  },
-  {
-    id: 2,
-    ingrediente: 'Oregano',
-    proveedor: 'Abastos',
-    precio: 40,
-    unidad: 'gr',
-    vigenciaInicio: '2025-11-05',
-    vigenciaFin: null,
-    estado: 'active'
-  },
-  {
-    id: 3,
-    ingrediente: 'Coca-Cola 1.5L',
-    proveedor: 'COCA COLA FEMSA',
-    precio: 5417,
-    unidad: 'und',
-    vigenciaInicio: '2025-11-05',
-    vigenciaFin: '2025-12-05',
-    estado: 'expiring'
-  },
-  {
-    id: 4,
-    ingrediente: 'Queso Chedar',
-    proveedor: 'Calypso del Caribe',
-    precio: 500,
-    unidad: 'und',
-    vigenciaInicio: '2025-11-05',
-    vigenciaFin: null,
-    estado: 'active'
-  },
-  {
-    id: 5,
-    ingrediente: 'Papas Fritas',
-    proveedor: 'Calypso del Caribe',
-    precio: 8.3,
-    unidad: 'gr',
-    vigenciaInicio: '2025-11-05',
-    vigenciaFin: null,
-    estado: 'active'
-  },
-  {
-    id: 6,
-    ingrediente: 'Humo Liquido',
-    proveedor: 'CIMPAC',
-    precio: 20,
-    unidad: 'ml',
-    vigenciaInicio: '2025-10-01',
-    vigenciaFin: '2025-11-10',
-    estado: 'expiring'
-  }
-])
 
 // DataTable configuration
 const preciosTableColumns = [
   {
-    key: 'ingrediente',
+    key: 'name',
     title: 'Ingrediente',
     sortable: true,
     format: 'text',
     align: 'left'
   },
   {
-    key: 'proveedor',
-    title: 'Proveedor',
-    sortable: true,
-    format: 'text',
-    align: 'left'
-  },
-  {
-    key: 'precio',
+    key: 'price',
     title: 'Precio',
     sortable: true,
     format: 'currency',
     align: 'right'
   },
   {
-    key: 'unidad',
+    key: 'unit',
     title: 'Unidad',
-    sortable: true,
-    format: 'text',
-    align: 'center'
-  },
-  {
-    key: 'vigencia',
-    title: 'Vigencia',
-    sortable: false,
-    format: 'text',
-    align: 'left'
-  },
-  {
-    key: 'estado',
-    title: 'Estado',
     sortable: true,
     format: 'text',
     align: 'center'
   },
 ]
 
-// Helper functions for status badges
-function getEstadoText(estado) {
-  switch (estado) {
-    case 'active':
-      return 'Activo'
-    case 'expiring':
-      return 'Por vencer'
-    default:
-      return 'Vencido'
+// Computed properties for summary cards
+const uniqueCategoriesCount = computed(() => {
+  const categories = new Set(ingredients.value.map(i => i.category).filter(Boolean));
+  return categories.size;
+});
+
+const averagePrice = computed(() => {
+  const itemsWithPrice = ingredients.value.filter(i => i.price > 0);
+  if (itemsWithPrice.length === 0) return 0;
+  const total = itemsWithPrice.reduce((sum, i) => sum + i.price, 0);
+  return total / itemsWithPrice.length;
+});
+
+// Computed properties for pagination display
+const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1);
+const endIndex = computed(() => Math.min(currentPage.value * itemsPerPage.value, totalIngredients.value));
+const totalPages = computed(() => Math.ceil(totalIngredients.value / itemsPerPage.value));
+
+// Pagination methods
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
   }
-}
+};
 
-function getEstadoVariant(estado) {
-  switch (estado) {
-    case 'active':
-      return 'success'
-    case 'expiring':
-      return 'warning'
-    default:
-      return 'destructive'
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
   }
-}
+};
 
-// Computed properties
-const proveedoresUnicos = computed(() => {
-  return [...new Set(precios.value.map(p => p.proveedor))].sort()
-})
-
-const filteredPrecios = computed(() => {
-  return precios.value.filter(precio => {
-    const matchesSearch = !searchTerm.value || 
-      precio.ingrediente.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-      precio.proveedor.toLowerCase().includes(searchTerm.value.toLowerCase())
-    
-    const matchesProveedor = !proveedorFilter.value || precio.proveedor === proveedorFilter.value
-    const matchesStatus = !statusFilter.value || precio.estado === statusFilter.value
-    
-    return matchesSearch && matchesProveedor && matchesStatus
-  })
-})
-
-const topComparisons = computed(() => {
-  // Agrupar precios por ingrediente para comparación
-  const grouped = {}
-  precios.value.forEach(precio => {
-    if (!grouped[precio.ingrediente]) {
-      grouped[precio.ingrediente] = []
-    }
-    grouped[precio.ingrediente].push(precio)
-  })
-  
-  // Tomar los primeros 3 ingredientes que tienen múltiples proveedores
-  const comparisons = Object.entries(grouped)
-    .filter(([_, precios]) => precios.length > 1)
-    .slice(0, 3)
-    .map(([ingrediente, precios]) => {
-      const sortedPrecios = precios.sort((a, b) => a.precio - b.precio)
-      return {
-        ingrediente,
-        precios: sortedPrecios.map((p, idx) => ({
-          proveedor: p.proveedor,
-          precio: p.precio.toLocaleString(),
-          unidad: p.unidad,
-          esMenor: idx === 0
-        }))
-      }
-    })
-  
-  return comparisons
-})
-
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
 
 useHead({
   title: 'Lista de Precios - Abastecimiento'

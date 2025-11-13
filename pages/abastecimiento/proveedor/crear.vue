@@ -164,7 +164,7 @@ const isSubmitting = ref(false)
 // Setup useAsyncData for the POST request
 const { execute: createSupplier, error: createError } = useAsyncData(
   'create-supplier-call', // Unique key
-  () => $fetch('/api/suppliers', {
+  () => $fetch('/api/suppliers/providers', {
     method: 'POST',
     body: form,
   }),
