@@ -115,6 +115,13 @@
         
         <template #cell-actions="{ row }">
           <div class="flex justify-center space-x-2">
+            <button @click="copyPortalLink(row)"
+              class="text-blue-600 hover:text-blue-900 transition-colors"
+              title="Copiar enlace del portal">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            </button>
             <button @click="editProveedor(row)"
               class="text-crocus-600 hover:text-crocus-900 transition-colors"
               title="Editar proveedor">
@@ -422,7 +429,27 @@ const editProveedor = (proveedor) => {
 
 }
 
+const copyPortalLink = async (proveedor) => {
+  try {
+    const baseUrl = window.location.origin
+    const portalUrl = `${baseUrl}/proveedor/${proveedor.access_token}`
 
+    await navigator.clipboard.writeText(portalUrl)
+
+    useToast().add({
+      title: 'Enlace Copiado',
+      description: 'El enlace del portal ha sido copiado al portapapeles',
+      color: 'green'
+    })
+  } catch (error) {
+    console.error('Error copying portal link:', error)
+    useToast().add({
+      title: 'Error',
+      description: 'No se pudo copiar el enlace',
+      color: 'red'
+    })
+  }
+}
 
 // The toggleStatus function might need to be updated to call the API
 

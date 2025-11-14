@@ -12,6 +12,11 @@
             <h1 class="text-3xl font-bold text-ebony-800">{{ pageTitle }}</h1>
             <p class="text-sm text-ebony-400 mt-1">{{ currentDateTime }}</p>
           </div>
+          <div v-if="backButton">
+            <NuxtLink :to="backButton.url" class="btn-secondary px-4 py-2 rounded-lg text-sm">
+              {{ backButton.label }}
+            </NuxtLink>
+          </div>
         </div>
       </header>
 
@@ -45,6 +50,9 @@
         </div>
       </div>
     </main>
+
+    <!-- Global Purchase Action Bar -->
+    <PurchasesGlobalPurchaseActionBar />
   </div>
 </template>
 
@@ -67,7 +75,8 @@ const getPageConfig = () => {
       searchPlaceholder: 'Buscar métricas financieras...',
       activePage: 'financiero' as const,
       showBreadcrumb: false,
-      breadcrumbPage: undefined
+      breadcrumbPage: undefined,
+      backButton: undefined
     }
   } else if (path === '/financiero/tir') {
     return {
@@ -76,7 +85,8 @@ const getPageConfig = () => {
       searchPlaceholder: 'Buscar métricas TIR...',
       activePage: 'financiero' as const,
       showBreadcrumb: false,
-      breadcrumbPage: undefined
+      breadcrumbPage: undefined,
+      backButton: undefined
     }
   } else if (path === '/financiero/analisis') {
     return {
@@ -85,7 +95,8 @@ const getPageConfig = () => {
       searchPlaceholder: 'Buscar productos...',
       activePage: 'financiero' as const,
       showBreadcrumb: false,
-      breadcrumbPage: undefined
+      breadcrumbPage: undefined,
+      backButton: undefined
     }
   } else if (path === '/financiero/obstaculos') {
     return {
@@ -94,7 +105,8 @@ const getPageConfig = () => {
       searchPlaceholder: 'Buscar obstáculos...',
       activePage: 'financiero' as const,
       showBreadcrumb: false,
-      breadcrumbPage: undefined
+      breadcrumbPage: undefined,
+      backButton: undefined
     }
   } else if (path === '/abastecimiento' || path === '/abastecimiento/') {
     return {
@@ -103,7 +115,8 @@ const getPageConfig = () => {
       searchPlaceholder: 'Buscar en abastecimiento...',
       activePage: 'abastecimiento' as const,
       showBreadcrumb: false,
-      breadcrumbPage: undefined
+      breadcrumbPage: undefined,
+      backButton: undefined
     }
   } else if (path === '/abastecimiento/proveedores') {
     return {
@@ -112,7 +125,8 @@ const getPageConfig = () => {
       searchPlaceholder: 'Buscar proveedores...',
       activePage: 'abastecimiento' as const,
       showBreadcrumb: false,
-      breadcrumbPage: undefined
+      breadcrumbPage: undefined,
+      backButton: undefined
     }
   } else if (path === '/abastecimiento/precios') {
     return {
@@ -121,7 +135,8 @@ const getPageConfig = () => {
       searchPlaceholder: 'Buscar precios...',
       activePage: 'abastecimiento' as const,
       showBreadcrumb: false,
-      breadcrumbPage: undefined
+      breadcrumbPage: undefined,
+      backButton: undefined
     }
   } else if (path === '/abastecimiento/compras') {
     return {
@@ -130,7 +145,34 @@ const getPageConfig = () => {
       searchPlaceholder: 'Buscar órdenes...',
       activePage: 'abastecimiento' as const,
       showBreadcrumb: false,
-      breadcrumbPage: undefined
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/abastecimiento/compra/crear') {
+    return {
+      pageTitle: 'Crear Nueva Orden de Compra',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: {
+        label: 'Volver',
+        url: '/abastecimiento/compras'
+      }
+    }
+  } else if (path.startsWith('/abastecimiento/compra/')) {
+    return {
+      pageTitle: 'Editar Orden de Compra',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: {
+        label: 'Volver',
+        url: '/abastecimiento/compras'
+      }
     }
   } else if (path.includes('/analytics')) {
     return {
@@ -139,7 +181,8 @@ const getPageConfig = () => {
       searchPlaceholder: 'Buscar métricas...',
       activePage: 'analytics' as const,
       showBreadcrumb: true,
-      breadcrumbPage: 'Analytics'
+      breadcrumbPage: 'Analytics',
+      backButton: undefined
     }
   } else if (path.includes('/reportes')) {
     return {
@@ -148,7 +191,8 @@ const getPageConfig = () => {
       searchPlaceholder: 'Buscar reportes...',
       activePage: 'reportes' as const,
       showBreadcrumb: true,
-      breadcrumbPage: 'Reportes'
+      breadcrumbPage: 'Reportes',
+      backButton: undefined
     }
   } else if (path.includes('/configuracion')) {
     return {
@@ -157,7 +201,8 @@ const getPageConfig = () => {
       searchPlaceholder: 'Buscar configuración...',
       activePage: 'configuracion' as const,
       showBreadcrumb: true,
-      breadcrumbPage: 'Configuración'
+      breadcrumbPage: 'Configuración',
+      backButton: undefined
     }
   } else if (path.includes('/admin')) {
     return {
@@ -166,17 +211,19 @@ const getPageConfig = () => {
       searchPlaceholder: 'Buscar en administración...',
       activePage: 'admin' as const,
       showBreadcrumb: true,
-      breadcrumbPage: 'Administración'
+      breadcrumbPage: 'Administración',
+      backButton: undefined
     }
   }
-  
+
   return {
     pageTitle: 'Dashboard',
     pageSubtitle: undefined,
     searchPlaceholder: 'Buscar...',
     activePage: 'dashboard' as const,
     showBreadcrumb: false,
-    breadcrumbPage: undefined
+    breadcrumbPage: undefined,
+    backButton: undefined
   }
 }
 
@@ -187,6 +234,7 @@ const searchPlaceholder = computed(() => config.value.searchPlaceholder)
 const activePage = computed(() => config.value.activePage)
 const showBreadcrumb = computed(() => config.value.showBreadcrumb)
 const breadcrumbPage = computed(() => config.value.breadcrumbPage)
+const backButton = computed(() => config.value.backButton)
 
 // Date and time functionality
 const currentDateTime = ref('')

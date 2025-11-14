@@ -112,11 +112,20 @@
           <h3 class="text-lg font-bold text-text-primary">
             Órdenes de Compra
           </h3>
-          <NuxtLink 
-            to="/abastecimiento/compra/crear" 
-            class="btn-primary px-6 py-2 rounded-lg text-sm font-medium">
-            + Nueva Orden
-          </NuxtLink>
+          <div class="flex items-center gap-2">
+            <NuxtLink
+              to="/abastecimiento/compra/crear"
+              class="btn-primary px-6 py-2 rounded-lg text-sm font-medium">
+              + Nueva Orden
+            </NuxtLink>
+            <button
+              @click="refresh"
+              class="p-2 text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+              title="Refrescar lista"
+            >
+              <ArrowPathIcon class="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </template>
       <!-- Custom slots for special columns -->
@@ -226,8 +235,8 @@
 </template>
 
 <script setup>
-import { 
-  PlusIcon, 
+import {
+  PlusIcon,
   MagnifyingGlassIcon,
   DocumentTextIcon,
   ClockIcon,
@@ -242,7 +251,8 @@ import {
   ChevronRightIcon,
   TruckIcon,
   DocumentCheckIcon,
-  EllipsisHorizontalIcon
+  EllipsisHorizontalIcon,
+  ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 
 // Reactive state

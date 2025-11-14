@@ -1,74 +1,166 @@
 <template>
   <div class="page-layout">
-    <!-- Loading overlay during submit (always on top) -->
+    <!-- Loading overlay during submit -->
     <div v-if="isSubmitting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-8 flex flex-col items-center">
         <CommonsTheCustomLoader size="large" />
-        <p class="mt-4 text-lg font-semibold text-text-primary">Creando orden de compra...</p>
+        <p class="mt-4 text-lg font-semibold text-text-primary">Creando cotización...</p>
       </div>
     </div>
 
-    <!-- Loading State for initial data -->
+    <!-- Loading State -->
     <div v-if="isLoadingData" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- Main Content -->
     <div v-else>
-    <!-- Header -->
-    <div class="bg-surface border-border border rounded-lg">
-      <div class="p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-2xl font-bold text-text-primary">Crear Nueva Orden de Compra</h2>
-            <p class="text-sm text-text-secondary mt-1">Complete la información de la orden</p>
+      <!-- Order Information Card -->
+      <div class="bg-surface border-2 border-border rounded-lg mb-6">
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Purchase Number -->
+            <div class="flex items-center space-x-3">
+              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                  Número de Orden
+                </p>
+                <p class="text-lg font-semibold text-text-primary">
+                  {{ nextPurchaseNumber }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Date -->
+            <div class="flex items-center space-x-3">
+              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                  Fecha de Orden
+                </p>
+                <p class="text-lg font-semibold text-text-primary">
+                  Al momento de crear
+                </p>
+              </div>
+            </div>
+
+            <!-- Status Badge -->
+            <div class="flex items-center space-x-3">
+              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                  Estado
+                </p>
+                <div class="pt-1">
+                  <UiStatusBadge
+                    value="Creado"
+                    format="text"
+                    variant="info"
+                    size="lg"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-          <NuxtLink
-            to="/abastecimiento/compras"
-            class="btn-secondary px-4 py-2 rounded-lg text-sm">
-            Volver
-          </NuxtLink>
         </div>
       </div>
-    </div>
 
-    <!-- Resumen -->
-    <div class="bg-surface border-border border rounded-lg">
-      <div class="p-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="flex items-center space-x-4">
-            <div class="bg-primary-100 p-3 rounded-lg">
-              <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+      <!-- Progress Steps -->
+      <div class="bg-surface border-border border rounded-lg mb-6">
+        <div class="p-6">
+          <div class="flex items-center justify-between">
+            <!-- Step 1 -->
+            <div class="flex items-center flex-1">
+              <div
+                class="flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2"
+                :class="{
+                  'bg-primary text-primary-foreground border-primary': currentStep === 1,
+                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 1,
+                  'border-border text-text-secondary bg-transparent': currentStep < 1
+                }"
+              >
+                <svg v-if="currentStep > 1" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                <span v-else class="font-semibold">1</span>
+              </div>
+              <div class="ml-3 flex-1">
+                <p class="text-sm font-medium" :class="currentStep >= 1 ? 'text-text-primary' : 'text-text-secondary'">
+                  Información General
+                </p>
+                <p class="text-xs text-text-secondary">Proveedor y detalles</p>
+              </div>
+              <div class="flex-1 h-1 mx-4" :class="currentStep > 1 ? 'bg-secondary' : 'bg-border'"></div>
             </div>
-            <div>
-              <p class="text-xs text-text-secondary">Número de Orden</p>
-              <p class="text-lg font-semibold text-text-primary">{{ nextPurchaseNumber }}</p>
+
+            <!-- Step 2 -->
+            <div class="flex items-center flex-1">
+              <div
+                class="flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2"
+                :class="{
+                  'bg-primary text-primary-foreground border-primary': currentStep === 2,
+                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 2,
+                  'border-border text-text-secondary bg-transparent': currentStep < 2
+                }"
+              >
+                <svg v-if="currentStep > 2" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                <span v-else class="font-semibold">2</span>
+              </div>
+              <div class="ml-3 flex-1">
+                <p class="text-sm font-medium" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">
+                  Alimentos
+                </p>
+                <p class="text-xs text-text-secondary">Productos e ingredientes</p>
+              </div>
+              <div class="flex-1 h-1 mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'"></div>
             </div>
-          </div>
-          <div class="flex items-center space-x-4">
-            <div class="bg-green-100 p-3 rounded-lg">
-              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-xs text-text-secondary">Fecha de Orden</p>
-              <p class="text-lg font-semibold text-text-primary">Al momento de crear</p>
+
+            <!-- Step 3 -->
+            <div class="flex items-center">
+              <div
+                class="flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2"
+                :class="{
+                  'bg-primary text-primary-foreground border-primary': currentStep === 3,
+                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 3,
+                  'border-border text-text-secondary bg-transparent': currentStep < 3
+                }"
+              >
+                <span class="font-semibold">3</span>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">
+                  Revisión y Confirmación
+                </p>
+                <p class="text-xs text-text-secondary">Verificar y crear</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Form -->
-    <div class="bg-surface border-border border rounded-lg">
-      <div class="p-6">
-        <form @submit.prevent="handleSubmit" class="space-y-6">
-          <!-- Información General -->
-          <div>
-            <h3 class="text-lg font-semibold text-text-primary mb-4">Información General</h3>
+      <!-- Form Content -->
+      <form @submit.prevent="handleNext">
+        <!-- Step 1: Información General -->
+        <Transition name="fade" mode="out-in">
+        <div v-if="currentStep === 1" key="step-1" class="bg-surface border-border border rounded-lg">
+          <div class="p-6">
+            <h3 class="text-lg font-semibold text-text-primary mb-6">Información General</h3>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
@@ -84,33 +176,6 @@
 
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Fecha de Entrega
-                </label>
-                <input
-                  v-model="form.delivery_date"
-                  type="datetime-local"
-                  class="input-base w-full px-4 py-2"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Estado
-                </label>
-                <select
-                  v-model="form.status"
-                  class="input-base w-full px-4 py-2"
-                >
-                  <option value="pending">Pendiente</option>
-                  <option value="sent">Enviada</option>
-                  <option value="received">Recibida</option>
-                  <option value="invoiced">Facturada</option>
-                  <option value="overdue">Vencida</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
                   Número de Factura
                 </label>
                 <input
@@ -120,24 +185,50 @@
                   placeholder="Ej: FAC-001234 (opcional)"
                 />
               </div>
+
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Observaciones
+                </label>
+                <textarea
+                  v-model="form.notes"
+                  class="input-base w-full px-4 py-2"
+                  rows="3"
+                  placeholder="Observaciones adicionales sobre la orden..."
+                ></textarea>
+              </div>
             </div>
           </div>
+        </div>
 
-          <!-- Items de la Orden -->
-          <div>
-            <h3 class="text-lg font-semibold text-text-primary mb-4">Items de la Orden</h3>
+        <!-- Step 2: Items -->
+        <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border-border border rounded-lg">
+          <div class="p-6">
+            <h3 class="text-lg font-semibold text-text-primary mb-6">Alimentos</h3>
 
             <div class="space-y-4">
               <div
                 v-for="(item, index) in form.items"
                 :key="index"
-                class="p-4 border border-border rounded-lg"
+                class="p-4 border-2 border-border rounded-lg"
               >
-                <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                <div class="flex justify-between items-start mb-4">
+                  <h4 class="font-medium text-text-primary">Alimento #{{ index + 1 }}</h4>
+                  <button
+                    type="button"
+                    @click="removeItem(index)"
+                    :disabled="form.items.length === 1"
+                    class="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Ingrediente *
-                    </label>
+                    <label class="block text-sm font-medium text-text-primary mb-2">Ingrediente *</label>
                     <UiSearchableSelect
                       v-model="item.ingredient_id"
                       :options="ingredientOptions"
@@ -148,25 +239,7 @@
                   </div>
 
                   <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Cantidad *
-                    </label>
-                    <input
-                      v-model.number="item.quantity"
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      required
-                      class="input-base w-full px-4 py-2"
-                      placeholder="0"
-                      @input="updateItemTotal(index)"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Unidad de Compra *
-                    </label>
+                    <label class="block text-sm font-medium text-text-primary mb-2">Unidad de Compra *</label>
                     <select
                       v-model="item.purchase_unit"
                       required
@@ -190,87 +263,28 @@
                   </div>
 
                   <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Precio por {{ item.purchase_unit || 'unidad' }} *
-                    </label>
+                    <label class="block text-sm font-medium text-text-primary mb-2">Cantidad *</label>
                     <input
-                      v-model.number="item.purchase_price"
+                      v-model.number="item.quantity"
                       type="number"
+                      min="0.01"
                       step="0.01"
-                      min="0"
                       required
                       class="input-base w-full px-4 py-2"
-                      placeholder="0.00"
-                      @input="onPurchasePriceChange(index)"
+                      @input="updateItemTotal(index)"
                     />
-                    <p v-if="item.unit_cost && item.purchase_unit" class="text-xs text-titan-500 mt-1">
-                      ≈ ${{ formatPrice(item.unit_cost) }} por {{ getIngredientUnit(item.ingredient_id) }}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Total
-                    </label>
-                    <input
-                      :value="item.total_cost?.toLocaleString() || '0'"
-                      type="text"
-                      readonly
-                      class="input-base w-full px-4 py-2 bg-surface-secondary"
-                    />
-                    <p v-if="item.quantity && item.purchase_unit" class="text-xs text-titan-500 mt-1">
-                      {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
-                    </p>
-                  </div>
-
-                  <div class="flex items-end">
-                    <button
-                      type="button"
-                      @click="removeItem(index)"
-                      :disabled="form.items.length === 1"
-                      class="btn-destructive px-4 py-2 rounded-lg text-sm disabled:opacity-50 w-full"
-                    >
-                      Eliminar
-                    </button>
                   </div>
                 </div>
 
-                <!-- Additional fields -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                  <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Fecha de Vencimiento
-                    </label>
-                    <input
-                      v-model="item.expiry_date"
-                      type="date"
-                      class="input-base w-full px-4 py-2"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Número de Lote
-                    </label>
-                    <input
-                      v-model="item.batch_number"
-                      type="text"
-                      class="input-base w-full px-4 py-2"
-                      placeholder="Ej: LOTE-2025-001"
-                    />
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Notas del Item
-                    </label>
-                    <input
-                      v-model="item.notes"
-                      type="text"
-                      class="input-base w-full px-4 py-2"
-                      placeholder="Observaciones"
-                    />
-                  </div>
+                <!-- Notas del Item -->
+                <div class="mt-4">
+                  <label class="block text-sm font-medium text-text-primary mb-2">Notas del Item</label>
+                  <input
+                    v-model="item.notes"
+                    type="text"
+                    class="input-base w-full px-4 py-2"
+                    placeholder="Observaciones opcionales"
+                  />
                 </div>
               </div>
             </div>
@@ -283,79 +297,135 @@
               + Agregar Item
             </button>
           </div>
+        </div>
 
-          <!-- Totals -->
-          <div class="bg-surface-secondary p-4 rounded-lg">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Step 3: Review - Quotation Summary -->
+        <div v-else-if="currentStep === 3" key="step-3" class="bg-surface border border-border rounded-lg">
+          <!-- Quotation Header -->
+          <div class="border-b border-border p-8">
+            <div class="flex justify-between items-start">
               <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Subtotal
-                </label>
-                <input
-                  :value="subtotal.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })"
-                  type="text"
-                  readonly
-                  class="input-base w-full px-4 py-2 bg-white font-semibold"
-                />
+                <h1 class="text-3xl font-bold text-text-primary mb-2">COTIZACIÓN</h1>
+                <p class="text-sm text-text-secondary">Resumen de solicitud de cotización</p>
               </div>
-
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  IVA
-                </label>
-                <input
-                  v-model.number="form.tax_amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="input-base w-full px-4 py-2"
-                  placeholder="0.00"
-                  @input="updateTotal"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Total
-                </label>
-                <input
-                  :value="totalAmount.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })"
-                  type="text"
-                  readonly
-                  class="input-base w-full px-4 py-2 bg-white font-bold text-lg"
-                />
+              <div class="text-right">
+                <div class="border-2 border-border px-4 py-2 rounded-lg inline-block mb-2 bg-surface-secondary">
+                  <p class="text-xs font-medium text-text-secondary">COTIZACIÓN N°</p>
+                  <p class="text-xl font-bold text-text-primary">{{ nextPurchaseNumber }}</p>
+                </div>
+                <p class="text-xs text-text-secondary mt-2">
+                  Fecha: {{ new Date().toLocaleDateString('es-CO') }}
+                </p>
               </div>
             </div>
           </div>
 
-          <!-- Observaciones -->
-          <div>
-            <h3 class="text-lg font-semibold text-text-primary mb-4">Observaciones</h3>
-            <textarea
-              v-model="form.notes"
-              class="input-base w-full px-4 py-2"
-              rows="3"
-              placeholder="Observaciones adicionales sobre la orden..."
-            ></textarea>
+          <!-- Supplier Info -->
+          <div class="px-8 py-6 border-b border-border">
+            <div class="grid grid-cols-2 gap-8">
+              <div>
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Proveedor</p>
+                <p class="text-lg font-bold text-text-primary">{{ getSupplierName(form.supplier_id) }}</p>
+              </div>
+              <div>
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Estado</p>
+                <UiStatusBadge
+                  value="Cotización"
+                  format="text"
+                  variant="info"
+                  size="md"
+                />
+                <p v-if="form.notes" class="text-sm text-text-secondary mt-2">{{ form.notes }}</p>
+              </div>
+            </div>
           </div>
 
-          <!-- Buttons -->
-          <div class="flex justify-end space-x-4 pt-6 border-t border-border">
-            <NuxtLink
-              to="/abastecimiento/compras"
-              class="btn-secondary px-6 py-2 rounded-lg">
-              Cancelar
-            </NuxtLink>
+          <!-- Items Table -->
+          <div class="px-8 py-6">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-border">
+                  <th class="text-left py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                    Alimento
+                  </th>
+                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                    Cantidad Solicitada
+                  </th>
+                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                    Equivalente
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(item, index) in form.items"
+                  :key="index"
+                  class="border-b border-border"
+                >
+                  <td class="py-4">
+                    <p class="font-medium text-text-primary">{{ getIngredientName(item.ingredient_id) }}</p>
+                    <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
+                  </td>
+                  <td class="text-right py-4 text-text-primary font-semibold">
+                    {{ item.quantity }} {{ item.purchase_unit }}
+                  </td>
+                  <td class="text-right py-4 text-text-secondary text-sm">
+                    {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Footer Note -->
+          <div class="px-8 py-4 bg-surface-secondary border-t border-border">
+            <p class="text-xs text-text-secondary text-center">
+              Al crear esta cotización, se registrará en el sistema con el número {{ nextPurchaseNumber }}
+            </p>
+          </div>
+        </div>
+        </Transition>
+
+        <!-- Spacer for fixed buttons -->
+        <div class="h-24"></div>
+      </form>
+
+      <!-- Fixed Navigation Buttons -->
+      <div class="fixed bottom-0 left-64 right-0 bg-surface border-t border-border shadow-lg z-40">
+        <div class="px-8 py-4">
+          <div class="flex justify-between items-center">
             <button
+              v-if="currentStep > 1"
+              type="button"
+              @click="previousStep"
+              class="btn-secondary px-6 py-2 rounded-lg"
+            >
+              ← Anterior
+            </button>
+            <div v-else></div>
+
+            <button
+              v-if="currentStep < 3"
               type="submit"
+              @click="handleNext"
+              :disabled="(currentStep === 1 && !isStep1Valid) || (currentStep === 2 && !isStep2Valid)"
+              class="btn-primary px-6 py-2 rounded-lg transition-opacity"
+              :class="{ 'opacity-50 cursor-not-allowed': (currentStep === 1 && !isStep1Valid) || (currentStep === 2 && !isStep2Valid) }"
+            >
+              Siguiente →
+            </button>
+            <button
+              v-else
+              type="button"
+              @click="handleSubmit"
               :disabled="isSubmitting"
-              class="btn-primary px-6 py-2 rounded-lg disabled:opacity-50">
-              {{ isSubmitting ? 'Creando...' : 'Crear Orden' }}
+              class="btn-primary px-6 py-2 rounded-lg disabled:opacity-50"
+            >
+              {{ isSubmitting ? 'Creando...' : 'Crear y Enviar Cotización' }}
             </button>
           </div>
-        </form>
+        </div>
       </div>
-    </div>
     </div>
   </div>
 </template>
@@ -366,13 +436,16 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Crear Orden de Compra - Abastecimiento'
+  title: 'Crear Cotización - Abastecimiento'
 })
 
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
 
-// Fetch suppliers (NO await to show loading)
+// Wizard state
+const currentStep = ref(1)
+
+// Fetch suppliers
 const { data: suppliersData, pending: loadingSuppliers } = useFetch('/api/suppliers/providers', {
   server: false,
   query: { limit: 250 }
@@ -380,7 +453,6 @@ const { data: suppliersData, pending: loadingSuppliers } = useFetch('/api/suppli
 
 const suppliers = computed(() => suppliersData.value?.data || [])
 
-// Transform suppliers for SearchableSelect
 const supplierOptions = computed(() =>
   suppliers.value.map(supplier => ({
     value: supplier.id,
@@ -388,7 +460,7 @@ const supplierOptions = computed(() =>
   }))
 )
 
-// Fetch ingredients (NO await to show loading)
+// Fetch ingredients
 const { data: ingredientsData, pending: loadingIngredients } = useFetch('/api/suppliers/ingredients', {
   server: false,
   query: { limit: 250 }
@@ -396,7 +468,6 @@ const { data: ingredientsData, pending: loadingIngredients } = useFetch('/api/su
 
 const ingredients = computed(() => ingredientsData.value?.data || [])
 
-// Transform ingredients for SearchableSelect
 const ingredientOptions = computed(() =>
   ingredients.value.map(ingredient => ({
     value: ingredient.id,
@@ -411,10 +482,10 @@ const { data: nextNumberData, pending: loadingNextNumber } = useFetch('/api/supp
 
 const nextPurchaseNumber = computed(() => nextNumberData.value?.next_number || 'WR-2025-XXXX')
 
-// Loading state for initial data
+// Loading state
 const isLoadingData = computed(() => loadingSuppliers.value || loadingIngredients.value || loadingNextNumber.value)
 
-// Get current date and time in local timezone for datetime-local input
+// Get current date and time
 const getCurrentDateTime = () => {
   const now = new Date()
   const year = now.getFullYear()
@@ -425,24 +496,18 @@ const getCurrentDateTime = () => {
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
-// Unit conversion factors (to convert to base unit)
+// Unit conversion factors
 const unitConversions = {
-  // Peso (base: gr)
   'gr-gr': 1,
   'kg-gr': 1000,
   'lb-gr': 453.592,
   'oz-gr': 28.3495,
-
-  // Volumen (base: ml)
   'ml-ml': 1,
   'lt-ml': 1000,
   'gal-ml': 3785.41,
-
-  // Unidades discretas
   'und-und': 1
 }
 
-// Get conversion factor
 const getConversionFactor = (fromUnit, toUnit) => {
   const key = `${fromUnit}-${toUnit}`
   return unitConversions[key] || 1
@@ -451,8 +516,6 @@ const getConversionFactor = (fromUnit, toUnit) => {
 // Form state
 const form = ref({
   supplier_id: '',
-  // purchase_number is auto-generated by backend
-  // purchase_date will be set when creating
   delivery_date: '',
   status: 'pending',
   invoice_number: '',
@@ -463,10 +526,10 @@ const form = ref({
     {
       ingredient_id: '',
       quantity: 1,
-      purchase_unit: '',     // Unidad en la que se compra
-      purchase_price: 0,      // Precio en la unidad de compra
-      unit: '',               // Unidad base del ingrediente (para BD)
-      unit_cost: 0,           // Precio convertido a unidad base
+      purchase_unit: '',
+      purchase_price: 0,
+      unit: '',
+      unit_cost: 0,
       total_cost: 0,
       expiry_date: null,
       batch_number: '',
@@ -492,10 +555,34 @@ const formatPrice = (price) => {
   return price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleString('es-CO', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 const getIngredientUnit = (ingredientId) => {
   if (!ingredientId) return ''
   const ingredient = ingredients.value.find(ing => ing.id === ingredientId)
   return ingredient?.unit || ''
+}
+
+const getIngredientName = (ingredientId) => {
+  if (!ingredientId) return ''
+  const ingredient = ingredients.value.find(ing => ing.id === ingredientId)
+  return ingredient?.name || ''
+}
+
+const getSupplierName = (supplierId) => {
+  if (!supplierId) return ''
+  const supplier = suppliers.value.find(sup => sup.id === supplierId)
+  return supplier?.name || ''
 }
 
 const getUnitOptionsForIngredient = (ingredientId) => {
@@ -503,7 +590,6 @@ const getUnitOptionsForIngredient = (ingredientId) => {
 
   const baseUnit = getIngredientUnit(ingredientId)
 
-  // Retornar opciones según el tipo de unidad base
   if (baseUnit === 'gr') {
     return [
       { value: 'gr', label: 'Gramos (gr)' },
@@ -543,15 +629,12 @@ const onIngredientChange = (index) => {
     ing => ing.id === form.value.items[index].ingredient_id
   )
   if (selectedIngredient) {
-    // Set base unit
     form.value.items[index].unit = selectedIngredient.unit
-    // Set default purchase unit to base unit
     form.value.items[index].purchase_unit = selectedIngredient.unit
   }
 }
 
 const onPurchaseUnitChange = (index) => {
-  // Recalculate when unit changes
   onPurchasePriceChange(index)
 }
 
@@ -562,10 +645,7 @@ const onPurchasePriceChange = (index) => {
   const baseUnit = getIngredientUnit(item.ingredient_id)
   const factor = getConversionFactor(item.purchase_unit, baseUnit)
 
-  // Convert price to base unit
-  // Ejemplo: $10,000/lb → $22.05/gr (10000 / 453.592)
   item.unit_cost = (item.purchase_price || 0) / factor
-
   updateItemTotal(index)
 }
 
@@ -578,8 +658,6 @@ const updateItemTotal = (index) => {
     return
   }
 
-  // Calculate total with original purchase values (simpler and more intuitive)
-  // Total = quantity purchased × price per unit purchased
   item.total_cost = (parseFloat(item.quantity) || 0) * (parseFloat(item.purchase_price) || 0)
   updateTotal()
 }
@@ -610,12 +688,86 @@ const removeItem = (index) => {
   }
 }
 
+// Wizard navigation - Computed properties for button states
+const isStep1Valid = computed(() => {
+  return !!form.value.supplier_id
+})
+
+const isStep2Valid = computed(() => {
+  if (form.value.items.length === 0) return false
+
+  // For quotations, we only need ingredient, quantity, and unit (no prices)
+  return form.value.items.every(item => {
+    return item.ingredient_id &&
+           item.quantity > 0 &&
+           item.purchase_unit
+  })
+})
+
+const validateStep1 = () => {
+  if (!form.value.supplier_id) {
+    alert('Por favor seleccione un proveedor')
+    return false
+  }
+  return true
+}
+
+const validateStep2 = () => {
+  // Validate all items have required fields (quotations don't need prices yet)
+  for (let i = 0; i < form.value.items.length; i++) {
+    const item = form.value.items[i]
+    if (!item.ingredient_id) {
+      alert(`Por favor seleccione un ingrediente para el alimento #${i + 1}`)
+      return false
+    }
+    if (!item.quantity || item.quantity <= 0) {
+      alert(`Por favor ingrese una cantidad válida para el alimento #${i + 1}`)
+      return false
+    }
+    if (!item.purchase_unit) {
+      alert(`Por favor seleccione una unidad para el alimento #${i + 1}`)
+      return false
+    }
+  }
+  return true
+}
+
+const handleNext = (event) => {
+  console.log('handleNext called, currentStep:', currentStep.value)
+  console.log('form.supplier_id:', form.value.supplier_id)
+
+  if (currentStep.value === 1) {
+    if (validateStep1()) {
+      console.log('Step 1 validated, moving to step 2')
+      currentStep.value = 2
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } else {
+      console.log('Step 1 validation failed')
+    }
+  } else if (currentStep.value === 2) {
+    if (validateStep2()) {
+      console.log('Step 2 validated, moving to step 3')
+      currentStep.value = 3
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } else {
+      console.log('Step 2 validation failed')
+    }
+  }
+}
+
+const previousStep = () => {
+  if (currentStep.value > 1) {
+    currentStep.value--
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
 // Handle form submission
 const handleSubmit = async () => {
   try {
     isSubmitting.value = true
 
-    // Convert items to base units for database
+    // Convert items to base units for database (quotation without prices)
     const convertedItems = form.value.items.map(item => {
       const baseUnit = getIngredientUnit(item.ingredient_id)
       const factor = getConversionFactor(item.purchase_unit, baseUnit)
@@ -623,42 +775,67 @@ const handleSubmit = async () => {
 
       return {
         ingredient_id: item.ingredient_id,
-        quantity: convertedQuantity,      // Cantidad convertida a unidad base
-        unit: baseUnit,                   // Unidad base del ingrediente
-        unit_cost: item.unit_cost,        // Precio ya convertido a unidad base
-        total_cost: item.total_cost,      // Total calculado
-        expiry_date: item.expiry_date,
-        batch_number: item.batch_number,
-        notes: item.notes
+        quantity: convertedQuantity,
+        unit: baseUnit,
+        unit_cost: null,  // Quotation: no prices yet
+        total_cost: 0,    // Quotation: no totals yet
+        expiry_date: item.expiry_date || null,
+        batch_number: item.batch_number || null,
+        notes: item.notes || null
       }
     })
 
-    // Set purchase_date to current date and time at the moment of submission
     const purchaseData = {
       supplier_id: form.value.supplier_id,
       purchase_date: getCurrentDateTime(),
-      delivery_date: form.value.delivery_date,
-      status: form.value.status,
-      invoice_number: form.value.invoice_number,
-      tax_amount: form.value.tax_amount,
-      total_amount: totalAmount.value,
-      notes: form.value.notes,
+      delivery_date: form.value.delivery_date || null,
+      status: 'quotation',  // Create as quotation
+      invoice_number: form.value.invoice_number || null,
+      tax_amount: 0,  // No tax yet
+      total_amount: 0,  // No total yet
+      notes: form.value.notes || null,
       items: convertedItems
     }
+
+    console.log('Submitting quotation data:', purchaseData)
 
     await $fetch('/api/suppliers/purchases', {
       method: 'POST',
       body: purchaseData
     })
 
-    // Redirect back to orders list
     await navigateTo('/abastecimiento/compras')
 
   } catch (error) {
-    console.error('Error creating order:', error)
-    alert('Error al crear la orden. Por favor intente nuevamente.')
+    console.error('Error creating quotation:', error)
+    console.error('Error details:', error.response?._data || error)
+    alert(`Error al crear la cotización: ${error.response?._data?.detail || error.message || 'Por favor intente nuevamente.'}`)
   } finally {
     isSubmitting.value = false
   }
 }
 </script>
+
+<style scoped>
+/* Fade transition for wizard steps */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>
