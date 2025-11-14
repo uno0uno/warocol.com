@@ -83,14 +83,19 @@
             {{ proveedor }}
           </option>
         </select>
-        <select v-model="statusFilter" 
+        <select v-model="statusFilter"
           class="px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
           <option value="">Todos los estados</option>
+          <option value="quotation">Cotización</option>
           <option value="pending">Pendiente</option>
-          <option value="sent">Enviada</option>
+          <option value="confirmed">Confirmada</option>
+          <option value="preparing">En Preparación</option>
+          <option value="shipped">Enviada</option>
           <option value="received">Recibida</option>
+          <option value="verified">Verificada</option>
           <option value="invoiced">Facturada</option>
-          <option value="overdue">Vencida</option>
+          <option value="paid">Pagada</option>
+          <option value="cancelled">Cancelada</option>
         </select>
         <input
           v-model="dateRange"
@@ -138,15 +143,8 @@
       
       <template #cell-proveedor="{ value }">
         <div class="flex items-center">
-          <div class="flex-shrink-0 h-8 w-8">
-            <div class="h-8 w-8 rounded-full bg-crocus-100 flex items-center justify-center">
-              <span class="text-crocus-600 font-medium text-xs">
-                {{ value.charAt(0).toUpperCase() }}
-              </span>
-            </div>
-          </div>
           <div class="ml-3">
-            <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
+            <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
           </div>
         </div>
       </template>
@@ -166,7 +164,7 @@
         <UiStatusBadge
           :value="`${value} items`"
           format="text"
-          variant="info"
+          variant="secondary"
           size="sm"
         />
       </template>
@@ -298,7 +296,7 @@ const { data: purchasesData, pending: isLoading, error: fetchError, refresh } = 
 const ordenes = computed(() => purchasesData.value.data.map(purchase => ({
   id: purchase.id,
   numero: purchase.purchase_number || `PO-${purchase.id.substring(0, 8)}`,
-  proveedor: 'Proveedor', // TODO: Fetch supplier name
+  proveedor: purchase.supplier_name || 'Sin proveedor',
   fecha: purchase.purchase_date,
   fechaEntrega: purchase.delivery_date,
   valorTotal: parseFloat(purchase.total_amount || 0),
@@ -450,15 +448,25 @@ const formatDate = (dateString) => {
 // Helper function for status variants
 function getStatusVariant(status) {
   switch (status) {
+    case 'quotation':
+      return 'info'
     case 'pending':
       return 'warning'
-    case 'sent':
+    case 'confirmed':
+      return 'success'
+    case 'preparing':
+      return 'info'
+    case 'shipped':
       return 'info'
     case 'received':
       return 'success'
+    case 'verified':
+      return 'success'
     case 'invoiced':
       return 'secondary'
-    case 'overdue':
+    case 'paid':
+      return 'success'
+    case 'cancelled':
       return 'destructive'
     default:
       return 'secondary'
@@ -467,11 +475,16 @@ function getStatusVariant(status) {
 
 const getStatusText = (status) => {
   const texts = {
+    quotation: 'Cotización',
     pending: 'Pendiente',
-    sent: 'Enviada',
+    confirmed: 'Confirmada',
+    preparing: 'En Preparación',
+    shipped: 'Enviada',
     received: 'Recibida',
+    verified: 'Verificada',
     invoiced: 'Facturada',
-    overdue: 'Vencida'
+    paid: 'Pagada',
+    cancelled: 'Cancelada'
   }
   return texts[status] || 'Desconocido'
 }
