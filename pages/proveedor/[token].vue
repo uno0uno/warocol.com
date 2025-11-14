@@ -34,7 +34,7 @@
 
       <!-- Filter Tabs -->
       <div class="mb-6">
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <button
             v-for="tab in tabs"
             :key="tab.value"
@@ -228,6 +228,7 @@ const tabs = [
   { label: 'Cotizaciones', value: 'quotation' },
   { label: 'Pendientes', value: 'pending' },
   { label: 'Confirmadas', value: 'confirmed' },
+  { label: 'Facturadas', value: 'invoiced' },
   { label: 'Enviadas', value: 'shipped' },
   { label: 'Completadas', value: 'paid' }
 ]
