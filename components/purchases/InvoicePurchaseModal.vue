@@ -28,20 +28,67 @@
 
         <!-- Body -->
         <form @submit.prevent="handleSubmit" class="p-6 space-y-6">
-          <!-- Invoice Number -->
+          <!-- Document Type -->
           <div>
-            <label class="block text-sm font-medium text-text-primary mb-2">Número de Factura *</label>
-            <input v-model="formData.invoice_number" type="text" required class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary" placeholder="Ej: FAC-2025-001" />
+            <label class="block text-sm font-medium text-text-primary mb-2">Tipo de Documento *</label>
+            <div class="grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                @click="formData.document_type = 'remision'"
+                :class="[
+                  'px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium',
+                  formData.document_type === 'remision'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-text-secondary hover:border-primary/50'
+                ]"
+              >
+                Remisión
+              </button>
+              <button
+                type="button"
+                @click="formData.document_type = 'factura_contado'"
+                :class="[
+                  'px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium',
+                  formData.document_type === 'factura_contado'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-text-secondary hover:border-primary/50'
+                ]"
+              >
+                Factura de Contado
+              </button>
+              <button
+                type="button"
+                @click="formData.document_type = 'factura_credito'"
+                :class="[
+                  'px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium',
+                  formData.document_type === 'factura_credito'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-text-secondary hover:border-primary/50'
+                ]"
+              >
+                Factura a Crédito
+              </button>
+            </div>
           </div>
 
-          <!-- Invoice Date -->
+          <!-- Document Number -->
           <div>
-            <label class="block text-sm font-medium text-text-primary mb-2">Fecha de Factura *</label>
+            <label class="block text-sm font-medium text-text-primary mb-2">
+              {{ formData.document_type === 'remision' ? 'Número de Remisión' : 'Número de Factura' }} *
+            </label>
+            <input v-model="formData.invoice_number" type="text" required class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary" :placeholder="formData.document_type === 'remision' ? 'Ej: REM-2025-001' : 'Ej: FAC-2025-001'" />
+          </div>
+
+          <!-- Document Date -->
+          <div>
+            <label class="block text-sm font-medium text-text-primary mb-2">
+              {{ formData.document_type === 'remision' ? 'Fecha de Remisión' : 'Fecha de Factura' }} *
+            </label>
             <input v-model="formData.invoice_date" type="datetime-local" required class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary" />
           </div>
 
-          <!-- Grid for Amounts -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Amounts (only for invoices, not for remision) -->
+          <div v-if="formData.document_type !== 'remision'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Invoice Amount -->
             <div>
               <label class="block text-sm font-medium text-text-primary mb-2">Monto de Factura *</label>
@@ -55,10 +102,24 @@
             </div>
           </div>
 
-          <!-- Payment Due Date -->
-          <div>
-            <label class="block text-sm font-medium text-text-primary mb-2">Fecha de Vencimiento</label>
-            <input v-model="formData.payment_due_date" type="datetime-local" class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary" />
+          <!-- Credit Days (only for factura_credito) -->
+          <div v-if="formData.document_type === 'factura_credito'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-2">Días de Crédito *</label>
+              <select v-model.number="formData.credit_days" required class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary">
+                <option :value="null">Seleccionar...</option>
+                <option :value="15">15 días</option>
+                <option :value="30">30 días</option>
+                <option :value="45">45 días</option>
+                <option :value="60">60 días</option>
+                <option :value="90">90 días</option>
+                <option :value="120">120 días</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-2">Fecha de Vencimiento</label>
+              <input :value="calculatedDueDate" type="text" disabled class="w-full px-4 py-2 bg-surface-secondary border-2 border-border rounded-lg text-text-secondary" />
+            </div>
           </div>
 
           <!-- Notes -->
@@ -85,24 +146,50 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 const props = defineProps<{ isOpen: boolean, purchaseId: string }>()
 const emit = defineEmits<{ close: [], invoiced: [] }>()
 
 const loading = ref(false)
 const formData = ref({
+  document_type: 'factura_contado',
   invoice_number: '',
   invoice_date: '',
   invoice_amount: 0,
   tax_amount: 0,
-  payment_due_date: '',
+  credit_days: null as number | null,
   notes: ''
+})
+
+// Computed property for due date calculation
+const calculatedDueDate = computed(() => {
+  if (formData.value.document_type !== 'factura_credito' || !formData.value.invoice_date || !formData.value.credit_days) {
+    return ''
+  }
+
+  const invoiceDate = new Date(formData.value.invoice_date)
+  const dueDate = new Date(invoiceDate)
+  dueDate.setDate(dueDate.getDate() + formData.value.credit_days)
+
+  return dueDate.toLocaleDateString('es-CO', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
 })
 
 watch(() => props.isOpen, (newValue) => {
   if (newValue) {
-    formData.value = { invoice_number: '', invoice_date: '', invoice_amount: 0, tax_amount: 0, payment_due_date: '', notes: '' }
+    formData.value = {
+      document_type: 'factura_contado',
+      invoice_number: '',
+      invoice_date: '',
+      invoice_amount: 0,
+      tax_amount: 0,
+      credit_days: null,
+      notes: ''
+    }
   }
 })
 
@@ -112,15 +199,26 @@ const handleSubmit = async () => {
   loading.value = true
   try {
     const body: any = {
+      document_type: formData.value.document_type,
       invoice_number: formData.value.invoice_number,
       invoice_date: new Date(formData.value.invoice_date).toISOString(),
-      invoice_amount: formData.value.invoice_amount,
-      tax_amount: formData.value.tax_amount,
       notes: formData.value.notes || null
     }
 
-    if (formData.value.payment_due_date) {
-      body.payment_due_date = new Date(formData.value.payment_due_date).toISOString()
+    // Only include amounts for invoices, not for remisions
+    if (formData.value.document_type !== 'remision') {
+      body.invoice_amount = formData.value.invoice_amount
+      body.tax_amount = formData.value.tax_amount
+    }
+
+    // Only include credit days for factura_credito
+    if (formData.value.document_type === 'factura_credito' && formData.value.credit_days) {
+      body.credit_days = formData.value.credit_days
+      // Calculate due date
+      const invoiceDate = new Date(formData.value.invoice_date)
+      const dueDate = new Date(invoiceDate)
+      dueDate.setDate(dueDate.getDate() + formData.value.credit_days)
+      body.payment_due_date = dueDate.toISOString()
     }
 
     const response = await $fetch(`/api/suppliers/purchases/${props.purchaseId}/invoice`, { method: 'POST', body })
@@ -128,11 +226,16 @@ const handleSubmit = async () => {
     if (response.success) {
       emit('invoiced')
       emit('close')
-      useToast().add({ title: 'Factura Registrada', description: 'La factura ha sido registrada exitosamente', color: 'green' })
+      const docTypeLabel = formData.value.document_type === 'remision' ? 'Remisión' : 'Factura'
+      useToast().add({
+        title: `${docTypeLabel} Registrada`,
+        description: `La ${docTypeLabel.toLowerCase()} ha sido registrada exitosamente`,
+        color: 'green'
+      })
     }
   } catch (error: any) {
     console.error('Error invoicing purchase:', error)
-    useToast().add({ title: 'Error', description: error.data?.detail || 'No se pudo registrar la factura', color: 'red' })
+    useToast().add({ title: 'Error', description: error.data?.detail || 'No se pudo registrar el documento', color: 'red' })
   } finally {
     loading.value = false
   }
