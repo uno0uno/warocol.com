@@ -38,23 +38,19 @@
 
             <!-- Action buttons based on current status -->
             <div v-else class="flex gap-3">
-              <!-- Complete Quotation (when in quotation status) -->
-              <button
+              <!-- WAITING: Quotation - Supplier must complete prices -->
+              <div
                 v-if="currentPurchase.status === 'quotation'"
-                type="button"
-                @click="showCompletePricesModal = true"
-                class="px-4 py-2 border-2 rounded-lg transition-colors flex items-center space-x-2"
-                style="border-color: hsl(var(--success)); color: hsl(var(--success));"
-                @mouseenter="$event.target.style.backgroundColor = 'hsl(var(--success) / 0.1)'"
-                @mouseleave="$event.target.style.backgroundColor = 'transparent'"
+                class="px-4 py-2 border-2 border-dashed rounded-lg flex items-center space-x-2"
+                style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg class="w-5 h-5 animate-pulse" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Completar Precios</span>
-              </button>
+                <span>Esperando cotización del proveedor</span>
+              </div>
 
-              <!-- Confirm (when in pending status) -->
+              <!-- Confirm (when in pending status) - USER ACTION -->
               <button
                 v-if="currentPurchase.status === 'pending'"
                 type="button"
@@ -70,37 +66,29 @@
                 <span>Aprobar Orden</span>
               </button>
 
-              <!-- Invoice (after confirmation) -->
-              <button
+              <!-- WAITING: Invoice - Supplier must invoice -->
+              <div
                 v-if="currentPurchase.status === 'confirmed' || currentPurchase.status === 'preparing'"
-                type="button"
-                @click="showInvoiceModal = true"
-                class="px-4 py-2 border-2 rounded-lg transition-colors flex items-center space-x-2"
-                style="border-color: hsl(var(--warning)); color: hsl(var(--warning));"
-                @mouseenter="$event.target.style.backgroundColor = 'hsl(var(--warning) / 0.1)'"
-                @mouseleave="$event.target.style.backgroundColor = 'transparent'"
+                class="px-4 py-2 border-2 border-dashed rounded-lg flex items-center space-x-2"
+                style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg class="w-5 h-5 animate-pulse" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Registrar Factura</span>
-              </button>
+                <span>Esperando factura del proveedor</span>
+              </div>
 
-              <!-- Ship (after invoice) -->
-              <button
+              <!-- WAITING: Ship - Supplier must ship -->
+              <div
                 v-if="currentPurchase.status === 'invoiced'"
-                type="button"
-                @click="showShipModal = true"
-                class="px-4 py-2 border-2 rounded-lg transition-colors flex items-center space-x-2"
-                style="border-color: hsl(var(--primary)); color: hsl(var(--primary));"
-                @mouseenter="$event.target.style.backgroundColor = 'hsl(var(--primary) / 0.1)'"
-                @mouseleave="$event.target.style.backgroundColor = 'transparent'"
+                class="px-4 py-2 border-2 border-dashed rounded-lg flex items-center space-x-2"
+                style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                <svg class="w-5 h-5 animate-pulse" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Marcar como Enviado</span>
-              </button>
+                <span>Esperando envío del proveedor</span>
+              </div>
 
               <!-- Receive -->
               <button
