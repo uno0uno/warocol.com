@@ -177,6 +177,7 @@
       :purchase="selectedPurchase"
       @close="showDetailsModal = false"
       @complete-prices="handleCompletePricesFromDetails"
+      @invoice-purchase="handleInvoiceFromDetails"
       @ship-purchase="handleShipFromDetails"
     />
 
@@ -187,6 +188,15 @@
       :token="token"
       @close="showCompletePricesModal = false"
       @completed="handlePricesCompleted"
+    />
+
+    <!-- Invoice Purchase Modal -->
+    <InvoicePurchaseModalSupplier
+      :is-open="showInvoiceModal"
+      :purchase="selectedPurchase"
+      :token="token"
+      @close="showInvoiceModal = false"
+      @invoiced="handlePurchaseInvoiced"
     />
 
     <!-- Ship Purchase Modal -->
@@ -204,6 +214,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import CompletePricesModalSupplier from '~/components/purchases/CompletePricesModalSupplier.vue'
+import InvoicePurchaseModalSupplier from '~/components/purchases/InvoicePurchaseModalSupplier.vue'
 import ShipPurchaseModalSupplier from '~/components/purchases/ShipPurchaseModalSupplier.vue'
 import PurchaseDetailsModal from '~/components/purchases/PurchaseDetailsModal.vue'
 
@@ -220,6 +231,7 @@ const supplier = ref<any>(null)
 const purchases = ref<any[]>([])
 const currentTab = ref('quotation')
 const showCompletePricesModal = ref(false)
+const showInvoiceModal = ref(false)
 const showShipModal = ref(false)
 const showDetailsModal = ref(false)
 const selectedPurchase = ref<any>(null)
@@ -295,6 +307,11 @@ function openCompletePricesModal(purchase: any) {
   showCompletePricesModal.value = true
 }
 
+function openInvoiceModal(purchase: any) {
+  selectedPurchase.value = purchase
+  showInvoiceModal.value = true
+}
+
 function openShipModal(purchase: any) {
   selectedPurchase.value = purchase
   showShipModal.value = true
@@ -305,6 +322,11 @@ function handleCompletePricesFromDetails(purchase: any) {
   openCompletePricesModal(purchase)
 }
 
+function handleInvoiceFromDetails(purchase: any) {
+  showDetailsModal.value = false
+  openInvoiceModal(purchase)
+}
+
 function handleShipFromDetails(purchase: any) {
   showDetailsModal.value = false
   openShipModal(purchase)
@@ -312,6 +334,11 @@ function handleShipFromDetails(purchase: any) {
 
 async function handlePricesCompleted() {
   showCompletePricesModal.value = false
+  await loadPurchases()
+}
+
+async function handlePurchaseInvoiced() {
+  showInvoiceModal.value = false
   await loadPurchases()
 }
 
