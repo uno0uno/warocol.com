@@ -70,17 +70,30 @@
             <span>Financiero</span>
           </NuxtLink>
 
-          <NuxtLink 
-            to="/abastecimiento" 
+          <NuxtLink
+            to="/abastecimiento"
             :class="[
               'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-              activePage === 'abastecimiento' 
-                ? 'bg-ebony-600 text-white' 
+              activePage === 'abastecimiento'
+                ? 'bg-ebony-600 text-white'
                 : 'text-titan-600 hover:bg-ebony-600 hover:text-white'
             ]"
           >
             <TruckIcon class="w-5 h-5" />
             <span>Abastecimiento</span>
+          </NuxtLink>
+
+          <NuxtLink
+            to="/pagos"
+            :class="[
+              'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+              activePage === 'pagos'
+                ? 'bg-ebony-600 text-white'
+                : 'text-titan-600 hover:bg-ebony-600 hover:text-white'
+            ]"
+          >
+            <BanknotesIcon class="w-5 h-5" />
+            <span>Pagos</span>
           </NuxtLink>
         </nav>
         
@@ -102,14 +115,15 @@
 </template>
 
 <script setup lang="ts">
-import { 
+import {
+  BanknotesIcon,
   ChartBarIcon,
   ChevronDownIcon,
   TruckIcon
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'financiero' | 'abastecimiento' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
+  activePage?: 'dashboard' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
 }
 
 interface Tenant {
