@@ -31,44 +31,25 @@
           <!-- Document Type -->
           <div>
             <label class="block text-sm font-medium text-text-primary mb-2">Tipo de Documento *</label>
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid gap-3" :class="availableDocumentTypes.length === 2 ? 'grid-cols-2' : 'grid-cols-3'">
               <button
+                v-for="docType in availableDocumentTypes"
+                :key="docType.value"
                 type="button"
-                @click="formData.document_type = 'remision'"
+                @click="formData.document_type = docType.value"
                 :class="[
                   'px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium',
-                  formData.document_type === 'remision'
+                  formData.document_type === docType.value
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border text-text-secondary hover:border-primary/50'
                 ]"
               >
-                Remisión
-              </button>
-              <button
-                type="button"
-                @click="formData.document_type = 'factura_contado'"
-                :class="[
-                  'px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium',
-                  formData.document_type === 'factura_contado'
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-text-secondary hover:border-primary/50'
-                ]"
-              >
-                Factura de Contado
-              </button>
-              <button
-                type="button"
-                @click="formData.document_type = 'factura_credito'"
-                :class="[
-                  'px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium',
-                  formData.document_type === 'factura_credito'
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-text-secondary hover:border-primary/50'
-                ]"
-              >
-                Factura a Crédito
+                {{ docType.label }}
               </button>
             </div>
+            <p v-if="purchase?.payment_type" class="text-xs text-text-secondary mt-2">
+              Opciones basadas en el tipo de pago: {{ getPaymentTypeText(purchase.payment_type) }}
+            </p>
           </div>
 
           <!-- Document Number -->
@@ -148,7 +129,11 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 
-const props = defineProps<{ isOpen: boolean, purchaseId: string }>()
+const props = defineProps<{
+  isOpen: boolean
+  purchaseId: string
+  purchase?: any
+}>()
 const emit = defineEmits<{ close: [], invoiced: [] }>()
 
 const loading = ref(false)
@@ -160,6 +145,34 @@ const formData = ref({
   tax_amount: 0,
   credit_days: null as number | null,
   notes: ''
+})
+
+// Determine available document types based on payment_type
+const availableDocumentTypes = computed(() => {
+  const paymentType = props.purchase?.payment_type
+
+  // Always allow remision
+  const types: Array<{ value: string, label: string }> = [
+    { value: 'remision', label: 'Remisión' }
+  ]
+
+  if (!paymentType) {
+    // If no payment type specified, show all options (backward compatibility)
+    types.push({ value: 'factura_contado', label: 'Factura de Contado' })
+    types.push({ value: 'factura_credito', label: 'Factura a Crédito' })
+  } else if (paymentType === 'contado') {
+    // For contado, only allow contado invoice
+    types.push({ value: 'factura_contado', label: 'Factura de Contado' })
+  } else if (paymentType === 'credito' || paymentType === 'credito_consolidado') {
+    // For credito, only allow credito invoice
+    types.push({ value: 'factura_credito', label: 'Factura a Crédito' })
+  } else if (paymentType === 'contraentrega') {
+    // For contraentrega, allow both (supplier can issue either)
+    types.push({ value: 'factura_contado', label: 'Factura de Contado' })
+    types.push({ value: 'factura_credito', label: 'Factura a Crédito' })
+  }
+
+  return types
 })
 
 // Computed property for due date calculation
@@ -181,8 +194,16 @@ const calculatedDueDate = computed(() => {
 
 watch(() => props.isOpen, (newValue) => {
   if (newValue) {
+    // Set default document_type based on payment_type
+    const paymentType = props.purchase?.payment_type
+    let defaultDocType = 'factura_contado'
+
+    if (paymentType === 'credito' || paymentType === 'credito_consolidado') {
+      defaultDocType = 'factura_credito'
+    }
+
     formData.value = {
-      document_type: 'factura_contado',
+      document_type: defaultDocType,
       invoice_number: '',
       invoice_date: '',
       invoice_amount: 0,
@@ -194,6 +215,16 @@ watch(() => props.isOpen, (newValue) => {
 })
 
 const closeModal = () => !loading.value && emit('close')
+
+const getPaymentTypeText = (paymentType: string): string => {
+  const types: Record<string, string> = {
+    'contado': 'Contado',
+    'credito': 'Crédito',
+    'contraentrega': 'Contraentrega',
+    'credito_consolidado': 'Crédito Consolidado'
+  }
+  return types[paymentType] || paymentType
+}
 
 const handleSubmit = async () => {
   loading.value = true
