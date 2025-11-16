@@ -15,7 +15,10 @@
               </div>
               <div>
                 <h2 class="text-xl font-bold text-text-primary">Registrar Pago</h2>
-                <p class="text-sm text-text-secondary">Registra el pago realizado al proveedor</p>
+                <p v-if="isBulkPayment" class="text-sm text-text-secondary">
+                  Registrando pago para {{ props.purchases?.length }} orden(es)
+                </p>
+                <p v-else class="text-sm text-text-secondary">Registra el pago realizado al proveedor</p>
               </div>
             </div>
             <button @click="closeModal" class="text-text-secondary hover:text-text-primary transition-colors">
@@ -28,6 +31,27 @@
 
         <!-- Body -->
         <form @submit.prevent="handleSubmit" class="p-6 space-y-6">
+          <!-- Selected Purchases Summary (for bulk payment) -->
+          <div v-if="isBulkPayment" class="bg-background border-2 border-border rounded-lg p-4">
+            <h4 class="text-sm font-semibold text-text-primary mb-3">Órdenes seleccionadas:</h4>
+            <div class="space-y-2 max-h-40 overflow-y-auto">
+              <div v-for="purchase in props.purchases" :key="purchase.id"
+                class="flex justify-between items-center text-sm py-2 border-b border-border last:border-0">
+                <div>
+                  <p class="font-medium text-text-primary">{{ purchase.purchase_number }}</p>
+                  <p class="text-xs text-text-secondary">{{ purchase.supplier_name || 'N/A' }}</p>
+                </div>
+                <p class="font-semibold text-text-primary">
+                  {{ formatCurrency(getPurchaseAmount(purchase)) }}
+                </p>
+              </div>
+            </div>
+            <div class="mt-3 pt-3 border-t-2 border-border flex justify-between items-center">
+              <p class="font-semibold text-text-primary">Total a pagar:</p>
+              <p class="text-lg font-bold text-emerald-500">{{ formatCurrency(totalAmount) }}</p>
+            </div>
+          </div>
+
           <!-- Payment Method -->
           <div>
             <label class="block text-sm font-medium text-text-primary mb-2">Método de Pago *</label>
@@ -91,9 +115,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
-const props = defineProps<{ isOpen: boolean, purchaseId: string }>()
+const props = defineProps<{
+  isOpen: boolean
+  purchaseId?: string
+  purchases?: any[]
+}>()
 const emit = defineEmits<{ close: [], paid: [] }>()
 
 const loading = ref(false)
@@ -107,13 +135,40 @@ const formData = ref({
 
 const selectedFiles = ref<File[]>([])
 
+// Computed properties
+const isBulkPayment = computed(() => {
+  return props.purchases && props.purchases.length > 0
+})
+
+const totalAmount = computed(() => {
+  if (!isBulkPayment.value) return 0
+  return props.purchases!.reduce((sum, purchase) => sum + getPurchaseAmount(purchase), 0)
+})
+
+// Helper functions
+function getPurchaseAmount(purchase: any): number {
+  const invoiceAmount = purchase.invoice_amount ? parseFloat(purchase.invoice_amount) : null
+  const totalAmount = parseFloat(purchase.total_amount || 0)
+  const taxAmount = parseFloat(purchase.tax_amount || 0)
+  return invoiceAmount || (totalAmount + taxAmount)
+}
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0
+  }).format(value)
+}
+
 watch(() => props.isOpen, (newValue) => {
   if (newValue) {
     const now = new Date()
+    const calculatedAmount = isBulkPayment.value ? totalAmount.value : 0
     formData.value = {
       payment_method: '',
       payment_reference: '',
-      payment_amount: 0,
+      payment_amount: calculatedAmount,
       payment_date: now.toISOString().slice(0, 16),
       notes: ''
     }
@@ -126,38 +181,125 @@ const closeModal = () => !loading.value && emit('close')
 const handleSubmit = async () => {
   loading.value = true
   try {
-    // Create FormData to include both form fields and files
-    const formDataPayload = new FormData()
+    if (isBulkPayment.value) {
+      // Process multiple payments
+      const purchaseIds = props.purchases!.map(p => p.id)
+      let successCount = 0
+      let errorCount = 0
 
-    formDataPayload.append('payment_method', formData.value.payment_method)
-    formDataPayload.append('payment_reference', formData.value.payment_reference)
-    formDataPayload.append('payment_amount', formData.value.payment_amount.toString())
-    formDataPayload.append('payment_date', new Date(formData.value.payment_date).toISOString())
-
-    if (formData.value.notes) {
-      formDataPayload.append('notes', formData.value.notes)
-    }
-
-    // Append files if any
-    if (selectedFiles.value.length > 0) {
-      for (const file of selectedFiles.value) {
-        formDataPayload.append('files', file)
+      // Read files into memory once to reuse them
+      const fileData: { name: string; blob: Blob; type: string }[] = []
+      if (selectedFiles.value.length > 0) {
+        for (const file of selectedFiles.value) {
+          const blob = new Blob([await file.arrayBuffer()], { type: file.type })
+          fileData.push({ name: file.name, blob, type: file.type })
+        }
       }
-    }
 
-    const response = await $fetch(`/api/suppliers/purchases/${props.purchaseId}/pay`, {
-      method: 'POST',
-      body: formDataPayload
-    })
+      for (const purchaseId of purchaseIds) {
+        try {
+          // Create FormData for each purchase
+          const formDataPayload = new FormData()
 
-    if (response.success) {
-      emit('paid')
-      emit('close')
-      useToast().add({ title: 'Pago Registrado', description: 'El pago ha sido registrado exitosamente', color: 'green' })
+          formDataPayload.append('payment_method', formData.value.payment_method)
+          formDataPayload.append('payment_reference', formData.value.payment_reference)
+
+          // Calculate individual amount
+          const purchase = props.purchases!.find(p => p.id === purchaseId)
+          const individualAmount = getPurchaseAmount(purchase)
+          formDataPayload.append('payment_amount', individualAmount.toString())
+          formDataPayload.append('payment_date', new Date(formData.value.payment_date).toISOString())
+
+          if (formData.value.notes) {
+            formDataPayload.append('notes', formData.value.notes)
+          }
+
+          // Create new File objects from stored blobs for each request
+          if (fileData.length > 0) {
+            for (const fd of fileData) {
+              const newFile = new File([fd.blob], fd.name, { type: fd.type })
+              formDataPayload.append('files', newFile)
+            }
+          }
+
+          const response = await $fetch(`/api/suppliers/purchases/${purchaseId}/pay`, {
+            method: 'POST',
+            body: formDataPayload
+          })
+
+          if (response.success) {
+            successCount++
+          }
+        } catch (error) {
+          console.error(`Error paying purchase ${purchaseId}:`, error)
+          errorCount++
+        }
+      }
+
+      if (successCount > 0) {
+        emit('paid')
+        emit('close')
+        if (errorCount > 0) {
+          useToast().add({
+            title: 'Pagos Parcialmente Registrados',
+            description: `${successCount} pagos registrados, ${errorCount} fallaron`,
+            color: 'yellow'
+          })
+        } else {
+          useToast().add({
+            title: 'Pagos Registrados',
+            description: `${successCount} pagos registrados exitosamente`,
+            color: 'green'
+          })
+        }
+      } else {
+        useToast().add({
+          title: 'Error',
+          description: 'No se pudo registrar ningún pago',
+          color: 'red'
+        })
+      }
+    } else {
+      // Single payment (original logic)
+      const formDataPayload = new FormData()
+
+      formDataPayload.append('payment_method', formData.value.payment_method)
+      formDataPayload.append('payment_reference', formData.value.payment_reference)
+      formDataPayload.append('payment_amount', formData.value.payment_amount.toString())
+      formDataPayload.append('payment_date', new Date(formData.value.payment_date).toISOString())
+
+      if (formData.value.notes) {
+        formDataPayload.append('notes', formData.value.notes)
+      }
+
+      if (selectedFiles.value.length > 0) {
+        for (const file of selectedFiles.value) {
+          formDataPayload.append('files', file)
+        }
+      }
+
+      const response = await $fetch(`/api/suppliers/purchases/${props.purchaseId}/pay`, {
+        method: 'POST',
+        body: formDataPayload
+      })
+
+      if (response.success) {
+        emit('paid')
+        emit('close')
+        useToast().add({
+          title: 'Pago Registrado',
+          description: 'El pago ha sido registrado exitosamente',
+          color: 'green'
+        })
+      }
     }
   } catch (error: any) {
     console.error('Error paying purchase:', error)
-    useToast().add({ title: 'Error', description: error.data?.detail || 'No se pudo registrar el pago', color: 'red' })
+    useToast().add({
+      title: 'Error',
+      description: error.data?.detail || 'No se pudo registrar el pago',
+      color: 'red'
+    })
   } finally {
     loading.value = false
   }

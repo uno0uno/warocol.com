@@ -35,38 +35,68 @@
       </div>
 
       <!-- Pending Payments Table -->
-      <UiDataTable title="Órdenes Pendientes de Pago" :columns="pendingColumns" :data="pendingTableData"
-        variant="default" empty-message="No hay pagos pendientes. Todas las órdenes verificadas han sido pagadas.">
-        <template #cell-orden="{ row }">
+      <div class="bg-surface border-2 border-border rounded-lg">
+        <div class="p-6 border-b-2 border-border flex items-center justify-between">
           <div>
-            <p class="font-medium text-text-primary">{{ row.orden }}</p>
-            <p class="text-xs text-text-secondary">{{ row.fecha }}</p>
+            <h3 class="text-lg font-semibold text-text-primary">Órdenes Pendientes de Pago</h3>
+            <p v-if="selectedPurchases.length > 0" class="text-sm text-text-secondary mt-1">
+              {{ selectedPurchases.length }} orden(es) seleccionada(s)
+            </p>
           </div>
-        </template>
-
-        <template #cell-factura="{ row }">
-          <div>
-            <p class="font-medium text-text-primary">{{ row.factura || '-' }}</p>
-            <p class="text-xs text-text-secondary">{{ row.fechaFactura || '-' }}</p>
-          </div>
-        </template>
-
-        <template #cell-vencimiento="{ row }">
-          <span v-if="row.vencimiento" :class="[
-            'px-2 py-1 rounded text-xs font-medium',
-            row.estaVencido ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'
-          ]">
-            {{ row.vencimiento }}
-          </span>
-          <span v-else class="text-text-secondary">-</span>
-        </template>
-
-        <template #cell-acciones="{ row }">
-          <button @click="openPaymentModal(row.purchaseData)" class="btn-primary px-4 py-2 rounded-lg text-sm">
-            Registrar Pago
+          <button
+            v-if="selectedPurchases.length > 0"
+            @click="openBulkPaymentModal"
+            class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Registrar Pago ({{ selectedPurchases.length }})</span>
           </button>
-        </template>
-      </UiDataTable>
+        </div>
+
+        <UiDataTable :columns="pendingColumns" :data="pendingTableData"
+          variant="default" empty-message="No hay pagos pendientes. Todas las órdenes verificadas han sido pagadas."
+          :show-title="false">
+          <template #cell-seleccion="{ row }">
+            <input
+              type="checkbox"
+              :checked="isSelected(row.purchaseData.id)"
+              @change="toggleSelection(row.purchaseData)"
+              class="h-4 w-4 text-primary focus:ring-primary border-border rounded cursor-pointer"
+            />
+          </template>
+
+          <template #cell-orden="{ row }">
+            <div>
+              <p class="font-medium text-text-primary">{{ row.orden }}</p>
+              <p class="text-xs text-text-secondary">{{ row.fecha }}</p>
+            </div>
+          </template>
+
+          <template #cell-factura="{ row }">
+            <div>
+              <p class="font-medium text-text-primary">{{ row.factura || '-' }}</p>
+              <p class="text-xs text-text-secondary">{{ row.fechaFactura || '-' }}</p>
+            </div>
+          </template>
+
+          <template #cell-vencimiento="{ row }">
+            <span v-if="row.vencimiento" :class="[
+              'px-2 py-1 rounded text-xs font-medium',
+              row.estaVencido ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'
+            ]">
+              {{ row.vencimiento }}
+            </span>
+            <span v-else class="text-text-secondary">-</span>
+          </template>
+
+          <template #cell-acciones="{ row }">
+            <button @click="openPaymentModal(row.purchaseData)" class="btn-secondary px-4 py-2 rounded-lg text-sm">
+              Pago Individual
+            </button>
+          </template>
+        </UiDataTable>
+      </div>
 
       <!-- Paid Purchases Table -->
       <UiDataTable title="Órdenes Pagadas" :columns="paidColumns" :data="paidTableData" variant="default"
@@ -104,8 +134,13 @@
     </div>
 
     <!-- Payment Modal -->
-    <PurchasesPayPurchaseModal v-if="selectedPurchase" :is-open="showPaymentModal" :purchase-id="selectedPurchase.id"
-      @close="closePaymentModal" @paid="handlePaymentCompleted" />
+    <PurchasesPayPurchaseModal
+      v-if="selectedPurchase || selectedPurchases.length > 0"
+      :is-open="showPaymentModal"
+      :purchase-id="selectedPurchase?.id"
+      :purchases="selectedPurchases"
+      @close="closePaymentModal"
+      @paid="handlePaymentCompleted" />
   </div>
 </template>
 
@@ -127,6 +162,7 @@ useHead({
 // State
 const showPaymentModal = ref(false)
 const selectedPurchase = ref<any>(null)
+const selectedPurchases = ref<any[]>([])
 
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
@@ -178,23 +214,12 @@ const pendingPurchases = computed(() => {
   return filtered
 })
 
-// Fetch paid purchases using useAsyncData (for stats)
-const { data: paidPurchasesData } = useAsyncData(
-  `purchases-paid-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/suppliers/purchases', {
-    query: {
-      status: 'paid',
-      limit: 250
-    }
-  }),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ data: [] })
-  }
-)
-
-const paidPurchases = computed(() => paidPurchasesData.value?.data || [])
+// Compute paid purchases from all purchases (those with payment history)
+const paidPurchases = computed(() => {
+  const allPurchases = purchasesData.value?.data || []
+  // A purchase is "paid" if has_payment flag is true (checks history)
+  return allPurchases.filter(p => p.has_payment || p.payment_method || p.payment_reference || p.paid_at)
+})
 
 // Computed stats
 const totalPending = computed(() => {
@@ -241,8 +266,9 @@ const paidThisMonth = computed(() => {
 
   return paidPurchases.value
     .filter(p => {
-      if (!p.payment_date) return false
-      const paymentDate = new Date(p.payment_date)
+      const dateToUse = p.payment_date || p.paid_at
+      if (!dateToUse) return false
+      const paymentDate = new Date(dateToUse)
       return paymentDate >= firstDayOfMonth
     })
     .reduce((sum, p) => {
@@ -259,14 +285,16 @@ const paidThisMonthCount = computed(() => {
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
 
   return paidPurchases.value.filter(p => {
-    if (!p.payment_date) return false
-    const paymentDate = new Date(p.payment_date)
+    const dateToUse = p.payment_date || p.paid_at
+    if (!dateToUse) return false
+    const paymentDate = new Date(dateToUse)
     return paymentDate >= firstDayOfMonth
   }).length
 })
 
 // Table columns configuration
 const pendingColumns = [
+  { key: 'seleccion', title: '', sortable: false, align: 'center' as const },
   { key: 'orden', title: 'Orden', sortable: true, align: 'left' as const },
   { key: 'proveedor', title: 'Proveedor', sortable: true, align: 'left' as const },
   { key: 'factura', title: 'Factura', sortable: false, align: 'left' as const },
@@ -279,8 +307,8 @@ const paidColumns = [
   { key: 'orden', title: 'Orden', sortable: true, align: 'left' as const },
   { key: 'proveedor', title: 'Proveedor', sortable: true, align: 'left' as const },
   { key: 'factura', title: 'Factura', sortable: false, align: 'left' as const },
-  { key: 'montoPagado', title: 'Monto Pagado', sortable: true, align: 'right' as const },
-  { key: 'fechaPago', title: 'Fecha de Pago', sortable: true, align: 'left' as const },
+  { key: 'montoPagado', title: 'Monto Pagado', sortable: true, align: 'right' as const, format: 'currency' as const },
+  { key: 'fechaPago', title: 'Fecha de Pago', sortable: true, align: 'left' as const, format: 'text' as const },
   { key: 'metodo', title: 'Método', sortable: false, align: 'left' as const },
   { key: 'estado', title: 'Estado', sortable: false, align: 'center' as const }
 ]
@@ -309,8 +337,8 @@ const paidTableData = computed(() => {
     factura: purchase.invoice_number,
     fechaFactura: formatDate(purchase.invoice_date),
     montoPagado: parseFloat(purchase.payment_amount || purchase.invoice_amount || '0') || (parseFloat(purchase.total_amount || '0') + parseFloat(purchase.tax_amount || '0')),
-    fechaPago: formatDate(purchase.payment_date),
-    metodo: purchase.payment_method
+    fechaPago: formatDate(purchase.payment_date_final || purchase.payment_date || purchase.paid_at),
+    metodo: purchase.payment_method_final || purchase.payment_method
   }))
 })
 
@@ -344,15 +372,36 @@ function isOverdue(dueDate: string | null | undefined): boolean {
   return due < today
 }
 
+// Selection functions
+function toggleSelection(purchase: any) {
+  const index = selectedPurchases.value.findIndex(p => p.id === purchase.id)
+  if (index >= 0) {
+    selectedPurchases.value.splice(index, 1)
+  } else {
+    selectedPurchases.value.push(purchase)
+  }
+}
+
+function isSelected(purchaseId: string): boolean {
+  return selectedPurchases.value.some(p => p.id === purchaseId)
+}
+
 // Modal functions
 function openPaymentModal(purchase: any) {
   selectedPurchase.value = purchase
+  selectedPurchases.value = [] // Clear bulk selection
+  showPaymentModal.value = true
+}
+
+function openBulkPaymentModal() {
+  selectedPurchase.value = null
   showPaymentModal.value = true
 }
 
 function closePaymentModal() {
   showPaymentModal.value = false
   selectedPurchase.value = null
+  selectedPurchases.value = []
 }
 
 async function handlePaymentCompleted() {
