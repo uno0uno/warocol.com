@@ -17,217 +17,217 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else>
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-5">
-      <SharedMetricCard
-        title="Total de Órdenes"
-        :value="stats.total"
-        subtitle="Órdenes registradas"
-        variant="primary"
-        :show-icon="false"
-      />
-      
-      <SharedMetricCard
-        title="Órdenes Pendientes"
-        :value="stats.pendientes"
-        subtitle="Esperando procesamiento"
-        variant="primary"
-        :show-icon="false"
-      />
-      
-      <SharedMetricCard
-        title="Órdenes Recibidas"
-        :value="stats.recibidas"
-        subtitle="Completadas exitosamente"
-        variant="primary"
-        :show-icon="false"
-      />
-      
-      <SharedMetricCard
-        title="Órdenes Vencidas"
-        :value="stats.vencidas"
-        subtitle="Fuera de tiempo"
-        variant="primary"
-        :show-icon="false"
-      />
-      
-      <SharedMetricCard
-        title="Valor Total"
-        :value="`$${stats.valorTotal}`"
-        suffix="M"
-        subtitle="Monto total órdenes"
-        variant="primary"
-        :show-icon="false"
-      />
-    </div>
-
-    <!-- Filters and Search -->
-    <div class="bg-white rounded-lg shadow-sm border border-titan-200 p-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div class="lg:col-span-2">
-          <div class="relative">
-            <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
-            <input
-              v-model="searchTerm"
-              type="text"
-              placeholder="Buscar por número de orden o proveedor..."
-              class="w-full pl-10 pr-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500"
-            />
-          </div>
-        </div>
-        <select v-model="proveedorFilter" 
-          class="px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
-          <option value="">Todos los proveedores</option>
-          <option v-for="proveedor in proveedoresUnicos" :key="proveedor" :value="proveedor">
-            {{ proveedor }}
-          </option>
-        </select>
-        <select v-model="statusFilter"
-          class="px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
-          <option value="">Todos los estados</option>
-          <option value="quotation">Cotización</option>
-          <option value="pending">Pendiente</option>
-          <option value="confirmed">Confirmada</option>
-          <option value="preparing">En Preparación</option>
-          <option value="shipped">Enviada</option>
-          <option value="received">Recibida</option>
-          <option value="verified">Verificada</option>
-          <option value="invoiced">Facturada</option>
-          <option value="paid">Pagada</option>
-          <option value="cancelled">Cancelada</option>
-        </select>
-        <input
-          v-model="dateRange"
-          type="month"
-          class="px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500"
+    <div v-else class="flex flex-col gap-4">
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-5">
+        <SharedMetricCard
+          title="Total de Órdenes"
+          :value="stats.total"
+          subtitle="Órdenes registradas"
+          variant="primary"
+          :show-icon="false"
+        />
+        
+        <SharedMetricCard
+          title="Órdenes Pendientes"
+          :value="stats.pendientes"
+          subtitle="Esperando procesamiento"
+          variant="primary"
+          :show-icon="false"
+        />
+        
+        <SharedMetricCard
+          title="Órdenes Recibidas"
+          :value="stats.recibidas"
+          subtitle="Completadas exitosamente"
+          variant="primary"
+          :show-icon="false"
+        />
+        
+        <SharedMetricCard
+          title="Órdenes Vencidas"
+          :value="stats.vencidas"
+          subtitle="Fuera de tiempo"
+          variant="primary"
+          :show-icon="false"
+        />
+        
+        <SharedMetricCard
+          title="Valor Total"
+          :value="`$${stats.valorTotal}`"
+          suffix="M"
+          subtitle="Monto total órdenes"
+          variant="primary"
+          :show-icon="false"
         />
       </div>
-    </div>
 
-    <!-- Orders Table -->
-    <UiDataTable
-      :columns="ordenesTableColumns"
-      :data="filteredOrdenes"
-      variant="default"
-    >
-      <!-- Custom header with title and create button -->
-      <template #header>
-        <div class="flex justify-between items-center">
-          <h3 class="text-lg font-bold text-text-primary">
-            Órdenes de Compra
-          </h3>
-          <div class="flex items-center gap-2">
-            <NuxtLink
-              to="/abastecimiento/compra/crear"
-              class="btn-primary px-6 py-2 rounded-lg text-sm font-medium">
-              + Nueva Orden
-            </NuxtLink>
-            <button
-              @click="refresh"
-              class="p-2 text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-              title="Refrescar lista"
-            >
-              <ArrowPathIcon class="h-5 w-5" />
+      <!-- Filters and Search -->
+      <div class="bg-white rounded-lg shadow-sm border border-titan-200 p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div class="lg:col-span-2">
+            <div class="relative">
+              <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
+              <input
+                v-model="searchTerm"
+                type="text"
+                placeholder="Buscar por número de orden o proveedor..."
+                class="w-full pl-10 pr-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500"
+              />
+            </div>
+          </div>
+          <select v-model="proveedorFilter" 
+            class="px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+            <option value="">Todos los proveedores</option>
+            <option v-for="proveedor in proveedoresUnicos" :key="proveedor" :value="proveedor">
+              {{ proveedor }}
+            </option>
+          </select>
+          <select v-model="statusFilter"
+            class="px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+            <option value="">Todos los estados</option>
+            <option value="quotation">Cotización</option>
+            <option value="pending">Pendiente</option>
+            <option value="confirmed">Confirmada</option>
+            <option value="preparing">En Preparación</option>
+            <option value="shipped">Enviada</option>
+            <option value="received">Recibida</option>
+            <option value="verified">Verificada</option>
+            <option value="invoiced">Facturada</option>
+            <option value="paid">Pagada</option>
+            <option value="cancelled">Cancelada</option>
+          </select>
+          <input
+            v-model="dateRange"
+            type="month"
+            class="px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500"
+          />
+        </div>
+      </div>
+
+      <!-- Orders Table -->
+      <UiDataTable
+        :columns="ordenesTableColumns"
+        :data="filteredOrdenes"
+        variant="default"
+      >
+        <!-- Custom header with title and create button -->
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="text-lg font-bold text-text-primary">
+              Órdenes de Compra
+            </h3>
+            <div class="flex items-center gap-2">
+              <NuxtLink
+                to="/abastecimiento/compra/crear"
+                class="btn-primary px-6 py-2 rounded-lg text-sm font-medium">
+                + Nueva Orden
+              </NuxtLink>
+              <button
+                @click="refresh"
+                class="p-2 text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                title="Refrescar lista"
+              >
+                <ArrowPathIcon class="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </template>
+        <!-- Custom slots for special columns -->
+        <template #cell-numero="{ value, row }">
+          <div>
+            <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
+            <div class="text-xs text-titan-600">{{ row.invoice_number || 'Sin factura' }}</div>
+          </div>
+        </template>
+        
+        <template #cell-proveedor="{ value }">
+          <div class="flex items-center">
+            <div class="ml-3">
+              <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
+            </div>
+          </div>
+        </template>
+        
+        <template #cell-fecha="{ value }">
+          <span class="text-sm text-ebony-800"">{{ formatDate(value) }}</span>
+        </template>
+        
+        <template #cell-valorTotal="{ value, row }">
+          <div>
+            <div class="text-sm font-medium text-ebony-800">${{ value.toLocaleString() }}</div>
+            <div class="text-xs text-titan-600">+${{ row.impuestos.toLocaleString() }} IVA</div>
+          </div>
+        </template>
+        
+        <template #cell-totalItems="{ value }">
+          <UiStatusBadge
+            :value="`${value} items`"
+            format="text"
+            variant="secondary"
+            size="sm"
+          />
+        </template>
+        
+        <template #cell-estado="{ value }">
+          <UiStatusBadge
+            :value="getStatusText(value)"
+            format="text"
+            :variant="getStatusVariant(value)"
+            size="sm"
+          />
+        </template>
+        
+        <template #cell-fechaEntrega="{ value }">
+          <div class="text-sm text-ebony-800">
+            <div v-if="value">{{ formatDate(value) }}</div>
+            <div v-else class="text-ebony-800"">Sin programar</div>
+          </div>
+        </template>
+        
+        <template #cell-actions="{ row }">
+          <div class="flex justify-center space-x-2">
+            <button @click="editOrder(row)"
+              class="text-crocus-600 hover:text-crocus-900 transition-colors"
+              title="Editar orden">
+              <PencilIcon class="h-4 w-4" />
             </button>
           </div>
-        </div>
-      </template>
-      <!-- Custom slots for special columns -->
-      <template #cell-numero="{ value, row }">
-        <div>
-          <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
-          <div class="text-xs text-titan-600">{{ row.invoice_number || 'Sin factura' }}</div>
-        </div>
-      </template>
-      
-      <template #cell-proveedor="{ value }">
-        <div class="flex items-center">
-          <div class="ml-3">
-            <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
-          </div>
-        </div>
-      </template>
-      
-      <template #cell-fecha="{ value }">
-        <span class="text-sm text-ebony-800"">{{ formatDate(value) }}</span>
-      </template>
-      
-      <template #cell-valorTotal="{ value, row }">
-        <div>
-          <div class="text-sm font-medium text-ebony-800">${{ value.toLocaleString() }}</div>
-          <div class="text-xs text-titan-600">+${{ row.impuestos.toLocaleString() }} IVA</div>
-        </div>
-      </template>
-      
-      <template #cell-totalItems="{ value }">
-        <UiStatusBadge
-          :value="`${value} items`"
-          format="text"
-          variant="secondary"
-          size="sm"
-        />
-      </template>
-      
-      <template #cell-estado="{ value }">
-        <UiStatusBadge
-          :value="getStatusText(value)"
-          format="text"
-          :variant="getStatusVariant(value)"
-          size="sm"
-        />
-      </template>
-      
-      <template #cell-fechaEntrega="{ value }">
-        <div class="text-sm text-ebony-800">
-          <div v-if="value">{{ formatDate(value) }}</div>
-          <div v-else class="text-ebony-800"">Sin programar</div>
-        </div>
-      </template>
-      
-      <template #cell-actions="{ row }">
-        <div class="flex justify-center space-x-2">
-          <button @click="editOrder(row)"
-            class="text-crocus-600 hover:text-crocus-900 transition-colors"
-            title="Editar orden">
-            <PencilIcon class="h-4 w-4" />
+        </template>
+      </UiDataTable>
+
+      <!-- Pagination -->
+      <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
+        <div class="flex-1 flex justify-between sm:hidden">
+          <button class="relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
+            Anterior
+          </button>
+          <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
+            Siguiente
           </button>
         </div>
-      </template>
-    </UiDataTable>
-
-    <!-- Pagination -->
-    <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
-      <div class="flex-1 flex justify-between sm:hidden">
-        <button class="relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
-          Anterior
-        </button>
-        <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
-          Siguiente
-        </button>
-      </div>
-      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-        <div>
-          <p class="text-sm text-titan-700">
-            Mostrando <span class="font-medium">1</span> a <span class="font-medium">10</span> de{' '}
-            <span class="font-medium">{{ filteredOrdenes.length }}</span> resultados
-          </p>
-        </div>
-        <div>
-          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-            <button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
-              <ChevronLeftIcon class="h-5 w-5" />
-            </button>
-            <button class="relative inline-flex items-center px-4 py-2 border border-titan-300 bg-white text-sm font-medium text-titan-700 hover:bg-titan-50">
-              1
-            </button>
-            <button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
-              <ChevronRightIcon class="h-5 w-5" />
-            </button>
-          </nav>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm text-titan-700">
+              Mostrando <span class="font-medium">1</span> a <span class="font-medium">10</span> de{' '}
+              <span class="font-medium">{{ filteredOrdenes.length }}</span> resultados
+            </p>
+          </div>
+          <div>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+              <button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
+                <ChevronLeftIcon class="h-5 w-5" />
+              </button>
+              <button class="relative inline-flex items-center px-4 py-2 border border-titan-300 bg-white text-sm font-medium text-titan-700 hover:bg-titan-50">
+                1
+              </button>
+              <button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
+                <ChevronRightIcon class="h-5 w-5" />
+              </button>
+            </nav>
+          </div>
         </div>
       </div>
-    </div>
     </div>
   </div>
 </template>

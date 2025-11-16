@@ -148,36 +148,33 @@ const handleSubmit = async () => {
   loading.value = true
 
   try {
+    // Create FormData to include both form fields and files
+    const formDataPayload = new FormData()
+
+    formDataPayload.append('tracking_number', trackingNumber.value)
+    formDataPayload.append('carrier', formData.value.carrier)
+
+    if (formData.value.package_count) {
+      formDataPayload.append('package_count', formData.value.package_count.toString())
+    }
+
+    if (formData.value.notes) {
+      formDataPayload.append('notes', formData.value.notes)
+    }
+
+    // Append files if any
+    if (selectedFiles.value.length > 0) {
+      for (const file of selectedFiles.value) {
+        formDataPayload.append('files', file)
+      }
+    }
+
     const response = await $fetch(`/api/suppliers/purchases/${props.purchaseId}/ship`, {
       method: 'POST',
-      body: {
-        tracking_number: trackingNumber.value,
-        carrier: formData.value.carrier,
-        package_count: formData.value.package_count || null,
-        notes: formData.value.notes || null
-      }
+      body: formDataPayload
     })
 
     if (response.success) {
-      // Upload attachments if any
-      if (selectedFiles.value.length > 0) {
-        for (const file of selectedFiles.value) {
-          try {
-            const formData = new FormData()
-            formData.append('file', file)
-            formData.append('attachment_type', 'delivery_note')
-            formData.append('description', `Documento de envío: ${trackingNumber.value}`)
-
-            await $fetch(`/api/attachments/purchases/${props.purchaseId}/upload`, {
-              method: 'POST',
-              body: formData
-            })
-          } catch (error) {
-            console.error('Error uploading attachment:', error)
-          }
-        }
-      }
-
       emit('shipped')
       emit('close')
 

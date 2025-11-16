@@ -54,7 +54,7 @@
             <!-- Payment Amount -->
             <div>
               <label class="block text-sm font-medium text-text-primary mb-2">Monto Pagado *</label>
-              <input v-model.number="formData.payment_amount" type="number" step="0.01" min="0" required class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary" placeholder="0.00" />
+              <input v-model.number="formData.payment_amount" type="number" step="0.01" min="0.01" required class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary" placeholder="0.00" />
             </div>
 
             <!-- Payment Date -->
@@ -126,37 +126,31 @@ const closeModal = () => !loading.value && emit('close')
 const handleSubmit = async () => {
   loading.value = true
   try {
+    // Create FormData to include both form fields and files
+    const formDataPayload = new FormData()
+
+    formDataPayload.append('payment_method', formData.value.payment_method)
+    formDataPayload.append('payment_reference', formData.value.payment_reference)
+    formDataPayload.append('payment_amount', formData.value.payment_amount.toString())
+    formDataPayload.append('payment_date', new Date(formData.value.payment_date).toISOString())
+
+    if (formData.value.notes) {
+      formDataPayload.append('notes', formData.value.notes)
+    }
+
+    // Append files if any
+    if (selectedFiles.value.length > 0) {
+      for (const file of selectedFiles.value) {
+        formDataPayload.append('files', file)
+      }
+    }
+
     const response = await $fetch(`/api/suppliers/purchases/${props.purchaseId}/pay`, {
       method: 'POST',
-      body: {
-        payment_method: formData.value.payment_method,
-        payment_reference: formData.value.payment_reference,
-        payment_amount: formData.value.payment_amount,
-        payment_date: new Date(formData.value.payment_date).toISOString(),
-        notes: formData.value.notes || null
-      }
+      body: formDataPayload
     })
 
     if (response.success) {
-      // Upload attachments if any
-      if (selectedFiles.value.length > 0) {
-        for (const file of selectedFiles.value) {
-          try {
-            const formData = new FormData()
-            formData.append('file', file)
-            formData.append('attachment_type', 'receipt')
-            formData.append('description', `Comprobante de pago: ${formData.value.payment_reference}`)
-
-            await $fetch(`/api/attachments/purchases/${props.purchaseId}/upload`, {
-              method: 'POST',
-              body: formData
-            })
-          } catch (error) {
-            console.error('Error uploading attachment:', error)
-          }
-        }
-      }
-
       emit('paid')
       emit('close')
       useToast().add({ title: 'Pago Registrado', description: 'El pago ha sido registrado exitosamente', color: 'green' })

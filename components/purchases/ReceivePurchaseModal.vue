@@ -262,36 +262,31 @@ const handleSubmit = async () => {
   loading.value = true
 
   try {
+    // Create FormData to include both form fields and files
+    const formDataPayload = new FormData()
+
+    // Add items as JSON string
+    formDataPayload.append('items_data', JSON.stringify(formData.value.items))
+    formDataPayload.append('package_condition', formData.value.package_condition)
+    formDataPayload.append('partial', formData.value.partial.toString())
+
+    if (formData.value.reception_notes) {
+      formDataPayload.append('reception_notes', formData.value.reception_notes)
+    }
+
+    // Append files if any
+    if (selectedFiles.value.length > 0) {
+      for (const file of selectedFiles.value) {
+        formDataPayload.append('files', file)
+      }
+    }
+
     const response = await $fetch(`/api/suppliers/purchases/${props.purchaseId}/receive`, {
       method: 'POST',
-      body: {
-        package_condition: formData.value.package_condition,
-        items: formData.value.items,
-        reception_notes: formData.value.reception_notes || null,
-        partial: formData.value.partial
-      }
+      body: formDataPayload
     })
 
     if (response.success) {
-      // Upload attachments if any
-      if (selectedFiles.value.length > 0) {
-        for (const file of selectedFiles.value) {
-          try {
-            const formData = new FormData()
-            formData.append('file', file)
-            formData.append('attachment_type', 'receipt')
-            formData.append('description', `Documento de recepción: ${new Date().toISOString().split('T')[0]}`)
-
-            await $fetch(`/api/attachments/purchases/${props.purchaseId}/upload`, {
-              method: 'POST',
-              body: formData
-            })
-          } catch (error) {
-            console.error('Error uploading attachment:', error)
-          }
-        }
-      }
-
       emit('received')
       emit('close')
 

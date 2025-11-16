@@ -17,7 +17,7 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else>
+    <div v-else class="flex flex-col gap-4">
       <!-- Summary Cards -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
         <SharedMetricCard
@@ -108,6 +108,7 @@
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </template>

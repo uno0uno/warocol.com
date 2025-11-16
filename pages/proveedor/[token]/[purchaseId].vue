@@ -184,190 +184,35 @@
           <span>Progreso de la Orden</span>
         </h3>
 
-        <!-- Stepper -->
+        <!-- Stepper - Dynamic based on payment type -->
         <div class="flex items-center justify-between">
-          <!-- Step 1: Cotización -->
-          <div class="flex items-center flex-1">
-            <div class="flex flex-col items-center">
-              <div
-                :class="[
-                  'flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2',
-                  getStepIndex('quotation') === currentStepIndex
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : getStepIndex('quotation') < currentStepIndex
-                    ? 'bg-secondary text-secondary-foreground border-secondary'
-                    : 'border-border text-text-secondary bg-surface'
-                ]"
-              >
-                <svg v-if="getStepIndex('quotation') < currentStepIndex" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="text-xs font-semibold">1</span>
+          <template v-for="(step, index) in stepOrder" :key="step">
+            <!-- Step -->
+            <div class="flex items-center" :class="index < stepOrder.length - 1 ? 'flex-1' : ''">
+              <div class="flex flex-col items-center">
+                <div
+                  :class="[
+                    'flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2',
+                    getStepIndex(step) === currentStepIndex
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : getStepIndex(step) < currentStepIndex
+                      ? 'bg-secondary text-secondary-foreground border-secondary'
+                      : 'border-border text-text-secondary bg-surface'
+                  ]"
+                >
+                  <svg v-if="getStepIndex(step) < currentStepIndex" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                  <span v-else class="text-xs font-semibold">{{ index + 1 }}</span>
+                </div>
+                <p class="text-xs font-medium mt-2" :class="getStepIndex(step) <= currentStepIndex ? 'text-text-primary' : 'text-text-secondary'">
+                  {{ stepLabels[step] }}
+                </p>
               </div>
-              <p class="text-xs font-medium mt-2" :class="getStepIndex('quotation') <= currentStepIndex ? 'text-text-primary' : 'text-text-secondary'">Cotización</p>
+              <!-- Connector line (not for last step) -->
+              <div v-if="index < stepOrder.length - 1" class="flex-1 h-1 mx-4" :class="getStepIndex(stepOrder[index + 1]) <= currentStepIndex ? 'bg-secondary' : 'bg-border'"></div>
             </div>
-            <div class="flex-1 h-1 mx-4" :class="getStepIndex('pending') <= currentStepIndex ? 'bg-secondary' : 'bg-border'"></div>
-          </div>
-
-          <!-- Step 2: Pendiente -->
-          <div class="flex items-center flex-1">
-            <div class="flex flex-col items-center">
-              <div
-                :class="[
-                'flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2',
-                getStepIndex('pending') === currentStepIndex
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : getStepIndex('pending') < currentStepIndex
-                  ? 'bg-secondary text-secondary-foreground border-secondary'
-                  : 'border-border text-text-secondary bg-surface'
-              ]"
-            >
-              <svg v-if="getStepIndex('pending') < currentStepIndex" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-              </svg>
-              <span v-else class="text-xs font-semibold">2</span>
-            </div>
-              <p class="text-xs font-medium mt-2" :class="getStepIndex('pending') <= currentStepIndex ? 'text-text-primary' : 'text-text-secondary'">Pendiente</p>
-            </div>
-            <div class="flex-1 h-1 mx-4" :class="getStepIndex('confirmed') <= currentStepIndex ? 'bg-secondary' : 'bg-border'"></div>
-          </div>
-
-          <!-- Step 3: Confirmado -->
-          <div class="flex items-center flex-1">
-            <div class="flex flex-col items-center">
-              <div
-                :class="[
-                  'flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2',
-                  getStepIndex('confirmed') === currentStepIndex
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : getStepIndex('confirmed') < currentStepIndex
-                    ? 'bg-secondary text-secondary-foreground border-secondary'
-                    : 'border-border text-text-secondary bg-surface'
-                ]"
-              >
-                <svg v-if="getStepIndex('confirmed') < currentStepIndex" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="text-xs font-semibold">3</span>
-              </div>
-              <p class="text-xs font-medium mt-2" :class="getStepIndex('confirmed') <= currentStepIndex ? 'text-text-primary' : 'text-text-secondary'">Confirmado</p>
-            </div>
-            <div class="flex-1 h-1 mx-4" :class="getStepIndex('invoiced') <= currentStepIndex ? 'bg-secondary' : 'bg-border'"></div>
-          </div>
-
-          <!-- Step 4: Facturado -->
-          <div class="flex items-center flex-1">
-            <div class="flex flex-col items-center">
-              <div
-                :class="[
-                  'flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2',
-                  getStepIndex('invoiced') === currentStepIndex
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : getStepIndex('invoiced') < currentStepIndex
-                    ? 'bg-secondary text-secondary-foreground border-secondary'
-                    : 'border-border text-text-secondary bg-surface'
-                ]"
-              >
-                <svg v-if="getStepIndex('invoiced') < currentStepIndex" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="text-xs font-semibold">4</span>
-              </div>
-              <p class="text-xs font-medium mt-2" :class="getStepIndex('invoiced') <= currentStepIndex ? 'text-text-primary' : 'text-text-secondary'">Facturado</p>
-            </div>
-            <div class="flex-1 h-1 mx-4" :class="getStepIndex('shipped') <= currentStepIndex ? 'bg-secondary' : 'bg-border'"></div>
-          </div>
-
-          <!-- Step 5: Enviado -->
-          <div class="flex items-center flex-1">
-            <div class="flex flex-col items-center">
-              <div
-                :class="[
-                  'flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2',
-                  getStepIndex('shipped') === currentStepIndex
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : getStepIndex('shipped') < currentStepIndex
-                    ? 'bg-secondary text-secondary-foreground border-secondary'
-                    : 'border-border text-text-secondary bg-surface'
-                ]"
-              >
-                <svg v-if="getStepIndex('shipped') < currentStepIndex" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="text-xs font-semibold">5</span>
-              </div>
-              <p class="text-xs font-medium mt-2" :class="getStepIndex('shipped') <= currentStepIndex ? 'text-text-primary' : 'text-text-secondary'">Enviado</p>
-            </div>
-            <div class="flex-1 h-1 mx-4" :class="getStepIndex('received') <= currentStepIndex ? 'bg-secondary' : 'bg-border'"></div>
-          </div>
-
-          <!-- Step 6: Recibido -->
-          <div class="flex items-center flex-1">
-            <div class="flex flex-col items-center">
-              <div
-                :class="[
-                  'flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2',
-                  getStepIndex('received') === currentStepIndex
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : getStepIndex('received') < currentStepIndex
-                    ? 'bg-secondary text-secondary-foreground border-secondary'
-                    : 'border-border text-text-secondary bg-surface'
-                ]"
-              >
-                <svg v-if="getStepIndex('received') < currentStepIndex" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="text-xs font-semibold">6</span>
-              </div>
-              <p class="text-xs font-medium mt-2" :class="getStepIndex('received') <= currentStepIndex ? 'text-text-primary' : 'text-text-secondary'">Recibido</p>
-            </div>
-            <div class="flex-1 h-1 mx-4" :class="getStepIndex('verified') <= currentStepIndex ? 'bg-secondary' : 'bg-border'"></div>
-          </div>
-
-          <!-- Step 7: Verificado -->
-          <div class="flex items-center flex-1">
-            <div class="flex flex-col items-center">
-              <div
-                :class="[
-                  'flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2',
-                  getStepIndex('verified') === currentStepIndex
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : getStepIndex('verified') < currentStepIndex
-                    ? 'bg-secondary text-secondary-foreground border-secondary'
-                    : 'border-border text-text-secondary bg-surface'
-                ]"
-              >
-                <svg v-if="getStepIndex('verified') < currentStepIndex" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="text-xs font-semibold">7</span>
-              </div>
-              <p class="text-xs font-medium mt-2" :class="getStepIndex('verified') <= currentStepIndex ? 'text-text-primary' : 'text-text-secondary'">Verificado</p>
-            </div>
-            <div class="flex-1 h-1 mx-4" :class="getStepIndex('paid') <= currentStepIndex ? 'bg-secondary' : 'bg-border'"></div>
-          </div>
-
-          <!-- Step 8: Pagado -->
-          <div class="flex items-center">
-            <div class="flex flex-col items-center">
-              <div
-                :class="[
-                  'flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2',
-                  getStepIndex('paid') === currentStepIndex
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : getStepIndex('paid') < currentStepIndex
-                    ? 'bg-secondary text-secondary-foreground border-secondary'
-                    : 'border-border text-text-secondary bg-surface'
-                ]"
-              >
-                <svg v-if="getStepIndex('paid') <= currentStepIndex" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="text-xs font-semibold">8</span>
-              </div>
-              <p class="text-xs font-medium mt-2" :class="getStepIndex('paid') <= currentStepIndex ? 'text-text-primary' : 'text-text-secondary'">Pagado</p>
-            </div>
-          </div>
+          </template>
         </div>
 
         <!-- Current Step Details -->
@@ -392,7 +237,7 @@
                 <span>Completar Precios</span>
               </button>
               <button
-                v-else-if="purchase?.status === 'confirmed' || purchase?.status === 'preparing'"
+                v-else-if="canShowInvoiceButton"
                 @click="showInvoiceModal = true"
                 class="btn-secondary px-6 py-3 rounded-lg text-base font-semibold flex items-center space-x-2"
               >
@@ -572,39 +417,93 @@ const showCompletePricesModal = ref(false)
 const showInvoiceModal = ref(false)
 const showShipModal = ref(false)
 
-// Wizard step mapping
-const stepOrder = ['quotation', 'pending', 'confirmed', 'invoiced', 'shipped', 'received', 'verified', 'paid']
+// Step labels for wizard
+const stepLabels: Record<string, string> = {
+  quotation: 'Cotización',
+  pending: 'Pendiente',
+  confirmed: 'Confirmado',
+  paid: 'Pagado',
+  invoiced: 'Facturado',
+  shipped: 'Enviado',
+  received: 'Recibido',
+  verified: 'Verificado'
+}
+
+// Wizard step mapping - order changes based on payment type
+const stepOrder = computed(() => {
+  const paymentType = purchase.value?.payment_type
+
+  // For "contado" payment type, payment comes before invoicing
+  if (paymentType === 'contado') {
+    return ['quotation', 'pending', 'confirmed', 'paid', 'invoiced', 'shipped', 'received', 'verified']
+  }
+
+  // For credit and other payment types, payment comes at the end
+  return ['quotation', 'pending', 'confirmed', 'invoiced', 'shipped', 'received', 'verified', 'paid']
+})
 
 function getStepIndex(status: string): number {
-  if (status === 'preparing') return stepOrder.indexOf('confirmed')
-  return stepOrder.indexOf(status)
+  if (status === 'preparing') return stepOrder.value.indexOf('confirmed')
+  return stepOrder.value.indexOf(status)
 }
 
 const currentStepIndex = computed(() => {
   return getStepIndex(purchase.value?.status || 'quotation')
 })
 
+// Control when the invoice button should be shown
+// For "contado" payment type, payment must be made before invoicing
+const canShowInvoiceButton = computed(() => {
+  const status = purchase.value?.status
+  const paymentType = purchase.value?.payment_type
+
+  // For "contado" payment type, require payment first
+  if (paymentType === 'contado') {
+    return status === 'paid'
+  }
+
+  // For other payment types (credito, contraentrega, etc.), allow invoicing after confirmation
+  return status === 'confirmed' || status === 'preparing'
+})
+
 function getProgressWidth(): number {
-  const totalSteps = stepOrder.length
+  const totalSteps = stepOrder.value.length
   const currentStep = currentStepIndex.value
   return (currentStep / (totalSteps - 1)) * 100
 }
 
 function isSupplierStep(status: string): boolean {
-  return ['quotation', 'confirmed', 'preparing', 'invoiced'].includes(status)
+  const paymentType = purchase.value?.payment_type
+  const baseSupplierSteps = ['quotation', 'confirmed', 'preparing', 'invoiced']
+
+  // For "contado" payment type, also include 'paid' status as a supplier step
+  // because they need to invoice after payment
+  if (paymentType === 'contado' && status === 'paid') {
+    return true
+  }
+
+  return baseSupplierSteps.includes(status)
 }
 
 function getStepDescription(status: string): string {
+  const paymentType = purchase.value?.payment_type
+
   const descriptions: Record<string, string> = {
     quotation: 'Completa los precios de los productos solicitados para enviar la cotización',
     pending: 'Esperando que el cliente apruebe tu cotización',
-    confirmed: 'Cotización aprobada. Registra la factura o remisión para continuar con el envío',
-    preparing: 'Cotización aprobada. Registra la factura o remisión para continuar con el envío',
+    confirmed: paymentType === 'contado'
+      ? 'Cotización aprobada. Esperando pago del cliente antes de poder facturar'
+      : 'Cotización aprobada. Registra la factura o remisión para continuar con el envío',
+    preparing: paymentType === 'contado'
+      ? 'Cotización aprobada. Esperando pago del cliente antes de poder facturar'
+      : 'Cotización aprobada. Registra la factura o remisión para continuar con el envío',
+    paid: paymentType === 'contado'
+      ? 'Pago recibido. Ahora puedes registrar la factura o remisión'
+      : '¡Orden completada exitosamente! El pago ha sido procesado',
     invoiced: 'Factura registrada. Marca la orden como enviada con el número de tracking',
     shipped: 'Orden enviada. Esperando confirmación de recepción por parte del cliente',
     received: 'Orden recibida. Esperando verificación de calidad por parte del cliente',
-    verified: 'Orden verificada y aprobada. Esperando pago por parte del cliente',
-    paid: '¡Orden completada exitosamente! El pago ha sido procesado'
+    verified: 'Orden verificada y aprobada. Esperando pago por parte del cliente'
   }
   return descriptions[status] || ''
 }

@@ -179,7 +179,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 
 definePageMeta({
   layout: 'dashboard'
@@ -193,20 +193,76 @@ useHead({
 })
 
 // State
-const loading = ref(true)
-const pendingPurchases = ref<any[]>([])
-const paidPurchases = ref<any[]>([])
-const suppliers = ref<any[]>([])
 const showPaymentModal = ref(false)
 const selectedPurchase = ref<any>(null)
 
-// Fetch suppliers
-const { data: suppliersData } = await useFetch('/api/suppliers/providers', {
-  server: false,
-  query: { limit: 250 }
+// Tenant reactivity
+const { onTenantChange, currentTenant } = useTenantReactive()
+
+// Fetch suppliers using useAsyncData
+const { data: suppliersData } = useAsyncData(
+  `suppliers-${currentTenant.value?.id || 'default'}`,
+  () => $fetch('/api/suppliers/providers', {
+    query: { limit: 250 }
+  }),
+  {
+    server: false,
+    watch: [currentTenant],
+    default: () => ({ data: [] })
+  }
+)
+
+const suppliers = computed(() => suppliersData.value?.data || [])
+
+// Fetch all purchases using useAsyncData
+const { data: purchasesData, pending: loading, refresh } = useAsyncData(
+  `purchases-payments-${currentTenant.value?.id || 'default'}`,
+  () => $fetch('/api/suppliers/purchases', {
+    query: { limit: 250 }
+  }),
+  {
+    server: false,
+    watch: [currentTenant],
+    default: () => ({ data: [] })
+  }
+)
+
+// Filter pending purchases based on payment_type and status
+const pendingPurchases = computed(() => {
+  const allPurchases = purchasesData.value?.data || []
+  const filtered = []
+
+  for (const p of allPurchases) {
+    // For "contado" payment type, show purchases in confirmed/preparing status (waiting for payment before invoice)
+    if (p.payment_type === 'contado' && (p.status === 'confirmed' || p.status === 'preparing')) {
+      filtered.push(p)
+    }
+    // For other payment types (credito, contraentrega, etc.), show verified purchases (traditional flow)
+    else if (p.payment_type !== 'contado' && p.status === 'verified') {
+      filtered.push(p)
+    }
+  }
+
+  return filtered
 })
 
-suppliers.value = suppliersData.value?.data || []
+// Fetch paid purchases using useAsyncData (for stats)
+const { data: paidPurchasesData } = useAsyncData(
+  `purchases-paid-${currentTenant.value?.id || 'default'}`,
+  () => $fetch('/api/suppliers/purchases', {
+    query: {
+      status: 'paid',
+      limit: 250
+    }
+  }),
+  {
+    server: false,
+    watch: [currentTenant],
+    default: () => ({ data: [] })
+  }
+)
+
+const paidPurchases = computed(() => paidPurchasesData.value?.data || [])
 
 // Computed stats
 const totalPending = computed(() => {
@@ -320,43 +376,6 @@ function closePaymentModal() {
 
 async function handlePaymentCompleted() {
   closePaymentModal()
-  await loadPurchases()
+  await refresh() // Use the refresh from useAsyncData
 }
-
-async function loadPurchases() {
-  try {
-    // Load verified purchases (pending payment)
-    const verifiedResponse = await $fetch('/api/suppliers/purchases', {
-      query: {
-        status: 'verified',
-        limit: 250
-      }
-    })
-    pendingPurchases.value = verifiedResponse.data || []
-
-    // Load paid purchases (for stats)
-    const paidResponse = await $fetch('/api/suppliers/purchases', {
-      query: {
-        status: 'paid',
-        limit: 250
-      }
-    })
-    paidPurchases.value = paidResponse.data || []
-
-    loading.value = false
-  } catch (err: any) {
-    console.error('Error loading purchases:', err)
-    loading.value = false
-  }
-}
-
-const refresh = async () => {
-  loading.value = true
-  await loadPurchases()
-}
-
-// Load on mount
-onMounted(async () => {
-  await loadPurchases()
-})
 </script>

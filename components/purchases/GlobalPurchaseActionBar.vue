@@ -66,7 +66,7 @@
                 <span>Aprobar Orden</span>
               </button>
 
-              <!-- WAITING: Invoice - Supplier must invoice -->
+              <!-- WAITING: Payment (for "contado" type) or Invoice (for other types) -->
               <div
                 v-if="currentPurchase.status === 'confirmed' || currentPurchase.status === 'preparing'"
                 class="px-4 py-2 border-2 border-dashed rounded-lg flex items-center space-x-2"
@@ -75,7 +75,20 @@
                 <svg class="w-5 h-5 animate-pulse" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Esperando factura del proveedor</span>
+                <span v-if="currentPurchase.payment_type === 'contado'">Esperando pago antes de facturar</span>
+                <span v-else>Esperando factura del proveedor</span>
+              </div>
+
+              <!-- WAITING: Invoice after payment (for "contado" type only) -->
+              <div
+                v-if="currentPurchase.status === 'paid' && currentPurchase.payment_type === 'contado'"
+                class="px-4 py-2 border-2 border-dashed rounded-lg flex items-center space-x-2"
+                style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));"
+              >
+                <svg class="w-5 h-5 animate-pulse" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Pago recibido. Esperando factura del proveedor</span>
               </div>
 
               <!-- WAITING: Ship - Supplier must ship -->
@@ -230,10 +243,25 @@ const isUpdating = ref(false)
 
 // Computed to check if we should show the bar
 const shouldShowBar = computed(() => {
-  return showActionBar.value &&
-         currentPurchase.value &&
-         currentPurchase.value.status !== 'paid' &&
-         currentPurchase.value.status !== 'cancelled'
+  if (!showActionBar.value || !currentPurchase.value) {
+    return false
+  }
+
+  const status = currentPurchase.value.status
+  const paymentType = currentPurchase.value.payment_type
+
+  // Never show for cancelled orders
+  if (status === 'cancelled') {
+    return false
+  }
+
+  // For "contado" payment type, show bar even in "paid" status (waiting for invoice)
+  if (paymentType === 'contado' && status === 'paid') {
+    return true
+  }
+
+  // For other payment types, hide bar when paid
+  return status !== 'paid'
 })
 
 // Combined loading state

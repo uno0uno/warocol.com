@@ -73,7 +73,7 @@
             <!-- Invoice Amount -->
             <div>
               <label class="block text-sm font-medium text-text-primary mb-2">Monto de Factura *</label>
-              <input v-model.number="formData.invoice_amount" type="number" step="0.01" min="0" required class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary" placeholder="0.00" />
+              <input v-model.number="formData.invoice_amount" type="number" step="0.01" min="0.01" required class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary" placeholder="0.00" />
             </div>
 
             <!-- Tax Amount -->
@@ -241,54 +241,46 @@ const getPaymentTypeText = (paymentType: string): string => {
 const handleSubmit = async () => {
   loading.value = true
   try {
-    const body: any = {
-      document_type: formData.value.document_type,
-      invoice_number: formData.value.invoice_number,
-      invoice_date: new Date(formData.value.invoice_date).toISOString(),
-      notes: formData.value.notes || null
+    // Create FormData to include both form fields and files
+    const formDataPayload = new FormData()
+
+    formDataPayload.append('document_type', formData.value.document_type)
+    formDataPayload.append('invoice_number', formData.value.invoice_number)
+    formDataPayload.append('invoice_date', new Date(formData.value.invoice_date).toISOString())
+
+    if (formData.value.notes) {
+      formDataPayload.append('notes', formData.value.notes)
     }
 
     // Only include amounts for invoices, not for remisions
     if (formData.value.document_type !== 'remision') {
-      body.invoice_amount = formData.value.invoice_amount
-      body.tax_amount = formData.value.tax_amount
+      formDataPayload.append('invoice_amount', formData.value.invoice_amount.toString())
+      formDataPayload.append('tax_amount', formData.value.tax_amount.toString())
     }
 
     // Only include credit days for factura_credito
     if (formData.value.document_type === 'factura_credito' && formData.value.credit_days) {
-      body.credit_days = formData.value.credit_days
+      formDataPayload.append('credit_days', formData.value.credit_days.toString())
       // Calculate due date
       const invoiceDate = new Date(formData.value.invoice_date)
       const dueDate = new Date(invoiceDate)
       dueDate.setDate(dueDate.getDate() + formData.value.credit_days)
-      body.payment_due_date = dueDate.toISOString()
+      formDataPayload.append('payment_due_date', dueDate.toISOString())
+    }
+
+    // Append files if any
+    if (selectedFiles.value.length > 0) {
+      for (const file of selectedFiles.value) {
+        formDataPayload.append('files', file)
+      }
     }
 
     const response = await $fetch(`/api/supplier-portal/${props.token}/purchases/${props.purchase.id}/invoice`, {
       method: 'POST',
-      body
+      body: formDataPayload
     })
 
     if (response.success) {
-      // Upload attachments if any
-      if (selectedFiles.value.length > 0) {
-        for (const file of selectedFiles.value) {
-          try {
-            const formData = new FormData()
-            formData.append('file', file)
-            formData.append('attachment_type', 'invoice')
-            formData.append('description', `Documento de ${formData.value.document_type === 'remision' ? 'remisión' : 'factura'}: ${formData.value.invoice_number}`)
-
-            await $fetch(`/api/attachments/purchases/${props.purchase.id}/upload`, {
-              method: 'POST',
-              body: formData
-            })
-          } catch (error) {
-            console.error('Error uploading attachment:', error)
-          }
-        }
-      }
-
       emit('invoiced')
       emit('close')
       const docTypeLabel = formData.value.document_type === 'remision' ? 'Remisión' : 'Factura'

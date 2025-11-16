@@ -18,6 +18,12 @@ export interface Purchase {
   purchase_date: string
   delivery_date: string | null
   status: string
+  payment_type?: string | null
+  credit_days?: number | null
+  payment_due_date?: string | null
+  payment_terms?: string | null
+  consolidation_group?: string | null
+  requires_advance_payment?: boolean | null
   invoice_number: string | null
   tax_amount: number
   total_amount: number
@@ -74,6 +80,12 @@ export const usePurchasesStore = defineStore('purchases', () => {
           purchase_date: purchase.purchase_date || '',
           delivery_date: purchase.delivery_date || null,
           status: purchase.status || 'pending',
+          payment_type: purchase.payment_type || null,
+          credit_days: purchase.credit_days || null,
+          payment_due_date: purchase.payment_due_date || null,
+          payment_terms: purchase.payment_terms || null,
+          consolidation_group: purchase.consolidation_group || null,
+          requires_advance_payment: purchase.requires_advance_payment || null,
           invoice_number: purchase.invoice_number || null,
           tax_amount: parseFloat(purchase.tax_amount) || 0,
           total_amount: parseFloat(purchase.total_amount) || 0,
