@@ -28,11 +28,11 @@
                 Modificar información de: <span class="font-medium">{{ form.name }}</span>
               </p>
             </div>
-            <NuxtLink 
-              to="/abastecimiento/proveedores" 
+            <button
+              @click="$router.back()"
               class="btn-secondary px-4 py-2 rounded-lg text-sm">
               Volver
-            </NuxtLink>
+            </button>
           </div>
         </div>
       </div>

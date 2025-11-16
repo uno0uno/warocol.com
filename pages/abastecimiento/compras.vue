@@ -54,7 +54,8 @@
         
         <SharedMetricCard
           title="Valor Total"
-          :value="`$${stats.valorTotal}`"
+          :value="stats.valorTotal"
+          format="currency"
           suffix="M"
           subtitle="Monto total órdenes"
           variant="primary"
@@ -309,12 +310,13 @@ const ordenes = computed(() => purchasesData.value.data.map(purchase => ({
 // Stats
 const stats = computed(() => {
   const all = ordenes.value
+  const totalSum = all.reduce((sum, o) => sum + o.valorTotal, 0)
   return {
     total: all.length,
     pendientes: all.filter(o => o.estado === 'pending').length,
     recibidas: all.filter(o => o.estado === 'received').length,
     vencidas: all.filter(o => o.estado === 'overdue').length,
-    valorTotal: (all.reduce((sum, o) => sum + o.valorTotal, 0) / 1000000).toFixed(1)
+    valorTotal: totalSum / 1000000 // Convert to millions
   }
 })
 

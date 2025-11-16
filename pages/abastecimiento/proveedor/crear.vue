@@ -8,11 +8,11 @@
             <h2 class="text-2xl font-bold text-text-primary">Crear Nuevo Proveedor</h2>
             <p class="text-sm text-text-secondary mt-1">Complete la información del proveedor</p>
           </div>
-          <NuxtLink 
-            to="/abastecimiento/proveedores" 
+          <button
+            @click="$router.back()"
             class="btn-secondary px-4 py-2 rounded-lg text-sm">
             Volver
-          </NuxtLink>
+          </button>
         </div>
       </div>
     </div>

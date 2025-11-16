@@ -52,7 +52,10 @@
 
           <!-- Content -->
           <div class="flex-1 pb-8">
-            <div class="bg-background border border-border rounded-lg p-4">
+            <div
+              class="bg-background border border-border rounded-lg p-4 cursor-pointer hover:bg-surface-secondary/50 transition-colors"
+              @click="navigateToTransitionDetail(entry)"
+            >
               <!-- Status and Date -->
               <div class="mb-2">
                 <h4 class="font-semibold text-text-primary">
@@ -287,5 +290,10 @@ function formatMetadataValue(key: string, value: any): string {
   }
 
   return String(value)
+}
+
+function navigateToTransitionDetail(entry: any) {
+  // Navigate to transition detail page
+  navigateTo(`/abastecimiento/compra/${props.purchaseId}/transicion/${entry.id}`)
 }
 </script>

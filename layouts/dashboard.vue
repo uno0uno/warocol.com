@@ -13,9 +13,9 @@
             <p class="text-sm text-ebony-400 mt-1">{{ currentDateTime }}</p>
           </div>
           <div v-if="backButton">
-            <NuxtLink :to="backButton.url" class="btn-secondary px-4 py-2 rounded-lg text-sm">
+            <button @click="goBack" class="btn-secondary px-4 py-2 rounded-lg text-sm">
               {{ backButton.label }}
-            </NuxtLink>
+            </button>
           </div>
         </div>
       </header>
@@ -63,6 +63,12 @@ import {
 
 // Get route-based configuration
 const route = useRoute()
+const router = useRouter()
+
+// Go back function
+const goBack = () => {
+  router.back()
+}
 
 // Determine configuration based on route
 const getPageConfig = () => {
@@ -157,8 +163,7 @@ const getPageConfig = () => {
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: {
-        label: 'Volver',
-        url: '/abastecimiento/compras'
+        label: 'Volver'
       }
     }
   } else if (path.startsWith('/abastecimiento/compra/')) {
@@ -170,8 +175,7 @@ const getPageConfig = () => {
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: {
-        label: 'Volver',
-        url: '/abastecimiento/compras'
+        label: 'Volver'
       }
     }
   } else if (path === '/pagos' || path === '/pagos/') {
