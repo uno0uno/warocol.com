@@ -364,6 +364,13 @@
           </div>
         </div>
       </div>
+
+      <!-- Status History Timeline -->
+      <PurchasesStatusHistoryTimeline
+        :purchase-id="purchaseId"
+        :current-status="purchase?.status"
+        :base-transition-url="`/proveedor/${token}/${purchaseId}/transicion`"
+      />
     </div>
 
     <!-- Modals -->

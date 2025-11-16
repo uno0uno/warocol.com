@@ -53,7 +53,8 @@
           <!-- Content -->
           <div class="flex-1 pb-8">
             <div
-              class="bg-background border border-border rounded-lg p-4 cursor-pointer hover:bg-surface-secondary/50 transition-colors"
+              class="bg-background border border-border rounded-lg p-4 transition-colors"
+              :class="props.baseTransitionUrl ? 'cursor-pointer hover:bg-surface-secondary/50' : ''"
               @click="navigateToTransitionDetail(entry)"
             >
               <!-- Status and Date -->
@@ -117,6 +118,7 @@ import { ref, onMounted, watch } from 'vue'
 const props = defineProps<{
   purchaseId: string
   currentStatus?: string
+  baseTransitionUrl?: string // Optional base URL for transition detail navigation
 }>()
 
 const loading = ref(false)
@@ -293,7 +295,12 @@ function formatMetadataValue(key: string, value: any): string {
 }
 
 function navigateToTransitionDetail(entry: any) {
-  // Navigate to transition detail page
-  navigateTo(`/abastecimiento/compra/${props.purchaseId}/transicion/${entry.id}`)
+  // Only navigate if baseTransitionUrl is provided
+  if (!props.baseTransitionUrl) {
+    return
+  }
+
+  // Navigate to transition detail page using the provided base URL
+  navigateTo(`${props.baseTransitionUrl}/${entry.id}`)
 }
 </script>

@@ -211,6 +211,7 @@
         <PurchasesStatusHistoryTimeline
           :purchase-id="purchaseId"
           :current-status="purchase?.status"
+          :base-transition-url="`/abastecimiento/compra/${purchaseId}/transicion`"
         />
       </div>
 
