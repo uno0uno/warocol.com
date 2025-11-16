@@ -174,6 +174,16 @@ const getPageConfig = () => {
         url: '/abastecimiento/compras'
       }
     }
+  } else if (path === '/pagos' || path === '/pagos/') {
+    return {
+      pageTitle: 'Pagos',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar pagos...',
+      activePage: 'pagos' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path.includes('/analytics')) {
     return {
       pageTitle: 'Dashboard - Analytics',
