@@ -1,18 +1,13 @@
 <template>
   <div class="page-layout">
     <div class="page-header">
-      <div class="flex justify-between items-start">
-        <div>
-          <h1 class="page-title">Gestión de Pagos</h1>
-          <p class="page-subtitle">Administra los pagos a proveedores y cuentas por pagar</p>
-        </div>
-        <button
-          @click="refresh"
+      <div class="flex justify-end items-center">
+        <button @click="refresh"
           class="p-2 text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-          title="Refrescar listado"
-        >
+          title="Refrescar listado">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
         </button>
       </div>
@@ -24,162 +19,99 @@
     </div>
 
     <!-- Content -->
-    <div v-else>
+    <div v-else class="space-y-6">
       <!-- Quick Stats -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <!-- Total Pending -->
-        <div class="bg-surface border-2 border-border rounded-lg p-6">
-          <div class="flex items-start justify-between">
-            <div>
-              <p class="text-sm text-text-secondary mb-2">Total Pendiente</p>
-              <p class="text-2xl font-bold text-text-primary">{{ formatCurrency(totalPending) }}</p>
-              <p class="text-xs text-text-secondary mt-1">{{ pendingPurchases.length }} facturas pendientes</p>
-            </div>
-            <div class="bg-warning/10 p-3 rounded-lg">
-              <svg class="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <SharedMetricCard title="Total Pendiente" :value="totalPending" format="currency"
+          :subtitle="`${pendingPurchases.length} facturas pendientes`" variant="primary" :icon="CurrencyDollarIcon"
+          :show-icon="false" />
 
-        <!-- Due This Week -->
-        <div class="bg-surface border-2 border-border rounded-lg p-6">
-          <div class="flex items-start justify-between">
-            <div>
-              <p class="text-sm text-text-secondary mb-2">Vencen Esta Semana</p>
-              <p class="text-2xl font-bold text-text-primary">{{ formatCurrency(dueThisWeek) }}</p>
-              <p class="text-xs text-text-secondary mt-1">{{ dueThisWeekCount }} facturas</p>
-            </div>
-            <div class="bg-destructive/10 p-3 rounded-lg">
-              <svg class="w-6 h-6 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <SharedMetricCard title="Vencen Esta Semana" :value="dueThisWeek" format="currency"
+          :subtitle="`${dueThisWeekCount} facturas`" variant="primary" :icon="ClockIcon" :show-icon="false" />
 
-        <!-- Paid This Month -->
-        <div class="bg-surface border-2 border-border rounded-lg p-6">
-          <div class="flex items-start justify-between">
-            <div>
-              <p class="text-sm text-text-secondary mb-2">Pagado Este Mes</p>
-              <p class="text-2xl font-bold text-text-primary">{{ formatCurrency(paidThisMonth) }}</p>
-              <p class="text-xs text-text-secondary mt-1">{{ paidThisMonthCount }} facturas pagadas</p>
-            </div>
-            <div class="bg-success/10 p-3 rounded-lg">
-              <svg class="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <SharedMetricCard title="Pagado Este Mes" :value="paidThisMonth" format="currency"
+          :subtitle="`${paidThisMonthCount} facturas pagadas`" variant="primary" :icon="CheckCircleIcon"
+          :show-icon="false" />
       </div>
 
-      <!-- Pending Payments List -->
-      <div class="bg-surface border-2 border-border rounded-lg p-6">
-        <h2 class="text-lg font-semibold text-text-primary mb-6">Órdenes Pendientes de Pago</h2>
+      <!-- Pending Payments Table -->
+      <UiDataTable title="Órdenes Pendientes de Pago" :columns="pendingColumns" :data="pendingTableData"
+        variant="default" empty-message="No hay pagos pendientes. Todas las órdenes verificadas han sido pagadas.">
+        <template #cell-orden="{ row }">
+          <div>
+            <p class="font-medium text-text-primary">{{ row.orden }}</p>
+            <p class="text-xs text-text-secondary">{{ row.fecha }}</p>
+          </div>
+        </template>
 
-        <!-- Empty State -->
-        <div v-if="pendingPurchases.length === 0" class="text-center py-12">
-          <svg class="w-16 h-16 mx-auto text-text-secondary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 class="text-xl font-bold text-text-primary mb-2">No hay pagos pendientes</h3>
-          <p class="text-text-secondary">Todas las órdenes verificadas han sido pagadas</p>
-        </div>
+        <template #cell-factura="{ row }">
+          <div>
+            <p class="font-medium text-text-primary">{{ row.factura || '-' }}</p>
+            <p class="text-xs text-text-secondary">{{ row.fechaFactura || '-' }}</p>
+          </div>
+        </template>
 
-        <!-- Purchases Table -->
-        <div v-else class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-surface-secondary border-b-2 border-border">
-              <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                  Orden
-                </th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                  Proveedor
-                </th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                  Factura
-                </th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
-                  Monto
-                </th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                  Vencimiento
-                </th>
-                <th class="px-4 py-3 text-center text-xs font-medium text-text-secondary uppercase tracking-wider">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-border">
-              <tr
-                v-for="purchase in pendingPurchases"
-                :key="purchase.id"
-                class="hover:bg-surface-secondary/50 transition-colors"
-              >
-                <td class="px-4 py-4 text-sm">
-                  <div>
-                    <p class="font-medium text-text-primary">{{ purchase.purchase_number }}</p>
-                    <p class="text-xs text-text-secondary">{{ formatDate(purchase.purchase_date) }}</p>
-                  </div>
-                </td>
-                <td class="px-4 py-4 text-sm text-text-primary">
-                  {{ getSupplierName(purchase) }}
-                </td>
-                <td class="px-4 py-4 text-sm">
-                  <div>
-                    <p class="font-medium text-text-primary">{{ purchase.invoice_number || '-' }}</p>
-                    <p class="text-xs text-text-secondary">{{ formatDate(purchase.invoice_date) }}</p>
-                  </div>
-                </td>
-                <td class="px-4 py-4 text-sm text-right">
-                  <p class="font-semibold text-text-primary">
-                    {{ formatCurrency(parseFloat(purchase.invoice_amount || 0) || (parseFloat(purchase.total_amount || 0) + parseFloat(purchase.tax_amount || 0))) }}
-                  </p>
-                </td>
-                <td class="px-4 py-4 text-sm">
-                  <span
-                    v-if="purchase.payment_due_date"
-                    :class="[
-                      'px-2 py-1 rounded text-xs font-medium',
-                      isOverdue(purchase.payment_due_date) ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'
-                    ]"
-                  >
-                    {{ formatDate(purchase.payment_due_date) }}
-                  </span>
-                  <span v-else class="text-text-secondary">-</span>
-                </td>
-                <td class="px-4 py-4 text-center">
-                  <button
-                    @click="openPaymentModal(purchase)"
-                    class="btn-primary px-4 py-2 rounded-lg text-sm"
-                  >
-                    Registrar Pago
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+        <template #cell-vencimiento="{ row }">
+          <span v-if="row.vencimiento" :class="[
+            'px-2 py-1 rounded text-xs font-medium',
+            row.estaVencido ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'
+          ]">
+            {{ row.vencimiento }}
+          </span>
+          <span v-else class="text-text-secondary">-</span>
+        </template>
+
+        <template #cell-acciones="{ row }">
+          <button @click="openPaymentModal(row.purchaseData)" class="btn-primary px-4 py-2 rounded-lg text-sm">
+            Registrar Pago
+          </button>
+        </template>
+      </UiDataTable>
+
+      <!-- Paid Purchases Table -->
+      <UiDataTable title="Órdenes Pagadas" :columns="paidColumns" :data="paidTableData" variant="default"
+        empty-message="No hay pagos registrados. Aún no se han registrado pagos a proveedores.">
+        <template #cell-orden="{ row }">
+          <div>
+            <p class="font-medium text-text-primary">{{ row.orden }}</p>
+            <p class="text-xs text-text-secondary">{{ row.fecha }}</p>
+          </div>
+        </template>
+
+        <template #cell-factura="{ row }">
+          <div>
+            <p class="font-medium text-text-primary">{{ row.factura || '-' }}</p>
+            <p class="text-xs text-text-secondary">{{ row.fechaFactura || '-' }}</p>
+          </div>
+        </template>
+
+        <template #cell-montoPagado="{ row }">
+          <p class="font-medium text-text-primary">
+            {{ formatCurrency(row.montoPagado) }}
+          </p>
+        </template>
+
+        <template #cell-metodo="{ row }">
+          <span class="capitalize">{{ row.metodo || '-' }}</span>
+        </template>
+
+        <template #cell-estado="{ row }">
+          <span class="px-2 py-1 rounded text-xs font-medium bg-success/10 text-success">
+            Pagado
+          </span>
+        </template>
+      </UiDataTable>
     </div>
 
     <!-- Payment Modal -->
-    <PurchasesPayPurchaseModal
-      v-if="selectedPurchase"
-      :is-open="showPaymentModal"
-      :purchase-id="selectedPurchase.id"
-      @close="closePaymentModal"
-      @paid="handlePaymentCompleted"
-    />
+    <PurchasesPayPurchaseModal v-if="selectedPurchase" :is-open="showPaymentModal" :purchase-id="selectedPurchase.id"
+      @close="closePaymentModal" @paid="handlePaymentCompleted" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { CurrencyDollarIcon, ClockIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 
 definePageMeta({
   layout: 'dashboard'
@@ -333,18 +265,65 @@ const paidThisMonthCount = computed(() => {
   }).length
 })
 
+// Table columns configuration
+const pendingColumns = [
+  { key: 'orden', title: 'Orden', sortable: true, align: 'left' as const },
+  { key: 'proveedor', title: 'Proveedor', sortable: true, align: 'left' as const },
+  { key: 'factura', title: 'Factura', sortable: false, align: 'left' as const },
+  { key: 'monto', title: 'Monto', sortable: true, align: 'right' as const, format: 'currency' as const },
+  { key: 'vencimiento', title: 'Vencimiento', sortable: true, align: 'left' as const },
+  { key: 'acciones', title: 'Acciones', sortable: false, align: 'center' as const }
+]
+
+const paidColumns = [
+  { key: 'orden', title: 'Orden', sortable: true, align: 'left' as const },
+  { key: 'proveedor', title: 'Proveedor', sortable: true, align: 'left' as const },
+  { key: 'factura', title: 'Factura', sortable: false, align: 'left' as const },
+  { key: 'montoPagado', title: 'Monto Pagado', sortable: true, align: 'right' as const },
+  { key: 'fechaPago', title: 'Fecha de Pago', sortable: true, align: 'left' as const },
+  { key: 'metodo', title: 'Método', sortable: false, align: 'left' as const },
+  { key: 'estado', title: 'Estado', sortable: false, align: 'center' as const }
+]
+
+// Transform pending purchases data for table
+const pendingTableData = computed(() => {
+  return pendingPurchases.value.map(purchase => ({
+    orden: purchase.purchase_number,
+    fecha: formatDate(purchase.purchase_date),
+    proveedor: getSupplierName(purchase),
+    factura: purchase.invoice_number,
+    fechaFactura: formatDate(purchase.invoice_date),
+    monto: parseFloat(purchase.invoice_amount || '0') || (parseFloat(purchase.total_amount || '0') + parseFloat(purchase.tax_amount || '0')),
+    vencimiento: formatDate(purchase.payment_due_date),
+    estaVencido: isOverdue(purchase.payment_due_date),
+    purchaseData: purchase
+  }))
+})
+
+// Transform paid purchases data for table
+const paidTableData = computed(() => {
+  return paidPurchases.value.map(purchase => ({
+    orden: purchase.purchase_number,
+    fecha: formatDate(purchase.purchase_date),
+    proveedor: getSupplierName(purchase),
+    factura: purchase.invoice_number,
+    fechaFactura: formatDate(purchase.invoice_date),
+    montoPagado: parseFloat(purchase.payment_amount || purchase.invoice_amount || '0') || (parseFloat(purchase.total_amount || '0') + parseFloat(purchase.tax_amount || '0')),
+    fechaPago: formatDate(purchase.payment_date),
+    metodo: purchase.payment_method
+  }))
+})
+
 // Helper functions
 function getSupplierName(purchase: any): string {
-  // First try to use supplier_name from purchase data
   if (purchase.supplier_name) {
     return purchase.supplier_name
   }
-  // Fallback to finding in suppliers array
   const supplier = suppliers.value.find(s => s.id === purchase.supplier_id)
   return supplier?.name || 'N/A'
 }
 
-function formatDate(dateString: string | null): string {
+function formatDate(dateString: string | null | undefined): string {
   if (!dateString) return '-'
   const date = new Date(dateString)
   return date.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })
@@ -358,12 +337,14 @@ function formatCurrency(value: number): string {
   }).format(value)
 }
 
-function isOverdue(dueDate: string): boolean {
+function isOverdue(dueDate: string | null | undefined): boolean {
+  if (!dueDate) return false
   const today = new Date()
   const due = new Date(dueDate)
   return due < today
 }
 
+// Modal functions
 function openPaymentModal(purchase: any) {
   selectedPurchase.value = purchase
   showPaymentModal.value = true
