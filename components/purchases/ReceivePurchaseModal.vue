@@ -159,6 +159,9 @@
             </label>
           </div>
 
+          <!-- Attachments Section -->
+          <PurchasesAttachmentUploader v-model="selectedFiles" />
+
           <!-- Actions -->
           <div class="flex justify-end space-x-3 pt-4 border-t-2" style="border-top-color: hsl(var(--crocus-600) / 0.3);">
             <button
@@ -223,6 +226,8 @@ const formData = ref({
   partial: false
 })
 
+const selectedFiles = ref<File[]>([])
+
 // Initialize items when modal opens
 watch(() => props.isOpen, (newValue) => {
   if (newValue && props.purchaseItems?.length) {
@@ -238,6 +243,7 @@ watch(() => props.isOpen, (newValue) => {
       reception_notes: '',
       partial: false
     }
+    selectedFiles.value = []
   }
 })
 
@@ -267,6 +273,25 @@ const handleSubmit = async () => {
     })
 
     if (response.success) {
+      // Upload attachments if any
+      if (selectedFiles.value.length > 0) {
+        for (const file of selectedFiles.value) {
+          try {
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('attachment_type', 'receipt')
+            formData.append('description', `Documento de recepción: ${new Date().toISOString().split('T')[0]}`)
+
+            await $fetch(`/api/attachments/purchases/${props.purchaseId}/upload`, {
+              method: 'POST',
+              body: formData
+            })
+          } catch (error) {
+            console.error('Error uploading attachment:', error)
+          }
+        }
+      }
+
       emit('received')
       emit('close')
 

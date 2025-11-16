@@ -70,6 +70,9 @@
             <textarea v-model="formData.notes" rows="3" class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary resize-none" placeholder="Notas sobre el pago..."></textarea>
           </div>
 
+          <!-- Attachments Section -->
+          <PurchasesAttachmentUploader v-model="selectedFiles" />
+
           <!-- Actions -->
           <div class="flex justify-end space-x-3 pt-4 border-t-2 border-border">
             <button type="button" @click="closeModal" :disabled="loading" class="px-6 py-2 border-2 border-border rounded-lg text-text-primary hover:bg-background transition-colors disabled:opacity-50">Cancelar</button>
@@ -102,6 +105,8 @@ const formData = ref({
   notes: ''
 })
 
+const selectedFiles = ref<File[]>([])
+
 watch(() => props.isOpen, (newValue) => {
   if (newValue) {
     const now = new Date()
@@ -112,6 +117,7 @@ watch(() => props.isOpen, (newValue) => {
       payment_date: now.toISOString().slice(0, 16),
       notes: ''
     }
+    selectedFiles.value = []
   }
 })
 
@@ -132,6 +138,25 @@ const handleSubmit = async () => {
     })
 
     if (response.success) {
+      // Upload attachments if any
+      if (selectedFiles.value.length > 0) {
+        for (const file of selectedFiles.value) {
+          try {
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('attachment_type', 'receipt')
+            formData.append('description', `Comprobante de pago: ${formData.value.payment_reference}`)
+
+            await $fetch(`/api/attachments/purchases/${props.purchaseId}/upload`, {
+              method: 'POST',
+              body: formData
+            })
+          } catch (error) {
+            console.error('Error uploading attachment:', error)
+          }
+        }
+      }
+
       emit('paid')
       emit('close')
       useToast().add({ title: 'Pago Registrado', description: 'El pago ha sido registrado exitosamente', color: 'green' })

@@ -65,6 +65,9 @@
             ></textarea>
           </div>
 
+          <!-- Attachments Section -->
+          <PurchasesAttachmentUploader v-model="selectedFiles" />
+
           <!-- Actions -->
           <div class="flex justify-between items-center pt-4 border-t-2 border-border">
             <button
@@ -114,6 +117,8 @@ const formData = ref({
   notes: ''
 })
 
+const selectedFiles = ref<File[]>([])
+
 // Generate tracking number automatically based on purchase number
 // Example: WR-2025-0004 -> TRACK-2025-0004
 const trackingNumber = computed(() => {
@@ -129,6 +134,7 @@ watch(() => props.isOpen, (newValue) => {
       package_count: 1,
       notes: ''
     }
+    selectedFiles.value = []
   }
 })
 
@@ -153,6 +159,25 @@ const handleSubmit = async () => {
     })
 
     if (response.success) {
+      // Upload attachments if any
+      if (selectedFiles.value.length > 0) {
+        for (const file of selectedFiles.value) {
+          try {
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('attachment_type', 'delivery_note')
+            formData.append('description', `Documento de envío: ${trackingNumber.value}`)
+
+            await $fetch(`/api/attachments/purchases/${props.purchase.id}/upload`, {
+              method: 'POST',
+              body: formData
+            })
+          } catch (error) {
+            console.error('Error uploading attachment:', error)
+          }
+        }
+      }
+
       emit('shipped')
       emit('close')
 

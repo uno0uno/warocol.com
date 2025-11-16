@@ -82,6 +82,9 @@
             <textarea v-model="formData.verification_notes" rows="3" class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary resize-none" placeholder="Observaciones generales..."></textarea>
           </div>
 
+          <!-- Attachments Section -->
+          <PurchasesAttachmentUploader v-model="selectedFiles" />
+
           <!-- Actions -->
           <div class="flex justify-end space-x-3 pt-4 border-t-2 border-border">
             <button type="button" @click="closeModal" :disabled="loading" class="px-6 py-2 border-2 border-border rounded-lg text-text-primary hover:bg-background transition-colors disabled:opacity-50">
@@ -120,6 +123,8 @@ const formData = ref({
   verification_notes: ''
 })
 
+const selectedFiles = ref<File[]>([])
+
 watch(() => props.isOpen, (newValue) => {
   if (newValue && props.purchaseItems?.length) {
     formData.value = {
@@ -134,6 +139,7 @@ watch(() => props.isOpen, (newValue) => {
       all_items_approved: false,
       verification_notes: ''
     }
+    selectedFiles.value = []
   }
 })
 
@@ -156,6 +162,25 @@ const handleSubmit = async () => {
     })
 
     if (response.success) {
+      // Upload attachments if any
+      if (selectedFiles.value.length > 0) {
+        for (const file of selectedFiles.value) {
+          try {
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('attachment_type', 'other')
+            formData.append('description', `Documento de verificación de calidad: ${new Date().toISOString().split('T')[0]}`)
+
+            await $fetch(`/api/attachments/purchases/${props.purchaseId}/upload`, {
+              method: 'POST',
+              body: formData
+            })
+          } catch (error) {
+            console.error('Error uploading attachment:', error)
+          }
+        }
+      }
+
       emit('verified')
       emit('close')
       useToast().add({ title: 'Verificación Completa', description: 'La calidad de la orden ha sido verificada', color: 'green' })
