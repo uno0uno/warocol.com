@@ -105,6 +105,76 @@
         </div>
       </div>
 
+      <!-- Payment Conditions -->
+      <div v-if="purchase?.payment_type" class="bg-surface border-2 border-border rounded-lg p-6 mb-6">
+        <h3 class="text-lg font-semibold text-text-primary mb-4 flex items-center space-x-2">
+          <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <span>Condiciones de Pago</span>
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Payment Type -->
+          <div class="p-4 bg-background rounded-lg border border-border">
+            <p class="text-xs text-text-secondary mb-1">Tipo de Pago</p>
+            <p class="text-base font-semibold text-text-primary">
+              {{ getPaymentTypeText(purchase.payment_type) }}
+            </p>
+          </div>
+
+          <!-- Credit Days (if applicable) -->
+          <div v-if="purchase.credit_days" class="p-4 bg-background rounded-lg border border-border">
+            <p class="text-xs text-text-secondary mb-1">Plazo de Crédito</p>
+            <p class="text-base font-semibold text-text-primary">
+              {{ purchase.credit_days }} días
+            </p>
+          </div>
+
+          <!-- Payment Due Date (if available) -->
+          <div v-if="purchase.payment_due_date" class="p-4 bg-background rounded-lg border border-border">
+            <p class="text-xs text-text-secondary mb-1">Fecha de Vencimiento</p>
+            <p class="text-base font-semibold text-text-primary">
+              {{ formatDate(purchase.payment_due_date) }}
+            </p>
+          </div>
+
+          <!-- Consolidation Group (if applicable) -->
+          <div v-if="purchase.consolidation_group" class="p-4 bg-background rounded-lg border border-border">
+            <p class="text-xs text-text-secondary mb-1">Grupo de Consolidación</p>
+            <p class="text-base font-semibold text-text-primary">
+              {{ purchase.consolidation_group }}
+            </p>
+          </div>
+
+          <!-- Payment Balance (if status is invoiced or later) -->
+          <div v-if="purchase.payment_balance !== null && purchase.payment_balance !== undefined && ['invoiced', 'shipped', 'received', 'verified', 'paid'].includes(purchase.status)" class="p-4 bg-background rounded-lg border border-border">
+            <p class="text-xs text-text-secondary mb-1">Saldo Pendiente</p>
+            <p class="text-base font-semibold" :class="purchase.payment_balance > 0 ? 'text-warning' : 'text-success'">
+              {{ formatCurrency(purchase.payment_balance) }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Payment Terms (if available) -->
+        <div v-if="purchase.payment_terms" class="mt-4 p-4 bg-background rounded-lg border border-border">
+          <p class="text-xs text-text-secondary mb-2">Términos de Pago</p>
+          <p class="text-sm text-text-primary">{{ purchase.payment_terms }}</p>
+        </div>
+
+        <!-- Advance Payment Notice -->
+        <div v-if="purchase.requires_advance_payment" class="mt-4 p-4 bg-warning/10 rounded-lg border border-warning">
+          <div class="flex items-center space-x-2">
+            <svg class="w-5 h-5 text-warning flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p class="text-sm font-medium text-warning">
+              Esta orden requiere anticipo antes del envío
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- Wizard / Stepper -->
       <div class="p-6 bg-surface border-2 border-border rounded-lg mb-6">
         <h3 class="text-lg font-semibold text-text-primary mb-6 flex items-center space-x-2">
@@ -581,6 +651,18 @@ function formatDate(dateString: string | null): string {
 function formatCurrency(value: number | null): string {
   if (value === null || value === undefined) return '$0'
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
+}
+
+function getPaymentTypeText(paymentType: string | null): string {
+  if (!paymentType) return 'No especificado'
+
+  const types: Record<string, string> = {
+    'contado': 'Contado',
+    'credito': 'Crédito',
+    'contraentrega': 'Contraentrega',
+    'credito_consolidado': 'Crédito Consolidado'
+  }
+  return types[paymentType] || paymentType
 }
 
 async function loadPurchase() {

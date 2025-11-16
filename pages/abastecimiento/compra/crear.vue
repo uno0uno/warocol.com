@@ -176,14 +176,81 @@
 
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Número de Factura
+                  Tipo de Pago *
+                </label>
+                <select
+                  v-model="form.payment_type"
+                  required
+                  class="input-base w-full px-4 py-2"
+                >
+                  <option value="">Seleccionar tipo de pago</option>
+                  <option value="contado">Contado - Pago Inmediato</option>
+                  <option value="credito">Crédito - Pago Diferido</option>
+                  <option value="contraentrega">Contraentrega - Pago al Recibir</option>
+                  <option value="credito_consolidado">Crédito Consolidado - Factura Mensual</option>
+                </select>
+              </div>
+
+              <!-- Conditional fields for credito -->
+              <template v-if="form.payment_type === 'credito' || form.payment_type === 'credito_consolidado'">
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-2">
+                    Días de Crédito *
+                  </label>
+                  <input
+                    v-model.number="form.credit_days"
+                    type="number"
+                    min="1"
+                    max="180"
+                    step="1"
+                    required
+                    class="input-base w-full px-4 py-2"
+                    placeholder="Ej: 30, 60, 90"
+                  />
+                  <p class="text-xs text-text-secondary mt-1">
+                    El vencimiento se calculará automáticamente al facturar
+                  </p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-2">
+                    Términos de Pago
+                  </label>
+                  <input
+                    v-model="form.payment_terms"
+                    type="text"
+                    class="input-base w-full px-4 py-2"
+                    placeholder="Ej: 30 días neto, 2/10 neto 30"
+                  />
+                </div>
+              </template>
+
+              <!-- Conditional field for credito_consolidado -->
+              <div v-if="form.payment_type === 'credito_consolidado'">
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Grupo de Consolidación
                 </label>
                 <input
-                  v-model="form.invoice_number"
+                  v-model="form.consolidation_group"
                   type="text"
                   class="input-base w-full px-4 py-2"
-                  placeholder="Ej: FAC-001234 (opcional)"
+                  placeholder="Ej: MENSUAL-2025-01"
                 />
+                <p class="text-xs text-text-secondary mt-1">
+                  Las remisiones se agruparán para facturación mensual
+                </p>
+              </div>
+
+              <!-- Conditional field for contraentrega -->
+              <div v-if="form.payment_type === 'contraentrega'" class="md:col-span-2">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    v-model="form.requires_advance_payment"
+                    type="checkbox"
+                    class="rounded border-border text-primary focus:ring-primary"
+                  />
+                  <span class="text-sm text-text-primary">Requiere anticipo</span>
+                </label>
               </div>
 
               <div class="md:col-span-2">
@@ -336,6 +403,42 @@
                   size="md"
                 />
                 <p v-if="form.notes" class="text-sm text-text-secondary mt-2">{{ form.notes }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Information -->
+          <div class="px-8 py-6 border-b border-border bg-background/50">
+            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-4">
+              Condiciones de Pago
+            </p>
+            <div class="grid grid-cols-2 gap-6">
+              <div>
+                <p class="text-sm text-text-secondary mb-1">Tipo de Pago</p>
+                <p class="text-base font-semibold text-text-primary">{{ getPaymentTypeText(form.payment_type) }}</p>
+              </div>
+              <div v-if="form.credit_days">
+                <p class="text-sm text-text-secondary mb-1">Plazo de Crédito</p>
+                <p class="text-base font-semibold text-text-primary">{{ form.credit_days }} días</p>
+              </div>
+              <div v-if="form.payment_terms" class="col-span-2">
+                <p class="text-sm text-text-secondary mb-1">Términos de Pago</p>
+                <p class="text-sm text-text-primary">{{ form.payment_terms }}</p>
+              </div>
+              <div v-if="form.consolidation_group" class="col-span-2">
+                <p class="text-sm text-text-secondary mb-1">Grupo de Consolidación</p>
+                <p class="text-sm text-text-primary">{{ form.consolidation_group }}</p>
+                <p class="text-xs text-text-secondary mt-1">
+                  Esta orden se facturará de forma consolidada con otras del mismo grupo
+                </p>
+              </div>
+              <div v-if="form.requires_advance_payment" class="col-span-2">
+                <div class="flex items-center space-x-2 p-3 bg-warning/10 border border-warning rounded-lg">
+                  <svg class="w-5 h-5 text-warning flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span class="text-sm text-warning font-medium">Requiere pago anticipado</span>
+                </div>
               </div>
             </div>
           </div>
@@ -522,6 +625,14 @@ const form = ref({
   tax_amount: 0,
   total_amount: 0,
   notes: '',
+
+  // Payment type fields
+  payment_type: '',
+  payment_terms: '',
+  credit_days: null,
+  requires_advance_payment: false,
+  consolidation_group: '',
+
   items: [
     {
       ingredient_id: '',
@@ -623,6 +734,16 @@ const getConvertedQuantity = (index) => {
   return converted.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+const getPaymentTypeText = (paymentType) => {
+  const types = {
+    'contado': 'Contado - Pago Inmediato',
+    'credito': 'Crédito - Pago Diferido',
+    'contraentrega': 'Contraentrega - Pago al Recibir',
+    'credito_consolidado': 'Crédito Consolidado - Factura Mensual'
+  }
+  return types[paymentType] || 'No especificado'
+}
+
 // Methods
 const onIngredientChange = (index) => {
   const selectedIngredient = ingredients.value.find(
@@ -690,7 +811,16 @@ const removeItem = (index) => {
 
 // Wizard navigation - Computed properties for button states
 const isStep1Valid = computed(() => {
-  return !!form.value.supplier_id
+  if (!form.value.supplier_id || !form.value.payment_type) {
+    return false
+  }
+
+  // If credit or consolidated credit, credit_days is required
+  if ((form.value.payment_type === 'credito' || form.value.payment_type === 'credito_consolidado') && !form.value.credit_days) {
+    return false
+  }
+
+  return true
 })
 
 const isStep2Valid = computed(() => {
@@ -707,6 +837,14 @@ const isStep2Valid = computed(() => {
 const validateStep1 = () => {
   if (!form.value.supplier_id) {
     alert('Por favor seleccione un proveedor')
+    return false
+  }
+  if (!form.value.payment_type) {
+    alert('Por favor seleccione el tipo de pago')
+    return false
+  }
+  if ((form.value.payment_type === 'credito' || form.value.payment_type === 'credito_consolidado') && !form.value.credit_days) {
+    alert('Por favor ingrese los días de crédito')
     return false
   }
   return true
@@ -794,6 +932,14 @@ const handleSubmit = async () => {
       tax_amount: 0,  // No tax yet
       total_amount: 0,  // No total yet
       notes: form.value.notes || null,
+
+      // Payment fields
+      payment_type: form.value.payment_type,
+      payment_terms: form.value.payment_terms || null,
+      credit_days: form.value.credit_days || null,
+      requires_advance_payment: form.value.requires_advance_payment || false,
+      consolidation_group: form.value.consolidation_group || null,
+
       items: convertedItems
     }
 

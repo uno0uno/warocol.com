@@ -103,6 +103,57 @@
         </div>
       </div>
 
+      <!-- Payment Information Card -->
+      <div v-if="form.payment_type" class="bg-surface border-2 border-border rounded-lg p-6 mb-6">
+        <h3 class="text-lg font-semibold text-text-primary mb-4 flex items-center space-x-2">
+          <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <span>Información de Pago</span>
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 bg-background rounded-lg border border-border">
+            <p class="text-xs text-text-secondary mb-1">Tipo de Pago</p>
+            <p class="text-base font-semibold text-text-primary">
+              {{ getPaymentTypeText(form.payment_type) }}
+            </p>
+          </div>
+
+          <div v-if="form.credit_days" class="p-4 bg-background rounded-lg border border-border">
+            <p class="text-xs text-text-secondary mb-1">Plazo de Crédito</p>
+            <p class="text-base font-semibold text-text-primary">
+              {{ form.credit_days }} días
+            </p>
+          </div>
+
+          <div v-if="form.payment_due_date" class="p-4 bg-background rounded-lg border border-border">
+            <p class="text-xs text-text-secondary mb-1">Fecha de Vencimiento</p>
+            <p class="text-base font-semibold text-text-primary">
+              {{ formatDate(form.payment_due_date) }}
+            </p>
+          </div>
+
+          <div v-if="form.payment_terms" class="md:col-span-3 p-4 bg-background rounded-lg border border-border">
+            <p class="text-xs text-text-secondary mb-1">Términos de Pago</p>
+            <p class="text-sm text-text-primary">{{ form.payment_terms }}</p>
+          </div>
+
+          <div v-if="form.consolidation_group" class="md:col-span-3 p-4 bg-background rounded-lg border border-border">
+            <p class="text-xs text-text-secondary mb-1">Grupo de Consolidación</p>
+            <p class="text-sm text-text-primary">{{ form.consolidation_group }}</p>
+          </div>
+
+          <div v-if="form.requires_advance_payment" class="md:col-span-3">
+            <div class="flex items-center space-x-2 p-3 bg-warning/10 border border-warning rounded-lg">
+              <svg class="w-5 h-5 text-warning flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span class="text-sm text-warning font-medium">Requiere pago anticipado</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Read-only Summary + Status History (All states) -->
       <div class="space-y-6">
@@ -407,6 +458,16 @@ function formatDate(dateString) {
     month: 'short',
     day: 'numeric'
   })
+}
+
+function getPaymentTypeText(paymentType) {
+  const types = {
+    'contado': 'Contado',
+    'credito': 'Crédito',
+    'contraentrega': 'Contraentrega',
+    'credito_consolidado': 'Crédito Consolidado'
+  }
+  return types[paymentType] || 'No especificado'
 }
 
 // Methods
