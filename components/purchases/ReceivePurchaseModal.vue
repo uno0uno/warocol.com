@@ -20,7 +20,7 @@
               </div>
               <div>
                 <h2 class="text-xl font-bold text-text-primary">Recibir Orden</h2>
-                <p class="text-sm text-text-secondary">Registra las cantidades recibidas de cada ítem</p>
+                <p class="text-sm text-text-secondary">Registra las cantidades recibidas y evalúa la calidad de cada ítem</p>
               </div>
             </div>
             <button
@@ -126,7 +126,59 @@
                     </select>
                   </div>
                 </div>
+
+                <!-- Quality Assessment Section (only show if item was received) -->
+                <div v-if="item.quantity_received > 0" class="mt-4 pt-4 border-t" style="border-color: hsl(var(--crocus-600) / 0.2);">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Quality Status -->
+                    <div>
+                      <label class="block text-xs font-medium text-text-secondary mb-1">Estado de Calidad *</label>
+                      <select
+                        v-model="item.quality_status"
+                        required
+                        class="w-full px-3 py-2 rounded-lg text-text-primary transition-all border-2"
+                        style="background-color: hsl(var(--surface)); border-color: hsl(var(--crocus-600) / 0.3);"
+                        @focus="$event.target.style.borderColor = 'hsl(var(--crocus-600))'; $event.target.style.outline = '2px solid hsl(var(--crocus-600) / 0.2)'"
+                        @blur="$event.target.style.borderColor = 'hsl(var(--crocus-600) / 0.3)'; $event.target.style.outline = 'none'"
+                      >
+                        <option value="good">Bueno - Cumple especificaciones</option>
+                        <option value="acceptable">Aceptable - Ligeras variaciones</option>
+                        <option value="poor">Pobre - No cumple estándares</option>
+                        <option value="rejected">Rechazado - Inaceptable</option>
+                      </select>
+                    </div>
+
+                    <!-- Quality Notes -->
+                    <div>
+                      <label class="block text-xs font-medium text-text-secondary mb-1">Notas de Calidad</label>
+                      <textarea
+                        v-model="item.quality_notes"
+                        rows="2"
+                        class="w-full px-3 py-2 rounded-lg text-text-primary transition-all border-2 resize-none"
+                        style="background-color: hsl(var(--surface)); border-color: hsl(var(--crocus-600) / 0.3);"
+                        @focus="$event.target.style.borderColor = 'hsl(var(--crocus-600))'; $event.target.style.outline = '2px solid hsl(var(--crocus-600) / 0.2)'"
+                        @blur="$event.target.style.borderColor = 'hsl(var(--crocus-600) / 0.3)'; $event.target.style.outline = 'none'"
+                        placeholder="Observaciones sobre la calidad..."
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Overall Quality Approval -->
+          <div class="p-4 rounded-lg border-2" style="background-color: hsl(var(--info) / 0.1); border-color: hsl(var(--info) / 0.3);">
+            <div class="flex items-center space-x-3">
+              <input
+                v-model="formData.all_items_approved"
+                type="checkbox"
+                id="all-items-approved"
+                class="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+              />
+              <label for="all-items-approved" class="text-sm font-medium text-text-primary cursor-pointer">
+                Todos los ítems cumplen con las especificaciones de calidad
+              </label>
             </div>
           </div>
 
@@ -143,6 +195,22 @@
               @focus="$event.target.style.borderColor = 'hsl(var(--crocus-600))'; $event.target.style.outline = '2px solid hsl(var(--crocus-600) / 0.2)'"
               @blur="$event.target.style.borderColor = 'hsl(var(--crocus-600) / 0.3)'; $event.target.style.outline = 'none'"
               placeholder="Observaciones sobre la recepción..."
+            ></textarea>
+          </div>
+
+          <!-- Verification Notes -->
+          <div>
+            <label class="block text-sm font-medium text-text-primary mb-2">
+              Notas de Verificación (Opcional)
+            </label>
+            <textarea
+              v-model="formData.verification_notes"
+              rows="3"
+              class="w-full px-4 py-2 rounded-lg text-text-primary placeholder-text-secondary transition-all resize-none border-2"
+              style="background-color: hsl(var(--background)); border-color: hsl(var(--crocus-600) / 0.3);"
+              @focus="$event.target.style.borderColor = 'hsl(var(--crocus-600))'; $event.target.style.outline = '2px solid hsl(var(--crocus-600) / 0.2)'"
+              @blur="$event.target.style.borderColor = 'hsl(var(--crocus-600) / 0.3)'; $event.target.style.outline = 'none'"
+              placeholder="Observaciones sobre la calidad y verificación..."
             ></textarea>
           </div>
 
@@ -223,7 +291,9 @@ const formData = ref({
   package_condition: 'good',
   items: [] as any[],
   reception_notes: '',
-  partial: false
+  verification_notes: '',
+  partial: false,
+  all_items_approved: true
 })
 
 const selectedFiles = ref<File[]>([])
@@ -238,10 +308,15 @@ watch(() => props.isOpen, (newValue) => {
         quantity_ordered: item.quantity,
         unit: item.unit,
         quantity_received: item.quantity, // Default to ordered quantity
-        item_condition: 'complete'
+        item_condition: 'complete',
+        quality_status: 'good', // Default quality
+        quality_notes: '',
+        verification_notes: ''
       })),
       reception_notes: '',
-      partial: false
+      verification_notes: '',
+      partial: false,
+      all_items_approved: true
     }
     selectedFiles.value = []
   }
@@ -269,9 +344,14 @@ const handleSubmit = async () => {
     formDataPayload.append('items_data', JSON.stringify(formData.value.items))
     formDataPayload.append('package_condition', formData.value.package_condition)
     formDataPayload.append('partial', formData.value.partial.toString())
+    formDataPayload.append('all_items_approved', formData.value.all_items_approved.toString())
 
     if (formData.value.reception_notes) {
       formDataPayload.append('reception_notes', formData.value.reception_notes)
+    }
+
+    if (formData.value.verification_notes) {
+      formDataPayload.append('verification_notes', formData.value.verification_notes)
     }
 
     // Append files if any
@@ -291,10 +371,10 @@ const handleSubmit = async () => {
       emit('close')
 
       useToast().add({
-        title: 'Recepción Registrada',
+        title: 'Recepción y Verificación Registradas',
         description: formData.value.partial
-          ? 'Se ha registrado la recepción parcial de la orden'
-          : 'La orden ha sido recibida completamente',
+          ? 'Se ha registrado la recepción parcial y verificación de calidad de la orden'
+          : 'La orden ha sido recibida, verificada y completada',
         color: 'green'
       })
     }

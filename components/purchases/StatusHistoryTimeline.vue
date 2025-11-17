@@ -161,8 +161,8 @@ function getStatusText(status: string): string {
     preparing: 'Preparando',
     shipped: 'Enviado',
     partially_received: 'Parcialmente Recibido',
-    received: 'Recibido',
-    verified: 'Verificado',
+    received: 'Recibido y Verificado',
+    verified: 'Verificado', // Legacy status for old records
     invoiced: 'Facturado',
     paid: 'Pagado',
     cancelled: 'Cancelado',

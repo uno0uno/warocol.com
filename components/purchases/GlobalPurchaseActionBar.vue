@@ -103,7 +103,7 @@
                 <span>Esperando envío del proveedor</span>
               </div>
 
-              <!-- Receive -->
+              <!-- Receive (includes quality verification) -->
               <button
                 v-if="currentPurchase.status === 'shipped' || currentPurchase.status === 'partially_received'"
                 type="button"
@@ -119,37 +119,33 @@
                 <span>Recibir Orden</span>
               </button>
 
-              <!-- Verify -->
-              <button
-                v-if="currentPurchase.status === 'received'"
-                type="button"
-                @click="showVerifyModal = true"
-                class="px-4 py-2 border-2 rounded-lg transition-colors flex items-center space-x-2"
-                style="border-color: hsl(var(--info)); color: hsl(var(--info));"
-                @mouseenter="$event.target.style.backgroundColor = 'hsl(var(--info) / 0.1)'"
-                @mouseleave="$event.target.style.backgroundColor = 'transparent'"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>Verificar Calidad</span>
-              </button>
-
-              <!-- Verified state - Redirect to Pagos -->
+              <!-- Received state - Redirect to Pagos (only for credit types that haven't been paid yet) -->
               <div
-                v-if="currentPurchase.status === 'verified'"
+                v-if="currentPurchase.status === 'received' && shouldShowPaymentReminder"
                 class="px-4 py-2 border-2 border-dashed rounded-lg flex items-center space-x-2"
                 style="border-color: hsl(var(--success)); color: hsl(var(--text-secondary));"
               >
                 <svg class="w-5 h-5" style="color: hsl(var(--success));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Orden verificada. Registrar pago en módulo de Pagos</span>
+                <span>Orden recibida. Registrar pago en módulo de Pagos</span>
               </div>
 
-              <!-- Cancel (not available in verified state) -->
+              <!-- Received state - Payment already completed (for contado orders) -->
+              <div
+                v-if="currentPurchase.status === 'received' && !shouldShowPaymentReminder"
+                class="px-4 py-2 border-2 border-dashed rounded-lg flex items-center space-x-2"
+                style="border-color: hsl(var(--success)); color: hsl(var(--text-secondary));"
+              >
+                <svg class="w-5 h-5" style="color: hsl(var(--success));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Orden recibida y pagada. Proceso completado</span>
+              </div>
+
+              <!-- Cancel (not available in received state) -->
               <button
-                v-if="currentPurchase.status !== 'verified'"
+                v-if="currentPurchase.status !== 'received'"
                 type="button"
                 @click="showCancelModal = true"
                 class="px-4 py-2 border-2 rounded-lg transition-colors flex items-center space-x-2"
@@ -202,15 +198,6 @@
         :ingredients="ingredients"
         @close="showReceiveModal = false"
         @received="handleStateChanged"
-      />
-
-      <PurchasesVerifyPurchaseModal
-        :is-open="showVerifyModal"
-        :purchase-id="currentPurchaseId"
-        :purchase-items="currentPurchase.items"
-        :ingredients="ingredients"
-        @close="showVerifyModal = false"
-        @verified="handleStateChanged"
       />
 
       <PurchasesInvoicePurchaseModal
@@ -267,6 +254,25 @@ const shouldShowBar = computed(() => {
 // Combined loading state
 const isLoadingOrUpdating = computed(() => isLoading.value || isUpdating.value)
 
+// Check if we should show payment reminder for verified orders
+// For "contado" orders, payment happens before verification, so we shouldn't show the reminder
+// For "credito" orders, payment happens after verification, so we should show the reminder
+const shouldShowPaymentReminder = computed(() => {
+  if (!currentPurchase.value) return false
+
+  const paymentType = currentPurchase.value.payment_type
+  const history = currentPurchase.value.status_history || []
+
+  // For contado orders, check if payment already occurred (status transitioned through "paid")
+  if (paymentType === 'contado') {
+    const hasPaidStatus = history.some((entry: any) => entry.to_status === 'paid')
+    return !hasPaidStatus // Don't show reminder if already paid
+  }
+
+  // For credit orders, show reminder (payment happens after verification)
+  return true
+})
+
 // Fetch ingredients for modals
 const { data: ingredientsData } = useFetch('/api/suppliers/ingredients', {
   server: false,
@@ -280,7 +286,6 @@ const showCompletePricesModal = ref(false)
 const showConfirmModal = ref(false)
 const showShipModal = ref(false)
 const showReceiveModal = ref(false)
-const showVerifyModal = ref(false)
 const showInvoiceModal = ref(false)
 const showCancelModal = ref(false)
 

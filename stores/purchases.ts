@@ -11,6 +11,15 @@ export interface PurchaseItem {
   notes: string
 }
 
+export interface StatusHistoryEntry {
+  id: string
+  from_status: string | null
+  to_status: string
+  changed_at: string
+  metadata?: Record<string, any>
+  notes?: string | null
+}
+
 export interface Purchase {
   id: string
   supplier_id: string
@@ -34,6 +43,7 @@ export interface Purchase {
   carrier?: string | null
   estimated_delivery_date?: string | null
   package_count?: number | null
+  status_history?: StatusHistoryEntry[]
 }
 
 export const usePurchasesStore = defineStore('purchases', () => {
@@ -104,7 +114,8 @@ export const usePurchasesStore = defineStore('purchases', () => {
           tracking_number: purchase.tracking_number || null,
           carrier: purchase.carrier || null,
           estimated_delivery_date: purchase.estimated_delivery_date || null,
-          package_count: purchase.package_count || null
+          package_count: purchase.package_count || null,
+          status_history: purchase.status_history || []
         }
 
         // Update the Map and trigger reactivity by creating a new Map
