@@ -19,6 +19,11 @@
             <h1 class="text-3xl font-bold text-ebony-800">{{ pageTitle }}</h1>
             <p class="text-sm text-ebony-400 mt-1">{{ currentDateTime }}</p>
           </div>
+          <div v-if="showBackButton">
+            <button @click="goBack" class="btn-secondary px-4 py-2 rounded-lg text-sm">
+              Volver
+            </button>
+          </div>
         </div>
       </header>
 
@@ -54,9 +59,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
+const router = useRouter()
 const currentYear = computed(() => new Date().getFullYear())
 
 // Get token from route params
@@ -76,6 +82,18 @@ const pageTitle = computed(() => {
   if (path.match(/\/proveedor\/[^/]+\/[^/]+$/)) return 'Detalle de Orden'
   return 'Mis Órdenes de Compra'
 })
+
+// Show back button only on detail pages
+const showBackButton = computed(() => {
+  const path = route.path
+  // Show on purchase detail page: /proveedor/[token]/[purchaseId]
+  return path.match(/\/proveedor\/[^/]+\/[^/]+$/) !== null
+})
+
+// Go back function
+const goBack = () => {
+  router.back()
+}
 
 // Date and time functionality
 const currentDateTime = ref('')
