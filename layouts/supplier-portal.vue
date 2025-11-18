@@ -27,32 +27,34 @@
         </div>
       </header>
 
-      <!-- Main Content -->
-      <main class="flex-1 overflow-y-auto p-8">
-        <slot />
-      </main>
+      <!-- Main Content with Footer (scrollable together) -->
+      <div class="flex-1 overflow-y-auto">
+        <main class="p-8">
+          <slot />
+        </main>
 
-      <!-- Footer -->
-      <footer class="footer-main">
-        <div class="footer-content">
-          <div class="footer-security">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <span>Conexión segura - SSL encriptado</span>
-          </div>
+        <!-- Footer -->
+        <footer class="footer-main">
+          <div class="footer-content">
+            <div class="footer-security">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span>Conexión segura - SSL encriptado</span>
+            </div>
 
-          <div class="footer-copyright">
-            <p>&copy; {{ currentYear }} Warolabs. Todos los derechos reservados.</p>
-          </div>
+            <div class="footer-copyright">
+              <p>&copy; {{ currentYear }} Warolabs. Todos los derechos reservados.</p>
+            </div>
 
-          <div class="footer-links">
-            <a href="mailto:hola@warolabs.com">Contacto</a>
-            <span>|</span>
-            <a href="https://warolabs.com" target="_blank" rel="noopener">Sobre Warolabs</a>
+            <div class="footer-links">
+              <a href="mailto:hola@warolabs.com">Contacto</a>
+              <span>|</span>
+              <a href="https://warolabs.com" target="_blank" rel="noopener">Sobre Warolabs</a>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   </div>
 </template>
@@ -135,7 +137,6 @@ main {
   background: hsla(0, 0%, 100%, 0.95);
   border-top: 1px solid hsl(220, 11%, 90%);
   padding: 16px 40px;
-  flex-shrink: 0;
 }
 
 .footer-content {

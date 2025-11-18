@@ -251,13 +251,16 @@ const shouldShowBar = computed(() => {
     return false
   }
 
-  // For "contado" payment type, show bar even in "paid" status (waiting for invoice)
-  if (paymentType === 'contado' && status === 'paid') {
-    return true
+  // For "contado" payment type:
+  // - Show bar in "paid" status (waiting for invoice)
+  // - Hide bar in "received" status (flow is complete)
+  if (paymentType === 'contado') {
+    if (status === 'paid') return true
+    if (status === 'received') return false
   }
 
-  // For other payment types, hide bar when paid
-  return status !== 'paid'
+  // For other payment types, hide bar when paid or received
+  return status !== 'paid' && status !== 'received'
 })
 
 // Combined loading state

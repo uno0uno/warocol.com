@@ -27,6 +27,18 @@
       <!-- Header -->
       <div class="bg-surface border-2 border-border rounded-lg mb-6">
         <div class="p-6">
+          <div class="flex justify-between items-start mb-4">
+            <h2 class="text-xl font-bold text-text-primary">Detalles de la Orden</h2>
+            <button
+              @click="refresh"
+              class="h-[42px] px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary hover:border-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary group disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Refrescar orden"
+            >
+              <svg class="w-5 h-5 transition-transform group-hover:rotate-180 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Purchase Number with Date -->
             <div class="flex items-start space-x-3">
