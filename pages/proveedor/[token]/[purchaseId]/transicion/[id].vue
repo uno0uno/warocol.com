@@ -403,8 +403,7 @@ function getPaymentTypeText(type: string): string {
   const types: Record<string, string> = {
     'contado': 'Contado',
     'credito': 'Crédito',
-    'contraentrega': 'Contraentrega',
-    'credito_consolidado': 'Crédito Consolidado'
+    'contraentrega': 'Contraentrega'
   }
   return types[type] || type
 }

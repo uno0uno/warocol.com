@@ -161,6 +161,7 @@
 
             <!-- Action Button (only for supplier steps) -->
             <div v-if="isSupplierStep(purchase?.status || '')">
+              <!-- Complete Prices (quotation) -->
               <button
                 v-if="purchase?.status === 'quotation'"
                 @click="showCompletePricesModal = true"
@@ -171,6 +172,8 @@
                 </svg>
                 <span>Completar Precios</span>
               </button>
+
+              <!-- Register Invoice (confirmed/preparing/paid) -->
               <button
                 v-else-if="canShowInvoiceButton"
                 @click="showInvoiceModal = true"
@@ -181,6 +184,8 @@
                 </svg>
                 <span>Registrar Factura</span>
               </button>
+
+              <!-- Mark as Shipped (only when invoiced, not shipped/received) -->
               <button
                 v-else-if="purchase?.status === 'invoiced'"
                 @click="showShipModal = true"
@@ -355,6 +360,9 @@ console.log('Purchase page loaded:', { token: token.value, purchaseId: purchaseI
 const loading = ref(true)
 const error = ref<string | null>(null)
 const purchase = ref<any>(null)
+
+// Use global state for supplier (shared with layout)
+const supplier = useState<any>('supplier-portal-supplier', () => null)
 const showCompletePricesModal = ref(false)
 const showInvoiceModal = ref(false)
 const showShipModal = ref(false)
@@ -443,6 +451,7 @@ function getStepDescription(status: string): string {
       : '¡Orden completada exitosamente! El pago ha sido procesado',
     invoiced: 'Factura registrada. Marca la orden como enviada con el número de tracking',
     shipped: 'Orden enviada. Esperando confirmación de recepción y verificación por parte del cliente',
+    partially_received: 'Orden parcialmente recibida. Esperando recepción completa por parte del cliente',
     received: paymentType === 'contado'
       ? '¡Orden completada! Producto recibido, verificado y pagado exitosamente'
       : 'Orden recibida y verificada. Esperando pago por parte del cliente'
@@ -498,8 +507,7 @@ function getPaymentTypeText(paymentType: string | null): string {
   const types: Record<string, string> = {
     'contado': 'Contado',
     'credito': 'Crédito',
-    'contraentrega': 'Contraentrega',
-    'credito_consolidado': 'Crédito Consolidado'
+    'contraentrega': 'Contraentrega'
   }
   return types[paymentType] || paymentType
 }
@@ -552,6 +560,11 @@ onMounted(async () => {
     console.log('[PurchaseDetail] Verifying token...')
     const verifyResponse = await $fetch(`/api/supplier-portal/${token.value}/verify`)
     console.log('[PurchaseDetail] Token verified:', verifyResponse)
+
+    // Load supplier data
+    if (verifyResponse.success && verifyResponse.data) {
+      supplier.value = verifyResponse.data.supplier
+    }
 
     console.log('[PurchaseDetail] Loading purchases...')
     await loadPurchase()

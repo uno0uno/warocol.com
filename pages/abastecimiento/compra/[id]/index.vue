@@ -422,8 +422,7 @@ function getPaymentTypeText(paymentType) {
   const types = {
     'contado': 'Contado',
     'credito': 'Crédito',
-    'contraentrega': 'Contraentrega',
-    'credito_consolidado': 'Crédito Consolidado'
+    'contraentrega': 'Contraentrega'
   }
   return types[paymentType] || 'No especificado'
 }

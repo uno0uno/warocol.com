@@ -75,8 +75,8 @@
       </div>
 
       <!-- Pending Payments Table -->
-      <div class="bg-surface border-2 border-border rounded-lg">
-        <div class="p-6 border-b-2 border-border flex items-center justify-between">
+      <div class="bg-surface">
+        <div class="p-6 flex items-center justify-between">
           <div>
             <h3 class="text-lg font-semibold text-text-primary">Órdenes Pendientes de Pago</h3>
             <p v-if="selectedPurchases.length > 0" class="text-sm text-text-secondary mt-1">
@@ -134,43 +134,49 @@
       </div>
 
       <!-- Paid Purchases Table -->
-      <UiDataTable title="Órdenes Pagadas" :columns="paidColumns" :data="paidTableData" variant="default"
-        empty-message="No hay pagos registrados. Aún no se han registrado pagos a proveedores.">
-        <template #cell-orden="{ row }">
-          <div :class="{ 'animate-pulse': row.isHighlighted }">
-            <p class="font-medium text-text-primary">{{ row.orden }}</p>
-            <p class="text-xs text-text-secondary">{{ row.fecha }}</p>
-          </div>
-        </template>
+      <div class="bg-surface rounded-lg">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold text-text-primary">Órdenes Pagadas</h3>
+        </div>
 
-        <template #cell-factura="{ row }">
-          <div>
-            <p class="font-medium text-text-primary">{{ row.factura || '-' }}</p>
-            <p class="text-xs text-text-secondary">{{ row.fechaFactura || '-' }}</p>
-          </div>
-        </template>
+        <UiDataTable :columns="paidColumns" :data="paidTableData" variant="default"
+          empty-message="No hay pagos registrados. Aún no se han registrado pagos a proveedores." :show-title="false">
+          <template #cell-orden="{ row }">
+            <div :class="{ 'animate-pulse': row.isHighlighted }">
+              <p class="font-medium text-text-primary">{{ row.orden }}</p>
+              <p class="text-xs text-text-secondary">{{ row.fecha }}</p>
+            </div>
+          </template>
 
-        <template #cell-montoPagado="{ row }">
-          <p class="font-medium text-text-primary">
-            {{ formatCurrency(row.montoPagado) }}
-          </p>
-        </template>
+          <template #cell-factura="{ row }">
+            <div>
+              <p class="font-medium text-text-primary">{{ row.factura || '-' }}</p>
+              <p class="text-xs text-text-secondary">{{ row.fechaFactura || '-' }}</p>
+            </div>
+          </template>
 
-        <template #cell-metodo="{ row }">
-          <span class="capitalize">{{ row.metodo || '-' }}</span>
-        </template>
+          <template #cell-montoPagado="{ row }">
+            <p class="font-medium text-text-primary">
+              {{ formatCurrency(row.montoPagado) }}
+            </p>
+          </template>
 
-        <template #cell-estado="{ row }">
-          <span :class="[
-            'px-2 py-1 rounded text-xs font-medium',
-            row.isHighlighted
-              ? 'bg-success/30 text-success border-2 border-success animate-pulse'
-              : 'bg-success/10 text-success'
-          ]">
-            {{ row.isHighlighted ? '✓ Pagado (desde compra)' : 'Pagado' }}
-          </span>
-        </template>
-      </UiDataTable>
+          <template #cell-metodo="{ row }">
+            <span class="capitalize">{{ row.metodo || '-' }}</span>
+          </template>
+
+          <template #cell-estado="{ row }">
+            <span :class="[
+              'px-2 py-1 rounded text-xs font-medium',
+              row.isHighlighted
+                ? 'bg-success/30 text-success border-2 border-success animate-pulse'
+                : 'bg-success/10 text-success'
+            ]">
+              {{ row.isHighlighted ? '✓ Pagado (desde compra)' : 'Pagado' }}
+            </span>
+          </template>
+        </UiDataTable>
+      </div>
     </div>
 
     <!-- Payment Modal -->

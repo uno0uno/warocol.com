@@ -1,134 +1,80 @@
 <template>
-  <div class="min-h-screen" style="background: hsl(220, 14%, 97%);">
-    <!-- Header -->
-    <header class="header-main">
-      <div class="header-content">
-        <!-- Logo -->
-        <div class="logo">
-          <img src="/logo_waro_10_octubre.png" alt="Waro" class="logo-image-header">
-        </div>
+  <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <SupplierPortalSidebar
+      v-if="supplier"
+      :token="token"
+      :supplier-name="supplier?.name"
+      :supplier-email="supplier?.email"
+      :supplier-phone="supplier?.phone"
+      :active-page="activePage"
+    />
 
-        <!-- Navigation -->
-        <nav>
-          <a
-            href="mailto:hola@warolabs.com"
-            class="support-link"
-          >
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Main Content -->
+      <main class="flex-1 overflow-y-auto">
+        <slot />
+      </main>
+
+      <!-- Footer -->
+      <footer class="footer-main">
+        <div class="footer-content">
+          <div class="footer-security">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <span class="hidden sm:inline">SOPORTE</span>
-          </a>
-        </nav>
-      </div>
-    </header>
+            <span>Conexión segura - SSL encriptado</span>
+          </div>
 
-    <!-- Main Content -->
-    <main>
-      <slot />
-    </main>
+          <div class="footer-copyright">
+            <p>&copy; {{ currentYear }} Warolabs. Todos los derechos reservados.</p>
+          </div>
 
-    <!-- Footer -->
-    <footer class="footer-main">
-      <div class="footer-content">
-        <div class="footer-security">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <span>Conexión segura - SSL encriptado</span>
+          <div class="footer-links">
+            <a href="mailto:hola@warolabs.com">Contacto</a>
+            <span>|</span>
+            <a href="https://warolabs.com" target="_blank" rel="noopener">Sobre Warolabs</a>
+          </div>
         </div>
-
-        <div class="footer-copyright">
-          <p>&copy; {{ currentYear }} Warolabs. Todos los derechos reservados.</p>
-        </div>
-
-        <div class="footer-links">
-          <a href="mailto:hola@warolabs.com">Contacto</a>
-          <span>|</span>
-          <a href="https://warolabs.com" target="_blank" rel="noopener">Sobre Warolabs</a>
-        </div>
-      </div>
-    </footer>
+      </footer>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const currentYear = computed(() => new Date().getFullYear())
+
+// Get token from route params
+const token = computed(() => route.params.token as string)
+
+// Determine active page based on route path
+const activePage = computed(() => {
+  const path = route.path
+  if (path.includes('/facturacion')) return 'billing'
+  return 'purchases'
+})
+
+// Get supplier from global state (set by pages)
+const supplier = useState<any>('supplier-portal-supplier', () => null)
 </script>
 
 <style scoped>
-/* Header Styles (matching landing page) */
-.header-main {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 10px 60px;
-  background: hsla(0, 0%, 100%, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid hsl(220, 11%, 90%);
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  max-width: 1200px;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.logo-image-header {
-  height: 40px;
-  width: auto;
-  object-fit: contain;
-}
-
-nav {
-  display: flex;
-  gap: 24px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.support-link {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-  color: hsl(220, 13%, 28%);
-  font-size: 14px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: color 0.3s;
-}
-
-.support-link:hover {
-  color: hsl(262, 83%, 58%);
-}
-
 /* Main Content */
 main {
-  min-height: calc(100vh - 120px);
-  padding: 20px;
+  background: hsl(220, 14%, 97%);
 }
 
 /* Footer Styles */
 .footer-main {
   background: hsla(0, 0%, 100%, 0.95);
   border-top: 1px solid hsl(220, 11%, 90%);
-  padding: 24px 60px;
-  margin-top: auto;
+  padding: 16px 40px;
+  flex-shrink: 0;
 }
 
 .footer-content {
@@ -175,24 +121,6 @@ main {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .header-main {
-    padding: 8px 20px;
-  }
-
-  .header-content {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  nav {
-    gap: 16px;
-    justify-content: center;
-  }
-
-  .support-link {
-    font-size: 12px;
-  }
-
   .footer-main {
     padding: 20px;
   }

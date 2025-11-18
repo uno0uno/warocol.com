@@ -1,12 +1,12 @@
 <template>
   <div>
     <!-- Loading State -->
-    <div v-if="loading" class="flex items-center justify-center min-h-[60vh]">
+    <div v-if="loading" class="flex items-center justify-center w-full min-h-[60vh]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="flex items-center justify-center min-h-[60vh]">
+    <div v-else-if="error" class="flex items-center justify-center w-full min-h-[60vh]">
       <div class="max-w-md p-6 bg-surface border border-border rounded-lg text-center">
         <svg class="w-16 h-16 mx-auto text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -18,19 +18,6 @@
 
     <!-- Portal Content -->
     <div v-else class="container mx-auto px-4 py-8">
-      <!-- Header -->
-      <div class="bg-surface border border-border rounded-lg p-6 mb-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-text-primary">Portal de Proveedor</h1>
-            <p class="text-text-secondary mt-1">{{ supplier?.name }}</p>
-          </div>
-          <div class="text-right">
-            <p class="text-sm text-text-secondary">Email: {{ supplier?.email }}</p>
-            <p class="text-sm text-text-secondary" v-if="supplier?.phone">Teléfono: {{ supplier?.phone }}</p>
-          </div>
-        </div>
-      </div>
 
       <!-- Purchases List -->
       <div class="mb-4">
@@ -151,8 +138,10 @@ const token = computed(() => route.params.token as string)
 
 const loading = ref(true)
 const error = ref<string | null>(null)
-const supplier = ref<any>(null)
 const purchases = ref<any[]>([])
+
+// Use global state for supplier (shared with layout)
+const supplier = useState<any>('supplier-portal-supplier', () => null)
 
 function navigateToPurchase(purchaseId: string) {
   navigateTo(`/proveedor/${token.value}/${purchaseId}`)

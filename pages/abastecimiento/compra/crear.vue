@@ -187,12 +187,11 @@
                   <option value="contado">Contado - Pago Inmediato</option>
                   <option value="credito">Crédito - Pago Diferido</option>
                   <option value="contraentrega">Contraentrega - Pago al Recibir</option>
-                  <option value="credito_consolidado">Crédito Consolidado - Factura Mensual</option>
                 </select>
               </div>
 
               <!-- Conditional fields for credito -->
-              <template v-if="form.payment_type === 'credito' || form.payment_type === 'credito_consolidado'">
+              <template v-if="form.payment_type === 'credito'">
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-2">
                     Días de Crédito *
@@ -224,22 +223,6 @@
                   />
                 </div>
               </template>
-
-              <!-- Conditional field for credito_consolidado -->
-              <div v-if="form.payment_type === 'credito_consolidado'">
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Grupo de Consolidación
-                </label>
-                <input
-                  v-model="form.consolidation_group"
-                  type="text"
-                  class="input-base w-full px-4 py-2"
-                  placeholder="Ej: MENSUAL-2025-01"
-                />
-                <p class="text-xs text-text-secondary mt-1">
-                  Las remisiones se agruparán para facturación mensual
-                </p>
-              </div>
 
               <!-- Conditional field for contraentrega -->
               <div v-if="form.payment_type === 'contraentrega'" class="md:col-span-2">
@@ -738,8 +721,7 @@ const getPaymentTypeText = (paymentType) => {
   const types = {
     'contado': 'Contado - Pago Inmediato',
     'credito': 'Crédito - Pago Diferido',
-    'contraentrega': 'Contraentrega - Pago al Recibir',
-    'credito_consolidado': 'Crédito Consolidado - Factura Mensual'
+    'contraentrega': 'Contraentrega - Pago al Recibir'
   }
   return types[paymentType] || 'No especificado'
 }
@@ -815,8 +797,8 @@ const isStep1Valid = computed(() => {
     return false
   }
 
-  // If credit or consolidated credit, credit_days is required
-  if ((form.value.payment_type === 'credito' || form.value.payment_type === 'credito_consolidado') && !form.value.credit_days) {
+  // If credit, credit_days is required
+  if (form.value.payment_type === 'credito' && !form.value.credit_days) {
     return false
   }
 
@@ -843,7 +825,7 @@ const validateStep1 = () => {
     alert('Por favor seleccione el tipo de pago')
     return false
   }
-  if ((form.value.payment_type === 'credito' || form.value.payment_type === 'credito_consolidado') && !form.value.credit_days) {
+  if (form.value.payment_type === 'credito' && !form.value.credit_days) {
     alert('Por favor ingrese los días de crédito')
     return false
   }

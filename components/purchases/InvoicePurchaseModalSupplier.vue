@@ -28,8 +28,8 @@
 
         <!-- Body -->
         <form @submit.prevent="handleSubmit" class="p-6 space-y-6">
-          <!-- Document Type -->
-          <div>
+          <!-- Document Type (only show if multiple options available) -->
+          <div v-if="availableDocumentTypes.length > 1">
             <label class="block text-sm font-medium text-text-primary mb-2">Tipo de Documento *</label>
             <div class="grid gap-3" :class="availableDocumentTypes.length === 2 ? 'grid-cols-2' : 'grid-cols-3'">
               <button
@@ -50,6 +50,21 @@
             <p v-if="purchase?.payment_type" class="text-xs text-text-secondary mt-2">
               Opciones basadas en el tipo de pago: {{ getPaymentTypeText(purchase.payment_type) }}
             </p>
+          </div>
+
+          <!-- Single Document Type Info (shown when only one option) -->
+          <div v-else class="p-4 rounded-lg border-2 border-primary/30 bg-primary/5">
+            <div class="flex items-center space-x-3">
+              <div class="bg-primary/10 p-2 rounded-lg">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-text-primary">{{ availableDocumentTypes[0]?.label }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">Tipo de documento para {{ getPaymentTypeText(purchase?.payment_type) }}</p>
+              </div>
+            </div>
           </div>
 
           <!-- Document Number -->
@@ -159,26 +174,24 @@ const selectedFiles = ref<File[]>([])
 // Determine available document types based on payment_type
 const availableDocumentTypes = computed(() => {
   const paymentType = props.purchase?.payment_type
-
-  // Always allow remision
-  const types: Array<{ value: string, label: string }> = [
-    { value: 'remision', label: 'Remisión' }
-  ]
+  const types: Array<{ value: string, label: string }> = []
 
   if (!paymentType) {
     // If no payment type specified, show all options (backward compatibility)
+    types.push({ value: 'remision', label: 'Remisión' })
     types.push({ value: 'factura_contado', label: 'Factura de Contado' })
     types.push({ value: 'factura_credito', label: 'Factura a Crédito' })
   } else if (paymentType === 'contado') {
-    // For contado, only allow contado invoice
+    // For contado, allow remision or contado invoice
+    types.push({ value: 'remision', label: 'Remisión' })
     types.push({ value: 'factura_contado', label: 'Factura de Contado' })
-  } else if (paymentType === 'credito' || paymentType === 'credito_consolidado') {
-    // For credito, only allow credito invoice
+  } else if (paymentType === 'credito') {
+    // For credito, allow remision or credito invoice
+    types.push({ value: 'remision', label: 'Remisión' })
     types.push({ value: 'factura_credito', label: 'Factura a Crédito' })
   } else if (paymentType === 'contraentrega') {
-    // For contraentrega, allow both (supplier can issue either)
-    types.push({ value: 'factura_contado', label: 'Factura de Contado' })
-    types.push({ value: 'factura_credito', label: 'Factura a Crédito' })
+    // For contraentrega, ONLY allow remision (payment hasn't been received yet)
+    types.push({ value: 'remision', label: 'Remisión' })
   }
 
   return types
@@ -207,8 +220,11 @@ watch(() => props.isOpen, (newValue) => {
     const paymentType = props.purchase?.payment_type
     let defaultDocType = 'factura_contado'
 
-    if (paymentType === 'credito' || paymentType === 'credito_consolidado') {
+    if (paymentType === 'credito') {
       defaultDocType = 'factura_credito'
+    } else if (paymentType === 'contraentrega') {
+      // For contraentrega, default to remision since payment hasn't been received yet
+      defaultDocType = 'remision'
     }
 
     // Pre-fill with purchase data if available
@@ -232,8 +248,7 @@ const getPaymentTypeText = (paymentType: string): string => {
   const types: Record<string, string> = {
     'contado': 'Contado',
     'credito': 'Crédito',
-    'contraentrega': 'Contraentrega',
-    'credito_consolidado': 'Crédito Consolidado'
+    'contraentrega': 'Contraentrega'
   }
   return types[paymentType] || paymentType
 }
