@@ -132,16 +132,25 @@
               </div>
 
               <!-- Received state - Payment already completed (for contado orders) -->
-              <div
+              <NuxtLink
                 v-if="currentPurchase.status === 'received' && !shouldShowPaymentReminder"
-                class="px-4 py-2 border-2 border-dashed rounded-lg flex items-center space-x-2"
-                style="border-color: hsl(var(--success)); color: hsl(var(--text-secondary));"
+                :to="{
+                  path: '/pagos',
+                  query: {
+                    search: currentPurchase.purchase_number,
+                    highlight: currentPurchase.id
+                  }
+                }"
+                class="px-4 py-2 border-2 rounded-lg flex items-center space-x-2 transition-colors cursor-pointer"
+                style="border-color: hsl(var(--success)); color: hsl(var(--success));"
+                @mouseenter="$event.target.style.backgroundColor = 'hsl(var(--success) / 0.1)'"
+                @mouseleave="$event.target.style.backgroundColor = 'transparent'"
               >
-                <svg class="w-5 h-5" style="color: hsl(var(--success));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Orden recibida y pagada. Proceso completado</span>
-              </div>
+                <span>Orden recibida y pagada. Ver en módulo de Pagos →</span>
+              </NuxtLink>
 
               <!-- Cancel (not available in received state) -->
               <button

@@ -180,7 +180,7 @@ const getPageConfig = () => {
     }
   } else if (path === '/pagos' || path === '/pagos/') {
     return {
-      pageTitle: 'Pagos',
+      pageTitle: 'Gestión de Pagos',
       pageSubtitle: undefined,
       searchPlaceholder: 'Buscar pagos...',
       activePage: 'pagos' as const,

@@ -300,7 +300,7 @@ function navigateToTransitionDetail(entry: any) {
     return
   }
 
-  // Navigate to transition detail page using the provided base URL
-  navigateTo(`${props.baseTransitionUrl}/${entry.id}`)
+  // Open transition detail in a new window/tab using Nuxt's navigateTo
+  navigateTo(`${props.baseTransitionUrl}/${entry.id}`, { open: { target: '_blank' } })
 }
 </script>

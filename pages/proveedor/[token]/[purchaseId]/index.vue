@@ -38,6 +38,18 @@
       <!-- Header -->
       <div class="bg-surface border-2 border-border rounded-lg mb-6">
         <div class="p-6">
+          <div class="flex justify-between items-start mb-4">
+            <h2 class="text-xl font-bold text-text-primary">Detalles de la Orden</h2>
+            <button
+              @click="refresh"
+              class="p-2 text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+              title="Refrescar orden"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Purchase Number with Date -->
             <div class="flex items-start space-x-3">
@@ -355,8 +367,7 @@ const stepLabels: Record<string, string> = {
   paid: 'Pagado',
   invoiced: 'Facturado',
   shipped: 'Enviado',
-  received: 'Recibido',
-  verified: 'Verificado'
+  received: 'Recibido y Verificado'
 }
 
 // Wizard step mapping - order changes based on payment type
@@ -365,11 +376,11 @@ const stepOrder = computed(() => {
 
   // For "contado" payment type, payment comes before invoicing
   if (paymentType === 'contado') {
-    return ['quotation', 'pending', 'confirmed', 'paid', 'invoiced', 'shipped', 'received', 'verified']
+    return ['quotation', 'pending', 'confirmed', 'paid', 'invoiced', 'shipped', 'received']
   }
 
-  // For credit and other payment types, payment comes at the end
-  return ['quotation', 'pending', 'confirmed', 'invoiced', 'shipped', 'received', 'verified', 'paid']
+  // For credit and other payment types, payment comes after reception
+  return ['quotation', 'pending', 'confirmed', 'invoiced', 'shipped', 'received', 'paid']
 })
 
 function getStepIndex(status: string): number {
@@ -431,9 +442,10 @@ function getStepDescription(status: string): string {
       ? 'Pago recibido. Ahora puedes registrar la factura o remisión'
       : '¡Orden completada exitosamente! El pago ha sido procesado',
     invoiced: 'Factura registrada. Marca la orden como enviada con el número de tracking',
-    shipped: 'Orden enviada. Esperando confirmación de recepción por parte del cliente',
-    received: 'Orden recibida. Esperando verificación de calidad por parte del cliente',
-    verified: 'Orden verificada y aprobada. Esperando pago por parte del cliente'
+    shipped: 'Orden enviada. Esperando confirmación de recepción y verificación por parte del cliente',
+    received: paymentType === 'contado'
+      ? '¡Orden completada! Producto recibido, verificado y pagado exitosamente'
+      : 'Orden recibida y verificada. Esperando pago por parte del cliente'
   }
   return descriptions[status] || ''
 }
@@ -445,8 +457,7 @@ function getStatusText(status: string): string {
     confirmed: 'Confirmada',
     preparing: 'En Preparación',
     shipped: 'Enviado',
-    received: 'Recibido',
-    verified: 'Verificado',
+    received: 'Recibido y Verificado',
     invoiced: 'Facturado',
     paid: 'Pagado',
     cancelled: 'Cancelado'
@@ -462,8 +473,7 @@ function getStatusBadgeClass(status: string): string {
     confirmed: 'border-success text-success',
     preparing: 'border-blue-500 text-blue-500',
     shipped: 'border-blue-600 text-blue-600',
-    received: 'border-purple-500 text-purple-500',
-    verified: 'border-indigo-500 text-indigo-500',
+    received: 'border-success text-success',
     invoiced: 'border-orange-500 text-orange-500',
     paid: 'border-success text-success',
     cancelled: 'border-destructive text-destructive'
