@@ -6,8 +6,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const publicRoutes = ['/auth/login', '/auth/verify', '/'] // Add other public routes as needed
 
   // If the user is trying to access a public route, do nothing.
-  // Also, allow access to any route starting with /auth/
-  if (publicRoutes.includes(to.path) || to.path.startsWith('/auth/')) {
+  // Also, allow access to any route starting with /auth/ or /proveedor/ (supplier portal)
+  if (publicRoutes.includes(to.path) || to.path.startsWith('/auth/') || to.path.startsWith('/proveedor/')) {
     return
   }
 

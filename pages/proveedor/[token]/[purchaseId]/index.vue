@@ -521,23 +521,22 @@ onMounted(async () => {
   console.log('[PurchaseDetail] Purchase ID:', purchaseId.value)
 
   try {
-    console.log('[PurchaseDetail] Verifying token...')
-    const verifyResponse = await $fetch(`/api/supplier-portal/${token.value}/verify`)
-    console.log('[PurchaseDetail] Token verified:', verifyResponse)
-
-    // Load supplier data
-    if (verifyResponse.success && verifyResponse.data) {
-      supplier.value = verifyResponse.data.supplier
+    // Supplier is loaded by middleware
+    // Check if supplier is available (middleware might have failed)
+    if (!supplier.value) {
+      error.value = 'No se pudo verificar el acceso'
+      loading.value = false
+      return
     }
 
-    console.log('[PurchaseDetail] Loading purchases...')
+    console.log('[PurchaseDetail] Loading purchase...')
     await loadPurchase()
     console.log('[PurchaseDetail] Purchase loaded:', purchase.value)
 
     loading.value = false
   } catch (err: any) {
     console.error('[PurchaseDetail] Error:', err)
-    error.value = err.data?.detail || err.message || 'No se pudo verificar el acceso'
+    error.value = err.data?.detail || err.message || 'Error al cargar la orden'
     loading.value = false
   }
 })

@@ -191,16 +191,19 @@ const refresh = async () => {
 
 onMounted(async () => {
   try {
-    // Verify token
-    const verifyResponse = await $fetch(`/api/supplier-portal/${token.value}/verify`)
-    supplier.value = verifyResponse.supplier
+    // Supplier is loaded by middleware
+    // Check if supplier is available (middleware might have failed)
+    if (!supplier.value) {
+      error.value = 'No se pudo verificar el acceso'
+      loading.value = false
+      return
+    }
 
     // Load purchases
     await loadPurchases()
-
     loading.value = false
   } catch (err: any) {
-    error.value = err.data?.detail || 'No se pudo verificar el acceso'
+    error.value = err.data?.detail || 'Error al cargar las órdenes'
     loading.value = false
   }
 })

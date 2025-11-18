@@ -1,16 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-6xl">
-    <!-- Back Button -->
-    <button
-      @click="navigateTo(`/proveedor/${token}/${purchaseId}`)"
-      class="mb-6 flex items-center space-x-2 text-text-secondary hover:text-text-primary transition-colors"
-    >
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-      </svg>
-      <span>Volver al detalle de la orden</span>
-    </button>
-
+  <div>
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
@@ -286,6 +275,9 @@ const transitionId = computed(() => route.params.id as string)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const transition = ref<any>(null)
+
+// Use global state for supplier (shared with layout)
+const supplier = useState<any>('supplier-portal-supplier', () => null)
 const purchaseData = ref<any>({
   purchase_number: '',
   purchase_date: null,
@@ -319,6 +311,7 @@ async function loadTransitionDetail() {
 }
 
 onMounted(() => {
+  // Supplier is loaded by middleware
   loadTransitionDetail()
 })
 

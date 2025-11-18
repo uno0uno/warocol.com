@@ -49,31 +49,13 @@ const error = ref<string | null>(null)
 // Use global state for supplier (shared with layout)
 const supplier = useState<any>('supplier-portal-supplier', () => null)
 
-async function loadSupplier() {
-  try {
-    const response = await $fetch(`/api/supplier-portal/${token}/verify`)
-    if (response.success && response.data) {
-      supplier.value = response.data.supplier
-    }
-  } catch (err: any) {
-    error.value = err.data?.detail || 'No se pudo verificar el acceso'
+onMounted(() => {
+  // Supplier is loaded by middleware
+  // Check if supplier is available (middleware might have failed)
+  if (!supplier.value) {
+    error.value = 'No se pudo verificar el acceso'
   }
-}
-
-async function refresh() {
-  loading.value = true
-  await loadSupplier()
   loading.value = false
-}
-
-onMounted(async () => {
-  try {
-    await loadSupplier()
-    loading.value = false
-  } catch (err: any) {
-    error.value = err.data?.detail || 'No se pudo verificar el acceso'
-    loading.value = false
-  }
 })
 
 definePageMeta({
