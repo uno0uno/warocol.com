@@ -20,46 +20,21 @@
     <div v-else class="flex flex-col gap-4">
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
-        <SharedMetricCard
-          title="Proveedores Activos"
-          :value="stats.activos"
-          subtitle="Estado operativo"
-          variant="primary"
-          :show-icon="false"
-        />
-        
-        <SharedMetricCard
-          title="Proveedores Inactivos"
-          :value="stats.inactivos"
-          subtitle="Pausados o desactivados"
-          variant="primary"
-          :show-icon="false"
-        />
-        
-        <SharedMetricCard
-          title="Promedio de Pago"
-          :value="stats.promedioPago"
-          suffix="d"
-          subtitle="Días promedio de términos"
-          variant="info"
-          :show-icon="false"
-        />
-        
-        <SharedMetricCard
-          title="Con Entregas Programadas"
-          :value="stats.conEntregas"
-          subtitle="Proveedores con entregas"
-          variant="primary"
-          :show-icon="false"
-        />
+        <SharedMetricCard title="Proveedores Activos" :value="stats.activos" subtitle="Estado operativo"
+          variant="primary" :show-icon="false" />
+
+        <SharedMetricCard title="Proveedores Inactivos" :value="stats.inactivos" subtitle="Pausados o desactivados"
+          variant="primary" :show-icon="false" />
+
+        <SharedMetricCard title="Promedio de Pago" :value="stats.promedioPago" suffix="d"
+          subtitle="Días promedio de términos" variant="info" :show-icon="false" />
+
+        <SharedMetricCard title="Con Entregas Programadas" :value="stats.conEntregas"
+          subtitle="Proveedores con entregas" variant="primary" :show-icon="false" />
       </div>
 
       <!-- Suppliers Table -->
-      <UiDataTable
-        :columns="proveedoresTableColumns"
-        :data="suppliers"
-        variant="default"
-      >
+      <UiDataTable :columns="proveedoresTableColumns" :data="suppliers" variant="default">
         <!-- Custom header with title and create button -->
         <template #header>
           <div class="flex justify-between items-center">
@@ -68,16 +43,12 @@
             </h3>
             <div class="flex items-center space-x-4">
               <div class="relative">
-                <input
-                  type="text"
-                  v-model="apiSearchTerm"
-                  placeholder="Buscar proveedor..."
-                  class="pl-10 pr-4 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm"
-                />
-                <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-titan-400" />
+                <input type="text" v-model="apiSearchTerm" placeholder="Buscar proveedor..."
+                  class="pl-10 pr-4 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm" />
+                <MagnifyingGlassIcon
+                  class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-titan-400" />
               </div>
-              <NuxtLink 
-                to="/abastecimiento/proveedor/crear" 
+              <NuxtLink to="/abastecimiento/proveedor/crear"
                 class="btn-primary px-6 py-2 rounded-lg text-sm font-medium">
                 + Nuevo Proveedor
               </NuxtLink>
@@ -85,45 +56,40 @@
           </div>
         </template>
         <!-- Custom slots for special columns -->
-              <template #cell-name="{ value, row }">
-                <div class="flex items-center">
-                  <div class="ml-4">
-                    <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
-                    <div class="text-sm text-titan-600">{{ row.tax_id }}</div>
-                  </div>
-                </div>
-              </template>        
+        <template #cell-name="{ value, row }">
+          <div class="flex items-center">
+            <div class="ml-4">
+              <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
+              <div class="text-sm text-titan-600">{{ row.tax_id }}</div>
+            </div>
+          </div>
+        </template>
         <template #cell-contact="{ row }">
           <div>
             <div class="text-sm text-ebony-800">{{ row.email || 'No especificado' }}</div>
             <div class="text-sm text-titan-600">{{ row.phone || 'No especificado' }}</div>
           </div>
         </template>
-        
+
         <template #cell-payment_terms="{ value }">
           <span class="text-sm text-ebony-800">{{ value || 'Contado' }}</span>
         </template>
-        
+
         <template #cell-is_active="{ value }">
-          <UiStatusBadge
-            :value="value ? 'Activo' : 'Inactivo'"
-            format="text"
-            :variant="value ? 'success' : 'destructive'"
-            size="sm"
-          />
+          <UiStatusBadge :value="value ? 'Activo' : 'Inactivo'" format="text"
+            :variant="value ? 'success' : 'destructive'" size="sm" />
         </template>
-        
+
         <template #cell-actions="{ row }">
           <div class="flex justify-center space-x-2">
-            <button @click="copyPortalLink(row)"
-              class="text-blue-600 hover:text-blue-900 transition-colors"
+            <button @click="copyPortalLink(row)" class="text-blue-600 hover:text-blue-900 transition-colors"
               title="Copiar enlace del portal">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
             </button>
-            <button @click="editProveedor(row)"
-              class="text-crocus-600 hover:text-crocus-900 transition-colors"
+            <button @click="editProveedor(row)" class="text-crocus-600 hover:text-crocus-900 transition-colors"
               title="Editar proveedor">
               <PencilIcon class="h-4 w-4" />
             </button>
@@ -134,53 +100,38 @@
       <!-- Pagination -->
       <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
         <div class="flex-1 flex justify-between sm:hidden">
-          <button 
-            @click="prevPage" 
-            :disabled="currentPage === 1"
-            class="relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50"
-          >
+          <button @click="prevPage" :disabled="currentPage === 1"
+            class="relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
             Anterior
           </button>
-          <button 
-            @click="nextPage" 
-            :disabled="currentPage === totalPages"
-            class="ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50"
-          >
+          <button @click="nextPage" :disabled="currentPage === totalPages"
+            class="ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
             Siguiente
           </button>
         </div>
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
             <p class="text-sm text-titan-700">
-              Mostrando <span class="font-medium">{{ startIndex }}</span> a <span class="font-medium">{{ endIndex }}</span> de{' '}
+              Mostrando <span class="font-medium">{{ startIndex }}</span> a <span class="font-medium">{{ endIndex
+                }}</span>
+              de{' '}
               <span class="font-medium">{{ totalSuppliers }}</span> resultados
             </p>
           </div>
           <div>
             <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-              <button 
-                @click="prevPage" 
-                :disabled="currentPage === 1"
-                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50"
-              >
+              <button @click="prevPage" :disabled="currentPage === 1"
+                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
                 <ChevronLeftIcon class="h-5 w-5" />
               </button>
-              <button 
-                v-for="page in totalPages" 
-                :key="page" 
-                @click="goToPage(page)"
-                :class="[
-                  'relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium',
-                  currentPage === page ? 'bg-crocus-50 border-crocus-500 text-crocus-600' : 'bg-white text-titan-700 hover:bg-titan-50'
-                ]"
-              >
+              <button v-for="page in totalPages" :key="page" @click="goToPage(page)" :class="[
+                'relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium',
+                currentPage === page ? 'bg-crocus-50 border-crocus-500 text-crocus-600' : 'bg-white text-titan-700 hover:bg-titan-50'
+              ]">
                 {{ page }}
               </button>
-              <button 
-                @click="nextPage" 
-                :disabled="currentPage === totalPages"
-                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50"
-              >
+              <button @click="nextPage" :disabled="currentPage === totalPages"
+                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
                 <ChevronRightIcon class="h-5 w-5" />
               </button>
             </nav>
@@ -194,9 +145,9 @@
 
 <script setup>
 
-import { 
+import {
 
-  PlusIcon, 
+  PlusIcon,
 
   MagnifyingGlassIcon,
 
@@ -471,9 +422,3 @@ useHead({
 })
 
 </script>
-
-
-
-
-
-

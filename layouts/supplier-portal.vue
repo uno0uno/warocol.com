@@ -23,7 +23,7 @@
       </header>
 
       <!-- Main Content -->
-      <main class="flex-1 overflow-y-auto">
+      <main class="flex-1 overflow-y-auto p-8">
         <slot />
       </main>
 

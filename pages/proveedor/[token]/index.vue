@@ -18,24 +18,6 @@
 
     <!-- Portal Content -->
     <div v-else class="container mx-auto px-4 py-8">
-
-      <!-- Purchases List -->
-      <div class="mb-4">
-        <div class="flex justify-between items-start mb-2">
-          <h2 class="text-xl font-bold text-text-primary">Mis Órdenes de Compra</h2>
-          <button
-            @click="refresh"
-            class="p-2 text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-            title="Refrescar órdenes"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
-        </div>
-        <p class="text-sm text-text-secondary mt-1">Haz clic en una orden para ver los detalles y tomar acción</p>
-      </div>
-
       <div>
         <div v-if="purchases.length === 0" class="bg-surface border border-border rounded-lg p-12 text-center">
           <svg class="w-16 h-16 mx-auto text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
