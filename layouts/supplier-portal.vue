@@ -12,6 +12,16 @@
 
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Header -->
+      <header class="bg-white border-b border-titan-300 px-8 py-4 flex-shrink-0">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-ebony-800">{{ pageTitle }}</h1>
+            <p class="text-sm text-ebony-400 mt-1">{{ currentDateTime }}</p>
+          </div>
+        </div>
+      </header>
+
       <!-- Main Content -->
       <main class="flex-1 overflow-y-auto">
         <slot />
@@ -43,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -57,6 +67,37 @@ const activePage = computed(() => {
   const path = route.path
   if (path.includes('/facturacion')) return 'billing'
   return 'purchases'
+})
+
+// Page title based on route
+const pageTitle = computed(() => {
+  const path = route.path
+  if (path.includes('/facturacion')) return 'Facturación'
+  if (path.match(/\/proveedor\/[^/]+\/[^/]+$/)) return 'Detalle de Orden'
+  return 'Mis Órdenes de Compra'
+})
+
+// Date and time functionality
+const currentDateTime = ref('')
+
+const updateDateTime = () => {
+  const now = new Date()
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'America/Bogota'
+  }
+  currentDateTime.value = now.toLocaleDateString('es-CO', options)
+}
+
+// Update time immediately and then every minute
+onMounted(() => {
+  updateDateTime()
+  setInterval(updateDateTime, 60000) // Update every minute
 })
 
 // Get supplier from global state (set by pages)
