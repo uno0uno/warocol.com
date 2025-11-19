@@ -29,62 +29,62 @@
     <!-- Edit Form -->
     <div v-else class="page-layout">
       <!-- Order Information Card -->
-      <div class="bg-surface border-2 border-border rounded-lg mb-6">
-        <div class="p-6">
-          <div class="flex justify-between items-start mb-4">
-            <h2 class="text-xl font-bold text-text-primary">Detalles de la Orden</h2>
+      <div class="bg-surface border-2 border-border rounded-lg mb-4 sm:mb-6">
+        <div class="p-4 sm:p-6">
+          <div class="flex justify-between items-start mb-3 sm:mb-4">
+            <h2 class="text-lg sm:text-xl font-bold text-text-primary">Detalles de la Orden</h2>
             <button
               @click="refresh"
-              class="h-[42px] px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary hover:border-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary group disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-[42px] px-3 sm:px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary hover:border-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary group disabled:opacity-50 disabled:cursor-not-allowed"
               title="Refrescar orden"
             >
-              <svg class="w-5 h-5 transition-transform group-hover:rotate-180 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:rotate-180 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             <!-- Purchase Number with Date and Payment Type -->
-            <div class="flex items-start space-x-3">
-              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-start space-x-2 sm:space-x-3">
+              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <div class="space-y-1">
+              <div class="space-y-1 min-w-0">
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
                   {{ formatDate(form.purchase_date) }}
                 </p>
-                <p class="text-lg font-semibold text-text-primary">
+                <p class="text-base sm:text-lg font-semibold text-text-primary truncate">
                   {{ form.purchase_number }}
                 </p>
-                <p v-if="form.payment_type" class="text-sm text-text-secondary">
+                <p v-if="form.payment_type" class="text-xs sm:text-sm text-text-secondary truncate">
                   Pago: {{ getPaymentTypeText(form.payment_type) }}
                 </p>
               </div>
             </div>
 
             <!-- Supplier -->
-            <div class="flex items-start space-x-3">
-              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-start space-x-2 sm:space-x-3">
+              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
-              <div class="space-y-1">
+              <div class="space-y-1 min-w-0">
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
                   Proveedor
                 </p>
-                <p class="text-lg font-semibold text-text-primary">
+                <p class="text-base sm:text-lg font-semibold text-text-primary truncate">
                   {{ getSupplierName(form.supplier_id) }}
                 </p>
               </div>
             </div>
 
             <!-- Status Badge -->
-            <div class="flex items-start space-x-3">
-              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-start space-x-2 sm:space-x-3">
+              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -107,20 +107,91 @@
       </div>
 
       <!-- Read-only Summary + Status History (All states) -->
-      <div class="space-y-6">
+      <div class="space-y-4 sm:space-y-6">
         <!-- Order Summary (Read-only) -->
-        <div class="bg-surface border-2 border-border rounded-lg p-6">
-          <h3 class="text-lg font-semibold text-text-primary mb-6 flex items-center space-x-2">
-            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
+          <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 sm:mb-6 flex items-center space-x-2">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             <span>Resumen de la Orden</span>
           </h3>
 
-          <!-- Items Table -->
-          <div class="mb-4">
-            <h4 class="font-medium text-text-primary mb-4">Items</h4>
-            <div class="overflow-x-auto">
+          <!-- Items Section -->
+          <div class="mb-4 sm:mb-6">
+            <h4 class="font-medium text-text-primary mb-3 sm:mb-4">Items</h4>
+
+            <!-- Mobile: Cards View -->
+            <div class="md:hidden space-y-3">
+              <div
+                v-for="(item, index) in form.items"
+                :key="index"
+                class="bg-surface rounded-xl shadow-md hover:shadow-lg transition-shadow border border-border"
+              >
+                <div class="p-4">
+                  <!-- Main Content with Dashed Border -->
+                  <div class="border-2 border-dashed border-border rounded-lg p-3 mb-3">
+
+                    <!-- Ingredient Name -->
+                    <div class="mb-3">
+                      <h4 class="text-sm font-bold text-text-primary">
+                        {{ getIngredientName(item.ingredient_id) }}
+                      </h4>
+                      <p v-if="item.notes" class="text-xs text-text-secondary mt-1">
+                        {{ item.notes }}
+                      </p>
+                    </div>
+
+                    <!-- Value Info -->
+                    <div class="flex items-end justify-between pt-2 border-t border-border">
+                      <div>
+                        <p class="text-xs text-muted-foreground mb-0.5">Precio Unitario</p>
+                        <p class="text-base font-semibold text-text-primary">
+                          {{ parseFloat(item.unit_cost).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                        </p>
+                      </div>
+                      <div class="text-right">
+                        <p class="text-xs text-muted-foreground mb-0.5">Total</p>
+                        <p class="text-lg font-bold text-text-primary">
+                          {{ parseFloat(item.total_cost).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                        </p>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <!-- Footer Stats -->
+                  <div class="flex items-center justify-between">
+
+                    <!-- Stats Icons -->
+                    <div class="flex items-center gap-3">
+
+                      <!-- Quantity -->
+                      <div class="flex items-center gap-1">
+                        <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        <span class="text-text-primary font-semibold text-xs">{{ item.quantity }} {{ item.unit }}</span>
+                      </div>
+
+                      <!-- Batch Number -->
+                      <div class="flex items-center gap-1">
+                        <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                        </svg>
+                        <span class="text-text-secondary text-xs">{{ item.batch_number || 'Sin lote' }}</span>
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <!-- Desktop: Table View -->
+            <div class="hidden md:block overflow-x-auto">
               <table class="w-full border-2 border-border rounded-lg">
                 <thead class="bg-surface-secondary">
                   <tr>
@@ -172,38 +243,104 @@
           </div>
 
           <!-- Totals Summary -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
             <!-- Subtotal Card -->
-            <div class="border-2 border-border rounded-lg p-4 bg-surface">
-              <p class="text-sm text-text-secondary mb-2">Subtotal</p>
-              <p class="text-xl font-semibold text-text-primary">
-                {{ subtotal.toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}
-              </p>
+            <div class="bg-surface rounded-xl shadow-md hover:shadow-lg transition-shadow border border-border">
+              <div class="p-3 sm:p-4">
+                <div class="border-2 border-dashed border-border rounded-lg p-3">
+                  <p class="text-xs text-muted-foreground mb-1">Subtotal</p>
+                  <p class="text-lg sm:text-xl font-bold text-text-primary">
+                    {{ subtotal.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                  </p>
+                </div>
+              </div>
             </div>
 
             <!-- IVA Card -->
-            <div class="border-2 border-border rounded-lg p-4 bg-surface">
-              <p class="text-sm text-text-secondary mb-2">IVA</p>
-              <p class="text-xl font-semibold text-text-primary">
-                {{ parseFloat(form.tax_amount).toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}
-              </p>
+            <div class="bg-surface rounded-xl shadow-md hover:shadow-lg transition-shadow border border-border">
+              <div class="p-3 sm:p-4">
+                <div class="border-2 border-dashed border-border rounded-lg p-3">
+                  <p class="text-xs text-muted-foreground mb-1">IVA</p>
+                  <p class="text-lg sm:text-xl font-bold text-text-primary">
+                    {{ parseFloat(form.tax_amount).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                  </p>
+                </div>
+              </div>
             </div>
 
             <!-- Total Card -->
-            <div class="border-2 border-border rounded-lg p-4 bg-surface">
-              <p class="text-sm text-text-secondary mb-2">Total</p>
-              <p class="text-2xl font-bold text-primary">
-                {{ totalAmount.toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}
-              </p>
+            <div class="bg-surface rounded-xl shadow-md hover:shadow-lg transition-shadow border border-border">
+              <div class="p-3 sm:p-4">
+                <div class="border-2 border-dashed border-border rounded-lg p-3">
+                  <p class="text-xs text-muted-foreground mb-1">Total</p>
+                  <p class="text-xl sm:text-2xl font-bold text-primary">
+                    {{ totalAmount.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
           <!-- Observaciones -->
-          <div v-if="form.notes" class="mt-6">
-            <h4 class="font-medium text-text-primary mb-2">Observaciones</h4>
-            <p class="text-sm text-text-secondary bg-background p-4 rounded-lg border border-border">
+          <div v-if="form.notes" class="mt-4 sm:mt-6">
+            <h4 class="font-medium text-text-primary text-sm sm:text-base mb-2">Observaciones</h4>
+            <p class="text-xs sm:text-sm text-text-secondary bg-background p-3 sm:p-4 rounded-lg border border-border">
               {{ form.notes }}
             </p>
+          </div>
+        </div>
+
+        <!-- Action Buttons Section -->
+        <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
+          <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+            <!-- Back button -->
+            <NuxtLink
+              to="/abastecimiento/compras"
+              class="btn-secondary px-4 py-2 sm:px-6 rounded-lg text-sm sm:text-base text-center"
+            >
+              ← Volver a Órdenes
+            </NuxtLink>
+
+            <!-- Action buttons based on current status -->
+            <div v-if="purchase" class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <!-- WAITING: Quotation - Supplier must complete prices -->
+              <div
+                v-if="purchase.status === 'quotation'"
+                class="px-3 py-2 sm:px-4 border-2 border-dashed rounded-lg flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm"
+                style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));"
+              >
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 animate-pulse flex-shrink-0" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Esperando cotización del proveedor</span>
+              </div>
+
+              <!-- Confirm (when in pending status) - USER ACTION -->
+              <button
+                v-if="purchase.status === 'pending'"
+                type="button"
+                class="px-3 py-2 sm:px-4 border-2 rounded-lg transition-colors flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm hover:bg-opacity-10"
+                style="border-color: hsl(var(--success)); color: hsl(var(--success));"
+              >
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Aprobar Orden</span>
+              </button>
+
+              <!-- Cancel (not available in received state) -->
+              <button
+                v-if="purchase.status !== 'received'"
+                type="button"
+                class="px-3 py-2 sm:px-4 border-2 rounded-lg transition-colors flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm hover:bg-opacity-10"
+                style="border-color: hsl(var(--destructive)); color: hsl(var(--destructive));"
+              >
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span>Cancelar Orden</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -215,8 +352,8 @@
         />
       </div>
 
-      <!-- Spacer for global action bar -->
-      <div class="h-24"></div>
+      <!-- Spacer for mobile bottom nav -->
+      <div class="h-20 md:h-0"></div>
     </div>
   </div>
 </template>

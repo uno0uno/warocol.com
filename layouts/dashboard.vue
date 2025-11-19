@@ -1,16 +1,16 @@
 <template>
-  <div class="h-screen flex overflow-hidden">
-    <!-- Dashboard Sidebar - Fixed Viewport Height -->
-    <DashboardSidebar :active-page="activePage" />
+  <div class="h-screen flex flex-col md:flex-row overflow-hidden">
+    <!-- Dashboard Sidebar - Desktop Only -->
+    <DashboardSidebar :active-page="activePage" class="hidden md:flex" />
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col min-w-0">
+    <main class="flex-1 flex flex-col min-w-0 h-screen md:h-auto">
       <!-- Main Content Header -->
-      <header class="bg-white border-b border-titan-300 px-8 py-4 flex-shrink-0">
+      <header class="bg-white border-b border-titan-300 px-4 sm:px-6 md:px-8 py-4 flex-shrink-0">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-3xl font-bold text-ebony-800">{{ pageTitle }}</h1>
-            <p class="text-sm text-ebony-400 mt-1">{{ currentDateTime }}</p>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-ebony-800">{{ pageTitle }}</h1>
+            <p class="text-xs sm:text-sm text-ebony-400 mt-1 hidden sm:block">{{ currentDateTime }}</p>
           </div>
           <div v-if="backButton">
             <button @click="goBack" class="btn-secondary px-4 py-2 rounded-lg text-sm">
@@ -21,8 +21,8 @@
       </header>
 
       <!-- Content Area with Overflow -->
-      <div class="flex-1 overflow-y-auto">
-        <div class="p-8">
+      <div class="flex-1 overflow-y-auto pb-20 md:pb-0">
+        <div class="p-4 sm:p-6 md:p-8">
           <!-- Breadcrumb (if provided) -->
           <nav v-if="showBreadcrumb" class="flex mb-6" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-3">
@@ -41,7 +41,7 @@
           </nav>
 
           <!-- Page Content with Animation -->
-          <Transition 
+          <Transition
             name="page-transition"
             mode="out-in"
           >
@@ -51,13 +51,16 @@
       </div>
     </main>
 
+    <!-- Bottom Navigation - Mobile Only -->
+    <DashboardBottomNav :active-page="activePage" />
+
     <!-- Global Purchase Action Bar -->
-    <PurchasesGlobalPurchaseActionBar />
+    <!-- <PurchasesGlobalPurchaseActionBar /> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { 
+import {
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
 

@@ -1,5 +1,8 @@
 <template>
-  <aside class="w-64 py-4 px-6 bg-ebony-800 text-white h-screen flex flex-col flex-shrink-0 justify-between">
+  <!-- Desktop Sidebar Only -->
+  <aside
+    class="w-64 py-4 px-6 bg-ebony-800 text-white h-screen flex flex-col justify-between flex-shrink-0"
+  >
       <div class="flex flex-col gap-8">
 
         <div class="border-b border-ebony-600 flex flex-col gap-8">
@@ -115,6 +118,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import {
   BanknotesIcon,
   ChartBarIcon,

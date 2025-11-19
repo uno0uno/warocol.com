@@ -11,43 +11,43 @@
       >
         <div
           v-if="shouldShowBar"
-          class="fixed bottom-0 left-0 md:left-64 right-0 border-t-2 shadow-lg z-40"
-          style="pointer-events: auto; background-color: hsl(var(--surface)); border-top-color: hsl(var(--border));"
+          class="fixed top-0 md:bottom-0 md:top-auto left-0 md:left-64 right-0 border-b-2 md:border-b-0 md:border-t-2 shadow-lg z-[55]"
+          style="pointer-events: auto; background-color: hsl(var(--surface)); border-color: hsl(var(--border));"
         >
-        <div class="px-8 py-4">
-          <div class="flex justify-between items-center">
+        <div class="px-4 py-2 sm:px-6 sm:py-4 md:px-8">
+          <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2 sm:gap-3">
             <!-- Back button -->
             <NuxtLink
               to="/abastecimiento/compras"
-              class="btn-secondary px-6 py-2 rounded-lg"
+              class="btn-secondary px-4 py-2 sm:px-6 rounded-lg text-sm sm:text-base text-center"
             >
               ← Volver a Órdenes
             </NuxtLink>
 
             <!-- Loading skeleton -->
-            <div v-if="isLoadingOrUpdating" class="flex gap-3">
-              <div class="flex items-center space-x-2 px-4 py-2 border-2 rounded-lg animate-pulse" style="border-color: hsl(var(--crocus-600) / 0.3); width: 180px; height: 42px;">
-                <div class="w-5 h-5 rounded" style="background-color: hsl(var(--surface-secondary));"></div>
-                <div class="h-4 rounded flex-1" style="background-color: hsl(var(--surface-secondary));"></div>
+            <div v-if="isLoadingOrUpdating" class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <div class="flex items-center space-x-2 px-3 py-2 sm:px-4 border-2 rounded-lg animate-pulse" style="border-color: hsl(var(--crocus-600) / 0.3); min-height: 38px;">
+                <div class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 rounded" style="background-color: hsl(var(--surface-secondary));"></div>
+                <div class="h-3 sm:h-4 rounded flex-1" style="background-color: hsl(var(--surface-secondary));"></div>
               </div>
-              <div class="flex items-center space-x-2 px-4 py-2 border-2 rounded-lg animate-pulse" style="border-color: hsl(var(--destructive) / 0.3); width: 150px; height: 42px;">
-                <div class="w-5 h-5 rounded" style="background-color: hsl(var(--surface-secondary));"></div>
-                <div class="h-4 rounded flex-1" style="background-color: hsl(var(--surface-secondary));"></div>
+              <div class="flex items-center space-x-2 px-3 py-2 sm:px-4 border-2 rounded-lg animate-pulse" style="border-color: hsl(var(--destructive) / 0.3); min-height: 38px;">
+                <div class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 rounded" style="background-color: hsl(var(--surface-secondary));"></div>
+                <div class="h-3 sm:h-4 rounded flex-1" style="background-color: hsl(var(--surface-secondary));"></div>
               </div>
             </div>
 
             <!-- Action buttons based on current status -->
-            <div v-else class="flex gap-3">
+            <div v-else class="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <!-- WAITING: Quotation - Supplier must complete prices -->
               <div
                 v-if="currentPurchase.status === 'quotation'"
-                class="px-4 py-2 border-2 border-dashed rounded-lg flex items-center space-x-2"
+                class="px-3 py-2 sm:px-4 border-2 border-dashed rounded-lg flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2"
                 style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));"
               >
-                <svg class="w-5 h-5 animate-pulse" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 animate-pulse flex-shrink-0" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Esperando cotización del proveedor</span>
+                <span class="text-xs sm:text-sm">Esperando cotización del proveedor</span>
               </div>
 
               <!-- Confirm (when in pending status) - USER ACTION -->
@@ -55,52 +55,52 @@
                 v-if="currentPurchase.status === 'pending'"
                 type="button"
                 @click="showConfirmModal = true"
-                class="px-4 py-2 border-2 rounded-lg transition-colors flex items-center space-x-2"
+                class="px-3 py-2 sm:px-4 border-2 rounded-lg transition-colors flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2"
                 style="border-color: hsl(var(--success)); color: hsl(var(--success));"
                 @mouseenter="$event.target.style.backgroundColor = 'hsl(var(--success) / 0.1)'"
                 @mouseleave="$event.target.style.backgroundColor = 'transparent'"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Aprobar Orden</span>
+                <span class="text-xs sm:text-sm">Aprobar Orden</span>
               </button>
 
               <!-- WAITING: Payment (for "contado" type) or Invoice (for other types) -->
               <div
                 v-if="currentPurchase.status === 'confirmed' || currentPurchase.status === 'preparing'"
-                class="px-4 py-2 border-2 border-dashed rounded-lg flex items-center space-x-2"
+                class="px-3 py-2 sm:px-4 border-2 border-dashed rounded-lg flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2"
                 style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));"
               >
-                <svg class="w-5 h-5 animate-pulse" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 animate-pulse flex-shrink-0" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span v-if="currentPurchase.payment_type === 'contado'">Esperando pago antes de facturar</span>
-                <span v-else>Esperando factura del proveedor</span>
+                <span v-if="currentPurchase.payment_type === 'contado'" class="text-xs sm:text-sm">Esperando pago antes de facturar</span>
+                <span v-else class="text-xs sm:text-sm">Esperando factura del proveedor</span>
               </div>
 
               <!-- WAITING: Invoice after payment (for "contado" type only) -->
               <div
                 v-if="currentPurchase.status === 'paid' && currentPurchase.payment_type === 'contado'"
-                class="px-4 py-2 border-2 border-dashed rounded-lg flex items-center space-x-2"
+                class="px-3 py-2 sm:px-4 border-2 border-dashed rounded-lg flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2"
                 style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));"
               >
-                <svg class="w-5 h-5 animate-pulse" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 animate-pulse flex-shrink-0" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Pago recibido. Esperando factura del proveedor</span>
+                <span class="text-xs sm:text-sm">Pago recibido. Esperando factura del proveedor</span>
               </div>
 
               <!-- WAITING: Ship - Supplier must ship -->
               <div
                 v-if="currentPurchase.status === 'invoiced'"
-                class="px-4 py-2 border-2 border-dashed rounded-lg flex items-center space-x-2"
+                class="px-3 py-2 sm:px-4 border-2 border-dashed rounded-lg flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2"
                 style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));"
               >
-                <svg class="w-5 h-5 animate-pulse" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 animate-pulse flex-shrink-0" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Esperando envío del proveedor</span>
+                <span class="text-xs sm:text-sm">Esperando envío del proveedor</span>
               </div>
 
               <!-- Receive (includes quality verification) -->
@@ -108,27 +108,27 @@
                 v-if="currentPurchase.status === 'shipped' || currentPurchase.status === 'partially_received'"
                 type="button"
                 @click="showReceiveModal = true"
-                class="px-4 py-2 border-2 rounded-lg transition-colors flex items-center space-x-2"
+                class="px-3 py-2 sm:px-4 border-2 rounded-lg transition-colors flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2"
                 style="border-color: hsl(var(--crocus-600)); color: hsl(var(--crocus-600));"
                 @mouseenter="$event.target.style.backgroundColor = 'hsl(var(--crocus-600) / 0.1)'"
                 @mouseleave="$event.target.style.backgroundColor = 'transparent'"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
-                <span>Recibir Orden</span>
+                <span class="text-xs sm:text-sm">Recibir Orden</span>
               </button>
 
               <!-- Received state - Redirect to Pagos (only for credit types that haven't been paid yet) -->
               <div
                 v-if="currentPurchase.status === 'received' && shouldShowPaymentReminder"
-                class="px-4 py-2 border-2 border-dashed rounded-lg flex items-center space-x-2"
+                class="px-3 py-2 sm:px-4 border-2 border-dashed rounded-lg flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2"
                 style="border-color: hsl(var(--success)); color: hsl(var(--text-secondary));"
               >
-                <svg class="w-5 h-5" style="color: hsl(var(--success));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" style="color: hsl(var(--success));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Orden recibida. Registrar pago en módulo de Pagos</span>
+                <span class="text-xs sm:text-sm">Orden recibida. Registrar pago en módulo de Pagos</span>
               </div>
 
               <!-- Received state - Payment already completed (for contado orders) -->
@@ -141,15 +141,15 @@
                     highlight: currentPurchase.id
                   }
                 }"
-                class="px-4 py-2 border-2 rounded-lg flex items-center space-x-2 transition-colors cursor-pointer"
+                class="px-3 py-2 sm:px-4 border-2 rounded-lg flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 transition-colors cursor-pointer"
                 style="border-color: hsl(var(--success)); color: hsl(var(--success));"
                 @mouseenter="$event.target.style.backgroundColor = 'hsl(var(--success) / 0.1)'"
                 @mouseleave="$event.target.style.backgroundColor = 'transparent'"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Orden recibida y pagada. Ver en módulo de Pagos →</span>
+                <span class="text-xs sm:text-sm">Orden recibida y pagada. Ver en módulo de Pagos →</span>
               </NuxtLink>
 
               <!-- Cancel (not available in received state) -->
@@ -157,15 +157,15 @@
                 v-if="currentPurchase.status !== 'received'"
                 type="button"
                 @click="showCancelModal = true"
-                class="px-4 py-2 border-2 rounded-lg transition-colors flex items-center space-x-2"
+                class="px-3 py-2 sm:px-4 border-2 rounded-lg transition-colors flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2"
                 style="border-color: hsl(var(--destructive)); color: hsl(var(--destructive));"
                 @mouseenter="$event.target.style.backgroundColor = 'hsl(var(--destructive) / 0.1)'"
                 @mouseleave="$event.target.style.backgroundColor = 'transparent'"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                <span>Cancelar Orden</span>
+                <span class="text-xs sm:text-sm">Cancelar Orden</span>
               </button>
             </div>
           </div>

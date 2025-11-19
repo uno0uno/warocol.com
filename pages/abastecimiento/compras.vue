@@ -17,41 +17,49 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else class="flex flex-col gap-4">
+    <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-5">
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-5">
         <SharedMetricCard
           title="Total de Órdenes"
           :value="stats.total"
           subtitle="Órdenes registradas"
           variant="primary"
           :show-icon="false"
+          size="sm"
+          class="md:size-default"
         />
-        
+
         <SharedMetricCard
           title="Órdenes Pendientes"
           :value="stats.pendientes"
           subtitle="Esperando procesamiento"
           variant="primary"
           :show-icon="false"
+          size="sm"
+          class="md:size-default"
         />
-        
+
         <SharedMetricCard
           title="Órdenes Recibidas"
           :value="stats.recibidas"
           subtitle="Completadas exitosamente"
           variant="primary"
           :show-icon="false"
+          size="sm"
+          class="md:size-default"
         />
-        
+
         <SharedMetricCard
           title="Órdenes Vencidas"
           :value="stats.vencidas"
           subtitle="Fuera de tiempo"
           variant="primary"
           :show-icon="false"
+          size="sm"
+          class="md:size-default"
         />
-        
+
         <SharedMetricCard
           title="Valor Total"
           :value="stats.valorTotal"
@@ -60,32 +68,34 @@
           subtitle="Monto total órdenes"
           variant="primary"
           :show-icon="false"
+          size="sm"
+          class="md:size-default col-span-2 sm:col-span-1"
         />
       </div>
 
       <!-- Filters and Search -->
-      <div class="bg-white rounded-lg shadow-sm border border-titan-200 p-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div class="lg:col-span-2">
+      <div class="bg-white rounded-lg shadow-sm border border-titan-200 p-4 sm:p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div class="sm:col-span-2 lg:col-span-2">
             <div class="relative">
               <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
               <input
                 v-model="searchTerm"
                 type="text"
-                placeholder="Buscar por número de orden o proveedor..."
-                class="w-full pl-10 pr-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500"
+                placeholder="Buscar..."
+                class="w-full pl-9 pr-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500"
               />
             </div>
           </div>
-          <select v-model="proveedorFilter" 
-            class="px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
-            <option value="">Todos los proveedores</option>
+          <select v-model="proveedorFilter"
+            class="px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+            <option value="">Todos</option>
             <option v-for="proveedor in proveedoresUnicos" :key="proveedor" :value="proveedor">
               {{ proveedor }}
             </option>
           </select>
           <select v-model="statusFilter"
-            class="px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+            class="px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
             <option value="">Todos los estados</option>
             <option value="quotation">Cotización</option>
             <option value="pending">Pendiente</option>
@@ -101,103 +111,156 @@
           <input
             v-model="dateRange"
             type="month"
-            class="px-4 py-2 border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500"
+            class="px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500"
           />
         </div>
       </div>
 
-      <!-- Orders Table -->
-      <UiDataTable
-        :columns="ordenesTableColumns"
-        :data="filteredOrdenes"
-        variant="default"
-      >
-        <!-- Custom header with title and create button -->
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="text-lg font-bold text-text-primary">
-              Órdenes de Compra
-            </h3>
-            <div class="flex items-center gap-2">
-              <NuxtLink
-                to="/abastecimiento/compra/crear"
-                class="btn-primary px-6 py-2 rounded-lg text-sm font-medium">
-                + Nueva Orden
-              </NuxtLink>
-              <button
-                @click="refresh"
-                class="h-[42px] px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary hover:border-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary group disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Refrescar lista"
-              >
-                <svg class="w-5 h-5 transition-transform group-hover:rotate-180 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
+      <!-- Mobile: Cards View -->
+      <div class="md:hidden">
+        <div class="bg-white border border-titan-200 rounded-lg mb-3">
+          <div class="p-4 border-b border-titan-200">
+            <div class="flex flex-col gap-3">
+              <h3 class="text-base font-bold text-ebony-800">
+                Órdenes de Compra
+              </h3>
+              <div class="flex items-center gap-2">
+                <NuxtLink
+                  to="/abastecimiento/compra/crear"
+                  class="btn-primary flex-1 px-4 py-2 rounded-lg text-sm font-medium text-center">
+                  + Nuevo
+                </NuxtLink>
+                <button
+                  @click="refresh"
+                  class="h-[42px] px-3 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary hover:border-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary group"
+                  title="Refrescar lista"
+                >
+                  <svg class="w-4 h-4 transition-transform group-hover:rotate-180 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 space-y-3">
+          <PurchasesPurchaseOrderCard
+            v-for="orden in filteredOrdenes"
+            :key="orden.id"
+            :order="orden"
+            @edit="editOrder"
+          />
+
+          <!-- Empty State -->
+          <div v-if="filteredOrdenes.length === 0" class="text-center py-12">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-surface-secondary rounded-full mb-4">
+              <svg class="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+              </svg>
+            </div>
+            <p class="text-text-primary font-medium">No hay órdenes para mostrar</p>
+            <p class="text-muted-foreground text-sm mt-1">Crea una nueva orden para comenzar</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop: Table View -->
+      <div class="hidden md:block">
+        <UiDataTable
+          :columns="ordenesTableColumns"
+          :data="filteredOrdenes"
+          variant="default"
+        >
+          <!-- Custom header with title and create button -->
+          <template #header>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+              <h3 class="text-base sm:text-lg font-bold text-text-primary">
+                Órdenes de Compra
+              </h3>
+              <div class="flex items-center gap-2 w-full sm:w-auto">
+                <NuxtLink
+                  to="/abastecimiento/compra/crear"
+                  class="btn-primary flex-1 sm:flex-initial px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
+                  <span class="hidden sm:inline">+ Nueva Orden</span>
+                  <span class="sm:hidden">+ Nuevo</span>
+                </NuxtLink>
+                <button
+                  @click="refresh"
+                  class="h-[42px] px-3 sm:px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary hover:border-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary group disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Refrescar lista"
+                >
+                  <svg class="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:rotate-180 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </template>
+
+          <!-- Custom slots for special columns -->
+          <template #cell-numero="{ value, row }">
+            <div>
+              <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
+              <div class="text-xs text-titan-600">{{ row.invoice_number || 'Sin factura' }}</div>
+            </div>
+          </template>
+
+          <template #cell-proveedor="{ value }">
+            <div class="flex items-center">
+              <div class="ml-3">
+                <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
+              </div>
+            </div>
+          </template>
+
+          <template #cell-fecha="{ value }">
+            <span class="text-sm text-ebony-800">{{ formatDate(value) }}</span>
+          </template>
+
+          <template #cell-valorTotal="{ value, row }">
+            <div>
+              <div class="text-sm font-medium text-ebony-800">${{ value.toLocaleString() }}</div>
+              <div class="text-xs text-titan-600">+${{ row.impuestos.toLocaleString() }} IVA</div>
+            </div>
+          </template>
+
+          <template #cell-totalItems="{ value }">
+            <UiStatusBadge
+              :value="`${value} items`"
+              format="text"
+              variant="secondary"
+              size="sm"
+            />
+          </template>
+
+          <template #cell-estado="{ value }">
+            <UiStatusBadge
+              :value="getStatusText(value)"
+              format="text"
+              :variant="getStatusVariant(value)"
+              size="sm"
+            />
+          </template>
+
+          <template #cell-fechaEntrega="{ value }">
+            <div class="text-sm text-ebony-800">
+              <div v-if="value">{{ formatDate(value) }}</div>
+              <div v-else class="text-ebony-800">Sin programar</div>
+            </div>
+          </template>
+
+          <template #cell-actions="{ row }">
+            <div class="flex justify-center space-x-2">
+              <button @click="editOrder(row)"
+                class="text-crocus-600 hover:text-crocus-900 transition-colors"
+                title="Editar orden">
+                <PencilIcon class="h-4 w-4" />
               </button>
             </div>
-          </div>
-        </template>
-        <!-- Custom slots for special columns -->
-        <template #cell-numero="{ value, row }">
-          <div>
-            <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
-            <div class="text-xs text-titan-600">{{ row.invoice_number || 'Sin factura' }}</div>
-          </div>
-        </template>
-        
-        <template #cell-proveedor="{ value }">
-          <div class="flex items-center">
-            <div class="ml-3">
-              <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
-            </div>
-          </div>
-        </template>
-        
-        <template #cell-fecha="{ value }">
-          <span class="text-sm text-ebony-800"">{{ formatDate(value) }}</span>
-        </template>
-        
-        <template #cell-valorTotal="{ value, row }">
-          <div>
-            <div class="text-sm font-medium text-ebony-800">${{ value.toLocaleString() }}</div>
-            <div class="text-xs text-titan-600">+${{ row.impuestos.toLocaleString() }} IVA</div>
-          </div>
-        </template>
-        
-        <template #cell-totalItems="{ value }">
-          <UiStatusBadge
-            :value="`${value} items`"
-            format="text"
-            variant="secondary"
-            size="sm"
-          />
-        </template>
-        
-        <template #cell-estado="{ value }">
-          <UiStatusBadge
-            :value="getStatusText(value)"
-            format="text"
-            :variant="getStatusVariant(value)"
-            size="sm"
-          />
-        </template>
-        
-        <template #cell-fechaEntrega="{ value }">
-          <div class="text-sm text-ebony-800">
-            <div v-if="value">{{ formatDate(value) }}</div>
-            <div v-else class="text-ebony-800"">Sin programar</div>
-          </div>
-        </template>
-        
-        <template #cell-actions="{ row }">
-          <div class="flex justify-center space-x-2">
-            <button @click="editOrder(row)"
-              class="text-crocus-600 hover:text-crocus-900 transition-colors"
-              title="Editar orden">
-              <PencilIcon class="h-4 w-4" />
-            </button>
-          </div>
-        </template>
-      </UiDataTable>
+          </template>
+        </UiDataTable>
+      </div>
 
       <!-- Pagination -->
       <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
@@ -442,10 +505,18 @@ const filteredOrdenes = computed(() => {
 // Helper functions
 const formatDate = (dateString) => {
   const date = new Date(dateString)
-  return date.toLocaleDateString('es-CO', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
+  return date.toLocaleDateString('es-CO', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
+const formatDateShort = (dateString) => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('es-CO', {
+    month: 'short',
+    day: 'numeric'
   })
 }
 

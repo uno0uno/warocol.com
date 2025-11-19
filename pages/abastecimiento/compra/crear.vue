@@ -16,13 +16,13 @@
     <!-- Main Content -->
     <div v-else>
       <!-- Order Information Card -->
-      <div class="bg-surface border-2 border-border rounded-lg mb-6">
-        <div class="p-6">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-surface border-2 border-border rounded-lg mb-4 sm:mb-6">
+        <div class="p-4 sm:p-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <!-- Purchase Number -->
-            <div class="flex items-center space-x-3">
-              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center space-x-2 sm:space-x-3">
+              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
@@ -37,9 +37,9 @@
             </div>
 
             <!-- Date -->
-            <div class="flex items-center space-x-3">
-              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center space-x-2 sm:space-x-3">
+              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
@@ -47,16 +47,16 @@
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
                   Fecha de Orden
                 </p>
-                <p class="text-lg font-semibold text-text-primary">
+                <p class="text-sm sm:text-lg font-semibold text-text-primary">
                   Al momento de crear
                 </p>
               </div>
             </div>
 
             <!-- Status Badge -->
-            <div class="flex items-center space-x-3">
-              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center space-x-2 sm:space-x-3">
+              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -79,74 +79,76 @@
       </div>
 
       <!-- Progress Steps -->
-      <div class="bg-surface border-border border rounded-lg mb-6">
-        <div class="p-6">
+      <div class="bg-surface border-border border rounded-lg mb-4 sm:mb-6">
+        <div class="p-3 sm:p-6">
           <div class="flex items-center justify-between">
             <!-- Step 1 -->
             <div class="flex items-center flex-1">
               <div
-                class="flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2"
+                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
                 :class="{
                   'bg-primary text-primary-foreground border-primary': currentStep === 1,
                   'bg-secondary text-secondary-foreground border-secondary': currentStep > 1,
                   'border-border text-text-secondary bg-transparent': currentStep < 1
                 }"
               >
-                <svg v-if="currentStep > 1" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <svg v-if="currentStep > 1" class="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
-                <span v-else class="font-semibold">1</span>
+                <span v-else class="font-semibold text-sm sm:text-base">1</span>
               </div>
-              <div class="ml-3 flex-1">
-                <p class="text-sm font-medium" :class="currentStep >= 1 ? 'text-text-primary' : 'text-text-secondary'">
-                  Información General
+              <div class="ml-1 sm:ml-3 flex-1 min-w-0">
+                <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 1 ? 'text-text-primary' : 'text-text-secondary'">
+                  <span class="hidden sm:inline">Información General</span>
+                  <span class="sm:hidden">Info</span>
                 </p>
-                <p class="text-xs text-text-secondary">Proveedor y detalles</p>
+                <p class="text-xs text-text-secondary hidden sm:block">Proveedor y detalles</p>
               </div>
-              <div class="flex-1 h-1 mx-4" :class="currentStep > 1 ? 'bg-secondary' : 'bg-border'"></div>
+              <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 1 ? 'bg-secondary' : 'bg-border'"></div>
             </div>
 
             <!-- Step 2 -->
             <div class="flex items-center flex-1">
               <div
-                class="flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2"
+                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
                 :class="{
                   'bg-primary text-primary-foreground border-primary': currentStep === 2,
                   'bg-secondary text-secondary-foreground border-secondary': currentStep > 2,
                   'border-border text-text-secondary bg-transparent': currentStep < 2
                 }"
               >
-                <svg v-if="currentStep > 2" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <svg v-if="currentStep > 2" class="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
-                <span v-else class="font-semibold">2</span>
+                <span v-else class="font-semibold text-sm sm:text-base">2</span>
               </div>
-              <div class="ml-3 flex-1">
-                <p class="text-sm font-medium" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">
+              <div class="ml-1 sm:ml-3 flex-1 min-w-0">
+                <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">
                   Alimentos
                 </p>
-                <p class="text-xs text-text-secondary">Productos e ingredientes</p>
+                <p class="text-xs text-text-secondary hidden sm:block">Productos e ingredientes</p>
               </div>
-              <div class="flex-1 h-1 mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'"></div>
+              <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'"></div>
             </div>
 
             <!-- Step 3 -->
             <div class="flex items-center">
               <div
-                class="flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2"
+                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
                 :class="{
                   'bg-primary text-primary-foreground border-primary': currentStep === 3,
                   'bg-secondary text-secondary-foreground border-secondary': currentStep > 3,
                   'border-border text-text-secondary bg-transparent': currentStep < 3
                 }"
               >
-                <span class="font-semibold">3</span>
+                <span class="font-semibold text-sm sm:text-base">3</span>
               </div>
-              <div class="ml-3">
-                <p class="text-sm font-medium" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">
-                  Revisión y Confirmación
+              <div class="ml-1 sm:ml-3 min-w-0">
+                <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">
+                  <span class="hidden sm:inline">Revisión y Confirmación</span>
+                  <span class="sm:hidden">Revisar</span>
                 </p>
-                <p class="text-xs text-text-secondary">Verificar y crear</p>
+                <p class="text-xs text-text-secondary hidden sm:block">Verificar y crear</p>
               </div>
             </div>
           </div>
@@ -158,10 +160,10 @@
         <!-- Step 1: Información General -->
         <Transition name="fade" mode="out-in">
         <div v-if="currentStep === 1" key="step-1" class="bg-surface border-border border rounded-lg">
-          <div class="p-6">
-            <h3 class="text-lg font-semibold text-text-primary mb-6">Información General</h3>
+          <div class="p-4 sm:p-6">
+            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 sm:mb-6">Información General</h3>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
                   Proveedor *
@@ -253,30 +255,30 @@
 
         <!-- Step 2: Items -->
         <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border-border border rounded-lg">
-          <div class="p-6">
-            <h3 class="text-lg font-semibold text-text-primary mb-6">Alimentos</h3>
+          <div class="p-4 sm:p-6">
+            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 sm:mb-6">Alimentos</h3>
 
-            <div class="space-y-4">
+            <div class="space-y-3 sm:space-y-4">
               <div
                 v-for="(item, index) in form.items"
                 :key="index"
-                class="p-4 border-2 border-border rounded-lg"
+                class="p-3 sm:p-4 border-2 border-border rounded-lg"
               >
-                <div class="flex justify-between items-start mb-4">
-                  <h4 class="font-medium text-text-primary">Alimento #{{ index + 1 }}</h4>
+                <div class="flex justify-between items-start mb-3 sm:mb-4">
+                  <h4 class="text-sm sm:text-base font-medium text-text-primary">Alimento #{{ index + 1 }}</h4>
                   <button
                     type="button"
                     @click="removeItem(index)"
                     :disabled="form.items.length === 1"
-                    class="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed p-1"
                   >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-3 sm:mb-4">
                   <div>
                     <label class="block text-sm font-medium text-text-primary mb-2">Ingrediente *</label>
                     <UiSearchableSelect
@@ -327,12 +329,12 @@
                 </div>
 
                 <!-- Notas del Item -->
-                <div class="mt-4">
+                <div class="mt-3 sm:mt-4">
                   <label class="block text-sm font-medium text-text-primary mb-2">Notas del Item</label>
                   <input
                     v-model="item.notes"
                     type="text"
-                    class="input-base w-full px-4 py-2"
+                    class="input-base w-full px-3 sm:px-4 py-2"
                     placeholder="Observaciones opcionales"
                   />
                 </div>
@@ -342,7 +344,7 @@
             <button
               type="button"
               @click="addItem"
-              class="btn-secondary px-4 py-2 rounded-lg text-sm mt-4"
+              class="btn-secondary px-3 sm:px-4 py-2 rounded-lg text-sm mt-3 sm:mt-4 w-full sm:w-auto"
             >
               + Agregar Item
             </button>
@@ -352,16 +354,16 @@
         <!-- Step 3: Review - Quotation Summary -->
         <div v-else-if="currentStep === 3" key="step-3" class="bg-surface border border-border rounded-lg">
           <!-- Quotation Header -->
-          <div class="border-b border-border p-8">
-            <div class="flex justify-between items-start">
+          <div class="border-b border-border p-4 sm:p-6 md:p-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
               <div>
-                <h1 class="text-3xl font-bold text-text-primary mb-2">COTIZACIÓN</h1>
-                <p class="text-sm text-text-secondary">Resumen de solicitud de cotización</p>
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary mb-2">COTIZACIÓN</h1>
+                <p class="text-xs sm:text-sm text-text-secondary">Resumen de solicitud de cotización</p>
               </div>
-              <div class="text-right">
-                <div class="border-2 border-border px-4 py-2 rounded-lg inline-block mb-2 bg-surface-secondary">
+              <div class="text-left sm:text-right w-full sm:w-auto">
+                <div class="border-2 border-border px-3 sm:px-4 py-2 rounded-lg inline-block mb-2 bg-surface-secondary">
                   <p class="text-xs font-medium text-text-secondary">COTIZACIÓN N°</p>
-                  <p class="text-xl font-bold text-text-primary">{{ nextPurchaseNumber }}</p>
+                  <p class="text-lg sm:text-xl font-bold text-text-primary">{{ nextPurchaseNumber }}</p>
                 </div>
                 <p class="text-xs text-text-secondary mt-2">
                   Fecha: {{ new Date().toLocaleDateString('es-CO') }}
@@ -371,8 +373,8 @@
           </div>
 
           <!-- Supplier Info -->
-          <div class="px-8 py-6 border-b border-border">
-            <div class="grid grid-cols-2 gap-8">
+          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-border">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
               <div>
                 <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Proveedor</p>
                 <p class="text-lg font-bold text-text-primary">{{ getSupplierName(form.supplier_id) }}</p>
@@ -391,11 +393,11 @@
           </div>
 
           <!-- Payment Information -->
-          <div class="px-8 py-6 border-b border-border bg-background/50">
-            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-4">
+          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-border bg-background/50">
+            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3 sm:mb-4">
               Condiciones de Pago
             </p>
-            <div class="grid grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <p class="text-sm text-text-secondary mb-1">Tipo de Pago</p>
                 <p class="text-base font-semibold text-text-primary">{{ getPaymentTypeText(form.payment_type) }}</p>
@@ -426,9 +428,39 @@
             </div>
           </div>
 
-          <!-- Items Table -->
-          <div class="px-8 py-6">
-            <table class="w-full">
+          <!-- Items Table - Desktop -->
+          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6">
+            <!-- Mobile: Cards View -->
+            <div class="md:hidden space-y-3">
+              <div
+                v-for="(item, index) in form.items"
+                :key="index"
+                class="border border-border rounded-lg p-3 bg-background"
+              >
+                <div class="mb-2">
+                  <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1">Alimento</p>
+                  <p class="font-medium text-text-primary text-sm">{{ getIngredientName(item.ingredient_id) }}</p>
+                  <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-border">
+                  <div>
+                    <p class="text-xs text-text-secondary mb-1">Cantidad Solicitada</p>
+                    <p class="text-sm text-text-primary font-semibold">
+                      {{ item.quantity }} {{ item.purchase_unit }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-text-secondary mb-1">Equivalente</p>
+                    <p class="text-sm text-text-secondary">
+                      {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Desktop: Table View -->
+            <table class="w-full hidden md:table">
               <thead>
                 <tr class="border-b border-border">
                   <th class="text-left py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
@@ -464,7 +496,7 @@
           </div>
 
           <!-- Footer Note -->
-          <div class="px-8 py-4 bg-surface-secondary border-t border-border">
+          <div class="px-4 sm:px-6 md:px-8 py-3 sm:py-4 bg-surface-secondary border-t border-border">
             <p class="text-xs text-text-secondary text-center">
               Al crear esta cotización, se registrará en el sistema con el número {{ nextPurchaseNumber }}
             </p>
@@ -472,21 +504,22 @@
         </div>
         </Transition>
 
-        <!-- Spacer for fixed buttons -->
-        <div class="h-24"></div>
+        <!-- Spacer for fixed buttons + bottom nav -->
+        <div class="h-32 md:h-24"></div>
       </form>
 
       <!-- Fixed Navigation Buttons -->
-      <div class="fixed bottom-0 left-64 right-0 bg-surface border-t border-border shadow-lg z-40">
-        <div class="px-8 py-4">
-          <div class="flex justify-between items-center">
+      <div class="fixed bottom-16 md:bottom-0 left-0 md:left-64 right-0 bg-surface border-t border-border shadow-lg z-40">
+        <div class="px-4 sm:px-6 md:px-8 py-3 sm:py-4">
+          <div class="flex justify-between items-center gap-3">
             <button
               v-if="currentStep > 1"
               type="button"
               @click="previousStep"
-              class="btn-secondary px-6 py-2 rounded-lg"
+              class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
             >
-              ← Anterior
+              <span class="hidden sm:inline">← Anterior</span>
+              <span class="sm:hidden">←</span>
             </button>
             <div v-else></div>
 
@@ -495,19 +528,21 @@
               type="submit"
               @click="handleNext"
               :disabled="(currentStep === 1 && !isStep1Valid) || (currentStep === 2 && !isStep2Valid)"
-              class="btn-primary px-6 py-2 rounded-lg transition-opacity"
+              class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
               :class="{ 'opacity-50 cursor-not-allowed': (currentStep === 1 && !isStep1Valid) || (currentStep === 2 && !isStep2Valid) }"
             >
-              Siguiente →
+              <span class="hidden sm:inline">Siguiente →</span>
+              <span class="sm:hidden">→</span>
             </button>
             <button
               v-else
               type="button"
               @click="handleSubmit"
               :disabled="isSubmitting"
-              class="btn-primary px-6 py-2 rounded-lg disabled:opacity-50"
+              class="btn-primary px-4 sm:px-6 py-2 rounded-lg disabled:opacity-50 text-sm sm:text-base"
             >
-              {{ isSubmitting ? 'Creando...' : 'Crear y Enviar Cotización' }}
+              <span class="hidden sm:inline">{{ isSubmitting ? 'Creando...' : 'Crear y Enviar Cotización' }}</span>
+              <span class="sm:hidden">{{ isSubmitting ? 'Creando...' : 'Crear' }}</span>
             </button>
           </div>
         </div>
