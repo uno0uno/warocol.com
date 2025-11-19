@@ -430,7 +430,9 @@ function formatMetadataKey(key: string): string {
     payment_reference: 'Referencia de Pago',
     payment_amount: 'Monto Pagado',
     payment_date: 'Fecha de Pago',
-    cancellation_reason: 'Razón de Cancelación'
+    cancellation_reason: 'Razón de Cancelación',
+    numero_factura_legal: 'Número de Factura Legal',
+    fecha_factura_legal: 'Fecha de Factura Legal'
   }
   return keyMap[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
 }

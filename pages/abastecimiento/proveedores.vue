@@ -17,40 +17,41 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else class="flex flex-col gap-4">
+    <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
         <SharedMetricCard title="Proveedores Activos" :value="stats.activos" subtitle="Estado operativo"
-          variant="primary" :show-icon="false" />
+          variant="primary" :show-icon="false" size="sm" class="md:size-default" />
 
         <SharedMetricCard title="Proveedores Inactivos" :value="stats.inactivos" subtitle="Pausados o desactivados"
-          variant="primary" :show-icon="false" />
+          variant="primary" :show-icon="false" size="sm" class="md:size-default" />
 
         <SharedMetricCard title="Promedio de Pago" :value="stats.promedioPago" suffix="d"
-          subtitle="Días promedio de términos" variant="info" :show-icon="false" />
+          subtitle="Días promedio de términos" variant="info" :show-icon="false" size="sm" class="md:size-default" />
 
         <SharedMetricCard title="Con Entregas Programadas" :value="stats.conEntregas"
-          subtitle="Proveedores con entregas" variant="primary" :show-icon="false" />
+          subtitle="Proveedores con entregas" variant="primary" :show-icon="false" size="sm" class="md:size-default" />
       </div>
 
       <!-- Suppliers Table -->
       <UiDataTable :columns="proveedoresTableColumns" :data="suppliers" variant="default">
         <!-- Custom header with title and create button -->
         <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="text-lg font-bold text-text-primary">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+            <h3 class="text-base sm:text-lg font-bold text-text-primary">
               Proveedores
             </h3>
-            <div class="flex items-center space-x-4">
-              <div class="relative">
-                <input type="text" v-model="apiSearchTerm" placeholder="Buscar proveedor..."
-                  class="pl-10 pr-4 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm" />
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+              <div class="relative flex-1 sm:flex-initial">
+                <input type="text" v-model="apiSearchTerm" placeholder="Buscar..."
+                  class="w-full pl-9 pr-3 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm" />
                 <MagnifyingGlassIcon
-                  class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-titan-400" />
+                  class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
               </div>
               <NuxtLink to="/abastecimiento/proveedor/crear"
-                class="btn-primary px-6 py-2 rounded-lg text-sm font-medium">
-                + Nuevo Proveedor
+                class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
+                <span class="hidden sm:inline">+ Nuevo Proveedor</span>
+                <span class="sm:hidden">+ Nuevo</span>
               </NuxtLink>
             </div>
           </div>

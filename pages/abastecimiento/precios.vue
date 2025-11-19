@@ -17,25 +17,29 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else class="flex flex-col gap-4">
+    <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Summary Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
         <SharedMetricCard
           title="Total de Ingredientes"
           :value="summary.ingredientes"
           subtitle="Ingredientes configurados"
           variant="primary"
           :show-icon="false"
+          size="sm"
+          class="md:size-default"
         />
-        
+
         <SharedMetricCard
           title="Categorías"
           :value="uniqueCategoriesCount"
           subtitle="Categorías de ingredientes"
           variant="primary"
           :show-icon="false"
+          size="sm"
+          class="md:size-default"
         />
-        
+
         <SharedMetricCard
           title="Precio Promedio"
           :value="averagePrice"
@@ -43,6 +47,8 @@
           variant="info"
           format="currency"
           :show-icon="false"
+          size="sm"
+          class="md:size-default col-span-2 md:col-span-1"
         />
       </div>
 
