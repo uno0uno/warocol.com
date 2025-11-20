@@ -258,6 +258,8 @@
 </template>
 
 <script setup lang="ts">
+import { inject } from 'vue'
+
 definePageMeta({
   layout: 'dashboard'
 })
@@ -270,7 +272,7 @@ const transitionId = route.params.transitionId as string
 const { currentTenant } = useTenantReactive()
 
 // Fetch transition detail using single endpoint
-const { data: transitionData, pending: loading, error: fetchError } = useAsyncData(
+const { data: transitionData, pending: loading, error: fetchError, refresh: refreshData } = useAsyncData(
   `transition-detail-${purchaseId}-${transitionId}-${currentTenant.value?.id || 'default'}`,
   () => $fetch(`/api/suppliers/purchases/${purchaseId}/transitions/${transitionId}`),
   {
@@ -303,6 +305,14 @@ const error = computed(() => {
   if (fetchError.value) return 'Error al cargar la transición'
   if (!transition.value && !loading.value) return 'Transición no encontrada'
   return null
+})
+
+// Inject refresh handler setter from layout
+const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>('setRefreshHandler', () => {})
+
+// Register refresh handler for mobile bottom nav and desktop header
+onMounted(() => {
+  setRefreshHandler(refreshData)
 })
 
 function isImageFile(filename: string): boolean {

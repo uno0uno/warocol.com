@@ -19,72 +19,52 @@
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Stats Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-5">
-        <SharedMetricCard
-          title="Total de Órdenes"
-          :value="stats.total"
-          subtitle="Órdenes registradas"
-          variant="primary"
-          :show-icon="false"
-          size="sm"
-          class="md:size-default"
-        />
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-5">
+        <SharedMetricCard title="Total de Órdenes" :value="stats.total" subtitle="Órdenes registradas" variant="primary"
+          :show-icon="false" size="sm" class="md:size-default" />
 
-        <SharedMetricCard
-          title="Órdenes Pendientes"
-          :value="stats.pendientes"
-          subtitle="Esperando procesamiento"
-          variant="primary"
-          :show-icon="false"
-          size="sm"
-          class="md:size-default"
-        />
+        <SharedMetricCard title="Órdenes Pendientes" :value="stats.pendientes" subtitle="Esperando procesamiento"
+          variant="primary" :show-icon="false" size="sm" class="md:size-default" />
 
-        <SharedMetricCard
-          title="Órdenes Recibidas"
-          :value="stats.recibidas"
-          subtitle="Completadas exitosamente"
-          variant="primary"
-          :show-icon="false"
-          size="sm"
-          class="md:size-default"
-        />
+        <SharedMetricCard title="Órdenes Recibidas" :value="stats.recibidas" subtitle="Completadas exitosamente"
+          variant="primary" :show-icon="false" size="sm" class="md:size-default" />
 
-        <SharedMetricCard
-          title="Órdenes Vencidas"
-          :value="stats.vencidas"
-          subtitle="Fuera de tiempo"
-          variant="primary"
-          :show-icon="false"
-          size="sm"
-          class="md:size-default"
-        />
+        <SharedMetricCard title="Órdenes Vencidas" :value="stats.vencidas" subtitle="Fuera de tiempo" variant="primary"
+          :show-icon="false" size="sm" class="md:size-default" />
 
-        <SharedMetricCard
-          title="Valor Total"
-          :value="stats.valorTotal"
-          format="currency"
-          suffix="M"
-          subtitle="Monto total órdenes"
-          variant="primary"
-          :show-icon="false"
-          size="sm"
-          class="md:size-default col-span-2 sm:col-span-1"
-        />
+        <SharedMetricCard title="Valor Total" :value="stats.valorTotal" format="currency" suffix="M"
+          subtitle="Monto total órdenes" variant="primary" :show-icon="false" size="sm"
+          class="md:size-default col-span-2 md:col-span-1" />
       </div>
 
       <!-- Filters and Search -->
-      <div class="bg-white rounded-lg shadow-sm border border-titan-200 p-4 sm:p-6">
+      <!-- Mobile: Compact Search + Filter Button -->
+      <div class="md:hidden bg-white rounded-lg shadow-sm border border-titan-200 p-3">
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
+            <input v-model="searchTerm" type="text" placeholder="Buscar..."
+              class="w-full pl-9 pr-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" />
+          </div>
+          <button @click="showFiltersModal = true"
+            class="px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary transition-colors flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+            <span class="text-sm font-medium">Filtros</span>
+            <span v-if="activeFiltersCount > 0" class="px-1.5 py-0.5 bg-primary text-white text-xs rounded-full">{{ activeFiltersCount }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Desktop: Full Filters -->
+      <div class="hidden md:block bg-white rounded-lg shadow-sm border border-titan-200 p-4 sm:p-6">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
           <div class="sm:col-span-2 lg:col-span-2">
             <div class="relative">
               <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
-              <input
-                v-model="searchTerm"
-                type="text"
-                placeholder="Buscar..."
-                class="w-full pl-9 pr-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500"
-              />
+              <input v-model="searchTerm" type="text" placeholder="Buscar..."
+                class="w-full pl-9 pr-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" />
             </div>
           </div>
           <select v-model="proveedorFilter"
@@ -108,167 +88,166 @@
             <option value="paid">Pagada</option>
             <option value="cancelled">Cancelada</option>
           </select>
-          <input
-            v-model="dateRange"
-            type="month"
-            class="px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500"
-          />
+          <input v-model="dateRange" type="month"
+            class="px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" />
         </div>
       </div>
 
-      <!-- Mobile: Cards View -->
-      <div class="md:hidden">
-        <div class="bg-white border border-titan-200 rounded-lg mb-3">
-          <div class="p-4 border-b border-titan-200">
-            <div class="flex flex-col gap-3">
-              <h3 class="text-base font-bold text-ebony-800">
-                Órdenes de Compra
-              </h3>
-              <div class="flex items-center gap-2">
-                <NuxtLink
-                  to="/abastecimiento/compra/crear"
-                  class="btn-primary flex-1 px-4 py-2 rounded-lg text-sm font-medium text-center">
-                  + Nuevo
-                </NuxtLink>
-                <button
-                  @click="refresh"
-                  class="h-[42px] px-3 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary hover:border-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary group"
-                  title="Refrescar lista"
-                >
-                  <svg class="w-4 h-4 transition-transform group-hover:rotate-180 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+      <!-- Filters Modal (Mobile) -->
+      <UiBottomSheetModal v-model="showFiltersModal" title="Filtros" max-height="lg">
+        <!-- Filters Content -->
+        <div class="p-4 space-y-4">
+          <!-- Proveedor Filter -->
+          <div>
+            <label class="text-sm font-medium text-titan-700 mb-2 block">Proveedor</label>
+            <select v-model="proveedorFilter"
+              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+              <option value="">Todos los proveedores</option>
+              <option v-for="proveedor in proveedoresUnicos" :key="proveedor" :value="proveedor">
+                {{ proveedor }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Status Filter -->
+          <div>
+            <label class="text-sm font-medium text-titan-700 mb-2 block">Estado</label>
+            <select v-model="statusFilter"
+              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+              <option value="">Todos los estados</option>
+              <option value="quotation">Cotización</option>
+              <option value="pending">Pendiente</option>
+              <option value="confirmed">Confirmada</option>
+              <option value="preparing">En Preparación</option>
+              <option value="shipped">Enviada</option>
+              <option value="received">Recibida</option>
+              <option value="verified">Verificada</option>
+              <option value="invoiced">Facturada</option>
+              <option value="paid">Pagada</option>
+              <option value="cancelled">Cancelada</option>
+            </select>
+          </div>
+
+          <!-- Date Range Filter -->
+          <div>
+            <label class="text-sm font-medium text-titan-700 mb-2 block">Mes</label>
+            <input v-model="dateRange" type="month"
+              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" />
           </div>
         </div>
 
-        <div class="p-3 space-y-3">
-          <PurchasesPurchaseOrderCard
-            v-for="orden in filteredOrdenes"
-            :key="orden.id"
-            :order="orden"
-            @edit="editOrder"
-          />
-
-          <!-- Empty State -->
-          <div v-if="filteredOrdenes.length === 0" class="text-center py-12">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-surface-secondary rounded-full mb-4">
-              <svg class="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-              </svg>
-            </div>
-            <p class="text-text-primary font-medium">No hay órdenes para mostrar</p>
-            <p class="text-muted-foreground text-sm mt-1">Crea una nueva orden para comenzar</p>
+        <!-- Footer Actions -->
+        <template #footer>
+          <div class="px-4 py-3 flex gap-3">
+            <button @click="clearFilters"
+              class="flex-1 px-4 py-2 border-2 border-titan-300 rounded-lg text-titan-700 hover:bg-titan-50 transition-colors text-sm font-medium">
+              Limpiar
+            </button>
+            <button @click="showFiltersModal = false"
+              class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+              Aplicar
+            </button>
           </div>
-        </div>
-      </div>
+        </template>
+      </UiBottomSheetModal>
 
-      <!-- Desktop: Table View -->
-      <div class="hidden md:block">
-        <UiDataTable
-          :columns="ordenesTableColumns"
-          :data="filteredOrdenes"
-          variant="default"
-        >
-          <!-- Custom header with title and create button -->
-          <template #header>
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-              <h3 class="text-base sm:text-lg font-bold text-text-primary">
-                Órdenes de Compra
-              </h3>
-              <div class="flex items-center gap-2 w-full sm:w-auto">
-                <NuxtLink
-                  to="/abastecimiento/compra/crear"
-                  class="btn-primary flex-1 sm:flex-initial px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
-                  <span class="hidden sm:inline">+ Nueva Orden</span>
-                  <span class="sm:hidden">+ Nuevo</span>
-                </NuxtLink>
-                <button
-                  @click="refresh"
-                  class="h-[42px] px-3 sm:px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary hover:border-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary group disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Refrescar lista"
-                >
-                  <svg class="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:rotate-180 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </button>
-              </div>
+      <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
+      <UiResponsiveDataView
+        :columns="ordenesTableColumns"
+        :data="filteredOrdenes"
+        title="Órdenes de Compra"
+        empty-message="No hay órdenes para mostrar"
+        empty-sub-message="Crea una nueva orden para comenzar"
+        variant="default"
+      >
+        <!-- Mobile Actions -->
+        <template #mobileActions>
+          <NuxtLink to="/abastecimiento/compra/crear"
+            class="btn-primary w-full px-4 py-2 rounded-lg text-sm font-medium text-center">
+            + Nuevo
+          </NuxtLink>
+        </template>
+
+        <!-- Mobile Card Slot -->
+        <template #card="{ item }">
+          <PurchasesPurchaseOrderCard :order="item" @edit="editOrder" />
+        </template>
+
+        <!-- Desktop Header -->
+        <template #header>
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+            <h3 class="text-base sm:text-lg font-bold text-text-primary">
+              Órdenes de Compra
+            </h3>
+            <NuxtLink to="/abastecimiento/compra/crear"
+              class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
+              <span class="hidden sm:inline">+ Nueva Orden</span>
+              <span class="sm:hidden">+ Nuevo</span>
+            </NuxtLink>
+          </div>
+        </template>
+
+        <!-- Desktop Table Cell Customizations -->
+        <template #cell-numero="{ value, row }">
+          <div>
+            <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
+            <div class="text-xs text-titan-600">{{ row.invoice_number || 'Sin factura' }}</div>
+          </div>
+        </template>
+
+        <template #cell-proveedor="{ value }">
+          <div class="flex items-center">
+            <div class="ml-3">
+              <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
             </div>
-          </template>
+          </div>
+        </template>
 
-          <!-- Custom slots for special columns -->
-          <template #cell-numero="{ value, row }">
-            <div>
-              <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
-              <div class="text-xs text-titan-600">{{ row.invoice_number || 'Sin factura' }}</div>
-            </div>
-          </template>
+        <template #cell-fecha="{ value }">
+          <span class="text-sm text-ebony-800">{{ formatDate(value) }}</span>
+        </template>
 
-          <template #cell-proveedor="{ value }">
-            <div class="flex items-center">
-              <div class="ml-3">
-                <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
-              </div>
-            </div>
-          </template>
+        <template #cell-valorTotal="{ value, row }">
+          <div>
+            <div class="text-sm font-medium text-ebony-800">${{ value.toLocaleString() }}</div>
+            <div class="text-xs text-titan-600">+${{ row.impuestos.toLocaleString() }} IVA</div>
+          </div>
+        </template>
 
-          <template #cell-fecha="{ value }">
-            <span class="text-sm text-ebony-800">{{ formatDate(value) }}</span>
-          </template>
+        <template #cell-totalItems="{ value }">
+          <UiStatusBadge :value="`${value} items`" format="text" variant="secondary" size="sm" />
+        </template>
 
-          <template #cell-valorTotal="{ value, row }">
-            <div>
-              <div class="text-sm font-medium text-ebony-800">${{ value.toLocaleString() }}</div>
-              <div class="text-xs text-titan-600">+${{ row.impuestos.toLocaleString() }} IVA</div>
-            </div>
-          </template>
+        <template #cell-estado="{ value }">
+          <UiStatusBadge :value="getStatusText(value)" format="text" :variant="getStatusVariant(value)" size="sm" />
+        </template>
 
-          <template #cell-totalItems="{ value }">
-            <UiStatusBadge
-              :value="`${value} items`"
-              format="text"
-              variant="secondary"
-              size="sm"
-            />
-          </template>
+        <template #cell-fechaEntrega="{ value }">
+          <div class="text-sm text-ebony-800">
+            <div v-if="value">{{ formatDate(value) }}</div>
+            <div v-else class="text-ebony-800">Sin programar</div>
+          </div>
+        </template>
 
-          <template #cell-estado="{ value }">
-            <UiStatusBadge
-              :value="getStatusText(value)"
-              format="text"
-              :variant="getStatusVariant(value)"
-              size="sm"
-            />
-          </template>
-
-          <template #cell-fechaEntrega="{ value }">
-            <div class="text-sm text-ebony-800">
-              <div v-if="value">{{ formatDate(value) }}</div>
-              <div v-else class="text-ebony-800">Sin programar</div>
-            </div>
-          </template>
-
-          <template #cell-actions="{ row }">
-            <div class="flex justify-center space-x-2">
-              <button @click="editOrder(row)"
-                class="text-crocus-600 hover:text-crocus-900 transition-colors"
-                title="Editar orden">
-                <PencilIcon class="h-4 w-4" />
-              </button>
-            </div>
-          </template>
-        </UiDataTable>
-      </div>
+        <template #cell-actions="{ row }">
+          <div class="flex justify-center space-x-2">
+            <button @click="editOrder(row)" class="text-crocus-600 hover:text-crocus-900 transition-colors"
+              title="Editar orden">
+              <PencilIcon class="h-4 w-4" />
+            </button>
+          </div>
+        </template>
+      </UiResponsiveDataView>
 
       <!-- Pagination -->
       <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
         <div class="flex-1 flex justify-between sm:hidden">
-          <button class="relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
+          <button
+            class="relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
             Anterior
           </button>
-          <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
+          <button
+            class="ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
             Siguiente
           </button>
         </div>
@@ -281,13 +260,16 @@
           </div>
           <div>
             <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-              <button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
+              <button
+                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
                 <ChevronLeftIcon class="h-5 w-5" />
               </button>
-              <button class="relative inline-flex items-center px-4 py-2 border border-titan-300 bg-white text-sm font-medium text-titan-700 hover:bg-titan-50">
+              <button
+                class="relative inline-flex items-center px-4 py-2 border border-titan-300 bg-white text-sm font-medium text-titan-700 hover:bg-titan-50">
                 1
               </button>
-              <button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
+              <button
+                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
                 <ChevronRightIcon class="h-5 w-5" />
               </button>
             </nav>
@@ -299,6 +281,7 @@
 </template>
 
 <script setup>
+import { inject } from 'vue'
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -325,8 +308,25 @@ const proveedorFilter = ref('')
 const statusFilter = ref('')
 const dateRange = ref('')
 const showCreateModal = ref(false)
+const showFiltersModal = ref(false)
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
+
+// Active filters count
+const activeFiltersCount = computed(() => {
+  let count = 0
+  if (proveedorFilter.value) count++
+  if (statusFilter.value) count++
+  if (dateRange.value) count++
+  return count
+})
+
+// Clear all filters
+const clearFilters = () => {
+  proveedorFilter.value = ''
+  statusFilter.value = ''
+  dateRange.value = ''
+}
 
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
@@ -371,6 +371,14 @@ const ordenes = computed(() => purchasesData.value.data.map(purchase => ({
   estado: purchase.status,
   invoice_number: purchase.invoice_number
 })))
+
+// Inject refresh handler setter from layout
+const setRefreshHandler = inject('setRefreshHandler', () => {})
+
+// Register refresh handler for mobile bottom nav and desktop header
+onMounted(() => {
+  setRefreshHandler(refresh)
+})
 
 // Stats
 const stats = computed(() => {
@@ -491,13 +499,13 @@ const proveedoresUnicos = computed(() => {
 
 const filteredOrdenes = computed(() => {
   return ordenes.value.filter(orden => {
-    const matchesSearch = !searchTerm.value || 
+    const matchesSearch = !searchTerm.value ||
       orden.numero.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
       orden.proveedor.toLowerCase().includes(searchTerm.value.toLowerCase())
-    
+
     const matchesProveedor = !proveedorFilter.value || orden.proveedor === proveedorFilter.value
     const matchesStatus = !statusFilter.value || orden.estado === statusFilter.value
-    
+
     return matchesSearch && matchesProveedor && matchesStatus
   })
 })

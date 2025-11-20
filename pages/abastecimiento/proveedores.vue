@@ -19,7 +19,7 @@
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Stats Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
+      <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
         <SharedMetricCard title="Proveedores Activos" :value="stats.activos" subtitle="Estado operativo"
           variant="primary" :show-icon="false" size="sm" class="md:size-default" />
 
@@ -33,9 +33,37 @@
           subtitle="Proveedores con entregas" variant="primary" :show-icon="false" size="sm" class="md:size-default" />
       </div>
 
-      <!-- Suppliers Table -->
-      <UiDataTable :columns="proveedoresTableColumns" :data="suppliers" variant="default">
-        <!-- Custom header with title and create button -->
+      <!-- Responsive Data View -->
+      <UiResponsiveDataView
+        :columns="proveedoresTableColumns"
+        :data="suppliers"
+        title="Proveedores"
+        empty-message="No hay proveedores registrados"
+        empty-sub-message="Crea un nuevo proveedor para comenzar"
+        variant="default"
+      >
+        <!-- Mobile Actions -->
+        <template #mobileActions>
+          <div class="flex flex-col gap-2">
+            <div class="relative">
+              <input type="text" v-model="apiSearchTerm" placeholder="Buscar..."
+                class="w-full pl-9 pr-3 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm" />
+              <MagnifyingGlassIcon
+                class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
+            </div>
+            <NuxtLink to="/abastecimiento/proveedor/crear"
+              class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center">
+              + Nuevo
+            </NuxtLink>
+          </div>
+        </template>
+
+        <!-- Mobile Card -->
+        <template #card="{ item }">
+          <SuppliersSupplierCard :supplier="item" @edit="editProveedor" @copy-link="copyPortalLink" />
+        </template>
+
+        <!-- Desktop Header -->
         <template #header>
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
             <h3 class="text-base sm:text-lg font-bold text-text-primary">
@@ -56,7 +84,8 @@
             </div>
           </div>
         </template>
-        <!-- Custom slots for special columns -->
+
+        <!-- Desktop Table Cells -->
         <template #cell-name="{ value, row }">
           <div class="flex items-center">
             <div class="ml-4">
@@ -65,6 +94,7 @@
             </div>
           </div>
         </template>
+
         <template #cell-contact="{ row }">
           <div>
             <div class="text-sm text-ebony-800">{{ row.email || 'No especificado' }}</div>
@@ -96,7 +126,7 @@
             </button>
           </div>
         </template>
-      </UiDataTable>
+      </UiResponsiveDataView>
 
       <!-- Pagination -->
       <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
@@ -172,7 +202,7 @@ import {
 
 } from '@heroicons/vue/24/outline'
 
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, inject, onMounted } from 'vue'
 
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
@@ -220,15 +250,19 @@ const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = 
   }
 );
 
+// Inject refresh handler setter from layout
+const setRefreshHandler = inject('setRefreshHandler', () => {})
 
+// Register refresh handler for mobile bottom nav and desktop header
+onMounted(() => {
+  setRefreshHandler(refresh)
+})
 
 // Computed properties for data and pagination
 
 const suppliers = computed(() => suppliersData.value.data);
 
 const totalSuppliers = computed(() => suppliersData.value.total);
-
-
 
 // Stats (mock data for now, can be fetched from API later if needed)
 
@@ -387,20 +421,24 @@ const copyPortalLink = async (proveedor) => {
     const baseUrl = window.location.origin
     const portalUrl = `${baseUrl}/proveedor/${proveedor.access_token}`
 
-    await navigator.clipboard.writeText(portalUrl)
+    // Try modern clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(portalUrl)
+    } else {
+      // Fallback for non-HTTPS contexts
+      const textArea = document.createElement('textarea')
+      textArea.value = portalUrl
+      textArea.style.position = 'fixed'
+      textArea.style.opacity = '0'
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+    }
 
-    useToast().add({
-      title: 'Enlace Copiado',
-      description: 'El enlace del portal ha sido copiado al portapapeles',
-      color: 'green'
-    })
+    console.log('✅ Portal link copied:', portalUrl)
   } catch (error) {
     console.error('Error copying portal link:', error)
-    useToast().add({
-      title: 'Error',
-      description: 'No se pudo copiar el enlace',
-      color: 'red'
-    })
   }
 }
 

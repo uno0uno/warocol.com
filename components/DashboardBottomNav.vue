@@ -22,7 +22,7 @@
           />
         </div>
         <span
-          class="text-[10px] font-medium transition-colors"
+          class="text-xs font-medium transition-colors"
           :class="activePage === 'financiero'
             ? 'text-crocus-700 font-semibold'
             : 'text-titan-600'"
@@ -50,7 +50,7 @@
           />
         </div>
         <span
-          class="text-[10px] font-medium transition-colors"
+          class="text-xs font-medium transition-colors"
           :class="activePage === 'abastecimiento'
             ? 'text-crocus-700 font-semibold'
             : 'text-titan-600'"
@@ -78,7 +78,7 @@
           />
         </div>
         <span
-          class="text-[10px] font-medium transition-colors"
+          class="text-xs font-medium transition-colors"
           :class="activePage === 'pagos'
             ? 'text-crocus-700 font-semibold'
             : 'text-titan-600'"
@@ -86,6 +86,22 @@
           Pagos
         </span>
       </NuxtLink>
+
+      <!-- Refresh Button (solo si se proporciona onRefresh) -->
+      <button
+        v-if="onRefresh"
+        @click="onRefresh"
+        class="flex flex-col items-center gap-0.5 flex-1 group"
+      >
+        <div class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100">
+          <svg class="w-5 h-5 transition-transform group-hover:rotate-180 duration-300 text-titan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </div>
+        <span class="text-xs font-medium transition-colors text-titan-600">
+          Refrescar
+        </span>
+      </button>
 
       <!-- Configuración/Tenant -->
       <button
@@ -95,7 +111,7 @@
         <div class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100">
           <Cog6ToothIcon class="w-5 h-5 transition-colors text-titan-500" />
         </div>
-        <span class="text-[10px] font-medium transition-colors text-titan-600">
+        <span class="text-xs font-medium transition-colors text-titan-600">
           Más
         </span>
       </button>
@@ -103,97 +119,58 @@
     </div>
 
     <!-- Tenant Selector Modal -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="transition-opacity duration-200"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition-opacity duration-200"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div
-          v-if="showTenantModal"
-          class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-end md:hidden"
-          @click="showTenantModal = false"
-        >
-          <Transition
-            enter-active-class="transition-transform duration-300"
-            enter-from-class="translate-y-full"
-            enter-to-class="translate-y-0"
-            leave-active-class="transition-transform duration-300"
-            leave-from-class="translate-y-0"
-            leave-to-class="translate-y-full"
-          >
-            <div
-              v-if="showTenantModal"
-              class="bg-white rounded-t-2xl w-full max-h-[80vh] overflow-y-auto"
-              @click.stop
-            >
-              <!-- Header -->
-              <div class="sticky top-0 bg-white border-b border-titan-300 px-4 py-4 flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-ebony-800">Configuración</h3>
-                <button @click="showTenantModal = false" class="p-2 hover:bg-titan-100 rounded-lg">
-                  <XMarkIcon class="w-5 h-5 text-titan-500" />
-                </button>
-              </div>
-
-              <!-- Content -->
-              <div class="p-4 space-y-6">
-                <!-- Tenant Selector -->
-                <div>
-                  <label class="text-sm text-titan-600 font-medium mb-2 block">Seleccionar Tenant</label>
-                  <div class="space-y-2">
-                    <div v-if="isLoadingTenants" class="text-sm text-titan-600 py-2">
-                      Cargando tenants...
-                    </div>
-                    <div v-else-if="tenants.length === 0" class="text-sm text-titan-600 py-2">
-                      No hay tenants disponibles
-                    </div>
-                    <button
-                      v-else
-                      v-for="tenant in tenants"
-                      :key="tenant.id"
-                      @click="selectTenant(tenant)"
-                      :disabled="isLoadingTenants"
-                      class="w-full flex items-center justify-between px-4 py-3 rounded-lg border-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      :class="selectedTenant?.id === tenant.id
-                        ? 'border-crocus-600 bg-crocus-50'
-                        : 'border-titan-200 hover:border-crocus-300 hover:bg-titan-50'"
-                    >
-                      <div class="flex items-center gap-3">
-                        <div
-                          class="w-3 h-3 rounded-full"
-                          :class="selectedTenant?.id === tenant.id ? 'bg-crocus-600' : 'bg-titan-400'"
-                        ></div>
-                        <span class="font-medium text-ebony-800">{{ tenant.name }}</span>
-                      </div>
-                      <CheckCircleIcon
-                        v-if="selectedTenant?.id === tenant.id"
-                        class="w-5 h-5 text-crocus-600"
-                      />
-                    </button>
-                  </div>
-                </div>
-
-                <!-- User Info -->
-                <div class="pt-4 border-t border-titan-300">
-                  <div class="flex items-center gap-3 px-4 py-3 bg-titan-50 rounded-lg">
-                    <div class="w-10 h-10 bg-ebony-800 rounded-full flex items-center justify-center font-bold text-white text-sm">
-                      SA
-                    </div>
-                    <div>
-                      <div class="font-semibold text-sm text-ebony-800">Saifer Admin</div>
-                      <div class="text-xs text-titan-600">saifer@warocol.com</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <UiBottomSheetModal v-model="showTenantModal" title="Configuración" max-height="lg">
+      <div class="p-4 space-y-6">
+        <!-- Tenant Selector -->
+        <div>
+          <label class="text-sm text-titan-600 font-medium mb-2 block">Seleccionar Tenant</label>
+          <div class="space-y-2">
+            <div v-if="isLoadingTenants" class="text-sm text-titan-600 py-2">
+              Cargando tenants...
             </div>
-          </Transition>
+            <div v-else-if="tenants.length === 0" class="text-sm text-titan-600 py-2">
+              No hay tenants disponibles
+            </div>
+            <button
+              v-else
+              v-for="tenant in tenants"
+              :key="tenant.id"
+              @click="selectTenant(tenant)"
+              :disabled="isLoadingTenants"
+              class="w-full flex items-center justify-between px-4 py-3 rounded-lg border-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              :class="selectedTenant?.id === tenant.id
+                ? 'border-crocus-600 bg-crocus-50'
+                : 'border-titan-200 hover:border-crocus-300 hover:bg-titan-50'"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-3 h-3 rounded-full"
+                  :class="selectedTenant?.id === tenant.id ? 'bg-crocus-600' : 'bg-titan-400'"
+                ></div>
+                <span class="font-medium text-ebony-800">{{ tenant.name }}</span>
+              </div>
+              <CheckCircleIcon
+                v-if="selectedTenant?.id === tenant.id"
+                class="w-5 h-5 text-crocus-600"
+              />
+            </button>
+          </div>
         </div>
-      </Transition>
-    </Teleport>
+
+        <!-- User Info -->
+        <div class="pt-4 border-t border-titan-300">
+          <div class="flex items-center gap-3 px-4 py-3 bg-titan-50 rounded-lg">
+            <div class="w-10 h-10 bg-ebony-800 rounded-full flex items-center justify-center font-bold text-white text-sm">
+              SA
+            </div>
+            <div>
+              <div class="font-semibold text-sm text-ebony-800">Saifer Admin</div>
+              <div class="text-xs text-titan-600">saifer@warocol.com</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </UiBottomSheetModal>
   </nav>
 </template>
 
@@ -203,13 +180,13 @@ import {
   ChartBarIcon,
   TruckIcon,
   Cog6ToothIcon,
-  XMarkIcon,
   CheckCircleIcon
 } from '@heroicons/vue/24/outline'
 import { computed } from 'vue'
 
 interface Props {
   activePage?: 'dashboard' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
+  onRefresh?: () => void | Promise<void>
 }
 
 interface Tenant {

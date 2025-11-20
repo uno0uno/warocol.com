@@ -1,7 +1,8 @@
 <template>
   <div>
     <!-- Loading overlay during submit/delete (always on top) -->
-    <div v-if="isSubmitting || isDeleting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div v-if="isSubmitting || isDeleting"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-8 flex flex-col items-center">
         <CommonsTheCustomLoader size="large" />
         <p class="mt-4 text-lg font-semibold text-text-primary">
@@ -29,76 +30,74 @@
     <!-- Edit Form -->
     <div v-else class="page-layout">
       <!-- Order Information Card -->
-      <div class="bg-surface border-2 border-border rounded-lg mb-4 sm:mb-6">
-        <div class="p-4 sm:p-6">
-          <div class="flex justify-between items-start mb-3 sm:mb-4">
-            <h2 class="text-lg sm:text-xl font-bold text-text-primary">Detalles de la Orden</h2>
-            <button
-              @click="refresh"
-              class="h-[42px] px-3 sm:px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary hover:border-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary group disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Refrescar orden"
-            >
-              <svg class="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:rotate-180 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+      <div class="bg-surface border-2 border-border rounded-xl">
+        <div class="p-6">
+          <div class="space-y-5 flex flex-col md:flex-row justify-between items-start md:items-center">
+
             <!-- Purchase Number with Date and Payment Type -->
-            <div class="flex items-start space-x-2 sm:space-x-3">
-              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 bg-surface-secondary rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <div class="space-y-1 min-w-0">
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-medium text-text-primary opacity-60 uppercase tracking-wider mb-1">
                   {{ formatDate(form.purchase_date) }}
                 </p>
-                <p class="text-base sm:text-lg font-semibold text-text-primary truncate">
+                <p class="text-[17px] font-semibold text-text-primary mb-0.5">
                   {{ form.purchase_number }}
                 </p>
-                <p v-if="form.payment_type" class="text-xs sm:text-sm text-text-secondary truncate">
+                <p v-if="form.payment_type" class="text-sm font-normal text-text-primary opacity-65">
                   Pago: {{ getPaymentTypeText(form.payment_type) }}
                 </p>
               </div>
             </div>
 
             <!-- Supplier -->
-            <div class="flex items-start space-x-2 sm:space-x-3">
-              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 bg-surface-secondary rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
-              <div class="space-y-1 min-w-0">
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-medium text-text-primary opacity-60 uppercase tracking-wider mb-1">
                   Proveedor
                 </p>
-                <p class="text-base sm:text-lg font-semibold text-text-primary truncate">
-                  {{ getSupplierName(form.supplier_id) }}
-                </p>
+                <div class="flex items-center gap-2">
+                  <p class="text-[17px] font-semibold text-text-primary">
+                    {{ getSupplierName(form.supplier_id) }}
+                  </p>
+                  <button v-if="currentSupplier" @click="copyPortalLink"
+                    class="w-8 h-8 flex items-center justify-center bg-surface-secondary rounded-md text-primary hover:bg-accent transition-colors"
+                    title="Copiar enlace del portal">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
 
             <!-- Status Badge -->
-            <div class="flex items-start space-x-2 sm:space-x-3">
-              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 bg-surface-secondary rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <div class="space-y-1">
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+              <div class="flex-1">
+                <p class="text-xs font-medium text-text-primary opacity-60 uppercase tracking-wider mb-1">
                   Estado Actual
                 </p>
-                <div class="pt-1">
-                  <UiStatusBadge
-                    :value="getStatusText(form.status)"
-                    format="text"
-                    :variant="getStatusVariant(form.status)"
-                    size="lg"
-                  />
+                <div class="mt-1">
+                  <UiStatusBadge :value="getStatusText(form.status)" format="text"
+                    :variant="getStatusVariant(form.status)" size="lg" />
                 </div>
               </div>
             </div>
@@ -112,7 +111,8 @@
         <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
           <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 sm:mb-6 flex items-center space-x-2">
             <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             <span>Resumen de la Orden</span>
           </h3>
@@ -123,11 +123,8 @@
 
             <!-- Mobile: Cards View -->
             <div class="md:hidden space-y-3">
-              <div
-                v-for="(item, index) in form.items"
-                :key="index"
-                class="bg-surface rounded-xl shadow-md hover:shadow-lg transition-shadow border border-border"
-              >
+              <div v-for="(item, index) in form.items" :key="index"
+                class="bg-surface rounded-xl  transition-shadow border border-border">
                 <div class="p-4">
                   <!-- Main Content with Dashed Border -->
                   <div class="border-2 border-dashed border-border rounded-lg p-3 mb-3">
@@ -147,13 +144,19 @@
                       <div>
                         <p class="text-xs text-muted-foreground mb-0.5">Precio Unitario</p>
                         <p class="text-base font-semibold text-text-primary">
-                          {{ parseFloat(item.unit_cost).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                          {{ parseFloat(item.unit_cost).toLocaleString('es-CO', {
+                            style: 'currency', currency: 'COP',
+                            minimumFractionDigits: 0, maximumFractionDigits: 0
+                          }) }}
                         </p>
                       </div>
                       <div class="text-right">
                         <p class="text-xs text-muted-foreground mb-0.5">Total</p>
                         <p class="text-lg font-bold text-text-primary">
-                          {{ parseFloat(item.total_cost).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                          {{ parseFloat(item.total_cost).toLocaleString('es-CO', {
+                            style: 'currency', currency: 'COP',
+                            minimumFractionDigits: 0, maximumFractionDigits: 0
+                          }) }}
                         </p>
                       </div>
                     </div>
@@ -168,16 +171,20 @@
 
                       <!-- Quantity -->
                       <div class="flex items-center gap-1">
-                        <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
                         <span class="text-text-primary font-semibold text-xs">{{ item.quantity }} {{ item.unit }}</span>
                       </div>
 
                       <!-- Batch Number -->
                       <div class="flex items-center gap-1">
-                        <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                        <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                         </svg>
                         <span class="text-text-secondary text-xs">{{ item.batch_number || 'Sin lote' }}</span>
                       </div>
@@ -195,29 +202,31 @@
               <table class="w-full border-2 border-border rounded-lg">
                 <thead class="bg-surface-secondary">
                   <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
+                    <th
+                      class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                       Ingrediente
                     </th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
+                    <th
+                      class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                       Cantidad
                     </th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
+                    <th
+                      class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                       Precio Unitario
                     </th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
+                    <th
+                      class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                       Total
                     </th>
-                    <th class="px-4 py-3 text-center text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
+                    <th
+                      class="px-4 py-3 text-center text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                       Lote
                     </th>
                   </tr>
                 </thead>
                 <tbody class="bg-surface divide-y divide-border">
-                  <tr
-                    v-for="(item, index) in form.items"
-                    :key="index"
-                    class="hover:bg-surface-secondary/50 transition-colors"
-                  >
+                  <tr v-for="(item, index) in form.items" :key="index"
+                    class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm text-text-primary">
                       <div>
                         <p class="font-medium">{{ getIngredientName(item.ingredient_id) }}</p>
@@ -243,38 +252,90 @@
           </div>
 
           <!-- Totals Summary -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <!-- Mobile: Card Layout -->
+          <div class="md:hidden mb-4">
+            <div class="bg-surface border-2 border-border rounded-xl">
+              <div class="p-6">
+                <div class="space-y-3">
+                  <!-- Subtotal Row -->
+                  <div class="flex justify-between items-center">
+                    <span class="text-[15px] font-medium text-text-primary opacity-70">Subtotal</span>
+                    <span class="text-[15px] font-semibold text-text-primary">
+                      {{ subtotal.toLocaleString('es-CO', {
+                        style: 'currency', currency: 'COP', minimumFractionDigits:
+                          0, maximumFractionDigits: 0
+                      }) }}
+                    </span>
+                  </div>
+
+                  <!-- IVA Row -->
+                  <div class="flex justify-between items-center">
+                    <span class="text-[15px] font-medium text-text-primary opacity-70">IVA (19%)</span>
+                    <span class="text-[15px] font-semibold text-text-primary">
+                      {{ parseFloat(form.tax_amount).toLocaleString('es-CO', {
+                        style: 'currency', currency: 'COP',
+                        minimumFractionDigits: 0, maximumFractionDigits: 0
+                      }) }}
+                    </span>
+                  </div>
+
+                  <!-- Total Row -->
+                  <div class="flex justify-between items-center pt-4 mt-4 border-t border-border">
+                    <span class="text-lg font-semibold text-text-primary">Total</span>
+                    <span class="text-2xl font-bold text-primary">
+                      {{ totalAmount.toLocaleString('es-CO', {
+                        style: 'currency', currency: 'COP',
+                        minimumFractionDigits: 0, maximumFractionDigits: 0
+                      }) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop: Grid Layout (unchanged) -->
+          <div class="hidden md:grid md:grid-cols-3 gap-4 mb-6">
             <!-- Subtotal Card -->
-            <div class="bg-surface rounded-xl shadow-md hover:shadow-lg transition-shadow border border-border">
-              <div class="p-3 sm:p-4">
+            <div class="bg-surface rounded-xl  transition-shadow border border-border">
+              <div class="p-4">
                 <div class="border-2 border-dashed border-border rounded-lg p-3">
                   <p class="text-xs text-muted-foreground mb-1">Subtotal</p>
-                  <p class="text-lg sm:text-xl font-bold text-text-primary">
-                    {{ subtotal.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                  <p class="text-xl font-bold text-text-primary">
+                    {{ subtotal.toLocaleString('es-CO', {
+                      style: 'currency', currency: 'COP', minimumFractionDigits: 0,
+                      maximumFractionDigits: 0
+                    }) }}
                   </p>
                 </div>
               </div>
             </div>
 
             <!-- IVA Card -->
-            <div class="bg-surface rounded-xl shadow-md hover:shadow-lg transition-shadow border border-border">
-              <div class="p-3 sm:p-4">
+            <div class="bg-surface rounded-xl  transition-shadow border border-border">
+              <div class="p-4">
                 <div class="border-2 border-dashed border-border rounded-lg p-3">
                   <p class="text-xs text-muted-foreground mb-1">IVA</p>
-                  <p class="text-lg sm:text-xl font-bold text-text-primary">
-                    {{ parseFloat(form.tax_amount).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                  <p class="text-xl font-bold text-text-primary">
+                    {{ parseFloat(form.tax_amount).toLocaleString('es-CO', {
+                      style: 'currency', currency: 'COP',
+                      minimumFractionDigits: 0, maximumFractionDigits: 0
+                    }) }}
                   </p>
                 </div>
               </div>
             </div>
 
             <!-- Total Card -->
-            <div class="bg-surface rounded-xl shadow-md hover:shadow-lg transition-shadow border border-border">
-              <div class="p-3 sm:p-4">
+            <div class="bg-surface rounded-xl  transition-shadow border border-border">
+              <div class="p-4">
                 <div class="border-2 border-dashed border-border rounded-lg p-3">
                   <p class="text-xs text-muted-foreground mb-1">Total</p>
-                  <p class="text-xl sm:text-2xl font-bold text-primary">
-                    {{ totalAmount.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                  <p class="text-2xl font-bold text-primary">
+                    {{ totalAmount.toLocaleString('es-CO', {
+                      style: 'currency', currency: 'COP', minimumFractionDigits:
+                        0, maximumFractionDigits: 0
+                    }) }}
                   </p>
                 </div>
               </div>
@@ -291,51 +352,104 @@
         </div>
 
         <!-- Action Buttons Section -->
-        <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
+        <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
           <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
-            <!-- Back button -->
-            <NuxtLink
-              to="/abastecimiento/compras"
-              class="btn-secondary px-4 py-2 sm:px-6 rounded-lg text-sm sm:text-base text-center"
-            >
-              ← Volver a Órdenes
-            </NuxtLink>
 
             <!-- Action buttons based on current status -->
             <div v-if="purchase" class="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <!-- WAITING: Quotation - Supplier must complete prices -->
-              <div
-                v-if="purchase.status === 'quotation'"
+              <div v-if="purchase.status === 'quotation'"
                 class="px-3 py-2 sm:px-4 border-2 border-dashed rounded-lg flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm"
-                style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));"
-              >
-                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 animate-pulse flex-shrink-0" style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 animate-pulse flex-shrink-0"
+                  style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>Esperando cotización del proveedor</span>
               </div>
 
-              <!-- Confirm (when in pending status) - USER ACTION -->
-              <button
-                v-if="purchase.status === 'pending'"
-                type="button"
-                class="px-3 py-2 sm:px-4 border-2 rounded-lg transition-colors flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm hover:bg-opacity-10"
-                style="border-color: hsl(var(--success)); color: hsl(var(--success));"
-              >
-                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <!-- Approve (when in pending status) - USER ACTION -->
+              <NuxtLink v-if="purchase.status === 'pending'" :to="`/abastecimiento/compra/${purchaseId}/acciones`"
+                class="px-3 py-2 sm:px-4 border-2 rounded-lg transition-colors flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm hover:opacity-60"
+                style="border-color: hsl(var(--success)); color: hsl(var(--success));">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>Aprobar Orden</span>
-              </button>
+              </NuxtLink>
+
+              <!-- WAITING: Payment (for "contado" type) or Invoice (for other types) -->
+              <div v-if="purchase.status === 'confirmed' || purchase.status === 'preparing'"
+                class="px-3 py-2 sm:px-4 border-2 border-dashed rounded-lg flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm"
+                style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 animate-pulse flex-shrink-0"
+                  style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span v-if="purchase.payment_type === 'contado'">Esperando pago antes de facturar</span>
+                <span v-else>Esperando factura del proveedor</span>
+              </div>
+
+              <!-- WAITING: Invoice after payment (for "contado" type only) -->
+              <div v-if="purchase.status === 'paid' && purchase.payment_type === 'contado'"
+                class="px-3 py-2 sm:px-4 border-2 border-dashed rounded-lg flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm"
+                style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 animate-pulse flex-shrink-0"
+                  style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Pago recibido. Esperando factura del proveedor</span>
+              </div>
+
+              <!-- WAITING: Ship - Supplier must ship -->
+              <div v-if="purchase.status === 'invoiced'"
+                class="px-3 py-2 sm:px-4 border-2 border-dashed rounded-lg flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm"
+                style="border-color: hsl(var(--warning)); color: hsl(var(--text-secondary));">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 animate-pulse flex-shrink-0"
+                  style="color: hsl(var(--warning));" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Esperando envío del proveedor</span>
+              </div>
+
+              <!-- Receive (includes quality verification) -->
+              <NuxtLink v-if="purchase.status === 'shipped' || purchase.status === 'partially_received'"
+                :to="`/abastecimiento/compra/${purchaseId}/acciones`"
+                class="px-3 py-2 sm:px-4 border-2 rounded-lg transition-colors flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm hover:opacity-60"
+                style="border-color: hsl(var(--success)); color: hsl(var(--success));">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <span>Recibir Orden</span>
+              </NuxtLink>
+
+              <!-- Received state - Payment reminder -->
+              <div v-if="purchase.status === 'received' && shouldShowPaymentReminder"
+                class="px-3 py-2 sm:px-4 border-2 border-dashed rounded-lg flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm"
+                style="border-color: hsl(var(--success)); color: hsl(var(--text-secondary));">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" style="color: hsl(var(--success));"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Orden recibida. Registrar pago en módulo de Pagos</span>
+              </div>
 
               <!-- Cancel (not available in received state) -->
-              <button
-                v-if="purchase.status !== 'received'"
-                type="button"
-                class="px-3 py-2 sm:px-4 border-2 rounded-lg transition-colors flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm hover:bg-opacity-10"
-                style="border-color: hsl(var(--destructive)); color: hsl(var(--destructive));"
-              >
-                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button v-if="purchase.status !== 'received' && purchase.status !== 'cancelled'" type="button"
+                @click="showCancelModal = true"
+                class="px-3 py-2 sm:px-4 border-2 rounded-lg transition-colors flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm hover:opacity-60"
+                style="border-color: hsl(var(--destructive)); color: hsl(var(--destructive));">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
                 <span>Cancelar Orden</span>
@@ -345,20 +459,19 @@
         </div>
 
         <!-- Status History Timeline -->
-        <PurchasesStatusHistoryTimeline
-          :purchase-id="purchaseId"
-          :current-status="purchase?.status"
-          :base-transition-url="`/abastecimiento/compra/${purchaseId}/transicion`"
-        />
+        <PurchasesStatusHistoryTimeline :purchase-id="purchaseId" :current-status="purchase?.status"
+          :base-transition-url="`/abastecimiento/compra/${purchaseId}/transicion`" />
       </div>
-
-      <!-- Spacer for mobile bottom nav -->
-      <div class="h-20 md:h-0"></div>
     </div>
+
+    <!-- Cancel Modal -->
+    <PurchasesCancelPurchaseModal :is-open="showCancelModal" :purchase-id="purchaseId" @close="showCancelModal = false"
+      @cancelled="handleCancelled" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { inject } from 'vue'
 import { usePurchasesStore } from '~/stores/purchases'
 import { storeToRefs } from 'pinia'
 
@@ -368,6 +481,7 @@ definePageMeta({
 
 // Get order ID from route
 const route = useRoute()
+const router = useRouter()
 const purchaseId = route.params.id as string
 
 useHead({
@@ -397,6 +511,9 @@ const ingredients = computed(() => ingredientsData.value?.data || [])
 const isSubmitting = ref(false)
 const isDeleting = ref(false)
 const error = ref<string | null>(null)
+
+// Cancel modal state
+const showCancelModal = ref(false)
 
 // Load purchase from store
 const loadingPurchase = ref(false)
@@ -457,13 +574,41 @@ const refresh = async () => {
   await loadPurchase(true)
 }
 
+// Inject refresh handler setter from layout (must be at setup level)
+const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>('setRefreshHandler', () => {})
+
 // Load on mount and set as current purchase
 onMounted(async () => {
   // First set the current purchase ID (this will show the bar but wait for data)
   purchasesStore.setCurrentPurchase(purchaseId)
 
+  // Check if we should force refresh on mount
+  const shouldRefresh = route.query.refresh === 'true'
+
   // Then load the purchase data
-  await loadPurchase()
+  await loadPurchase(shouldRefresh)
+
+  // Clean up the query param if it exists
+  if (shouldRefresh) {
+    const { refresh, ...restQuery } = route.query
+    router.replace({ query: restQuery })
+  }
+
+  // Register refresh handler for mobile bottom nav
+  setRefreshHandler(refresh)
+})
+
+// Watch route query to detect when we should reload (e.g., after completing an action)
+// This handles the case when navigating within the same page
+watch(() => route.query.refresh, async (newValue, oldValue) => {
+  // Only trigger if the value changed to 'true' (not on initial mount)
+  if (newValue === 'true' && oldValue !== 'true') {
+    console.log('🔄 Refresh requested, reloading purchase data...')
+    await loadPurchase(true)
+    // Clean up the query param
+    const { refresh, ...restQuery } = route.query
+    router.replace({ query: restQuery })
+  }
 })
 
 // Clean up on unmount
@@ -538,6 +683,14 @@ function getSupplierName(supplierId) {
   const supplier = suppliers.value.find(sup => sup.id === supplierId)
   return supplier?.name || 'Proveedor desconocido'
 }
+
+// Get current supplier with access token
+const currentSupplier = computed(() => {
+  if (!form.value.supplier_id) return null
+  const supplier = suppliers.value.find(sup => sup.id === form.value.supplier_id)
+  console.log('🔍 Current supplier:', supplier)
+  return supplier
+})
 
 function getIngredientName(ingredientId) {
   if (!ingredientId) return 'No especificado'
@@ -656,9 +809,142 @@ const handleDelete = async () => {
   }
 }
 
-// Handle state change after successful transition
-const handleStateChanged = async () => {
-  // Refresh purchase data to get updated status
+// Check if we should show payment reminder for received orders
+// For "contado" orders, payment happens before verification, so we shouldn't show the reminder
+// For "credito" orders, payment happens after verification, so we should show the reminder
+const shouldShowPaymentReminder = computed(() => {
+  if (!purchase.value) return false
+
+  const paymentType = purchase.value.payment_type
+  const history = purchase.value.status_history || []
+
+  // For contado orders, check if payment already occurred (status transitioned through "paid")
+  if (paymentType === 'contado') {
+    const hasPaidStatus = history.some((entry: any) => entry.to_status === 'paid')
+    return !hasPaidStatus // Don't show reminder if already paid
+  }
+
+  // For credit orders, show reminder (payment happens after verification)
+  return true
+})
+
+// Determine if there are available actions for the current status
+const hasAvailableActions = computed(() => {
+  if (!purchase.value) return false
+
+  const status = purchase.value.status
+
+  // Has available actions if:
+  // 1. Status is 'pending' (can approve)
+  // 2. Status is 'shipped' or 'partially_received' (can receive)
+  // 3. Status is not 'received' or 'cancelled' (can cancel)
+
+  const canApprove = status === 'pending'
+  const canReceive = status === 'shipped' || status === 'partially_received'
+  const canCancel = status !== 'received' && status !== 'cancelled'
+
+  return canApprove || canReceive || canCancel
+})
+
+// Check if current status is a waiting state (no user action required)
+const hasWaitingStatus = computed(() => {
+  if (!purchase.value) return false
+
+  const status = purchase.value.status
+  const waitingStatuses = ['quotation', 'confirmed', 'preparing', 'paid', 'invoiced']
+
+  return waitingStatuses.includes(status) ||
+    (status === 'received' && shouldShowPaymentReminder.value)
+})
+
+// Get waiting message based on status
+const getWaitingMessage = computed(() => {
+  if (!purchase.value) return ''
+
+  const status = purchase.value.status
+  const paymentType = purchase.value.payment_type
+
+  switch (status) {
+    case 'quotation':
+      return 'Esperando cotización del proveedor'
+    case 'confirmed':
+    case 'preparing':
+      return paymentType === 'contado'
+        ? 'Esperando pago antes de facturar'
+        : 'Esperando factura del proveedor'
+    case 'paid':
+      return 'Pago recibido. Esperando factura del proveedor'
+    case 'invoiced':
+      return 'Esperando envío del proveedor'
+    case 'received':
+      if (shouldShowPaymentReminder.value) {
+        return 'Orden recibida. Registrar pago en módulo de Pagos'
+      }
+      return 'Orden completada'
+    default:
+      return 'Estado actual: ' + getStatusText(status)
+  }
+})
+
+// Get waiting description based on status
+const getWaitingDescription = computed(() => {
+  if (!purchase.value) return ''
+
+  const status = purchase.value.status
+  const paymentType = purchase.value.payment_type
+
+  switch (status) {
+    case 'quotation':
+      return 'El proveedor debe completar los precios en su portal'
+    case 'confirmed':
+    case 'preparing':
+      return paymentType === 'contado'
+        ? 'Debes registrar el pago en el módulo de Pagos'
+        : 'El proveedor enviará la factura'
+    case 'paid':
+      return 'El proveedor debe enviar la factura'
+    case 'invoiced':
+      return 'El proveedor debe despachar la orden'
+    case 'received':
+      if (shouldShowPaymentReminder.value) {
+        return 'Dirígete al módulo de Pagos para registrar el pago de esta orden'
+      }
+      return 'La orden ha sido recibida y verificada'
+    default:
+      return ''
+  }
+})
+
+// Copy portal link to clipboard
+const copyPortalLink = async () => {
+  try {
+    const baseUrl = window.location.origin
+    const portalUrl = `${baseUrl}/proveedor/${currentSupplier.value.access_token}`
+
+    // Try modern clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(portalUrl)
+    } else {
+      // Fallback for non-HTTPS contexts
+      const textArea = document.createElement('textarea')
+      textArea.value = portalUrl
+      textArea.style.position = 'fixed'
+      textArea.style.opacity = '0'
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+    }
+
+    console.log('✅ Portal link copied:', portalUrl)
+  } catch (error) {
+    console.error('Error copying portal link:', error)
+  }
+}
+
+// Handle cancel action
+const handleCancelled = async () => {
+  showCancelModal.value = false
   await refresh()
 }
 </script>

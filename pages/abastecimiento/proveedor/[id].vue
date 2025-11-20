@@ -168,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, inject, onMounted } from 'vue'
 import { useRoute, useRouter, navigateTo } from '#app'
 
 definePageMeta({
@@ -212,6 +212,14 @@ const { data: supplierData, pending: isLoading, error, refresh } = useAsyncData(
     }
   }
 )
+
+// Inject refresh handler setter from layout
+const setRefreshHandler = inject('setRefreshHandler', () => {})
+
+// Register refresh handler for mobile bottom nav and desktop header
+onMounted(() => {
+  setRefreshHandler(refresh)
+})
 
 // Handle form submission (Update)
 const handleSubmit = async () => {

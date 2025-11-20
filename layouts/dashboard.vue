@@ -6,14 +6,26 @@
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col min-w-0 h-screen md:h-auto">
       <!-- Main Content Header -->
-      <header class="bg-white border-b border-titan-300 px-4 sm:px-6 md:px-8 py-4 flex-shrink-0">
+      <header class="bg-surface border-b border-border px-6 py-4 md:px-8 md:py-4 flex-shrink-0">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-ebony-800">{{ pageTitle }}</h1>
-            <p class="text-xs sm:text-sm text-ebony-400 mt-1 hidden sm:block">{{ currentDateTime }}</p>
+            <h1 class="text-[26px] md:text-3xl font-bold text-text-primary">{{ pageTitle }}</h1>
+            <p class="text-xs sm:text-sm text-muted-foreground mt-1">{{ currentDateTime }}</p>
           </div>
-          <div v-if="backButton">
-            <button @click="goBack" class="btn-secondary px-4 py-2 rounded-lg text-sm">
+          <div v-if="backButton || refreshHandler" class="hidden md:flex md:gap-3">
+            <!-- Refresh Button (Desktop only) -->
+            <button v-if="refreshHandler" @click="refreshHandler"
+              class="w-11 h-11 flex items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Refrescar orden">
+              <svg class="w-5 h-5 transition-transform hover:rotate-180 duration-300" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+              </svg>
+            </button>
+            <!-- Back Button -->
+            <button v-if="backButton" @click="goBack" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold">
               {{ backButton.label }}
             </button>
           </div>
@@ -27,7 +39,8 @@
           <nav v-if="showBreadcrumb" class="flex mb-6" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-3">
               <li class="inline-flex items-center">
-                <NuxtLink to="/financiero" class="text-sm font-medium text-titan-600 hover:text-crocus-600 transition-colors">
+                <NuxtLink to="/financiero"
+                  class="text-sm font-medium text-titan-600 hover:text-crocus-600 transition-colors">
                   Financiero
                 </NuxtLink>
               </li>
@@ -41,10 +54,7 @@
           </nav>
 
           <!-- Page Content with Animation -->
-          <Transition
-            name="page-transition"
-            mode="out-in"
-          >
+          <Transition name="page-transition" mode="out-in">
             <slot />
           </Transition>
         </div>
@@ -52,7 +62,7 @@
     </main>
 
     <!-- Bottom Navigation - Mobile Only -->
-    <DashboardBottomNav :active-page="activePage" />
+    <DashboardBottomNav :active-page="activePage" :on-refresh="refreshHandler" />
 
     <!-- Global Purchase Action Bar -->
     <!-- <PurchasesGlobalPurchaseActionBar /> -->
@@ -60,6 +70,7 @@
 </template>
 
 <script setup lang="ts">
+import { provide } from 'vue'
 import {
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
@@ -76,7 +87,7 @@ const goBack = () => {
 // Determine configuration based on route
 const getPageConfig = () => {
   const path = route.path
-  
+
   if (path === '/financiero' || path === '/dashboard') {
     return {
       pageTitle: 'Dashboard',
@@ -276,6 +287,14 @@ onMounted(() => {
   setInterval(updateDateTime, 60000) // Update every minute
 })
 
+// Refresh handler - will be injected by pages that need it
+const refreshHandler = ref<(() => void | Promise<void>) | undefined>(undefined)
+
+// Provide refresh setter for child pages
+provide('setRefreshHandler', (handler: (() => void | Promise<void>) | undefined) => {
+  refreshHandler.value = handler
+})
+
 // Meta tags for dashboard
 useHead({
   titleTemplate: '%s - Warocol Dashboard',
@@ -322,6 +341,7 @@ useHead({
     opacity: 0;
     transform: translateY(-15px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

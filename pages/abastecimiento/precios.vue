@@ -52,14 +52,28 @@
         />
       </div>
 
-      <!-- Prices Table -->
-      <UiDataTable
-        title="Lista de Precios de Ingredientes"
+      <!-- Responsive Data View -->
+      <UiResponsiveDataView
         :columns="preciosTableColumns"
         :data="ingredients"
+        title="Lista de Precios"
+        empty-message="No hay precios configurados"
+        empty-sub-message="Los precios de ingredientes aparecerán aquí"
         variant="default"
       >
-        <!-- Custom slots for special columns -->
+        <!-- Mobile Card -->
+        <template #card="{ item }">
+          <PricesPriceCard :ingredient="item" />
+        </template>
+
+        <!-- Desktop Header -->
+        <template #header>
+          <h3 class="text-base sm:text-lg font-bold text-text-primary">
+            Lista de Precios de Ingredientes
+          </h3>
+        </template>
+
+        <!-- Desktop Table Cells -->
         <template #cell-name="{ value, row }">
           <div class="flex items-center">
             <div class="ml-3">
@@ -68,15 +82,15 @@
             </div>
           </div>
         </template>
-        
+
         <template #cell-price="{ value }">
           <span class="text-sm font-medium text-ebony-800">${{ (value || 0).toLocaleString() }}</span>
         </template>
-        
+
         <template #cell-unit="{ value }">
           <span class="text-sm text-ebony-800">{{ value }}</span>
         </template>
-      </UiDataTable>
+      </UiResponsiveDataView>
 
       <!-- Pagination -->
       <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
@@ -120,7 +134,8 @@
 </template>
 
 <script setup>
-import { 
+import { inject, onMounted } from 'vue'
+import {
   ChevronLeftIcon,
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
@@ -161,6 +176,14 @@ const { data: ingredientsData, pending: isLoading, error: fetchError, refresh } 
 // Computed properties for data
 const ingredients = computed(() => ingredientsData.value?.data || []);
 const totalIngredients = computed(() => ingredientsData.value?.total || 0);
+
+// Inject refresh handler setter from layout
+const setRefreshHandler = inject('setRefreshHandler', () => {})
+
+// Register refresh handler for mobile bottom nav and desktop header
+onMounted(() => {
+  setRefreshHandler(refresh)
+})
 
 // Summary data (can be computed from fetched data later)
 const summary = ref({
