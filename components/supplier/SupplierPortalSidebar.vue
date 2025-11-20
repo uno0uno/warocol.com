@@ -1,68 +1,51 @@
 <template>
-  <aside class="w-64 py-4 px-6 bg-ebony-800 text-white h-screen flex flex-col flex-shrink-0 justify-between">
-    <div class="flex flex-col gap-8">
-      <!-- Header Section -->
-      <div class="border-b border-ebony-600 flex flex-col gap-8">
-        <!-- Logo -->
-        <div class="flex border border-ebony-600 px-5 py-2 rounded-lg">
-          <div class="w-full h-full rounded-lg flex items-center justify-center">
-            <img
-              src="/logo_waro_10_octubre.png"
-              alt="Waro"
-              class="w-5/6 h-full px-2 object-contain"
-              style="filter: brightness(0) invert(1);"
-            />
-          </div>
-        </div>
-
-        <!-- Supplier Info -->
-        <div class="relative pb-6">
-          <label class="text-xs text-titan-600 font-medium mb-2 block">Proveedor</label>
-          <div class="px-3 py-2 bg-ebony-700 border border-ebony-600 rounded-lg text-sm text-white">
-            <div class="flex items-center gap-2">
-              <div class="w-2 h-2 bg-crocus-600 rounded-full"></div>
-              <span>{{ supplierName || 'Proveedor' }}</span>
-            </div>
-          </div>
+  <UiBaseSidebar>
+    <!-- Supplier Selector -->
+    <template #selector>
+      <label class="text-xs text-titan-600 font-medium mb-2 block">Proveedor</label>
+      <div class="px-3 py-2 bg-ebony-700 border border-ebony-600 rounded-lg text-sm text-white">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 bg-crocus-600 rounded-full"></div>
+          <span>{{ supplierName || 'Proveedor' }}</span>
         </div>
       </div>
+    </template>
 
-      <!-- Navigation -->
-      <nav class="flex flex-col gap-1 overflow-y-auto">
-        <NuxtLink
-          :to="`/proveedor/${token}`"
-          :class="[
-            'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-            activePage === 'purchases'
-              ? 'bg-ebony-600 text-white'
-              : 'text-titan-600 hover:bg-ebony-600 hover:text-white'
-          ]"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <span>Órdenes de Compra</span>
-        </NuxtLink>
+    <!-- Navigation Links -->
+    <template #navigation>
+      <NuxtLink
+        :to="`/proveedor/${token}`"
+        :class="[
+          'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+          activePage === 'purchases'
+            ? 'bg-ebony-600 text-white'
+            : 'text-titan-600 hover:bg-ebony-600 hover:text-white'
+        ]"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span>Órdenes de Compra</span>
+      </NuxtLink>
 
-        <NuxtLink
-          :to="`/proveedor/${token}/facturacion`"
-          :class="[
-            'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-            activePage === 'billing'
-              ? 'bg-ebony-600 text-white'
-              : 'text-titan-600 hover:bg-ebony-600 hover:text-white'
-          ]"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
-          </svg>
-          <span>Facturación</span>
-        </NuxtLink>
-      </nav>
-    </div>
+      <NuxtLink
+        :to="`/proveedor/${token}/facturacion`"
+        :class="[
+          'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+          activePage === 'billing'
+            ? 'bg-ebony-600 text-white'
+            : 'text-titan-600 hover:bg-ebony-600 hover:text-white'
+        ]"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+        </svg>
+        <span>Facturación</span>
+      </NuxtLink>
+    </template>
 
     <!-- Supplier Contact Info -->
-    <div>
+    <template #footer>
       <div class="flex items-start gap-3 rounded-lg hover:bg-ebony-600 cursor-pointer p-2">
         <div class="w-10 h-10 bg-ebony-900 rounded-full flex items-center justify-center font-bold flex-shrink-0">
           {{ getInitials(supplierName) }}
@@ -73,8 +56,8 @@
           <div class="text-xs text-titan-600 truncate" v-if="supplierPhone">{{ supplierPhone }}</div>
         </div>
       </div>
-    </div>
-  </aside>
+    </template>
+  </UiBaseSidebar>
 </template>
 
 <script setup lang="ts">

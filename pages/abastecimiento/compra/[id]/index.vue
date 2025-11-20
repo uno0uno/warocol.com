@@ -30,80 +30,44 @@
     <!-- Edit Form -->
     <div v-else class="page-layout">
       <!-- Order Information Card -->
-      <div class="bg-surface border-2 border-border rounded-xl">
-        <div class="p-6">
-          <div class="space-y-5 flex flex-col md:flex-row justify-between items-start md:items-center">
+      <PurchasesPurchaseOrderHeader>
+        <!-- Purchase Number with Date and Payment Type -->
+        <PurchasesPurchaseInfoCard
+          :label="formatDate(form.purchase_date)"
+          :value="form.purchase_number"
+          :subtitle="form.payment_type ? `Pago: ${getPaymentTypeText(form.payment_type)}` : undefined"
+          icon-path="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+        />
 
-            <!-- Purchase Number with Date and Payment Type -->
-            <div class="flex items-start gap-4">
-              <div class="w-12 h-12 bg-surface-secondary rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-xs font-medium text-text-primary opacity-60 uppercase tracking-wider mb-1">
-                  {{ formatDate(form.purchase_date) }}
-                </p>
-                <p class="text-[17px] font-semibold text-text-primary mb-0.5">
-                  {{ form.purchase_number }}
-                </p>
-                <p v-if="form.payment_type" class="text-sm font-normal text-text-primary opacity-65">
-                  Pago: {{ getPaymentTypeText(form.payment_type) }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Supplier -->
-            <div class="flex items-start gap-4">
-              <div class="w-12 h-12 bg-surface-secondary rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-xs font-medium text-text-primary opacity-60 uppercase tracking-wider mb-1">
-                  Proveedor
-                </p>
-                <div class="flex items-center gap-2">
-                  <p class="text-[17px] font-semibold text-text-primary">
-                    {{ getSupplierName(form.supplier_id) }}
-                  </p>
-                  <button v-if="currentSupplier" @click="copyPortalLink"
-                    class="w-8 h-8 flex items-center justify-center bg-surface-secondary rounded-md text-primary hover:bg-accent transition-colors"
-                    title="Copiar enlace del portal">
-                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Status Badge -->
-            <div class="flex items-start gap-4">
-              <div class="w-12 h-12 bg-surface-secondary rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div class="flex-1">
-                <p class="text-xs font-medium text-text-primary opacity-60 uppercase tracking-wider mb-1">
-                  Estado Actual
-                </p>
-                <div class="mt-1">
-                  <UiStatusBadge :value="getStatusText(form.status)" format="text"
-                    :variant="getStatusVariant(form.status)" size="lg" />
-                </div>
-              </div>
-            </div>
+        <!-- Supplier -->
+        <PurchasesPurchaseInfoCard
+          label="Proveedor"
+          icon-path="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+        >
+          <div class="flex items-center gap-2">
+            <p class="text-lg font-semibold text-text-primary">
+              {{ getSupplierName(form.supplier_id) }}
+            </p>
+            <button v-if="currentSupplier" @click="copyPortalLink"
+              class="w-8 h-8 flex items-center justify-center bg-surface-secondary rounded-md text-primary hover:bg-accent transition-colors"
+              title="Copiar enlace del portal">
+              <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            </button>
           </div>
-        </div>
-      </div>
+        </PurchasesPurchaseInfoCard>
+
+        <!-- Status Badge -->
+        <PurchasesPurchaseInfoCard
+          label="Estado Actual"
+          icon-path="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        >
+          <UiStatusBadge :value="getStatusText(form.status)" format="text"
+            :variant="getStatusVariant(form.status)" />
+        </PurchasesPurchaseInfoCard>
+      </PurchasesPurchaseOrderHeader>
 
       <!-- Read-only Summary + Status History (All states) -->
       <div class="space-y-4 sm:space-y-6">

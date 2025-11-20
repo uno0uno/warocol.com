@@ -25,82 +25,23 @@
     <div v-else class="w-full">
 
       <!-- Header -->
-      <div class="bg-surface border-2 border-border rounded-lg mb-6">
-        <div class="p-6">
-          <div class="flex justify-between items-start mb-4">
-            <h2 class="text-xl font-bold text-text-primary">Detalles de la Orden</h2>
-            <button
-              @click="refresh"
-              class="h-[42px] px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary hover:border-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary group disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Refrescar orden"
-            >
-              <svg class="w-5 h-5 transition-transform group-hover:rotate-180 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Purchase Number with Date -->
-            <div class="flex items-start space-x-3">
-              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  {{ formatDate(purchase?.purchase_date) }}
-                </p>
-                <p class="text-lg font-semibold text-text-primary">
-                  {{ purchase?.purchase_number }}
-                </p>
-                <p v-if="purchase?.payment_type" class="text-sm text-text-secondary">
-                  Pago: {{ getPaymentTypeText(purchase.payment_type) }}
-                </p>
-              </div>
-            </div>
+      <PurchasesPurchaseOrderHeader>
+        <!-- Purchase Number with Date -->
+        <PurchasesPurchaseInfoCard :label="formatDate(purchase?.purchase_date)" :value="purchase?.purchase_number"
+          :subtitle="purchase?.payment_type ? `Pago: ${getPaymentTypeText(purchase.payment_type)}` : undefined"
+          icon-path="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 
-            <!-- Items Count -->
-            <div class="flex items-start space-x-3">
-              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  Items
-                </p>
-                <p class="text-lg font-semibold text-text-primary">
-                  {{ purchase?.items?.length || 0 }} producto(s)
-                </p>
-              </div>
-            </div>
+        <!-- Items Count -->
+        <PurchasesPurchaseInfoCard label="Items" :value="`${purchase?.items?.length || 0} producto(s)`"
+          icon-path="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
 
-            <!-- Status Badge -->
-            <div class="flex items-start space-x-3">
-              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  Estado Actual
-                </p>
-                <div class="pt-1">
-                  <span :class="getStatusBadgeClass(purchase?.status || '')">
-                    {{ getStatusText(purchase?.status || '') }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        <!-- Status Badge -->
+        <PurchasesPurchaseInfoCard label="Estado Actual" icon-path="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z">
+          <span :class="getStatusBadgeClass(purchase?.status || '')">
+            {{ getStatusText(purchase?.status || '') }}
+          </span>
+        </PurchasesPurchaseInfoCard>
+      </PurchasesPurchaseOrderHeader>
 
       <!-- Wizard / Stepper -->
       <div class="p-6 bg-surface border-2 border-border rounded-lg mb-6">
@@ -317,7 +258,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import CompletePricesModalSupplier from '~/components/purchases/CompletePricesModalSupplier.vue'
 import InvoicePurchaseModalSupplier from '~/components/purchases/InvoicePurchaseModalSupplier.vue'
@@ -435,20 +376,9 @@ function getStepDescription(status: string): string {
   return descriptions[status] || ''
 }
 
-function getStatusText(status: string): string {
-  const statusMap: Record<string, string> = {
-    quotation: 'Cotización',
-    pending: 'Pendiente',
-    confirmed: 'Confirmada',
-    preparing: 'En Preparación',
-    shipped: 'Enviado',
-    received: 'Recibido y Verificado',
-    invoiced: 'Facturado',
-    paid: 'Pagado',
-    cancelled: 'Cancelado'
-  }
-  return statusMap[status] || status
-}
+// Use composables for formatters and status
+const { formatDate, formatCurrency } = useFormatters()
+const { getStatusText, getPaymentTypeText } = usePurchaseStatus()
 
 function getStatusBadgeClass(status: string): string {
   const baseClasses = 'px-3 py-1 text-sm font-medium rounded border-2'
@@ -464,28 +394,6 @@ function getStatusBadgeClass(status: string): string {
     cancelled: 'border-destructive text-destructive'
   }
   return `${baseClasses} ${statusClasses[status] || 'border-border text-text-secondary'}`
-}
-
-function formatDate(dateString: string | null): string {
-  if (!dateString) return 'No especificada'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
-}
-
-function formatCurrency(value: number | null): string {
-  if (value === null || value === undefined) return '$0'
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
-}
-
-function getPaymentTypeText(paymentType: string | null): string {
-  if (!paymentType) return 'No especificado'
-
-  const types: Record<string, string> = {
-    'contado': 'Contado',
-    'credito': 'Crédito',
-    'contraentrega': 'Contraentrega'
-  }
-  return types[paymentType] || paymentType
 }
 
 async function loadPurchase() {
@@ -518,6 +426,9 @@ const refresh = async () => {
   loading.value = false
 }
 
+// Inject refresh handler setter from layout
+const setRefreshHandler = inject('setRefreshHandler', () => { })
+
 async function handleActionCompleted() {
   showCompletePricesModal.value = false
   showInvoiceModal.value = false
@@ -528,6 +439,9 @@ async function handleActionCompleted() {
 }
 
 onMounted(async () => {
+  // Register refresh handler for header and mobile bottom nav
+  setRefreshHandler(refresh)
+
   console.log('[PurchaseDetail] Component mounted')
   console.log('[PurchaseDetail] Token:', token.value)
   console.log('[PurchaseDetail] Purchase ID:', purchaseId.value)

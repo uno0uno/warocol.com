@@ -101,24 +101,23 @@
         </div>
       </div>
 
-      <!-- Invoices Table -->
-      <UiDataTable :columns="invoicesTableColumns" :data="filteredInvoices" variant="default">
-        <!-- Custom header with title and refresh button -->
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="text-lg font-bold text-text-primary">
-              Mis Facturas y Remisiones
-            </h3>
-            <button @click="refresh"
-              class="h-[42px] px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary hover:border-primary transition-all focus:outline-none focus:ring-2 focus:ring-primary group disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Refrescar lista">
-              <svg class="w-5 h-5 transition-transform group-hover:rotate-180 duration-300" fill="none"
-                stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          </div>
+      <!-- Invoices Table/Cards -->
+      <UiResponsiveDataView
+        :columns="invoicesTableColumns"
+        :data="filteredInvoices"
+        title="Mis Facturas y Remisiones"
+        empty-message="No tienes facturas o remisiones"
+        empty-sub-message="Las facturas aparecerán aquí cuando sean creadas"
+        variant="default"
+      >
+        <!-- Mobile Card -->
+        <template #card="{ item }">
+          <PurchasesInvoiceCard
+            :invoice="item"
+            :is-selected="isSelected(item.id)"
+            @view="viewInvoice"
+            @toggle-selection="toggleSelection"
+          />
         </template>
 
         <!-- Custom slots for special columns -->
@@ -161,7 +160,7 @@
           <UiStatusBadge :value="getStatusText(value)" format="text" :variant="getStatusVariant(value)" size="sm" />
         </template>
 
-      </UiDataTable>
+      </UiResponsiveDataView>
     </div>
 
     <!-- Legal Invoice Modal -->
@@ -256,7 +255,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, inject, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 
 definePageMeta({
@@ -336,44 +335,58 @@ const uniqueSuppliers = computed(() => {
 })
 
 // Table columns configuration
-const invoicesTableColumns = ref([
+const invoicesTableColumns = [
   {
     key: 'select',
     title: '',
     sortable: false,
+    format: 'text',
+    align: 'center',
     width: '50px'
   },
   {
     key: 'numero',
     title: 'Número',
-    sortable: true
+    sortable: true,
+    format: 'text',
+    align: 'left'
   },
   {
     key: 'proveedor',
     title: 'Proveedor',
-    sortable: true
+    sortable: true,
+    format: 'text',
+    align: 'left'
   },
   {
     key: 'tipo',
     title: 'Tipo',
-    sortable: true
+    sortable: true,
+    format: 'text',
+    align: 'center'
   },
   {
     key: 'fecha',
     title: 'Fecha',
-    sortable: true
+    sortable: true,
+    format: 'date',
+    align: 'center'
   },
   {
     key: 'monto',
     title: 'Monto Total',
-    sortable: true
+    sortable: true,
+    format: 'currency',
+    align: 'right'
   },
   {
     key: 'estado',
     title: 'Estado',
-    sortable: true
+    sortable: true,
+    format: 'text',
+    align: 'center'
   }
-])
+]
 
 // Transform invoices data for the table
 const filteredInvoices = computed(() => {
@@ -426,36 +439,9 @@ function getDocumentTypeText(type: string): string {
   return types[type] || type || 'N/A'
 }
 
-function getStatusText(status: string): string {
-  const statusMap: Record<string, string> = {
-    invoiced: 'Facturado',
-    shipped: 'Enviado',
-    received: 'Recibido',
-    paid: 'Pagado'
-  }
-  return statusMap[status] || status
-}
-
-function getStatusVariant(status: string): string {
-  const variantMap: Record<string, string> = {
-    invoiced: 'warning',
-    shipped: 'primary',
-    received: 'secondary',
-    paid: 'success'
-  }
-  return variantMap[status] || 'default'
-}
-
-function formatDate(dateString: string | null): string {
-  if (!dateString) return 'No especificada'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
-}
-
-function formatCurrency(value: number | null): string {
-  if (value === null || value === undefined) return '$0'
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
-}
+// Use composables for formatters and status
+const { formatDate, formatCurrency } = useFormatters()
+const { getStatusText, getStatusVariant } = usePurchaseStatus()
 
 function isSelected(invoiceId: string): boolean {
   return selectedInvoices.value.some(inv => inv.id === invoiceId)
@@ -472,6 +458,12 @@ function toggleSelection(row: any) {
 
 function clearSelection() {
   selectedInvoices.value = []
+}
+
+function viewInvoice(invoice: any) {
+  // Future: Navigate to invoice detail page
+  // For now, just log the invoice
+  console.log('View invoice:', invoice)
 }
 
 function closeLegalInvoiceModal() {
@@ -534,4 +526,12 @@ function clearFilters() {
   }
   refresh()
 }
+
+// Inject refresh handler setter from layout
+const setRefreshHandler = inject('setRefreshHandler', () => {})
+
+// Register refresh handler for header and mobile bottom nav
+onMounted(() => {
+  setRefreshHandler(refresh)
+})
 </script>
