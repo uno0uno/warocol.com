@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Loading overlay during submit -->
-    <div v-if="isSubmitting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div v-if="isSubmitting || isApproving" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-8 flex flex-col items-center">
         <CommonsTheCustomLoader size="large" />
         <p class="mt-4 text-lg font-semibold text-text-primary">
@@ -149,10 +149,10 @@
             <template v-if="purchase?.status === 'pending'">
               <button 
                 @click="handleApprove"
-                :disabled="isSubmitting"
+                :disabled="isApproving"
                 class="w-full py-3 bg-success text-white rounded-lg hover:bg-success/90 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-success/20">
-                <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
-                <span>{{ isSubmitting ? 'Aprobando...' : 'Aprobar Orden' }}</span>
+                <CommonsTheCustomLoader v-if="isApproving" size="small" />
+                <span>{{ isApproving ? 'Aprobando...' : 'Aprobar Orden' }}</span>
               </button>
             </template>
 
@@ -199,12 +199,13 @@ useHead({
 
 // Handle receive form submission from button
 const handleReceiveSubmit = () => {
+  isSubmitting.value = true
   const formRef = receiveFormRef
   if (formRef.value) {
-    const formElement = formRef.value.$el?.tagName === 'FORM' 
-      ? formRef.value.$el 
+    const formElement = formRef.value.$el?.tagName === 'FORM'
+      ? formRef.value.$el
       : formRef.value.$el?.querySelector('form')
-    
+
     if (formElement) {
       const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
       formElement.dispatchEvent(submitEvent)
@@ -224,6 +225,7 @@ const { data: ingredientsData, pending: loadingIngredients } = useFetch('/api/su
 const ingredients = computed(() => ingredientsData.value?.data || [])
 
 const isSubmitting = ref(false)
+const isApproving = ref(false)
 const error = ref<string | null>(null)
 
 // Form refs
@@ -337,7 +339,7 @@ const confirmationNumber = computed(() => {
 
 // Action handlers
 const handleApprove = async () => {
-  isSubmitting.value = true
+  isApproving.value = true
 
   try {
     const response = await $fetch(`/api/suppliers/purchases/${purchaseId}/confirm`, {
@@ -360,7 +362,7 @@ const handleApprove = async () => {
       color: 'red'
     })
   } finally {
-    isSubmitting.value = false
+    isApproving.value = false
   }
 }
 
