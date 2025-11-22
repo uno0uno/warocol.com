@@ -20,8 +20,8 @@
     <div v-else class="page-layout">
       <!-- Header -->
       <div class="bg-surface border-border border rounded-lg">
-        <div class="p-6">
-          <div class="flex items-center justify-between">
+        <div class="p-4 sm:p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 class="text-2xl font-bold text-text-primary">Editar Proveedor</h2>
               <p class="text-sm text-text-secondary mt-1">
@@ -30,7 +30,7 @@
             </div>
             <button
               @click="$router.back()"
-              class="btn-secondary px-4 py-2 rounded-lg text-sm">
+              class="btn-secondary px-4 py-2 rounded-lg text-sm w-full sm:w-auto">
               Volver
             </button>
           </div>
@@ -39,7 +39,7 @@
 
       <!-- Form -->
       <div class="bg-surface border-border border rounded-lg">
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
           <form @submit.prevent="handleSubmit" class="space-y-6">
             <!-- Información Básica -->
             <div>
@@ -137,25 +137,25 @@
 
 
             <!-- Buttons -->
-            <div class="flex justify-between pt-6 border-t border-border">
+            <div class="flex flex-col-reverse sm:flex-row justify-between gap-4 pt-6 border-t border-border">
               <button 
                 type="button"
                 @click="handleDelete"
                 :disabled="isDeleting"
-                class="btn-destructive px-6 py-2 rounded-lg disabled:opacity-50">
+                class="btn-destructive px-6 py-2 rounded-lg disabled:opacity-50 w-full sm:w-auto">
                 {{ isDeleting ? 'Eliminando...' : 'Eliminar Proveedor' }}
               </button>
               
-              <div class="flex space-x-4">
+              <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <NuxtLink 
                   to="/abastecimiento/proveedores" 
-                  class="btn-secondary px-6 py-2 rounded-lg">
+                  class="btn-secondary px-6 py-2 rounded-lg w-full sm:w-auto text-center">
                   Cancelar
                 </NuxtLink>
                 <button 
                   type="submit" 
                   :disabled="isSubmitting"
-                  class="btn-primary px-6 py-2 rounded-lg disabled:opacity-50">
+                  class="btn-primary px-6 py-2 rounded-lg disabled:opacity-50 w-full sm:w-auto">
                   {{ isSubmitting ? 'Guardando...' : 'Guardar Cambios' }}
                 </button>
               </div>

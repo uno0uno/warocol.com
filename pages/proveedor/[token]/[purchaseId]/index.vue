@@ -54,10 +54,10 @@
         </h3>
 
         <!-- Stepper - Dynamic based on payment type -->
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between overflow-x-auto pb-4 sm:pb-0 min-w-full">
           <template v-for="(step, index) in stepOrder" :key="step">
             <!-- Step -->
-            <div class="flex items-center" :class="index < stepOrder.length - 1 ? 'flex-1' : ''">
+            <div class="flex items-center min-w-[100px] sm:min-w-0" :class="index < stepOrder.length - 1 ? 'flex-1' : ''">
               <div class="flex flex-col items-center">
                 <div :class="[
                   'flex items-center justify-center w-10 h-10 rounded-full transition-colors border-2',
@@ -89,7 +89,7 @@
 
         <!-- Current Step Details -->
         <div class="mt-8 p-6 bg-background rounded-lg border-2 border-border">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div class="flex-1">
               <p class="text-sm text-text-secondary mb-1">Estado Actual</p>
               <p class="text-xl font-bold text-text-primary">{{ getStatusText(purchase?.status || '') }}</p>
@@ -97,10 +97,10 @@
             </div>
 
             <!-- Action Button (only for supplier steps) -->
-            <div v-if="isSupplierStep(purchase?.status || '')">
+            <div v-if="isSupplierStep(purchase?.status || '')" class="w-full sm:w-auto">
               <!-- Complete Prices (quotation) -->
               <button v-if="purchase?.status === 'quotation'" @click="showCompletePricesModal = true"
-                class="btn-primary px-6 py-3 rounded-lg text-base font-semibold flex items-center space-x-2">
+                class="btn-primary px-6 py-3 rounded-lg text-base font-semibold flex items-center justify-center space-x-2 w-full sm:w-auto">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -110,7 +110,7 @@
 
               <!-- Register Invoice (confirmed/preparing/paid) -->
               <button v-else-if="canShowInvoiceButton" @click="showInvoiceModal = true"
-                class="btn-secondary px-6 py-3 rounded-lg text-base font-semibold flex items-center space-x-2">
+                class="btn-secondary px-6 py-3 rounded-lg text-base font-semibold flex items-center justify-center space-x-2 w-full sm:w-auto">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -120,7 +120,7 @@
 
               <!-- Mark as Shipped (only when invoiced, not shipped/received) -->
               <button v-else-if="purchase?.status === 'invoiced'" @click="showShipModal = true"
-                class="btn-secondary px-6 py-3 rounded-lg text-base font-semibold flex items-center space-x-2">
+                class="btn-secondary px-6 py-3 rounded-lg text-base font-semibold flex items-center justify-center space-x-2 w-full sm:w-auto">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />

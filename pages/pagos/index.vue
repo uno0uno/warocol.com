@@ -9,7 +9,7 @@
     <!-- Content -->
     <div v-else class="space-y-6">
       <!-- Quick Stats -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
         <SharedMetricCard title="Total Pendiente" :value="totalPending" format="currency"
           :subtitle="`${pendingPurchases.length} facturas pendientes`" variant="primary" :icon="CurrencyDollarIcon"
           :show-icon="false" />
@@ -23,8 +23,33 @@
       </div>
 
       <!-- Search Bar and Filters -->
-      <div class="bg-surface border-2 border-border rounded-lg p-4">
+      <!-- Mobile: Compact Search + Filter Button -->
+      <div class="md:hidden bg-white rounded-lg shadow-sm border border-titan-200 p-3">
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" fill="none"
+              stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input v-model="searchQuery" type="text" placeholder="Buscar..."
+              class="w-full pl-9 pr-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" />
+          </div>
+          <button @click="showFiltersModal = true"
+            class="px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary transition-colors flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+            <span class="text-sm font-medium">Filtros</span>
+            <span v-if="activeFiltersCount > 0" class="px-1.5 py-0.5 bg-primary text-white text-xs rounded-full">{{
+              activeFiltersCount }}</span>
+          </button>
+        </div>
+      </div>
 
+      <!-- Desktop: Full Filters -->
+      <div class="hidden md:block bg-surface border-2 border-border rounded-lg p-4">
         <div class="flex flex-col md:flex-row gap-4">
           <!-- Search by order number or invoice -->
           <div class="flex-1">
@@ -59,7 +84,6 @@
 
           <!-- Refresh button -->
           <SharedRefreshButton :on-refresh="refresh" title="Refrescar pagos" />
-
         </div>
 
         <!-- Clear filters button -->
@@ -74,9 +98,52 @@
         </div>
       </div>
 
-      <!-- Pending Payments Table -->
-      <div class="bg-surface">
-        <div class="p-6 flex items-center justify-between">
+      <!-- Filters Modal (Mobile) -->
+      <UiBottomSheetModal v-model="showFiltersModal" title="Filtros" max-height="lg">
+        <div class="p-4 space-y-4">
+          <!-- Supplier Filter -->
+          <div>
+            <label class="text-sm font-medium text-titan-700 mb-2 block">Proveedor</label>
+            <select v-model="selectedSupplierFilter"
+              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+              <option value="">Todos los proveedores</option>
+              <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
+                {{ supplier.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Status Filter -->
+          <div>
+            <label class="text-sm font-medium text-titan-700 mb-2 block">Estado</label>
+            <select v-model="selectedStatusFilter"
+              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+              <option value="">Todos los estados</option>
+              <option value="pending">Pendiente</option>
+              <option value="overdue">Vencido</option>
+              <option value="due_this_week">Vence esta semana</option>
+            </select>
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="px-4 py-3 flex gap-3">
+            <button @click="clearFilters"
+              class="flex-1 px-4 py-2 border-2 border-titan-300 rounded-lg text-titan-700 hover:bg-titan-50 transition-colors text-sm font-medium">
+              Limpiar
+            </button>
+            <button @click="showFiltersModal = false"
+              class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+              Aplicar
+            </button>
+          </div>
+        </template>
+      </UiBottomSheetModal>
+
+      <!-- Pending Payments -->
+      <div class="bg-surface rounded-lg">
+        <!-- Header -->
+        <div class="p-4 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-border">
           <div>
             <h3 class="text-lg font-semibold text-text-primary">Órdenes Pendientes de Pago</h3>
             <p v-if="selectedPurchases.length > 0" class="text-sm text-text-secondary mt-1">
@@ -84,7 +151,7 @@
             </p>
           </div>
           <button v-if="selectedPurchases.length > 0" @click="openBulkPaymentModal"
-            class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center space-x-2">
+            class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center justify-center space-x-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -93,89 +160,122 @@
           </button>
         </div>
 
-        <UiDataTable :columns="pendingColumns" :data="pendingTableData" variant="default"
-          empty-message="No hay pagos pendientes. Todas las órdenes verificadas han sido pagadas." :show-title="false">
-          <template #cell-seleccion="{ row }">
-            <input type="checkbox" :checked="isSelected(row.purchaseData.id)"
-              @change="toggleSelection(row.purchaseData)"
-              class="h-4 w-4 text-primary focus:ring-primary border-border rounded cursor-pointer" />
-          </template>
+        <!-- Mobile: Cards -->
+        <div class="md:hidden p-4">
+          <div v-if="pendingTableData.length === 0" class="text-center py-12">
+            <p class="text-text-primary font-medium">No hay pagos pendientes</p>
+            <p class="text-muted-foreground text-sm mt-1">Todas las órdenes verificadas han sido pagadas.</p>
+          </div>
+          <div v-else class="grid grid-cols-1 gap-3">
+            <PaymentsPendingPaymentCard v-for="payment in pendingTableData" :key="payment.purchaseData.id"
+              :payment="payment" :is-selected="isSelected(payment.purchaseData.id)" @toggle-selection="toggleSelection"
+              @pay="openPaymentModal" />
+          </div>
+        </div>
 
-          <template #cell-orden="{ row }">
-            <div>
-              <p class="font-medium text-text-primary">{{ row.orden }}</p>
-              <p class="text-xs text-text-secondary">{{ row.fecha }}</p>
-            </div>
-          </template>
+        <!-- Desktop: Table -->
+        <div class="hidden md:block">
+          <UiDataTable :columns="pendingColumns" :data="pendingTableData" variant="default"
+            empty-message="No hay pagos pendientes. Todas las órdenes verificadas han sido pagadas."
+            :show-title="false">
+            <template #cell-seleccion="{ row }">
+              <input type="checkbox" :checked="isSelected(row.purchaseData.id)"
+                @change="toggleSelection(row.purchaseData)"
+                class="h-4 w-4 text-primary focus:ring-primary border-border rounded cursor-pointer" />
+            </template>
 
-          <template #cell-factura="{ row }">
-            <div>
-              <p class="font-medium text-text-primary">{{ row.factura || '-' }}</p>
-              <p class="text-xs text-text-secondary">{{ row.fechaFactura || '-' }}</p>
-            </div>
-          </template>
+            <template #cell-orden="{ row }">
+              <div>
+                <p class="font-medium text-text-primary">{{ row.orden }}</p>
+                <p class="text-xs text-text-secondary">{{ row.fecha }}</p>
+              </div>
+            </template>
 
-          <template #cell-vencimiento="{ row }">
-            <span v-if="row.vencimiento" :class="[
-              'px-2 py-1 rounded text-xs font-medium',
-              row.estaVencido ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'
-            ]">
-              {{ row.vencimiento }}
-            </span>
-            <span v-else class="text-text-secondary">-</span>
-          </template>
+            <template #cell-factura="{ row }">
+              <div>
+                <p class="font-medium text-text-primary">{{ row.factura || '-' }}</p>
+                <p class="text-xs text-text-secondary">{{ row.fechaFactura || '-' }}</p>
+              </div>
+            </template>
 
-          <template #cell-acciones="{ row }">
-            <button @click="openPaymentModal(row.purchaseData)" class="btn-secondary px-4 py-2 rounded-lg text-sm">
-              Pago Individual
-            </button>
-          </template>
-        </UiDataTable>
+            <template #cell-vencimiento="{ row }">
+              <span v-if="row.vencimiento" :class="[
+                'px-2 py-1 rounded text-xs font-medium',
+                row.estaVencido ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'
+              ]">
+                {{ row.vencimiento }}
+              </span>
+              <span v-else class="text-text-secondary">-</span>
+            </template>
+
+            <template #cell-acciones="{ row }">
+              <button @click="openPaymentModal(row.purchaseData)" class="btn-secondary px-4 py-2 rounded-lg text-sm">
+                Pago Individual
+              </button>
+            </template>
+          </UiDataTable>
+        </div>
       </div>
 
-      <!-- Paid Purchases Table -->
+      <!-- Paid Purchases -->
       <div class="bg-surface rounded-lg">
-        <div class="p-6">
+        <!-- Header -->
+        <div class="p-4 md:p-6 border-b border-border">
           <h3 class="text-lg font-semibold text-text-primary">Órdenes Pagadas</h3>
         </div>
 
-        <UiDataTable :columns="paidColumns" :data="paidTableData" variant="default"
-          empty-message="No hay pagos registrados. Aún no se han registrado pagos a proveedores." :show-title="false">
-          <template #cell-orden="{ row }">
-            <div :class="{ 'animate-pulse': row.isHighlighted }">
-              <p class="font-medium text-text-primary">{{ row.orden }}</p>
-              <p class="text-xs text-text-secondary">{{ row.fecha }}</p>
-            </div>
-          </template>
+        <!-- Mobile: Cards -->
+        <div class="md:hidden p-4">
+          <div v-if="paidTableData.length === 0" class="text-center py-12">
+            <p class="text-text-primary font-medium">No hay pagos registrados</p>
+            <p class="text-muted-foreground text-sm mt-1">Aún no se han registrado pagos a proveedores.</p>
+          </div>
+          <div v-else class="grid grid-cols-1 gap-3">
+            <PaymentsPaidPaymentCard v-for="payment in paidTableData" :key="payment.purchaseData.id"
+              :payment="payment" />
+          </div>
+        </div>
 
-          <template #cell-factura="{ row }">
-            <div>
-              <p class="font-medium text-text-primary">{{ row.factura || '-' }}</p>
-              <p class="text-xs text-text-secondary">{{ row.fechaFactura || '-' }}</p>
-            </div>
-          </template>
+        <!-- Desktop: Table -->
+        <div class="hidden md:block">
+          <UiDataTable :columns="paidColumns" :data="paidTableData" variant="default"
+            empty-message="No hay pagos registrados. Aún no se han registrado pagos a proveedores." :show-title="false">
+            <template #cell-orden="{ row }">
+              <div :class="{ 'animate-pulse': row.isHighlighted }">
+                <p class="font-medium text-text-primary">{{ row.orden }}</p>
+                <p class="text-xs text-text-secondary">{{ row.fecha }}</p>
+              </div>
+            </template>
 
-          <template #cell-montoPagado="{ row }">
-            <p class="font-medium text-text-primary">
-              {{ formatCurrency(row.montoPagado) }}
-            </p>
-          </template>
+            <template #cell-factura="{ row }">
+              <div>
+                <p class="font-medium text-text-primary">{{ row.factura || '-' }}</p>
+                <p class="text-xs text-text-secondary">{{ row.fechaFactura || '-' }}</p>
+              </div>
+            </template>
 
-          <template #cell-metodo="{ row }">
-            <span class="capitalize">{{ row.metodo || '-' }}</span>
-          </template>
+            <template #cell-montoPagado="{ row }">
+              <p class="font-medium text-text-primary">
+                {{ formatCurrency(row.montoPagado) }}
+              </p>
+            </template>
 
-          <template #cell-estado="{ row }">
-            <span :class="[
-              'px-2 py-1 rounded text-xs font-medium',
-              row.isHighlighted
-                ? 'bg-success/30 text-success border-2 border-success animate-pulse'
-                : 'bg-success/10 text-success'
-            ]">
-              {{ row.isHighlighted ? '✓ Pagado (desde compra)' : 'Pagado' }}
-            </span>
-          </template>
-        </UiDataTable>
+            <template #cell-metodo="{ row }">
+              <span class="capitalize">{{ row.metodo || '-' }}</span>
+            </template>
+
+            <template #cell-estado="{ row }">
+              <span :class="[
+                'px-2 py-1 rounded text-xs font-medium',
+                row.isHighlighted
+                  ? 'bg-success/30 text-success border-2 border-success animate-pulse'
+                  : 'bg-success/10 text-success'
+              ]">
+                {{ row.isHighlighted ? '✓ Pagado (desde compra)' : 'Pagado' }}
+              </span>
+            </template>
+          </UiDataTable>
+        </div>
       </div>
     </div>
 
@@ -215,6 +315,7 @@ const highlightId = ref<string | null>(null)
 const searchQuery = ref((route.query.search as string) || '')
 const selectedSupplierFilter = ref((route.query.supplier_id as string) || '')
 const selectedStatusFilter = ref((route.query.payment_status as string) || '')
+const showFiltersModal = ref(false)
 
 // Set highlight ID from query params
 if (route.query.highlight) {
@@ -238,6 +339,14 @@ const { data: suppliersData } = useAsyncData(
 )
 
 const suppliers = computed(() => suppliersData.value?.data || [])
+
+// Active filters count for badge
+const activeFiltersCount = computed(() => {
+  let count = 0
+  if (selectedSupplierFilter.value) count++
+  if (selectedStatusFilter.value) count++
+  return count
+})
 
 // Computed query params for purchases
 const purchasesQuery = computed(() => ({

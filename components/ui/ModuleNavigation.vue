@@ -8,7 +8,7 @@
           :key="item.to"
           :to="item.to"
           :class="getNavLinkClasses(item)"
-          class="text-xs sm:text-sm transition-colors whitespace-nowrap flex-shrink-0"
+          class="text-[15px] transition-colors whitespace-nowrap flex-shrink-0"
         >
           {{ item.label }}
         </NuxtLink>
@@ -17,7 +17,7 @@
         <span
           v-for="disabledItem in disabledItems"
           :key="disabledItem"
-          class="text-text-tertiary opacity-50 cursor-not-allowed text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
+          class="text-text-tertiary opacity-50 cursor-not-allowed text-[15px] whitespace-nowrap flex-shrink-0"
         >
           {{ disabledItem }}
         </span>
