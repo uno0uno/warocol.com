@@ -9,7 +9,7 @@
     <!-- Content -->
     <div v-else class="space-y-6">
       <!-- Quick Stats -->
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
         <SharedMetricCard title="Total Pendiente" :value="totalPending" format="currency"
           :subtitle="`${pendingPurchases.length} facturas pendientes`" variant="primary" :icon="CurrencyDollarIcon"
           :show-icon="false" />
@@ -150,7 +150,7 @@
               {{ selectedPurchases.length }} orden(es) seleccionada(s)
             </p>
           </div>
-          <button v-if="selectedPurchases.length > 0" @click="openBulkPaymentModal"
+          <button v-if="selectedPurchases.length > 0" @click="navigateToPayment(selectedPurchases)"
             class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center justify-center space-x-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -169,7 +169,7 @@
           <div v-else class="grid grid-cols-1 gap-3">
             <PaymentsPendingPaymentCard v-for="payment in pendingTableData" :key="payment.purchaseData.id"
               :payment="payment" :is-selected="isSelected(payment.purchaseData.id)" @toggle-selection="toggleSelection"
-              @pay="openPaymentModal" />
+              @pay="navigateToPayment([payment.purchaseData])" />
           </div>
         </div>
 
@@ -209,7 +209,7 @@
             </template>
 
             <template #cell-acciones="{ row }">
-              <button @click="openPaymentModal(row.purchaseData)" class="btn-secondary px-4 py-2 rounded-lg text-sm">
+              <button @click="navigateToPayment([row.purchaseData])" class="btn-secondary px-4 py-2 rounded-lg text-sm">
                 Pago Individual
               </button>
             </template>
@@ -279,15 +279,11 @@
       </div>
     </div>
 
-    <!-- Payment Modal -->
-    <PurchasesPayPurchaseModal v-if="selectedPurchase || selectedPurchases.length > 0" :is-open="showPaymentModal"
-      :purchase-id="selectedPurchase?.id" :purchases="selectedPurchases" @close="closePaymentModal"
-      @paid="handlePaymentCompleted" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, inject, onMounted } from 'vue'
 import { CurrencyDollarIcon, ClockIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 
 definePageMeta({
@@ -303,8 +299,6 @@ useHead({
 })
 
 // State
-const showPaymentModal = ref(false)
-const selectedPurchase = ref<any>(null)
 const selectedPurchases = ref<any[]>([])
 
 // Get route for query params
@@ -368,6 +362,14 @@ const { data: purchasesData, pending: loading, refresh } = useAsyncData(
     default: () => ({ data: [] })
   }
 )
+
+// Inject refresh handler setter from layout
+const setRefreshHandler = inject('setRefreshHandler', () => {})
+
+// Register refresh handler for mobile bottom nav and desktop header
+onMounted(() => {
+  setRefreshHandler(refresh)
+})
 
 // Filter pending purchases based on payment_type and status
 // Server-side filtering already applied via query params, just filter by payment flow
@@ -563,27 +565,10 @@ function isSelected(purchaseId: string): boolean {
   return selectedPurchases.value.some(p => p.id === purchaseId)
 }
 
-// Modal functions
-function openPaymentModal(purchase: any) {
-  selectedPurchase.value = purchase
-  selectedPurchases.value = [] // Clear bulk selection
-  showPaymentModal.value = true
-}
-
-function openBulkPaymentModal() {
-  selectedPurchase.value = null
-  showPaymentModal.value = true
-}
-
-function closePaymentModal() {
-  showPaymentModal.value = false
-  selectedPurchase.value = null
-  selectedPurchases.value = []
-}
-
-async function handlePaymentCompleted() {
-  closePaymentModal()
-  await refresh() // Use the refresh from useAsyncData
+// Navigation functions
+function navigateToPayment(purchases: any[]) {
+  const ids = purchases.map(p => p.id).join(',')
+  navigateTo(`/pagos/registrar?ids=${ids}`)
 }
 
 // Filter functions

@@ -168,9 +168,56 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path.includes('/abastecimiento/compra/') && path.includes('/acciones')) {
+    return {
+      pageTitle: 'Acciones de la Orden',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: {
+        label: 'Volver'
+      }
+    }
+  } else if (path.includes('/abastecimiento/compra/') && path.includes('/transicion')) {
+    // Transition pages open in new window, no back button needed
+    return {
+      pageTitle: 'Historial de Cambios',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path === '/abastecimiento/compra/crear') {
     return {
       pageTitle: 'Crear Nueva Orden de Compra',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: {
+        label: 'Volver'
+      }
+    }
+  } else if (path === '/abastecimiento/proveedor/crear') {
+    return {
+      pageTitle: 'Crear Proveedor',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: {
+        label: 'Volver'
+      }
+    }
+  } else if (path.startsWith('/abastecimiento/proveedor/') && path !== '/abastecimiento/proveedor/crear') {
+    return {
+      pageTitle: 'Editar Proveedor',
       pageSubtitle: undefined,
       searchPlaceholder: undefined,
       activePage: 'abastecimiento' as const,
@@ -186,6 +233,18 @@ const getPageConfig = () => {
       pageSubtitle: undefined,
       searchPlaceholder: undefined,
       activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: {
+        label: 'Volver'
+      }
+    }
+  } else if (path === '/pagos/registrar') {
+    return {
+      pageTitle: 'Registrar Pago',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'pagos' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: {

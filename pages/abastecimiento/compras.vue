@@ -19,22 +19,22 @@
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Stats Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-5">
         <SharedMetricCard title="Total de Órdenes" :value="stats.total" subtitle="Órdenes registradas" variant="primary"
-          :show-icon="false" size="sm" class="md:size-default" />
+          :show-icon="false" />
 
         <SharedMetricCard title="Órdenes Pendientes" :value="stats.pendientes" subtitle="Esperando procesamiento"
-          variant="primary" :show-icon="false" size="sm" class="md:size-default" />
+          variant="primary" :show-icon="false" />
 
         <SharedMetricCard title="Órdenes Recibidas" :value="stats.recibidas" subtitle="Completadas exitosamente"
-          variant="primary" :show-icon="false" size="sm" class="md:size-default" />
+          variant="primary" :show-icon="false" />
 
         <SharedMetricCard title="Órdenes Vencidas" :value="stats.vencidas" subtitle="Fuera de tiempo" variant="primary"
-          :show-icon="false" size="sm" class="md:size-default" />
+          :show-icon="false" />
 
         <SharedMetricCard title="Valor Total" :value="stats.valorTotal" format="currency" suffix="M"
-          subtitle="Monto total órdenes" variant="primary" :show-icon="false" size="sm"
-          class="md:size-default col-span-2 md:col-span-1" />
+          subtitle="Monto total órdenes" variant="primary" :show-icon="false"
+          class="col-span-2 md:col-span-1" />
       </div>
 
       <!-- Filters and Search -->

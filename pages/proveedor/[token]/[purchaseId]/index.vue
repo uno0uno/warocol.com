@@ -99,34 +99,38 @@
             <!-- Action Button (only for supplier steps) -->
             <div v-if="isSupplierStep(purchase?.status || '')" class="w-full sm:w-auto">
               <!-- Complete Prices (quotation) -->
-              <button v-if="purchase?.status === 'quotation'" @click="showCompletePricesModal = true"
+              <!-- Complete Prices (quotation) -->
+              <NuxtLink v-if="purchase?.status === 'quotation'" 
+                :to="`/proveedor/${token}/${purchaseId}/acciones`"
                 class="btn-primary px-6 py-3 rounded-lg text-base font-semibold flex items-center justify-center space-x-2 w-full sm:w-auto">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
                 <span>Completar Precios</span>
-              </button>
+              </NuxtLink>
 
               <!-- Register Invoice (confirmed/preparing/paid) -->
-              <button v-else-if="canShowInvoiceButton" @click="showInvoiceModal = true"
+              <NuxtLink v-else-if="canShowInvoiceButton" 
+                :to="`/proveedor/${token}/${purchaseId}/acciones`"
                 class="btn-secondary px-6 py-3 rounded-lg text-base font-semibold flex items-center justify-center space-x-2 w-full sm:w-auto">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <span>Registrar Factura</span>
-              </button>
+              </NuxtLink>
 
               <!-- Mark as Shipped (only when invoiced, not shipped/received) -->
-              <button v-else-if="purchase?.status === 'invoiced'" @click="showShipModal = true"
+              <NuxtLink v-else-if="purchase?.status === 'invoiced'" 
+                :to="`/proveedor/${token}/${purchaseId}/acciones`"
                 class="btn-secondary px-6 py-3 rounded-lg text-base font-semibold flex items-center justify-center space-x-2 w-full sm:w-auto">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                 </svg>
                 <span>Marcar como Enviado</span>
-              </button>
+              </NuxtLink>
             </div>
           </div>
         </div>
@@ -246,23 +250,13 @@
     </div>
 
     <!-- Modals -->
-    <CompletePricesModalSupplier :is-open="showCompletePricesModal" :purchase="purchase" :token="token"
-      @close="showCompletePricesModal = false" @completed="handleActionCompleted" />
-
-    <InvoicePurchaseModalSupplier :is-open="showInvoiceModal" :purchase="purchase" :token="token"
-      @close="showInvoiceModal = false" @invoiced="handleActionCompleted" />
-
-    <ShipPurchaseModalSupplier :is-open="showShipModal" :purchase="purchase" :token="token"
-      @close="showShipModal = false" @shipped="handleActionCompleted" />
+    <!-- Modals removed in favor of actions page -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, inject } from 'vue'
 import { useRoute } from 'vue-router'
-import CompletePricesModalSupplier from '~/components/purchases/CompletePricesModalSupplier.vue'
-import InvoicePurchaseModalSupplier from '~/components/purchases/InvoicePurchaseModalSupplier.vue'
-import ShipPurchaseModalSupplier from '~/components/purchases/ShipPurchaseModalSupplier.vue'
 
 definePageMeta({
   layout: 'supplier-portal'
@@ -280,9 +274,6 @@ const purchase = ref<any>(null)
 
 // Use global state for supplier (shared with layout)
 const supplier = useState<any>('supplier-portal-supplier', () => null)
-const showCompletePricesModal = ref(false)
-const showInvoiceModal = ref(false)
-const showShipModal = ref(false)
 
 // Step labels for wizard
 const stepLabels: Record<string, string> = {
@@ -429,14 +420,7 @@ const refresh = async () => {
 // Inject refresh handler setter from layout
 const setRefreshHandler = inject('setRefreshHandler', () => { })
 
-async function handleActionCompleted() {
-  showCompletePricesModal.value = false
-  showInvoiceModal.value = false
-  showShipModal.value = false
 
-  // Reload purchase to get updated status
-  await loadPurchase()
-}
 
 onMounted(async () => {
   // Register refresh handler for header and mobile bottom nav

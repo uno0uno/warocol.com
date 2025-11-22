@@ -19,18 +19,18 @@
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Stats Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
         <SharedMetricCard title="Proveedores Activos" :value="stats.activos" subtitle="Estado operativo"
-          variant="primary" :show-icon="false" size="sm" class="md:size-default" />
+          variant="primary" :show-icon="false" />
 
         <SharedMetricCard title="Proveedores Inactivos" :value="stats.inactivos" subtitle="Pausados o desactivados"
-          variant="primary" :show-icon="false" size="sm" class="md:size-default" />
+          variant="primary" :show-icon="false" />
 
         <SharedMetricCard title="Promedio de Pago" :value="stats.promedioPago" suffix="d"
-          subtitle="Días promedio de términos" variant="info" :show-icon="false" size="sm" class="md:size-default" />
+          subtitle="Días promedio de términos" variant="info" :show-icon="false" />
 
         <SharedMetricCard title="Con Entregas Programadas" :value="stats.conEntregas"
-          subtitle="Proveedores con entregas" variant="primary" :show-icon="false" size="sm" class="md:size-default" />
+          subtitle="Proveedores con entregas" variant="primary" :show-icon="false" />
       </div>
 
       <!-- Responsive Data View -->

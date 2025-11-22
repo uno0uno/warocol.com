@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-4">
+  <form @submit.prevent="handleSubmit" class="space-y-4">
     <!-- Items Received -->
     <div>
       <label class="block text-sm font-medium text-text-primary mb-3">
@@ -115,7 +115,7 @@
         class="flex-1 px-6 py-3 border-2 border-border rounded-lg text-text-primary hover:bg-surface transition-colors disabled:opacity-50">
         Cancelar
       </button>
-      <button type="button" @click="handleSubmit" :disabled="loading"
+      <button type="submit" :disabled="loading"
         class="flex-1 px-6 py-3 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         style="background-color: hsl(var(--crocus-600));"
         @mouseenter="!loading && ($event.target.style.backgroundColor = 'hsl(var(--crocus-600) / 0.9)')"
@@ -124,7 +124,7 @@
         <span>{{ loading ? 'Registrando...' : 'Confirmar Recepción' }}</span>
       </button>
     </div>
-  </div>
+  </form>
 </template>
 
 <script setup lang="ts">

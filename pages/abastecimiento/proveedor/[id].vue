@@ -16,154 +16,165 @@
       </div>
     </div>
 
-    <!-- Edit Form -->
+    <!-- Edit Form with Split Layout -->
     <div v-else class="page-layout">
-      <!-- Header -->
-      <div class="bg-surface border-border border rounded-lg">
-        <div class="p-4 sm:p-6">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 class="text-2xl font-bold text-text-primary">Editar Proveedor</h2>
-              <p class="text-sm text-text-secondary mt-1">
-                Modificar información de: <span class="font-medium">{{ form.name }}</span>
-              </p>
+      <form @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
+      <!-- Left Column: Form Content -->
+      <div class="xl:col-span-2 space-y-6">
+        <div class="bg-surface border-2 border-border rounded-xl p-6 md:p-8 shadow-sm">
+          <!-- Información Básica -->
+          <div>
+            <h3 class="text-lg font-semibold text-text-primary mb-6">Información Básica</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Nombre del Proveedor *
+                </label>
+                <input
+                  v-model="form.name"
+                  type="text"
+                  required
+                  class="input-base w-full px-4 py-2"
+                  placeholder="Ej: Frutas del Valle S.A.S"
+                />
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  NIT/Cédula *
+                </label>
+                <input
+                  v-model="form.tax_id"
+                  type="text"
+                  required
+                  class="input-base w-full px-4 py-2"
+                  placeholder="Ej: 900123456-7"
+                />
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Email
+                </label>
+                <input
+                  v-model="form.email"
+                  type="email"
+                  class="input-base w-full px-4 py-2"
+                  placeholder="contacto@proveedor.com"
+                />
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Teléfono
+                </label>
+                <input
+                  v-model="form.phone"
+                  type="tel"
+                  class="input-base w-full px-4 py-2"
+                  placeholder="+57 300 123 4567"
+                />
+              </div>
             </div>
-            <button
-              @click="$router.back()"
-              class="btn-secondary px-4 py-2 rounded-lg text-sm w-full sm:w-auto">
-              Volver
-            </button>
+          </div>
+
+          <!-- Términos Comerciales -->
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold text-text-primary mb-6">Términos Comerciales</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Términos de Pago
+                </label>
+                <select
+                  v-model="form.payment_terms"
+                  class="input-base w-full px-4 py-2"
+                >
+                  <option value="">Seleccionar términos</option>
+                  <option value="Contado">Contado</option>
+                  <option value="15 días">15 días</option>
+                  <option value="30 días">30 días</option>
+                  <option value="45 días">45 días</option>
+                  <option value="60 días">60 días</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estado -->
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold text-text-primary mb-6">Estado</h3>
+            <div class="flex items-center space-x-3">
+              <input
+                v-model="form.is_active"
+                type="checkbox"
+                id="is_active"
+                class="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+              />
+              <label for="is_active" class="text-sm font-medium text-text-primary">
+                Proveedor activo
+              </label>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Form -->
-      <div class="bg-surface border-border border rounded-lg">
-        <div class="p-4 sm:p-6">
-          <form @submit.prevent="handleSubmit" class="space-y-6">
-            <!-- Información Básica -->
-            <div>
-              <h3 class="text-lg font-semibold text-text-primary mb-4">Información Básica</h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label class="block text-sm font-medium text-text-primary mb-2">
-                    Nombre del Proveedor *
-                  </label>
-                  <input
-                    v-model="form.name"
-                    type="text"
-                    required
-                    class="input-base w-full px-4 py-2"
-                    placeholder="Ej: Frutas del Valle S.A.S"
-                  />
-                </div>
-                
-                <div>
-                  <label class="block text-sm font-medium text-text-primary mb-2">
-                    NIT/Cédula *
-                  </label>
-                  <input
-                    v-model="form.tax_id"
-                    type="text"
-                    required
-                    class="input-base w-full px-4 py-2"
-                    placeholder="Ej: 900123456-7"
-                  />
-                </div>
-                
-                <div>
-                  <label class="block text-sm font-medium text-text-primary mb-2">
-                    Email
-                  </label>
-                  <input
-                    v-model="form.email"
-                    type="email"
-                    class="input-base w-full px-4 py-2"
-                    placeholder="contacto@proveedor.com"
-                  />
-                </div>
-                
-                <div>
-                  <label class="block text-sm font-medium text-text-primary mb-2">
-                    Teléfono
-                  </label>
-                  <input
-                    v-model="form.phone"
-                    type="tel"
-                    class="input-base w-full px-4 py-2"
-                    placeholder="+57 300 123 4567"
-                  />
-                </div>
+      <!-- Right Column: Summary & Actions -->
+      <div class="xl:col-span-1">
+        <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm sticky top-6">
+          <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen del Proveedor</h3>
+
+          <div class="bg-background rounded-lg p-4 border border-border mb-6">
+            <div class="space-y-3">
+              <div>
+                <p class="text-sm text-text-secondary mb-1">Nombre</p>
+                <p class="font-medium text-text-primary">{{ form.name || 'Sin nombre' }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-text-secondary mb-1">NIT/Cédula</p>
+                <p class="font-medium text-text-primary">{{ form.tax_id || 'Sin NIT' }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-text-secondary mb-1">Estado</p>
+                <span v-if="form.is_active" class="px-2 py-1 rounded text-xs font-medium bg-success/10 text-success">
+                  Activo
+                </span>
+                <span v-else class="px-2 py-1 rounded text-xs font-medium bg-destructive/10 text-destructive">
+                  Inactivo
+                </span>
               </div>
             </div>
+          </div>
 
-            <!-- Términos Comerciales -->
-            <div>
-              <h3 class="text-lg font-semibold text-text-primary mb-4">Términos Comerciales</h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              <div>
-                                <label class="block text-sm font-medium text-text-primary mb-2">
-                                  Términos de Pago
-                                </label>
-                                <select
-                                  v-model="form.payment_terms"
-                                  class="input-base w-full px-4 py-2"
-                                >
-                                  <option value="">Seleccionar términos</option>
-                                  <option value="Contado">Contado</option>
-                                  <option value="15 días">15 días</option>
-                                  <option value="30 días">30 días</option>
-                                  <option value="45 días">45 días</option>
-                                  <option value="60 días">60 días</option>
-                                </select>
-                              </div>              </div>
-            </div>
+          <!-- Actions -->
+          <div class="space-y-3">
+            <button 
+              type="submit" 
+              :disabled="isSubmitting"
+              class="w-full py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-emerald-500/20">
+              <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
+              <span>{{ isSubmitting ? 'Guardando...' : 'Guardar Cambios' }}</span>
+            </button>
+            
+            <NuxtLink 
+              to="/abastecimiento/proveedores" 
+              class="w-full py-3 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-background transition-colors font-medium block text-center">
+              Cancelar
+            </NuxtLink>
 
-            <!-- Estado -->
-            <div>
-              <h3 class="text-lg font-semibold text-text-primary mb-4">Estado</h3>
-              <div class="flex items-center space-x-3">
-                <input
-                  v-model="form.is_active"
-                  type="checkbox"
-                  id="is_active"
-                  class="h-4 w-4 text-primary focus:ring-primary border-border rounded"
-                />
-                <label for="is_active" class="text-sm font-medium text-text-primary">
-                  Proveedor activo
-                </label>
-              </div>
-            </div>
-
-
-            <!-- Buttons -->
-            <div class="flex flex-col-reverse sm:flex-row justify-between gap-4 pt-6 border-t border-border">
-              <button 
-                type="button"
-                @click="handleDelete"
-                :disabled="isDeleting"
-                class="btn-destructive px-6 py-2 rounded-lg disabled:opacity-50 w-full sm:w-auto">
-                {{ isDeleting ? 'Eliminando...' : 'Eliminar Proveedor' }}
-              </button>
-              
-              <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <NuxtLink 
-                  to="/abastecimiento/proveedores" 
-                  class="btn-secondary px-6 py-2 rounded-lg w-full sm:w-auto text-center">
-                  Cancelar
-                </NuxtLink>
-                <button 
-                  type="submit" 
-                  :disabled="isSubmitting"
-                  class="btn-primary px-6 py-2 rounded-lg disabled:opacity-50 w-full sm:w-auto">
-                  {{ isSubmitting ? 'Guardando...' : 'Guardar Cambios' }}
-                </button>
-              </div>
-            </div>
-          </form>
+            <button 
+              type="button"
+              @click="handleDelete"
+              :disabled="isDeleting"
+              class="w-full py-3 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold">
+              <CommonsTheCustomLoader v-if="isDeleting" size="small" />
+              <span>{{ isDeleting ? 'Eliminando...' : 'Eliminar Proveedor' }}</span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </form>
+  </div>
   </div>
 </template>
 

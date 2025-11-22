@@ -19,15 +19,13 @@
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Summary Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
         <SharedMetricCard
           title="Total de Ingredientes"
           :value="summary.ingredientes"
           subtitle="Ingredientes configurados"
           variant="primary"
           :show-icon="false"
-          size="sm"
-          class="md:size-default"
         />
 
         <SharedMetricCard
@@ -36,8 +34,6 @@
           subtitle="Categorías de ingredientes"
           variant="primary"
           :show-icon="false"
-          size="sm"
-          class="md:size-default"
         />
 
         <SharedMetricCard
@@ -47,8 +43,7 @@
           variant="info"
           format="currency"
           :show-icon="false"
-          size="sm"
-          class="md:size-default col-span-2 md:col-span-1"
+          class="col-span-2 md:col-span-1"
         />
       </div>
 

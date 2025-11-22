@@ -107,9 +107,9 @@ const valueVariants = cva(
         info: 'text-info'
       },
       size: {
-        sm: 'text-[34px] md:text-2xl',
-        default: 'text-[34px] md:text-4xl',
-        lg: 'text-[34px] md:text-5xl'
+        sm: 'text-2xl md:text-2xl',
+        default: 'text-3xl md:text-4xl',
+        lg: 'text-3xl md:text-5xl'
       }
     },
     defaultVariants: {

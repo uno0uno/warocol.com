@@ -143,16 +143,18 @@ const pageTitle = computed(() => {
   const path = route.path
   if (path.includes('/facturacion')) return 'Facturación'
   if (path.includes('/transicion/')) return 'Historial de Cambios'
+  if (path.includes('/acciones')) return 'Acciones de la Orden'
   if (path.match(/\/proveedor\/[^/]+\/[^/]+/)) return 'Detalle de Orden'
   return 'Mis Órdenes de Compra'
 })
 
-// Show back button only on detail pages (not on transition pages which open in new window)
+// Show back button on detail pages and actions pages (not on transition pages which open in new window)
 const showBackButton = computed(() => {
   const path = route.path
   // Show on purchase detail page: /proveedor/[token]/[purchaseId]
+  // Show on actions page: /proveedor/[token]/[purchaseId]/acciones
   // But NOT on transition pages (they open in new window)
-  return path.match(/\/proveedor\/[^/]+\/[^/]+$/) !== null && !path.includes('/facturacion') && !path.includes('/transicion/')
+  return (path.match(/\/proveedor\/[^/]+\/[^/]+/) !== null && !path.includes('/facturacion') && !path.includes('/transicion/'))
 })
 
 // Go back function
