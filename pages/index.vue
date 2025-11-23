@@ -51,7 +51,6 @@
         <p class="subtitle">Desde el precio de un plato hasta el turno de un empleado. Ponemos a tu alcance la tecnología que convierte tus datos en decisiones certeras. <em>Nosotros te guiamos para que sea fácil.</em></p>
         
         <div class="cta-buttons">
-            <button class="btn btn-primary">COMENZAR</button>
             <button class="btn btn-secondary">HABLA CON NOSOTROS</button>
         </div>
     </section>

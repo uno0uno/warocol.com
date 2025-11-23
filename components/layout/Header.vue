@@ -5,11 +5,7 @@
         <img src="/logo_waro_10_octubre.png" alt="Waro" class="logo-image-header">
       </div>
       <nav>
-        <a href="#eventos">EVENTOS</a>
-        <a href="#artistas">ARTISTAS</a>
-        <a href="#restaurantes">RESTAURANTES</a>
-        <a href="#blog">BLOG</a>
-        <a href="/auth/login">INGRESAR</a>
+
         <button class="btn-get-started-header">COMENZAR</button>
       </nav>
     </div>
