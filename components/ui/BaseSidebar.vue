@@ -1,5 +1,5 @@
 <template>
-  <aside class="w-72 bg-ebony-900 h-screen flex flex-col border-r border-ebony-700 flex-shrink-0 shadow-xl">
+  <aside class="w-72 bg-ebony-900 h-screen border-r border-ebony-700 flex-shrink-0 shadow-xl flex flex-col">
     <!-- Header: Logo & Selector -->
     <div class="p-6 pb-4 flex-shrink-0">
       <!-- Logo -->
@@ -34,4 +34,5 @@
 
 <script setup lang="ts">
 // No props needed, everything is handled via slots
+// inheritAttrs is true by default, allowing class merging from parent
 </script>

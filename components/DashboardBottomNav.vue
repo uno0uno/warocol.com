@@ -121,6 +121,28 @@
     <!-- Tenant Selector Modal -->
     <UiBottomSheetModal v-model="showTenantModal" title="Configuración" max-height="lg">
       <div class="p-4 space-y-6">
+        <!-- Equipo Link -->
+        <div>
+          <NuxtLink
+            to="/equipo"
+            @click="showTenantModal = false"
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-titan-200 hover:border-crocus-300 hover:bg-titan-50 transition-colors"
+          >
+            <div class="w-10 h-10 bg-crocus-100 rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-crocus-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <div class="flex-1">
+              <div class="font-semibold text-sm text-ebony-800">Miembros de equipo</div>
+              <div class="text-xs text-titan-600">Gestionar usuarios y permisos</div>
+            </div>
+            <svg class="w-5 h-5 text-titan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </NuxtLink>
+        </div>
+
         <!-- Tenant Selector -->
         <div>
           <label class="text-sm text-titan-600 font-medium mb-2 block">Seleccionar Tenant</label>
@@ -161,11 +183,11 @@
         <div class="pt-4 border-t border-titan-300">
           <div class="flex items-center gap-3 px-4 py-3 bg-titan-50 rounded-lg">
             <div class="w-10 h-10 bg-ebony-800 rounded-full flex items-center justify-center font-bold text-white text-sm">
-              SA
+              {{ userInitials }}
             </div>
             <div>
-              <div class="font-semibold text-sm text-ebony-800">Saifer Admin</div>
-              <div class="text-xs text-titan-600">saifer@warocol.com</div>
+              <div class="font-semibold text-sm text-ebony-800">{{ userName }}</div>
+              <div class="text-xs text-titan-600">{{ userEmail }}</div>
             </div>
           </div>
         </div>
@@ -209,6 +231,15 @@ const tenantsStore = useTenantsStore()
 const tenants = computed(() => tenantsStore.tenants)
 const selectedTenant = computed(() => tenantsStore.selectedTenant)
 const isLoadingTenants = computed(() => tenantsStore.isLoading)
+
+// Use auth store for user data
+const authStore = useAuthStore()
+const userName = computed(() => authStore.user?.name || authStore.session?.user?.name || 'Usuario')
+const userEmail = computed(() => authStore.user?.email || authStore.session?.user?.email || 'No email')
+const userInitials = computed(() => {
+  const name = userName.value
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+})
 
 // Handle tenant selection
 const selectTenant = async (tenant: Tenant) => {

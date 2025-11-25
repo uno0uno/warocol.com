@@ -1,8 +1,21 @@
 <template>
-  <UiBaseSidebar>
+  <!-- Loading Global Overlay -->
+  <Teleport to="body">
+    <div v-if="isLoggingOut" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+      <div class="bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center">
+        <div class="w-16 h-16 mb-4">
+          <div class="w-16 h-16 border-4 border-crocus-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <p class="text-lg font-medium text-ebony-900">Cerrando sesión...</p>
+        <p class="text-sm text-titan-400 mt-2">Por favor espera</p>
+      </div>
+    </div>
+  </Teleport>
+
+  <UiBaseSidebar v-bind="$attrs">
     <!-- Tenant Selector -->
     <template #selector>
-      <div class="relative tenant-selector-container">
+      <div class="tenant-selector-container">
         <button
           @click="showTenantDropdown = !showTenantDropdown"
           :disabled="isLoadingTenants"
@@ -16,32 +29,34 @@
           <ChevronDownIcon :class="['w-4 h-4 text-titan-400 transition-transform', showTenantDropdown ? 'rotate-180' : '']" />
         </button>
 
-        <!-- Dropdown -->
-        <div
-          v-show="showTenantDropdown"
-          class="absolute top-full left-0 right-0 mt-2 bg-ebony-800 border border-ebony-700 rounded-lg shadow-xl z-50"
-        >
-          <div class="py-1">
-            <div v-if="isLoadingTenants" class="px-3 py-2 text-sm text-titan-400">
-              Loading tenants...
+        <!-- Expandable List -->
+        <Transition name="tenant-expand">
+          <div
+            v-show="showTenantDropdown"
+            class="mt-2 bg-ebony-800 border border-ebony-700 rounded-lg overflow-hidden"
+          >
+            <div class="py-1">
+              <div v-if="isLoadingTenants" class="px-3 py-2 text-sm text-titan-400">
+                Loading tenants...
+              </div>
+              <div v-else-if="tenants.length === 0" class="px-3 py-2 text-sm text-titan-400">
+                No tenants available
+              </div>
+              <button
+                v-else
+                v-for="tenant in tenants"
+                :key="tenant.id"
+                @click="selectTenant(tenant)"
+                :disabled="isLoadingTenants"
+                class="w-full flex items-center gap-2 px-3 py-2 text-sm text-white hover:bg-ebony-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
+                :class="selectedTenant?.id === tenant.id ? 'bg-crocus-600/20 text-crocus-400 font-medium' : ''"
+              >
+                <div class="w-2 h-2 rounded-full" :class="selectedTenant?.id === tenant.id ? 'bg-crocus-500' : 'bg-titan-500'"></div>
+                <span>{{ tenant.name }}</span>
+              </button>
             </div>
-            <div v-else-if="tenants.length === 0" class="px-3 py-2 text-sm text-titan-400">
-              No tenants available
-            </div>
-            <button
-              v-else
-              v-for="tenant in tenants"
-              :key="tenant.id"
-              @click="selectTenant(tenant)"
-              :disabled="isLoadingTenants"
-              class="w-full flex items-center gap-2 px-3 py-2 text-sm text-white hover:bg-ebony-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
-              :class="selectedTenant?.id === tenant.id ? 'bg-crocus-600/20 text-crocus-400 font-medium' : ''"
-            >
-              <div class="w-2 h-2 rounded-full" :class="selectedTenant?.id === tenant.id ? 'bg-crocus-500' : 'bg-titan-500'"></div>
-              <span>{{ tenant.name }}</span>
-            </button>
           </div>
-        </div>
+        </Transition>
       </div>
     </template>
 
@@ -98,23 +113,25 @@
           <!-- Menu Header -->
           <div class="p-3 border-b border-ebony-700 flex items-center gap-3 bg-ebony-900/30">
             <div class="w-8 h-8 bg-crocus-600 rounded-full flex items-center justify-center font-semibold text-white flex-shrink-0">
-              SA
+              {{ userInitials }}
             </div>
             <div class="flex-1 overflow-hidden">
-              <div class="text-sm font-medium text-white truncate">Saifer Admin</div>
-              <div class="text-xs text-titan-400 truncate">saifer@warocol.com</div>
+              <div class="text-sm font-medium text-white truncate">{{ userName }}</div>
+              <div class="text-xs text-titan-400 truncate">{{ userEmail }}</div>
             </div>
           </div>
 
           <!-- Menu Options -->
           <div class="p-1">
-            <button class="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-titan-300 hover:bg-ebony-700 rounded-md transition-colors">
+            <NuxtLink
+              to="/equipo"
+              class="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-titan-300 hover:bg-ebony-700 rounded-md transition-colors"
+            >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              Configuración
-            </button>
+              Equipo
+            </NuxtLink>
             <div class="h-px bg-ebony-700 my-1 mx-2"></div>
             <button
               @click="handleLogout"
@@ -122,7 +139,6 @@
               class="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-titan-300 hover:bg-ebony-700 rounded-md transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg
-                v-if="!isLoggingOut"
                 class="w-3.5 h-3.5 group-hover:text-red-400"
                 fill="none"
                 stroke="currentColor"
@@ -130,17 +146,8 @@
               >
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
-              <svg
-                v-else
-                class="w-3.5 h-3.5 animate-spin"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
               <span class="group-hover:text-red-400 transition-colors">
-                {{ isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión' }}
+                Cerrar sesión
               </span>
             </button>
           </div>
@@ -157,13 +164,13 @@
           <div class="flex items-center gap-3">
             <div class="relative flex-shrink-0">
               <div class="w-8 h-8 bg-crocus-600 rounded-full flex items-center justify-center font-semibold text-white text-xs">
-                SA
+                {{ userInitials }}
               </div>
               <span class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-ebony-900 rounded-full"></span>
             </div>
             <div class="flex-1 min-w-0 text-left">
-              <div :class="['text-sm font-medium', showUserMenu ? 'text-crocus-400' : 'text-white']">Saifer Admin</div>
-              <div :class="['text-xs truncate max-w-[120px]', showUserMenu ? 'text-crocus-400/60' : 'text-titan-400']">saifer@warocol.com</div>
+              <div :class="['text-sm font-medium', showUserMenu ? 'text-crocus-400' : 'text-white']">{{ userName }}</div>
+              <div :class="['text-xs truncate max-w-[120px]', showUserMenu ? 'text-crocus-400/60' : 'text-titan-400']">{{ userEmail }}</div>
             </div>
           </div>
           <svg class="w-3.5 h-3.5 text-titan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,6 +183,11 @@
 </template>
 
 <script setup lang="ts">
+// Disable automatic attribute inheritance since this is a multi-root component
+defineOptions({
+  inheritAttrs: false
+})
+
 import { computed } from 'vue'
 import {
   BanknotesIcon,
@@ -212,6 +224,15 @@ const tenantsStore = useTenantsStore()
 const tenants = computed(() => tenantsStore.tenants)
 const selectedTenant = computed(() => tenantsStore.selectedTenant)
 const isLoadingTenants = computed(() => tenantsStore.isLoading)
+
+// Use auth store for user data
+const authStore = useAuthStore()
+const userName = computed(() => authStore.user?.name || authStore.session?.user?.name || 'Usuario')
+const userEmail = computed(() => authStore.user?.email || authStore.session?.user?.email || 'No email')
+const userInitials = computed(() => {
+  const name = userName.value
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+})
 
 // Handle tenant selection
 const selectTenant = async (tenant: Tenant) => {
@@ -284,3 +305,19 @@ onMounted(() => {
   })
 })
 </script>
+
+<style scoped>
+/* Tenant dropdown expand/collapse transition */
+.tenant-expand-enter-active,
+.tenant-expand-leave-active {
+  transition: all 0.3s ease;
+  max-height: 500px;
+  opacity: 1;
+}
+
+.tenant-expand-enter-from,
+.tenant-expand-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+</style>

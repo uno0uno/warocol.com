@@ -261,6 +261,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path === '/equipo') {
+    return {
+      pageTitle: 'Miembros de equipo',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'dashboard' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path.includes('/analytics')) {
     return {
       pageTitle: 'Dashboard - Analytics',
