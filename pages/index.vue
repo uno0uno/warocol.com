@@ -81,7 +81,10 @@
 
 <script setup>
 useHead({
-  title: 'raindrop - Find Issues'
+  title: 'raindrop - Find Issues',
+  link: [
+    { rel: 'canonical', href: 'https://warolabs.com' }
+  ],
   // Quantico font now loaded locally via assets/css/fonts.css
 })
 </script>

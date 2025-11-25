@@ -1,27 +1,27 @@
 <template>
-  <div class="flex flex-col md:flex-row w-screen h-screen overflow-hidden">
-    <!-- Left Panel - Formulario -->
-    <div class="relative flex flex-col items-center justify-center w-full h-full md:h-auto md:w-auto md:flex-1 md:max-w-[500px] px-6 sm:px-12 md:px-16 py-8 md:py-12 bg-[hsl(220,14%,97%)]">
-      <!-- Fondo de emojis - Solo visible en mobile -->
-      <div ref="foodBgContainer" class="absolute inset-0 md:hidden overflow-hidden pointer-events-none z-0">
+  <div class="flex w-screen h-screen overflow-hidden">
+    <!-- Formulario centrado con fondo de emojis -->
+    <div class="relative flex items-center justify-center w-full h-full px-6 sm:px-12 md:px-16 py-8 md:py-12 bg-[hsl(220,14%,97%)]">
+      <!-- Fondo de emojis -->
+      <div ref="foodBgContainer" class="absolute inset-0 overflow-hidden pointer-events-none z-0">
         <div
           v-for="(item, index) in foodItems"
           :key="index"
-          class="food-item mobile-emoji"
+          class="food-item"
           :style="item.style"
         >
           {{ item.emoji }}
         </div>
       </div>
 
-      <div class="relative z-10 flex flex-col w-full max-w-md">
+      <div class="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-lg p-8 md:p-10">
         <!-- Logo -->
-        <div class="mb-8 md:mb-16">
+        <div class="mb-8 md:mb-16 flex justify-center">
           <img src="/logo_waro_10_octubre.png" alt="Waro" class="h-8 md:h-10 w-auto">
         </div>
 
         <!-- Contenido del login -->
-        <div class="flex-1">
+        <div>
           <!-- Verificando sesión -->
           <div v-if="checkingSession" class="text-center space-y-4">
             <div class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
@@ -30,7 +30,7 @@
           </div>
 
           <!-- Formulario de login -->
-          <div v-else-if="!emailSent">
+          <div v-else-if="!emailSent" class="text-center">
             <h1 class="text-3xl font-medium mb-4" style="color: hsl(250, 30%, 16%);">Iniciar sesión</h1>
             <p class="text-base mb-10" style="color: hsl(220, 13%, 28%);">
               Ingresa tu email para recibir un código de acceso seguro.
@@ -38,7 +38,7 @@
 
             <!-- Email Form -->
             <form @submit.prevent="handleSubmit">
-              <div class="mb-6">
+              <div class="mb-6 text-left">
                 <label for="email" class="block text-xs font-semibold mb-2" style="color: hsl(250, 30%, 16%);">
                   Dirección de Email
                 </label>
@@ -50,7 +50,7 @@
               </div>
 
               <button type="submit" :disabled="loading || !email"
-                class="px-6 py-3 rounded-md text-base font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full px-6 py-3 rounded-md text-base font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 :style="email && !loading ?
                   'background-color: hsl(250, 30%, 16%); color: white;' :
                   'background-color: hsl(220, 14%, 90%); color: hsl(220, 8%, 51%); cursor: not-allowed;'"
@@ -65,7 +65,41 @@
             </form>
           </div>
 
-          <!-- Código de verificación -->
+          <!-- Revisa tu correo -->
+          <div v-else-if="emailSent" class="text-center">
+            <!-- Email Icon -->
+            <div class="mx-auto mb-6 w-16 h-16 rounded-full flex items-center justify-center"
+              style="background-color: hsl(250, 30%, 16%, 0.1);">
+              <svg class="w-8 h-8" style="color: hsl(250, 30%, 16%);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+
+            <h1 class="text-3xl font-medium mb-4" style="color: hsl(250, 30%, 16%);">Revisa tu correo</h1>
+            <p class="text-base mb-2" style="color: hsl(220, 13%, 28%);">
+              Hemos enviado un enlace de acceso a:
+            </p>
+            <p class="text-base font-medium mb-10" style="color: hsl(250, 30%, 16%);">
+              {{ email }}
+            </p>
+
+            <div class="rounded-lg p-4 mb-8" style="background-color: hsl(220, 14%, 95%); border: 1px solid hsl(220, 14%, 90%);">
+              <p class="text-sm" style="color: hsl(220, 13%, 28%);">
+                Abre el email y haz clic en el enlace para iniciar sesión. El enlace es válido por 15 minutos.
+              </p>
+            </div>
+
+            <button @click="emailSent = false" type="button"
+              class="w-full py-3 rounded-md text-base font-medium transition-all border-2"
+              style="background-color: white; border-color: hsl(250, 30%, 16%); color: hsl(250, 30%, 16%);"
+              @mouseenter="$event.target.style.backgroundColor = 'hsl(220, 14%, 95%)'"
+              @mouseleave="$event.target.style.backgroundColor = 'white'">
+              Volver
+            </button>
+          </div>
+
+          <!-- CÓDIGO DE VERIFICACIÓN - COMENTADO
           <div v-else-if="emailSent">
             <h1 class="text-3xl font-medium mb-4" style="color: hsl(250, 30%, 16%);">Código de Verificación</h1>
             <p class="text-base mb-10" style="color: hsl(220, 13%, 28%);">
@@ -105,6 +139,7 @@
               </p>
             </div>
           </div>
+          -->
 
           <!-- Error Message -->
           <div v-if="error" class="mt-5 rounded-md p-4 border"
@@ -123,21 +158,6 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Right Panel - Fondo de alimentos (solo desktop) -->
-    <div class="hidden md:flex flex-1 relative items-center justify-start px-8 md:px-12 lg:px-20 py-8 md:py-16 overflow-hidden bg-[hsl(220,14%,97%)]">
-      <!-- Fondo de emojis para desktop -->
-      <div ref="foodBgContainerDesktop" class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          v-for="(item, index) in foodItemsDesktop"
-          :key="index"
-          class="food-item"
-          :style="item.style"
-        >
-          {{ item.emoji }}
         </div>
       </div>
     </div>
@@ -168,17 +188,11 @@ const foodEmojis = [
 ]
 
 // Referencias a los contenedores de emojis
-const foodBgContainer = ref(null) // Mobile
-const foodBgContainerDesktop = ref(null) // Desktop
+const foodBgContainer = ref(null)
 
-// Dimensiones de los contenedores
+// Dimensiones del contenedor
 const containerWidth = ref(0)
 const containerHeight = ref(0)
-const containerWidthDesktop = ref(0)
-const containerHeightDesktop = ref(0)
-
-// Detectar si es mobile
-const isMobile = ref(false)
 
 // Función helper para generar emojis
 const generateFoodItems = (width, height, size) => {
@@ -194,8 +208,13 @@ const generateFoodItems = (width, height, size) => {
     const col = i % cols
 
     const emoji = foodEmojis[Math.floor(Math.random() * foodEmojis.length)]
-    const left = (col * size) + (size / 2)
-    const top = (row * size) + (size / 2)
+
+    // Agregar variación aleatoria para desorganizar la cuadrícula
+    const randomOffsetX = (Math.random() - 0.5) * size * 0.6
+    const randomOffsetY = (Math.random() - 0.5) * size * 0.6
+
+    const left = (col * size) + (size / 2) + randomOffsetX
+    const top = (row * size) + (size / 2) + randomOffsetY
 
     items.push({
       emoji,
@@ -209,19 +228,13 @@ const generateFoodItems = (width, height, size) => {
   return items
 }
 
-// Computed property para emojis en mobile
+// Computed property para emojis
 const foodItems = computed(() => {
-  return generateFoodItems(containerWidth.value, containerHeight.value, 70)
+  return generateFoodItems(containerWidth.value, containerHeight.value, 100)
 })
 
-// Computed property para emojis en desktop
-const foodItemsDesktop = computed(() => {
-  return generateFoodItems(containerWidthDesktop.value, containerHeightDesktop.value, 80)
-})
-
-// Observers para detectar cambios de tamaño
+// Observer para detectar cambios de tamaño
 let resizeObserver = null
-let resizeObserverDesktop = null
 
 // Obtener configuración de runtime
 const {
@@ -233,18 +246,9 @@ const {
   }
 } = useRuntimeConfig()
 
-// Función para detectar mobile (necesita estar definida antes de onMounted)
-const checkMobile = () => {
-  isMobile.value = window.innerWidth < 768
-}
-
 // Verificar si ya hay sesión al cargar el componente y configurar observer de emojis
 onMounted(async () => {
-  // Detectar si es mobile
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-
-  // Configurar observer de emojis para mobile
+  // Configurar observer de emojis
   if (foodBgContainer.value) {
     const rect = foodBgContainer.value.getBoundingClientRect()
     containerWidth.value = rect.width
@@ -258,22 +262,6 @@ onMounted(async () => {
     })
 
     resizeObserver.observe(foodBgContainer.value)
-  }
-
-  // Configurar observer de emojis para desktop
-  if (foodBgContainerDesktop.value) {
-    const rect = foodBgContainerDesktop.value.getBoundingClientRect()
-    containerWidthDesktop.value = rect.width
-    containerHeightDesktop.value = rect.height
-
-    resizeObserverDesktop = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        containerWidthDesktop.value = entry.contentRect.width
-        containerHeightDesktop.value = entry.contentRect.height
-      }
-    })
-
-    resizeObserverDesktop.observe(foodBgContainerDesktop.value)
   }
 
   // Verificar sesión existente
@@ -380,15 +368,11 @@ watch([email, verificationCode], () => {
   }
 })
 
-// Cleanup observers y event listeners cuando el componente se desmonte
+// Cleanup observer cuando el componente se desmonte
 onUnmounted(() => {
   if (resizeObserver) {
     resizeObserver.disconnect()
   }
-  if (resizeObserverDesktop) {
-    resizeObserverDesktop.disconnect()
-  }
-  window.removeEventListener('resize', checkMobile)
 })
 </script>
 
@@ -400,11 +384,5 @@ onUnmounted(() => {
   opacity: 0.08;
   filter: grayscale(100%) brightness(0.7);
   transform: translate(-50%, -50%);
-}
-
-/* Emojis en mobile - más opacidad visible */
-.mobile-emoji {
-  font-size: 45px;
-  opacity: 0.15;
 }
 </style>
