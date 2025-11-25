@@ -204,6 +204,10 @@ import {
 
 import { ref, computed, watch, inject, onMounted } from 'vue'
 
+definePageMeta({
+  layout: 'dashboard'
+})
+
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
 
