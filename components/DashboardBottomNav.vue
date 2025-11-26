@@ -3,8 +3,8 @@
   <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-titan-300 shadow-lg z-50 safe-area-bottom">
     <div class="flex items-center justify-around px-2 py-2">
 
-      <!-- Financiero -->
-      <NuxtLink
+      <!-- Financiero - Temporarily disabled -->
+      <!-- <NuxtLink
         to="/financiero"
         class="flex flex-col items-center gap-0.5 flex-1 group"
       >
@@ -29,7 +29,7 @@
         >
           Financiero
         </span>
-      </NuxtLink>
+      </NuxtLink> -->
 
       <!-- Abastecimiento -->
       <NuxtLink

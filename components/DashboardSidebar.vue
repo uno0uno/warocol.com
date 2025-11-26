@@ -62,7 +62,8 @@
 
     <!-- Navigation Links -->
     <template #navigation>
-      <NuxtLink
+      <!-- Financiero - Temporarily disabled -->
+      <!-- <NuxtLink
         to="/financiero"
         :class="[
           'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
@@ -73,7 +74,7 @@
       >
         <ChartBarIcon :class="['w-5 h-5', activePage === 'financiero' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
         <span>Financiero</span>
-      </NuxtLink>
+      </NuxtLink> -->
 
       <NuxtLink
         to="/abastecimiento"

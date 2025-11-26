@@ -148,16 +148,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
-  } else if (path === '/abastecimiento/precios') {
-    return {
-      pageTitle: 'Lista de Precios',
-      pageSubtitle: undefined,
-      searchPlaceholder: 'Buscar precios...',
-      activePage: 'abastecimiento' as const,
-      showBreadcrumb: false,
-      breadcrumbPage: undefined,
-      backButton: undefined
-    }
+  // } else if (path === '/abastecimiento/precios') {
+  //   return {
+  //     pageTitle: 'Lista de Precios',
+  //     pageSubtitle: undefined,
+  //     searchPlaceholder: 'Buscar precios...',
+  //     activePage: 'abastecimiento' as const,
+  //     showBreadcrumb: false,
+  //     breadcrumbPage: undefined,
+  //     backButton: undefined
+  //   }
   } else if (path === '/abastecimiento/compras') {
     return {
       pageTitle: 'Órdenes de Compra',

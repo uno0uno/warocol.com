@@ -27,7 +27,7 @@ definePageMeta({
 // Navigation configuration
 const navigationItems = [
   { to: '/abastecimiento/proveedores', label: 'Proveedores' },
-  { to: '/abastecimiento/precios', label: 'Lista de Precios', matchPath: '/precios' },
+  // { to: '/abastecimiento/precios', label: 'Lista de Precios', matchPath: '/precios' }, // Temporarily disabled
   { to: '/abastecimiento/compras', label: 'Órdenes de Compra', matchPath: '/compras' }
 ]
 
