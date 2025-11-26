@@ -246,10 +246,11 @@ const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = 
   {
     server: false,
     watch: [currentTenant, currentPage, itemsPerPage, apiSearchTerm, apiIsActive, apiPaymentTerms],
-    default: () => ({ data: [], total: 0 }),
+    default: () => ({ data: [], total: 0, stats: null }),
     transform: (response) => ({
       data: response.data || [],
       total: response.total || 0,
+      stats: response.stats || null
     })
   }
 );
@@ -263,23 +264,28 @@ onMounted(() => {
 })
 
 // Computed properties for data and pagination
-
 const suppliers = computed(() => suppliersData.value.data);
-
 const totalSuppliers = computed(() => suppliersData.value.total);
 
-// Stats (mock data for now, can be fetched from API later if needed)
+// Stats from API response
+const stats = computed(() => {
+  const apiStats = suppliersData.value.stats
 
-const stats = ref({
+  if (!apiStats) {
+    return {
+      activos: 0,
+      inactivos: 0,
+      promedioPago: 0,
+      conEntregas: 0
+    }
+  }
 
-  activos: 25,
-
-  inactivos: 3,
-
-  promedioPago: 30,
-
-  conEntregas: 18
-
+  return {
+    activos: apiStats.activos || 0,
+    inactivos: apiStats.inactivos || 0,
+    promedioPago: apiStats.promedio_pago || 0,
+    conEntregas: apiStats.con_entregas || 0
+  }
 })
 
 
