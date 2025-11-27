@@ -65,48 +65,33 @@
             </form>
           </div>
 
-          <!-- Revisa tu correo -->
+          <!-- Código de Verificación -->
           <div v-else-if="emailSent" class="text-center">
-            <!-- Email Icon -->
-            <div class="mx-auto mb-6 w-16 h-16 rounded-full flex items-center justify-center"
-              style="background-color: hsl(250, 30%, 16%, 0.1);">
-              <svg class="w-8 h-8" style="color: hsl(250, 30%, 16%);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
-
             <h1 class="text-3xl font-medium mb-4" style="color: hsl(250, 30%, 16%);">Revisa tu correo</h1>
             <p class="text-base mb-2" style="color: hsl(220, 13%, 28%);">
               Hemos enviado un enlace de acceso a:
             </p>
-            <p class="text-base font-medium mb-10" style="color: hsl(250, 30%, 16%);">
+            <p class="text-base font-medium mb-6" style="color: hsl(250, 30%, 16%);">
               {{ email }}
             </p>
 
-            <div class="rounded-lg p-4 mb-8" style="background-color: hsl(220, 14%, 95%); border: 1px solid hsl(220, 14%, 90%);">
+            <div class="rounded-lg p-4 mb-6" style="background-color: hsl(220, 14%, 95%); border: 1px solid hsl(220, 14%, 90%);">
               <p class="text-sm" style="color: hsl(220, 13%, 28%);">
                 Abre el email y haz clic en el enlace para iniciar sesión. El enlace es válido por 15 minutos.
               </p>
             </div>
 
-            <button @click="emailSent = false" type="button"
-              class="w-full py-3 rounded-md text-base font-medium transition-all border-2"
-              style="background-color: white; border-color: hsl(250, 30%, 16%); color: hsl(250, 30%, 16%);"
-              @mouseenter="$event.target.style.backgroundColor = 'hsl(220, 14%, 95%)'"
-              @mouseleave="$event.target.style.backgroundColor = 'white'">
-              Volver
-            </button>
-          </div>
+            <!-- Separador -->
+            <div class="relative my-8">
+              <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t" style="border-color: hsl(220, 14%, 90%);"></div>
+              </div>
+              <div class="relative flex justify-center text-sm">
+                <span class="px-4 bg-white" style="color: hsl(220, 13%, 28%);">O usa el código de verificación</span>
+              </div>
+            </div>
 
-          <!-- CÓDIGO DE VERIFICACIÓN - COMENTADO
-          <div v-else-if="emailSent">
-            <h1 class="text-3xl font-medium mb-4" style="color: hsl(250, 30%, 16%);">Código de Verificación</h1>
-            <p class="text-base mb-10" style="color: hsl(220, 13%, 28%);">
-              Revisa tu email <span class="font-medium" style="color: hsl(250, 30%, 16%);">({{ email }})</span> y usa el
-              código de 6 dígitos:
-            </p>
-
+            <!-- Input de código -->
             <div class="space-y-6">
               <input v-model="verificationCode" type="text" placeholder="123456" :disabled="verifyingCode"
                 @keyup.enter="verifyCode"
@@ -139,7 +124,6 @@
               </p>
             </div>
           </div>
-          -->
 
           <!-- Error Message -->
           <div v-if="error" class="mt-5 rounded-md p-4 border"
