@@ -1,0 +1,363 @@
+<script setup lang="ts">
+import { ref, computed, inject, onMounted, onUnmounted } from 'vue'
+import { usePOSStore } from '~/stores/usePOSStore'
+
+definePageMeta({
+  layout: 'dashboard'
+})
+
+const router = useRouter()
+const posStore = usePOSStore()
+
+// Inject subtitle setter from layout
+const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle', () => {})
+
+// State
+const selectedPaymentMethod = ref<'cash' | 'card' | 'digital'>('cash')
+
+// Computed
+const cartItems = computed(() => posStore.cart)
+const cartTotal = computed(() => posStore.cartTotal)
+
+// Methods
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0
+  }).format(value)
+}
+
+const getItemTotal = (item: any) => {
+  const basePrice = item.product.price
+  const modifiersPrice = item.modifiers.reduce((sum: number, mod: any) => sum + mod.price, 0)
+  return basePrice + modifiersPrice
+}
+
+const processOrder = () => {
+  // In real app, this would send order to API
+  alert('¡Orden procesada exitosamente!')
+
+  // Clear cart
+  posStore.clearCart()
+
+  // Navigate back to POS
+  router.push('/ventas/pos')
+}
+
+const cancelOrder = () => {
+  router.push('/ventas/pos')
+}
+
+// Set page subtitle
+onMounted(() => {
+  setPageSubtitle('Orden #2039 • Mesa 4 • Mesero: Carlos P.')
+})
+
+// Clear subtitle on unmount
+onUnmounted(() => {
+  setPageSubtitle(undefined)
+})
+</script>
+
+<template>
+  <div class="w-full pb-32 lg:pb-0">
+    <!-- Empty Cart State -->
+    <div v-if="cartItems.length === 0" class="text-center py-16">
+      <svg class="h-24 w-24 mx-auto text-text-secondary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+      </svg>
+      <h2 class="text-xl font-semibold text-text-primary mb-2">Carrito Vacío</h2>
+      <p class="text-text-secondary mb-6">No hay productos en tu orden</p>
+      <UiButton variant="default" @click="router.push('/ventas/pos')">
+        Volver al POS
+      </UiButton>
+    </div>
+
+    <!-- Main Grid -->
+    <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- LEFT COLUMN: Order Items & Payment Method -->
+      <div class="lg:col-span-8 space-y-6">
+
+        <!-- Section: Order Items -->
+        <div class="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
+          <div class="p-4 border-b border-border flex justify-between items-center bg-surface-secondary/50">
+            <h2 class="font-bold text-text-primary flex items-center gap-2">
+              <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            </svg>
+              Items de la Orden
+              <span class="text-text-tertiary font-normal text-sm ml-1">({{ cartItems.length }})</span>
+            </h2>
+          </div>
+
+          <div class="divide-y divide-border">
+            <!-- Cart Items -->
+            <div
+              v-for="(item, index) in cartItems"
+              :key="index"
+              class="p-4 flex gap-4 items-start group hover:bg-surface-secondary/50 theme-transition"
+            >
+              <!-- Order Number -->
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                {{ index + 1 }}
+              </div>
+
+              <!-- Product Image -->
+              <div class="w-16 h-16 rounded-lg bg-surface-secondary flex items-center justify-center text-3xl flex-shrink-0 border border-border">
+                {{ item.product.image }}
+              </div>
+
+              <!-- Product Info -->
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-start mb-1">
+                  <h3 class="font-semibold text-text-primary">{{ item.product.name }}</h3>
+                  <span class="font-bold text-text-primary ml-4">{{ formatCurrency(getItemTotal(item)) }}</span>
+                </div>
+
+                <div class="flex justify-between items-end">
+                  <div class="text-sm text-text-secondary space-y-1">
+                    <p class="text-xs">{{ formatCurrency(item.product.price) }} c/u</p>
+
+                    <!-- Modifiers -->
+                    <div v-if="item.modifiers && item.modifiers.length > 0">
+                      <p class="text-text-tertiary text-xs">
+                        {{ item.modifiers.map(m => m.name).join(', ') }}
+                      </p>
+                    </div>
+
+                    <!-- Notes -->
+                    <p v-if="item.notes" class="text-xs text-text-tertiary italic">
+                      {{ item.notes }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Payment Method -->
+        <div class="bg-surface rounded-2xl shadow-sm border border-border p-6">
+          <h2 class="font-bold text-text-primary flex items-center gap-2 mb-4">
+            <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+            </svg>
+            Método de Pago
+          </h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Efectivo -->
+            <label class="cursor-pointer relative">
+              <input
+                type="radio"
+                name="payment"
+                value="cash"
+                v-model="selectedPaymentMethod"
+                class="sr-only"
+              >
+              <div
+                class="border rounded-xl p-4 theme-transition h-full flex flex-col gap-3"
+                :class="selectedPaymentMethod === 'cash'
+                  ? 'border-primary bg-primary/5 shadow-sm'
+                  : 'border-border hover:border-primary/30'"
+              >
+                <div class="flex justify-between items-start">
+                  <div class="bg-green-100 text-green-700 w-10 h-10 rounded-full flex items-center justify-center">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                    </svg>
+                  </div>
+                  <svg
+                    class="h-6 w-6 text-primary transition-all"
+                    :class="selectedPaymentMethod === 'cash' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'"
+                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="font-semibold text-text-primary">Efectivo</div>
+                  <div class="text-xs text-text-secondary">Pago en caja</div>
+                </div>
+              </div>
+            </label>
+
+            <!-- Tarjeta -->
+            <label class="cursor-pointer relative">
+              <input
+                type="radio"
+                name="payment"
+                value="card"
+                v-model="selectedPaymentMethod"
+                class="sr-only"
+              >
+              <div
+                class="border rounded-xl p-4 theme-transition h-full flex flex-col gap-3"
+                :class="selectedPaymentMethod === 'card'
+                  ? 'border-primary bg-primary/5 shadow-sm'
+                  : 'border-border hover:border-primary/30'"
+              >
+                <div class="flex justify-between items-start">
+                  <div class="bg-blue-100 text-blue-700 w-10 h-10 rounded-full flex items-center justify-center">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                    </svg>
+                  </div>
+                  <svg
+                    class="h-6 w-6 text-primary transition-all"
+                    :class="selectedPaymentMethod === 'card' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'"
+                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="font-semibold text-text-primary">Datáfono</div>
+                  <div class="text-xs text-text-secondary">Crédito / Débito</div>
+                </div>
+              </div>
+            </label>
+
+            <!-- Transferencia/QR -->
+            <label class="cursor-pointer relative">
+              <input
+                type="radio"
+                name="payment"
+                value="digital"
+                v-model="selectedPaymentMethod"
+                class="sr-only"
+              >
+              <div
+                class="border rounded-xl p-4 theme-transition h-full flex flex-col gap-3"
+                :class="selectedPaymentMethod === 'digital'
+                  ? 'border-primary bg-primary/5 shadow-sm'
+                  : 'border-border hover:border-primary/30'"
+              >
+                <div class="flex justify-between items-start">
+                  <div class="bg-purple-100 text-purple-700 w-10 h-10 rounded-full flex items-center justify-center">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
+                    </svg>
+                  </div>
+                  <svg
+                    class="h-6 w-6 text-primary transition-all"
+                    :class="selectedPaymentMethod === 'digital' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'"
+                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="font-semibold text-text-primary">QR / Digital</div>
+                  <div class="text-xs text-text-secondary">Nequi / Daviplata</div>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Sticky Summary -->
+      <div class="lg:col-span-4 lg:sticky lg:top-8">
+        <div class="bg-surface rounded-2xl shadow-lg border border-border p-6">
+          <h3 class="text-lg font-bold text-text-primary mb-6">Resumen de la Orden</h3>
+
+          <div class="space-y-3 mb-6">
+            <div class="flex justify-between text-sm text-text-secondary">
+              <span>Subtotal ({{ cartItems.length }} productos)</span>
+              <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
+            </div>
+            <div class="flex justify-between text-sm text-text-secondary">
+              <span>Impuestos (0%)</span>
+              <span class="font-medium text-text-primary">{{ formatCurrency(0) }}</span>
+            </div>
+            <div class="flex justify-between text-sm text-green-600">
+              <span>Descuento</span>
+              <span class="font-medium">- {{ formatCurrency(0) }}</span>
+            </div>
+          </div>
+
+          <div class="border-t border-dashed border-border my-4 pt-4">
+            <div class="flex justify-between items-end mb-1">
+              <span class="text-text-secondary font-medium">Total a Pagar</span>
+              <span class="text-3xl font-bold text-primary">{{ formatCurrency(cartTotal) }}</span>
+            </div>
+            <p class="text-right text-xs text-text-tertiary">COP</p>
+          </div>
+
+          <!-- Action Buttons (Desktop) -->
+          <div class="hidden lg:flex flex-col gap-3 mt-6">
+            <button
+              @click="processOrder"
+              class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group"
+            >
+              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+              <span>Confirmar Orden</span>
+              <svg class="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
+            </button>
+
+            <button
+              @click="cancelOrder"
+              class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+
+        <!-- Security Note -->
+        <div class="mt-4 flex items-center justify-center gap-2 text-xs text-text-tertiary">
+          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+          </svg>
+          <span>Transacción segura y encriptada</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Mobile Sticky Action Bar -->
+    <div
+      v-if="cartItems.length > 0"
+      class="fixed bottom-0 left-0 right-0 bg-surface border-t border-border shadow-lg p-4 lg:hidden z-50"
+    >
+      <div class="max-w-6xl mx-auto flex gap-3">
+        <button
+          @click="cancelOrder"
+          class="w-12 h-12 flex items-center justify-center border border-border rounded-xl text-text-secondary hover:bg-surface-secondary active:bg-surface-tertiary theme-transition"
+        >
+          <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <button
+          @click="processOrder"
+          class="flex-1 bg-primary text-primary-foreground rounded-xl py-3 px-6 font-bold flex items-center justify-between shadow-lg active:bg-primary/90 transition-colors"
+        >
+          <span class="text-sm font-normal opacity-90">Total a Pagar</span>
+          <span class="flex items-center gap-2">
+            {{ formatCurrency(cartTotal) }}
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+            </svg>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+/* Ensure content doesn't get hidden behind fixed bottom bar */
+.pb-32 {
+  padding-bottom: 8rem;
+}
+</style>

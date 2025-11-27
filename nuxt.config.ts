@@ -73,7 +73,8 @@ export default defineNuxtConfig({
       }
     }],
     '@nuxtjs/robots',
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    'nuxt-icon'
   ],
   site: {
     url: 'https://warocol.com'
