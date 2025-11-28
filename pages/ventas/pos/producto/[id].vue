@@ -433,9 +433,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="product-customization-page flex flex-col h-full bg-gradient-to-br from-background via-background to-surface/30">
+  <div class="product-customization-page flex flex-col bg-gradient-to-br from-background via-background to-surface/30 min-h-full">
     <!-- Loading State -->
-    <div v-if="!product" class="flex items-center justify-center h-full">
+    <div v-if="!product" class="flex items-center justify-center min-h-[50vh]">
       <div class="text-center">
         <div class="animate-pulse">
           <div class="w-16 h-16 bg-primary/20 rounded-2xl mx-auto mb-4"></div>
@@ -445,21 +445,21 @@ onUnmounted(() => {
     </div>
 
     <!-- Product Content -->
-    <div v-else class="flex flex-col lg:flex-row h-full gap-6">
+    <div v-else class="flex flex-col lg:flex-row gap-4 md:gap-6 pb-4">
       <!-- Left Column: Product Details & Customization -->
-      <div class="flex-1 overflow-y-auto space-y-6 lg:pr-4">
+      <div class="flex-1 space-y-4 md:space-y-6 lg:pr-4">
         
         <!-- Product Card Hero -->
-        <div class="bg-surface rounded-2xl p-6 border border-border relative overflow-hidden">
+        <div class="bg-surface rounded-2xl p-4 md:p-6 border border-border relative overflow-hidden">
           <!-- Popular Badge -->
           <div class="absolute top-0 right-0 bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-bl-xl z-10">
             POPULAR
           </div>
 
-          <div class="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+          <div class="flex flex-col sm:flex-row gap-4 md:gap-6 items-start sm:items-center">
             <!-- Product Image/Emoji -->
-            <div class="w-full sm:w-40 h-40 flex-shrink-0 bg-surface-secondary rounded-xl overflow-hidden relative flex items-center justify-center">
-              <div class="text-8xl">{{ product.image }}</div>
+            <div class="w-full sm:w-32 md:w-40 h-32 md:h-40 flex-shrink-0 bg-surface-secondary rounded-xl overflow-hidden relative flex items-center justify-center">
+              <div class="text-6xl md:text-8xl">{{ product.image }}</div>
             </div>
 
             <!-- Product Info -->
@@ -469,11 +469,11 @@ onUnmounted(() => {
                   {{ product.category }}
                 </span>
               </div>
-              <h2 class="text-2xl font-bold text-text-primary mb-2">{{ product.name }}</h2>
-              <p class="text-text-secondary text-sm mb-4 leading-relaxed">
+              <h2 class="text-xl md:text-2xl font-bold text-text-primary mb-2">{{ product.name }}</h2>
+              <p class="text-text-secondary text-xs md:text-sm mb-3 md:mb-4 leading-relaxed">
                 Delicioso producto preparado con los mejores ingredientes. Personaliza tu pedido a tu gusto.
               </p>
-              <div class="text-xl font-bold text-primary">
+              <div class="text-lg md:text-xl font-bold text-primary">
                 {{ formatCurrency(product.price) }}
               </div>
             </div>
@@ -482,15 +482,15 @@ onUnmounted(() => {
 
         <!-- Modifier Groups -->
         <section v-for="group in modifierGroups" :key="group.id">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold text-text-primary">{{ group.name }}</h3>
+          <div class="flex items-center justify-between mb-3 md:mb-4">
+            <h3 class="text-base md:text-lg font-bold text-text-primary">{{ group.name }}</h3>
             <span class="text-xs font-medium bg-surface-secondary text-text-secondary px-2 py-1 rounded">
               {{ group.required ? 'Obligatorio' : 'Opcional' }} • Máx {{ group.maxSelections }}
             </span>
           </div>
 
           <!-- Size Options (Radio style) -->
-          <div v-if="group.name === 'Tamaño'" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div v-if="group.name === 'Tamaño'" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <label
               v-for="option in group.options"
               :key="option.id"
@@ -504,22 +504,22 @@ onUnmounted(() => {
                 @change="toggleModifier(option, group.id)"
               />
               <div
-                class="border-2 rounded-xl p-4 transition-all duration-200 bg-surface h-full flex flex-col justify-between"
+                class="border-2 rounded-xl p-3 md:p-4 transition-all duration-200 bg-surface h-full flex flex-col justify-between"
                 :class="isModifierSelected(option.id)
                   ? 'border-primary bg-primary/5 shadow-sm'
                   : 'border-border hover:border-primary/50'"
               >
                 <div class="flex justify-between items-start w-full">
-                  <div class="flex items-center gap-2">
-                    <div class="bg-surface-secondary p-1.5 rounded-lg text-text-secondary">
-                      <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <div class="flex items-center gap-1.5 md:gap-2">
+                    <div class="bg-surface-secondary p-1 md:p-1.5 rounded-lg text-text-secondary">
+                      <svg class="h-3 md:h-4 w-3 md:w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
                       </svg>
                     </div>
-                    <span class="font-semibold text-text-primary">{{ option.name }}</span>
+                    <span class="font-semibold text-text-primary text-xs md:text-sm">{{ option.name }}</span>
                   </div>
                   <svg
-                    class="h-5 w-5 text-primary transition-all duration-200 flex-shrink-0"
+                    class="h-4 md:h-5 w-4 md:w-5 text-primary transition-all duration-200 flex-shrink-0"
                     :class="isModifierSelected(option.id) ? 'opacity-100 scale-100' : 'opacity-0 scale-50'"
                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
                   >
@@ -527,12 +527,12 @@ onUnmounted(() => {
                   </svg>
                 </div>
                 <div
-                  class="mt-2 text-sm font-medium"
+                  class="mt-1.5 md:mt-2 text-xs md:text-sm font-medium"
                   :class="option.price > 0 ? 'text-primary' : option.price < 0 ? 'text-success' : 'text-text-secondary'"
                 >
                   {{ option.price > 0 ? '+ ' : '' }}{{ option.price !== 0 ? formatCurrency(option.price) : 'Incluido' }}
                 </div>
-                <div class="text-xs text-text-tertiary mt-1">
+                <div class="text-xs text-text-tertiary mt-0.5 md:mt-1">
                   {{ option.name === 'Pequeño' ? '4 Porciones' : option.name === 'Mediano' ? '8 Porciones' : '12 Porciones' }}
                 </div>
               </div>
@@ -540,7 +540,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Extras Options (Checkbox style) -->
-          <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <label
               v-for="option in group.options"
               :key="option.id"
@@ -553,31 +553,31 @@ onUnmounted(() => {
                 @change="toggleModifier(option, group.id)"
               />
               <div
-                class="border rounded-xl p-3 flex items-center justify-between transition-all bg-surface"
+                class="border rounded-xl p-2 md:p-3 flex items-center justify-between transition-all bg-surface"
                 :class="isModifierSelected(option.id)
                   ? 'border-primary bg-primary/5'
                   : 'border-border hover:bg-surface-secondary'"
               >
-                <div class="flex items-center gap-3">
-                  <div class="bg-surface-secondary p-2 rounded-lg text-text-secondary">
-                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="flex items-center gap-2 md:gap-3">
+                  <div class="bg-surface-secondary p-1.5 md:p-2 rounded-lg text-text-secondary">
+                    <svg class="h-4 md:h-5 w-4 md:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
                   </div>
                   <div>
-                    <div class="font-medium text-text-primary text-sm">{{ option.name }}</div>
+                    <div class="font-medium text-text-primary text-xs md:text-sm">{{ option.name }}</div>
                     <div class="text-xs text-primary font-semibold">+ {{ formatCurrency(option.price) }}</div>
                   </div>
                 </div>
                 <div
-                  class="w-5 h-5 rounded border flex items-center justify-center transition-all"
+                  class="w-4 md:w-5 h-4 md:h-5 rounded border flex items-center justify-center transition-all flex-shrink-0"
                   :class="isModifierSelected(option.id)
                     ? 'border-primary bg-primary'
                     : 'border-border bg-surface'"
                 >
                   <CheckIcon
                     v-if="isModifierSelected(option.id)"
-                    class="h-3 w-3 text-primary-foreground"
+                    class="h-2.5 md:h-3 w-2.5 md:w-3 text-primary-foreground"
                   />
                 </div>
               </div>
@@ -587,11 +587,11 @@ onUnmounted(() => {
 
         <!-- Notes Section -->
         <section>
-          <h3 class="text-lg font-bold text-text-primary mb-3">Notas Especiales</h3>
+          <h3 class="text-base md:text-lg font-bold text-text-primary mb-3">Notas Especiales</h3>
           <textarea
             v-model="notes"
             placeholder="Ej: Sin cebolla, término medio, cortar en cuadros..."
-            class="w-full border border-border rounded-xl p-4 text-sm text-text-primary focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none shadow-sm placeholder:text-muted-foreground bg-surface"
+            class="w-full border border-border rounded-xl p-3 md:p-4 text-xs md:text-sm text-text-primary focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none shadow-sm placeholder:text-muted-foreground bg-surface"
             rows="3"
           />
         </section>
@@ -600,17 +600,17 @@ onUnmounted(() => {
       <!-- Right Column: Summary (Desktop Sticky) -->
       <div class="hidden lg:block lg:w-96 flex-shrink-0">
         <div class="sticky top-6 bg-surface rounded-2xl p-6 shadow-lg border border-border">
-          <h3 class="text-lg font-bold text-text-primary mb-4">Resumen</h3>
+          <h3 class="text-base md:text-lg font-bold text-text-primary mb-4">Resumen</h3>
 
           <!-- Summary Items -->
           <div class="space-y-3 mb-6 border-b border-border pb-6">
-            <div class="flex justify-between text-sm">
+            <div class="flex justify-between text-xs md:text-sm">
               <span class="text-text-secondary">{{ product.name }}</span>
               <span class="font-medium text-text-primary">{{ formatCurrency(product.price) }}</span>
             </div>
 
             <!-- Selected Modifiers -->
-            <div v-for="modifier in selectedModifiers" :key="modifier.id" class="flex justify-between text-sm text-text-secondary">
+            <div v-for="modifier in selectedModifiers" :key="modifier.id" class="flex justify-between text-xs md:text-sm text-text-secondary">
               <span>+ {{ modifier.name }}</span>
               <span>{{ formatCurrency(modifier.price) }}</span>
             </div>
@@ -618,8 +618,8 @@ onUnmounted(() => {
 
           <!-- Total -->
           <div class="flex justify-between items-center mb-6">
-            <span class="text-text-secondary font-medium">Total</span>
-            <span class="text-2xl font-bold text-text-primary">
+            <span class="text-text-secondary font-medium text-sm md:text-base">Total</span>
+            <span class="text-xl md:text-2xl font-bold text-text-primary">
               {{ formatCurrency(totalPrice) }}
             </span>
           </div>
@@ -627,27 +627,49 @@ onUnmounted(() => {
           <!-- Add to Cart Button -->
           <button
             @click="addToCart"
-            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
+            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base"
           >
-            <ShoppingCartIcon class="h-5 w-5" />
+            <ShoppingCartIcon class="h-4 md:h-5 w-4 md:w-5" />
             {{ isEditMode ? 'Guardar Cambios' : 'Agregar al Carrito' }}
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Mobile/Tablet Sticky Bottom Action Bar -->
-    <div class="fixed bottom-0 left-0 right-0 bg-surface border-t border-border shadow-lg p-4 lg:hidden z-50">
-      <div class="max-w-5xl mx-auto">
-        <!-- Add Button -->
+    <!-- Mobile/Tablet Bottom Summary -->
+    <div class="lg:hidden mt-4 md:mt-6 pb-4">
+      <div class="bg-surface rounded-xl p-4 md:p-6 shadow-lg border border-border">
+        <h3 class="text-base md:text-lg font-bold text-text-primary mb-3 md:mb-4">Resumen</h3>
+
+        <!-- Summary Items -->
+        <div class="space-y-2 md:space-y-3 mb-4 md:mb-6 border-b border-border pb-4 md:pb-6">
+          <div class="flex justify-between text-xs md:text-sm">
+            <span class="text-text-secondary">{{ product.name }}</span>
+            <span class="font-medium text-text-primary">{{ formatCurrency(product.price) }}</span>
+          </div>
+
+          <!-- Selected Modifiers -->
+          <div v-for="modifier in selectedModifiers" :key="modifier.id" class="flex justify-between text-xs md:text-sm text-text-secondary">
+            <span>+ {{ modifier.name }}</span>
+            <span>{{ formatCurrency(modifier.price) }}</span>
+          </div>
+        </div>
+
+        <!-- Total -->
+        <div class="flex justify-between items-center mb-4 md:mb-6">
+          <span class="text-text-secondary font-medium text-sm md:text-base">Total</span>
+          <span class="text-xl md:text-2xl font-bold text-text-primary">
+            {{ formatCurrency(totalPrice) }}
+          </span>
+        </div>
+
+        <!-- Add to Cart Button -->
         <button
           @click="addToCart"
-          class="w-full bg-primary text-primary-foreground rounded-xl py-3 px-6 font-bold flex items-center justify-between shadow-lg active:bg-primary/90 transition-colors"
+          class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base"
         >
-          <span class="text-sm font-medium">
-            {{ isEditMode ? 'Guardar Cambios' : 'Agregar al Carrito' }}
-          </span>
-          <span>{{ formatCurrency(totalPrice) }}</span>
+          <ShoppingCartIcon class="h-4 md:h-5 w-4 md:w-5" />
+          {{ isEditMode ? 'Guardar Cambios' : 'Agregar al Carrito' }}
         </button>
       </div>
     </div>

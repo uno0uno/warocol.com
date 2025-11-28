@@ -1,6 +1,6 @@
 <template>
-  <!-- Bottom Navigation - Solo Mobile -->
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-titan-300 shadow-lg z-50 safe-area-bottom">
+  <!-- Bottom Navigation - Mobile & Tablet -->
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-titan-300 shadow-lg z-50 safe-area-bottom">
     <div class="flex items-center justify-around px-2 py-2">
 
       <!-- Financiero - Temporarily disabled -->
@@ -211,15 +211,15 @@ interface Props {
   onRefresh?: () => void | Promise<void>
 }
 
+const props = withDefaults(defineProps<Props>(), {
+  activePage: 'financiero'
+})
+
 interface Tenant {
   id: string
   name: string
   slug: string
 }
-
-const props = withDefaults(defineProps<Props>(), {
-  activePage: 'financiero'
-})
 
 // Modal state
 const showTenantModal = ref(false)

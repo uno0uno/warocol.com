@@ -4,14 +4,18 @@
 
 <script setup>
 import { computed } from 'vue'
-import { 
-  PlusIcon, 
-  ArrowPathIcon, 
+import {
+  PlusIcon,
+  MinusIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  ArrowPathIcon,
   MagnifyingGlassIcon,
   CalendarIcon,
   InformationCircleIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
+  CheckIcon,
   XCircleIcon,
   XMarkIcon,
   ChevronUpDownIcon,
@@ -34,8 +38,11 @@ import {
   RssIcon,
   SunIcon,
   MoonIcon,
-  TrashIcon
+  TrashIcon,
+  ShoppingCartIcon,
+  PencilSquareIcon
 } from '@heroicons/vue/24/outline'
+import { CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/vue/24/solid'
 
 const props = defineProps({
   name: {
@@ -53,12 +60,17 @@ const className = computed(() => props.class)
 const iconComponent = computed(() => {
   const iconMap = {
     'heroicons:plus': PlusIcon,
+    'heroicons:minus': MinusIcon,
+    'heroicons:arrow-up': ArrowUpIcon,
+    'heroicons:arrow-down': ArrowDownIcon,
     'heroicons:arrow-path': ArrowPathIcon,
     'heroicons:magnifying-glass': MagnifyingGlassIcon,
     'heroicons:calendar': CalendarIcon,
     'heroicons:information-circle': InformationCircleIcon,
     'heroicons:exclamation-triangle': ExclamationTriangleIcon,
     'heroicons:check-circle': CheckCircleIcon,
+    'heroicons:check-circle-20-solid': CheckCircleSolidIcon,
+    'heroicons:check': CheckIcon,
     'heroicons:x-circle': XCircleIcon,
     'heroicons:x-mark': XMarkIcon,
     'heroicons:chevron-up-down': ChevronUpDownIcon,
@@ -81,9 +93,11 @@ const iconComponent = computed(() => {
     'heroicons:rss': RssIcon,
     'heroicons:sun': SunIcon,
     'heroicons:moon': MoonIcon,
-    'heroicons:trash': TrashIcon
+    'heroicons:trash': TrashIcon,
+    'heroicons:shopping-cart': ShoppingCartIcon,
+    'heroicons:pencil-square': PencilSquareIcon
   }
-  
+
   return iconMap[props.name] || 'div'
 })
 </script>

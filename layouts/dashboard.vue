@@ -1,7 +1,7 @@
 <template>
-  <div class="h-screen flex flex-col md:flex-row overflow-hidden">
+  <div class="h-screen flex flex-col lg:flex-row overflow-hidden">
     <!-- Dashboard Sidebar - Desktop Only -->
-    <DashboardSidebar :active-page="activePage" class="hidden md:flex" />
+    <DashboardSidebar :active-page="activePage" class="hidden lg:flex" />
 
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col min-w-0 h-screen md:h-auto">
@@ -10,12 +10,12 @@
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-[26px] md:text-3xl font-bold text-text-primary">{{ pageTitle }}</h1>
-            <p class="text-xs sm:text-sm text-muted-foreground mt-1">{{ currentDateTime }}</p>
+            <p class="text-xs sm:text-sm text-muted-foreground mt-1">{{ displaySubtitle || currentDateTime }}</p>
           </div>
-          <div v-if="backButton || refreshHandler" class="hidden md:flex md:gap-3">
+          <div v-if="backButton || refreshHandler" class="flex gap-2 md:gap-3">
             <!-- Refresh Button (Desktop only) -->
             <button v-if="refreshHandler" @click="refreshHandler"
-              class="w-11 h-11 flex items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+              class="hidden md:flex w-11 h-11 items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
               title="Refrescar orden">
               <svg class="w-5 h-5 transition-transform hover:rotate-180 duration-300" fill="none" stroke="currentColor"
                 viewBox="0 0 24 24">
@@ -25,7 +25,7 @@
               </svg>
             </button>
             <!-- Back Button -->
-            <button v-if="backButton" @click="goBack" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold">
+            <button v-if="backButton" @click="goBack" class="btn-secondary px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold">
               {{ backButton.label }}
             </button>
           </div>
@@ -62,7 +62,13 @@
     </main>
 
     <!-- Bottom Navigation - Mobile Only -->
-    <DashboardBottomNav :active-page="activePage" :on-refresh="refreshHandler" />
+    <DashboardBottomNav 
+      :active-page="activePage" 
+      :on-refresh="refreshHandler"
+      :show-cart-button="route.path === '/ventas/pos'"
+      :cart-items-count="posCartItemsCount"
+      @open-cart="posOpenCartModal"
+    />
 
     <!-- Global Purchase Action Bar -->
     <!-- <PurchasesGlobalPurchaseActionBar /> -->
@@ -70,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { provide } from 'vue'
+import { provide, inject, ref, computed, onMounted, type Ref, type ComputedRef } from 'vue'
 import {
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
@@ -81,7 +87,12 @@ const router = useRouter()
 
 // Go back function
 const goBack = () => {
-  router.back()
+  // Special handling for POS pages - always go to /ventas
+  if (route.path.startsWith('/ventas/pos')) {
+    router.push('/ventas')
+  } else {
+    router.back()
+  }
 }
 
 // Determine configuration based on route
@@ -311,6 +322,52 @@ const getPageConfig = () => {
       breadcrumbPage: 'Administración',
       backButton: undefined
     }
+  } else if (path.includes('/ventas/pos/producto/')) {
+    return {
+      pageTitle: 'Personalizar Producto',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'dashboard' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: {
+        label: 'Volver'
+      }
+    }
+  } else if (path === '/ventas/pos/checkout') {
+    return {
+      pageTitle: 'Confirmar Orden',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'dashboard' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: {
+        label: 'Volver'
+      }
+    }
+  } else if (path === '/ventas/pos' || path.includes('/ventas/pos')) {
+    return {
+      pageTitle: 'Punto de Venta',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'dashboard' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: {
+        label: 'Volver'
+      }
+    }
+  } else if (path === '/ventas' || path === '/ventas/') {
+    return {
+      pageTitle: 'Ventas',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar ventas...',
+      activePage: 'ventas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   }
 
   return {
@@ -363,6 +420,21 @@ const refreshHandler = ref<(() => void | Promise<void>) | undefined>(undefined)
 provide('setRefreshHandler', (handler: (() => void | Promise<void>) | undefined) => {
   refreshHandler.value = handler
 })
+
+// Dynamic subtitle - can be set by child pages
+const dynamicSubtitle = ref<string | undefined>(undefined)
+
+// Provide subtitle setter for child pages
+provide('setPageSubtitle', (subtitle: string | undefined) => {
+  dynamicSubtitle.value = subtitle
+})
+
+// Combined subtitle (dynamic takes precedence)
+const displaySubtitle = computed(() => dynamicSubtitle.value || pageSubtitle.value)
+
+// Inject cart data from POS page
+const posCartItemsCount = inject<ComputedRef<number> | Ref<number>>('posCartItemsCount', ref(0))
+const posOpenCartModal = inject<() => void>('posOpenCartModal', () => {})
 
 // Meta tags for dashboard
 useHead({

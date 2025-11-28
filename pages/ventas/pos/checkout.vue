@@ -261,8 +261,8 @@ onUnmounted(() => {
 
       </div>
 
-      <!-- RIGHT COLUMN: Sticky Summary -->
-      <div class="lg:col-span-4 lg:sticky lg:top-8">
+      <!-- RIGHT COLUMN: Sticky Summary (Desktop Only) -->
+      <div class="hidden lg:block lg:col-span-4 lg:sticky lg:top-8">
         <div class="bg-surface rounded-2xl shadow-lg border border-border p-6">
           <h3 class="text-lg font-bold text-text-primary mb-6">Resumen de la Orden</h3>
 
@@ -324,32 +324,64 @@ onUnmounted(() => {
 
     </div>
 
-    <!-- Mobile Sticky Action Bar -->
+    <!-- Mobile Bottom Summary -->
     <div
       v-if="cartItems.length > 0"
-      class="fixed bottom-0 left-0 right-0 bg-surface border-t border-border shadow-lg p-4 lg:hidden z-50"
+      class="lg:hidden mt-6 pb-4"
     >
-      <div class="max-w-6xl mx-auto flex gap-3">
-        <button
-          @click="cancelOrder"
-          class="w-12 h-12 flex items-center justify-center border border-border rounded-xl text-text-secondary hover:bg-surface-secondary active:bg-surface-tertiary theme-transition"
-        >
-          <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-          </svg>
-        </button>
-        <button
-          @click="processOrder"
-          class="flex-1 bg-primary text-primary-foreground rounded-xl py-3 px-6 font-bold flex items-center justify-between shadow-lg active:bg-primary/90 transition-colors"
-        >
-          <span class="text-sm font-normal opacity-90">Total a Pagar</span>
-          <span class="flex items-center gap-2">
-            {{ formatCurrency(cartTotal) }}
+      <div class="bg-surface rounded-2xl shadow-lg border border-border p-6">
+        <h3 class="text-lg font-bold text-text-primary mb-6">Resumen de la Orden</h3>
+
+        <div class="space-y-3 mb-6">
+          <div class="flex justify-between text-sm text-text-secondary">
+            <span>Subtotal ({{ cartItems.length }} productos)</span>
+            <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
+          </div>
+          <div class="flex justify-between text-sm text-text-secondary">
+            <span>Impuestos (0%)</span>
+            <span class="font-medium text-text-primary">{{ formatCurrency(0) }}</span>
+          </div>
+          <div class="flex justify-between text-sm text-green-600">
+            <span>Descuento</span>
+            <span class="font-medium">- {{ formatCurrency(0) }}</span>
+          </div>
+        </div>
+
+        <div class="border-t border-dashed border-border my-4 pt-4">
+          <div class="flex justify-between items-end mb-1">
+            <span class="text-text-secondary font-medium">Total a Pagar</span>
+            <span class="text-3xl font-bold text-primary">{{ formatCurrency(cartTotal) }}</span>
+          </div>
+          <p class="text-right text-xs text-text-tertiary">COP</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col gap-3 mt-6">
+          <button
+            @click="processOrder"
+            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
+          >
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
-          </span>
-        </button>
+            <span>Confirmar Orden</span>
+          </button>
+
+          <button
+            @click="cancelOrder"
+            class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+
+      <!-- Security Note -->
+      <div class="mt-4 flex items-center justify-center gap-2 text-xs text-text-tertiary">
+        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+        </svg>
+        <span>Transacción segura y encriptada</span>
       </div>
     </div>
   </div>

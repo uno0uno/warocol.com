@@ -62,19 +62,18 @@
 
     <!-- Navigation Links -->
     <template #navigation>
-      <!-- Financiero - Temporarily disabled -->
-      <!-- <NuxtLink
-        to="/financiero"
+      <NuxtLink
+        to="/ventas"
         :class="[
           'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
-          activePage === 'financiero'
+          activePage === 'ventas'
             ? 'bg-crocus-600/20 text-crocus-400'
             : 'text-titan-400 hover:bg-ebony-800 hover:text-white'
         ]"
       >
-        <ChartBarIcon :class="['w-5 h-5', activePage === 'financiero' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-        <span>Financiero</span>
-      </NuxtLink> -->
+        <ShoppingCartIcon :class="['w-5 h-5', activePage === 'ventas' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+        <span>Ventas</span>
+      </NuxtLink>
 
       <NuxtLink
         to="/abastecimiento"
@@ -87,6 +86,32 @@
       >
         <TruckIcon :class="['w-5 h-5', activePage === 'abastecimiento' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
         <span>Abastecimiento</span>
+      </NuxtLink>
+
+      <NuxtLink
+        to="/inventario/ingredientes"
+        :class="[
+          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
+          activePage === 'inventario'
+            ? 'bg-crocus-600/20 text-crocus-400'
+            : 'text-titan-400 hover:bg-ebony-800 hover:text-white'
+        ]"
+      >
+        <ChartBarIcon :class="['w-5 h-5', activePage === 'inventario' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+        <span>Inventario</span>
+      </NuxtLink>
+
+      <NuxtLink
+        to="/menu/productos"
+        :class="[
+          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
+          activePage === 'menu'
+            ? 'bg-crocus-600/20 text-crocus-400'
+            : 'text-titan-400 hover:bg-ebony-800 hover:text-white'
+        ]"
+      >
+        <CubeIcon :class="['w-5 h-5', activePage === 'menu' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+        <span>Menú</span>
       </NuxtLink>
 
       <NuxtLink
@@ -194,11 +219,13 @@ import {
   BanknotesIcon,
   ChartBarIcon,
   ChevronDownIcon,
+  CubeIcon,
+  ShoppingCartIcon,
   TruckIcon
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
+  activePage?: 'dashboard' | 'ventas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
 }
 
 interface Tenant {

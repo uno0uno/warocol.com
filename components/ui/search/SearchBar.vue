@@ -24,13 +24,13 @@ const handleInput = (event) => {
 </script>
 
 <template>
-  <div :class="cn('flex items-center bg-gray-800 rounded-lg px-3 py-2', props.class)">
-    <MagnifyingGlassIcon class="w-4 h-4 text-gray-400" />
+  <div :class="cn('flex items-center bg-input border border-border rounded-lg px-3 py-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:border-ring', props.class)">
+    <MagnifyingGlassIcon class="w-4 h-4 text-muted-foreground" />
     <input
       :value="modelValue"
       :placeholder="placeholder"
       @input="handleInput"
-      class="ml-2 bg-transparent border-none outline-none text-sm flex-1 text-white placeholder:text-gray-400"
+      class="ml-2 bg-transparent border-none outline-none text-sm flex-1 text-foreground placeholder:text-muted-foreground"
     />
   </div>
 </template>

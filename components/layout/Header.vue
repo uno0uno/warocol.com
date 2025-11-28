@@ -93,8 +93,7 @@ nav a:hover {
     }
 
     .header-content {
-        flex-direction: column;
-        gap: 12px;
+        /* Mantener layout horizontal en todas las pantallas */
     }
 
     nav {
