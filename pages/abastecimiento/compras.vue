@@ -580,7 +580,7 @@ const viewOrderDetails = (orden) => {
 
 const openActionsMenu = (orden) => {
   // TODO: Implementar modal con acciones (editar, recibir, descargar, etc.)
-  console.log('Abrir menú de acciones para:', orden.numero)
+
 }
 
 // Funciones mantenidas para futura implementación
@@ -591,11 +591,11 @@ const editOrder = (orden) => {
 
 const receiveOrder = (orden) => {
   orden.estado = 'received'
-  console.log('Orden recibida:', orden)
+
 }
 
 const downloadOrder = (orden) => {
-  console.log('Descargar orden:', orden)
+
 }
 
 useHead({

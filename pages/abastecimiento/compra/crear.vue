@@ -504,12 +504,10 @@
         </div>
         </Transition>
 
-        <!-- Spacer for fixed buttons + bottom nav -->
-        <div class="h-32 md:h-24"></div>
       </form>
 
-      <!-- Fixed Navigation Buttons -->
-      <div class="fixed bottom-16 md:bottom-0 left-0 md:left-64 right-0 bg-surface border-t border-border shadow-lg z-40">
+      <!-- Navigation Buttons -->
+      <div class="bg-surface border-t border-border shadow-lg mt-6">
         <div class="px-4 sm:px-6 md:px-8 py-3 sm:py-4">
           <div class="flex justify-between items-center gap-3">
             <button
@@ -888,24 +886,23 @@ const validateStep2 = () => {
 }
 
 const handleNext = (event) => {
-  console.log('handleNext called, currentStep:', currentStep.value)
-  console.log('form.supplier_id:', form.value.supplier_id)
+
 
   if (currentStep.value === 1) {
     if (validateStep1()) {
-      console.log('Step 1 validated, moving to step 2')
+
       currentStep.value = 2
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
-      console.log('Step 1 validation failed')
+
     }
   } else if (currentStep.value === 2) {
     if (validateStep2()) {
-      console.log('Step 2 validated, moving to step 3')
+
       currentStep.value = 3
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
-      console.log('Step 2 validation failed')
+
     }
   }
 }
@@ -930,8 +927,10 @@ const handleSubmit = async () => {
 
       return {
         ingredient_id: item.ingredient_id,
-        quantity: convertedQuantity,
-        unit: baseUnit,
+        quantity: convertedQuantity,  // Base unit quantity (for inventory)
+        unit: baseUnit,  // Base unit (for inventory)
+        purchase_quantity: item.quantity,  // Original purchase quantity (for display)
+        purchase_unit: item.purchase_unit,  // Original purchase unit (for display)
         unit_cost: null,  // Quotation: no prices yet
         total_cost: 0,    // Quotation: no totals yet
         expiry_date: item.expiry_date || null,
@@ -960,7 +959,7 @@ const handleSubmit = async () => {
       items: convertedItems
     }
 
-    console.log('Submitting quotation data:', purchaseData)
+
 
     await $fetch('/api/suppliers/purchases', {
       method: 'POST',

@@ -49,6 +49,7 @@
               :token="token"
               @cancel="navigateTo(`/proveedor/${token}/${purchaseId}`)"
               @completed="handleActionCompleted"
+              @loading="isFormSubmitting = $event"
             />
 
             <!-- Invoice Form -->
@@ -59,6 +60,7 @@
               :token="token"
               @cancel="navigateTo(`/proveedor/${token}/${purchaseId}`)"
               @invoiced="handleActionCompleted"
+              @loading="isFormSubmitting = $event"
             />
 
             <!-- Ship Form -->

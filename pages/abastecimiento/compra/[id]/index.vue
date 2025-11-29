@@ -49,7 +49,7 @@
               {{ getSupplierName(form.supplier_id) }}
             </p>
             <button v-if="currentSupplier" @click="copyPortalLink"
-              class="w-8 h-8 flex items-center justify-center bg-surface-secondary rounded-md text-primary hover:bg-accent transition-colors"
+              class="w-8 h-8 flex items-center justify-center bg-surface-secondary rounded-md text-primary transition-colors"
               title="Copiar enlace del portal">
               <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -104,7 +104,7 @@
                     </div>
 
                     <!-- Value Info -->
-                    <div class="flex items-end justify-between pt-2 border-t border-border">
+                    <div v-if="form.status !== 'quotation'" class="flex items-end justify-between pt-2 border-t border-border">
                       <div>
                         <p class="text-xs text-muted-foreground mb-0.5">Precio Unitario</p>
                         <p class="text-base font-semibold text-text-primary">
@@ -140,7 +140,7 @@
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
-                        <span class="text-text-primary font-semibold text-xs">{{ item.quantity }} {{ item.unit }}</span>
+                        <span class="text-text-primary font-semibold text-xs">{{ item.purchase_quantity || item.quantity }} {{ item.purchase_unit || item.unit }}</span>
                       </div>
 
                       <!-- Batch Number -->
@@ -174,11 +174,11 @@
                       class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                       Cantidad
                     </th>
-                    <th
+                    <th v-if="form.status !== 'quotation'"
                       class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                       Precio Unitario
                     </th>
-                    <th
+                    <th v-if="form.status !== 'quotation'"
                       class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
                       Total
                     </th>
@@ -198,12 +198,12 @@
                       </div>
                     </td>
                     <td class="px-4 py-3 text-sm text-text-primary text-right font-medium whitespace-nowrap">
-                      {{ item.quantity }} {{ item.unit }}
+                      {{ item.purchase_quantity || item.quantity }} {{ item.purchase_unit || item.unit }}
                     </td>
-                    <td class="px-4 py-3 text-sm text-text-primary text-right whitespace-nowrap">
-                      {{ parseFloat(item.unit_cost).toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}
+                    <td v-if="form.status !== 'quotation'" class="px-4 py-3 text-sm text-text-primary text-right whitespace-nowrap">
+                      {{ ((parseFloat(item.total_cost) || 0) / (item.purchase_quantity || item.quantity || 1)).toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}
                     </td>
-                    <td class="px-4 py-3 text-sm font-bold text-text-primary text-right whitespace-nowrap">
+                    <td v-if="form.status !== 'quotation'" class="px-4 py-3 text-sm font-bold text-text-primary text-right whitespace-nowrap">
                       {{ parseFloat(item.total_cost).toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}
                     </td>
                     <td class="px-4 py-3 text-sm text-text-secondary text-center">
@@ -217,7 +217,7 @@
 
           <!-- Totals Summary -->
           <!-- Mobile: Card Layout -->
-          <div class="md:hidden mb-4">
+          <div v-if="form.status !== 'quotation'" class="md:hidden mb-4">
             <div class="bg-surface border-2 border-border rounded-xl">
               <div class="p-6">
                 <div class="space-y-3">
@@ -259,7 +259,7 @@
           </div>
 
           <!-- Desktop: Grid Layout (unchanged) -->
-          <div class="hidden md:grid md:grid-cols-3 gap-4 mb-6">
+          <div v-if="form.status !== 'quotation'" class="hidden md:grid md:grid-cols-3 gap-4 mb-6">
             <!-- Subtotal Card -->
             <div class="bg-surface rounded-xl  transition-shadow border border-border">
               <div class="p-4">
@@ -531,6 +531,8 @@ const form = computed(() => {
     notes: purchase.value.notes || '',
     items: purchase.value.items
   }
+  
+
 })
 
 // Refresh function
@@ -652,7 +654,7 @@ function getSupplierName(supplierId) {
 const currentSupplier = computed(() => {
   if (!form.value.supplier_id) return null
   const supplier = suppliers.value.find(sup => sup.id === form.value.supplier_id)
-  console.log('🔍 Current supplier:', supplier)
+
   return supplier
 })
 

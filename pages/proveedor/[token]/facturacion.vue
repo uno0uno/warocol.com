@@ -463,7 +463,7 @@ function clearSelection() {
 function viewInvoice(invoice: any) {
   // Future: Navigate to invoice detail page
   // For now, just log the invoice
-  console.log('View invoice:', invoice)
+
 }
 
 function closeLegalInvoiceModal() {

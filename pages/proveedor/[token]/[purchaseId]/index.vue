@@ -200,11 +200,11 @@
                     </div>
                   </td>
                   <td class="px-4 py-3 text-sm text-text-primary text-right font-medium whitespace-nowrap">
-                    {{ item.quantity }} {{ item.unit }}
+                    {{ item.purchase_quantity || item.quantity }} {{ item.purchase_unit || item.unit }}
                   </td>
                   <td v-if="purchase?.status !== 'quotation'"
                     class="px-4 py-3 text-sm text-text-primary text-right whitespace-nowrap">
-                    {{ formatCurrency(item.unit_cost) }}
+                    {{ formatCurrency((item.total_cost || 0) / (item.purchase_quantity || item.quantity || 1)) }}
                   </td>
                   <td v-if="purchase?.status !== 'quotation'"
                     class="px-4 py-3 text-sm font-bold text-text-primary text-right whitespace-nowrap">
@@ -238,7 +238,7 @@
           <div class="border-2 border-border rounded-lg p-4 bg-surface">
             <p class="text-sm text-text-secondary mb-2">Total</p>
             <p class="text-2xl font-bold text-primary">
-              {{ formatCurrency((purchase?.total_amount || 0) + (purchase?.tax_amount || 0)) }}
+              {{ formatCurrency(totalAmount) }}
             </p>
           </div>
         </div>
@@ -266,7 +266,7 @@ const route = useRoute()
 const token = computed(() => route.params.token as string)
 const purchaseId = computed(() => route.params.purchaseId as string)
 
-console.log('Purchase page loaded:', { token: token.value, purchaseId: purchaseId.value })
+
 
 const loading = ref(true)
 const error = ref<string | null>(null)

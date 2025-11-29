@@ -121,6 +121,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   cancel: []
   invoiced: []
+  loading: [isLoading: boolean]
 }>()
 
 const loading = ref(false)
@@ -211,6 +212,7 @@ const getPaymentTypeText = (paymentType: string): string => {
 
 const handleSubmit = async () => {
   loading.value = true
+  emit('loading', true)
   try {
     const formDataPayload = new FormData()
 
@@ -260,6 +262,7 @@ const handleSubmit = async () => {
     useToast().add({ title: 'Error', description: error.data?.detail || 'No se pudo registrar el documento', color: 'red' })
   } finally {
     loading.value = false
+    emit('loading', false)
   }
 }
 </script>

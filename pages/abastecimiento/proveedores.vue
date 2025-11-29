@@ -237,7 +237,7 @@ const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = 
     if (apiIsActive.value !== null) params.is_active = apiIsActive.value;
     if (apiPaymentTerms.value) params.payment_terms = apiPaymentTerms.value;
 
-    console.log('🔍 Fetching suppliers for tenant:', currentTenant.value?.id, 'with params:', params)
+
 
     return $fetch('/api/suppliers/providers', {
       query: params
@@ -446,7 +446,7 @@ const copyPortalLink = async (proveedor) => {
       document.body.removeChild(textArea)
     }
 
-    console.log('✅ Portal link copied:', portalUrl)
+
   } catch (error) {
     console.error('Error copying portal link:', error)
   }
@@ -458,7 +458,7 @@ const toggleStatus = (proveedor) => {
 
   proveedor.is_active = !proveedor.is_active
 
-  console.log('Estado cambiado para:', proveedor.name)
+
 
 }
 

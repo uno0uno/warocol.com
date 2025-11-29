@@ -255,6 +255,31 @@
           </div>
         </div>
       </div>
+
+      
+      <!-- Add Attachments -->
+      <div class="bg-surface border-2 border-border rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-text-primary mb-4 flex items-center space-x-2">
+          <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Agregar Archivos</span>
+        </h3>
+        
+        <div class="space-y-4">
+          <PurchasesAttachmentUploader v-model="newFiles" />
+          
+          <div v-if="newFiles.length > 0" class="flex justify-end">
+            <button 
+              @click="handleUploadFiles" 
+              :disabled="isUploading"
+              class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center space-x-2 font-medium">
+              <CommonsTheCustomLoader v-if="isUploading" size="small" />
+              <span>{{ isUploading ? 'Subiendo...' : 'Subir Archivos' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -311,9 +336,39 @@ async function loadTransitionDetail() {
 }
 
 onMounted(() => {
-  // Supplier is loaded by middleware
   loadTransitionDetail()
 })
+
+// File Upload Logic
+const newFiles = ref<File[]>([])
+const isUploading = ref(false)
+
+const handleUploadFiles = async () => {
+  if (newFiles.value.length === 0) return
+
+  isUploading.value = true
+  const formData = new FormData()
+  newFiles.value.forEach(file => {
+    formData.append('files', file)
+  })
+
+  try {
+    await $fetch(`/api/supplier-portal/${token.value}/purchases/${purchaseId.value}/transitions/${transitionId.value}/attachments`, {
+      method: 'POST',
+      body: formData
+    })
+
+    newFiles.value = []
+    // Small delay to ensure DB consistency
+    await new Promise(resolve => setTimeout(resolve, 500))
+    await loadTransitionDetail()
+  } catch (error: any) {
+    console.error('Error uploading files:', error)
+    alert(error.data?.detail || 'Error al subir archivos')
+  } finally {
+    isUploading.value = false
+  }
+}
 
 // Helper functions
 function isImageFile(filename: string): boolean {

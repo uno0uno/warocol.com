@@ -15,7 +15,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   // ✅ Check if we already have a valid session in the store
   if (authStore.isSessionValid) {
-    console.log('✅ Using cached valid session, skipping API call')
+
     return
   }
 
@@ -35,7 +35,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       authStore.clearAuth()
 
       // If not on a public route, redirect to login
-      console.log('🔒 No valid session, redirecting to login.')
+
       return navigateTo('/auth/login')
 
     } else if (sessionResponse.value.user) {

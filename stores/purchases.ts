@@ -9,6 +9,8 @@ export interface PurchaseItem {
   expiry_date: string | null
   batch_number: string
   notes: string
+  purchase_quantity?: number
+  purchase_unit?: string
 }
 
 export interface StatusHistoryEntry {
@@ -82,6 +84,7 @@ export const usePurchasesStore = defineStore('purchases', () => {
       if (response?.success && response.data) {
         const purchase = response.data
 
+
         // Transform and store in cache
         const transformedPurchase: Purchase = {
           id: purchase.id,
@@ -108,7 +111,9 @@ export const usePurchasesStore = defineStore('purchases', () => {
             total_cost: parseFloat(item.total_cost),
             expiry_date: item.expiry_date || null,
             batch_number: item.batch_number || '',
-            notes: item.notes || ''
+            notes: item.notes || '',
+            purchase_quantity: (item.purchase_quantity !== null && item.purchase_quantity !== undefined) ? parseFloat(String(item.purchase_quantity)) : undefined,
+            purchase_unit: item.purchase_unit || undefined
           })) || [],
           confirmation_number: purchase.confirmation_number || null,
           tracking_number: purchase.tracking_number || null,

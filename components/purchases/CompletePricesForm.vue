@@ -136,6 +136,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   cancel: []
   completed: []
+  loading: [boolean]
 }>()
 
 const loading = ref(false)
@@ -146,15 +147,32 @@ const additionalNotes = ref('')
 // Initialize price items
 onMounted(() => {
   if (props.purchase) {
-    priceItems.value = props.purchase.items.map((item: any) => ({
-      id: item.id,
-      ingredient_name: item.ingredient_name,
-      quantity: item.quantity,
-      unit: item.unit,
-      unit_cost: item.unit_cost || 0,
-      total_cost: item.total_cost || 0,
-      notes: item.notes || ''
-    }))
+    priceItems.value = props.purchase.items.map((item: any) => {
+      const displayQuantity = item.purchase_quantity || item.quantity
+      const displayUnit = item.purchase_unit || item.unit
+      
+      // Calculate display unit cost (price per display unit)
+      let displayUnitCost = 0
+      if (item.total_cost > 0) {
+        displayUnitCost = item.total_cost / displayQuantity
+      } else if (item.unit_cost > 0) {
+        // Convert base unit cost to display unit cost
+        // total = base_cost * base_qty
+        // display_cost = total / display_qty
+        displayUnitCost = (item.unit_cost * item.quantity) / displayQuantity
+      }
+
+      return {
+        id: item.id,
+        ingredient_name: item.ingredient_name,
+        quantity: displayQuantity,
+        unit: displayUnit,
+        base_quantity: item.quantity, // Keep base quantity for conversion
+        unit_cost: displayUnitCost,
+        total_cost: item.total_cost || 0,
+        notes: item.notes || ''
+      }
+    })
     taxAmount.value = 0
     additionalNotes.value = ''
   }
@@ -174,18 +192,26 @@ const allPricesValid = computed(() => {
 
 function calculateItemTotal(index: number) {
   const item = priceItems.value[index]
+  // Calculate total based on displayed quantity and displayed unit cost
   item.total_cost = (item.quantity || 0) * (item.unit_cost || 0)
 }
 
 const handleSubmit = async () => {
   loading.value = true
+  emit('loading', true)
 
   try {
-    const itemsWithPrices = priceItems.value.map(item => ({
-      id: item.id,
-      unit_cost: item.unit_cost,
-      notes: item.notes || ''
-    }))
+    const itemsWithPrices = priceItems.value.map(item => {
+      // Convert back to base unit cost for backend
+      // base_unit_cost = total_cost / base_quantity
+      const baseUnitCost = item.base_quantity > 0 ? (item.total_cost / item.base_quantity) : 0
+
+      return {
+        id: item.id,
+        unit_cost: baseUnitCost,
+        notes: item.notes || ''
+      }
+    })
 
     const response = await $fetch(`/api/supplier-portal/${props.token}/purchases/${props.purchase.id}/update-prices`, {
       method: 'POST',
@@ -214,6 +240,7 @@ const handleSubmit = async () => {
     })
   } finally {
     loading.value = false
+    emit('loading', false)
   }
 }
 </script>

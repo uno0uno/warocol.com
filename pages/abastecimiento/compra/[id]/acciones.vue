@@ -132,7 +132,7 @@
             <div v-if="purchase?.total_amount">
               <p class="text-sm text-text-secondary mb-1">Monto Total</p>
               <p class="font-medium text-text-primary text-lg">
-                {{ (purchase.total_amount + (purchase.tax_amount || 0)).toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}
+                {{ ((parseFloat(purchase.total_amount) || 0) + (parseFloat(purchase.tax_amount) || 0)).toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}
               </p>
             </div>
             <div>
