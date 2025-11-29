@@ -134,19 +134,6 @@ const salesTableColumns = [
 
 <template>
   <div class="space-y-6">
-    <!-- Header with Nueva Venta Button -->
-    <div class="flex justify-end">
-      <button
-        @click="openNewSaleModal"
-        class="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
-      >
-        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        Nueva Venta
-      </button>
-    </div>
-
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
       <SharedMetricCard
@@ -161,7 +148,7 @@ const salesTableColumns = [
         title="Completadas"
         :value="completedSales"
         subtitle="Ventas finalizadas"
-        variant="success"
+        variant="primary"
         :show-icon="false"
       />
 
@@ -169,7 +156,7 @@ const salesTableColumns = [
         title="Pendientes"
         :value="pendingSales"
         subtitle="Ventas en proceso"
-        variant="warning"
+        variant="primary"
         :show-icon="false"
       />
     </div>
@@ -183,11 +170,34 @@ const salesTableColumns = [
       empty-sub-message="Las ventas aparecerán aquí"
       variant="default"
     >
+      <!-- Mobile Actions -->
+      <template #mobileActions>
+        <div class="flex flex-col gap-2">
+          <button
+            @click="openNewSaleModal"
+            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center"
+          >
+            + Nueva Venta
+          </button>
+        </div>
+      </template>
+
       <!-- Desktop Header -->
       <template #header>
-        <h3 class="text-base sm:text-lg font-bold text-text-primary">
-          Historial de Ventas
-        </h3>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+          <h3 class="text-base sm:text-lg font-bold text-text-primary">
+            Historial de Ventas
+          </h3>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <button
+              @click="openNewSaleModal"
+              class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
+            >
+              <span class="hidden sm:inline">+ Nueva Venta</span>
+              <span class="sm:hidden">+ Nueva</span>
+            </button>
+          </div>
+        </div>
       </template>
 
       <!-- Desktop Table Cells -->
