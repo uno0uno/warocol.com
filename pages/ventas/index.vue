@@ -120,11 +120,32 @@ const totalSales = computed(() => sales.value.reduce((sum, sale) => sum + sale.t
 const completedSales = computed(() => sales.value.filter(s => s.status === 'completed').length)
 const pendingSales = computed(() => sales.value.filter(s => s.status === 'pending').length)
 
+// Format date only
+const formatDateOnly = (dateString: string) => {
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).format(date)
+}
+
+// Format time only
+const formatTimeOnly = (dateString: string) => {
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('es-CO', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date)
+}
+
 // Table columns configuration
 const salesTableColumns = [
   { key: 'id', title: 'ID', sortable: true },
-  { key: 'date', title: 'Fecha', sortable: true },
-  { key: 'customer', title: 'Cliente', sortable: false },
+  { key: 'date_only', title: 'Fecha', sortable: true },
+  { key: 'time_only', title: 'Hora', sortable: false },
+  { key: 'customer_name', title: 'Cliente', sortable: false },
+  { key: 'customer_phone', title: 'Teléfono', sortable: false },
   { key: 'items', title: 'Items', sortable: true },
   { key: 'total', title: 'Total', sortable: true },
   { key: 'status', title: 'Estado', sortable: true },
@@ -205,15 +226,20 @@ const salesTableColumns = [
         <span class="font-semibold text-text-primary">{{ value }}</span>
       </template>
 
-      <template #cell-date="{ value }">
-        <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+      <template #cell-date_only="{ row }">
+        <span class="text-sm text-text-secondary">{{ formatDateOnly(row.date) }}</span>
       </template>
 
-      <template #cell-customer="{ value }">
-        <div>
-          <p class="text-sm font-medium text-text-primary">{{ value.name }}</p>
-          <p class="text-xs text-text-tertiary">{{ value.phone }}</p>
-        </div>
+      <template #cell-time_only="{ row }">
+        <span class="text-sm text-text-secondary">{{ formatTimeOnly(row.date) }}</span>
+      </template>
+
+      <template #cell-customer_name="{ row }">
+        <span class="text-sm font-medium text-text-primary">{{ row.customer.name }}</span>
+      </template>
+
+      <template #cell-customer_phone="{ row }">
+        <span class="text-sm text-text-secondary">{{ row.customer.phone }}</span>
       </template>
 
       <template #cell-items="{ value }">

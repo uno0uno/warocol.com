@@ -1,9 +1,280 @@
+<template>
+  <div class="page-layout">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
+      <SharedMetricCard
+        title="Total Productos"
+        :value="stats.total"
+        subtitle="En el catálogo"
+        variant="primary"
+        :show-icon="false"
+      />
+      <SharedMetricCard
+        title="Disponibles"
+        :value="stats.available"
+        subtitle="Listos para vender"
+        variant="primary"
+        :show-icon="false"
+      />
+      <SharedMetricCard
+        title="Con Control Stock"
+        :value="stats.withStock"
+        subtitle="Control de inventario"
+        variant="primary"
+        :show-icon="false"
+      />
+      <SharedMetricCard
+        title="Combos"
+        :value="stats.combos"
+        subtitle="Ofertas especiales"
+        variant="primary"
+        :show-icon="false"
+      />
+    </div>
+
+    <!-- Tabla de Productos -->
+    <UiResponsiveDataView
+      :columns="productosTableColumns"
+      :data="filteredProducts"
+      title="Catálogo de Productos"
+      empty-message="No hay productos registrados"
+      empty-sub-message="Crea un nuevo producto para comenzar"
+      variant="default"
+    >
+      <!-- Mobile Actions -->
+      <template #mobileActions>
+        <div class="flex flex-col gap-2">
+          <div class="relative">
+            <input
+              type="text"
+              v-model="searchQuery"
+              placeholder="Buscar..."
+              class="w-full pl-9 pr-3 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm"
+            />
+            <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
+          </div>
+          <select
+            v-model="selectedCategory"
+            class="w-full px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+          >
+            <option value="all">Todas las categorías</option>
+            <option
+              v-for="cat in categories.filter(c => c !== 'all')"
+              :key="cat"
+              :value="cat"
+            >
+              {{ cat }}
+            </option>
+          </select>
+          <button
+            @click="createProduct"
+            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center"
+          >
+            + Nuevo Producto
+          </button>
+        </div>
+      </template>
+
+      <!-- Desktop Header -->
+      <template #header>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+          <h3 class="text-base sm:text-lg font-bold text-text-primary">
+            Catálogo de Productos
+          </h3>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <div class="relative flex-1 sm:flex-initial">
+              <input
+                type="text"
+                v-model="searchQuery"
+                placeholder="Buscar..."
+                class="w-full pl-9 pr-3 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm"
+              />
+              <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
+            </div>
+            <select
+              v-model="selectedCategory"
+              class="w-full sm:w-48 px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+            >
+              <option value="all">Todas las categorías</option>
+              <option
+                v-for="cat in categories.filter(c => c !== 'all')"
+                :key="cat"
+                :value="cat"
+              >
+                {{ cat }}
+              </option>
+            </select>
+            <button
+              @click="createProduct"
+              class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
+            >
+              <span class="hidden sm:inline">+ Nuevo Producto</span>
+              <span class="sm:hidden">+ Nuevo</span>
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <!-- Desktop Table Cells -->
+      <template #cell-name="{ value }">
+        <div class="flex items-center">
+          <div class="ml-2">
+            <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
+          </div>
+        </div>
+      </template>
+
+      <template #cell-category="{ value }">
+        <span class="text-sm text-text-primary">{{ value }}</span>
+      </template>
+
+      <template #cell-precio_venta="{ value }">
+        <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(value) }}</span>
+      </template>
+
+      <template #cell-costo_calculado="{ value }">
+        <span class="text-sm text-text-primary">{{ formatCurrency(value) }}</span>
+      </template>
+
+      <template #cell-margen="{ row }">
+        <UiStatusBadge
+          :value="`${calculateMargin(row.precio_venta, row.costo_calculado)}%`"
+          format="text"
+          :variant="calculateMargin(row.precio_venta, row.costo_calculado) > 100 ? 'success' : 'warning'"
+          size="sm"
+        />
+      </template>
+
+      <template #cell-controla_stock="{ value }">
+        <div class="flex justify-center">
+          <UiStatusBadge
+            v-if="value"
+            value="Sí"
+            format="text"
+            variant="success"
+            size="sm"
+          />
+          <UiStatusBadge
+            v-else
+            value="No"
+            format="text"
+            variant="secondary"
+            size="sm"
+          />
+        </div>
+      </template>
+
+      <template #cell-is_available="{ value }">
+        <div class="flex justify-center">
+          <UiStatusBadge
+            :value="value ? 'Disponible' : 'No disponible'"
+            format="text"
+            :variant="value ? 'success' : 'destructive'"
+            size="sm"
+          />
+        </div>
+      </template>
+
+      <template #cell-actions="{ row }">
+        <div class="flex justify-center">
+          <button
+            @click="editProduct(row)"
+            class="text-crocus-600 hover:text-crocus-900 transition-colors"
+            title="Editar producto"
+          >
+            <Icon name="heroicons:pencil-square" class="h-4 w-4" />
+          </button>
+        </div>
+      </template>
+
+      <!-- Mobile Card -->
+      <template #card="{ item }">
+        <div class="bg-surface border border-border rounded-xl p-4">
+          <div class="flex justify-between items-start mb-3">
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <p class="font-semibold text-text-primary">{{ item.name }}</p>
+                <UiStatusBadge
+                  v-if="item.is_combo"
+                  value="Combo"
+                  format="text"
+                  variant="default"
+                  size="sm"
+                />
+              </div>
+              <p class="text-xs text-text-secondary mt-1">{{ item.category }}</p>
+            </div>
+            <UiStatusBadge
+              :value="item.is_available ? 'Disponible' : 'No disponible'"
+              format="text"
+              :variant="item.is_available ? 'success' : 'destructive'"
+              size="sm"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-xs text-text-secondary">Precio</p>
+                <p class="text-sm font-semibold text-text-primary">
+                  {{ formatCurrency(item.precio_venta) }}
+                </p>
+              </div>
+              <div>
+                <p class="text-xs text-text-secondary">Costo</p>
+                <p class="text-sm text-text-primary">
+                  {{ formatCurrency(item.costo_calculado) }}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-xs text-text-secondary mb-1">Margen</p>
+              <UiStatusBadge
+                :value="`${calculateMargin(item.precio_venta, item.costo_calculado)}%`"
+                format="text"
+                :variant="calculateMargin(item.precio_venta, item.costo_calculado) > 100 ? 'success' : 'warning'"
+                size="sm"
+              />
+            </div>
+
+            <div class="flex flex-wrap gap-2 pt-2 border-t border-border">
+              <UiStatusBadge
+                v-if="item.controla_stock"
+                value="Control Stock"
+                format="text"
+                variant="default"
+                size="sm"
+              />
+              <UiStatusBadge
+                v-if="item.allow_modifiers"
+                value="Modificadores"
+                format="text"
+                variant="default"
+                size="sm"
+              />
+            </div>
+          </div>
+
+          <div class="flex gap-2 mt-3">
+            <button
+              @click="editProduct(item)"
+              class="flex-1 px-3 py-2 border border-border rounded-lg text-sm font-medium text-text-primary hover:bg-surface-secondary transition-colors"
+            >
+              Editar
+            </button>
+          </div>
+        </div>
+      </template>
+    </UiResponsiveDataView>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref, computed, onMounted, inject } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
-import { useProductsStore } from '@/stores/useProductsStore'
+import { useMenuMockData } from '@/composables/useMenuMockData'
 
-// Layout config
 definePageMeta({
   layout: 'dashboard'
 })
@@ -11,8 +282,8 @@ definePageMeta({
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
 
-// Use products store
-const productsStore = useProductsStore()
+// Get mock data from composable
+const { productos } = useMenuMockData()
 
 // Filters
 const searchQuery = ref('')
@@ -20,11 +291,12 @@ const selectedCategory = ref('all')
 
 // Computed
 const categories = computed(() => {
-  return ['all', ...productsStore.categories]
+  const cats = new Set(productos.value.map(p => p.category))
+  return ['all', ...Array.from(cats)]
 })
 
 const filteredProducts = computed(() => {
-  return productsStore.allProducts.filter(product => {
+  return productos.value.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchQuery.value.toLowerCase())
     const matchesCategory = selectedCategory.value === 'all' || product.category === selectedCategory.value
@@ -33,11 +305,71 @@ const filteredProducts = computed(() => {
 })
 
 const stats = computed(() => ({
-  total: productsStore.allProducts.length,
-  available: productsStore.availableProducts.length,
-  withStock: productsStore.allProducts.filter(p => p.controla_stock).length,
-  combos: productsStore.allProducts.filter(p => p.is_combo).length
+  total: productos.value.length,
+  available: productos.value.filter(p => p.is_available).length,
+  withStock: productos.value.filter(p => p.controla_stock).length,
+  combos: productos.value.filter(p => p.is_combo).length
 }))
+
+// Table columns configuration
+const productosTableColumns = [
+  {
+    key: 'name',
+    title: 'Producto',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'category',
+    title: 'Categoría',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'precio_venta',
+    title: 'Precio',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'costo_calculado',
+    title: 'Costo',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'margen',
+    title: 'Margen',
+    sortable: true,
+    format: 'text',
+    align: 'center'
+  },
+  {
+    key: 'controla_stock',
+    title: 'Control Stock',
+    sortable: true,
+    format: 'boolean',
+    align: 'center'
+  },
+  {
+    key: 'is_available',
+    title: 'Estado',
+    sortable: true,
+    format: 'boolean',
+    align: 'center'
+  },
+  {
+    key: 'actions',
+    title: 'Acciones',
+    sortable: false,
+    format: 'text',
+    align: 'center'
+  }
+]
 
 // Format currency
 const formatCurrency = (value: number) => {
@@ -68,7 +400,6 @@ const createProduct = () => {
 // Refresh handler
 const setRefreshHandler = inject('setRefreshHandler', () => {})
 const refresh = () => {
-  // Reload from storage or API
   console.log('Refreshing products...')
 }
 
@@ -81,153 +412,3 @@ onTenantChange(() => {
   refresh()
 })
 </script>
-
-<template>
-  <div class="space-y-6">
-    <!-- Stats -->
-    <UiStats>
-      <UiStatsCard
-        label="Total Productos"
-        :value="stats.total"
-        icon="cube"
-      />
-      <UiStatsCard
-        label="Disponibles"
-        :value="stats.available"
-        icon="check-circle"
-      />
-      <UiStatsCard
-        label="Con Control Stock"
-        :value="stats.withStock"
-        icon="chart-bar"
-      />
-      <UiStatsCard
-        label="Combos"
-        :value="stats.combos"
-        icon="gift"
-      />
-    </UiStats>
-
-    <!-- Filters -->
-    <div class="flex flex-col sm:flex-row gap-4">
-      <div class="flex-1">
-        <UiSearchBar
-          v-model="searchQuery"
-          placeholder="Buscar productos..."
-        />
-      </div>
-      <div class="w-full sm:w-48">
-        <select
-          v-model="selectedCategory"
-          class="w-full px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          <option value="all">Todas las categorías</option>
-          <option
-            v-for="cat in categories.filter(c => c !== 'all')"
-            :key="cat"
-            :value="cat"
-          >
-            {{ cat }}
-          </option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Action Button -->
-    <div class="flex justify-end">
-      <UiButton variant="default" size="default" class="gap-2" @click="createProduct">
-        <Icon name="heroicons:plus" class="h-5 w-5" />
-        Nuevo Producto
-      </UiButton>
-    </div>
-
-    <!-- Products List -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <UiCard
-        v-for="product in filteredProducts"
-        :key="product.id"
-        class="hover:shadow-lg transition-shadow cursor-pointer"
-        @click="editProduct(product)"
-      >
-        <UiCardHeader>
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <h3 class="text-lg font-semibold text-text-primary">
-                {{ product.name }}
-              </h3>
-              <p class="text-sm text-text-secondary mt-1">
-                {{ product.description }}
-              </p>
-            </div>
-            <UiStatusBadge
-              v-if="product.is_combo"
-              label="Combo"
-              variant="secondary"
-            />
-          </div>
-        </UiCardHeader>
-
-        <UiCardContent class="space-y-3">
-          <!-- Category -->
-          <div class="flex items-center gap-2 text-sm text-text-secondary">
-            <Icon name="heroicons:tag" class="h-4 w-4" />
-            <span>{{ product.category }}</span>
-          </div>
-
-          <!-- Price and Cost -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <p class="text-xs text-text-secondary">Precio</p>
-              <p class="text-lg font-semibold text-text-primary">
-                {{ formatCurrency(product.price) }}
-              </p>
-            </div>
-            <div>
-              <p class="text-xs text-text-secondary">Costo</p>
-              <p class="text-lg font-medium text-text-primary">
-                {{ formatCurrency(product.costo_calculado) }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Margin -->
-          <div>
-            <p class="text-xs text-text-secondary mb-1">Margen</p>
-            <UiStatusBadge
-              :label="`${calculateMargin(product.price, product.costo_calculado)}%`"
-              :variant="calculateMargin(product.price, product.costo_calculado) > 50 ? 'success' : 'warning'"
-            />
-          </div>
-
-          <!-- Badges -->
-          <div class="flex flex-wrap gap-2 pt-2 border-t border-border">
-            <UiStatusBadge
-              v-if="product.controla_stock"
-              label="Control Stock"
-              variant="default"
-            />
-            <UiStatusBadge
-              v-if="product.is_available"
-              label="Disponible"
-              variant="success"
-            />
-            <UiStatusBadge
-              v-else
-              label="No disponible"
-              variant="destructive"
-            />
-          </div>
-        </UiCardContent>
-      </UiCard>
-    </div>
-
-    <!-- Empty State -->
-    <div
-      v-if="filteredProducts.length === 0"
-      class="text-center py-12"
-    >
-      <Icon name="heroicons:cube" class="h-16 w-16 mx-auto text-text-secondary mb-4" />
-      <p class="text-text-secondary">No se encontraron productos</p>
-    </div>
-  </div>
-</template>

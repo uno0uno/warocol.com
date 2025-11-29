@@ -368,6 +368,56 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path === '/menu/productos') {
+    return {
+      pageTitle: 'Productos',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar productos...',
+      activePage: 'menu' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/menu/recetas') {
+    return {
+      pageTitle: 'Recetas',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar recetas...',
+      activePage: 'menu' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/menu/modificadores') {
+    return {
+      pageTitle: 'Modificadores',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar modificadores...',
+      activePage: 'menu' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/menu/combos') {
+    return {
+      pageTitle: 'Combos',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar combos...',
+      activePage: 'menu' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/menu' || path === '/menu/') {
+    return {
+      pageTitle: 'Menú',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar...',
+      activePage: 'menu' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   }
 
   return {
