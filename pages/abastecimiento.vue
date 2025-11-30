@@ -6,15 +6,7 @@
     />
 
     <!-- Content -->
-    <Transition enter-active-class="transition-all duration-400 ease-out"
-      enter-from-class="opacity-0 transform translate-y-[-20px]" 
-      enter-to-class="opacity-100 transform translate-y-0"
-      leave-active-class="transition-all duration-300 ease-in" 
-      leave-from-class="opacity-100 transform translate-y-0"
-      leave-to-class="opacity-0 transform translate-y-[-20px]" 
-      mode="out-in">
-      <NuxtPage />
-    </Transition>
+    <NuxtPage />
   </div>
 </template>
 
