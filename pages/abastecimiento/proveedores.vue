@@ -1,7 +1,7 @@
 <template>
   <div class="page-layout">
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+    <!-- Loading State (only show if no data yet) -->
+    <div v-if="isLoading && !suppliers.length" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
@@ -18,6 +18,9 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
+      <h1 style="background: lime; color: black; padding: 20px; font-size: 24px; font-weight: bold;">
+        MAIN CONTENT RENDERING - SUPPLIERS: {{ suppliers?.length }} - TOTAL: {{ totalSuppliers }}
+      </h1>
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
         <SharedMetricCard title="Proveedores Activos" :value="stats.activos" subtitle="Estado operativo"
@@ -86,24 +89,20 @@
         </template>
 
         <!-- Desktop Table Cells -->
-        <template #cell-name="{ value, row }">
-          <div class="flex items-center">
-            <div class="ml-4">
-              <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
-              <div class="text-sm text-titan-600">{{ row.tax_id }}</div>
-            </div>
-          </div>
+        <template #cell-name="{ value }">
+          <span class="text-sm font-bold text-ebony-800">{{ value }}</span>
         </template>
 
-        <template #cell-contact="{ row }">
-          <div>
-            <div class="text-sm text-ebony-800">{{ row.email || 'No especificado' }}</div>
-            <div class="text-sm text-titan-600">{{ row.phone || 'No especificado' }}</div>
-          </div>
+        <template #cell-tax_id="{ value }">
+          <span class="text-sm text-text-secondary">{{ value }}</span>
         </template>
 
-        <template #cell-payment_terms="{ value }">
-          <span class="text-sm text-ebony-800">{{ value || 'Contado' }}</span>
+        <template #cell-email="{ value }">
+          <span class="text-sm text-text-primary">{{ value || 'No especificado' }}</span>
+        </template>
+
+        <template #cell-phone="{ value }">
+          <span class="text-sm text-text-secondary">{{ value || 'No especificado' }}</span>
         </template>
 
         <template #cell-is_active="{ value }">
@@ -237,8 +236,6 @@ const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = 
     if (apiIsActive.value !== null) params.is_active = apiIsActive.value;
     if (apiPaymentTerms.value) params.payment_terms = apiPaymentTerms.value;
 
-
-
     return $fetch('/api/suppliers/providers', {
       query: params
     });
@@ -288,58 +285,55 @@ const stats = computed(() => {
   }
 })
 
+// Manual refresh on tenant change to ensure data loading
+onTenantChange(async () => {
+  await refresh()
+})
 
+onMounted(() => {
+  console.log('[MOUNTED] isLoading:', isLoading.value)
+  console.log('[MOUNTED] suppliers:', suppliers.value?.length)
+  console.log('[MOUNTED] suppliersData:', suppliersData.value)
+})
+
+// Watch for changes
+watch([isLoading, suppliers], ([loading, sups]) => {
+  console.log('[WATCH] isLoading:', loading, 'suppliers:', sups?.length)
+}, { immediate: true })
 
 // DataTable configuration
 
 const proveedoresTableColumns = [
-
   {
-
     key: 'name',
-
     title: 'Proveedor',
-
     sortable: true,
-
     format: 'text',
-
     align: 'left'
-
   },
-
   {
-
-    key: 'contact',
-
-    title: 'Contacto',
-
+    key: 'tax_id',
+    title: 'NIT',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
+    key: 'email',
+    title: 'Email',
     sortable: false,
-
     format: 'text',
-
     align: 'left'
-
   },
-
   {
-
-    key: 'payment_terms',
-
-    title: 'Términos de Pago',
-
-    sortable: true,
-
+    key: 'phone',
+    title: 'Teléfono',
+    sortable: false,
     format: 'text',
-
     align: 'left'
-
   },
-
   {
-
     key: 'is_active',
-
     title: 'Estado',
 
     sortable: true,

@@ -177,23 +177,77 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Tipo de Pago *
-                </label>
-                <select
-                  v-model="form.payment_type"
-                  required
-                  class="input-base w-full px-4 py-2"
-                >
-                  <option value="">Seleccionar tipo de pago</option>
-                  <option value="contado">Contado - Pago Inmediato</option>
-                  <option value="credito">Crédito - Pago Diferido</option>
-                  <option value="contraentrega">Contraentrega - Pago al Recibir</option>
-                </select>
+                <!-- Loading State -->
+                <div v-if="loadingAgreements" class="h-[74px] flex items-center">
+                  <div class="flex items-center space-x-2 text-text-secondary">
+                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-sm">Buscando acuerdos...</span>
+                  </div>
+                </div>
+
+                <!-- Payment Selection -->
+                <div v-else>
+                  <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-text-primary">
+                      {{ usePaymentAgreement ? 'Acuerdo de Pago *' : 'Tipo de Pago *' }}
+                    </label>
+                    
+                    <!-- Toggle -->
+                    <label v-if="paymentAgreements.length > 0" class="flex items-center space-x-2 cursor-pointer">
+                      <span class="text-xs text-text-secondary">Usar acuerdo</span>
+                      <div class="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          v-model="usePaymentAgreement" 
+                          type="checkbox" 
+                          class="sr-only peer"
+                        >
+                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                      </div>
+                    </label>
+                  </div>
+
+                  <!-- Agreement Select -->
+                  <div v-if="usePaymentAgreement">
+                    <select
+                      v-model="selectedAgreementId"
+                      required
+                      class="input-base w-full px-4 py-2"
+                    >
+                      <option value="">Seleccionar acuerdo</option>
+                      <option
+                        v-for="agreement in paymentAgreements"
+                        :key="agreement.id"
+                        :value="agreement.id"
+                      >
+                        {{ agreement.name }}
+                      </option>
+                    </select>
+                    <p v-if="selectedAgreementId" class="text-xs text-text-secondary mt-1 truncate">
+                      {{ paymentAgreements.find(a => a.id === selectedAgreementId)?.description }}
+                    </p>
+                  </div>
+
+                  <!-- Manual Payment Type Select -->
+                  <div v-else>
+                    <select
+                      v-model="form.payment_type"
+                      required
+                      class="input-base w-full px-4 py-2"
+                    >
+                      <option value="">Seleccionar tipo de pago</option>
+                      <option value="contado">Contado - Pago Inmediato</option>
+                      <option value="credito">Crédito - Pago Diferido</option>
+                      <option value="contraentrega">Contraentrega - Pago al Recibir</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
-              <!-- Conditional fields for credito -->
-              <template v-if="form.payment_type === 'credito'">
+              <!-- Conditional fields for credito (Manual) -->
+              <template v-if="!usePaymentAgreement && form.payment_type === 'credito'">
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-2">
                     Días de Crédito *
@@ -399,8 +453,12 @@
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
-                <p class="text-sm text-text-secondary mb-1">Tipo de Pago</p>
-                <p class="text-base font-semibold text-text-primary">{{ getPaymentTypeText(form.payment_type) }}</p>
+                <p class="text-sm text-text-secondary mb-1">
+                  {{ usePaymentAgreement ? 'Acuerdo de Pago' : 'Tipo de Pago' }}
+                </p>
+                <p class="text-base font-semibold text-text-primary">
+                  {{ usePaymentAgreement ? getAgreementName(selectedAgreementId) : getPaymentTypeText(form.payment_type) }}
+                </p>
               </div>
               <div v-if="form.credit_days">
                 <p class="text-sm text-text-secondary mb-1">Plazo de Crédito</p>
@@ -632,6 +690,12 @@ const getConversionFactor = (fromUnit, toUnit) => {
   return unitConversions[key] || 1
 }
 
+// Payment Agreements State
+const paymentAgreements = ref([])
+const loadingAgreements = ref(false)
+const usePaymentAgreement = ref(false)
+const selectedAgreementId = ref('')
+
 // Form state
 const form = ref({
   supplier_id: '',
@@ -648,6 +712,9 @@ const form = ref({
   credit_days: null,
   requires_advance_payment: false,
   consolidation_group: '',
+  
+  // New field for agreement
+  payment_agreement_id: null,
 
   items: [
     {
@@ -666,6 +733,39 @@ const form = ref({
 })
 
 const isSubmitting = ref(false)
+
+// Watch for supplier change to fetch agreements
+watch(() => form.value.supplier_id, async (newSupplierId) => {
+  if (!newSupplierId) {
+    paymentAgreements.value = []
+    return
+  }
+
+  loadingAgreements.value = true
+  try {
+    const response = await $fetch(`/api/suppliers/providers/${newSupplierId}/payment-agreements`)
+    paymentAgreements.value = response.data || []
+    
+    // Reset selection if supplier changes
+    selectedAgreementId.value = ''
+    usePaymentAgreement.value = false
+  } catch (error) {
+    console.error('Error fetching payment agreements:', error)
+    paymentAgreements.value = []
+  } finally {
+    loadingAgreements.value = false
+  }
+})
+
+// Watch for agreement selection to populate form
+watch(selectedAgreementId, (newId) => {
+  if (!newId) return
+
+  const agreement = paymentAgreements.value.find(a => a.id === newId)
+  if (agreement) {
+    console.log('Selected agreement:', agreement)
+  }
+})
 
 // Computed totals
 const subtotal = computed(() => {
@@ -750,13 +850,18 @@ const getConvertedQuantity = (index) => {
   return converted.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-const getPaymentTypeText = (paymentType) => {
+const getPaymentTypeText = (type) => {
   const types = {
     'contado': 'Contado - Pago Inmediato',
     'credito': 'Crédito - Pago Diferido',
     'contraentrega': 'Contraentrega - Pago al Recibir'
   }
-  return types[paymentType] || 'No especificado'
+  return types[type] || type
+}
+
+const getAgreementName = (id) => {
+  const agreement = paymentAgreements.value.find(a => a.id === id)
+  return agreement ? agreement.name : 'Acuerdo no encontrado'
 }
 
 // Methods
@@ -826,9 +931,15 @@ const removeItem = (index) => {
 
 // Wizard navigation - Computed properties for button states
 const isStep1Valid = computed(() => {
-  if (!form.value.supplier_id || !form.value.payment_type) {
-    return false
+  if (!form.value.supplier_id) return false
+
+  // If using agreement, check if selected
+  if (usePaymentAgreement.value) {
+    return !!selectedAgreementId.value
   }
+
+  // Otherwise check manual payment type
+  if (!form.value.payment_type) return false
 
   // If credit, credit_days is required
   if (form.value.payment_type === 'credito' && !form.value.credit_days) {
@@ -854,6 +965,15 @@ const validateStep1 = () => {
     alert('Por favor seleccione un proveedor')
     return false
   }
+
+  if (usePaymentAgreement.value) {
+    if (!selectedAgreementId.value) {
+      alert('Por favor seleccione un acuerdo de pago')
+      return false
+    }
+    return true
+  }
+
   if (!form.value.payment_type) {
     alert('Por favor seleccione el tipo de pago')
     return false
@@ -939,38 +1059,44 @@ const handleSubmit = async () => {
       }
     })
 
-    const purchaseData = {
+    // Prepare payload
+    const payload = {
       supplier_id: form.value.supplier_id,
       purchase_date: getCurrentDateTime(),
       delivery_date: form.value.delivery_date || null,
-      status: 'quotation',  // Create as quotation
+      status: 'quotation',
       invoice_number: form.value.invoice_number || null,
-      tax_amount: 0,  // No tax yet
-      total_amount: 0,  // No total yet
+      tax_amount: 0,
+      total_amount: 0,
       notes: form.value.notes || null,
-
+      
       // Payment fields
-      payment_type: form.value.payment_type,
-      payment_terms: form.value.payment_terms || null,
-      credit_days: form.value.credit_days || null,
-      requires_advance_payment: form.value.requires_advance_payment || false,
+      payment_type: usePaymentAgreement.value ? null : form.value.payment_type,
+      payment_terms: usePaymentAgreement.value ? null : form.value.payment_terms,
+      credit_days: usePaymentAgreement.value ? null : form.value.credit_days,
+      requires_advance_payment: usePaymentAgreement.value ? false : form.value.requires_advance_payment,
       consolidation_group: form.value.consolidation_group || null,
+      
+      // Agreement field
+      payment_agreement_id: usePaymentAgreement.value ? selectedAgreementId.value : null,
 
       items: convertedItems
     }
 
+    console.log('Submitting purchase:', payload)
 
-
-    await $fetch('/api/suppliers/purchases', {
+    const response = await $fetch('/api/suppliers/purchases', {
       method: 'POST',
-      body: purchaseData
+      body: payload
     })
 
-    await navigateTo('/abastecimiento/compras')
-
+    if (response.data) {
+      // Success
+      navigateTo('/abastecimiento/compras')
+    }
   } catch (error) {
-    console.error('Error creating quotation:', error)
-    console.error('Error details:', error.response?._data || error)
+    console.error('Error creating purchase:', error)
+    // TODO: Show error notification
     alert(`Error al crear la cotización: ${error.response?._data?.detail || error.message || 'Por favor intente nuevamente.'}`)
   } finally {
     isSubmitting.value = false

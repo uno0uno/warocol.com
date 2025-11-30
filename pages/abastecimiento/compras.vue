@@ -188,11 +188,12 @@
         </template>
 
         <!-- Desktop Table Cell Customizations -->
-        <template #cell-numero="{ value, row }">
-          <div>
-            <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
-            <div class="text-xs text-titan-600">{{ row.invoice_number || 'Sin factura' }}</div>
-          </div>
+        <template #cell-numero="{ value }">
+          <span class="text-sm font-medium text-ebony-800">{{ value }}</span>
+        </template>
+
+        <template #cell-invoice_number="{ value }">
+          <span class="text-sm text-text-secondary">{{ value || 'Sin factura' }}</span>
         </template>
 
         <template #cell-proveedor="{ value }">
@@ -205,13 +206,6 @@
 
         <template #cell-fecha="{ value }">
           <span class="text-sm text-ebony-800">{{ formatDate(value) }}</span>
-        </template>
-
-        <template #cell-valorTotal="{ value, row }">
-          <div>
-            <div class="text-sm font-medium text-ebony-800">${{ value.toLocaleString() }}</div>
-            <div class="text-xs text-titan-600">+${{ row.impuestos.toLocaleString() }} IVA</div>
-          </div>
         </template>
 
         <template #cell-totalItems="{ value }">
@@ -442,6 +436,13 @@ const ordenesTableColumns = [
     align: 'left'
   },
   {
+    key: 'invoice_number',
+    title: 'Factura',
+    sortable: true,
+    format: 'text',
+    align: 'left'
+  },
+  {
     key: 'proveedor',
     title: 'Proveedor',
     sortable: true,
@@ -457,7 +458,14 @@ const ordenesTableColumns = [
   },
   {
     key: 'valorTotal',
-    title: 'Valor Total',
+    title: 'Subtotal',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'impuestos',
+    title: 'IVA',
     sortable: true,
     format: 'currency',
     align: 'right'
