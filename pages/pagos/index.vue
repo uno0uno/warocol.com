@@ -185,22 +185,16 @@
             </template>
 
             <template #cell-orden="{ row }">
-              <div>
-                <p class="font-medium text-text-primary">{{ row.orden }}</p>
-                <p class="text-xs text-text-secondary">{{ row.fecha }}</p>
-              </div>
+              {{ row.orden }}
             </template>
 
             <template #cell-factura="{ row }">
-              <div>
-                <p class="font-medium text-text-primary">{{ row.factura || '-' }}</p>
-                <p class="text-xs text-text-secondary">{{ row.fechaFactura || '-' }}</p>
-              </div>
+              {{ row.factura }}
             </template>
 
             <template #cell-vencimiento="{ row }">
               <span v-if="row.vencimiento" :class="[
-                'px-2 py-1 rounded text-xs font-medium',
+                'px-2 py-1 rounded text-xs',
                 row.estaVencido ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'
               ]">
                 {{ row.vencimiento }}
@@ -241,23 +235,19 @@
           <UiDataTable :columns="paidColumns" :data="paidTableData" variant="default"
             empty-message="No hay pagos registrados. Aún no se han registrado pagos a proveedores." :show-title="false">
             <template #cell-orden="{ row }">
-              <div :class="{ 'animate-pulse': row.isHighlighted }">
-                <p class="font-medium text-text-primary">{{ row.orden }}</p>
-                <p class="text-xs text-text-secondary">{{ row.fecha }}</p>
-              </div>
+              <span :class="{ 'animate-pulse': row.isHighlighted }">{{ row.orden }}</span>
+            </template>
+
+            <template #cell-fechaOrden="{ row }">
+              <span :class="{ 'animate-pulse': row.isHighlighted }">{{ row.fechaOrden }}</span>
             </template>
 
             <template #cell-factura="{ row }">
-              <div>
-                <p class="font-medium text-text-primary">{{ row.factura || '-' }}</p>
-                <p class="text-xs text-text-secondary">{{ row.fechaFactura || '-' }}</p>
-              </div>
+              {{ row.factura }}
             </template>
 
             <template #cell-montoPagado="{ row }">
-              <p class="font-medium text-text-primary">
-                {{ formatCurrency(row.montoPagado) }}
-              </p>
+              {{ formatCurrency(row.montoPagado) }}
             </template>
 
             <template #cell-metodo="{ row }">
@@ -266,7 +256,7 @@
 
             <template #cell-estado="{ row }">
               <span :class="[
-                'px-2 py-1 rounded text-xs font-medium',
+                'px-2 py-1 rounded text-xs',
                 row.isHighlighted
                   ? 'bg-success/30 text-success border-2 border-success animate-pulse'
                   : 'bg-success/10 text-success'
@@ -471,32 +461,36 @@ const paidThisMonthCount = computed(() => {
 
 // Table columns configuration
 const pendingColumns = [
-  { key: 'seleccion', title: '', sortable: false, align: 'center' as const },
-  { key: 'orden', title: 'Orden', sortable: true, align: 'left' as const },
-  { key: 'proveedor', title: 'Proveedor', sortable: true, align: 'left' as const },
-  { key: 'factura', title: 'Factura', sortable: false, align: 'left' as const },
-  { key: 'monto', title: 'Monto', sortable: true, align: 'right' as const, format: 'currency' as const },
-  { key: 'vencimiento', title: 'Vencimiento', sortable: true, align: 'left' as const },
-  { key: 'acciones', title: 'Acciones', sortable: false, align: 'center' as const }
+  { key: 'seleccion', title: '', sortable: false, align: 'center' as const, class: 'font-normal' },
+  { key: 'orden', title: 'Orden', sortable: true, align: 'left' as const, class: 'font-bold' },
+  { key: 'fechaOrden', title: 'Fecha Orden', sortable: true, align: 'left' as const, class: 'font-normal' },
+  { key: 'proveedor', title: 'Proveedor', sortable: true, align: 'left' as const, class: 'font-normal' },
+  { key: 'factura', title: 'Factura', sortable: false, align: 'left' as const, class: 'font-normal' },
+  { key: 'fechaFactura', title: 'Fecha Factura', sortable: false, align: 'left' as const, class: 'font-normal' },
+  { key: 'monto', title: 'Monto', sortable: true, align: 'right' as const, format: 'currency' as const, class: 'font-normal' },
+  { key: 'vencimiento', title: 'Vencimiento', sortable: true, align: 'left' as const, class: 'font-normal' },
+  { key: 'acciones', title: 'Acciones', sortable: false, align: 'center' as const, class: 'font-normal' }
 ]
 
 const paidColumns = [
-  { key: 'orden', title: 'Orden', sortable: true, align: 'left' as const },
-  { key: 'proveedor', title: 'Proveedor', sortable: true, align: 'left' as const },
-  { key: 'factura', title: 'Factura', sortable: false, align: 'left' as const },
-  { key: 'montoPagado', title: 'Monto Pagado', sortable: true, align: 'right' as const, format: 'currency' as const },
-  { key: 'fechaPago', title: 'Fecha de Pago', sortable: true, align: 'left' as const, format: 'text' as const },
-  { key: 'metodo', title: 'Método', sortable: false, align: 'left' as const },
-  { key: 'estado', title: 'Estado', sortable: false, align: 'center' as const }
+  { key: 'orden', title: 'Orden', sortable: true, align: 'left' as const, class: 'font-bold' },
+  { key: 'fechaOrden', title: 'Fecha Orden', sortable: true, align: 'left' as const, class: 'font-normal' },
+  { key: 'proveedor', title: 'Proveedor', sortable: true, align: 'left' as const, class: 'font-normal' },
+  { key: 'factura', title: 'Factura', sortable: false, align: 'left' as const, class: 'font-normal' },
+  { key: 'fechaFactura', title: 'Fecha Factura', sortable: false, align: 'left' as const, class: 'font-normal' },
+  { key: 'montoPagado', title: 'Monto Pagado', sortable: true, align: 'right' as const, format: 'currency' as const, class: 'font-normal' },
+  { key: 'fechaPago', title: 'Fecha de Pago', sortable: true, align: 'left' as const, format: 'text' as const, class: 'font-normal' },
+  { key: 'metodo', title: 'Método', sortable: false, align: 'left' as const, class: 'font-normal' },
+  { key: 'estado', title: 'Estado', sortable: false, align: 'center' as const, class: 'font-normal' }
 ]
 
 // Transform pending purchases data for table
 const pendingTableData = computed(() => {
   return pendingPurchases.value.map(purchase => ({
     orden: purchase.purchase_number,
-    fecha: formatDate(purchase.purchase_date),
+    fechaOrden: formatDate(purchase.purchase_date),
     proveedor: getSupplierName(purchase),
-    factura: purchase.invoice_number,
+    factura: purchase.invoice_number || '-',
     fechaFactura: formatDate(purchase.invoice_date),
     monto: parseFloat(purchase.invoice_amount || '0') || (parseFloat(purchase.total_amount || '0') + parseFloat(purchase.tax_amount || '0')),
     vencimiento: formatDate(purchase.payment_due_date),
@@ -509,9 +503,9 @@ const pendingTableData = computed(() => {
 const paidTableData = computed(() => {
   return paidPurchases.value.map(purchase => ({
     orden: purchase.purchase_number,
-    fecha: formatDate(purchase.purchase_date),
+    fechaOrden: formatDate(purchase.purchase_date),
     proveedor: getSupplierName(purchase),
-    factura: purchase.invoice_number,
+    factura: purchase.invoice_number || '-',
     fechaFactura: formatDate(purchase.invoice_date),
     montoPagado: parseFloat(purchase.payment_amount || purchase.invoice_amount || '0') || (parseFloat(purchase.total_amount || '0') + parseFloat(purchase.tax_amount || '0')),
     fechaPago: formatDate(purchase.payment_date_final || purchase.payment_date || purchase.paid_at),

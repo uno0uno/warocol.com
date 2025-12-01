@@ -260,11 +260,14 @@ function getCellColor(value: any, column: TableColumn): string {
           </tr>
 
           <!-- Data Rows -->
-          <tr 
+          <tr
             v-else
-            v-for="(row, index) in data" 
+            v-for="(row, index) in data"
             :key="index"
-            :class="tableRowVariants({ variant, rowType: 'normal' })"
+            :class="[
+              tableRowVariants({ variant, rowType: 'normal' }),
+              index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'
+            ]"
           >
             <td 
               v-for="column in columns"
