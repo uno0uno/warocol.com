@@ -1,7 +1,7 @@
 <template>
   <div class="page-layout">
     <!-- Loading State (only show if no data yet) -->
-    <div v-if="isLoading && !suppliers.length" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
@@ -18,9 +18,7 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-      <h1 style="background: lime; color: black; padding: 20px; font-size: 24px; font-weight: bold;">
-        MAIN CONTENT RENDERING - SUPPLIERS: {{ suppliers?.length }} - TOTAL: {{ totalSuppliers }}
-      </h1>
+
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
         <SharedMetricCard title="Proveedores Activos" :value="stats.activos" subtitle="Estado operativo"
@@ -290,16 +288,7 @@ onTenantChange(async () => {
   await refresh()
 })
 
-onMounted(() => {
-  console.log('[MOUNTED] isLoading:', isLoading.value)
-  console.log('[MOUNTED] suppliers:', suppliers.value?.length)
-  console.log('[MOUNTED] suppliersData:', suppliersData.value)
-})
 
-// Watch for changes
-watch([isLoading, suppliers], ([loading, sups]) => {
-  console.log('[WATCH] isLoading:', loading, 'suppliers:', sups?.length)
-}, { immediate: true })
 
 // DataTable configuration
 
@@ -442,7 +431,7 @@ const copyPortalLink = async (proveedor) => {
 
 
   } catch (error) {
-    console.error('Error copying portal link:', error)
+
   }
 }
 

@@ -12,7 +12,7 @@ export const useTenantsStore = defineStore('tenants', () => {
   const selectedTenant = ref<Tenant | null>(null)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
-  
+
   // Global tenant change counter - increments when tenant changes
   const tenantChangeCounter = ref(0)
 
@@ -24,19 +24,19 @@ export const useTenantsStore = defineStore('tenants', () => {
   const fetchUserTenants = async () => {
     isLoading.value = true
     error.value = null
-    
-    
+
+
     try {
       // Get tenants and current session
       const [tenantsResponse, sessionResponse] = await Promise.all([
         $fetch('/api/tenants/user-tenants'),
         $fetch('/api/auth/session')
       ])
-      
-      
+
+
       if (tenantsResponse.success) {
         tenants.value = tenantsResponse.data
-        
+
         // Set current tenant from session if available
         if (sessionResponse.success && sessionResponse.currentTenant) {
           const currentTenant = tenants.value.find(t => t.id === sessionResponse.currentTenant.id)
@@ -44,7 +44,7 @@ export const useTenantsStore = defineStore('tenants', () => {
             selectedTenant.value = currentTenant
           }
         }
-        
+
         // Fallback to first tenant if none selected
         if (!selectedTenant.value && tenants.value.length > 0) {
           selectedTenant.value = tenants.value[0]
@@ -62,30 +62,26 @@ export const useTenantsStore = defineStore('tenants', () => {
   }
 
   const selectTenant = async (tenant: Tenant) => {
-    console.log(`🎯 selectTenant called with: ${tenant.slug}, current: ${selectedTenant.value?.slug}`)
-    
+
     // Check if already on the selected tenant
     if (selectedTenant.value?.slug === tenant.slug) {
-      console.log(`✅ Already on tenant ${tenant.slug}, skipping switch`)
       return true
     }
-    
+
     // Check if already loading to prevent concurrent calls
     if (isLoading.value) {
-      console.log(`⏳ Already loading tenant switch, skipping`)
       return false
     }
-    
+
     isLoading.value = true
     error.value = null
-    
+
     try {
-      console.log(`🔄 Switching from ${selectedTenant.value?.slug || 'none'} to ${tenant.slug}`)
-      
+
       // Import encryption utility
       const { getEncryptedOrigin } = await import('~/utils/encryption.js')
       const encryptedOrigin = getEncryptedOrigin()
-      
+
       const response = await $fetch('/api/auth/switch-tenant', {
         method: 'POST',
         headers: {
@@ -93,11 +89,10 @@ export const useTenantsStore = defineStore('tenants', () => {
         },
         body: { tenantSlug: tenant.slug }
       })
-      
+
       if (response.success) {
         selectedTenant.value = tenant
         tenantChangeCounter.value++ // Increment counter to trigger reactivity globally
-        console.log(`✅ Successfully switched to tenant ${tenant.slug}`)
         return true
       } else {
         error.value = response.message || 'Error switching tenant'
@@ -133,11 +128,11 @@ export const useTenantsStore = defineStore('tenants', () => {
     isLoading,
     error,
     tenantChangeCounter,
-    
+
     // Getters
     hasTenants,
     selectedTenantSlug,
-    
+
     // Actions
     fetchUserTenants,
     selectTenant,

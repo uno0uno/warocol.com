@@ -36,7 +36,6 @@ export const useTenantReactive = () => {
       async (newCounter, oldCounter) => {
         // Solo ejecutar si realmente cambió el counter (no en la inicialización)
         if (newCounter !== oldCounter && newCounter > 0) {
-          console.log(`🔄 Tenant change detected, executing callback (counter: ${newCounter})`)
           await callback()
         }
       },

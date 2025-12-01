@@ -270,10 +270,8 @@ const selectTenant = async (tenant: Tenant) => {
 
   if (success) {
     // The reactive system will automatically refresh all data in components using useTenantReactive()
-    console.log(`✅ Tenant switched successfully to: ${tenant.name}`)
   } else {
     // Show error message if needed
-    console.error('Failed to switch tenant')
   }
 }
 
@@ -289,7 +287,7 @@ const handleLogout = async () => {
       credentials: 'include'
     })
 
-    console.log('✅ Logged out successfully')
+
 
     // Clear any local storage/session storage
     if (typeof window !== 'undefined') {
@@ -300,7 +298,7 @@ const handleLogout = async () => {
     // Redirect to login page
     await navigateTo('/auth/login')
   } catch (error) {
-    console.error('❌ Logout error:', error)
+
     // Even if the API call fails, redirect to login for security
     await navigateTo('/auth/login')
   } finally {
