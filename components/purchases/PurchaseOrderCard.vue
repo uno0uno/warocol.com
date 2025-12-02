@@ -123,16 +123,25 @@ const statusText = computed(() => {
 
 const statusVariant = computed(() => {
   const variants: Record<string, string> = {
-    quotation: 'info',
+    // 📋 Pre-compra (Gris - Neutral)
+    quotation: 'secondary',
+    // ⏳ Requiere acción (Amarillo/Naranja - Atención)
     pending: 'warning',
-    confirmed: 'success',
+    // ✅ Confirmada (Primario - Importante pero en proceso)
+    confirmed: 'primary',
+    // 🔄 En preparación/tránsito (Azul - Informativo)
     preparing: 'info',
     shipped: 'info',
+    // 📦 Recibida/Verificada (Verde - Éxito)
     received: 'success',
     verified: 'success',
+    // 📄 Facturada (Gris - Neutral, esperando pago)
     invoiced: 'secondary',
+    // 💰 Pagada (Verde - Completado)
     paid: 'success',
-    cancelled: 'destructive'
+    // ❌ Problemas (Rojo - Destructivo)
+    cancelled: 'destructive',
+    overdue: 'destructive'
   }
   return variants[props.order.estado] || 'secondary'
 })

@@ -19,25 +19,32 @@
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
-        <SharedMetricCard title="Proveedores Activos" :value="stats.activos" subtitle="Estado operativo"
-          variant="primary" :show-icon="false" />
 
-        <SharedMetricCard title="Proveedores Inactivos" :value="stats.inactivos" subtitle="Pausados o desactivados"
-          variant="primary" :show-icon="false" />
 
-        <SharedMetricCard title="Promedio de Pago" :value="stats.promedioPago" suffix="d"
-          subtitle="Días promedio de términos" variant="info" :show-icon="false" />
-
-        <SharedMetricCard title="Con Entregas Programadas" :value="stats.conEntregas"
-          subtitle="Proveedores con entregas" variant="primary" :show-icon="false" />
+      <!-- Desktop: Full Filters -->
+      <div class="hidden md:block bg-white rounded-lg shadow-sm border border-titan-200 p-4 sm:p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div>
+            <label class="block text-sm font-medium text-text-secondary mb-2">Buscar</label>
+            <UiSearchWithField
+              v-model="localSearchTerm"
+              v-model:fieldValue="apiSearchField"
+              :fields="searchFields"
+              placeholder="Buscar..."
+              class="w-full"
+              @search="performSearch"
+            />
+          </div>
+        </div>
       </div>
 
       <!-- Responsive Data View -->
       <UiResponsiveDataView
         :columns="proveedoresTableColumns"
         :data="suppliers"
+        :sort-field="sortField"
+        :sort-direction="sortDirection"
+        @sort="handleSort"
         title="Proveedores"
         empty-message="No hay proveedores registrados"
         empty-sub-message="Crea un nuevo proveedor para comenzar"
@@ -47,10 +54,14 @@
         <template #mobileActions>
           <div class="flex flex-col gap-2">
             <div class="relative">
-              <input type="text" v-model="apiSearchTerm" placeholder="Buscar..."
-                class="w-full pl-9 pr-3 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm" />
-              <MagnifyingGlassIcon
-                class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
+              <UiSearchWithField
+                v-model="localSearchTerm"
+                v-model:fieldValue="apiSearchField"
+                :fields="searchFields"
+                placeholder="Buscar..."
+                class="w-full"
+                @search="performSearch"
+              />
             </div>
             <NuxtLink to="/abastecimiento/proveedor/crear"
               class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center">
@@ -70,19 +81,11 @@
             <h3 class="text-base sm:text-lg font-bold text-text-primary">
               Proveedores
             </h3>
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
-              <div class="relative flex-1 sm:flex-initial">
-                <input type="text" v-model="apiSearchTerm" placeholder="Buscar..."
-                  class="w-full pl-9 pr-3 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm" />
-                <MagnifyingGlassIcon
-                  class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
-              </div>
-              <NuxtLink to="/abastecimiento/proveedor/crear"
-                class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
-                <span class="hidden sm:inline">+ Nuevo Proveedor</span>
-                <span class="sm:hidden">+ Nuevo</span>
-              </NuxtLink>
-            </div>
+            <NuxtLink to="/abastecimiento/proveedor/crear"
+              class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
+              <span class="hidden sm:inline">+ Nuevo Proveedor</span>
+              <span class="sm:hidden">+ Nuevo</span>
+            </NuxtLink>
           </div>
         </template>
 
@@ -140,10 +143,8 @@
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
             <p class="text-sm text-titan-700">
-              Mostrando <span class="font-medium">{{ startIndex }}</span> a <span class="font-medium">{{ endIndex
-                }}</span>
-              de{' '}
-              <span class="font-medium">{{ totalSuppliers }}</span> resultados
+              Mostrando <span class="font-medium">{{ startIndex }}</span> a <span class="font-medium">{{ endIndex }}</span>
+              de <span class="font-medium">{{ totalSuppliers }}</span> resultados
             </p>
           </div>
           <div>
@@ -212,9 +213,28 @@ const { onTenantChange, currentTenant } = useTenantReactive()
 
 const currentPage = ref(1);
 
-const itemsPerPage = ref(10);
+const itemsPerPage = ref(20);
 
+// Sorting state
+const sortField = ref('')
+const sortDirection = ref('asc')
+
+const localSearchTerm = ref('');
 const apiSearchTerm = ref('');
+const apiSearchField = ref('name');
+
+const performSearch = () => {
+  apiSearchTerm.value = localSearchTerm.value;
+  currentPage.value = 1; // Reset to first page on search
+  refresh();
+}
+
+const searchFields = [
+  { label: 'Proveedor', value: 'name' },
+  { label: 'NIT', value: 'tax_id' },
+  { label: 'Email', value: 'email' },
+  { label: 'Teléfono', value: 'phone' }
+];
 
 const apiIsActive = ref(null);
 
@@ -230,7 +250,10 @@ const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = 
       page: currentPage.value,
       limit: itemsPerPage.value,
     };
-    if (apiSearchTerm.value) params.search = apiSearchTerm.value;
+    if (apiSearchTerm.value) {
+      params.search = apiSearchTerm.value;
+      params.search_field = apiSearchField.value;
+    }
     if (apiIsActive.value !== null) params.is_active = apiIsActive.value;
     if (apiPaymentTerms.value) params.payment_terms = apiPaymentTerms.value;
 
@@ -240,7 +263,7 @@ const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = 
   },
   {
     server: false,
-    watch: [currentTenant, currentPage, itemsPerPage, apiSearchTerm, apiIsActive, apiPaymentTerms],
+    watch: [currentTenant, currentPage, itemsPerPage, apiIsActive, apiPaymentTerms],
     default: () => ({ data: [], total: 0, stats: null }),
     transform: (response) => ({
       data: response.data || [],
@@ -259,29 +282,53 @@ onMounted(() => {
 })
 
 // Computed properties for data and pagination
-const suppliers = computed(() => suppliersData.value.data);
+// Computed properties for data and pagination
+const suppliersList = computed(() => suppliersData.value.data);
 const totalSuppliers = computed(() => suppliersData.value.total);
 
-// Stats from API response
-const stats = computed(() => {
-  const apiStats = suppliersData.value.stats
+// Sorted suppliers
+const suppliers = computed(() => {
+  if (!sortField.value) return suppliersList.value
 
-  if (!apiStats) {
-    return {
-      activos: 0,
-      inactivos: 0,
-      promedioPago: 0,
-      conEntregas: 0
+  const sorted = [...suppliersList.value].sort((a, b) => {
+    const aValue = a[sortField.value]
+    const bValue = b[sortField.value]
+
+    // Handle null/undefined
+    if (aValue === null || aValue === undefined) return 1
+    if (bValue === null || bValue === undefined) return -1
+
+    // Numeric comparison
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortDirection.value === 'asc' ? aValue - bValue : bValue - aValue
     }
-  }
 
-  return {
-    activos: apiStats.activos || 0,
-    inactivos: apiStats.inactivos || 0,
-    promedioPago: apiStats.promedio_pago || 0,
-    conEntregas: apiStats.con_entregas || 0
-  }
+    // String comparison
+    const strA = String(aValue).toLowerCase()
+    const strB = String(bValue).toLowerCase()
+    if (sortDirection.value === 'asc') {
+      return strA.localeCompare(strB)
+    } else {
+      return strB.localeCompare(strA)
+    }
+  })
+
+  return sorted
 })
+
+// Handle sort
+const handleSort = (field) => {
+  if (sortField.value === field) {
+    // Toggle direction
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    // New field, default to ascending
+    sortField.value = field
+    sortDirection.value = 'asc'
+  }
+}
+
+
 
 // Manual refresh on tenant change to ensure data loading
 onTenantChange(async () => {

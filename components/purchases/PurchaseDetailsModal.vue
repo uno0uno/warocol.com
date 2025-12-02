@@ -400,16 +400,25 @@ function getStatusText(status: string): string {
 function getStatusBadgeClass(status: string): string {
   const baseClasses = 'px-3 py-1 text-sm font-medium rounded border-2'
   const statusClasses: Record<string, string> = {
-    quotation: 'border-accent text-accent',
+    // 📋 Pre-compra (Gris - Neutral)
+    quotation: 'border-muted-foreground text-muted-foreground',
+    // ⏳ Requiere acción (Amarillo/Naranja - Atención)
     pending: 'border-warning text-warning',
-    confirmed: 'border-success text-success',
-    preparing: 'border-blue-500 text-blue-500',
-    shipped: 'border-blue-600 text-blue-600',
-    received: 'border-purple-500 text-purple-500',
-    verified: 'border-indigo-500 text-indigo-500',
-    invoiced: 'border-orange-500 text-orange-500',
+    // ✅ Confirmada (Primario - Importante pero en proceso)
+    confirmed: 'border-primary text-primary',
+    // 🔄 En preparación/tránsito (Azul - Informativo)
+    preparing: 'border-info text-info',
+    shipped: 'border-info text-info',
+    // 📦 Recibida/Verificada (Verde - Éxito)
+    received: 'border-success text-success',
+    verified: 'border-success text-success',
+    // 📄 Facturada (Gris - Neutral, esperando pago)
+    invoiced: 'border-muted-foreground text-muted-foreground',
+    // 💰 Pagada (Verde - Completado)
     paid: 'border-success text-success',
-    cancelled: 'border-destructive text-destructive'
+    // ❌ Problemas (Rojo - Destructivo)
+    cancelled: 'border-destructive text-destructive',
+    overdue: 'border-destructive text-destructive'
   }
   return `${baseClasses} ${statusClasses[status] || 'border-border text-text-secondary'}`
 }

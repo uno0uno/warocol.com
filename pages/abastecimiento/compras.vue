@@ -18,33 +18,21 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-5">
-        <SharedMetricCard title="Total de Órdenes" :value="stats.total" subtitle="Órdenes registradas" variant="primary"
-          :show-icon="false" />
 
-        <SharedMetricCard title="Órdenes Pendientes" :value="stats.pendientes" subtitle="Esperando procesamiento"
-          variant="primary" :show-icon="false" />
-
-        <SharedMetricCard title="Órdenes Recibidas" :value="stats.recibidas" subtitle="Completadas exitosamente"
-          variant="primary" :show-icon="false" />
-
-        <SharedMetricCard title="Órdenes Vencidas" :value="stats.vencidas" subtitle="Fuera de tiempo" variant="primary"
-          :show-icon="false" />
-
-        <SharedMetricCard title="Valor Total" :value="stats.valorTotal" format="currency" suffix="M"
-          subtitle="Monto total órdenes" variant="primary" :show-icon="false"
-          class="col-span-2 md:col-span-1" />
-      </div>
 
       <!-- Filters and Search -->
       <!-- Mobile: Compact Search + Filter Button -->
       <div class="md:hidden bg-white rounded-lg shadow-sm border border-titan-200 p-3">
         <div class="flex gap-2">
           <div class="relative flex-1">
-            <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
-            <input v-model="searchTerm" type="text" placeholder="Buscar..."
-              class="w-full pl-9 pr-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" />
+            <UiSearchWithField
+              v-model="localSearchTerm"
+              v-model:fieldValue="apiSearchField"
+              :fields="searchFields"
+              placeholder="Buscar..."
+              class="w-full"
+              @search="performSearch"
+            />
           </div>
           <button @click="showFiltersModal = true"
             class="px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary transition-colors flex items-center gap-2">
@@ -59,37 +47,72 @@
 
       <!-- Desktop: Full Filters -->
       <div class="hidden md:block bg-white rounded-lg shadow-sm border border-titan-200 p-4 sm:p-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-          <div class="sm:col-span-2 lg:col-span-2">
-            <div class="relative">
-              <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
-              <input v-model="searchTerm" type="text" placeholder="Buscar..."
-                class="w-full pl-9 pr-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" />
-            </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div>
+            <label class="block text-sm font-medium text-text-secondary mb-2">Buscar</label>
+            <UiSearchWithField
+              v-model="localSearchTerm"
+              v-model:fieldValue="apiSearchField"
+              :fields="searchFields"
+              placeholder="Buscar..."
+              class="w-full"
+              @search="performSearch"
+            />
           </div>
-          <select v-model="proveedorFilter"
-            class="px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
-            <option value="">Todos</option>
-            <option v-for="proveedor in proveedoresUnicos" :key="proveedor" :value="proveedor">
-              {{ proveedor }}
-            </option>
-          </select>
-          <select v-model="statusFilter"
-            class="px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
-            <option value="">Todos los estados</option>
-            <option value="quotation">Cotización</option>
-            <option value="pending">Pendiente</option>
-            <option value="confirmed">Confirmada</option>
-            <option value="preparing">En Preparación</option>
-            <option value="shipped">Enviada</option>
-            <option value="received">Recibida</option>
-            <option value="verified">Verificada</option>
-            <option value="invoiced">Facturada</option>
-            <option value="paid">Pagada</option>
-            <option value="cancelled">Cancelada</option>
-          </select>
-          <input v-model="dateRange" type="month"
-            class="px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" />
+
+          <div>
+            <label class="block text-sm font-medium text-text-secondary mb-2">Proveedor</label>
+            <select v-model="proveedorFilter"
+              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+              <option value="">Todos los proveedores</option>
+              <option v-for="proveedor in suppliers" :key="proveedor.id" :value="proveedor.id">
+                {{ proveedor.name }}
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-text-secondary mb-2">Estado</label>
+            <select v-model="statusFilter"
+              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+              <option value="">Todos los estados</option>
+              <option value="quotation">Cotización</option>
+              <option value="pending">Pendiente</option>
+              <option value="confirmed">Confirmada</option>
+              <option value="preparing">En Preparación</option>
+              <option value="shipped">Enviada</option>
+              <option value="received">Recibida</option>
+              <option value="verified">Verificada</option>
+              <option value="invoiced">Facturada</option>
+              <option value="paid">Pagada</option>
+              <option value="cancelled">Cancelada</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-text-secondary mb-2">Período</label>
+            <select v-model="dateFilter"
+              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+              <option value="">Todos</option>
+              <option value="today">Hoy</option>
+              <option value="yesterday">Ayer</option>
+              <option value="last_week">Semana Pasada</option>
+              <option value="15_days">Últimos 15 días</option>
+              <option value="1_month">Último mes</option>
+              <option value="3_months">Últimos 3 meses</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Clear filters button -->
+        <div v-if="proveedorFilter || statusFilter || dateFilter" class="mt-4 flex justify-end">
+          <button @click="clearFilters"
+            class="text-sm text-text-secondary hover:text-text-primary transition-colors flex items-center space-x-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span>Limpiar filtros</span>
+          </button>
         </div>
       </div>
 
@@ -103,8 +126,8 @@
             <select v-model="proveedorFilter"
               class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
               <option value="">Todos los proveedores</option>
-              <option v-for="proveedor in proveedoresUnicos" :key="proveedor" :value="proveedor">
-                {{ proveedor }}
+              <option v-for="proveedor in suppliers" :key="proveedor.id" :value="proveedor.id">
+                {{ proveedor.name }}
               </option>
             </select>
           </div>
@@ -128,11 +151,19 @@
             </select>
           </div>
 
-          <!-- Date Range Filter -->
+          <!-- Date Filter -->
           <div>
-            <label class="text-sm font-medium text-titan-700 mb-2 block">Mes</label>
-            <input v-model="dateRange" type="month"
-              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" />
+            <label class="text-sm font-medium text-titan-700 mb-2 block">Período</label>
+            <select v-model="dateFilter"
+              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+              <option value="">Todos</option>
+              <option value="today">Hoy</option>
+              <option value="yesterday">Ayer</option>
+              <option value="last_week">Semana Pasada</option>
+              <option value="15_days">Últimos 15 días</option>
+              <option value="1_month">Último mes</option>
+              <option value="3_months">Últimos 3 meses</option>
+            </select>
           </div>
         </div>
 
@@ -154,7 +185,10 @@
       <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
       <UiResponsiveDataView
         :columns="ordenesTableColumns"
-        :data="filteredOrdenes"
+        :data="sortedOrdenes"
+        :sort-field="sortField"
+        :sort-direction="sortDirection"
+        @sort="handleSort"
         title="Órdenes de Compra"
         empty-message="No hay órdenes para mostrar"
         empty-sub-message="Crea una nueva orden para comenzar"
@@ -213,7 +247,12 @@
         </template>
 
         <template #cell-estado="{ value }">
-          <UiStatusBadge :value="getStatusText(value)" format="text" :variant="getStatusVariant(value)" size="sm" />
+          <UiStatusBadge
+            :value="getStatusText(value)"
+            format="text"
+            :class="['border-0', getStatusClass(value)]"
+            size="sm"
+          />
         </template>
 
         <template #cell-fechaEntrega="{ value }">
@@ -234,36 +273,55 @@
       </UiResponsiveDataView>
 
       <!-- Pagination -->
-      <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
+      <div v-if="purchasesData.total > itemsPerPage" class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
         <div class="flex-1 flex justify-between sm:hidden">
           <button
-            class="relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
+            @click="previousPage"
+            :disabled="!canGoPrevious"
+            :class="[
+              'relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md',
+              canGoPrevious ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed'
+            ]">
             Anterior
           </button>
           <button
-            class="ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md text-titan-700 bg-white hover:bg-titan-50">
+            @click="nextPage"
+            :disabled="!canGoNext"
+            :class="[
+              'ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md',
+              canGoNext ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed'
+            ]">
             Siguiente
           </button>
         </div>
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
             <p class="text-sm text-titan-700">
-              Mostrando <span class="font-medium">1</span> a <span class="font-medium">10</span> de{' '}
-              <span class="font-medium">{{ filteredOrdenes.length }}</span> resultados
+              Mostrando <span class="font-medium">{{ startItem }}</span> a <span class="font-medium">{{ endItem }}</span> de
+              <span class="font-medium">{{ purchasesData.total }}</span> resultados
             </p>
           </div>
           <div>
             <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
               <button
-                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
+                @click="previousPage"
+                :disabled="!canGoPrevious"
+                :class="[
+                  'relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 text-sm font-medium',
+                  canGoPrevious ? 'bg-white text-titan-500 hover:bg-titan-50' : 'bg-titan-50 text-titan-300 cursor-not-allowed'
+                ]">
                 <ChevronLeftIcon class="h-5 w-5" />
               </button>
+              <span class="relative inline-flex items-center px-4 py-2 border border-titan-300 bg-white text-sm font-medium text-titan-700">
+                {{ currentPage }} / {{ totalPages }}
+              </span>
               <button
-                class="relative inline-flex items-center px-4 py-2 border border-titan-300 bg-white text-sm font-medium text-titan-700 hover:bg-titan-50">
-                1
-              </button>
-              <button
-                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 bg-white text-sm font-medium text-titan-500 hover:bg-titan-50">
+                @click="nextPage"
+                :disabled="!canGoNext"
+                :class="[
+                  'relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 text-sm font-medium',
+                  canGoNext ? 'bg-white text-titan-500 hover:bg-titan-50' : 'bg-titan-50 text-titan-300 cursor-not-allowed'
+                ]">
                 <ChevronRightIcon class="h-5 w-5" />
               </button>
             </nav>
@@ -297,21 +355,39 @@ import {
 } from '@heroicons/vue/24/outline'
 
 // Reactive state
-const searchTerm = ref('')
+const localSearchTerm = ref('')
+const apiSearchTerm = ref('')
+const apiSearchField = ref('purchase_number')
 const proveedorFilter = ref('')
 const statusFilter = ref('')
-const dateRange = ref('')
+const dateFilter = ref('')
 const showCreateModal = ref(false)
 const showFiltersModal = ref(false)
 const currentPage = ref(1)
-const itemsPerPage = ref(10)
+const itemsPerPage = ref(20) // 20 filas por página
+
+const searchFields = [
+  { label: 'N° Orden', value: 'purchase_number' },
+  { label: 'N° Factura', value: 'invoice_number' },
+  { label: 'Proveedor', value: 'supplier_name' }
+]
+
+const performSearch = () => {
+  apiSearchTerm.value = localSearchTerm.value
+  currentPage.value = 1
+  refresh()
+}
+
+// Sorting state
+const sortField = ref('')
+const sortDirection = ref('asc')
 
 // Active filters count
 const activeFiltersCount = computed(() => {
   let count = 0
   if (proveedorFilter.value) count++
   if (statusFilter.value) count++
-  if (dateRange.value) count++
+  if (dateFilter.value) count++
   return count
 })
 
@@ -319,11 +395,60 @@ const activeFiltersCount = computed(() => {
 const clearFilters = () => {
   proveedorFilter.value = ''
   statusFilter.value = ''
-  dateRange.value = ''
+  dateFilter.value = ''
 }
+
+// Pagination
+const totalPages = computed(() => {
+  return Math.ceil((purchasesData.value?.total || 0) / itemsPerPage.value)
+})
+
+const canGoPrevious = computed(() => currentPage.value > 1)
+const canGoNext = computed(() => currentPage.value < totalPages.value)
+
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
+const previousPage = () => {
+  if (canGoPrevious.value) {
+    currentPage.value--
+  }
+}
+
+const nextPage = () => {
+  if (canGoNext.value) {
+    currentPage.value++
+  }
+}
+
+const startItem = computed(() => {
+  return (currentPage.value - 1) * itemsPerPage.value + 1
+})
+
+const endItem = computed(() => {
+  return Math.min(currentPage.value * itemsPerPage.value, purchasesData.value?.total || 0)
+})
 
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
+
+// Fetch suppliers
+const { data: suppliersData } = useAsyncData(
+  `suppliers-${currentTenant.value?.id || 'default'}`,
+  () => $fetch('/api/suppliers/providers', {
+    query: { limit: 250 }
+  }),
+  {
+    server: false,
+    watch: [currentTenant],
+    default: () => ({ data: [] })
+  }
+)
+
+const suppliers = computed(() => suppliersData.value?.data || [])
 
 // Fetch data using useAsyncData for proper loading states (NO await to show loading)
 const { data: purchasesData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
@@ -333,9 +458,13 @@ const { data: purchasesData, pending: isLoading, error: fetchError, refresh } = 
       page: currentPage.value,
       limit: itemsPerPage.value,
     };
-    if (searchTerm.value) params.search = searchTerm.value;
+    if (apiSearchTerm.value) {
+      params.search = apiSearchTerm.value;
+      params.search_field = apiSearchField.value;
+    }
     if (statusFilter.value) params.status = statusFilter.value;
     if (proveedorFilter.value) params.supplier_id = proveedorFilter.value;
+    if (dateFilter.value) params.date_filter = dateFilter.value;
 
     return $fetch('/api/suppliers/purchases', {
       query: params
@@ -343,7 +472,7 @@ const { data: purchasesData, pending: isLoading, error: fetchError, refresh } = 
   },
   {
     server: false,
-    watch: [currentTenant, currentPage, itemsPerPage, searchTerm, statusFilter, proveedorFilter],
+    watch: [currentTenant, currentPage, itemsPerPage, statusFilter, proveedorFilter, dateFilter],
     default: () => ({ data: [], total: 0 }),
     transform: (response) => ({
       data: response.data || [],
@@ -374,18 +503,7 @@ onMounted(() => {
   setRefreshHandler(refresh)
 })
 
-// Stats
-const stats = computed(() => {
-  const all = ordenes.value
-  const totalSum = all.reduce((sum, o) => sum + o.valorTotal, 0)
-  return {
-    total: all.length,
-    pendientes: all.filter(o => o.estado === 'pending').length,
-    recibidas: all.filter(o => o.estado === 'received').length,
-    vencidas: all.filter(o => o.estado === 'overdue').length,
-    valorTotal: totalSum / 1000000 // Convert to millions
-  }
-})
+
 
 const actividadReciente = ref([
   {
@@ -500,23 +618,54 @@ const ordenesTableColumns = [
   }
 ]
 
-// Computed properties
-const proveedoresUnicos = computed(() => {
-  return [...new Set(ordenes.value.map(o => o.proveedor))].sort()
-})
+// Sorted orders
+const sortedOrdenes = computed(() => {
+  if (!sortField.value) return ordenes.value
 
-const filteredOrdenes = computed(() => {
-  return ordenes.value.filter(orden => {
-    const matchesSearch = !searchTerm.value ||
-      orden.numero.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-      orden.proveedor.toLowerCase().includes(searchTerm.value.toLowerCase())
+  const sorted = [...ordenes.value].sort((a, b) => {
+    const aValue = a[sortField.value]
+    const bValue = b[sortField.value]
 
-    const matchesProveedor = !proveedorFilter.value || orden.proveedor === proveedorFilter.value
-    const matchesStatus = !statusFilter.value || orden.estado === statusFilter.value
+    // Handle null/undefined
+    if (aValue === null || aValue === undefined) return 1
+    if (bValue === null || bValue === undefined) return -1
 
-    return matchesSearch && matchesProveedor && matchesStatus
+    // Numeric comparison for numbers
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortDirection.value === 'asc' ? aValue - bValue : bValue - aValue
+    }
+
+    // Date comparison
+    if (sortField.value === 'fecha' || sortField.value === 'fechaEntrega') {
+      const dateA = new Date(aValue).getTime()
+      const dateB = new Date(bValue).getTime()
+      return sortDirection.value === 'asc' ? dateA - dateB : dateB - dateA
+    }
+
+    // String comparison
+    const strA = String(aValue).toLowerCase()
+    const strB = String(bValue).toLowerCase()
+    if (sortDirection.value === 'asc') {
+      return strA.localeCompare(strB)
+    } else {
+      return strB.localeCompare(strA)
+    }
   })
+
+  return sorted
 })
+
+// Handle sort
+const handleSort = (field) => {
+  if (sortField.value === field) {
+    // Toggle direction
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    // New field, default to ascending
+    sortField.value = field
+    sortDirection.value = 'asc'
+  }
+}
 
 // Helper functions
 const formatDate = (dateString) => {
@@ -537,31 +686,23 @@ const formatDateShort = (dateString) => {
 }
 
 // Helper function for status variants
-function getStatusVariant(status) {
-  switch (status) {
-    case 'quotation':
-      return 'info'
-    case 'pending':
-      return 'warning'
-    case 'confirmed':
-      return 'success'
-    case 'preparing':
-      return 'info'
-    case 'shipped':
-      return 'info'
-    case 'received':
-      return 'success'
-    case 'verified':
-      return 'success'
-    case 'invoiced':
-      return 'secondary'
-    case 'paid':
-      return 'success'
-    case 'cancelled':
-      return 'destructive'
-    default:
-      return 'secondary'
+// Helper function for status classes (matching acciones.vue)
+function getStatusClass(status) {
+  const classes = {
+    quotation: '!bg-yellow-500/10 !text-yellow-600',
+    pending: '!bg-blue-500/10 !text-blue-600',
+    confirmed: '!bg-teal-500/10 !text-teal-600',
+    preparing: '!bg-purple-500/10 !text-purple-600',
+    shipped: '!bg-cyan-500/10 !text-cyan-600',
+    partially_received: '!bg-orange-500/10 !text-orange-600',
+    received: '!bg-emerald-500/10 !text-emerald-600',
+    verified: '!bg-green-600/10 !text-green-700',
+    invoiced: '!bg-indigo-500/10 !text-indigo-600',
+    paid: '!bg-green-600/10 !text-green-700',
+    cancelled: '!bg-destructive/10 !text-destructive',
+    overdue: '!bg-destructive/10 !text-destructive'
   }
+  return classes[status] || 'bg-titan-200 text-titan-700'
 }
 
 const getStatusText = (status) => {

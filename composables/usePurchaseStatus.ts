@@ -1,3 +1,4 @@
+// Composable para gestión de estados de compras
 export const usePurchaseStatus = () => {
   const getStatusText = (status: string): string => {
     const statusMap: Record<string, string> = {
@@ -16,25 +17,46 @@ export const usePurchaseStatus = () => {
     return statusMap[status] || status
   }
 
-  const getStatusVariant = (status: string): 'success' | 'warning' | 'info' | 'destructive' | 'secondary' => {
+  const getStatusVariant = (status: string): 'success' | 'warning' | 'info' | 'destructive' | 'secondary' | 'primary' => {
     switch (status) {
+      // 📋 Pre-compra (Gris - Neutral)
       case 'quotation':
-        return 'info'
+        return 'secondary'
+
+      // ⏳ Requiere acción (Amarillo/Naranja - Atención)
       case 'pending':
         return 'warning'
+
+      // ✅ Confirmada (Primario - Importante pero en proceso)
       case 'confirmed':
+        return 'primary'
+
+      // 🔄 En preparación/tránsito (Azul - Informativo, en movimiento)
       case 'preparing':
       case 'shipped':
         return 'info'
+
+      // 📦 Recibida (Verde claro - Éxito parcial)
       case 'received':
-      case 'verified':
-      case 'paid':
         return 'success'
+
+      // ✅ Verificada (Verde - Éxito)
+      case 'verified':
+        return 'success'
+
+      // 📄 Facturada (Gris - Neutral, esperando pago)
       case 'invoiced':
         return 'secondary'
+
+      // 💰 Pagada (Verde - Completado exitosamente)
+      case 'paid':
+        return 'success'
+
+      // ❌ Problemas (Rojo - Destructivo)
       case 'cancelled':
       case 'overdue':
         return 'destructive'
+
       default:
         return 'secondary'
     }

@@ -38,7 +38,14 @@
 
     <!-- Desktop: Table View -->
     <div class="hidden md:block">
-      <UiDataTable :columns="columns" :data="data" :variant="variant">
+      <UiDataTable
+        :columns="columns"
+        :data="data"
+        :variant="variant"
+        :sort-field="sortField"
+        :sort-direction="sortDirection"
+        @sort="$emit('sort', $event)"
+      >
         <!-- Pass through all table slots -->
         <template v-if="$slots.header" #header>
           <slot name="header" />
@@ -78,14 +85,21 @@ interface Props {
   emptySubMessage?: string
   // Key field for v-for (default: 'id')
   itemKey?: string
+  // Sorting props
+  sortField?: string
+  sortDirection?: 'asc' | 'desc'
 }
 
 const props = withDefaults(defineProps<Props>(), {
   variant: 'default',
   emptyMessage: 'No hay elementos para mostrar',
   emptySubMessage: 'Los elementos aparecerán aquí cuando estén disponibles',
-  itemKey: 'id'
+  itemKey: 'id',
+  sortDirection: 'asc'
 })
+
+// Define emits
+defineEmits(['sort'])
 
 // Get unique key for items
 const getItemKey = (item: any) => {

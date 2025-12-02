@@ -1,0 +1,77 @@
+<script setup>
+import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
+import { cn } from '../utils'
+
+const props = defineProps({
+  placeholder: {
+    type: String,
+    default: 'Buscar...'
+  },
+  modelValue: {
+    type: String,
+    default: ''
+  },
+  fieldValue: {
+    type: String,
+    default: ''
+  },
+  fields: {
+    type: Array,
+    default: () => []
+  },
+  class: {
+    type: String,
+    default: ''
+  }
+})
+
+const emit = defineEmits(['update:modelValue', 'update:fieldValue', 'search'])
+
+const handleInput = (event) => {
+  emit('update:modelValue', event.target.value)
+}
+
+const handleFieldChange = (event) => {
+  emit('update:fieldValue', event.target.value)
+  emit('search')
+}
+</script>
+
+<template>
+  <div :class="cn('flex items-center gap-2', props.class)">
+    <!-- Search Input -->
+    <div class="relative flex-1">
+      <button 
+        @click="emit('search')"
+        class="absolute left-3 top-1/2 transform -translate-y-1/2 text-titan-400 hover:text-crocus-500 transition-colors cursor-pointer"
+      >
+        <MagnifyingGlassIcon class="w-4 h-4" />
+      </button>
+      <input
+        :value="modelValue"
+        :placeholder="placeholder"
+        @input="handleInput"
+        @keydown.enter="emit('search')"
+        class="w-full h-10 pl-9 pr-3 rounded-lg border border-titan-300 bg-white text-sm text-ebony-800 placeholder:text-titan-400 focus:outline-none focus:ring-2 focus:ring-crocus-500"
+      />
+    </div>
+
+    <!-- Field Select -->
+    <div class="relative">
+      <select
+        :value="fieldValue"
+        @change="handleFieldChange"
+        class="h-10 pl-3 pr-8 rounded-lg border border-titan-300 bg-white bg-none text-sm text-ebony-800 focus:outline-none focus:ring-2 focus:ring-crocus-500 appearance-none cursor-pointer min-w-[120px]"
+      >
+        <option v-for="field in fields" :key="field.value" :value="field.value">
+          {{ field.label }}
+        </option>
+      </select>
+      <div class="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+        <svg class="w-4 h-4 text-titan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+  </div>
+</template>
