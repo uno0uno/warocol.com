@@ -8,32 +8,21 @@
 
     <!-- Content -->
     <div v-else class="space-y-6">
-      <!-- Quick Stats -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
-        <SharedMetricCard title="Total Pendiente" :value="totalPending" format="currency"
-          :subtitle="`${pendingPurchases.length} facturas pendientes`" variant="primary" :icon="CurrencyDollarIcon"
-          :show-icon="false" />
 
-        <SharedMetricCard title="Vencen Esta Semana" :value="dueThisWeek" format="currency"
-          :subtitle="`${dueThisWeekCount} facturas`" variant="primary" :icon="ClockIcon" :show-icon="false" />
-
-        <SharedMetricCard title="Pagado Este Mes" :value="paidThisMonth" format="currency"
-          :subtitle="`${paidThisMonthCount} facturas pagadas`" variant="primary" :icon="CheckCircleIcon"
-          :show-icon="false" />
-      </div>
 
       <!-- Search Bar and Filters -->
       <!-- Mobile: Compact Search + Filter Button -->
       <div class="md:hidden bg-white rounded-lg shadow-sm border border-titan-200 p-3">
         <div class="flex gap-2">
           <div class="relative flex-1">
-            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" fill="none"
-              stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input v-model="searchQuery" type="text" placeholder="Buscar..."
-              class="w-full pl-9 pr-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500" />
+            <UiSearchWithField
+              v-model="localSearchTerm"
+              v-model:fieldValue="apiSearchField"
+              :fields="searchFields"
+              placeholder="Buscar..."
+              class="w-full"
+              @search="performSearch"
+            />
           </div>
           <button @click="showFiltersModal = true"
             class="px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary transition-colors flex items-center gap-2">
@@ -54,8 +43,14 @@
           <!-- Search by order number or invoice -->
           <div class="flex-1">
             <label class="block text-sm font-medium text-text-secondary mb-2">Buscar</label>
-            <input v-model="searchQuery" type="text" placeholder="Número de orden o factura..."
-              class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
+            <UiSearchWithField
+              v-model="localSearchTerm"
+              v-model:fieldValue="apiSearchField"
+              :fields="searchFields"
+              placeholder="Buscar..."
+              class="w-full"
+              @search="performSearch"
+            />
           </div>
 
           <!-- Filter by supplier -->
@@ -96,13 +91,10 @@
               <option value="3_months">Últimos 3 meses</option>
             </select>
           </div>
-
-          <!-- Refresh button -->
-          <SharedRefreshButton :on-refresh="refresh" title="Refrescar pagos" />
         </div>
 
         <!-- Clear filters button -->
-        <div v-if="searchQuery || selectedSupplierFilter || selectedStatusFilter || selectedDateFilter" class="mt-4 flex justify-end">
+        <div v-if="apiSearchTerm || selectedSupplierFilter || selectedStatusFilter || selectedDateFilter" class="mt-4 flex justify-end">
           <button @click="clearFilters"
             class="text-sm text-text-secondary hover:text-text-primary transition-colors flex items-center space-x-1">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -207,7 +199,10 @@
         <div class="hidden md:block">
           <UiDataTable :columns="pendingColumns" :data="filteredPendingTableData" variant="default"
             empty-message="No hay pagos pendientes. Todas las órdenes verificadas han sido pagadas."
-            :show-title="false">
+            :show-title="false"
+            :sort-field="sortField"
+            :sort-direction="sortDirection"
+            @sort="handleSort">
             <template #cell-seleccion="{ row }">
               <input type="checkbox" :checked="isSelected(row.purchaseData.id)"
                 @change="toggleSelection(row.purchaseData)"
@@ -263,7 +258,10 @@
         <!-- Desktop: Table -->
         <div class="hidden md:block">
           <UiDataTable :columns="paidColumns" :data="filteredPaidTableData" variant="default"
-            empty-message="No hay pagos registrados. Aún no se han registrado pagos a proveedores." :show-title="false">
+            empty-message="No hay pagos registrados. Aún no se han registrado pagos a proveedores." :show-title="false"
+            :sort-field="sortField"
+            :sort-direction="sortDirection"
+            @sort="handleSort">
             <template #cell-orden="{ row }">
               <span :class="{ 'animate-pulse': row.isHighlighted }">{{ row.orden }}</span>
             </template>
@@ -326,11 +324,28 @@ const route = useRoute()
 const highlightId = ref<string | null>(null)
 
 // Filter state - Initialize from query params
-const searchQuery = ref((route.query.search as string) || '')
+const localSearchTerm = ref((route.query.search as string) || '')
+const apiSearchTerm = ref((route.query.search as string) || '')
+const apiSearchField = ref((route.query.search_field as string) || 'purchase_number')
 const selectedSupplierFilter = ref((route.query.supplier_id as string) || '')
 const selectedStatusFilter = ref((route.query.payment_status as string) || '')
 const selectedDateFilter = ref((route.query.date_filter as string) || '')
 const showFiltersModal = ref(false)
+
+// Sorting state
+const sortField = ref('')
+const sortDirection = ref<'asc' | 'desc'>('asc')
+
+const searchFields = [
+  { label: 'N° Orden', value: 'purchase_number' },
+  { label: 'N° Factura', value: 'invoice_number' },
+  { label: 'Proveedor', value: 'supplier_name' }
+]
+
+const performSearch = () => {
+  apiSearchTerm.value = localSearchTerm.value
+  refresh()
+}
 
 // Set highlight ID from query params
 if (route.query.highlight) {
@@ -367,7 +382,8 @@ const activeFiltersCount = computed(() => {
 // Computed query params for purchases
 const purchasesQuery = computed(() => ({
   limit: 250,
-  search: searchQuery.value || undefined,
+  search: apiSearchTerm.value || undefined,
+  search_field: apiSearchField.value || undefined,
   supplier_id: selectedSupplierFilter.value || undefined,
   payment_status: selectedStatusFilter.value || undefined,
   date_filter: selectedDateFilter.value || undefined
@@ -381,7 +397,7 @@ const { data: purchasesData, pending: loading, refresh } = useAsyncData(
   }),
   {
     server: false,
-    watch: [currentTenant, purchasesQuery],
+    watch: [currentTenant, selectedSupplierFilter, selectedStatusFilter, selectedDateFilter],
     default: () => ({ data: [] })
   }
 )
@@ -422,75 +438,7 @@ const paidPurchases = computed(() => {
 })
 
 // Computed stats
-const totalPending = computed(() => {
-  return pendingPurchases.value.reduce((sum, p) => {
-    const invoiceAmount = p.invoice_amount ? parseFloat(p.invoice_amount) : null
-    const totalAmount = parseFloat(p.total_amount || 0)
-    const taxAmount = parseFloat(p.tax_amount || 0)
-    return sum + (invoiceAmount || (totalAmount + taxAmount))
-  }, 0)
-})
 
-const dueThisWeek = computed(() => {
-  const today = new Date()
-  const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
-
-  return pendingPurchases.value
-    .filter(p => {
-      if (!p.payment_due_date) return false
-      const dueDate = new Date(p.payment_due_date)
-      return dueDate >= today && dueDate <= nextWeek
-    })
-    .reduce((sum, p) => {
-      const invoiceAmount = p.invoice_amount ? parseFloat(p.invoice_amount) : null
-      const totalAmount = parseFloat(p.total_amount || 0)
-      const taxAmount = parseFloat(p.tax_amount || 0)
-      return sum + (invoiceAmount || (totalAmount + taxAmount))
-    }, 0)
-})
-
-const dueThisWeekCount = computed(() => {
-  const today = new Date()
-  const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
-
-  return pendingPurchases.value.filter(p => {
-    if (!p.payment_due_date) return false
-    const dueDate = new Date(p.payment_due_date)
-    return dueDate >= today && dueDate <= nextWeek
-  }).length
-})
-
-const paidThisMonth = computed(() => {
-  const today = new Date()
-  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-
-  return paidPurchases.value
-    .filter(p => {
-      const dateToUse = p.payment_date || p.paid_at
-      if (!dateToUse) return false
-      const paymentDate = new Date(dateToUse)
-      return paymentDate >= firstDayOfMonth
-    })
-    .reduce((sum, p) => {
-      const paymentAmount = p.payment_amount ? parseFloat(p.payment_amount) : null
-      const invoiceAmount = p.invoice_amount ? parseFloat(p.invoice_amount) : null
-      const totalAmount = parseFloat(p.total_amount || 0)
-      const taxAmount = parseFloat(p.tax_amount || 0)
-      return sum + (paymentAmount || invoiceAmount || (totalAmount + taxAmount))
-    }, 0)
-})
-
-const paidThisMonthCount = computed(() => {
-  const today = new Date()
-  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-
-  return paidPurchases.value.filter(p => {
-    const dateToUse = p.payment_date || p.paid_at
-    if (!dateToUse) return false
-    const paymentDate = new Date(dateToUse)
-    return paymentDate >= firstDayOfMonth
-  }).length
-})
 
 // Table columns configuration
 const pendingColumns = [
@@ -548,9 +496,85 @@ const paidTableData = computed(() => {
   }))
 })
 
-// No client-side filtering needed - backend handles all filters
-const filteredPendingTableData = computed(() => pendingTableData.value)
-const filteredPaidTableData = computed(() => paidTableData.value)
+// Sort pending data
+const sortedPendingTableData = computed(() => {
+  if (!sortField.value) return pendingTableData.value
+
+  const sorted = [...pendingTableData.value].sort((a, b) => {
+    const aValue = a[sortField.value]
+    const bValue = b[sortField.value]
+
+    // Handle null/undefined
+    if (aValue === null || aValue === undefined) return 1
+    if (bValue === null || bValue === undefined) return -1
+
+    // Numeric comparison for numbers
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortDirection.value === 'asc' ? aValue - bValue : bValue - aValue
+    }
+
+    // Date comparison for date fields
+    if (sortField.value === 'fechaOrden' || sortField.value === 'fechaFactura' || sortField.value === 'vencimiento') {
+      // Dates are already formatted strings, need to convert back
+      const dateA = new Date(a.purchaseData.purchase_date || a.purchaseData.invoice_date || a.purchaseData.payment_due_date).getTime()
+      const dateB = new Date(b.purchaseData.purchase_date || b.purchaseData.invoice_date || b.purchaseData.payment_due_date).getTime()
+      return sortDirection.value === 'asc' ? dateA - dateB : dateB - dateA
+    }
+
+    // String comparison
+    const strA = String(aValue).toLowerCase()
+    const strB = String(bValue).toLowerCase()
+    if (sortDirection.value === 'asc') {
+      return strA.localeCompare(strB)
+    } else {
+      return strB.localeCompare(strA)
+    }
+  })
+
+  return sorted
+})
+
+// Sort paid data
+const sortedPaidTableData = computed(() => {
+  if (!sortField.value) return paidTableData.value
+
+  const sorted = [...paidTableData.value].sort((a, b) => {
+    const aValue = a[sortField.value]
+    const bValue = b[sortField.value]
+
+    // Handle null/undefined
+    if (aValue === null || aValue === undefined) return 1
+    if (bValue === null || bValue === undefined) return -1
+
+    // Numeric comparison for numbers
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortDirection.value === 'asc' ? aValue - bValue : bValue - aValue
+    }
+
+    // Date comparison for date fields
+    if (sortField.value === 'fechaOrden' || sortField.value === 'fechaFactura' || sortField.value === 'fechaPago') {
+      // Dates are already formatted strings, need to convert back
+      const dateA = new Date(a.purchaseData.purchase_date || a.purchaseData.invoice_date || a.purchaseData.payment_date_final || a.purchaseData.payment_date || a.purchaseData.paid_at).getTime()
+      const dateB = new Date(b.purchaseData.purchase_date || b.purchaseData.invoice_date || b.purchaseData.payment_date_final || b.purchaseData.payment_date || b.purchaseData.paid_at).getTime()
+      return sortDirection.value === 'asc' ? dateA - dateB : dateB - dateA
+    }
+
+    // String comparison
+    const strA = String(aValue).toLowerCase()
+    const strB = String(bValue).toLowerCase()
+    if (sortDirection.value === 'asc') {
+      return strA.localeCompare(strB)
+    } else {
+      return strB.localeCompare(strA)
+    }
+  })
+
+  return sorted
+})
+
+// Filtered data (for backwards compatibility)
+const filteredPendingTableData = computed(() => sortedPendingTableData.value)
+const filteredPaidTableData = computed(() => sortedPaidTableData.value)
 
 // Helper functions
 function getSupplierName(purchase: any): string {
@@ -602,9 +626,22 @@ function navigateToPayment(purchases: any[]) {
   navigateTo(`/pagos/registrar?ids=${ids}`)
 }
 
+// Handle sort
+function handleSort(field: string) {
+  if (sortField.value === field) {
+    // Toggle direction
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    // New field, default to ascending
+    sortField.value = field
+    sortDirection.value = 'asc'
+  }
+}
+
 // Filter functions
 function clearFilters() {
-  searchQuery.value = ''
+  localSearchTerm.value = ''
+  apiSearchTerm.value = ''
   selectedSupplierFilter.value = ''
   selectedStatusFilter.value = ''
   selectedDateFilter.value = ''
