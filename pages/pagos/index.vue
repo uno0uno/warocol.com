@@ -50,7 +50,7 @@
 
       <!-- Desktop: Full Filters -->
       <div class="hidden md:block bg-surface border-2 border-border rounded-lg p-4">
-        <div class="flex flex-col md:flex-row gap-4">
+        <div class="flex flex-col lg:flex-row gap-4">
           <!-- Search by order number or invoice -->
           <div class="flex-1">
             <label class="block text-sm font-medium text-text-secondary mb-2">Buscar</label>
@@ -82,12 +82,27 @@
             </select>
           </div>
 
+          <!-- Filter by date range -->
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-text-secondary mb-2">Período</label>
+            <select v-model="selectedDateFilter"
+              class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+              <option value="">Todos</option>
+              <option value="today">Hoy</option>
+              <option value="yesterday">Ayer</option>
+              <option value="last_week">Semana Pasada</option>
+              <option value="15_days">Últimos 15 días</option>
+              <option value="1_month">Último mes</option>
+              <option value="3_months">Últimos 3 meses</option>
+            </select>
+          </div>
+
           <!-- Refresh button -->
           <SharedRefreshButton :on-refresh="refresh" title="Refrescar pagos" />
         </div>
 
         <!-- Clear filters button -->
-        <div v-if="searchQuery || selectedSupplierFilter || selectedStatusFilter" class="mt-4 flex justify-end">
+        <div v-if="searchQuery || selectedSupplierFilter || selectedStatusFilter || selectedDateFilter" class="mt-4 flex justify-end">
           <button @click="clearFilters"
             class="text-sm text-text-secondary hover:text-text-primary transition-colors flex items-center space-x-1">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,6 +137,21 @@
               <option value="pending">Pendiente</option>
               <option value="overdue">Vencido</option>
               <option value="due_this_week">Vence esta semana</option>
+            </select>
+          </div>
+
+          <!-- Date Filter -->
+          <div>
+            <label class="text-sm font-medium text-titan-700 mb-2 block">Período</label>
+            <select v-model="selectedDateFilter"
+              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
+              <option value="">Todos</option>
+              <option value="today">Hoy</option>
+              <option value="yesterday">Ayer</option>
+              <option value="last_week">Semana Pasada</option>
+              <option value="15_days">Últimos 15 días</option>
+              <option value="1_month">Último mes</option>
+              <option value="3_months">Últimos 3 meses</option>
             </select>
           </div>
         </div>
@@ -162,12 +192,12 @@
 
         <!-- Mobile: Cards -->
         <div class="md:hidden p-4">
-          <div v-if="pendingTableData.length === 0" class="text-center py-12">
+          <div v-if="filteredPendingTableData.length === 0" class="text-center py-12">
             <p class="text-text-primary font-medium">No hay pagos pendientes</p>
             <p class="text-muted-foreground text-sm mt-1">Todas las órdenes verificadas han sido pagadas.</p>
           </div>
           <div v-else class="grid grid-cols-1 gap-3">
-            <PaymentsPendingPaymentCard v-for="payment in pendingTableData" :key="payment.purchaseData.id"
+            <PaymentsPendingPaymentCard v-for="payment in filteredPendingTableData" :key="payment.purchaseData.id"
               :payment="payment" :is-selected="isSelected(payment.purchaseData.id)" @toggle-selection="toggleSelection"
               @pay="navigateToPayment([payment.purchaseData])" />
           </div>
@@ -175,7 +205,7 @@
 
         <!-- Desktop: Table -->
         <div class="hidden md:block">
-          <UiDataTable :columns="pendingColumns" :data="pendingTableData" variant="default"
+          <UiDataTable :columns="pendingColumns" :data="filteredPendingTableData" variant="default"
             empty-message="No hay pagos pendientes. Todas las órdenes verificadas han sido pagadas."
             :show-title="false">
             <template #cell-seleccion="{ row }">
@@ -220,19 +250,19 @@
 
         <!-- Mobile: Cards -->
         <div class="md:hidden p-4">
-          <div v-if="paidTableData.length === 0" class="text-center py-12">
+          <div v-if="filteredPaidTableData.length === 0" class="text-center py-12">
             <p class="text-text-primary font-medium">No hay pagos registrados</p>
             <p class="text-muted-foreground text-sm mt-1">Aún no se han registrado pagos a proveedores.</p>
           </div>
           <div v-else class="grid grid-cols-1 gap-3">
-            <PaymentsPaidPaymentCard v-for="payment in paidTableData" :key="payment.purchaseData.id"
+            <PaymentsPaidPaymentCard v-for="payment in filteredPaidTableData" :key="payment.purchaseData.id"
               :payment="payment" />
           </div>
         </div>
 
         <!-- Desktop: Table -->
         <div class="hidden md:block">
-          <UiDataTable :columns="paidColumns" :data="paidTableData" variant="default"
+          <UiDataTable :columns="paidColumns" :data="filteredPaidTableData" variant="default"
             empty-message="No hay pagos registrados. Aún no se han registrado pagos a proveedores." :show-title="false">
             <template #cell-orden="{ row }">
               <span :class="{ 'animate-pulse': row.isHighlighted }">{{ row.orden }}</span>
@@ -299,6 +329,7 @@ const highlightId = ref<string | null>(null)
 const searchQuery = ref((route.query.search as string) || '')
 const selectedSupplierFilter = ref((route.query.supplier_id as string) || '')
 const selectedStatusFilter = ref((route.query.payment_status as string) || '')
+const selectedDateFilter = ref((route.query.date_filter as string) || '')
 const showFiltersModal = ref(false)
 
 // Set highlight ID from query params
@@ -329,6 +360,7 @@ const activeFiltersCount = computed(() => {
   let count = 0
   if (selectedSupplierFilter.value) count++
   if (selectedStatusFilter.value) count++
+  if (selectedDateFilter.value) count++
   return count
 })
 
@@ -337,7 +369,8 @@ const purchasesQuery = computed(() => ({
   limit: 250,
   search: searchQuery.value || undefined,
   supplier_id: selectedSupplierFilter.value || undefined,
-  payment_status: selectedStatusFilter.value || undefined
+  payment_status: selectedStatusFilter.value || undefined,
+  date_filter: selectedDateFilter.value || undefined
 }))
 
 // Fetch all purchases using useAsyncData with reactive filters
@@ -515,6 +548,10 @@ const paidTableData = computed(() => {
   }))
 })
 
+// No client-side filtering needed - backend handles all filters
+const filteredPendingTableData = computed(() => pendingTableData.value)
+const filteredPaidTableData = computed(() => paidTableData.value)
+
 // Helper functions
 function getSupplierName(purchase: any): string {
   if (purchase.supplier_name) {
@@ -570,5 +607,6 @@ function clearFilters() {
   searchQuery.value = ''
   selectedSupplierFilter.value = ''
   selectedStatusFilter.value = ''
+  selectedDateFilter.value = ''
 }
 </script>
