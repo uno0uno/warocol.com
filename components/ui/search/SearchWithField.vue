@@ -41,9 +41,9 @@ const handleFieldChange = (event) => {
   <div :class="cn('flex items-center gap-2', props.class)">
     <!-- Search Input -->
     <div class="relative flex-1">
-      <button 
+      <button
         @click="emit('search')"
-        class="absolute left-3 top-1/2 transform -translate-y-1/2 text-titan-400 hover:text-crocus-500 transition-colors cursor-pointer"
+        class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
       >
         <MagnifyingGlassIcon class="w-4 h-4" />
       </button>
@@ -52,7 +52,7 @@ const handleFieldChange = (event) => {
         :placeholder="placeholder"
         @input="handleInput"
         @keydown.enter="emit('search')"
-        class="w-full h-10 pl-9 pr-3 rounded-lg border border-titan-300 bg-white text-sm text-ebony-800 placeholder:text-titan-400 focus:outline-none focus:ring-2 focus:ring-crocus-500"
+        class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
       />
     </div>
 
@@ -61,14 +61,14 @@ const handleFieldChange = (event) => {
       <select
         :value="fieldValue"
         @change="handleFieldChange"
-        class="h-10 pl-3 pr-8 rounded-lg border border-titan-300 bg-white bg-none text-sm text-ebony-800 focus:outline-none focus:ring-2 focus:ring-crocus-500 appearance-none cursor-pointer min-w-[120px]"
+        class="h-10 pl-3 pr-8 rounded-lg border-2 border-border bg-background bg-none text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary appearance-none cursor-pointer min-w-[120px]"
       >
         <option v-for="field in fields" :key="field.value" :value="field.value">
           {{ field.label }}
         </option>
       </select>
       <div class="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-        <svg class="w-4 h-4 text-titan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
       </div>

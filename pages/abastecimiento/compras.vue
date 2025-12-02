@@ -20,167 +20,24 @@
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
 
-      <!-- Filters and Search -->
-      <!-- Mobile: Compact Search + Filter Button -->
-      <div class="md:hidden bg-white rounded-lg shadow-sm border border-titan-200 p-3">
-        <div class="flex gap-2">
-          <div class="relative flex-1">
-            <UiSearchWithField
-              v-model="localSearchTerm"
-              v-model:fieldValue="apiSearchField"
-              :fields="searchFields"
-              placeholder="Buscar..."
-              class="w-full"
-              @search="performSearch"
-            />
-          </div>
-          <button @click="showFiltersModal = true"
-            class="px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary transition-colors flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-            </svg>
-            <span class="text-sm font-medium">Filtros</span>
-            <span v-if="activeFiltersCount > 0" class="px-1.5 py-0.5 bg-primary text-white text-xs rounded-full">{{ activeFiltersCount }}</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Desktop: Full Filters -->
-      <div class="hidden md:block bg-white rounded-lg shadow-sm border border-titan-200 p-4 sm:p-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div>
-            <label class="block text-sm font-medium text-text-secondary mb-2">Buscar</label>
-            <UiSearchWithField
-              v-model="localSearchTerm"
-              v-model:fieldValue="apiSearchField"
-              :fields="searchFields"
-              placeholder="Buscar..."
-              class="w-full"
-              @search="performSearch"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-text-secondary mb-2">Proveedor</label>
-            <select v-model="proveedorFilter"
-              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
-              <option value="">Todos los proveedores</option>
-              <option v-for="proveedor in suppliers" :key="proveedor.id" :value="proveedor.id">
-                {{ proveedor.name }}
-              </option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-text-secondary mb-2">Estado</label>
-            <select v-model="statusFilter"
-              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
-              <option value="">Todos los estados</option>
-              <option value="quotation">Cotización</option>
-              <option value="pending">Pendiente</option>
-              <option value="confirmed">Confirmada</option>
-              <option value="preparing">En Preparación</option>
-              <option value="shipped">Enviada</option>
-              <option value="received">Recibida</option>
-              <option value="verified">Verificada</option>
-              <option value="invoiced">Facturada</option>
-              <option value="paid">Pagada</option>
-              <option value="cancelled">Cancelada</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-text-secondary mb-2">Período</label>
-            <select v-model="dateFilter"
-              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
-              <option value="">Todos</option>
-              <option value="today">Hoy</option>
-              <option value="yesterday">Ayer</option>
-              <option value="last_week">Semana Pasada</option>
-              <option value="15_days">Últimos 15 días</option>
-              <option value="1_month">Último mes</option>
-              <option value="3_months">Últimos 3 meses</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Clear filters button -->
-        <div v-if="proveedorFilter || statusFilter || dateFilter" class="mt-4 flex justify-end">
-          <button @click="clearFilters"
-            class="text-sm text-text-secondary hover:text-text-primary transition-colors flex items-center space-x-1">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            <span>Limpiar filtros</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Filters Modal (Mobile) -->
-      <UiBottomSheetModal v-model="showFiltersModal" title="Filtros" max-height="lg">
-        <!-- Filters Content -->
-        <div class="p-4 space-y-4">
-          <!-- Proveedor Filter -->
-          <div>
-            <label class="text-sm font-medium text-titan-700 mb-2 block">Proveedor</label>
-            <select v-model="proveedorFilter"
-              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
-              <option value="">Todos los proveedores</option>
-              <option v-for="proveedor in suppliers" :key="proveedor.id" :value="proveedor.id">
-                {{ proveedor.name }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Status Filter -->
-          <div>
-            <label class="text-sm font-medium text-titan-700 mb-2 block">Estado</label>
-            <select v-model="statusFilter"
-              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
-              <option value="">Todos los estados</option>
-              <option value="quotation">Cotización</option>
-              <option value="pending">Pendiente</option>
-              <option value="confirmed">Confirmada</option>
-              <option value="preparing">En Preparación</option>
-              <option value="shipped">Enviada</option>
-              <option value="received">Recibida</option>
-              <option value="verified">Verificada</option>
-              <option value="invoiced">Facturada</option>
-              <option value="paid">Pagada</option>
-              <option value="cancelled">Cancelada</option>
-            </select>
-          </div>
-
-          <!-- Date Filter -->
-          <div>
-            <label class="text-sm font-medium text-titan-700 mb-2 block">Período</label>
-            <select v-model="dateFilter"
-              class="w-full px-3 py-2 text-sm border border-titan-300 rounded-lg focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500">
-              <option value="">Todos</option>
-              <option value="today">Hoy</option>
-              <option value="yesterday">Ayer</option>
-              <option value="last_week">Semana Pasada</option>
-              <option value="15_days">Últimos 15 días</option>
-              <option value="1_month">Último mes</option>
-              <option value="3_months">Últimos 3 meses</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Footer Actions -->
-        <template #footer>
-          <div class="px-4 py-3 flex gap-3">
-            <button @click="clearFilters"
-              class="flex-1 px-4 py-2 border-2 border-titan-300 rounded-lg text-titan-700 hover:bg-titan-50 transition-colors text-sm font-medium">
-              Limpiar
-            </button>
-            <button @click="showFiltersModal = false"
-              class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
-              Aplicar
-            </button>
-          </div>
-        </template>
-      </UiBottomSheetModal>
+      <!-- Filters Bar -->
+      <SharedFiltersBar
+        v-model:search="localSearchTerm"
+        v-model:search-field="apiSearchField"
+        v-model:supplier-filter="proveedorFilter"
+        v-model:status-filter="statusFilter"
+        v-model:date-filter="dateFilter"
+        :search-fields="searchFields"
+        :suppliers="suppliers"
+        :status-options="purchaseStatusOptions"
+        status-label="Estado"
+        status-placeholder="Todos los estados"
+        show-supplier-filter
+        show-status-filter
+        show-date-filter
+        @search="performSearch"
+        @clear-filters="clearFilters"
+      />
 
       <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
       <UiResponsiveDataView
@@ -362,7 +219,6 @@ const proveedorFilter = ref('')
 const statusFilter = ref('')
 const dateFilter = ref('')
 const showCreateModal = ref(false)
-const showFiltersModal = ref(false)
 const currentPage = ref(1)
 const itemsPerPage = ref(20) // 20 filas por página
 
@@ -370,6 +226,19 @@ const searchFields = [
   { label: 'N° Orden', value: 'purchase_number' },
   { label: 'N° Factura', value: 'invoice_number' },
   { label: 'Proveedor', value: 'supplier_name' }
+]
+
+const purchaseStatusOptions = [
+  { label: 'Cotización', value: 'quotation' },
+  { label: 'Pendiente', value: 'pending' },
+  { label: 'Confirmada', value: 'confirmed' },
+  { label: 'En Preparación', value: 'preparing' },
+  { label: 'Enviada', value: 'shipped' },
+  { label: 'Recibida', value: 'received' },
+  { label: 'Verificada', value: 'verified' },
+  { label: 'Facturada', value: 'invoiced' },
+  { label: 'Pagada', value: 'paid' },
+  { label: 'Cancelada', value: 'cancelled' }
 ]
 
 const performSearch = () => {
@@ -381,15 +250,6 @@ const performSearch = () => {
 // Sorting state
 const sortField = ref('')
 const sortDirection = ref('asc')
-
-// Active filters count
-const activeFiltersCount = computed(() => {
-  let count = 0
-  if (proveedorFilter.value) count++
-  if (statusFilter.value) count++
-  if (dateFilter.value) count++
-  return count
-})
 
 // Clear all filters
 const clearFilters = () => {

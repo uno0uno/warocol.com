@@ -21,22 +21,16 @@
 
 
 
-      <!-- Desktop: Full Filters -->
-      <div class="hidden md:block bg-white rounded-lg shadow-sm border border-titan-200 p-4 sm:p-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div>
-            <label class="block text-sm font-medium text-text-secondary mb-2">Buscar</label>
-            <UiSearchWithField
-              v-model="localSearchTerm"
-              v-model:fieldValue="apiSearchField"
-              :fields="searchFields"
-              placeholder="Buscar..."
-              class="w-full"
-              @search="performSearch"
-            />
-          </div>
-        </div>
-      </div>
+      <!-- Filters Bar -->
+      <SharedFiltersBar
+        v-model:search="localSearchTerm"
+        v-model:search-field="apiSearchField"
+        :search-fields="searchFields"
+        search-label="Buscar"
+        search-placeholder="Buscar..."
+        @search="performSearch"
+        @clear-filters="clearFilters"
+      />
 
       <!-- Responsive Data View -->
       <UiResponsiveDataView
@@ -235,6 +229,13 @@ const searchFields = [
   { label: 'Email', value: 'email' },
   { label: 'Teléfono', value: 'phone' }
 ];
+
+const clearFilters = () => {
+  localSearchTerm.value = ''
+  apiSearchTerm.value = ''
+  apiSearchField.value = 'name'
+  refresh()
+}
 
 const apiIsActive = ref(null);
 
