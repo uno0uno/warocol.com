@@ -1,39 +1,14 @@
 <template>
   <div class="page-layout">
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
-      <SharedMetricCard
-        title="Grupos Totales"
-        :value="stats.total_groups"
-        subtitle="Grupos de modificadores"
-        variant="primary"
-        :show-icon="false"
-      />
-      <SharedMetricCard
-        title="Total Modificadores"
-        :value="stats.total_modifiers"
-        subtitle="Opciones disponibles"
-        variant="primary"
-        :show-icon="false"
-      />
-      <SharedMetricCard
-        title="Con Receta"
-        :value="stats.with_recipe"
-        subtitle="Tienen ingredientes"
-        variant="primary"
-        :show-icon="false"
-      />
-      <SharedMetricCard
-        title="Productos Asociados"
-        :value="stats.products_with_modifiers"
-        subtitle="Con modificadores"
-        variant="primary"
-        :show-icon="false"
-      />
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Tabla de Grupos de Modificadores -->
-    <UiResponsiveDataView
+    <!-- Main Content -->
+    <div v-else>
+      <!-- Tabla de Grupos de Modificadores -->
+      <UiResponsiveDataView
       :columns="gruposTableColumns"
       :data="filteredGroups"
       title="Grupos de Modificadores"
@@ -54,6 +29,7 @@
             <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
           </div>
           <button
+            @click="goToCreateGroup"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center"
           >
             + Nuevo Grupo
@@ -78,6 +54,7 @@
               <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
             </div>
             <button
+              @click="goToCreateGroup"
               class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
             >
               <span class="hidden sm:inline">+ Nuevo Grupo</span>
@@ -96,7 +73,7 @@
         </div>
       </template>
 
-      <template #cell-producto_name="{ value }">
+      <template #cell-product_name="{ value }">
         <span class="text-sm text-text-primary">{{ value }}</span>
       </template>
 
@@ -108,13 +85,13 @@
         </div>
       </template>
 
-      <template #cell-min_seleccion="{ value }">
+      <template #cell-min_qty="{ value }">
         <div class="flex justify-center">
           <span class="text-sm text-text-primary">{{ value }}</span>
         </div>
       </template>
 
-      <template #cell-max_seleccion="{ value }">
+      <template #cell-max_qty="{ value }">
         <div class="flex justify-center">
           <span class="text-sm text-text-primary">{{ value }}</span>
         </div>
@@ -123,7 +100,7 @@
       <template #cell-tipo="{ row }">
         <div class="flex justify-center">
           <UiStatusBadge
-            v-if="row.es_obligatorio"
+            v-if="row.is_required"
             value="Obligatorio"
             format="text"
             variant="warning"
@@ -142,6 +119,7 @@
       <template #cell-actions="{ row }">
         <div class="flex justify-center">
           <button
+            @click="goToEditGroup(row.id)"
             class="text-crocus-600 hover:text-crocus-900 transition-colors"
             title="Editar grupo"
           >
@@ -156,12 +134,12 @@
           <div class="flex justify-between items-start mb-3">
             <div class="flex-1">
               <p class="font-semibold text-text-primary">{{ item.name }}</p>
-              <p class="text-xs text-text-secondary mt-1">{{ item.producto_name }}</p>
+              <p class="text-xs text-text-secondary mt-1">{{ item.product_name }}</p>
             </div>
             <UiStatusBadge
-              :value="item.es_obligatorio ? 'Obligatorio' : 'Opcional'"
+              :value="item.is_required ? 'Obligatorio' : 'Opcional'"
               format="text"
-              :variant="item.es_obligatorio ? 'warning' : 'secondary'"
+              :variant="item.is_required ? 'warning' : 'secondary'"
               size="sm"
             />
           </div>
@@ -177,7 +155,7 @@
               <div>
                 <p class="text-xs text-text-secondary">Selección</p>
                 <p class="text-sm text-text-primary">
-                  {{ item.min_seleccion }} - {{ item.max_seleccion }}
+                  {{ item.min_qty }} - {{ item.max_qty }}
                 </p>
               </div>
             </div>
@@ -193,17 +171,10 @@
                 >
                   <div class="flex items-center gap-2 flex-1">
                     <span class="text-text-primary">{{ mod.name }}</span>
-                    <UiStatusBadge
-                      v-if="mod.tiene_receta"
-                      value="Receta"
-                      format="text"
-                      variant="success"
-                      size="sm"
-                    />
                   </div>
                   <div class="text-right">
                     <div class="text-text-primary font-medium">
-                      {{ formatCurrency(mod.precio_adicional) }}
+                      {{ formatCurrency(mod.price) }}
                     </div>
                   </div>
                 </div>
@@ -219,6 +190,7 @@
               {{ expandedRows.has(item.id) ? 'Contraer' : 'Ver modificadores' }}
             </button>
             <button
+              @click="goToEditGroup(item.id)"
               class="px-3 py-2 border border-border rounded-lg text-sm font-medium text-text-primary hover:bg-surface-secondary transition-colors"
             >
               Editar
@@ -248,12 +220,6 @@
                 Precio Adicional
               </th>
               <th class="text-center py-2 px-2 text-xs font-medium text-text-secondary">
-                Tiene Receta
-              </th>
-              <th class="text-center py-2 px-2 text-xs font-medium text-text-secondary">
-                Costo Ingredientes
-              </th>
-              <th class="text-center py-2 px-2 text-xs font-medium text-text-secondary">
                 Max Cantidad
               </th>
               <th class="text-center py-2 px-2 text-xs font-medium text-text-secondary">
@@ -271,7 +237,7 @@
                 <div class="flex items-center gap-2">
                   {{ mod.name }}
                   <UiStatusBadge
-                    v-if="mod.es_predeterminado"
+                    v-if="mod.is_default"
                     value="Por defecto"
                     format="text"
                     variant="default"
@@ -280,42 +246,18 @@
                 </div>
               </td>
               <td class="py-3 px-2 text-sm text-text-primary text-center">
-                <span :class="mod.precio_adicional < 0 ? 'text-red-600' : 'text-green-600'">
-                  {{ formatCurrency(mod.precio_adicional) }}
+                <span :class="mod.price < 0 ? 'text-red-600' : 'text-green-600'">
+                  {{ formatCurrency(mod.price) }}
                 </span>
               </td>
-              <td class="py-3 px-2 text-center">
-                <UiStatusBadge
-                  v-if="mod.tiene_receta"
-                  value="Sí"
-                  format="text"
-                  variant="success"
-                  size="sm"
-                />
-                <UiStatusBadge
-                  v-else
-                  value="No"
-                  format="text"
-                  variant="secondary"
-                  size="sm"
-                />
-              </td>
               <td class="py-3 px-2 text-sm text-text-primary text-center">
-                <template v-if="mod.tiene_receta">
-                  {{ formatCurrency(getRecetaModificador(mod.id)?.costo_total || 0) }}
-                </template>
-                <template v-else>
-                  <span class="text-text-tertiary">-</span>
-                </template>
-              </td>
-              <td class="py-3 px-2 text-sm text-text-primary text-center">
-                {{ mod.max_cantidad }}
+                {{ mod.max_limit }}
               </td>
               <td class="py-3 px-2 text-center">
                 <UiStatusBadge
-                  :value="mod.esta_disponible ? 'Activo' : 'Inactivo'"
+                  :value="mod.is_available ? 'Activo' : 'Inactivo'"
                   format="text"
-                  :variant="mod.esta_disponible ? 'success' : 'destructive'"
+                  :variant="mod.is_available ? 'success' : 'destructive'"
                   size="sm"
                 />
               </td>
@@ -324,50 +266,73 @@
         </table>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, inject } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
-import { useMenuMockData } from '@/composables/useMenuMockData'
 
 definePageMeta({
   layout: 'dashboard'
 })
 
+const router = useRouter()
 const { onTenantChange, currentTenant } = useTenantReactive()
-
-// Get mock data from composable
-const {
-  gruposModificadores,
-  modificadores,
-  getModificadoresByGrupo,
-  getRecetaModificador
-} = useMenuMockData()
 
 const searchQuery = ref('')
 const expandedRows = ref(new Set())
 
+// Fetch modifier groups from API
+const { data: groupsData, refresh: refreshGroups, pending: groupsPending } = useAsyncData(
+  `modifier-groups-${currentTenant.value?.id || 'default'}`,
+  () => $fetch('/api/menu/modifier-groups', {
+    query: {
+      limit: 250,
+      search: searchQuery.value || undefined
+    }
+  }),
+  {
+    server: false,
+    watch: [currentTenant],
+    default: () => ({ data: [], total: 0 })
+  }
+)
+
+// Fetch stats from API
+const { data: statsData, refresh: refreshStats, pending: statsPending } = useAsyncData(
+  `modifier-stats-${currentTenant.value?.id || 'default'}`,
+  () => $fetch('/api/menu/modifier-groups/stats/summary'),
+  {
+    server: false,
+    watch: [currentTenant],
+    default: () => ({ total_groups: 0, total_modifiers: 0, products_with_modifiers: 0 })
+  }
+)
+
 const filteredGroups = computed(() => {
-  return gruposModificadores.value.filter(grupo => {
+  const groups = groupsData.value?.data || []
+  if (!searchQuery.value) return groups
+
+  return groups.filter((grupo: any) => {
     const matchesSearch = grupo.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                         grupo.producto_name.toLowerCase().includes(searchQuery.value.toLowerCase())
+                         (grupo.product_name && grupo.product_name.toLowerCase().includes(searchQuery.value.toLowerCase()))
     return matchesSearch
   })
 })
 
 const stats = computed(() => {
-  const totalModifiers = modificadores.value.length
-  const withRecipe = modificadores.value.filter(m => m.tiene_receta).length
-  const uniqueProducts = new Set(gruposModificadores.value.map(g => g.producto_id)).size
-
   return {
-    total_groups: gruposModificadores.value.length,
-    total_modifiers: totalModifiers,
-    with_recipe: withRecipe,
-    products_with_modifiers: uniqueProducts
+    total_groups: statsData.value?.total_groups || 0,
+    total_modifiers: statsData.value?.total_modifiers || 0,
+    with_recipe: 0, // TODO: Add this to API if needed
+    products_with_modifiers: statsData.value?.products_with_modifiers || 0
   }
+})
+
+const isLoading = computed(() => {
+  return groupsPending.value || statsPending.value
 })
 
 // Table columns configuration
@@ -380,7 +345,7 @@ const gruposTableColumns = [
     align: 'left'
   },
   {
-    key: 'producto_name',
+    key: 'product_name',
     title: 'Producto',
     sortable: true,
     format: 'text',
@@ -394,14 +359,14 @@ const gruposTableColumns = [
     align: 'center'
   },
   {
-    key: 'min_seleccion',
+    key: 'min_qty',
     title: 'Mín',
     sortable: true,
     format: 'number',
     align: 'center'
   },
   {
-    key: 'max_seleccion',
+    key: 'max_qty',
     title: 'Máx',
     sortable: true,
     format: 'number',
@@ -431,7 +396,7 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-const toggleExpanded = (grupoId: number) => {
+const toggleExpanded = (grupoId: string) => {
   if (expandedRows.value.has(grupoId)) {
     expandedRows.value.delete(grupoId)
   } else {
@@ -441,13 +406,28 @@ const toggleExpanded = (grupoId: number) => {
   expandedRows.value = new Set(expandedRows.value)
 }
 
-const setRefreshHandler = inject('setRefreshHandler', () => {})
-const refresh = () => {
-  console.log('Refreshing modifiers...')
+const getModificadoresByGrupo = (grupoId: string) => {
+  const grupo = filteredGroups.value.find((g: any) => g.id === grupoId)
+  return grupo?.modifiers || []
 }
 
-onMounted(() => {
+const goToCreateGroup = () => {
+  router.push('/menu/modificadores/crear')
+}
+
+const goToEditGroup = (groupId: string) => {
+  router.push(`/menu/modificadores/${groupId}`)
+}
+
+const setRefreshHandler = inject('setRefreshHandler', () => {})
+const refresh = async () => {
+  await Promise.all([refreshGroups(), refreshStats()])
+}
+
+onMounted(async () => {
   setRefreshHandler(refresh)
+  // Refresh data when page loads (e.g., after returning from create/edit)
+  await refresh()
 })
 
 onTenantChange(() => {

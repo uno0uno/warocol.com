@@ -27,8 +27,8 @@ definePageMeta({
 
 // Navigation configuration based on conceptual document
 const navigationItems = [
-  { to: '/menu/productos', label: 'Productos' },
   { to: '/menu/recetas', label: 'Recetas', matchPath: '/recetas' },
+  { to: '/menu/productos', label: 'Productos' },
   { to: '/menu/modificadores', label: 'Modificadores', matchPath: '/modificadores' },
   { to: '/menu/combos', label: 'Combos', matchPath: '/combos' }
 ]

@@ -6,6 +6,7 @@
         <!-- Search Field -->
         <div v-if="showSearch" class="relative flex-1">
           <UiSearchWithField
+            v-if="searchFields.length > 0"
             :model-value="search"
             :field-value="searchField"
             :fields="searchFields"
@@ -14,6 +15,14 @@
             @update:modelValue="$emit('update:search', $event)"
             @update:fieldValue="$emit('update:searchField', $event)"
             @search="$emit('search')"
+          />
+          <UiSearchBar
+            v-else
+            :model-value="search"
+            :placeholder="searchPlaceholder"
+            class="w-full"
+            @update:modelValue="$emit('update:search', $event)"
+            @keydown.enter="$emit('search')"
           />
         </div>
 
@@ -35,11 +44,12 @@
     </div>
 
     <!-- Desktop: Full Filters -->
-    <div class="hidden md:block bg-surface border-2 border-border rounded-lg p-4 sm:p-6 w-full">
+    <div class="hidden md:block bg-surface w-full">
       <div :class="['grid gap-3 sm:gap-4 w-full', gridColsClass]">
         <!-- Search Field -->
         <div v-if="showSearch" class="w-full">
           <UiSearchWithField
+            v-if="searchFields.length > 0"
             :model-value="search"
             :field-value="searchField"
             :fields="searchFields"
@@ -48,6 +58,14 @@
             @update:modelValue="$emit('update:search', $event)"
             @update:fieldValue="$emit('update:searchField', $event)"
             @search="$emit('search')"
+          />
+          <UiSearchBar
+            v-else
+            :model-value="search"
+            :placeholder="searchPlaceholder"
+            class="w-full"
+            @update:modelValue="$emit('update:search', $event)"
+            @keydown.enter="$emit('search')"
           />
         </div>
 
@@ -188,6 +206,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { SearchBar } from '../ui/search'
 
 interface SearchField {
   label: string

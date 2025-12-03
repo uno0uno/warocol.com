@@ -1,8 +1,14 @@
 <template>
-  <div v-if="!product" class="flex items-center justify-center min-h-[400px]">
+  <!-- Loading State -->
+  <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+    <CommonsTheCustomLoader size="large" />
+  </div>
+
+  <!-- Error State -->
+  <div v-else-if="fetchError || !productData" class="flex items-center justify-center min-h-[400px]">
     <div class="text-center">
       <Icon name="heroicons:exclamation-circle" class="h-16 w-16 mx-auto text-text-secondary mb-4" />
-      <p class="text-text-secondary">Producto no encontrado</p>
+      <p class="text-text-secondary">{{ fetchError || 'Producto no encontrado' }}</p>
       <UiButton variant="outline" size="default" class="mt-4" @click="router.push('/menu/productos')">
         Volver a Productos
       </UiButton>
@@ -46,13 +52,16 @@
               <label class="block text-sm font-medium text-text-primary mb-2">
                 Categoría *
               </label>
-              <input
-                v-model="form.category"
-                type="text"
+              <select
+                v-model="form.category_id"
                 required
                 class="input-base w-full px-4 py-2"
-                placeholder="Ej: Hamburguesas, Bebidas, Pizzas"
-              />
+              >
+                <option value="" disabled>Seleccione una categoría</option>
+                <option v-for="category in categories" :key="category.id" :value="category.id">
+                  {{ category.name }}
+                </option>
+              </select>
             </div>
 
             <div>
@@ -129,9 +138,79 @@
           </div>
         </div>
 
-        <!-- Receta / Ingredientes -->
+        <!-- Recetas Base (Opcional) -->
         <div class="mt-8">
-          <h3 class="text-lg font-semibold text-text-primary mb-6">Receta / Ingredientes</h3>
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-text-primary">Recetas Base (Opcional)</h3>
+            <button
+              type="button"
+              @click="addRecipeBase"
+              class="btn-secondary px-3 py-1.5 rounded-lg text-xs flex items-center gap-1"
+            >
+              + Agregar Receta Base
+            </button>
+          </div>
+          <p class="text-sm text-text-secondary mb-4">
+            Selecciona una o más recetas base para usar sus ingredientes predefinidos.
+          </p>
+
+          <!-- Lista de recetas base seleccionadas -->
+          <div v-if="form.recipe_base_ids.length > 0" class="space-y-3 mb-6">
+            <div
+              v-for="(recipeBaseId, index) in form.recipe_base_ids"
+              :key="index"
+              class="flex items-start gap-3 p-3 bg-surface-secondary rounded-lg border border-border"
+            >
+              <div class="flex-1">
+                <select
+                  v-model="form.recipe_base_ids[index]"
+                  class="input-base w-full px-3 py-2 text-sm"
+                  @change="onRecipeBaseChange"
+                >
+                  <option value="">Seleccionar receta base...</option>
+                  <option v-for="recipe in recipeBases" :key="recipe.id" :value="recipe.id">
+                    {{ recipe.name }}
+                  </option>
+                </select>
+
+                <!-- Ingredientes de esta receta base -->
+                <div v-if="recipeBaseId && getRecipeBaseIngredients(recipeBaseId).length > 0" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                  <div class="text-xs space-y-1">
+                    <div
+                      v-for="ing in getRecipeBaseIngredients(recipeBaseId)"
+                      :key="ing.id"
+                      class="flex justify-between text-text-secondary"
+                    >
+                      <span>{{ ing.ingredient_name }}</span>
+                      <span>{{ ing.base_quantity }} {{ ing.unit }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                @click="removeRecipeBase(index)"
+                class="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                title="Eliminar receta base"
+              >
+                <Icon name="heroicons:trash" class="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div v-else class="text-center py-6 text-text-secondary border border-dashed border-border rounded-lg mb-6">
+            <p class="text-sm">No hay recetas base agregadas</p>
+            <p class="text-xs mt-1">Haz clic en "+ Agregar Receta Base" para comenzar</p>
+          </div>
+        </div>
+
+        <!-- Ingredientes Adicionales -->
+        <div class="mt-8">
+          <h3 class="text-lg font-semibold text-text-primary mb-2">Ingredientes Adicionales</h3>
+          <p class="text-sm text-text-secondary mb-4">
+            Agrega ingredientes adicionales específicos para este producto
+          </p>
 
           <!-- Lista de ingredientes -->
           <div class="space-y-3 mb-4">
@@ -140,14 +219,18 @@
               :key="index"
               class="flex items-start gap-3 p-4 bg-surface-secondary rounded-lg border border-border"
             >
-              <div class="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <input
-                    v-model="ingredient.name"
-                    type="text"
-                    placeholder="Nombre ingrediente"
+                  <select
+                    v-model="ingredient.ingredient_id"
+                    required
                     class="input-base w-full px-3 py-2 text-sm"
-                  />
+                  >
+                    <option value="" disabled>Seleccione ingrediente</option>
+                    <option v-for="ing in ingredients" :key="ing.id" :value="ing.id">
+                      {{ ing.name }} ({{ formatCurrency(ing.costo_unitario || 0) }}/{{ ing.unit }})
+                    </option>
+                  </select>
                 </div>
                 <div>
                   <input
@@ -156,6 +239,7 @@
                     min="0"
                     step="0.01"
                     placeholder="Cantidad"
+                    required
                     class="input-base w-full px-3 py-2 text-sm"
                   />
                 </div>
@@ -164,16 +248,7 @@
                     v-model="ingredient.unit"
                     type="text"
                     placeholder="Unidad (g, ml, u)"
-                    class="input-base w-full px-3 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <input
-                    v-model.number="ingredient.cost_per_unit"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="Costo/unidad"
+                    required
                     class="input-base w-full px-3 py-2 text-sm"
                   />
                 </div>
@@ -331,8 +406,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useProductsStore, type RecipeIngredient } from '@/stores/useProductsStore'
+import { ref, computed, watch } from 'vue'
+import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
   layout: 'dashboard',
@@ -341,7 +416,6 @@ definePageMeta({
     mode: 'out-in'
   },
   middleware: defineNuxtRouteMiddleware((to, from) => {
-    // Set back button in layout
     const backButton = useState('backButton')
     backButton.value = {
       label: 'Volver a Productos',
@@ -352,62 +426,166 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
-const productsStore = useProductsStore()
+const { currentTenant } = useTenantReactive()
 
 // Get product ID from route
 const productId = route.params.id as string
 
-// Load product
-const product = computed(() => productsStore.getProduct(productId))
+// Fetch product data from backend
+const { data: productData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
+  `product-${productId}`,
+  () => $fetch(`/api/menu/products/${productId}`),
+  {
+    server: false,
+    default: () => null
+  }
+)
+
+// Fetch categories for dropdown
+const { data: categoriesData } = useAsyncData(
+  `categories-${currentTenant.value?.id || 'default'}`,
+  () => $fetch('/api/menu/categories'),
+  {
+    server: false,
+    watch: [currentTenant],
+    default: () => ({ data: [] })
+  }
+)
+
+// Fetch recipe bases for dropdown
+const { data: recipeBasesData } = useAsyncData(
+  `recipe-bases-${currentTenant.value?.id || 'default'}`,
+  () => $fetch('/api/menu/recipe-bases', {
+    query: {
+      limit: 250,
+      is_active: true,
+      include_ingredients: true
+    }
+  }),
+  {
+    server: false,
+    watch: [currentTenant],
+    default: () => ({ data: [] })
+  }
+)
+
+// Fetch ingredients for dropdown
+const { data: ingredientsData } = useAsyncData(
+  `ingredients-${currentTenant.value?.id || 'default'}`,
+  () => $fetch('/api/suppliers/ingredients', { query: { limit: 250 } }),
+  {
+    server: false,
+    watch: [currentTenant],
+    default: () => ({ data: [] })
+  }
+)
+
+const categories = computed(() => categoriesData.value?.data || [])
+const ingredients = computed(() => ingredientsData.value?.data || [])
+const recipeBases = computed(() => recipeBasesData.value?.data || [])
+
+// Computed: Get all ingredients from all selected recipe bases
+const selectedRecipeBaseIngredients = computed(() => {
+  const allIngredients: any[] = []
+  form.value.recipe_base_ids.forEach((recipeBaseId: string) => {
+    if (recipeBaseId) {
+      const selectedRecipe = recipeBases.value.find((r: any) => r.id === recipeBaseId)
+      if (selectedRecipe?.ingredients) {
+        allIngredients.push(...selectedRecipe.ingredients)
+      }
+    }
+  })
+  return allIngredients
+})
 
 // Form state
 const form = ref({
   name: '',
   description: '',
   price: 0,
-  category: '',
+  category_id: '',
   preparation_time: 15,
   controla_stock: true,
   is_available: true,
   is_combo: false,
-  ingredients: [] as RecipeIngredient[]
+  allow_modifiers: true,
+  recipe_base_ids: [] as string[],
+  ingredients: [] as Array<{ ingredient_id: string, quantity: number, unit: string }>
 })
 
 const isSubmitting = ref(false)
 
-// Load product data into form
-onMounted(() => {
-  if (product.value) {
+// Watch product data and populate form
+watch(productData, (data) => {
+  if (data?.data) {
+    const product = data.data
     form.value = {
-      name: product.value.name,
-      description: product.value.description,
-      price: product.value.price,
-      category: product.value.category,
-      preparation_time: product.value.preparation_time,
-      controla_stock: product.value.controla_stock,
-      is_available: product.value.is_available,
-      is_combo: product.value.is_combo,
-      ingredients: JSON.parse(JSON.stringify(product.value.ingredients)) // Deep copy
+      name: product.name,
+      description: product.description || '',
+      price: Number(product.price),
+      category_id: product.category_id,
+      preparation_time: product.preparation_time || 15,
+      controla_stock: product.controla_stock,
+      is_available: product.is_available,
+      is_combo: product.is_combo,
+      allow_modifiers: product.allow_modifiers,
+      recipe_base_ids: product.recipe_base_ids || [],
+      ingredients: product.ingredients.map((ing: any) => ({
+        ingredient_id: ing.ingredient_id,
+        quantity: Number(ing.quantity),
+        unit: ing.unit
+      }))
     }
   }
-})
+}, { immediate: true })
 
 // Computed
 const calculatedCost = computed(() => {
-  return form.value.ingredients.reduce((sum, ing) => {
-    return sum + (ing.quantity * ing.cost_per_unit)
+  let totalCost = 0
+
+  // Add cost from all recipe base ingredients
+  if (selectedRecipeBaseIngredients.value.length > 0) {
+    totalCost += selectedRecipeBaseIngredients.value.reduce((sum: number, ing: any) => {
+      const ingredient = ingredients.value.find((i: any) => i.id === ing.ingredient_id)
+      const costPerUnit = ingredient?.costo_unitario || 0
+      return sum + (ing.base_quantity * Number(costPerUnit))
+    }, 0)
+  }
+
+  // Add cost from additional ingredients
+  totalCost += form.value.ingredients.reduce((sum, ing) => {
+    const ingredient = ingredients.value.find((i: any) => i.id === ing.ingredient_id)
+    const costPerUnit = ingredient?.costo_unitario || 0
+    return sum + (ing.quantity * Number(costPerUnit))
   }, 0)
+
+  return totalCost
 })
 
 // Methods
+function addRecipeBase() {
+  form.value.recipe_base_ids.push('')
+}
+
+function removeRecipeBase(index: number) {
+  form.value.recipe_base_ids.splice(index, 1)
+}
+
+function getRecipeBaseIngredients(recipeBaseId: string) {
+  if (!recipeBaseId) return []
+  const recipe = recipeBases.value.find((r: any) => r.id === recipeBaseId)
+  return recipe?.ingredients || []
+}
+
+const onRecipeBaseChange = () => {
+  console.log('Recipe bases:', form.value.recipe_base_ids)
+}
+
 const addIngredient = () => {
   form.value.ingredients.push({
-    id: `temp_${Date.now()}`,
-    name: '',
+    ingredient_id: '',
     quantity: 0,
-    unit: 'g',
-    cost_per_unit: 0,
-    controla_inventario: true
+    unit: 'g'
   })
 }
 
@@ -415,29 +593,42 @@ const removeIngredient = (index: number) => {
   form.value.ingredients.splice(index, 1)
 }
 
+const getIngredientName = (ingredientId: string) => {
+  const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
+  return ingredient?.name || 'Seleccione un ingrediente'
+}
+
 const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    // Update product in store
-    const updated = productsStore.updateProduct(productId, {
-      name: form.value.name,
-      description: form.value.description,
-      price: form.value.price,
-      category: form.value.category,
-      preparation_time: form.value.preparation_time,
-      controla_stock: form.value.controla_stock,
-      is_available: form.value.is_available,
-      is_combo: form.value.is_combo,
-      ingredients: form.value.ingredients
+    // Validate no duplicate recipe bases
+    const recipeBaseIds = form.value.recipe_base_ids.filter(id => id !== '')
+    const uniqueRecipeBaseIds = [...new Set(recipeBaseIds)]
+
+    if (recipeBaseIds.length !== uniqueRecipeBaseIds.length) {
+      alert('Error: No puedes agregar la misma receta base más de una vez')
+      isSubmitting.value = false
+      return
+    }
+
+    // Filter out empty recipe base IDs before sending
+    const cleanedForm = {
+      ...form.value,
+      recipe_base_ids: uniqueRecipeBaseIds
+    }
+    await $fetch(`/api/menu/products/${productId}`, {
+      method: 'PUT',
+      body: cleanedForm
     })
 
-    console.log('✅ Producto actualizado:', updated)
+    console.log('✅ Producto actualizado')
 
     // Navigate back to products list
     await router.push('/menu/productos')
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error al actualizar producto:', error)
+    alert(`Error al actualizar el producto: ${error.data?.detail || error.message}`)
   } finally {
     isSubmitting.value = false
   }
@@ -451,14 +642,15 @@ const deleteProduct = async () => {
   isSubmitting.value = true
 
   try {
-    const success = productsStore.deleteProduct(productId)
+    await $fetch(`/api/menu/products/${productId}`, {
+      method: 'DELETE'
+    })
 
-    if (success) {
-      console.log('✅ Producto eliminado')
-      await router.push('/menu/productos')
-    }
-  } catch (error) {
+    console.log('✅ Producto eliminado')
+    await router.push('/menu/productos')
+  } catch (error: any) {
     console.error('❌ Error al eliminar producto:', error)
+    alert(`Error al eliminar el producto: ${error.data?.detail || error.message}`)
   } finally {
     isSubmitting.value = false
   }
@@ -482,6 +674,6 @@ const calculateMargin = (price: number, cost: number) => {
 }
 
 useHead({
-  title: computed(() => product.value ? `Editar ${product.value.name} - Menú` : 'Producto no encontrado')
+  title: computed(() => productData.value?.data ? `Editar ${productData.value.data.name} - Menú` : 'Editar Producto')
 })
 </script>
