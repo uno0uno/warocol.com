@@ -287,7 +287,8 @@
                         v-model.number="item.quantity"
                         @input="calculateDiscount(index)"
                         placeholder="1"
-                        min="1"
+                        min="0.01"
+                        step="0.01"
                         class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary"
                         required
                       />
