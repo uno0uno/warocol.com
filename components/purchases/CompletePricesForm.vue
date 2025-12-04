@@ -24,9 +24,14 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label class="block text-sm font-medium text-text-primary mb-2">
-              Precio Unitario *
-            </label>
+            <div class="flex flex-col items-start justify-between mb-2">
+              <label class="text-sm font-medium text-text-primary">
+                Precio Unitario *
+              </label>
+              <span v-if="item.is_suggested_price" class="text-xs text-primary font-medium">
+                Precio sugerido (último registrado)
+              </span>
+            </div>
             <input
               v-model.number="item.unit_cost"
               type="number"
@@ -163,6 +168,10 @@ onMounted(() => {
         // total = base_cost * base_qty
         // display_cost = total / display_qty
         displayUnitCost = (item.unit_cost * item.quantity) / displayQuantity
+      } else if (item.last_unit_cost > 0) {
+        // Use last historical price as suggestion
+        // Convert base unit cost to display unit cost
+        displayUnitCost = (item.last_unit_cost * item.quantity) / displayQuantity
       }
 
       // Extract weight information for packages
@@ -171,6 +180,12 @@ onMounted(() => {
         weightInfo = `Peso del paquete: ${item.weight_value} ${item.weight_unit} (≈${item.weight_per_unit_grams} gr/und)`
       }
 
+      // Calculate total cost based on display unit cost
+      const calculatedTotal = displayUnitCost > 0 ? displayUnitCost * displayQuantity : 0
+
+      // Check if price is from historical data
+      const isSuggestedPrice = !item.total_cost && !item.unit_cost && item.last_unit_cost > 0
+
       return {
         id: item.id,
         ingredient_name: item.ingredient_name,
@@ -178,9 +193,11 @@ onMounted(() => {
         unit: displayUnit,
         base_quantity: item.quantity, // Keep base quantity for conversion
         unit_cost: displayUnitCost,
-        total_cost: item.total_cost || 0,
+        total_cost: calculatedTotal,
         notes: item.notes || '',
-        weight_info: weightInfo
+        weight_info: weightInfo,
+        is_suggested_price: isSuggestedPrice,
+        last_unit_cost: item.last_unit_cost || null
       }
     })
     taxAmount.value = 0
