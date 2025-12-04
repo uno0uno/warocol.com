@@ -13,6 +13,9 @@
             <p class="text-sm text-text-secondary">
               Cantidad: {{ item.quantity }} {{ item.unit }}
             </p>
+            <p v-if="item.weight_info" class="text-xs text-text-secondary mt-1">
+              {{ item.weight_info }}
+            </p>
           </div>
           <span class="text-xs bg-surface-secondary px-2 py-1 rounded">
             Item #{{ index + 1 }}
@@ -150,7 +153,7 @@ onMounted(() => {
     priceItems.value = props.purchase.items.map((item: any) => {
       const displayQuantity = item.purchase_quantity || item.quantity
       const displayUnit = item.purchase_unit || item.unit
-      
+
       // Calculate display unit cost (price per display unit)
       let displayUnitCost = 0
       if (item.total_cost > 0) {
@@ -162,6 +165,12 @@ onMounted(() => {
         displayUnitCost = (item.unit_cost * item.quantity) / displayQuantity
       }
 
+      // Extract weight information for packages
+      let weightInfo = null
+      if (item.weight_value && item.weight_unit && item.weight_per_unit_grams) {
+        weightInfo = `Peso del paquete: ${item.weight_value} ${item.weight_unit} (≈${item.weight_per_unit_grams} gr/und)`
+      }
+
       return {
         id: item.id,
         ingredient_name: item.ingredient_name,
@@ -170,7 +179,8 @@ onMounted(() => {
         base_quantity: item.quantity, // Keep base quantity for conversion
         unit_cost: displayUnitCost,
         total_cost: item.total_cost || 0,
-        notes: item.notes || ''
+        notes: item.notes || '',
+        weight_info: weightInfo
       }
     })
     taxAmount.value = 0

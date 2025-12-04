@@ -113,9 +113,12 @@
                             minimumFractionDigits: 0, maximumFractionDigits: 0
                           }) }}
                         </p>
+                        <p class="text-xs text-muted-foreground mt-0.5">
+                          por {{ item.unit }}
+                        </p>
                       </div>
                       <div class="text-right">
-                        <p class="text-xs text-muted-foreground mb-0.5">Total</p>
+                        <p class="text-xs text-muted-foreground mb-0.5">Total {{ item.purchase_unit }}</p>
                         <p class="text-lg font-bold text-text-primary">
                           {{ parseFloat(item.total_cost).toLocaleString('es-CO', {
                             style: 'currency', currency: 'COP',
@@ -134,13 +137,18 @@
                     <div class="flex items-center gap-3">
 
                       <!-- Quantity -->
-                      <div class="flex items-center gap-1">
-                        <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                        </svg>
-                        <span class="text-text-primary font-semibold text-xs">{{ item.purchase_quantity || item.quantity }} {{ item.purchase_unit || item.unit }}</span>
+                      <div class="flex flex-col gap-0.5">
+                        <div class="flex items-center gap-1">
+                          <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                          </svg>
+                          <span class="text-text-primary font-semibold text-xs">{{ item.purchase_quantity || item.quantity }} {{ item.purchase_unit || item.unit }}</span>
+                        </div>
+                        <span v-if="item.weight_value && item.weight_unit" class="text-text-secondary text-xs ml-5">
+                          Peso: {{ item.weight_value }} {{ item.weight_unit }}
+                        </span>
                       </div>
 
                       <!-- Batch Number -->
@@ -197,14 +205,23 @@
                         <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
                       </div>
                     </td>
-                    <td class="px-4 py-3 text-sm text-text-primary text-right font-medium whitespace-nowrap">
-                      {{ item.purchase_quantity || item.quantity }} {{ item.purchase_unit || item.unit }}
+                    <td class="px-4 py-3 text-sm text-text-primary text-right font-medium">
+                      <div>{{ item.purchase_quantity || item.quantity }} {{ item.purchase_unit || item.unit }}</div>
+                      <div v-if="item.weight_value && item.weight_unit" class="text-xs text-text-secondary mt-1">
+                        Peso: {{ item.weight_value }} {{ item.weight_unit }} ({{ item.weight_per_unit_grams }} gr/und)
+                      </div>
                     </td>
-                    <td v-if="form.status !== 'quotation'" class="px-4 py-3 text-sm text-text-primary text-right whitespace-nowrap">
-                      {{ ((parseFloat(item.total_cost) || 0) / (item.purchase_quantity || item.quantity || 1)).toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}
+                    <td v-if="form.status !== 'quotation'" class="px-4 py-3 text-sm text-text-primary text-right">
+                      <div>
+                        {{ parseFloat(item.unit_cost).toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}
+                      </div>
+                      <div class="text-xs text-text-secondary mt-1">
+                        por {{ item.unit }}
+                      </div>
                     </td>
-                    <td v-if="form.status !== 'quotation'" class="px-4 py-3 text-sm font-bold text-text-primary text-right whitespace-nowrap">
-                      {{ parseFloat(item.total_cost).toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}
+                    <td v-if="form.status !== 'quotation'" class="px-4 py-3 text-sm font-bold text-text-primary text-right">
+                      <div>{{ parseFloat(item.total_cost).toLocaleString('es-CO', { style: 'currency', currency: 'COP' }) }}</div>
+                      <div class="text-xs text-text-secondary mt-1">{{ item.purchase_unit }}</div>
                     </td>
                     <td class="px-4 py-3 text-sm text-text-secondary text-center">
                       {{ item.batch_number || '-' }}

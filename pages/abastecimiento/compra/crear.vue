@@ -356,29 +356,50 @@
                     >
                       <option value="">{{ item.ingredient_id ? 'Seleccionar unidad' : 'Seleccione ingrediente primero' }}</option>
                       <option
-                        v-for="option in getUnitOptionsForIngredient(item.ingredient_id)"
+                        v-for="option in getPurchaseUnitOptions(item.ingredient_id)"
                         :key="option.value"
                         :value="option.value"
                       >
                         {{ option.label }}
+                        <template v-if="option.conversion_factor && option.conversion_factor !== 1">
+                          ({{ option.conversion_factor }} {{ getIngredientUnit(item.ingredient_id) }})
+                        </template>
                       </option>
                     </select>
                     <p v-if="item.ingredient_id && item.purchase_unit" class="text-xs text-text-secondary mt-1">
-                      Se convertirá a: {{ getIngredientUnit(item.ingredient_id) }}
+                      Se convertirá a: {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
                     </p>
                   </div>
 
                   <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">Cantidad *</label>
-                    <input
-                      v-model.number="item.quantity"
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      required
-                      class="input-base w-full px-4 py-2"
-                      @input="updateItemTotal(index)"
-                    />
+                    <label class="block text-sm font-medium text-text-primary mb-2">
+                      {{ getQuantityLabel(index) }}
+                    </label>
+                    <div class="flex gap-2">
+                      <input
+                        v-model.number="item.quantity"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        required
+                        class="input-base flex-1 px-4 py-2"
+                        @input="updateItemTotal(index)"
+                      />
+                      <select
+                        v-if="shouldShowWeightUnitSelector(index)"
+                        v-model="item.weight_unit"
+                        class="input-base px-3 py-2 w-24"
+                        @change="updateItemTotal(index)"
+                      >
+                        <option value="gr">gr</option>
+                        <option value="kg">kg</option>
+                        <option value="lb">lb</option>
+                        <option value="oz">oz</option>
+                      </select>
+                    </div>
+                    <p v-if="shouldShowWeightPerUnit(index)" class="text-xs text-text-secondary mt-1">
+                      {{ getWeightPerUnitText(index) }}
+                    </p>
                   </div>
                 </div>
 
@@ -500,17 +521,28 @@
                   <p class="font-medium text-text-primary text-sm">{{ getIngredientName(item.ingredient_id) }}</p>
                   <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
                 </div>
-                <div class="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-border">
-                  <div>
-                    <p class="text-xs text-text-secondary mb-1">Cantidad Solicitada</p>
-                    <p class="text-sm text-text-primary font-semibold">
-                      {{ item.quantity }} {{ item.purchase_unit }}
-                    </p>
+                <div class="space-y-3 mt-3 pt-3 border-t border-border">
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <p class="text-xs text-text-secondary mb-1">Cantidad Solicitada</p>
+                      <p class="text-sm text-text-primary font-semibold">
+                        {{ item.quantity }} {{ item.purchase_unit }}
+                      </p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-text-secondary mb-1">Equivalente</p>
+                      <p class="text-sm text-text-secondary">
+                        {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p class="text-xs text-text-secondary mb-1">Equivalente</p>
-                    <p class="text-sm text-text-secondary">
-                      {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
+                  <div v-if="shouldShowWeightPerUnit(index)" class="col-span-2 bg-background/50 p-2 rounded border border-border">
+                    <p class="text-xs text-text-secondary mb-1">Detalles del Paquete</p>
+                    <p class="text-xs text-text-primary">
+                      Peso total: {{ item.quantity }} {{ item.weight_unit }}
+                    </p>
+                    <p class="text-xs text-text-secondary mt-1">
+                      ≈ {{ (convertWeightToGrams(item.quantity, item.weight_unit) / getConversionFactor(item.purchase_unit, item.ingredient_id)).toFixed(2) }} gr por unidad
                     </p>
                   </div>
                 </div>
@@ -530,6 +562,9 @@
                   <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
                     Equivalente
                   </th>
+                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                    Detalles
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -547,6 +582,17 @@
                   </td>
                   <td class="text-right py-4 text-text-secondary text-sm">
                     {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
+                  </td>
+                  <td class="text-right py-4">
+                    <div v-if="shouldShowWeightPerUnit(index)" class="text-xs space-y-1">
+                      <p class="text-text-primary">
+                        Peso: {{ item.quantity }} {{ item.weight_unit }}
+                      </p>
+                      <p class="text-text-secondary">
+                        ({{ (convertWeightToGrams(item.quantity, item.weight_unit) / getConversionFactor(item.purchase_unit, item.ingredient_id)).toFixed(2) }} gr/und)
+                      </p>
+                    </div>
+                    <span v-else class="text-text-secondary text-xs">-</span>
                   </td>
                 </tr>
               </tbody>
@@ -652,6 +698,42 @@ const ingredientOptions = computed(() =>
   }))
 )
 
+// Fetch ingredient purchase units
+const { data: purchaseUnitsData, pending: loadingPurchaseUnits } = useFetch('/api/suppliers/ingredient-purchase-units', {
+  server: false,
+  query: { limit: 250, active_only: true }
+})
+
+const purchaseUnits = computed(() => purchaseUnitsData.value?.data || [])
+
+// Get purchase unit options for a specific ingredient
+const getPurchaseUnitOptions = (ingredientId) => {
+  if (!ingredientId) return []
+
+  const units = purchaseUnits.value.filter(u => u.ingredient_id === ingredientId)
+
+  // If no configured units, return base unit option
+  if (units.length === 0) {
+    const ingredient = ingredients.value.find(i => i.id === ingredientId)
+    if (ingredient) {
+      return [{
+        value: ingredient.unit,
+        label: ingredient.unit,
+        conversion_factor: 1,
+        is_default: true
+      }]
+    }
+    return []
+  }
+
+  return units.map(u => ({
+    value: u.purchase_unit_label,
+    label: u.purchase_unit_label,
+    conversion_factor: u.conversion_factor,
+    is_default: u.is_default
+  }))
+}
+
 // Fetch next purchase number
 const { data: nextNumberData, pending: loadingNextNumber } = useFetch('/api/suppliers/purchases/next-number', {
   server: false
@@ -660,7 +742,7 @@ const { data: nextNumberData, pending: loadingNextNumber } = useFetch('/api/supp
 const nextPurchaseNumber = computed(() => nextNumberData.value?.next_number || 'WR-2025-XXXX')
 
 // Loading state
-const isLoadingData = computed(() => loadingSuppliers.value || loadingIngredients.value || loadingNextNumber.value)
+const isLoadingData = computed(() => loadingSuppliers.value || loadingIngredients.value || loadingPurchaseUnits.value || loadingNextNumber.value)
 
 // Get current date and time
 const getCurrentDateTime = () => {
@@ -673,7 +755,7 @@ const getCurrentDateTime = () => {
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
-// Unit conversion factors
+// Unit conversion factors (legacy - kept for backward compatibility)
 const unitConversions = {
   'gr-gr': 1,
   'kg-gr': 1000,
@@ -685,9 +767,25 @@ const unitConversions = {
   'und-und': 1
 }
 
-const getConversionFactor = (fromUnit, toUnit) => {
-  const key = `${fromUnit}-${toUnit}`
-  return unitConversions[key] || 1
+const getConversionFactor = (purchaseUnitLabel, ingredientId) => {
+  // First, try to get from configured purchase units
+  const unit = purchaseUnits.value.find(u =>
+    u.ingredient_id === ingredientId &&
+    u.purchase_unit_label === purchaseUnitLabel
+  )
+
+  if (unit) {
+    return unit.conversion_factor
+  }
+
+  // Fallback to legacy conversion (for basic units like kg->gr)
+  const ingredient = ingredients.value.find(i => i.id === ingredientId)
+  if (ingredient) {
+    const key = `${purchaseUnitLabel}-${ingredient.unit}`
+    return unitConversions[key] || 1
+  }
+
+  return 1
 }
 
 // Payment Agreements State
@@ -727,7 +825,8 @@ const form = ref({
       total_cost: 0,
       expiry_date: null,
       batch_number: '',
-      notes: ''
+      notes: '',
+      weight_unit: 'gr' // Unidad de peso para paquetes (gr, kg, lb, oz)
     }
   ]
 })
@@ -843,11 +942,73 @@ const getConvertedQuantity = (index) => {
   const item = form.value.items[index]
   if (!item.quantity || !item.purchase_unit || !item.ingredient_id) return '0'
 
-  const baseUnit = getIngredientUnit(item.ingredient_id)
-  const factor = getConversionFactor(item.purchase_unit, baseUnit)
+  const factor = getConversionFactor(item.purchase_unit, item.ingredient_id)
   const converted = item.quantity * factor
 
   return converted.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+// Get dynamic label for quantity field
+const getQuantityLabel = (index) => {
+  const item = form.value.items[index]
+  if (!item.ingredient_id || !item.purchase_unit) return 'Cantidad *'
+
+  const baseUnit = getIngredientUnit(item.ingredient_id)
+  const conversionFactor = getConversionFactor(item.purchase_unit, item.ingredient_id)
+
+  // Si la unidad base es 'und' y hay un factor de conversión > 1 (es un paquete/caja)
+  if (baseUnit === 'und' && conversionFactor > 1) {
+    return 'Peso Total del Paquete *'
+  }
+
+  return 'Cantidad *'
+}
+
+// Check if should show weight unit selector
+const shouldShowWeightUnitSelector = (index) => {
+  const item = form.value.items[index]
+  if (!item.ingredient_id || !item.purchase_unit) return false
+
+  const baseUnit = getIngredientUnit(item.ingredient_id)
+  const conversionFactor = getConversionFactor(item.purchase_unit, item.ingredient_id)
+
+  return baseUnit === 'und' && conversionFactor > 1
+}
+
+// Check if should show weight per unit info
+const shouldShowWeightPerUnit = (index) => {
+  const item = form.value.items[index]
+  if (!item.ingredient_id || !item.purchase_unit || !item.quantity) return false
+
+  const baseUnit = getIngredientUnit(item.ingredient_id)
+  const conversionFactor = getConversionFactor(item.purchase_unit, item.ingredient_id)
+
+  return baseUnit === 'und' && conversionFactor > 1 && item.quantity > 0
+}
+
+// Get weight per unit text
+const getWeightPerUnitText = (index) => {
+  const item = form.value.items[index]
+  if (!item.quantity) return ''
+
+  const conversionFactor = getConversionFactor(item.purchase_unit, item.ingredient_id)
+
+  // Convert weight to grams based on selected unit
+  const weightInGrams = convertWeightToGrams(item.quantity, item.weight_unit || 'gr')
+  const weightPerUnit = weightInGrams / conversionFactor
+
+  return `≈ ${weightPerUnit.toFixed(2)} gr por unidad (${conversionFactor} unidades)`
+}
+
+// Convert weight to grams
+const convertWeightToGrams = (weight, unit) => {
+  const conversions = {
+    'gr': 1,
+    'kg': 1000,
+    'lb': 453.592,
+    'oz': 28.3495
+  }
+  return weight * (conversions[unit] || 1)
 }
 
 const getPaymentTypeText = (type) => {
@@ -871,7 +1032,18 @@ const onIngredientChange = (index) => {
   )
   if (selectedIngredient) {
     form.value.items[index].unit = selectedIngredient.unit
-    form.value.items[index].purchase_unit = selectedIngredient.unit
+
+    // Auto-select default purchase unit
+    const purchaseUnitOptions = getPurchaseUnitOptions(selectedIngredient.id)
+    const defaultUnit = purchaseUnitOptions.find(opt => opt.is_default)
+
+    if (defaultUnit) {
+      form.value.items[index].purchase_unit = defaultUnit.value
+    } else if (purchaseUnitOptions.length > 0) {
+      form.value.items[index].purchase_unit = purchaseUnitOptions[0].value
+    } else {
+      form.value.items[index].purchase_unit = selectedIngredient.unit
+    }
   }
 }
 
@@ -883,8 +1055,7 @@ const onPurchasePriceChange = (index) => {
   const item = form.value.items[index]
   if (!item.purchase_unit || !item.ingredient_id) return
 
-  const baseUnit = getIngredientUnit(item.ingredient_id)
-  const factor = getConversionFactor(item.purchase_unit, baseUnit)
+  const factor = getConversionFactor(item.purchase_unit, item.ingredient_id)
 
   item.unit_cost = (item.purchase_price || 0) / factor
   updateItemTotal(index)
@@ -918,7 +1089,8 @@ const addItem = () => {
     total_cost: 0,
     expiry_date: null,
     batch_number: '',
-    notes: ''
+    notes: '',
+    weight_unit: 'gr'
   })
 }
 
@@ -1042,20 +1214,42 @@ const handleSubmit = async () => {
     // Convert items to base units for database (quotation without prices)
     const convertedItems = form.value.items.map(item => {
       const baseUnit = getIngredientUnit(item.ingredient_id)
-      const factor = getConversionFactor(item.purchase_unit, baseUnit)
-      const convertedQuantity = item.quantity * factor
+      const factor = getConversionFactor(item.purchase_unit, item.ingredient_id)
+
+      // Si es un paquete con peso (baseUnit='und' y factor > 1), calcular cantidad en unidades
+      let convertedQuantity
+      let actualPurchaseQuantity = item.quantity
+
+      if (baseUnit === 'und' && factor > 1) {
+        // Es un paquete: convertir el peso a gramos y calcular cuántas unidades son
+        const totalWeightInGrams = convertWeightToGrams(item.quantity, item.weight_unit || 'gr')
+        const weightPerUnit = totalWeightInGrams / factor
+        convertedQuantity = factor  // La cantidad en unidades es el factor de conversión (18 und)
+
+        // purchase_quantity sigue siendo numérico (1), los datos de peso van en campos separados
+        actualPurchaseQuantity = 1  // Siempre 1 paquete
+      } else {
+        // Unidad simple: conversión normal
+        convertedQuantity = item.quantity * factor
+      }
 
       return {
         ingredient_id: item.ingredient_id,
         quantity: convertedQuantity,  // Base unit quantity (for inventory)
         unit: baseUnit,  // Base unit (for inventory)
-        purchase_quantity: item.quantity,  // Original purchase quantity (for display)
+        purchase_quantity: actualPurchaseQuantity,  // Original purchase quantity (for display)
         purchase_unit: item.purchase_unit,  // Original purchase unit (for display)
         unit_cost: null,  // Quotation: no prices yet
         total_cost: 0,    // Quotation: no totals yet
         expiry_date: item.expiry_date || null,
         batch_number: item.batch_number || null,
-        notes: item.notes || null
+        notes: item.notes || null,
+        // Información adicional del peso para paquetes
+        weight_value: baseUnit === 'und' && factor > 1 ? item.quantity : null,
+        weight_unit: baseUnit === 'und' && factor > 1 ? item.weight_unit : null,
+        weight_per_unit_grams: baseUnit === 'und' && factor > 1
+          ? (convertWeightToGrams(item.quantity, item.weight_unit || 'gr') / factor).toFixed(2)
+          : null
       }
     })
 

@@ -199,16 +199,21 @@
                       <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
                     </div>
                   </td>
-                  <td class="px-4 py-3 text-sm text-text-primary text-right font-medium whitespace-nowrap">
-                    {{ item.purchase_quantity || item.quantity }} {{ item.purchase_unit || item.unit }}
+                  <td class="px-4 py-3 text-sm text-text-primary text-right font-medium">
+                    <div>{{ item.purchase_quantity || item.quantity }} {{ item.purchase_unit || item.unit }}</div>
+                    <div v-if="item.weight_value && item.weight_unit" class="text-xs text-text-secondary mt-1">
+                      Peso: {{ item.weight_value }} {{ item.weight_unit }} ({{ item.weight_per_unit_grams }} gr/und)
+                    </div>
                   </td>
                   <td v-if="purchase?.status !== 'quotation'"
-                    class="px-4 py-3 text-sm text-text-primary text-right whitespace-nowrap">
-                    {{ formatCurrency((item.total_cost || 0) / (item.purchase_quantity || item.quantity || 1)) }}
+                    class="px-4 py-3 text-sm text-text-primary text-right">
+                    <div>{{ formatCurrency(item.unit_cost || 0) }}</div>
+                    <div class="text-xs text-text-secondary mt-1">por {{ item.unit }}</div>
                   </td>
                   <td v-if="purchase?.status !== 'quotation'"
-                    class="px-4 py-3 text-sm font-bold text-text-primary text-right whitespace-nowrap">
-                    {{ formatCurrency(item.total_cost) }}
+                    class="px-4 py-3 text-sm font-bold text-text-primary text-right">
+                    <div>{{ formatCurrency(item.total_cost) }}</div>
+                    <div class="text-xs text-text-secondary mt-1">{{ item.purchase_unit }}</div>
                   </td>
                 </tr>
               </tbody>
