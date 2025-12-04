@@ -99,6 +99,14 @@
           <span class="text-sm text-ebony-800">{{ formatDate(value) }}</span>
         </template>
 
+        <template #cell-valorTotal="{ value }">
+          <span class="text-sm font-medium text-ebony-800">{{ (value || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+        </template>
+
+        <template #cell-impuestos="{ value }">
+          <span class="text-sm font-medium text-ebony-800">{{ (value || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+        </template>
+
         <template #cell-totalItems="{ value }">
           <UiStatusBadge :value="`${value} items`" format="text" variant="secondary" size="sm" />
         </template>
