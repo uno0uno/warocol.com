@@ -9,6 +9,9 @@ definePageMeta({
 const router = useRouter()
 const posStore = usePOSStore()
 
+// State
+const showCustomerModal = ref(false)
+
 // Mock products for POS
 const products = ref([
   { id: '1', name: 'Hamburguesa Clásica', price: 15000, category: 'Hamburguesas', image: '🍔', available: true },
@@ -58,8 +61,24 @@ const clearCart = () => {
 }
 
 const processOrder = () => {
+  // Check if customer is identified
+  if (!posStore.currentCustomer) {
+    alert('Por favor identifica al cliente primero')
+    showCustomerModal.value = true
+    return
+  }
+
   // Navigate to checkout page
   router.push('/ventas/pos/checkout')
+}
+
+const startNewSale = () => {
+  showCustomerModal.value = true
+}
+
+const handleCustomerIdentified = (customer: any) => {
+  posStore.setCustomer(customer)
+  console.log('Cliente identificado:', customer)
 }
 
 // Provide cart data to layout
@@ -70,6 +89,45 @@ onMounted(() => {
 
 <template>
   <div>
+    <!-- Customer Identification Modal -->
+    <PosCustomerIdentificationModal
+      v-model="showCustomerModal"
+      @customer-identified="handleCustomerIdentified"
+    />
+
+    <!-- Customer Header -->
+    <div class="bg-surface border-2 border-border rounded-lg mb-4 p-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="bg-background p-3 rounded-lg border border-border">
+            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+              Cliente Actual
+            </p>
+            <p class="text-lg font-semibold text-text-primary">
+              {{ posStore.currentCustomer?.name || 'Sin identificar' }}
+            </p>
+            <p v-if="posStore.currentCustomer" class="text-xs text-text-secondary">
+              📱 {{ posStore.currentCustomer.phone_number }}
+            </p>
+          </div>
+        </div>
+        <button
+          @click="startNewSale"
+          class="btn-primary px-4 py-2 rounded-lg font-medium shadow-crocus flex items-center gap-2"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          {{ posStore.currentCustomer ? 'Cambiar Cliente' : 'Nueva Venta' }}
+        </button>
+      </div>
+    </div>
+
     <!-- Main POS Container -->
     <div class="flex flex-col lg:flex-row gap-4 md:gap-6 lg:max-h-[calc(100vh-10rem)]">
       <!-- Products Panel (Left) -->

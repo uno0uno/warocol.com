@@ -20,9 +20,17 @@ export interface CartItem {
     notes?: string
 }
 
+export interface Customer {
+    id: string
+    phone_number: string
+    name: string | null
+    email: string | null
+}
+
 export const usePOSStore = defineStore('pos', () => {
     // State
     const cart = ref<CartItem[]>([])
+    const currentCustomer = ref<Customer | null>(null)
 
     // Getters
     const cartItemsCount = computed(() => {
@@ -86,9 +94,23 @@ export const usePOSStore = defineStore('pos', () => {
         return cart.value[index]
     }
 
+    const setCustomer = (customer: Customer) => {
+        currentCustomer.value = customer
+    }
+
+    const clearCustomer = () => {
+        currentCustomer.value = null
+    }
+
+    const clearAll = () => {
+        cart.value = []
+        currentCustomer.value = null
+    }
+
     return {
         // State
         cart,
+        currentCustomer,
 
         // Getters
         cartItemsCount,
@@ -101,6 +123,9 @@ export const usePOSStore = defineStore('pos', () => {
         updateQuantity,
         updateCartItem,
         clearCart,
-        getCartItem
+        getCartItem,
+        setCustomer,
+        clearCustomer,
+        clearAll
     }
 })
