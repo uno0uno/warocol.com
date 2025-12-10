@@ -64,7 +64,8 @@ export default defineNuxtConfig({
         lang: 'es',
         class: 'light'
       }
-    }
+    },
+    pageTransition: { name: 'page', mode: 'out-in' }
   },
   modules: [
     ['@nuxtjs/google-fonts', {

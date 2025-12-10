@@ -20,19 +20,32 @@ const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageS
 // Product ID from route
 const productId = computed(() => route.params.id as string)
 
-// Mock product data (in real app, this would come from API)
-const products = ref([
-  { id: '1', name: 'Hamburguesa Clásica', price: 15000, category: 'Hamburguesas', image: '🍔', available: true },
-  { id: '2', name: 'Pizza Margherita', price: 25000, category: 'Pizzas', image: '🍕', available: true },
-  { id: '3', name: 'Limonada Natural', price: 5000, category: 'Bebidas', image: '🍹', available: true },
-  { id: '4', name: 'Papas Fritas', price: 7000, category: 'Acompañamientos', image: '🍟', available: true },
-  { id: '5', name: 'Combo Hamburguesa', price: 18000, category: 'Combos', image: '🎁', available: true },
-  { id: '6', name: 'Ensalada César', price: 12000, category: 'Ensaladas', image: '🥗', available: true }
-])
+// Load product from API (no await to show both loading indicators)
+const { data: productData, pending: loadingProduct } = useAsyncData(
+  `product-${productId.value}`,
+  () => $fetch(`/api/menu/products/${productId.value}`),
+  {
+    server: false
+  }
+)
 
-// Find current product
+// Product computed from API data
 const product = computed(() => {
-  return products.value.find(p => p.id === productId.value)
+  if (!productData.value?.data) return null
+
+  const p = productData.value.data
+  console.log('📦 Product data from API:', p)
+  console.log('🔧 Modifier groups:', p.modifier_groups)
+
+  return {
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    category: p.category?.name || 'Sin categoría',
+    image: p.image_url || '🍽️',
+    available: p.is_available,
+    modifier_groups: p.modifier_groups || []
+  }
 })
 
 // State
@@ -290,34 +303,37 @@ const getModifierIcon = (name: string): string => {
   return 'material-symbols:add-circle'
 }
 
-// Mock modifiers (in real app, this would come from API based on product)
-const modifierGroups = ref<ModifierGroup[]>([
-  {
-    id: '1',
-    name: 'Tamaño',
-    required: false,
-    maxSelections: 1,
-    options: [
-      { id: 'm1', name: 'Pequeño', price: -2000, icon: 'material-symbols:arrow-downward' },
-      { id: 'm2', name: 'Mediano', price: 0, icon: 'material-symbols:remove' },
-      { id: 'm3', name: 'Grande', price: 3000, icon: 'material-symbols:arrow-upward' }
-    ]
-  },
-  {
-    id: '2',
-    name: 'Extras',
-    required: false,
-    maxSelections: 3,
-    options: [
-      { id: 'm4', name: 'Queso extra', price: 2000 }, // Icon auto-detectado: mdi:cheese
-      { id: 'm5', name: 'Tocineta', price: 3000 }, // Icon auto-detectado: mdi:bacon
-      { id: 'm6', name: 'Aguacate', price: 1500 }, // Icon auto-detectado: mdi:fruit-cherries
-      { id: 'm7', name: 'Champiñones', price: 2000 }, // Icon auto-detectado: mdi:mushroom
-      { id: 'm8', name: 'Pepperoni', price: 2500 }, // Icon auto-detectado: mdi:circle-slice-8
-      { id: 'm9', name: 'Jalapeño', price: 1000 } // Icon auto-detectado: mdi:chili-hot
-    ]
+// Map modifier groups from API data
+const modifierGroups = computed<ModifierGroup[]>(() => {
+  if (!product.value?.modifier_groups || !Array.isArray(product.value.modifier_groups)) {
+    console.log('⚠️ No modifier_groups found in product data')
+    return []
   }
-])
+
+  try {
+    return product.value.modifier_groups
+      .filter((group: any) => group && group.modifiers && Array.isArray(group.modifiers) && group.modifiers.length > 0)
+      .map((group: any) => ({
+        id: group.id,
+        name: group.name,
+        required: group.is_required || false,
+        maxSelections: group.max_qty || 1,
+        options: (group.modifiers || [])
+          .filter((mod: any) => mod && mod.is_available !== false)
+          .map((mod: any) => ({
+            id: mod.id,
+            name: mod.name,
+            price: Number(mod.price) || 0,
+            icon: getModifierIcon(mod.name)
+          }))
+          .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+      }))
+      .sort((a, b) => (a.group_sort_order || 0) - (b.group_sort_order || 0))
+  } catch (error) {
+    console.error('Error mapping modifier groups:', error)
+    return []
+  }
+})
 
 // Computed
 const totalPrice = computed(() => {
@@ -333,19 +349,19 @@ const toggleModifier = (modifier: { id: string; name: string; price: number }, g
   if (!group) return
 
   const index = selectedModifiers.value.findIndex(m => m.id === modifier.id)
-  
+
   if (index !== -1) {
     // Remove modifier
     selectedModifiers.value.splice(index, 1)
   } else {
     // Check max selections for group
-    const groupModifiers = selectedModifiers.value.filter(m => 
+    const groupModifiers = selectedModifiers.value.filter(m =>
       group.options.some(opt => opt.id === m.id)
     )
-    
+
     if (groupModifiers.length >= group.maxSelections) {
       // Remove oldest modifier from this group
-      const oldestInGroup = selectedModifiers.value.find(m => 
+      const oldestInGroup = selectedModifiers.value.find(m =>
         group.options.some(opt => opt.id === m.id)
       )
       if (oldestInGroup) {
@@ -353,7 +369,7 @@ const toggleModifier = (modifier: { id: string; name: string; price: number }, g
         selectedModifiers.value.splice(oldIndex, 1)
       }
     }
-    
+
     // Add new modifier
     selectedModifiers.value.push(modifier)
   }
@@ -388,7 +404,7 @@ const addToCart = () => {
   }
 
   // Navigate back to POS
-  router.push('/ventas/pos')
+  router.push('/pos')
 }
 
 const formatCurrency = (value: number) => {
@@ -406,17 +422,18 @@ watch(product, (newProduct) => {
   }
 }, { immediate: true })
 
-// Redirect if product not found, or load cart item data if in edit mode
-onMounted(() => {
-  if (!product.value) {
-    router.push('/ventas/pos')
-    return
+// Watch for product load completion and redirect if not found
+watch(() => loadingProduct.value, (isLoading) => {
+  // Only check after loading is complete
+  if (!isLoading && !product.value) {
+    console.log('⚠️ Product not found, redirecting to /pos')
+    router.push('/pos')
   }
+})
 
-  setPageSubtitle(product.value.name)
-
-  // If in edit mode, pre-load cart item data
-  if (isEditMode.value && editCartIndex.value !== null) {
+// Load cart item data if in edit mode
+watch(product, (newProduct) => {
+  if (newProduct && isEditMode.value && editCartIndex.value !== null) {
     const cartItem = posStore.getCartItem(editCartIndex.value)
     if (cartItem) {
       // Don't load quantity - always work with quantity 1
@@ -424,7 +441,7 @@ onMounted(() => {
       notes.value = cartItem.notes || ''
     }
   }
-})
+}, { immediate: true })
 
 // Clear subtitle on unmount
 onUnmounted(() => {
@@ -435,12 +452,10 @@ onUnmounted(() => {
 <template>
   <div class="product-customization-page flex flex-col bg-gradient-to-br from-background via-background to-surface/30 min-h-full">
     <!-- Loading State -->
-    <div v-if="!product" class="flex items-center justify-center min-h-[50vh]">
+    <div v-if="loadingProduct || !product" class="flex items-center justify-center min-h-[70vh]">
       <div class="text-center">
-        <div class="animate-pulse">
-          <div class="w-16 h-16 bg-primary/20 rounded-2xl mx-auto mb-4"></div>
-          <p class="text-text-secondary font-medium">Cargando producto...</p>
-        </div>
+        <CommonsTheCustomLoader size="large" />
+        <p class="text-text-secondary font-medium mt-6">Cargando producto...</p>
       </div>
     </div>
 
@@ -637,7 +652,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Mobile/Tablet Bottom Summary -->
-    <div class="lg:hidden mt-4 md:mt-6 pb-4">
+    <div v-if="!loadingProduct && product" class="lg:hidden mt-4 md:mt-6 pb-4">
       <div class="bg-surface rounded-xl p-4 md:p-6 shadow-lg border border-border">
         <h3 class="text-base md:text-lg font-bold text-text-primary mb-3 md:mb-4">Resumen</h3>
 

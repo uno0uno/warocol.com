@@ -243,7 +243,7 @@ const apiPaymentTerms = ref(null);
 
 
 
-// Fetch data using useAsyncData for proper loading states (NO await to show loading)
+// Fetch data using useAsyncData (no await to show both loading indicators)
 const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
   `suppliers-${currentTenant.value?.id || 'default'}`,
   () => {

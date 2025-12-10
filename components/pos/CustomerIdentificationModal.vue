@@ -36,8 +36,8 @@
             </div>
           </div>
 
-          <!-- Name (Optional) - Shows if customer is new -->
-          <div v-if="showNameField">
+          <!-- Name (Optional) -->
+          <div>
             <label class="block text-sm font-medium text-text-primary mb-2">
               Nombre (opcional)
             </label>
@@ -53,24 +53,9 @@
                 :disabled="isLoading"
               />
             </div>
-          </div>
-
-          <!-- Customer Found Message -->
-          <div v-if="customerFound" class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-            <div class="flex items-start gap-3">
-              <span class="text-2xl">✅</span>
-              <div>
-                <p class="font-semibold text-green-800 dark:text-green-200">
-                  Cliente Encontrado
-                </p>
-                <p class="text-sm text-green-700 dark:text-green-300 mt-1">
-                  {{ customerFound.name || 'Sin nombre' }}
-                </p>
-                <p class="text-xs text-green-600 dark:text-green-400 mt-1">
-                  {{ customerFound.email || 'Sin email' }}
-                </p>
-              </div>
-            </div>
+            <p class="mt-1 text-xs text-text-secondary">
+              Si el cliente ya existe, se usará su información guardada
+            </p>
           </div>
 
           <!-- Error Message -->
@@ -105,7 +90,7 @@
             class="px-6 py-3 rounded-lg font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-crocus disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="!form.phone_number || isLoading"
           >
-            {{ customerFound ? 'Continuar' : 'Buscar Cliente' }}
+            Continuar
           </button>
         </div>
       </div>
@@ -143,65 +128,8 @@ const form = ref({
 
 const isLoading = ref(false)
 const errorMessage = ref('')
-const customerFound = ref<Customer | null>(null)
-const showNameField = ref(false)
-
-// Watch for phone number changes to search customer
-watch(() => form.value.phone_number, async (newPhone) => {
-  console.log('📱 Phone changed:', newPhone)
-
-  // Reset states
-  customerFound.value = null
-  showNameField.value = false
-  errorMessage.value = ''
-
-  // Only search if phone has at least 7 digits
-  if (newPhone.length >= 7) {
-    console.log('🔍 Searching customer with phone:', newPhone)
-    await searchCustomer(newPhone)
-  }
-}, { immediate: false })
 
 // Methods
-const searchCustomer = async (phone: string) => {
-  console.log('🚀 searchCustomer called with:', phone)
-  try {
-    isLoading.value = true
-    errorMessage.value = ''
-
-    console.log('📡 Making request to /api/customers/search')
-
-    // Use $fetch for dynamic client-side requests
-    const response = await $fetch('/api/customers/search', {
-      method: 'GET',
-      params: { phone_number: phone }
-    }) as {
-      success: boolean
-      customer: Customer | null
-      found: boolean
-    }
-
-    console.log('✅ Response received:', response)
-
-    if (response.found && response.customer) {
-      console.log('✅ Customer found:', response.customer)
-      customerFound.value = response.customer
-      form.value.name = response.customer.name || ''
-      showNameField.value = false
-    } else {
-      console.log('❌ Customer not found')
-      customerFound.value = null
-      showNameField.value = true
-    }
-  } catch (error: any) {
-    console.error('❌ Error searching customer:', error)
-    errorMessage.value = 'Error al buscar cliente'
-    showNameField.value = true
-  } finally {
-    isLoading.value = false
-  }
-}
-
 const handleSubmit = async () => {
   if (!form.value.phone_number) return
 
@@ -231,8 +159,6 @@ const handleSubmit = async () => {
         phone_number: '',
         name: ''
       }
-      customerFound.value = null
-      showNameField.value = false
     }
   } catch (error: any) {
     console.error('Error creating/finding customer:', error)
@@ -250,8 +176,6 @@ const handleCancel = () => {
     phone_number: '',
     name: ''
   }
-  customerFound.value = null
-  showNameField.value = false
   errorMessage.value = ''
 }
 </script>

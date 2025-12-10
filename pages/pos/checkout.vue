@@ -14,6 +14,8 @@ const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageS
 
 // State
 const selectedPaymentMethod = ref<'cash' | 'card' | 'digital'>('cash')
+const isProcessing = ref(false)
+const processingError = ref('')
 
 // Computed
 const cartItems = computed(() => posStore.cart)
@@ -34,19 +36,69 @@ const getItemTotal = (item: any) => {
   return basePrice + modifiersPrice
 }
 
-const processOrder = () => {
-  // In real app, this would send order to API
-  alert('¡Orden procesada exitosamente!')
+const processOrder = async () => {
+  if (!posStore.currentCustomer) {
+    processingError.value = 'No customer identified'
+    return
+  }
 
-  // Clear cart
-  posStore.clearCart()
+  // Get cartId from store
+  if (!posStore.cartId) {
+    processingError.value = 'No active cart found'
+    return
+  }
 
-  // Navigate back to POS
-  router.push('/ventas/pos')
+  try {
+    isProcessing.value = true
+    processingError.value = ''
+
+    // Complete order via API
+    const response = await $fetch(`/api/pos/cart/${posStore.cartId}/complete`, {
+      method: 'POST',
+      body: {
+        payment_method: selectedPaymentMethod.value
+      }
+    }) as {
+      success: boolean
+      message: string
+      data: {
+        order_id: string
+        order_number: number
+        total_amount: number
+        payment_method: string
+        items_count: number
+      }
+    }
+
+    if (response.success) {
+      // Show success message with order number
+      alert(`¡Orden #${response.data.order_number} procesada exitosamente!\n\nTotal: ${formatCurrency(response.data.total_amount)}\nMétodo de pago: ${getPaymentMethodLabel(response.data.payment_method)}`)
+
+      // Clear local cart
+      posStore.clearAll()
+
+      // Navigate back to POS
+      router.push('/pos')
+    }
+  } catch (error: any) {
+    console.error('❌ Error processing order:', error)
+    processingError.value = error.data?.message || error.message || 'Error processing order'
+  } finally {
+    isProcessing.value = false
+  }
+}
+
+const getPaymentMethodLabel = (method: string) => {
+  const labels: Record<string, string> = {
+    'cash': 'Efectivo',
+    'card': 'Tarjeta',
+    'digital': 'Pago Digital'
+  }
+  return labels[method] || method
 }
 
 const cancelOrder = () => {
-  router.push('/ventas/pos')
+  router.push('/pos')
 }
 
 // Set page subtitle
@@ -69,7 +121,7 @@ onUnmounted(() => {
       </svg>
       <h2 class="text-xl font-semibold text-text-primary mb-2">Carrito Vacío</h2>
       <p class="text-text-secondary mb-6">No hay productos en tu orden</p>
-      <UiButton variant="default" @click="router.push('/ventas/pos')">
+      <UiButton variant="default" @click="router.push('/pos')">
         Volver al POS
       </UiButton>
     </div>
@@ -289,17 +341,29 @@ onUnmounted(() => {
             <p class="text-right text-xs text-text-tertiary">COP</p>
           </div>
 
+          <!-- Error Message -->
+          <div v-if="processingError" class="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 mt-4">
+            <div class="flex items-start gap-3">
+              <span class="text-xl">⚠️</span>
+              <p class="text-sm text-red-800 dark:text-red-200">
+                {{ processingError }}
+              </p>
+            </div>
+          </div>
+
           <!-- Action Buttons (Desktop) -->
           <div class="hidden lg:flex flex-col gap-3 mt-6">
             <button
               @click="processOrder"
-              class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group"
+              :disabled="isProcessing"
+              class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <CommonsTheCustomLoader v-if="isProcessing" size="small" />
+              <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
               </svg>
-              <span>Confirmar Orden</span>
-              <svg class="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <span>{{ isProcessing ? 'Procesando...' : 'Confirmar Orden' }}</span>
+              <svg v-if="!isProcessing" class="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
               </svg>
             </button>
@@ -359,12 +423,14 @@ onUnmounted(() => {
         <div class="flex flex-col gap-3 mt-6">
           <button
             @click="processOrder"
-            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
+            :disabled="isProcessing"
+            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <CommonsTheCustomLoader v-if="isProcessing" size="small" />
+            <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
-            <span>Confirmar Orden</span>
+            <span>{{ isProcessing ? 'Procesando...' : 'Confirmar Orden' }}</span>
           </button>
 
           <button

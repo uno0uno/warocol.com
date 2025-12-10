@@ -33,7 +33,7 @@
 
       <!-- POS -->
       <NuxtLink
-        to="/ventas/pos"
+        to="/pos"
         class="flex flex-col items-center gap-0.5 flex-1 group"
       >
         <div
