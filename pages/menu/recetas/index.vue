@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Loading State -->
-    <div v-if="isLoading && recetas.length === 0" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="(isLoading && recetas.length === 0) || isChangingTenant" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
@@ -346,6 +346,7 @@ const categoryFilter = ref('')
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
 const expandedRows = ref(new Set())
+const isChangingTenant = ref(false)
 
 // Fetch recipe bases from backend with ingredients
 const { data: productsData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
@@ -552,8 +553,10 @@ onMounted(() => {
   setRefreshHandler(refresh)
 })
 
-onTenantChange(() => {
-  refresh()
+onTenantChange(async () => {
+  isChangingTenant.value = true
+  await refresh()
+  isChangingTenant.value = false
 })
 </script>
 
