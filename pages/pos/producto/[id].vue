@@ -10,6 +10,9 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+// Tenant reactivity
+const { onTenantChange, currentTenant } = useTenantReactive()
+
 const route = useRoute()
 const router = useRouter()
 const posStore = usePOSStore()
@@ -21,13 +24,21 @@ const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageS
 const productId = computed(() => route.params.id as string)
 
 // Load product from API (no await to show both loading indicators)
-const { data: productData, pending: loadingProduct } = useAsyncData(
-  `product-${productId.value}`,
+const { data: productData, pending: loadingProduct, refresh: refreshProduct } = useAsyncData(
+  `product-${productId.value}-${currentTenant.value?.id || 'default'}`,
   () => $fetch(`/api/menu/products/${productId.value}`),
   {
-    server: false
+    server: false,
+    watch: [currentTenant]
   }
 )
+
+// Refresh on tenant change
+onTenantChange(async () => {
+  await refreshProduct()
+  // Navigate back to POS on tenant change
+  router.push('/pos')
+})
 
 // Product computed from API data
 const product = computed(() => {

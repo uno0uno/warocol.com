@@ -6,6 +6,9 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+// Tenant reactivity
+const { onTenantChange, currentTenant } = useTenantReactive()
+
 const router = useRouter()
 const posStore = usePOSStore()
 
@@ -20,8 +23,8 @@ const isLoadingCustomer = ref(false)
 const customerError = ref('')
 
 // Load products from API (no await to show both loading indicators)
-const { data: productsData, pending: loadingProducts } = useAsyncData(
-  'pos-products',
+const { data: productsData, pending: loadingProducts, refresh: refreshProducts } = useAsyncData(
+  `pos-products-${currentTenant.value?.id || 'default'}`,
   () => $fetch('/api/menu/products', {
     params: {
       is_available: true,
@@ -29,9 +32,17 @@ const { data: productsData, pending: loadingProducts } = useAsyncData(
     }
   }),
   {
-    server: false
+    server: false,
+    watch: [currentTenant]
   }
 )
+
+// Refresh on tenant change
+onTenantChange(async () => {
+  await refreshProducts()
+  // Clear POS state when tenant changes
+  posStore.clearAll()
+})
 
 // Map products to POS format
 const products = computed(() => {
