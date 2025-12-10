@@ -148,6 +148,8 @@ const showNameField = ref(false)
 
 // Watch for phone number changes to search customer
 watch(() => form.value.phone_number, async (newPhone) => {
+  console.log('📱 Phone changed:', newPhone)
+
   // Reset states
   customerFound.value = null
   showNameField.value = false
@@ -155,34 +157,44 @@ watch(() => form.value.phone_number, async (newPhone) => {
 
   // Only search if phone has at least 7 digits
   if (newPhone.length >= 7) {
+    console.log('🔍 Searching customer with phone:', newPhone)
     await searchCustomer(newPhone)
   }
-})
+}, { immediate: false })
 
 // Methods
 const searchCustomer = async (phone: string) => {
+  console.log('🚀 searchCustomer called with:', phone)
   try {
     isLoading.value = true
     errorMessage.value = ''
 
-    const response = await $fetch<{
+    console.log('📡 Making request to /api/customers/search')
+
+    // Use $fetch for dynamic client-side requests
+    const response = await $fetch('/api/customers/search', {
+      method: 'GET',
+      params: { phone_number: phone }
+    }) as {
       success: boolean
       customer: Customer | null
       found: boolean
-    }>('/api/customers/search', {
-      query: { phone_number: phone }
-    })
+    }
+
+    console.log('✅ Response received:', response)
 
     if (response.found && response.customer) {
+      console.log('✅ Customer found:', response.customer)
       customerFound.value = response.customer
       form.value.name = response.customer.name || ''
       showNameField.value = false
     } else {
+      console.log('❌ Customer not found')
       customerFound.value = null
       showNameField.value = true
     }
   } catch (error: any) {
-    console.error('Error searching customer:', error)
+    console.error('❌ Error searching customer:', error)
     errorMessage.value = 'Error al buscar cliente'
     showNameField.value = true
   } finally {
@@ -197,17 +209,18 @@ const handleSubmit = async () => {
     isLoading.value = true
     errorMessage.value = ''
 
-    const response = await $fetch<{
-      success: boolean
-      data: Customer
-      is_new: boolean
-    }>('/api/customers/search-or-create', {
+    // Use $fetch for POST requests
+    const response = await $fetch('/api/customers/search-or-create', {
       method: 'POST',
       body: {
         phone_number: form.value.phone_number,
         name: form.value.name || null
       }
-    })
+    }) as {
+      success: boolean
+      data: Customer
+      is_new: boolean
+    }
 
     if (response.success) {
       emit('customer-identified', response.data)
@@ -223,7 +236,7 @@ const handleSubmit = async () => {
     }
   } catch (error: any) {
     console.error('Error creating/finding customer:', error)
-    errorMessage.value = error.message || 'Error al procesar el cliente'
+    errorMessage.value = error.data?.message || error.message || 'Error al procesar el cliente'
   } finally {
     isLoading.value = false
   }

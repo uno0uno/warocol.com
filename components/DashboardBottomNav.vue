@@ -31,6 +31,34 @@
         </span>
       </NuxtLink> -->
 
+      <!-- POS -->
+      <NuxtLink
+        to="/ventas/pos"
+        class="flex flex-col items-center gap-0.5 flex-1 group"
+      >
+        <div
+          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200"
+          :class="activePage === 'pos'
+            ? 'bg-crocus-100'
+            : 'hover:bg-titan-100'"
+        >
+          <ComputerDesktopIcon
+            class="w-5 h-5 transition-colors"
+            :class="activePage === 'pos'
+              ? 'text-crocus-600'
+              : 'text-titan-500'"
+          />
+        </div>
+        <span
+          class="text-xs font-medium transition-colors"
+          :class="activePage === 'pos'
+            ? 'text-crocus-700 font-semibold'
+            : 'text-titan-600'"
+        >
+          POS
+        </span>
+      </NuxtLink>
+
       <!-- Abastecimiento -->
       <NuxtLink
         to="/abastecimiento"
@@ -200,6 +228,7 @@
 import {
   BanknotesIcon,
   ChartBarIcon,
+  ComputerDesktopIcon,
   TruckIcon,
   Cog6ToothIcon,
   CheckCircleIcon
@@ -207,7 +236,7 @@ import {
 import { computed } from 'vue'
 
 interface Props {
-  activePage?: 'dashboard' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
+  activePage?: 'dashboard' | 'pos' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
   onRefresh?: () => void | Promise<void>
 }
 

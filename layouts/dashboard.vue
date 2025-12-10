@@ -8,26 +8,59 @@
       <!-- Main Content Header -->
       <header class="bg-surface border-b border-border px-6 py-4 md:px-8 md:py-4 flex-shrink-0">
         <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-[26px] md:text-3xl font-bold text-text-primary">{{ pageTitle }}</h1>
-            <p class="text-xs sm:text-sm text-muted-foreground mt-1">{{ displaySubtitle || currentDateTime }}</p>
-          </div>
-          <div v-if="backButton || refreshHandler" class="flex gap-2 md:gap-3">
-            <!-- Refresh Button (Desktop only) -->
-            <button v-if="refreshHandler" @click="refreshHandler"
-              class="hidden md:flex w-11 h-11 items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Refrescar orden">
-              <svg class="w-5 h-5 transition-transform hover:rotate-180 duration-300" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                </path>
+          <div class="flex items-center gap-4">
+            <!-- Back Button (if dynamic back is enabled) -->
+            <button
+              v-if="showBackBtn && backBtnHandler"
+              @click="backBtnHandler"
+              class="p-2 hover:bg-surface-secondary rounded-lg transition-colors"
+            >
+              <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
               </svg>
             </button>
-            <!-- Back Button -->
-            <button v-if="backButton" @click="goBack" class="btn-secondary px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold">
-              {{ backButton.label }}
+
+            <div>
+              <h1 class="text-[26px] md:text-3xl font-bold text-text-primary">{{ displayTitle }}</h1>
+              <p class="text-xs sm:text-sm text-muted-foreground mt-1">{{ displaySubtitle || currentDateTime }}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <!-- Header Action Button (e.g., Print) -->
+            <button
+              v-if="dynamicHeaderAction"
+              @click="dynamicHeaderAction.handler"
+              class="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
+            >
+              <svg v-if="dynamicHeaderAction.icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              {{ dynamicHeaderAction.label }}
             </button>
+
+            <!-- Status Badge -->
+            <span v-if="dynamicStatus" :class="['px-3 py-1.5 rounded-full text-sm font-medium', dynamicStatus.color]">
+              {{ dynamicStatus.label }}
+            </span>
+
+            <div v-if="backButton || refreshHandler" class="flex gap-2 md:gap-3">
+              <!-- Refresh Button (Desktop only) -->
+              <button v-if="refreshHandler" @click="refreshHandler"
+                class="hidden md:flex w-11 h-11 items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Refrescar orden">
+                <svg class="w-5 h-5 transition-transform hover:rotate-180 duration-300" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                  </path>
+                </svg>
+              </button>
+              <!-- Back Button -->
+              <button v-if="backButton" @click="goBack" class="btn-secondary px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold">
+                {{ backButton.label }}
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -62,10 +95,10 @@
     </main>
 
     <!-- Bottom Navigation - Mobile Only -->
-    <DashboardBottomNav 
-      :active-page="activePage" 
+    <DashboardBottomNav
+      :active-page="activePage"
       :on-refresh="refreshHandler"
-      :show-cart-button="route.path === '/ventas/pos'"
+      :show-cart-button="route.path === '/pos'"
       :cart-items-count="posCartItemsCount"
       @open-cart="posOpenCartModal"
     />
@@ -87,10 +120,11 @@ const router = useRouter()
 
 // Go back function
 const goBack = () => {
-  // Special handling for POS pages - always go to /ventas
-  if (route.path.startsWith('/ventas/pos')) {
-    router.push('/ventas')
+  // Special handling for POS sub-pages - always go back to POS
+  if (route.path.startsWith('/pos/producto/') || route.path.startsWith('/pos/checkout')) {
+    router.push('/pos')
   } else {
+    // Default: browser back (includes /pos main page)
     router.back()
   }
 }
@@ -322,36 +356,36 @@ const getPageConfig = () => {
       breadcrumbPage: 'Administración',
       backButton: undefined
     }
-  } else if (path.includes('/ventas/pos/producto/')) {
+  } else if (path.includes('/pos/producto/')) {
     return {
       pageTitle: 'Personalizar Producto',
       pageSubtitle: undefined,
       searchPlaceholder: undefined,
-      activePage: 'dashboard' as const,
+      activePage: 'pos' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: {
         label: 'Volver'
       }
     }
-  } else if (path === '/ventas/pos/checkout') {
+  } else if (path === '/pos/checkout') {
     return {
       pageTitle: 'Confirmar Orden',
       pageSubtitle: undefined,
       searchPlaceholder: undefined,
-      activePage: 'dashboard' as const,
+      activePage: 'pos' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: {
         label: 'Volver'
       }
     }
-  } else if (path === '/ventas/pos' || path.includes('/ventas/pos')) {
+  } else if (path === '/pos' || path.includes('/pos')) {
     return {
       pageTitle: 'Punto de Venta',
       pageSubtitle: undefined,
       searchPlaceholder: undefined,
-      activePage: 'dashboard' as const,
+      activePage: 'pos' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: {
@@ -471,6 +505,14 @@ provide('setRefreshHandler', (handler: (() => void | Promise<void>) | undefined)
   refreshHandler.value = handler
 })
 
+// Dynamic title - can be set by child pages
+const dynamicTitle = ref<string | undefined>(undefined)
+
+// Provide title setter for child pages
+provide('setPageTitle', (title: string | undefined) => {
+  dynamicTitle.value = title
+})
+
 // Dynamic subtitle - can be set by child pages
 const dynamicSubtitle = ref<string | undefined>(undefined)
 
@@ -479,8 +521,40 @@ provide('setPageSubtitle', (subtitle: string | undefined) => {
   dynamicSubtitle.value = subtitle
 })
 
-// Combined subtitle (dynamic takes precedence)
+// Dynamic status badge - can be set by child pages
+const dynamicStatus = ref<{ label: string; color: string } | undefined>(undefined)
+
+// Provide status setter for child pages
+provide('setPageStatus', (status: { label: string; color: string } | undefined) => {
+  dynamicStatus.value = status
+})
+
+// Dynamic back button - can be set by child pages
+const dynamicBackButton = ref<boolean>(false)
+const dynamicBackHandler = ref<(() => void) | undefined>(undefined)
+
+// Provide back button setters for child pages
+provide('setShowBackButton', (show: boolean) => {
+  dynamicBackButton.value = show
+})
+
+provide('setBackHandler', (handler: (() => void) | undefined) => {
+  dynamicBackHandler.value = handler
+})
+
+// Dynamic header action (like print button) - can be set by child pages
+const dynamicHeaderAction = ref<{ label: string; icon?: boolean; handler: () => void } | undefined>(undefined)
+
+// Provide header action setter for child pages
+provide('setHeaderAction', (action: { label: string; icon?: boolean; handler: () => void } | undefined) => {
+  dynamicHeaderAction.value = action
+})
+
+// Combined values (dynamic takes precedence)
+const displayTitle = computed(() => dynamicTitle.value || pageTitle.value)
 const displaySubtitle = computed(() => dynamicSubtitle.value || pageSubtitle.value)
+const showBackBtn = computed(() => dynamicBackButton.value || !!backButton.value)
+const backBtnHandler = computed(() => dynamicBackHandler.value || (backButton.value ? goBack : undefined))
 
 // Inject cart data from POS page
 const posCartItemsCount = inject<ComputedRef<number> | Ref<number>>('posCartItemsCount', ref(0))

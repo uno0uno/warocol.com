@@ -76,6 +76,19 @@
       </NuxtLink>
 
       <NuxtLink
+        to="/ventas/pos"
+        :class="[
+          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
+          activePage === 'pos'
+            ? 'bg-crocus-600/20 text-crocus-400'
+            : 'text-titan-400 hover:bg-ebony-800 hover:text-white'
+        ]"
+      >
+        <ComputerDesktopIcon :class="['w-5 h-5', activePage === 'pos' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+        <span>POS</span>
+      </NuxtLink>
+
+      <NuxtLink
         to="/abastecimiento"
         :class="[
           'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
@@ -219,13 +232,14 @@ import {
   BanknotesIcon,
   ChartBarIcon,
   ChevronDownIcon,
+  ComputerDesktopIcon,
   CubeIcon,
   ShoppingCartIcon,
   TruckIcon
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
+  activePage?: 'dashboard' | 'ventas' | 'pos' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
 }
 
 interface Tenant {

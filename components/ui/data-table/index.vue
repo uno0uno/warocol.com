@@ -128,6 +128,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   sort: [field: string]
+  rowClick: [row: any]
 }>()
 
 // Format cell values based on column format
@@ -266,8 +267,10 @@ function getCellColor(value: any, column: TableColumn): string {
             :key="index"
             :class="[
               tableRowVariants({ variant, rowType: 'normal' }),
-              index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'
+              index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30',
+              'cursor-pointer hover:bg-surface-secondary transition-colors'
             ]"
+            @click="emit('rowClick', row)"
           >
             <td 
               v-for="column in columns"

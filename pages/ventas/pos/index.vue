@@ -84,6 +84,26 @@ const handleCustomerIdentified = (customer: any) => {
 // Provide cart data to layout
 onMounted(() => {
   provide('posCartItemsCount', cartItemsCount)
+
+  // Check for pending customer from /ventas page
+  const pendingCustomer = sessionStorage.getItem('pendingSaleCustomer')
+  if (pendingCustomer) {
+    try {
+      const customer = JSON.parse(pendingCustomer)
+      posStore.setCustomer(customer)
+      console.log('✅ Cliente cargado desde session:', customer)
+
+      // Clear from session
+      sessionStorage.removeItem('pendingSaleCustomer')
+
+      // Open modal if no customer is set yet
+    } catch (error) {
+      console.error('Error parsing customer from session:', error)
+    }
+  } else if (!posStore.currentCustomer) {
+    // No customer in session and no customer in store, open modal
+    showCustomerModal.value = true
+  }
 })
 </script>
 

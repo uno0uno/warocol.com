@@ -45,6 +45,7 @@
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="$emit('sort', $event)"
+        @row-click="$emit('row-click', $event)"
       >
         <!-- Pass through all table slots -->
         <template v-if="$slots.header" #header>
@@ -99,7 +100,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Define emits
-defineEmits(['sort'])
+defineEmits(['sort', 'row-click'])
 
 // Get unique key for items
 const getItemKey = (item: any) => {
