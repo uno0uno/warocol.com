@@ -7,6 +7,9 @@ definePageMeta({
   ssr: false
 })
 
+// Tenant reactivity
+const { onTenantChange, currentTenant } = useTenantReactive()
+
 // State
 const localSearchTerm = ref('')
 const apiSearchField = ref('order_number')
@@ -17,7 +20,7 @@ const statusFilter = ref<string | null>(null)
 
 // Load orders from API
 const { data: ordersData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  'orders-list',
+  `orders-list-${currentTenant.value?.id || 'default'}`,
   () => $fetch('/api/orders', {
     params: {
       limit: 250,
@@ -30,9 +33,15 @@ const { data: ordersData, pending: isLoading, error: fetchError, refresh } = use
     }
   }),
   {
-    server: false
+    server: false,
+    watch: [currentTenant]
   }
 )
+
+// Refresh on tenant change
+onTenantChange(async () => {
+  await refresh()
+})
 
 // Computed - Transform data to flatten customer object
 const orders = computed(() => {

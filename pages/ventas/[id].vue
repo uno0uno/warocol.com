@@ -6,34 +6,44 @@ definePageMeta({
   ssr: false
 })
 
+// Tenant reactivity
+const { onTenantChange, currentTenant } = useTenantReactive()
+
 const route = useRoute()
 const router = useRouter()
 
 const orderId = computed(() => route.params.id as string)
 
 // Load order details
-const { data: orderData, pending: isLoading, error: fetchError } = useAsyncData(
-  `order-${orderId.value}`,
+const { data: orderData, pending: isLoading, error: fetchError, refresh: refreshOrder } = useAsyncData(
+  `order-${orderId.value}-${currentTenant.value?.id || 'default'}`,
   async () => {
     const response = await $fetch(`/api/orders/${orderId.value}`) as any
     return response.data
   },
   {
-    server: false
+    server: false,
+    watch: [currentTenant]
   }
 )
 
 // Load order items
-const { data: itemsData, pending: itemsLoading } = useAsyncData(
-  `order-items-${orderId.value}`,
+const { data: itemsData, pending: itemsLoading, refresh: refreshItems } = useAsyncData(
+  `order-items-${orderId.value}-${currentTenant.value?.id || 'default'}`,
   async () => {
     const response = await $fetch(`/api/orders/${orderId.value}/items`) as any
     return response.data
   },
   {
-    server: false
+    server: false,
+    watch: [currentTenant]
   }
 )
+
+// Refresh on tenant change
+onTenantChange(async () => {
+  await Promise.all([refreshOrder(), refreshItems()])
+})
 
 const order = computed(() => {
   if (!orderData.value) return null
