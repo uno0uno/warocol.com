@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, inject, onMounted } from 'vue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({
@@ -143,6 +143,12 @@ const getStatusColor = (status: string) => {
 const viewOrderDetails = (order: any) => {
   navigateTo(`/ventas/${order.id}`)
 }
+
+// Set refresh handler for layout
+const setRefreshHandler = inject('setRefreshHandler', () => {})
+onMounted(() => {
+  setRefreshHandler(refresh)
+})
 </script>
 
 <template>

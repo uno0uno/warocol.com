@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Loading State -->
-    <div v-if="(isLoading && products.length === 0) || isChangingTenant" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
@@ -289,7 +289,6 @@ const statusFilter = ref('')
 const categoryFilter = ref('')
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
-const isChangingTenant = ref(false)
 
 const searchFields = [
   { label: 'Nombre', value: 'name' },
@@ -578,9 +577,7 @@ const editProduct = (product: any) => {
 
 // Handle tenant change
 onTenantChange(async () => {
-  isChangingTenant.value = true
   await refresh()
-  isChangingTenant.value = false
 })
 </script>
 
