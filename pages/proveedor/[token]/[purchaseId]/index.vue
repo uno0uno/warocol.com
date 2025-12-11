@@ -153,7 +153,9 @@
           </div>
           <div>
             <p class="text-sm text-text-secondary mb-1">Fecha de Entrega</p>
-            <p class="text-base font-medium text-text-primary">{{ formatDate(purchase?.delivery_date) }}</p>
+            <p class="text-base font-medium text-text-primary">
+              {{ purchase?.estimated_delivery_date || purchase?.delivery_date ? formatDate(purchase.estimated_delivery_date || purchase.delivery_date) : 'No especificada' }}
+            </p>
           </div>
         </div>
 

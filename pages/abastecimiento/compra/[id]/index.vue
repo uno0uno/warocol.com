@@ -81,6 +81,19 @@
             <span>Resumen de la Orden</span>
           </h3>
 
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <p class="text-sm text-text-secondary mb-1">Fecha de Orden</p>
+              <p class="text-base font-medium text-text-primary">{{ formatDate(form.purchase_date) }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-text-secondary mb-1">Fecha de Entrega</p>
+              <p class="text-base font-medium text-text-primary">
+                {{ purchase?.estimated_delivery_date || purchase?.delivery_date ? formatDate(purchase.estimated_delivery_date || purchase.delivery_date) : 'No especificada' }}
+              </p>
+            </div>
+          </div>
+
           <!-- Items Section -->
           <div class="mb-4 sm:mb-6">
             <h4 class="font-medium text-text-primary mb-3 sm:mb-4">Items</h4>

@@ -14,6 +14,18 @@
       />
     </div>
 
+    <!-- Estimated Delivery Date -->
+    <div>
+      <label class="block text-sm font-medium text-text-primary mb-2">
+        Fecha Estimada de Entrega
+      </label>
+      <input
+        v-model="formData.estimated_delivery_date"
+        type="date"
+        class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+      />
+    </div>
+
     <!-- Notes -->
     <div>
       <label class="block text-sm font-medium text-text-primary mb-2">
@@ -69,6 +81,7 @@ const loading = ref(false)
 const formData = ref({
   carrier: 'Waro',
   package_count: 1,
+  estimated_delivery_date: '',
   notes: ''
 })
 
@@ -84,6 +97,7 @@ onMounted(() => {
   formData.value = {
     carrier: 'Waro',
     package_count: 1,
+    estimated_delivery_date: '',
     notes: ''
   }
   selectedFiles.value = []
@@ -100,6 +114,10 @@ const handleSubmit = async () => {
 
     if (formData.value.package_count) {
       formDataPayload.append('package_count', formData.value.package_count.toString())
+    }
+
+    if (formData.value.estimated_delivery_date) {
+      formDataPayload.append('estimated_delivery_date', formData.value.estimated_delivery_date)
     }
 
     if (formData.value.notes) {

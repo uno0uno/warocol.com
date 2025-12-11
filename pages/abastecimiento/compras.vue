@@ -355,7 +355,7 @@ const ordenes = computed(() => purchasesData.value.data.map(purchase => ({
   numero: purchase.purchase_number || `PO-${purchase.id.substring(0, 8)}`,
   proveedor: purchase.supplier_name || 'Sin proveedor',
   fecha: purchase.purchase_date,
-  fechaEntrega: purchase.delivery_date,
+  fechaEntrega: purchase.estimated_delivery_date || purchase.delivery_date,
   valorTotal: parseFloat(purchase.total_amount || 0),
   impuestos: parseFloat(purchase.tax_amount || 0),
   totalItems: purchase.items?.length || 0,
@@ -540,8 +540,8 @@ const formatDate = (dateString) => {
   const date = new Date(dateString)
   return date.toLocaleDateString('es-CO', {
     year: 'numeric',
-    month: 'short',
-    day: 'numeric'
+    month: '2-digit',
+    day: '2-digit'
   })
 }
 
