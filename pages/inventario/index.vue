@@ -1,12 +1,9 @@
-<script setup lang="ts">
-definePageMeta({
-  layout: 'dashboard'
-})
-
-// Redirect to ingredientes by default
-navigateTo('/inventario/ingredientes')
+<script setup>
+// Redirect to stock by default
+await navigateTo('/inventario/stock')
 </script>
 
 <template>
-  <div />
+  <!-- This page redirects, no content needed -->
+  <div></div>
 </template>

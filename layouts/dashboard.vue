@@ -452,6 +452,36 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path === '/inventario/stock') {
+    return {
+      pageTitle: 'Stock de Inventario',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar ingredientes...',
+      activePage: 'inventario' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/inventario/movimientos') {
+    return {
+      pageTitle: 'Movimientos de Inventario',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar movimientos...',
+      activePage: 'inventario' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/inventario' || path === '/inventario/') {
+    return {
+      pageTitle: 'Inventario',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar...',
+      activePage: 'inventario' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   }
 
   return {
