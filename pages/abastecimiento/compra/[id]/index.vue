@@ -34,10 +34,23 @@
         <!-- Purchase Number with Date and Payment Type -->
         <PurchasesPurchaseInfoCard
           :label="formatDate(form.purchase_date)"
-          :value="form.purchase_number"
           :subtitle="form.payment_type ? `Pago: ${getPaymentTypeText(form.payment_type)}` : undefined"
           icon-path="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-        />
+        >
+          <div class="flex items-center gap-2">
+            <p class="text-lg font-semibold text-text-primary">
+              {{ form.purchase_number }}
+            </p>
+            <button @click="copyPurchaseLink"
+              class="w-8 h-8 flex items-center justify-center bg-surface-secondary rounded-md text-primary transition-colors"
+              title="Copiar enlace de la orden">
+              <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            </button>
+          </div>
+        </PurchasesPurchaseInfoCard>
 
         <!-- Supplier -->
         <PurchasesPurchaseInfoCard
@@ -81,7 +94,7 @@
             <span>Resumen de la Orden</span>
           </h3>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-4 mb-6">
             <div>
               <p class="text-sm text-text-secondary mb-1">Fecha de Orden</p>
               <p class="text-base font-medium text-text-primary">{{ formatDate(form.purchase_date) }}</p>
@@ -913,9 +926,10 @@ const getWaitingDescription = computed(() => {
 
 // Copy portal link to clipboard
 const copyPortalLink = async () => {
+  const toast = useToast()
   try {
     const baseUrl = window.location.origin
-    const portalUrl = `${baseUrl}/proveedor/${currentSupplier.value.access_token}`
+    const portalUrl = `${baseUrl}/proveedor/${currentSupplier.value.access_token}/${purchaseId}`
 
     // Try modern clipboard API
     if (navigator.clipboard && window.isSecureContext) {
@@ -933,8 +947,40 @@ const copyPortalLink = async () => {
     }
 
     console.log('✅ Portal link copied:', portalUrl)
+    toast.success('Enlace del portal del proveedor copiado exitosamente', { title: 'Copiado' })
   } catch (error) {
     console.error('Error copying portal link:', error)
+    toast.error('No se pudo copiar el enlace', { title: 'Error' })
+  }
+}
+
+// Copy purchase order link to clipboard
+const copyPurchaseLink = async () => {
+  const toast = useToast()
+  try {
+    const baseUrl = window.location.origin
+    const purchaseUrl = `${baseUrl}/abastecimiento/compra/${purchaseId}`
+
+    // Try modern clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(purchaseUrl)
+    } else {
+      // Fallback for non-HTTPS contexts
+      const textArea = document.createElement('textarea')
+      textArea.value = purchaseUrl
+      textArea.style.position = 'fixed'
+      textArea.style.opacity = '0'
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+    }
+
+    console.log('✅ Purchase link copied:', purchaseUrl)
+    toast.success('Enlace de la orden copiado exitosamente', { title: 'Copiado' })
+  } catch (error) {
+    console.error('Error copying purchase link:', error)
+    toast.error('No se pudo copiar el enlace', { title: 'Error' })
   }
 }
 
