@@ -450,8 +450,8 @@
                 <span>Orden recibida. Registrar pago en módulo de Pagos</span>
               </div>
 
-              <!-- Cancel (not available in received state) -->
-              <button v-if="purchase.status !== 'received' && purchase.status !== 'cancelled'" type="button"
+              <!-- Cancel (only available for early states before payment/shipping) -->
+              <button v-if="canCancelPurchase" type="button"
                 @click="showCancelModal = true"
                 class="px-3 py-2 sm:px-4 border-2 rounded-lg transition-colors flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm hover:opacity-60"
                 style="border-color: hsl(var(--destructive)); color: hsl(var(--destructive));">
@@ -461,6 +461,15 @@
                 </svg>
                 <span>Cancelar Orden</span>
               </button>
+
+              <!-- Info message when cannot cancel -->
+              <div v-else-if="!isCancelled && cancelBlockedReason"
+                class="px-3 py-2 sm:px-4 bg-muted/50 border-2 border-border rounded-lg flex items-start space-x-2 text-xs sm:text-sm">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 text-muted-foreground mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-text-secondary">{{ cancelBlockedReason }}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -922,6 +931,36 @@ const getWaitingDescription = computed(() => {
     default:
       return ''
   }
+})
+
+// Cancellation rules - match backend validation
+const CANCELLABLE_STATES = ['quotation', 'pending', 'confirmed', 'preparing']
+
+const canCancelPurchase = computed(() => {
+  if (!purchase.value) return false
+  return CANCELLABLE_STATES.includes(purchase.value.status)
+})
+
+const isCancelled = computed(() => {
+  return purchase.value?.status === 'cancelled'
+})
+
+const cancelBlockedReason = computed(() => {
+  if (!purchase.value) return ''
+
+  const status = purchase.value.status
+
+  const errorMessages = {
+    'paid': 'No se puede cancelar una orden que ya ha sido pagada.',
+    'invoiced': 'No se puede cancelar una orden que ya ha sido facturada.',
+    'shipped': 'No se puede cancelar una orden que ya ha sido enviada.',
+    'received': 'No se puede cancelar una orden que ya ha sido recibida. El inventario ya fue actualizado.',
+    'partially_received': 'No se puede cancelar una orden parcialmente recibida.',
+    'overdue': 'No se puede cancelar una orden vencida.',
+    'cancelled': ''  // Don't show message for already cancelled
+  }
+
+  return errorMessages[status] || ''
 })
 
 // Copy portal link to clipboard
