@@ -701,7 +701,7 @@ const ingredientOptions = computed(() =>
 // Fetch ingredient purchase units
 const { data: purchaseUnitsData, pending: loadingPurchaseUnits } = useFetch('/api/suppliers/ingredient-purchase-units', {
   server: false,
-  query: { limit: 250, active_only: true }
+  query: { limit: 10000, active_only: true }
 })
 
 const purchaseUnits = computed(() => purchaseUnitsData.value?.data || [])
