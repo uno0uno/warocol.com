@@ -252,14 +252,7 @@
                   <span class="text-sm font-medium text-text-primary">Disponible para venta</span>
                 </label>
 
-                <label class="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    v-model="form.controla_stock"
-                    class="w-5 h-5 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span class="text-sm font-medium text-text-primary">Controlar stock</span>
-                </label>
+                <!-- REMOVED: Controlar stock - Now ALL products control inventory automatically -->
 
                 <label class="flex items-center gap-3 cursor-pointer">
                   <input

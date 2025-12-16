@@ -209,7 +209,7 @@ function getCellColor(value: any, column: TableColumn): string {
               v-for="column in columns" 
               :key="column.key"
               :class="cn(
-                'py-3 px-2 border-r border-dashed border-border/60 last:border-r-0',
+                'py-2 px-2 border-r border-dashed border-border/60 last:border-r-0',
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
                 column.class
@@ -272,11 +272,11 @@ function getCellColor(value: any, column: TableColumn): string {
             ]"
             @click="emit('rowClick', row)"
           >
-            <td 
+            <td
               v-for="column in columns"
               :key="column.key"
               :class="cn(
-                'py-4 px-2 text-sm font-medium border-r border-dashed border-border/60 last:border-r-0',
+                'py-2 px-2 text-sm font-medium border-r border-dashed border-border/60 last:border-r-0',
                 getCellColor(row[column.key], column),
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
@@ -300,11 +300,11 @@ function getCellColor(value: any, column: TableColumn): string {
         <!-- Table Footer (Totals) -->
         <tbody v-if="showFooter && totalsData">
           <tr :class="tableRowVariants({ variant, rowType: 'totals' })">
-            <td 
+            <td
               v-for="column in columns"
               :key="`total-${column.key}`"
               :class="cn(
-                'py-4 px-2 text-sm text-text-primary font-semibold border-r border-dashed border-border/60 last:border-r-0',
+                'py-2 px-2 text-sm text-text-primary font-semibold border-r border-dashed border-border/60 last:border-r-0',
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
                 column.class

@@ -132,6 +132,16 @@
                 <span class="text-sm text-text-secondary">Valor total:</span>
                 <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(item.total_value) }}</span>
               </div>
+              <button
+                @click="navigateTo(`/inventario/ajustes/crear?ingredientId=${item.ingredient_id}`)"
+                title="Ajustar stock"
+                class="w-full mt-2 px-3 py-2 border border-border rounded-md hover:bg-surface-secondary transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+              >
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                Ajustar Stock
+              </button>
             </UiCardContent>
           </UiCard>
         </template>
@@ -185,6 +195,20 @@
             :label="getStatusLabel(value)"
             :variant="getStockVariant(value)"
           />
+        </template>
+
+        <template #cell-actions="{ row }">
+          <div class="flex justify-center">
+            <button
+              @click="navigateTo(`/inventario/ajustes/crear?ingredientId=${row.ingredient_id}`)"
+              title="Ajustar stock"
+              class="p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-primary"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+              </svg>
+            </button>
+          </div>
         </template>
       </UiResponsiveDataView>
     </div>
@@ -379,6 +403,13 @@ const stockTableColumns = [
     title: 'Estado',
     sortable: true,
     format: 'badge',
+    align: 'center'
+  },
+  {
+    key: 'actions',
+    title: 'Acciones',
+    sortable: false,
+    format: 'custom',
     align: 'center'
   }
 ]

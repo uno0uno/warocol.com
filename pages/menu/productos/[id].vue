@@ -281,22 +281,7 @@
         <div class="mt-8">
           <h3 class="text-lg font-semibold text-text-primary mb-6">Configuración</h3>
           <div class="space-y-4">
-            <div class="flex items-start space-x-3">
-              <input
-                v-model="form.controla_stock"
-                type="checkbox"
-                id="controla_stock"
-                class="h-4 w-4 mt-0.5 text-primary focus:ring-primary border-border rounded"
-              />
-              <div>
-                <label for="controla_stock" class="text-sm font-medium text-text-primary block">
-                  Controla Stock
-                </label>
-                <p class="text-xs text-text-secondary mt-1">
-                  Valida y descuenta ingredientes al vender
-                </p>
-              </div>
-            </div>
+            <!-- REMOVED: Controla Stock - ALL products now automatically control inventory -->
 
             <div class="flex items-start space-x-3">
               <input

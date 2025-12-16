@@ -92,13 +92,7 @@
               </div>
 
               <div class="flex flex-wrap gap-2 pt-2 border-t border-border">
-                <UiStatusBadge
-                  v-if="item.controla_stock"
-                  value="Control Stock"
-                  format="text"
-                  variant="default"
-                  size="sm"
-                />
+                <!-- REMOVED: Control Stock badge - ALL products now control inventory automatically -->
                 <UiStatusBadge
                   v-if="item.is_combo"
                   value="Combo"
@@ -154,16 +148,7 @@
             <span class="text-sm font-semibold text-crocus-600">{{ formatMargin(row) }}</span>
           </template>
 
-          <template #cell-controla_stock="{ value }">
-            <div class="flex justify-center">
-              <UiStatusBadge
-                :value="value ? 'Sí' : 'No'"
-                format="text"
-                :variant="value ? 'success' : 'default'"
-                size="sm"
-              />
-            </div>
-          </template>
+          <!-- REMOVED: cell-controla_stock - ALL products now control inventory automatically -->
 
           <template #cell-is_available="{ value }">
             <div class="flex justify-center">
@@ -494,6 +479,7 @@ onMounted(() => {
 })
 
 // Table columns configuration
+// REMOVED: controla_stock column - ALL products now control inventory automatically
 const productosTableColumns = [
   {
     key: 'name',
@@ -528,13 +514,6 @@ const productosTableColumns = [
     title: 'Margen',
     sortable: false,
     format: 'text',
-    align: 'center'
-  },
-  {
-    key: 'controla_stock',
-    title: 'Control Stock',
-    sortable: true,
-    format: 'boolean',
     align: 'center'
   },
   {
