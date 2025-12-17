@@ -472,6 +472,26 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path.startsWith('/inventario/ajustes/crear')) {
+    return {
+      pageTitle: 'Ajustar Inventario',
+      pageSubtitle: 'Registra ajustes manuales al inventario',
+      searchPlaceholder: undefined,
+      activePage: 'inventario' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/inventario/ajustes') {
+    return {
+      pageTitle: 'Ajustes de Inventario',
+      pageSubtitle: 'Resumen e historial de ajustes manuales',
+      searchPlaceholder: 'Buscar ajustes...',
+      activePage: 'inventario' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path === '/inventario' || path === '/inventario/') {
     return {
       pageTitle: 'Inventario',

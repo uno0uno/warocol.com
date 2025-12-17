@@ -20,7 +20,8 @@ definePageMeta({
 // Navigation configuration
 const navigationItems = [
   { to: '/inventario/stock', label: 'Stock' },
-  { to: '/inventario/movimientos', label: 'Movimientos' }
+  { to: '/inventario/movimientos', label: 'Movimientos' },
+  { to: '/inventario/ajustes', label: 'Ajustes' }
 ]
 
 // Pass through the refresh handler from layout to child pages
