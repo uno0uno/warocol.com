@@ -3,8 +3,69 @@
 @tailwind utilities;
 
 
+/* Blog Article Styles */
 .article-style {
-  @apply prose sm:prose-2xl prose-img:rounded-lg text-left leading-normal prose-h2:mt-6 sm:prose-h2:mt-16 prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:text-lg sm:prose-p:text-2xl
+  @apply prose prose-lg lg:prose-xl max-w-none text-left;
+}
+
+.article-style h1 {
+  @apply text-3xl lg:text-4xl font-semibold text-ebony-900;
+}
+
+.article-style h2 {
+  @apply text-2xl lg:text-3xl font-bold mt-8 mb-6 text-ebony-800;
+}
+
+.article-style h3 {
+  @apply text-xl lg:text-2xl font-semibold my-4 text-ebony-700;
+}
+
+.article-style p {
+  @apply text-base lg:text-xl font-normal text-ebony-600 leading-relaxed my-6;
+}
+
+.article-style ul,
+.article-style ol {
+  @apply my-6;
+}
+
+.article-style ul li,
+.article-style ol li {
+  @apply text-base lg:text-xl font-normal text-ebony-600 leading-relaxed my-2;
+}
+
+.article-style ul li p,
+.article-style ol li p {
+  @apply text-base lg:text-xl font-normal text-ebony-600 leading-relaxed my-2;
+}
+
+.article-style a {
+  @apply text-crocus-600 hover:text-crocus-700 underline decoration-crocus-300 underline-offset-2;
+}
+
+.article-style img {
+  @apply rounded-xl my-8;
+}
+
+.article-style blockquote {
+  @apply border-l-4 border-crocus-500 pl-6 italic text-ebony-700 my-8;
+}
+
+.article-style code {
+  @apply bg-titan-100 px-2 py-1 rounded text-sm text-ebony-800;
+}
+
+.article-style pre {
+  @apply bg-ebony-900 text-titan-50 p-6 rounded-xl overflow-x-auto my-8;
+}
+
+.article-style pre code {
+  @apply bg-transparent p-0 text-titan-50;
+}
+
+/* Article Layout Container */
+.article-container {
+  @apply px-4 md:px-8 lg:px-16 xl:px-24 2xl:px-48;
 }
 
 .p-cards{
