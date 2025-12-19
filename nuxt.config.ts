@@ -24,16 +24,18 @@ export default defineNuxtConfig({
           'Access-Control-Allow-Credentials': 'true'
         }
       },
-      '/api/**': { 
+      '/api/**': {
         proxy: {
-          to: process.env.NODE_ENV === 'development' 
+          to: process.env.NODE_ENV === 'development'
             ? `${process.env.NUXT_PUBLIC_WAROLABS_API_URL || 'http://localhost:9999'}/**`
             : 'https://api.warolabs.com/**',
           changeOrigin: true,
           followRedirects: true,
           ...(process.env.NODE_ENV === 'development' && {
             headers: {
-              'X-Forwarded-Host': `localhost:${process.env.PORT || '8080'}`
+              'X-Forwarded-Host': `localhost:${process.env.PORT || '8080'}`,
+              'Origin': `http://localhost:${process.env.PORT || '8080'}`,
+              'Referer': `http://localhost:${process.env.PORT || '8080'}/`
             }
           })
         },

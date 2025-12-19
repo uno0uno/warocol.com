@@ -2,226 +2,88 @@
 const route = useRoute()
 const config = useRuntimeConfig()
 
-// Article type definition
+// Types
+interface AuthorInfo {
+  name: string | null
+  avatar: string | null
+  user_name: string | null
+  description: string | null
+  city: string | null
+  country: string | null
+}
+
 interface Article {
-  id: string
-  slug: string
+  id: number
   title: string
-  titleSeo: string
+  slug: string
   description: string
-  descriptionSeo: string
   content: string
-  cover: string
+  meta_title: string
+  meta_descripcion: string
   thumbnail: string
-  category: string
-  author: {
-    name: string
-    userName?: string
-    profilePicture: string
-    description?: string
-    city?: string
-    country?: string
+  cover: string
+  tags: string
+  views: number
+  published: boolean
+  draft: boolean
+  is_active: boolean
+  author: string
+  id_profile: string
+  tenant_id: string
+  lang: string
+  planet: string
+  country: string
+  city: string
+  created_at: string
+  updated_at: string | null
+  author_name: string | null
+  author_info: AuthorInfo | null
+  tenant_name: string | null
+}
+
+interface ArticleResponse {
+  success: boolean
+  data: Article
+}
+
+// Fetch article from API
+const slug = route.params.slug as string
+
+const { data: articleData, pending, error: fetchError } = useAsyncData<ArticleResponse>(
+  `blog-article-${slug}`,
+  () => $fetch(`/api/blog/${slug}`),
+  {
+    server: true
   }
-  publishedDate: string
-  updatedDate?: string
+)
+
+const article = computed(() => articleData.value?.data || null)
+
+// Format date
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
 }
 
-// Mock articles data (replace with real API call in production)
-const mockArticles: Record<string, Article> = {
-  'introduccion-a-nuxt-3': {
-    id: '1',
-    slug: 'introduccion-a-nuxt-3',
-    title: 'Introducción a Nuxt 3: El Framework Vue para Aplicaciones Modernas',
-    titleSeo: 'Introducción a Nuxt 3 - Guía Completa',
-    description: 'Descubre cómo Nuxt 3 revoluciona el desarrollo web con Vue.js, ofreciendo server-side rendering, mejores herramientas y un rendimiento excepcional.',
-    descriptionSeo: 'Aprende los conceptos básicos de Nuxt 3 y cómo crear aplicaciones web modernas con Vue.js',
-    cover: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=1200&h=630&fit=crop',
-    thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=450&fit=crop',
-    category: 'Desarrollo',
-    author: {
-      name: 'María González',
-      userName: 'mariagonzalez',
-      profilePicture: 'https://i.pravatar.cc/150?img=5',
-      description: 'Desarrolladora Full Stack especializada en Vue.js y Nuxt. Apasionada por crear experiencias web excepcionales y compartir conocimiento con la comunidad.',
-      city: 'Medellín',
-      country: 'Colombia',
-      socialLinks: {
-        twitter: 'https://twitter.com/mariagonzalez',
-        linkedin: 'https://linkedin.com/in/mariagonzalez'
-      }
-    },
-    publishedDate: '2024-01-15T10:00:00Z',
-    content: `
-# ¿Qué es Nuxt 3?
-
-Nuxt 3 es la última versión del popular framework de Vue.js que facilita la creación de aplicaciones web universales. Con mejoras significativas en rendimiento, developer experience y nuevas características, Nuxt 3 se ha convertido en la opción preferida para desarrolladores que buscan crear aplicaciones Vue escalables.
-
-## Características Principales
-
-### 1. Motor Nitro
-Nuxt 3 incluye Nitro, un nuevo motor de servidor que proporciona:
-- Server-side rendering optimizado
-- Generación de sitios estáticos
-- API routes integradas
-- Deploy universal a múltiples plataformas
-
-### 2. Composition API
-Totalmente compatible con la Composition API de Vue 3, ofreciendo:
-- Mejor organización del código
-- Reutilización de lógica mejorada
-- TypeScript de primera clase
-
-### 3. Rendimiento Mejorado
-- Menor tamaño de bundle
-- Carga más rápida
-- Mejor optimización automática
-
-## Primeros Pasos
-
-Para crear un nuevo proyecto Nuxt 3, simplemente ejecuta:
-
-\`\`\`bash
-npx nuxi init mi-proyecto
-cd mi-proyecto
-npm install
-npm run dev
-\`\`\`
-
-## Estructura de Directorios
-
-Nuxt 3 utiliza una estructura basada en convenciones:
-
-- **pages/**: Rutas automáticas basadas en archivos
-- **components/**: Auto-importación de componentes
-- **composables/**: Funciones reutilizables
-- **layouts/**: Plantillas de página
-- **server/**: API endpoints
-
-## Conclusión
-
-Nuxt 3 representa un gran salto hacia adelante en el desarrollo de aplicaciones Vue. Con sus nuevas características y mejoras de rendimiento, es el momento perfecto para empezar a utilizarlo en tus proyectos.
-    `
-  },
-  'mejores-practicas-typescript': {
-    id: '2',
-    slug: 'mejores-practicas-typescript',
-    title: 'Mejores Prácticas con TypeScript en 2024',
-    titleSeo: 'Mejores Prácticas TypeScript 2024',
-    description: 'Una guía completa sobre cómo escribir código TypeScript más limpio, mantenible y seguro siguiendo las mejores prácticas de la industria.',
-    descriptionSeo: 'Descubre cómo escribir código TypeScript más limpio y mantenible con estas mejores prácticas',
-    cover: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=1200&h=630&fit=crop',
-    thumbnail: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&h=450&fit=crop',
-    category: 'Tutorial',
-    author: {
-      name: 'Carlos Ramírez',
-      userName: 'carlosdev',
-      profilePicture: 'https://i.pravatar.cc/150?img=12',
-      description: 'Senior Software Engineer con más de 10 años de experiencia. Especializado en TypeScript, Node.js y arquitectura de software.',
-      city: 'Bogotá',
-      country: 'Colombia',
-      socialLinks: {
-        twitter: 'https://twitter.com/carlosdev',
-        linkedin: 'https://linkedin.com/in/carlosramirez',
-        website: 'https://carlosdev.co'
-      }
-    },
-    publishedDate: '2024-01-10T14:30:00Z',
-    content: `
-# Mejores Prácticas con TypeScript
-
-TypeScript se ha convertido en el estándar de facto para desarrollo JavaScript a gran escala. En este artículo, exploraremos las mejores prácticas para escribir código TypeScript de calidad.
-
-## 1. Usa Tipos Estrictos
-
-Activa el modo estricto en tu \`tsconfig.json\`:
-
-\`\`\`json
-{
-  "compilerOptions": {
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true
-  }
-}
-\`\`\`
-
-## 2. Evita el Tipo 'any'
-
-El tipo \`any\` elimina las ventajas de TypeScript. En su lugar:
-
-- Usa \`unknown\` cuando no conozcas el tipo
-- Define interfaces específicas
-- Usa genéricos para flexibilidad
-
-## 3. Aprovecha las Interfaces y Types
-
-\`\`\`typescript
-interface User {
-  id: string
-  name: string
-  email: string
-}
-
-type UserRole = 'admin' | 'user' | 'guest'
-\`\`\`
-
-## 4. Utiliza Utility Types
-
-TypeScript ofrece tipos de utilidad poderosos:
-
-- \`Partial<T>\`: Hace todas las propiedades opcionales
-- \`Required<T>\`: Hace todas las propiedades requeridas
-- \`Pick<T, K>\`: Selecciona propiedades específicas
-- \`Omit<T, K>\`: Omite propiedades específicas
-
-## 5. Documenta tu Código
-
-Usa JSDoc para documentación:
-
-\`\`\`typescript
-/**
- * Calcula el total de una orden
- * @param items - Array de items
- * @param tax - Porcentaje de impuesto
- * @returns Total con impuestos incluidos
- */
-function calculateTotal(items: Item[], tax: number): number {
-  // ...
-}
-\`\`\`
-
-## Conclusión
-
-Siguiendo estas prácticas, escribirás código TypeScript más robusto y mantenible. La inversión en tipos fuertes paga dividendos en la detección temprana de errores y mejor experiencia de desarrollo.
-    `
-  }
-}
-
-// Get article from mock data
-const article = ref<Article | null>(null)
-const pending = ref(true)
-const error = ref<string | null>(null)
-
-// Simulate async loading
-setTimeout(() => {
-  const slug = route.params.slug as string
-  if (mockArticles[slug]) {
-    article.value = mockArticles[slug]
-  } else {
-    error.value = 'Artículo no encontrado'
-  }
-  pending.value = false
-}, 300)
+// Get category from tags
+const category = computed(() => {
+  if (!article.value?.tags) return 'General'
+  return article.value.tags.split(',')[0]?.trim() || 'General'
+})
 
 // SEO Meta tags
-const siteUrl = config.public.siteUrl || ''
+const siteUrl = config.public.siteUrl || 'https://warocol.com'
 
 useHead({
-  title: () => article.value?.titleSeo || article.value?.title,
+  title: () => article.value?.meta_title || article.value?.title || 'Artículo',
   meta: [
     {
       name: 'description',
-      content: () => article.value?.descriptionSeo || article.value?.description
+      content: () => article.value?.meta_descripcion || article.value?.description
     },
     // Open Graph
     {
@@ -230,15 +92,15 @@ useHead({
     },
     {
       property: 'og:title',
-      content: () => article.value?.titleSeo || article.value?.title
+      content: () => article.value?.meta_title || article.value?.title
     },
     {
       property: 'og:description',
-      content: () => article.value?.descriptionSeo || article.value?.description
+      content: () => article.value?.meta_descripcion || article.value?.description
     },
     {
       property: 'og:image',
-      content: () => article.value?.thumbnail || article.value?.cover
+      content: () => article.value?.cover || article.value?.thumbnail
     },
     {
       property: 'og:url',
@@ -251,28 +113,28 @@ useHead({
     },
     {
       name: 'twitter:title',
-      content: () => article.value?.titleSeo || article.value?.title
+      content: () => article.value?.meta_title || article.value?.title
     },
     {
       name: 'twitter:description',
-      content: () => article.value?.descriptionSeo || article.value?.description
+      content: () => article.value?.meta_descripcion || article.value?.description
     },
     {
       name: 'twitter:image',
-      content: () => article.value?.thumbnail || article.value?.cover
+      content: () => article.value?.cover || article.value?.thumbnail
     },
     // Article specific
     {
       property: 'article:published_time',
-      content: () => article.value?.publishedDate
+      content: () => article.value?.created_at
     },
     {
       property: 'article:modified_time',
-      content: () => article.value?.updatedDate || article.value?.publishedDate
+      content: () => article.value?.updated_at || article.value?.created_at
     },
     {
       property: 'article:author',
-      content: () => article.value?.author.name
+      content: () => article.value?.author_name || 'Waro Colombia'
     }
   ],
   link: [
@@ -295,10 +157,16 @@ useHead({
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="flex items-center justify-center min-h-screen">
+    <div v-else-if="fetchError" class="flex items-center justify-center min-h-screen">
       <div class="text-center px-4">
         <p class="text-2xl font-bold text-ebony-900 mb-2">Error al cargar el artículo</p>
-        <p class="text-lg text-ebony-600">{{ error }}</p>
+        <p class="text-lg text-ebony-600 mb-4">{{ fetchError.message }}</p>
+        <NuxtLink
+          to="/blog"
+          class="text-lg text-crocus-600 hover:text-crocus-700 underline"
+        >
+          Volver al blog
+        </NuxtLink>
       </div>
     </div>
 
@@ -311,22 +179,23 @@ useHead({
     >
       <!-- Hidden meta for SEO -->
       <meta itemprop="headline" :content="article.title">
-      <meta itemprop="description" :content="article.descriptionSeo">
+      <meta itemprop="description" :content="article.meta_descripcion">
 
       <!-- Hero Section -->
       <BlogArticleHero
         :title="article.title"
         :description="article.description"
-        :category="article.category"
+        :category="category"
         :author="{
-          name: article.author.name,
-          profilePicture: article.author.profilePicture
+          name: article.author_info?.name || article.author_name || 'Waro Colombia',
+          profilePicture: article.author_info?.avatar || ''
         }"
-        :published-date="article.publishedDate"
+        :published-date="article.created_at"
       />
 
       <!-- Cover Image -->
       <BlogArticleImage
+        v-if="article.cover"
         :src="article.cover"
         :alt="article.title"
       />
@@ -340,7 +209,16 @@ useHead({
 
         <!-- Author Card Slot -->
         <template #author>
-          <BlogAuthorCard :author="article.author" />
+          <BlogAuthorCard
+            :author="{
+              name: article.author_info?.name || article.author_name || 'Waro Colombia',
+              userName: article.author_info?.user_name || '',
+              profilePicture: article.author_info?.avatar || '',
+              description: article.author_info?.description || 'Equipo de contenido de Waro Colombia, especialistas en eventos corporativos y organización.',
+              city: article.author_info?.city || article.city || '',
+              country: article.author_info?.country || article.country || 'Colombia'
+            }"
+          />
         </template>
       </BlogArticleContent>
     </article>
