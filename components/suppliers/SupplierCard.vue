@@ -20,6 +20,11 @@
           />
         </div>
 
+        <!-- Description -->
+        <div v-if="supplier.description" class="mt-3">
+          <p class="text-sm text-text-secondary line-clamp-2">{{ supplier.description }}</p>
+        </div>
+
         <!-- Contact Info -->
         <div class="pt-3 mt-4 border-t border-border space-y-1.5">
           <p class="text-[13px] font-medium text-text-primary opacity-70">Contacto</p>
@@ -69,6 +74,7 @@
 interface Supplier {
   id: string
   name: string
+  description?: string
   tax_id?: string
   email?: string
   phone?: string

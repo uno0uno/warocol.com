@@ -32,7 +32,18 @@
                 placeholder="Ej: 900123456-7"
               />
             </div>
-            
+
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-text-primary mb-2">
+                Descripción
+              </label>
+              <textarea
+                v-model="form.description"
+                class="input-base w-full px-4 py-2 min-h-[80px]"
+                placeholder="Breve descripción del proveedor, productos que ofrece, etc."
+              ></textarea>
+            </div>
+
             <div>
               <label class="block text-sm font-medium text-text-primary mb-2">
                 Email
@@ -367,6 +378,7 @@ useHead({
 // Form state
 const form = reactive({
   name: '',
+  description: '',
   tax_id: '',
   email: '',
   phone: '',
