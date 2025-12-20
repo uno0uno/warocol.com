@@ -1,23 +1,43 @@
 <template>
-  <header class="header-main" :class="{ 'header-dark': isDarkHeader }">
-    <div class="header-content" :style="{ maxWidth: headerMaxWidth }">
-      <div class="logo">
-        <NuxtLink to="/">
-          <img 
-            src="/logo_waro_10_octubre.png" 
-            alt="Waro" 
-            class="logo-image-header"
-            :class="{ 'invert-logo': isDarkHeader }"
-          >
-        </NuxtLink>
-      </div>
-      <nav :class="{ 'nav-dark': isDarkHeader }">
-        <NuxtLink to="/blog">BLOG</NuxtLink>
-        <button 
-          class="btn-get-started-header"
-          :class="{ 'btn-dark': isDarkHeader }"
+  <header
+    class="relative z-10 flex justify-center items-center px-3 sm:px-4 md:px-6 py-2 sm:py-3 backdrop-blur-md border-b transition-colors duration-300"
+    :class="isDarkHeader
+      ? 'bg-crocus-900 border-crocus-800'
+      : 'bg-white/95 border-titan-200'"
+  >
+    <div
+      class="flex justify-between items-center w-full gap-3 sm:gap-4 transition-all duration-300"
+      :style="{ maxWidth: headerMaxWidth }"
+    >
+      <!-- Logo -->
+      <NuxtLink to="/" class="flex-shrink-0">
+        <img
+          src="/logo_waro_10_octubre.png"
+          alt="Waro"
+          class="h-6 sm:h-8 md:h-9 w-auto object-contain transition-all duration-300"
+          :class="isDarkHeader ? 'brightness-0 invert' : ''"
         >
-          COMENZAR
+      </NuxtLink>
+
+      <!-- Navigation - Always visible -->
+      <nav class="flex items-center gap-3 sm:gap-4 md:gap-5">
+        <NuxtLink
+          to="/blog"
+          class="text-xs sm:text-sm font-medium tracking-wide transition-colors whitespace-nowrap"
+          :class="isDarkHeader
+            ? 'text-white hover:text-crocus-200'
+            : 'text-ebony-600 hover:text-crocus-600'"
+        >
+          Blog
+        </NuxtLink>
+
+        <button
+          class="px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 text-[10px] sm:text-xs md:text-sm font-semibold rounded-md border-2 transition-all whitespace-nowrap"
+          :class="isDarkHeader
+            ? 'bg-transparent border-white text-white hover:bg-white hover:text-crocus-900'
+            : 'bg-white border-crocus-600 text-crocus-600 hover:bg-crocus-600 hover:text-white'"
+        >
+          Comenzar
         </button>
       </nav>
     </div>
@@ -38,130 +58,3 @@ const isDarkHeader = computed(() => {
   return route.path.startsWith('/blog')
 })
 </script>
-
-<style scoped>
-/* Header */
-.header-main {
-    position: relative;
-    z-index: 10;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px 60px;
-    background: hsla(0, 0%, 100%, 0.95);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid hsl(220, 11%, 90%);
-    transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-
-.header-main.header-dark {
-    background: hsl(262, 47%, 18%); /* crocus-900 */
-    border-bottom: 1px solid hsl(262, 47%, 25%); /* crocus-800 */
-}
-
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    transition: max-width 0.3s ease;
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.logo-image-header {
-    height: 40px;
-    width: auto;
-    object-fit: contain;
-    transition: filter 0.3s ease;
-}
-
-.logo-image-header.invert-logo {
-    filter: brightness(0) invert(1);
-}
-
-nav {
-    display: flex;
-    gap: 24px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-nav a {
-    text-decoration: none;
-    color: hsl(220, 13%, 28%);
-    font-size: 14px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: color 0.3s;
-}
-
-nav a:hover {
-    color: hsl(262, 83%, 58%);
-}
-
-/* Dark Nav Links */
-nav.nav-dark a {
-    color: white;
-}
-
-nav.nav-dark a:hover {
-    color: hsl(262, 83%, 85%); /* crocus-200 */
-}
-
-/* Specific override for dark header links handled in template via class, 
-   but we can also add a scoped class if preferred. 
-   Using utility classes in template for simplicity. */
-
-.btn-get-started-header {
-    padding: 10px 24px;
-    background: white;
-    border: 2px solid hsl(262, 83%, 58%);
-    color: hsl(262, 83%, 58%);
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s;
-}
-
-.btn-get-started-header:hover {
-    background: hsl(262, 83%, 58%);
-    color: white;
-}
-
-.btn-get-started-header.btn-dark {
-    background: transparent;
-    border-color: white;
-    color: white;
-}
-
-.btn-get-started-header.btn-dark:hover {
-    background: white;
-    color: hsl(262, 47%, 18%); /* crocus-900 */
-}
-
-@media (max-width: 768px) {
-    .header-main {
-        padding: 8px 20px;
-    }
-
-    nav {
-        gap: 16px;
-        justify-content: center;
-    }
-    
-    nav a {
-        font-size: 12px;
-    }
-    
-    .btn-get-started-header {
-        padding: 8px 16px;
-        font-size: 12px;
-    }
-}
-</style>

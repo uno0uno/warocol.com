@@ -150,10 +150,7 @@ useHead({
   <div class="min-h-screen bg-white">
     <!-- Loading State -->
     <div v-if="pending" class="flex items-center justify-center min-h-screen">
-      <div class="text-center">
-        <div class="w-16 h-16 border-4 border-crocus-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p class="text-lg text-ebony-600">Cargando artículo...</p>
-      </div>
+      <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- Error State -->
