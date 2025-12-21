@@ -310,7 +310,27 @@
         <!-- Step 2: Items -->
         <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border-border border rounded-lg">
           <div class="p-4 sm:p-6">
-            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 sm:mb-6">Alimentos</h3>
+            <!-- Type Tabs -->
+            <div class="flex items-center justify-between mb-4 sm:mb-6">
+              <h3 class="text-base sm:text-lg font-semibold text-text-primary">Items de la Orden</h3>
+            </div>
+
+            <!-- Type Filter Tabs -->
+            <div class="flex flex-wrap gap-2 mb-4 sm:mb-6 p-1 bg-background rounded-lg border border-border">
+              <button
+                v-for="typeOption in ingredientTypeOptions"
+                :key="typeOption.value"
+                type="button"
+                @click="selectedIngredientType = typeOption.value"
+                class="flex-1 min-w-[100px] px-3 py-2 text-sm font-medium rounded-md transition-all"
+                :class="selectedIngredientType === typeOption.value
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-surface'"
+              >
+                <span class="mr-1.5">{{ typeOption.icon }}</span>
+                {{ typeOption.label }}
+              </button>
+            </div>
 
             <div class="space-y-3 sm:space-y-4">
               <div
@@ -319,7 +339,7 @@
                 class="p-3 sm:p-4 border-2 border-border rounded-lg"
               >
                 <div class="flex justify-between items-start mb-3 sm:mb-4">
-                  <h4 class="text-sm sm:text-base font-medium text-text-primary">Alimento #{{ index + 1 }}</h4>
+                  <h4 class="text-sm sm:text-base font-medium text-text-primary">Item #{{ index + 1 }}</h4>
                   <button
                     type="button"
                     @click="removeItem(index)"
@@ -691,10 +711,27 @@ const { data: ingredientsData, pending: loadingIngredients } = useFetch('/api/su
 
 const ingredients = computed(() => ingredientsData.value?.data || [])
 
+// Ingredient type filter
+const selectedIngredientType = ref('food')
+
+const ingredientTypeOptions = [
+  { value: 'food', label: 'Alimentos', icon: '🍎' },
+  { value: 'service', label: 'Servicios', icon: '🔧' },
+  { value: 'supply', label: 'Insumos', icon: '📦' }
+]
+
+// Filter ingredients by selected type
+const filteredIngredients = computed(() =>
+  ingredients.value.filter(ingredient =>
+    !selectedIngredientType.value || ingredient.type === selectedIngredientType.value
+  )
+)
+
 const ingredientOptions = computed(() =>
-  ingredients.value.map(ingredient => ({
+  filteredIngredients.value.map(ingredient => ({
     value: ingredient.id,
-    label: ingredient.name
+    label: ingredient.name,
+    type: ingredient.type
   }))
 )
 

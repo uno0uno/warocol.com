@@ -197,7 +197,19 @@
                   class="hover:bg-surface-secondary/50 transition-colors">
                   <td class="px-4 py-3 text-sm text-text-primary">
                     <div>
-                      <p class="font-medium">{{ item.ingredient_name }}</p>
+                      <div class="flex items-center gap-2">
+                        <p class="font-medium">{{ item.ingredient_name }}</p>
+                        <span
+                          v-if="item.ingredient_type && item.ingredient_type !== 'food'"
+                          class="px-1.5 py-0.5 text-[10px] font-medium rounded"
+                          :class="{
+                            'bg-blue-100 text-blue-700': item.ingredient_type === 'service',
+                            'bg-amber-100 text-amber-700': item.ingredient_type === 'supply'
+                          }"
+                        >
+                          {{ item.ingredient_type === 'service' ? 'Servicio' : 'Insumo' }}
+                        </span>
+                      </div>
                       <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
                     </div>
                   </td>

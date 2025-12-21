@@ -92,6 +92,23 @@
             </button>
           </div>
 
+          <!-- Type Filter Tabs -->
+          <div class="flex flex-wrap gap-2 mb-4 p-1 bg-background rounded-lg border border-border">
+            <button
+              v-for="typeOption in ingredientTypeOptions"
+              :key="typeOption.value"
+              type="button"
+              @click="selectedIngredientType = typeOption.value"
+              class="flex-1 min-w-[100px] px-3 py-2 text-sm font-medium rounded-md transition-all"
+              :class="selectedIngredientType === typeOption.value
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-text-secondary hover:text-text-primary hover:bg-surface'"
+            >
+              <span class="mr-1.5">{{ typeOption.icon }}</span>
+              {{ typeOption.label }}
+            </button>
+          </div>
+
           <div class="space-y-4">
             <div
               v-for="(item, index) in editForm.items"
@@ -734,11 +751,28 @@ const supplierOptions = computed(() =>
   }))
 )
 
-// Ingredient options for searchable select
+// Ingredient type filter for edit mode
+const selectedIngredientType = ref('food')
+
+const ingredientTypeOptions = [
+  { value: 'food', label: 'Alimentos', icon: '🍎' },
+  { value: 'service', label: 'Servicios', icon: '🔧' },
+  { value: 'supply', label: 'Insumos', icon: '📦' }
+]
+
+// Filter ingredients by selected type
+const filteredIngredients = computed(() =>
+  ingredients.value.filter((ingredient: any) =>
+    !selectedIngredientType.value || ingredient.type === selectedIngredientType.value
+  )
+)
+
+// Ingredient options for searchable select (filtered by type)
 const ingredientOptions = computed(() =>
-  ingredients.value.map((ingredient: any) => ({
+  filteredIngredients.value.map((ingredient: any) => ({
     value: ingredient.id,
-    label: ingredient.name
+    label: ingredient.name,
+    type: ingredient.type
   }))
 )
 
