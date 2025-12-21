@@ -327,7 +327,6 @@
                   ? 'bg-primary text-white shadow-sm'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface'"
               >
-                <span class="mr-1.5">{{ typeOption.icon }}</span>
                 {{ typeOption.label }}
               </button>
             </div>
@@ -715,9 +714,9 @@ const ingredients = computed(() => ingredientsData.value?.data || [])
 const selectedIngredientType = ref('food')
 
 const ingredientTypeOptions = [
-  { value: 'food', label: 'Alimentos', icon: '🍎' },
-  { value: 'service', label: 'Servicios', icon: '🔧' },
-  { value: 'supply', label: 'Insumos', icon: '📦' }
+  { value: 'food', label: 'Alimentos' },
+  { value: 'service', label: 'Servicios' },
+  { value: 'supply', label: 'Insumos' }
 ]
 
 // Filter ingredients by selected type
