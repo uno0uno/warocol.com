@@ -29,8 +29,176 @@
 
     <!-- Edit Form -->
     <div v-else class="page-layout">
+      <!-- EDIT MODE -->
+      <div v-if="isEditMode" class="space-y-4 sm:space-y-6">
+        <!-- Edit Mode Header -->
+        <div class="bg-primary/10 border-2 border-primary rounded-lg p-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <div>
+                <h2 class="text-lg font-bold text-text-primary">Editando Orden {{ form.purchase_number }}</h2>
+                <p class="text-sm text-text-secondary">Modifica los items antes de que el proveedor cotice</p>
+              </div>
+            </div>
+            <button @click="cancelEdit" class="text-text-secondary hover:text-text-primary transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Supplier Selection -->
+        <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
+          <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Proveedor</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-2">Proveedor *</label>
+              <UiSearchableSelect
+                v-model="editForm.supplier_id"
+                :options="supplierOptions"
+                placeholder="Buscar proveedor..."
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-2">Observaciones</label>
+              <textarea
+                v-model="editForm.notes"
+                class="input-base w-full px-4 py-2"
+                rows="2"
+                placeholder="Observaciones adicionales..."
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items Section -->
+        <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base sm:text-lg font-semibold text-text-primary">Items de la Orden</h3>
+            <button
+              type="button"
+              @click="addEditItem"
+              class="px-3 py-1.5 text-xs font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors flex items-center space-x-1"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Agregar Item</span>
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div
+              v-for="(item, index) in editForm.items"
+              :key="index"
+              class="p-4 border-2 border-border rounded-lg"
+            >
+              <div class="flex justify-between items-start mb-4">
+                <h4 class="text-sm font-medium text-text-primary">Item #{{ index + 1 }}</h4>
+                <button
+                  type="button"
+                  @click="removeEditItem(index)"
+                  :disabled="editForm.items.length === 1"
+                  class="text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed p-1"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <!-- Ingredient -->
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-2">Ingrediente *</label>
+                  <UiSearchableSelect
+                    v-model="item.ingredient_id"
+                    :options="ingredientOptions"
+                    placeholder="Buscar ingrediente..."
+                    required
+                    @update:model-value="onEditIngredientChange(index)"
+                  />
+                </div>
+
+                <!-- Purchase Unit -->
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-2">Unidad *</label>
+                  <select
+                    v-model="item.purchase_unit"
+                    required
+                    :disabled="!item.ingredient_id"
+                    class="input-base w-full px-4 py-2"
+                    :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id }"
+                  >
+                    <option value="">{{ item.ingredient_id ? 'Seleccionar unidad' : 'Seleccione ingrediente' }}</option>
+                    <option
+                      v-for="option in getEditPurchaseUnitOptions(item.ingredient_id)"
+                      :key="option.value"
+                      :value="option.value"
+                    >
+                      {{ option.label }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Quantity -->
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-2">Cantidad *</label>
+                  <input
+                    v-model.number="item.purchase_quantity"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    required
+                    class="input-base w-full px-4 py-2"
+                  />
+                </div>
+
+                <!-- Notes -->
+                <div class="sm:col-span-2 md:col-span-3">
+                  <label class="block text-sm font-medium text-text-primary mb-2">Notas del Item</label>
+                  <input
+                    v-model="item.notes"
+                    type="text"
+                    class="input-base w-full px-4 py-2"
+                    placeholder="Observaciones opcionales"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end space-x-3">
+          <button
+            type="button"
+            @click="cancelEdit"
+            :disabled="isSubmitting"
+            class="px-6 py-2 border-2 border-border rounded-lg text-text-primary hover:bg-background transition-colors disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            @click="saveEdit"
+            :disabled="isSubmitting || !isEditFormValid"
+            class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center space-x-2"
+          >
+            <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
+            <span>{{ isSubmitting ? 'Guardando...' : 'Guardar Cambios' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW MODE (Original content) -->
       <!-- Order Information Card -->
-      <PurchasesPurchaseOrderHeader>
+      <PurchasesPurchaseOrderHeader v-if="!isEditMode">
         <!-- Purchase Number with Date and Payment Type -->
         <PurchasesPurchaseInfoCard
           :label="formatDate(form.purchase_date)"
@@ -83,7 +251,7 @@
       </PurchasesPurchaseOrderHeader>
 
       <!-- Read-only Summary + Status History (All states) -->
-      <div class="space-y-4 sm:space-y-6">
+      <div v-if="!isEditMode" class="space-y-4 sm:space-y-6">
         <!-- Order Summary (Read-only) -->
         <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
           <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 sm:mb-6 flex items-center space-x-2">
@@ -376,6 +544,17 @@
                 <span>Esperando cotización del proveedor</span>
               </div>
 
+              <!-- Edit button (only when in quotation status and supplier hasn't responded) -->
+              <button v-if="canEditQuotation"
+                @click="isEditMode = true"
+                class="px-3 py-2 sm:px-4 border-2 rounded-lg transition-colors flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm hover:opacity-60"
+                style="border-color: hsl(var(--primary)); color: hsl(var(--primary));">
+                <svg class="hidden sm:block w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>Editar Orden</span>
+              </button>
+
               <!-- Approve (when in pending status) - USER ACTION -->
               <NuxtLink v-if="purchase.status === 'pending'" :to="`/abastecimiento/compra/${purchaseId}/acciones`"
                 class="px-3 py-2 sm:px-4 border-2 rounded-lg transition-colors flex items-center justify-center sm:justify-start space-x-1.5 sm:space-x-2 text-xs sm:text-sm hover:opacity-60"
@@ -530,6 +709,237 @@ const error = ref<string | null>(null)
 
 // Cancel modal state
 const showCancelModal = ref(false)
+
+// Edit mode state
+const isEditMode = ref(false)
+const editForm = ref({
+  supplier_id: '',
+  notes: '',
+  items: [] as any[]
+})
+
+// Fetch ingredient purchase units for edit mode
+const { data: purchaseUnitsData } = useFetch('/api/suppliers/ingredient-purchase-units', {
+  server: false,
+  query: { limit: 10000, active_only: true }
+})
+
+const purchaseUnits = computed(() => purchaseUnitsData.value?.data || [])
+
+// Supplier options for searchable select
+const supplierOptions = computed(() =>
+  suppliers.value.map((supplier: any) => ({
+    value: supplier.id,
+    label: supplier.name
+  }))
+)
+
+// Ingredient options for searchable select
+const ingredientOptions = computed(() =>
+  ingredients.value.map((ingredient: any) => ({
+    value: ingredient.id,
+    label: ingredient.name
+  }))
+)
+
+// Get purchase unit options for a specific ingredient
+const getEditPurchaseUnitOptions = (ingredientId: string) => {
+  if (!ingredientId) return []
+
+  const units = purchaseUnits.value.filter((u: any) => u.ingredient_id === ingredientId)
+
+  // If no configured units, return base unit option
+  if (units.length === 0) {
+    const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
+    if (ingredient) {
+      return [{
+        value: ingredient.unit,
+        label: ingredient.unit,
+        conversion_factor: 1,
+        is_default: true
+      }]
+    }
+    return []
+  }
+
+  return units.map((u: any) => ({
+    value: u.purchase_unit_label,
+    label: u.purchase_unit_label,
+    conversion_factor: u.conversion_factor,
+    is_default: u.is_default
+  }))
+}
+
+// Get ingredient base unit
+const getIngredientUnit = (ingredientId: string) => {
+  if (!ingredientId) return ''
+  const ingredient = ingredients.value.find((ing: any) => ing.id === ingredientId)
+  return ingredient?.unit || ''
+}
+
+// Get conversion factor for a purchase unit
+const getConversionFactor = (purchaseUnitLabel: string, ingredientId: string) => {
+  const unit = purchaseUnits.value.find((u: any) =>
+    u.ingredient_id === ingredientId &&
+    u.purchase_unit_label === purchaseUnitLabel
+  )
+
+  if (unit) {
+    return unit.conversion_factor
+  }
+
+  return 1
+}
+
+// Initialize edit form with current purchase data
+const initEditForm = () => {
+  if (!purchase.value) return
+
+  editForm.value = {
+    supplier_id: purchase.value.supplier_id || '',
+    notes: purchase.value.notes || '',
+    items: (purchase.value.items || []).map((item: any) => ({
+      ingredient_id: item.ingredient_id,
+      quantity: item.quantity,
+      unit: item.unit,
+      purchase_quantity: item.purchase_quantity || item.quantity,
+      purchase_unit: item.purchase_unit || item.unit,
+      notes: item.notes || ''
+    }))
+  }
+
+  // Ensure at least one item
+  if (editForm.value.items.length === 0) {
+    addEditItem()
+  }
+}
+
+// Watch for edit mode to initialize form
+watch(isEditMode, (newValue) => {
+  if (newValue) {
+    initEditForm()
+  }
+})
+
+// Edit form validation
+const isEditFormValid = computed(() => {
+  if (!editForm.value.supplier_id) return false
+  if (editForm.value.items.length === 0) return false
+
+  return editForm.value.items.every((item: any) =>
+    item.ingredient_id &&
+    item.purchase_quantity > 0 &&
+    item.purchase_unit
+  )
+})
+
+// Cancel edit mode
+const cancelEdit = () => {
+  isEditMode.value = false
+}
+
+// Add item to edit form
+const addEditItem = () => {
+  editForm.value.items.push({
+    ingredient_id: '',
+    quantity: 1,
+    unit: '',
+    purchase_quantity: 1,
+    purchase_unit: '',
+    notes: ''
+  })
+}
+
+// Remove item from edit form
+const removeEditItem = (index: number) => {
+  if (editForm.value.items.length > 1) {
+    editForm.value.items.splice(index, 1)
+  }
+}
+
+// Handle ingredient change in edit mode
+const onEditIngredientChange = (index: number) => {
+  const ingredient = ingredients.value.find(
+    (ing: any) => ing.id === editForm.value.items[index].ingredient_id
+  )
+  if (ingredient) {
+    editForm.value.items[index].unit = ingredient.unit
+
+    // Auto-select default purchase unit
+    const options = getEditPurchaseUnitOptions(ingredient.id)
+    const defaultUnit = options.find((opt: any) => opt.is_default)
+
+    if (defaultUnit) {
+      editForm.value.items[index].purchase_unit = defaultUnit.value
+    } else if (options.length > 0) {
+      editForm.value.items[index].purchase_unit = options[0].value
+    } else {
+      editForm.value.items[index].purchase_unit = ingredient.unit
+    }
+  }
+}
+
+// Save edit
+const saveEdit = async () => {
+  if (!isEditFormValid.value) {
+    useToast().add({
+      title: 'Error de Validación',
+      description: 'Completa todos los campos requeridos',
+      color: 'red'
+    })
+    return
+  }
+
+  isSubmitting.value = true
+
+  try {
+    // Convert items to base units for database
+    const convertedItems = editForm.value.items.map((item: any) => {
+      const baseUnit = getIngredientUnit(item.ingredient_id)
+      const factor = getConversionFactor(item.purchase_unit, item.ingredient_id)
+      const convertedQuantity = item.purchase_quantity * factor
+
+      return {
+        ingredient_id: item.ingredient_id,
+        quantity: convertedQuantity,
+        unit: baseUnit,
+        purchase_quantity: item.purchase_quantity,
+        purchase_unit: item.purchase_unit,
+        unit_cost: null,
+        total_cost: 0,
+        notes: item.notes || null
+      }
+    })
+
+    await $fetch(`/api/suppliers/purchases/${purchaseId}`, {
+      method: 'PUT',
+      body: {
+        supplier_id: editForm.value.supplier_id,
+        notes: editForm.value.notes || null,
+        items: convertedItems
+      }
+    })
+
+    // Exit edit mode and refresh data
+    isEditMode.value = false
+    await loadPurchase(true)
+
+    useToast().add({
+      title: 'Orden Actualizada',
+      description: 'Los cambios se han guardado correctamente',
+      color: 'green'
+    })
+  } catch (error: any) {
+    console.error('Error updating purchase:', error)
+    useToast().add({
+      title: 'Error',
+      description: error.data?.detail || 'No se pudo actualizar la orden',
+      color: 'red'
+    })
+  } finally {
+    isSubmitting.value = false
+  }
+}
 
 // Load purchase from store
 const loadingPurchase = ref(false)
@@ -939,6 +1349,18 @@ const CANCELLABLE_STATES = ['quotation', 'pending', 'confirmed', 'preparing']
 const canCancelPurchase = computed(() => {
   if (!purchase.value) return false
   return CANCELLABLE_STATES.includes(purchase.value.status)
+})
+
+// Can edit quotation - only when status is 'quotation' and supplier hasn't responded (no prices set)
+const canEditQuotation = computed(() => {
+  if (!purchase.value) return false
+  if (purchase.value.status !== 'quotation') return false
+
+  // Check if any item has a price set (supplier has started responding)
+  const items = purchase.value.items || []
+  const hasAnyPrice = items.some((item: any) => item.unit_cost !== null && item.unit_cost > 0)
+
+  return !hasAnyPrice
 })
 
 const isCancelled = computed(() => {
