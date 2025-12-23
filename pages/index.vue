@@ -80,12 +80,21 @@
 </template>
 
 <script setup>
+const { public: config } = useRuntimeConfig()
+
 useHead({
-  title: 'raindrop - Find Issues',
-  link: [
-    { rel: 'canonical', href: 'https://warolabs.com' }
+  title: config.seoTitle,
+  meta: [
+    { name: 'description', content: config.seoDescription },
+    { property: 'og:title', content: config.ogTitle },
+    { property: 'og:description', content: config.ogDescription },
+    { property: 'og:url', content: config.ogUrl },
+    { name: 'twitter:title', content: config.twitterTitle },
+    { name: 'twitter:description', content: config.twitterDescription }
   ],
-  // Quantico font now loaded locally via assets/css/fonts.css
+  link: [
+    { rel: 'canonical', href: config.canonicalUrl }
+  ]
 })
 </script>
 

@@ -53,19 +53,92 @@ export default defineNuxtConfig({
       warolabsApiUrl: process.env.NUXT_PUBLIC_WAROLABS_API_URL || 'http://localhost:9999',
       organizationName: process.env.NUXT_PUBLIC_ORGANIZATION_NAME || '',
       defaultRedirectUrl: process.env.NUXT_PUBLIC_DEFAULT_REDIRECT_URL || '/dashboard',
-      publicKeyEncrypter: process.env.NUXT_PUBLIC_PUBLIC_KEY_ENCRYPTER || ''
+      publicKeyEncrypter: process.env.NUXT_PUBLIC_PUBLIC_KEY_ENCRYPTER || '',
+      // SEO Configuration
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://warocol.com',
+      canonicalUrl: process.env.NUXT_PUBLIC_CANONICAL_URL || 'https://warocol.com',
+      siteName: process.env.NUXT_PUBLIC_SITE_NAME || 'Waro Colombia',
+      siteDescription: process.env.NUXT_PUBLIC_SITE_DESCRIPTION || '',
+      siteAuthor: process.env.NUXT_PUBLIC_SITE_AUTHOR || 'Waro Colombia',
+      siteLang: process.env.NUXT_PUBLIC_SITE_LANG || 'es',
+      siteLocale: process.env.NUXT_PUBLIC_SITE_LOCALE || 'es_CO',
+      seoTitle: process.env.NUXT_PUBLIC_SEO_TITLE || '',
+      seoDescription: process.env.NUXT_PUBLIC_SEO_DESCRIPTION || '',
+      ogTitle: process.env.NUXT_PUBLIC_OG_TITLE || '',
+      ogDescription: process.env.NUXT_PUBLIC_OG_DESCRIPTION || '',
+      ogUrl: process.env.NUXT_PUBLIC_OG_URL || '',
+      ogImage: process.env.NUXT_PUBLIC_OG_IMAGE || '',
+      ogImageWidth: process.env.NUXT_PUBLIC_OG_IMAGE_WIDTH || '1200',
+      ogImageHeight: process.env.NUXT_PUBLIC_OG_IMAGE_HEIGHT || '630',
+      twitterTitle: process.env.NUXT_PUBLIC_TWITTER_TITLE || '',
+      twitterDescription: process.env.NUXT_PUBLIC_TWITTER_DESCRIPTION || '',
+      twitterImage: process.env.NUXT_PUBLIC_TWITTER_IMAGE || '',
+      twitterSite: process.env.NUXT_PUBLIC_TWITTER_SITE || '',
+      twitterCreator: process.env.NUXT_PUBLIC_TWITTER_CREATOR || '',
+      logoUrl: process.env.NUXT_PUBLIC_LOGO_URL || '',
+      instagramUrl: process.env.NUXT_PUBLIC_INSTAGRAM_URL || '',
+      schemaDescription: process.env.NUXT_PUBLIC_SCHEMA_DESCRIPTION || ''
     }
   },
   app: {
     head: {
+      titleTemplate: '%s',
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'charset', content: 'utf-8' }
+        { charset: 'utf-8' },
+        { name: 'description', content: process.env.NUXT_PUBLIC_SITE_DESCRIPTION },
+        { name: 'author', content: process.env.NUXT_PUBLIC_SITE_AUTHOR },
+        { name: 'robots', content: 'index, follow' },
+        // Open Graph
+        { property: 'og:type', content: 'website' },
+        { property: 'og:site_name', content: process.env.NUXT_PUBLIC_SITE_NAME },
+        { property: 'og:locale', content: process.env.NUXT_PUBLIC_SITE_LOCALE },
+        { property: 'og:image', content: process.env.NUXT_PUBLIC_OG_IMAGE },
+        { property: 'og:image:width', content: process.env.NUXT_PUBLIC_OG_IMAGE_WIDTH },
+        { property: 'og:image:height', content: process.env.NUXT_PUBLIC_OG_IMAGE_HEIGHT },
+        // Twitter Cards
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:site', content: process.env.NUXT_PUBLIC_TWITTER_SITE },
+        { name: 'twitter:creator', content: process.env.NUXT_PUBLIC_TWITTER_CREATOR },
+        { name: 'twitter:image', content: process.env.NUXT_PUBLIC_TWITTER_IMAGE }
       ],
       htmlAttrs: {
-        lang: 'es',
+        lang: process.env.NUXT_PUBLIC_SITE_LANG || 'es',
         class: 'light'
-      }
+      },
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'canonical', href: process.env.NUXT_PUBLIC_CANONICAL_URL }
+      ],
+      script: [
+        // JSON-LD Schema.org Organization
+        {
+          type: 'application/ld+json',
+          innerHTML: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: process.env.NUXT_PUBLIC_SITE_NAME,
+            url: process.env.NUXT_PUBLIC_SITE_URL,
+            logo: process.env.NUXT_PUBLIC_LOGO_URL,
+            description: process.env.NUXT_PUBLIC_SCHEMA_DESCRIPTION,
+            sameAs: [
+              process.env.NUXT_PUBLIC_INSTAGRAM_URL
+            ].filter(Boolean)
+          })
+        },
+        // JSON-LD Schema.org WebSite
+        {
+          type: 'application/ld+json',
+          innerHTML: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: process.env.NUXT_PUBLIC_SITE_NAME,
+            url: process.env.NUXT_PUBLIC_SITE_URL,
+            description: process.env.NUXT_PUBLIC_SITE_DESCRIPTION,
+            inLanguage: process.env.NUXT_PUBLIC_SITE_LANG
+          })
+        }
+      ]
     },
     pageTransition: { name: 'page', mode: 'out-in' }
   },
@@ -91,9 +164,6 @@ export default defineNuxtConfig({
         allow: ['/']
       }
     ]
-  },
-  head: {
-    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }]
   },
   devtools: { 
     enabled: true,

@@ -255,8 +255,9 @@ onMounted(async () => {
     })
     if (session?.success && session?.user) {
 
-      // Verificar que la sesión sea válida para warocol.com (tenant: Waro Colombia)
-      const expectedTenantName = 'Waro Colombia'
+      // Verificar que la sesión sea válida para warocol.com
+      const { public: config } = useRuntimeConfig()
+      const expectedTenantName = config.siteName || 'Waro Colombia'
       if (session.user.tenant_name === expectedTenantName || session.user.is_superuser) {
 
         // Redirigir al perfil de warocol
