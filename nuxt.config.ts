@@ -31,13 +31,16 @@ export default defineNuxtConfig({
             : 'https://api.warolabs.com/**',
           changeOrigin: true,
           followRedirects: true,
-          ...(process.env.NODE_ENV === 'development' && {
-            headers: {
-              'X-Forwarded-Host': `localhost:${process.env.PORT || '8080'}`,
-              'Origin': `http://localhost:${process.env.PORT || '8080'}`,
-              'Referer': `http://localhost:${process.env.PORT || '8080'}/`
-            }
-          })
+          headers: process.env.NODE_ENV === 'development'
+            ? {
+                'X-Forwarded-Host': `localhost:${process.env.PORT || '8080'}`,
+                'Origin': `http://localhost:${process.env.PORT || '8080'}`,
+                'Referer': `http://localhost:${process.env.PORT || '8080'}/`
+              }
+            : {
+                'Origin': 'https://warocol.com',
+                'Referer': 'https://warocol.com/'
+              }
         },
         cors: true,
         headers: {
