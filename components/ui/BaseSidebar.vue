@@ -1,14 +1,14 @@
 <template>
   <aside class="w-72 bg-ebony-900 h-screen border-r border-ebony-700 flex-shrink-0 shadow-xl flex flex-col">
     <!-- Header: Logo & Selector -->
-    <div class="p-6 pb-4 flex-shrink-0">
+    <div class="p-4 pb-3 flex-shrink-0">
       <!-- Logo -->
-      <div class="flex border border-ebony-700 px-5 py-2 rounded-lg mb-6">
-        <div class="w-full h-full rounded-lg flex items-center justify-center">
+      <div class="flex border border-ebony-700 px-3 py-2 rounded-lg mb-4">
+        <div class="w-full rounded-lg flex items-center justify-center">
           <img
             src="/logo_waro_10_octubre.png"
             alt="Waro"
-            class="w-5/6 h-full px-2 object-contain"
+            class="w-3/4 h-auto object-contain"
             style="filter: brightness(0) invert(1);"
           />
         </div>
@@ -21,12 +21,12 @@
     </div>
 
     <!-- Navigation Slot (Scrollable area) -->
-    <nav class="flex-1 overflow-y-auto px-4 space-y-1 scrollbar-hide">
+    <nav class="flex-1 overflow-y-auto px-3 py-2 scrollbar-hide">
       <slot name="navigation" />
     </nav>
 
     <!-- Footer Slot (User/Supplier Info) -->
-    <div class="p-4 border-t border-ebony-700 flex-shrink-0">
+    <div class="p-3 border-t border-ebony-700 flex-shrink-0">
       <slot name="footer" />
     </div>
   </aside>

@@ -62,109 +62,120 @@
 
     <!-- Navigation Links -->
     <template #navigation>
-      <NuxtLink
-        to="/ventas"
-        :class="[
-          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
-          activePage === 'ventas'
-            ? 'bg-crocus-600/20 text-crocus-400'
-            : 'text-titan-400 hover:bg-ebony-800 hover:text-white'
-        ]"
-      >
-        <ShoppingCartIcon :class="['w-5 h-5', activePage === 'ventas' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-        <span>Ventas</span>
-      </NuxtLink>
+      <!-- Sección Ventas -->
+      <div class="space-y-1">
+        <span class="px-3 text-[10px] text-titan-500/70 uppercase tracking-widest font-medium">Ventas</span>
+        <NuxtLink
+          to="/ventas"
+          :class="[
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+            activePage === 'ventas'
+              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+          ]"
+        >
+          <ShoppingCartIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'ventas' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+          <span>Ventas</span>
+        </NuxtLink>
 
-      <NuxtLink
-        to="/pos"
-        :class="[
-          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
-          activePage === 'pos'
-            ? 'bg-crocus-600/20 text-crocus-400'
-            : 'text-titan-400 hover:bg-ebony-800 hover:text-white'
-        ]"
-      >
-        <ComputerDesktopIcon :class="['w-5 h-5', activePage === 'pos' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-        <span>POS</span>
-      </NuxtLink>
+        <NuxtLink
+          to="/pos"
+          :class="[
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+            activePage === 'pos'
+              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+          ]"
+        >
+          <ComputerDesktopIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'pos' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+          <span>POS</span>
+        </NuxtLink>
+      </div>
 
-      <NuxtLink
-        to="/abastecimiento"
-        :class="[
-          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
-          activePage === 'abastecimiento'
-            ? 'bg-crocus-600/20 text-crocus-400'
-            : 'text-titan-400 hover:bg-ebony-800 hover:text-white'
-        ]"
-      >
-        <TruckIcon :class="['w-5 h-5', activePage === 'abastecimiento' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-        <span>Abastecimiento</span>
-      </NuxtLink>
+      <!-- Sección Operaciones -->
+      <div class="space-y-1 pt-4">
+        <span class="px-3 text-[10px] text-titan-500/70 uppercase tracking-widest font-medium">Operaciones</span>
+        <NuxtLink
+          to="/abastecimiento"
+          :class="[
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+            activePage === 'abastecimiento'
+              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+          ]"
+        >
+          <TruckIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'abastecimiento' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+          <span>Abastecimiento</span>
+        </NuxtLink>
 
-      <NuxtLink
-        to="/inventario"
-        :class="[
-          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
-          activePage === 'inventario'
-            ? 'bg-crocus-600/20 text-crocus-400'
-            : 'text-titan-400 hover:bg-ebony-800 hover:text-white'
-        ]"
-      >
-        <ChartBarIcon :class="['w-5 h-5', activePage === 'inventario' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-        <span>Inventario</span>
-      </NuxtLink>
+        <NuxtLink
+          to="/inventario"
+          :class="[
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+            activePage === 'inventario'
+              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+          ]"
+        >
+          <ChartBarIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'inventario' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+          <span>Inventario</span>
+        </NuxtLink>
+      </div>
 
-      <NuxtLink
-        to="/menu/productos"
-        :class="[
-          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
-          activePage === 'menu'
-            ? 'bg-crocus-600/20 text-crocus-400'
-            : 'text-titan-400 hover:bg-ebony-800 hover:text-white'
-        ]"
-      >
-        <CubeIcon :class="['w-5 h-5', activePage === 'menu' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-        <span>Menú</span>
-      </NuxtLink>
+      <!-- Sección Gestión -->
+      <div class="space-y-1 pt-4">
+        <span class="px-3 text-[10px] text-titan-500/70 uppercase tracking-widest font-medium">Gestión</span>
+        <NuxtLink
+          to="/menu/productos"
+          :class="[
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+            activePage === 'menu'
+              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+          ]"
+        >
+          <CubeIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'menu' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+          <span>Menú</span>
+        </NuxtLink>
 
-      <NuxtLink
-        to="/pagos"
-        :class="[
-          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
-          activePage === 'pagos'
-            ? 'bg-crocus-600/20 text-crocus-400'
-            : 'text-titan-400 hover:bg-ebony-800 hover:text-white'
-        ]"
-      >
-        <BanknotesIcon :class="['w-5 h-5', activePage === 'pagos' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-        <span>Pagos</span>
-      </NuxtLink>
+        <NuxtLink
+          to="/pagos"
+          :class="[
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+            activePage === 'pagos'
+              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+          ]"
+        >
+          <BanknotesIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'pagos' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+          <span>Pagos</span>
+        </NuxtLink>
 
-      <NuxtLink
-        to="/equipo"
-        :class="[
-          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
-          activePage === 'equipo'
-            ? 'bg-crocus-600/20 text-crocus-400'
-            : 'text-titan-400 hover:bg-ebony-800 hover:text-white'
-        ]"
-      >
-        <UsersIcon :class="['w-5 h-5', activePage === 'equipo' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-        <span>Equipo</span>
-      </NuxtLink>
+        <NuxtLink
+          to="/equipo"
+          :class="[
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+            activePage === 'equipo'
+              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+          ]"
+        >
+          <UsersIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'equipo' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+          <span>Equipo</span>
+        </NuxtLink>
+      </div>
 
-      <!-- Separator -->
-      <div class="h-px bg-ebony-700 my-2"></div>
-
-      <!-- Logout Button -->
-      <button
-        @click="handleLogout"
-        :disabled="isLoggingOut"
-        class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group text-titan-400 hover:bg-red-900/20 hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <ArrowRightOnRectangleIcon class="w-5 h-5 text-titan-500 group-hover:text-red-400" />
-        <span>Cerrar sesión</span>
-      </button>
+      <!-- Cerrar sesión (separado visualmente) -->
+      <div class="pt-4 mt-auto">
+        <button
+          @click="handleLogout"
+          :disabled="isLoggingOut"
+          class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group text-titan-400 hover:bg-red-900/20 hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <ArrowRightOnRectangleIcon class="w-5 h-5 flex-shrink-0 text-titan-500 group-hover:text-red-400" />
+          <span>Cerrar sesión</span>
+        </button>
+      </div>
     </template>
 
     <!-- User Profile (display only, no menu) -->
