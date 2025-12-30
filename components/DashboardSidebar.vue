@@ -139,83 +139,47 @@
         <BanknotesIcon :class="['w-5 h-5', activePage === 'pagos' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
         <span>Pagos</span>
       </NuxtLink>
+
+      <NuxtLink
+        to="/equipo"
+        :class="[
+          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group',
+          activePage === 'equipo'
+            ? 'bg-crocus-600/20 text-crocus-400'
+            : 'text-titan-400 hover:bg-ebony-800 hover:text-white'
+        ]"
+      >
+        <UsersIcon :class="['w-5 h-5', activePage === 'equipo' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+        <span>Equipo</span>
+      </NuxtLink>
+
+      <!-- Separator -->
+      <div class="h-px bg-ebony-700 my-2"></div>
+
+      <!-- Logout Button -->
+      <button
+        @click="handleLogout"
+        :disabled="isLoggingOut"
+        class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium group text-titan-400 hover:bg-red-900/20 hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <ArrowRightOnRectangleIcon class="w-5 h-5 text-titan-500 group-hover:text-red-400" />
+        <span>Cerrar sesión</span>
+      </button>
     </template>
 
-    <!-- User Profile -->
+    <!-- User Profile (display only, no menu) -->
     <template #footer>
-      <div class="relative user-menu-container">
-        <!-- Popover Menu -->
-        <div
-          v-show="showUserMenu"
-          class="absolute bottom-full left-0 right-0 mb-2 bg-ebony-800 border border-ebony-700 rounded-lg shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2"
-        >
-          <!-- Menu Header -->
-          <div class="p-3 border-b border-ebony-700 flex items-center gap-3 bg-ebony-900/30">
-            <div class="w-8 h-8 bg-crocus-600 rounded-full flex items-center justify-center font-semibold text-white flex-shrink-0">
-              {{ userInitials }}
-            </div>
-            <div class="flex-1 overflow-hidden">
-              <div class="text-sm font-medium text-white truncate">{{ userName }}</div>
-              <div class="text-xs text-titan-400 truncate">{{ userEmail }}</div>
-            </div>
+      <div class="flex items-center gap-3 p-3 rounded-lg bg-ebony-800/50">
+        <div class="relative flex-shrink-0">
+          <div class="w-8 h-8 bg-crocus-600 rounded-full flex items-center justify-center font-semibold text-white text-xs">
+            {{ userInitials }}
           </div>
-
-          <!-- Menu Options -->
-          <div class="p-1">
-            <NuxtLink
-              to="/equipo"
-              class="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-titan-300 hover:bg-ebony-700 rounded-md transition-colors"
-            >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              Equipo
-            </NuxtLink>
-            <div class="h-px bg-ebony-700 my-1 mx-2"></div>
-            <button
-              @click="handleLogout"
-              :disabled="isLoggingOut"
-              class="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-titan-300 hover:bg-ebony-700 rounded-md transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg
-                class="w-3.5 h-3.5 group-hover:text-red-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span class="group-hover:text-red-400 transition-colors">
-                Cerrar sesión
-              </span>
-            </button>
-          </div>
+          <span class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-ebony-900 rounded-full"></span>
         </div>
-
-        <!-- User Button -->
-        <button
-          @click="showUserMenu = !showUserMenu"
-          :class="[
-            'w-full flex items-center justify-between p-3 rounded-lg transition-colors',
-            showUserMenu ? 'bg-crocus-600/20 border border-crocus-600/30' : 'hover:bg-ebony-800'
-          ]"
-        >
-          <div class="flex items-center gap-3">
-            <div class="relative flex-shrink-0">
-              <div class="w-8 h-8 bg-crocus-600 rounded-full flex items-center justify-center font-semibold text-white text-xs">
-                {{ userInitials }}
-              </div>
-              <span class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-ebony-900 rounded-full"></span>
-            </div>
-            <div class="flex-1 min-w-0 text-left">
-              <div :class="['text-sm font-medium', showUserMenu ? 'text-crocus-400' : 'text-white']">{{ userName }}</div>
-              <div :class="['text-xs truncate max-w-[120px]', showUserMenu ? 'text-crocus-400/60' : 'text-titan-400']">{{ userEmail }}</div>
-            </div>
-          </div>
-          <svg class="w-3.5 h-3.5 text-titan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
-          </svg>
-        </button>
+        <div class="flex-1 min-w-0 text-left">
+          <div class="text-sm font-medium text-white truncate">{{ userName }}</div>
+          <div class="text-xs text-titan-400 truncate max-w-[120px]">{{ userEmail }}</div>
+        </div>
       </div>
     </template>
   </UiBaseSidebar>
@@ -229,17 +193,19 @@ defineOptions({
 
 import { computed } from 'vue'
 import {
+  ArrowRightOnRectangleIcon,
   BanknotesIcon,
   ChartBarIcon,
   ChevronDownIcon,
   ComputerDesktopIcon,
   CubeIcon,
   ShoppingCartIcon,
-  TruckIcon
+  TruckIcon,
+  UsersIcon
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'pos' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
+  activePage?: 'dashboard' | 'ventas' | 'pos' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
 }
 
 interface Tenant {
@@ -252,9 +218,8 @@ const props = withDefaults(defineProps<Props>(), {
   activePage: 'financiero'
 })
 
-// Tenant selector state
+// State
 const showTenantDropdown = ref(false)
-const showUserMenu = ref(false)
 const isLoggingOut = ref(false)
 const route = useRoute()
 const router = useRouter()
@@ -320,21 +285,13 @@ const handleLogout = async () => {
   }
 }
 
-// Close dropdowns when clicking outside
+// Close tenant dropdown when clicking outside
 onMounted(() => {
   const handleClickOutside = (event: Event) => {
     const target = event.target as Element
-
-    // Close tenant dropdown if clicking outside
     const tenantSelector = document.querySelector('.tenant-selector-container')
     if (tenantSelector && !tenantSelector.contains(target)) {
       showTenantDropdown.value = false
-    }
-
-    // Close user menu if clicking outside
-    const userMenu = document.querySelector('.user-menu-container')
-    if (userMenu && !userMenu.contains(target)) {
-      showUserMenu.value = false
     }
   }
 
