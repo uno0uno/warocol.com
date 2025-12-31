@@ -89,15 +89,41 @@
       </template>
 
       <template #cell-actions="{ row }">
-        <button
-          @click="openDeleteModal(row)"
-          class="text-red-500 hover:text-red-700 transition-colors p-1"
-          title="Eliminar miembro"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
+        <div class="flex items-center gap-1">
+          <!-- Edit Profile Button (for current user) -->
+          <button
+            v-if="isCurrentUser(row)"
+            @click="openEditProfileModal(row)"
+            class="text-blue-500 hover:text-blue-700 transition-colors p-1"
+            title="Editar mi perfil"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+          <!-- Edit Role Button (only for superuser, not for self) -->
+          <button
+            v-if="isSuperUser && !isCurrentUser(row)"
+            @click="openEditRoleModal(row)"
+            class="text-blue-500 hover:text-blue-700 transition-colors p-1"
+            title="Cambiar rol"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+          <!-- Delete Button (not for self) -->
+          <button
+            v-if="!isCurrentUser(row)"
+            @click="openDeleteModal(row)"
+            class="text-red-500 hover:text-red-700 transition-colors p-1"
+            title="Eliminar miembro"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
       </template>
     </UiResponsiveDataView>
 
@@ -235,6 +261,165 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Edit Profile Modal -->
+    <Teleport to="body">
+      <div v-if="showEditProfileModal" class="fixed inset-0 z-50 flex items-center justify-center">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/50" @click="closeEditProfileModal"></div>
+
+        <!-- Modal -->
+        <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-text-primary">Editar mi perfil</h2>
+            <button @click="closeEditProfileModal" class="text-text-secondary hover:text-text-primary">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <form @submit.prevent="updateProfile" class="space-y-4">
+            <!-- Avatar Preview -->
+            <div class="flex justify-center">
+              <div v-if="profileToEdit?.avatar" class="w-20 h-20 rounded-full overflow-hidden">
+                <img :src="profileToEdit.avatar" :alt="profileToEdit.name" class="w-full h-full object-cover" />
+              </div>
+              <div v-else class="w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl text-white"
+                :style="{ backgroundColor: profileToEdit?.color }">
+                {{ profileToEdit?.initials }}
+              </div>
+            </div>
+
+            <!-- Name -->
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Nombre</label>
+              <input
+                v-model="editProfileForm.name"
+                type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Tu nombre completo"
+              />
+            </div>
+
+            <!-- Email (read-only) -->
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Email</label>
+              <input
+                :value="profileToEdit?.email"
+                type="email"
+                disabled
+                class="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-text-secondary cursor-not-allowed"
+              />
+              <p class="text-xs text-text-secondary mt-1">El email no se puede cambiar</p>
+            </div>
+
+            <!-- Error message -->
+            <div v-if="editProfileError" class="text-sm text-error bg-red-50 p-3 rounded-lg">
+              {{ editProfileError }}
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3 pt-2">
+              <button
+                type="button"
+                @click="closeEditProfileModal"
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-text-primary hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                :disabled="editProfileLoading"
+                class="flex-1 btn-primary px-4 py-2 rounded-lg disabled:opacity-50"
+              >
+                {{ editProfileLoading ? 'Guardando...' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Edit Role Modal -->
+    <Teleport to="body">
+      <div v-if="showEditRoleModal" class="fixed inset-0 z-50 flex items-center justify-center">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/50" @click="closeEditRoleModal"></div>
+
+        <!-- Modal -->
+        <div class="relative bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-text-primary">Cambiar rol</h2>
+            <button @click="closeEditRoleModal" class="text-text-secondary hover:text-text-primary">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <form @submit.prevent="updateRole" class="space-y-4">
+            <!-- Member Info -->
+            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div v-if="memberToEdit?.avatar" class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                <img :src="memberToEdit.avatar" :alt="memberToEdit.name" class="w-full h-full object-cover" />
+              </div>
+              <div v-else class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-white flex-shrink-0"
+                :style="{ backgroundColor: memberToEdit?.color }">
+                {{ memberToEdit?.initials }}
+              </div>
+              <div>
+                <div class="font-medium text-text-primary">{{ memberToEdit?.name }}</div>
+                <div class="text-sm text-text-secondary">{{ memberToEdit?.email }}</div>
+              </div>
+            </div>
+
+            <!-- Current Role -->
+            <div class="text-sm text-text-secondary">
+              Rol actual: <span class="font-medium text-text-primary">{{ getRoleLabel(memberToEdit?.role) }}</span>
+            </div>
+
+            <!-- New Role Select -->
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Nuevo rol</label>
+              <select
+                v-model="editRoleForm.role"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              >
+                <option value="superuser">Super Usuario</option>
+                <option value="admin">Administrador</option>
+                <option value="employee">Empleado</option>
+                <option value="member">Miembro</option>
+              </select>
+            </div>
+
+            <!-- Error message -->
+            <div v-if="editRoleError" class="text-sm text-error bg-red-50 p-3 rounded-lg">
+              {{ editRoleError }}
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3 pt-2">
+              <button
+                type="button"
+                @click="closeEditRoleModal"
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-text-primary hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                :disabled="editRoleLoading || editRoleForm.role === memberToEdit?.role"
+                class="flex-1 btn-primary px-4 py-2 rounded-lg disabled:opacity-50"
+              >
+                {{ editRoleLoading ? 'Guardando...' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -247,6 +432,7 @@ definePageMeta({
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
+const authStore = useAuthStore()
 
 // Helper function to get initials from name
 const getInitials = (name, userName) => {
@@ -310,6 +496,57 @@ const teamMembers = computed(() => membersData.value || [])
 
 // Error message
 const error = computed(() => fetchError.value ? 'Error al cargar los miembros del equipo' : null)
+
+// Session data for current user
+const { data: sessionData } = useAsyncData(
+  'current-session',
+  () => $fetch('/api/auth/session'),
+  { server: false }
+)
+
+// Current user email from multiple sources
+const currentUserEmail = computed(() => {
+  // Try multiple sources for current user email
+  const email = sessionData.value?.user?.email ||
+                authStore.displayUser?.email ||
+                authStore.session?.user?.email ||
+                authStore.user?.email
+  console.log('Current user email:', email, 'Session:', sessionData.value)
+  return email || null
+})
+
+// Current user role in this tenant
+const currentUserRole = computed(() => {
+  if (!currentUserEmail.value || !teamMembers.value.length) return null
+  const currentMember = teamMembers.value.find(m =>
+    m.email?.toLowerCase() === currentUserEmail.value?.toLowerCase()
+  )
+  console.log('Current member:', currentMember)
+  return currentMember?.role || null
+})
+
+// Check if current user is superuser
+const isSuperUser = computed(() => {
+  const result = currentUserRole.value === 'superuser'
+  console.log('Is superuser:', result, 'Role:', currentUserRole.value)
+  return result
+})
+
+// Check if a member is the current user
+const isCurrentUser = (member) => {
+  return member.email?.toLowerCase() === currentUserEmail.value?.toLowerCase()
+}
+
+// Get role label helper
+const getRoleLabel = (role) => {
+  const labels = {
+    'superuser': 'Super Usuario',
+    'admin': 'Administrador',
+    'employee': 'Empleado',
+    'member': 'Miembro'
+  }
+  return labels[role] || role
+}
 
 // Table columns configuration
 const teamMembersTableColumns = [
@@ -436,6 +673,106 @@ const deleteMember = async () => {
     toast.error(err.data?.message || err.message || 'Error al eliminar miembro')
   } finally {
     deleting.value = false
+  }
+}
+
+// Edit Profile Modal State
+const showEditProfileModal = ref(false)
+const profileToEdit = ref(null)
+const editProfileLoading = ref(false)
+const editProfileError = ref('')
+const editProfileForm = reactive({
+  name: ''
+})
+
+const openEditProfileModal = (member) => {
+  profileToEdit.value = member
+  editProfileForm.name = member.name || ''
+  editProfileError.value = ''
+  showEditProfileModal.value = true
+}
+
+const closeEditProfileModal = () => {
+  showEditProfileModal.value = false
+  profileToEdit.value = null
+}
+
+const updateProfile = async () => {
+  if (!profileToEdit.value) return
+
+  editProfileLoading.value = true
+  editProfileError.value = ''
+
+  try {
+    const response = await $fetch('/api/auth/update-profile', {
+      method: 'PUT',
+      body: {
+        name: editProfileForm.name
+      }
+    })
+
+    if (response.success) {
+      toast.success('Perfil actualizado correctamente')
+      closeEditProfileModal()
+      refresh()
+    } else {
+      editProfileError.value = response.message || 'Error al actualizar perfil'
+    }
+  } catch (err) {
+    console.error('Error updating profile:', err)
+    editProfileError.value = err.data?.message || err.message || 'Error al actualizar perfil'
+  } finally {
+    editProfileLoading.value = false
+  }
+}
+
+// Edit Role Modal State
+const showEditRoleModal = ref(false)
+const memberToEdit = ref(null)
+const editRoleLoading = ref(false)
+const editRoleError = ref('')
+const editRoleForm = reactive({
+  role: 'admin'
+})
+
+const openEditRoleModal = (member) => {
+  memberToEdit.value = member
+  editRoleForm.role = member.role
+  editRoleError.value = ''
+  showEditRoleModal.value = true
+}
+
+const closeEditRoleModal = () => {
+  showEditRoleModal.value = false
+  memberToEdit.value = null
+}
+
+const updateRole = async () => {
+  if (!memberToEdit.value) return
+
+  editRoleLoading.value = true
+  editRoleError.value = ''
+
+  try {
+    const response = await $fetch(`/api/tenants/members/${memberToEdit.value.id}/role`, {
+      method: 'PUT',
+      body: {
+        role: editRoleForm.role
+      }
+    })
+
+    if (response.success) {
+      toast.success(response.message || `Rol actualizado a ${getRoleLabel(editRoleForm.role)}`)
+      closeEditRoleModal()
+      refresh()
+    } else {
+      editRoleError.value = response.message || 'Error al actualizar rol'
+    }
+  } catch (err) {
+    console.error('Error updating role:', err)
+    editRoleError.value = err.data?.message || err.message || 'Error al actualizar rol'
+  } finally {
+    editRoleLoading.value = false
   }
 }
 
