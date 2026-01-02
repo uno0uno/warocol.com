@@ -6,6 +6,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Ordenes' })
+
 const { onTenantChange } = useTenantReactive()
 
 const mockOrders = ref([

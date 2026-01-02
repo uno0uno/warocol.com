@@ -611,6 +611,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Crear Combo' })
+
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
 

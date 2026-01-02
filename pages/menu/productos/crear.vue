@@ -657,6 +657,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Crear Producto' })
+
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
 

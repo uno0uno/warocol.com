@@ -188,6 +188,8 @@ definePageMeta({
   pageDescription: 'Resumen e historial de ajustes manuales'
 })
 
+useHead({ title: 'Ajustes de Inventario' })
+
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
 

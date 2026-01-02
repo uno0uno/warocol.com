@@ -40,6 +40,8 @@ definePageMeta({
   title: 'Registrar Pago'
 })
 
+useHead({ title: 'Registrar Pago' })
+
 const route = useRoute()
 const loading = ref(true)
 const error = ref<string | null>(null)

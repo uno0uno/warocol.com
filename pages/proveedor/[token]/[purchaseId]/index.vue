@@ -281,6 +281,8 @@ definePageMeta({
   layout: 'supplier-portal'
 })
 
+useHead({ title: 'Detalle de Compra' })
+
 const route = useRoute()
 const token = computed(() => route.params.token as string)
 const purchaseId = computed(() => route.params.purchaseId as string)

@@ -7,6 +7,8 @@ definePageMeta({
   ssr: false
 })
 
+useHead({ title: 'Ventas' })
+
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
 

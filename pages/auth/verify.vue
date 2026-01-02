@@ -83,6 +83,8 @@ definePageMeta({
   layout: false
 });
 
+useHead({ title: 'Verificando Acceso' })
+
 const route = useRoute()
 const toast = useToast()
 const { public: { defaultRedirectUrl } } = useRuntimeConfig()

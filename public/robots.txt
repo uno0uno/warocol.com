@@ -1,0 +1,25 @@
+# robots.txt for warocol.com
+# Only allow indexing of public pages (home and blog)
+
+User-agent: *
+
+# Allow public pages
+Allow: /$
+Allow: /blog
+Allow: /blog/
+
+# Block all dashboard and private routes
+Disallow: /auth/
+Disallow: /pos/
+Disallow: /ventas/
+Disallow: /menu/
+Disallow: /inventario/
+Disallow: /abastecimiento/
+Disallow: /financiero/
+Disallow: /pagos/
+Disallow: /equipo
+Disallow: /proveedor/
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://warocol.com/sitemap.xml

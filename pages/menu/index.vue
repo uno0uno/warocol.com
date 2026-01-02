@@ -3,6 +3,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Menú' })
+
 // Redirect to productos by default
 navigateTo('/menu/productos')
 </script>

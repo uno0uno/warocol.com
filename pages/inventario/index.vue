@@ -1,4 +1,6 @@
 <script setup>
+useHead({ title: 'Inventario' })
+
 // Redirect to stock by default
 await navigateTo('/inventario/stock')
 </script>

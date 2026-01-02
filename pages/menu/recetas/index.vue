@@ -335,6 +335,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Recetas' })
+
 const { onTenantChange, currentTenant } = useTenantReactive()
 
 // Reactive state

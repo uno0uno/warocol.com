@@ -96,6 +96,8 @@ definePageMeta({
   layout: 'supplier-portal'
 })
 
+useHead({ title: 'Portal Proveedor' })
+
 const route = useRoute()
 const token = computed(() => route.params.token as string)
 

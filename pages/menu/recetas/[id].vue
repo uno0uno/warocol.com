@@ -268,6 +268,8 @@ definePageMeta({
   })
 })
 
+useHead({ title: 'Editar Receta' })
+
 const route = useRoute()
 const router = useRouter()
 const { currentTenant } = useTenantReactive()

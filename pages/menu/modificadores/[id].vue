@@ -556,6 +556,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Editar Modificador' })
+
 const router = useRouter()
 const route = useRoute()
 const { currentTenant } = useTenantReactive()

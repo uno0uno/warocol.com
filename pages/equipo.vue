@@ -429,6 +429,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Equipo' })
+
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
 const toast = useToast()

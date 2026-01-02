@@ -88,6 +88,8 @@ definePageMeta({
   layout: false
 });
 
+useHead({ title: 'Aceptar Invitación' })
+
 const route = useRoute()
 
 // Estados reactivos

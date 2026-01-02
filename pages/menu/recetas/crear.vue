@@ -497,6 +497,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Crear Receta' })
+
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
 

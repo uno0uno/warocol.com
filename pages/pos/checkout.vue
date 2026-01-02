@@ -6,6 +6,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Checkout' })
+
 const router = useRouter()
 const posStore = usePOSStore()
 

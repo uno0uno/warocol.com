@@ -222,6 +222,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Stock' })
+
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
 

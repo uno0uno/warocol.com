@@ -264,6 +264,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Productos' })
+
 const router = useRouter()
 
 // Reactive state

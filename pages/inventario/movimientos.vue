@@ -161,6 +161,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Movimientos de Inventario' })
+
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
 

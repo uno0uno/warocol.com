@@ -10,6 +10,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Producto POS' })
+
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
 

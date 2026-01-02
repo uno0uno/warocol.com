@@ -6,4 +6,6 @@
 definePageMeta({
   layout: false
 })
+
+useHead({ title: 'Iniciar Sesión' })
 </script>

@@ -6,6 +6,8 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+useHead({ title: 'Punto de Venta' })
+
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
 
