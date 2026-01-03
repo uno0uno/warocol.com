@@ -73,6 +73,12 @@
             </div>
           </template>
 
+          <template #cell-costo_total="{ row }">
+            <div class="flex justify-end">
+              <span class="text-sm font-semibold text-primary">{{ formatCurrency(row.costo_total) }}</span>
+            </div>
+          </template>
+
           <template #cell-is_active="{ row }">
             <div class="flex justify-center">
               <UiStatusBadge
@@ -106,6 +112,10 @@
                   <div class="flex items-center gap-2 mt-1">
                     <p class="text-xs text-text-secondary">
                       {{ item.ingredientes.length }} ingredientes
+                    </p>
+                    <span class="text-xs text-text-tertiary">•</span>
+                    <p class="text-xs font-semibold text-primary">
+                      {{ formatCurrency(item.costo_total) }}
                     </p>
                   </div>
                 </div>
@@ -409,18 +419,24 @@ const recetas = computed(() => {
     producto_name: recipeBase.name,
     descripcion: recipeBase.description,
     is_active: recipeBase.is_active,
-    ingredientes: recipeBase.ingredients?.map((ing: any) => ({
-      ingrediente_id: ing.ingredient_id,
-      ingrediente_name: ing.ingredient_name,
-      cantidad: Number(ing.base_quantity || 0),
-      unidad: ing.unit,
-      is_required: ing.is_required,
-      notes: ing.notes,
-      costo_unitario: 0, // Recipe bases don't store costs
-      costo_total: 0,
-      controla_inventario: false
-    })) || [],
-    costo_total: 0, // Recipe bases don't calculate costs
+    ingredientes: recipeBase.ingredients?.map((ing: any) => {
+      const costoUnitario = Number(ing.costo_unitario || 0)
+      const cantidad = Number(ing.base_quantity || 0)
+      return {
+        ingrediente_id: ing.ingredient_id,
+        ingrediente_name: ing.ingredient_name,
+        cantidad: cantidad,
+        unidad: ing.unit,
+        is_required: ing.is_required,
+        notes: ing.notes,
+        costo_unitario: costoUnitario,
+        costo_total: costoUnitario * cantidad,
+        controla_inventario: ing.controla_inventario || false
+      }
+    }) || [],
+    costo_total: recipeBase.ingredients?.reduce((total: number, ing: any) => {
+      return total + (Number(ing.costo_unitario || 0) * Number(ing.base_quantity || 0))
+    }, 0) || 0,
     rendimiento: 1
   }))
 })
@@ -513,6 +529,13 @@ const recetasTableColumns = [
     sortable: true,
     format: 'number',
     align: 'center'
+  },
+  {
+    key: 'costo_total',
+    title: 'Costo',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
   },
   {
     key: 'is_active',
