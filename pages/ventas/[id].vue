@@ -214,70 +214,76 @@ onUnmounted(() => {
           <CommonsTheCustomLoader size="medium" />
         </div>
 
-        <!-- Items Table -->
+        <!-- Items Table with Expandable Modifiers -->
         <div v-else-if="items.length > 0" class="overflow-x-auto">
           <table class="w-full">
             <thead class="bg-surface-secondary">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">Producto</th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">Modificadores</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">Cantidad</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Precio Unit.</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">Cant.</th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Precio</th>
                 <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Subtotal</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border">
-              <tr
-                v-for="item in items"
-                :key="item.id"
-                class="hover:bg-surface-secondary/50 transition-colors"
-              >
-                <!-- Product -->
-                <td class="px-6 py-4">
-                  <div>
-                    <p class="text-sm font-medium text-text-primary">{{ item.product.name }}</p>
-                    <p v-if="item.product.description" class="text-xs text-text-secondary mt-1">{{ item.product.description }}</p>
-                  </div>
-                </td>
-
-                <!-- Modifiers -->
-                <td class="px-6 py-4">
-                  <div v-if="item.modifiers && item.modifiers.length > 0" class="space-y-1">
-                    <div
-                      v-for="modifier in item.modifiers"
-                      :key="modifier.id"
-                      class="text-xs text-text-secondary"
-                    >
-                      • {{ modifier.name }}
-                      <span v-if="modifier.price > 0" class="text-primary">+{{ formatCurrency(modifier.price) }}</span>
+              <template v-for="item in items" :key="item.id">
+                <!-- Product Row (Main) -->
+                <tr class="bg-surface hover:bg-surface-secondary/50 transition-colors">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-lg flex-shrink-0">
+                        {{ item.product.image || '🍽️' }}
+                      </div>
+                      <div>
+                        <p class="text-sm font-semibold text-text-primary">{{ item.product.name }}</p>
+                        <p v-if="item.notes" class="text-xs text-text-tertiary italic mt-0.5">{{ item.notes }}</p>
+                      </div>
                     </div>
-                  </div>
-                  <span v-else class="text-xs text-text-secondary">-</span>
-                </td>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                      {{ item.quantity }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <span class="text-sm font-medium text-text-primary">{{ formatCurrency(item.price_at_purchase) }}</span>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <span class="text-sm font-bold text-primary">{{ formatCurrency(item.subtotal) }}</span>
+                  </td>
+                </tr>
 
-                <!-- Quantity -->
-                <td class="px-6 py-4 text-center">
-                  <span class="text-sm font-medium text-text-primary">{{ item.quantity }}</span>
-                </td>
-
-                <!-- Unit Price -->
-                <td class="px-6 py-4 text-right">
-                  <span class="text-sm text-text-primary">{{ formatCurrency(item.price_at_purchase) }}</span>
-                </td>
-
-                <!-- Subtotal -->
-                <td class="px-6 py-4 text-right">
-                  <span class="text-sm font-bold text-primary">{{ formatCurrency(item.subtotal) }}</span>
-                </td>
-              </tr>
+                <!-- Modifier Rows (Sub-rows) -->
+                <tr
+                  v-for="modifier in (item.modifiers || [])"
+                  :key="`${item.id}-mod-${modifier.id}`"
+                  class="bg-surface-secondary/30"
+                >
+                  <td class="px-6 py-2 pl-14">
+                    <div class="flex items-center gap-2">
+                      <span class="text-primary text-xs">+</span>
+                      <span class="text-xs text-text-secondary">{{ modifier.name }}</span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-2 text-center">
+                    <span class="text-xs text-text-tertiary">x{{ item.quantity }}</span>
+                  </td>
+                  <td class="px-6 py-2 text-right">
+                    <span class="text-xs text-text-secondary">{{ formatCurrency(modifier.price) }}</span>
+                  </td>
+                  <td class="px-6 py-2 text-right">
+                    <span class="text-xs text-primary/70">{{ formatCurrency(modifier.price * item.quantity) }}</span>
+                  </td>
+                </tr>
+              </template>
             </tbody>
-            <tfoot class="bg-surface-secondary">
+            <tfoot class="bg-surface-secondary border-t-2 border-border">
               <tr>
-                <td colspan="4" class="px-6 py-4 text-right text-sm font-semibold text-text-primary">
+                <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary">
                   Total de la Orden:
                 </td>
                 <td class="px-6 py-4 text-right">
-                  <span class="text-lg font-bold text-primary">{{ formatCurrency(order.total_amount) }}</span>
+                  <span class="text-xl font-bold text-primary">{{ formatCurrency(order.total_amount) }}</span>
                 </td>
               </tr>
             </tfoot>

@@ -35,7 +35,7 @@ const formatCurrency = (value: number) => {
 const getItemTotal = (item: any) => {
   const basePrice = item.product.price
   const modifiersPrice = item.modifiers.reduce((sum: number, mod: any) => sum + mod.price, 0)
-  return basePrice + modifiersPrice
+  return (basePrice + modifiersPrice) * item.quantity
 }
 
 const processOrder = async () => {
@@ -166,7 +166,12 @@ onUnmounted(() => {
               <!-- Product Info -->
               <div class="flex-1 min-w-0">
                 <div class="flex justify-between items-start mb-1">
-                  <h3 class="font-semibold text-text-primary">{{ item.product.name }}</h3>
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-semibold text-text-primary">{{ item.product.name }}</h3>
+                    <span v-if="item.quantity > 1" class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                      x{{ item.quantity }}
+                    </span>
+                  </div>
                   <span class="font-bold text-text-primary ml-4">{{ formatCurrency(getItemTotal(item)) }}</span>
                 </div>
 
@@ -174,10 +179,11 @@ onUnmounted(() => {
                   <div class="text-sm text-text-secondary space-y-1">
                     <p class="text-xs">{{ formatCurrency(item.product.price) }} c/u</p>
 
-                    <!-- Modifiers -->
-                    <div v-if="item.modifiers && item.modifiers.length > 0">
-                      <p class="text-text-tertiary text-xs">
-                        {{ item.modifiers.map(m => m.name).join(', ') }}
+                    <!-- Modifiers with prices -->
+                    <div v-if="item.modifiers && item.modifiers.length > 0" class="space-y-0.5">
+                      <p v-for="mod in item.modifiers" :key="mod.id" class="text-text-tertiary text-xs flex items-center gap-2">
+                        <span>+ {{ mod.name }}</span>
+                        <span class="text-text-secondary font-medium">{{ formatCurrency(mod.price) }}</span>
                       </p>
                     </div>
 
