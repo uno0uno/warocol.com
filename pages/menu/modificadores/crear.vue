@@ -32,7 +32,7 @@
               </div>
             </div>
 
-            <!-- Product -->
+            <!-- Products -->
             <div class="flex items-center space-x-2 sm:space-x-3">
               <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
                 <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,8 +40,8 @@
                 </svg>
               </div>
               <div class="space-y-1">
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Producto</p>
-                <p class="text-sm sm:text-lg font-semibold text-text-primary">{{ getProductName(form.product_id) || 'Seleccionar' }}</p>
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Productos</p>
+                <p class="text-sm sm:text-lg font-semibold text-text-primary">{{ getSelectedProductsText() }}</p>
               </div>
             </div>
 
@@ -154,21 +154,38 @@
             <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 sm:mb-6">Información del Grupo</h3>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <!-- Product Selection -->
+              <!-- Products Selection (Multi-select) -->
               <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Producto *
+                  Productos * <span class="text-text-secondary font-normal">(selecciona uno o más)</span>
                 </label>
-                <select
-                  v-model="form.product_id"
-                  class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary bg-surface"
-                  required
-                >
-                  <option value="">Seleccionar producto</option>
-                  <option v-for="product in products" :key="product.id" :value="product.id">
-                    {{ product.name }}
-                  </option>
-                </select>
+                <div class="border border-border rounded-lg p-3 max-h-60 overflow-y-auto bg-surface">
+                  <div v-if="products.length === 0" class="text-center py-4 text-text-secondary text-sm">
+                    No hay productos disponibles
+                  </div>
+                  <div v-else class="space-y-2">
+                    <label
+                      v-for="product in products"
+                      :key="product.id"
+                      class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-secondary cursor-pointer transition-colors"
+                      :class="{ 'bg-primary/5 border border-primary/20': form.product_ids.includes(product.id) }"
+                    >
+                      <input
+                        type="checkbox"
+                        :value="product.id"
+                        v-model="form.product_ids"
+                        class="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                      />
+                      <span class="text-sm text-text-primary">{{ product.name }}</span>
+                      <span v-if="product.category?.name" class="text-xs text-text-secondary ml-auto">
+                        {{ product.category.name }}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+                <p class="text-xs text-text-secondary mt-1">
+                  {{ form.product_ids.length }} producto(s) seleccionado(s)
+                </p>
               </div>
 
               <!-- Group Name -->
@@ -390,7 +407,18 @@
               <div>
                 <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Grupo</p>
                 <p class="text-lg font-bold text-text-primary">{{ form.name }}</p>
-                <p class="text-sm text-text-secondary mt-2">Para: {{ getProductName(form.product_id) }}</p>
+                <div class="mt-2">
+                  <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1">Productos asociados:</p>
+                  <div class="flex flex-wrap gap-1">
+                    <span
+                      v-for="name in getSelectedProductNames()"
+                      :key="name"
+                      class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                    >
+                      {{ name }}
+                    </span>
+                  </div>
+                </div>
               </div>
               <div>
                 <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Configuración</p>
@@ -567,7 +595,7 @@ const isSubmitting = ref(false)
 
 // Form data
 const form = ref({
-  product_id: '',
+  product_ids: [] as string[],
   name: '',
   min_qty: 0,
   max_qty: 1,
@@ -606,7 +634,7 @@ const isLoadingData = computed(() => {
 
 const canProceed = computed(() => {
   if (currentStep.value === 1) {
-    return form.value.product_id && form.value.name && form.value.max_qty >= form.value.min_qty
+    return form.value.product_ids.length > 0 && form.value.name && form.value.max_qty >= form.value.min_qty
   }
   if (currentStep.value === 2) {
     return form.value.modifiers.length > 0 && form.value.modifiers.every(m => m.name)
@@ -618,6 +646,18 @@ const canProceed = computed(() => {
 function getProductName(productId: string) {
   const product = products.value.find((p: any) => p.id === productId)
   return product?.name || ''
+}
+
+function getSelectedProductsText() {
+  if (form.value.product_ids.length === 0) return 'Seleccionar'
+  if (form.value.product_ids.length === 1) {
+    return getProductName(form.value.product_ids[0])
+  }
+  return `${form.value.product_ids.length} productos`
+}
+
+function getSelectedProductNames() {
+  return form.value.product_ids.map(id => getProductName(id)).filter(Boolean)
 }
 
 function addModifier() {

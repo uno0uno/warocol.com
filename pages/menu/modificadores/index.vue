@@ -73,8 +73,25 @@
         </div>
       </template>
 
-      <template #cell-product_name="{ value }">
-        <span class="text-sm text-text-primary">{{ value }}</span>
+      <template #cell-products="{ row }">
+        <div class="flex flex-wrap gap-1">
+          <span
+            v-for="product in (row.products || []).slice(0, 3)"
+            :key="product.id"
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
+          >
+            {{ product.name }}
+          </span>
+          <span
+            v-if="(row.products || []).length > 3"
+            class="text-xs text-text-secondary"
+          >
+            +{{ row.products.length - 3 }} más
+          </span>
+          <span v-if="!row.products?.length" class="text-xs text-text-secondary">
+            Sin productos
+          </span>
+        </div>
       </template>
 
       <template #cell-opciones="{ row }">
@@ -134,7 +151,21 @@
           <div class="flex justify-between items-start mb-3">
             <div class="flex-1">
               <p class="font-semibold text-text-primary">{{ item.name }}</p>
-              <p class="text-xs text-text-secondary mt-1">{{ item.product_name }}</p>
+              <div class="flex flex-wrap gap-1 mt-1">
+                <span
+                  v-for="product in (item.products || []).slice(0, 2)"
+                  :key="product.id"
+                  class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-primary/10 text-primary"
+                >
+                  {{ product.name }}
+                </span>
+                <span
+                  v-if="(item.products || []).length > 2"
+                  class="text-xs text-text-secondary"
+                >
+                  +{{ item.products.length - 2 }}
+                </span>
+              </div>
             </div>
             <UiStatusBadge
               :value="item.is_required ? 'Obligatorio' : 'Opcional'"
@@ -317,10 +348,13 @@ const filteredGroups = computed(() => {
   const groups = groupsData.value?.data || []
   if (!searchQuery.value) return groups
 
+  const search = searchQuery.value.toLowerCase()
   return groups.filter((grupo: any) => {
-    const matchesSearch = grupo.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                         (grupo.product_name && grupo.product_name.toLowerCase().includes(searchQuery.value.toLowerCase()))
-    return matchesSearch
+    const matchesName = grupo.name.toLowerCase().includes(search)
+    const matchesProducts = (grupo.products || []).some((p: any) =>
+      p.name.toLowerCase().includes(search)
+    )
+    return matchesName || matchesProducts
   })
 })
 
@@ -347,9 +381,9 @@ const gruposTableColumns = [
     align: 'left'
   },
   {
-    key: 'product_name',
-    title: 'Producto',
-    sortable: true,
+    key: 'products',
+    title: 'Productos',
+    sortable: false,
     format: 'text',
     align: 'left'
   },
