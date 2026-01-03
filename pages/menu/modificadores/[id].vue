@@ -160,9 +160,18 @@
                   Productos * <span class="text-text-secondary font-normal">(selecciona uno o más)</span>
                 </label>
                 <div class="border border-border rounded-lg p-3 max-h-60 overflow-y-auto bg-surface">
-                  <div v-if="products.length === 0" class="text-center py-4 text-text-secondary text-sm">
+                  <!-- Loading state -->
+                  <div v-if="loadingProducts" class="flex items-center justify-center py-8">
+                    <div class="flex flex-col items-center gap-2">
+                      <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                      <span class="text-sm text-text-secondary">Cargando productos...</span>
+                    </div>
+                  </div>
+                  <!-- Empty state -->
+                  <div v-else-if="products.length === 0" class="text-center py-4 text-text-secondary text-sm">
                     No hay productos disponibles
                   </div>
+                  <!-- Products list -->
                   <div v-else class="space-y-2">
                     <label
                       v-for="product in products"
@@ -625,7 +634,7 @@ const { data: groupData, pending: isLoadingGroup } = useAsyncData(
 )
 
 // Fetch products
-const { data: productsData } = useAsyncData(
+const { data: productsData, pending: loadingProducts } = useAsyncData(
   `products-${currentTenant.value?.id || 'default'}`,
   () => $fetch('/api/menu/products', {
     query: { limit: 250 }
