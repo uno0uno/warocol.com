@@ -75,7 +75,7 @@
 
           <template #cell-costo_total="{ row }">
             <div class="flex justify-end">
-              <span class="text-sm font-semibold text-primary">{{ formatCurrency(row.costo_total) }}</span>
+              <span class="text-sm text-text-primary">{{ formatCurrency(row.costo_total) }}</span>
             </div>
           </template>
 
@@ -114,7 +114,7 @@
                       {{ item.ingredientes.length }} ingredientes
                     </p>
                     <span class="text-xs text-text-tertiary">•</span>
-                    <p class="text-xs font-semibold text-primary">
+                    <p class="text-xs text-text-primary">
                       {{ formatCurrency(item.costo_total) }}
                     </p>
                   </div>
