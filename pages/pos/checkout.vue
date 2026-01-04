@@ -33,9 +33,9 @@ const formatCurrency = (value: number) => {
 }
 
 const getItemTotal = (item: any) => {
-  const basePrice = item.product.price
-  const modifiersPrice = item.modifiers.reduce((sum: number, mod: any) => sum + mod.price, 0)
-  return (basePrice + modifiersPrice) * item.quantity
+  const basePrice = Number(item.product.price) || 0
+  const modifiersPrice = item.modifiers.reduce((sum: number, mod: any) => sum + (Number(mod.price) || 0), 0)
+  return (basePrice + modifiersPrice) * (Number(item.quantity) || 1)
 }
 
 const processOrder = async () => {
@@ -83,7 +83,6 @@ const processOrder = async () => {
       router.push('/pos')
     }
   } catch (error: any) {
-    console.error('❌ Error processing order:', error)
     processingError.value = error.data?.message || error.message || 'Error processing order'
   } finally {
     isProcessing.value = false

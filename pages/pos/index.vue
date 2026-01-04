@@ -139,7 +139,6 @@ const handleCustomerSubmit = async () => {
 
     if (response.success) {
       posStore.setCustomer(response.data)
-      console.log('✅ Cliente identificado:', response.data)
 
       // Reset form
       customerForm.value = {
@@ -148,7 +147,6 @@ const handleCustomerSubmit = async () => {
       }
     }
   } catch (error: any) {
-    console.error('❌ Error al procesar cliente:', error)
     customerError.value = error.data?.message || error.message || 'Error al procesar el cliente'
   } finally {
     isLoadingCustomer.value = false
@@ -165,11 +163,9 @@ onMounted(() => {
   if (isReturningFromPOSPage) {
     // Clear the flag
     sessionStorage.removeItem('posNavigation')
-    console.log('↩️ Regresando a POS, manteniendo estado')
   } else {
     // Clear store for new sale (only when entering POS from outside)
     posStore.clearAll()
-    console.log('🧹 Store limpiado para nueva venta')
 
     // Check for pending customer from /ventas page
     const pendingCustomer = sessionStorage.getItem('pendingSaleCustomer')
@@ -177,12 +173,11 @@ onMounted(() => {
       try {
         const customer = JSON.parse(pendingCustomer)
         posStore.setCustomer(customer)
-        console.log('✅ Cliente cargado desde session:', customer)
 
         // Clear from session
         sessionStorage.removeItem('pendingSaleCustomer')
       } catch (error) {
-        console.error('Error parsing customer from session:', error)
+        // Error parsing customer
       }
     }
   }

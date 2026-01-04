@@ -47,13 +47,11 @@ const product = computed(() => {
   if (!productData.value?.data) return null
 
   const p = productData.value.data
-  console.log('📦 Product data from API:', p)
-  console.log('🔧 Modifier groups:', p.modifier_groups)
 
   return {
     id: p.id,
     name: p.name,
-    price: p.price,
+    price: Number(p.price) || 0,
     category: p.category?.name || 'Sin categoría',
     image: p.image_url || '🍽️',
     available: p.is_available,
@@ -319,7 +317,6 @@ const getModifierIcon = (name: string): string => {
 // Map modifier groups from API data
 const modifierGroups = computed<ModifierGroup[]>(() => {
   if (!product.value?.modifier_groups || !Array.isArray(product.value.modifier_groups)) {
-    console.log('⚠️ No modifier_groups found in product data')
     return []
   }
 
@@ -343,7 +340,6 @@ const modifierGroups = computed<ModifierGroup[]>(() => {
       }))
       .sort((a, b) => (a.group_sort_order || 0) - (b.group_sort_order || 0))
   } catch (error) {
-    console.error('Error mapping modifier groups:', error)
     return []
   }
 })
@@ -351,8 +347,8 @@ const modifierGroups = computed<ModifierGroup[]>(() => {
 // Computed
 const totalPrice = computed(() => {
   if (!product.value) return 0
-  const basePrice = product.value.price
-  const modifiersPrice = selectedModifiers.value.reduce((sum, mod) => sum + mod.price, 0)
+  const basePrice = Number(product.value.price) || 0
+  const modifiersPrice = selectedModifiers.value.reduce((sum, mod) => sum + Number(mod.price), 0)
   return basePrice + modifiersPrice // Always 1 item
 })
 
@@ -439,7 +435,6 @@ watch(product, (newProduct) => {
 watch(() => loadingProduct.value, (isLoading) => {
   // Only check after loading is complete
   if (!isLoading && !product.value) {
-    console.log('⚠️ Product not found, redirecting to /pos')
     router.push('/pos')
   }
 })

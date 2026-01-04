@@ -42,8 +42,8 @@ export const usePOSStore = defineStore('pos', () => {
 
     const cartTotal = computed(() => {
         return cart.value.reduce((sum, item) => {
-            const productTotal = item.product.price * item.quantity
-            const modifiersTotal = item.modifiers.reduce((modSum, mod) => modSum + mod.price, 0) * item.quantity
+            const productTotal = Number(item.product.price) * Number(item.quantity)
+            const modifiersTotal = item.modifiers.reduce((modSum, mod) => modSum + Number(mod.price), 0) * Number(item.quantity)
             return sum + productTotal + modifiersTotal
         }, 0)
     })
@@ -73,9 +73,7 @@ export const usePOSStore = defineStore('pos', () => {
                         notes: item.notes || null
                     }
                 })
-                console.log('✅ Item sincronizado con BD')
             } catch (error) {
-                console.error('❌ Error sincronizando item:', error)
                 // Mantener el item localmente aunque falle la sincronización
             }
         }
@@ -95,9 +93,7 @@ export const usePOSStore = defineStore('pos', () => {
                     await $fetch(`/api/pos/cart/${cartId.value}/items/${itemId}`, {
                         method: 'DELETE'
                     })
-                    console.log('✅ Item eliminado de BD')
                 } catch (error) {
-                    console.error('❌ Error eliminando item:', error)
                     // Si falla, podríamos recargar el carrito para mantener sincronía
                 }
             }
@@ -111,11 +107,6 @@ export const usePOSStore = defineStore('pos', () => {
 
             if (item.quantity <= 0) {
                 await removeFromCart(index)
-            } else {
-                // TODO: Sincronizar cambios de cantidad con backend
-                // Necesitamos endpoint PATCH /pos/cart/{cart_id}/items/{item_id}
-                // Por ahora, los cambios de cantidad solo persisten en la sesión actual
-                console.log('⚠️ Cambio de cantidad (solo local por ahora)')
             }
         }
     }
@@ -131,11 +122,6 @@ export const usePOSStore = defineStore('pos', () => {
                 quantity,
                 id: oldItemId // Mantener el ID del item original
             }
-
-            // TODO: Sincronizar cambios con backend
-            // Necesitamos endpoint PATCH /pos/cart/{cart_id}/items/{item_id}
-            // Por ahora, los cambios solo persisten en la sesión actual
-            console.log('⚠️ Item actualizado (solo local por ahora)')
         }
     }
 
@@ -148,9 +134,8 @@ export const usePOSStore = defineStore('pos', () => {
                 await $fetch(`/api/pos/cart/${cartId.value}`, {
                     method: 'DELETE'
                 })
-                console.log('✅ Carrito limpiado en BD')
             } catch (error) {
-                console.error('❌ Error limpiando carrito:', error)
+                // Error limpiando carrito
             }
         }
     }
@@ -183,7 +168,6 @@ export const usePOSStore = defineStore('pos', () => {
 
         try {
             isSyncing.value = true
-            console.log('📥 Cargando carrito desde BD...')
 
             const response = await $fetch(`/api/pos/cart/${customerId}`) as {
                 success: boolean
@@ -203,19 +187,20 @@ export const usePOSStore = defineStore('pos', () => {
                     product: {
                         id: item.product.id,
                         name: item.product.name,
-                        price: item.product.price,
+                        price: Number(item.product.price) || 0,
                         image: item.product.image || '🍽️',
                         category: ''
                     },
-                    quantity: item.quantity,
-                    modifiers: item.modifiers || [],
+                    quantity: Number(item.quantity) || 1,
+                    modifiers: (item.modifiers || []).map((mod: any) => ({
+                        id: mod.id,
+                        name: mod.name,
+                        price: Number(mod.price) || 0
+                    })),
                     notes: item.notes
                 }))
-
-                console.log(`✅ Carrito cargado: ${cart.value.length} items`)
             }
         } catch (error) {
-            console.error('❌ Error cargando carrito:', error)
             // Si falla, crear carrito nuevo vacío
             cart.value = []
         } finally {
