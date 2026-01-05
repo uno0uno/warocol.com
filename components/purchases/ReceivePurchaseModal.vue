@@ -259,21 +259,16 @@ const handleSubmit = async () => {
       emit('received')
       emit('close')
 
-      useToast().add({
-        title: 'Recepción y Verificación Registradas',
-        description: formData.value.partial
+      useToast().success(
+        formData.value.partial
           ? 'Se ha registrado la recepción parcial y verificación de calidad de la orden'
           : 'La orden ha sido recibida, verificada y completada',
-        color: 'green'
-      })
+        { title: 'Recepción y Verificación Registradas' }
+      )
     }
   } catch (error: any) {
     console.error('Error receiving purchase:', error)
-    useToast().add({
-      title: 'Error',
-      description: error.data?.detail || 'No se pudo registrar la recepción',
-      color: 'red'
-    })
+    useToast().error(error.data?.detail || 'No se pudo registrar la recepción', { title: 'Error' })
   } finally {
     loading.value = false
   }

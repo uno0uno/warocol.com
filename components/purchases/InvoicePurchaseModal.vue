@@ -290,15 +290,11 @@ const handleSubmit = async () => {
       emit('invoiced')
       emit('close')
       const docTypeLabel = formData.value.document_type === 'remision' ? 'Remisión' : 'Factura'
-      useToast().add({
-        title: `${docTypeLabel} Registrada`,
-        description: `La ${docTypeLabel.toLowerCase()} ha sido registrada exitosamente`,
-        color: 'green'
-      })
+      useToast().success(`La ${docTypeLabel.toLowerCase()} ha sido registrada exitosamente`, { title: `${docTypeLabel} Registrada` })
     }
   } catch (error: any) {
     console.error('Error invoicing purchase:', error)
-    useToast().add({ title: 'Error', description: error.data?.detail || 'No se pudo registrar el documento', color: 'red' })
+    useToast().error(error.data?.detail || 'No se pudo registrar el documento', { title: 'Error' })
   } finally {
     loading.value = false
   }

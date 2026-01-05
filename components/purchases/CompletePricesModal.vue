@@ -274,19 +274,11 @@ const handleSubmit = async () => {
       emit('completed')
       emit('close')
 
-      useToast().add({
-        title: 'Cotización Completada',
-        description: 'Los precios han sido agregados y la cotización está lista para aprobar',
-        color: 'green'
-      })
+      useToast().success('Los precios han sido agregados y la cotización está lista para aprobar', { title: 'Cotización Completada' })
     }
   } catch (error: any) {
     console.error('Error completing quotation:', error)
-    useToast().add({
-      title: 'Error',
-      description: error.data?.detail || 'No se pudo completar la cotización',
-      color: 'red'
-    })
+    useToast().error(error.data?.detail || 'No se pudo completar la cotización', { title: 'Error' })
   } finally {
     loading.value = false
   }

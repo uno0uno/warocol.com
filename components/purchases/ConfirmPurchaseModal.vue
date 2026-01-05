@@ -148,19 +148,11 @@ const handleSubmit = async () => {
       emit('close')
 
       // Show success message
-      useToast().add({
-        title: 'Orden Confirmada',
-        description: 'La orden de compra ha sido confirmada exitosamente',
-        color: 'green'
-      })
+      useToast().success('La orden de compra ha sido confirmada exitosamente', { title: 'Orden Confirmada' })
     }
   } catch (error: any) {
     console.error('Error confirming purchase:', error)
-    useToast().add({
-      title: 'Error',
-      description: error.data?.detail || 'No se pudo confirmar la orden',
-      color: 'red'
-    })
+    useToast().error(error.data?.detail || 'No se pudo confirmar la orden', { title: 'Error' })
   } finally {
     loading.value = false
   }

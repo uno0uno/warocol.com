@@ -915,11 +915,7 @@ const onEditIngredientChange = (index: number) => {
 // Save edit
 const saveEdit = async () => {
   if (!isEditFormValid.value) {
-    useToast().add({
-      title: 'Error de Validación',
-      description: 'Completa todos los campos requeridos',
-      color: 'red'
-    })
+    useToast().error('Completa todos los campos requeridos', { title: 'Error de Validación' })
     return
   }
 
@@ -957,18 +953,10 @@ const saveEdit = async () => {
     isEditMode.value = false
     await loadPurchase(true)
 
-    useToast().add({
-      title: 'Orden Actualizada',
-      description: 'Los cambios se han guardado correctamente',
-      color: 'green'
-    })
+    useToast().success('Los cambios se han guardado correctamente', { title: 'Orden Actualizada' })
   } catch (error: any) {
     console.error('Error updating purchase:', error)
-    useToast().add({
-      title: 'Error',
-      description: error.data?.detail || 'No se pudo actualizar la orden',
-      color: 'red'
-    })
+    useToast().error(error.data?.detail || 'No se pudo actualizar la orden', { title: 'Error' })
   } finally {
     isSubmitting.value = false
   }

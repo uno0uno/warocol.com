@@ -81,11 +81,7 @@ const handleFileSelect = (event: Event) => {
     const maxSize = 10 * 1024 * 1024
     const validFiles = files.filter(file => {
       if (file.size > maxSize) {
-        useToast().add({
-          title: 'Archivo muy grande',
-          description: `${file.name} excede el tamaño máximo de 10MB`,
-          color: 'red'
-        })
+        useToast().error(`${file.name} excede el tamaño máximo de 10MB`, { title: 'Archivo muy grande' })
         return false
       }
       return true

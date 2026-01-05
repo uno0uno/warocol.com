@@ -84,11 +84,7 @@ async function loadPurchases() {
       purchases.value = foundPurchases
       
       if (foundPurchases.length !== ids.length) {
-        useToast().add({
-          title: 'Advertencia',
-          description: 'Algunas órdenes no pudieron ser cargadas',
-          color: 'yellow'
-        })
+        useToast().warning('Algunas órdenes no pudieron ser cargadas', { title: 'Advertencia' })
       }
     }
     

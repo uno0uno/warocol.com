@@ -212,11 +212,7 @@ const handleSubmit = async () => {
     }
   } catch (error: any) {
     console.error('Error receiving purchase:', error)
-    useToast().add({
-      title: 'Error',
-      description: error.data?.detail || 'No se pudo registrar la recepción',
-      color: 'red'
-    })
+    useToast().error(error.data?.detail || 'No se pudo registrar la recepción', { title: 'Error' })
   } finally {
     loading.value = false
   }

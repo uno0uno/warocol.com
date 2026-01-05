@@ -252,19 +252,11 @@ const handleSubmit = async () => {
     if (response.success) {
       emit('completed')
       
-      useToast().add({
-        title: 'Cotización Enviada',
-        description: 'Los precios han sido enviados correctamente',
-        color: 'green'
-      })
+      useToast().success('Los precios han sido enviados correctamente', { title: 'Cotización Enviada' })
     }
   } catch (error: any) {
     console.error('Error completing quotation:', error)
-    useToast().add({
-      title: 'Error',
-      description: error.data?.detail || 'No se pudo enviar la cotización',
-      color: 'red'
-    })
+    useToast().error(error.data?.detail || 'No se pudo enviar la cotización', { title: 'Error' })
   } finally {
     loading.value = false
     emit('loading', false)

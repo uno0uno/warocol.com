@@ -249,24 +249,12 @@ const handleSubmit = async () => {
       if (successCount > 0) {
         emit('paid')
         if (errorCount > 0) {
-          useToast().add({
-            title: 'Pagos Parcialmente Registrados',
-            description: `${successCount} pagos registrados, ${errorCount} fallaron`,
-            color: 'yellow'
-          })
+          useToast().warning(`${successCount} pagos registrados, ${errorCount} fallaron`, { title: 'Pagos Parcialmente Registrados' })
         } else {
-          useToast().add({
-            title: 'Pagos Registrados',
-            description: `${successCount} pagos registrados exitosamente`,
-            color: 'green'
-          })
+          useToast().success(`${successCount} pagos registrados exitosamente`, { title: 'Pagos Registrados' })
         }
       } else {
-        useToast().add({
-          title: 'Error',
-          description: 'No se pudo registrar ningún pago',
-          color: 'red'
-        })
+        useToast().error('No se pudo registrar ningún pago', { title: 'Error' })
       }
     } else {
       // Single payment
@@ -293,20 +281,12 @@ const handleSubmit = async () => {
 
       if (response.success) {
         emit('paid')
-        useToast().add({
-          title: 'Pago Registrado',
-          description: 'El pago ha sido registrado exitosamente',
-          color: 'green'
-        })
+        useToast().success('El pago ha sido registrado exitosamente', { title: 'Pago Registrado' })
       }
     }
   } catch (error: any) {
     console.error('Error paying purchase:', error)
-    useToast().add({
-      title: 'Error',
-      description: error.data?.detail || 'No se pudo registrar el pago',
-      color: 'red'
-    })
+    useToast().error(error.data?.detail || 'No se pudo registrar el pago', { title: 'Error' })
   } finally {
     loading.value = false
   }

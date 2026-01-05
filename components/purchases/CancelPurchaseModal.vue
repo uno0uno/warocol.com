@@ -153,20 +153,12 @@ const closeModal = () => {
 
 const handleSubmit = async () => {
   if (formData.value.cancellation_reason.length < 10) {
-    useToast().add({
-      title: 'Error de Validación',
-      description: 'La razón de cancelación debe tener al menos 10 caracteres',
-      color: 'red'
-    })
+    useToast().error('La razón de cancelación debe tener al menos 10 caracteres', { title: 'Error de Validación' })
     return
   }
 
   if (!confirmCancel.value) {
-    useToast().add({
-      title: 'Confirmación Requerida',
-      description: 'Debes confirmar que deseas cancelar la orden',
-      color: 'red'
-    })
+    useToast().warning('Debes confirmar que deseas cancelar la orden', { title: 'Confirmación Requerida' })
     return
   }
 
@@ -185,19 +177,11 @@ const handleSubmit = async () => {
       emit('cancelled')
       emit('close')
 
-      useToast().add({
-        title: 'Orden Cancelada',
-        description: 'La orden de compra ha sido cancelada',
-        color: 'green'
-      })
+      useToast().success('La orden de compra ha sido cancelada', { title: 'Orden Cancelada' })
     }
   } catch (error: any) {
     console.error('Error cancelling purchase:', error)
-    useToast().add({
-      title: 'Error',
-      description: error.data?.detail || 'No se pudo cancelar la orden',
-      color: 'red'
-    })
+    useToast().error(error.data?.detail || 'No se pudo cancelar la orden', { title: 'Error' })
   } finally {
     loading.value = false
   }

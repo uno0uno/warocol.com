@@ -356,11 +356,7 @@ const handleApprove = async () => {
     }
   } catch (error: any) {
     console.error('Error confirming purchase:', error)
-    useToast().add({
-      title: 'Error',
-      description: error.data?.detail || 'No se pudo confirmar la orden',
-      color: 'red'
-    })
+    useToast().error(error.data?.detail || 'No se pudo confirmar la orden', { title: 'Error' })
   } finally {
     isApproving.value = false
   }

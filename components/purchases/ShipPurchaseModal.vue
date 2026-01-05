@@ -193,19 +193,11 @@ const handleSubmit = async () => {
       emit('shipped')
       emit('close')
 
-      useToast().add({
-        title: 'Envío Registrado',
-        description: 'La orden ha sido marcada como enviada',
-        color: 'green'
-      })
+      useToast().success('La orden ha sido marcada como enviada', { title: 'Envío Registrado' })
     }
   } catch (error: any) {
     console.error('Error shipping purchase:', error)
-    useToast().add({
-      title: 'Error',
-      description: error.data?.detail || 'No se pudo registrar el envío',
-      color: 'red'
-    })
+    useToast().error(error.data?.detail || 'No se pudo registrar el envío', { title: 'Error' })
   } finally {
     loading.value = false
   }
