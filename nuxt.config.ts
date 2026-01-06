@@ -167,10 +167,6 @@ export default defineNuxtConfig({
         userAgents: ['*'],
         allow: ['/'],
         disallow: ['/api/*', '/dashboard/*', '/pos/*', '/menu/*', '/inventario/*', '/abastecimiento/*', '/ventas/*', '/equipo', '/pagos/*', '/financiero/*', '/auth/*']
-      },
-      {
-        userAgents: ['GPTBot'],
-        disallow: ['/']
       }
     ]
   },
