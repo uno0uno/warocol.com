@@ -112,8 +112,7 @@ export default defineNuxtConfig({
         class: 'light'
       },
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-        { rel: 'canonical', href: process.env.NUXT_PUBLIC_CANONICAL_URL }
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
       ],
       script: [
         // JSON-LD Schema.org Organization

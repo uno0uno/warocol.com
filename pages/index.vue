@@ -80,7 +80,13 @@
 </template>
 
 <script setup>
+const route = useRoute()
 const { public: config } = useRuntimeConfig()
+
+const canonicalUrl = computed(() => {
+  const baseUrl = config.siteUrl || 'https://warocol.com'
+  return `${baseUrl}${route.path === '/' ? '' : route.path}`
+})
 
 useHead({
   title: config.seoTitle,
@@ -88,12 +94,12 @@ useHead({
     { name: 'description', content: config.seoDescription },
     { property: 'og:title', content: config.ogTitle },
     { property: 'og:description', content: config.ogDescription },
-    { property: 'og:url', content: config.ogUrl },
+    { property: 'og:url', content: canonicalUrl },
     { name: 'twitter:title', content: config.twitterTitle },
     { name: 'twitter:description', content: config.twitterDescription }
   ],
   link: [
-    { rel: 'canonical', href: config.canonicalUrl }
+    { rel: 'canonical', href: canonicalUrl }
   ]
 })
 </script>

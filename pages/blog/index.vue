@@ -121,13 +121,36 @@ const getCategory = (tags: string) => {
   return firstTag || 'General'
 }
 
+const route = useRoute()
+const config = useRuntimeConfig()
+
+const siteUrl = config.public.siteUrl || 'https://warocol.com'
+const canonicalUrl = `${siteUrl}${route.path}`
+
+const blogTitle = 'Blog - Artículos y Recursos | Waro Colombia'
+const blogDescription = 'Descubre artículos, tutoriales y recursos sobre gestión de restaurantes, control de costos, inventarios y más. Aprende a optimizar tu negocio gastronómico.'
+
 useHead({
-  title: 'Blog - Artículos y Tutoriales',
+  title: blogTitle,
   meta: [
-    {
-      name: 'description',
-      content: 'Lee nuestros últimos artículos sobre eventos corporativos, organización y mejores prácticas.'
-    }
+    { name: 'description', content: blogDescription },
+    // Open Graph
+    { property: 'og:type', content: 'website' },
+    { property: 'og:title', content: blogTitle },
+    { property: 'og:description', content: blogDescription },
+    { property: 'og:url', content: canonicalUrl },
+    { property: 'og:image', content: `${siteUrl}/og-image.png` },
+    { property: 'og:site_name', content: 'Waro Colombia' },
+    { property: 'og:locale', content: 'es_CO' },
+    // Twitter Cards
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: blogTitle },
+    { name: 'twitter:description', content: blogDescription },
+    { name: 'twitter:image', content: `${siteUrl}/og-image.png` },
+    { name: 'twitter:site', content: '@warocolombia' }
+  ],
+  link: [
+    { rel: 'canonical', href: canonicalUrl }
   ]
 })
 </script>
