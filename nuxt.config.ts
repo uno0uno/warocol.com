@@ -161,11 +161,16 @@ export default defineNuxtConfig({
   },
   robots: {
     credits: false,
+    sitemap: 'https://warocol.com/sitemap.xml',
     groups: [
       {
+        userAgents: ['*'],
+        allow: ['/'],
+        disallow: ['/api/*', '/dashboard/*', '/pos/*', '/menu/*', '/inventario/*', '/abastecimiento/*', '/ventas/*', '/equipo', '/pagos/*', '/financiero/*', '/auth/*']
+      },
+      {
         userAgents: ['GPTBot'],
-        disallow: ['/api/*'],
-        allow: ['/']
+        disallow: ['/']
       }
     ]
   },
