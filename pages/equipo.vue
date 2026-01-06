@@ -15,9 +15,10 @@
       </div>
     </div>
 
+    <!-- Content -->
+    <div v-else class="space-y-8">
     <!-- Responsive Data View -->
     <UiResponsiveDataView
-      v-else
       :columns="teamMembersTableColumns"
       :data="teamMembers"
       title="Miembros del equipo"
@@ -126,6 +127,131 @@
         </div>
       </template>
     </UiResponsiveDataView>
+
+    <!-- Pending Invitations Section -->
+    <div v-if="pendingInvitations.length > 0" class="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div class="p-4 border-b border-gray-100">
+        <h3 class="text-lg font-bold text-text-primary flex items-center gap-2">
+          <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Invitaciones pendientes
+          <span class="text-sm font-normal text-text-secondary">({{ pendingInvitations.length }})</span>
+        </h3>
+      </div>
+
+      <!-- Desktop Table -->
+      <div class="hidden md:block overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Invitado</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Email</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Rol</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Expira</th>
+              <th class="px-4 py-3 text-center text-xs font-medium text-text-secondary uppercase tracking-wider">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr v-for="invitation in pendingInvitations" :key="invitation.id" class="hover:bg-gray-50">
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-white flex-shrink-0 bg-amber-500">
+                    {{ getInitials(invitation.name, null) }}
+                  </div>
+                  <div class="text-sm font-medium text-text-primary">{{ invitation.name || 'Sin nombre' }}</div>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-sm text-text-primary">{{ invitation.email }}</td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                  {{ getRoleLabel(invitation.role) }}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-sm text-text-secondary">{{ formatExpirationDate(invitation.expiresAt) }}</td>
+              <td class="px-4 py-3 text-center">
+                <button
+                  @click="openCancelInvitationModal(invitation)"
+                  class="text-red-500 hover:text-red-700 transition-colors p-1"
+                  title="Cancelar invitacion"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Cards -->
+      <div class="md:hidden divide-y divide-gray-100">
+        <div v-for="invitation in pendingInvitations" :key="invitation.id" class="p-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-white flex-shrink-0 bg-amber-500">
+                {{ getInitials(invitation.name, null) }}
+              </div>
+              <div>
+                <div class="text-sm font-medium text-text-primary">{{ invitation.name || 'Sin nombre' }}</div>
+                <div class="text-xs text-text-secondary">{{ invitation.email }}</div>
+              </div>
+            </div>
+            <button
+              @click="openCancelInvitationModal(invitation)"
+              class="text-red-500 hover:text-red-700 transition-colors p-2"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="mt-2 flex items-center gap-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+              {{ getRoleLabel(invitation.role) }}
+            </span>
+            <span class="text-xs text-text-secondary">Expira: {{ formatExpirationDate(invitation.expiresAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- Cancel Invitation Modal -->
+    <Teleport to="body">
+      <div v-if="showCancelInvitationModal" class="fixed inset-0 z-50 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/50" @click="closeCancelInvitationModal"></div>
+        <div class="relative bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
+          <div class="text-center">
+            <div class="mx-auto mb-4 w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+              <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-text-primary mb-2">Cancelar invitacion</h3>
+            <p class="text-sm text-text-secondary mb-6">
+              ¿Estas seguro de cancelar la invitacion para <strong>{{ invitationToCancel?.email }}</strong>?
+            </p>
+            <div class="flex gap-3">
+              <button
+                @click="closeCancelInvitationModal"
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-text-primary hover:bg-gray-50"
+              >
+                No, mantener
+              </button>
+              <button
+                @click="cancelInvitation"
+                :disabled="cancelingInvitation"
+                class="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+              >
+                {{ cancelingInvitation ? 'Cancelando...' : 'Si, cancelar' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- Invite Modal -->
     <Teleport to="body">
@@ -467,11 +593,18 @@ const { data: membersData, pending: isLoading, error: fetchError, refresh } = us
   {
     server: false,
     watch: [currentTenant],
-    default: () => ({ success: true, data: [] }),
+    default: () => ({ success: true, data: [], pending_invitations: [] }),
     transform: (response) => {
+      console.log('API Response:', JSON.stringify(response, null, 2))
+      console.log('Pending invitations raw:', response?.pending_invitations)
+      const result = {
+        members: [],
+        pendingInvitations: []
+      }
+
       if (response?.success && response.data) {
         // Transform API data to UI format
-        return response.data.map(member => {
+        result.members = response.data.map(member => {
           const displayName = member.profile.name || member.profile.user_name || 'Usuario sin nombre'
           return {
             id: member.id,
@@ -488,13 +621,29 @@ const { data: membersData, pending: isLoading, error: fetchError, refresh } = us
           }
         })
       }
-      return []
+
+      // Transform pending invitations (backend returns snake_case)
+      const invitations = response?.pending_invitations || response?.pendingInvitations || []
+      result.pendingInvitations = invitations.map(inv => ({
+        id: inv.id,
+        email: inv.email,
+        name: inv.name,
+        role: inv.role,
+        status: inv.status,
+        expiresAt: inv.expires_at || inv.expiresAt,
+        invitedByName: inv.invited_by_name || inv.invitedByName
+      }))
+
+      return result
     }
   }
 )
 
 // Team members computed from data
-const teamMembers = computed(() => membersData.value || [])
+const teamMembers = computed(() => membersData.value?.members || [])
+
+// Pending invitations computed from data
+const pendingInvitations = computed(() => membersData.value?.pendingInvitations || [])
 
 // Error message
 const error = computed(() => fetchError.value ? 'Error al cargar los miembros del equipo' : null)
@@ -776,6 +925,61 @@ const updateRole = async () => {
   } finally {
     editRoleLoading.value = false
   }
+}
+
+// Cancel Invitation Modal State
+const showCancelInvitationModal = ref(false)
+const invitationToCancel = ref(null)
+const cancelingInvitation = ref(false)
+
+const openCancelInvitationModal = (invitation) => {
+  invitationToCancel.value = invitation
+  showCancelInvitationModal.value = true
+}
+
+const closeCancelInvitationModal = () => {
+  showCancelInvitationModal.value = false
+  invitationToCancel.value = null
+}
+
+const cancelInvitation = async () => {
+  if (!invitationToCancel.value) return
+
+  cancelingInvitation.value = true
+  try {
+    const response = await $fetch(`/api/invitations/${invitationToCancel.value.id}`, {
+      method: 'DELETE'
+    })
+
+    if (response.success) {
+      toast.success(`Invitacion para ${invitationToCancel.value.email} cancelada`)
+      closeCancelInvitationModal()
+      refresh()
+    } else {
+      toast.error(response.message || 'Error al cancelar invitacion')
+    }
+  } catch (err) {
+    console.error('Error canceling invitation:', err)
+    toast.error(err.data?.message || err.message || 'Error al cancelar invitacion')
+  } finally {
+    cancelingInvitation.value = false
+  }
+}
+
+// Format expiration date
+const formatExpirationDate = (dateString) => {
+  if (!dateString) return 'Sin fecha'
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = date - now
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffDays < 0) return 'Expirada'
+  if (diffDays === 0) return 'Hoy'
+  if (diffDays === 1) return 'Manana'
+  if (diffDays <= 7) return `${diffDays} dias`
+
+  return date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
 }
 
 // Inject refresh handler setter from layout
