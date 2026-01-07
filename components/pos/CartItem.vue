@@ -5,11 +5,8 @@
       {{ orderNumber }}
     </div>
 
-    <!-- Item Details (Clickable) -->
-    <div
-      class="flex-1 min-w-0 cursor-pointer hover:opacity-80 theme-transition"
-      @click="$emit('edit')"
-    >
+    <!-- Item Details -->
+    <div class="flex-1 min-w-0">
       <div class="flex justify-between items-start">
         <p class="text-sm font-medium text-text-primary truncate">{{ item.product.name }}</p>
         <p class="text-sm font-bold text-primary ml-2">{{ formatCurrency(itemTotal) }}</p>
@@ -33,7 +30,18 @@
     </div>
 
     <!-- Actions -->
-    <div class="flex items-center gap-2 ml-2">
+    <div class="flex items-center gap-1.5 ml-2">
+      <!-- Edit Button -->
+      <button
+        class="w-7 h-7 flex items-center justify-center rounded bg-primary/10 border border-primary text-primary hover:bg-primary hover:text-primary-foreground theme-transition"
+        @click.stop="$emit('edit')"
+        title="Editar"
+      >
+        <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+        </svg>
+      </button>
+      <!-- Delete Button -->
       <button
         class="w-7 h-7 flex items-center justify-center rounded bg-destructive/10 border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground theme-transition"
         @click.stop="$emit('remove')"

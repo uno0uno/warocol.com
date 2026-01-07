@@ -175,11 +175,32 @@ export const usePOSStore = defineStore('pos', () => {
             const quantity = updatedItem.quantity || 1
             const oldItemId = cart.value[index].id
 
-            // Actualizar localmente
+            // Actualizar localmente primero
             cart.value[index] = {
                 ...updatedItem,
                 quantity,
-                id: oldItemId // Mantener el ID del item original
+                id: oldItemId
+            }
+
+            // Sincronizar con backend si hay cartId y itemId
+            if (cartId.value && oldItemId && !isSyncing.value) {
+                try {
+                    await $fetch(`/api/pos/cart/${cartId.value}/items/${oldItemId}`, {
+                        method: 'PUT',
+                        body: {
+                            quantity,
+                            unit_price: updatedItem.product.price,
+                            modifiers: updatedItem.modifiers || [],
+                            notes: updatedItem.notes || null
+                        }
+                    })
+                } catch (error) {
+                    console.error('Error syncing cart item update to backend:', error)
+                    // Si falla, recargar el carrito para mantener sincronía
+                    if (currentCustomer.value) {
+                        await loadCartFromBackend(currentCustomer.value.id)
+                    }
+                }
             }
         }
     }
