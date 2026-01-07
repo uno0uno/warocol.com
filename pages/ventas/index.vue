@@ -12,6 +12,10 @@ useHead({ title: 'Ventas' })
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
 
+// Export modal state
+const showExportModal = ref(false)
+const exportResult = ref<{ success: boolean; message: string; email?: string; count?: number } | null>(null)
+
 // State
 const localSearchTerm = ref('')
 const apiSearchField = ref('order_number')
@@ -150,6 +154,45 @@ const clearFilters = () => {
   sortField.value = 'order_date'
   sortDirection.value = 'desc'
   Promise.all([refresh(), refreshMetrics()])
+}
+
+// Export functionality
+const isExporting = ref(false)
+const exportOrders = async () => {
+  if (isExporting.value) return
+
+  try {
+    isExporting.value = true
+    const response = await $fetch('/api/orders/export', {
+      method: 'POST',
+      params: {
+        search: localSearchTerm.value || undefined,
+        search_field: apiSearchField.value || undefined,
+        payment_method: paymentMethodFilter.value || undefined,
+        status: statusFilter.value || undefined,
+        sort_field: sortField.value,
+        sort_direction: sortDirection.value,
+        date_from: dateRange.value.from || undefined,
+        date_to: dateRange.value.to || undefined
+      }
+    }) as { success: boolean; message: string; data?: { email: string; orders_count: number } }
+
+    exportResult.value = {
+      success: true,
+      message: response.message,
+      email: response.data?.email,
+      count: response.data?.orders_count
+    }
+    showExportModal.value = true
+  } catch (error: any) {
+    exportResult.value = {
+      success: false,
+      message: error.data?.message || error.message || 'Error al exportar'
+    }
+    showExportModal.value = true
+  } finally {
+    isExporting.value = false
+  }
 }
 
 const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'desc' }) => {
@@ -351,6 +394,23 @@ onMounted(async () => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
+
+        <!-- Export Button (Desktop only) -->
+        <button
+          @click="exportOrders"
+          :disabled="isExporting"
+          class="hidden md:flex h-10 px-4 items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Exportar ventas a correo"
+        >
+          <svg v-if="!isExporting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>{{ isExporting ? 'Enviando...' : 'Exportar' }}</span>
+        </button>
       </div>
 
       <!-- Responsive Data View -->
@@ -484,5 +544,82 @@ onMounted(async () => {
         </template>
       </UiResponsiveDataView>
     </div>
+
+    <!-- Export Result Modal -->
+    <Teleport to="body">
+      <div
+        v-if="showExportModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+      >
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/50" @click="showExportModal = false"></div>
+
+        <!-- Modal -->
+        <div class="relative bg-surface rounded-2xl shadow-xl border border-border w-full max-w-md p-6">
+          <!-- Icon -->
+          <div class="flex justify-center mb-4">
+            <div
+              :class="[
+                'w-16 h-16 rounded-full flex items-center justify-center',
+                exportResult?.success ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'
+              ]"
+            >
+              <svg
+                v-if="exportResult?.success"
+                class="w-8 h-8 text-green-600 dark:text-green-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <svg
+                v-else
+                class="w-8 h-8 text-red-600 dark:text-red-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Title -->
+          <h3 class="text-xl font-bold text-text-primary text-center mb-4">
+            {{ exportResult?.success ? 'Reporte Enviado' : 'Error al Exportar' }}
+          </h3>
+
+          <!-- Success Details -->
+          <div v-if="exportResult?.success" class="bg-surface-secondary rounded-lg p-4 mb-6 space-y-3">
+            <div class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <span class="text-sm text-text-primary">{{ exportResult.email }}</span>
+            </div>
+            <div v-if="exportResult?.count" class="flex items-center gap-3">
+              <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span class="text-sm text-text-primary">{{ exportResult.count }} ventas</span>
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          <p v-else class="text-text-secondary text-center mb-6">
+            {{ exportResult?.message }}
+          </p>
+
+          <!-- Accept Button -->
+          <button
+            @click="showExportModal = false"
+            class="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+          >
+            Aceptar
+          </button>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
