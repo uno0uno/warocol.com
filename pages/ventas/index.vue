@@ -12,6 +12,21 @@ useHead({ title: 'Ventas' })
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
 
+// Load metrics from API
+const { data: metricsData, pending: metricsLoading, refresh: refreshMetrics } = useAsyncData(
+  `orders-metrics-${currentTenant.value?.id || 'default'}`,
+  () => $fetch('/api/orders/metrics', {
+    params: {
+      date_from: dateRange.value.from || undefined,
+      date_to: dateRange.value.to || undefined
+    }
+  }),
+  {
+    server: false,
+    watch: [currentTenant]
+  }
+)
+
 // State
 const localSearchTerm = ref('')
 const apiSearchField = ref('order_number')
@@ -19,6 +34,47 @@ const sortField = ref('order_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 const paymentMethodFilter = ref<string | null>(null)
 const statusFilter = ref<string | null>(null)
+const dateRangeFilter = ref<string | null>(null)
+
+// Computed date range based on filter selection
+const dateRange = computed(() => {
+  if (!dateRangeFilter.value) return { from: null, to: null }
+
+  const today = new Date()
+  today.setHours(23, 59, 59, 999)
+  const todayStr = today.toISOString().split('T')[0]
+
+  let fromDate = new Date()
+  fromDate.setHours(0, 0, 0, 0)
+
+  switch (dateRangeFilter.value) {
+    case 'today':
+      break
+    case 'yesterday':
+      fromDate.setDate(fromDate.getDate() - 1)
+      today.setDate(today.getDate() - 1)
+      break
+    case 'week':
+      fromDate.setDate(fromDate.getDate() - 7)
+      break
+    case '15days':
+      fromDate.setDate(fromDate.getDate() - 15)
+      break
+    case 'month':
+      fromDate.setDate(fromDate.getDate() - 30)
+      break
+    case '90days':
+      fromDate.setDate(fromDate.getDate() - 90)
+      break
+    default:
+      return { from: null, to: null }
+  }
+
+  return {
+    from: fromDate.toISOString().split('T')[0],
+    to: dateRangeFilter.value === 'yesterday' ? fromDate.toISOString().split('T')[0] : todayStr
+  }
+})
 
 // Load orders from API
 const { data: ordersData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
@@ -31,7 +87,9 @@ const { data: ordersData, pending: isLoading, error: fetchError, refresh } = use
       payment_method: paymentMethodFilter.value || undefined,
       status: statusFilter.value || undefined,
       sort_field: sortField.value,
-      sort_direction: sortDirection.value
+      sort_direction: sortDirection.value,
+      date_from: dateRange.value.from || undefined,
+      date_to: dateRange.value.to || undefined
     }
   }),
   {
@@ -42,8 +100,11 @@ const { data: ordersData, pending: isLoading, error: fetchError, refresh } = use
 
 // Refresh on tenant change
 onTenantChange(async () => {
-  await refresh()
+  await Promise.all([refresh(), refreshMetrics()])
 })
+
+// Metrics computed
+const metrics = computed(() => metricsData.value?.data || null)
 
 // Computed - Transform data to flatten customer object
 const orders = computed(() => {
@@ -85,9 +146,10 @@ const clearFilters = () => {
   apiSearchField.value = 'order_number'
   paymentMethodFilter.value = null
   statusFilter.value = null
+  dateRangeFilter.value = null
   sortField.value = 'order_date'
   sortDirection.value = 'desc'
-  refresh()
+  Promise.all([refresh(), refreshMetrics()])
 }
 
 const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'desc' }) => {
@@ -149,7 +211,9 @@ const viewOrderDetails = (order: any) => {
 // Set refresh handler for layout
 const setRefreshHandler = inject('setRefreshHandler', () => {})
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(async () => {
+    await Promise.all([refresh(), refreshMetrics()])
+  })
 })
 </script>
 
@@ -173,45 +237,119 @@ onMounted(() => {
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-      <!-- Filters Bar -->
-      <SharedFiltersBar
-        v-model:search="localSearchTerm"
-        v-model:search-field="apiSearchField"
-        :search-fields="searchFields"
-        search-label="Buscar"
-        search-placeholder="Buscar ventas..."
-        @search="performSearch"
-        @clear-filters="clearFilters"
-      >
-        <!-- Additional Filters -->
-        <template #additional-filters>
-          <div class="flex gap-2">
-            <!-- Payment Method Filter -->
-            <select
-              v-model="paymentMethodFilter"
-              @change="performSearch"
-              class="px-3 py-2 border border-border rounded-lg bg-background text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option :value="null">Todos los métodos</option>
-              <option value="cash">Efectivo</option>
-              <option value="card">Tarjeta</option>
-              <option value="digital">Digital</option>
-            </select>
+      <!-- Metrics Cards -->
+      <div v-if="metrics" class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <SharedMetricCard
+          title="Total Ventas"
+          :value="metrics.total_sales"
+          format="currency"
+          variant="primary"
+          size="sm"
+        />
+        <SharedMetricCard
+          title="Ticket Promedio"
+          :value="metrics.avg_ticket"
+          format="currency"
+          variant="primary"
+          size="sm"
+        />
+        <SharedMetricCard
+          title="Ordenes Completadas"
+          :value="metrics.completed_orders"
+          format="number"
+          variant="primary"
+          size="sm"
+        />
+        <SharedMetricCard
+          title="Ordenes Canceladas"
+          :value="metrics.cancelled_orders"
+          format="number"
+          variant="primary"
+          size="sm"
+        />
+      </div>
 
-            <!-- Status Filter -->
-            <select
-              v-model="statusFilter"
-              @change="performSearch"
-              class="px-3 py-2 border border-border rounded-lg bg-background text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option :value="null">Todos los estados</option>
-              <option value="completed">Completadas</option>
-              <option value="cancelled">Canceladas</option>
-              <option value="pending">Pendientes</option>
-            </select>
-          </div>
-        </template>
-      </SharedFiltersBar>
+      <!-- Filters Bar -->
+      <div class="flex flex-wrap items-center gap-2 w-full">
+        <!-- Search Input -->
+        <div class="relative flex-1 min-w-[200px]">
+          <button
+            @click="performSearch"
+            class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+          </button>
+          <input
+            v-model="localSearchTerm"
+            @keydown.enter="performSearch"
+            placeholder="Buscar ventas..."
+            class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
+        <!-- Search Field Select -->
+        <select
+          v-model="apiSearchField"
+          class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px]"
+        >
+          <option value="order_number">Nº Orden</option>
+          <option value="customer_name">Cliente</option>
+          <option value="customer_phone">Teléfono</option>
+        </select>
+
+        <!-- Date Range Filter -->
+        <select
+          v-model="dateRangeFilter"
+          @change="performSearch(); refreshMetrics()"
+          class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[140px]"
+        >
+          <option :value="null">Todo el tiempo</option>
+          <option value="today">Hoy</option>
+          <option value="yesterday">Ayer</option>
+          <option value="week">Última semana</option>
+          <option value="15days">Últimos 15 días</option>
+          <option value="month">Último mes</option>
+          <option value="90days">Últimos 90 días</option>
+        </select>
+
+        <!-- Payment Method Filter -->
+        <select
+          v-model="paymentMethodFilter"
+          @change="performSearch"
+          class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px]"
+        >
+          <option :value="null">Método pago</option>
+          <option value="cash">Efectivo</option>
+          <option value="card">Tarjeta</option>
+          <option value="digital">Digital</option>
+        </select>
+
+        <!-- Status Filter -->
+        <select
+          v-model="statusFilter"
+          @change="performSearch"
+          class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px]"
+        >
+          <option :value="null">Estado</option>
+          <option value="completed">Completadas</option>
+          <option value="cancelled">Canceladas</option>
+          <option value="pending">Pendientes</option>
+        </select>
+
+        <!-- Clear Filters Button -->
+        <button
+          v-if="localSearchTerm || dateRangeFilter || paymentMethodFilter || statusFilter"
+          @click="clearFilters"
+          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+          title="Limpiar filtros"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
       <!-- Responsive Data View -->
       <UiResponsiveDataView
