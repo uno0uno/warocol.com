@@ -12,21 +12,6 @@ useHead({ title: 'Ventas' })
 // Tenant reactivity
 const { onTenantChange, currentTenant } = useTenantReactive()
 
-// Load metrics from API
-const { data: metricsData, pending: metricsLoading, refresh: refreshMetrics } = useAsyncData(
-  `orders-metrics-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/orders/metrics', {
-    params: {
-      date_from: dateRange.value.from || undefined,
-      date_to: dateRange.value.to || undefined
-    }
-  }),
-  {
-    server: false,
-    watch: [currentTenant]
-  }
-)
-
 // State
 const localSearchTerm = ref('')
 const apiSearchField = ref('order_number')
@@ -75,6 +60,21 @@ const dateRange = computed(() => {
     to: dateRangeFilter.value === 'yesterday' ? fromDate.toISOString().split('T')[0] : todayStr
   }
 })
+
+// Load metrics from API
+const { data: metricsData, pending: metricsLoading, refresh: refreshMetrics } = useAsyncData(
+  `orders-metrics-${currentTenant.value?.id || 'default'}`,
+  () => $fetch('/api/orders/metrics', {
+    params: {
+      date_from: dateRange.value.from || undefined,
+      date_to: dateRange.value.to || undefined
+    }
+  }),
+  {
+    server: false,
+    watch: [currentTenant]
+  }
+)
 
 // Load orders from API
 const { data: ordersData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
@@ -210,17 +210,19 @@ const viewOrderDetails = (order: any) => {
 
 // Set refresh handler for layout
 const setRefreshHandler = inject('setRefreshHandler', () => {})
-onMounted(() => {
+onMounted(async () => {
   setRefreshHandler(async () => {
     await Promise.all([refresh(), refreshMetrics()])
   })
+  // Refresh metrics on mount to ensure they load when navigating back
+  await refreshMetrics()
 })
 </script>
 
 <template>
   <div class="page-layout">
     <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="isLoading || metricsLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
