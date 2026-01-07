@@ -16,6 +16,12 @@ const router = useRouter()
 
 const orderId = computed(() => route.params.id as string)
 
+// Edit mode state
+const isEditMode = ref(false)
+const isSaving = ref(false)
+const itemsToDelete = ref<Set<string>>(new Set())
+const modifiersToDelete = ref<Map<string, Set<string>>>(new Map())
+
 // Load order details
 const { data: orderData, pending: isLoading, error: fetchError, refresh: refreshOrder } = useAsyncData(
   `order-${orderId.value}-${currentTenant.value?.id || 'default'}`,
@@ -58,6 +64,36 @@ const order = computed(() => {
 })
 
 const items = computed(() => itemsData.value || [])
+
+// Filtered items (excluding deleted ones in edit mode)
+const visibleItems = computed(() => {
+  if (!isEditMode.value) return items.value
+  return items.value.filter((item: any) => !itemsToDelete.value.has(item.id))
+})
+
+// Calculate adjusted total
+const adjustedTotal = computed(() => {
+  let total = 0
+  for (const item of visibleItems.value) {
+    let itemTotal = Number(item.price_at_purchase) * Number(item.quantity)
+
+    // Add modifiers that aren't deleted
+    const deletedMods = modifiersToDelete.value.get(item.id) || new Set()
+    for (const mod of (item.modifiers || [])) {
+      if (!deletedMods.has(mod.id)) {
+        itemTotal += Number(mod.price) * Number(item.quantity)
+      }
+    }
+    total += itemTotal
+  }
+  return total
+})
+
+// Check if there are changes
+const hasChanges = computed(() => {
+  return itemsToDelete.value.size > 0 ||
+    Array.from(modifiersToDelete.value.values()).some(set => set.size > 0)
+})
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('es-CO', {
@@ -110,8 +146,92 @@ const goBack = () => {
 }
 
 const printReceipt = () => {
-  // TODO: Implementar funcionalidad de impresión
   window.print()
+}
+
+// Edit mode functions
+const enterEditMode = () => {
+  isEditMode.value = true
+  itemsToDelete.value = new Set()
+  modifiersToDelete.value = new Map()
+}
+
+const cancelEdit = () => {
+  isEditMode.value = false
+  itemsToDelete.value = new Set()
+  modifiersToDelete.value = new Map()
+}
+
+const markItemForDeletion = (itemId: string) => {
+  // Check if this would delete all items
+  const remainingItems = items.value.filter((item: any) =>
+    !itemsToDelete.value.has(item.id) && item.id !== itemId
+  )
+
+  if (remainingItems.length === 0) {
+    useToast().error('La venta debe tener al menos un producto', { title: 'No permitido' })
+    return
+  }
+
+  const newSet = new Set(itemsToDelete.value)
+  newSet.add(itemId)
+  itemsToDelete.value = newSet
+}
+
+const markModifierForDeletion = (itemId: string, modifierId: string) => {
+  const newMap = new Map(modifiersToDelete.value)
+  if (!newMap.has(itemId)) {
+    newMap.set(itemId, new Set())
+  }
+  const modSet = new Set(newMap.get(itemId))
+  modSet.add(modifierId)
+  newMap.set(itemId, modSet)
+  modifiersToDelete.value = newMap
+}
+
+const isModifierDeleted = (itemId: string, modifierId: string) => {
+  return modifiersToDelete.value.get(itemId)?.has(modifierId) || false
+}
+
+// Save changes - backend handles inventory restock automatically
+const saveChanges = async () => {
+  if (!hasChanges.value) return
+
+  isSaving.value = true
+  try {
+    // Delete items (backend automatically returns ingredients to stock)
+    for (const itemId of itemsToDelete.value) {
+      await $fetch(`/api/orders/${orderId.value}/items/${itemId}`, {
+        method: 'DELETE'
+      })
+    }
+
+    // Delete modifiers (backend automatically returns ingredients to stock)
+    for (const [itemId, modifierIds] of modifiersToDelete.value) {
+      // Skip if item was already deleted
+      if (itemsToDelete.value.has(itemId)) continue
+
+      for (const modifierId of modifierIds) {
+        await $fetch(`/api/orders/${orderId.value}/items/${itemId}/modifiers/${modifierId}`, {
+          method: 'DELETE'
+        })
+      }
+    }
+
+    // Refresh data
+    await Promise.all([refreshOrder(), refreshItems()])
+
+    isEditMode.value = false
+    itemsToDelete.value = new Set()
+    modifiersToDelete.value = new Map()
+
+    useToast().success('Venta ajustada correctamente. Stock actualizado.', { title: 'Cambios guardados' })
+  } catch (error: any) {
+    console.error('Error saving changes:', error)
+    useToast().error(error.data?.message || 'Error al guardar los cambios', { title: 'Error' })
+  } finally {
+    isSaving.value = false
+  }
 }
 
 // Get layout setters
@@ -199,14 +319,66 @@ onUnmounted(() => {
         <!-- Total Amount -->
         <div class="bg-surface border-2 border-primary rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Total</p>
-          <p class="text-2xl font-bold text-primary">{{ formatCurrency(order.total_amount) }}</p>
+          <p class="text-2xl font-bold text-primary">
+            {{ isEditMode && hasChanges ? formatCurrency(adjustedTotal) : formatCurrency(order.total_amount) }}
+          </p>
+          <p v-if="isEditMode && hasChanges" class="text-xs text-text-tertiary line-through">
+            {{ formatCurrency(order.total_amount) }}
+          </p>
         </div>
       </div>
 
       <!-- Order Items -->
       <div class="bg-surface border border-border rounded-xl overflow-hidden">
-        <div class="p-6 border-b border-border">
+        <div class="p-6 border-b border-border flex justify-between items-center">
           <h2 class="text-lg font-semibold text-text-primary">Items de la Orden ({{ order.items_count }})</h2>
+
+          <!-- Edit/Save Buttons -->
+          <div class="flex gap-2">
+            <template v-if="!isEditMode">
+              <button
+                @click="enterEditMode"
+                class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Editar Venta
+              </button>
+            </template>
+            <template v-else>
+              <button
+                @click="cancelEdit"
+                class="px-4 py-2 border border-border text-text-secondary hover:bg-surface-secondary rounded-lg text-sm font-medium transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                @click="saveChanges"
+                :disabled="!hasChanges || isSaving"
+                class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg v-if="isSaving" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Edit Mode Warning -->
+        <div v-if="isEditMode" class="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-6 py-3">
+          <p class="text-sm text-yellow-800 dark:text-yellow-300 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span><strong>Modo Edición:</strong> Haz clic en la X para eliminar productos o adiciones. Los ingredientes se devolverán al stock al guardar.</span>
+          </p>
         </div>
 
         <!-- Loading Items -->
@@ -215,10 +387,11 @@ onUnmounted(() => {
         </div>
 
         <!-- Items Table with Expandable Modifiers -->
-        <div v-else-if="items.length > 0" class="overflow-x-auto">
+        <div v-else-if="visibleItems.length > 0" class="overflow-x-auto">
           <table class="w-full">
             <thead class="bg-surface-secondary">
               <tr>
+                <th v-if="isEditMode" class="px-4 py-3 w-12"></th>
                 <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">Producto</th>
                 <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">Cant.</th>
                 <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Precio</th>
@@ -226,9 +399,20 @@ onUnmounted(() => {
               </tr>
             </thead>
             <tbody class="divide-y divide-border">
-              <template v-for="item in items" :key="item.id">
+              <template v-for="item in visibleItems" :key="item.id">
                 <!-- Product Row (Main) -->
                 <tr class="bg-surface hover:bg-surface-secondary/50 transition-colors">
+                  <td v-if="isEditMode" class="px-4 py-4">
+                    <button
+                      @click="markItemForDeletion(item.id)"
+                      class="w-8 h-8 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition-colors"
+                      title="Eliminar producto"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </td>
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-3">
                       <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-lg flex-shrink-0">
@@ -254,36 +438,51 @@ onUnmounted(() => {
                 </tr>
 
                 <!-- Modifier Rows (Sub-rows) -->
-                <tr
-                  v-for="modifier in (item.modifiers || [])"
-                  :key="`${item.id}-mod-${modifier.id}`"
-                  class="bg-surface-secondary/30"
-                >
-                  <td class="px-6 py-2 pl-14">
-                    <div class="flex items-center gap-2">
-                      <span class="text-primary text-xs">+</span>
-                      <span class="text-xs text-text-secondary">{{ modifier.name }}</span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-2 text-center">
-                    <span class="text-xs text-text-tertiary">x{{ item.quantity }}</span>
-                  </td>
-                  <td class="px-6 py-2 text-right">
-                    <span class="text-xs text-text-secondary">{{ formatCurrency(modifier.price) }}</span>
-                  </td>
-                  <td class="px-6 py-2 text-right">
-                    <span class="text-xs text-primary/70">{{ formatCurrency(modifier.price * item.quantity) }}</span>
-                  </td>
-                </tr>
+                <template v-for="modifier in (item.modifiers || [])" :key="`${item.id}-mod-${modifier.id}`">
+                  <tr
+                    v-if="!isModifierDeleted(item.id, modifier.id)"
+                    class="bg-surface-secondary/30"
+                  >
+                    <td v-if="isEditMode" class="px-4 py-2">
+                      <button
+                        @click="markModifierForDeletion(item.id, modifier.id)"
+                        class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition-colors ml-2"
+                        title="Eliminar adición"
+                      >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </td>
+                    <td class="px-6 py-2" :class="isEditMode ? '' : 'pl-14'">
+                      <div class="flex items-center gap-2" :class="isEditMode ? 'pl-8' : ''">
+                        <span class="text-primary text-xs">+</span>
+                        <span class="text-xs text-text-secondary">{{ modifier.name }}</span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-2 text-center">
+                      <span class="text-xs text-text-tertiary">x{{ item.quantity }}</span>
+                    </td>
+                    <td class="px-6 py-2 text-right">
+                      <span class="text-xs text-text-secondary">{{ formatCurrency(modifier.price) }}</span>
+                    </td>
+                    <td class="px-6 py-2 text-right">
+                      <span class="text-xs text-primary/70">{{ formatCurrency(modifier.price * item.quantity) }}</span>
+                    </td>
+                  </tr>
+                </template>
               </template>
             </tbody>
             <tfoot class="bg-surface-secondary border-t-2 border-border">
               <tr>
+                <td v-if="isEditMode"></td>
                 <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary">
                   Total de la Orden:
                 </td>
                 <td class="px-6 py-4 text-right">
-                  <span class="text-xl font-bold text-primary">{{ formatCurrency(order.total_amount) }}</span>
+                  <span class="text-xl font-bold text-primary">
+                    {{ isEditMode && hasChanges ? formatCurrency(adjustedTotal) : formatCurrency(order.total_amount) }}
+                  </span>
                 </td>
               </tr>
             </tfoot>
