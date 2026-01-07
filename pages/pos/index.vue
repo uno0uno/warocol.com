@@ -91,12 +91,12 @@ const editCartItem = (cartIndex: number, productId: string) => {
   router.push(`/pos/producto/${productId}?edit=${cartIndex}`)
 }
 
-const removeFromCart = (index: number) => {
-  posStore.removeFromCart(index)
+const removeFromCart = async (index: number) => {
+  await posStore.removeFromCart(index)
 }
 
-const clearCart = () => {
-  posStore.clearCart()
+const clearCart = async () => {
+  await posStore.clearCart()
 }
 
 const processOrder = () => {

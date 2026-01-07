@@ -19,6 +19,10 @@ const selectedPaymentMethod = ref<'cash' | 'card' | 'digital'>('cash')
 const isProcessing = ref(false)
 const processingError = ref('')
 
+// Success modal state
+const showSuccessModal = ref(false)
+const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string } | null>(null)
+
 // Computed
 const cartItems = computed(() => posStore.cart)
 const cartTotal = computed(() => posStore.cartTotal)
@@ -73,14 +77,18 @@ const processOrder = async () => {
     }
 
     if (response.success) {
-      // Show success message with order number
-      alert(`¡Orden #${response.data.order_number} procesada exitosamente!\n\nTotal: ${formatCurrency(response.data.total_amount)}\nMétodo de pago: ${getPaymentMethodLabel(response.data.payment_method)}`)
+      // Store order result for modal
+      orderResult.value = {
+        order_number: response.data.order_number,
+        total_amount: response.data.total_amount,
+        payment_method: response.data.payment_method
+      }
 
       // Clear local cart
       posStore.clearAll()
 
-      // Navigate back to POS
-      router.push('/pos')
+      // Show success modal
+      showSuccessModal.value = true
     }
   } catch (error: any) {
     processingError.value = error.data?.message || error.message || 'Error processing order'
@@ -99,6 +107,11 @@ const getPaymentMethodLabel = (method: string) => {
 }
 
 const cancelOrder = () => {
+  router.push('/pos')
+}
+
+const closeSuccessModal = () => {
+  showSuccessModal.value = false
   router.push('/pos')
 }
 
@@ -457,6 +470,66 @@ onUnmounted(() => {
         <span>Transacción segura y encriptada</span>
       </div>
     </div>
+
+    <!-- Success Modal -->
+    <Teleport to="body">
+      <div
+        v-if="showSuccessModal"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+      >
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/50"></div>
+
+        <!-- Modal -->
+        <div class="relative bg-surface rounded-2xl shadow-xl border border-border w-full max-w-md p-6">
+          <!-- Icon -->
+          <div class="flex justify-center mb-4">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center bg-green-100 dark:bg-green-900/30">
+              <svg
+                class="w-8 h-8 text-green-600 dark:text-green-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Title -->
+          <h3 class="text-xl font-bold text-text-primary text-center mb-2">
+            Venta Completada
+          </h3>
+          <p class="text-text-secondary text-center mb-6">
+            La orden ha sido procesada exitosamente
+          </p>
+
+          <!-- Order Details -->
+          <div v-if="orderResult" class="bg-surface-secondary rounded-lg p-4 mb-6 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-text-secondary">Nº Orden</span>
+              <span class="text-lg font-bold text-primary">#{{ orderResult.order_number }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-text-secondary">Total</span>
+              <span class="text-lg font-bold text-text-primary">{{ formatCurrency(orderResult.total_amount) }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-text-secondary">Método de Pago</span>
+              <span class="text-sm font-medium text-text-primary">{{ getPaymentMethodLabel(orderResult.payment_method) }}</span>
+            </div>
+          </div>
+
+          <!-- Accept Button -->
+          <button
+            @click="closeSuccessModal"
+            class="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+          >
+            Nueva Venta
+          </button>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 

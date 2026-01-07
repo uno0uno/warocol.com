@@ -34,6 +34,7 @@ export const usePOSStore = defineStore('pos', () => {
     const currentCustomer = ref<Customer | null>(null)
     const cartId = ref<string | null>(null) // ID del carrito en la BD
     const isSyncing = ref(false) // Flag para evitar loops de sincronización
+    const isDeleting = ref(false) // Flag para bloquear acciones mientras se elimina
 
     // Getters
     const cartItemsCount = computed(() => {
@@ -50,53 +51,111 @@ export const usePOSStore = defineStore('pos', () => {
 
     const isEmpty = computed(() => cart.value.length === 0)
 
+    // Track pending add operations to prevent race conditions
+    const pendingAdds = ref<Map<number, Promise<void>>>(new Map())
+
     // Actions
     const addToCart = async (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
         const quantity = item.quantity || 1
 
         // Agregar localmente primero para feedback inmediato
-        cart.value.push({
+        const newItem: CartItem = {
             ...item,
             quantity
-        })
+        }
+        cart.value.push(newItem)
+        const newItemIndex = cart.value.length - 1
 
         // Sincronizar con backend si hay cliente y cartId
         if (currentCustomer.value && cartId.value && !isSyncing.value) {
-            try {
-                await $fetch(`/api/pos/cart/${cartId.value}/items`, {
-                    method: 'POST',
-                    body: {
-                        product_id: item.product.id,
-                        quantity,
-                        unit_price: item.product.price,
-                        modifiers: item.modifiers || [],
-                        notes: item.notes || null
+            const addPromise = (async () => {
+                try {
+                    const response = await $fetch(`/api/pos/cart/${cartId.value}/items`, {
+                        method: 'POST',
+                        body: {
+                            product_id: item.product.id,
+                            quantity,
+                            unit_price: item.product.price,
+                            modifiers: item.modifiers || [],
+                            notes: item.notes || null
+                        }
+                    }) as { success: boolean; data: { item_id: string } }
+
+                    // IMPORTANTE: Actualizar el item local con el ID del backend
+                    if (response.success && response.data?.item_id) {
+                        // Encontrar el item por índice o por referencia
+                        const currentItem = cart.value[newItemIndex]
+                        if (currentItem && currentItem.product.id === item.product.id) {
+                            currentItem.id = response.data.item_id
+                        }
                     }
-                })
-            } catch (error) {
-                // Mantener el item localmente aunque falle la sincronización
-            }
+                } catch (error) {
+                    console.error('Error syncing cart item to backend:', error)
+                    // Si falla, remover el item local ya que no se guardó en backend
+                    const idx = cart.value.findIndex(i => i === newItem)
+                    if (idx >= 0) {
+                        cart.value.splice(idx, 1)
+                    }
+                }
+            })()
+
+            // Track this pending operation
+            pendingAdds.value.set(newItemIndex, addPromise)
+            await addPromise
+            pendingAdds.value.delete(newItemIndex)
         }
     }
 
     const removeFromCart = async (index: number) => {
-        if (index >= 0 && index < cart.value.length) {
-            const item = cart.value[index]
-            const itemId = item.id
+        isDeleting.value = true
 
-            // Eliminar localmente primero (optimistic update)
-            cart.value.splice(index, 1)
+        try {
+            if (index >= 0 && index < cart.value.length) {
+                const item = cart.value[index]
 
-            // Sincronizar con backend si hay cartId y itemId
-            if (cartId.value && itemId && !isSyncing.value) {
-                try {
-                    await $fetch(`/api/pos/cart/${cartId.value}/items/${itemId}`, {
-                        method: 'DELETE'
-                    })
-                } catch (error) {
-                    // Si falla, podríamos recargar el carrito para mantener sincronía
+                // Esperar a que cualquier operación de add pendiente termine
+                const pendingAdd = pendingAdds.value.get(index)
+                if (pendingAdd) {
+                    await pendingAdd
+                }
+
+                const itemId = item.id
+
+                // Eliminar localmente primero (optimistic update)
+                cart.value.splice(index, 1)
+
+                // Actualizar índices en pendingAdds después de splice
+                const newPendingAdds = new Map<number, Promise<void>>()
+                pendingAdds.value.forEach((promise, idx) => {
+                    if (idx > index) {
+                        newPendingAdds.set(idx - 1, promise)
+                    } else if (idx < index) {
+                        newPendingAdds.set(idx, promise)
+                    }
+                })
+                pendingAdds.value = newPendingAdds
+
+                // Sincronizar con backend si hay cartId y itemId
+                if (cartId.value && itemId && !isSyncing.value) {
+                    try {
+                        await $fetch(`/api/pos/cart/${cartId.value}/items/${itemId}`, {
+                            method: 'DELETE'
+                        })
+                    } catch (error) {
+                        // Si falla la eliminación, recargar el carrito para mantener sincronía
+                        if (currentCustomer.value) {
+                            await loadCartFromBackend(currentCustomer.value.id)
+                        }
+                    }
+                } else if (cartId.value && !itemId) {
+                    // El item no tiene ID del backend - recargar carrito para sincronía
+                    if (currentCustomer.value) {
+                        await loadCartFromBackend(currentCustomer.value.id)
+                    }
                 }
             }
+        } finally {
+            isDeleting.value = false
         }
     }
 
@@ -213,6 +272,7 @@ export const usePOSStore = defineStore('pos', () => {
         cart,
         currentCustomer,
         cartId,
+        isDeleting,
 
         // Getters
         cartItemsCount,

@@ -62,6 +62,7 @@ const product = computed(() => {
 // State
 const selectedModifiers = ref<Array<{ id: string; name: string; price: number }>>([])
 const notes = ref('')
+const isAdding = ref(false)
 
 // Edit mode detection
 const editCartIndex = computed(() => {
@@ -388,32 +389,38 @@ const isModifierSelected = (modifierId: string) => {
   return selectedModifiers.value.some(m => m.id === modifierId)
 }
 
-const addToCart = () => {
-  if (!product.value) return
+const addToCart = async () => {
+  if (!product.value || isAdding.value) return
 
-  const cartItemData = {
-    product: {
-      id: product.value.id,
-      name: product.value.name,
-      price: product.value.price,
-      image: product.value.image,
-      category: product.value.category
-    },
-    modifiers: selectedModifiers.value,
-    quantity: 1, // Always 1 for individual personalization
-    notes: notes.value || undefined
+  isAdding.value = true
+
+  try {
+    const cartItemData = {
+      product: {
+        id: product.value.id,
+        name: product.value.name,
+        price: product.value.price,
+        image: product.value.image,
+        category: product.value.category
+      },
+      modifiers: selectedModifiers.value,
+      quantity: 1, // Always 1 for individual personalization
+      notes: notes.value || undefined
+    }
+
+    if (isEditMode.value && editCartIndex.value !== null) {
+      // Update existing cart item
+      await posStore.updateCartItem(editCartIndex.value, cartItemData)
+    } else {
+      // Add new cart item
+      await posStore.addToCart(cartItemData)
+    }
+
+    // Navigate back to POS
+    router.push('/pos')
+  } finally {
+    isAdding.value = false
   }
-
-  if (isEditMode.value && editCartIndex.value !== null) {
-    // Update existing cart item
-    posStore.updateCartItem(editCartIndex.value, cartItemData)
-  } else {
-    // Add new cart item
-    posStore.addToCart(cartItemData)
-  }
-
-  // Navigate back to POS
-  router.push('/pos')
 }
 
 const formatCurrency = (value: number) => {
@@ -650,10 +657,20 @@ onUnmounted(() => {
           <!-- Add to Cart Button -->
           <button
             @click="addToCart"
-            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base"
+            :disabled="isAdding"
+            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ShoppingCartIcon class="h-4 md:h-5 w-4 md:w-5" />
-            {{ isEditMode ? 'Guardar Cambios' : 'Agregar al Carrito' }}
+            <template v-if="isAdding">
+              <svg class="animate-spin h-4 md:h-5 w-4 md:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Agregando...
+            </template>
+            <template v-else>
+              <ShoppingCartIcon class="h-4 md:h-5 w-4 md:w-5" />
+              {{ isEditMode ? 'Guardar Cambios' : 'Agregar al Carrito' }}
+            </template>
           </button>
         </div>
       </div>
@@ -689,10 +706,20 @@ onUnmounted(() => {
         <!-- Add to Cart Button -->
         <button
           @click="addToCart"
-          class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base"
+          :disabled="isAdding"
+          class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <ShoppingCartIcon class="h-4 md:h-5 w-4 md:w-5" />
-          {{ isEditMode ? 'Guardar Cambios' : 'Agregar al Carrito' }}
+          <template v-if="isAdding">
+            <svg class="animate-spin h-4 md:h-5 w-4 md:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Agregando...
+          </template>
+          <template v-else>
+            <ShoppingCartIcon class="h-4 md:h-5 w-4 md:w-5" />
+            {{ isEditMode ? 'Guardar Cambios' : 'Agregar al Carrito' }}
+          </template>
         </button>
       </div>
     </div>
