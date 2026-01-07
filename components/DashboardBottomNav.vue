@@ -1,150 +1,179 @@
 <template>
   <!-- Bottom Navigation - Mobile & Tablet -->
   <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-titan-300 shadow-lg z-50 safe-area-bottom">
-    <div class="flex items-center justify-around px-2 py-2">
+    <div class="flex items-center justify-between px-4 py-2">
 
-      <!-- Financiero - Temporarily disabled -->
-      <!-- <NuxtLink
-        to="/financiero"
-        class="flex flex-col items-center gap-0.5 flex-1 group"
-      >
-        <div
-          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200"
-          :class="activePage === 'financiero'
-            ? 'bg-crocus-100'
-            : 'hover:bg-titan-100'"
-        >
-          <ChartBarIcon
-            class="w-5 h-5 transition-colors"
-            :class="activePage === 'financiero'
-              ? 'text-crocus-600'
-              : 'text-titan-500'"
-          />
+      <!-- User Profile -->
+      <div class="flex items-center gap-3">
+        <div class="relative flex-shrink-0">
+          <div class="w-10 h-10 bg-crocus-600 rounded-full flex items-center justify-center font-semibold text-white text-sm">
+            {{ userInitials }}
+          </div>
+          <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
         </div>
-        <span
-          class="text-xs font-medium transition-colors"
-          :class="activePage === 'financiero'
-            ? 'text-crocus-700 font-semibold'
-            : 'text-titan-600'"
-        >
-          Financiero
-        </span>
-      </NuxtLink> -->
-
-      <!-- POS -->
-      <NuxtLink
-        to="/pos"
-        class="flex flex-col items-center gap-0.5 flex-1 group"
-      >
-        <div
-          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200"
-          :class="activePage === 'pos'
-            ? 'bg-crocus-100'
-            : 'hover:bg-titan-100'"
-        >
-          <ComputerDesktopIcon
-            class="w-5 h-5 transition-colors"
-            :class="activePage === 'pos'
-              ? 'text-crocus-600'
-              : 'text-titan-500'"
-          />
+        <div class="flex flex-col">
+          <span class="text-sm font-semibold text-ebony-800 leading-tight">{{ userName }}</span>
+          <span class="text-xs text-titan-500 leading-tight">{{ selectedTenant?.name || 'Sin tenant' }}</span>
         </div>
-        <span
-          class="text-xs font-medium transition-colors"
-          :class="activePage === 'pos'
-            ? 'text-crocus-700 font-semibold'
-            : 'text-titan-600'"
-        >
-          POS
-        </span>
-      </NuxtLink>
+      </div>
 
-      <!-- Abastecimiento -->
-      <NuxtLink
-        to="/abastecimiento"
-        class="flex flex-col items-center gap-0.5 flex-1 group"
-      >
-        <div
-          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200"
-          :class="activePage === 'abastecimiento'
-            ? 'bg-crocus-100'
-            : 'hover:bg-titan-100'"
+      <!-- Actions -->
+      <div class="flex items-center gap-2">
+        <!-- Refresh Button -->
+        <button
+          v-if="onRefresh"
+          @click="onRefresh"
+          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100"
         >
-          <TruckIcon
-            class="w-5 h-5 transition-colors"
-            :class="activePage === 'abastecimiento'
-              ? 'text-crocus-600'
-              : 'text-titan-500'"
-          />
-        </div>
-        <span
-          class="text-xs font-medium transition-colors"
-          :class="activePage === 'abastecimiento'
-            ? 'text-crocus-700 font-semibold'
-            : 'text-titan-600'"
-        >
-          Abastecimiento
-        </span>
-      </NuxtLink>
-
-      <!-- Pagos -->
-      <NuxtLink
-        to="/pagos"
-        class="flex flex-col items-center gap-0.5 flex-1 group"
-      >
-        <div
-          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200"
-          :class="activePage === 'pagos'
-            ? 'bg-crocus-100'
-            : 'hover:bg-titan-100'"
-        >
-          <BanknotesIcon
-            class="w-5 h-5 transition-colors"
-            :class="activePage === 'pagos'
-              ? 'text-crocus-600'
-              : 'text-titan-500'"
-          />
-        </div>
-        <span
-          class="text-xs font-medium transition-colors"
-          :class="activePage === 'pagos'
-            ? 'text-crocus-700 font-semibold'
-            : 'text-titan-600'"
-        >
-          Pagos
-        </span>
-      </NuxtLink>
-
-      <!-- Refresh Button (solo si se proporciona onRefresh) -->
-      <button
-        v-if="onRefresh"
-        @click="onRefresh"
-        class="flex flex-col items-center gap-0.5 flex-1 group"
-      >
-        <div class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100">
-          <svg class="w-5 h-5 transition-transform group-hover:rotate-180 duration-300 text-titan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-titan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
           </svg>
-        </div>
-        <span class="text-xs font-medium transition-colors text-titan-600">
-          Refrescar
-        </span>
-      </button>
+        </button>
 
-      <!-- Configuración/Tenant -->
-      <button
-        @click="showTenantModal = true"
-        class="flex flex-col items-center gap-0.5 flex-1 group"
-      >
-        <div class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100">
-          <Cog6ToothIcon class="w-5 h-5 transition-colors text-titan-500" />
-        </div>
-        <span class="text-xs font-medium transition-colors text-titan-600">
-          Más
-        </span>
-      </button>
+        <!-- Menú (all navigation) -->
+        <button
+          @click="showMenuModal = true"
+          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100"
+        >
+          <Bars3Icon class="w-5 h-5 text-titan-500" />
+        </button>
+
+        <!-- Configuración/Tenant -->
+        <button
+          @click="showTenantModal = true"
+          class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100"
+        >
+          <Cog6ToothIcon class="w-5 h-5 text-titan-500" />
+        </button>
+      </div>
 
     </div>
+
+    <!-- Menu Modal (grid of icons) -->
+    <UiBottomSheetModal v-model="showMenuModal" title="Navegación" max-height="sm">
+      <div class="p-4">
+        <div class="grid grid-cols-4 gap-4">
+          <NuxtLink
+            to="/ventas"
+            @click="showMenuModal = false"
+            class="flex flex-col items-center gap-1"
+          >
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+              :class="activePage === 'ventas' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+            >
+              <ShoppingCartIcon
+                class="w-6 h-6"
+                :class="activePage === 'ventas' ? 'text-crocus-600' : 'text-titan-600'"
+              />
+            </div>
+            <span class="text-[10px] text-titan-600">Ventas</span>
+          </NuxtLink>
+
+          <NuxtLink
+            to="/pos"
+            @click="showMenuModal = false"
+            class="flex flex-col items-center gap-1"
+          >
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+              :class="activePage === 'pos' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+            >
+              <ComputerDesktopIcon
+                class="w-6 h-6"
+                :class="activePage === 'pos' ? 'text-crocus-600' : 'text-titan-600'"
+              />
+            </div>
+            <span class="text-[10px] text-titan-600">POS</span>
+          </NuxtLink>
+
+          <NuxtLink
+            to="/abastecimiento"
+            @click="showMenuModal = false"
+            class="flex flex-col items-center gap-1"
+          >
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+              :class="activePage === 'abastecimiento' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+            >
+              <TruckIcon
+                class="w-6 h-6"
+                :class="activePage === 'abastecimiento' ? 'text-crocus-600' : 'text-titan-600'"
+              />
+            </div>
+            <span class="text-[10px] text-titan-600">Compras</span>
+          </NuxtLink>
+
+          <NuxtLink
+            to="/inventario"
+            @click="showMenuModal = false"
+            class="flex flex-col items-center gap-1"
+          >
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+              :class="activePage === 'inventario' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+            >
+              <ChartBarIcon
+                class="w-6 h-6"
+                :class="activePage === 'inventario' ? 'text-crocus-600' : 'text-titan-600'"
+              />
+            </div>
+            <span class="text-[10px] text-titan-600">Inventario</span>
+          </NuxtLink>
+
+          <NuxtLink
+            to="/menu/productos"
+            @click="showMenuModal = false"
+            class="flex flex-col items-center gap-1"
+          >
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+              :class="activePage === 'menu' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+            >
+              <CubeIcon
+                class="w-6 h-6"
+                :class="activePage === 'menu' ? 'text-crocus-600' : 'text-titan-600'"
+              />
+            </div>
+            <span class="text-[10px] text-titan-600">Menú</span>
+          </NuxtLink>
+
+          <NuxtLink
+            to="/pagos"
+            @click="showMenuModal = false"
+            class="flex flex-col items-center gap-1"
+          >
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+              :class="activePage === 'pagos' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+            >
+              <BanknotesIcon
+                class="w-6 h-6"
+                :class="activePage === 'pagos' ? 'text-crocus-600' : 'text-titan-600'"
+              />
+            </div>
+            <span class="text-[10px] text-titan-600">Pagos</span>
+          </NuxtLink>
+
+          <NuxtLink
+            to="/equipo"
+            @click="showMenuModal = false"
+            class="flex flex-col items-center gap-1"
+          >
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+              :class="activePage === 'equipo' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+            >
+              <UsersIcon
+                class="w-6 h-6"
+                :class="activePage === 'equipo' ? 'text-crocus-600' : 'text-titan-600'"
+              />
+            </div>
+            <span class="text-[10px] text-titan-600">Equipo</span>
+          </NuxtLink>
+        </div>
+      </div>
+    </UiBottomSheetModal>
 
     <!-- Tenant Selector Modal -->
     <UiBottomSheetModal v-model="showTenantModal" title="Configuración" max-height="lg">
@@ -231,12 +260,16 @@ import {
   ComputerDesktopIcon,
   TruckIcon,
   Cog6ToothIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  Bars3Icon,
+  ShoppingCartIcon,
+  CubeIcon,
+  UsersIcon
 } from '@heroicons/vue/24/outline'
 import { computed } from 'vue'
 
 interface Props {
-  activePage?: 'dashboard' | 'pos' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
+  activePage?: 'dashboard' | 'pos' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'ventas' | 'inventario' | 'menu' | 'equipo'
   onRefresh?: () => void | Promise<void>
 }
 
@@ -252,6 +285,7 @@ interface Tenant {
 
 // Modal state
 const showTenantModal = ref(false)
+const showMenuModal = ref(false)
 
 // Use tenants store
 const tenantsStore = useTenantsStore()
