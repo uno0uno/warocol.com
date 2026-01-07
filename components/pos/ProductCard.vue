@@ -4,7 +4,7 @@
     @click="$emit('select', product)"
   >
     <div class="text-3xl md:text-4xl mb-2">{{ product.image }}</div>
-    <p class="text-xs md:text-sm font-medium text-text-primary text-center line-clamp-2">
+    <p class="text-xs md:text-sm font-medium text-text-primary text-center">
       {{ product.name }}
     </p>
     <p class="text-base md:text-lg font-bold text-primary mt-1">
