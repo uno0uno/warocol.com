@@ -29,15 +29,14 @@ definePageMeta({
 const navigationItems = [
   { to: '/menu/recetas', label: 'Recetas', matchPath: '/recetas' },
   { to: '/menu/productos', label: 'Productos' },
-  { to: '/menu/modificadores', label: 'Modificadores', matchPath: '/modificadores' },
-  { to: '/menu/combos', label: 'Combos', matchPath: '/combos' }
+  { to: '/menu/modificadores', label: 'Modificadores', matchPath: '/modificadores' }
 ]
 
 // Meta tags
 useHead({
   title: 'Menú - Warocol',
   meta: [
-    { name: 'description', content: 'Gestión de productos, recetas, modificadores y combos' }
+    { name: 'description', content: 'Gestión de productos, recetas y modificadores' }
   ]
 })
 </script>
