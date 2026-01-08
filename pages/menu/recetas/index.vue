@@ -441,13 +441,6 @@ const recetas = computed(() => {
   }))
 })
 
-// Debug logs
-watch([isLoading, recetas], ([loading, recipes]) => {
-  console.log('🍳 [RECETAS] isLoading:', loading)
-  console.log('🍳 [RECETAS] recetas.length:', recipes?.length || 0)
-  console.log('🍳 [RECETAS] productsData:', productsData.value)
-}, { immediate: true })
-
 // Pagination
 const totalPages = computed(() => {
   return Math.ceil((productsData.value?.total || 0) / itemsPerPage.value)

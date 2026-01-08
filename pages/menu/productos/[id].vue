@@ -300,22 +300,6 @@
               </div>
             </div>
 
-            <div class="flex items-start space-x-3">
-              <input
-                v-model="form.is_combo"
-                type="checkbox"
-                id="is_combo"
-                class="h-4 w-4 mt-0.5 text-primary focus:ring-primary border-border rounded"
-              />
-              <div>
-                <label for="is_combo" class="text-sm font-medium text-text-primary block">
-                  Es Combo
-                </label>
-                <p class="text-xs text-text-secondary mt-1">
-                  Marca este producto como un combo de varios items
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -607,9 +591,7 @@ const handleSubmit = async () => {
       body: cleanedForm
     })
 
-    console.log('✅ Producto actualizado')
-
-    // Navigate back to products list
+    clearNuxtData()
     await router.push('/menu/productos')
   } catch (error: any) {
     console.error('❌ Error al actualizar producto:', error)
@@ -631,7 +613,7 @@ const deleteProduct = async () => {
       method: 'DELETE'
     })
 
-    console.log('✅ Producto eliminado')
+    clearNuxtData()
     await router.push('/menu/productos')
   } catch (error: any) {
     console.error('❌ Error al eliminar producto:', error)
@@ -642,6 +624,7 @@ const deleteProduct = async () => {
 }
 
 const cancel = () => {
+  clearNuxtData()
   router.push('/menu/productos')
 }
 

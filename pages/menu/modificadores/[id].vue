@@ -816,7 +816,8 @@ async function submitGroup() {
       body: form.value
     })
 
-    router.push('/menu/modificadores')
+    clearNuxtData()
+    await router.push('/menu/modificadores')
   } catch (error: any) {
     console.error('Error updating modifier group:', error)
     alert(`Error al actualizar el grupo: ${error.message || 'Por favor intenta de nuevo.'}`)

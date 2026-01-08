@@ -253,15 +253,7 @@
                 </label>
 
                 <!-- REMOVED: Controlar stock - Now ALL products control inventory automatically -->
-
-                <label class="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    v-model="form.is_combo"
-                    class="w-5 h-5 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span class="text-sm font-medium text-text-primary">Es combo</span>
-                </label>
+                <!-- REMOVED: Es combo - Combos are now managed through product_base_recipes -->
               </div>
             </div>
           </div>
@@ -462,13 +454,6 @@
                     :value="form.is_available ? 'Disponible' : 'No disponible'"
                     format="text"
                     :variant="form.is_available ? 'success' : 'default'"
-                    size="sm"
-                  />
-                  <UiStatusBadge
-                    v-if="form.is_combo"
-                    value="Combo"
-                    format="text"
-                    variant="info"
                     size="sm"
                   />
                 </div>
@@ -892,7 +877,8 @@ async function submitProduct() {
       body: cleanedForm
     })
 
-    router.push('/menu/productos')
+    clearNuxtData()
+    await router.push('/menu/productos')
   } catch (error: any) {
     console.error('Error creating product:', error)
     alert(`Error al crear el producto: ${error.message || 'Por favor intenta de nuevo.'}`)

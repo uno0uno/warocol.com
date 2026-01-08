@@ -265,7 +265,6 @@
                     <input
                       type="number"
                       v-model.number="ingredient.base_quantity"
-                      @input="updateIngredientCost(index)"
                       placeholder="0"
                       min="0"
                       step="0.1"
@@ -326,7 +325,8 @@
                   />
                 </div>
               </div>
-            </div>
+
+              </div>
           </div>
         </div>
 
@@ -623,8 +623,8 @@ async function submitRecipe() {
       }
     })
 
-    // Redirect to recipes list
-    router.push('/menu/recetas')
+    clearNuxtData()
+    await router.push('/menu/recetas')
   } catch (error: any) {
     console.error('Error creating recipe base:', error)
     alert(`Error al crear la receta base: ${error.data?.detail || error.message || 'Por favor intenta de nuevo.'}`)

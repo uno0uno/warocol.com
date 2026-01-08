@@ -789,7 +789,8 @@ async function submitGroup() {
       body: form.value
     })
 
-    router.push('/menu/modificadores')
+    clearNuxtData()
+    await router.push('/menu/modificadores')
   } catch (error: any) {
     console.error('Error creating modifier group:', error)
     alert(`Error al crear el grupo: ${error.message || 'Por favor intenta de nuevo.'}`)

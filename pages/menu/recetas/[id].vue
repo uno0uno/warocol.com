@@ -377,8 +377,8 @@ const handleSubmit = async () => {
       }
     })
 
-    alert('Receta base actualizada correctamente')
-    router.push('/menu/recetas')
+    clearNuxtData()
+    await router.push('/menu/recetas')
   } catch (error: any) {
     console.error('Error updating recipe base:', error)
     alert(`Error al actualizar la receta: ${error.data?.detail || error.message || 'Por favor intenta de nuevo.'}`)
@@ -388,6 +388,7 @@ const handleSubmit = async () => {
 }
 
 const cancel = () => {
+  clearNuxtData()
   router.push('/menu/recetas')
 }
 
@@ -403,8 +404,8 @@ const deleteRecipe = async () => {
       method: 'DELETE'
     })
 
-    alert('Receta base eliminada correctamente')
-    router.push('/menu/recetas')
+    clearNuxtData()
+    await router.push('/menu/recetas')
   } catch (error: any) {
     console.error('Error deleting recipe base:', error)
     alert(`Error al eliminar la receta: ${error.data?.detail || error.message || 'Por favor intenta de nuevo.'}`)
