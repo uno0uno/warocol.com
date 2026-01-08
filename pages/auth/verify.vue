@@ -99,7 +99,7 @@ const redirectProgress = ref(0)
 // Obtener parámetros de la URL
 const token = route.query.token
 const email = route.query.email
-const redirectUrl = route.query.redirect || '/financiero/tir'
+const redirectUrl = route.query.redirect || '/ventas'
 
 // ========================================
 // LÓGICA PARA EMOJIS DE COMIDA

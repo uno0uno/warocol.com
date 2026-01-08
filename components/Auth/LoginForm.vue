@@ -262,7 +262,7 @@ onMounted(async () => {
 
         // Redirigir al perfil de warocol
         const route = useRoute()
-        const redirectUrl = route.query.redirect || '/financiero/tir'
+        const redirectUrl = route.query.redirect || '/ventas'
         await navigateTo(redirectUrl)
         return
       } else {
@@ -330,7 +330,7 @@ async function verifyCode() {
 
     // Redirigir con recarga completa para asegurar que la cookie se incluya
     const route = useRoute()
-    const redirectUrl = route.query.redirect || '/financiero/tir'
+    const redirectUrl = route.query.redirect || '/ventas'
 
     // Agregar delay antes de redirección
     setTimeout(() => {
