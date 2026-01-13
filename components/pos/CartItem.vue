@@ -31,8 +31,9 @@
 
     <!-- Actions -->
     <div class="flex items-center gap-1.5 ml-2">
-      <!-- Edit Button -->
+      <!-- Edit Button (hidden for resale products) -->
       <button
+        v-if="!item.is_resale"
         class="w-7 h-7 flex items-center justify-center rounded bg-primary/10 border border-primary text-primary hover:bg-primary hover:text-primary-foreground theme-transition"
         @click.stop="$emit('edit')"
         title="Editar"
@@ -69,6 +70,7 @@ interface CartItem {
   modifiers: Array<{ id: string; name: string; price: number }>
   quantity: number
   notes?: string
+  is_resale?: boolean
 }
 
 interface Props {

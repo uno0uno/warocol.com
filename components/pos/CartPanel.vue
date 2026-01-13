@@ -98,6 +98,7 @@ interface CartItem {
   modifiers: Array<{ id: string; name: string; price: number }>
   quantity: number
   notes?: string
+  is_resale?: boolean
 }
 
 interface Props {

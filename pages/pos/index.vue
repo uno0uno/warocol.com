@@ -30,7 +30,8 @@ const { data: productsData, pending: loadingProducts, refresh: refreshProducts }
   () => $fetch('/api/menu/products', {
     params: {
       is_available: true,
-      limit: 250
+      limit: 250,
+      include_modifiers: true  // POS context - includes resale products
     }
   }),
   {
@@ -54,9 +55,10 @@ const products = computed(() => {
     id: p.id,
     name: p.name,
     price: p.price,
-    category: p.category?.name || 'Sin categoría',
+    category: p.category_name || p.category?.name || 'Sin categoría',
     image: p.image_url || '🍽️',
-    available: p.is_available
+    available: p.is_available,
+    is_resale: p.is_resale || false
   }))
 })
 
@@ -77,9 +79,26 @@ const filteredProducts = computed(() => {
 const cartItemsCount = computed(() => posStore.cartItemsCount)
 const cartTotal = computed(() => posStore.cartTotal)
 
-// Navigate to product customization page
-const selectProduct = (product: any) => {
-  // Mark that we're navigating within POS
+// Navigate to product customization page or add directly to cart
+const selectProduct = async (product: any) => {
+  // Resale products don't need modifiers - add directly to cart
+  if (product.is_resale) {
+    await posStore.addToCart({
+      product: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        category: product.category
+      },
+      quantity: 1,
+      modifiers: [],
+      is_resale: true
+    })
+    return
+  }
+
+  // Regular products - navigate to customization page
   sessionStorage.setItem('posNavigation', 'true')
   router.push(`/pos/producto/${product.id}`)
 }

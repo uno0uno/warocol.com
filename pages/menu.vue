@@ -29,6 +29,7 @@ definePageMeta({
 const navigationItems = [
   { to: '/menu/recetas', label: 'Recetas', matchPath: '/recetas' },
   { to: '/menu/productos', label: 'Productos' },
+  { to: '/menu/reventa', label: 'Reventa', matchPath: '/reventa' },
   { to: '/menu/modificadores', label: 'Modificadores', matchPath: '/modificadores' }
 ]
 

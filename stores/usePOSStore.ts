@@ -19,6 +19,7 @@ export interface CartItem {
     quantity: number
     modifiers: CartModifier[]
     notes?: string
+    is_resale?: boolean // Productos de reventa no permiten modificadores
 }
 
 export interface Customer {
@@ -277,7 +278,8 @@ export const usePOSStore = defineStore('pos', () => {
                         name: mod.name,
                         price: Number(mod.price) || 0
                     })),
-                    notes: item.notes
+                    notes: item.notes,
+                    is_resale: item.is_resale || false
                 }))
             }
         } catch (error) {
