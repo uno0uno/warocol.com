@@ -283,10 +283,6 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 
-definePageMeta({
-  layout: 'dashboard'
-})
-
 const route = useRoute()
 const purchaseId = route.params.id as string
 const transitionId = route.params.transitionId as string

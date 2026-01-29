@@ -686,10 +686,6 @@ import { inject } from 'vue'
 import { usePurchasesStore } from '~/stores/purchases'
 import { storeToRefs } from 'pinia'
 
-definePageMeta({
-  layout: 'dashboard'
-})
-
 // Get order ID from route
 const route = useRoute()
 const router = useRouter()

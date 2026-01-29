@@ -182,12 +182,6 @@
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, watch } from 'vue'
 
-definePageMeta({
-  layout: 'dashboard',
-  pageTitle: 'Ajustes de Inventario',
-  pageDescription: 'Resumen e historial de ajustes manuales'
-})
-
 useHead({ title: 'Ajustes de Inventario' })
 
 // Tenant reactivity

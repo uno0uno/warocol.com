@@ -399,10 +399,6 @@
 import { ref, reactive, inject, onMounted } from 'vue'
 import { useRoute, useRouter, navigateTo } from '#app'
 
-definePageMeta({
-  layout: 'dashboard'
-})
-
 const route = useRoute()
 const router = useRouter()
 const supplierId = route.params.id

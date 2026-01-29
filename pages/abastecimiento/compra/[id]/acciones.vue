@@ -185,10 +185,6 @@
 import { inject } from 'vue'
 import { usePurchasesStore } from '~/stores/purchases'
 
-definePageMeta({
-  layout: 'dashboard'
-})
-
 // Get order ID from route
 const route = useRoute()
 const purchaseId = route.params.id as string

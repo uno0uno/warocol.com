@@ -367,10 +367,6 @@
 <script setup>
 import { ref, reactive } from 'vue'
 
-definePageMeta({
-  layout: 'dashboard'
-})
-
 useHead({
   title: 'Crear Proveedor - Abastecimiento'
 })

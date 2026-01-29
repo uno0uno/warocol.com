@@ -346,12 +346,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 
-definePageMeta({
-  layout: 'dashboard',
-  pageTitle: 'Nuevo Ajuste de Inventario',
-  pageDescription: 'Registra ajustes manuales al inventario'
-})
-
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
 

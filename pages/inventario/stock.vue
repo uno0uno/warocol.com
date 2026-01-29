@@ -218,10 +218,6 @@
 <script setup lang="ts">
 import { ref, computed, inject, onMounted } from 'vue'
 
-definePageMeta({
-  layout: 'dashboard'
-})
-
 useHead({ title: 'Stock' })
 
 // Tenant reactivity

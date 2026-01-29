@@ -157,10 +157,6 @@
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, watch } from 'vue'
 
-definePageMeta({
-  layout: 'dashboard'
-})
-
 useHead({ title: 'Movimientos de Inventario' })
 
 // Tenant reactivity
