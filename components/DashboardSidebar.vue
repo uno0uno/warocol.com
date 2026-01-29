@@ -321,7 +321,6 @@ const selectTenant = async (tenant: Tenant) => {
 const handleLogout = async () => {
   try {
     isLoggingOut.value = true
-    showUserMenu.value = false
 
     // Call signout endpoint
     await $fetch('/api/auth/signout', {
