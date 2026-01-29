@@ -88,7 +88,7 @@
           </NuxtLink>
 
           <NuxtLink
-            to="/abastecimiento"
+            to="/abastecimiento/proveedores"
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
           >
@@ -105,7 +105,7 @@
           </NuxtLink>
 
           <NuxtLink
-            to="/inventario"
+            to="/inventario/stock"
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
           >

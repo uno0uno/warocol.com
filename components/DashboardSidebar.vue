@@ -100,7 +100,7 @@
       <div class="space-y-1 pt-4">
         <span v-if="!collapsed" class="px-3 text-[10px] text-titan-500/70 uppercase tracking-widest font-medium">Operaciones</span>
         <NuxtLink
-          to="/abastecimiento"
+          to="/abastecimiento/proveedores"
           :class="[
             'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
             collapsed ? 'justify-center' : '',
@@ -115,7 +115,7 @@
         </NuxtLink>
 
         <NuxtLink
-          to="/inventario"
+          to="/inventario/stock"
           :class="[
             'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
             collapsed ? 'justify-center' : '',
