@@ -18,10 +18,18 @@ const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageS
 const selectedPaymentMethod = ref<'cash' | 'card' | 'digital'>('cash')
 const isProcessing = ref(false)
 const processingError = ref('')
+const isSyncingCart = ref(false)
+const syncError = ref('')
 
 // Success modal state
 const showSuccessModal = ref(false)
 const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string } | null>(null)
+
+// Customer identification (inline form, not modal)
+const customerForm = ref({
+  phone_number: '',
+  name: ''
+})
 
 // Computed
 const cartItems = computed(() => posStore.cart)
@@ -43,14 +51,15 @@ const getItemTotal = (item: any) => {
 }
 
 const processOrder = async () => {
-  if (!posStore.currentCustomer) {
-    processingError.value = 'No customer identified'
+  // Validar que hay teléfono del cliente
+  if (!customerForm.value.phone_number) {
+    processingError.value = 'Ingresa el número de teléfono del cliente'
     return
   }
 
-  // Get cartId from store
+  // Verificar que el carrito ya está sincronizado
   if (!posStore.cartId) {
-    processingError.value = 'No active cart found'
+    processingError.value = 'Error: El carrito no está sincronizado'
     return
   }
 
@@ -58,11 +67,35 @@ const processOrder = async () => {
     isProcessing.value = true
     processingError.value = ''
 
-    // Complete order via API
+    // 1. Crear/buscar cliente
+    const customerResponse = await $fetch('/api/customers/search-or-create', {
+      method: 'POST',
+      body: {
+        phone_number: customerForm.value.phone_number,
+        name: customerForm.value.name || null
+      }
+    }) as {
+      success: boolean
+      data: {
+        id: string
+        phone_number: string
+        name: string | null
+        email: string | null
+      }
+      is_new: boolean
+    }
+
+    if (!customerResponse.success) {
+      processingError.value = 'Error al procesar el cliente'
+      return
+    }
+
+    // 2. Completar orden (pasando customer_id en el body)
     const response = await $fetch(`/api/pos/cart/${posStore.cartId}/complete`, {
       method: 'POST',
       body: {
-        payment_method: selectedPaymentMethod.value
+        payment_method: selectedPaymentMethod.value,
+        customer_id: customerResponse.data.id
       }
     }) as {
       success: boolean
@@ -115,9 +148,44 @@ const closeSuccessModal = () => {
   router.push('/pos')
 }
 
-// Set page subtitle
-onMounted(() => {
-  setPageSubtitle('Orden #2039 • Mesa 4 • Mesero: Carlos P.')
+// Sincronizar carrito al backend cuando carga la página
+const syncCart = async () => {
+  // Si no hay items o ya está sincronizado, no hacer nada
+  if (posStore.cart.length === 0) {
+    isSyncingCart.value = false
+    return
+  }
+  if (posStore.cartId) {
+    isSyncingCart.value = false
+    return
+  }
+
+  try {
+    isSyncingCart.value = true
+    syncError.value = ''
+
+    const success = await posStore.syncCartBatch()
+    if (!success) {
+      syncError.value = 'Error al sincronizar el carrito'
+    }
+  } catch (error: any) {
+    syncError.value = error.message || 'Error al sincronizar'
+  } finally {
+    isSyncingCart.value = false
+  }
+}
+
+// Set page subtitle and sync cart on mount
+onMounted(async () => {
+  setPageSubtitle('Checkout')
+
+  // Mostrar loader inmediatamente si necesitamos sincronizar
+  if (posStore.cart.length > 0 && !posStore.cartId) {
+    isSyncingCart.value = true
+  }
+
+  // Sincronizar carrito al backend (batch, sin cliente)
+  await syncCart()
 })
 
 // Clear subtitle on unmount
@@ -128,8 +196,32 @@ onUnmounted(() => {
 
 <template>
   <div class="w-full pb-32 lg:pb-0">
+    <!-- Loading State (syncing cart) -->
+    <div v-if="isSyncingCart" class="flex items-center justify-center min-h-[70vh]">
+      <div class="text-center">
+        <CommonsTheCustomLoader size="large" />
+        <p class="text-text-secondary font-medium mt-6">Preparando checkout...</p>
+      </div>
+    </div>
+
+    <!-- Sync Error State -->
+    <div v-else-if="syncError" class="flex flex-col items-center justify-center min-h-[70vh]">
+      <div class="text-center">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+          <svg class="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-semibold text-text-primary mb-2">Error de Sincronización</h2>
+        <p class="text-text-secondary mb-6">{{ syncError }}</p>
+        <UiButton variant="default" @click="router.push('/pos')">
+          Volver al POS
+        </UiButton>
+      </div>
+    </div>
+
     <!-- Empty Cart State -->
-    <div v-if="cartItems.length === 0" class="text-center py-16">
+    <div v-else-if="cartItems.length === 0" class="text-center py-16">
       <svg class="h-24 w-24 mx-auto text-text-secondary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
       </svg>
@@ -140,7 +232,7 @@ onUnmounted(() => {
       </UiButton>
     </div>
 
-    <!-- Main Grid -->
+    <!-- Main Grid (cart has items and sync completed) -->
     <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
       <!-- LEFT COLUMN: Order Items & Payment Method -->
@@ -331,6 +423,59 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- Section: Customer Identification -->
+        <div class="bg-surface rounded-2xl shadow-sm border border-border p-6">
+          <h2 class="font-bold text-text-primary flex items-center gap-2 mb-4">
+            <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+            Datos del Cliente
+          </h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Phone Number -->
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1.5">
+                Teléfono *
+              </label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary text-lg">
+                  📱
+                </span>
+                <input
+                  v-model="customerForm.phone_number"
+                  type="tel"
+                  placeholder="3001234567"
+                  class="w-full pl-10 pr-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- Name (Optional) -->
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1.5">
+                Nombre (opcional)
+              </label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary text-lg">
+                  👤
+                </span>
+                <input
+                  v-model="customerForm.name"
+                  type="text"
+                  placeholder="Juan Pérez"
+                  class="w-full pl-10 pr-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background"
+                />
+              </div>
+            </div>
+          </div>
+
+          <p class="mt-3 text-xs text-text-tertiary">
+            Si el cliente existe, se asociará automáticamente. Si no, se creará uno nuevo.
+          </p>
+        </div>
+
       </div>
 
       <!-- RIGHT COLUMN: Sticky Summary (Desktop Only) -->
@@ -410,7 +555,7 @@ onUnmounted(() => {
 
     <!-- Mobile Bottom Summary -->
     <div
-      v-if="cartItems.length > 0"
+      v-if="cartItems.length > 0 && !isSyncingCart && !syncError"
       class="lg:hidden mt-6 pb-4"
     >
       <div class="bg-surface rounded-2xl shadow-lg border border-border p-6">

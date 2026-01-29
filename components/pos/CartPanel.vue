@@ -32,6 +32,9 @@
         :order-number="index + 1"
         @edit="$emit('edit-item', index, item.product.id)"
         @remove="$emit('remove-item', index)"
+        @increment="$emit('increment-item', index)"
+        @decrement="$emit('decrement-item', index)"
+        @duplicate="$emit('duplicate-item', index)"
       />
     </div>
 
@@ -109,6 +112,9 @@ interface Props {
 interface Emits {
   (e: 'edit-item', index: number, productId: string): void
   (e: 'remove-item', index: number): void
+  (e: 'increment-item', index: number): void
+  (e: 'decrement-item', index: number): void
+  (e: 'duplicate-item', index: number): void
   (e: 'process-order'): void
   (e: 'clear-cart'): void
 }

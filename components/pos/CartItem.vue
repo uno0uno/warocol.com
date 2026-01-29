@@ -31,6 +31,39 @@
 
     <!-- Actions -->
     <div class="flex items-center gap-1.5 ml-2">
+      <!-- Quantity Controls -->
+      <div class="flex items-center border border-border rounded-lg bg-surface">
+        <button
+          class="w-6 h-6 flex items-center justify-center text-text-secondary hover:bg-surface-secondary rounded-l-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="item.quantity <= 1"
+          @click.stop="$emit('decrement')"
+          title="Reducir cantidad"
+        >
+          <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4" />
+          </svg>
+        </button>
+        <span class="w-5 text-center text-xs font-medium text-text-primary">{{ item.quantity }}</span>
+        <button
+          class="w-6 h-6 flex items-center justify-center text-text-secondary hover:bg-surface-secondary rounded-r-lg"
+          @click.stop="$emit('increment')"
+          title="Aumentar cantidad"
+        >
+          <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      </div>
+      <!-- Duplicate Button -->
+      <button
+        class="w-7 h-7 flex items-center justify-center rounded bg-primary/10 border border-primary text-primary hover:bg-primary hover:text-primary-foreground theme-transition"
+        @click.stop="$emit('duplicate')"
+        title="Duplicar item"
+      >
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+        </svg>
+      </button>
       <!-- Edit Button (hidden for resale products) -->
       <button
         v-if="!item.is_resale"
@@ -81,6 +114,9 @@ interface Props {
 interface Emits {
   (e: 'edit'): void
   (e: 'remove'): void
+  (e: 'increment'): void
+  (e: 'decrement'): void
+  (e: 'duplicate'): void
 }
 
 const props = defineProps<Props>()

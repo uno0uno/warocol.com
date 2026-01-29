@@ -29,6 +29,18 @@ export interface Customer {
     email: string | null
 }
 
+// Producto cacheado con modificadores completos
+export interface CachedProduct {
+    id: string
+    name: string
+    price: number
+    image: string
+    category: string
+    is_available: boolean
+    is_resale: boolean
+    modifier_groups: any[] // Grupos de modificadores con todas sus opciones
+}
+
 export const usePOSStore = defineStore('pos', () => {
     // State
     const cart = ref<CartItem[]>([])
@@ -36,6 +48,9 @@ export const usePOSStore = defineStore('pos', () => {
     const cartId = ref<string | null>(null) // ID del carrito en la BD
     const isSyncing = ref(false) // Flag para evitar loops de sincronización
     const isDeleting = ref(false) // Flag para bloquear acciones mientras se elimina
+
+    // Cache de productos (con modificadores) - persiste entre ventas
+    const cachedProducts = ref<CachedProduct[]>([])
 
     // Getters
     const cartItemsCount = computed(() => {
@@ -55,56 +70,24 @@ export const usePOSStore = defineStore('pos', () => {
     // Track pending add operations to prevent race conditions
     const pendingAdds = ref<Map<number, Promise<void>>>(new Map())
 
+    // Esperar a que todas las operaciones pendientes terminen
+    const waitForPendingOperations = async () => {
+        const pending = Array.from(pendingAdds.value.values())
+        if (pending.length > 0) {
+            await Promise.all(pending)
+        }
+    }
+
     // Actions
     const addToCart = async (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
         const quantity = item.quantity || 1
 
-        // Agregar localmente primero para feedback inmediato
+        // Agregar localmente (sin backend)
         const newItem: CartItem = {
             ...item,
             quantity
         }
         cart.value.push(newItem)
-        const newItemIndex = cart.value.length - 1
-
-        // Sincronizar con backend si hay cliente y cartId
-        if (currentCustomer.value && cartId.value && !isSyncing.value) {
-            const addPromise = (async () => {
-                try {
-                    const response = await $fetch(`/api/pos/cart/${cartId.value}/items`, {
-                        method: 'POST',
-                        body: {
-                            product_id: item.product.id,
-                            quantity,
-                            unit_price: item.product.price,
-                            modifiers: item.modifiers || [],
-                            notes: item.notes || null
-                        }
-                    }) as { success: boolean; data: { item_id: string } }
-
-                    // IMPORTANTE: Actualizar el item local con el ID del backend
-                    if (response.success && response.data?.item_id) {
-                        // Encontrar el item por índice o por referencia
-                        const currentItem = cart.value[newItemIndex]
-                        if (currentItem && currentItem.product.id === item.product.id) {
-                            currentItem.id = response.data.item_id
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error syncing cart item to backend:', error)
-                    // Si falla, remover el item local ya que no se guardó en backend
-                    const idx = cart.value.findIndex(i => i === newItem)
-                    if (idx >= 0) {
-                        cart.value.splice(idx, 1)
-                    }
-                }
-            })()
-
-            // Track this pending operation
-            pendingAdds.value.set(newItemIndex, addPromise)
-            await addPromise
-            pendingAdds.value.delete(newItemIndex)
-        }
     }
 
     const removeFromCart = async (index: number) => {
@@ -112,17 +95,13 @@ export const usePOSStore = defineStore('pos', () => {
 
         try {
             if (index >= 0 && index < cart.value.length) {
-                const item = cart.value[index]
-
                 // Esperar a que cualquier operación de add pendiente termine
                 const pendingAdd = pendingAdds.value.get(index)
                 if (pendingAdd) {
                     await pendingAdd
                 }
 
-                const itemId = item.id
-
-                // Eliminar localmente primero (optimistic update)
+                // Eliminar localmente
                 cart.value.splice(index, 1)
 
                 // Actualizar índices en pendingAdds después de splice
@@ -135,25 +114,6 @@ export const usePOSStore = defineStore('pos', () => {
                     }
                 })
                 pendingAdds.value = newPendingAdds
-
-                // Sincronizar con backend si hay cartId y itemId
-                if (cartId.value && itemId && !isSyncing.value) {
-                    try {
-                        await $fetch(`/api/pos/cart/${cartId.value}/items/${itemId}`, {
-                            method: 'DELETE'
-                        })
-                    } catch (error) {
-                        // Si falla la eliminación, recargar el carrito para mantener sincronía
-                        if (currentCustomer.value) {
-                            await loadCartFromBackend(currentCustomer.value.id)
-                        }
-                    }
-                } else if (cartId.value && !itemId) {
-                    // El item no tiene ID del backend - recargar carrito para sincronía
-                    if (currentCustomer.value) {
-                        await loadCartFromBackend(currentCustomer.value.id)
-                    }
-                }
             }
         } finally {
             isDeleting.value = false
@@ -163,60 +123,57 @@ export const usePOSStore = defineStore('pos', () => {
     const updateQuantity = async (index: number, delta: number) => {
         if (index >= 0 && index < cart.value.length) {
             const item = cart.value[index]
-            item.quantity += delta
+            const newQuantity = item.quantity + delta
 
-            if (item.quantity <= 0) {
+            if (newQuantity <= 0) {
                 await removeFromCart(index)
+            } else {
+                // Actualizar localmente
+                item.quantity = newQuantity
             }
+        }
+    }
+
+    const duplicateCartItem = async (index: number) => {
+        if (index >= 0 && index < cart.value.length) {
+            const originalItem = cart.value[index]
+            await addToCart({
+                product: { ...originalItem.product },
+                modifiers: [...originalItem.modifiers],
+                notes: originalItem.notes,
+                is_resale: originalItem.is_resale
+            })
         }
     }
 
     const updateCartItem = async (index: number, updatedItem: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
         if (index >= 0 && index < cart.value.length) {
             const quantity = updatedItem.quantity || 1
-            const oldItemId = cart.value[index].id
 
-            // Actualizar localmente primero
+            // Actualizar localmente (sin ID del backend)
             cart.value[index] = {
                 ...updatedItem,
-                quantity,
-                id: oldItemId
-            }
-
-            // Sincronizar con backend si hay cartId y itemId
-            if (cartId.value && oldItemId && !isSyncing.value) {
-                try {
-                    await $fetch(`/api/pos/cart/${cartId.value}/items/${oldItemId}`, {
-                        method: 'PUT',
-                        body: {
-                            quantity,
-                            unit_price: updatedItem.product.price,
-                            modifiers: updatedItem.modifiers || [],
-                            notes: updatedItem.notes || null
-                        }
-                    })
-                } catch (error) {
-                    console.error('Error syncing cart item update to backend:', error)
-                    // Si falla, recargar el carrito para mantener sincronía
-                    if (currentCustomer.value) {
-                        await loadCartFromBackend(currentCustomer.value.id)
-                    }
-                }
+                quantity
             }
         }
     }
 
     const clearCart = async () => {
-        cart.value = []
+        // Guardar cartId antes de limpiar
+        const oldCartId = cartId.value
 
-        // Sincronizar con backend si hay cartId
-        if (cartId.value && !isSyncing.value) {
+        // Limpiar estado local primero
+        cart.value = []
+        cartId.value = null  // Limpiar cartId para que sea local de nuevo
+
+        // Eliminar carrito del backend si existía
+        if (oldCartId && !isSyncing.value) {
             try {
-                await $fetch(`/api/pos/cart/${cartId.value}`, {
+                await $fetch(`/api/pos/cart/${oldCartId}`, {
                     method: 'DELETE'
                 })
             } catch (error) {
-                // Error limpiando carrito
+                // Error limpiando carrito - no importa, ya limpiamos local
             }
         }
     }
@@ -225,11 +182,55 @@ export const usePOSStore = defineStore('pos', () => {
         return cart.value[index]
     }
 
+    // Sincronizar items locales al backend cuando se identifica cliente
+    const syncLocalCartToBackend = async (customerId: string) => {
+        if (cart.value.length === 0) return
+
+        try {
+            isSyncing.value = true
+
+            // Crear carrito en backend
+            const response = await $fetch(`/api/pos/cart/${customerId}`) as {
+                success: boolean
+                data: { id: string }
+            }
+
+            if (response.success) {
+                cartId.value = response.data.id
+
+                // Sincronizar cada item local al backend
+                for (const item of cart.value) {
+                    const itemResponse = await $fetch(`/api/pos/cart/${cartId.value}/items`, {
+                        method: 'POST',
+                        body: {
+                            product_id: item.product.id,
+                            quantity: item.quantity,
+                            unit_price: item.product.price,
+                            modifiers: item.modifiers || [],
+                            notes: item.notes || null
+                        }
+                    }) as { success: boolean; data: { item_id: string } }
+
+                    if (itemResponse.success) {
+                        item.id = itemResponse.data.item_id
+                    }
+                }
+            }
+        } finally {
+            isSyncing.value = false
+        }
+    }
+
     const setCustomer = async (customer: Customer) => {
         currentCustomer.value = customer
 
-        // Cargar carrito del backend para este cliente
-        await loadCartFromBackend(customer.id)
+        // Si hay items locales sin sincronizar, transferirlos al backend
+        if (cart.value.length > 0 && !cartId.value) {
+            await syncLocalCartToBackend(customer.id)
+        } else {
+            // Si no hay items locales, cargar carrito existente del cliente
+            await loadCartFromBackend(customer.id)
+        }
     }
 
     const clearCustomer = () => {
@@ -241,6 +242,90 @@ export const usePOSStore = defineStore('pos', () => {
         cart.value = []
         currentCustomer.value = null
         cartId.value = null
+        // NO limpiar cachedProducts - se mantienen entre ventas
+    }
+
+    // Funciones para cache de productos
+    const setProducts = (products: CachedProduct[]) => {
+        cachedProducts.value = products
+    }
+
+    const getProduct = (productId: string): CachedProduct | undefined => {
+        return cachedProducts.value.find(p => p.id === productId)
+    }
+
+    const hasProducts = computed(() => cachedProducts.value.length > 0)
+
+    // Sincronizar carrito local al backend en batch (sin cliente)
+    // Se usa al entrar a checkout - SIEMPRE crea un nuevo carrito con los items actuales
+    const syncCartBatch = async (): Promise<boolean> => {
+        if (cart.value.length === 0) return false
+        if (isSyncing.value) return false
+
+        try {
+            isSyncing.value = true
+
+            // Si ya había un carrito, eliminarlo primero
+            if (cartId.value) {
+                try {
+                    await $fetch(`/api/pos/cart/${cartId.value}`, {
+                        method: 'DELETE'
+                    })
+                } catch (e) {
+                    // Ignorar error al eliminar carrito viejo
+                }
+                cartId.value = null
+            }
+
+            // Preparar items para el batch
+            const batchItems = cart.value.map(item => ({
+                product_id: item.product.id,
+                quantity: item.quantity,
+                unit_price: item.product.price,
+                modifiers: item.modifiers.map(mod => ({
+                    id: mod.id,
+                    name: mod.name,
+                    price: mod.price
+                })),
+                notes: item.notes || null
+            }))
+
+            const response = await $fetch('/api/pos/cart/batch', {
+                method: 'POST',
+                body: {
+                    items: batchItems
+                    // No customer_id - carrito anónimo
+                }
+            }) as {
+                success: boolean
+                data: {
+                    cart_id: string
+                    item_ids: string[]
+                    total_amount: number
+                    items_count: number
+                }
+            }
+
+            if (response.success) {
+                cartId.value = response.data.cart_id
+
+                // Actualizar IDs de items locales
+                response.data.item_ids.forEach((itemId, index) => {
+                    if (cart.value[index]) {
+                        cart.value[index].id = itemId
+                    }
+                })
+
+                return true
+            }
+
+            return false
+        } catch (error) {
+            console.error('Error syncing cart batch:', error)
+            return false
+        } finally {
+            isSyncing.value = false
+        }
     }
 
     // Cargar carrito desde el backend
@@ -296,11 +381,13 @@ export const usePOSStore = defineStore('pos', () => {
         currentCustomer,
         cartId,
         isDeleting,
+        cachedProducts,
 
         // Getters
         cartItemsCount,
         cartTotal,
         isEmpty,
+        hasProducts,
 
         // Actions
         addToCart,
@@ -311,6 +398,11 @@ export const usePOSStore = defineStore('pos', () => {
         getCartItem,
         setCustomer,
         clearCustomer,
-        clearAll
+        clearAll,
+        duplicateCartItem,
+        waitForPendingOperations,
+        setProducts,
+        getProduct,
+        syncCartBatch
     }
 })

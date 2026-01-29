@@ -13,7 +13,7 @@ definePageMeta({
 useHead({ title: 'Producto POS' })
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { onTenantChange } = useTenantReactive()
 
 const route = useRoute()
 const router = useRouter()
@@ -25,35 +25,36 @@ const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageS
 // Product ID from route
 const productId = computed(() => route.params.id as string)
 
-// Load product from API (no await to show both loading indicators)
-const { data: productData, pending: loadingProduct, refresh: refreshProduct } = useAsyncData(
-  `product-${productId.value}-${currentTenant.value?.id || 'default'}`,
-  () => $fetch(`/api/menu/products/${productId.value}`),
-  {
-    server: false,
-    watch: [currentTenant]
-  }
-)
+// Obtener producto del cache (NO del backend)
+const cachedProduct = computed(() => posStore.getProduct(productId.value))
 
-// Refresh on tenant change
-onTenantChange(async () => {
-  await refreshProduct()
-  // Navigate back to POS on tenant change
+// Si no hay producto en cache, redirigir a POS (el usuario navegó directamente)
+const loadingProduct = ref(false)
+
+onMounted(() => {
+  if (!cachedProduct.value) {
+    // No hay producto en cache - redirigir a POS para cargar productos
+    router.push('/pos')
+  }
+})
+
+// Redirect on tenant change
+onTenantChange(() => {
   router.push('/pos')
 })
 
-// Product computed from API data
+// Product computed from cache
 const product = computed(() => {
-  if (!productData.value?.data) return null
+  if (!cachedProduct.value) return null
 
-  const p = productData.value.data
+  const p = cachedProduct.value
 
   return {
     id: p.id,
     name: p.name,
     price: Number(p.price) || 0,
-    category: p.category?.name || 'Sin categoría',
-    image: p.image_url || '🍽️',
+    category: p.category,
+    image: p.image,
     available: p.is_available,
     modifier_groups: p.modifier_groups || []
   }
@@ -438,13 +439,12 @@ watch(product, (newProduct) => {
   }
 }, { immediate: true })
 
-// Watch for product load completion and redirect if not found
-watch(() => loadingProduct.value, (isLoading) => {
-  // Only check after loading is complete
-  if (!isLoading && !product.value) {
+// Watch for product availability - redirect if not in cache
+watch(cachedProduct, (p) => {
+  if (!p) {
     router.push('/pos')
   }
-})
+}, { immediate: true })
 
 // Load cart item data if in edit mode
 watch(product, (newProduct) => {

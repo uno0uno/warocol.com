@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, provide, onMounted } from 'vue'
+import { ref, computed, provide, onMounted, watch } from 'vue'
+import type { CachedProduct } from '~/stores/usePOSStore'
 import { usePOSStore } from '~/stores/usePOSStore'
 
 definePageMeta({
@@ -17,12 +18,6 @@ const posStore = usePOSStore()
 // State
 const searchQuery = ref('')
 const selectedCategory = ref('all')
-const customerForm = ref({
-  phone_number: '',
-  name: ''
-})
-const isLoadingCustomer = ref(false)
-const customerError = ref('')
 
 // Load products from API (no await to show both loading indicators)
 const { data: productsData, pending: loadingProducts, refresh: refreshProducts } = useAsyncData(
@@ -46,6 +41,23 @@ onTenantChange(async () => {
   // Clear POS state when tenant changes
   posStore.clearAll()
 })
+
+// Cachear productos con modificadores cuando cargan
+watch(() => productsData.value, (data) => {
+  if (data?.data) {
+    const productsToCache: CachedProduct[] = data.data.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      price: Number(p.price) || 0,
+      image: p.image_url || '🍽️',
+      category: p.category_name || p.category?.name || 'Sin categoría',
+      is_available: p.is_available,
+      is_resale: p.is_resale || false,
+      modifier_groups: p.modifier_groups || []
+    }))
+    posStore.setProducts(productsToCache)
+  }
+}, { immediate: true })
 
 // Map products to POS format
 const products = computed(() => {
@@ -114,62 +126,31 @@ const removeFromCart = async (index: number) => {
   await posStore.removeFromCart(index)
 }
 
+const incrementCartItem = async (index: number) => {
+  await posStore.updateQuantity(index, 1)
+}
+
+const decrementCartItem = async (index: number) => {
+  await posStore.updateQuantity(index, -1)
+}
+
+const duplicateCartItem = async (index: number) => {
+  await posStore.duplicateCartItem(index)
+}
+
 const clearCart = async () => {
   await posStore.clearCart()
 }
 
-const processOrder = () => {
-  // Check if customer is identified
-  if (!posStore.currentCustomer) {
-    alert('Por favor identifica al cliente primero')
-    return
-  }
+const processOrder = async () => {
+  // Esperar a que todas las operaciones pendientes terminen (duplicar, agregar, etc.)
+  await posStore.waitForPendingOperations()
 
   // Mark that we're navigating within POS
   sessionStorage.setItem('posNavigation', 'true')
 
-  // Navigate to checkout page
+  // Navigate to checkout page (cliente se pide al finalizar)
   router.push('/pos/checkout')
-}
-
-const handleCustomerSubmit = async () => {
-  if (!customerForm.value.phone_number) return
-
-  try {
-    isLoadingCustomer.value = true
-    customerError.value = ''
-
-    const response = await $fetch('/api/customers/search-or-create', {
-      method: 'POST',
-      body: {
-        phone_number: customerForm.value.phone_number,
-        name: customerForm.value.name || null
-      }
-    }) as {
-      success: boolean
-      data: {
-        id: string
-        phone_number: string
-        name: string | null
-        email: string | null
-      }
-      is_new: boolean
-    }
-
-    if (response.success) {
-      posStore.setCustomer(response.data)
-
-      // Reset form
-      customerForm.value = {
-        phone_number: '',
-        name: ''
-      }
-    }
-  } catch (error: any) {
-    customerError.value = error.data?.message || error.message || 'Error al procesar el cliente'
-  } finally {
-    isLoadingCustomer.value = false
-  }
 }
 
 // Provide cart data to layout
@@ -213,100 +194,10 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Customer Identification Form (shown when no customer) -->
-    <div v-else-if="!posStore.currentCustomer" class="flex items-center justify-center min-h-[70vh]">
-      <div class="w-full max-w-md">
-        <div class="bg-surface rounded-2xl shadow-xl border-2 border-border p-8">
-          <!-- Header -->
-          <div class="text-center mb-8">
-            <div class="bg-primary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-            <h2 class="text-2xl font-bold text-text-primary mb-2">Identificar Cliente</h2>
-            <p class="text-sm text-text-secondary">
-              Ingresa el número de teléfono para comenzar la venta
-            </p>
-          </div>
-
-          <!-- Form -->
-          <form @submit.prevent="handleCustomerSubmit" class="space-y-6">
-            <!-- Phone Number -->
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-2">
-                Número de Teléfono *
-              </label>
-              <div class="relative">
-                <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-secondary text-xl">
-                  📱
-                </span>
-                <input
-                  v-model="customerForm.phone_number"
-                  type="tel"
-                  placeholder="3001234567"
-                  class="w-full pl-12 pr-4 py-4 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary text-lg bg-background"
-                  required
-                  autofocus
-                  :disabled="isLoadingCustomer"
-                />
-              </div>
-            </div>
-
-            <!-- Name (Optional) -->
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-2">
-                Nombre (opcional)
-              </label>
-              <div class="relative">
-                <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-secondary text-xl">
-                  👤
-                </span>
-                <input
-                  v-model="customerForm.name"
-                  type="text"
-                  placeholder="Juan Pérez"
-                  class="w-full pl-12 pr-4 py-4 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background"
-                  :disabled="isLoadingCustomer"
-                />
-              </div>
-              <p class="mt-2 text-xs text-text-secondary">
-                Si el cliente ya existe, se usará su información guardada
-              </p>
-            </div>
-
-            <!-- Error Message -->
-            <div v-if="customerError" class="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4">
-              <div class="flex items-start gap-3">
-                <span class="text-xl">⚠️</span>
-                <p class="text-sm text-red-800 dark:text-red-200">
-                  {{ customerError }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Loading State -->
-            <div v-if="isLoadingCustomer" class="flex justify-center py-4">
-              <CommonsTheCustomLoader size="medium" />
-            </div>
-
-            <!-- Submit Button -->
-            <button
-              type="submit"
-              :disabled="!customerForm.phone_number || isLoadingCustomer"
-              class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
-            >
-              Continuar
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- POS Content (shown when customer is identified) -->
+    <!-- POS Content (shown always after loading) -->
     <div v-else>
-      <!-- Customer Header -->
-      <div class="bg-surface border-2 border-border rounded-lg mb-4 p-4">
+      <!-- Customer Header (when customer is identified) -->
+      <div v-if="posStore.currentCustomer" class="bg-surface border-2 border-border rounded-lg mb-4 p-4">
         <div class="flex items-center gap-3">
           <div class="bg-background p-3 rounded-lg border border-border">
             <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -318,12 +209,22 @@ onMounted(() => {
               Cliente Actual
             </p>
             <p class="text-lg font-semibold text-text-primary">
-              {{ posStore.currentCustomer?.name || 'Sin identificar' }}
+              {{ posStore.currentCustomer.name || 'Sin nombre' }}
             </p>
-            <p v-if="posStore.currentCustomer" class="text-xs text-text-secondary">
+            <p class="text-xs text-text-secondary">
               📱 {{ posStore.currentCustomer.phone_number }}
             </p>
           </div>
+        </div>
+      </div>
+
+      <!-- Sin cliente - Banner informativo -->
+      <div v-else class="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-700 rounded-lg mb-4 p-3">
+        <div class="flex items-center gap-2">
+          <span class="text-amber-600 dark:text-amber-400">👤</span>
+          <p class="text-sm text-amber-800 dark:text-amber-200">
+            <span class="font-medium">Sin cliente identificado</span> — Se pedirá al procesar la orden
+          </p>
         </div>
       </div>
 
@@ -385,6 +286,9 @@ onMounted(() => {
         :total="cartTotal"
         @edit-item="editCartItem"
         @remove-item="removeFromCart"
+        @increment-item="incrementCartItem"
+        @decrement-item="decrementCartItem"
+        @duplicate-item="duplicateCartItem"
         @process-order="processOrder"
         @clear-cart="clearCart"
       />
