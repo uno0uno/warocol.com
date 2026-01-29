@@ -11,6 +11,8 @@
 </template>
 
 <script setup>
+import { provide, inject } from 'vue'
+
 const route = useRoute()
 
 definePageMeta({
@@ -23,6 +25,10 @@ const navigationItems = [
   // { to: '/abastecimiento/precios', label: 'Lista de Precios', matchPath: '/precios' }, // Temporarily disabled
   { to: '/abastecimiento/compras', label: 'Órdenes de Compra', matchPath: '/compras' }
 ]
+
+// Pass through the refresh handler from layout to child pages
+const setRefreshHandler = inject('setRefreshHandler', () => {})
+provide('setRefreshHandler', setRefreshHandler)
 
 // Meta tags
 useHead({
