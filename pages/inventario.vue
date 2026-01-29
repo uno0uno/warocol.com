@@ -6,12 +6,14 @@
     />
 
     <!-- Content -->
-    <NuxtPage />
+    <NuxtPage :page-key="route.fullPath" />
   </div>
 </template>
 
 <script setup>
 import { provide, inject } from 'vue'
+
+const route = useRoute()
 
 definePageMeta({
   layout: 'dashboard'

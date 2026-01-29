@@ -1,16 +1,17 @@
 <template>
   <div class="page-layout">
     <!-- Navigation -->
-    <UiModuleNavigation 
+    <UiModuleNavigation
       :navigation-items="navigationItems"
     />
 
     <!-- Content -->
-    <NuxtPage />
+    <NuxtPage :page-key="route.fullPath" />
   </div>
 </template>
 
 <script setup>
+const route = useRoute()
 
 definePageMeta({
   layout: 'dashboard'
