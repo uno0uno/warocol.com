@@ -1,5 +1,8 @@
 <template>
-  <div class="page-layout">
+  <div>
+    <!-- Debug: Always visible -->
+    <p class="p-4 bg-yellow-200 text-black font-bold">PROVEEDORES PAGE - isLoading: {{ isLoading }}</p>
+
     <!-- Loading State (only show if no data yet) -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
