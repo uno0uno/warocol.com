@@ -238,7 +238,7 @@ export interface MetricCardProps {
   suffix?: string
   unit?: string
   subtitle?: string
-  format?: 'currency' | 'percentage' | 'number' | 'decimal'
+  format?: 'currency' | 'percentage' | 'number' | 'decimal' | 'text'
   precision?: number
   icon?: any
   showIcon?: boolean
@@ -265,7 +265,10 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Format value based on type - keeping existing functionality
+// Format value based on type - keeping existing functionality
 const formattedValue = computed(() => {
+  if (props.format === 'text') return props.value
+
   const numValue = typeof props.value === 'string' ? parseFloat(props.value) : props.value
 
   switch (props.format) {

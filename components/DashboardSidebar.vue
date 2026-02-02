@@ -164,7 +164,7 @@
         </NuxtLink>
 
         <NuxtLink
-          to="/equipo"
+          to="/equipo/miembros"
           :class="[
             'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
             collapsed ? 'justify-center' : '',

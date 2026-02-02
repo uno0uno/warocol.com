@@ -156,7 +156,7 @@
           </NuxtLink>
 
           <NuxtLink
-            to="/equipo"
+            to="/equipo/miembros"
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
           >
@@ -181,7 +181,7 @@
         <!-- Equipo Link -->
         <div>
           <NuxtLink
-            to="/equipo"
+            to="/equipo/miembros"
             @click="showTenantModal = false"
             class="w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-titan-200 hover:border-crocus-300 hover:bg-titan-50 transition-colors"
           >

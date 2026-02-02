@@ -46,9 +46,14 @@ const route = useRoute()
 
 function getNavLinkClasses(item: NavigationItem): string[] {
   const matchPath = item.matchPath || item.to
-  const isActive = item.matchPath
-    ? route.path.includes(item.matchPath)
-    : route.path === item.to
+  
+  let isActive = false
+  if (item.matchPath) {
+    // Strict segment matching to avoid false positives (e.g. /compras inside /compras-directas)
+    isActive = route.path.endsWith(item.matchPath) || route.path.includes(item.matchPath + '/')
+  } else {
+    isActive = route.path === item.to
+  }
 
   return [
     isActive

@@ -209,6 +209,7 @@
 
 <script setup lang="ts">
 import { ChevronLeftIcon, ChevronRightIcon, EyeIcon } from '@heroicons/vue/24/outline'
+import { inject, onMounted } from 'vue'
 
 useHead({
   title: 'Compras Directas - Abastecimiento'
@@ -225,6 +226,8 @@ const sortField = ref('purchase_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 
 // Fetch purchases
+const { currentTenant } = useTenantReactive()
+
 const { data: purchasesResponse, pending: isLoading, error: fetchError, refresh } = useFetch('/api/suppliers/purchases/direct', {
   query: computed(() => ({
     page: currentPage.value,
@@ -235,7 +238,7 @@ const { data: purchasesResponse, pending: isLoading, error: fetchError, refresh 
     date_filter: dateFilter.value || undefined
   })),
   server: false,
-  watch: [currentPage, localSearchTerm, proveedorFilter, statusFilter, dateFilter]
+  watch: [currentTenant, currentPage, localSearchTerm, proveedorFilter, statusFilter, dateFilter]
 })
 
 const purchasesData = computed(() => purchasesResponse.value || { data: [], total: 0, page: 1, limit: 20 })
@@ -260,14 +263,14 @@ const statusOptions = [
 
 // Table columns
 const tableColumns = [
-  { key: 'purchase_number', label: 'Numero', sortable: true },
-  { key: 'supplier_name', label: 'Proveedor', sortable: true },
-  { key: 'purchase_date', label: 'Fecha', sortable: true },
-  { key: 'total_amount', label: 'Total', sortable: true },
-  { key: 'items_count', label: 'Items', sortable: false },
-  { key: 'status', label: 'Estado', sortable: true },
-  { key: 'invoice_number', label: 'Factura', sortable: false },
-  { key: 'actions', label: '', sortable: false }
+  { key: 'purchase_number', title: 'Numero', sortable: true },
+  { key: 'supplier_name', title: 'Proveedor', sortable: true },
+  { key: 'purchase_date', title: 'Fecha', sortable: true },
+  { key: 'total_amount', title: 'Total', sortable: true },
+  { key: 'items_count', title: 'Items', sortable: false },
+  { key: 'status', title: 'Estado', sortable: true },
+  { key: 'invoice_number', title: 'Factura', sortable: false },
+  { key: 'actions', title: '', sortable: false }
 ]
 
 // Computed
@@ -365,4 +368,10 @@ const nextPage = () => {
     currentPage.value++
   }
 }
+
+// Inject refresh handler
+const setRefreshHandler = inject('setRefreshHandler', () => {})
+onMounted(() => {
+  setRefreshHandler(refresh)
+})
 </script>
