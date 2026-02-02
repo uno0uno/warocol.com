@@ -38,14 +38,14 @@
           <!-- Icon -->
           <div
             class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border-2 z-10"
-            :class="index === 0 ? getStatusIconClasses(entry.to_status) : 'bg-gray-500/10 border-gray-500 text-gray-500'"
+            :class="index === 0 ? getStatusIconClasses(entry.to_status, entry) : 'bg-gray-500/10 border-gray-500 text-gray-500'"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                :d="getStatusIcon(entry.to_status)"
+                :d="getStatusIcon(entry.to_status, entry)"
               />
             </svg>
           </div>
@@ -60,9 +60,9 @@
               <!-- Status and Date -->
               <div class="mb-2">
                 <h4 class="font-semibold text-text-primary">
-                  {{ getStatusText(entry.to_status) }}
+                  {{ getEntryTitle(entry) }}
                 </h4>
-                <p v-if="entry.from_status" class="text-xs text-text-secondary">
+                <p v-if="entry.from_status && entry.metadata?.action !== 'items_edited'" class="text-xs text-text-secondary">
                   Desde: {{ getStatusText(entry.from_status) }}
                 </p>
               </div>
@@ -75,10 +75,76 @@
                 {{ formatDateTime(entry.changed_at) }}
               </p>
 
-              <!-- Metadata -->
-              <div v-if="entry.metadata && Object.keys(entry.metadata).length > 0" class="space-y-2">
+              <!-- Items Edited - Special display for edit audit trail -->
+              <div v-if="entry.metadata?.action === 'items_edited'" class="space-y-3">
+                <!-- Added Items -->
+                <div v-if="entry.metadata.changes_summary?.added?.length" class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span class="text-sm font-medium text-green-600">Agregados:</span>
+                  </div>
+                  <ul class="ml-6 text-sm text-text-secondary space-y-0.5">
+                    <li v-for="item in entry.metadata.changes_summary.added" :key="item" class="flex items-center gap-1">
+                      <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                      {{ item }}
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- Removed Items -->
+                <div v-if="entry.metadata.changes_summary?.removed?.length" class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                    </svg>
+                    <span class="text-sm font-medium text-red-600">Eliminados:</span>
+                  </div>
+                  <ul class="ml-6 text-sm text-text-secondary space-y-0.5">
+                    <li v-for="item in entry.metadata.changes_summary.removed" :key="item" class="flex items-center gap-1">
+                      <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                      {{ item }}
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- Modified Items -->
+                <div v-if="entry.metadata.changes_summary?.modified?.length" class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span class="text-sm font-medium text-yellow-600">Modificados:</span>
+                  </div>
+                  <ul class="ml-6 text-sm text-text-secondary space-y-0.5">
+                    <li v-for="item in entry.metadata.changes_summary.modified" :key="item" class="flex items-center gap-1">
+                      <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
+                      {{ item }}
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- Totals Difference -->
+                <div v-if="entry.metadata.totals" class="pt-2 border-t border-border">
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-text-secondary">
+                      Total: ${{ formatNumber(entry.metadata.totals.before) }} → ${{ formatNumber(entry.metadata.totals.after) }}
+                    </span>
+                    <span
+                      class="font-medium"
+                      :class="entry.metadata.totals.difference >= 0 ? 'text-green-600' : 'text-red-600'"
+                    >
+                      {{ entry.metadata.totals.difference >= 0 ? '+' : '' }}${{ formatNumber(entry.metadata.totals.difference) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Regular Metadata (for non-edit entries) -->
+              <div v-else-if="entry.metadata && Object.keys(entry.metadata).length > 0 && !isInternalMetadata(entry.metadata)" class="space-y-2">
                 <div
-                  v-for="(value, key) in entry.metadata"
+                  v-for="(value, key) in getDisplayableMetadata(entry.metadata)"
                   :key="key"
                   class="text-sm"
                 >
@@ -154,6 +220,41 @@ watch(() => props.currentStatus, (newStatus, oldStatus) => {
 })
 
 // Helper functions
+function getEntryTitle(entry: any): string {
+  if (entry.metadata?.action === 'items_edited') {
+    return 'Items Editados'
+  }
+  return getStatusText(entry.to_status)
+}
+
+function formatNumber(value: number): string {
+  if (value === null || value === undefined) return '0'
+  return Math.abs(value).toLocaleString('es-CO', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  })
+}
+
+function isInternalMetadata(metadata: any): boolean {
+  if (!metadata) return true
+  // Check if metadata only contains internal fields
+  const internalKeys = ['action', 'items_before', 'items_after', 'changes_summary', 'totals', 'direct_entry', 'updated_via']
+  const keys = Object.keys(metadata)
+  return keys.every(k => internalKeys.includes(k))
+}
+
+function getDisplayableMetadata(metadata: any): Record<string, any> {
+  if (!metadata) return {}
+  const internalKeys = ['action', 'items_before', 'items_after', 'changes_summary', 'totals', 'direct_entry', 'updated_via']
+  const result: Record<string, any> = {}
+  for (const [key, value] of Object.entries(metadata)) {
+    if (!internalKeys.includes(key)) {
+      result[key] = value
+    }
+  }
+  return result
+}
+
 function getStatusText(status: string): string {
   const texts: Record<string, string> = {
     pending: 'Pendiente',
@@ -195,7 +296,12 @@ function getStatusVariant(status: string): string {
   }
 }
 
-function getStatusIconClasses(status: string): string {
+function getStatusIconClasses(status: string, entry?: any): string {
+  // Special case for items_edited
+  if (entry?.metadata?.action === 'items_edited') {
+    return 'bg-yellow-500/10 border-yellow-500 text-yellow-500'
+  }
+
   const variant = getStatusVariant(status)
   const colorMap: Record<string, string> = {
     success: 'bg-green-500/10 border-green-500 text-green-500',
@@ -207,7 +313,12 @@ function getStatusIconClasses(status: string): string {
   return colorMap[variant] || colorMap.secondary
 }
 
-function getStatusIcon(status: string): string {
+function getStatusIcon(status: string, entry?: any): string {
+  // Special case for items_edited
+  if (entry?.metadata?.action === 'items_edited') {
+    return 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
+  }
+
   const icons: Record<string, string> = {
     pending: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
     confirmed: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',

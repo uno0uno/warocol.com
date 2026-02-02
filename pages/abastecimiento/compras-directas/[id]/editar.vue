@@ -1,0 +1,1094 @@
+<template>
+  <div class="page-layout">
+    <!-- Loading overlay during submit -->
+    <div v-if="isSubmitting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-8 flex flex-col items-center">
+        <CommonsTheCustomLoader size="large" />
+        <p class="mt-4 text-lg font-semibold text-text-primary">Guardando cambios...</p>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="isLoadingData" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
+      <div class="text-center">
+        <p class="text-xl font-semibold text-ebony-800 mb-2">Error al cargar la compra.</p>
+        <p class="text-sm text-ebony-600">{{ fetchError.message }}</p>
+        <NuxtLink to="/abastecimiento/compras-directas" class="mt-4 px-4 py-2 bg-crocus-500 text-white rounded-lg hover:bg-crocus-600 inline-block">
+          Volver al Listado
+        </NuxtLink>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div v-else>
+      <!-- Order Information Card -->
+      <div class="bg-surface border-2 border-border rounded-lg mb-4 sm:mb-6">
+        <div class="p-4 sm:p-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <!-- Purchase Number -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                  Numero de Compra
+                </p>
+                <p class="text-lg font-semibold text-text-primary">
+                  {{ originalPurchase?.purchase_number }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Date -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                  Fecha de Compra
+                </p>
+                <p class="text-sm sm:text-lg font-semibold text-text-primary">
+                  {{ formatDate(originalPurchase?.purchase_date) }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Status Badge -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                  Modo
+                </p>
+                <div class="pt-1">
+                  <UiStatusBadge
+                    value="Editando"
+                    format="text"
+                    variant="warning"
+                    size="lg"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Steps -->
+      <div class="bg-surface border-border border rounded-lg mb-4 sm:mb-6">
+        <div class="p-3 sm:p-6">
+          <div class="flex items-center justify-between">
+            <!-- Step 1 -->
+            <div class="flex items-center flex-1">
+              <div
+                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
+                :class="{
+                  'bg-primary text-primary-foreground border-primary': currentStep === 1,
+                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 1,
+                  'border-border text-text-secondary bg-transparent': currentStep < 1
+                }"
+              >
+                <svg v-if="currentStep > 1" class="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                <span v-else class="font-semibold text-sm sm:text-base">1</span>
+              </div>
+              <div class="ml-1 sm:ml-3 flex-1 min-w-0">
+                <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 1 ? 'text-text-primary' : 'text-text-secondary'">
+                  Items
+                </p>
+                <p class="text-xs text-text-secondary hidden sm:block">Productos y precios</p>
+              </div>
+              <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 1 ? 'bg-secondary' : 'bg-border'"></div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="flex items-center flex-1">
+              <div
+                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
+                :class="{
+                  'bg-primary text-primary-foreground border-primary': currentStep === 2,
+                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 2,
+                  'border-border text-text-secondary bg-transparent': currentStep < 2
+                }"
+              >
+                <svg v-if="currentStep > 2" class="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                <span v-else class="font-semibold text-sm sm:text-base">2</span>
+              </div>
+              <div class="ml-1 sm:ml-3 flex-1 min-w-0">
+                <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">
+                  <span class="hidden sm:inline">Documentos</span>
+                  <span class="sm:hidden">Docs</span>
+                </p>
+                <p class="text-xs text-text-secondary hidden sm:block">Factura y pago</p>
+              </div>
+              <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'"></div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="flex items-center">
+              <div
+                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
+                :class="{
+                  'bg-primary text-primary-foreground border-primary': currentStep === 3,
+                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 3,
+                  'border-border text-text-secondary bg-transparent': currentStep < 3
+                }"
+              >
+                <span class="font-semibold text-sm sm:text-base">3</span>
+              </div>
+              <div class="ml-1 sm:ml-3 min-w-0">
+                <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">
+                  <span class="hidden sm:inline">Confirmar</span>
+                  <span class="sm:hidden">OK</span>
+                </p>
+                <p class="text-xs text-text-secondary hidden sm:block">Revisar y guardar</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Content -->
+      <form @submit.prevent="handleNext">
+        <!-- Step 1: Items -->
+        <Transition name="fade" mode="out-in">
+        <div v-if="currentStep === 1" key="step-1" class="bg-surface border-border border rounded-lg">
+          <div class="p-4 sm:p-6">
+            <div class="flex items-center justify-between mb-4 sm:mb-6">
+              <div>
+                <h3 class="text-base sm:text-lg font-semibold text-text-primary">Items de la Compra</h3>
+                <p class="text-sm text-text-secondary">Proveedor: {{ originalPurchase?.supplier_name }}</p>
+              </div>
+              <button
+                type="button"
+                @click="addItem"
+                class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm"
+              >
+                + Agregar Item
+              </button>
+            </div>
+
+            <div class="space-y-4">
+              <div
+                v-for="(item, index) in form.items"
+                :key="index"
+                class="border-2 border-border rounded-lg p-4 bg-background"
+              >
+                <div class="flex justify-between items-start mb-4">
+                  <h4 class="text-sm font-medium text-text-primary">Item #{{ index + 1 }}</h4>
+                  <button
+                    type="button"
+                    @click="removeItem(index)"
+                    :disabled="form.items.length === 1"
+                    class="text-destructive hover:text-destructive/80 disabled:opacity-50 p-1"
+                  >
+                    <TrashIcon class="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <!-- Ingrediente -->
+                  <div class="sm:col-span-2">
+                    <label class="block text-sm font-medium text-text-primary mb-2">
+                      Ingrediente *
+                    </label>
+                    <UiSearchableSelect
+                      v-model="item.ingredient_id"
+                      :options="ingredientOptions"
+                      placeholder="Buscar ingrediente..."
+                      required
+                      @update:model-value="() => onIngredientChange(index)"
+                    />
+                  </div>
+
+                  <!-- Unidad -->
+                  <div>
+                    <label class="block text-sm font-medium text-text-primary mb-2">
+                      Unidad *
+                    </label>
+                    <select
+                      v-model="item.purchase_unit"
+                      required
+                      :disabled="!item.ingredient_id"
+                      class="input-base w-full px-4 py-2"
+                      @change="() => onUnitChange(index)"
+                    >
+                      <option value="">Seleccionar</option>
+                      <option
+                        v-for="unit in getPurchaseUnitOptions(item.ingredient_id)"
+                        :key="unit.value"
+                        :value="unit.value"
+                      >
+                        {{ unit.label }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Cantidad -->
+                  <div>
+                    <label class="block text-sm font-medium text-text-primary mb-2">
+                      Cantidad *
+                    </label>
+                    <input
+                      v-model.number="item.purchase_quantity"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      required
+                      class="input-base w-full px-4 py-2"
+                      @input="() => updateItemTotal(index)"
+                    />
+                  </div>
+
+                  <!-- Precio Unitario -->
+                  <div>
+                    <label class="block text-sm font-medium text-text-primary mb-2">
+                      Precio Unit. *
+                    </label>
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                      <input
+                        v-model.number="item.unit_cost"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                        class="input-base w-full pl-8 pr-4 py-2"
+                        @input="() => updateItemTotal(index)"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Total -->
+                  <div>
+                    <label class="block text-sm font-medium text-text-primary mb-2">
+                      Total
+                    </label>
+                    <div class="px-4 py-2 bg-surface-secondary rounded-lg font-semibold text-text-primary border border-border">
+                      ${{ formatPrice(item.total_cost) }}
+                    </div>
+                  </div>
+
+                  <!-- Notas -->
+                  <div class="sm:col-span-2">
+                    <label class="block text-sm font-medium text-text-primary mb-2">
+                      Notas del item
+                    </label>
+                    <input
+                      v-model="item.notes"
+                      type="text"
+                      class="input-base w-full px-4 py-2"
+                      placeholder="Observaciones opcionales"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Documentos -->
+        <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border-border border rounded-lg">
+          <div class="p-4 sm:p-6">
+            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-2">Documentos</h3>
+            <p class="text-sm text-text-secondary mb-6">Agrega o actualiza factura y comprobante de pago</p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- Factura Section -->
+              <div class="border-2 border-border rounded-lg p-4 bg-background/50">
+                <h4 class="font-semibold text-text-primary mb-4 flex items-center gap-2">
+                  <DocumentTextIcon class="w-5 h-5 text-primary" />
+                  Factura
+                </h4>
+
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                      Numero de Factura
+                    </label>
+                    <input
+                      v-model="form.invoice_number"
+                      type="text"
+                      class="input-base w-full px-4 py-2"
+                      placeholder="Ej: FV-12345"
+                    />
+                  </div>
+
+                  <!-- Existing Attachments -->
+                  <div v-if="existingInvoiceAttachments.length > 0">
+                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                      Archivos Existentes
+                    </label>
+                    <div class="space-y-2">
+                      <div
+                        v-for="attachment in existingInvoiceAttachments"
+                        :key="attachment.id"
+                        class="flex items-center justify-between p-2 bg-surface border border-border rounded-lg"
+                      >
+                        <div class="flex items-center space-x-2 flex-1 min-w-0">
+                          <svg class="w-4 h-4 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span class="text-xs text-text-primary truncate">{{ attachment.file_name }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Attachment Uploader -->
+                  <div>
+                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                      {{ existingInvoiceAttachments.length > 0 ? 'Agregar Mas Archivos' : 'Adjuntar Factura' }}
+                    </label>
+                    <div class="space-y-3">
+                      <div class="flex items-center space-x-2">
+                        <input
+                          ref="invoiceFileInput"
+                          type="file"
+                          class="hidden"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          multiple
+                          @change="handleInvoiceFileSelect"
+                        />
+                        <button
+                          type="button"
+                          @click="($refs.invoiceFileInput as HTMLInputElement).click()"
+                          class="px-4 py-2 bg-primary/10 text-primary border-2 border-primary/30 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium"
+                        >
+                          <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                          </svg>
+                          Seleccionar Archivo
+                        </button>
+                        <span class="text-xs text-text-secondary">PDF o imagen (max. 10MB)</span>
+                      </div>
+
+                      <!-- Selected Files Preview -->
+                      <div v-if="form.invoice_files.length > 0" class="space-y-2">
+                        <div
+                          v-for="(file, index) in form.invoice_files"
+                          :key="index"
+                          class="flex items-center justify-between p-2 bg-surface border border-border rounded-lg"
+                        >
+                          <div class="flex items-center space-x-2 flex-1 min-w-0">
+                            <svg class="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            <span class="text-xs text-text-primary truncate">{{ file.name }}</span>
+                            <span class="text-xs text-text-secondary">({{ formatFileSize(file.size) }})</span>
+                          </div>
+                          <button
+                            type="button"
+                            @click="removeInvoiceFile(index)"
+                            class="text-destructive hover:bg-destructive/10 p-1 rounded"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Comprobante de Pago Section -->
+              <div class="border-2 border-border rounded-lg p-4 bg-background/50">
+                <h4 class="font-semibold text-text-primary mb-4 flex items-center gap-2">
+                  <CreditCardIcon class="w-5 h-5 text-primary" />
+                  Comprobante de Pago
+                </h4>
+
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                      Metodo de Pago
+                    </label>
+                    <select
+                      v-model="form.payment_method"
+                      class="input-base w-full px-4 py-2"
+                    >
+                      <option value="">Sin pago aun</option>
+                      <option value="transfer">Transferencia</option>
+                      <option value="cash">Efectivo</option>
+                      <option value="check">Cheque</option>
+                      <option value="credit_card">Tarjeta de Credito</option>
+                    </select>
+                  </div>
+
+                  <div v-if="form.payment_method">
+                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                      Referencia de Pago
+                    </label>
+                    <input
+                      v-model="form.payment_reference"
+                      type="text"
+                      class="input-base w-full px-4 py-2"
+                      placeholder="Numero de transferencia, etc."
+                    />
+                  </div>
+
+                  <!-- Existing Attachments -->
+                  <div v-if="existingPaymentAttachments.length > 0">
+                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                      Comprobantes Existentes
+                    </label>
+                    <div class="space-y-2">
+                      <div
+                        v-for="attachment in existingPaymentAttachments"
+                        :key="attachment.id"
+                        class="flex items-center justify-between p-2 bg-surface border border-border rounded-lg"
+                      >
+                        <div class="flex items-center space-x-2 flex-1 min-w-0">
+                          <svg class="w-4 h-4 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span class="text-xs text-text-primary truncate">{{ attachment.file_name }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Attachment Uploader -->
+                  <div v-if="form.payment_method">
+                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                      {{ existingPaymentAttachments.length > 0 ? 'Agregar Mas Comprobantes' : 'Adjuntar Comprobante' }}
+                    </label>
+                    <div class="space-y-3">
+                      <div class="flex items-center space-x-2">
+                        <input
+                          ref="paymentFileInput"
+                          type="file"
+                          class="hidden"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          multiple
+                          @change="handlePaymentFileSelect"
+                        />
+                        <button
+                          type="button"
+                          @click="($refs.paymentFileInput as HTMLInputElement).click()"
+                          class="px-4 py-2 bg-primary/10 text-primary border-2 border-primary/30 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium"
+                        >
+                          <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                          </svg>
+                          Seleccionar Archivo
+                        </button>
+                        <span class="text-xs text-text-secondary">PDF o imagen (max. 10MB)</span>
+                      </div>
+
+                      <!-- Selected Files Preview -->
+                      <div v-if="form.payment_files.length > 0" class="space-y-2">
+                        <div
+                          v-for="(file, index) in form.payment_files"
+                          :key="index"
+                          class="flex items-center justify-between p-2 bg-surface border border-border rounded-lg"
+                        >
+                          <div class="flex items-center space-x-2 flex-1 min-w-0">
+                            <svg class="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            <span class="text-xs text-text-primary truncate">{{ file.name }}</span>
+                            <span class="text-xs text-text-secondary">({{ formatFileSize(file.size) }})</span>
+                          </div>
+                          <button
+                            type="button"
+                            @click="removePaymentFile(index)"
+                            class="text-destructive hover:bg-destructive/10 p-1 rounded"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="mt-6">
+              <label class="block text-sm font-medium text-text-primary mb-2">
+                Notas Generales
+              </label>
+              <textarea
+                v-model="form.notes"
+                class="input-base w-full px-4 py-2"
+                rows="3"
+                placeholder="Observaciones adicionales..."
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Revision -->
+        <div v-else-if="currentStep === 3" key="step-3" class="bg-surface border border-border rounded-lg">
+          <!-- Header -->
+          <div class="border-b border-border p-4 sm:p-6 md:p-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+              <div>
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary mb-2">RESUMEN DE CAMBIOS</h1>
+                <p class="text-xs sm:text-sm text-text-secondary">Revisa los cambios antes de guardar</p>
+              </div>
+              <div class="text-left sm:text-right w-full sm:w-auto">
+                <div class="border-2 border-border px-3 sm:px-4 py-2 rounded-lg inline-block mb-2 bg-surface-secondary">
+                  <p class="text-xs font-medium text-text-secondary">COMPRA N°</p>
+                  <p class="text-lg sm:text-xl font-bold text-text-primary">{{ originalPurchase?.purchase_number }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Supplier Info -->
+          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-border">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+              <div>
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Proveedor</p>
+                <p class="text-lg font-bold text-text-primary">{{ originalPurchase?.supplier_name }}</p>
+              </div>
+              <div>
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Estado</p>
+                <p class="text-base font-medium text-text-primary">{{ getStatusText(originalPurchase?.status) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6">
+            <!-- Mobile: Cards View -->
+            <div class="md:hidden space-y-3">
+              <div
+                v-for="(item, index) in form.items"
+                :key="index"
+                class="border border-border rounded-lg p-3 bg-background"
+              >
+                <div class="mb-2">
+                  <p class="font-medium text-text-primary text-sm">{{ getIngredientName(item.ingredient_id) }}</p>
+                  <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-sm">
+                  <div>
+                    <p class="text-xs text-text-secondary">Cantidad</p>
+                    <p class="font-semibold">{{ item.purchase_quantity }} {{ item.purchase_unit }}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-text-secondary">Precio Unit.</p>
+                    <p class="font-semibold">${{ formatPrice(item.unit_cost) }}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-text-secondary">Total</p>
+                    <p class="font-bold text-primary">${{ formatPrice(item.total_cost) }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Desktop: Table View -->
+            <table class="w-full hidden md:table">
+              <thead>
+                <tr class="border-b border-border">
+                  <th class="text-left py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Ingrediente</th>
+                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Cantidad</th>
+                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Precio Unit.</th>
+                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(item, index) in form.items"
+                  :key="index"
+                  class="border-b border-border"
+                >
+                  <td class="py-4">
+                    <p class="font-medium text-text-primary">{{ getIngredientName(item.ingredient_id) }}</p>
+                    <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
+                  </td>
+                  <td class="text-right py-4 text-text-primary">
+                    {{ item.purchase_quantity }} {{ item.purchase_unit }}
+                  </td>
+                  <td class="text-right py-4 text-text-primary">
+                    ${{ formatPrice(item.unit_cost) }}
+                  </td>
+                  <td class="text-right py-4 font-bold text-primary">
+                    ${{ formatPrice(item.total_cost) }}
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="bg-primary/5">
+                  <td colspan="3" class="py-4 text-right font-bold text-text-primary">Total:</td>
+                  <td class="py-4 text-right text-xl font-bold text-primary">${{ formatPrice(totalAmount) }}</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <!-- Mobile Total -->
+            <div class="md:hidden mt-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-text-primary">Total:</span>
+                <span class="text-xl font-bold text-primary">${{ formatPrice(totalAmount) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Documents Summary -->
+          <div v-if="form.invoice_number || form.payment_method || form.invoice_files.length || form.payment_files.length" class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-t border-border bg-background/50">
+            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">Documentos</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div v-if="form.invoice_number || form.invoice_files.length">
+                <p class="text-sm text-text-secondary">Factura:</p>
+                <p v-if="form.invoice_number" class="font-medium text-text-primary">{{ form.invoice_number }}</p>
+                <p v-if="existingInvoiceAttachments.length" class="text-xs text-success mt-1">{{ existingInvoiceAttachments.length }} archivo(s) existente(s)</p>
+                <p v-if="form.invoice_files.length" class="text-xs text-primary mt-1">+ {{ form.invoice_files.length }} archivo(s) nuevo(s)</p>
+              </div>
+              <div v-if="form.payment_method || form.payment_files.length">
+                <p class="text-sm text-text-secondary">Pago:</p>
+                <p v-if="form.payment_method" class="font-medium text-text-primary">{{ getPaymentMethodText(form.payment_method) }}</p>
+                <p v-if="form.payment_reference" class="text-xs text-text-secondary">Ref: {{ form.payment_reference }}</p>
+                <p v-if="existingPaymentAttachments.length" class="text-xs text-success mt-1">{{ existingPaymentAttachments.length }} comprobante(s) existente(s)</p>
+                <p v-if="form.payment_files.length" class="text-xs text-primary mt-1">+ {{ form.payment_files.length }} comprobante(s) nuevo(s)</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div v-if="form.notes" class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-t border-border">
+            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Notas</p>
+            <p class="text-sm text-text-primary">{{ form.notes }}</p>
+          </div>
+
+          <!-- Warning Message -->
+          <div class="px-4 sm:px-6 md:px-8 py-4 bg-warning/10 border-t border-warning/20">
+            <div class="flex items-center gap-3">
+              <ExclamationTriangleIcon class="w-6 h-6 text-warning flex-shrink-0" />
+              <div>
+                <p class="font-medium text-warning">Los cambios en items pueden afectar el inventario</p>
+                <p class="text-xs text-warning/80">Verifica que los datos sean correctos antes de guardar</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        </Transition>
+      </form>
+
+      <!-- Navigation Buttons -->
+      <div class="bg-surface border-t border-border shadow-lg mt-6">
+        <div class="px-4 sm:px-6 md:px-8 py-3 sm:py-4">
+          <div class="flex justify-between items-center gap-3">
+            <button
+              v-if="currentStep > 1"
+              type="button"
+              @click="previousStep"
+              class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
+            >
+              <span class="hidden sm:inline">← Anterior</span>
+              <span class="sm:hidden">←</span>
+            </button>
+            <NuxtLink
+              v-else
+              :to="`/abastecimiento/compras-directas/${purchaseId}`"
+              class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
+            >
+              Cancelar
+            </NuxtLink>
+
+            <button
+              v-if="currentStep < 3"
+              type="button"
+              @click="handleNext"
+              :disabled="!isStepValid"
+              class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
+              :class="{ 'opacity-50 cursor-not-allowed': !isStepValid }"
+            >
+              <span class="hidden sm:inline">Siguiente →</span>
+              <span class="sm:hidden">→</span>
+            </button>
+            <button
+              v-else
+              type="button"
+              @click="handleSubmit"
+              :disabled="isSubmitting"
+              class="btn-primary px-4 sm:px-6 py-2 rounded-lg disabled:opacity-50 text-sm sm:text-base"
+            >
+              <span class="hidden sm:inline">{{ isSubmitting ? 'Guardando...' : 'Guardar Cambios' }}</span>
+              <span class="sm:hidden">{{ isSubmitting ? '...' : 'Guardar' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { TrashIcon, DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+
+const route = useRoute()
+const purchaseId = route.params.id as string
+
+useHead({
+  title: 'Editar Compra Directa - Abastecimiento'
+})
+
+interface PurchaseItem {
+  id?: string
+  ingredient_id: string
+  purchase_quantity: number
+  purchase_unit: string
+  unit_cost: number
+  total_cost: number
+  notes: string
+}
+
+// Wizard state
+const currentStep = ref(1)
+
+// State
+const isSubmitting = ref(false)
+
+// Form
+const form = ref({
+  notes: '',
+  invoice_number: '',
+  invoice_files: [] as File[],
+  payment_method: '',
+  payment_reference: '',
+  payment_files: [] as File[],
+  items: [] as PurchaseItem[]
+})
+
+// Fetch existing purchase
+const { data: purchaseResponse, pending: loadingPurchase, error: fetchError } = useFetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
+  server: false
+})
+
+const originalPurchase = computed(() => (purchaseResponse.value as any)?.data || null)
+
+// Existing attachments
+const existingInvoiceAttachments = computed(() =>
+  originalPurchase.value?.attachments?.filter((a: any) => a.attachment_type === 'invoice') || []
+)
+const existingPaymentAttachments = computed(() =>
+  originalPurchase.value?.attachments?.filter((a: any) => a.attachment_type === 'payment_proof') || []
+)
+
+// Initialize form when purchase loads
+watch(originalPurchase, (purchase) => {
+  if (purchase) {
+    form.value.notes = purchase.notes || ''
+    form.value.invoice_number = purchase.invoice_number || ''
+    form.value.payment_method = purchase.payment_method || ''
+    form.value.payment_reference = purchase.payment_reference || ''
+    form.value.items = (purchase.items || []).map((item: any) => ({
+      id: item.id,
+      ingredient_id: item.ingredient_id,
+      purchase_quantity: item.purchase_quantity || item.quantity,
+      purchase_unit: item.purchase_unit || item.unit,
+      unit_cost: item.unit_cost || 0,
+      total_cost: item.total_cost || 0,
+      notes: item.notes || ''
+    }))
+  }
+}, { immediate: true })
+
+// Fetch ingredients
+const { data: ingredientsData, pending: loadingIngredients } = useFetch('/api/suppliers/ingredients', {
+  server: false,
+  query: { limit: 500 }
+})
+
+const ingredients = computed(() => ingredientsData.value?.data || [])
+const ingredientOptions = computed(() => ingredients.value.map((i: any) => ({
+  value: i.id,
+  label: i.name,
+  unit: i.unit
+})))
+
+// Fetch purchase units
+const { data: purchaseUnitsData, pending: loadingPurchaseUnits } = useFetch('/api/suppliers/ingredient-purchase-units', {
+  server: false,
+  query: { limit: 10000, active_only: true }
+})
+
+const purchaseUnits = computed(() => purchaseUnitsData.value?.data || [])
+
+// Loading state
+const isLoadingData = computed(() =>
+  loadingPurchase.value || loadingIngredients.value || loadingPurchaseUnits.value
+)
+
+// Computed
+const totalAmount = computed(() => {
+  return form.value.items.reduce((sum, item) => sum + (item.total_cost || 0), 0)
+})
+
+// Step validation
+const isStepValid = computed(() => {
+  if (currentStep.value === 1) {
+    return form.value.items.length > 0 && form.value.items.every(item =>
+      item.ingredient_id &&
+      item.purchase_quantity > 0 &&
+      item.purchase_unit &&
+      item.unit_cost >= 0
+    )
+  }
+  // Step 2 (documents) is always valid
+  return true
+})
+
+// Methods
+const formatPrice = (price: number) => {
+  if (!price) return '0'
+  return price.toLocaleString('es-CO', { minimumFractionDigits: 0 })
+}
+
+const formatDate = (date: string) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString('es-CO', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  })
+}
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+const getIngredientName = (id: string) => {
+  const ingredient = ingredients.value.find((i: any) => i.id === id)
+  return ingredient?.name || ''
+}
+
+const getStatusText = (status: string) => {
+  const statusMap: Record<string, string> = {
+    'received': 'Recibida',
+    'invoiced': 'Facturada',
+    'paid': 'Pagada'
+  }
+  return statusMap[status] || status
+}
+
+const getPaymentMethodText = (method: string) => {
+  const methods: Record<string, string> = {
+    'transfer': 'Transferencia',
+    'cash': 'Efectivo',
+    'check': 'Cheque',
+    'credit_card': 'Tarjeta de Credito'
+  }
+  return methods[method] || method
+}
+
+const getPurchaseUnitOptions = (ingredientId: string) => {
+  if (!ingredientId) return []
+
+  const units = purchaseUnits.value.filter((u: any) => u.ingredient_id === ingredientId)
+
+  if (units.length === 0) {
+    const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
+    if (ingredient) {
+      return [{ value: ingredient.unit, label: ingredient.unit }]
+    }
+    return []
+  }
+
+  return units.map((u: any) => ({
+    value: u.purchase_unit_label,
+    label: u.purchase_unit_label,
+    conversion_factor: u.conversion_factor
+  }))
+}
+
+const onIngredientChange = (index: number) => {
+  const item = form.value.items[index]
+  const ingredient = ingredients.value.find((i: any) => i.id === item.ingredient_id)
+
+  if (ingredient) {
+    const units = getPurchaseUnitOptions(item.ingredient_id)
+    const defaultUnit = units.find((u: any) => u.is_default) || units[0]
+    if (defaultUnit) {
+      item.purchase_unit = defaultUnit.value
+    }
+  }
+}
+
+const onUnitChange = (index: number) => {
+  updateItemTotal(index)
+}
+
+const updateItemTotal = (index: number) => {
+  const item = form.value.items[index]
+  item.total_cost = (item.purchase_quantity || 0) * (item.unit_cost || 0)
+}
+
+const addItem = () => {
+  form.value.items.push({
+    ingredient_id: '',
+    purchase_quantity: 1,
+    purchase_unit: '',
+    unit_cost: 0,
+    total_cost: 0,
+    notes: ''
+  })
+}
+
+const removeItem = (index: number) => {
+  if (form.value.items.length > 1) {
+    form.value.items.splice(index, 1)
+  }
+}
+
+const handleInvoiceFileSelect = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const files = Array.from(input.files || [])
+  const validFiles = files.filter(file => {
+    if (file.size > 10 * 1024 * 1024) {
+      alert(`${file.name} excede el tamaño máximo de 10MB`)
+      return false
+    }
+    return true
+  })
+  form.value.invoice_files.push(...validFiles)
+  input.value = ''
+}
+
+const handlePaymentFileSelect = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const files = Array.from(input.files || [])
+  const validFiles = files.filter(file => {
+    if (file.size > 10 * 1024 * 1024) {
+      alert(`${file.name} excede el tamaño máximo de 10MB`)
+      return false
+    }
+    return true
+  })
+  form.value.payment_files.push(...validFiles)
+  input.value = ''
+}
+
+const removeInvoiceFile = (index: number) => {
+  form.value.invoice_files.splice(index, 1)
+}
+
+const removePaymentFile = (index: number) => {
+  form.value.payment_files.splice(index, 1)
+}
+
+// Wizard navigation
+const handleNext = () => {
+  if (!isStepValid.value) return
+
+  if (currentStep.value < 3) {
+    currentStep.value++
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+const previousStep = () => {
+  if (currentStep.value > 1) {
+    currentStep.value--
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+// Submit
+const handleSubmit = async () => {
+  if (!isStepValid.value) return
+
+  isSubmitting.value = true
+
+  try {
+    const formData = new FormData()
+
+    formData.append('items_data', JSON.stringify(form.value.items.map(item => ({
+      id: item.id,
+      ingredient_id: item.ingredient_id,
+      quantity: item.purchase_quantity,
+      purchase_quantity: item.purchase_quantity,
+      purchase_unit: item.purchase_unit,
+      unit_cost: item.unit_cost,
+      notes: item.notes
+    }))))
+
+    if (form.value.notes) formData.append('notes', form.value.notes)
+    if (form.value.invoice_number) formData.append('invoice_number', form.value.invoice_number)
+    if (form.value.payment_method) {
+      formData.append('payment_method', form.value.payment_method)
+      formData.append('payment_amount', totalAmount.value.toString())
+      formData.append('payment_date', new Date().toISOString())
+    }
+    if (form.value.payment_reference) formData.append('payment_reference', form.value.payment_reference)
+
+    // Add new files
+    form.value.invoice_files.forEach(file => {
+      formData.append('invoice_files', file)
+    })
+    form.value.payment_files.forEach(file => {
+      formData.append('payment_files', file)
+    })
+
+    const response = await $fetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
+      method: 'PUT',
+      body: formData
+    }) as any
+
+    if (response.success) {
+      await navigateTo(`/abastecimiento/compras-directas/${purchaseId}`)
+    }
+  } catch (error: any) {
+    console.error('Error updating direct purchase:', error)
+    alert(`Error: ${error.response?._data?.detail || error.message || 'Error al actualizar la compra'}`)
+  } finally {
+    isSubmitting.value = false
+  }
+}
+</script>
+
+<style scoped>
+/* Fade transition for wizard steps */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>

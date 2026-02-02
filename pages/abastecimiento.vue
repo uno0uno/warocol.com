@@ -23,7 +23,8 @@ definePageMeta({
 const navigationItems = [
   { to: '/abastecimiento/proveedores', label: 'Proveedores' },
   // { to: '/abastecimiento/precios', label: 'Lista de Precios', matchPath: '/precios' }, // Temporarily disabled
-  { to: '/abastecimiento/compras', label: 'Órdenes de Compra', matchPath: '/compras' }
+  { to: '/abastecimiento/compras', label: 'Órdenes de Compra', matchPath: '/compras' },
+  { to: '/abastecimiento/compras-directas', label: 'Compras Directas', matchPath: '/compras-directas' }
 ]
 
 // Pass through the refresh handler from layout to child pages
