@@ -79,6 +79,29 @@
                   Ingresa un monto mensual fijo. No se actualiza automáticamente.
                 </p>
               </label>
+
+              <label
+                class="group relative flex flex-col p-5 border-2 rounded-xl cursor-pointer"
+                :class="form.salary_type === 'hourly' 
+                  ? 'border-crocus-500 bg-crocus-50 shadow-md' 
+                  : 'border-titan-300 bg-white hover:border-crocus-300 hover:shadow-sm'"
+              >
+                <input type="radio" v-model="form.salary_type" value="hourly" class="sr-only" />
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                    :class="form.salary_type === 'hourly' 
+                      ? 'bg-crocus-600 text-white shadow-md' 
+                      : 'bg-titan-200 text-titan-600 group-hover:bg-titan-300'">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <span class="font-bold text-text-primary text-base">Por Hora</span>
+                </div>
+                <p class="text-sm text-text-secondary leading-relaxed">
+                  Define un valor por hora. El pago se calcula según las horas reportadas.
+                </p>
+              </label>
             </div>
           </div>
 
@@ -187,6 +210,53 @@
                 </div>
               </div>
             </div>
+
+            <!-- Hourly Config -->
+            <div v-else-if="form.salary_type === 'hourly'" class="space-y-6">
+              <h3 class="text-lg font-bold text-crocus-700 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Valor por Hora
+              </h3>
+
+              <div>
+                <label class="block text-sm font-bold text-text-primary mb-3">
+                  Valor Hora *
+                </label>
+                <div class="relative">
+                  <span class="absolute left-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
+                  <input
+                    v-model.number="form.hourly_rate"
+                    type="number"
+                    min="0"
+                    step="100"
+                    required
+                    class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+               <!-- Quick select buttons -->
+               <div>
+                <p class="text-sm font-bold text-text-primary mb-3">Selección rápida:</p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="amount in [5000, 8000, 10000, 15000, 20000]"
+                    :key="amount"
+                    type="button"
+                    @click="form.hourly_rate = amount"
+                    class="px-4 py-2.5 rounded-xl text-sm font-bold"
+                    :class="form.hourly_rate === amount 
+                      ? 'bg-crocus-600 text-white shadow-md' 
+                      : 'bg-white border-2 border-titan-300 text-text-primary hover:border-crocus-400 hover:shadow-sm'"
+                  >
+                    {{ formatCurrency(amount) }}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Frecuencia de Pago -->
@@ -259,8 +329,12 @@
               <div>
                 <p class="text-xs text-text-tertiary mb-1 uppercase tracking-wide font-semibold">Tipo de Salario</p>
                 <p class="font-bold text-text-primary">
-                  {{ form.salary_type === 'smmlv' ? 'Basado en SMMLV' : form.salary_type === 'fixed' ? 'Monto Fijo' : 'Sin seleccionar' }}
+                  {{ form.salary_type === 'smmlv' ? 'Basado en SMMLV' : form.salary_type === 'fixed' ? 'Monto Fijo' : form.salary_type === 'hourly' ? 'Por Hora' : 'Sin seleccionar' }}
                 </p>
+              </div>
+              <div v-if="form.salary_type === 'hourly' && form.hourly_rate">
+                <p class="text-xs text-text-tertiary mb-1 uppercase tracking-wide font-semibold">Valor Hora</p>
+                <p class="font-bold text-text-primary">{{ formatCurrency(form.hourly_rate) }} / hora</p>
               </div>
               <div v-if="form.salary_type === 'smmlv' && form.multiplier">
                 <p class="text-xs text-text-tertiary mb-1 uppercase tracking-wide font-semibold">Multiplicador</p>
@@ -324,6 +398,7 @@ const form = reactive({
   salary_type: 'smmlv',
   multiplier: 1,
   fixed_amount: null,
+  hourly_rate: null,
   payment_frequency: 'monthly',
   notes: ''
 })
@@ -351,6 +426,7 @@ const { data: employeeData } = useAsyncData(
         form.salary_type = data.salary_type
         form.multiplier = data.multiplier || 1
         form.fixed_amount = data.fixed_amount
+        form.hourly_rate = data.hourly_rate
         form.payment_frequency = data.payment_frequency || 'monthly'
         form.notes = data.salary_notes || ''
       }
@@ -375,6 +451,9 @@ const calculatedSalary = computed(() => {
     return (form.multiplier || 0) * smmlv.value
   } else if (form.salary_type === 'fixed') {
     return form.fixed_amount || 0
+  } else if (form.salary_type === 'hourly') {
+    // Estimate monthly based on 240 hours (standard work month)
+    return (form.hourly_rate || 0) * 240
   }
   return 0
 })
@@ -396,6 +475,7 @@ const isFormValid = computed(() => {
   if (!form.salary_type) return false
   if (form.salary_type === 'smmlv' && (!form.multiplier || form.multiplier <= 0)) return false
   if (form.salary_type === 'fixed' && (!form.fixed_amount || form.fixed_amount <= 0)) return false
+  if (form.salary_type === 'hourly' && (!form.hourly_rate || form.hourly_rate <= 0)) return false
   return true
 })
 
@@ -431,6 +511,8 @@ const handleSubmit = async () => {
 
     if (form.salary_type === 'smmlv') {
       body.minimum_wage_multiplier = form.multiplier
+    } else if (form.salary_type === 'hourly') {
+      body.hourly_rate = form.hourly_rate
     } else {
       body.fixed_amount = form.fixed_amount
     }

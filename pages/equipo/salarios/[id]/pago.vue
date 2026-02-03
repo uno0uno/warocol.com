@@ -25,9 +25,15 @@
           <!-- Salario configurado info -->
           <div v-if="employee.salary_type" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p class="text-sm text-blue-800">
-              <strong>Salario configurado:</strong> {{ formatCurrency(employee.calculated_salary || 0) }}
+              <strong>Salario configurado:</strong> 
+              <span v-if="employee.salary_type === 'hourly'">
+                {{ formatCurrency(employee.hourly_rate || 0) }} / hora
+              </span>
+              <span v-else>
+                {{ formatCurrency(employee.calculated_salary || 0) }}
+              </span>
               <span class="text-blue-600">
-                ({{ employee.salary_type === 'smmlv' ? `${employee.multiplier}x SMMLV` : 'Monto fijo' }})
+                ({{ employee.salary_type === 'smmlv' ? `${employee.multiplier}x SMMLV` : employee.salary_type === 'hourly' ? 'Pago por horas' : 'Monto fijo' }})
               </span>
             </p>
           </div>
