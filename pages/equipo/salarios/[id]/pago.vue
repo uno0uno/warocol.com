@@ -367,7 +367,7 @@ const handleSubmit = async () => {
       try {
         const formData = new FormData()
         form.attachments.forEach((file) => {
-          formData.append('attachments', file)
+          formData.append('files', file)
         })
 
         await $fetch(`/api/salaries/payments/${response.data.id}/attachments`, {
