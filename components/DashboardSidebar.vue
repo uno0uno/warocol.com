@@ -164,6 +164,21 @@
         </NuxtLink>
 
         <NuxtLink
+          to="/gastos"
+          :class="[
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+            collapsed ? 'justify-center' : '',
+            activePage === 'gastos'
+              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+          ]"
+          :title="collapsed ? 'Gastos' : ''"
+        >
+          <CurrencyDollarIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'gastos' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+          <span v-if="!collapsed" class="whitespace-nowrap">Gastos</span>
+        </NuxtLink>
+
+        <NuxtLink
           to="/equipo/miembros"
           :class="[
             'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
@@ -260,6 +275,7 @@ import {
   ChevronDownIcon,
   ComputerDesktopIcon,
   CubeIcon,
+  CurrencyDollarIcon,
   KeyIcon,
   ShoppingCartIcon,
   Squares2X2Icon,

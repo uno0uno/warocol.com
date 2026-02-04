@@ -170,9 +170,16 @@ export default defineNuxtConfig({
       }
     ]
   },
-  devtools: { 
-    enabled: true,
-    port: 8080
+  devtools: {
+    enabled: false
+  },
+  vite: {
+    vue: {
+      script: {
+        defineModel: true,
+        propsDestructure: true
+      }
+    }
   },
   css: ['~/assets/css/main.scss', '~/assets/css/design-system.css', '~/assets/css/design-tokens.css', '~/assets/css/fonts.css'],
   postcss: {

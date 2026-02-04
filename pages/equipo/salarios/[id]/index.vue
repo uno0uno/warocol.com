@@ -1,378 +1,665 @@
+<script setup lang="ts">
+import { ref, reactive, computed, watch, inject, onMounted } from 'vue'
+
+definePageMeta({
+  layout: 'dashboard',
+  ssr: false
+})
+
+const route = useRoute()
+const router = useRouter()
+const employeeId = route.params.id as string
+
+useHead({ title: 'Detalle del Salario' })
+
+// Tenant reactivity
+const { currentTenant } = useTenantReactive()
+
+// Loading states
+const isLoading = ref(true)
+const error = ref<string | null>(null)
+const isEditMode = ref(false)
+const isSubmitting = ref(false)
+const isDeleting = ref(false)
+
+// Fetch employee data
+const { data: employeeData, pending: employeePending, refresh, error: fetchError } = useAsyncData(
+  `employee-salary-${employeeId}`,
+  () => $fetch(`/api/team/salaries/employees/${employeeId}`),
+  {
+    server: false,
+    watch: [currentTenant]
+  }
+)
+
+const employee = computed(() => employeeData.value?.data)
+const isLoadingEmployee = computed(() => employeePending.value)
+
+// Fetch salary payments
+const { data: paymentsData, pending: paymentsPending, refresh: refreshPayments } = useAsyncData(
+  `employee-payments-${employeeId}`,
+  async () => {
+    if (!employee.value) return { data: [] }
+    try {
+      const response = await $fetch(`/api/team/salaries/payments`, {
+        params: { employee_id: employeeId }
+      })
+      return response
+    } catch (error) {
+      console.error('Error fetching payments:', error)
+      return { data: [] }
+    }
+  },
+  {
+    server: false,
+    watch: [currentTenant, employee]
+  }
+)
+
+const payments = computed(() => paymentsData.value?.data || [])
+const isLoadingPayments = computed(() => paymentsPending.value)
+
+// Edit form
+const editForm = reactive({
+  salaryType: 'smmlv',
+  minimumWageMultiplier: 1,
+  fixedAmount: 0,
+  notes: ''
+})
+
+// File upload
+const fileInput = ref<HTMLInputElement | null>(null)
+const selectedFiles = ref<File[]>([])
+const attachmentsToRemove = ref<string[]>([])
+
+const handleFileSelect = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (target.files) {
+    selectedFiles.value.push(...Array.from(target.files))
+    if (fileInput.value) {
+      fileInput.value.value = ''
+    }
+  }
+}
+
+const removeFile = (index: number) => {
+  selectedFiles.value.splice(index, 1)
+}
+
+const removeAttachment = (attachmentId: string) => {
+  if (!confirm('¿Estás seguro de que deseas eliminar este archivo?')) {
+    return
+  }
+  attachmentsToRemove.value.push(attachmentId)
+}
+
+// Actions
+const goBack = () => {
+  router.push('/equipo/salarios')
+}
+
+const toggleEditMode = () => {
+  if (!isEditMode.value && employee.value) {
+    // Entering edit mode - populate form
+    editForm.salaryType = employee.value.salary_type || 'smmlv'
+    editForm.minimumWageMultiplier = employee.value.multiplier || 1
+    editForm.fixedAmount = employee.value.fixed_amount || 0
+    editForm.notes = employee.value.salary_notes || ''
+  }
+  isEditMode.value = !isEditMode.value
+  selectedFiles.value = []
+  attachmentsToRemove.value = []
+}
+
+const cancelEdit = () => {
+  isEditMode.value = false
+  selectedFiles.value = []
+  attachmentsToRemove.value = []
+  error.value = null
+}
+
+const saveChanges = async () => {
+  isSubmitting.value = true
+  error.value = null
+
+  try {
+    const formData = new FormData()
+
+    // Build config object
+    const config = {
+      salary_type: editForm.salaryType,
+      minimum_wage_multiplier: editForm.salaryType === 'smmlv' ? editForm.minimumWageMultiplier : null,
+      fixed_amount: editForm.salaryType === 'fixed' ? editForm.fixedAmount : null,
+      notes: editForm.notes
+    }
+
+    // Send as JSON
+    await $fetch(`/api/team/salaries/employees/${employeeId}/config`, {
+      method: 'POST',
+      body: config
+    })
+
+    // Handle attachment deletions
+    for (const attachmentId of attachmentsToRemove.value) {
+      try {
+        await $fetch(`/api/team/salaries/attachments/${attachmentId}`, {
+          method: 'DELETE'
+        })
+      } catch (err) {
+        console.error('Error deleting attachment:', err)
+      }
+    }
+
+    await refresh()
+    isEditMode.value = false
+    selectedFiles.value = []
+    attachmentsToRemove.value = []
+  } catch (err: any) {
+    console.error('Error updating salary:', err)
+    error.value = err?.data?.detail || 'Error al actualizar'
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const deleteEmployee = async () => {
+  if (!confirm('¿Estás seguro de que deseas eliminar este empleado? Esta acción no se puede deshacer.')) {
+    return
+  }
+
+  isDeleting.value = true
+  isSubmitting.value = true
+
+  try {
+    await $fetch(`/api/team/employees/${employeeId}`, {
+      method: 'DELETE'
+    })
+    router.push('/equipo/salarios')
+  } catch (error: any) {
+    console.error('Error deleting employee:', error)
+    alert(error?.data?.detail || 'Error al eliminar empleado')
+    isDeleting.value = false
+    isSubmitting.value = false
+  }
+}
+
+const markAsPaid = async (payment: any) => {
+  try {
+    const formData = new FormData()
+    formData.append('status', 'paid')
+    formData.append('payment_date', new Date().toISOString())
+
+    await $fetch(`/api/team/salaries/payments/${payment.id}`, {
+      method: 'PUT',
+      body: formData
+    })
+
+    await refreshPayments()
+  } catch (error: any) {
+    console.error('Error marking as paid:', error)
+    alert(error?.data?.detail || 'Error al marcar como pagado')
+  }
+}
+
+// Helper functions
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0
+  }).format(value)
+}
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('es-CO', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(date)
+}
+
+const formatFileSize = (bytes: number) => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
+const getStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    'pending': 'Pendiente',
+    'paid': 'Pagado',
+    'cancelled': 'Cancelado'
+  }
+  return labels[status] || status
+}
+
+const getSalaryTypeLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    'smmlv': 'Salario Mínimo',
+    'fixed': 'Fijo',
+    'hourly': 'Por Hora'
+  }
+  return labels[type] || type
+}
+
+// Set refresh handler for layout
+const setRefreshHandler = inject('setRefreshHandler', () => {})
+onMounted(() => {
+  setRefreshHandler(refresh)
+})
+
+// Watch for data load
+watch(employeeData, (data) => {
+  if (data) {
+    isLoading.value = false
+  }
+}, { immediate: true })
+</script>
+
 <template>
-  <div>
+  <div class="page-layout">
+    <!-- Loading overlay during submit -->
+    <div v-if="isSubmitting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-8 flex flex-col items-center">
+        <CommonsTheCustomLoader size="large" />
+        <p class="mt-4 text-lg font-semibold text-text-primary">{{ isDeleting ? 'Eliminando empleado...' : 'Guardando cambios...' }}</p>
+      </div>
+    </div>
+
     <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="isLoadingEmployee" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="flex items-center justify-center min-h-[400px]">
-      <div class="text-center bg-red-50 p-8 rounded-xl border border-red-200">
-        <p class="text-error font-medium mb-4">{{ error }}</p>
-        <NuxtLink to="/equipo/salarios" class="px-4 py-2 bg-white border border-red-200 text-red-700 rounded-lg hover:bg-red-50 font-medium">
-          Volver a salarios
+    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
+      <div class="text-center">
+        <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar el empleado.</p>
+        <p class="text-sm text-text-secondary">{{ fetchError.message }}</p>
+        <NuxtLink to="/equipo/salarios" class="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 inline-block">
+          Volver al Listado
         </NuxtLink>
       </div>
     </div>
 
-    <!-- Content -->
-    <div v-else class="space-y-6">
-      <!-- Header with Employee Info -->
-      <div class="bg-white border border-titan-200 rounded-xl p-6 shadow-sm">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div class="flex items-center gap-5">
-            <div class="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl text-white shadow-sm"
-              :style="{ backgroundColor: employee.color }">
-              {{ employee.initials }}
-            </div>
-            <div>
-              <div class="flex items-center gap-3">
-                <h1 class="text-2xl font-bold text-text-primary">{{ employee.name }}</h1>
-                <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border"
-                  :class="{
-                    'bg-amber-50 text-amber-700 border-amber-200': employee.role === 'superuser',
-                    'bg-blue-50 text-blue-700 border-blue-200': employee.role === 'admin',
-                    'bg-titan-50 text-titan-700 border-titan-200': employee.role === 'employee' || !['superuser', 'admin'].includes(employee.role)
-                  }"
-                >
-                  {{ employee.role_label }}
-                </span>
+    <!-- Main Content -->
+    <template v-else-if="employee">
+      <!-- Navigation Header -->
+      <div class="flex items-center gap-3 mb-4">
+        <button
+          @click="goBack"
+          class="flex items-center gap-2 px-4 py-2 bg-surface border-2 border-border text-text-primary rounded-lg hover:border-primary transition-colors text-sm font-medium"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span>Volver</span>
+        </button>
+        <button
+          v-if="!isEditMode"
+          @click="deleteEmployee"
+          class="flex items-center gap-2 px-4 py-2 bg-surface border-2 border-border text-destructive rounded-lg hover:border-destructive hover:bg-destructive/10 transition-colors text-sm font-medium"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span>Eliminar</span>
+        </button>
+      </div>
+
+      <!-- Header Card -->
+      <div class="bg-surface border-2 border-border rounded-lg mb-4 sm:mb-6">
+        <div class="p-4 sm:p-6">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <!-- Employee Info -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
               </div>
-              <p class="text-text-secondary mt-1 flex items-center gap-2">
-                <EnvelopeIcon class="w-4 h-4" />
-                {{ employee.email }}
-              </p>
+              <div class="space-y-1 min-w-0">
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                  Empleado
+                </p>
+                <p class="text-sm sm:text-base font-semibold text-text-primary truncate">
+                  {{ employee.name }}
+                </p>
+                <p class="text-xs text-text-secondary truncate">
+                  {{ employee.role_label }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Salary Info -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                  Salario Mensual
+                </p>
+                <p class="text-sm sm:text-lg font-semibold text-primary">
+                  {{ employee.calculated_salary ? formatCurrency(employee.calculated_salary) : 'Sin configurar' }}
+                </p>
+                <p v-if="employee.salary_type === 'smmlv' && employee.multiplier" class="text-xs text-text-secondary">
+                  {{ employee.multiplier }}x SMMLV
+                </p>
+              </div>
+            </div>
+
+            <!-- Total Paid -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                  Total Pagado ({{ new Date().getFullYear() }})
+                </p>
+                <p class="text-sm sm:text-lg font-semibold text-primary">
+                  {{ formatCurrency(employee.total_paid_this_year || 0) }}
+                </p>
+                <p class="text-xs text-text-secondary">
+                  {{ employee.payments_count || 0 }} pagos
+                </p>
+              </div>
             </div>
           </div>
-          
-          <div class="flex flex-col sm:flex-row gap-3">
-            <NuxtLink
-              :to="`/equipo/salarios/${employeeId}/configurar`"
-              class="px-5 py-2.5 border border-titan-300 rounded-xl text-text-secondary hover:text-text-primary hover:bg-titan-50 hover:border-titan-400 font-bold flex items-center justify-center gap-2"
+        </div>
+      </div>
+
+      <!-- Salary Configuration Details -->
+      <div class="bg-surface border-2 border-border rounded-lg mb-4 sm:mb-6">
+        <div class="p-4 sm:p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center space-x-2">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <span>Configuración del Salario</span>
+            </h3>
+            <button
+              v-if="!isEditMode"
+              @click="toggleEditMode"
+              class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium"
             >
-              <Cog6ToothIcon class="w-5 h-5" />
-              Configurar Salario
-            </NuxtLink>
+              Editar
+            </button>
+          </div>
+
+          <!-- View Mode -->
+          <div v-if="!isEditMode">
+            <div class="overflow-x-auto">
+              <table class="w-full border-2 border-border rounded-lg">
+                <thead class="bg-surface-secondary">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border w-1/3">
+                      Campo
+                    </th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
+                      Valor
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-surface divide-y divide-border">
+                  <!-- Type Row -->
+                  <tr class="hover:bg-surface-secondary/50 transition-colors">
+                    <td class="px-4 py-3 text-sm font-medium text-text-secondary">
+                      Tipo de Salario
+                    </td>
+                    <td class="px-4 py-3 text-sm text-text-primary">
+                      <span class="font-medium">{{ employee.salary_type ? getSalaryTypeLabel(employee.salary_type) : 'Sin configurar' }}</span>
+                    </td>
+                  </tr>
+
+                  <!-- Multiplier Row (if SMMLV) -->
+                  <tr v-if="employee.salary_type === 'smmlv'" class="hover:bg-surface-secondary/50 transition-colors">
+                    <td class="px-4 py-3 text-sm font-medium text-text-secondary">
+                      Multiplicador SMMLV
+                    </td>
+                    <td class="px-4 py-3 text-sm text-text-primary">
+                      <span class="font-medium">{{ employee.multiplier || '-' }}x</span>
+                    </td>
+                  </tr>
+
+                  <!-- Fixed Amount Row (if fixed) -->
+                  <tr v-if="employee.salary_type === 'fixed'" class="hover:bg-surface-secondary/50 transition-colors">
+                    <td class="px-4 py-3 text-sm font-medium text-text-secondary">
+                      Monto Fijo
+                    </td>
+                    <td class="px-4 py-3 text-sm text-text-primary">
+                      <span class="font-bold text-primary text-lg">{{ formatCurrency(employee.fixed_amount || 0) }}</span>
+                    </td>
+                  </tr>
+
+                  <!-- Calculated Salary Row -->
+                  <tr class="hover:bg-surface-secondary/50 transition-colors">
+                    <td class="px-4 py-3 text-sm font-medium text-text-secondary">
+                      Salario Calculado
+                    </td>
+                    <td class="px-4 py-3 text-sm text-text-primary">
+                      <span class="font-bold text-primary text-lg">{{ employee.calculated_salary ? formatCurrency(employee.calculated_salary) : '-' }}</span>
+                    </td>
+                  </tr>
+
+                  <!-- Notes Row -->
+                  <tr class="hover:bg-surface-secondary/50 transition-colors">
+                    <td class="px-4 py-3 text-sm font-medium text-text-secondary">
+                      Notas
+                    </td>
+                    <td class="px-4 py-3 text-sm text-text-primary">
+                      <span class="font-medium">{{ employee.salary_notes || 'Sin notas' }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Edit Mode -->
+          <form v-else @submit.prevent="saveChanges">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <!-- Salary Type -->
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Tipo de Salario *
+                </label>
+                <select
+                  v-model="editForm.salaryType"
+                  required
+                  class="input-base w-full px-4 py-2"
+                >
+                  <option value="smmlv">Salario Mínimo (SMMLV)</option>
+                  <option value="fixed">Fijo</option>
+                  <option value="hourly">Por Hora</option>
+                </select>
+              </div>
+
+              <!-- Multiplier (if SMMLV) -->
+              <div v-if="editForm.salaryType === 'smmlv'">
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Multiplicador SMMLV *
+                </label>
+                <input
+                  type="number"
+                  v-model.number="editForm.minimumWageMultiplier"
+                  required
+                  step="0.1"
+                  min="0.5"
+                  class="input-base w-full px-4 py-2"
+                />
+              </div>
+
+              <!-- Fixed Amount (if fixed) -->
+              <div v-if="editForm.salaryType === 'fixed'">
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Monto Fijo *
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <input
+                    type="number"
+                    v-model.number="editForm.fixedAmount"
+                    required
+                    step="1000"
+                    min="0"
+                    class="input-base w-full pl-8 pr-4 py-2"
+                  />
+                </div>
+              </div>
+
+              <!-- Notes -->
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Notas (Opcional)
+                </label>
+                <textarea
+                  v-model="editForm.notes"
+                  rows="3"
+                  placeholder="Observaciones adicionales..."
+                  class="input-base w-full px-4 py-2 resize-none"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Error message -->
+            <div v-if="error" class="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-lg">
+              <p class="text-sm text-red-600 font-medium">{{ error }}</p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3 pt-4 border-t border-border">
+              <button
+                @click="cancelEdit"
+                type="button"
+                class="flex-1 px-4 py-2.5 border-2 border-border rounded-lg text-text-secondary hover:bg-background transition-colors font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                :disabled="isSubmitting"
+                class="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                {{ isSubmitting ? 'Guardando...' : 'Guardar Cambios' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Change History Table -->
+      <div v-if="payments && payments.length > 0" class="mt-6">
+        <EquipoSalaryChangeHistoryTable :payment-id="payments[0].id" />
+      </div>
+
+      <!-- Payments Table -->
+      <div class="bg-surface border-2 border-border rounded-lg mt-6">
+        <div class="p-4 sm:p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-base sm:text-lg font-semibold text-text-primary">Historial de Pagos</h3>
             <NuxtLink
               :to="`/equipo/salarios/${employeeId}/pago`"
-              class="px-5 py-2.5 bg-crocus-600 text-white rounded-xl hover:bg-crocus-700 font-bold flex items-center justify-center gap-2 shadow-sm"
+              class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
             >
-              <BanknotesIcon class="w-5 h-5" />
-              Registrar Pago
+              + Nuevo Pago
             </NuxtLink>
           </div>
-        </div>
-      </div>
 
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- 1. Configuration Card -->
-        <div class="bg-white border border-titan-200 rounded-xl overflow-hidden flex flex-col h-full shadow-sm">
-          <div class="bg-titan-50 px-6 py-4 border-b border-titan-200 flex justify-between items-center">
-            <h3 class="font-bold text-text-primary flex items-center gap-2">
-              <CurrencyDollarIcon class="w-5 h-5 text-crocus-500" />
-              Configuración Actual
-            </h3>
-            <span v-if="employee.salary_type" class="text-xs font-bold px-2 py-1 rounded bg-white border border-titan-200 text-titan-500 uppercase">
-              {{ employee.salary_type === 'smmlv' ? 'SMMLV' : 'FIJO' }}
-            </span>
+          <!-- Loading State -->
+          <div v-if="isLoadingPayments" class="flex justify-center py-8">
+            <CommonsTheCustomLoader size="medium" />
           </div>
-          
-          <div class="p-6 flex-1 flex flex-col justify-center">
-            <div v-if="employee.salary_type" class="space-y-4">
-              <div class="text-center">
-                <p class="text-xs font-bold text-text-tertiary uppercase tracking-wider mb-1">Salario Mensual</p>
-                <p class="text-3xl font-black text-text-primary">{{ formatCurrency(employee.calculated_salary) }}</p>
-                <p v-if="employee.salary_type === 'smmlv'" class="text-sm font-medium text-text-secondary mt-1">
-                  {{ employee.multiplier }}x Salarios Mínimos
-                </p>
-              </div>
-            </div>
-            <div v-else class="text-center py-4">
-              <div class="w-12 h-12 bg-titan-100 rounded-full flex items-center justify-center mx-auto mb-3 text-titan-400">
-                <ExclamationTriangleIcon class="w-6 h-6" />
-              </div>
-              <p class="text-text-secondary font-medium mb-3">Sin salario configurado</p>
-              <NuxtLink
-                :to="`/equipo/salarios/${employeeId}/configurar`"
-                class="text-crocus-600 font-bold hover:text-crocus-700 text-sm"
-              >
-                Configurar ahora &rarr;
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
 
-        <!-- 2. Annual Summary Card -->
-        <div class="bg-white border border-titan-200 rounded-xl overflow-hidden shadow-sm">
-          <div class="bg-titan-50 px-6 py-4 border-b border-titan-200">
-            <h3 class="font-bold text-text-primary flex items-center gap-2">
-              <CalendarDaysIcon class="w-5 h-5 text-blue-500" />
-              Resumen Anual
-            </h3>
+          <!-- Empty State -->
+          <div v-else-if="payments.length === 0" class="text-center py-8">
+            <p class="text-sm text-text-secondary">No hay pagos registrados</p>
           </div>
-          <div class="p-6 space-y-5">
-            <div>
-              <div class="flex justify-between items-end mb-1">
-                <p class="text-sm font-medium text-text-secondary">Total Pagado</p>
-                <span class="text-xs text-titan-400 font-mono">{{ new Date().getFullYear() }}</span>
-              </div>
-              <p class="text-2xl font-bold text-text-primary">{{ formatCurrency(stats.totalPaidYear) }}</p>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4 pt-4 border-t border-titan-100">
-              <div>
-                <p class="text-xs text-text-secondary mb-1">Pagos Totales</p>
-                <p class="text-lg font-bold text-text-primary">{{ stats.paymentsCount }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-text-secondary mb-1">Último Pago</p>
-                <p class="text-sm font-bold text-text-primary truncate">
-                  {{ stats.lastPaymentDate ? formatDate(stats.lastPaymentDate) : 'N/A' }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- 3. Current Month Status -->
-        <div class="bg-white border border-titan-200 rounded-xl overflow-hidden shadow-sm">
-          <div class="bg-titan-50 px-6 py-4 border-b border-titan-200">
-            <h3 class="font-bold text-text-primary flex items-center gap-2">
-              <ClipboardDocumentCheckIcon class="w-5 h-5 text-emerald-500" />
-              Este Mes
-            </h3>
-          </div>
-          <div class="p-6 space-y-6">
-            <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
-              <p class="text-xs font-bold text-emerald-700 uppercase mb-1">Pagado</p>
-              <p class="text-2xl font-black text-emerald-700">{{ formatCurrency(stats.paidThisMonth) }}</p>
-            </div>
-            
-            <div class="rounded-xl p-4 border" :class="stats.pendingThisMonth > 0 ? 'bg-amber-50 border-amber-100' : 'bg-titan-50 border-titan-100'">
-              <div class="flex justify-between items-start">
-                <div>
-                  <p class="text-xs font-bold uppercase mb-1" :class="stats.pendingThisMonth > 0 ? 'text-amber-700' : 'text-titan-500'">Pendiente</p>
-                  <p class="text-xl font-bold" :class="stats.pendingThisMonth > 0 ? 'text-amber-800' : 'text-titan-600'">
-                    {{ formatCurrency(stats.pendingThisMonth) }}
-                  </p>
-                </div>
-                <div v-if="stats.pendingThisMonth > 0">
-                  <NuxtLink :to="`/equipo/salarios/${employeeId}/pago`" class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded font-bold hover:bg-amber-200">
-                    Pagar
-                  </NuxtLink>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Payment History list -->
-      <div class="bg-white border border-titan-200 rounded-xl shadow-sm">
-        <div class="px-6 py-5 border-b border-titan-200 flex justify-between items-center">
-          <h3 class="font-bold text-text-primary flex items-center gap-2">
-            <ClockIcon class="w-5 h-5 text-titan-400" />
-            Historial de Pagos
-          </h3>
-          <span class="text-xs font-medium text-titan-500 bg-titan-50 px-2 py-1 rounded border border-titan-100">
-            {{ payments.length }} registros
-          </span>
-        </div>
-
-        <div v-if="payments.length === 0" class="text-center py-16 px-6">
-          <div class="w-16 h-16 bg-titan-50 rounded-full flex items-center justify-center mx-auto mb-4 text-titan-300">
-            <FolderOpenIcon class="w-8 h-8" />
-          </div>
-          <h4 class="text-lg font-bold text-text-primary mb-1">No hay historial</h4>
-          <p class="text-text-secondary mb-6 max-w-sm mx-auto">No se han registrado pagos para este empleado todavía.</p>
-          <NuxtLink
-            :to="`/equipo/salarios/${employeeId}/pago`"
-            class="inline-flex items-center gap-2 text-crocus-600 font-bold hover:text-crocus-700 bg-crocus-50 px-4 py-2 rounded-lg hover:bg-crocus-100"
-          >
-            <BanknotesIcon class="w-5 h-5" />
-            Registrar primer pago
-          </NuxtLink>
-        </div>
-
-        <!-- Rendered List -->
-        <div v-else class="divide-y divide-titan-100">
-          <div
-            v-for="payment in payments"
-            :key="payment.id"
-            class="p-6 hover:bg-titan-50"
-          >
-            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-              <!-- Left: Icon & Info -->
-              <div class="flex gap-4">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border"
-                  :class="{
-                    'bg-emerald-50 text-emerald-600 border-emerald-100': ['cash', 'transfer'].includes(payment.payment_method),
-                    'bg-blue-50 text-blue-600 border-blue-100': payment.payment_method === 'check',
-                    'bg-titan-50 text-titan-500 border-titan-200': payment.payment_method === 'other'
-                  }">
-                  <component :is="getPaymentIcon(payment.payment_method)" class="w-6 h-6" />
-                </div>
-                
-                <div>
-                  <div class="flex flex-wrap items-center gap-2 mb-1">
-                    <p class="font-bold text-text-primary text-lg">{{ formatCurrency(payment.payment_amount) }}</p>
-                    <span class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide border"
-                       :class="{
-                        'bg-emerald-50 text-emerald-700 border-emerald-100': ['cash', 'transfer'].includes(payment.payment_method),
-                        'bg-titan-50 text-titan-600 border-titan-200': !['cash', 'transfer'].includes(payment.payment_method)
-                      }">
-                      {{ formatPaymentMethod(payment.payment_method) }}
+          <!-- Payments Table -->
+          <div v-else class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-border">
+                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Período</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Fecha</th>
+                  <th class="text-right py-3 px-4 text-sm font-medium text-text-secondary">Monto</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Método</th>
+                  <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">Estado</th>
+                  <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">Archivos</th>
+                  <th class="text-center py-3 px-4 text-sm font-medium text-text-secondary">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="payment in payments"
+                  :key="payment.id"
+                  class="border-b border-border hover:bg-background transition-colors"
+                >
+                  <td class="py-3 px-4 text-sm text-text-primary">{{ payment.period_month }}</td>
+                  <td class="py-3 px-4 text-sm text-text-secondary">{{ formatDate(payment.payment_date) }}</td>
+                  <td class="py-3 px-4 text-sm text-primary text-right font-medium">{{ formatCurrency(payment.payment_amount) }}</td>
+                  <td class="py-3 px-4 text-sm text-text-secondary">{{ payment.payment_method }}</td>
+                  <td class="py-3 px-4">
+                    <span
+                      :class="{
+                        'bg-green-100 text-green-800': payment.status === 'paid',
+                        'bg-yellow-100 text-yellow-800': payment.status === 'pending',
+                        'bg-red-100 text-red-800': payment.status === 'cancelled'
+                      }"
+                      class="px-2 py-1 rounded-full text-xs font-medium"
+                    >
+                      {{ getStatusLabel(payment.status) }}
                     </span>
-                  </div>
-                  <p class="text-sm text-text-secondary flex items-center gap-1">
-                    <CalendarIcon class="w-3.5 h-3.5" />
-                    {{ formatDate(payment.payment_date) }}
-                  </p>
-                  
-                  <p v-if="payment.notes" class="text-sm text-text-secondary mt-2 p-2 bg-titan-50 rounded border border-titan-100 inline-block max-w-xl">
-                    {{ payment.notes }}
-                  </p>
-                </div>
-              </div>
-
-              <!-- Right: Meta & Attachments -->
-              <div class="flex flex-col items-end gap-2">
-                 <div v-if="payment.payment_reference" class="text-xs font-medium text-titan-500 flex items-center gap-1 bg-white border border-titan-200 px-2 py-1 rounded">
-                   <TagIcon class="w-3 h-3" />
-                   Ref: {{ payment.payment_reference }}
-                 </div>
-
-                 <!-- Attachments List -->
-                 <div v-if="payment.attachments?.length" class="flex flex-wrap justify-end gap-2 mt-1">
-                   <a
-                     v-for="attachment in payment.attachments"
-                     :key="attachment.id"
-                     :href="attachment.path"
-                     target="_blank"
-                     class="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-titan-200 rounded-lg text-xs font-bold text-text-secondary hover:text-crocus-600 hover:border-crocus-200 hover:bg-crocus-50 shadow-sm"
-                   >
-                     <PaperClipIcon class="w-3.5 h-3.5" />
-                     {{ attachment.file_name }}
-                   </a>
-                 </div>
-              </div>
-            </div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="flex items-center justify-center gap-2">
+                      <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                      </svg>
+                      <span class="text-sm text-text-secondary">{{ payment.attachments?.length || 0 }}</span>
+                    </div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="flex justify-center gap-2">
+                      <NuxtLink
+                        :to="`/equipo/salarios/pagos/${payment.id}`"
+                        class="text-text-secondary hover:text-primary transition-colors"
+                        title="Ver detalles"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </NuxtLink>
+                      <button
+                        v-if="payment.status === 'pending'"
+                        @click="markAsPaid(payment)"
+                        class="text-green-600 hover:text-green-700 transition-colors"
+                        title="Marcar como pagado"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
-
-<script setup>
-import { 
-  EnvelopeIcon, 
-  Cog6ToothIcon, 
-  BanknotesIcon, 
-  CurrencyDollarIcon, 
-  ExclamationTriangleIcon,
-  CalendarDaysIcon,
-  ClipboardDocumentCheckIcon,
-  ClockIcon,
-  FolderOpenIcon,
-  CalendarIcon,
-  TagIcon,
-  PaperClipIcon,
-  CreditCardIcon,
-  TicketIcon
-} from '@heroicons/vue/24/outline'
-
-const route = useRoute()
-const employeeId = route.params.id
-
-useHead({ title: 'Detalle Empleado - Salarios' })
-
-// Fetch employee data with salary and payments
-const { data: employeeData, pending: isLoading, error: fetchError } = useAsyncData(
-  `employee-salary-detail-${employeeId}`,
-  () => $fetch(`/api/salaries/employees/${employeeId}`),
-  {
-    server: false,
-    default: () => ({ success: false, data: null }),
-    transform: (response) => response?.data || null
-  }
-)
-
-const employee = computed(() => employeeData.value || {
-  name: 'Cargando...',
-  email: '',
-  initials: '...',
-  color: '#ccc',
-  role: '',
-  role_label: ''
-})
-
-const payments = computed(() => employeeData.value?.payments || [])
-
-const stats = computed(() => {
-  const data = employeeData.value
-  if (!data) return {
-    totalPaidYear: 0,
-    paymentsCount: 0,
-    lastPaymentDate: null,
-    paidThisMonth: 0,
-    pendingThisMonth: 0
-  }
-
-  const currentMonth = new Date().toISOString().slice(0, 7)
-  const paidThisMonth = (data.payments || [])
-    .filter(p => p.period_month === currentMonth)
-    .reduce((sum, p) => sum + (p.payment_amount || 0), 0)
-
-  return {
-    totalPaidYear: data.total_paid_this_year || 0,
-    paymentsCount: data.payments_count || 0,
-    lastPaymentDate: data.payments?.[0]?.payment_date || null,
-    paidThisMonth,
-    pendingThisMonth: Math.max(0, (data.calculated_salary || 0) - paidThisMonth)
-  }
-})
-
-const error = computed(() => fetchError.value ? 'Error al cargar los datos del empleado' : null)
-
-// Formatters
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(value || 0)
-}
-
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  return new Date(dateString).toLocaleDateString('es-CO', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
-}
-
-const formatPaymentMethod = (method) => {
-  const methods = {
-    transfer: 'Transferencia',
-    cash: 'Efectivo',
-    check: 'Cheque',
-    other: 'Otro'
-  }
-  return methods[method] || method
-}
-
-// Icon helper
-const getPaymentIcon = (method) => {
-  switch (method) {
-    case 'cash': return BanknotesIcon
-    case 'transfer': return CreditCardIcon
-    case 'check': return TicketIcon
-    default: return CurrencyDollarIcon
-  }
-}
-</script>
