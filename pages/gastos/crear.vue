@@ -604,59 +604,33 @@ const handleSubmit = async () => {
 
   isSubmitting.value = true
   try {
-    // Use FormData if files are present
-    if (selectedFiles.value.length > 0) {
-      const formData = new FormData()
-      formData.append('transactionDate', form.transactionDate)
-      formData.append('expenseCategoryId', form.expenseCategoryId)
-      formData.append('description', form.description || '')
-      formData.append('amount', String(form.amount))
+    // Always use FormData (backend expects Form parameters)
+    const formData = new FormData()
+    formData.append('transactionDate', form.transactionDate)
+    formData.append('expenseCategoryId', form.expenseCategoryId)
+    formData.append('description', form.description || '')
+    formData.append('amount', String(form.amount))
 
-      // Append recurring fields if applicable
-      if (form.isRecurring) {
-        formData.append('isRecurring', 'true')
-        formData.append('frequency', form.frequency)
-        if (form.recurringEndDate) {
-          formData.append('recurringEndDate', form.recurringEndDate)
-        }
+    // Append recurring fields
+    formData.append('isRecurring', form.isRecurring ? 'true' : 'false')
+    if (form.isRecurring) {
+      formData.append('frequency', form.frequency)
+      if (form.recurringEndDate) {
+        formData.append('recurringEndDate', form.recurringEndDate)
       }
-
-      // Append files
-      selectedFiles.value.forEach(file => {
-        formData.append('files', file)
-      })
-
-      const response = await $fetch('/api/finance/expenses', {
-        method: 'POST',
-        body: formData
-      })
-
-      console.log('Expense created successfully with files:', response)
-    } else {
-      // No files - use JSON
-      const payload: any = {
-        transactionDate: form.transactionDate,
-        expenseCategoryId: form.expenseCategoryId,
-        description: form.description,
-        amount: Number(form.amount)
-      }
-
-      // Add recurring fields if applicable
-      if (form.isRecurring) {
-        payload.isRecurring = true
-        payload.frequency = form.frequency
-        if (form.recurringEndDate) {
-          payload.recurringEndDate = form.recurringEndDate
-        }
-      }
-
-      const response = await $fetch('/api/finance/expenses', {
-        method: 'POST',
-        body: payload
-      })
-
-      console.log('Expense created successfully:', response)
     }
+
+    // Append files if present
+    selectedFiles.value.forEach(file => {
+      formData.append('files', file)
+    })
+
+    const response = await $fetch('/api/finance/expenses', {
+      method: 'POST',
+      body: formData
+    })
+
+    console.log('Expense created successfully:', response)
     
     // Success - redirect to list
     navigateTo('/gastos')
