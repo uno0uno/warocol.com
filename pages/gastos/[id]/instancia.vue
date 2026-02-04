@@ -75,29 +75,41 @@ const createInstance = async () => {
   error.value = null
 
   try {
-    const formData = new FormData()
-    formData.append('periodMonth', instanceForm.periodMonth)
-    formData.append('scheduledDate', instanceForm.scheduledDate)
-    formData.append('status', 'pending')
+    const payload = {
+      periodMonth: instanceForm.periodMonth,
+      scheduledDate: instanceForm.scheduledDate,
+      status: 'pending'
+    }
 
     if (instanceForm.amount !== null && instanceForm.amount > 0) {
-      formData.append('amount', instanceForm.amount.toString())
+      payload.amount = instanceForm.amount
     } else if (expense.value?.amount) {
-      formData.append('amount', expense.value.amount.toString())
+      payload.amount = expense.value.amount
     }
 
     if (instanceForm.notes) {
-      formData.append('notes', instanceForm.notes)
+      payload.notes = instanceForm.notes
     }
 
-    instanceForm.selectedFiles.forEach(file => {
-      formData.append('files', file)
+    const response = await $fetch(`/api/finance/expenses/${expenseId}/instances`, {
+      method: 'POST',
+      body: payload
     })
 
-    await $fetch(`/api/finance/expenses/${expenseId}/instances`, {
-      method: 'POST',
-      body: formData
-    })
+    // Upload files separately if present
+    if (instanceForm.selectedFiles.length > 0 && response.data?.id) {
+      try {
+        const formData = new FormData()
+        instanceForm.selectedFiles.forEach(file => formData.append('files', file))
+        await $fetch(`/api/finance/expenses/instances/${response.data.id}/attachments`, {
+          method: 'POST',
+          body: formData
+        })
+      } catch (fileError) {
+        console.error('Error uploading files:', fileError)
+        // Continue even if file upload fails
+      }
+    }
 
     // Navigate back to expense detail
     router.push(`/gastos/${expenseId}`)

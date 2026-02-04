@@ -123,8 +123,6 @@ const saveChanges = async () => {
   error.value = null
 
   try {
-    const formData = new FormData()
-
     // Build config object
     const config = {
       salary_type: editForm.salaryType,
@@ -185,13 +183,14 @@ const deleteEmployee = async () => {
 
 const markAsPaid = async (payment: any) => {
   try {
-    const formData = new FormData()
-    formData.append('status', 'paid')
-    formData.append('payment_date', new Date().toISOString())
+    const payload = {
+      status: 'paid',
+      payment_date: new Date().toISOString()
+    }
 
     await $fetch(`/api/team/salaries/payments/${payment.id}`, {
       method: 'PUT',
-      body: formData
+      body: payload
     })
 
     await refreshPayments()

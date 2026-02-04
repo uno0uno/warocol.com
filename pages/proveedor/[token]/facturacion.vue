@@ -486,20 +486,32 @@ async function submitLegalInvoice() {
   try {
     isSubmitting.value = true
 
-    const formData = new FormData()
-    formData.append('purchase_ids', selectedInvoices.value.map(inv => inv.id).join(','))
-    formData.append('legal_invoice_number', legalInvoiceForm.value.number)
-    formData.append('legal_invoice_date', new Date(legalInvoiceForm.value.date).toISOString())
-
-    // Append files
-    legalInvoiceForm.value.files.forEach(file => {
-      formData.append('files', file)
-    })
+    const payload = {
+      purchase_ids: selectedInvoices.value.map(inv => inv.id).join(','),
+      legal_invoice_number: legalInvoiceForm.value.number,
+      legal_invoice_date: new Date(legalInvoiceForm.value.date).toISOString()
+    }
 
     const response = await $fetch(`/api/supplier-portal/${token.value}/invoices/attach-legal`, {
       method: 'POST',
-      body: formData
+      body: payload
     })
+
+    // Upload files separately if present
+    if (legalInvoiceForm.value.files.length > 0 && response.data?.id) {
+      try {
+        const formData = new FormData()
+        legalInvoiceForm.value.files.forEach(file => {
+          formData.append('files', file)
+        })
+        await $fetch(`/api/supplier-portal/${token.value}/invoices/${response.data.id}/attachments`, {
+          method: 'POST',
+          body: formData
+        })
+      } catch (fileError) {
+        console.error('Error uploading files:', fileError)
+      }
+    }
 
     // Refresh data and clear selection
     await refresh()

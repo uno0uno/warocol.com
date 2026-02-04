@@ -131,32 +131,33 @@ const cancelEdit = () => {
 const saveChanges = async () => {
   isSubmitting.value = true
   try {
-    const formData = new FormData()
-    formData.append('payment_amount', editForm.value.payment_amount.toString())
+    const payload: any = {
+      payment_amount: editForm.value.payment_amount
+    }
 
     if (editForm.value.payment_date) {
-      formData.append('payment_date', editForm.value.payment_date)
+      payload.payment_date = editForm.value.payment_date
     }
 
     if (editForm.value.payment_method) {
-      formData.append('payment_method', editForm.value.payment_method)
+      payload.payment_method = editForm.value.payment_method
     }
 
     if (editForm.value.payment_reference) {
-      formData.append('payment_reference', editForm.value.payment_reference)
+      payload.payment_reference = editForm.value.payment_reference
     }
 
     if (editForm.value.notes) {
-      formData.append('notes', editForm.value.notes)
+      payload.notes = editForm.value.notes
     }
 
     if (editForm.value.status) {
-      formData.append('status', editForm.value.status)
+      payload.status = editForm.value.status
     }
 
     await $fetch(`/api/team/salaries/payments/${paymentId}`, {
       method: 'PUT',
-      body: formData
+      body: payload
     })
 
     await refresh()
@@ -174,13 +175,14 @@ const markAsPaid = async () => {
 
   isSubmitting.value = true
   try {
-    const formData = new FormData()
-    formData.append('status', 'paid')
-    formData.append('payment_date', new Date().toISOString())
+    const payload = {
+      status: 'paid',
+      payment_date: new Date().toISOString()
+    }
 
     await $fetch(`/api/team/salaries/payments/${paymentId}`, {
       method: 'PUT',
-      body: formData
+      body: payload
     })
 
     await refresh()

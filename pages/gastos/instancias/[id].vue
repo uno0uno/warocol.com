@@ -424,10 +424,10 @@ const markAsPaid = async () => {
     const paymentDate = new Date().toISOString()
     await $fetch(`/api/finance/expenses/instances/${instanceId}`, {
       method: 'PUT',
-      body: new URLSearchParams({
+      body: {
         status: 'paid',
         paymentDate: paymentDate
-      })
+      }
     })
     await refresh()
   } catch (error: any) {

@@ -1023,39 +1023,48 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    const formData = new FormData()
-
-    formData.append('items_data', JSON.stringify(form.value.items.map(item => ({
-      id: item.id,
-      ingredient_id: item.ingredient_id,
-      quantity: item.purchase_quantity,
-      purchase_quantity: item.purchase_quantity,
-      purchase_unit: item.purchase_unit,
-      unit_cost: item.unit_cost,
-      notes: item.notes
-    }))))
-
-    if (form.value.notes) formData.append('notes', form.value.notes)
-    if (form.value.invoice_number) formData.append('invoice_number', form.value.invoice_number)
-    if (form.value.payment_method) {
-      formData.append('payment_method', form.value.payment_method)
-      formData.append('payment_amount', totalAmount.value.toString())
-      formData.append('payment_date', new Date().toISOString())
+    const payload = {
+      items_data: JSON.stringify(form.value.items.map(item => ({
+        id: item.id,
+        ingredient_id: item.ingredient_id,
+        quantity: item.purchase_quantity,
+        purchase_quantity: item.purchase_quantity,
+        purchase_unit: item.purchase_unit,
+        unit_cost: item.unit_cost,
+        notes: item.notes
+      })))
     }
-    if (form.value.payment_reference) formData.append('payment_reference', form.value.payment_reference)
 
-    // Add new files
-    form.value.invoice_files.forEach(file => {
-      formData.append('invoice_files', file)
-    })
-    form.value.payment_files.forEach(file => {
-      formData.append('payment_files', file)
-    })
+    if (form.value.notes) payload.notes = form.value.notes
+    if (form.value.invoice_number) payload.invoice_number = form.value.invoice_number
+    if (form.value.payment_method) {
+      payload.payment_method = form.value.payment_method
+      payload.payment_amount = totalAmount.value
+      payload.payment_date = new Date().toISOString()
+    }
+    if (form.value.payment_reference) payload.payment_reference = form.value.payment_reference
 
     const response = await $fetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
       method: 'PUT',
-      body: formData
-    }) as any
+      body: payload
+    })
+
+    // Upload files if present
+    if ((form.value.invoice_files?.length > 0 || form.value.payment_files?.length > 0) && response.data?.id) {
+      try {
+        const formData = new FormData()
+        form.value.invoice_files?.forEach(file => formData.append('invoice_files', file))
+        form.value.payment_files?.forEach(file => formData.append('payment_files', file))
+
+        await $fetch(`/api/suppliers/purchases/direct/${response.data.id}/attachments`, {
+          method: 'POST',
+          body: formData
+        })
+      } catch (fileError) {
+        console.error('Error uploading files:', fileError)
+        alert('Compra actualizada, pero hubo un error al subir los archivos')
+      }
+    }
 
     if (response.success) {
       await navigateTo(`/abastecimiento/compras-directas/${purchaseId}`)

@@ -726,20 +726,21 @@ const saveChanges = async () => {
   isSaving.value = true
 
   try {
-    const formData = new FormData()
-    formData.append('items_data', JSON.stringify(editItems.value.map(item => ({
-      ingredient_id: item.ingredient_id,
-      quantity: item.purchase_quantity,
-      unit_cost: item.unit_cost,
-      purchase_quantity: item.purchase_quantity,
-      purchase_unit: item.purchase_unit,
-      notes: item.notes
-    }))))
-    formData.append('notes', editNotes.value || '')
+    const payload = {
+      items_data: JSON.stringify(editItems.value.map(item => ({
+        ingredient_id: item.ingredient_id,
+        quantity: item.purchase_quantity,
+        unit_cost: item.unit_cost,
+        purchase_quantity: item.purchase_quantity,
+        purchase_unit: item.purchase_unit,
+        notes: item.notes
+      }))),
+      notes: editNotes.value || ''
+    }
 
     await $fetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
       method: 'PUT',
-      body: formData
+      body: payload
     })
 
     toast.success('Cambios guardados exitosamente', { title: 'Guardado' })

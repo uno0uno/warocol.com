@@ -773,33 +773,43 @@ const handleSubmit = async () => {
 
   isSubmitting.value = true
   try {
-    // Use FormData as backend expects Form(...) parameters
-    const formData = new FormData()
-    formData.append('transactionDate', form.transactionDate)
-    formData.append('expenseCategoryId', form.expenseCategoryId)
-    formData.append('description', form.description)
-    formData.append('amount', String(form.amount))
-
-    // Append recurring fields if applicable
-    if (form.isRecurring) {
-      formData.append('isRecurring', 'true')
-      formData.append('frequency', form.frequency)
-      if (form.recurringEndDate) {
-        formData.append('recurringEndDate', form.recurringEndDate)
-      }
-    } else {
-      formData.append('isRecurring', 'false')
+    // Create JSON payload
+    const payload: any = {
+      transactionDate: form.transactionDate,
+      expenseCategoryId: form.expenseCategoryId,
+      description: form.description,
+      amount: form.amount
     }
 
-    // Append new files
-    selectedFiles.value.forEach(file => {
-      formData.append('files', file)
-    })
+    // Add recurring fields if applicable
+    if (form.isRecurring) {
+      payload.isRecurring = true
+      payload.frequency = form.frequency
+      if (form.recurringEndDate) {
+        payload.recurringEndDate = form.recurringEndDate
+      }
+    } else {
+      payload.isRecurring = false
+    }
 
     await $fetch(`/api/finance/expenses/${expenseId}`, {
       method: 'PUT',
-      body: formData
+      body: payload
     })
+
+    // Upload new files separately if present
+    if (selectedFiles.value.length > 0) {
+      try {
+        const formData = new FormData()
+        selectedFiles.value.forEach(file => formData.append('files', file))
+        await $fetch(`/api/finance/expenses/${expenseId}/attachments`, {
+          method: 'POST',
+          body: formData
+        })
+      } catch (fileError) {
+        console.error('Error uploading files:', fileError)
+      }
+    }
 
     // Delete removed attachments
     for (const attachmentId of attachmentsToRemove.value) {
@@ -905,10 +915,10 @@ const markAsPaid = async (instance: any) => {
     const paymentDate = new Date().toISOString()
     await $fetch(`/api/finance/expenses/instances/${instance.id}`, {
       method: 'PUT',
-      body: new URLSearchParams({
+      body: {
         status: 'paid',
         paymentDate: paymentDate
-      })
+      }
     })
     await refreshInstances()
   } catch (error: any) {
