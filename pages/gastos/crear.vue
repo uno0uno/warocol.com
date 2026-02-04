@@ -604,33 +604,42 @@ const handleSubmit = async () => {
 
   isSubmitting.value = true
   try {
-    // Always use FormData (backend expects Form parameters)
-    const formData = new FormData()
-    formData.append('transactionDate', form.transactionDate)
-    formData.append('expenseCategoryId', form.expenseCategoryId)
-    formData.append('description', form.description || '')
-    formData.append('amount', String(form.amount))
-
-    // Append recurring fields
-    formData.append('isRecurring', form.isRecurring ? 'true' : 'false')
-    if (form.isRecurring) {
-      formData.append('frequency', form.frequency)
-      if (form.recurringEndDate) {
-        formData.append('recurringEndDate', form.recurringEndDate)
-      }
+    // Build JSON payload (backend now expects JSON)
+    const payload = {
+      transactionDate: form.transactionDate,
+      expenseCategoryId: form.expenseCategoryId,
+      description: form.description || '',
+      amount: form.amount,
+      isRecurring: form.isRecurring,
+      frequency: form.isRecurring ? form.frequency : null,
+      recurringEndDate: form.isRecurring && form.recurringEndDate ? form.recurringEndDate : null
     }
-
-    // Append files if present
-    selectedFiles.value.forEach(file => {
-      formData.append('files', file)
-    })
 
     const response = await $fetch('/api/finance/expenses', {
       method: 'POST',
-      body: formData
+      body: payload
     })
 
     console.log('Expense created successfully:', response)
+
+    // If there are files, upload them separately
+    if (selectedFiles.value.length > 0 && response.data?.id) {
+      try {
+        const formData = new FormData()
+        selectedFiles.value.forEach(file => {
+          formData.append('files', file)
+        })
+
+        await $fetch(`/api/finance/expenses/${response.data.id}/attachments`, {
+          method: 'POST',
+          body: formData
+        })
+      } catch (fileError) {
+        console.error('Error uploading files:', fileError)
+        // Don't fail the whole operation, just warn
+        alert('Gasto creado, pero hubo un error al subir los archivos')
+      }
+    }
     
     // Success - redirect to list
     navigateTo('/gastos')

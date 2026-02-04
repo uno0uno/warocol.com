@@ -209,16 +209,17 @@ const handleSubmit = async () => {
 
   isSubmitting.value = true
   try {
-    // Use FormData as backend expects Form(...) parameters
-    const formData = new FormData()
-    formData.append('transactionDate', form.transactionDate)
-    formData.append('expenseCategoryId', form.expenseCategoryId)
-    formData.append('description', form.description)
-    formData.append('amount', String(form.amount))
+    // Send JSON payload
+    const payload = {
+      transactionDate: form.transactionDate,
+      expenseCategoryId: form.expenseCategoryId,
+      description: form.description,
+      amount: form.amount
+    }
 
     await $fetch(`/api/finance/expenses/${expenseId}`, {
       method: 'PUT',
-      body: formData
+      body: payload
     })
 
     // Success - redirect to detail

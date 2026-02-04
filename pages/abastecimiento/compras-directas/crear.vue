@@ -1154,41 +1154,52 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    const formData = new FormData()
+    // Build JSON payload
+    const payload = {
+      supplier_id: form.value.supplier_id,
+      items_data: JSON.stringify(form.value.items.map(item => ({
+        ingredient_id: item.ingredient_id,
+        quantity: item.purchase_quantity,
+        purchase_quantity: item.purchase_quantity,
+        purchase_unit: item.purchase_unit,
+        unit_cost: item.unit_cost,
+        notes: item.notes
+      }))),
+      payment_type: form.value.payment_type
+    }
 
-    formData.append('supplier_id', form.value.supplier_id)
-    formData.append('items_data', JSON.stringify(form.value.items.map(item => ({
-      ingredient_id: item.ingredient_id,
-      quantity: item.purchase_quantity,
-      purchase_quantity: item.purchase_quantity,
-      purchase_unit: item.purchase_unit,
-      unit_cost: item.unit_cost,
-      notes: item.notes
-    }))))
-    formData.append('payment_type', form.value.payment_type)
-
-    if (form.value.notes) formData.append('notes', form.value.notes)
-    if (form.value.invoice_number) formData.append('invoice_number', form.value.invoice_number)
+    if (form.value.notes) payload.notes = form.value.notes
+    if (form.value.invoice_number) payload.invoice_number = form.value.invoice_number
     if (form.value.payment_method) {
-      formData.append('payment_method', form.value.payment_method)
-      formData.append('payment_amount', totalAmount.value.toString())
-      formData.append('payment_date', new Date().toISOString())
+      payload.payment_method = form.value.payment_method
+      payload.payment_amount = totalAmount.value
+      payload.payment_date = new Date().toISOString()
     }
-    if (form.value.payment_reference) formData.append('payment_reference', form.value.payment_reference)
-
-    if (form.value.invoice_file) {
-      formData.append('invoice_files', form.value.invoice_file)
-    }
-    if (form.value.payment_file) {
-      formData.append('payment_files', form.value.payment_file)
-    }
+    if (form.value.payment_reference) payload.payment_reference = form.value.payment_reference
 
     const response = await $fetch('/api/suppliers/purchases/direct', {
       method: 'POST',
-      body: formData
-    }) as any
+      body: payload
+    })
 
     if (response.success) {
+      // Upload files if present
+      if ((form.value.invoice_file || form.value.payment_file) && response.data?.id) {
+        try {
+          const formData = new FormData()
+          if (form.value.invoice_file) formData.append('invoice_files', form.value.invoice_file)
+          if (form.value.payment_file) formData.append('payment_files', form.value.payment_file)
+
+          await $fetch(`/api/suppliers/purchases/direct/${response.data.id}/attachments`, {
+            method: 'POST',
+            body: formData
+          })
+        } catch (fileError) {
+          console.error('Error uploading files:', fileError)
+          alert('Compra creada, pero hubo un error al subir los archivos')
+        }
+      }
+
       // Navigate to the created purchase
       await navigateTo(`/abastecimiento/compras-directas/${response.data.id}`)
     }

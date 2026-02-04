@@ -341,30 +341,44 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    // Create FormData for file upload
-    const formData = new FormData()
-    formData.append('tenant_member_id', employeeId)
-    formData.append('payment_amount', form.payment_amount)
-    formData.append('payment_method', form.payment_method)
-    formData.append('payment_date', form.payment_date)
-    formData.append('period_month', form.period_month)
+    // Build JSON payload
+    const payload = {
+      tenant_member_id: employeeId,
+      payment_amount: form.payment_amount,
+      payment_method: form.payment_method,
+      payment_date: form.payment_date,
+      period_month: form.period_month
+    }
 
     if (form.payment_reference) {
-      formData.append('payment_reference', form.payment_reference)
+      payload.payment_reference = form.payment_reference
     }
     if (form.notes) {
-      formData.append('notes', form.notes)
+      payload.notes = form.notes
     }
 
-    // Add attachments
-    form.attachments.forEach((file, index) => {
-      formData.append(`attachments`, file)
+    const response = await $fetch('/api/salaries/payments', {
+      method: 'POST',
+      body: payload
     })
 
-    await $fetch('/api/salaries/payments', {
-      method: 'POST',
-      body: formData
-    })
+    // Upload attachments if present
+    if (form.attachments.length > 0 && response.data?.id) {
+      try {
+        const formData = new FormData()
+        form.attachments.forEach((file) => {
+          formData.append('attachments', file)
+        })
+
+        await $fetch(`/api/salaries/payments/${response.data.id}/attachments`, {
+          method: 'POST',
+          body: formData
+        })
+      } catch (fileError) {
+        console.error('Error uploading files:', fileError)
+        toast.error('Pago registrado, pero hubo un error al subir los archivos')
+      }
+    }
 
     toast.success('Pago registrado correctamente')
     clearNuxtData(`employee-salary-detail-${employeeId}`)
