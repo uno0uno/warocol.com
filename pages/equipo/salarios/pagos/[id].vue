@@ -33,7 +33,7 @@ const editForm = ref({
 // Fetch payment data
 const { data: paymentData, error, refresh, pending } = useAsyncData(
   `salary-payment-${paymentId}`,
-  () => $fetch(`/api/team/salaries/payments/${paymentId}`),
+  () => $fetch(`/api/salaries/payments/${paymentId}`),
   {
     server: false,
     watch: [currentTenant]
@@ -155,7 +155,7 @@ const saveChanges = async () => {
       payload.status = editForm.value.status
     }
 
-    await $fetch(`/api/team/salaries/payments/${paymentId}`, {
+    await $fetch(`/api/salaries/payments/${paymentId}`, {
       method: 'PUT',
       body: payload
     })
@@ -180,7 +180,7 @@ const markAsPaid = async () => {
       payment_date: new Date().toISOString()
     }
 
-    await $fetch(`/api/team/salaries/payments/${paymentId}`, {
+    await $fetch(`/api/salaries/payments/${paymentId}`, {
       method: 'PUT',
       body: payload
     })
@@ -233,9 +233,9 @@ const uploadFiles = async () => {
       formData.append('files', file)
     })
 
-    console.log('Sending POST request to:', `/api/team/salaries/payments/${paymentId}/attachments`)
+    console.log('Sending POST request to:', `/api/salaries/payments/${paymentId}/attachments`)
 
-    const response = await $fetch(`/api/team/salaries/payments/${paymentId}/attachments`, {
+    const response = await $fetch(`/api/salaries/payments/${paymentId}/attachments`, {
       method: 'POST',
       body: formData
     })
@@ -258,7 +258,7 @@ const deleteAttachment = async (attachmentId: string) => {
   if (!confirm('¿Eliminar este archivo?')) return
 
   try {
-    await $fetch(`/api/team/salaries/payments/attachments/${attachmentId}`, {
+    await $fetch(`/api/salaries/payments/attachments/${attachmentId}`, {
       method: 'DELETE'
     })
     await refresh()

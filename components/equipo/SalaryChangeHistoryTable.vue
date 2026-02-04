@@ -15,7 +15,7 @@ const fetchHistory = async () => {
   error.value = null
 
   try {
-    const response = await $fetch(`/api/team/salaries/payments/${props.paymentId}/history`)
+    const response = await $fetch(`/api/salaries/payments/${props.paymentId}/history`)
     history.value = response || []
   } catch (err: any) {
     console.error('Error fetching history:', err)

@@ -17,7 +17,7 @@ const localSearchTerm = ref('')
 // Fetch employees with salary data
 const { data: employeesData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
   `employees-salaries-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/team/salaries/employees'),
+  () => $fetch('/api/salaries/employees'),
   {
     server: false,
     watch: [currentTenant],

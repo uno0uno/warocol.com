@@ -25,7 +25,7 @@ const isDeleting = ref(false)
 // Fetch employee data
 const { data: employeeData, pending: employeePending, refresh, error: fetchError } = useAsyncData(
   `employee-salary-${employeeId}`,
-  () => $fetch(`/api/team/salaries/employees/${employeeId}`),
+  () => $fetch(`/api/salaries/employees/${employeeId}`),
   {
     server: false,
     watch: [currentTenant]
@@ -41,7 +41,7 @@ const { data: paymentsData, pending: paymentsPending, refresh: refreshPayments }
   async () => {
     if (!employee.value) return { data: [] }
     try {
-      const response = await $fetch(`/api/team/salaries/payments`, {
+      const response = await $fetch(`/api/salaries/payments`, {
         params: { employee_id: employeeId }
       })
       return response
@@ -132,7 +132,7 @@ const saveChanges = async () => {
     }
 
     // Send as JSON
-    await $fetch(`/api/team/salaries/employees/${employeeId}/config`, {
+    await $fetch(`/api/salaries/employees/${employeeId}/config`, {
       method: 'POST',
       body: config
     })
@@ -140,7 +140,7 @@ const saveChanges = async () => {
     // Handle attachment deletions
     for (const attachmentId of attachmentsToRemove.value) {
       try {
-        await $fetch(`/api/team/salaries/attachments/${attachmentId}`, {
+        await $fetch(`/api/salaries/attachments/${attachmentId}`, {
           method: 'DELETE'
         })
       } catch (err) {
@@ -188,7 +188,7 @@ const markAsPaid = async (payment: any) => {
       payment_date: new Date().toISOString()
     }
 
-    await $fetch(`/api/team/salaries/payments/${payment.id}`, {
+    await $fetch(`/api/salaries/payments/${payment.id}`, {
       method: 'PUT',
       body: payload
     })
