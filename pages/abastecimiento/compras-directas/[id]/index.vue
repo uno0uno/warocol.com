@@ -795,23 +795,17 @@ const uploadFile = async (file: File, type: 'invoice' | 'payment') => {
 
   try {
     const formData = new FormData()
-    formData.append('items_data', JSON.stringify(purchase.value.items.map((item: any) => ({
-      ingredient_id: item.ingredient_id,
-      quantity: item.quantity,
-      unit_cost: item.unit_cost,
-      purchase_quantity: item.purchase_quantity,
-      purchase_unit: item.purchase_unit,
-      notes: item.notes
-    }))))
 
+    // Append file to appropriate field
     if (type === 'invoice') {
       formData.append('invoice_files', file)
     } else {
       formData.append('payment_files', file)
     }
 
-    await $fetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
-      method: 'PUT',
+    // Use correct endpoint: POST to /attachments
+    await $fetch(`/api/suppliers/purchases/direct/${purchaseId}/attachments`, {
+      method: 'POST',
       body: formData
     })
 

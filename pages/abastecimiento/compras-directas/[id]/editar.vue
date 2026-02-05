@@ -1017,12 +1017,14 @@ const previousStep = () => {
 }
 
 // Submit
+// Submit
 const handleSubmit = async () => {
   if (!isStepValid.value) return
 
   isSubmitting.value = true
 
   try {
+    // 1. Prepare JSON payload for update
     const payload = {
       items_data: JSON.stringify(form.value.items.map(item => ({
         id: item.id,
@@ -1032,29 +1034,36 @@ const handleSubmit = async () => {
         purchase_unit: item.purchase_unit,
         unit_cost: item.unit_cost,
         notes: item.notes
-      })))
+      }))),
+      notes: form.value.notes,
+      invoice_number: form.value.invoice_number,
+      payment_method: form.value.payment_method || null,
+      payment_reference: form.value.payment_reference || null,
+      payment_amount: form.value.payment_method ? Number(totalAmount.value) : null,
+      payment_date: form.value.payment_method ? new Date().toISOString() : null
     }
 
-    if (form.value.notes) payload.notes = form.value.notes
-    if (form.value.invoice_number) payload.invoice_number = form.value.invoice_number
-    if (form.value.payment_method) {
-      payload.payment_method = form.value.payment_method
-      payload.payment_amount = totalAmount.value
-      payload.payment_date = new Date().toISOString()
-    }
-    if (form.value.payment_reference) payload.payment_reference = form.value.payment_reference
-
+    // 2. Update Direct Purchase (PUT - JSON)
     const response = await $fetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
       method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: payload
     })
 
-    // Upload files if present
+    // 3. Upload files if present (POST - Multipart)
     if ((form.value.invoice_files?.length > 0 || form.value.payment_files?.length > 0) && response.data?.id) {
       try {
         const formData = new FormData()
-        form.value.invoice_files?.forEach(file => formData.append('invoice_files', file))
-        form.value.payment_files?.forEach(file => formData.append('payment_files', file))
+        
+        if (form.value.invoice_files?.length) {
+          form.value.invoice_files.forEach(file => formData.append('invoice_files', file))
+        }
+        
+        if (form.value.payment_files?.length) {
+          form.value.payment_files.forEach(file => formData.append('payment_files', file))
+        }
 
         await $fetch(`/api/suppliers/purchases/direct/${response.data.id}/attachments`, {
           method: 'POST',
@@ -1062,7 +1071,8 @@ const handleSubmit = async () => {
         })
       } catch (fileError) {
         console.error('Error uploading files:', fileError)
-        alert('Compra actualizada, pero hubo un error al subir los archivos')
+        const msg = fileError.response?._data?.detail || fileError.message || 'Error desconocido'
+        alert(`Compra actualizada, pero error subiendo archivos: ${msg}`)
       }
     }
 
