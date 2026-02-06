@@ -1,5 +1,5 @@
 <template>
-  <div class="index-page">
+  <div class="index-page animate-fade-in">
     <!-- Animated Food Background -->
     <div class="food-bg">
         <div class="food-item">🍞</div>

@@ -5,17 +5,29 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   // Define public routes that don't require authentication
   const publicRoutes = ['/auth/login', '/auth/verify', '/'] // Add other public routes as needed
 
-  // If the user is trying to access a public route, do nothing.
-  // Also, allow access to any route starting with /auth/, /proveedor/ (supplier portal), or /blog/
-  if (publicRoutes.includes(to.path) || to.path.startsWith('/auth/') || to.path.startsWith('/proveedor/') || to.path.startsWith('/blog')) {
-    return
-  }
+  // Check if route uses public-restaurant layout (for tenant public pages)
+  const isPublicRestaurant = to.meta?.layout === 'public-restaurant'
 
   const authStore = useAuthStore()
 
+  // If user already has a valid session and tries to access login, redirect to ventas
+  if (authStore.isSessionValid && to.path === '/auth/login') {
+    return navigateTo('/ventas')
+  }
+
+  // If the user is trying to access a public route, do nothing.
+  // Also, allow access to any route starting with /auth/, /proveedor/ (supplier portal), or /blog/
+  // Or if the route uses the public-restaurant layout
+  if (publicRoutes.includes(to.path) ||
+      to.path.startsWith('/auth/') ||
+      to.path.startsWith('/proveedor/') ||
+      to.path.startsWith('/blog') ||
+      isPublicRestaurant) {
+    return
+  }
+
   // ✅ Check if we already have a valid session in the store
   if (authStore.isSessionValid) {
-
     return
   }
 

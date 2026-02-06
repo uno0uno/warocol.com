@@ -96,134 +96,106 @@
         </NuxtLink>
       </div>
 
-      <!-- Sección Operaciones -->
-      <div class="space-y-1 pt-4">
-        <span v-if="!collapsed" class="px-3 text-[10px] text-titan-500/70 uppercase tracking-widest font-medium">Operaciones</span>
-        <NuxtLink
-          to="/abastecimiento/proveedores"
-          :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-            collapsed ? 'justify-center' : '',
-            activePage === 'abastecimiento'
-              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-          ]"
-          :title="collapsed ? 'Abastecimiento' : ''"
+      <!-- Sección Operaciones (colapsable) -->
+      <div class="pt-4">
+        <button
+          v-if="!collapsed"
+          @click="sections.operaciones = !sections.operaciones"
+          class="w-full flex items-center justify-between px-3 py-1 group"
         >
-          <TruckIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'abastecimiento' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-          <span v-if="!collapsed" class="whitespace-nowrap">Abastecimiento</span>
-        </NuxtLink>
+          <span class="text-[10px] text-titan-500/70 uppercase tracking-widest font-medium group-hover:text-titan-400 transition-colors">Operaciones</span>
+          <ChevronDownIcon :class="['w-3 h-3 text-titan-500/70 transition-transform duration-200', sections.operaciones ? '' : '-rotate-90']" />
+        </button>
+        <div :class="['overflow-hidden transition-all duration-200 space-y-1', !collapsed && !sections.operaciones ? 'max-h-0 opacity-0' : 'max-h-40 opacity-100']">
+          <NuxtLink
+            to="/abastecimiento/proveedores"
+            :class="[
+              'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+              collapsed ? 'justify-center' : '',
+              activePage === 'abastecimiento'
+                ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+                : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+            ]"
+            :title="collapsed ? 'Abastecimiento' : ''"
+          >
+            <TruckIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'abastecimiento' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+            <span v-if="!collapsed" class="whitespace-nowrap">Abastecimiento</span>
+          </NuxtLink>
 
-        <NuxtLink
-          to="/inventario/stock"
-          :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-            collapsed ? 'justify-center' : '',
-            activePage === 'inventario'
-              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-          ]"
-          :title="collapsed ? 'Inventario' : ''"
-        >
-          <ChartBarIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'inventario' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-          <span v-if="!collapsed" class="whitespace-nowrap">Inventario</span>
-        </NuxtLink>
+          <NuxtLink
+            to="/inventario/stock"
+            :class="[
+              'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+              collapsed ? 'justify-center' : '',
+              activePage === 'inventario'
+                ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+                : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+            ]"
+            :title="collapsed ? 'Inventario' : ''"
+          >
+            <ChartBarIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'inventario' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+            <span v-if="!collapsed" class="whitespace-nowrap">Inventario</span>
+          </NuxtLink>
+        </div>
       </div>
 
-      <!-- Sección Gestión -->
-      <div class="space-y-1 pt-4">
-        <span v-if="!collapsed" class="px-3 text-[10px] text-titan-500/70 uppercase tracking-widest font-medium">Gestión</span>
-        <NuxtLink
-          to="/menu/productos"
-          :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-            collapsed ? 'justify-center' : '',
-            activePage === 'menu'
-              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-          ]"
-          :title="collapsed ? 'Menú' : ''"
+      <!-- Sección Gestión (colapsable) -->
+      <div class="pt-4">
+        <button
+          v-if="!collapsed"
+          @click="sections.gestion = !sections.gestion"
+          class="w-full flex items-center justify-between px-3 py-1 group"
         >
-          <CubeIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'menu' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-          <span v-if="!collapsed" class="whitespace-nowrap">Menú</span>
-        </NuxtLink>
-
-        <NuxtLink
-          to="/pagos"
-          :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-            collapsed ? 'justify-center' : '',
-            activePage === 'pagos'
-              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-          ]"
-          :title="collapsed ? 'Pagos' : ''"
-        >
-          <BanknotesIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'pagos' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-          <span v-if="!collapsed" class="whitespace-nowrap">Pagos</span>
-        </NuxtLink>
-
-        <NuxtLink
-          to="/gastos"
-          :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-            collapsed ? 'justify-center' : '',
-            activePage === 'gastos'
-              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-          ]"
-          :title="collapsed ? 'Gastos' : ''"
-        >
-          <CurrencyDollarIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'gastos' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-          <span v-if="!collapsed" class="whitespace-nowrap">Gastos</span>
-        </NuxtLink>
-
-        <NuxtLink
-          to="/equipo/miembros"
-          :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-            collapsed ? 'justify-center' : '',
-            activePage === 'equipo'
-              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-          ]"
-          :title="collapsed ? 'Equipo' : ''"
-        >
-          <UsersIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'equipo' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-          <span v-if="!collapsed" class="whitespace-nowrap">Equipo</span>
-        </NuxtLink>
-
-        <NuxtLink
-          to="/integraciones"
-          :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-            collapsed ? 'justify-center' : '',
-            activePage === 'integraciones'
-              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-          ]"
-          :title="collapsed ? 'Integraciones' : ''"
-        >
-          <KeyIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'integraciones' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-          <span v-if="!collapsed" class="whitespace-nowrap">Integraciones</span>
-        </NuxtLink>
+          <span class="text-[10px] text-titan-500/70 uppercase tracking-widest font-medium group-hover:text-titan-400 transition-colors">Gestión</span>
+          <ChevronDownIcon :class="['w-3 h-3 text-titan-500/70 transition-transform duration-200', sections.gestion ? '' : '-rotate-90']" />
+        </button>
+        <div :class="['overflow-hidden transition-all duration-200 space-y-1', !collapsed && !sections.gestion ? 'max-h-0 opacity-0' : 'max-h-60 opacity-100']">
+          <NuxtLink
+            v-for="item in gestionItems"
+            :key="item.to"
+            :to="item.to"
+            :class="[
+              'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+              collapsed ? 'justify-center' : '',
+              activePage === item.page
+                ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+                : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+            ]"
+            :title="collapsed ? item.label : ''"
+          >
+            <component
+              :is="item.icon"
+              :class="['w-5 h-5 flex-shrink-0', activePage === item.page ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']"
+            />
+            <span v-if="!collapsed" class="whitespace-nowrap">{{ item.label }}</span>
+          </NuxtLink>
+        </div>
       </div>
 
-      <!-- Sección Aplicaciones -->
-      <div class="space-y-1 pt-4">
-        <span v-if="!collapsed" class="px-3 text-[10px] text-titan-500/70 uppercase tracking-widest font-medium">Aplicaciones</span>
-        <a
-          href="https://warotickets.com/gestion/eventos"
-          :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-            collapsed ? 'justify-center' : '',
-            'text-titan-300 hover:bg-ebony-800 hover:text-white'
-          ]"
-          :title="collapsed ? 'Eventos' : ''"
+      <!-- Sección Aplicaciones (colapsable) -->
+      <div class="pt-4">
+        <button
+          v-if="!collapsed"
+          @click="sections.aplicaciones = !sections.aplicaciones"
+          class="w-full flex items-center justify-between px-3 py-1 group"
         >
-          <Squares2X2Icon class="w-5 h-5 flex-shrink-0 text-titan-500 group-hover:text-titan-300" />
-          <span v-if="!collapsed" class="whitespace-nowrap">Eventos</span>
-        </a>
+          <span class="text-[10px] text-titan-500/70 uppercase tracking-widest font-medium group-hover:text-titan-400 transition-colors">Aplicaciones</span>
+          <ChevronDownIcon :class="['w-3 h-3 text-titan-500/70 transition-transform duration-200', sections.aplicaciones ? '' : '-rotate-90']" />
+        </button>
+        <div :class="['overflow-hidden transition-all duration-200 space-y-1', !collapsed && !sections.aplicaciones ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100']">
+          <a
+            href="https://warotickets.com/gestion/eventos"
+            :class="[
+              'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+              collapsed ? 'justify-center' : '',
+              'text-titan-300 hover:bg-ebony-800 hover:text-white'
+            ]"
+            :title="collapsed ? 'Eventos' : ''"
+          >
+            <Squares2X2Icon class="w-5 h-5 flex-shrink-0 text-titan-500 group-hover:text-titan-300" />
+            <span v-if="!collapsed" class="whitespace-nowrap">Eventos</span>
+          </a>
+        </div>
       </div>
 
       <!-- Cerrar sesión (separado visualmente) -->
@@ -320,6 +292,25 @@ const userInitials = computed(() => {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
 
+// Gestión menu items
+const gestionItems = [
+  { to: '/menu/productos', page: 'menu', label: 'Menú', icon: CubeIcon },
+  { to: '/pagos', page: 'pagos', label: 'Pagos', icon: BanknotesIcon },
+  { to: '/gastos', page: 'gastos', label: 'Gastos', icon: CurrencyDollarIcon },
+  { to: '/equipo/miembros', page: 'equipo', label: 'Equipo', icon: UsersIcon },
+  { to: '/integraciones', page: 'integraciones', label: 'Integraciones', icon: KeyIcon },
+]
+
+// Collapsible sections state — auto-expand section containing active page
+const operacionesPages = ['abastecimiento', 'inventario']
+const gestionPages = ['menu', 'pagos', 'gastos', 'equipo', 'integraciones']
+
+const sections = reactive({
+  operaciones: true,
+  gestion: true,
+  aplicaciones: false,
+})
+
 // Handle tenant selection
 const selectTenant = async (tenant: Tenant) => {
   showTenantDropdown.value = false
@@ -346,18 +337,21 @@ const handleLogout = async () => {
 
 
 
+    // Clear auth store state
+    authStore.clearAuth()
+
     // Clear any local storage/session storage
     if (typeof window !== 'undefined') {
       localStorage.clear()
       sessionStorage.clear()
     }
 
-    // Redirect to login page
-    await navigateTo('/auth/login')
+    // Redirect to homepage
+    await navigateTo('/')
   } catch (error) {
-
-    // Even if the API call fails, redirect to login for security
-    await navigateTo('/auth/login')
+    // Even if the API call fails, clear auth and redirect for security
+    authStore.clearAuth()
+    await navigateTo('/')
   } finally {
     isLoggingOut.value = false
   }

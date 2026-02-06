@@ -1,5 +1,11 @@
 <template>
-  <AuthLoginForm />
+  <div v-if="checking" class="flex items-center justify-center min-h-screen">
+    <div class="text-center">
+      <TheCustomLoader size="large" />
+      <p class="text-text-secondary font-medium mt-6">Verificando sesión...</p>
+    </div>
+  </div>
+  <AuthLoginForm v-else />
 </template>
 
 <script setup>
@@ -8,4 +14,27 @@ definePageMeta({
 })
 
 useHead({ title: 'Iniciar Sesión' })
+
+const checking = ref(true)
+
+onMounted(async () => {
+  try {
+    const sessionData = await $fetch('/api/auth/session')
+    if (sessionData?.user) {
+      const authStore = useAuthStore()
+      authStore.initializeFromMiddleware({
+        session: sessionData,
+        profileData: null,
+        user: {
+          name: sessionData.user.name || 'Anonymous User',
+          email: sessionData.user.email,
+        }
+      })
+      return navigateTo('/ventas')
+    }
+  } catch (e) {
+    // No valid session
+  }
+  checking.value = false
+})
 </script>

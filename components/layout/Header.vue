@@ -31,6 +31,26 @@
           Blog
         </NuxtLink>
 
+        <NuxtLink
+          to="/bogota"
+          class="text-xs sm:text-sm font-medium tracking-wide transition-colors whitespace-nowrap"
+          :class="isDarkHeader
+            ? 'text-white hover:text-crocus-200'
+            : 'text-ebony-600 hover:text-crocus-600'"
+        >
+          Bogotá
+        </NuxtLink>
+
+        <NuxtLink
+          :to="authStore.isSessionValid ? '/ventas' : '/auth/login'"
+          class="text-xs sm:text-sm font-medium tracking-wide transition-colors whitespace-nowrap"
+          :class="isDarkHeader
+            ? 'text-white hover:text-crocus-200'
+            : 'text-ebony-600 hover:text-crocus-600'"
+        >
+          {{ authStore.isSessionValid ? 'Mi Panel' : 'Ingresar' }}
+        </NuxtLink>
+
         <button
           class="px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 text-[10px] sm:text-xs md:text-sm font-semibold rounded-md border-2 transition-all whitespace-nowrap"
           :class="isDarkHeader
@@ -45,7 +65,10 @@
 </template>
 
 <script setup>
+import { useAuthStore } from '~/stores/auth'
+
 const route = useRoute()
+const authStore = useAuthStore()
 
 const headerMaxWidth = computed(() => {
   if (route.path.startsWith('/blog')) {
