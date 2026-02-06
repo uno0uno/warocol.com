@@ -3,7 +3,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   if (process.server) return
 
   // Define public routes that don't require authentication
-  const publicRoutes = ['/auth/login', '/auth/verify', '/'] // Add other public routes as needed
+  const publicRoutes = ['/auth/login', '/auth/verify', '/', '/bogota'] // Add other public routes as needed
 
   // Check if route uses public-restaurant layout (for tenant public pages)
   const isPublicRestaurant = to.meta?.layout === 'public-restaurant'
