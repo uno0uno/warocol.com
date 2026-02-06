@@ -2,8 +2,17 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   // Skip on server-side rendering
   if (process.server) return
 
-  // Skip on auth routes, root/public routes, and supplier portal
-  if (to.path.startsWith('/auth') || to.path === '/' || to.path.startsWith('/api') || to.path.startsWith('/proveedor/')) return
+  // Skip on auth routes, public routes, and supplier portal
+  const isPublicRestaurant = to.meta?.layout === 'public-restaurant'
+  if (
+    to.path.startsWith('/auth') ||
+    to.path === '/' ||
+    to.path === '/bogota' ||
+    to.path.startsWith('/api') ||
+    to.path.startsWith('/proveedor/') ||
+    to.path.startsWith('/blog') ||
+    isPublicRestaurant
+  ) return
 
   const authStore = useAuthStore()
   const tenantsStore = useTenantsStore()
