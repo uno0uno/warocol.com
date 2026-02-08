@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, watch } from 'vue'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat, startOfMonth, getDaysInMonth, differenceInCalendarDays } from 'date-fns'
+import { format as fnsFormat, startOfMonth, startOfYear, getDaysInMonth, getDaysInYear, differenceInCalendarDays } from 'date-fns'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({
@@ -68,6 +68,7 @@ watch(dateRangeDates, (val) => {
     refresh()
     refreshMetrics()
     refreshMonthMetrics()
+    refreshYearMetrics()
   }
 })
 
@@ -98,17 +99,56 @@ const { data: monthMetricsData, refresh: refreshMonthMetrics } = useAsyncData(
   { server: false, watch: [currentTenant] }
 )
 
-// Forecast: project current month sales to end of month
-const forecast = computed(() => {
-  const monthData = monthMetricsData.value?.data
-  if (!monthData || !monthData.total_sales) return 0
-  const today = new Date()
-  const daysElapsed = differenceInCalendarDays(today, startOfMonth(today)) + 1
-  const totalDays = getDaysInMonth(today)
-  return (monthData.total_sales / daysElapsed) * totalDays
+// Load current year metrics for annual forecast
+const currentYearFrom = fnsFormat(startOfYear(new Date()), 'yyyy-MM-dd')
+
+const { data: yearMetricsData, refresh: refreshYearMetrics } = useAsyncData(
+  `orders-year-metrics-${currentTenant.value?.id || 'default'}`,
+  () => $fetch('/api/orders/metrics', {
+    params: { date_from: currentYearFrom, date_to: currentMonthToday }
+  }),
+  { server: false, watch: [currentTenant] }
+)
+
+// Determine if dates are selected
+const hasDateFilter = computed(() => {
+  return dateRangeDates.value && dateRangeDates.value.length === 2 && dateRangeDates.value[0] && dateRangeDates.value[1]
 })
 
-const forecastMonth = fnsFormat(new Date(), 'MMMM', { locale: es })
+// Forecast: annual when no dates selected, monthly when dates selected
+const forecast = computed(() => {
+  const today = new Date()
+
+  if (!hasDateFilter.value) {
+    // Annual forecast
+    const yearData = yearMetricsData.value?.data
+    if (!yearData || !yearData.total_sales) return 0
+    const daysElapsed = differenceInCalendarDays(today, startOfYear(today)) + 1
+    const totalDays = getDaysInYear(today)
+    return Math.round((yearData.total_sales / daysElapsed) * totalDays)
+  } else {
+    // Monthly forecast
+    const monthData = monthMetricsData.value?.data
+    if (!monthData || !monthData.total_sales) return 0
+    const daysElapsed = differenceInCalendarDays(today, startOfMonth(today)) + 1
+    const totalDays = getDaysInMonth(today)
+    return Math.round((monthData.total_sales / daysElapsed) * totalDays)
+  }
+})
+
+const forecastLabel = computed(() => {
+  if (!hasDateFilter.value) {
+    return `Forecast ${fnsFormat(new Date(), 'yyyy')}`
+  }
+  return `Forecast ${fnsFormat(new Date(), 'MMMM', { locale: es })}`
+})
+
+const forecastSubtitle = computed(() => {
+  if (!hasDateFilter.value) {
+    return 'Proyección fin de año'
+  }
+  return 'Proyección fin de mes'
+})
 
 // Load orders from API
 const { data: ordersData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
@@ -134,7 +174,7 @@ const { data: ordersData, pending: isLoading, error: fetchError, refresh } = use
 
 // Refresh on tenant change
 onTenantChange(async () => {
-  await Promise.all([refresh(), refreshMetrics(), refreshMonthMetrics()])
+  await Promise.all([refresh(), refreshMetrics(), refreshMonthMetrics(), refreshYearMetrics()])
 })
 
 // Metrics computed
@@ -285,10 +325,10 @@ const viewOrderDetails = (order: any) => {
 const setRefreshHandler = inject('setRefreshHandler', () => {})
 onMounted(async () => {
   setRefreshHandler(async () => {
-    await Promise.all([refresh(), refreshMetrics(), refreshMonthMetrics()])
+    await Promise.all([refresh(), refreshMetrics(), refreshMonthMetrics(), refreshYearMetrics()])
   })
   // Refresh metrics on mount to ensure they load when navigating back
-  await Promise.all([refreshMetrics(), refreshMonthMetrics()])
+  await Promise.all([refreshMetrics(), refreshMonthMetrics(), refreshYearMetrics()])
 })
 </script>
 
@@ -345,12 +385,12 @@ onMounted(async () => {
             size="sm"
           />
           <SharedMetricCard
-            :title="`Forecast ${forecastMonth}`"
+            :title="forecastLabel"
             :value="forecast"
             format="currency"
             variant="info"
             size="sm"
-            :subtitle="`Proyección fin de mes`"
+            :subtitle="forecastSubtitle"
           />
         </template>
       </div>

@@ -264,8 +264,14 @@ const props = withDefaults(defineProps<Props>(), {
   showIcon: true
 })
 
-// Format value based on type - keeping existing functionality
-// Format value based on type - keeping existing functionality
+// Compact currency formatter for large numbers
+const formatCompactCurrency = (num: number): string => {
+  if (num >= 1_000_000_000) return `$${(num / 1_000_000_000).toFixed(1)}B`
+  if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`
+  return `$${num.toLocaleString()}`
+}
+
+// Format value based on type
 const formattedValue = computed(() => {
   if (props.format === 'text') return props.value
 
@@ -273,14 +279,13 @@ const formattedValue = computed(() => {
 
   switch (props.format) {
     case 'currency':
-      return `$${numValue.toLocaleString()}`
+      return formatCompactCurrency(numValue)
     case 'percentage':
       return `${numValue.toFixed(props.precision)}%`
     case 'decimal':
       return numValue.toFixed(props.precision)
     case 'number':
     default:
-      // Keep existing behavior with suffix
       return `${numValue.toLocaleString()}${props.suffix}`
   }
 })
