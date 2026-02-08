@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, inject, onMounted } from 'vue'
+import { ref, computed, inject, onMounted, watch } from 'vue'
+import { es } from 'date-fns/locale'
+import { format as fnsFormat } from 'date-fns'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({
@@ -23,45 +25,48 @@ const sortField = ref('order_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 const paymentMethodFilter = ref<string | null>(null)
 const statusFilter = ref<string | null>(null)
-const dateRangeFilter = ref<string | null>(null)
+const dateRangeDates = ref<Date[] | null>(null)
 
-// Computed date range based on filter selection
+// Preset ranges for the date picker shortcuts
+const presetDates = ref([
+  { label: 'Hoy', value: [new Date(), new Date()] },
+  {
+    label: 'Ayer',
+    value: (() => {
+      const d = new Date(); d.setDate(d.getDate() - 1); return [d, d]
+    })()
+  },
+  { label: 'Última semana', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
+  { label: 'Últimos 15 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 15); return d })(), new Date()] },
+  { label: 'Último mes', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
+  { label: 'Últimos 90 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d })(), new Date()] },
+])
+
+// Format function for the date picker display
+const formatDateRange = (dates: Date[]) => {
+  if (!dates || !dates[0]) return ''
+  const from = fnsFormat(dates[0], 'dd/MM/yyyy', { locale: es })
+  if (!dates[1]) return from
+  const to = fnsFormat(dates[1], 'dd/MM/yyyy', { locale: es })
+  return `${from} - ${to}`
+}
+
+// Computed date range for API params (YYYY-MM-DD format)
 const dateRange = computed(() => {
-  if (!dateRangeFilter.value) return { from: null, to: null }
-
-  const today = new Date()
-  today.setHours(23, 59, 59, 999)
-  const todayStr = today.toISOString().split('T')[0]
-
-  let fromDate = new Date()
-  fromDate.setHours(0, 0, 0, 0)
-
-  switch (dateRangeFilter.value) {
-    case 'today':
-      break
-    case 'yesterday':
-      fromDate.setDate(fromDate.getDate() - 1)
-      today.setDate(today.getDate() - 1)
-      break
-    case 'week':
-      fromDate.setDate(fromDate.getDate() - 7)
-      break
-    case '15days':
-      fromDate.setDate(fromDate.getDate() - 15)
-      break
-    case 'month':
-      fromDate.setDate(fromDate.getDate() - 30)
-      break
-    case '90days':
-      fromDate.setDate(fromDate.getDate() - 90)
-      break
-    default:
-      return { from: null, to: null }
-  }
-
+  if (!dateRangeDates.value || dateRangeDates.value.length < 2) return { from: null, to: null }
+  const [from, to] = dateRangeDates.value
+  if (!from || !to) return { from: null, to: null }
   return {
-    from: fromDate.toISOString().split('T')[0],
-    to: dateRangeFilter.value === 'yesterday' ? fromDate.toISOString().split('T')[0] : todayStr
+    from: fnsFormat(from, 'yyyy-MM-dd'),
+    to: fnsFormat(to, 'yyyy-MM-dd')
+  }
+})
+
+// Refresh data when date range changes (only when both dates are selected or cleared)
+watch(dateRangeDates, (val) => {
+  if (!val || (val.length === 2 && val[0] && val[1])) {
+    refresh()
+    refreshMetrics()
   }
 })
 
@@ -150,7 +155,7 @@ const clearFilters = () => {
   apiSearchField.value = 'order_number'
   paymentMethodFilter.value = null
   statusFilter.value = null
-  dateRangeFilter.value = null
+  dateRangeDates.value = null
   sortField.value = 'order_date'
   sortDirection.value = 'desc'
   Promise.all([refresh(), refreshMetrics()])
@@ -315,7 +320,7 @@ onMounted(async () => {
       </div>
 
       <!-- Filters Bar -->
-      <div class="flex flex-wrap items-center gap-2 w-full">
+      <div class="flex items-center gap-2 w-full overflow-x-auto">
         <!-- Search Input -->
         <div class="relative flex-1 min-w-[200px]">
           <button
@@ -344,20 +349,22 @@ onMounted(async () => {
           <option value="customer_phone">Teléfono</option>
         </select>
 
-        <!-- Date Range Filter -->
-        <select
-          v-model="dateRangeFilter"
-          @change="performSearch(); refreshMetrics()"
-          class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[140px]"
-        >
-          <option :value="null">Todo el tiempo</option>
-          <option value="today">Hoy</option>
-          <option value="yesterday">Ayer</option>
-          <option value="week">Última semana</option>
-          <option value="15days">Últimos 15 días</option>
-          <option value="month">Último mes</option>
-          <option value="90days">Últimos 90 días</option>
-        </select>
+        <!-- Date Range Picker -->
+        <VueDatePicker
+          v-model="dateRangeDates"
+          range
+          :preset-dates="presetDates"
+          :enable-time-picker="false"
+          :locale="es"
+          placeholder="Rango de fechas"
+          auto-apply
+          :teleport="true"
+          :max-date="new Date()"
+          :format="formatDateRange"
+          input-class-name="dp-custom-input"
+          menu-class-name="dp-custom-menu"
+          calendar-cell-class-name="dp-custom-cell"
+        />
 
         <!-- Payment Method Filter -->
         <select
@@ -385,7 +392,7 @@ onMounted(async () => {
 
         <!-- Clear Filters Button -->
         <button
-          v-if="localSearchTerm || dateRangeFilter || paymentMethodFilter || statusFilter"
+          v-if="localSearchTerm || dateRangeDates || paymentMethodFilter || statusFilter"
           @click="clearFilters"
           class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
           title="Limpiar filtros"
@@ -623,3 +630,41 @@ onMounted(async () => {
     </Teleport>
   </div>
 </template>
+
+<style>
+.dp-custom-input {
+  height: 40px !important;
+  border: 2px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem !important;
+  background: hsl(var(--background)) !important;
+  font-size: 0.875rem !important;
+  color: hsl(var(--foreground)) !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  min-width: 220px;
+}
+.dp-custom-input:focus {
+  outline: none !important;
+  border-color: hsl(var(--primary)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2) !important;
+}
+.dp-custom-input::placeholder {
+  color: hsl(var(--muted-foreground)) !important;
+}
+.dp__theme_light {
+  --dp-primary-color: hsl(var(--primary));
+  --dp-primary-text-color: hsl(var(--primary-foreground));
+  --dp-background-color: hsl(var(--card));
+  --dp-text-color: hsl(var(--foreground));
+  --dp-border-color: hsl(var(--border));
+  --dp-menu-border-color: hsl(var(--border));
+  --dp-hover-color: hsl(var(--accent));
+  --dp-hover-text-color: hsl(var(--foreground));
+  --dp-secondary-color: hsl(var(--muted));
+  --dp-border-color-hover: hsl(var(--primary));
+}
+.dp-custom-menu {
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+</style>
