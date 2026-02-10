@@ -59,6 +59,7 @@
             ref="fileInput"
             type="file"
             accept="image/*"
+            capture="environment"
             @change="handleFileSelect"
             class="hidden"
           />
@@ -71,7 +72,7 @@
               </svg>
             </div>
             <h3 class="text-base md:text-lg font-semibold text-gray-700 mb-1">Arrastra una imagen aquí</h3>
-            <p class="text-xs md:text-sm text-gray-500 mb-1">o haz clic para seleccionar</p>
+            <p class="text-xs md:text-sm text-gray-500 mb-1">o haz clic para seleccionar o tomar foto</p>
             <p class="text-xs text-gray-400 mt-2">PNG, JPG, JPEG • Máx: 10MB</p>
           </div>
 
