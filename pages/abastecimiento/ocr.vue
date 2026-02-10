@@ -37,10 +37,10 @@
     </div>
 
     <!-- Main Content Area - Full Height Split View -->
-    <div v-else class="flex-1 flex overflow-hidden">
+    <div v-else class="flex-1 flex flex-col md:flex-row overflow-hidden">
 
       <!-- Left Panel - Upload -->
-      <div class="w-1/2 border-r border-gray-200 bg-white p-8 overflow-y-auto flex flex-col gap-6">
+      <div class="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-gray-200 bg-white p-4 md:p-8 overflow-y-auto flex flex-col gap-4 md:gap-6">
 
         <!-- Drop Zone -->
         <div
@@ -64,14 +64,14 @@
           />
 
           <!-- Empty State -->
-          <div v-if="!imagePreview" class="flex flex-col items-center justify-center text-center p-12">
-            <div class="w-20 h-20 bg-gradient-to-br from-crocus-100 to-crocus-200 rounded-full flex items-center justify-center mb-4">
-              <svg class="w-10 h-10 text-crocus-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div v-if="!imagePreview" class="flex flex-col items-center justify-center text-center p-8 md:p-12">
+            <div class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-crocus-100 to-crocus-200 rounded-full flex items-center justify-center mb-3 md:mb-4">
+              <svg class="w-8 h-8 md:w-10 md:h-10 text-crocus-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <h3 class="text-lg font-semibold text-gray-700 mb-1">Arrastra una imagen aquí</h3>
-            <p class="text-sm text-gray-500 mb-1">o haz clic para seleccionar</p>
+            <h3 class="text-base md:text-lg font-semibold text-gray-700 mb-1">Arrastra una imagen aquí</h3>
+            <p class="text-xs md:text-sm text-gray-500 mb-1">o haz clic para seleccionar</p>
             <p class="text-xs text-gray-400 mt-2">PNG, JPG, JPEG • Máx: 10MB</p>
           </div>
 
@@ -105,7 +105,7 @@
         <button
           @click="processImage"
           :disabled="!imageFile || isProcessing || modelStatus !== 'ready'"
-          class="flex-shrink-0 w-full px-6 py-4 rounded-xl font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+          class="flex-shrink-0 w-full px-4 md:px-6 py-3 md:py-4 rounded-xl font-semibold text-base md:text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
           :class="imageFile && !isProcessing && modelStatus === 'ready'
             ? 'bg-gradient-to-r from-crocus-500 to-crocus-600 text-white hover:shadow-xl hover:scale-[1.02]'
             : 'bg-gray-200 text-gray-500'"
@@ -129,14 +129,14 @@
         </button>
 
         <!-- Tips Card -->
-        <div class="flex-shrink-0 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5">
-          <h3 class="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <div class="flex-shrink-0 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 md:p-5">
+          <h3 class="text-xs md:text-sm font-bold text-blue-900 mb-2 md:mb-3 flex items-center gap-2">
+            <svg class="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
             </svg>
             Consejos para mejores resultados
           </h3>
-          <ul class="text-sm text-blue-800 space-y-2">
+          <ul class="text-xs md:text-sm text-blue-800 space-y-1.5 md:space-y-2">
             <li class="flex items-start gap-2">
               <span class="text-blue-500 mt-0.5">✓</span>
               <span>Usa imágenes con buena iluminación</span>
@@ -158,26 +158,26 @@
       </div>
 
       <!-- Right Panel - Results -->
-      <div class="w-1/2 bg-white p-8 overflow-y-auto flex flex-col">
+      <div class="w-full md:w-1/2 bg-white p-4 md:p-8 overflow-y-auto flex flex-col">
 
         <!-- Header -->
-        <div class="flex-shrink-0 flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-bold text-gray-900">Texto Extraído</h2>
+        <div class="flex-shrink-0 flex justify-between items-center mb-4 md:mb-6">
+          <h2 class="text-xl md:text-2xl font-bold text-gray-900">Texto Extraído</h2>
           <button
             v-if="extractedText"
             @click="copyToClipboard"
-            class="flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg transition-all"
+            class="flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-medium rounded-lg transition-all"
             :class="copied
               ? 'bg-green-100 text-green-700'
               : 'bg-crocus-50 text-crocus-700 hover:bg-crocus-100'"
           >
-            <svg v-if="copied" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg v-if="copied" class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
-            <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg v-else class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
-            {{ copied ? '¡Copiado!' : 'Copiar' }}
+            <span class="hidden sm:inline">{{ copied ? '¡Copiado!' : 'Copiar' }}</span>
           </button>
         </div>
 
@@ -186,48 +186,48 @@
 
           <!-- Empty State -->
           <div v-if="!extractedText && !isProcessing" class="h-full flex flex-col items-center justify-center text-gray-400">
-            <div class="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-              <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-24 h-24 md:w-32 md:h-32 bg-gray-100 rounded-full flex items-center justify-center mb-4 md:mb-6">
+              <svg class="w-12 h-12 md:w-16 md:h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <p class="text-xl font-medium text-gray-500 mb-2">El texto aparecerá aquí</p>
-            <p class="text-gray-400">Sube una imagen y presiona "Extraer Texto"</p>
+            <p class="text-lg md:text-xl font-medium text-gray-500 mb-2">El texto aparecerá aquí</p>
+            <p class="text-sm md:text-base text-gray-400">Sube una imagen y presiona "Extraer Texto"</p>
           </div>
 
           <!-- Processing State -->
           <div v-else-if="isProcessing" class="h-full flex flex-col items-center justify-center">
             <CommonsTheCustomLoader size="large" />
-            <p class="text-lg text-gray-600 mt-6 font-medium">Analizando imagen...</p>
-            <p class="text-sm text-gray-500 mt-2">Esto puede tomar unos segundos</p>
+            <p class="text-base md:text-lg text-gray-600 mt-4 md:mt-6 font-medium">Analizando imagen...</p>
+            <p class="text-xs md:text-sm text-gray-500 mt-2">Esto puede tomar unos segundos</p>
           </div>
 
           <!-- Text Result -->
           <div v-else class="h-full flex flex-col">
-            <div class="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 overflow-y-auto">
-              <pre class="text-base text-gray-800 whitespace-pre-wrap font-mono leading-relaxed">{{ extractedText }}</pre>
+            <div class="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 md:p-6 border border-gray-200 overflow-y-auto">
+              <pre class="text-sm md:text-base text-gray-800 whitespace-pre-wrap font-mono leading-relaxed">{{ extractedText }}</pre>
             </div>
 
             <!-- Stats -->
-            <div class="flex-shrink-0 mt-6 flex gap-6 text-sm">
-              <div class="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
-                <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+            <div class="flex-shrink-0 mt-4 md:mt-6 flex flex-wrap gap-2 md:gap-6 text-xs md:text-sm">
+              <div class="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-gray-100 rounded-lg">
+                <svg class="w-4 h-4 md:w-5 md:h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
                 </svg>
-                <span class="font-medium text-gray-700">{{ characterCount }} caracteres</span>
+                <span class="font-medium text-gray-700">{{ characterCount }} <span class="hidden sm:inline">caracteres</span></span>
               </div>
-              <div class="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
-                <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+              <div class="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-gray-100 rounded-lg">
+                <svg class="w-4 h-4 md:w-5 md:h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm3 1h6v4H7V5zm6 6H7v2h6v-2z" clip-rule="evenodd" />
                 </svg>
-                <span class="font-medium text-gray-700">{{ wordCount }} palabras</span>
+                <span class="font-medium text-gray-700">{{ wordCount }} <span class="hidden sm:inline">palabras</span></span>
               </div>
-              <div class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-crocus-100 to-crocus-200 rounded-lg">
-                <svg class="w-5 h-5 text-crocus-600" fill="currentColor" viewBox="0 0 20 20">
+              <div class="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-crocus-100 to-crocus-200 rounded-lg">
+                <svg class="w-4 h-4 md:w-5 md:h-5 text-crocus-600" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
                   <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                 </svg>
-                <span class="font-medium text-crocus-700">{{ Math.round(confidence) }}% confianza</span>
+                <span class="font-medium text-crocus-700">{{ Math.round(confidence) }}%</span>
               </div>
             </div>
           </div>
