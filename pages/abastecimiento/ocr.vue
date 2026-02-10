@@ -240,7 +240,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, inject, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, inject } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 
 definePageMeta({
@@ -321,16 +321,7 @@ const wordCount = computed(() => {
   return words[0] === '' ? 0 : words.length
 })
 
-// Watch modelStatus to update dashboard header status badge
-watch(modelStatus, (newStatus) => {
-  const statusConfig = {
-    loading: { label: 'Preparando OCR...', color: 'bg-yellow-100 text-yellow-800' },
-    ready: { label: 'Listo', color: 'bg-green-100 text-green-800' },
-    error: { label: 'Error', color: 'bg-red-100 text-red-800' }
-  }
-
-  setPageStatus(statusConfig[newStatus])
-}, { immediate: true })
+// No mostrar estado en el header para esta página
 
 // Initialize OCR function (extracted for reusability)
 const initOCR = async () => {
