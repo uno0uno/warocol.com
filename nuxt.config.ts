@@ -6,9 +6,11 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'node-server',
     routeRules: {
-      '/api/auth/**': { 
+      // Client-only pages (no SSR)
+      '/abastecimiento/ocr': { ssr: false },
+      '/api/auth/**': {
         proxy: {
-          to: process.env.NODE_ENV === 'development' 
+          to: process.env.NODE_ENV === 'development'
             ? `${process.env.NUXT_PUBLIC_WAROLABS_API_URL || 'http://localhost:9999'}/auth/**`
             : 'https://api.warolabs.com/auth/**',
           changeOrigin: true,
