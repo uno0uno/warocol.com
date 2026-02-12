@@ -96,49 +96,6 @@
         </NuxtLink>
       </div>
 
-      <!-- Sección Operaciones (colapsable) -->
-      <div class="pt-4">
-        <button
-          v-if="!collapsed"
-          @click="sections.operaciones = !sections.operaciones"
-          class="w-full flex items-center justify-between px-3 py-1 group"
-        >
-          <span class="text-[10px] text-titan-500/70 uppercase tracking-widest font-medium group-hover:text-titan-400 transition-colors">Operaciones</span>
-          <ChevronDownIcon :class="['w-3 h-3 text-titan-500/70 transition-transform duration-200', sections.operaciones ? '' : '-rotate-90']" />
-        </button>
-        <div :class="['overflow-hidden transition-all duration-200 space-y-1', !collapsed && !sections.operaciones ? 'max-h-0 opacity-0' : 'max-h-40 opacity-100']">
-          <NuxtLink
-            to="/abastecimiento/proveedores"
-            :class="[
-              'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-              collapsed ? 'justify-center' : '',
-              activePage === 'abastecimiento'
-                ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-                : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-            ]"
-            :title="collapsed ? 'Abastecimiento' : ''"
-          >
-            <TruckIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'abastecimiento' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-            <span v-if="!collapsed" class="whitespace-nowrap">Abastecimiento</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/inventario/stock"
-            :class="[
-              'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-              collapsed ? 'justify-center' : '',
-              activePage === 'inventario'
-                ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-                : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-            ]"
-            :title="collapsed ? 'Inventario' : ''"
-          >
-            <ChartBarIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'inventario' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-            <span v-if="!collapsed" class="whitespace-nowrap">Inventario</span>
-          </NuxtLink>
-        </div>
-      </div>
-
       <!-- Sección Gestión (colapsable) -->
       <div class="pt-4">
         <button
@@ -242,21 +199,17 @@ defineOptions({
 import { computed } from 'vue'
 import {
   ArrowRightOnRectangleIcon,
-  BanknotesIcon,
-  ChartBarIcon,
   ChevronDownIcon,
   ComputerDesktopIcon,
   CubeIcon,
-  CurrencyDollarIcon,
+  DocumentTextIcon,
   KeyIcon,
   ShoppingCartIcon,
   Squares2X2Icon,
-  TruckIcon,
-  UsersIcon
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'pos' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
+  activePage?: 'dashboard' | 'ventas' | 'pos' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'gastos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
 }
 
 interface Tenant {
@@ -295,18 +248,14 @@ const userInitials = computed(() => {
 // Gestión menu items
 const gestionItems = [
   { to: '/menu/productos', page: 'menu', label: 'Menú', icon: CubeIcon },
-  { to: '/pagos', page: 'pagos', label: 'Pagos', icon: BanknotesIcon },
-  { to: '/gastos', page: 'gastos', label: 'Gastos', icon: CurrencyDollarIcon },
-  { to: '/equipo/miembros', page: 'equipo', label: 'Equipo', icon: UsersIcon },
+  { to: '/abastecimiento/lector-facturas', page: 'abastecimiento', label: 'Lector Facturas', icon: DocumentTextIcon },
   { to: '/integraciones', page: 'integraciones', label: 'Integraciones', icon: KeyIcon },
 ]
 
 // Collapsible sections state — auto-expand section containing active page
-const operacionesPages = ['abastecimiento', 'inventario']
-const gestionPages = ['menu', 'pagos', 'gastos', 'equipo', 'integraciones']
+const gestionPages = ['menu', 'abastecimiento', 'integraciones']
 
 const sections = reactive({
-  operaciones: true,
   gestion: true,
   aplicaciones: false,
 })

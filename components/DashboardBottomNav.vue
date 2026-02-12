@@ -88,7 +88,7 @@
           </NuxtLink>
 
           <NuxtLink
-            to="/abastecimiento/proveedores"
+            to="/abastecimiento/lector-facturas"
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
           >
@@ -96,29 +96,12 @@
               class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
               :class="activePage === 'abastecimiento' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
             >
-              <TruckIcon
+              <DocumentTextIcon
                 class="w-6 h-6"
                 :class="activePage === 'abastecimiento' ? 'text-crocus-600' : 'text-titan-600'"
               />
             </div>
-            <span class="text-[10px] text-titan-600">Compras</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/inventario/stock"
-            @click="showMenuModal = false"
-            class="flex flex-col items-center gap-1"
-          >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'inventario' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <ChartBarIcon
-                class="w-6 h-6"
-                :class="activePage === 'inventario' ? 'text-crocus-600' : 'text-titan-600'"
-              />
-            </div>
-            <span class="text-[10px] text-titan-600">Inventario</span>
+            <span class="text-[10px] text-titan-600">Lector Facturas</span>
           </NuxtLink>
 
           <NuxtLink
@@ -139,37 +122,20 @@
           </NuxtLink>
 
           <NuxtLink
-            to="/pagos"
+            to="/integraciones"
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
           >
             <div
               class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'pagos' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+              :class="activePage === 'integraciones' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
             >
-              <BanknotesIcon
+              <KeyIcon
                 class="w-6 h-6"
-                :class="activePage === 'pagos' ? 'text-crocus-600' : 'text-titan-600'"
+                :class="activePage === 'integraciones' ? 'text-crocus-600' : 'text-titan-600'"
               />
             </div>
-            <span class="text-[10px] text-titan-600">Pagos</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/equipo/miembros"
-            @click="showMenuModal = false"
-            class="flex flex-col items-center gap-1"
-          >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'equipo' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <UsersIcon
-                class="w-6 h-6"
-                :class="activePage === 'equipo' ? 'text-crocus-600' : 'text-titan-600'"
-              />
-            </div>
-            <span class="text-[10px] text-titan-600">Equipo</span>
+            <span class="text-[10px] text-titan-600">Integraciones</span>
           </NuxtLink>
         </div>
       </div>
@@ -178,28 +144,6 @@
     <!-- Tenant Selector Modal -->
     <UiBottomSheetModal v-model="showTenantModal" title="Configuración" max-height="lg">
       <div class="p-4 space-y-6">
-        <!-- Equipo Link -->
-        <div>
-          <NuxtLink
-            to="/equipo/miembros"
-            @click="showTenantModal = false"
-            class="w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-titan-200 hover:border-crocus-300 hover:bg-titan-50 transition-colors"
-          >
-            <div class="w-10 h-10 bg-crocus-100 rounded-full flex items-center justify-center">
-              <svg class="w-5 h-5 text-crocus-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <div class="flex-1">
-              <div class="font-semibold text-sm text-ebony-800">Miembros de equipo</div>
-              <div class="text-xs text-titan-600">Gestionar usuarios y permisos</div>
-            </div>
-            <svg class="w-5 h-5 text-titan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </NuxtLink>
-        </div>
-
         <!-- Tenant Selector -->
         <div>
           <label class="text-sm text-titan-600 font-medium mb-2 block">Seleccionar Tenant</label>
@@ -255,16 +199,14 @@
 
 <script setup lang="ts">
 import {
-  BanknotesIcon,
-  ChartBarIcon,
   ComputerDesktopIcon,
-  TruckIcon,
+  DocumentTextIcon,
   Cog6ToothIcon,
   CheckCircleIcon,
   Bars3Icon,
+  KeyIcon,
   ShoppingCartIcon,
   CubeIcon,
-  UsersIcon
 } from '@heroicons/vue/24/outline'
 import { computed } from 'vue'
 

@@ -249,9 +249,9 @@ definePageMeta({
 })
 
 useHead({
-  title: 'OCR - Extractor de Texto - Warocol',
+  title: 'Lector de Facturas - Warocol',
   meta: [
-    { name: 'description', content: 'Extrae texto de imágenes usando OCR' }
+    { name: 'description', content: 'Sube facturas y extrae información automáticamente' }
   ]
 })
 
@@ -394,8 +394,8 @@ const initOCR = async () => {
 // Initialize OCR on mount
 onMounted(async () => {
   // Set page title and subtitle in dashboard header
-  setPageTitle('Extractor de Texto OCR')
-  setPageSubtitle('Extrae texto de imágenes automáticamente con IA')
+  setPageTitle('Lector de Facturas')
+  setPageSubtitle('Sube facturas y extrae información automáticamente')
 
   // Initialize OCR engine
   await initOCR()

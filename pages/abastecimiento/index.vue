@@ -3,7 +3,7 @@
 definePageMeta({
   middleware: (to) => {
     if (to.path === '/abastecimiento' || to.path === '/abastecimiento/') {
-      return navigateTo('/abastecimiento/proveedores', { replace: true })
+      return navigateTo('/abastecimiento/lector-facturas', { replace: true })
     }
   }
 })
