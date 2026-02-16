@@ -70,8 +70,8 @@ const { data: metricsData, pending: metricsLoading, error: metricsError, refresh
     }
   }),
   {
-    server: true,
-    lazy: false,
+    server: false,
+    lazy: true,
     default: () => ({ data: null })
   }
 )
@@ -88,8 +88,8 @@ const { data: salesFlowData, pending: salesFlowLoading, refresh: refreshSalesFlo
     }
   }),
   {
-    server: true,
-    lazy: false,
+    server: false,
+    lazy: true,
     default: () => ({ data: [], metadata: {} })
   }
 )
@@ -103,7 +103,7 @@ const { data: monthMetricsData, refresh: refreshMonthMetrics } = useAsyncData(
   () => $fetch('/api/orders/metrics', {
     params: { date_from: currentMonthFrom, date_to: currentMonthToday }
   }),
-  { server: false }
+  { server: false, lazy: true }
 )
 
 // Load current year metrics for annual forecast
@@ -114,7 +114,7 @@ const { data: yearMetricsData, refresh: refreshYearMetrics } = useAsyncData(
   () => $fetch('/api/orders/metrics', {
     params: { date_from: currentYearFrom, date_to: currentMonthToday }
   }),
-  { server: false }
+  { server: false, lazy: true }
 )
 
 // Determine if dates are selected
