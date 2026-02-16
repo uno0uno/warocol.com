@@ -187,6 +187,9 @@ export default defineNuxtConfig({
     },
     optimizeDeps: {
       include: ['@unovis/ts', '@unovis/vue']
+    },
+    ssr: {
+      noExternal: ['@unovis/vue', '@unovis/ts']
     }
   },
   css: ['~/assets/css/main.scss', '~/assets/css/design-system.css', '~/assets/css/design-tokens.css', '~/assets/css/fonts.css'],
