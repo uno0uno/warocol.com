@@ -172,6 +172,9 @@ export default defineNuxtConfig({
       }
     ]
   },
+  build: {
+    transpile: ['@unovis/vue', '@unovis/ts']
+  },
   devtools: {
     enabled: false
   },
