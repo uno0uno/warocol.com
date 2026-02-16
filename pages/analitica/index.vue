@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { Camera, Plus } from 'lucide-vue-next';
+import { Sparkles, Plus } from 'lucide-vue-next';
 import { es } from 'date-fns/locale';
 import { format as fnsFormat, startOfMonth, startOfYear, differenceInCalendarDays, getDaysInMonth, getDaysInYear, formatDistanceToNow } from 'date-fns';
 // DashboardSidebar import removed as it's provided by layout
@@ -308,7 +308,7 @@ definePageMeta({
         to="/abastecimiento/lector-facturas"
         class="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl font-medium hover:bg-primary/90 transition-all"
       >
-        <Camera :size="18" />
+        <Sparkles :size="18" />
         <span class="hidden md:inline">Cargar Factura IA</span>
         <span class="md:hidden">Factura IA</span>
       </NuxtLink>
