@@ -8,6 +8,7 @@ export default defineNuxtConfig({
     routeRules: {
       // Client-only pages (no SSR)
       '/abastecimiento/lector-facturas': { ssr: false },
+      '/analitica': { ssr: false },
       '/api/auth/**': {
         proxy: {
           to: process.env.NODE_ENV === 'development'
