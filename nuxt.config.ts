@@ -190,7 +190,7 @@ export default defineNuxtConfig({
       include: ['@unovis/ts', '@unovis/vue']
     },
     ssr: {
-      noExternal: ['@unovis/vue', '@unovis/ts']
+      noExternal: ['@unovis/vue', '@unovis/ts', 'striptags']
     }
   },
   css: ['~/assets/css/main.scss', '~/assets/css/design-system.css', '~/assets/css/design-tokens.css', '~/assets/css/fonts.css'],
