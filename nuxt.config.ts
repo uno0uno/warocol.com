@@ -174,7 +174,7 @@ export default defineNuxtConfig({
     ]
   },
   build: {
-    transpile: ['@unovis/vue', '@unovis/ts']
+    transpile: ['@unovis/vue', '@unovis/ts', 'striptags']
   },
   devtools: {
     enabled: false
@@ -187,7 +187,7 @@ export default defineNuxtConfig({
       }
     },
     optimizeDeps: {
-      include: ['@unovis/ts', '@unovis/vue']
+      include: ['@unovis/ts', '@unovis/vue', 'striptags']
     },
     ssr: {
       noExternal: ['@unovis/vue', '@unovis/ts', 'striptags']
