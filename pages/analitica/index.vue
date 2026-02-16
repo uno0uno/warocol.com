@@ -304,17 +304,17 @@ definePageMeta({
   <div class="space-y-4">
   <ClientOnly>
     <Teleport to="#dashboard-header-actions">
-      <NuxtLink 
+      <NuxtLink
         to="/abastecimiento/lector-facturas"
-        class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+        class="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl font-medium hover:bg-primary/90 transition-all"
       >
         <Camera :size="18" />
         <span class="hidden md:inline">Cargar Factura IA</span>
         <span class="md:hidden">Factura IA</span>
       </NuxtLink>
-      <NuxtLink 
+      <NuxtLink
         to="/ventas"
-        class="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-medium hover:bg-slate-50 transition-all"
+        class="flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2.5 rounded-xl font-medium hover:bg-accent transition-all"
       >
         <Plus :size="18" />
         <span class="hidden md:inline">Venta Nueva</span>
