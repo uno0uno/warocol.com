@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue';
 import { Sparkles, Plus } from 'lucide-vue-next';
 import { es } from 'date-fns/locale';
 import { format as fnsFormat, startOfMonth, startOfYear, differenceInCalendarDays, getDaysInMonth, getDaysInYear, formatDistanceToNow } from 'date-fns';
@@ -12,6 +12,9 @@ import InvoiceModal from '~/components/analytics/InvoiceModal.vue';
 
 const isInventoryUnlocked = ref(false);
 const showInvoiceModal = ref(false);
+
+// Inject refresh handler setter from layout
+const setRefreshHandler = inject<((handler: (() => void | Promise<void>) | undefined) => void) | undefined>('setRefreshHandler');
 
 // Last update timestamp
 const lastUpdate = ref<Date>(new Date());
@@ -231,16 +234,37 @@ const lastUpdateText = computed(() => {
   return formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es })
 })
 
+// Refresh handler for layout button
+const handleRefresh = async () => {
+  await Promise.all([
+    refreshMetrics(),
+    refreshSalesFlow(),
+    refreshMonthMetrics(),
+    refreshYearMetrics()
+  ])
+  lastUpdate.value = new Date()
+}
+
 // Update clock every minute
 let clockInterval: NodeJS.Timeout | null = null
 onMounted(() => {
   clockInterval = setInterval(() => {
     currentTime.value = new Date()
   }, 60000) // Update every minute
+
+  // Register refresh handler for header button
+  if (setRefreshHandler) {
+    setRefreshHandler(handleRefresh)
+  }
 })
 
 onUnmounted(() => {
   if (clockInterval) clearInterval(clockInterval)
+
+  // Unregister refresh handler
+  if (setRefreshHandler) {
+    setRefreshHandler(undefined)
+  }
 })
 
 // Refresh data when filters change
