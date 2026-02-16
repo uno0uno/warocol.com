@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { Camera, Plus } from 'lucide-vue-next';
 import { es } from 'date-fns/locale';
-import { format as fnsFormat } from 'date-fns';
+import { format as fnsFormat, startOfMonth, startOfYear, differenceInCalendarDays, getDaysInMonth, getDaysInYear } from 'date-fns';
 // DashboardSidebar import removed as it's provided by layout
 import MetricCard from '~/components/shared/MetricCard.vue';
 import SalesChart from '~/components/analytics/SalesChart.vue';
@@ -86,6 +86,69 @@ const { data: salesFlowData, pending: salesFlowLoading, refresh: refreshSalesFlo
     default: () => ({ data: [], metadata: {} })
   }
 )
+
+// Load current month metrics for forecast (independent of date filter)
+const currentMonthFrom = fnsFormat(startOfMonth(new Date()), 'yyyy-MM-dd')
+const currentMonthToday = fnsFormat(new Date(), 'yyyy-MM-dd')
+
+const { data: monthMetricsData, refresh: refreshMonthMetrics } = useAsyncData(
+  'analytics-month-metrics',
+  () => $fetch('/api/orders/metrics', {
+    params: { date_from: currentMonthFrom, date_to: currentMonthToday }
+  }),
+  { server: false }
+)
+
+// Load current year metrics for annual forecast
+const currentYearFrom = fnsFormat(startOfYear(new Date()), 'yyyy-MM-dd')
+
+const { data: yearMetricsData, refresh: refreshYearMetrics } = useAsyncData(
+  'analytics-year-metrics',
+  () => $fetch('/api/orders/metrics', {
+    params: { date_from: currentYearFrom, date_to: currentMonthToday }
+  }),
+  { server: false }
+)
+
+// Determine if dates are selected
+const hasDateFilter = computed(() => {
+  return dateRangeDates.value && dateRangeDates.value.length === 2 && dateRangeDates.value[0] && dateRangeDates.value[1]
+})
+
+// Forecast: annual when no dates selected, monthly when dates selected
+const forecast = computed(() => {
+  const today = new Date()
+
+  if (!hasDateFilter.value) {
+    // Annual forecast
+    const yearData = yearMetricsData.value?.data
+    if (!yearData || !yearData.total_sales) return 0
+    const daysElapsed = differenceInCalendarDays(today, startOfYear(today)) + 1
+    const totalDays = getDaysInYear(today)
+    return Math.round((yearData.total_sales / daysElapsed) * totalDays)
+  } else {
+    // Monthly forecast
+    const monthData = monthMetricsData.value?.data
+    if (!monthData || !monthData.total_sales) return 0
+    const daysElapsed = differenceInCalendarDays(today, startOfMonth(today)) + 1
+    const totalDays = getDaysInMonth(today)
+    return Math.round((monthData.total_sales / daysElapsed) * totalDays)
+  }
+})
+
+const forecastLabel = computed(() => {
+  if (!hasDateFilter.value) {
+    return `Forecast ${fnsFormat(new Date(), 'yyyy')}`
+  }
+  return `Forecast ${fnsFormat(new Date(), 'MMMM', { locale: es })}`
+})
+
+const forecastSubtitle = computed(() => {
+  if (!hasDateFilter.value) {
+    return 'Proyección fin de año'
+  }
+  return 'Proyección fin de mes'
+})
 
 // Compute dynamic chart title based on date range and metadata
 const chartTitle = computed(() => {
@@ -322,31 +385,38 @@ definePageMeta({
           <span class="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded">ACTUALIZADO HACE 1 MIN</span>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <MetricCard 
-            title="Ventas Brutas" 
-            :value="metrics.total_sales" 
-            format="currency" 
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+          <MetricCard
+            title="Ventas Brutas"
+            :value="metrics.total_sales"
+            format="currency"
             variant="success"
           />
-          <MetricCard 
-            title="Pedidos Online" 
-            :value="metrics.completed_orders" 
-            format="number" 
-            variant="info" 
+          <MetricCard
+            title="Pedidos Online"
+            :value="metrics.completed_orders"
+            format="number"
+            variant="info"
           />
-          <MetricCard 
-            title="Ticket Promedio" 
-            :value="metrics.avg_ticket" 
-            format="currency" 
-            variant="warning" 
+          <MetricCard
+            title="Ticket Promedio"
+            :value="metrics.avg_ticket"
+            format="currency"
+            variant="warning"
           />
-          <MetricCard 
-            title="Ahorro Comisiones" 
-            :value="metrics.commission_savings" 
-            format="currency" 
-            variant="primary" 
+          <MetricCard
+            title="Ahorro Comisiones"
+            :value="metrics.commission_savings"
+            format="currency"
+            variant="primary"
             subtitle="Pedidos directos vs App"
+          />
+          <MetricCard
+            :title="forecastLabel"
+            :value="forecast"
+            format="currency"
+            variant="info"
+            :subtitle="forecastSubtitle"
           />
         </div>
 
