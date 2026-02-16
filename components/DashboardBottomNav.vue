@@ -122,6 +122,23 @@
           </NuxtLink>
 
           <NuxtLink
+            to="/analitica"
+            @click="showMenuModal = false"
+            class="flex flex-col items-center gap-1"
+          >
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+              :class="activePage === 'analitica' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+            >
+              <ChartBarIcon
+                class="w-6 h-6"
+                :class="activePage === 'analitica' ? 'text-crocus-600' : 'text-titan-600'"
+              />
+            </div>
+            <span class="text-[10px] text-titan-600">Analítica</span>
+          </NuxtLink>
+
+          <NuxtLink
             to="/integraciones"
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
@@ -207,11 +224,12 @@ import {
   KeyIcon,
   ShoppingCartIcon,
   CubeIcon,
+  ChartBarIcon,
 } from '@heroicons/vue/24/outline'
 import { computed } from 'vue'
 
 interface Props {
-  activePage?: 'dashboard' | 'pos' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'ventas' | 'inventario' | 'menu' | 'equipo'
+  activePage?: 'dashboard' | 'pos' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'analitica' | 'reportes' | 'configuracion' | 'admin' | 'ventas' | 'inventario' | 'menu' | 'equipo' | 'integraciones'
   onRefresh?: () => void | Promise<void>
 }
 

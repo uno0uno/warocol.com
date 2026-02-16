@@ -181,6 +181,9 @@ export default defineNuxtConfig({
         defineModel: true,
         propsDestructure: true
       }
+    },
+    optimizeDeps: {
+      include: ['@unovis/ts', '@unovis/vue']
     }
   },
   css: ['~/assets/css/main.scss', '~/assets/css/design-system.css', '~/assets/css/design-tokens.css', '~/assets/css/fonts.css'],
