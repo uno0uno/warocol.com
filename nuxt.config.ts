@@ -159,6 +159,10 @@ export default defineNuxtConfig({
     'nuxt-icon',
     'nuxt-echarts'
   ],
+  echarts: {
+    charts: ['LineChart'],
+    components: ['GridComponent', 'TooltipComponent']
+  },
   site: {
     url: 'https://warocol.com'
   },
