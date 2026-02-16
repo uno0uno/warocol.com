@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { Camera, Plus } from 'lucide-vue-next';
 import { es } from 'date-fns/locale';
-import { format as fnsFormat, startOfMonth, startOfYear, differenceInCalendarDays, getDaysInMonth, getDaysInYear } from 'date-fns';
+import { format as fnsFormat, startOfMonth, startOfYear, differenceInCalendarDays, getDaysInMonth, getDaysInYear, formatDistanceToNow } from 'date-fns';
 // DashboardSidebar import removed as it's provided by layout
 import MetricCard from '~/components/shared/MetricCard.vue';
 import SalesChart from '~/components/analytics/SalesChart.vue';
@@ -12,6 +12,10 @@ import InvoiceModal from '~/components/analytics/InvoiceModal.vue';
 
 const isInventoryUnlocked = ref(false);
 const showInvoiceModal = ref(false);
+
+// Last update timestamp
+const lastUpdate = ref<Date>(new Date());
+const currentTime = ref<Date>(new Date());
 
 // Filter states
 const paymentMethodFilter = ref<string | null>(null);
@@ -221,27 +225,45 @@ const chartLabels = computed(() => {
   }
 })
 
+// Computed for last update text
+const lastUpdateText = computed(() => {
+  if (!lastUpdate.value) return 'Nunca actualizado'
+  return formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es })
+})
+
+// Update clock every minute
+let clockInterval: NodeJS.Timeout | null = null
+onMounted(() => {
+  clockInterval = setInterval(() => {
+    currentTime.value = new Date()
+  }, 60000) // Update every minute
+})
+
+onUnmounted(() => {
+  if (clockInterval) clearInterval(clockInterval)
+})
+
 // Refresh data when filters change
-watch([paymentMethodFilter, statusFilter], () => {
-  refreshMetrics()
-  refreshSalesFlow()
+watch([paymentMethodFilter, statusFilter], async () => {
+  await Promise.all([refreshMetrics(), refreshSalesFlow()])
+  lastUpdate.value = new Date()
 })
 
 // Refresh data when date range changes (only when both dates are selected or cleared)
-watch(dateRangeDates, (val) => {
+watch(dateRangeDates, async (val) => {
   if (!val || (val.length === 2 && val[0] && val[1])) {
-    refreshMetrics()
-    refreshSalesFlow()
+    await Promise.all([refreshMetrics(), refreshSalesFlow()])
+    lastUpdate.value = new Date()
   }
 })
 
 // Clear filters function
-const clearFilters = () => {
+const clearFilters = async () => {
   paymentMethodFilter.value = null
   statusFilter.value = null
   dateRangeDates.value = null
-  refreshMetrics()
-  refreshSalesFlow()
+  await Promise.all([refreshMetrics(), refreshSalesFlow()])
+  lastUpdate.value = new Date()
 }
 
 // Function to unlock inventory
@@ -382,7 +404,7 @@ definePageMeta({
             <span class="w-2 h-6 bg-green-500 rounded-full"></span>
             Ventas en Tiempo Real
           </h3>
-          <span class="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded">ACTUALIZADO HACE 1 MIN</span>
+          <span class="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded uppercase">{{ lastUpdateText }}</span>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
@@ -390,19 +412,19 @@ definePageMeta({
             title="Ventas Brutas"
             :value="metrics.total_sales"
             format="currency"
-            variant="success"
+            variant="primary"
           />
           <MetricCard
             title="Pedidos Online"
             :value="metrics.completed_orders"
             format="number"
-            variant="info"
+            variant="primary"
           />
           <MetricCard
             title="Ticket Promedio"
             :value="metrics.avg_ticket"
             format="currency"
-            variant="warning"
+            variant="primary"
           />
           <MetricCard
             title="Ahorro Comisiones"
@@ -415,7 +437,7 @@ definePageMeta({
             :title="forecastLabel"
             :value="forecast"
             format="currency"
-            variant="info"
+            variant="primary"
             :subtitle="forecastSubtitle"
           />
         </div>
@@ -432,21 +454,21 @@ definePageMeta({
       </section>
 
       <!-- NIVEL 2: SALUD DEL MARGEN (LOCKED) -->
-      <HealthSemaphore 
-        :isUnlocked="isInventoryUnlocked" 
+      <!-- <HealthSemaphore
+        :isUnlocked="isInventoryUnlocked"
         @unlock="showInvoiceModal = true"
-      />
+      /> -->
 
       <!-- NIVEL 3: ALERTAS DE GESTION -->
-      <AlertsSection :class="!isInventoryUnlocked ? 'opacity-30 grayscale pointer-events-none' : ''" />
+      <!-- <AlertsSection :class="!isInventoryUnlocked ? 'opacity-30 grayscale pointer-events-none' : ''" /> -->
 
     </div>
 
-    <InvoiceModal
+    <!-- <InvoiceModal
       :show="showInvoiceModal"
       @close="showInvoiceModal = false"
       @confirm="unlockInventory"
-    />
+    /> -->
   </div>
 </template>
 
