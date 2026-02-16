@@ -8,7 +8,6 @@ export default defineNuxtConfig({
     routeRules: {
       // Client-only pages (no SSR)
       '/abastecimiento/lector-facturas': { ssr: false },
-      '/analitica': { ssr: false },
       '/api/auth/**': {
         proxy: {
           to: process.env.NODE_ENV === 'development'
@@ -157,7 +156,8 @@ export default defineNuxtConfig({
     }],
     '@nuxtjs/robots',
     '@pinia/nuxt',
-    'nuxt-icon'
+    'nuxt-icon',
+    'nuxt-echarts'
   ],
   site: {
     url: 'https://warocol.com'
@@ -173,9 +173,6 @@ export default defineNuxtConfig({
       }
     ]
   },
-  build: {
-    transpile: ['@unovis/vue', '@unovis/ts', 'striptags']
-  },
   devtools: {
     enabled: false
   },
@@ -185,12 +182,6 @@ export default defineNuxtConfig({
         defineModel: true,
         propsDestructure: true
       }
-    },
-    optimizeDeps: {
-      include: ['@unovis/ts', '@unovis/vue', 'striptags']
-    },
-    ssr: {
-      noExternal: ['@unovis/vue', '@unovis/ts', 'striptags']
     }
   },
   css: ['~/assets/css/main.scss', '~/assets/css/design-system.css', '~/assets/css/design-tokens.css', '~/assets/css/fonts.css'],
