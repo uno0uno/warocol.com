@@ -275,7 +275,17 @@ const formatCompactCurrency = (num: number): string => {
 const formattedValue = computed(() => {
   if (props.format === 'text') return props.value
 
+  // Handle undefined, null, or empty values
+  if (props.value === undefined || props.value === null || props.value === '') {
+    return props.format === 'currency' ? '$0' : '0'
+  }
+
   const numValue = typeof props.value === 'string' ? parseFloat(props.value) : props.value
+
+  // Handle NaN after parsing
+  if (isNaN(numValue)) {
+    return props.format === 'currency' ? '$0' : '0'
+  }
 
   switch (props.format) {
     case 'currency':
