@@ -1,0 +1,735 @@
+<template>
+  <div class="confirm-page">
+    <div class="confirm-container">
+      <!-- Header -->
+      <div class="page-header">
+        <button class="back-btn" @click="goBack">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          Volver
+        </button>
+
+        <h1 class="page-title">Confirmar Pedido</h1>
+        <p class="page-subtitle">Revisa tu pedido antes de confirmar</p>
+      </div>
+
+      <!-- Content -->
+      <div class="confirm-content">
+        <!-- Order Type -->
+        <div class="section">
+          <h3 class="section-title">Tipo de Pedido</h3>
+          <div class="order-type-display">
+            <div class="type-icon">
+              {{ getOrderTypeIcon(cartStore.orderType) }}
+            </div>
+            <div>
+              <div class="type-label">{{ getOrderTypeLabel(cartStore.orderType) }}</div>
+              <div v-if="cartStore.orderType === 'pickup'" class="type-desc">
+                Recibirás un PIN para recoger tu pedido
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivery Address (if delivery) -->
+        <div v-if="cartStore.orderType === 'delivery' && selectedAddress" class="section">
+          <h3 class="section-title">Dirección de Entrega</h3>
+          <div class="address-display">
+            <div class="address-icon">📍</div>
+            <div class="address-info">
+              <div class="address-line">{{ selectedAddress.address_line1 }}</div>
+              <div v-if="selectedAddress.address_line2" class="address-line2">
+                {{ selectedAddress.address_line2 }}
+              </div>
+              <div class="address-city">
+                {{ selectedAddress.city }}, {{ selectedAddress.state }}
+              </div>
+              <div v-if="selectedAddress.delivery_notes" class="address-notes">
+                📝 {{ selectedAddress.delivery_notes }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scheduled Time -->
+        <div v-if="cartStore.deliveryInfo?.scheduled_time" class="section">
+          <h3 class="section-title">Fecha y Hora</h3>
+          <div class="time-display">
+            📅 {{ formatScheduledTime(cartStore.deliveryInfo.scheduled_time) }}
+          </div>
+        </div>
+
+        <!-- Additional Instructions -->
+        <div v-if="cartStore.deliveryInfo?.delivery_instructions" class="section">
+          <h3 class="section-title">Instrucciones Adicionales</h3>
+          <div class="instructions-display">
+            📝 {{ cartStore.deliveryInfo.delivery_instructions }}
+          </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="section">
+          <h3 class="section-title">Tu Pedido ({{ cartStore.itemCount }} productos)</h3>
+          <div class="items-list">
+            <div v-for="item in cartStore.items" :key="item.id" class="order-item">
+              <div class="item-quantity">{{ item.quantity }}x</div>
+              <div class="item-details">
+                <div class="item-name">{{ item.product_name }}</div>
+                <div v-if="item.modifiers.length > 0" class="item-modifiers">
+                  <span v-for="mod in item.modifiers" :key="mod.id" class="modifier">
+                    + {{ mod.name }}
+                  </span>
+                </div>
+                <div v-if="item.notes" class="item-notes">📝 {{ item.notes }}</div>
+              </div>
+              <div class="item-price">{{ formatPrice(item.total) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="section">
+          <h3 class="section-title">Resumen</h3>
+          <div class="summary-lines">
+            <div class="summary-line">
+              <span>Subtotal</span>
+              <span>{{ formatPrice(cartStore.subtotal) }}</span>
+            </div>
+            <div v-if="deliveryFee > 0" class="summary-line">
+              <span>Domicilio</span>
+              <span>{{ formatPrice(deliveryFee) }}</span>
+            </div>
+            <div v-else-if="cartStore.orderType === 'delivery'" class="summary-line">
+              <span>Domicilio <span class="free-badge">GRATIS</span></span>
+              <span>{{ formatPrice(0) }}</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-line total-line">
+              <span>Total</span>
+              <span>{{ formatPrice(total) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Info (Mock) -->
+        <div class="section">
+          <div class="payment-info">
+            💵 <strong>Pago:</strong> Efectivo al recibir
+          </div>
+        </div>
+
+        <!-- Confirm Button -->
+        <button
+          class="btn btn-primary btn-large"
+          @click="handleConfirmOrder"
+          :disabled="isLoading"
+        >
+          <span v-if="!isLoading">Confirmar Pedido</span>
+          <span v-else>Procesando...</span>
+        </button>
+
+        <!-- Terms -->
+        <p class="terms-text">
+          Al confirmar, aceptas nuestros términos y condiciones de servicio
+        </p>
+      </div>
+    </div>
+
+    <!-- Success Modal -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="showSuccessModal" class="modal-backdrop" @click="closeSuccessModal">
+          <div class="success-modal" @click.stop>
+            <div class="success-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="64"
+                height="64"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+
+            <h2 class="modal-title">¡Pedido Confirmado!</h2>
+
+            <div class="order-number">
+              Número de pedido: <strong>#{{ mockOrderNumber }}</strong>
+            </div>
+
+            <div v-if="authStore.pickupPin" class="pickup-pin-display">
+              <div class="pin-label">Tu PIN de Recogida:</div>
+              <div class="pin-code">{{ authStore.pickupPin }}</div>
+              <p class="pin-desc">Muestra este PIN al recoger tu pedido</p>
+            </div>
+
+            <div class="success-message">
+              <p v-if="cartStore.orderType === 'delivery'">
+                Tu pedido llegará en aproximadamente <strong>30-45 minutos</strong>
+              </p>
+              <p v-else-if="cartStore.orderType === 'pickup'">
+                Tu pedido estará listo para recoger en <strong>20-30 minutos</strong>
+              </p>
+              <p v-else>
+                Tu pedido está siendo preparado
+              </p>
+            </div>
+
+            <button class="btn btn-primary" @click="goToHome">
+              Volver al Inicio
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useOnlineCartStore } from '~/stores/online_cart'
+import { useAuthStore } from '~/stores/auth'
+import { useAddressStore } from '~/stores/address'
+
+definePageMeta({
+  layout: 'public-restaurant',
+})
+
+const route = useRoute()
+const router = useRouter()
+const cartStore = useOnlineCartStore()
+const authStore = useAuthStore()
+const addressStore = useAddressStore()
+
+const tenantSlug = computed(() => route.params.tenant as string)
+
+// Redirect if not verified or no delivery info
+if (!authStore.isVerified || !cartStore.deliveryInfo) {
+  router.push(`/${tenantSlug.value}/checkout/otp`)
+}
+
+const isLoading = ref(false)
+const showSuccessModal = ref(false)
+const mockOrderNumber = ref('')
+
+const selectedAddress = computed(() => addressStore.selectedAddress)
+
+// Mock delivery fee
+const deliveryFee = computed(() => {
+  if (cartStore.orderType === 'delivery') {
+    return cartStore.subtotal >= 50000 ? 0 : 5000
+  }
+  return 0
+})
+
+const total = computed(() => {
+  return cartStore.subtotal + deliveryFee.value
+})
+
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+  }).format(price)
+}
+
+const getOrderTypeIcon = (type: string) => {
+  const icons = {
+    delivery: '🚗',
+    pickup: '🏪',
+    'dine-in': '🍽️',
+  }
+  return icons[type as keyof typeof icons] || '📦'
+}
+
+const getOrderTypeLabel = (type: string) => {
+  const labels = {
+    delivery: 'Domicilio',
+    pickup: 'Recoger en Tienda',
+    'dine-in': 'Comer en el Restaurante',
+  }
+  return labels[type as keyof typeof labels] || type
+}
+
+const formatScheduledTime = (isoString: string) => {
+  const date = new Date(isoString)
+  return date.toLocaleString('es-CO', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+const handleConfirmOrder = async () => {
+  isLoading.value = true
+
+  try {
+    // Simulate order creation
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // Generate mock order number
+    mockOrderNumber.value = `WRO${Date.now().toString().slice(-6)}`
+
+    // Show success modal
+    showSuccessModal.value = true
+
+    // Clear cart (but keep it for display)
+    // In real implementation, cart would be converted to order
+  } catch (error) {
+    alert('Error al confirmar pedido')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const closeSuccessModal = () => {
+  showSuccessModal.value = false
+  goToHome()
+}
+
+const goToHome = () => {
+  // Clear cart and reset stores
+  cartStore.reset()
+  authStore.logout()
+  addressStore.reset()
+
+  // Navigate to home
+  router.push(`/${tenantSlug.value}`)
+}
+
+const goBack = () => {
+  router.push(`/${tenantSlug.value}/checkout/delivery`)
+}
+</script>
+
+<style scoped>
+.confirm-page {
+  min-height: 100vh;
+  background: #f9fafb;
+  padding: 20px;
+}
+
+.confirm-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: white;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
+}
+
+.back-btn:hover {
+  background: #f3f4f6;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.page-subtitle {
+  font-size: 16px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.confirm-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 16px 0;
+}
+
+.order-type-display,
+.address-display {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.type-icon,
+.address-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.type-label {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.type-desc {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.address-info {
+  flex: 1;
+}
+
+.address-line {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.address-line2,
+.address-city {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.address-notes {
+  font-size: 13px;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.time-display,
+.instructions-display {
+  font-size: 15px;
+  color: #374151;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.order-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.item-quantity {
+  font-size: 15px;
+  font-weight: 700;
+  color: #667eea;
+  min-width: 32px;
+}
+
+.item-details {
+  flex: 1;
+}
+
+.item-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.item-modifiers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.modifier {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.item-notes {
+  font-size: 13px;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.item-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.summary-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+}
+
+.summary-line span:first-child {
+  color: #6b7280;
+}
+
+.summary-line span:last-child {
+  color: #111827;
+  font-weight: 500;
+}
+
+.free-badge {
+  background: #10b981;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+}
+
+.summary-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
+.total-line {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.total-line span {
+  color: #111827 !important;
+}
+
+.total-line span:last-child {
+  color: #667eea !important;
+  font-size: 20px;
+}
+
+.payment-info {
+  text-align: center;
+  padding: 12px;
+  background: #fef3c7;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 15px;
+}
+
+.btn {
+  padding: 18px 32px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.terms-text {
+  text-align: center;
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* Success Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.success-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 48px 32px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  animation: scaleIn 0.5s ease-out;
+}
+
+.modal-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 16px 0;
+}
+
+.order-number {
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.order-number strong {
+  color: #111827;
+  font-size: 18px;
+}
+
+.pickup-pin-display {
+  background: #fef3c7;
+  border: 2px solid #fbbf24;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.pin-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 12px;
+}
+
+.pin-code {
+  font-size: 36px;
+  font-weight: 800;
+  color: #7c2d12;
+  letter-spacing: 4px;
+  margin-bottom: 8px;
+}
+
+.pin-desc {
+  font-size: 13px;
+  color: #92400e;
+  margin: 0;
+}
+
+.success-message {
+  margin-bottom: 24px;
+}
+
+.success-message p {
+  font-size: 16px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 640px) {
+  .page-title {
+    font-size: 24px;
+  }
+
+  .success-modal {
+    padding: 32px 24px;
+  }
+
+  .modal-title {
+    font-size: 24px;
+  }
+
+  .pin-code {
+    font-size: 28px;
+  }
+}
+</style>

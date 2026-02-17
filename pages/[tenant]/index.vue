@@ -1,14 +1,24 @@
 <script setup>
 import RestaurantHeader from '~/components/public/RestaurantHeader.vue'
 import PublicMenu from '~/components/public/PublicMenu.vue'
+import CartButton from '~/components/online/CartButton.vue'
+import CartDrawer from '~/components/online/CartDrawer.vue'
+import { useOnlineCartStore } from '~/stores/online_cart'
 
 definePageMeta({
   layout: 'public-restaurant'
 })
 
 const route = useRoute()
+const router = useRouter()
 const config = useRuntimeConfig()
 const tenantSlug = route.params.tenant
+
+// Initialize cart store
+const cartStore = useOnlineCartStore()
+
+// Cart drawer state
+const isCartOpen = ref(false)
 
 // SSR data fetching — await ensures data is ready before rendering on server
 const { data: profileData, error: profileError, pending: pendingProfile } = await useAsyncData(
@@ -103,9 +113,47 @@ useHead({
   ]
 })
 
-// Handle product click
-const handleProductClick = (product) => {
-  console.log('Product clicked:', product)
+// Initialize cart session on mount
+onMounted(() => {
+  // Get or create session ID
+  let sessionId = null
+  if (process.client) {
+    sessionId = localStorage.getItem('waro_session_id')
+  }
+
+  cartStore.initSession(sessionId)
+  cartStore.setTenant(tenantSlug)
+})
+
+// Handle product click - Add to cart
+const handleProductClick = async (product) => {
+  try {
+    // Mock: Add product with basic info
+    await cartStore.addItem(
+      {
+        id: product.id,
+        name: product.name,
+        price: product.price
+      },
+      1, // quantity
+      [], // no modifiers for now
+      undefined // no notes
+    )
+
+    // Show success feedback
+    console.log('✅ Producto agregado al carrito:', product.name)
+
+    // Optional: Show toast notification here
+    // toast.success(`${product.name} agregado al carrito`)
+  } catch (error) {
+    console.error('Error al agregar producto:', error)
+    alert('Error al agregar producto al carrito')
+  }
+}
+
+// Handle checkout - Navigate to OTP verification
+const handleCheckout = () => {
+  router.push(`/${tenantSlug}/checkout/otp`)
 }
 </script>
 
@@ -149,6 +197,18 @@ const handleProductClick = (product) => {
           @product-click="handleProductClick"
         />
       </div>
+
+      <!-- Cart Button (Floating) -->
+      <CartButton
+        :count="cartStore.itemCount"
+        @click="isCartOpen = true"
+      />
+
+      <!-- Cart Drawer -->
+      <CartDrawer
+        v-model="isCartOpen"
+        @checkout="handleCheckout"
+      />
     </div>
   </div>
 </template>
