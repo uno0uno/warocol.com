@@ -27,6 +27,9 @@
           </div>
 
           <div class="flex items-center gap-3">
+            <!-- Portal Target for Custom Actions -->
+            <div id="dashboard-header-actions" class="flex items-center gap-2"></div>
+
             <!-- Header Action Button (e.g., Print) -->
             <button
               v-if="dynamicHeaderAction"
@@ -326,14 +329,14 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
-  } else if (path.includes('/analytics')) {
+  } else if (path.includes('/analytics') || path.includes('/analitica')) {
     return {
-      pageTitle: 'Dashboard - Analytics',
-      pageSubtitle: 'Análisis avanzado de datos y métricas',
+      pageTitle: 'Panel de Control',
+      pageSubtitle: undefined,
       searchPlaceholder: 'Buscar métricas...',
       activePage: 'analytics' as const,
-      showBreadcrumb: true,
-      breadcrumbPage: 'Analytics',
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
       backButton: undefined
     }
   } else if (path.includes('/reportes')) {
