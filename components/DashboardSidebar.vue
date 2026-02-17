@@ -65,6 +65,21 @@
       <!-- Sección Ventas -->
       <div class="space-y-1">
         <span v-if="!collapsed" class="px-3 text-[10px] text-titan-500/70 uppercase tracking-widest font-medium">Ventas</span>
+        
+        <NuxtLink
+          to="/analitica"
+          :class="[
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+            collapsed ? 'justify-center' : '',
+            activePage === 'analytics'
+              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+          ]"
+          :title="collapsed ? 'Analítica' : ''"
+        >
+          <ChartBarIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'analytics' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+          <span v-if="!collapsed" class="whitespace-nowrap">Analítica</span>
+        </NuxtLink>
         <NuxtLink
           to="/ventas"
           :class="[
@@ -199,6 +214,7 @@ defineOptions({
 import { computed } from 'vue'
 import {
   ArrowRightOnRectangleIcon,
+  ChartBarIcon,
   ChevronDownIcon,
   ComputerDesktopIcon,
   CubeIcon,
