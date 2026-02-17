@@ -49,13 +49,13 @@ const menuItems = computed(() => {
 const getCategoryStyles = (category: string) => {
   switch (category) {
     case 'Star':
-      return { bg: 'bg-green-100', text: 'text-green-700', icon: Star, label: 'Estrella' };
+      return { bg: 'bg-green-100', text: 'text-green-700', icon: Star, label: 'Excelente' };
     case 'Plowhorse':
-      return { bg: 'bg-blue-100', text: 'text-blue-700', icon: Shield, label: 'Caballo' };
+      return { bg: 'bg-blue-100', text: 'text-blue-700', icon: Shield, label: 'Popular' };
     case 'Puzzle':
-      return { bg: 'bg-orange-100', text: 'text-orange-700', icon: Puzzle, label: 'Puzzle' };
+      return { bg: 'bg-orange-100', text: 'text-orange-700', icon: Puzzle, label: 'Potencial' };
     case 'Dog':
-      return { bg: 'bg-red-100', text: 'text-red-700', icon: AlertTriangle, label: 'Perro' };
+      return { bg: 'bg-red-100', text: 'text-red-700', icon: AlertTriangle, label: 'Crítico' };
     default:
       return { bg: 'bg-slate-100', text: 'text-slate-700', icon: Star, label: 'Unknown' };
   }
@@ -68,6 +68,20 @@ const formatCurrency = (value: number) => {
     minimumFractionDigits: 0
   }).format(value);
 };
+
+const totals = computed(() => {
+  const items = props.menuData?.menu_items
+  if (!items || items.length === 0) return null
+  return {
+    units: items.reduce((s, i) => s + (i.total_units_sold || 0), 0),
+    revenue: items.reduce((s, i) => s + (i.total_revenue || 0), 0),
+    profit: items.reduce((s, i) => s + (i.total_profit || 0), 0),
+    margin: items.reduce((s, i) => s + (i.total_revenue || 0), 0) > 0
+      ? Math.round(items.reduce((s, i) => s + (i.total_profit || 0), 0) /
+          items.reduce((s, i) => s + (i.total_revenue || 0), 0) * 100)
+      : 0
+  }
+})
 </script>
 
 <template>
@@ -77,8 +91,12 @@ const formatCurrency = (value: number) => {
         <tr>
           <th class="py-3 px-4">Producto</th>
           <th class="py-3 px-4 text-center">Clasificación</th>
+          <th class="py-3 px-4 text-right">Unidades</th>
+          <th class="py-3 px-4 text-right">Costo</th>
+          <th class="py-3 px-4 text-right">Precio</th>
           <th class="py-3 px-4 text-right">Margen</th>
-          <th class="py-3 px-4 text-right">Ventas</th>
+          <th class="py-3 px-4 text-right">Ingresos</th>
+          <th class="py-3 px-4 text-right">Ganancia</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100">
@@ -89,7 +107,6 @@ const formatCurrency = (value: number) => {
         >
           <td class="py-3 px-4">
             <div class="font-medium text-slate-800">{{ item.name }}</div>
-            <div v-if="item.category" class="text-xs text-slate-500 mt-0.5">{{ item.category }}</div>
           </td>
           <td class="py-3 px-4 flex justify-center">
             <span
@@ -101,6 +118,21 @@ const formatCurrency = (value: number) => {
             </span>
           </td>
           <td class="py-3 px-4 text-right">
+            <span class="text-slate-600">
+              {{ item.total_units_sold || 0 }}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-right">
+            <span class="text-slate-600">
+              {{ item.estimated_cost ? formatCurrency(item.estimated_cost) : '—' }}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-right">
+            <span class="text-slate-800 font-semibold">
+              {{ item.price ? formatCurrency(item.price) : '—' }}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-right">
             <span
               :class="item.profit_margin_pct >= 40 ? 'text-green-600 font-bold' : 'text-slate-600'"
             >
@@ -108,37 +140,30 @@ const formatCurrency = (value: number) => {
             </span>
           </td>
           <td class="py-3 px-4 text-right">
-            <span class="text-slate-800 font-medium">
+            <span class="text-slate-800 font-bold">
               {{ item.total_revenue ? formatCurrency(item.total_revenue) : '—' }}
             </span>
-            <div v-if="item.total_units_sold" class="text-xs text-slate-500 mt-0.5">
-              {{ item.total_units_sold }} uds
-            </div>
+          </td>
+          <td class="py-3 px-4 text-right">
+            <span class="text-green-600 font-bold">
+              {{ item.total_profit ? formatCurrency(item.total_profit) : '—' }}
+            </span>
           </td>
         </tr>
       </tbody>
+      <tfoot v-if="totals" class="border-t-2 border-slate-200 bg-slate-50">
+        <tr class="font-semibold text-slate-800">
+          <td class="py-3 px-4">Total</td>
+          <td class="py-3 px-4"></td>
+          <td class="py-3 px-4 text-right">{{ totals.units }}</td>
+          <td class="py-3 px-4 text-right">—</td>
+          <td class="py-3 px-4 text-right">—</td>
+          <td class="py-3 px-4 text-right">{{ totals.margin }}%</td>
+          <td class="py-3 px-4 text-right">{{ formatCurrency(totals.revenue) }}</td>
+          <td class="py-3 px-4 text-right text-green-600">{{ formatCurrency(totals.profit) }}</td>
+        </tr>
+      </tfoot>
     </table>
 
-    <!-- Summary if data available -->
-    <div v-if="menuData?.summary" class="mt-4 pt-4 border-t border-slate-200">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center text-xs">
-        <div>
-          <div class="text-slate-500">Estrellas</div>
-          <div class="text-green-600 font-bold text-lg">{{ menuData.summary.stars }}</div>
-        </div>
-        <div>
-          <div class="text-slate-500">Caballos</div>
-          <div class="text-blue-600 font-bold text-lg">{{ menuData.summary.plowhorses }}</div>
-        </div>
-        <div>
-          <div class="text-slate-500">Puzzles</div>
-          <div class="text-orange-600 font-bold text-lg">{{ menuData.summary.puzzles }}</div>
-        </div>
-        <div>
-          <div class="text-slate-500">Perros</div>
-          <div class="text-red-600 font-bold text-lg">{{ menuData.summary.dogs }}</div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>

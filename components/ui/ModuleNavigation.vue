@@ -9,6 +9,8 @@
           :to="item.to"
           :class="getNavLinkClasses(item)"
           class="text-[15px] transition-colors whitespace-nowrap flex-shrink-0"
+          active-class=""
+          exact-active-class=""
         >
           {{ item.label }}
         </NuxtLink>
@@ -45,15 +47,7 @@ const props = withDefaults(defineProps<Props>(), {
 const route = useRoute()
 
 function getNavLinkClasses(item: NavigationItem): string[] {
-  const matchPath = item.matchPath || item.to
-  
-  let isActive = false
-  if (item.matchPath) {
-    // Strict segment matching to avoid false positives (e.g. /compras inside /compras-directas)
-    isActive = route.path.endsWith(item.matchPath) || route.path.includes(item.matchPath + '/')
-  } else {
-    isActive = route.path === item.to
-  }
+  const isActive = route.path === item.to || route.path.startsWith(item.to + '/')
 
   return [
     isActive
