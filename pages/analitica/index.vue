@@ -117,6 +117,54 @@ const { data: yearMetricsData, refresh: refreshYearMetrics } = useAsyncData(
   { server: false, lazy: true }
 )
 
+// Load food cost data for HealthSemaphore
+const { data: foodCostData, refresh: refreshFoodCost } = useAsyncData(
+  'analytics-food-cost',
+  () => $fetch('/api/analytics/food-cost', {
+    params: {
+      date_from: dateRange.value.from || undefined,
+      date_to: dateRange.value.to || undefined
+    }
+  }),
+  {
+    server: false,
+    lazy: true,
+    default: () => ({ data: null })
+  }
+)
+
+// Load menu analysis data for MenuMatrix
+const { data: menuAnalysisData, refresh: refreshMenuAnalysis } = useAsyncData(
+  'analytics-menu-analysis',
+  () => $fetch('/api/analytics/menu-analysis', {
+    params: {
+      date_from: dateRange.value.from || undefined,
+      date_to: dateRange.value.to || undefined,
+      limit: 10
+    }
+  }),
+  {
+    server: false,
+    lazy: true,
+    default: () => ({ data: null })
+  }
+)
+
+// Load alerts for AlertsSection
+const { data: alertsData, refresh: refreshAlerts } = useAsyncData(
+  'analytics-alerts',
+  () => $fetch('/api/analytics/alerts', {
+    params: {
+      limit: 10
+    }
+  }),
+  {
+    server: false,
+    lazy: true,
+    default: () => ({ data: null })
+  }
+)
+
 // Determine if dates are selected
 const hasDateFilter = computed(() => {
   return dateRangeDates.value && dateRangeDates.value.length === 2 && dateRangeDates.value[0] && dateRangeDates.value[1]
@@ -240,7 +288,10 @@ const handleRefresh = async () => {
     refreshMetrics(),
     refreshSalesFlow(),
     refreshMonthMetrics(),
-    refreshYearMetrics()
+    refreshYearMetrics(),
+    refreshFoodCost(),
+    refreshMenuAnalysis(),
+    refreshAlerts()
   ])
   lastUpdate.value = new Date()
 }
@@ -269,14 +320,22 @@ onUnmounted(() => {
 
 // Refresh data when filters change
 watch([paymentMethodFilter, statusFilter], async () => {
-  await Promise.all([refreshMetrics(), refreshSalesFlow()])
+  await Promise.all([
+    refreshMetrics(),
+    refreshSalesFlow()
+  ])
   lastUpdate.value = new Date()
 })
 
 // Refresh data when date range changes (only when both dates are selected or cleared)
 watch(dateRangeDates, async (val) => {
   if (!val || (val.length === 2 && val[0] && val[1])) {
-    await Promise.all([refreshMetrics(), refreshSalesFlow()])
+    await Promise.all([
+      refreshMetrics(),
+      refreshSalesFlow(),
+      refreshFoodCost(),
+      refreshMenuAnalysis()
+    ])
     lastUpdate.value = new Date()
   }
 })
@@ -286,7 +345,12 @@ const clearFilters = async () => {
   paymentMethodFilter.value = null
   statusFilter.value = null
   dateRangeDates.value = null
-  await Promise.all([refreshMetrics(), refreshSalesFlow()])
+  await Promise.all([
+    refreshMetrics(),
+    refreshSalesFlow(),
+    refreshFoodCost(),
+    refreshMenuAnalysis()
+  ])
   lastUpdate.value = new Date()
 }
 
@@ -482,11 +546,16 @@ definePageMeta({
       <!-- NIVEL 2: SALUD DEL MARGEN (LOCKED) -->
       <HealthSemaphore
         :isUnlocked="isInventoryUnlocked"
+        :foodCostData="foodCostData?.data"
+        :menuData="menuAnalysisData?.data"
         @unlock="showInvoiceModal = true"
       />
 
       <!-- NIVEL 3: ALERTAS DE GESTION -->
-      <AlertsSection :class="!isInventoryUnlocked ? 'opacity-30 grayscale pointer-events-none' : ''" />
+      <AlertsSection
+        :alerts="alertsData?.data?.alerts"
+        :class="!isInventoryUnlocked ? 'opacity-30 grayscale pointer-events-none' : ''"
+      />
 
     </div>
 

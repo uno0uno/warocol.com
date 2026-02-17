@@ -1,5 +1,68 @@
 <script setup lang="ts">
-import { AlertCircle, AlertTriangle, ArrowRight } from 'lucide-vue-next';
+import { AlertCircle, AlertTriangle, Info, ArrowRight } from 'lucide-vue-next';
+
+interface Alert {
+  id: string;
+  type: 'critical' | 'warning' | 'info';
+  title: string;
+  description: string;
+  action: {
+    label: string;
+    url: string;
+  };
+}
+
+const props = defineProps<{
+  alerts?: Alert[];
+}>();
+
+// Icon mapping based on alert type
+const getIcon = (type: string) => {
+  switch (type) {
+    case 'critical':
+      return AlertCircle;
+    case 'warning':
+      return AlertTriangle;
+    default:
+      return Info;
+  }
+};
+
+// Color classes based on alert type
+const getColorClasses = (type: string) => {
+  switch (type) {
+    case 'critical':
+      return {
+        bg: 'bg-red-50',
+        border: 'border-red-100',
+        iconBg: 'bg-white',
+        iconText: 'text-red-500',
+        titleText: 'text-red-700',
+        descText: 'text-red-600/80',
+        actionText: 'text-red-700'
+      };
+    case 'warning':
+      return {
+        bg: 'bg-orange-50',
+        border: 'border-orange-100',
+        iconBg: 'bg-white',
+        iconText: 'text-orange-500',
+        titleText: 'text-orange-700',
+        descText: 'text-orange-600/80',
+        actionText: 'text-orange-700'
+      };
+    default:
+      return {
+        bg: 'bg-blue-50',
+        border: 'border-blue-100',
+        iconBg: 'bg-white',
+        iconText: 'text-blue-500',
+        titleText: 'text-blue-700',
+        descText: 'text-blue-600/80',
+        actionText: 'text-blue-700'
+      };
+  }
+};
 </script>
 
 <template>
@@ -8,36 +71,48 @@ import { AlertCircle, AlertTriangle, ArrowRight } from 'lucide-vue-next';
       <span class="w-2 h-6 bg-red-500 rounded-full"></span>
       Alertas
     </h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      
-      <!-- Alerta 1 -->
-      <div class="bg-red-50 border border-red-100 p-4 rounded-xl flex items-start gap-3">
-        <div class="bg-white p-2 rounded-lg shadow-sm text-red-500">
-          <AlertCircle :size="20" />
+
+    <div v-if="!alerts || alerts.length === 0" class="text-center py-8">
+      <Info :size="48" class="text-slate-300 mx-auto mb-3" />
+      <p class="text-slate-500 text-sm">No hay alertas en este momento</p>
+      <p class="text-slate-400 text-xs mt-1">Todo está funcionando correctamente ✅</p>
+    </div>
+
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div
+        v-for="alert in alerts"
+        :key="alert.id"
+        :class="[
+          getColorClasses(alert.type).bg,
+          getColorClasses(alert.type).border,
+          'border p-4 rounded-xl flex items-start gap-3'
+        ]"
+      >
+        <div :class="[
+          getColorClasses(alert.type).iconBg,
+          getColorClasses(alert.type).iconText,
+          'p-2 rounded-lg shadow-sm'
+        ]">
+          <component :is="getIcon(alert.type)" :size="20" />
         </div>
-        <div>
-          <h4 class="font-bold text-red-700 text-sm">Inventario Crítico: Queso Mozzarella</h4>
-          <p class="text-red-600/80 text-xs mt-1 mb-2">Quedan solo 2kg (consumo diario: 1.5kg). Se acabará mañana al mediodía.</p>
-          <button class="flex items-center gap-1 text-xs font-bold text-red-700 hover:underline">
-            Pedir ahora <ArrowRight :size="12" />
-          </button>
+        <div class="flex-1">
+          <h4 :class="[getColorClasses(alert.type).titleText, 'font-bold text-sm']">
+            {{ alert.title }}
+          </h4>
+          <p :class="[getColorClasses(alert.type).descText, 'text-xs mt-1 mb-2']">
+            {{ alert.description }}
+          </p>
+          <NuxtLink
+            :to="alert.action.url"
+            :class="[
+              getColorClasses(alert.type).actionText,
+              'flex items-center gap-1 text-xs font-bold hover:underline'
+            ]"
+          >
+            {{ alert.action.label }} <ArrowRight :size="12" />
+          </NuxtLink>
         </div>
       </div>
-
-      <!-- Alerta 2 -->
-      <div class="bg-orange-50 border border-orange-100 p-4 rounded-xl flex items-start gap-3">
-        <div class="bg-white p-2 rounded-lg shadow-sm text-orange-500">
-          <AlertTriangle :size="20" />
-        </div>
-        <div>
-          <h4 class="font-bold text-orange-700 text-sm">Descuadre de Caja: Turno Tarde</h4>
-          <p class="text-orange-600/80 text-xs mt-1 mb-2">Faltan $15.000 en el cierre de ayer de Ana. Revisar transacciones.</p>
-          <button class="flex items-center gap-1 text-xs font-bold text-orange-700 hover:underline">
-            Ver detalle <ArrowRight :size="12" />
-          </button>
-        </div>
-      </div>
-
     </div>
   </section>
 </template>
