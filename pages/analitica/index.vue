@@ -330,19 +330,19 @@ definePageMeta({
     <Teleport to="#dashboard-header-actions">
       <NuxtLink
         to="/abastecimiento/lector-facturas"
-        class="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl font-medium hover:bg-primary/90 transition-all"
+        class="flex items-center gap-1 md:gap-2 bg-primary text-primary-foreground px-2 md:px-4 py-2 md:py-2.5 rounded-xl font-medium hover:bg-primary/90 transition-all"
+        title="Cargar Factura IA"
       >
         <Sparkles :size="18" />
-        <span class="hidden md:inline">Cargar Factura IA</span>
-        <span class="md:hidden">Factura IA</span>
+        <span class="hidden sm:inline">Cargar Factura IA</span>
       </NuxtLink>
       <NuxtLink
         to="/ventas"
-        class="flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2.5 rounded-xl font-medium hover:bg-accent transition-all"
+        class="flex items-center gap-1 md:gap-2 bg-card border border-border text-foreground px-2 md:px-4 py-2 md:py-2.5 rounded-xl font-medium hover:bg-accent transition-all"
+        title="Venta Nueva"
       >
         <Plus :size="18" />
-        <span class="hidden md:inline">Venta Nueva</span>
-        <span class="md:hidden">Venta</span>
+        <span class="hidden sm:inline">Venta Nueva</span>
       </NuxtLink>
     </Teleport>
   </ClientOnly>
