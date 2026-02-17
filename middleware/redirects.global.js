@@ -1,12 +1,13 @@
 export default defineNuxtRouteMiddleware((to) => {
-  // /abastecimiento/proveedores → /abastecimiento/lector-facturas
-  if (to.path === '/abastecimiento/proveedores') {
-    return navigateTo('/abastecimiento/lector-facturas', { redirectCode: 301 })
+  // /inventario/* → /abastecimiento/*
+  if (to.path === '/inventario' || to.path === '/inventario/stock') {
+    return navigateTo('/abastecimiento/stock', { redirectCode: 301 })
   }
-
-  // /inventario/* → /abastecimiento/lector-facturas
-  if (to.path === '/inventario' || to.path.startsWith('/inventario/')) {
-    return navigateTo('/abastecimiento/lector-facturas', { redirectCode: 301 })
+  if (to.path.startsWith('/inventario/ajustes')) {
+    return navigateTo(to.path.replace('/inventario/ajustes', '/abastecimiento/ajustes'), { redirectCode: 301 })
+  }
+  if (to.path.startsWith('/inventario/')) {
+    return navigateTo('/abastecimiento/stock', { redirectCode: 301 })
   }
 
   // /pagos/*, /gastos/*, /equipo/* → /menu/productos

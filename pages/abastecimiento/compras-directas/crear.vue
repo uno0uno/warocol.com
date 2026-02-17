@@ -237,15 +237,48 @@
         <!-- Step 2: Items -->
         <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border-border border rounded-lg">
           <div class="p-4 sm:p-6">
-            <div class="flex items-center justify-between mb-4 sm:mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4 sm:mb-6">
               <h3 class="text-base sm:text-lg font-semibold text-text-primary">Items de la Compra</h3>
-              <button
-                type="button"
-                @click="addItem"
-                class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm"
-              >
-                + Agregar Item
-              </button>
+              <div class="flex items-center gap-2">
+                <!-- Hidden scan input -->
+                <input
+                  ref="scanFileInput"
+                  type="file"
+                  class="hidden"
+                  accept="image/*"
+                  capture="environment"
+                  @change="handleScanFileSelect"
+                />
+                <button
+                  type="button"
+                  :disabled="isScanning"
+                  @click="scanFileInput?.click()"
+                  class="px-3 py-2 bg-amber-500/10 text-amber-700 border-2 border-amber-400/30 rounded-lg hover:bg-amber-500/20 transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  <svg v-if="!isScanning" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  <svg v-else class="w-4 h-4 flex-shrink-0 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  {{ isScanning ? 'Leyendo factura...' : 'Leer Factura con IA' }}
+                </button>
+                <button
+                  type="button"
+                  @click="addItem"
+                  class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm"
+                >
+                  + Agregar Item
+                </button>
+              </div>
+            </div>
+
+            <!-- OCR banner -->
+            <div v-if="ocrItemsLoaded" class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2 text-sm text-amber-800">
+              <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Items cargados desde la factura. Selecciona el ingrediente y la unidad para cada uno. La cantidad y precio vienen del OCR.</span>
             </div>
 
             <!-- Tabs de Filtro por Tipo de Ingrediente -->
@@ -295,6 +328,14 @@
                       required
                       @update:model-value="() => onIngredientChange(index)"
                     />
+                    <!-- OCR hint: texto de la factura -->
+                    <p v-if="item.ocr_description" class="mt-1 text-xs flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-amber-600'">
+                      <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Factura: "{{ item.ocr_description }}"</span>
+                    </p>
                   </div>
 
                   <!-- Unidad de Compra -->
@@ -778,6 +819,7 @@ interface PurchaseItem {
   total_cost: number
   notes: string
   suggested_price: number | null
+  ocr_description?: string // texto libre de la factura, solo para UI
 }
 
 // Wizard state
@@ -1128,6 +1170,118 @@ const handlePaymentFileSelect = (event: Event) => {
   }
   form.value.payment_file = file
   input.value = ''
+}
+
+// --- OCR scan functionality ---
+const scanFileInput = ref<HTMLInputElement | null>(null)
+const isScanning = ref(false)
+const ocrItemsLoaded = ref(false)
+
+const optimizeImageForOcr = (file: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
+      let width = img.width
+      let height = img.height
+      const maxSize = 1024
+      if (width > height) {
+        if (width > maxSize) { height = Math.round((height * maxSize) / width); width = maxSize }
+      } else {
+        if (height > maxSize) { width = Math.round((width * maxSize) / height); height = maxSize }
+      }
+      canvas.width = width
+      canvas.height = height
+      ctx.filter = 'grayscale(100%)'
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob)
+        else reject(new Error('Canvas conversion failed'))
+      }, 'image/jpeg', 0.7)
+    }
+    img.onerror = reject
+    img.src = URL.createObjectURL(file)
+  })
+}
+
+const normalizeForMatch = (text: string) =>
+  text.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9 ]/g, '')
+    .trim()
+
+const findIngredientMatch = (ocrDescription: string): string => {
+  const normalized = normalizeForMatch(ocrDescription)
+  const words = normalized.split(' ').filter(w => w.length > 2)
+  let bestMatch: any = null
+  let bestScore = 0
+  for (const ing of ingredients.value) {
+    const ingNorm = normalizeForMatch(ing.name)
+    // Score: how many words from the OCR description appear in the ingredient name
+    const score = words.filter(w => ingNorm.includes(w)).length
+    if (score > bestScore) {
+      bestScore = score
+      bestMatch = ing
+    }
+  }
+  // Only accept if at least one meaningful word matched
+  return bestScore > 0 ? bestMatch.id : ''
+}
+
+const handleScanFileSelect = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  input.value = ''
+  isScanning.value = true
+  ocrItemsLoaded.value = false
+  try {
+    const optimizedBlob = await optimizeImageForOcr(file)
+    const optimizedFile = new File([optimizedBlob], file.name, {
+      type: 'image/jpeg',
+      lastModified: Date.now()
+    })
+    const formData = new FormData()
+    formData.append('file', optimizedFile)
+    const response = await $fetch<any>('/api/suppliers/purchases/extract-invoice', {
+      method: 'POST',
+      body: formData
+    })
+    if (response.success && response.data) {
+      const data = response.data
+      // Pre-fill items from OCR
+      if (data.items && data.items.length > 0) {
+        form.value.items = data.items.map((ocrItem: any, index: number) => {
+          const matchedId = findIngredientMatch(ocrItem.descripcion || '')
+          const item: PurchaseItem = {
+            ingredient_id: matchedId,
+            purchase_quantity: ocrItem.cantidad || 1,
+            purchase_unit: '',
+            unit_cost: ocrItem.precio_unitario || 0,
+            total_cost: ocrItem.total || 0,
+            notes: '',
+            suggested_price: null,
+            ocr_description: ocrItem.descripcion || ''
+          }
+          return item
+        })
+        // Auto-set default purchase unit for matched items
+        form.value.items.forEach((item, index) => {
+          if (item.ingredient_id) onIngredientChange(index)
+        })
+        ocrItemsLoaded.value = true
+      }
+      // Pre-fill invoice fields for Step 3
+      if (data.numero_factura) form.value.invoice_number = data.numero_factura
+      form.value.invoice_file = optimizedFile
+    }
+  } catch (e) {
+    console.error('OCR scan error:', e)
+  } finally {
+    isScanning.value = false
+  }
 }
 
 // Wizard navigation

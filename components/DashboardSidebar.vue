@@ -211,17 +211,17 @@ defineOptions({
   inheritAttrs: false
 })
 
-import { computed } from 'vue'
+import { computed, ref, reactive } from 'vue'
 import {
   ArrowRightOnRectangleIcon,
   ChartBarIcon,
   ChevronDownIcon,
   ComputerDesktopIcon,
   CubeIcon,
-  DocumentTextIcon,
   KeyIcon,
   ShoppingCartIcon,
   Squares2X2Icon,
+  TruckIcon,
 } from '@heroicons/vue/24/outline'
 
 interface Props {
@@ -264,7 +264,7 @@ const userInitials = computed(() => {
 // Gestión menu items
 const gestionItems = [
   { to: '/menu/productos', page: 'menu', label: 'Menú', icon: CubeIcon },
-  { to: '/abastecimiento/lector-facturas', page: 'abastecimiento', label: 'Lector Facturas', icon: DocumentTextIcon },
+  { to: '/abastecimiento/compras-directas', page: 'abastecimiento', label: 'Abastecimiento', icon: TruckIcon },
   { to: '/integraciones', page: 'integraciones', label: 'Integraciones', icon: KeyIcon },
 ]
 
@@ -312,11 +312,11 @@ const handleLogout = async () => {
     }
 
     // Redirect to homepage
-    await navigateTo('/')
+    await router.push('/')
   } catch (error) {
     // Even if the API call fails, clear auth and redirect for security
     authStore.clearAuth()
-    await navigateTo('/')
+    await router.push('/')
   } finally {
     isLoggingOut.value = false
   }

@@ -19,10 +19,9 @@
 
       <!-- Actions -->
       <div class="flex items-center gap-2">
-        <!-- Refresh Button -->
+        <!-- Refresh Button - always visible -->
         <button
-          v-if="onRefresh"
-          @click="onRefresh"
+          @click="onRefresh ? onRefresh() : $router.go(0)"
           class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100"
         >
           <svg class="w-5 h-5 text-titan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +87,7 @@
           </NuxtLink>
 
           <NuxtLink
-            to="/abastecimiento/lector-facturas"
+            to="/abastecimiento/compras-directas"
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
           >
@@ -101,7 +100,7 @@
                 :class="activePage === 'abastecimiento' ? 'text-crocus-600' : 'text-titan-600'"
               />
             </div>
-            <span class="text-[10px] text-titan-600">Lector Facturas</span>
+            <span class="text-[10px] text-titan-600">Abastecimiento</span>
           </NuxtLink>
 
           <NuxtLink
@@ -128,11 +127,11 @@
           >
             <div
               class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'analitica' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+              :class="activePage === 'analytics' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
             >
               <ChartBarIcon
                 class="w-6 h-6"
-                :class="activePage === 'analitica' ? 'text-crocus-600' : 'text-titan-600'"
+                :class="activePage === 'analytics' ? 'text-crocus-600' : 'text-titan-600'"
               />
             </div>
             <span class="text-[10px] text-titan-600">Analítica</span>

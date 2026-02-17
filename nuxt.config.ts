@@ -7,7 +7,6 @@ export default defineNuxtConfig({
     preset: 'node-server',
     routeRules: {
       // Client-only pages (no SSR)
-      '/abastecimiento/lector-facturas': { ssr: false },
       '/api/auth/**': {
         proxy: {
           to: process.env.NODE_ENV === 'development'

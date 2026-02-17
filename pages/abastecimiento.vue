@@ -23,7 +23,10 @@ definePageMeta({
 
 // Navigation configuration
 const navigationItems = [
-  { to: '/abastecimiento/lector-facturas', label: 'Lector de Facturas', matchPath: '/ocr' }
+  { to: '/abastecimiento/proveedores', label: 'Proveedores' },
+  { to: '/abastecimiento/compras-directas', label: 'Compra Directa', matchPath: '/compras-directas' },
+  { to: '/abastecimiento/stock', label: 'Stock' },
+  { to: '/abastecimiento/ajustes', label: 'Ajustes', matchPath: '/ajustes' }
 ]
 
 // Pass through the refresh handler from layout to child pages
@@ -32,9 +35,9 @@ provide('setRefreshHandler', setRefreshHandler)
 
 // Meta tags
 useHead({
-  title: 'Lector de Facturas - Warocol',
+  title: 'Abastecimiento - Warocol',
   meta: [
-    { name: 'description', content: 'Lector de facturas para Warocol' }
+    { name: 'description', content: 'Módulo de abastecimiento para Warocol' }
   ]
 })
 </script>
