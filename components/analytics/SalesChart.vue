@@ -52,7 +52,7 @@ const formatValue = (value: number): string => {
     return `$${formatted}K`;
   }
 
-  return `$${value}`;
+  return `$${Math.round(value)}`;
 };
 
 // ECharts option configuration
