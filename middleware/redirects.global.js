@@ -10,8 +10,8 @@ export default defineNuxtRouteMiddleware((to) => {
     return navigateTo('/abastecimiento/stock', { redirectCode: 301 })
   }
 
-  // /pagos/*, /gastos/*, /equipo/* → /menu/productos
-  const redirectToMenu = ['/pagos', '/gastos', '/equipo']
+  // /pagos/*, /gastos/* → /menu/productos
+  const redirectToMenu = ['/pagos', '/gastos']
   if (redirectToMenu.some(prefix => to.path === prefix || to.path.startsWith(prefix + '/'))) {
     return navigateTo('/menu/productos', { redirectCode: 301 })
   }

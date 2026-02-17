@@ -121,7 +121,7 @@
           <span class="text-[10px] text-titan-500/70 uppercase tracking-widest font-medium group-hover:text-titan-400 transition-colors">Gestión</span>
           <ChevronDownIcon :class="['w-3 h-3 text-titan-500/70 transition-transform duration-200', sections.gestion ? '' : '-rotate-90']" />
         </button>
-        <div :class="['overflow-hidden transition-all duration-200 space-y-1', !collapsed && !sections.gestion ? 'max-h-0 opacity-0' : 'max-h-60 opacity-100']">
+        <div :class="['overflow-hidden transition-all duration-200 space-y-1', !collapsed && !sections.gestion ? 'max-h-0 opacity-0' : 'max-h-80 opacity-100']">
           <NuxtLink
             v-for="item in gestionItems"
             :key="item.to"
@@ -222,6 +222,7 @@ import {
   ShoppingCartIcon,
   Squares2X2Icon,
   TruckIcon,
+  UserGroupIcon,
 } from '@heroicons/vue/24/outline'
 
 interface Props {
@@ -265,6 +266,7 @@ const userInitials = computed(() => {
 const gestionItems = [
   { to: '/menu/productos', page: 'menu', label: 'Menú', icon: CubeIcon },
   { to: '/abastecimiento/compras-directas', page: 'abastecimiento', label: 'Abastecimiento', icon: TruckIcon },
+  { to: '/equipo/miembros', page: 'equipo', label: 'Equipo', icon: UserGroupIcon },
   { to: '/integraciones', page: 'integraciones', label: 'Integraciones', icon: KeyIcon },
 ]
 

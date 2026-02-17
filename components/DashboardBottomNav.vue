@@ -138,6 +138,23 @@
           </NuxtLink>
 
           <NuxtLink
+            to="/equipo/miembros"
+            @click="showMenuModal = false"
+            class="flex flex-col items-center gap-1"
+          >
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+              :class="activePage === 'equipo' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+            >
+              <UserGroupIcon
+                class="w-6 h-6"
+                :class="activePage === 'equipo' ? 'text-crocus-600' : 'text-titan-600'"
+              />
+            </div>
+            <span class="text-[10px] text-titan-600">Equipo</span>
+          </NuxtLink>
+
+          <NuxtLink
             to="/integraciones"
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
@@ -224,6 +241,7 @@ import {
   ShoppingCartIcon,
   CubeIcon,
   ChartBarIcon,
+  UserGroupIcon,
 } from '@heroicons/vue/24/outline'
 import { computed } from 'vue'
 

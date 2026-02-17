@@ -328,12 +328,12 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
-  } else if (path === '/equipo') {
+  } else if (path.startsWith('/equipo')) {
     return {
-      pageTitle: 'Miembros de equipo',
+      pageTitle: 'Equipo',
       pageSubtitle: undefined,
       searchPlaceholder: undefined,
-      activePage: 'dashboard' as const,
+      activePage: 'equipo' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: undefined
