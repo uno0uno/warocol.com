@@ -66,89 +66,13 @@ const dateRange = computed(() => {
 watch(dateRangeDates, (val) => {
   if (!val || (val.length === 2 && val[0] && val[1])) {
     refresh()
-    refreshMetrics()
-    refreshMonthMetrics()
-    refreshYearMetrics()
   }
 })
 
-// Load metrics from API
-const { data: metricsData, pending: metricsLoading, refresh: refreshMetrics } = useAsyncData(
-  `orders-metrics-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/orders/metrics', {
-    params: {
-      date_from: dateRange.value.from || undefined,
-      date_to: dateRange.value.to || undefined
-    }
-  }),
-  {
-    server: false,
-    watch: [currentTenant]
-  }
-)
 
-// Load current month metrics for forecast (independent of date filter)
-const currentMonthFrom = fnsFormat(startOfMonth(new Date()), 'yyyy-MM-dd')
-const currentMonthToday = fnsFormat(new Date(), 'yyyy-MM-dd')
+// Metrics removed based on request
 
-const { data: monthMetricsData, refresh: refreshMonthMetrics } = useAsyncData(
-  `orders-month-metrics-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/orders/metrics', {
-    params: { date_from: currentMonthFrom, date_to: currentMonthToday }
-  }),
-  { server: false, watch: [currentTenant] }
-)
 
-// Load current year metrics for annual forecast
-const currentYearFrom = fnsFormat(startOfYear(new Date()), 'yyyy-MM-dd')
-
-const { data: yearMetricsData, refresh: refreshYearMetrics } = useAsyncData(
-  `orders-year-metrics-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/orders/metrics', {
-    params: { date_from: currentYearFrom, date_to: currentMonthToday }
-  }),
-  { server: false, watch: [currentTenant] }
-)
-
-// Determine if dates are selected
-const hasDateFilter = computed(() => {
-  return dateRangeDates.value && dateRangeDates.value.length === 2 && dateRangeDates.value[0] && dateRangeDates.value[1]
-})
-
-// Forecast: annual when no dates selected, monthly when dates selected
-const forecast = computed(() => {
-  const today = new Date()
-
-  if (!hasDateFilter.value) {
-    // Annual forecast
-    const yearData = yearMetricsData.value?.data
-    if (!yearData || !yearData.total_sales) return 0
-    const daysElapsed = differenceInCalendarDays(today, startOfYear(today)) + 1
-    const totalDays = getDaysInYear(today)
-    return Math.round((yearData.total_sales / daysElapsed) * totalDays)
-  } else {
-    // Monthly forecast
-    const monthData = monthMetricsData.value?.data
-    if (!monthData || !monthData.total_sales) return 0
-    const daysElapsed = differenceInCalendarDays(today, startOfMonth(today)) + 1
-    const totalDays = getDaysInMonth(today)
-    return Math.round((monthData.total_sales / daysElapsed) * totalDays)
-  }
-})
-
-const forecastLabel = computed(() => {
-  if (!hasDateFilter.value) {
-    return `Forecast ${fnsFormat(new Date(), 'yyyy')}`
-  }
-  return `Forecast ${fnsFormat(new Date(), 'MMMM', { locale: es })}`
-})
-
-const forecastSubtitle = computed(() => {
-  if (!hasDateFilter.value) {
-    return 'Proyección fin de año'
-  }
-  return 'Proyección fin de mes'
-})
 
 // Load orders from API
 const { data: ordersData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
@@ -174,11 +98,11 @@ const { data: ordersData, pending: isLoading, error: fetchError, refresh } = use
 
 // Refresh on tenant change
 onTenantChange(async () => {
-  await Promise.all([refresh(), refreshMetrics(), refreshMonthMetrics(), refreshYearMetrics()])
+  await refresh()
 })
 
 // Metrics computed
-const metrics = computed(() => metricsData.value?.data || null)
+
 
 // Computed - Transform data to flatten customer object
 const orders = computed(() => {
@@ -223,7 +147,7 @@ const clearFilters = () => {
   dateRangeDates.value = null
   sortField.value = 'order_date'
   sortDirection.value = 'desc'
-  Promise.all([refresh(), refreshMetrics()])
+  Promise.all([refresh()])
 }
 
 // Export functionality
@@ -325,17 +249,15 @@ const viewOrderDetails = (order: any) => {
 const setRefreshHandler = inject('setRefreshHandler', () => {})
 onMounted(async () => {
   setRefreshHandler(async () => {
-    await Promise.all([refresh(), refreshMetrics(), refreshMonthMetrics(), refreshYearMetrics()])
+    await refresh()
   })
-  // Refresh metrics on mount to ensure they load when navigating back
-  await Promise.all([refreshMetrics(), refreshMonthMetrics(), refreshYearMetrics()])
 })
 </script>
 
 <template>
   <div class="page-layout">
     <!-- Loading State -->
-    <div v-if="isLoading || metricsLoading" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
@@ -352,48 +274,7 @@ onMounted(async () => {
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-      <!-- Metrics Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <!-- Skeleton loading -->
-        <template v-if="metricsLoading">
-          <div v-for="i in 4" :key="i" class="bg-surface border border-border rounded-xl px-4 py-4 md:px-6 md:py-3 animate-pulse">
-            <div class="h-3 w-20 bg-muted rounded mb-3"></div>
-            <div class="h-7 w-28 bg-muted rounded"></div>
-          </div>
-        </template>
-        <!-- Actual metrics -->
-        <template v-else-if="metrics">
-          <SharedMetricCard
-            title="Total Ventas"
-            :value="metrics.total_sales"
-            format="currency"
-            variant="primary"
-            size="sm"
-          />
-          <SharedMetricCard
-            title="Ticket Promedio"
-            :value="metrics.avg_ticket"
-            format="currency"
-            variant="primary"
-            size="sm"
-          />
-          <SharedMetricCard
-            title="Ordenes Completadas"
-            :value="metrics.completed_orders"
-            format="number"
-            variant="primary"
-            size="sm"
-          />
-          <SharedMetricCard
-            :title="forecastLabel"
-            :value="forecast"
-            format="currency"
-            variant="info"
-            size="sm"
-            :subtitle="forecastSubtitle"
-          />
-        </template>
-      </div>
+      <!-- Metrics Removed -->
 
       <!-- Filters Bar -->
       <div class="flex items-center gap-2 w-full overflow-x-auto">

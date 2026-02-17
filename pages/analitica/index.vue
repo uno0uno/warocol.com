@@ -468,12 +468,14 @@ definePageMeta({
 
         <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <h4 class="text-slate-600 font-medium mb-4">{{ chartTitle }}</h4>
-          <SalesChart
-            :salesData="salesFlowData?.data || []"
-            :loading="salesFlowLoading"
-            :currentLabel="chartLabels.current"
-            :comparisonLabel="chartLabels.comparison"
-          />
+          <ClientOnly>
+            <SalesChart
+              :salesData="salesFlowData?.data || []"
+              :loading="salesFlowLoading"
+              :currentLabel="chartLabels.current"
+              :comparisonLabel="chartLabels.comparison"
+            />
+          </ClientOnly>
         </div>
       </section>
 
