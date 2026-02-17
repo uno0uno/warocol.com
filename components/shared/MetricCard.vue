@@ -268,7 +268,7 @@ const props = withDefaults(defineProps<Props>(), {
 const formatCompactCurrency = (num: number): string => {
   if (num >= 1_000_000_000) return `$${(num / 1_000_000_000).toFixed(1)}B`
   if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`
-  return `$${num.toLocaleString()}`
+  return `$${Math.round(num).toLocaleString()}`
 }
 
 // Format value based on type
