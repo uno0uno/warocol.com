@@ -480,21 +480,21 @@ definePageMeta({
       </section>
 
       <!-- NIVEL 2: SALUD DEL MARGEN (LOCKED) -->
-      <!-- <HealthSemaphore
+      <HealthSemaphore
         :isUnlocked="isInventoryUnlocked"
         @unlock="showInvoiceModal = true"
-      /> -->
+      />
 
       <!-- NIVEL 3: ALERTAS DE GESTION -->
-      <!-- <AlertsSection :class="!isInventoryUnlocked ? 'opacity-30 grayscale pointer-events-none' : ''" /> -->
+      <AlertsSection :class="!isInventoryUnlocked ? 'opacity-30 grayscale pointer-events-none' : ''" />
 
     </div>
 
-    <!-- <InvoiceModal
+    <InvoiceModal
       :show="showInvoiceModal"
       @close="showInvoiceModal = false"
       @confirm="unlockInventory"
-    /> -->
+    />
   </div>
 </template>
 
