@@ -10,7 +10,6 @@ import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue';
 import AlertsSection from '~/components/analytics/AlertsSection.vue';
 import InvoiceModal from '~/components/analytics/InvoiceModal.vue';
 
-const isInventoryUnlocked = ref(false);
 const showInvoiceModal = ref(false);
 
 // Inject refresh handler setter from layout
@@ -354,11 +353,11 @@ const clearFilters = async () => {
   lastUpdate.value = new Date()
 }
 
-// Function to unlock inventory
-const unlockInventory = () => {
-  isInventoryUnlocked.value = true
-  showInvoiceModal.value = false
-}
+// Auto-unlock when we have data from backend
+const isInventoryUnlocked = computed(() => {
+  // Unlock if we have food cost data or menu analysis data
+  return !!(foodCostData.value?.data || menuAnalysisData.value?.data)
+})
 
 const metrics = computed(() => {
   const data = metricsData.value?.data || {}
@@ -562,7 +561,7 @@ definePageMeta({
     <InvoiceModal
       :show="showInvoiceModal"
       @close="showInvoiceModal = false"
-      @confirm="unlockInventory"
+      @confirm="showInvoiceModal = false"
     />
   </div>
 </template>
