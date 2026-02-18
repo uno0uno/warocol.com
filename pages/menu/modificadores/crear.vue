@@ -638,7 +638,7 @@
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
-  layout: 'dashboard'
+  // layout: 'dashboard' - Inherited from parent menu.vue
 })
 
 useHead({ title: 'Crear Modificador' })
@@ -789,7 +789,7 @@ async function submitGroup() {
       body: form.value
     })
 
-    clearNuxtData()
+    // clearNuxtData()
     await router.push('/menu/modificadores')
   } catch (error: any) {
     console.error('Error creating modifier group:', error)

@@ -639,7 +639,7 @@
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
-  layout: 'dashboard'
+  // layout: 'dashboard' - Inherited from parent menu.vue
 })
 
 useHead({ title: 'Crear Producto' })
@@ -877,7 +877,7 @@ async function submitProduct() {
       body: cleanedForm
     })
 
-    clearNuxtData()
+    // clearNuxtData()
     await router.push('/menu/productos')
   } catch (error: any) {
     console.error('Error creating product:', error)

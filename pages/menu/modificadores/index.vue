@@ -1,7 +1,7 @@
 <template>
   <div class="page-layout">
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+    <!-- Loading State (solo en carga inicial sin datos) -->
+    <div v-if="isLoading && !filteredGroups.length" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
@@ -306,7 +306,7 @@ import { ref, computed, onMounted, inject } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
-  layout: 'dashboard'
+  // layout: 'dashboard' - Inherited from parent menu.vue
 })
 
 useHead({ title: 'Modificadores' })
@@ -328,8 +328,9 @@ const { data: groupsData, refresh: refreshGroups, pending: groupsPending } = use
   }),
   {
     server: false,
+    lazy: true,
     watch: [currentTenant],
-    default: () => ({ data: [], total: 0 })
+    default: () => ({ data: [], total: 0 }),
   }
 )
 
@@ -339,8 +340,9 @@ const { data: statsData, refresh: refreshStats, pending: statsPending } = useAsy
   () => $fetch('/api/menu/modifier-groups/stats/summary'),
   {
     server: false,
+    lazy: true,
     watch: [currentTenant],
-    default: () => ({ total_groups: 0, total_modifiers: 0, products_with_modifiers: 0 })
+    default: () => ({ total_groups: 0, total_modifiers: 0, products_with_modifiers: 0 }),
   }
 )
 
@@ -460,13 +462,8 @@ const refresh = async () => {
   await Promise.all([refreshGroups(), refreshStats()])
 }
 
-onMounted(async () => {
+onMounted(() => {
   setRefreshHandler(refresh)
-  // Refresh data when page loads (e.g., after returning from create/edit)
-  await refresh()
 })
 
-onTenantChange(() => {
-  refresh()
-})
 </script>

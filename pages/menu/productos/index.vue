@@ -1,12 +1,12 @@
 <template>
   <div>
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+    <!-- Loading State (solo en carga inicial sin datos) -->
+    <div v-if="isLoading && !products.length" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- Error State -->
-    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
+    <div v-else-if="fetchError && !products.length" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
         <p class="text-xl font-semibold text-ebony-800 mb-2">Error al cargar los productos.</p>
         <p class="text-sm text-ebony-600">{{ fetchError.message }}</p>
@@ -261,7 +261,7 @@
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
-  layout: 'dashboard'
+  // layout: 'dashboard' - Inherited from parent menu.vue
 })
 
 useHead({ title: 'Productos' })
@@ -414,25 +414,18 @@ const { data: productsData, pending: isLoading, error: fetchError, refresh } = u
   },
   {
     server: false,
+    lazy: true,
     watch: [currentTenant, currentPage, itemsPerPage, statusFilter, categoryFilter],
     default: () => ({ data: [], total: 0 }),
     transform: (response: any) => ({
       data: response.data || [],
       total: response.total || 0,
-    })
+    }),
   }
 )
 
 // Computed properties for data
 const products = computed(() => productsData.value.data)
-
-// Debug logs
-watch([isLoading, products], ([loading, prods]) => {
-  console.log('🔍 [PRODUCTOS] isLoading:', loading)
-  console.log('🔍 [PRODUCTOS] products.length:', prods?.length || 0)
-  console.log('🔍 [PRODUCTOS] productsData:', productsData.value)
-  console.log('🔍 [PRODUCTOS] Mostrar loading?', loading && prods?.length === 0)
-}, { immediate: true })
 
 // Sorting
 const sortedProducts = computed(() => {
@@ -556,10 +549,6 @@ const editProduct = (product: any) => {
   router.push(`/menu/productos/${product.id}`)
 }
 
-// Handle tenant change
-onTenantChange(async () => {
-  await refresh()
-})
 </script>
 
 <style scoped>

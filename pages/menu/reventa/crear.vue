@@ -181,7 +181,7 @@
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
-  layout: 'dashboard'
+  // layout: 'dashboard' - Inherited from parent menu.vue
 })
 
 useHead({ title: 'Gestionar Productos de Reventa' })
@@ -484,7 +484,7 @@ async function saveChanges() {
       alert(`Cambios guardados con errores: ${messages.join(', ')}`)
     }
 
-    clearNuxtData()
+    // clearNuxtData()
     await router.push('/menu/reventa')
   } catch (error: any) {
     console.error('Error saving changes:', error)

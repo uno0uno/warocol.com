@@ -1,12 +1,12 @@
 <template>
   <div>
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+    <!-- Loading State (solo en carga inicial sin datos) -->
+    <div v-if="isLoading && !recetas.length" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- Error State -->
-    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
+    <div v-else-if="fetchError && !recetas.length" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
         <Icon name="heroicons:exclamation-circle" class="h-16 w-16 mx-auto text-text-secondary mb-4" />
         <p class="text-text-secondary">{{ fetchError }}</p>
@@ -342,7 +342,7 @@ import { ref, computed, onMounted, inject, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
-  layout: 'dashboard'
+  // layout: 'dashboard' - Inherited from parent menu.vue
 })
 
 useHead({ title: 'Recetas' })
@@ -378,12 +378,13 @@ const { data: productsData, pending: isLoading, error: fetchError, refresh } = u
   },
   {
     server: false,
+    lazy: true,
     watch: [currentTenant, currentPage, itemsPerPage],
     default: () => ({ data: [], total: 0 }),
     transform: (response: any) => ({
       data: response.data || [],
       total: response.total || 0,
-    })
+    }),
   }
 )
 
@@ -570,9 +571,6 @@ onMounted(() => {
   setRefreshHandler(refresh)
 })
 
-onTenantChange(async () => {
-  await refresh()
-})
 </script>
 
 <style scoped>

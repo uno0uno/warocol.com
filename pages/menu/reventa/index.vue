@@ -1,12 +1,12 @@
 <template>
   <div>
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+    <!-- Loading State (solo en carga inicial sin datos) -->
+    <div v-if="isLoading && !products.length" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- Error State -->
-    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
+    <div v-else-if="fetchError && !products.length" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
         <p class="text-xl font-semibold text-ebony-800 mb-2">Error al cargar los productos.</p>
         <p class="text-sm text-ebony-600">{{ fetchError.message }}</p>
@@ -227,7 +227,7 @@
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
-  layout: 'dashboard'
+  // layout: 'dashboard' - Inherited from parent menu.vue
 })
 
 useHead({ title: 'Productos de Reventa' })
@@ -379,12 +379,13 @@ const { data: productsData, pending: isLoading, error: fetchError, refresh } = u
   },
   {
     server: false,
+    lazy: true,
     watch: [currentTenant, currentPage, itemsPerPage, statusFilter, categoryFilter],
     default: () => ({ data: [], total: 0 }),
     transform: (response: any) => ({
       data: response.data || [],
       total: response.total || 0,
-    })
+    }),
   }
 )
 
@@ -500,10 +501,6 @@ const formatMargin = (product: any) => {
   return `${margin.toFixed(1)}%`
 }
 
-// Handle tenant change
-onTenantChange(async () => {
-  await refresh()
-})
 </script>
 
 <style scoped>

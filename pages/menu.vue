@@ -6,17 +6,7 @@
     />
 
     <!-- Content -->
-    <Transition
-      enter-active-class="transition-all duration-400 ease-out"
-      enter-from-class="opacity-0 transform translate-y-[-20px]"
-      enter-to-class="opacity-100 transform translate-y-0"
-      leave-active-class="transition-all duration-300 ease-in"
-      leave-from-class="opacity-100 transform translate-y-0"
-      leave-to-class="opacity-0 transform translate-y-[-20px]"
-      mode="out-in"
-    >
-      <NuxtPage />
-    </Transition>
+    <NuxtPage :key="sectionKey" />
   </div>
 </template>
 
@@ -24,6 +14,12 @@
 definePageMeta({
   layout: 'dashboard'
 })
+
+const route = useRoute()
+
+// Key based on section only (/menu/recetas, /menu/productos, etc.)
+// so navigating within a section (e.g. /menu/recetas/[id]) doesn't force a full remount
+const sectionKey = computed(() => route.path.split('/').slice(0, 3).join('/'))
 
 // Navigation configuration based on conceptual document
 const navigationItems = [
