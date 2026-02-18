@@ -674,6 +674,7 @@
                   <div>
                     <p class="text-xs text-text-secondary">Cantidad</p>
                     <p class="font-semibold">{{ item.purchase_quantity }} {{ item.purchase_unit }}</p>
+                    <p v-if="item.grams_per_unit" class="text-xs text-text-secondary">{{ item.grams_per_unit }}gr/und</p>
                   </div>
                   <div>
                     <p class="text-xs text-text-secondary">Precio Unit.</p>
@@ -708,7 +709,8 @@
                     <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
                   </td>
                   <td class="text-right py-4 text-text-primary">
-                    {{ item.purchase_quantity }} {{ item.purchase_unit }}
+                    <p>{{ item.purchase_quantity }} {{ item.purchase_unit }}</p>
+                    <p v-if="item.grams_per_unit" class="text-xs text-text-secondary">{{ item.grams_per_unit }}gr/und</p>
                   </td>
                   <td class="text-right py-4 text-text-primary">
                     ${{ formatPrice(item.unit_cost) }}
