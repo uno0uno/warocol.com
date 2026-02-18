@@ -365,11 +365,10 @@
                     </p>
                   </div>
 
-                  <!-- Peso por unidad (solo para ingredientes 'und' sin conversión configurada) -->
+                  <!-- Peso por unidad (para ingredientes 'und') -->
                   <div v-if="needsGramsPerUnit(item.ingredient_id)">
                     <label class="block text-sm font-medium text-text-primary mb-2">
                       Peso por unidad (gr)
-                      <span class="text-xs font-normal text-text-secondary ml-1">opcional</span>
                     </label>
                     <input
                       v-model.number="item.grams_per_unit"
@@ -380,7 +379,7 @@
                       class="input-base w-full px-4 py-2"
                     />
                     <p class="text-xs text-text-secondary mt-1">
-                      ¿Cuántos gramos pesa esta unidad? Se guardará para futuras compras.
+                      ¿Cuántos gramos pesa 1 unidad? Se usa para calcular costos en recetas.
                     </p>
                   </div>
 
@@ -1062,14 +1061,19 @@ const getIngredientUnit = (ingredientId: string) => {
   return ingredient?.unit || ''
 }
 
-// Detecta si el ingrediente es 'und' y no tiene purchase_units con peso configurado
+// Detecta si el ingrediente es 'und' — siempre se pide el peso
 const needsGramsPerUnit = (ingredientId: string) => {
   if (!ingredientId) return false
   const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
-  if (ingredient?.unit !== 'und') return false
+  return ingredient?.unit === 'und'
+}
+
+// Obtiene el peso existente (conversion_factor) de la primera purchase_unit configurada
+const getExistingGramsPerUnit = (ingredientId: string): number | null => {
   const units = purchaseUnits.value.filter((u: any) => u.ingredient_id === ingredientId)
-  // Solo muestra el campo si no hay purchase_units configuradas (o solo tiene 'und' con factor 1)
-  return units.length === 0
+  if (units.length === 0) return null
+  const defaultUnit = units.find((u: any) => u.is_default) || units[0]
+  return defaultUnit?.conversion_factor || null
 }
 
 // Obtener el factor de conversión para una unidad de compra
@@ -1134,6 +1138,11 @@ const onIngredientChange = (index: number) => {
     const defaultUnit = units.find((u: any) => u.is_default) || units[0]
     if (defaultUnit) {
       item.purchase_unit = defaultUnit.value
+    }
+
+    // Pre-populate grams_per_unit for 'und' ingredients
+    if (ingredient.unit === 'und') {
+      item.grams_per_unit = getExistingGramsPerUnit(item.ingredient_id)
     }
 
     // Update suggested price from catalog
