@@ -443,7 +443,7 @@ const { data: recipeBasesData } = useAsyncData(
 // Fetch ingredients for dropdown
 const { data: ingredientsData } = useAsyncData(
   `ingredients-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/suppliers/ingredients', { query: { limit: 250 } }),
+  () => $fetch('/api/suppliers/ingredients', { query: { limit: 1000 } }),
   {
     server: false,
     watch: [currentTenant],
