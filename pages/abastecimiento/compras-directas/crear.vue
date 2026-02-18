@@ -365,6 +365,25 @@
                     </p>
                   </div>
 
+                  <!-- Peso por unidad (solo para ingredientes 'und' sin conversión configurada) -->
+                  <div v-if="needsGramsPerUnit(item.ingredient_id)">
+                    <label class="block text-sm font-medium text-text-primary mb-2">
+                      Peso por unidad (gr)
+                      <span class="text-xs font-normal text-text-secondary ml-1">opcional</span>
+                    </label>
+                    <input
+                      v-model.number="item.grams_per_unit"
+                      type="number"
+                      min="1"
+                      step="1"
+                      placeholder="Ej: 500"
+                      class="input-base w-full px-4 py-2"
+                    />
+                    <p class="text-xs text-text-secondary mt-1">
+                      ¿Cuántos gramos pesa esta unidad? Se guardará para futuras compras.
+                    </p>
+                  </div>
+
                   <!-- Cantidad -->
                   <div>
                     <label class="block text-sm font-medium text-text-primary mb-2">
@@ -820,6 +839,7 @@ interface PurchaseItem {
   notes: string
   suggested_price: number | null
   ocr_description?: string // texto libre de la factura, solo para UI
+  grams_per_unit?: number | null // solo para ingredientes und: peso en gr por unidad
 }
 
 // Wizard state
@@ -850,7 +870,8 @@ function createEmptyItem(): PurchaseItem {
     unit_cost: 0,
     total_cost: 0,
     notes: '',
-    suggested_price: null
+    suggested_price: null,
+    grams_per_unit: null
   }
 }
 
@@ -1039,6 +1060,16 @@ const getIngredientUnit = (ingredientId: string) => {
   if (!ingredientId) return ''
   const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
   return ingredient?.unit || ''
+}
+
+// Detecta si el ingrediente es 'und' y no tiene purchase_units con peso configurado
+const needsGramsPerUnit = (ingredientId: string) => {
+  if (!ingredientId) return false
+  const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
+  if (ingredient?.unit !== 'und') return false
+  const units = purchaseUnits.value.filter((u: any) => u.ingredient_id === ingredientId)
+  // Solo muestra el campo si no hay purchase_units configuradas (o solo tiene 'und' con factor 1)
+  return units.length === 0
 }
 
 // Obtener el factor de conversión para una unidad de compra
@@ -1308,6 +1339,25 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
+    // Guardar grams_per_unit en ingredient_purchase_units para items und sin conversión
+    const gramsItems = form.value.items.filter(item => item.ingredient_id && item.grams_per_unit && item.grams_per_unit > 0)
+    for (const item of gramsItems) {
+      try {
+        await $fetch('/api/suppliers/ingredient-purchase-units', {
+          method: 'POST',
+          body: {
+            ingredient_id: item.ingredient_id,
+            purchase_unit: 'und',
+            purchase_unit_label: `und (${item.grams_per_unit}gr)`,
+            conversion_factor: item.grams_per_unit,
+            is_default: true
+          }
+        })
+      } catch (_) {
+        // Si ya existe no bloqueamos el flujo
+      }
+    }
+
     // Build JSON payload
     const payload = {
       supplier_id: form.value.supplier_id,
