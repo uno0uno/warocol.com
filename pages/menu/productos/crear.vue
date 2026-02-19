@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full">
+  <div class="page-layout">
     <!-- Loading overlay during submit -->
     <div v-if="isSubmitting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-8 flex flex-col items-center">
@@ -14,7 +14,7 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else class="flex w-full flex-col ">
+    <div v-else>
       <!-- Product Information Card -->
       <div class="bg-surface border-2 border-border rounded-lg mb-4 sm:mb-6">
         <div class="p-4 sm:p-6">
@@ -427,210 +427,175 @@
         </div>
 
         <!-- Step 3: Review - Product Summary -->
-        <div v-else-if="currentStep === 3" key="step-3" class="bg-surface border border-border rounded-lg">
-          <!-- Header -->
-          <div class="border-b border-border p-4 sm:p-6 md:p-8">
-            <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
-              <div>
-                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary mb-2">NUEVO PRODUCTO</h1>
-                <p class="text-xs sm:text-sm text-text-secondary">Resumen del producto a crear</p>
-              </div>
+        <div v-else-if="currentStep === 3" key="step-3">
+          <!-- Header compacto -->
+          <div class="bg-surface border border-border rounded-lg px-4 sm:px-6 py-3 mb-3 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Nuevo Producto · Resumen</p>
+              <p class="text-base font-bold text-text-primary">{{ form.name }}</p>
             </div>
+            <p class="text-xs text-text-secondary">{{ new Date().toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' }) }}</p>
           </div>
 
-          <!-- Product Info -->
-          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-border">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-              <div>
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Producto</p>
-                <p class="text-lg font-bold text-text-primary">{{ form.name }}</p>
-                <p v-if="form.description" class="text-sm text-text-secondary mt-2">{{ form.description }}</p>
-              </div>
-              <div>
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Categoría</p>
-                <p class="text-base font-semibold text-text-primary">{{ getCategoryName(form.category_id) }}</p>
-                <div class="flex gap-2 mt-3">
-                  <UiStatusBadge
-                    :value="form.is_available ? 'Disponible' : 'No disponible'"
-                    format="text"
-                    :variant="form.is_available ? 'success' : 'default'"
-                    size="sm"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Layout dos columnas -->
+          <div class="flex flex-col lg:flex-row gap-4 items-start">
 
-          <!-- Pricing Information -->
-          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-border bg-background/50">
-            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3 sm:mb-4">
-              Información de Precios
-            </p>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-              <div>
-                <p class="text-sm text-text-secondary mb-1">Precio de Venta</p>
-                <p class="text-lg font-bold text-text-primary">{{ formatCurrency(form.price) }}</p>
-              </div>
-              <div>
-                <p class="text-sm text-text-secondary mb-1">Costo Calculado</p>
-                <p class="text-lg font-bold text-text-primary">{{ formatCurrency(calculatedCost) }}</p>
-              </div>
-              <div>
-                <p class="text-sm text-text-secondary mb-1">Margen</p>
-                <p class="text-lg font-bold text-crocus-600">{{ formatMarginPercent }}</p>
-              </div>
-              <div>
-                <p class="text-sm text-text-secondary mb-1">Ganancia</p>
-                <p class="text-lg font-bold text-crocus-600">{{ formatCurrency(marginValue) }}</p>
-              </div>
-            </div>
-          </div>
+            <!-- Columna izquierda: recetas + ingredientes -->
+            <div class="w-full lg:flex-1 space-y-4">
 
-          <!-- Recipe Bases Section -->
-          <div v-if="form.recipe_base_ids.length > 0" class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-border bg-blue-50/30 dark:bg-blue-900/10">
-            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-4">
-              Recetas Base ({{ form.recipe_base_ids.length }})
-            </p>
-            <div class="space-y-4">
-              <div
-                v-for="(recipeBaseId, index) in form.recipe_base_ids"
-                :key="index"
-                class="bg-white dark:bg-surface border border-blue-200 dark:border-blue-800 rounded-lg p-4"
-              >
-                <h4 class="font-semibold text-text-primary mb-3 flex items-center gap-2">
-                  📋 {{ getRecipeBaseName(recipeBaseId) }}
-                </h4>
-                <div class="space-y-2">
+              <!-- Recetas Base -->
+              <div v-if="form.recipe_base_ids.length > 0" class="bg-surface border border-border rounded-lg p-4">
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
+                  Recetas Base ({{ form.recipe_base_ids.length }})
+                </p>
+                <div class="space-y-3">
                   <div
-                    v-for="ing in getRecipeBaseIngredients(recipeBaseId)"
-                    :key="ing.id"
-                    class="flex justify-between text-sm py-1 border-b border-border last:border-0"
+                    v-for="(recipeBaseId, index) in form.recipe_base_ids"
+                    :key="index"
+                    class="border border-border rounded-lg p-3 bg-background"
                   >
-                    <span class="text-text-primary">{{ ing.ingredient_name }}</span>
-                    <span class="text-text-secondary">{{ ing.base_quantity }} {{ ing.unit }}</span>
+                    <h4 class="font-semibold text-text-primary mb-2 flex items-center gap-2 text-sm">
+                      📋 {{ getRecipeBaseName(recipeBaseId) }}
+                    </h4>
+                    <div class="space-y-1">
+                      <div
+                        v-for="ing in getRecipeBaseIngredients(recipeBaseId)"
+                        :key="ing.id"
+                        class="flex justify-between text-xs py-1 border-b border-border last:border-0"
+                      >
+                        <span class="text-text-primary">{{ ing.ingredient_name }}</span>
+                        <span class="text-text-secondary">{{ ing.base_quantity }} {{ ing.unit }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ingredientes adicionales -->
+              <div class="bg-surface border border-border rounded-lg p-4">
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
+                  Ingredientes Adicionales ({{ form.ingredients.length }})
+                </p>
+                <div v-if="form.ingredients.length === 0" class="text-sm text-text-secondary">
+                  Sin ingredientes adicionales
+                </div>
+                <div v-else class="space-y-2">
+                  <div
+                    v-for="(ingredient, index) in form.ingredients"
+                    :key="index"
+                    class="flex items-center justify-between p-2 rounded-lg border border-border bg-background text-sm"
+                  >
+                    <span class="font-medium text-text-primary">{{ getIngredientName(ingredient.ingredient_id) }}</span>
+                    <div class="flex items-center gap-4 text-text-secondary">
+                      <span>{{ ingredient.quantity }} {{ ingredient.unit }}</span>
+                      <span class="font-semibold text-text-primary">{{ formatCurrency(getIngredientCost(ingredient)) }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Ingredients Table -->
-          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6">
-            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-4">
-              Ingredientes Adicionales ({{ form.ingredients.length }})
-            </p>
+            <!-- Columna derecha: info + precios -->
+            <div class="w-full lg:w-72 xl:w-80 space-y-4 lg:sticky lg:top-4">
 
-            <!-- Mobile: Cards View -->
-            <div class="md:hidden space-y-3">
-              <div
-                v-for="(ingredient, index) in form.ingredients"
-                :key="index"
-                class="border border-border rounded-lg p-3 bg-background"
-              >
-                <div class="mb-2">
-                  <p class="font-medium text-text-primary text-sm">{{ getIngredientName(ingredient.ingredient_id) }}</p>
-                </div>
-                <div class="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-border">
-                  <div>
-                    <p class="text-xs text-text-secondary mb-1">Cantidad</p>
-                    <p class="text-sm text-text-primary font-semibold">
-                      {{ ingredient.quantity }} {{ ingredient.unit }}
-                    </p>
+              <!-- Producto -->
+              <div class="bg-surface border border-border rounded-lg p-4">
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">Producto</p>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-text-secondary">Categoría</span>
+                    <span class="text-sm font-semibold text-text-primary">{{ getCategoryName(form.category_id) }}</span>
                   </div>
-                  <div>
-                    <p class="text-xs text-text-secondary mb-1">Costo</p>
-                    <p class="text-sm text-text-primary font-semibold">
-                      {{ formatCurrency(getIngredientCost(ingredient)) }}
-                    </p>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-text-secondary">Disponible</span>
+                    <UiStatusBadge
+                      :value="form.is_available ? 'Disponible' : 'No disponible'"
+                      format="text"
+                      :variant="form.is_available ? 'success' : 'default'"
+                      size="sm"
+                    />
+                  </div>
+                  <div v-if="form.description" class="pt-2 border-t border-border">
+                    <p class="text-xs text-text-secondary">{{ form.description }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Precios -->
+              <div class="bg-surface border border-border rounded-lg p-4">
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">Información de Precios</p>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-text-secondary">Precio de Venta</span>
+                    <span class="text-sm font-bold text-text-primary">{{ formatCurrency(form.price) }}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-text-secondary">Costo Calculado</span>
+                    <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(calculatedCost) }}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-text-secondary">Margen</span>
+                    <span class="text-sm font-semibold text-crocus-600">{{ formatMarginPercent }}</span>
+                  </div>
+                  <div class="flex justify-between items-center pt-2 border-t border-border">
+                    <span class="text-sm font-semibold text-text-primary">Ganancia</span>
+                    <span class="text-base font-bold text-crocus-600">{{ formatCurrency(marginValue) }}</span>
                   </div>
                 </div>
               </div>
             </div>
-
-            <!-- Desktop: Table View -->
-            <table class="w-full hidden md:table">
-              <thead>
-                <tr class="border-b border-border">
-                  <th class="text-left py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                    Ingrediente
-                  </th>
-                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                    Cantidad
-                  </th>
-                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                    Costo Unitario
-                  </th>
-                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                    Costo Total
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(ingredient, index) in form.ingredients"
-                  :key="index"
-                  class="border-b border-border"
-                >
-                  <td class="py-4">
-                    <p class="font-medium text-text-primary">{{ getIngredientName(ingredient.ingredient_id) }}</p>
-                  </td>
-                  <td class="text-right py-4 text-text-primary font-semibold">
-                    {{ ingredient.quantity }} {{ ingredient.unit }}
-                  </td>
-                  <td class="text-right py-4 text-text-secondary text-sm">
-                    {{ formatCurrency(getIngredientUnitCost(ingredient.ingredient_id)) }}
-                  </td>
-                  <td class="text-right py-4 text-text-primary font-semibold">
-                    {{ formatCurrency(getIngredientCost(ingredient)) }}
-                  </td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr class="border-t-2 border-border">
-                  <td colspan="3" class="py-4 text-right font-semibold text-text-primary">
-                    COSTO TOTAL:
-                  </td>
-                  <td class="py-4 text-right text-xl font-bold text-text-primary">
-                    {{ formatCurrency(calculatedCost) }}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
           </div>
         </div>
         </Transition>
 
-        <!-- Navigation Buttons -->
-        <div class="flex justify-between mt-4 sm:mt-6 gap-3">
-          <button
-            v-if="currentStep > 1"
-            type="button"
-            @click="previousStep"
-            class="btn-secondary px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium"
-          >
-            ← Anterior
-          </button>
-          <div v-else></div>
-
-          <button
-            v-if="currentStep < 3"
-            type="submit"
-            :disabled="!canProceed"
-            class="btn-primary px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Siguiente →
-          </button>
-          <button
-            v-else
-            type="button"
-            @click="submitProduct"
-            :disabled="isSubmitting"
-            class="btn-primary px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Crear Producto
-          </button>
-        </div>
       </form>
+
+      <!-- Navigation Buttons -->
+      <div class="bg-surface border-t border-border shadow-lg mt-6">
+        <div class="px-4 sm:px-6 md:px-8 py-3 sm:py-4">
+          <div class="flex justify-between items-center gap-3">
+            <button
+              v-if="currentStep > 1"
+              type="button"
+              @click="previousStep"
+              class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
+            >
+              <span class="hidden sm:inline">← Anterior</span>
+              <span class="sm:hidden">←</span>
+            </button>
+            <NuxtLink
+              v-else
+              to="/menu/productos"
+              class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
+            >
+              Cancelar
+            </NuxtLink>
+
+            <button
+              v-if="currentStep < 3"
+              type="button"
+              @click="handleNext"
+              :disabled="!canProceed"
+              class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
+              :class="{ 'opacity-50 cursor-not-allowed': !canProceed }"
+            >
+              <span class="hidden sm:inline">Siguiente →</span>
+              <span class="sm:hidden">→</span>
+            </button>
+            <button
+              v-else
+              type="button"
+              @click="submitProduct"
+              :disabled="isSubmitting"
+              class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
+              :class="{ 'opacity-50 cursor-not-allowed': isSubmitting }"
+            >
+              <span class="hidden sm:inline">{{ isSubmitting ? 'Creando...' : 'Crear Producto' }}</span>
+              <span class="sm:hidden">{{ isSubmitting ? '...' : 'Crear' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -898,10 +863,6 @@ function formatCurrency(value: number) {
 </script>
 
 <style scoped>
-.page-layout {
-  @apply max-w-6xl mx-auto p-4 md:p-6;
-}
-
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;

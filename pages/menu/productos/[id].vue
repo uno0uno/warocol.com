@@ -229,7 +229,7 @@
                     >
                       <option value="" disabled>Seleccione ingrediente</option>
                       <option v-for="ing in ingredients" :key="ing.id" :value="ing.id">
-                        {{ ing.name }} ({{ formatCurrency(ing.costo_unitario || 0) }}/{{ ing.unit }})
+                        {{ ing.name }} ({{ formatCurrency(ing.costo_unitario || ing.price || 0) }}/{{ ing.unit }})
                       </option>
                     </select>
                   </div>
@@ -373,6 +373,33 @@
         </div>
       </div>
     </form>
+
+    <!-- Delete confirmation modal -->
+    <UiModal v-model="showDeleteModal" title="Eliminar Producto">
+      <div class="p-6">
+        <div class="flex items-start gap-4">
+          <div class="flex-shrink-0 w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center">
+            <Icon name="heroicons:trash" class="w-5 h-5 text-destructive" />
+          </div>
+          <div>
+            <p class="text-sm text-text-primary font-medium mb-1">¿Eliminar este producto?</p>
+            <p class="text-sm text-text-secondary">Esta acción no se puede deshacer. El producto será eliminado permanentemente.</p>
+          </div>
+        </div>
+        <div v-if="deleteError" class="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
+          {{ deleteError }}
+        </div>
+        <div class="flex gap-3 mt-6">
+          <UiButton type="button" variant="outline" class="flex-1" @click="showDeleteModal = false" :disabled="isSubmitting">
+            Cancelar
+          </UiButton>
+          <UiButton type="button" variant="destructive" class="flex-1" @click="confirmDelete" :disabled="isSubmitting">
+            <CommonsTheCustomLoader v-if="isSubmitting" size="small" class="mr-2" />
+            {{ isSubmitting ? 'Eliminando...' : 'Sí, eliminar' }}
+          </UiButton>
+        </div>
+      </div>
+    </UiModal>
   </div>
 </template>
 
@@ -518,7 +545,7 @@ const calculatedCost = computed(() => {
   if (selectedRecipeBaseIngredients.value.length > 0) {
     totalCost += selectedRecipeBaseIngredients.value.reduce((sum: number, ing: any) => {
       const ingredient = ingredients.value.find((i: any) => i.id === ing.ingredient_id)
-      const costPerUnit = ingredient?.costo_unitario || 0
+      const costPerUnit = ingredient?.costo_unitario || ingredient?.price || 0
       return sum + (ing.base_quantity * Number(costPerUnit))
     }, 0)
   }
@@ -526,7 +553,7 @@ const calculatedCost = computed(() => {
   // Add cost from additional ingredients
   totalCost += form.value.ingredients.reduce((sum, ing) => {
     const ingredient = ingredients.value.find((i: any) => i.id === ing.ingredient_id)
-    const costPerUnit = ingredient?.costo_unitario || 0
+    const costPerUnit = ingredient?.costo_unitario || ingredient?.price || 0
     return sum + (ing.quantity * Number(costPerUnit))
   }, 0)
 
@@ -603,23 +630,26 @@ const handleSubmit = async () => {
   }
 }
 
-const deleteProduct = async () => {
-  if (!confirm('¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.')) {
-    return
-  }
+const showDeleteModal = ref(false)
+const deleteError = ref('')
 
+const deleteProduct = () => {
+  deleteError.value = ''
+  showDeleteModal.value = true
+}
+
+const confirmDelete = async () => {
   isSubmitting.value = true
-
+  deleteError.value = ''
   try {
     await $fetch(`/api/menu/products/${productId}`, {
       method: 'DELETE'
     })
-
-    // clearNuxtData()
+    showDeleteModal.value = false
     await router.push('/menu/productos')
   } catch (error: any) {
     console.error('❌ Error al eliminar producto:', error)
-    alert(`Error al eliminar el producto: ${error.data?.detail || error.message}`)
+    deleteError.value = error.data?.detail || error.message || 'Error al eliminar el producto'
   } finally {
     isSubmitting.value = false
   }

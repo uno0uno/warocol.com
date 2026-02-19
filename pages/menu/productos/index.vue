@@ -539,8 +539,11 @@ const formatCurrency = (value: number) => {
 
 // Calculate and format margin
 const formatMargin = (product: any) => {
-  if (!product.price || !product.costo_calculado) return '—'
-  const margin = ((product.price - product.costo_calculado) / product.costo_calculado) * 100
+  const price = Number(product.price) || 0
+  const cost = Number(product.costo_calculado) || 0
+  if (price <= 0 || cost <= 0) return '—'
+  const margin = ((price - cost) / cost) * 100
+  if (!isFinite(margin)) return '—'
   return `${margin.toFixed(1)}%`
 }
 

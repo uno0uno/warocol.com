@@ -251,6 +251,7 @@
                       v-model="ingredient.ingredient_id"
                       class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
                       required
+                      @change="onIngredientChange(index, ingredient.ingredient_id)"
                     >
                       <option value="">Seleccionar...</option>
                       <option v-for="ing in availableIngredients" :key="ing.id" :value="ing.id">
@@ -280,11 +281,13 @@
                       v-model="ingredient.unit"
                       class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
                     >
-                      <option value="g">Gramos (g)</option>
-                      <option value="kg">Kilogramos (kg)</option>
-                      <option value="ml">Mililitros (ml)</option>
-                      <option value="l">Litros (l)</option>
-                      <option value="u">Unidades (u)</option>
+                      <option
+                        v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
+                        :key="opt.value"
+                        :value="opt.value"
+                      >
+                        {{ opt.label }}
+                      </option>
                     </select>
                   </div>
 
@@ -491,6 +494,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
@@ -536,6 +540,46 @@ const { data: ingredientsData } = useAsyncData(
 
 // Computed
 const availableIngredients = computed(() => ingredientsData.value?.data || [])
+
+// Purchase units cache per ingredient
+const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
+
+const unitLabels: Record<string, string> = {
+  g: 'Gramos (g)',
+  kg: 'Kilogramos (kg)',
+  ml: 'Mililitros (ml)',
+  l: 'Litros (l)',
+  u: 'Unidades (u)',
+  lb: 'Libras (lb)',
+}
+
+function getIngredientUnitOptions(ingredientId: string) {
+  if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
+  const ingredient = availableIngredients.value.find((i: any) => i.id === ingredientId)
+  const baseUnit = ingredient?.unit || 'g'
+  const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
+  const unitSet = new Set<string>([baseUnit])
+  purchaseUnits.forEach((pu: any) => { if (pu.purchase_unit) unitSet.add(pu.purchase_unit) })
+  return Array.from(unitSet).map(u => ({ value: u, label: unitLabels[u] || u }))
+}
+
+async function onIngredientChange(index: number, ingredientId: string) {
+  if (!ingredientId) return
+  const ingredient = availableIngredients.value.find((i: any) => i.id === ingredientId)
+  form.value.ingredients[index].unit = ingredient?.unit || 'g'
+  if (!purchaseUnitsCache.value.has(ingredientId)) {
+    try {
+      const res = await $fetch<any>(`/api/suppliers/ingredient-purchase-units/ingredient/${ingredientId}`)
+      const updated = new Map(purchaseUnitsCache.value)
+      updated.set(ingredientId, res.data || [])
+      purchaseUnitsCache.value = updated
+    } catch {
+      const updated = new Map(purchaseUnitsCache.value)
+      updated.set(ingredientId, [])
+      purchaseUnitsCache.value = updated
+    }
+  }
+}
 
 const isLoadingData = computed(() => {
   return !ingredientsData.value
