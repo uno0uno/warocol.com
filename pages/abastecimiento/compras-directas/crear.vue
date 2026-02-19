@@ -253,7 +253,7 @@
                   type="button"
                   :disabled="isScanning"
                   @click="scanFileInput?.click()"
-                  class="px-3 py-2 bg-amber-500/10 text-amber-700 border-2 border-amber-400/30 rounded-lg hover:bg-amber-500/20 transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-1.5"
+                  class="px-3 py-2 bg-primary/10 text-primary border-2 border-primary/20 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-1.5"
                 >
                   <svg v-if="!isScanning" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -274,11 +274,11 @@
             </div>
 
             <!-- OCR banner -->
-            <div v-if="ocrItemsLoaded" class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2 text-sm text-amber-800">
+            <div v-if="ocrItemsLoaded" class="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg flex items-start gap-2 text-sm text-primary">
               <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Items cargados desde la factura. Selecciona el ingrediente y la unidad para cada uno. La cantidad y precio vienen del OCR.</span>
+              <span class="font-medium">Items cargados. La IA puede cometer errores, por favor verifica todos los datos.</span>
             </div>
 
             <!-- Tabs de Filtro por Tipo de Ingrediente -->
@@ -297,160 +297,271 @@
               </button>
             </div>
 
-            <div class="space-y-4">
+          <div class="relative">
+             <!-- AI Loading Overlay -->
+            <div v-if="isScanning" class="w-full py-6 flex flex-row items-center justify-center gap-3 bg-white rounded-lg border border-dashed border-gray-200">
+              <CommonsTheCustomLoader size="small" />
+              <p class="text-sm font-medium text-text-primary animate-pulse flex items-center gap-2 m-0">
+                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                {{ currentPhrase }}
+              </p>
+            </div>
+
+            <!-- Items List -->
+            <div v-else class="space-y-3">
               <div
                 v-for="(item, index) in form.items"
                 :key="index"
-                class="border-2 border-border rounded-lg p-4 bg-background"
+                class="border border-border rounded-lg p-3 bg-background"
               >
-                <div class="flex justify-between items-start mb-4">
-                  <h4 class="text-sm font-medium text-text-primary">Item #{{ index + 1 }}</h4>
+                <div class="flex justify-between items-start mb-2">
+                  <h4 class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Item #{{ index + 1 }}</h4>
                   <button
                     type="button"
                     @click="removeItem(index)"
                     :disabled="form.items.length === 1"
                     class="text-destructive hover:text-destructive/80 disabled:opacity-50 p-1"
                   >
-                    <TrashIcon class="w-5 h-5" />
+                    <TrashIcon class="w-4 h-4" />
                   </button>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <!-- Ingrediente -->
-                  <div class="sm:col-span-2">
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Ingrediente *
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                  <!-- Ingredient Search (lg: 4 cols) -->
+                  <div class="sm:col-span-12 lg:col-span-4 relative z-10">
+                    <label class="block text-xs font-medium text-text-primary mb-1">
+                      Ítem / Ingrediente *
                     </label>
-                    <UiSearchableSelect
-                      v-model="item.ingredient_id"
-                      :options="ingredientOptions"
-                      placeholder="Buscar ingrediente..."
-                      required
-                      @update:model-value="() => onIngredientChange(index)"
-                    />
-                    <!-- OCR hint: texto de la factura -->
-                    <p v-if="item.ocr_description" class="mt-1 text-xs flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-amber-600'">
+                    <div class="relative">
+                      <input
+                        type="text"
+                        v-model="item.searchTerm"
+                        @input="(e) => searchIngredients(e.target.value, index)"
+                        @focus="item.showResults = true"
+                        class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
+                        placeholder="Buscar ingrediente..."
+                      />
+                      <span class="absolute left-2.5 top-2 text-text-secondary">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                        </svg>
+                      </span>
+
+                      <!-- Search Results Dropdown -->
+                      <div
+                        v-if="item.showResults && ingredientResults[index]?.length"
+                        class="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                      >
+                        <ul class="py-1">
+                          <li
+                            v-for="ing in ingredientResults[index]"
+                            :key="ing.id"
+                            @click="selectIngredient(ing, index)"
+                            class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary"
+                          >
+                            {{ ing.name }}
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                    <!-- OCR hint -->
+                    <p v-if="item.ocr_description" class="mt-1 text-[10px] leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-amber-600'">
                       <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span>Factura: "{{ item.ocr_description }}"</span>
+                      <span class="truncate">Fac: "{{ item.ocr_description }}"</span>
                     </p>
                   </div>
 
-                  <!-- Unidad de Compra -->
-                  <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Unidad de Compra *
-                    </label>
-                    <select
-                      v-model="item.purchase_unit"
-                      required
-                      :disabled="!item.ingredient_id"
-                      class="input-base w-full px-4 py-2"
-                      :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id }"
-                      @change="() => onUnitChange(index)"
-                    >
-                      <option value="">{{ item.ingredient_id ? 'Seleccionar unidad' : 'Seleccione ingrediente primero' }}</option>
-                      <option
-                        v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
-                        :key="unitOpt.value"
-                        :value="unitOpt.value"
-                      >
-                        {{ unitOpt.label }}
-                      </option>
-                    </select>
-                    <p v-if="item.ingredient_id && item.purchase_unit" class="text-xs text-text-secondary mt-1">
-                      Se convertirá a: {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
-                    </p>
-                  </div>
+                  <!-- Wrapper for Unit and Financials (lg: 8 cols) -->
+                  <div class="sm:col-span-12 lg:col-span-8 flex flex-col gap-2">
 
-                  <!-- Peso por unidad (para ingredientes 'und') -->
-                  <div v-if="needsGramsPerUnit(item.ingredient_id)">
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Peso por unidad (gr)
-                    </label>
-                    <input
-                      v-model.number="item.grams_per_unit"
-                      type="number"
-                      min="1"
-                      step="1"
-                      placeholder="Ej: 500"
-                      class="input-base w-full px-4 py-2"
-                    />
-                    <p class="text-xs text-text-secondary mt-1">
-                      ¿Cuántos gramos pesa 1 unidad? Se usa para calcular costos en recetas.
-                    </p>
-                  </div>
+                    <!-- Top Row: Financials -->
+                    <div class="grid grid-cols-3 gap-3">
+                      <!-- Quantity -->
+                      <div>
+                        <label class="block text-xs font-medium text-text-primary mb-1">
+                          Cant. *
+                        </label>
+                        <input
+                          v-model.number="item.purchase_quantity"
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          required
+                          class="input-base w-full px-2 py-1.5 text-sm"
+                          @input="() => updateItemTotal(index)"
+                          placeholder="0"
+                        />
+                      </div>
 
-                  <!-- Cantidad -->
-                  <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Cantidad *
-                    </label>
-                    <input
-                      v-model.number="item.purchase_quantity"
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      required
-                      class="input-base w-full px-4 py-2"
-                      @input="() => updateItemTotal(index)"
-                    />
-                  </div>
+                      <!-- Unit Price -->
+                      <div>
+                         <label class="block text-xs font-medium text-text-primary mb-1 whitespace-nowrap">
+                          P. Unit *
+                          <span
+                            v-if="item.suggested_price"
+                            class="text-[10px] text-success cursor-pointer ml-0.5"
+                            @click="item.unit_cost = item.suggested_price; updateItemTotal(index)"
+                            title="Usar precio sugerido"
+                          >
+                            (Sug: {{ formatPrice(item.suggested_price) }})
+                          </span>
+                        </label>
+                        <div class="relative">
+                          <span class="absolute left-2 top-1.5 text-text-secondary text-xs">$</span>
+                          <input
+                            v-model.number="item.unit_cost"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            required
+                            class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
+                            @input="() => updateItemTotal(index)"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
 
-                  <!-- Precio Unitario -->
-                  <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Precio Unit. *
-                      <span
-                        v-if="item.suggested_price"
-                        class="text-xs text-success cursor-pointer ml-1"
-                        @click="item.unit_cost = item.suggested_price; updateItemTotal(index)"
-                      >
-                        (Sugerido: ${{ formatPrice(item.suggested_price) }})
-                      </span>
-                    </label>
-                    <div class="relative">
-                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
-                      <input
-                        v-model.number="item.unit_cost"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        required
-                        class="input-base w-full pl-8 pr-4 py-2"
-                        @input="() => updateItemTotal(index)"
-                      />
+                      <!-- Total -->
+                      <div>
+                         <label class="block text-xs font-medium text-text-primary mb-1">
+                          Total
+                        </label>
+                        <div class="input-base w-full px-2 py-1.5 text-sm bg-surface-secondary font-medium text-text-primary flex items-center h-[34px]">
+                          ${{ formatPrice(item.total_cost) }}
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  <!-- Total -->
-                  <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Total
-                    </label>
-                    <div class="px-4 py-2 bg-surface-secondary rounded-lg font-semibold text-text-primary border border-border">
-                      ${{ formatPrice(item.total_cost) }}
+                    <!-- Bottom Row: Unit Section -->
+                    <div class="w-full">
+                       <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                          <label class="text-xs font-medium text-text-primary">Unidad *</label>
+                          <button
+                            v-if="item.ingredient_id && !newUnitForms[index]?.show"
+                            type="button"
+                            class="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                            @click="initNewUnitForm(index)"
+                          >
+                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Nueva
+                          </button>
+                        </div>
+                        <p v-if="item.ingredient_id && item.purchase_unit" class="text-[10px] text-text-secondary truncate">
+                          = {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
+                        </p>
+                      </div>
+
+                      <div class="flex items-end gap-2">
+                        <!-- Unit Select -->
+                        <div class="flex-1 min-w-[120px]">
+                           <select
+                            v-model="item.purchase_unit"
+                            required
+                            :disabled="!item.ingredient_id"
+                            class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
+                            :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id }"
+                            @change="() => onUnitChange(index)"
+                          >
+                            <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
+                            <option
+                              v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
+                              :key="unitOpt.value"
+                              :value="unitOpt.value"
+                            >
+                              {{ unitOpt.label }}
+                            </option>
+                          </select>
+                        </div>
+
+                        <!-- Peso por unidad -->
+                        <div v-if="needsGramsPerUnit(item.ingredient_id)">
+                           <label class="block text-[10px] font-medium text-text-secondary mb-0.5 text-center">Peso(gr)</label>
+                           <input
+                            v-model.number="item.grams_per_unit"
+                            type="number"
+                            min="1"
+                            step="1"
+                            placeholder="0"
+                            class="input-base w-20 px-1 py-1.5 text-xs text-center h-[34px]"
+                          />
+                        </div>
+
+                        <!-- New Unit Form Fields -->
+                        <template v-if="newUnitForms[index]?.show">
+                          <!-- Nombre -->
+                          <div>
+                            <label class="block text-[10px] font-medium text-text-secondary mb-0.5">Nombre</label>
+                            <input
+                              v-model="newUnitForms[index].label"
+                              type="text"
+                              placeholder="Ej: Caja"
+                              class="input-base w-24 px-1.5 py-1.5 text-[10px] h-[34px]"
+                            />
+                          </div>
+
+                          <!-- Factor/Cant -->
+                          <div>
+                            <label class="block text-[10px] font-medium text-text-secondary mb-0.5 text-center">Cant.</label>
+                            <input
+                              v-model.number="newUnitForms[index].factor"
+                              type="number"
+                              min="1"
+                              placeholder="1"
+                              class="input-base w-16 px-1 py-1.5 text-[10px] text-center h-[34px]"
+                            />
+                          </div>
+
+                          <!-- Actions -->
+                          <div class="flex gap-0.5 h-[34px] items-center">
+                              <button
+                                type="button"
+                                class="p-1 bg-primary text-white rounded hover:bg-primary/90 transition-colors h-7 w-7 flex items-center justify-center"
+                                title="Guardar"
+                                @click="saveNewUnit(index)"
+                              >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                class="p-1 border border-border text-text-secondary rounded hover:bg-surface-secondary transition-colors h-7 w-7 flex items-center justify-center"
+                                title="Cancelar"
+                                @click="newUnitForms[index] = { ...newUnitForms[index], show: false }"
+                              >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                              </button>
+                          </div>
+                        </template>
+                      </div>
                     </div>
-                  </div>
 
-                  <!-- Notas -->
-                  <div class="sm:col-span-2">
-                    <label class="block text-sm font-medium text-text-primary mb-2">
-                      Notas del item
-                    </label>
-                    <input
-                      v-model="item.notes"
-                      type="text"
-                      class="input-base w-full px-4 py-2"
-                      placeholder="Observaciones opcionales"
-                    />
                   </div>
+                </div>
+
+                <!-- Notes Row (Full width) -->
+                <div class="mt-2">
+                  <input
+                    v-model="item.notes"
+                    type="text"
+                    class="input-base w-full px-2 py-1.5 text-xs text-text-secondary border-dashed bg-transparent focus:bg-background focus:border-solid transition-colors"
+                    placeholder="+ Agregar notas u observaciones del item (opcional)"
+                  />
                 </div>
               </div>
             </div>
 
+          </div>
           </div>
         </div>
 
@@ -623,153 +734,134 @@
         </div>
 
         <!-- Step 4: Revision -->
-        <div v-else-if="currentStep === 4" key="step-4" class="bg-surface border border-border rounded-lg">
-          <!-- Header -->
-          <div class="border-b border-border p-4 sm:p-6 md:p-8">
-            <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
-              <div>
-                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary mb-2">COMPRA DIRECTA</h1>
-                <p class="text-xs sm:text-sm text-text-secondary">Resumen antes de guardar</p>
-              </div>
-              <div class="text-left sm:text-right w-full sm:w-auto">
-                <div class="border-2 border-border px-3 sm:px-4 py-2 rounded-lg inline-block mb-2 bg-surface-secondary">
-                  <p class="text-xs font-medium text-text-secondary">COMPRA N°</p>
-                  <p class="text-lg sm:text-xl font-bold text-text-primary">{{ nextPurchaseNumber }}</p>
-                </div>
-                <p class="text-xs text-text-secondary mt-2">
-                  Fecha: {{ new Date().toLocaleDateString('es-CO') }}
+        <div v-else-if="currentStep === 4" key="step-4">
+          <!-- Header compacto -->
+          <div class="bg-surface border border-border rounded-lg px-4 sm:px-6 py-3 mb-3 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Compra Directa · Resumen</p>
+              <p class="text-base font-bold text-text-primary">{{ nextPurchaseNumber }}</p>
+            </div>
+            <p class="text-xs text-text-secondary">{{ new Date().toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' }) }}</p>
+          </div>
+
+          <!-- Layout: items (izq) + panel resumen (der) -->
+          <div class="flex flex-col lg:flex-row gap-4 items-start">
+
+            <!-- ── Columna izquierda: items ── -->
+            <div class="w-full lg:flex-1">
+              <div class="bg-surface border border-border rounded-lg p-4">
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
+                  {{ form.items.length }} {{ form.items.length === 1 ? 'producto' : 'productos' }}
                 </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Supplier Info -->
-          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-border">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-              <div>
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Proveedor</p>
-                <p class="text-lg font-bold text-text-primary">{{ getSupplierName(form.supplier_id) }}</p>
-              </div>
-              <div>
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Tipo de Pago</p>
-                <p class="text-base font-medium text-text-primary">{{ getPaymentTypeText(form.payment_type) }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Items Table -->
-          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6">
-            <!-- Mobile: Cards View -->
-            <div class="md:hidden space-y-3">
-              <div
-                v-for="(item, index) in form.items"
-                :key="index"
-                class="border border-border rounded-lg p-3 bg-background"
-              >
-                <div class="mb-2">
-                  <p class="font-medium text-text-primary text-sm">{{ getIngredientName(item.ingredient_id) }}</p>
-                  <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
-                </div>
-                <div class="grid grid-cols-3 gap-2 text-sm">
-                  <div>
-                    <p class="text-xs text-text-secondary">Cantidad</p>
-                    <p class="font-semibold">{{ item.purchase_quantity }} {{ item.purchase_unit }}</p>
-                    <p v-if="item.grams_per_unit" class="text-xs text-text-secondary">{{ item.grams_per_unit }}gr/und</p>
-                  </div>
-                  <div>
-                    <p class="text-xs text-text-secondary">Precio Unit.</p>
-                    <p class="font-semibold">${{ formatPrice(item.unit_cost) }}</p>
-                  </div>
-                  <div>
-                    <p class="text-xs text-text-secondary">Total</p>
-                    <p class="font-bold text-primary">${{ formatPrice(item.total_cost) }}</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div
+                    v-for="(item, index) in form.items"
+                    :key="index"
+                    class="flex items-start gap-3 p-3 rounded-lg border border-border bg-background"
+                  >
+                    <!-- Ícono inicial -->
+                    <div class="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary text-xs font-bold">
+                      {{ getIngredientName(item.ingredient_id).charAt(0) }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="font-medium text-text-primary text-sm truncate">{{ getIngredientName(item.ingredient_id) }}</p>
+                      <p v-if="item.notes" class="text-xs text-text-secondary truncate">{{ item.notes }}</p>
+                      <div class="mt-1.5 flex items-center justify-between gap-2">
+                        <span class="text-xs bg-surface-secondary px-2 py-0.5 rounded font-medium text-text-secondary">
+                          {{ item.purchase_quantity }} × {{ getItemUnitLabel(item) }}
+                        </span>
+                        <span class="text-sm font-bold text-primary">${{ formatPrice(item.total_cost) }}</span>
+                      </div>
+                      <p v-if="item.grams_per_unit" class="text-xs text-text-secondary mt-0.5">{{ item.grams_per_unit }} gr/und</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Desktop: Table View -->
-            <table class="w-full hidden md:table">
-              <thead>
-                <tr class="border-b border-border">
-                  <th class="text-left py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Ingrediente</th>
-                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Cantidad</th>
-                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Precio Unit.</th>
-                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(item, index) in form.items"
-                  :key="index"
-                  class="border-b border-border"
-                >
-                  <td class="py-4">
-                    <p class="font-medium text-text-primary">{{ getIngredientName(item.ingredient_id) }}</p>
-                    <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
-                  </td>
-                  <td class="text-right py-4 text-text-primary">
-                    <p>{{ item.purchase_quantity }} {{ item.purchase_unit }}</p>
-                    <p v-if="item.grams_per_unit" class="text-xs text-text-secondary">{{ item.grams_per_unit }}gr/und</p>
-                  </td>
-                  <td class="text-right py-4 text-text-primary">
-                    ${{ formatPrice(item.unit_cost) }}
-                  </td>
-                  <td class="text-right py-4 font-bold text-primary">
-                    ${{ formatPrice(item.total_cost) }}
-                  </td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr class="bg-primary/5">
-                  <td colspan="3" class="py-4 text-right font-bold text-text-primary">Total:</td>
-                  <td class="py-4 text-right text-xl font-bold text-primary">${{ formatPrice(totalAmount) }}</td>
-                </tr>
-              </tfoot>
-            </table>
+            <!-- ── Columna derecha: panel sticky ── -->
+            <div class="w-full lg:w-72 xl:w-80 lg:sticky lg:top-4">
+              <div class="bg-surface border border-border rounded-lg divide-y divide-border overflow-hidden">
 
-            <!-- Mobile Total -->
-            <div class="md:hidden mt-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
-              <div class="flex justify-between items-center">
-                <span class="font-bold text-text-primary">Total:</span>
-                <span class="text-xl font-bold text-primary">${{ formatPrice(totalAmount) }}</span>
+                <!-- Proveedor + pago -->
+                <div class="p-4 space-y-2">
+                  <div class="flex justify-between items-start">
+                    <p class="text-xs text-text-secondary">Proveedor</p>
+                    <p class="text-sm font-semibold text-text-primary text-right max-w-[60%] leading-tight">{{ getSupplierName(form.supplier_id) }}</p>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <p class="text-xs text-text-secondary">Pago</p>
+                    <p class="text-xs font-medium text-text-primary">{{ getPaymentTypeText(form.payment_type) }}</p>
+                  </div>
+                  <div v-if="form.payment_method" class="flex justify-between items-center">
+                    <p class="text-xs text-text-secondary">Método</p>
+                    <p class="text-xs font-medium text-text-primary">{{ getPaymentMethodText(form.payment_method) }}</p>
+                  </div>
+                </div>
+
+                <!-- Documentos -->
+                <div v-if="form.invoice_number || form.invoice_file || form.payment_file" class="p-4 space-y-1.5">
+                  <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Documentos</p>
+                  <div v-if="form.invoice_number" class="flex items-center gap-2 text-xs">
+                    <svg class="w-3.5 h-3.5 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="text-text-primary font-medium">{{ form.invoice_number }}</span>
+                    <span v-if="form.invoice_file" class="text-success">· PDF adjunto</span>
+                  </div>
+                  <div v-if="form.payment_reference" class="flex items-center gap-2 text-xs">
+                    <svg class="w-3.5 h-3.5 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                    <span class="text-text-primary font-medium">Ref: {{ form.payment_reference }}</span>
+                    <span v-if="form.payment_file" class="text-success">· Comprobante</span>
+                  </div>
+                  <div v-if="form.notes" class="flex items-start gap-2 text-xs mt-1">
+                    <span class="text-text-secondary">Nota:</span>
+                    <span class="text-text-primary">{{ form.notes }}</span>
+                  </div>
+                </div>
+
+                <!-- Total -->
+                <div class="p-4 bg-primary/5">
+                  <div class="flex justify-between items-center mb-1">
+                    <p class="text-xs text-text-secondary">Subtotal ({{ form.items.length }} ítems)</p>
+                    <p class="text-sm text-text-primary">${{ formatPrice(totalAmount) }}</p>
+                  </div>
+                  <div class="flex justify-between items-center pt-2 border-t border-primary/20">
+                    <p class="font-bold text-text-primary">Total</p>
+                    <p class="text-xl font-bold text-primary">${{ formatPrice(totalAmount) }}</p>
+                  </div>
+                </div>
+
+                <!-- Aviso stock + CTA -->
+                <div class="p-4 space-y-3">
+                  <div class="flex items-center gap-2 text-xs text-success bg-success/10 rounded-lg px-3 py-2">
+                    <CheckCircleIcon class="w-4 h-4 flex-shrink-0" />
+                    <span>El stock se actualizará al instante</span>
+                  </div>
+                  <button
+                    type="button"
+                    @click="handleSubmit"
+                    :disabled="isSubmitting"
+                    class="w-full py-3 rounded-lg font-semibold text-sm bg-success text-white hover:bg-success/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg v-if="!isSubmitting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    {{ isSubmitting ? 'Guardando...' : 'Confirmar y Guardar' }}
+                  </button>
+                  <button
+                    type="button"
+                    @click="previousStep"
+                    class="w-full py-2 rounded-lg text-xs text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors"
+                  >
+                    ← Editar compra
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Documents Summary -->
-          <div v-if="form.invoice_number || form.payment_method" class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-t border-border bg-background/50">
-            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">Documentos</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div v-if="form.invoice_number">
-                <p class="text-sm text-text-secondary">Factura:</p>
-                <p class="font-medium text-text-primary">{{ form.invoice_number }}</p>
-                <p v-if="form.invoice_file" class="text-xs text-success mt-1">Archivo adjunto</p>
-              </div>
-              <div v-if="form.payment_method">
-                <p class="text-sm text-text-secondary">Pago:</p>
-                <p class="font-medium text-text-primary">{{ getPaymentMethodText(form.payment_method) }}</p>
-                <p v-if="form.payment_reference" class="text-xs text-text-secondary">Ref: {{ form.payment_reference }}</p>
-                <p v-if="form.payment_file" class="text-xs text-success mt-1">Comprobante adjunto</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Notes -->
-          <div v-if="form.notes" class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-t border-border">
-            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Notas</p>
-            <p class="text-sm text-text-primary">{{ form.notes }}</p>
-          </div>
-
-          <!-- Success Message -->
-          <div class="px-4 sm:px-6 md:px-8 py-4 bg-success/10 border-t border-success/20">
-            <div class="flex items-center gap-3">
-              <CheckCircleIcon class="w-6 h-6 text-success flex-shrink-0" />
-              <div>
-                <p class="font-medium text-success">El inventario se actualizara inmediatamente</p>
-                <p class="text-xs text-success/80">Los items se agregaran al stock al guardar esta compra</p>
-              </div>
-            </div>
           </div>
         </div>
         </Transition>
@@ -807,16 +899,6 @@
               <span class="hidden sm:inline">Siguiente →</span>
               <span class="sm:hidden">→</span>
             </button>
-            <button
-              v-else
-              type="button"
-              @click="handleSubmit"
-              :disabled="isSubmitting"
-              class="btn-primary px-4 sm:px-6 py-2 rounded-lg disabled:opacity-50 text-sm sm:text-base bg-success hover:bg-success/90"
-            >
-              <span class="hidden sm:inline">{{ isSubmitting ? 'Guardando...' : 'Guardar y Actualizar Stock' }}</span>
-              <span class="sm:hidden">{{ isSubmitting ? '...' : 'Guardar' }}</span>
-            </button>
           </div>
         </div>
       </div>
@@ -825,6 +907,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { TrashIcon, DocumentTextIcon, CreditCardIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 
 useHead({
@@ -841,6 +924,14 @@ interface PurchaseItem {
   suggested_price: number | null
   ocr_description?: string // texto libre de la factura, solo para UI
   grams_per_unit?: number | null // solo para ingredientes und: peso en gr por unidad
+  searchTerm?: string // para el input de busqueda
+}
+
+interface NewUnitForm {
+  show: boolean
+  label: string      // nombre de la presentación ej: "Bloque x100 tajadas"
+  factor: number     // cuántas unidades base contiene
+  saving: boolean
 }
 
 // Wizard state
@@ -849,6 +940,15 @@ const currentStep = ref(1)
 // State
 const isSubmitting = ref(false)
 const supplierCatalog = ref<any[]>([])
+const newUnitForms = ref<Record<number, NewUnitForm>>({})
+
+interface LocalPurchaseUnit {
+  ingredient_id: string
+  purchase_unit: string
+  purchase_unit_label: string
+  conversion_factor: number
+}
+const localPurchaseUnits = ref<LocalPurchaseUnit[]>([])
 
 // Form
 const form = ref({
@@ -866,6 +966,7 @@ const form = ref({
 function createEmptyItem(): PurchaseItem {
   return {
     ingredient_id: '',
+    searchTerm: '',
     purchase_quantity: 1,
     purchase_unit: '',
     unit_cost: 0,
@@ -942,7 +1043,7 @@ const ingredientOptions = computed(() =>
 )
 
 // Fetch purchase units
-const { data: purchaseUnitsData, pending: loadingPurchaseUnits } = useFetch('/api/suppliers/ingredient-purchase-units', {
+const { data: purchaseUnitsData, pending: loadingPurchaseUnits, refresh: refreshPurchaseUnits } = useFetch('/api/suppliers/ingredient-purchase-units', {
   server: false,
   query: { limit: 10000, active_only: true }
 })
@@ -1026,8 +1127,9 @@ const getPurchaseUnitOptions = (ingredientId: string) => {
   const baseUnit = ingredient?.unit || ''
 
   const units = purchaseUnits.value.filter((u: any) => u.ingredient_id === ingredientId)
+  const pendingUnits = localPurchaseUnits.value.filter(u => u.ingredient_id === ingredientId)
 
-  if (units.length === 0) {
+  if (units.length === 0 && pendingUnits.length === 0) {
     if (ingredient) {
       return [{
         value: ingredient.unit,
@@ -1039,13 +1141,11 @@ const getPurchaseUnitOptions = (ingredientId: string) => {
     return []
   }
 
-  return units.map((u: any) => {
-    // Construir label con factor de conversión si aplica
+  const serverOptions = units.map((u: any) => {
     let label = u.purchase_unit_label
     if (u.conversion_factor && u.conversion_factor !== 1) {
       label = `${u.purchase_unit_label} (${u.conversion_factor} ${baseUnit})`
     }
-
     return {
       value: u.purchase_unit_label,
       label: label,
@@ -1054,6 +1154,26 @@ const getPurchaseUnitOptions = (ingredientId: string) => {
       unit_cost: u.unit_cost
     }
   })
+
+  const localOptions = pendingUnits.map(u => ({
+    value: u.purchase_unit_label,
+    label: u.conversion_factor !== 1
+      ? `${u.purchase_unit_label} (${u.conversion_factor} ${baseUnit})`
+      : u.purchase_unit_label,
+    conversion_factor: u.conversion_factor,
+    is_default: false,
+    unit_cost: undefined
+  }))
+
+  return [...serverOptions, ...localOptions]
+}
+
+// Label completo para el resumen: "4 × 1 Kilogramo (1000 gr)"
+const getItemUnitLabel = (item: PurchaseItem): string => {
+  if (!item.purchase_unit) return ''
+  const opts = getPurchaseUnitOptions(item.ingredient_id)
+  const opt = opts.find((o: any) => o.value === item.purchase_unit)
+  return opt?.label || item.purchase_unit
 }
 
 // Obtener la unidad base del ingrediente
@@ -1070,17 +1190,22 @@ const needsGramsPerUnit = (ingredientId: string) => {
   return ingredient?.unit === 'und'
 }
 
-// Obtiene el peso existente (conversion_factor) de la primera purchase_unit configurada
+// Obtiene el peso existente desde ingredients.unit_weight_gr
 const getExistingGramsPerUnit = (ingredientId: string): number | null => {
-  const units = purchaseUnits.value.filter((u: any) => u.ingredient_id === ingredientId)
-  if (units.length === 0) return null
-  const defaultUnit = units.find((u: any) => u.is_default) || units[0]
-  return defaultUnit?.conversion_factor || null
+  const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
+  return ingredient?.unit_weight_gr || null
 }
 
 // Obtener el factor de conversión para una unidad de compra
 const getConversionFactor = (purchaseUnitLabel: string, ingredientId: string) => {
-  // Buscar en unidades configuradas
+  // Buscar en unidades locales pendientes primero
+  const localUnit = localPurchaseUnits.value.find(u =>
+    u.ingredient_id === ingredientId &&
+    u.purchase_unit_label === purchaseUnitLabel
+  )
+  if (localUnit) return localUnit.conversion_factor
+
+  // Buscar en unidades configuradas del servidor
   const unit = purchaseUnits.value.find((u: any) =>
     u.ingredient_id === ingredientId &&
     u.purchase_unit_label === purchaseUnitLabel
@@ -1105,6 +1230,39 @@ const getConvertedQuantity = (index: number) => {
   const converted = item.purchase_quantity * factor
 
   return converted.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+// --- Nueva presentación de compra inline ---
+const initNewUnitForm = (index: number) => {
+  newUnitForms.value[index] = { show: true, label: '', factor: 1, saving: false }
+}
+
+const saveNewUnit = (index: number) => {
+  const entry = newUnitForms.value[index]
+  if (!entry?.label || entry.factor < 1) return
+
+  const item = form.value.items[index]
+  if (!item.ingredient_id) return
+
+  const purchaseUnitKey = entry.label.toLowerCase().replace(/\s+/g, '_').slice(0, 50)
+
+  // Check if this unit already exists (server or local)
+  const alreadyExists = localPurchaseUnits.value.some(
+    u => u.ingredient_id === item.ingredient_id && u.purchase_unit_label === entry.label
+  )
+  if (!alreadyExists) {
+    localPurchaseUnits.value.push({
+      ingredient_id: item.ingredient_id,
+      purchase_unit: purchaseUnitKey,
+      purchase_unit_label: entry.label,
+      conversion_factor: entry.factor
+    })
+  }
+
+  // Auto-select the new unit and update totals
+  item.purchase_unit = entry.label
+  onUnitChange(index)
+  newUnitForms.value[index] = { ...entry, show: false }
 }
 
 // Fetch supplier catalog when supplier changes
@@ -1219,6 +1377,31 @@ const scanFileInput = ref<HTMLInputElement | null>(null)
 const isScanning = ref(false)
 const ocrItemsLoaded = ref(false)
 
+// UI Phrases
+const loadingPhrases = [
+  'Analizando imagen...',
+  'Extrayendo productos...',
+  'Identificando precios...',
+  'Calculando unidades...',
+  'Organizando items...',
+  'Casi listo...'
+]
+const currentPhraseIndex = ref(0)
+const currentPhrase = computed(() => loadingPhrases[currentPhraseIndex.value])
+let phraseInterval: any = null
+
+const startPhraseRotation = () => {
+  currentPhraseIndex.value = 0
+  phraseInterval = setInterval(() => {
+    currentPhraseIndex.value = (currentPhraseIndex.value + 1) % loadingPhrases.length
+  }, 2000)
+}
+
+const stopPhraseRotation = () => {
+  if (phraseInterval) clearInterval(phraseInterval)
+  phraseInterval = null
+}
+
 const optimizeImageForOcr = (file: File): Promise<Blob> => {
   return new Promise((resolve, reject) => {
     const img = new Image()
@@ -1272,6 +1455,7 @@ const findIngredientMatch = (ocrDescription: string): string => {
   return bestScore > 0 ? bestMatch.id : ''
 }
 
+
 const handleScanFileSelect = async (event: Event) => {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
@@ -1279,6 +1463,9 @@ const handleScanFileSelect = async (event: Event) => {
   input.value = ''
   isScanning.value = true
   ocrItemsLoaded.value = false
+  startPhraseRotation()
+  const startTime = Date.now()
+  console.log('Starting OCR scan...')
   try {
     const optimizedBlob = await optimizeImageForOcr(file)
     const optimizedFile = new File([optimizedBlob], file.name, {
@@ -1296,14 +1483,30 @@ const handleScanFileSelect = async (event: Event) => {
       // Pre-fill items from OCR
       if (data.items && data.items.length > 0) {
         form.value.items = data.items.map((ocrItem: any, index: number) => {
-          const matchedId = findIngredientMatch(ocrItem.descripcion || '')
+          let matchedId = ''
+          
+          // Try AI hint first
+          if (ocrItem.detected_ingredient) {
+            matchedId = findIngredientMatch(ocrItem.detected_ingredient)
+          }
+          
+          // Fallback to description if no match
+          if (!matchedId && ocrItem.descripcion) {
+            matchedId = findIngredientMatch(ocrItem.descripcion)
+          }
+
+          const ingredientName = matchedId 
+            ? getIngredientName(matchedId) 
+            : (ocrItem.detected_ingredient || ocrItem.descripcion || '')
+
           const item: PurchaseItem = {
             ingredient_id: matchedId,
+            searchTerm: ingredientName,
             purchase_quantity: ocrItem.cantidad || 1,
             purchase_unit: '',
             unit_cost: ocrItem.precio_unitario || 0,
             total_cost: ocrItem.total || 0,
-            notes: '',
+            notes: ocrItem.descripcion ? `Fac: "${ocrItem.descripcion}"` : '',
             suggested_price: null,
             ocr_description: ocrItem.descripcion || ''
           }
@@ -1312,6 +1515,33 @@ const handleScanFileSelect = async (event: Event) => {
         // Auto-set default purchase unit for matched items
         form.value.items.forEach((item, index) => {
           if (item.ingredient_id) onIngredientChange(index)
+        })
+        // Aplicar peso_unidad_gr del OCR: auto-seleccionar unidad de compra y/o pre-llenar peso
+        data.items.forEach((ocrItem: any, index: number) => {
+          const item = form.value.items[index]
+          if (!ocrItem.peso_unidad_gr || !item.ingredient_id) return
+
+          const ingredient = ingredients.value.find((i: any) => i.id === item.ingredient_id)
+          if (!ingredient) return
+
+          const pesoGr = ocrItem.peso_unidad_gr
+
+          if (ingredient.unit === 'gr' || ingredient.unit === 'ml') {
+            // Ingrediente en gramos: buscar purchase unit cuyo conversion_factor ≈ pesoGr
+            const opts = getPurchaseUnitOptions(item.ingredient_id)
+            const THRESHOLD = 0.12 // 12% de tolerancia
+            const match = opts.find((o: any) => {
+              const diff = Math.abs(o.conversion_factor - pesoGr) / pesoGr
+              return diff <= THRESHOLD
+            })
+            if (match) {
+              item.purchase_unit = match.value
+              onUnitChange(index)
+            }
+          } else if (ingredient.unit === 'und' && !item.grams_per_unit) {
+            // Ingrediente en und: guardar peso como referencia para recetas
+            item.grams_per_unit = pesoGr
+          }
         })
         ocrItemsLoaded.value = true
       }
@@ -1322,7 +1552,12 @@ const handleScanFileSelect = async (event: Event) => {
   } catch (e) {
     console.error('OCR scan error:', e)
   } finally {
+    const elapsed = Date.now() - startTime
+    if (elapsed < 2500) {
+      await new Promise(resolve => setTimeout(resolve, 2500 - elapsed))
+    }
     isScanning.value = false
+    stopPhraseRotation()
   }
 }
 
@@ -1350,27 +1585,21 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    // Guardar grams_per_unit en ingredient_purchase_units para items und sin conversión
+    // Guardar unit_weight_gr en ingredients para items und con peso definido
     const gramsItems = form.value.items.filter(item => item.ingredient_id && item.grams_per_unit && item.grams_per_unit > 0)
     for (const item of gramsItems) {
       try {
-        await $fetch('/api/suppliers/ingredient-purchase-units', {
-          method: 'POST',
-          body: {
-            ingredient_id: item.ingredient_id,
-            purchase_unit: 'und',
-            purchase_unit_label: `und (${item.grams_per_unit}gr)`,
-            conversion_factor: item.grams_per_unit,
-            is_default: true
-          }
+        await $fetch(`/api/suppliers/ingredients/${item.ingredient_id}/unit-weight`, {
+          method: 'PATCH',
+          body: { unit_weight_gr: item.grams_per_unit }
         })
       } catch (_) {
-        // Si ya existe no bloqueamos el flujo
+        // No bloqueamos el flujo si falla el guardado del peso
       }
     }
 
     // Build JSON payload
-    const payload = {
+    const payload: Record<string, any> = {
       supplier_id: form.value.supplier_id,
       items_data: JSON.stringify(form.value.items.map(item => ({
         ingredient_id: item.ingredient_id,
@@ -1381,6 +1610,11 @@ const handleSubmit = async () => {
         notes: item.notes
       }))),
       payment_type: form.value.payment_type
+    }
+
+    // Include pending new purchase units to be created on the backend
+    if (localPurchaseUnits.value.length > 0) {
+      payload.new_units_data = JSON.stringify(localPurchaseUnits.value)
     }
 
     if (form.value.notes) payload.notes = form.value.notes

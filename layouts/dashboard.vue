@@ -131,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { provide, inject, ref, computed, onMounted, type Ref, type ComputedRef } from 'vue'
+import { provide, inject, ref, computed, onMounted, onUnmounted, type Ref, type ComputedRef } from 'vue'
 import {
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
@@ -574,9 +574,15 @@ const updateDateTime = () => {
 }
 
 // Update time immediately and then every minute
+let dateTimeInterval: ReturnType<typeof setInterval> | null = null
+
 onMounted(() => {
   updateDateTime()
-  setInterval(updateDateTime, 60000) // Update every minute
+  dateTimeInterval = setInterval(updateDateTime, 60000)
+})
+
+onUnmounted(() => {
+  if (dateTimeInterval) clearInterval(dateTimeInterval)
 })
 
 // Refresh handler - will be injected by pages that need it

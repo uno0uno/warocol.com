@@ -800,15 +800,21 @@ watch(originalPurchase, (purchase) => {
     form.value.invoice_number = purchase.invoice_number || ''
     form.value.payment_method = purchase.payment_method || ''
     form.value.payment_reference = purchase.payment_reference || ''
-    form.value.items = (purchase.items || []).map((item: any) => ({
-      id: item.id,
-      ingredient_id: item.ingredient_id,
-      purchase_quantity: item.purchase_quantity || item.quantity,
-      purchase_unit: item.purchase_unit || item.unit,
-      unit_cost: item.unit_cost || 0,
-      total_cost: item.total_cost || 0,
-      notes: item.notes || ''
-    }))
+    form.value.items = (purchase.items || []).map((item: any) => {
+      const purchaseQty = item.purchase_quantity || item.quantity || 1
+      const totalCost = item.total_cost || 0
+      // unit_cost in DB is per base unit; recover per-purchase-unit cost from total
+      const unitCostPerPurchaseUnit = purchaseQty > 0 ? totalCost / purchaseQty : (item.unit_cost || 0)
+      return {
+        id: item.id,
+        ingredient_id: item.ingredient_id,
+        purchase_quantity: purchaseQty,
+        purchase_unit: item.purchase_unit || item.unit,
+        unit_cost: unitCostPerPurchaseUnit,
+        total_cost: totalCost,
+        notes: item.notes || ''
+      }
+    })
   }
 }, { immediate: true })
 
