@@ -118,70 +118,93 @@
         <!-- VIEW MODE: Items Table -->
         <div v-if="!isEditMode">
           <!-- Mobile: Cards View -->
-          <div class="md:hidden space-y-3">
+          <div class="md:hidden space-y-2">
             <div v-for="(item, index) in purchase.items" :key="index"
-              class="bg-surface rounded-xl transition-shadow border border-border">
-              <div class="p-4">
-                <div class="border-2 border-dashed border-border rounded-lg p-3 mb-3">
-                  <div class="mb-3">
-                    <h4 class="text-sm font-bold text-text-primary">{{ item.ingredient_name }}</h4>
-                    <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
-                  </div>
-                  <div class="flex items-end justify-between pt-2 border-t border-border">
-                    <div>
-                      <p class="text-xs text-muted-foreground mb-0.5">Precio Unitario</p>
-                      <p class="text-base font-semibold text-text-primary">${{ formatCurrency(item.unit_cost) }}</p>
-                      <p class="text-xs text-muted-foreground mt-0.5">por {{ item.purchase_unit || item.unit }}</p>
-                    </div>
-                    <div class="text-right">
-                      <p class="text-xs text-muted-foreground mb-0.5">Total</p>
-                      <p class="text-lg font-bold text-text-primary">${{ formatCurrency(item.total_cost) }}</p>
-                    </div>
-                  </div>
+              class="rounded-xl border border-border bg-background overflow-hidden">
+              <!-- Card header -->
+              <div class="flex items-center justify-between px-4 py-3 bg-surface-secondary border-b border-border">
+                <div class="flex items-center gap-2">
+                  <span class="w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center flex-shrink-0">{{ index + 1 }}</span>
+                  <h4 class="text-sm font-semibold text-text-primary leading-tight">{{ item.ingredient_name }}</h4>
                 </div>
-                <div class="flex items-center gap-3">
-                  <div class="flex items-center gap-1">
-                    <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                    <span class="text-text-primary font-semibold text-xs">{{ item.purchase_quantity || item.quantity }} {{ item.purchase_unit || item.unit }}</span>
-                  </div>
+                <div class="flex items-center gap-1">
+                  <span class="text-xs font-bold text-primary bg-primary/10 rounded-full px-2 py-0.5 tabular-nums">{{ item.purchase_quantity || item.quantity }}</span>
+                  <span class="text-xs text-text-secondary">{{ item.purchase_unit || item.unit }}</span>
                 </div>
               </div>
+              <!-- Card body -->
+              <div class="px-4 py-3 flex items-center justify-between gap-4">
+                <div>
+                  <p class="text-[11px] text-text-secondary mb-0.5 uppercase tracking-wide">Precio</p>
+                  <p class="text-sm font-medium text-text-primary">${{ formatCurrency(getPurchaseUnitCost(item)) }}</p>
+                  <p class="text-[11px] text-text-secondary">/ {{ item.purchase_unit || item.unit }}</p>
+                </div>
+                <div class="h-8 w-px bg-border"></div>
+                <div class="text-right">
+                  <p class="text-[11px] text-text-secondary mb-0.5 uppercase tracking-wide">Total</p>
+                  <p class="text-base font-bold text-text-primary">${{ formatCurrency(item.total_cost) }}</p>
+                </div>
+              </div>
+              <div v-if="item.notes" class="px-4 pb-3">
+                <p class="text-xs text-text-secondary italic">{{ item.notes }}</p>
+              </div>
+            </div>
+            <!-- Mobile total -->
+            <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-primary/10 border border-primary/20">
+              <span class="text-sm font-medium text-primary">Total compra</span>
+              <span class="text-lg font-bold text-primary">${{ formatCurrency(purchase.total_amount) }}</span>
             </div>
           </div>
 
           <!-- Desktop: Table View -->
-          <div class="hidden md:block overflow-x-auto">
-            <table class="w-full border-2 border-border rounded-lg">
-              <thead class="bg-surface-secondary">
-                <tr>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">Ingrediente</th>
-                  <th class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">Cantidad</th>
-                  <th class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">Precio Unitario</th>
-                  <th class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">Total</th>
+          <div class="hidden md:block rounded-xl border border-border overflow-hidden">
+            <table class="w-full">
+              <thead>
+                <tr class="bg-surface-secondary border-b border-border">
+                  <th class="w-8 px-4 py-3 text-center text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">#</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">Ingrediente</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">Ref. Factura</th>
+                  <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider w-20 border-r border-dashed border-border/60">Cant.</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">Unidad</th>
+                  <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">Precio</th>
+                  <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider">Total</th>
                 </tr>
               </thead>
-              <tbody class="bg-surface divide-y divide-border">
-                <tr v-for="(item, index) in purchase.items" :key="index" class="hover:bg-surface-secondary/50 transition-colors">
-                  <td class="px-4 py-3 text-sm text-text-primary">
-                    <div>
-                      <p class="font-medium">{{ item.ingredient_name }}</p>
-                      <p v-if="item.notes" class="text-xs text-text-secondary mt-1">{{ item.notes }}</p>
-                    </div>
+              <tbody class="divide-y divide-border">
+                <tr v-for="(item, index) in purchase.items" :key="index"
+                  class="group bg-surface hover:bg-surface-secondary/60 transition-colors duration-100">
+                  <td class="px-4 py-3.5 text-center border-r border-dashed border-border/60">
+                    <span class="text-xs font-medium text-text-secondary tabular-nums">{{ index + 1 }}</span>
                   </td>
-                  <td class="px-4 py-3 text-sm text-text-primary text-right font-medium">
-                    {{ item.purchase_quantity || item.quantity }} {{ item.purchase_unit || item.unit }}
+                  <td class="px-4 py-3.5 border-r border-dashed border-border/60">
+                    <span class="text-sm font-semibold text-text-primary">{{ item.ingredient_name }}</span>
                   </td>
-                  <td class="px-4 py-3 text-sm text-text-primary text-right">
-                    ${{ formatCurrency(item.unit_cost) }}
+                  <td class="px-4 py-3.5 border-r border-dashed border-border/60">
+                    <span v-if="item.notes" class="text-xs text-text-secondary italic">{{ item.notes }}</span>
+                    <span v-else class="text-xs text-text-secondary/40">—</span>
                   </td>
-                  <td class="px-4 py-3 text-sm font-bold text-text-primary text-right">
-                    ${{ formatCurrency(item.total_cost) }}
+                  <td class="px-4 py-3.5 text-right border-r border-dashed border-border/60">
+                    <span class="text-sm font-semibold text-text-primary tabular-nums">{{ item.purchase_quantity || item.quantity }}</span>
+                  </td>
+                  <td class="px-4 py-3.5 border-r border-dashed border-border/60">
+                    <span class="text-sm text-text-primary">{{ item.purchase_unit || item.unit }}</span>
+                  </td>
+                  <td class="px-4 py-3.5 text-right border-r border-dashed border-border/60">
+                    <span class="text-sm text-text-primary tabular-nums">${{ formatCurrency(getPurchaseUnitCost(item)) }}</span>
+                  </td>
+                  <td class="px-4 py-3.5 text-right">
+                    <span class="text-sm font-bold text-text-primary tabular-nums">${{ formatCurrency(item.total_cost) }}</span>
                   </td>
                 </tr>
               </tbody>
+              <tfoot>
+                <tr class="bg-primary/5 border-t-2 border-primary/20">
+                  <td colspan="6" class="px-4 py-3.5 text-sm font-semibold text-text-secondary text-right border-r border-dashed border-border/60">Total de la compra</td>
+                  <td class="px-4 py-3.5 text-right">
+                    <span class="text-base font-bold text-primary tabular-nums">${{ formatCurrency(purchase.total_amount) }}</span>
+                  </td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>
@@ -393,12 +416,11 @@
           </div>
         </div>
 
-        <!-- Total Summary -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div class="md:col-span-2"></div>
-          <div class="bg-primary/10 border border-primary/20 rounded-xl p-4">
-            <p class="text-xs text-primary mb-1">Total de la Compra</p>
-            <p class="text-2xl font-bold text-primary">${{ formatCurrency(isEditMode ? editTotal : purchase.total_amount) }}</p>
+        <!-- Total Summary (Edit mode only — view mode shows total in table footer) -->
+        <div v-if="isEditMode" class="flex justify-end mt-4">
+          <div class="bg-primary/10 border border-primary/20 rounded-xl px-5 py-3 flex items-center gap-4">
+            <p class="text-sm font-medium text-primary">Total de la Compra</p>
+            <p class="text-xl font-bold text-primary">${{ formatCurrency(editTotal) }}</p>
           </div>
         </div>
 
@@ -601,15 +623,20 @@ const isFormValid = computed(() => {
 const enterEditMode = () => {
   if (!purchase.value) return
 
-  editItems.value = (purchase.value.items || []).map((item: any) => ({
-    ingredient_id: item.ingredient_id,
-    ingredient_name: item.ingredient_name,
-    purchase_quantity: item.purchase_quantity || item.quantity,
-    purchase_unit: item.purchase_unit || item.unit,
-    unit_cost: item.unit_cost || 0,
-    total_cost: item.total_cost || 0,
-    notes: item.notes || ''
-  }))
+  editItems.value = (purchase.value.items || []).map((item: any) => {
+    const pqty = item.purchase_quantity || item.quantity || 1
+    // unit_cost in DB is per base unit (gr). Convert to per purchase unit for display/edit.
+    const purchaseUnitCost = pqty > 0 ? (item.total_cost || 0) / pqty : 0
+    return {
+      ingredient_id: item.ingredient_id,
+      ingredient_name: item.ingredient_name,
+      purchase_quantity: pqty,
+      purchase_unit: item.purchase_unit || item.unit,
+      unit_cost: purchaseUnitCost,
+      total_cost: item.total_cost || 0,
+      notes: item.notes || ''
+    }
+  })
   editNotes.value = purchase.value.notes || ''
   isEditMode.value = true
 }
@@ -618,6 +645,13 @@ const cancelEdit = () => {
   isEditMode.value = false
   editItems.value = []
   editNotes.value = ''
+}
+
+// Returns price per purchase unit (for view mode display)
+// unit_cost in DB is stored per base unit (gr/ml/und), so we derive from total/qty
+const getPurchaseUnitCost = (item: any): number => {
+  const qty = item.purchase_quantity || item.quantity || 1
+  return qty > 0 ? (item.total_cost || 0) / qty : 0
 }
 
 const updateItemTotal = (index: number) => {

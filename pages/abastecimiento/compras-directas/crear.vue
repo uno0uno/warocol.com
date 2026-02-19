@@ -186,23 +186,81 @@
         <Transition name="fade" mode="out-in">
         <div v-if="currentStep === 1" key="step-1" class="bg-surface border-border border rounded-lg">
           <div class="p-4 sm:p-6">
-            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 sm:mb-6">Seleccionar Proveedor</h3>
+            <div class="flex items-center justify-between mb-4 sm:mb-6">
+              <h3 class="text-base sm:text-lg font-semibold text-text-primary">Seleccionar Proveedor</h3>
+              <div>
+                <!-- Hidden scan input (moved here from Step 2) -->
+                <input
+                  ref="scanFileInput"
+                  type="file"
+                  class="hidden"
+                  accept="image/*"
+                  capture="environment"
+                  @change="handleScanFileSelect"
+                />
+                <button
+                  type="button"
+                  :disabled="isScanning"
+                  @click="scanFileInput?.click()"
+                  class="px-3 py-2 bg-primary/10 text-primary border-2 border-primary/20 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  <svg v-if="!isScanning" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  <svg v-else class="w-4 h-4 flex-shrink-0 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  {{ isScanning ? currentPhrase : 'Leer Factura con IA' }}
+                </button>
+              </div>
+            </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Proveedor *
-                </label>
-                <UiSearchableSelect
-                  v-model="form.supplier_id"
-                  :options="supplierOptions"
-                  placeholder="Buscar proveedor..."
-                  required
-                  @update:model-value="onSupplierChange"
-                />
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-text-primary mb-2">Proveedor *</label>
+                <div class="flex items-stretch gap-3">
+                  <div class="flex-1 min-w-0">
+                    <UiSearchableSelect
+                      v-model="form.supplier_id"
+                      :options="supplierOptions"
+                      placeholder="Buscar proveedor..."
+                      required
+                      @update:model-value="onSupplierChange"
+                    />
+                  </div>
+                  <div v-if="supplierScanStatus === 'matched'" class="flex items-center gap-1.5 text-xs text-success bg-success/10 border border-success/20 px-2.5 rounded-lg shrink-0">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Proveedor detectado: <strong>{{ similarSupplier?.name }}</strong></span>
+                  </div>
+                </div>
                 <p class="text-xs text-text-secondary mt-2">
                   Si no encuentras el proveedor, <NuxtLink to="/abastecimiento/proveedores" class="text-primary hover:underline">crealo primero aqui</NuxtLink>
                 </p>
+                <div v-if="supplierScanStatus === 'similar'" class="mt-3 p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
+                  <p class="font-medium text-warning mb-1">¿Es este tu proveedor?</p>
+                  <p class="text-text-secondary mb-3">Encontramos "<strong>{{ similarSupplier?.name }}</strong>", similar a "<em>{{ ocrSupplierName }}</em>" en la factura.</p>
+                  <div class="flex gap-2">
+                    <button type="button" @click="selectSimilarSupplier" class="px-3 py-1.5 bg-warning text-white rounded-lg text-xs font-medium hover:bg-warning/90 transition-colors">
+                      Sí, usar ese
+                    </button>
+                    <button type="button" @click="supplierScanStatus = 'not_found'; similarSupplier = null" class="px-3 py-1.5 bg-surface border border-border rounded-lg text-xs font-medium hover:bg-background transition-colors">
+                      No, es diferente
+                    </button>
+                  </div>
+                </div>
+                <div v-else-if="supplierScanStatus === 'not_found'" class="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg text-sm">
+                  <p class="text-text-secondary mb-2">Factura de: <strong>"{{ ocrSupplierName }}"</strong> — no está en tu lista.</p>
+                  <button
+                    type="button"
+                    @click="createSupplierFromOcr"
+                    :disabled="isCreatingSupplier"
+                    class="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                  >
+                    {{ isCreatingSupplier ? 'Creando...' : `+ Crear "${ocrSupplierName}"` }}
+                  </button>
+                </div>
               </div>
 
               <div>
@@ -240,29 +298,6 @@
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4 sm:mb-6">
               <h3 class="text-base sm:text-lg font-semibold text-text-primary">Items de la Compra</h3>
               <div class="flex items-center gap-2">
-                <!-- Hidden scan input -->
-                <input
-                  ref="scanFileInput"
-                  type="file"
-                  class="hidden"
-                  accept="image/*"
-                  capture="environment"
-                  @change="handleScanFileSelect"
-                />
-                <button
-                  type="button"
-                  :disabled="isScanning"
-                  @click="scanFileInput?.click()"
-                  class="px-3 py-2 bg-primary/10 text-primary border-2 border-primary/20 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  <svg v-if="!isScanning" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                  <svg v-else class="w-4 h-4 flex-shrink-0 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  {{ isScanning ? 'Leyendo factura...' : 'Leer Factura con IA' }}
-                </button>
                 <button
                   type="button"
                   @click="addItem"
@@ -984,7 +1019,7 @@ const { data: nextNumberData } = useFetch('/api/suppliers/purchases/direct/next-
 const nextPurchaseNumber = computed(() => nextNumberData.value?.next_number || 'WR-CD-2025-0001')
 
 // Fetch suppliers
-const { data: suppliersData, pending: loadingSuppliers } = useFetch('/api/suppliers/providers', {
+const { data: suppliersData, pending: loadingSuppliers, refresh: refreshSuppliers } = useFetch('/api/suppliers/providers', {
   server: false,
   query: { limit: 250 }
 })
@@ -1377,6 +1412,13 @@ const scanFileInput = ref<HTMLInputElement | null>(null)
 const isScanning = ref(false)
 const ocrItemsLoaded = ref(false)
 
+// Supplier detection from OCR
+const ocrSupplierName = ref('')
+const ocrNit = ref('')
+const supplierScanStatus = ref<null | 'matched' | 'similar' | 'not_found'>(null)
+const similarSupplier = ref<{ id: string, name: string, score: number } | null>(null)
+const isCreatingSupplier = ref(false)
+
 // UI Phrases
 const loadingPhrases = [
   'Analizando imagen...',
@@ -1437,6 +1479,61 @@ const normalizeForMatch = (text: string) =>
     .replace(/[^a-z0-9 ]/g, '')
     .trim()
 
+const findSupplierMatch = (name: string): { id: string, name: string, score: number } | null => {
+  if (!name || suppliers.value.length === 0) return null
+  const normalized = normalizeForMatch(name)
+  const words = normalized.split(' ').filter(w => w.length > 2)
+  if (words.length === 0) return null
+
+  let best: { id: string, name: string, score: number } | null = null
+
+  for (const s of suppliers.value) {
+    const sNorm = normalizeForMatch(s.name)
+    const sWords = sNorm.split(' ').filter(w => w.length > 2)
+    // Match if any word from OCR is contained in a supplier word or vice versa
+    const overlap = words.filter(w => sWords.some(sw => sw.includes(w) || w.includes(sw))).length
+    const score = overlap / Math.max(words.length, sWords.length, 1)
+    if (!best || score > best.score) {
+      best = { id: s.id, name: s.name, score }
+    }
+  }
+  return best && best.score > 0 ? best : null
+}
+
+const selectSimilarSupplier = async () => {
+  if (!similarSupplier.value) return
+  form.value.supplier_id = similarSupplier.value.id
+  await onSupplierChange(similarSupplier.value.id)
+  supplierScanStatus.value = 'matched'
+}
+
+const createSupplierFromOcr = async () => {
+  if (!ocrSupplierName.value) return
+  isCreatingSupplier.value = true
+  try {
+    const response = await $fetch<any>('/api/suppliers/providers', {
+      method: 'POST',
+      body: {
+        name: ocrSupplierName.value,
+        ...(ocrNit.value ? { tax_id: ocrNit.value } : {}),
+        is_active: true
+      }
+    })
+    const created = response.data || response
+    if (created?.id) {
+      await refreshSuppliers()
+      form.value.supplier_id = created.id
+      await onSupplierChange(created.id)
+      similarSupplier.value = { id: created.id, name: created.name || ocrSupplierName.value, score: 1 }
+      supplierScanStatus.value = 'matched'
+    }
+  } catch (e: any) {
+    alert(`Error al crear el proveedor: ${e.response?._data?.detail || e.message}`)
+  } finally {
+    isCreatingSupplier.value = false
+  }
+}
+
 const findIngredientMatch = (ocrDescription: string): string => {
   const normalized = normalizeForMatch(ocrDescription)
   const words = normalized.split(' ').filter(w => w.length > 2)
@@ -1480,7 +1577,27 @@ const handleScanFileSelect = async (event: Event) => {
     })
     if (response.success && response.data) {
       const data = response.data
-      // Pre-fill items from OCR
+
+      // 1. Detect and match supplier from invoice
+      if (data.proveedor) {
+        ocrSupplierName.value = data.proveedor
+        ocrNit.value = data.nit || ''
+        const match = findSupplierMatch(data.proveedor)
+        if (match && match.score >= 0.6) {
+          form.value.supplier_id = match.id
+          await onSupplierChange(match.id)
+          supplierScanStatus.value = 'matched'
+          similarSupplier.value = match
+        } else if (match && match.score >= 0.3) {
+          supplierScanStatus.value = 'similar'
+          similarSupplier.value = match
+        } else {
+          supplierScanStatus.value = 'not_found'
+          similarSupplier.value = null
+        }
+      }
+
+      // 2. Pre-fill items from OCR
       if (data.items && data.items.length > 0) {
         form.value.items = data.items.map((ocrItem: any, index: number) => {
           let matchedId = ''

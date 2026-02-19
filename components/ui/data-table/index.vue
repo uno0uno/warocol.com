@@ -205,11 +205,11 @@ function getCellColor(value: any, column: TableColumn): string {
         <!-- Table Header -->
         <thead>
           <tr :class="tableHeaderVariants({ variant })">
-            <th 
-              v-for="column in columns" 
+            <th
+              v-for="column in columns"
               :key="column.key"
               :class="cn(
-                'py-2 px-2 border-r border-dashed border-border/60 last:border-r-0',
+                'py-3 px-4 border-r border-dashed border-border/60 last:border-r-0',
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
                 column.class
@@ -217,29 +217,29 @@ function getCellColor(value: any, column: TableColumn): string {
               :style="column.width ? { width: column.width } : undefined"
             >
               <!-- Sortable header button -->
-              <button 
+              <button
                 v-if="column.sortable"
                 @click="handleSort(column)"
                 :class="cn(
-                  'text-sm text-text-primary font-bold flex items-center gap-1 transition-colors hover:text-primary w-full',
+                  'text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1 transition-colors hover:text-primary w-full',
                   column.align === 'left' && 'justify-start',
                   column.align === 'center' && 'justify-center',
                   column.align === 'right' && 'justify-end'
                 )"
               >
                 {{ column.title }}
-                <component 
-                  :is="getSortIcon(column)" 
-                  class="w-3 h-3" 
+                <component
+                  :is="getSortIcon(column)"
+                  class="w-3 h-3"
                   v-if="getSortIcon(column)"
                 />
               </button>
-              
+
               <!-- Non-sortable header -->
-              <span 
+              <span
                 v-else
                 :class="cn(
-                  'text-sm text-text-primary font-bold block',
+                  'text-xs font-semibold text-text-secondary uppercase tracking-wider block',
                   column.align === 'left' && 'text-left',
                   column.align === 'center' && 'text-center',
                   column.align === 'right' && 'text-right'
@@ -276,7 +276,7 @@ function getCellColor(value: any, column: TableColumn): string {
               v-for="column in columns"
               :key="column.key"
               :class="cn(
-                'py-2 px-2 text-sm font-medium border-r border-dashed border-border/60 last:border-r-0',
+                'py-3.5 px-4 text-sm font-medium border-r border-dashed border-border/60 last:border-r-0',
                 getCellColor(row[column.key], column),
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
@@ -304,7 +304,7 @@ function getCellColor(value: any, column: TableColumn): string {
               v-for="column in columns"
               :key="`total-${column.key}`"
               :class="cn(
-                'py-2 px-2 text-sm text-text-primary font-semibold border-r border-dashed border-border/60 last:border-r-0',
+                'py-3.5 px-4 text-sm text-text-primary font-semibold border-r border-dashed border-border/60 last:border-r-0',
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
                 column.class
@@ -336,11 +336,11 @@ function getCellColor(value: any, column: TableColumn): string {
 /* Padding horizontal para primera y última columna de tabla */
 thead tr th:first-child,
 tbody tr td:first-child {
-  padding-left: 2rem; /* px-8 */
+  padding-left: 1.5rem; /* px-6 */
 }
 
 thead tr th:last-child,
 tbody tr td:last-child {
-  padding-right: 2rem; /* px-8 */
+  padding-right: 1.5rem; /* px-6 */
 }
 </style>

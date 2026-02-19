@@ -97,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, provide } from 'vue'
+import { ref, computed, onMounted, onUnmounted, provide } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
@@ -180,9 +180,13 @@ const updateDateTime = () => {
 }
 
 // Update time immediately and then every minute
+let dateTimeInterval: ReturnType<typeof setInterval> | null = null
 onMounted(() => {
   updateDateTime()
-  setInterval(updateDateTime, 60000) // Update every minute
+  dateTimeInterval = setInterval(updateDateTime, 60000)
+})
+onUnmounted(() => {
+  if (dateTimeInterval) clearInterval(dateTimeInterval)
 })
 
 // Get supplier from global state (set by pages)
