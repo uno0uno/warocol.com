@@ -1,6 +1,6 @@
 /**
  * Address Store - Delivery Addresses
- * Manages customer delivery addresses with MOCK data (no backend yet)
+ * Manages customer delivery addresses via real backend (/api/online/addresses)
  */
 import { defineStore } from 'pinia'
 
@@ -59,223 +59,117 @@ export const useAddressStore = defineStore('address', {
 
   actions: {
     /**
-     * Fetch addresses for customer (MOCK)
+     * Fetch addresses for customer
      */
     async fetchAddresses(customerId: string) {
       this.isLoading = true
 
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500))
+        const result = await $fetch<{ addresses: Address[]; total: number; default_address_id: string | null }>(
+          `/api/online/addresses/customer/${customerId}`,
+        )
 
-        // Mock addresses
-        this.addresses = [
-          {
-            id: 'addr_1',
-            customer_id: customerId,
-            address_line1: 'Calle 100 # 20-30',
-            address_line2: 'Apto 501',
-            city: 'Bogotá',
-            state: 'Cundinamarca',
-            postal_code: '110111',
-            country: 'CO',
-            latitude: 4.701594,
-            longitude: -74.033936,
-            is_default: true,
-            address_type: 'home',
-            delivery_notes: 'Portería con citófono - timbre 501',
-            created_at: new Date('2024-01-15'),
-            updated_at: new Date('2024-01-15'),
-          },
-          {
-            id: 'addr_2',
-            customer_id: customerId,
-            address_line1: 'Carrera 7 # 71-21',
-            address_line2: 'Torre B, Oficina 302',
-            city: 'Bogotá',
-            state: 'Cundinamarca',
-            postal_code: '110231',
-            country: 'CO',
-            latitude: 4.654107,
-            longitude: -74.062488,
-            is_default: false,
-            address_type: 'work',
-            delivery_notes: 'Recepción primer piso',
-            created_at: new Date('2024-02-01'),
-            updated_at: new Date('2024-02-01'),
-          },
-        ]
+        this.addresses = result.addresses
 
-        console.log('[MOCK] Addresses fetched:', this.addresses.length)
-
-        // Auto-select default address if available
         if (this.defaultAddress && !this.selectedAddressId) {
           this.selectedAddressId = this.defaultAddress.id
         }
-      } catch (error) {
-        console.error('[MOCK] Error fetching addresses:', error)
-        throw error
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Error al cargar las direcciones')
       } finally {
         this.isLoading = false
       }
     },
 
     /**
-     * Create new address (MOCK)
+     * Create new address
      */
     async createAddress(customerId: string, addressData: AddressCreate) {
       this.isLoading = true
 
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800))
+        const result = await $fetch<Address>('/api/online/addresses', {
+          method: 'POST',
+          body: { ...addressData, customer_id: customerId },
+        })
 
-        // Generate new address
-        const newAddress: Address = {
-          id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          customer_id: customerId,
-          address_line1: addressData.address_line1,
-          address_line2: addressData.address_line2,
-          city: addressData.city,
-          state: addressData.state,
-          postal_code: addressData.postal_code,
-          country: addressData.country || 'CO',
-          latitude: addressData.latitude,
-          longitude: addressData.longitude,
-          is_default: addressData.is_default || false,
-          address_type: addressData.address_type || 'home',
-          delivery_notes: addressData.delivery_notes,
-          created_at: new Date(),
-          updated_at: new Date(),
-        }
+        this.addresses.push(result as Address)
 
-        // If setting as default, unset all others
-        if (newAddress.is_default) {
-          this.addresses.forEach(addr => {
-            addr.is_default = false
-          })
-        }
-
-        this.addresses.push(newAddress)
-
-        console.log('[MOCK] Address created:', newAddress.id)
-
-        return newAddress
-      } catch (error) {
-        console.error('[MOCK] Error creating address:', error)
-        throw error
+        return result as Address
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Error al crear la dirección')
       } finally {
         this.isLoading = false
       }
     },
 
     /**
-     * Update address (MOCK)
+     * Update address
      */
-    async updateAddress(addressId: string, data: Partial<AddressCreate>) {
+    async updateAddress(customerId: string, addressId: string, data: Partial<AddressCreate>) {
       this.isLoading = true
 
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 600))
-
-        const address = this.addresses.find(a => a.id === addressId)
-        if (!address) {
-          throw new Error('Dirección no encontrada')
-        }
-
-        // Update fields
-        Object.assign(address, data, { updated_at: new Date() })
-
-        // If setting as default, unset all others
-        if (data.is_default) {
-          this.addresses.forEach(addr => {
-            if (addr.id !== addressId) {
-              addr.is_default = false
-            }
-          })
-        }
-
-        console.log('[MOCK] Address updated:', addressId)
-
-        return address
-      } catch (error) {
-        console.error('[MOCK] Error updating address:', error)
-        throw error
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    /**
-     * Delete address (MOCK)
-     */
-    async deleteAddress(addressId: string) {
-      this.isLoading = true
-
-      try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 400))
+        const result = await $fetch<Address>(`/api/online/addresses/${addressId}`, {
+          method: 'PUT',
+          query: { customer_id: customerId },
+          body: data,
+        })
 
         const index = this.addresses.findIndex(a => a.id === addressId)
-        if (index < 0) {
-          throw new Error('Dirección no encontrada')
-        }
+        if (index >= 0) this.addresses[index] = result as Address
 
-        const deletedAddress = this.addresses[index]
+        return result as Address
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Error al actualizar la dirección')
+      } finally {
+        this.isLoading = false
+      }
+    },
 
-        // Remove address
-        this.addresses.splice(index, 1)
+    /**
+     * Delete address
+     */
+    async deleteAddress(customerId: string, addressId: string) {
+      this.isLoading = true
 
-        // If was default and other addresses exist, set first as default
-        if (deletedAddress.is_default && this.addresses.length > 0) {
-          this.addresses[0].is_default = true
-        }
+      try {
+        await $fetch(`/api/online/addresses/${addressId}`, {
+          method: 'DELETE',
+          query: { customer_id: customerId },
+        })
 
-        // Clear selection if deleted
+        this.addresses = this.addresses.filter(a => a.id !== addressId)
+
         if (this.selectedAddressId === addressId) {
           this.selectedAddressId = this.defaultAddress?.id || null
         }
-
-        console.log('[MOCK] Address deleted:', addressId)
-      } catch (error) {
-        console.error('[MOCK] Error deleting address:', error)
-        throw error
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Error al eliminar la dirección')
       } finally {
         this.isLoading = false
       }
     },
 
     /**
-     * Set address as default (MOCK)
+     * Set address as default
      */
-    async setDefaultAddress(addressId: string) {
+    async setDefaultAddress(customerId: string, addressId: string) {
       this.isLoading = true
 
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 400))
-
-        const address = this.addresses.find(a => a.id === addressId)
-        if (!address) {
-          throw new Error('Dirección no encontrada')
-        }
-
-        // Unset all defaults
-        this.addresses.forEach(addr => {
-          addr.is_default = false
+        const result = await $fetch<Address>(`/api/online/addresses/${addressId}/set-default`, {
+          method: 'PATCH',
+          query: { customer_id: customerId },
         })
 
-        // Set new default
-        address.is_default = true
-        address.updated_at = new Date()
+        this.addresses.forEach(a => a.is_default = false)
+        const index = this.addresses.findIndex(a => a.id === addressId)
+        if (index >= 0) this.addresses[index] = result as Address
 
-        console.log('[MOCK] Default address set:', addressId)
-
-        return address
-      } catch (error) {
-        console.error('[MOCK] Error setting default address:', error)
-        throw error
+        return result as Address
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Error al establecer la dirección por defecto')
       } finally {
         this.isLoading = false
       }
