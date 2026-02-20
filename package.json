@@ -19,6 +19,7 @@
     "@tanstack/vue-table": "^8.21.3",
     "@vuepic/vue-datepicker": "^12.1.0",
     "@vueuse/core": "^13.9.0",
+    "apexcharts": "^5.6.0",
     "chart.js": "^4.5.0",
     "chartjs-plugin-annotation": "^3.1.0",
     "class-variance-authority": "^0.7.1",
@@ -27,13 +28,13 @@
     "lucide-vue-next": "^0.544.0",
     "markdown-it": "^13.0.2",
     "nuxt": "^3.17.1",
-    "nuxt-echarts": "^1.0.1",
     "nuxt-site-config": "^2.2.15",
     "pinia": "^3.0.3",
     "radix-vue": "^1.9.17",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.3.3",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "vue3-apexcharts": "^1.10.0"
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",

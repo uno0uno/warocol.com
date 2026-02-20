@@ -155,13 +155,8 @@ export default defineNuxtConfig({
     }],
     '@nuxtjs/robots',
     '@pinia/nuxt',
-    'nuxt-icon',
-    'nuxt-echarts'
+    'nuxt-icon'
   ],
-  echarts: {
-    charts: ['LineChart'],
-    components: ['GridComponent', 'TooltipComponent']
-  },
   site: {
     url: 'https://warocol.com'
   },
