@@ -17,8 +17,30 @@ const tenantSlug = route.params.tenant
 // Initialize cart store
 const cartStore = useOnlineCartStore()
 
+// Session init must happen before useFetch so sessionId is set at call time
+if (process.client) {
+  const storedSessionId = localStorage.getItem('waro_session_id')
+  cartStore.initSession(storedSessionId)
+  cartStore.setTenant(String(tenantSlug))
+}
+
 // Cart drawer state
 const isCartOpen = ref(false)
+
+// Session recovery — client-only (localStorage is not available on server)
+const { data: sessionCart } = await useFetch<{ data: any }>(
+  () => `/api/online/cart/session/${cartStore.sessionId}`,
+  {
+    query: { tenant_id: tenantSlug },
+    server: false,
+    immediate: process.client && !!cartStore.sessionId,
+    watch: false,
+  }
+)
+
+watch(sessionCart, (val) => {
+  if (val?.data) cartStore.hydrateFromBackend(val.data)
+}, { immediate: true })
 
 // SSR data fetching — await ensures data is ready before rendering on server
 const { data: profileData, error: profileError, pending: pendingProfile } = await useAsyncData(
@@ -113,17 +135,6 @@ useHead({
   ]
 })
 
-// Initialize cart session on mount
-onMounted(() => {
-  // Get or create session ID
-  let sessionId = null
-  if (process.client) {
-    sessionId = localStorage.getItem('waro_session_id')
-  }
-
-  cartStore.initSession(sessionId)
-  cartStore.setTenant(tenantSlug)
-})
 
 // Handle product click - Add to cart
 const handleProductClick = async (product) => {
@@ -140,20 +151,15 @@ const handleProductClick = async (product) => {
       undefined // no notes
     )
 
-    // Show success feedback
-    console.log('✅ Producto agregado al carrito:', product.name)
-
-    // Optional: Show toast notification here
-    // toast.success(`${product.name} agregado al carrito`)
   } catch (error) {
     console.error('Error al agregar producto:', error)
     alert('Error al agregar producto al carrito')
   }
 }
 
-// Handle checkout - Navigate to OTP verification
+// Handle checkout - Navigate to delivery step
 const handleCheckout = () => {
-  router.push(`/${tenantSlug}/checkout/otp`)
+  router.push(`/${tenantSlug}/checkout/delivery`)
 }
 </script>
 
