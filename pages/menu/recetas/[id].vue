@@ -104,6 +104,7 @@
                       v-model="ingredient.ingredient_id"
                       required
                       class="input-base w-full px-3 py-2 text-sm"
+                      @change="onIngredientChange(index, ingredient.ingredient_id)"
                     >
                       <option value="" disabled>Seleccionar...</option>
                       <option v-for="ing in availableIngredients" :key="ing.id" :value="ing.id">
@@ -133,13 +134,11 @@
                       v-model="ingredient.unit"
                       class="input-base w-full px-3 py-2 text-sm"
                     >
-                      <option value="gr">Gramos (gr)</option>
-                      <option value="g">Gramos (g)</option>
-                      <option value="kg">Kilogramos (kg)</option>
-                      <option value="ml">Mililitros (ml)</option>
-                      <option value="l">Litros (l)</option>
-                      <option value="und">Unidades (und)</option>
-                      <option value="u">Unidades (u)</option>
+                      <option
+                        v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
+                        :key="opt.value"
+                        :value="opt.value"
+                      >{{ opt.label }}</option>
                     </select>
                   </div>
 
@@ -290,20 +289,46 @@ const { data: recipeData, pending: isLoading, error: fetchError, refresh } = use
   }
 )
 
-// Fetch ingredients for dropdown
-const { data: ingredientsData, pending: ingredientsLoading } = useAsyncData(
-  `ingredients-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/suppliers/ingredients', { query: { limit: 500 } }),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ data: [] })
-  }
-)
-
-const availableIngredients = computed(() => ingredientsData.value?.data || [])
+// Shared ingredients (deduplicated across all /menu/* pages)
+const { availableIngredients, ingredientsLoading } = useMenuIngredients()
 
 const isPageLoading = computed(() => isLoading.value || ingredientsLoading.value)
+
+// Purchase units cache for dynamic unit options
+const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
+
+const unitLabels: Record<string, string> = {
+  g: 'Gramos (g)', kg: 'Kilogramos (kg)', ml: 'Mililitros (ml)',
+  l: 'Litros (l)', u: 'Unidades (u)', lb: 'Libras (lb)',
+  und: 'Unidades (und)', gr: 'Gramos (gr)',
+}
+
+function getIngredientUnitOptions(ingredientId: string) {
+  if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
+  const ingredient = availableIngredients.value.find((i: any) => i.id === ingredientId)
+  const baseUnit = ingredient?.unit || 'g'
+  const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
+  const unitSet = new Set<string>([baseUnit])
+  purchaseUnits.forEach((pu: any) => { if (pu.purchase_unit) unitSet.add(pu.purchase_unit) })
+  return Array.from(unitSet).map(u => ({ value: u, label: unitLabels[u] || u }))
+}
+
+async function loadPurchaseUnits(ingredientId: string) {
+  if (!ingredientId || purchaseUnitsCache.value.has(ingredientId)) return
+  try {
+    const res = await $fetch<any>(`/api/suppliers/ingredient-purchase-units/ingredient/${ingredientId}`)
+    const updated = new Map(purchaseUnitsCache.value)
+    updated.set(ingredientId, res.data || [])
+    purchaseUnitsCache.value = updated
+  } catch {}
+}
+
+async function onIngredientChange(index: number, ingredientId: string) {
+  if (!ingredientId) return
+  const ingredient = availableIngredients.value.find((i: any) => i.id === ingredientId)
+  form.value.ingredients[index].unit = ingredient?.unit || 'g'
+  await loadPurchaseUnits(ingredientId)
+}
 
 // Form state
 const form = ref({

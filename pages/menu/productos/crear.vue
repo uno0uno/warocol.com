@@ -647,18 +647,8 @@ const { data: categoriesData } = useAsyncData(
   }
 )
 
-// Fetch ingredients
-const { data: ingredientsData } = useAsyncData(
-  `ingredients-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/suppliers/ingredients', {
-    query: { limit: 250 }
-  }),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ data: [] })
-  }
-)
+// Shared ingredients (deduplicated across all /menu/* pages)
+const { availableIngredients, ingredientsLoading } = useMenuIngredients()
 
 // Fetch recipe bases
 const { data: recipeBasesData } = useAsyncData(
@@ -679,7 +669,6 @@ const { data: recipeBasesData } = useAsyncData(
 
 // Computed
 const categories = computed(() => categoriesData.value?.data || [])
-const availableIngredients = computed(() => ingredientsData.value?.data || [])
 const recipeBases = computed(() => recipeBasesData.value?.data || [])
 
 // Computed: Get all ingredients from all selected recipe bases
@@ -697,7 +686,7 @@ const selectedRecipeBaseIngredients = computed(() => {
 })
 
 const isLoadingData = computed(() => {
-  return !categoriesData.value || !ingredientsData.value
+  return !categoriesData.value || ingredientsLoading.value
 })
 
 const calculatedCost = computed(() => {

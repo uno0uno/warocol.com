@@ -171,9 +171,9 @@
               Número de pedido: <strong>#{{ mockOrderNumber }}</strong>
             </div>
 
-            <div v-if="authStore.pickupPin" class="pickup-pin-display">
+            <div v-if="otpAuthStore.pickupPin" class="pickup-pin-display">
               <div class="pin-label">Tu PIN de Recogida:</div>
-              <div class="pin-code">{{ authStore.pickupPin }}</div>
+              <div class="pin-code">{{ otpAuthStore.pickupPin }}</div>
               <p class="pin-desc">Muestra este PIN al recoger tu pedido</p>
             </div>
 
@@ -201,7 +201,7 @@
 
 <script setup lang="ts">
 import { useOnlineCartStore } from '~/stores/online_cart'
-import { useAuthStore } from '~/stores/auth'
+import { useOtpAuthStore } from '~/stores/otp_auth'
 import { useAddressStore } from '~/stores/address'
 
 definePageMeta({
@@ -211,21 +211,16 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const cartStore = useOnlineCartStore()
-const authStore = useAuthStore()
+const otpAuthStore = useOtpAuthStore()
 const addressStore = useAddressStore()
 
 const tenantSlug = computed(() => route.params.tenant as string)
-
-// Redirect if not verified or no delivery info
-if (!authStore.isVerified || !cartStore.deliveryInfo) {
-  router.push(`/${tenantSlug.value}/checkout/otp`)
-}
 
 const isLoading = ref(false)
 const showSuccessModal = ref(false)
 const mockOrderNumber = ref('')
 
-const selectedAddress = computed(() => addressStore.selectedAddress)
+const selectedAddress = computed(() => addressStore.pendingAddress)
 
 // Mock delivery fee
 const deliveryFee = computed(() => {
@@ -307,7 +302,7 @@ const closeSuccessModal = () => {
 const goToHome = () => {
   // Clear cart and reset stores
   cartStore.reset()
-  authStore.logout()
+  otpAuthStore.logout()
   addressStore.reset()
 
   // Navigate to home

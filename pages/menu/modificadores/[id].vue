@@ -685,22 +685,11 @@ const { data: productsData, pending: loadingProducts } = useAsyncData(
   }
 )
 
-// Fetch ingredients
-const { data: ingredientsData, pending: loadingIngredients } = useAsyncData(
-  `ingredients-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/suppliers/ingredients', {
-    query: { limit: 500 }
-  }),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ data: [] })
-  }
-)
+// Shared ingredients (deduplicated across all /menu/* pages)
+const { availableIngredients: ingredients } = useMenuIngredients()
 
 // Computed
 const products = computed(() => productsData.value?.data || [])
-const ingredients = computed(() => ingredientsData.value?.data || [])
 
 const isLoadingData = computed(() => {
   return isLoadingGroup.value || !productsData.value

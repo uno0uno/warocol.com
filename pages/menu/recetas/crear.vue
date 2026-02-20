@@ -525,31 +525,20 @@ const form = ref({
   tenant_id: currentTenant.value?.id || ''
 })
 
-// Fetch ingredients
-const { data: ingredientsData } = useAsyncData(
-  `ingredients-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/suppliers/ingredients', {
-    query: { limit: 250 }
-  }),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ data: [] })
-  }
-)
-
-// Computed
-const availableIngredients = computed(() => ingredientsData.value?.data || [])
+// Shared ingredients (deduplicated across all /menu/* pages)
+const { availableIngredients, ingredientsLoading } = useMenuIngredients()
 
 // Purchase units cache per ingredient
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 
 const unitLabels: Record<string, string> = {
   g: 'Gramos (g)',
+  gr: 'Gramos (gr)',
   kg: 'Kilogramos (kg)',
   ml: 'Mililitros (ml)',
   l: 'Litros (l)',
   u: 'Unidades (u)',
+  und: 'Unidades (und)',
   lb: 'Libras (lb)',
 }
 
@@ -581,9 +570,7 @@ async function onIngredientChange(index: number, ingredientId: string) {
   }
 }
 
-const isLoadingData = computed(() => {
-  return !ingredientsData.value
-})
+const isLoadingData = computed(() => ingredientsLoading.value)
 
 const canProceed = computed(() => {
   if (currentStep.value === 1) {
@@ -679,10 +666,6 @@ async function submitRecipe() {
 </script>
 
 <style scoped>
-.page-layout {
-  @apply max-w-6xl mx-auto p-4 md:p-6;
-}
-
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;

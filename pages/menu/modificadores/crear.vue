@@ -340,20 +340,32 @@
                     </p>
                   </div>
 
-                  <!-- Quantity + Unit -->
-                  <div class="md:col-span-2">
+                  <!-- Quantity -->
+                  <div class="md:col-span-1">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad</label>
-                    <div class="flex gap-1">
-                      <input
-                        type="number"
-                        v-model.number="modifier.ingredient_quantity"
-                        placeholder="50"
-                        min="0"
-                        step="0.01"
-                        class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary"
-                      />
-                    </div>
-                    <p class="text-xs text-text-secondary mt-1">{{ modifier.ingredient_unit || 'unidad' }}</p>
+                    <input
+                      type="number"
+                      v-model.number="modifier.ingredient_quantity"
+                      placeholder="50"
+                      min="0"
+                      step="0.01"
+                      class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary"
+                    />
+                  </div>
+
+                  <!-- Unit -->
+                  <div class="md:col-span-1">
+                    <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
+                    <select
+                      v-model="modifier.ingredient_unit"
+                      class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
+                    >
+                      <option
+                        v-for="opt in getIngredientUnitOptions(modifier.ingredient_id)"
+                        :key="opt.value"
+                        :value="opt.value"
+                      >{{ opt.label }}</option>
+                    </select>
                   </div>
 
                   <!-- Price -->
@@ -435,25 +447,139 @@
         </div>
 
         <!-- Step 3: Review -->
-        <div v-else-if="currentStep === 3" key="step-3" class="bg-surface border border-border rounded-lg">
-          <!-- Header -->
-          <div class="border-b border-border p-4 sm:p-6 md:p-8">
-            <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
-              <div>
-                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary mb-2">NUEVO GRUPO DE MODIFICADORES</h1>
-                <p class="text-xs sm:text-sm text-text-secondary">Resumen del grupo a crear</p>
-              </div>
+        <div v-else-if="currentStep === 3" key="step-3">
+          <!-- Header compacto -->
+          <div class="bg-surface border border-border rounded-lg px-4 sm:px-6 py-3 mb-3 flex items-center justify-between">
+            <div>
+              <p class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Nuevo Grupo · Resumen</p>
+              <p class="text-base font-bold text-text-primary">{{ form.name }}</p>
             </div>
+            <p class="text-xs text-text-secondary">{{ new Date().toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' }) }}</p>
           </div>
 
-          <!-- Group Info -->
-          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-b border-border">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-              <div>
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Grupo</p>
-                <p class="text-lg font-bold text-text-primary">{{ form.name }}</p>
-                <div class="mt-2">
-                  <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1">Productos asociados:</p>
+          <!-- Layout dos columnas -->
+          <div class="flex flex-col lg:flex-row gap-4 items-start">
+
+            <!-- Columna izquierda: modificadores -->
+            <div class="w-full lg:flex-1 space-y-4">
+              <div class="bg-surface border border-border rounded-lg p-4">
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
+                  Modificadores ({{ form.modifiers.length }})
+                </p>
+
+                <!-- Mobile: Cards View -->
+                <div class="md:hidden space-y-3">
+                  <div
+                    v-for="(modifier, index) in form.modifiers"
+                    :key="index"
+                    class="border border-border rounded-lg p-3 bg-background"
+                  >
+                    <div class="mb-2">
+                      <p class="font-medium text-text-primary text-sm">{{ modifier.name }}</p>
+                      <p v-if="modifier.ingredient_quantity" class="text-xs text-text-secondary">
+                        {{ modifier.ingredient_quantity }} {{ modifier.ingredient_unit }}
+                      </p>
+                      <div class="flex gap-2 mt-2">
+                        <UiStatusBadge
+                          v-if="modifier.is_default"
+                          value="Predeterminado"
+                          format="text"
+                          variant="default"
+                          size="sm"
+                        />
+                        <UiStatusBadge
+                          :value="modifier.is_available ? 'Disponible' : 'No disponible'"
+                          format="text"
+                          :variant="modifier.is_available ? 'success' : 'destructive'"
+                          size="sm"
+                        />
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-border">
+                      <div>
+                        <p class="text-xs text-text-secondary mb-1">Precio</p>
+                        <p class="text-sm text-text-primary font-semibold">{{ formatCurrency(modifier.price) }}</p>
+                      </div>
+                      <div>
+                        <p class="text-xs text-text-secondary mb-1">Máx cantidad</p>
+                        <p class="text-sm text-text-primary font-semibold">{{ modifier.max_limit }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Desktop: Table View -->
+                <table class="w-full hidden md:table">
+                  <thead>
+                    <tr class="border-b border-border">
+                      <th class="text-left py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Modificador</th>
+                      <th class="text-center py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Cantidad</th>
+                      <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Precio</th>
+                      <th class="text-center py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Máx</th>
+                      <th class="text-center py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(modifier, index) in form.modifiers"
+                      :key="index"
+                      class="border-b border-border"
+                    >
+                      <td class="py-4">
+                        <div class="flex items-center gap-2">
+                          <p class="font-medium text-text-primary">{{ modifier.name }}</p>
+                          <UiStatusBadge
+                            v-if="modifier.is_default"
+                            value="Predeterminado"
+                            format="text"
+                            variant="default"
+                            size="sm"
+                          />
+                        </div>
+                      </td>
+                      <td class="text-center py-4 text-text-primary">
+                        <span v-if="modifier.ingredient_quantity">{{ modifier.ingredient_quantity }} {{ modifier.ingredient_unit }}</span>
+                        <span v-else class="text-text-secondary">-</span>
+                      </td>
+                      <td class="text-right py-4 text-text-primary font-semibold">{{ formatCurrency(modifier.price) }}</td>
+                      <td class="text-center py-4 text-text-primary">{{ modifier.max_limit }}</td>
+                      <td class="text-center py-4">
+                        <UiStatusBadge
+                          :value="modifier.is_available ? 'Disponible' : 'No disponible'"
+                          format="text"
+                          :variant="modifier.is_available ? 'success' : 'destructive'"
+                          size="sm"
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Columna derecha: configuración del grupo -->
+            <div class="w-full lg:w-72 xl:w-80 space-y-4 lg:sticky lg:top-4">
+
+              <!-- Grupo -->
+              <div class="bg-surface border border-border rounded-lg p-4">
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">Grupo</p>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-text-secondary">Tipo</span>
+                    <UiStatusBadge
+                      :value="form.is_required ? 'Obligatorio' : 'Opcional'"
+                      format="text"
+                      :variant="form.is_required ? 'warning' : 'secondary'"
+                      size="sm"
+                    />
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-text-secondary">Selección</span>
+                    <span class="text-sm font-semibold text-text-primary">{{ form.min_qty }} – {{ form.max_qty }} opciones</span>
+                  </div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-border">
+                  <p class="text-xs text-text-secondary mb-2">Productos asociados</p>
                   <div class="flex flex-wrap gap-1">
                     <span
                       v-for="name in getSelectedProductNames()"
@@ -465,176 +591,83 @@
                   </div>
                 </div>
               </div>
-              <div>
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Configuración</p>
-                <div class="space-y-1">
-                  <p class="text-sm text-text-primary">Selección: {{ form.min_qty }} - {{ form.max_qty }} opciones</p>
-                  <div class="flex gap-2 mt-3">
-                    <UiStatusBadge
-                      :value="form.is_required ? 'Obligatorio' : 'Opcional'"
-                      format="text"
-                      :variant="form.is_required ? 'warning' : 'secondary'"
-                      size="sm"
-                    />
+
+              <!-- Resumen -->
+              <div class="bg-surface border border-border rounded-lg p-4">
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">Resumen</p>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-text-secondary">Total modificadores</span>
+                    <span class="text-sm font-bold text-text-primary">{{ form.modifiers.length }}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-text-secondary">Con ingrediente</span>
+                    <span class="text-sm font-semibold text-text-primary">{{ form.modifiers.filter(m => m.ingredient_id).length }}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-text-secondary">Con costo adicional</span>
+                    <span class="text-sm font-semibold text-text-primary">{{ form.modifiers.filter(m => m.price > 0).length }}</span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <!-- Modifiers Table -->
-          <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-6">
-            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-4">
-              Modificadores ({{ form.modifiers.length }})
-            </p>
-
-            <!-- Mobile: Cards View -->
-            <div class="md:hidden space-y-3">
-              <div
-                v-for="(modifier, index) in form.modifiers"
-                :key="index"
-                class="border border-border rounded-lg p-3 bg-background"
-              >
-                <div class="mb-2">
-                  <p class="font-medium text-text-primary text-sm">{{ modifier.name }}</p>
-                  <p v-if="modifier.ingredient_quantity" class="text-xs text-text-secondary">
-                    {{ modifier.ingredient_quantity }} {{ modifier.ingredient_unit }}
-                  </p>
-                  <div class="flex gap-2 mt-2">
-                    <UiStatusBadge
-                      v-if="modifier.is_default"
-                      value="Predeterminado"
-                      format="text"
-                      variant="default"
-                      size="sm"
-                    />
-                    <UiStatusBadge
-                      :value="modifier.is_available ? 'Disponible' : 'No disponible'"
-                      format="text"
-                      :variant="modifier.is_available ? 'success' : 'destructive'"
-                      size="sm"
-                    />
-                  </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-border">
-                  <div>
-                    <p class="text-xs text-text-secondary mb-1">Precio</p>
-                    <p class="text-sm text-text-primary font-semibold">
-                      {{ formatCurrency(modifier.price) }}
-                    </p>
-                  </div>
-                  <div>
-                    <p class="text-xs text-text-secondary mb-1">Máx cantidad</p>
-                    <p class="text-sm text-text-primary font-semibold">
-                      {{ modifier.max_limit }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Desktop: Table View -->
-            <table class="w-full hidden md:table">
-              <thead>
-                <tr class="border-b border-border">
-                  <th class="text-left py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                    Modificador
-                  </th>
-                  <th class="text-center py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                    Cantidad
-                  </th>
-                  <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                    Precio
-                  </th>
-                  <th class="text-center py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                    Máx
-                  </th>
-                  <th class="text-center py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                    Estado
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(modifier, index) in form.modifiers"
-                  :key="index"
-                  class="border-b border-border"
-                >
-                  <td class="py-4">
-                    <div class="flex items-center gap-2">
-                      <p class="font-medium text-text-primary">{{ modifier.name }}</p>
-                      <UiStatusBadge
-                        v-if="modifier.is_default"
-                        value="Predeterminado"
-                        format="text"
-                        variant="default"
-                        size="sm"
-                      />
-                    </div>
-                  </td>
-                  <td class="text-center py-4 text-text-primary">
-                    <span v-if="modifier.ingredient_quantity">
-                      {{ modifier.ingredient_quantity }} {{ modifier.ingredient_unit }}
-                    </span>
-                    <span v-else class="text-text-secondary">-</span>
-                  </td>
-                  <td class="text-right py-4 text-text-primary font-semibold">
-                    {{ formatCurrency(modifier.price) }}
-                  </td>
-                  <td class="text-center py-4 text-text-primary">
-                    {{ modifier.max_limit }}
-                  </td>
-                  <td class="text-center py-4">
-                    <UiStatusBadge
-                      :value="modifier.is_available ? 'Disponible' : 'No disponible'"
-                      format="text"
-                      :variant="modifier.is_available ? 'success' : 'destructive'"
-                      size="sm"
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </div>
         </Transition>
-
-        <!-- Navigation Buttons -->
-        <div class="flex justify-between mt-4 sm:mt-6 gap-3">
-          <button
-            v-if="currentStep > 1"
-            type="button"
-            @click="previousStep"
-            class="btn-secondary px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium"
-          >
-            ← Anterior
-          </button>
-          <div v-else></div>
-
-          <button
-            v-if="currentStep < 3"
-            type="submit"
-            :disabled="!canProceed"
-            class="btn-primary px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Siguiente →
-          </button>
-          <button
-            v-else
-            type="button"
-            @click="submitGroup"
-            :disabled="isSubmitting"
-            class="btn-primary px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Crear Grupo
-          </button>
-        </div>
       </form>
+
+      <!-- Navigation Buttons -->
+      <div class="bg-surface border-t border-border shadow-lg mt-6">
+        <div class="px-4 sm:px-6 md:px-8 py-3 sm:py-4">
+          <div class="flex justify-between items-center gap-3">
+            <button
+              v-if="currentStep > 1"
+              type="button"
+              @click="previousStep"
+              class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
+            >
+              <span class="hidden sm:inline">← Anterior</span>
+              <span class="sm:hidden">←</span>
+            </button>
+            <NuxtLink
+              v-else
+              to="/menu/modificadores"
+              class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
+            >
+              Cancelar
+            </NuxtLink>
+
+            <button
+              v-if="currentStep < 3"
+              type="button"
+              @click="handleNext"
+              :disabled="!canProceed"
+              class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
+              :class="{ 'opacity-50 cursor-not-allowed': !canProceed }"
+            >
+              <span class="hidden sm:inline">Siguiente →</span>
+              <span class="sm:hidden">→</span>
+            </button>
+            <button
+              v-else
+              type="button"
+              @click="submitGroup"
+              :disabled="isSubmitting"
+              class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
+              :class="{ 'opacity-50 cursor-not-allowed': isSubmitting }"
+            >
+              <span class="hidden sm:inline">{{ isSubmitting ? 'Creando...' : 'Crear Grupo' }}</span>
+              <span class="sm:hidden">{{ isSubmitting ? '...' : 'Crear' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
@@ -685,22 +718,11 @@ const { data: productsData, pending: loadingProducts } = useAsyncData(
   }
 )
 
-// Fetch ingredients
-const { data: ingredientsData, pending: loadingIngredients } = useAsyncData(
-  `ingredients-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/suppliers/ingredients', {
-    query: { limit: 500 }
-  }),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ data: [] })
-  }
-)
+// Shared ingredients (deduplicated across all /menu/* pages)
+const { availableIngredients: ingredients } = useMenuIngredients()
 
 // Computed
 const products = computed(() => productsData.value?.data || [])
-const ingredients = computed(() => ingredientsData.value?.data || [])
 
 const isLoadingData = computed(() => {
   return !productsData.value
@@ -748,15 +770,42 @@ function addModifier() {
   })
 }
 
+// Purchase units cache for dynamic unit options
+const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
+
+const unitLabels: Record<string, string> = {
+  g: 'Gramos (g)', kg: 'Kilogramos (kg)', ml: 'Mililitros (ml)',
+  l: 'Litros (l)', u: 'Unidades (u)', lb: 'Libras (lb)',
+  und: 'Unidades (und)', gr: 'Gramos (gr)',
+}
+
+function getIngredientUnitOptions(ingredientId: string | null) {
+  if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
+  const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
+  const baseUnit = ingredient?.unit || 'g'
+  const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
+  const unitSet = new Set<string>([baseUnit])
+  purchaseUnits.forEach((pu: any) => { if (pu.purchase_unit) unitSet.add(pu.purchase_unit) })
+  return Array.from(unitSet).map(u => ({ value: u, label: unitLabels[u] || u }))
+}
+
 function getIngredientById(id: string) {
   return ingredients.value.find((i: any) => i.id === id)
 }
 
-function onIngredientChange(modifier: any, ingredientId: string) {
+async function onIngredientChange(modifier: any, ingredientId: string) {
   const ingredient = getIngredientById(ingredientId)
   if (ingredient) {
     modifier.name = ingredient.name
     modifier.ingredient_unit = ingredient.unit
+  }
+  if (ingredientId && !purchaseUnitsCache.value.has(ingredientId)) {
+    try {
+      const res = await $fetch<any>(`/api/suppliers/ingredient-purchase-units/ingredient/${ingredientId}`)
+      const updated = new Map(purchaseUnitsCache.value)
+      updated.set(ingredientId, res.data || [])
+      purchaseUnitsCache.value = updated
+    } catch {}
   }
 }
 
