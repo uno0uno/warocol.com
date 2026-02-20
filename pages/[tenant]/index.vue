@@ -21,7 +21,6 @@ const cartStore = useOnlineCartStore()
 if (process.client) {
   const storedSessionId = localStorage.getItem('waro_session_id')
   cartStore.initSession(storedSessionId)
-  cartStore.setTenant(tenantSlug as string)
 }
 
 // Cart drawer state
@@ -31,7 +30,7 @@ const isCartOpen = ref(false)
 const { data: sessionCart } = await useFetch<{ data: any }>(
   () => `/api/online/cart/session/${cartStore.sessionId}`,
   {
-    query: { tenant_id: tenantSlug },
+    query: { tenant_id: computed(() => cartStore.tenantId) },
     server: false,
     immediate: process.client && !!cartStore.sessionId,
     watch: false,
@@ -56,6 +55,12 @@ const { data: menuData, error: menuError, pending: pendingMenu } = await useAsyn
 )
 
 const restaurant = computed(() => profileData.value?.data || null)
+
+// Set tenant UUID from profile data (not the route slug)
+watch(restaurant, (val) => {
+  if (val?.tenant_id) cartStore.setTenant(val.tenant_id)
+}, { immediate: true })
+
 const categories = computed(() => menuData.value?.data?.categories || [])
 const products = computed(() => menuData.value?.data?.products || [])
 const isLoading = computed(() => pendingProfile.value || pendingMenu.value)
