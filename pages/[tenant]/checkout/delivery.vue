@@ -26,25 +26,15 @@
       <div class="delivery-content">
         <!-- Address Section (only for delivery) -->
         <div v-if="cartStore.orderType === 'delivery'" class="section">
-          <div v-if="!showAddressForm">
-            <AddressSelector
-              :addresses="addressStore.addresses"
-              :selected-id="addressStore.selectedAddressId"
-              @select="handleSelectAddress"
-              @edit="handleEditAddress"
-              @delete="handleDeleteAddress"
-              @add-new="showAddressForm = true"
-            />
+          <div v-if="addressFormValid" class="address-saved">
+            ✅ Dirección guardada — puedes continuar
           </div>
-
-          <div v-else>
-            <AddressForm
-              :address="editingAddress"
-              :loading="addressStore.isLoading"
-              @submit="handleSaveAddress"
-              @cancel="cancelAddressForm"
-            />
-          </div>
+          <AddressForm
+            v-else
+            :loading="false"
+            @submit="handleAddressSubmit"
+            @cancel="goBack"
+          />
         </div>
 
         <!-- Pickup/Dine-in Info -->
@@ -157,10 +147,8 @@
 
 <script setup lang="ts">
 import { useOnlineCartStore } from '~/stores/online_cart'
-import { useAuthStore } from '~/stores/auth'
 import { useAddressStore } from '~/stores/address'
-import type { Address, AddressCreate } from '~/stores/address'
-import AddressSelector from '~/components/online/AddressSelector.vue'
+import type { AddressCreate } from '~/stores/address'
 import AddressForm from '~/components/online/AddressForm.vue'
 import CartSummary from '~/components/online/CartSummary.vue'
 
@@ -171,24 +159,12 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const cartStore = useOnlineCartStore()
-const authStore = useAuthStore()
 const addressStore = useAddressStore()
 
 const tenantSlug = computed(() => route.params.tenant as string)
 
-// Redirect if not verified
-if (!authStore.isVerified) {
-  router.push(`/${tenantSlug.value}/checkout/otp`)
-}
-
-// Load addresses
-if (authStore.customerId) {
-  addressStore.fetchAddresses(authStore.customerId)
-}
-
-// Address form state
-const showAddressForm = ref(false)
-const editingAddress = ref<Address | null>(null)
+// Address form state (guest: always show form, no pre-loaded addresses)
+const addressFormValid = ref(false)
 
 // Schedule state
 const isScheduled = ref(false)
@@ -216,59 +192,15 @@ const deliveryFee = computed(() => {
 })
 
 const canContinue = computed(() => {
-  // For delivery, must have selected address
   if (cartStore.orderType === 'delivery') {
-    return !!addressStore.selectedAddressId
+    return addressFormValid.value
   }
   return true
 })
 
-const handleSelectAddress = (addressId: string) => {
-  addressStore.selectAddress(addressId)
-}
-
-const handleEditAddress = (addressId: string) => {
-  const address = addressStore.addresses.find(a => a.id === addressId)
-  if (address) {
-    editingAddress.value = address
-    showAddressForm.value = true
-  }
-}
-
-const handleDeleteAddress = async (addressId: string) => {
-  if (confirm('¿Estás seguro de eliminar esta dirección?')) {
-    try {
-      await addressStore.deleteAddress(addressId)
-    } catch (error) {
-      alert('Error al eliminar dirección')
-    }
-  }
-}
-
-const handleSaveAddress = async (data: AddressCreate) => {
-  if (!authStore.customerId) return
-
-  try {
-    if (editingAddress.value) {
-      // Update existing
-      await addressStore.updateAddress(editingAddress.value.id, data)
-    } else {
-      // Create new
-      const newAddress = await addressStore.createAddress(authStore.customerId, data)
-      if (newAddress) {
-        addressStore.selectAddress(newAddress.id)
-      }
-    }
-
-    cancelAddressForm()
-  } catch (error) {
-    alert('Error al guardar dirección')
-  }
-}
-
-const cancelAddressForm = () => {
-  showAddressForm.value = false
-  editingAddress.value = null
+const handleAddressSubmit = (data: AddressCreate) => {
+  addressStore.setPendingAddress(data)
+  addressFormValid.value = true
 }
 
 const handleContinue = async () => {
@@ -283,15 +215,14 @@ const handleContinue = async () => {
       scheduledTimeStr = `${scheduledDate.value}T${scheduledTime.value}:00`
     }
 
-    // Update delivery info
+    // Save delivery preferences locally (no backend call yet — address has no ID until OTP)
     await cartStore.updateDeliveryInfo({
       order_type: cartStore.orderType,
-      delivery_address_id: addressStore.selectedAddressId || undefined,
       scheduled_time: scheduledTimeStr || undefined,
       delivery_instructions: deliveryInstructions.value || undefined,
     })
 
-    // Navigate to confirmation
+    // Navigate to confirmation (OTP + checkout happen there)
     router.push(`/${tenantSlug.value}/checkout/confirm`)
   } catch (error) {
     alert('Error al guardar información')
@@ -301,7 +232,7 @@ const handleContinue = async () => {
 }
 
 const goBack = () => {
-  router.push(`/${tenantSlug.value}/checkout/otp`)
+  router.push(`/${tenantSlug.value}/menu`)
 }
 </script>
 
@@ -521,6 +452,16 @@ const goBack = () => {
 
 .btn-large {
   padding: 18px 32px;
+}
+
+.address-saved {
+  padding: 16px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: #166534;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 /* Mobile styles */

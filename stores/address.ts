@@ -40,6 +40,7 @@ export const useAddressStore = defineStore('address', {
   state: () => ({
     addresses: [] as Address[],
     selectedAddressId: null as string | null,
+    pendingAddress: null as AddressCreate | null,
     isLoading: false,
   }),
 
@@ -286,6 +287,13 @@ export const useAddressStore = defineStore('address', {
     selectAddress(addressId: string) {
       this.selectedAddressId = addressId
       console.log('[MOCK] Address selected:', addressId)
+    },
+
+    /**
+     * Store address locally for guest checkout (no backend yet)
+     */
+    setPendingAddress(data: AddressCreate) {
+      this.pendingAddress = data
     },
 
     /**
