@@ -286,14 +286,51 @@ export const useAddressStore = defineStore('address', {
      */
     selectAddress(addressId: string) {
       this.selectedAddressId = addressId
-      console.log('[MOCK] Address selected:', addressId)
     },
 
     /**
-     * Store address locally for guest checkout (no backend yet)
+     * Store address locally for guest checkout (pre-OTP)
      */
     setPendingAddress(data: AddressCreate) {
       this.pendingAddress = data
+    },
+
+    /**
+     * Persist pending address to backend after OTP verification succeeds.
+     * Returns the new address UUID (passed to PUT /delivery in confirm.vue).
+     */
+    async persistPendingAddress(customerId: string): Promise<string | null> {
+      if (!this.pendingAddress) return null
+
+      this.isLoading = true
+
+      try {
+        const result = await $fetch<{
+          id: string
+          customer_id: string
+          address_line1: string
+          address_line2?: string
+          city: string
+          state: string
+          postal_code: string
+          country: string
+          is_default: boolean
+          address_type: string
+          delivery_notes?: string
+        }>('/api/online/addresses', {
+          method: 'POST',
+          body: { ...this.pendingAddress, customer_id: customerId },
+        })
+
+        this.addresses = [result as Address]
+        this.selectedAddressId = String(result.id)
+
+        return String(result.id)
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Error al guardar la dirección')
+      } finally {
+        this.isLoading = false
+      }
     },
 
     /**
@@ -301,7 +338,6 @@ export const useAddressStore = defineStore('address', {
      */
     reset() {
       this.$reset()
-      console.log('[MOCK] Address store reset')
     },
   },
 })
