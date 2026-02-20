@@ -256,6 +256,44 @@
           </div>
         </div>
 
+        <!-- Step: address_select — returning customer picks/manages saved address -->
+        <div v-else-if="step === 'address_select'" class="action-section otp-card">
+          <!-- Add / Edit form -->
+          <div v-if="showAddressForm">
+            <AddressForm
+              :address="editingAddressId ? addressStore.addresses.find(a => a.id === editingAddressId) ?? null : null"
+              :loading="addressStore.isLoading"
+              @submit="handleAddressFormSubmit"
+              @cancel="showAddressForm = false; editingAddressId = null"
+            />
+          </div>
+
+          <!-- Address selector -->
+          <div v-else>
+            <AddressSelector
+              :addresses="addressStore.addresses"
+              :selected-id="addressStore.selectedAddressId"
+              @select="addressStore.selectAddress($event)"
+              @edit="editingAddressId = $event; showAddressForm = true"
+              @delete="handleDeleteAddress"
+              @add-new="editingAddressId = null; showAddressForm = true"
+            />
+
+            <div v-if="checkoutError" class="error-alert">
+              ⚠️ {{ checkoutError }}
+            </div>
+
+            <button
+              class="btn btn-primary btn-large"
+              :disabled="!addressStore.selectedAddressId || addressStore.isLoading"
+              @click="submitOrder"
+            >
+              <span v-if="!addressStore.isLoading">Confirmar Pedido</span>
+              <span v-else>Procesando...</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Step: placing_order — spinner while POSTing -->
         <div v-else-if="step === 'placing_order'" class="action-section placing-section">
           <div class="placing-spinner"></div>
@@ -322,7 +360,10 @@
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useOtpAuthStore } from '~/stores/otp_auth'
 import { useAddressStore } from '~/stores/address'
+import type { AddressCreate } from '~/stores/address'
 import OTPInput from '~/components/online/OTPInput.vue'
+import AddressSelector from '~/components/online/AddressSelector.vue'
+import AddressForm from '~/components/online/AddressForm.vue'
 
 definePageMeta({
   layout: 'public-restaurant',
@@ -346,7 +387,7 @@ const addressStore = useAddressStore()
 const tenantSlug = computed(() => route.params.tenant as string)
 
 // Step state machine
-type CheckoutStep = 'review' | 'email_input' | 'otp_sent' | 'placing_order' | 'success'
+type CheckoutStep = 'review' | 'email_input' | 'otp_sent' | 'address_select' | 'placing_order' | 'success'
 const step = ref<CheckoutStep>('review')
 
 // OTP state
@@ -365,6 +406,10 @@ const customerWarnings = ref<string[]>([])
 const checkoutError = ref('')
 const confirmedOrder = ref<ConfirmedOrder | null>(null)
 
+// Address selection state (returning customer)
+const editingAddressId = ref<string | null>(null)
+const showAddressForm = ref(false)
+
 // Countdown timer (reactive wrapper around store getter)
 const countdown = ref(0)
 let countdownInterval: ReturnType<typeof setInterval> | null = null
@@ -379,7 +424,7 @@ onUnmounted(() => {
   if (countdownInterval) clearInterval(countdownInterval)
 })
 
-const selectedAddress = computed(() => addressStore.pendingAddress)
+const selectedAddress = computed(() => addressStore.selectedAddress ?? addressStore.pendingAddress)
 
 const deliveryFee = computed(() => {
   if (cartStore.orderType === 'delivery') {
@@ -463,12 +508,12 @@ const handleSendOTP = async () => {
 
 const handleVerifyOTP = async (code: string) => {
   otpCode.value = code
-  await placeOrder()
+  await verifyAndDetect()
 }
 
 const handleManualVerify = async () => {
   if (!otpCode.value) return
-  await placeOrder()
+  await verifyAndDetect()
 }
 
 const handleResendOTP = async () => {
@@ -497,19 +542,29 @@ const changeEmail = () => {
   customerWarnings.value = []
 }
 
-// Place order: verify OTP → persist address → update delivery → POST /checkout
-const placeOrder = async () => {
+// Phase 1: verify OTP → detect returning vs first-time customer
+const verifyAndDetect = async () => {
   if (!otpCode.value || !cartStore.cartId) return
 
   step.value = 'placing_order'
   checkoutError.value = ''
 
   try {
-    // 1. Verify OTP
     await otpAuthStore.verifyOTP(email.value, cartStore.cartId, otpCode.value)
 
-    // 2. Persist address and update delivery info (delivery orders only)
     if (cartStore.orderType === 'delivery') {
+      try {
+        await addressStore.fetchAddresses(otpAuthStore.customerId!)
+      } catch {
+        // fetch failure is non-fatal — fall through to guest flow
+      }
+
+      if (addressStore.hasAddresses) {
+        step.value = 'address_select'
+        return
+      }
+
+      // First-time customer: persist the form address and proceed
       const addressId = await addressStore.persistPendingAddress(otpAuthStore.customerId!)
       if (addressId) {
         await cartStore.updateDeliveryInfo({
@@ -519,7 +574,36 @@ const placeOrder = async () => {
       }
     }
 
-    // 3. POST /checkout
+    await submitOrder()
+  } catch (error: any) {
+    if (error.status === 409) {
+      step.value = 'success'
+      return
+    }
+
+    const message = error.data?.detail || error.message || 'Error al confirmar pedido'
+    hasOtpError.value = true
+    otpErrorMessage.value = message
+    checkoutError.value = message
+    otpInputRef.value?.clear()
+    otpCode.value = ''
+    step.value = 'otp_sent'
+  }
+}
+
+// Phase 2: submit order (called after address is confirmed)
+const submitOrder = async () => {
+  step.value = 'placing_order'
+  checkoutError.value = ''
+
+  try {
+    if (cartStore.orderType === 'delivery' && addressStore.selectedAddressId) {
+      await cartStore.updateDeliveryInfo({
+        order_type: 'delivery',
+        delivery_address_id: addressStore.selectedAddressId,
+      })
+    }
+
     const response = await $fetch<{ success: boolean; data: ConfirmedOrder }>(
       `/api/online/cart/${cartStore.cartId}/checkout`,
       { method: 'POST' }
@@ -529,20 +613,33 @@ const placeOrder = async () => {
     step.value = 'success'
   } catch (error: any) {
     if (error.status === 409) {
-      // Already checked out (double-submit) — treat as success
       step.value = 'success'
       return
     }
 
-    // OTP error vs checkout error
     const message = error.data?.detail || error.message || 'Error al confirmar pedido'
-    hasOtpError.value = true
-    otpErrorMessage.value = message
     checkoutError.value = message
-    otpInputRef.value?.clear()
-    otpCode.value = ''
-    step.value = 'otp_sent'
+    step.value = 'address_select'
   }
+}
+
+const handleDeleteAddress = (addressId: string) => {
+  addressStore.deleteAddress(otpAuthStore.customerId!, addressId)
+}
+
+// Address form submit handler (for add-new and edit within address_select step)
+const handleAddressFormSubmit = async (data: AddressCreate) => {
+  const customerId = otpAuthStore.customerId!
+
+  if (editingAddressId.value) {
+    await addressStore.updateAddress(customerId, editingAddressId.value, data)
+  } else {
+    const newAddress = await addressStore.createAddress(customerId, data)
+    addressStore.selectAddress(newAddress.id)
+  }
+
+  showAddressForm.value = false
+  editingAddressId.value = null
 }
 
 const goToHome = () => {
