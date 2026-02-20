@@ -128,28 +128,124 @@
           </div>
         </div>
 
-        <!-- Confirm Button -->
-        <button
-          class="btn btn-primary btn-large"
-          @click="handleConfirmOrder"
-          :disabled="isLoading"
-        >
-          <span v-if="!isLoading">Confirmar Pedido</span>
-          <span v-else>Procesando...</span>
-        </button>
+        <!-- Step: review — initial confirm button -->
+        <div v-if="step === 'review'" class="action-section">
+          <button class="btn btn-primary btn-large" @click="step = 'email_input'">
+            Confirmar Pedido
+          </button>
+          <p class="terms-text">
+            Al confirmar, aceptas nuestros términos y condiciones de servicio
+          </p>
+        </div>
 
-        <!-- Terms -->
-        <p class="terms-text">
-          Al confirmar, aceptas nuestros términos y condiciones de servicio
-        </p>
+        <!-- Step: email_input — enter email to receive OTP -->
+        <div v-else-if="step === 'email_input'" class="action-section otp-card">
+          <div class="otp-card-header">
+            <div class="otp-icon-circle">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="otp-card-title">Verificación de Email</h3>
+              <p class="otp-card-subtitle">Te enviaremos un código para confirmar tu pedido</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email" class="form-label">Correo electrónico</label>
+            <input
+              id="email"
+              v-model="email"
+              type="email"
+              class="form-input"
+              placeholder="tu@email.com"
+              required
+              @keyup.enter="handleSendOTP"
+            />
+          </div>
+
+          <button
+            class="btn btn-primary btn-large"
+            @click="handleSendOTP"
+            :disabled="!isEmailValid || otpAuthStore.isLoading"
+          >
+            <span v-if="!otpAuthStore.isLoading">Enviar Código</span>
+            <span v-else>Enviando...</span>
+          </button>
+
+          <button class="btn btn-link" @click="step = 'review'">Cancelar</button>
+        </div>
+
+        <!-- Step: otp_sent — verify OTP code -->
+        <div v-else-if="step === 'otp_sent'" class="action-section otp-card">
+          <div class="otp-card-header">
+            <div class="otp-icon-circle">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="otp-card-title">Ingresa el Código</h3>
+              <p class="otp-card-subtitle">
+                Código enviado a <strong>{{ email }}</strong>
+                <button class="change-email-btn" @click="changeEmail">Cambiar</button>
+              </p>
+            </div>
+          </div>
+
+          <div v-if="countdown > 0" class="timer-display">
+            ⏱️ Podrás reenviar en {{ countdown }} segundos
+          </div>
+
+          <OTPInput
+            ref="otpInputRef"
+            :has-error="hasOtpError"
+            :error-message="otpErrorMessage"
+            :disabled="otpAuthStore.isLoading"
+            @complete="handleVerifyOTP"
+            @change="clearOtpError"
+          />
+
+          <div v-if="checkoutError" class="error-alert">
+            ⚠️ {{ checkoutError }}
+          </div>
+
+          <div class="otp-actions">
+            <button
+              class="btn btn-primary btn-large"
+              @click="handleManualVerify"
+              :disabled="!otpCode || otpAuthStore.isLoading"
+            >
+              <span v-if="!otpAuthStore.isLoading">Verificar y Confirmar</span>
+              <span v-else>Verificando...</span>
+            </button>
+
+            <button
+              class="btn btn-link"
+              @click="handleResendOTP"
+              :disabled="!otpAuthStore.canResendOtp || otpAuthStore.isLoading"
+            >
+              Reenviar código
+            </button>
+          </div>
+        </div>
+
+        <!-- Step: placing_order — spinner while POSTing -->
+        <div v-else-if="step === 'placing_order'" class="action-section placing-section">
+          <div class="placing-spinner"></div>
+          <p class="placing-text">Confirmando tu pedido...</p>
+        </div>
       </div>
     </div>
 
     <!-- Success Modal -->
     <Teleport to="body">
       <Transition name="fade">
-        <div v-if="showSuccessModal" class="modal-backdrop" @click="closeSuccessModal">
-          <div class="success-modal" @click.stop>
+        <div v-if="step === 'success'" class="modal-backdrop">
+          <div class="success-modal">
             <div class="success-icon">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -168,12 +264,12 @@
             <h2 class="modal-title">¡Pedido Confirmado!</h2>
 
             <div class="order-number">
-              Número de pedido: <strong>#{{ mockOrderNumber }}</strong>
+              Número de pedido: <strong>#{{ confirmedOrder?.order_number }}</strong>
             </div>
 
-            <div v-if="otpAuthStore.pickupPin" class="pickup-pin-display">
+            <div v-if="confirmedOrder?.pickup_pin || otpAuthStore.pickupPin" class="pickup-pin-display">
               <div class="pin-label">Tu PIN de Recogida:</div>
-              <div class="pin-code">{{ otpAuthStore.pickupPin }}</div>
+              <div class="pin-code">{{ confirmedOrder?.pickup_pin || otpAuthStore.pickupPin }}</div>
               <p class="pin-desc">Muestra este PIN al recoger tu pedido</p>
             </div>
 
@@ -203,10 +299,20 @@
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useOtpAuthStore } from '~/stores/otp_auth'
 import { useAddressStore } from '~/stores/address'
+import OTPInput from '~/components/online/OTPInput.vue'
 
 definePageMeta({
   layout: 'public-restaurant',
 })
+
+interface ConfirmedOrder {
+  order_id: string
+  order_number: number
+  total_amount: number
+  order_type: string
+  pickup_pin: string | null
+  estimated_preparation_time: number | null
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -216,13 +322,37 @@ const addressStore = useAddressStore()
 
 const tenantSlug = computed(() => route.params.tenant as string)
 
-const isLoading = ref(false)
-const showSuccessModal = ref(false)
-const mockOrderNumber = ref('')
+// Step state machine
+type CheckoutStep = 'review' | 'email_input' | 'otp_sent' | 'placing_order' | 'success'
+const step = ref<CheckoutStep>('review')
+
+// OTP state
+const email = ref('')
+const otpCode = ref('')
+const hasOtpError = ref(false)
+const otpErrorMessage = ref('Código incorrecto')
+const otpInputRef = ref<InstanceType<typeof OTPInput> | null>(null)
+
+// Order state
+const checkoutError = ref('')
+const confirmedOrder = ref<ConfirmedOrder | null>(null)
+
+// Countdown timer (reactive wrapper around store getter)
+const countdown = ref(0)
+let countdownInterval: ReturnType<typeof setInterval> | null = null
+
+onMounted(() => {
+  countdownInterval = setInterval(() => {
+    countdown.value = otpAuthStore.otpCooldownRemaining
+  }, 1000)
+})
+
+onUnmounted(() => {
+  if (countdownInterval) clearInterval(countdownInterval)
+})
 
 const selectedAddress = computed(() => addressStore.pendingAddress)
 
-// Mock delivery fee
 const deliveryFee = computed(() => {
   if (cartStore.orderType === 'delivery') {
     return cartStore.subtotal >= 50000 ? 0 : 5000
@@ -232,6 +362,11 @@ const deliveryFee = computed(() => {
 
 const total = computed(() => {
   return cartStore.subtotal + deliveryFee.value
+})
+
+const isEmailValid = computed(() => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email.value)
 })
 
 const formatPrice = (price: number) => {
@@ -272,40 +407,104 @@ const formatScheduledTime = (isoString: string) => {
   })
 }
 
-const handleConfirmOrder = async () => {
-  isLoading.value = true
+// OTP handlers
+const handleSendOTP = async () => {
+  if (!isEmailValid.value || !cartStore.cartId) return
 
   try {
-    // Simulate order creation
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
-    // Generate mock order number
-    mockOrderNumber.value = `WRO${Date.now().toString().slice(-6)}`
-
-    // Show success modal
-    showSuccessModal.value = true
-
-    // Clear cart (but keep it for display)
-    // In real implementation, cart would be converted to order
-  } catch (error) {
-    alert('Error al confirmar pedido')
-  } finally {
-    isLoading.value = false
+    await otpAuthStore.sendOTP(email.value, cartStore.cartId)
+    step.value = 'otp_sent'
+  } catch (error: any) {
+    alert(error.message || 'Error al enviar código')
   }
 }
 
-const closeSuccessModal = () => {
-  showSuccessModal.value = false
-  goToHome()
+const handleVerifyOTP = async (code: string) => {
+  otpCode.value = code
+  await placeOrder()
+}
+
+const handleManualVerify = async () => {
+  if (!otpCode.value) return
+  await placeOrder()
+}
+
+const handleResendOTP = async () => {
+  if (!otpAuthStore.canResendOtp || !cartStore.cartId) return
+
+  try {
+    await otpAuthStore.resendOTP(email.value, cartStore.cartId)
+    hasOtpError.value = false
+    otpInputRef.value?.clear()
+  } catch (error: any) {
+    alert(error.message || 'Error al reenviar código')
+  }
+}
+
+const clearOtpError = () => {
+  hasOtpError.value = false
+  checkoutError.value = ''
+}
+
+const changeEmail = () => {
+  step.value = 'email_input'
+  otpCode.value = ''
+  hasOtpError.value = false
+  checkoutError.value = ''
+}
+
+// Place order: verify OTP → persist address → update delivery → POST /checkout
+const placeOrder = async () => {
+  if (!otpCode.value || !cartStore.cartId) return
+
+  step.value = 'placing_order'
+  checkoutError.value = ''
+
+  try {
+    // 1. Verify OTP
+    await otpAuthStore.verifyOTP(email.value, cartStore.cartId, otpCode.value)
+
+    // 2. Persist address and update delivery info (delivery orders only)
+    if (cartStore.orderType === 'delivery') {
+      const addressId = await addressStore.persistPendingAddress(otpAuthStore.customerId!)
+      if (addressId) {
+        await cartStore.updateDeliveryInfo({
+          order_type: 'delivery',
+          delivery_address_id: addressId,
+        })
+      }
+    }
+
+    // 3. POST /checkout
+    const response = await $fetch<{ success: boolean; data: ConfirmedOrder }>(
+      `/api/online/cart/${cartStore.cartId}/checkout`,
+      { method: 'POST' }
+    )
+
+    confirmedOrder.value = response.data
+    step.value = 'success'
+  } catch (error: any) {
+    if (error.status === 409) {
+      // Already checked out (double-submit) — treat as success
+      step.value = 'success'
+      return
+    }
+
+    // OTP error vs checkout error
+    const message = error.data?.detail || error.message || 'Error al confirmar pedido'
+    hasOtpError.value = true
+    otpErrorMessage.value = message
+    checkoutError.value = message
+    otpInputRef.value?.clear()
+    otpCode.value = ''
+    step.value = 'otp_sent'
+  }
 }
 
 const goToHome = () => {
-  // Clear cart and reset stores
   cartStore.reset()
   otpAuthStore.logout()
   addressStore.reset()
-
-  // Navigate to home
   router.push(`/${tenantSlug.value}`)
 }
 
@@ -562,6 +761,146 @@ const goBack = () => {
   font-size: 15px;
 }
 
+/* Action section (steps) */
+.action-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.otp-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.otp-card-header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.otp-icon-circle {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.otp-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.otp-card-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 16px;
+  color: #111827;
+  background: white;
+  border: 2px solid #d1d5db;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.change-email-btn {
+  font-size: 13px;
+  color: #667eea;
+  background: none;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.timer-display {
+  font-size: 14px;
+  color: #f59e0b;
+  font-weight: 600;
+  text-align: center;
+}
+
+.otp-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error-alert {
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 14px;
+  text-align: center;
+}
+
+.placing-section {
+  background: white;
+  border-radius: 12px;
+  padding: 48px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  align-items: center;
+  justify-content: center;
+}
+
+.placing-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.placing-text {
+  font-size: 16px;
+  color: #6b7280;
+  font-weight: 500;
+  margin: 0;
+  text-align: center;
+}
+
 .btn {
   padding: 18px 32px;
   font-size: 16px;
@@ -587,6 +926,23 @@ const goBack = () => {
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.btn-large {
+  padding: 16px 32px;
+  font-size: 16px;
+}
+
+.btn-link {
+  background: transparent;
+  color: #667eea;
+  padding: 10px;
+  font-size: 14px;
+  box-shadow: none;
+}
+
+.btn-link:hover:not(:disabled) {
+  background: #f0f4ff;
 }
 
 .terms-text {
@@ -709,6 +1065,12 @@ const goBack = () => {
   }
 }
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Mobile styles */
 @media (max-width: 640px) {
   .page-title {
@@ -725,6 +1087,12 @@ const goBack = () => {
 
   .pin-code {
     font-size: 28px;
+  }
+
+  .otp-card-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
 }
 </style>
