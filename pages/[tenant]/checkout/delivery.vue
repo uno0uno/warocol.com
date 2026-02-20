@@ -26,15 +26,62 @@
       <div class="delivery-content">
         <!-- Address Section (only for delivery) -->
         <div v-if="cartStore.orderType === 'delivery'" class="section">
-          <div v-if="addressFormValid" class="address-saved">
-            ✅ Dirección guardada — puedes continuar
+          <!-- Email lookup for returning customers -->
+          <div v-if="previewAddresses.length === 0" class="preview-lookup">
+            <h3 class="section-title">¿Ya eres cliente?</h3>
+            <div class="form-group">
+              <label for="preview_email" class="form-label">Ingresa tu correo para ver tus direcciones</label>
+              <div class="email-lookup-row">
+                <input
+                  id="preview_email"
+                  v-model="previewEmail"
+                  type="email"
+                  class="form-input"
+                  placeholder="tu@email.com"
+                  :disabled="previewLoading"
+                  @blur="lookupAddressesByEmail"
+                  @keyup.enter="lookupAddressesByEmail"
+                />
+                <button
+                  v-if="previewLoading"
+                  class="btn-lookup-spinner"
+                  disabled
+                >
+                  <span class="lookup-spinner"></span>
+                </button>
+              </div>
+              <p v-if="previewChecked && previewAddresses.length === 0" class="preview-no-results">
+                No encontramos direcciones guardadas para ese correo.
+              </p>
+            </div>
           </div>
-          <AddressForm
-            v-else
-            :loading="false"
-            @submit="handleAddressSubmit"
-            @cancel="goBack"
-          />
+
+          <!-- Preview: returning customer addresses (readonly) -->
+          <div v-if="previewAddresses.length > 0">
+            <div class="preview-header">
+              <h3 class="section-title" style="margin: 0">Tus direcciones guardadas</h3>
+              <button class="btn-link-sm" @click="clearPreview">Usar otra dirección</button>
+            </div>
+            <AddressSelector
+              :addresses="previewAddresses"
+              :selected-id="addressStore.selectedAddressId"
+              :readonly="true"
+              @select="addressStore.selectAddress($event)"
+            />
+          </div>
+
+          <!-- Fallback: guest address form -->
+          <template v-if="previewAddresses.length === 0">
+            <div v-if="addressFormValid" class="address-saved">
+              ✅ Dirección guardada — puedes continuar
+            </div>
+            <AddressForm
+              v-else
+              :loading="false"
+              @submit="handleAddressSubmit"
+              @cancel="goBack"
+            />
+          </template>
         </div>
 
         <!-- Pickup/Dine-in Info -->
@@ -148,8 +195,9 @@
 <script setup lang="ts">
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useAddressStore } from '~/stores/address'
-import type { AddressCreate } from '~/stores/address'
+import type { AddressCreate, Address } from '~/stores/address'
 import AddressForm from '~/components/online/AddressForm.vue'
+import AddressSelector from '~/components/online/AddressSelector.vue'
 import CartSummary from '~/components/online/CartSummary.vue'
 
 definePageMeta({
@@ -165,6 +213,50 @@ const tenantSlug = computed(() => route.params.tenant as string)
 
 // Address form state (guest: always show form, no pre-loaded addresses)
 const addressFormValid = ref(false)
+
+// Pre-OTP email preview state (local only — isolated from post-OTP addressStore flow)
+const previewEmail = ref('')
+const previewLoading = ref(false)
+const previewAddresses = ref<Address[]>([])
+const previewChecked = ref(false)
+
+const isPreviewEmailValid = computed(() =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(previewEmail.value)
+)
+
+const lookupAddressesByEmail = async () => {
+  if (!isPreviewEmailValid.value || previewLoading.value) return
+  previewLoading.value = true
+  previewChecked.value = false
+  try {
+    const result = await $fetch<{ customer_id: string | null; addresses: Address[]; total: number }>(
+      '/api/online/addresses/preview',
+      { query: { email: previewEmail.value } }
+    )
+    previewAddresses.value = result.addresses
+    previewChecked.value = true
+    if (result.addresses.length > 0) {
+      addressStore.addresses = result.addresses
+      const defaultAddr = result.addresses.find(a => a.is_default) ?? result.addresses[0]
+      addressStore.selectAddress(defaultAddr.id)
+      addressFormValid.value = true
+    }
+  } catch {
+    previewAddresses.value = []
+    previewChecked.value = true
+  } finally {
+    previewLoading.value = false
+  }
+}
+
+const clearPreview = () => {
+  previewAddresses.value = []
+  previewChecked.value = false
+  previewEmail.value = ''
+  addressStore.addresses = []
+  addressStore.selectedAddressId = null
+  addressFormValid.value = false
+}
 
 // Schedule state
 const isScheduled = ref(false)
@@ -462,6 +554,71 @@ const goBack = () => {
   color: #166534;
   font-size: 15px;
   font-weight: 600;
+}
+
+.preview-lookup {
+  margin-bottom: 16px;
+}
+
+.email-lookup-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.email-lookup-row .form-input {
+  flex: 1;
+}
+
+.btn-lookup-spinner {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: not-allowed;
+  flex-shrink: 0;
+}
+
+.lookup-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d1d5db;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.preview-no-results {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 8px 0 0 0;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.btn-link-sm {
+  font-size: 13px;
+  color: #667eea;
+  background: none;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  white-space: nowrap;
 }
 
 /* Mobile styles */

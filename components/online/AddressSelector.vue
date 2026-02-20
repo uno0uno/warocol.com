@@ -43,8 +43,8 @@
           </p>
         </div>
 
-        <!-- Actions -->
-        <div class="address-actions" @click.stop>
+        <!-- Actions (hidden in readonly mode) -->
+        <div v-if="!readonly" class="address-actions" @click.stop>
           <button
             class="action-btn edit-btn"
             @click="$emit('edit', address.id)"
@@ -91,8 +91,8 @@
       <p>No tienes direcciones guardadas</p>
     </div>
 
-    <!-- Add New Address Button -->
-    <button class="add-address-btn" @click="$emit('add-new')">
+    <!-- Add New Address Button (hidden in readonly mode) -->
+    <button v-if="!readonly" class="add-address-btn" @click="$emit('add-new')">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="20"
@@ -116,6 +116,7 @@ import type { Address } from '~/stores/address'
 defineProps<{
   addresses: Address[]
   selectedId: string | null
+  readonly?: boolean
 }>()
 
 defineEmits<{
