@@ -154,6 +154,19 @@
           </div>
 
           <div class="form-group">
+            <label for="phone" class="form-label">Número de celular</label>
+            <input
+              id="phone"
+              v-model="phone"
+              type="tel"
+              class="form-input"
+              placeholder="Ej: 3001234567"
+              required
+              @keyup.enter="handleSendOTP"
+            />
+          </div>
+
+          <div class="form-group">
             <label for="email" class="form-label">Correo electrónico</label>
             <input
               id="email"
@@ -166,10 +179,20 @@
             />
           </div>
 
+          <div v-if="customerValidationError" class="error-alert">
+            ⚠️ {{ customerValidationError }}
+          </div>
+
+          <div v-if="customerWarnings.length > 0" class="warnings-list">
+            <div v-for="warning in customerWarnings" :key="warning" class="warning-item">
+              ℹ️ {{ warning }}
+            </div>
+          </div>
+
           <button
             class="btn btn-primary btn-large"
             @click="handleSendOTP"
-            :disabled="!isEmailValid || otpAuthStore.isLoading"
+            :disabled="!isPhoneValid || !isEmailValid || otpAuthStore.isLoading"
           >
             <span v-if="!otpAuthStore.isLoading">Enviar Código</span>
             <span v-else>Enviando...</span>
@@ -327,11 +350,16 @@ type CheckoutStep = 'review' | 'email_input' | 'otp_sent' | 'placing_order' | 's
 const step = ref<CheckoutStep>('review')
 
 // OTP state
+const phone = ref('')
 const email = ref('')
 const otpCode = ref('')
 const hasOtpError = ref(false)
 const otpErrorMessage = ref('Código incorrecto')
 const otpInputRef = ref<InstanceType<typeof OTPInput> | null>(null)
+
+// Customer validation state
+const customerValidationError = ref('')
+const customerWarnings = ref<string[]>([])
 
 // Order state
 const checkoutError = ref('')
@@ -363,6 +391,8 @@ const deliveryFee = computed(() => {
 const total = computed(() => {
   return cartStore.subtotal + deliveryFee.value
 })
+
+const isPhoneValid = computed(() => /^3\d{9}$/.test(phone.value))
 
 const isEmailValid = computed(() => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -409,13 +439,25 @@ const formatScheduledTime = (isoString: string) => {
 
 // OTP handlers
 const handleSendOTP = async () => {
-  if (!isEmailValid.value || !cartStore.cartId) return
+  if (!isPhoneValid.value || !isEmailValid.value || !cartStore.cartId) return
+
+  customerValidationError.value = ''
+  customerWarnings.value = []
 
   try {
+    const validation = await otpAuthStore.validateCustomer(phone.value, total.value)
+
+    if (!validation.can_order) {
+      customerValidationError.value = validation.reason || 'No puedes realizar este pedido.'
+      return
+    }
+
+    customerWarnings.value = validation.warnings
+
     await otpAuthStore.sendOTP(email.value, cartStore.cartId)
     step.value = 'otp_sent'
   } catch (error: any) {
-    alert(error.message || 'Error al enviar código')
+    customerValidationError.value = error.message || 'Error al validar. Intenta de nuevo.'
   }
 }
 
@@ -451,6 +493,8 @@ const changeEmail = () => {
   otpCode.value = ''
   hasOtpError.value = false
   checkoutError.value = ''
+  customerValidationError.value = ''
+  customerWarnings.value = []
 }
 
 // Place order: verify OTP → persist address → update delivery → POST /checkout
@@ -873,6 +917,21 @@ const goBack = () => {
   color: #991b1b;
   font-size: 14px;
   text-align: center;
+}
+
+.warnings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.warning-item {
+  padding: 10px 14px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 13px;
 }
 
 .placing-section {

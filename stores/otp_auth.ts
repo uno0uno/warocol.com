@@ -134,7 +134,7 @@ export const useOtpAuthStore = defineStore('otpAuth', {
     },
 
     /**
-     * Validate customer eligibility (MOCK)
+     * Validate customer eligibility
      * Checks blacklist, tier, and spending limits
      */
     async validateCustomer(
@@ -144,69 +144,16 @@ export const useOtpAuthStore = defineStore('otpAuth', {
       this.isLoading = true
 
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500))
-
         this.phoneNumber = phoneNumber
 
-        // Mock validation logic
-        // In real implementation, this would check database
+        const result = await $fetch<CustomerValidation>('/api/online/customer/validate', {
+          method: 'POST',
+          body: { phone_number: phoneNumber, cart_total: cartTotal },
+        })
 
-        // Simulate 5% chance of blacklist
-        const isBlacklisted = Math.random() < 0.05
-
-        if (isBlacklisted) {
-          console.log('[MOCK] Customer is blacklisted')
-          return {
-            can_order: false,
-            is_blacklisted: true,
-            customer_tier: 'new',
-            reason: 'Este número está bloqueado temporalmente.',
-            warnings: [],
-          }
-        }
-
-        // Simulate customer tier (random)
-        const rand = Math.random()
-        let tier: 'new' | 'intermediate' | 'trusted'
-        let maxAmount: number | undefined
-
-        if (rand < 0.4) {
-          tier = 'new'
-          maxAmount = 50000
-        } else if (rand < 0.7) {
-          tier = 'intermediate'
-          maxAmount = 100000
-        } else {
-          tier = 'trusted'
-          maxAmount = undefined
-        }
-
-        // Check spending limit
-        if (maxAmount && cartTotal > maxAmount) {
-          console.log('[MOCK] Cart exceeds spending limit')
-          return {
-            can_order: false,
-            is_blacklisted: false,
-            customer_tier: tier,
-            max_amount: maxAmount,
-            reason: `Tu límite actual es $${maxAmount.toLocaleString('es-CO')} COP`,
-            warnings: [],
-          }
-        }
-
-        console.log('[MOCK] Customer validated:', tier)
-
-        return {
-          can_order: true,
-          is_blacklisted: false,
-          customer_tier: tier,
-          max_amount: maxAmount,
-          warnings: tier === 'new' ? ['Primer pedido - verificación requerida'] : [],
-        }
-      } catch (error) {
-        console.error('[MOCK] Error validating customer:', error)
-        throw error
+        return result
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Error al validar cliente')
       } finally {
         this.isLoading = false
       }
