@@ -26,21 +26,6 @@ if (process.client) {
 // Cart drawer state
 const isCartOpen = ref(false)
 
-// Session recovery — client-only (localStorage is not available on server)
-const { data: sessionCart } = await useFetch<{ data: any }>(
-  () => `/api/online/cart/session/${cartStore.sessionId}`,
-  {
-    query: { tenant_id: computed(() => cartStore.tenantId) },
-    server: false,
-    immediate: process.client && !!cartStore.sessionId,
-    watch: false,
-  }
-)
-
-watch(sessionCart, (val) => {
-  if (val?.data) cartStore.hydrateFromBackend(val.data)
-}, { immediate: true })
-
 // SSR data fetching — await ensures data is ready before rendering on server
 const { data: profileData, error: profileError, pending: pendingProfile } = await useAsyncData(
   `restaurant-${tenantSlug}`,
@@ -56,9 +41,20 @@ const { data: menuData, error: menuError, pending: pendingMenu } = await useAsyn
 
 const restaurant = computed(() => profileData.value?.data || null)
 
-// Set tenant UUID from profile data (not the route slug)
-watch(restaurant, (val) => {
-  if (val?.tenant_id) cartStore.setTenant(val.tenant_id)
+// Set tenant UUID from profile data and recover session once tenant is known
+watch(restaurant, async (val) => {
+  if (!val?.tenant_id) return
+  cartStore.setTenant(val.tenant_id)
+  // Session recovery — client-only, runs once after tenant UUID is available
+  if (!process.client || !cartStore.sessionId) return
+  try {
+    const cart = await $fetch<{ data: any }>(`/api/online/cart/session/${cartStore.sessionId}`, {
+      query: { tenant_id: val.tenant_id }
+    })
+    if (cart?.data) cartStore.hydrateFromBackend(cart.data)
+  } catch {
+    // No active cart for this session, that's expected
+  }
 }, { immediate: true })
 
 const categories = computed(() => menuData.value?.data?.categories || [])
