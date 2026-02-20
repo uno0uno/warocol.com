@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { EChartsOption } from 'echarts';
 
 interface SalesDataPoint {
   name: string;
@@ -22,12 +21,8 @@ const props = withDefaults(defineProps<Props>(), {
   comparisonLabel: 'Ayer'
 });
 
-// Use provided data or fallback to empty array
 const data = computed(() => {
-  if (props.salesData && props.salesData.length > 0) {
-    return props.salesData;
-  }
-  // Default/placeholder data
+  if (props.salesData && props.salesData.length > 0) return props.salesData;
   return [
     { name: '12pm', sales: 0, salesYesterday: 0 },
     { name: '2pm', sales: 0, salesYesterday: 0 },
@@ -38,161 +33,91 @@ const data = computed(() => {
   ];
 });
 
-// Format numbers compactly: K for thousands, M for millions
 const formatValue = (value: number): string => {
   if (value === 0) return '$0';
-
-  const absValue = Math.abs(value);
-
-  if (absValue >= 1000000) {
-    const formatted = (value / 1000000).toFixed(1);
-    return `$${formatted}M`;
-  } else if (absValue >= 1000) {
-    const formatted = (value / 1000).toFixed(1);
-    return `$${formatted}K`;
-  }
-
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
   return `$${Math.round(value)}`;
 };
 
-// ECharts option configuration
-const chartOption = computed<EChartsOption>(() => ({
+const series = computed(() => [
+  {
+    name: props.comparisonLabel,
+    data: data.value.map(d => d.salesYesterday),
+  },
+  {
+    name: props.currentLabel,
+    data: data.value.map(d => d.sales),
+  },
+]);
+
+const chartOptions = computed(() => ({
+  chart: {
+    type: 'area',
+    height: 250,
+    toolbar: { show: false },
+    zoom: { enabled: false },
+    animations: { enabled: true },
+    fontFamily: 'inherit',
+  },
+  stroke: {
+    curve: 'smooth',
+    width: [2, 4],
+    dashArray: [6, 0],
+  },
+  fill: {
+    type: 'gradient',
+    gradient: {
+      type: 'vertical',
+      shadeIntensity: 1,
+      opacityFrom: [0.1, 0.2],
+      opacityTo: [0.01, 0.02],
+      stops: [0, 100],
+    },
+  },
+  colors: ['#f59e0b', '#4f46e5'],
+  xaxis: {
+    categories: data.value.map(d => d.name),
+    axisBorder: { color: '#e2e8f0' },
+    axisTicks: { show: false },
+    labels: {
+      style: { colors: '#64748b', fontSize: '11px' },
+    },
+    tooltip: { enabled: false },
+  },
+  yaxis: {
+    labels: {
+      style: { colors: '#64748b', fontSize: '11px' },
+      formatter: formatValue,
+    },
+  },
   grid: {
-    top: 5,
-    right: 5,
-    bottom: 25,
-    left: 45,
-    containLabel: true
+    borderColor: '#f1f5f9',
+    strokeDashArray: 4,
+    xaxis: { lines: { show: false } },
+    yaxis: { lines: { show: true } },
+    padding: { left: 0, right: 0, top: 0, bottom: 0 },
   },
-  xAxis: {
-    type: 'category',
-    data: data.value.map(d => d.name),
-    boundaryGap: false,
-    axisLine: {
-      lineStyle: { color: '#e2e8f0' }
-    },
-    axisLabel: {
-      color: '#64748b',
-      fontSize: 11
-    }
-  },
-  yAxis: {
-    type: 'value',
-    axisLine: { show: false },
-    axisTick: { show: false },
-    splitLine: {
-      lineStyle: { color: '#f1f5f9', type: 'dashed' }
-    },
-    axisLabel: {
-      color: '#64748b',
-      fontSize: 11,
-      formatter: (value: number) => formatValue(value)
-    }
+  dataLabels: { enabled: false },
+  markers: {
+    size: [0, 6],
+    strokeColors: '#fff',
+    strokeWidth: 2,
+    hover: { size: 7 },
   },
   tooltip: {
-    trigger: 'axis',
-    backgroundColor: 'white',
-    borderColor: '#e2e8f0',
-    borderWidth: 1,
-    padding: 12,
-    textStyle: {
-      color: '#1e293b',
-      fontSize: 12
+    shared: true,
+    intersect: false,
+    style: { fontSize: '12px' },
+    y: {
+      formatter: (value: number, { seriesIndex }: { seriesIndex: number }) => {
+        const label = seriesIndex === 0 ? props.comparisonLabel : props.currentLabel;
+        return `${label}: $${value.toLocaleString('es-CO')}`;
+      },
     },
-    formatter: (params: any) => {
-      if (!params || params.length === 0) return '';
-
-      const dataIndex = params[0].dataIndex;
-      const dataPoint = data.value[dataIndex];
-
-      if (!dataPoint) return '';
-
-      return `
-        <div style="font-weight: 600; margin-bottom: 8px; font-size: 13px;">${dataPoint.name}</div>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #4f46e5;"></span>
-          <span style="color: #64748b;">${props.currentLabel}:</span>
-          <span style="font-weight: 600; color: #4f46e5;">$${dataPoint.sales.toLocaleString()}</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b;"></span>
-          <span style="color: #64748b;">${props.comparisonLabel}:</span>
-          <span style="font-weight: 600; color: #f59e0b;">$${dataPoint.salesYesterday.toLocaleString()}</span>
-        </div>
-      `;
-    }
   },
-  series: [
-    // Comparison period (Yesterday/Previous) - Amber with dashed line
-    {
-      name: props.comparisonLabel,
-      type: 'line',
-      data: data.value.map(d => d.salesYesterday),
-      smooth: true,
-      lineStyle: {
-        color: '#f59e0b',
-        width: 2,
-        type: 'dashed'
-      },
-      itemStyle: {
-        color: '#f59e0b'
-      },
-      areaStyle: {
-        color: {
-          type: 'linear',
-          x: 0,
-          y: 0,
-          x2: 0,
-          y2: 1,
-          colorStops: [
-            { offset: 0, color: 'rgba(245, 158, 11, 0.1)' },
-            { offset: 1, color: 'rgba(245, 158, 11, 0.01)' }
-          ]
-        }
-      },
-      showSymbol: false,
-      emphasis: {
-        focus: 'series'
-      }
-    },
-    // Current period (Today) - Indigo with solid line
-    {
-      name: props.currentLabel,
-      type: 'line',
-      data: data.value.map(d => d.sales),
-      smooth: true,
-      lineStyle: {
-        color: '#4f46e5',
-        width: 4
-      },
-      itemStyle: {
-        color: '#4f46e5',
-        borderColor: '#fff',
-        borderWidth: 2
-      },
-      areaStyle: {
-        color: {
-          type: 'linear',
-          x: 0,
-          y: 0,
-          x2: 0,
-          y2: 1,
-          colorStops: [
-            { offset: 0, color: 'rgba(79, 70, 229, 0.2)' },
-            { offset: 1, color: 'rgba(79, 70, 229, 0.02)' }
-          ]
-        }
-      },
-      showSymbol: true,
-      symbolSize: 6,
-      emphasis: {
-        focus: 'series',
-        itemStyle: {
-          borderWidth: 3
-        }
-      }
-    }
-  ]
+  legend: { show: false },
 }));
 </script>
 
@@ -211,7 +136,17 @@ const chartOption = computed<EChartsOption>(() => ({
     </div>
 
     <div class="h-[250px]">
-      <VChart :option="chartOption" :loading="loading" autoresize />
+      <div v-if="loading" class="flex items-center justify-center h-full">
+        <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+      <apexchart
+        v-else
+        type="area"
+        height="250"
+        :options="chartOptions"
+        :series="series"
+        class="w-full"
+      />
     </div>
   </div>
 </template>
