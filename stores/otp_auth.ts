@@ -1,6 +1,6 @@
 /**
  * Auth Store - OTP Verification
- * Manages authentication via email OTP with MOCK data (no backend yet)
+ * Manages authentication via email OTP
  */
 import { defineStore } from 'pinia'
 
@@ -23,8 +23,6 @@ export const useOtpAuthStore = defineStore('otpAuth', {
     otpExpiresAt: null as Date | null,
     pickupPin: null as string | null,
     isLoading: false,
-    // Mock OTP code for testing
-    mockOtpCode: '123456',
   }),
 
   getters: {
@@ -47,87 +45,64 @@ export const useOtpAuthStore = defineStore('otpAuth', {
 
   actions: {
     /**
-     * Send OTP code to email (MOCK)
+     * Send OTP code to email
      */
     async sendOTP(email: string, cartId: string) {
       this.isLoading = true
 
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        const data = await $fetch<{ success: boolean; expires_in: number; message: string }>(
+          '/api/online/otp/send',
+          {
+            method: 'POST',
+            body: { email, cart_id: cartId },
+          }
+        )
 
-        // Store email and timestamps
         this.email = email
         this.otpSentAt = new Date()
-        this.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
+        this.otpExpiresAt = new Date(Date.now() + data.expires_in * 1000)
 
-        // Generate random mock OTP
-        this.mockOtpCode = Math.floor(100000 + Math.random() * 900000).toString()
-
-        console.log('[MOCK] OTP sent to:', email)
-        console.log('[MOCK] OTP code:', this.mockOtpCode, '(for testing)')
-
-        return {
-          success: true,
-          expires_in: 300, // 5 minutes in seconds
-          message: `Código enviado a ${email}. Válido por 5 minutos.`,
-        }
-      } catch (error) {
-        console.error('[MOCK] Error sending OTP:', error)
-        throw error
+        return data
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Error al enviar el código')
       } finally {
         this.isLoading = false
       }
     },
 
     /**
-     * Verify OTP code (MOCK)
+     * Verify OTP code
      */
     async verifyOTP(email: string, cartId: string, code: string) {
       this.isLoading = true
 
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800))
+        const data = await $fetch<{
+          success: boolean
+          customer_id: string
+          is_verified: boolean
+          pickup_pin: string | null
+          message: string
+        }>('/api/online/otp/verify', {
+          method: 'POST',
+          body: { email, cart_id: cartId, otp_code: code },
+        })
 
-        // Check if OTP matches
-        if (code !== this.mockOtpCode) {
-          throw new Error('Código incorrecto')
-        }
+        this.customerId = data.customer_id
+        this.isVerified = data.is_verified
+        this.pickupPin = data.pickup_pin
 
-        // Check if expired
-        if (this.otpExpiresAt && Date.now() > this.otpExpiresAt.getTime()) {
-          throw new Error('Código expirado. Solicita uno nuevo.')
-        }
-
-        // Generate mock customer ID
-        this.customerId = `customer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        this.isVerified = true
-
-        // Generate pickup PIN if needed (6 digits)
-        this.pickupPin = Math.floor(100000 + Math.random() * 900000).toString()
-
-        console.log('[MOCK] OTP verified successfully')
-        console.log('[MOCK] Customer ID:', this.customerId)
-        console.log('[MOCK] Pickup PIN:', this.pickupPin)
-
-        return {
-          success: true,
-          customer_id: this.customerId,
-          is_verified: true,
-          pickup_pin: this.pickupPin,
-          message: 'Verificación exitosa',
-        }
-      } catch (error) {
-        console.error('[MOCK] Error verifying OTP:', error)
-        throw error
+        return data
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Código incorrecto')
       } finally {
         this.isLoading = false
       }
     },
 
     /**
-     * Resend OTP code (MOCK)
+     * Resend OTP code
      */
     async resendOTP(email: string, cartId: string) {
       if (!this.canResendOtp) {
@@ -136,7 +111,26 @@ export const useOtpAuthStore = defineStore('otpAuth', {
         )
       }
 
-      return await this.sendOTP(email, cartId)
+      this.isLoading = true
+
+      try {
+        const data = await $fetch<{ success: boolean; expires_in: number; message: string }>(
+          '/api/online/otp/resend',
+          {
+            method: 'POST',
+            body: { email, cart_id: cartId },
+          }
+        )
+
+        this.otpSentAt = new Date()
+        this.otpExpiresAt = new Date(Date.now() + data.expires_in * 1000)
+
+        return data
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Error al reenviar el código')
+      } finally {
+        this.isLoading = false
+      }
     },
 
     /**
@@ -223,7 +217,6 @@ export const useOtpAuthStore = defineStore('otpAuth', {
      */
     logout() {
       this.$reset()
-      console.log('[MOCK] User logged out')
     },
   },
 })
