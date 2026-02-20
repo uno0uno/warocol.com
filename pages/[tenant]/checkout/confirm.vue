@@ -490,7 +490,8 @@ const handleSendOTP = async () => {
   customerWarnings.value = []
 
   try {
-    const validation = await otpAuthStore.validateCustomer(phone.value, total.value)
+    const safeTotal = Number.isFinite(total.value) ? total.value : 0
+    const validation = await otpAuthStore.validateCustomer(phone.value, safeTotal)
 
     if (!validation.can_order) {
       customerValidationError.value = validation.reason || 'No puedes realizar este pedido.'
