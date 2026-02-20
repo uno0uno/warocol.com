@@ -280,7 +280,7 @@ onMounted(() => {
 
 // Computed properties for data and pagination
 // Computed properties for data and pagination
-const suppliersList = computed(() => suppliersData.value.data);
+const suppliersList = computed(() => suppliersData.value?.data || []);
 const totalSuppliers = computed(() => suppliersData.value.total);
 
 // Sorted suppliers

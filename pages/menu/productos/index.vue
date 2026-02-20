@@ -425,7 +425,7 @@ const { data: productsData, pending: isLoading, error: fetchError, refresh } = u
 )
 
 // Computed properties for data
-const products = computed(() => productsData.value.data)
+const products = computed(() => productsData.value?.data || [])
 
 // Sorting
 const sortedProducts = computed(() => {

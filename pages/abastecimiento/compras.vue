@@ -350,18 +350,21 @@ const { data: purchasesData, pending: isLoading, error: fetchError, refresh } = 
 );
 
 // Computed properties for data
-const ordenes = computed(() => purchasesData.value.data.map(purchase => ({
-  id: purchase.id,
-  numero: purchase.purchase_number || `PO-${purchase.id.substring(0, 8)}`,
-  proveedor: purchase.supplier_name || 'Sin proveedor',
-  fecha: purchase.purchase_date,
-  fechaEntrega: purchase.estimated_delivery_date || purchase.delivery_date,
-  valorTotal: parseFloat(purchase.total_amount || 0),
-  impuestos: parseFloat(purchase.tax_amount || 0),
-  totalItems: purchase.items?.length || 0,
-  estado: purchase.status,
-  invoice_number: purchase.invoice_number
-})))
+const ordenes = computed(() => {
+  if (!purchasesData.value?.data) return []
+  return purchasesData.value.data.map(purchase => ({
+    id: purchase.id,
+    numero: purchase.purchase_number || `PO-${purchase.id.substring(0, 8)}`,
+    proveedor: purchase.supplier_name || 'Sin proveedor',
+    fecha: purchase.purchase_date,
+    fechaEntrega: purchase.estimated_delivery_date || purchase.delivery_date,
+    valorTotal: parseFloat(purchase.total_amount || 0),
+    impuestos: parseFloat(purchase.tax_amount || 0),
+    totalItems: purchase.items?.length || 0,
+    estado: purchase.status,
+    invoice_number: purchase.invoice_number
+  }))
+})
 
 // Inject refresh handler setter from layout
 const setRefreshHandler = inject('setRefreshHandler', () => {})

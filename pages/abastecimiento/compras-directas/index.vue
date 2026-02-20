@@ -242,7 +242,7 @@ const { data: purchasesResponse, pending: isLoading, error: fetchError, refresh 
 })
 
 const purchasesData = computed(() => purchasesResponse.value || { data: [], total: 0, page: 1, limit: 20 })
-const purchases = computed(() => purchasesData.value.data || [])
+const purchases = computed(() => purchasesData.value?.data || [])
 
 // Fetch suppliers for filter
 const { data: suppliersResponse } = useFetch('/api/suppliers/providers', {
