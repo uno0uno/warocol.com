@@ -672,7 +672,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 useHead({
   title: 'Crear Cotización - Abastecimiento'
 })

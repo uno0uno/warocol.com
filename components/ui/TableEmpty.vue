@@ -9,7 +9,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import Icon from '~/components/ui/Icon.vue'
 
 defineProps({

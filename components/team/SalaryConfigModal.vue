@@ -134,7 +134,7 @@
   </UiTheModal>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const props = defineProps({
   employee: { type: Object, required: true },
   smmlv: { type: Number, default: 1423500 }

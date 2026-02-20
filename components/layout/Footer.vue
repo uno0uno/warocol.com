@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 const { public: config } = useRuntimeConfig()
 const currentYear = new Date().getFullYear()
 const siteName = config.siteName || 'Waro Colombia'

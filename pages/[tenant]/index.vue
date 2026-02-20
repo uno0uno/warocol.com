@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import RestaurantHeader from '~/components/public/RestaurantHeader.vue'
 import PublicMenu from '~/components/public/PublicMenu.vue'
 import CartButton from '~/components/online/CartButton.vue'
@@ -21,7 +21,7 @@ const cartStore = useOnlineCartStore()
 if (process.client) {
   const storedSessionId = localStorage.getItem('waro_session_id')
   cartStore.initSession(storedSessionId)
-  cartStore.setTenant(String(tenantSlug))
+  cartStore.setTenant(tenantSlug as string)
 }
 
 // Cart drawer state

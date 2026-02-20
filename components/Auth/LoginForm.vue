@@ -148,7 +148,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const email = ref('')
 const loading = ref(false)
 const error = ref('')

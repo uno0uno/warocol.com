@@ -64,7 +64,7 @@
   </header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
 
 const route = useRoute()

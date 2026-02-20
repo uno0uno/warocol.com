@@ -549,7 +549,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 useHead({ title: 'Miembros - Equipo' })
 
 // Tenant reactivity

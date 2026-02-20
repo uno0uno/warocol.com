@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
+import { cn } from '../utils'
 
 const props = defineProps({
   placeholder: {
@@ -34,7 +35,3 @@ const handleInput = (event) => {
     />
   </div>
 </template>
-
-<script>
-import { cn } from '../utils'
-</script>

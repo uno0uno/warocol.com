@@ -112,7 +112,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Badge, Button } from '~/components/ui'
 import Icon from '~/components/ui/Icon.vue'

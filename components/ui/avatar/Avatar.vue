@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { cn } from '../utils'
 import { cva } from 'class-variance-authority'
 import { UserIcon } from '@heroicons/vue/24/outline'

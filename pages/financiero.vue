@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 // Redirect /financiero to /gastos
 definePageMeta({
   layout: 'dashboard'

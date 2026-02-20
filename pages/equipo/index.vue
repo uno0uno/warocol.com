@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 // Redirect to miembros by default
 definePageMeta({
   middleware: [

@@ -58,7 +58,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { Badge } from '~/components/ui'
 import Icon from '~/components/ui/Icon.vue'

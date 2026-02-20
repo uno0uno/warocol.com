@@ -395,7 +395,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, inject, onMounted } from 'vue'
 import { useRoute, useRouter, navigateTo } from '#app'
 

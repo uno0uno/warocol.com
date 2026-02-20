@@ -383,7 +383,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const route = useRoute()
 const toast = useToast()
 const employeeId = route.params.id

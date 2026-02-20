@@ -297,7 +297,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Integraciones - API Keys' })
 

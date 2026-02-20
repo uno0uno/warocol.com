@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 // Usar middleware para redirect en lugar de navigateTo directo
 definePageMeta({
   middleware: (to) => {

@@ -7,7 +7,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { provide, inject } from 'vue'
 
 const route = useRoute()

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { cva } from 'class-variance-authority'
 import { cn } from '../utils'
 import { Button } from '~/components/ui'
