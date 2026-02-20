@@ -36,8 +36,8 @@ const data = computed(() => {
 const formatValue = (value: number): string => {
   if (value === 0) return '$0';
   const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
+  if (abs >= 1_000_000) return `$${Math.round(value / 1_000_000)}M`;
+  if (abs >= 1_000) return `$${Math.round(value / 1_000)}K`;
   return `$${Math.round(value)}`;
 };
 
@@ -60,20 +60,19 @@ const chartOptions = computed(() => ({
     zoom: { enabled: false },
     animations: { enabled: true },
     fontFamily: 'inherit',
+    offsetX: -16,
   },
   stroke: {
     curve: 'smooth',
-    width: [2, 4],
+    width: [1, 2],
     dashArray: [6, 0],
   },
   fill: {
     type: 'gradient',
     gradient: {
       type: 'vertical',
-      shadeIntensity: 1,
-      opacityFrom: [0.1, 0.2],
-      opacityTo: [0.01, 0.02],
-      stops: [0, 100],
+      opacityFrom: 0.2,
+      opacityTo: 0.30,
     },
   },
   colors: ['#f59e0b', '#4f46e5'],
@@ -101,20 +100,16 @@ const chartOptions = computed(() => ({
   },
   dataLabels: { enabled: false },
   markers: {
-    size: [0, 6],
+    size: [4, 6],
     strokeColors: '#fff',
     strokeWidth: 2,
     hover: { size: 7 },
   },
   tooltip: {
     shared: true,
-    intersect: false,
     style: { fontSize: '12px' },
     y: {
-      formatter: (value: number, { seriesIndex }: { seriesIndex: number }) => {
-        const label = seriesIndex === 0 ? props.comparisonLabel : props.currentLabel;
-        return `${label}: $${value.toLocaleString('es-CO')}`;
-      },
+      formatter: (value: number) => `$${value.toLocaleString('es-CO')}`,
     },
   },
   legend: { show: false },
