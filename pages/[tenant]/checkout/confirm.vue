@@ -249,7 +249,7 @@
             <button
               class="btn btn-link"
               @click="handleResendOTP"
-              :disabled="!otpAuthStore.canResendOtp || otpAuthStore.isLoading"
+              :disabled="countdown > 0 || otpAuthStore.isLoading"
             >
               Reenviar código
             </button>
