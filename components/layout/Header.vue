@@ -1,13 +1,12 @@
 <template>
   <header
-    class="relative z-10 flex justify-center items-center px-3 sm:px-4 md:px-6 py-2 sm:py-3 backdrop-blur-md border-b transition-colors duration-300"
+    class="relative z-10 flex items-center py-2 sm:py-3 backdrop-blur-md border-b transition-colors duration-300"
     :class="isDarkHeader
       ? 'bg-crocus-900 border-crocus-800'
       : 'bg-white/95 border-titan-200'"
   >
     <div
-      class="flex justify-between items-center w-full gap-3 sm:gap-4 transition-all duration-300"
-      :style="{ maxWidth: headerMaxWidth }"
+      class="flex justify-between items-center w-full max-w-7xl mx-auto px-4 gap-3 sm:gap-4 transition-all duration-300"
     >
       <!-- Logo -->
       <NuxtLink to="/" class="flex-shrink-0">
@@ -69,13 +68,6 @@ import { useAuthStore } from '~/stores/auth'
 
 const route = useRoute()
 const authStore = useAuthStore()
-
-const headerMaxWidth = computed(() => {
-  if (route.path.startsWith('/blog')) {
-    return '1280px'
-  }
-  return '1000px'
-})
 
 const isDarkHeader = computed(() => {
   return route.path.startsWith('/blog')
