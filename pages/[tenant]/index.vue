@@ -3,6 +3,7 @@ import RestaurantHeader from '~/components/public/RestaurantHeader.vue'
 import PublicMenu from '~/components/public/PublicMenu.vue'
 import CartButton from '~/components/online/CartButton.vue'
 import CartDrawer from '~/components/online/CartDrawer.vue'
+import ProductDetailDrawer from '~/components/online/ProductDetailDrawer.vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
 
 definePageMeta({
@@ -25,6 +26,10 @@ if (process.client) {
 
 // Cart drawer state
 const isCartOpen = ref(false)
+
+// Product detail drawer state
+const isProductDrawerOpen = ref(false)
+const selectedProduct = ref<Record<string, any> | null>(null)
 
 // SSR data fetching — await ensures data is ready before rendering on server
 const { data: profileData, error: profileError, pending: pendingProfile } = await useAsyncData(
@@ -137,24 +142,23 @@ useHead({
 })
 
 
-// Handle product click - Add to cart
+// Handle product click - Open detail drawer if has modifiers, else add directly
 const handleProductClick = async (product) => {
-  try {
-    // Mock: Add product with basic info
-    await cartStore.addItem(
-      {
-        id: product.id,
-        name: product.name,
-        price: product.price
-      },
-      1, // quantity
-      [], // no modifiers for now
-      undefined // no notes
-    )
-
-  } catch (error) {
-    console.error('Error al agregar producto:', error)
-    alert('Error al agregar producto al carrito')
+  if (product.has_modifiers) {
+    selectedProduct.value = product
+    isProductDrawerOpen.value = true
+  } else {
+    try {
+      await cartStore.addItem(
+        { id: product.id, name: product.name, price: product.price },
+        1,
+        [],
+        undefined
+      )
+    } catch (error) {
+      console.error('Error al agregar producto:', error)
+      alert('Error al agregar producto al carrito')
+    }
   }
 }
 
@@ -215,6 +219,14 @@ const handleCheckout = () => {
       <CartDrawer
         v-model="isCartOpen"
         @checkout="handleCheckout"
+      />
+
+      <!-- Product Detail Drawer -->
+      <ProductDetailDrawer
+        v-model="isProductDrawerOpen"
+        :product="selectedProduct"
+        :tenant-slug="String(tenantSlug)"
+        @close="isProductDrawerOpen = false"
       />
     </div>
   </div>
