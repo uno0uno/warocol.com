@@ -196,6 +196,67 @@ export const useOnlineCartStore = defineStore('onlineCart', {
     },
 
     /**
+     * Add multiple units with independent modifiers in one batch POST.
+     * Used by the per-item wizard when qty > 1 with individual customization.
+     */
+    async addItemsBatch(
+      product: { id: string; name: string; price: number },
+      units: Array<{ modifiers: CartModifier[]; notes?: string }>
+    ) {
+      this.isLoading = true
+      try {
+        for (const unit of units) {
+          const modifiersTotal = unit.modifiers.reduce((sum, mod) => sum + mod.price, 0)
+          const existingIndex = this.items.findIndex(
+            item =>
+              item.product_id === product.id &&
+              JSON.stringify(item.modifiers) === JSON.stringify(unit.modifiers)
+          )
+          if (existingIndex >= 0) {
+            this.items[existingIndex].quantity += 1
+            this.items[existingIndex].total =
+              (product.price + modifiersTotal) * this.items[existingIndex].quantity
+          } else {
+            this.items.push({
+              id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              product_id: product.id,
+              product_name: product.name,
+              quantity: 1,
+              unit_price: product.price,
+              modifiers: unit.modifiers,
+              notes: unit.notes,
+              total: product.price + modifiersTotal,
+            })
+          }
+        }
+
+        const data = await $fetch<{ data: BackendCart }>('/api/online/cart/batch', {
+          method: 'POST',
+          body: {
+            tenant_id: this.tenantId,
+            session_id: this.sessionId,
+            order_type: this.orderType,
+            items: this.items.map(item => ({
+              product_id: item.product_id,
+              product_name: item.product_name,
+              quantity: item.quantity,
+              unit_price: item.unit_price,
+              modifiers: item.modifiers,
+              notes: item.notes,
+            })),
+          },
+        })
+
+        this.cartId = data.data.id
+        this.syncItemIds(data.data.items)
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Error al agregar productos al carrito')
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    /**
      * Update item quantity — local only (no dedicated endpoint); calls removeItem if quantity ≤ 0
      */
     async updateItemQuantity(itemId: string, quantity: number) {

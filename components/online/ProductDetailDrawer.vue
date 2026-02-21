@@ -14,9 +14,12 @@
       <aside v-if="modelValue" class="product-drawer">
         <!-- Header -->
         <header class="product-drawer-header">
-          <h2 class="product-drawer-title">
-            {{ product?.name || '' }}
-          </h2>
+          <div class="header-titles">
+            <h2 class="product-drawer-title">
+              {{ wizardMode ? `Ítem ${wizardStep + 1} de ${quantity}` : (product?.name || '') }}
+            </h2>
+            <p v-if="wizardMode" class="header-product-name">{{ product?.name }}</p>
+          </div>
           <button class="product-close-btn" @click="close" aria-label="Cerrar">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -24,6 +27,16 @@
             </svg>
           </button>
         </header>
+
+        <!-- Wizard progress dots -->
+        <div v-if="wizardMode" class="wizard-progress">
+          <span
+            v-for="i in quantity"
+            :key="i"
+            class="wizard-dot"
+            :class="{ active: i - 1 === wizardStep, done: i - 1 < wizardStep }"
+          />
+        </div>
 
         <!-- Scrollable body -->
         <div class="product-drawer-body">
@@ -39,8 +52,8 @@
           </template>
 
           <template v-else-if="productDetail">
-            <!-- Product image / emoji -->
-            <div class="product-visual">
+            <!-- Product image / emoji — hidden in wizard steps after 1 to save space -->
+            <div v-if="!wizardMode" class="product-visual">
               <div
                 v-if="productDetail.image_url && productDetail.image_url.startsWith('http')"
                 class="product-image"
@@ -52,16 +65,16 @@
             </div>
 
             <!-- Description -->
-            <p v-if="productDetail.description" class="product-description">
+            <p v-if="productDetail.description && !wizardMode" class="product-description">
               {{ productDetail.description }}
             </p>
 
             <!-- Prep time -->
-            <p v-if="productDetail.preparation_time" class="product-prep-time">
+            <p v-if="productDetail.preparation_time && !wizardMode" class="product-prep-time">
               ⏱️ {{ productDetail.preparation_time }} min de preparación
             </p>
 
-            <!-- Modifier groups -->
+            <!-- Modifier groups — reads from activeModifiers proxy -->
             <div
               v-for="group in productDetail.modifier_groups"
               :key="group.id"
@@ -86,7 +99,7 @@
                 >
                   <input
                     type="radio"
-                    :name="`group-${group.id}`"
+                    :name="`group-${group.id}-step-${wizardStep}`"
                     :value="mod.id"
                     :checked="isSelected(mod.id)"
                     @change="selectRadio(group, mod)"
@@ -122,8 +135,22 @@
               </div>
             </div>
 
-            <!-- Quantity selector -->
-            <div class="quantity-section">
+            <!-- Notes -->
+            <div class="notes-section">
+              <label class="notes-label">
+                {{ wizardMode ? `Instrucciones para ítem ${wizardStep + 1}` : 'Instrucciones especiales' }}
+              </label>
+              <textarea
+                :value="activeNotes"
+                @input="activeNotes = ($event.target as HTMLTextAreaElement).value"
+                class="notes-input"
+                placeholder="Ej: Sin cebolla, extra salsa..."
+                rows="2"
+              />
+            </div>
+
+            <!-- Quantity selector — hidden while navigating wizard steps -->
+            <div v-if="!wizardMode" class="quantity-section">
               <span class="quantity-label">Cantidad</span>
               <div class="quantity-controls">
                 <button
@@ -136,22 +163,61 @@
               </div>
             </div>
 
-            <!-- Notes -->
-            <div class="notes-section">
-              <label class="notes-label">Instrucciones especiales</label>
-              <textarea
-                v-model="notes"
-                class="notes-input"
-                placeholder="Ej: Sin cebolla, extra salsa..."
-                rows="2"
-              />
+            <!-- "Configurar individualmente" toggle — only when qty > 1 and has modifier groups -->
+            <div
+              v-if="quantity > 1 && productDetail.modifier_groups.length > 0 && !wizardMode"
+              class="wizard-toggle-section"
+            >
+              <label class="wizard-toggle-label">
+                <div class="toggle-switch" :class="{ on: wizardPending }" @click="enableWizard">
+                  <div class="toggle-knob" />
+                </div>
+                <span>Personalizar cada uno individualmente</span>
+              </label>
+              <p class="wizard-toggle-hint">
+                Configura adiciones distintas para cada unidad
+              </p>
             </div>
           </template>
         </div>
 
         <!-- Sticky footer CTA -->
         <footer class="product-drawer-footer">
+          <!-- Wizard mode footer -->
+          <template v-if="wizardMode">
+            <div class="wizard-cta-row">
+              <button
+                class="wizard-back-btn"
+                :disabled="wizardStep === 0"
+                @click="wizardStep--"
+              >
+                ← Anterior
+              </button>
+              <!-- Not last step -->
+              <button
+                v-if="wizardStep < quantity - 1"
+                class="cta-btn wizard-next-btn"
+                :disabled="!isValid"
+                @click="wizardStep++"
+              >
+                Siguiente →
+              </button>
+              <!-- Last step -->
+              <button
+                v-else
+                class="cta-btn"
+                :disabled="!isValid || cartStore.isLoading"
+                @click="handleAddToCart"
+              >
+                <span v-if="cartStore.isLoading">Agregando...</span>
+                <span v-else>Agregar {{ quantity }} — {{ totalPrice }}</span>
+              </button>
+            </div>
+          </template>
+
+          <!-- Normal mode footer -->
           <button
+            v-else
             class="cta-btn"
             :disabled="!isValid || cartStore.isLoading || isLoading"
             @click="handleAddToCart"
@@ -199,6 +265,11 @@ interface ProductDetail {
   modifier_groups: ModifierGroup[]
 }
 
+interface WizardUnit {
+  modifiers: CartModifier[]
+  notes: string
+}
+
 const props = defineProps<{
   modelValue: boolean
   product: Record<string, any> | null
@@ -218,7 +289,72 @@ const selectedModifiers = ref<CartModifier[]>([])
 const quantity = ref(1)
 const notes = ref('')
 
-// Fetch product detail when drawer opens
+// Wizard state
+const wizardMode = ref(false)
+const wizardPending = ref(false)  // toggle visual state before entering wizard
+const wizardStep = ref(0)
+const wizardUnits = ref<WizardUnit[]>([])
+
+// --- Helpers ---
+
+function getDefaultModifiers(): CartModifier[] {
+  if (!productDetail.value) return []
+  const defaults: CartModifier[] = []
+  for (const group of productDetail.value.modifier_groups) {
+    for (const mod of group.modifiers) {
+      if (mod.is_default && mod.is_available) {
+        defaults.push({ id: mod.id, name: mod.name, price: mod.price })
+      }
+    }
+  }
+  return defaults
+}
+
+function buildWizardUnits(qty: number): WizardUnit[] {
+  return Array.from({ length: qty }, () => ({
+    modifiers: getDefaultModifiers(),
+    notes: '',
+  }))
+}
+
+// --- Active step proxies ---
+// In wizard mode: read/write from wizardUnits[wizardStep]
+// In normal mode: read/write from selectedModifiers / notes
+
+const activeStepModifiers = computed<CartModifier[]>({
+  get() {
+    if (wizardMode.value && wizardUnits.value[wizardStep.value]) {
+      return wizardUnits.value[wizardStep.value].modifiers
+    }
+    return selectedModifiers.value
+  },
+  set(val) {
+    if (wizardMode.value && wizardUnits.value[wizardStep.value]) {
+      wizardUnits.value[wizardStep.value].modifiers = val
+    } else {
+      selectedModifiers.value = val
+    }
+  },
+})
+
+const activeNotes = computed<string>({
+  get() {
+    if (wizardMode.value && wizardUnits.value[wizardStep.value]) {
+      return wizardUnits.value[wizardStep.value].notes
+    }
+    return notes.value
+  },
+  set(val) {
+    if (wizardMode.value && wizardUnits.value[wizardStep.value]) {
+      wizardUnits.value[wizardStep.value].notes = val
+    } else {
+      notes.value = val
+    }
+  },
+})
+
+// --- Fetch product detail on open ---
+
 watch(() => props.modelValue, async (val) => {
   if (val && props.product) {
     isLoading.value = true
@@ -226,6 +362,10 @@ watch(() => props.modelValue, async (val) => {
     quantity.value = 1
     notes.value = ''
     productDetail.value = null
+    wizardMode.value = false
+    wizardPending.value = false
+    wizardStep.value = 0
+    wizardUnits.value = []
     try {
       const res = await $fetch<{ data: ProductDetail }>(
         `/api/public/restaurant/${props.tenantSlug}/product/${props.product.id}`
@@ -245,49 +385,91 @@ watch(() => props.modelValue, async (val) => {
       isLoading.value = false
     }
   } else if (!val) {
-    // Reset on close
     productDetail.value = null
     selectedModifiers.value = []
     quantity.value = 1
     notes.value = ''
+    wizardMode.value = false
+    wizardPending.value = false
+    wizardStep.value = 0
+    wizardUnits.value = []
   }
 })
 
-// Only available modifiers
+// Resize wizardUnits when quantity changes in wizard mode
+watch(quantity, (newQty) => {
+  if (!wizardMode.value) return
+  if (newQty > wizardUnits.value.length) {
+    while (wizardUnits.value.length < newQty) {
+      wizardUnits.value.push({ modifiers: getDefaultModifiers(), notes: '' })
+    }
+  } else {
+    wizardUnits.value = wizardUnits.value.slice(0, newQty)
+    if (wizardStep.value >= newQty) wizardStep.value = newQty - 1
+  }
+})
+
+// --- Wizard enable ---
+
+function enableWizard() {
+  wizardPending.value = !wizardPending.value
+  if (wizardPending.value) {
+    // Enter wizard: snapshot current selectedModifiers into all units as starting defaults
+    wizardUnits.value = Array.from({ length: quantity.value }, () => ({
+      modifiers: [...selectedModifiers.value],
+      notes: notes.value,
+    }))
+    wizardStep.value = 0
+    wizardMode.value = true
+  } else {
+    // Exit wizard: restore first unit's state back to normal mode
+    if (wizardUnits.value[0]) {
+      selectedModifiers.value = [...wizardUnits.value[0].modifiers]
+      notes.value = wizardUnits.value[0].notes
+    }
+    wizardMode.value = false
+    wizardUnits.value = []
+    wizardStep.value = 0
+  }
+}
+
+// --- Modifier helpers (read from active step proxy) ---
+
 function availableModifiers(group: ModifierGroup): Modifier[] {
   return group.modifiers.filter(m => m.is_available)
 }
 
 function isSelected(modId: string): boolean {
-  return selectedModifiers.value.some(m => m.id === modId)
+  return activeStepModifiers.value.some(m => m.id === modId)
 }
 
 function groupSelectionCount(groupId: string): number {
   if (!productDetail.value) return 0
   const group = productDetail.value.modifier_groups.find(g => g.id === groupId)
   if (!group) return 0
-  return selectedModifiers.value.filter(sel =>
+  return activeStepModifiers.value.filter(sel =>
     group.modifiers.some(m => m.id === sel.id)
   ).length
 }
 
 function selectRadio(group: ModifierGroup, mod: Modifier) {
-  // Remove previous selection from this group
-  selectedModifiers.value = selectedModifiers.value.filter(sel =>
-    !group.modifiers.some(m => m.id === sel.id)
-  )
-  selectedModifiers.value.push({ id: mod.id, name: mod.name, price: mod.price })
+  const current = [...activeStepModifiers.value]
+  const filtered = current.filter(sel => !group.modifiers.some(m => m.id === sel.id))
+  filtered.push({ id: mod.id, name: mod.name, price: mod.price })
+  activeStepModifiers.value = filtered
 }
 
 function toggleCheckbox(mod: Modifier) {
-  if (isSelected(mod.id)) {
-    selectedModifiers.value = selectedModifiers.value.filter(m => m.id !== mod.id)
+  const current = [...activeStepModifiers.value]
+  if (current.some(m => m.id === mod.id)) {
+    activeStepModifiers.value = current.filter(m => m.id !== mod.id)
   } else {
-    selectedModifiers.value.push({ id: mod.id, name: mod.name, price: mod.price })
+    activeStepModifiers.value = [...current, { id: mod.id, name: mod.name, price: mod.price }]
   }
 }
 
-// CTA is valid when all required groups have at least one selection
+// --- Validation — always validates the ACTIVE step's modifiers ---
+
 const isValid = computed(() => {
   if (!productDetail.value) return false
   return productDetail.value.modifier_groups
@@ -295,8 +477,18 @@ const isValid = computed(() => {
     .every(g => groupSelectionCount(g.id) >= Math.max(1, g.min_qty))
 })
 
+// --- Price — shows total for current context ---
+
 const totalPrice = computed(() => {
   const base = props.product?.price ?? productDetail.value?.price ?? 0
+  if (wizardMode.value) {
+    // Show total for all units
+    const total = wizardUnits.value.reduce((sum, unit) => {
+      const modTotal = unit.modifiers.reduce((s, m) => s + m.price, 0)
+      return sum + base + modTotal
+    }, 0)
+    return formatPrice(total)
+  }
   const modTotal = selectedModifiers.value.reduce((sum, m) => sum + m.price, 0)
   return formatPrice((base + modTotal) * quantity.value)
 })
@@ -310,15 +502,24 @@ function formatPrice(price: number): string {
   }).format(price)
 }
 
+// --- Add to cart ---
+
 async function handleAddToCart() {
   if (!props.product || !isValid.value) return
   try {
-    await cartStore.addItem(
-      { id: props.product.id, name: props.product.name, price: props.product.price },
-      quantity.value,
-      [...selectedModifiers.value],
-      notes.value || undefined
-    )
+    if (wizardMode.value) {
+      await cartStore.addItemsBatch(
+        { id: props.product.id, name: props.product.name, price: props.product.price },
+        wizardUnits.value.map(u => ({ modifiers: u.modifiers, notes: u.notes || undefined }))
+      )
+    } else {
+      await cartStore.addItem(
+        { id: props.product.id, name: props.product.name, price: props.product.price },
+        quantity.value,
+        [...selectedModifiers.value],
+        notes.value || undefined
+      )
+    }
     close()
   } catch (err: any) {
     console.error('Error adding to cart:', err)
@@ -381,16 +582,31 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+.header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  max-width: calc(100% - 48px);
+}
+
 .product-drawer-title {
   font-size: 18px;
   font-weight: 700;
   color: #111827;
   margin: 0;
-  line-clamp: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: calc(100% - 48px);
+}
+
+.header-product-name {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .product-close-btn {
@@ -411,6 +627,33 @@ onMounted(() => {
 .product-close-btn:hover {
   background: #e5e7eb;
   color: #111827;
+}
+
+/* Wizard progress dots */
+.wizard-progress {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 24px 0;
+  flex-shrink: 0;
+}
+
+.wizard-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d1d5db;
+  transition: all 0.2s ease;
+}
+
+.wizard-dot.active {
+  background: #667eea;
+  transform: scale(1.3);
+}
+
+.wizard-dot.done {
+  background: #10b981;
 }
 
 /* Body */
@@ -662,6 +905,61 @@ onMounted(() => {
   border-color: #667eea;
 }
 
+/* Wizard toggle */
+.wizard-toggle-section {
+  padding: 14px 16px;
+  background: #f0f4ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+}
+
+.wizard-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.toggle-switch {
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: #d1d5db;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.toggle-switch.on {
+  background: #667eea;
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggle-switch.on .toggle-knob {
+  transform: translateX(18px);
+}
+
+.wizard-toggle-hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 6px 0 0 52px;
+}
+
 /* Footer CTA */
 .product-drawer-footer {
   padding: 16px 24px;
@@ -691,6 +989,39 @@ onMounted(() => {
   background: #d1d5db;
   color: #9ca3af;
   cursor: not-allowed;
+}
+
+/* Wizard footer */
+.wizard-cta-row {
+  display: flex;
+  gap: 10px;
+}
+
+.wizard-back-btn {
+  flex: 0 0 36%;
+  padding: 16px 8px;
+  background: transparent;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wizard-back-btn:hover:not(:disabled) {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.wizard-back-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.wizard-next-btn {
+  flex: 1;
 }
 
 /* Transitions — desktop: slide from right */
@@ -728,6 +1059,16 @@ onMounted(() => {
   .product-slide-enter-from,
   .product-slide-leave-to {
     transform: translateY(100%);
+  }
+
+  .wizard-cta-row {
+    gap: 8px;
+  }
+
+  .wizard-back-btn {
+    flex: 0 0 32%;
+    font-size: 14px;
+    padding: 14px 6px;
   }
 }
 </style>
