@@ -164,7 +164,7 @@ const handleProductClick = async (product) => {
 
 // Handle checkout - Navigate to delivery step
 const handleCheckout = () => {
-  router.push(`/${tenantSlug}/checkout/delivery`)
+  router.push(`/${tenantSlug}/checkout`)
 }
 </script>
 
