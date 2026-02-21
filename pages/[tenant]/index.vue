@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import RestaurantHeader from '~/components/public/RestaurantHeader.vue'
 import PublicMenu from '~/components/public/PublicMenu.vue'
-import CartButton from '~/components/online/CartButton.vue'
+import CartBottomBar from '~/components/online/CartBottomBar.vue'
 import CartDrawer from '~/components/online/CartDrawer.vue'
 import ProductDetailDrawer from '~/components/online/ProductDetailDrawer.vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
@@ -209,11 +209,8 @@ const handleCheckout = () => {
         />
       </div>
 
-      <!-- Cart Button (Floating) -->
-      <CartButton
-        :count="cartStore.itemCount"
-        @click="isCartOpen = true"
-      />
+      <!-- Cart Bottom Bar -->
+      <CartBottomBar @open-cart="isCartOpen = true" />
 
       <!-- Cart Drawer -->
       <CartDrawer
