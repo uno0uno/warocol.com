@@ -44,7 +44,7 @@ interface BackendCartItem {
   unit_price: number
   modifiers: BackendCartItemModifier[]
   notes?: string
-  total: number
+  subtotal: number | string  // API returns Decimal as string
 }
 
 interface BackendCart {
@@ -122,7 +122,7 @@ export const useOnlineCartStore = defineStore('onlineCart', {
           price: Number(mod.price),
         })),
         notes: item.notes,
-        total: Number(item.total),
+        total: Number(item.subtotal),
       }))
     },
 
