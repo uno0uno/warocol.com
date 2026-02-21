@@ -198,7 +198,7 @@
                 v-if="wizardStep < quantity - 1"
                 class="cta-btn wizard-next-btn"
                 :disabled="!isValid"
-                @click="wizardStep++"
+                @click="goToNextStep"
               >
                 Siguiente →
               </button>
@@ -401,7 +401,7 @@ watch(quantity, (newQty) => {
   if (!wizardMode.value) return
   if (newQty > wizardUnits.value.length) {
     while (wizardUnits.value.length < newQty) {
-      wizardUnits.value.push({ modifiers: getDefaultModifiers(), notes: '' })
+      wizardUnits.value.push({ modifiers: [], notes: '' })
     }
   } else {
     wizardUnits.value = wizardUnits.value.slice(0, newQty)
@@ -409,15 +409,19 @@ watch(quantity, (newQty) => {
   }
 })
 
+function goToNextStep() {
+  wizardStep.value++
+}
+
 // --- Wizard enable ---
 
 function enableWizard() {
   wizardPending.value = !wizardPending.value
   if (wizardPending.value) {
-    // Enter wizard: snapshot current selectedModifiers into all units as starting defaults
-    wizardUnits.value = Array.from({ length: quantity.value }, () => ({
-      modifiers: [...selectedModifiers.value],
-      notes: notes.value,
+    // Step 0 starts with the current selection (defaults); remaining steps start empty
+    wizardUnits.value = Array.from({ length: quantity.value }, (_, i) => ({
+      modifiers: i === 0 ? [...selectedModifiers.value] : [],
+      notes: i === 0 ? notes.value : '',
     }))
     wizardStep.value = 0
     wizardMode.value = true
@@ -480,7 +484,7 @@ const isValid = computed(() => {
 // --- Price — shows total for current context ---
 
 const totalPrice = computed(() => {
-  const base = props.product?.price ?? productDetail.value?.price ?? 0
+  const base = Number(props.product?.price ?? productDetail.value?.price ?? 0)
   if (wizardMode.value) {
     // Show total for all units
     const total = wizardUnits.value.reduce((sum, unit) => {
