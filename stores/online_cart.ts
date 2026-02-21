@@ -115,14 +115,14 @@ export const useOnlineCartStore = defineStore('onlineCart', {
         product_id: item.product_id,
         product_name: item.product_name,
         quantity: item.quantity,
-        unit_price: item.unit_price,
+        unit_price: Number(item.unit_price),
         modifiers: (item.modifiers || []).map(mod => ({
           id: mod.modifier_id,
           name: mod.modifier_name,
           price: Number(mod.price),
         })),
         notes: item.notes,
-        total: item.total,
+        total: Number(item.total),
       }))
     },
 

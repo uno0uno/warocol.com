@@ -1,5 +1,6 @@
 <template>
-  <Transition name="bar-slide">
+  <Teleport to="body">
+    <Transition name="bar-slide">
     <div v-if="cartStore.itemCount > 0" class="cart-bottom-bar">
       <!-- Left: icon + count + subtotal -->
       <div class="bar-info">
@@ -43,7 +44,8 @@
         </svg>
       </button>
     </div>
-  </Transition>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
