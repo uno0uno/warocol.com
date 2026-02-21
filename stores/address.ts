@@ -41,6 +41,7 @@ export const useAddressStore = defineStore('address', {
     addresses: [] as Address[],
     selectedAddressId: null as string | null,
     pendingAddress: null as AddressCreate | null,
+    previewCustomerId: null as string | null,
     isLoading: false,
   }),
 
@@ -223,6 +224,41 @@ export const useAddressStore = defineStore('address', {
       } catch (error: any) {
         throw new Error(error.data?.detail || 'Error al guardar la dirección')
       } finally {
+        this.isLoading = false
+      }
+    },
+
+    /**
+     * Preview saved addresses for a given email — no auth required.
+     * Calls GET /api/online/addresses/preview?email=...
+     * Populates addresses[] and previewCustomerId so StepDeliveryInfo
+     * can show saved addresses before OTP verification.
+     */
+    async previewByEmail(email: string) {
+      this.isLoading = true
+
+      try {
+        const result = await $fetch<{
+          customer_id: string | null
+          addresses: Address[]
+          total: number
+        }>('/api/online/addresses/preview', { query: { email } })
+
+        this.previewCustomerId = result.customer_id ? String(result.customer_id) : null
+        this.addresses = result.addresses
+
+        // Auto-select default address if present and nothing selected yet
+        if (!this.selectedAddressId) {
+          const defaultAddr = result.addresses.find(a => a.is_default)
+          if (defaultAddr) this.selectedAddressId = String(defaultAddr.id)
+        }
+      }
+      catch {
+        // Empty result = new customer — not an error
+        this.previewCustomerId = null
+        this.addresses = []
+      }
+      finally {
         this.isLoading = false
       }
     },
