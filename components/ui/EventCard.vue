@@ -115,7 +115,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Badge, Button } from '~/components/ui'
-import Icon from '~/components/ui/Icon.vue'
 
 const props = defineProps({
   event: {

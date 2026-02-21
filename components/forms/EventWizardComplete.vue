@@ -582,7 +582,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { Button } from '~/components/ui'
-import Icon from '~/components/ui/Icon.vue'
 
 const props = defineProps({
   eventData: {

@@ -79,7 +79,6 @@ import {
   useVueTable
 } from '@tanstack/vue-table'
 import { Button } from '~/components/ui'
-import Icon from '~/components/ui/Icon.vue'
 import TableHeader from '~/components/ui/TableHeader.vue'
 import TablePagination from '~/components/ui/TablePagination.vue'
 import TableEmpty from '~/components/ui/TableEmpty.vue'
