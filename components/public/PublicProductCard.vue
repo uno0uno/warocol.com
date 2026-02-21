@@ -42,29 +42,63 @@
         {{ product.description }}
       </p>
 
-      <!-- Footer: Price and Category -->
+      <!-- Footer: Price, Category, and Cart Controls -->
       <div class="flex items-center justify-between mt-auto">
         <!-- Price -->
         <div class="text-2xl font-bold text-gray-900">
           {{ formatPrice(product.price) }}
         </div>
 
-        <!-- Category badge -->
-        <div class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-          {{ product.category_name }}
+        <!-- NOT in cart → + button -->
+        <button
+          v-if="!isInCart"
+          @click.stop="handleClick"
+          :disabled="!product.is_available"
+          class="w-9 h-9 flex items-center justify-center rounded-full bg-blue-600 text-white text-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          aria-label="Agregar al carrito"
+        >
+          +
+        </button>
+
+        <!-- IN cart → − N + inline controls -->
+        <div v-else class="flex items-center gap-1" @click.stop>
+          <button
+            @click="decrease"
+            :disabled="cartStore.isLoading"
+            class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold"
+            aria-label="Quitar uno"
+          >−</button>
+          <span class="min-w-[1.5rem] text-center font-bold text-gray-900 text-sm">
+            {{ totalQtyInCart }}
+          </span>
+          <button
+            @click="increase"
+            :disabled="cartStore.isLoading || !product.is_available"
+            class="w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold"
+            aria-label="Agregar uno más"
+          >+</button>
         </div>
       </div>
 
-      <!-- Preparation time -->
-      <div v-if="product.preparation_time" class="flex items-center gap-1 mt-3 text-xs text-gray-500">
-        <span>⏱️</span>
-        <span>{{ product.preparation_time }} min</span>
+      <!-- Category badge -->
+      <div class="flex items-center justify-between mt-2">
+        <div class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+          {{ product.category_name }}
+        </div>
+
+        <!-- Preparation time -->
+        <div v-if="product.preparation_time" class="flex items-center gap-1 text-xs text-gray-500">
+          <span>⏱️</span>
+          <span>{{ product.preparation_time }} min</span>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useOnlineCartStore } from '~/stores/online_cart'
+
 const props = defineProps({
   product: {
     type: Object,
@@ -74,10 +108,50 @@ const props = defineProps({
 
 const emit = defineEmits(['click'])
 
-function handleClick() {
-  if (props.product.is_available) {
-    emit('click', props.product)
+const cartStore = useOnlineCartStore()
+
+// All cart items that belong to this product
+const cartItemsForProduct = computed(() =>
+  cartStore.items.filter(i => i.product_id === props.product.id)
+)
+
+// Sum of quantities across all cart items for this product
+const totalQtyInCart = computed(() =>
+  cartItemsForProduct.value.reduce((sum, i) => sum + i.quantity, 0)
+)
+
+const isInCart = computed(() => totalQtyInCart.value > 0)
+
+// Decrement: target the last item added (LIFO)
+const decrease = async () => {
+  const item = cartItemsForProduct.value.at(-1)
+  if (!item) return
+  try {
+    await cartStore.updateItemQuantity(item.id, item.quantity - 1)
+  } catch (e) {
+    console.error('Error al quitar producto:', e)
   }
+}
+
+// Increment: for modifier products → open drawer; for plain products → increment first item
+const increase = async () => {
+  if (props.product.has_modifiers) {
+    emit('click', props.product)
+    return
+  }
+  const item = cartItemsForProduct.value[0]
+  if (!item) return
+  try {
+    await cartStore.updateItemQuantity(item.id, item.quantity + 1)
+  } catch (e) {
+    console.error('Error al agregar producto:', e)
+  }
+}
+
+function handleClick() {
+  if (!props.product.is_available) return
+  if (isInCart.value) return
+  emit('click', props.product)
 }
 
 function formatPrice(price) {
