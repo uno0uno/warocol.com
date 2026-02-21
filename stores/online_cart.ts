@@ -29,13 +29,20 @@ export interface DeliveryInfo {
   delivery_instructions?: string
 }
 
+interface BackendCartItemModifier {
+  id: string           // junction row UUID (not the modifier UUID)
+  modifier_id: string  // the actual modifier UUID used in requests
+  modifier_name: string
+  price: number | string
+}
+
 interface BackendCartItem {
   id: string
   product_id: string
   product_name: string
   quantity: number
   unit_price: number
-  modifiers: CartModifier[]
+  modifiers: BackendCartItemModifier[]
   notes?: string
   total: number
 }
@@ -109,7 +116,11 @@ export const useOnlineCartStore = defineStore('onlineCart', {
         product_name: item.product_name,
         quantity: item.quantity,
         unit_price: item.unit_price,
-        modifiers: item.modifiers || [],
+        modifiers: (item.modifiers || []).map(mod => ({
+          id: mod.modifier_id,
+          name: mod.modifier_name,
+          price: Number(mod.price),
+        })),
         notes: item.notes,
         total: item.total,
       }))
