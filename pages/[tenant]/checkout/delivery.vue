@@ -324,7 +324,7 @@ const handleContinue = async () => {
 }
 
 const goBack = () => {
-  router.push(`/${tenantSlug.value}/menu`)
+  router.push(`/${tenantSlug.value}`)
 }
 </script>
 
