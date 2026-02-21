@@ -12,13 +12,19 @@
       </div>
     </div>
 
-    <!-- idle: phone + email form -->
+    <!-- idle: phone form (email already known from StepEmail) -->
     <div v-else-if="subStep === 'idle'" class="space-y-4">
       <div class="text-center mb-2">
         <h4 class="text-base font-semibold text-foreground">Verify your identity</h4>
         <p class="text-sm text-muted-foreground mt-0.5">
-          We'll send a one-time code to your email to confirm your order
+          We'll send a one-time code to confirm your order
         </p>
+      </div>
+
+      <!-- Email display (read-only — set at step 2) -->
+      <div class="flex items-center gap-2 p-3 rounded-md bg-muted/40 border border-border text-sm">
+        <Icon name="heroicons:envelope" class="w-4 h-4 text-muted-foreground flex-shrink-0" />
+        <span class="text-foreground font-medium">{{ otpAuthStore.email }}</span>
       </div>
 
       <div class="space-y-1">
@@ -33,17 +39,6 @@
         <p v-if="phone && !isPhoneValid" class="text-xs text-destructive">
           Enter a valid Colombian mobile number (10 digits starting with 3)
         </p>
-      </div>
-
-      <div class="space-y-1">
-        <label class="block text-sm font-medium text-foreground">Email address</label>
-        <input
-          v-model="email"
-          type="email"
-          class="w-full h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          placeholder="you@email.com"
-          @keyup.enter="handleSendOTP"
-        />
       </div>
 
       <div v-if="customerValidationError" class="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm">
@@ -64,7 +59,7 @@
 
       <Button
         class="w-full"
-        :disabled="!isPhoneValid || !isEmailValid || otpAuthStore.isLoading"
+        :disabled="!isPhoneValid || otpAuthStore.isLoading"
         @click="handleSendOTP"
       >
         <Icon
@@ -84,11 +79,11 @@
         </div>
         <h4 class="text-base font-semibold text-foreground">Enter the code</h4>
         <p class="text-sm text-muted-foreground mt-0.5">
-          Code sent to <strong>{{ email }}</strong>
+          Code sent to <strong>{{ otpAuthStore.email }}</strong>
           <button
             type="button"
             class="ml-2 text-xs text-primary font-medium underline underline-offset-2 hover:text-primary/80"
-            @click="changeEmail"
+            @click="subStep = 'idle'"
           >
             Change
           </button>
@@ -139,66 +134,15 @@
       </div>
     </div>
 
-    <!-- address_select: returning delivery customer picks address post-OTP -->
-    <div v-else-if="subStep === 'address_select'" class="space-y-4">
-      <div class="text-center mb-2">
-        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
-          <Icon name="heroicons:map-pin" class="w-6 h-6 text-primary" />
-        </div>
-        <h4 class="text-base font-semibold text-foreground">Select delivery address</h4>
-        <p class="text-sm text-muted-foreground mt-0.5">Choose or add a delivery address</p>
-      </div>
-
-      <!-- Add / Edit form -->
-      <AddressForm
-        v-if="showAddressForm"
-        :address="editingAddressId ? (addressStore.addresses.find(a => a.id === editingAddressId) ?? null) : null"
-        :loading="addressStore.isLoading"
-        @submit="handleAddressFormSubmit"
-        @cancel="showAddressForm = false; editingAddressId = null"
-      />
-
-      <template v-else>
-        <AddressSelector
-          :addresses="addressStore.addresses"
-          :selected-id="addressStore.selectedAddressId"
-          @select="addressStore.selectAddress($event)"
-          @edit="editingAddressId = $event; showAddressForm = true"
-          @delete="handleDeleteAddress"
-          @add-new="editingAddressId = null; showAddressForm = true"
-        />
-
-        <div v-if="checkoutError" class="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-          <Icon name="heroicons:exclamation-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5" />
-          {{ checkoutError }}
-        </div>
-
-        <Button
-          class="w-full"
-          :disabled="!addressStore.selectedAddressId || addressStore.isLoading"
-          @click="confirmAddress"
-        >
-          <Icon
-            v-if="addressStore.isLoading"
-            name="heroicons:arrow-path"
-            class="w-4 h-4 mr-2 animate-spin"
-          />
-          Confirm address
-        </Button>
-      </template>
-    </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useOtpAuthStore } from '~/stores/otp_auth'
 import { useAddressStore } from '~/stores/address'
-import type { AddressCreate } from '~/stores/address'
 import OTPInput from '~/components/online/OTPInput.vue'
-import AddressSelector from '~/components/online/AddressSelector.vue'
-import AddressForm from '~/components/online/AddressForm.vue'
 import { Button } from '~/components/ui'
 
 const emit = defineEmits<{
@@ -209,16 +153,14 @@ const cartStore = useOnlineCartStore()
 const otpAuthStore = useOtpAuthStore()
 const addressStore = useAddressStore()
 
-type IdentitySubStep = 'idle' | 'otp_sent' | 'address_select' | 'verified'
+type IdentitySubStep = 'idle' | 'otp_sent' | 'verified'
 const subStep = ref<IdentitySubStep>(
   otpAuthStore.isAuthenticated ? 'verified' : 'idle',
 )
 
-// Phone + email
+// Phone
 const phone = ref('')
-const email = ref('')
 const isPhoneValid = computed(() => /^3\d{9}$/.test(phone.value))
-const isEmailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))
 
 // Customer validation
 const customerValidationError = ref('')
@@ -245,10 +187,6 @@ onUnmounted(() => {
   if (countdownInterval) clearInterval(countdownInterval)
 })
 
-// Address select sub-state
-const editingAddressId = ref<string | null>(null)
-const showAddressForm = ref(false)
-
 // Delivery fee (mirrors confirm.vue logic)
 const deliveryFee = computed(() =>
   cartStore.orderType === 'delivery' && cartStore.subtotal < 50000 ? 5000 : 0,
@@ -256,7 +194,7 @@ const deliveryFee = computed(() =>
 
 // ── OTP send ──────────────────────────────────────────────────────────────
 const handleSendOTP = async () => {
-  if (!isPhoneValid.value || !isEmailValid.value) return
+  if (!isPhoneValid.value) return
   if (!cartStore.cartId) {
     customerValidationError.value = 'Cart not ready. Please try again.'
     return
@@ -278,7 +216,7 @@ const handleSendOTP = async () => {
     }
 
     customerWarnings.value = validation.warnings
-    await otpAuthStore.sendOTP(email.value, cartStore.cartId)
+    await otpAuthStore.sendOTP(otpAuthStore.email!, cartStore.cartId)
     subStep.value = 'otp_sent'
   }
   catch (error: any) {
@@ -298,33 +236,31 @@ const handleManualVerify = async () => {
 }
 
 const verifyAndDetect = async () => {
-  if (!otpCode.value || !cartStore.cartId) return
+  if (!otpCode.value || !cartStore.cartId || !otpAuthStore.email) return
 
   checkoutError.value = ''
 
   try {
-    await otpAuthStore.verifyOTP(email.value, cartStore.cartId, otpCode.value)
+    await otpAuthStore.verifyOTP(otpAuthStore.email, cartStore.cartId, otpCode.value)
 
+    // Apply delivery address — chosen at step 3 (StepDeliveryInfo)
     if (cartStore.orderType === 'delivery') {
-      try {
-        await addressStore.fetchAddresses(otpAuthStore.customerId!)
-      }
-      catch {
-        // fetch failure is non-fatal — fall through to guest flow
-      }
-
-      if (addressStore.hasAddresses) {
-        subStep.value = 'address_select'
-        return
-      }
-
-      // First-time customer: persist pending address and attach to cart
-      const addressId = await addressStore.persistPendingAddress(otpAuthStore.customerId!)
-      if (addressId) {
+      if (addressStore.selectedAddressId) {
+        // Returning customer: address was selected from preview
         await cartStore.updateDeliveryInfo({
           order_type: 'delivery',
-          delivery_address_id: addressId,
+          delivery_address_id: addressStore.selectedAddressId,
         })
+      }
+      else if (addressStore.pendingAddress) {
+        // New customer: persist address now that we have customerId
+        const addressId = await addressStore.persistPendingAddress(otpAuthStore.customerId!)
+        if (addressId) {
+          await cartStore.updateDeliveryInfo({
+            order_type: 'delivery',
+            delivery_address_id: addressId,
+          })
+        }
       }
     }
 
@@ -341,12 +277,12 @@ const verifyAndDetect = async () => {
   }
 }
 
-// ── Resend / change ───────────────────────────────────────────────────────
+// ── Resend ────────────────────────────────────────────────────────────────
 const handleResendOTP = async () => {
-  if (!otpAuthStore.canResendOtp || !cartStore.cartId) return
+  if (!otpAuthStore.canResendOtp || !cartStore.cartId || !otpAuthStore.email) return
 
   try {
-    await otpAuthStore.resendOTP(email.value, cartStore.cartId)
+    await otpAuthStore.resendOTP(otpAuthStore.email, cartStore.cartId)
     hasOtpError.value = false
     otpInputRef.value?.clear()
     otpCode.value = ''
@@ -361,51 +297,8 @@ const clearOtpError = () => {
   checkoutError.value = ''
 }
 
-const changeEmail = () => {
-  subStep.value = 'idle'
-  otpCode.value = ''
-  hasOtpError.value = false
-  checkoutError.value = ''
-  customerValidationError.value = ''
-  customerWarnings.value = []
-}
-
-// ── Address select (returning customer) ───────────────────────────────────
-const confirmAddress = async () => {
-  if (!addressStore.selectedAddressId) return
-
-  await cartStore.updateDeliveryInfo({
-    order_type: 'delivery',
-    delivery_address_id: addressStore.selectedAddressId,
-  })
-
-  subStep.value = 'verified'
-  emit('verified')
-}
-
-const handleDeleteAddress = (addressId: string) => {
-  addressStore.deleteAddress(otpAuthStore.customerId!, addressId)
-}
-
-const handleAddressFormSubmit = async (data: AddressCreate) => {
-  const customerId = otpAuthStore.customerId!
-
-  if (editingAddressId.value) {
-    await addressStore.updateAddress(customerId, editingAddressId.value, data)
-  }
-  else {
-    const newAddress = await addressStore.createAddress(customerId, data)
-    addressStore.selectAddress(newAddress.id)
-  }
-
-  showAddressForm.value = false
-  editingAddressId.value = null
-}
-
 // ── Exposed interface for wizard page ─────────────────────────────────────
-const isValid = computed(() =>
-  otpAuthStore.isAuthenticated && subStep.value !== 'address_select',
-)
+const isValid = computed(() => otpAuthStore.isAuthenticated)
 
 defineExpose({ isValid })
 </script>

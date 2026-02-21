@@ -14,14 +14,18 @@
       </template>
 
       <template #step-1>
-        <StepDeliveryInfo ref="stepDeliveryRef" />
+        <StepEmail ref="stepEmailRef" />
       </template>
 
       <template #step-2>
-        <StepIdentity ref="stepIdentityRef" @verified="handleVerified" />
+        <StepDeliveryInfo ref="stepDeliveryRef" />
       </template>
 
       <template #step-3>
+        <StepIdentity ref="stepIdentityRef" @verified="handleVerified" />
+      </template>
+
+      <template #step-4>
         <StepConfirm ref="stepConfirmRef" @success="handleSuccess" />
       </template>
     </CheckoutWizard>
@@ -31,6 +35,7 @@
 <script setup lang="ts">
 import CheckoutWizard from '~/components/online/CheckoutWizard.vue'
 import StepOrderType from '~/components/online/checkout/StepOrderType.vue'
+import StepEmail from '~/components/online/checkout/StepEmail.vue'
 import StepDeliveryInfo from '~/components/online/checkout/StepDeliveryInfo.vue'
 import StepIdentity from '~/components/online/checkout/StepIdentity.vue'
 import StepConfirm from '~/components/online/checkout/StepConfirm.vue'
@@ -60,8 +65,9 @@ onMounted(() => {
 // ── Wizard steps definition ───────────────────────────────────────────────
 
 const steps = [
-  { title: 'Order type',     description: 'How would you like it?' },
-  { title: 'Delivery info',  description: 'Address & schedule' },
+  { title: 'Order type',      description: 'How would you like it?' },
+  { title: 'Email',           description: 'Confirmation & address lookup' },
+  { title: 'Delivery info',   description: 'Address & schedule' },
   { title: 'Verify identity', description: 'Confirm with OTP' },
   { title: 'Review & confirm', description: 'Place your order' },
 ]
@@ -70,6 +76,7 @@ const currentStep = ref(0)
 
 // ── Step template refs ────────────────────────────────────────────────────
 
+const stepEmailRef    = ref<{ isValid: boolean; onNext: () => Promise<void> } | null>(null)
 const stepDeliveryRef = ref<{ isValid: boolean; buildDeliveryInfo: () => Record<string, unknown> } | null>(null)
 const stepIdentityRef = ref<{ isValid: boolean } | null>(null)
 const stepConfirmRef  = ref<{ isValid: boolean; isSubmitting: { value: boolean }; submitOrder: () => Promise<void> } | null>(null)
@@ -78,9 +85,10 @@ const stepConfirmRef  = ref<{ isValid: boolean; isSubmitting: { value: boolean }
 
 const canContinue = computed(() => {
   if (currentStep.value === 0) return true
-  if (currentStep.value === 1) return stepDeliveryRef.value?.isValid ?? false
-  if (currentStep.value === 2) return stepIdentityRef.value?.isValid ?? false
-  if (currentStep.value === 3) return stepConfirmRef.value?.isValid ?? false
+  if (currentStep.value === 1) return stepEmailRef.value?.isValid ?? false
+  if (currentStep.value === 2) return stepDeliveryRef.value?.isValid ?? false
+  if (currentStep.value === 3) return stepIdentityRef.value?.isValid ?? false
+  if (currentStep.value === 4) return stepConfirmRef.value?.isValid ?? false
   return false
 })
 
@@ -89,7 +97,13 @@ const isSubmitting = computed(() => stepConfirmRef.value?.isSubmitting.value ?? 
 // ── Step transition handlers ──────────────────────────────────────────────
 
 const handleNext = async () => {
-  if (currentStep.value === 1 && stepDeliveryRef.value) {
+  // Step 1 (Email): fetch address preview before advancing
+  if (currentStep.value === 1 && stepEmailRef.value) {
+    await stepEmailRef.value.onNext()
+  }
+
+  // Step 2 (Delivery): save time + instructions to cart
+  if (currentStep.value === 2 && stepDeliveryRef.value) {
     const info = stepDeliveryRef.value.buildDeliveryInfo() as {
       scheduled_time?: string
       delivery_instructions?: string
@@ -99,6 +113,7 @@ const handleNext = async () => {
       ...info,
     })
   }
+
   currentStep.value++
 }
 

@@ -4,55 +4,18 @@
     <div v-if="cartStore.orderType === 'delivery'">
       <h4 class="text-base font-semibold text-foreground mb-4">Delivery address</h4>
 
-      <!-- Email lookup for returning customers -->
-      <div v-if="previewAddresses.length === 0" class="mb-4">
-        <label class="block text-sm font-medium text-foreground mb-1">
-          Already a customer? Look up your saved addresses
-        </label>
-        <div class="flex gap-2 items-center">
-          <input
-            v-model="previewEmail"
-            type="email"
-            class="flex-1 h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            placeholder="you@email.com"
-            :disabled="previewLoading"
-            @blur="lookupAddressesByEmail"
-            @keyup.enter="lookupAddressesByEmail"
-          />
-          <div
-            v-if="previewLoading"
-            class="w-10 h-10 flex items-center justify-center border border-input rounded-md bg-muted"
-          >
-            <Icon name="heroicons:arrow-path" class="w-4 h-4 animate-spin text-muted-foreground" />
-          </div>
-        </div>
-        <p v-if="previewChecked && previewAddresses.length === 0" class="text-xs text-muted-foreground mt-1">
-          No saved addresses found for that email.
-        </p>
-      </div>
-
-      <!-- Returning customer: readonly address list -->
-      <div v-if="previewAddresses.length > 0">
-        <div class="flex items-center justify-between mb-3">
-          <p class="text-sm font-medium text-foreground">Your saved addresses</p>
-          <button
-            type="button"
-            class="text-xs text-primary font-medium underline underline-offset-2 hover:text-primary/80"
-            @click="clearPreview"
-          >
-            Use a different address
-          </button>
-        </div>
+      <!-- Returning customer: readonly address list from preview -->
+      <div v-if="addressStore.hasAddresses">
         <AddressSelector
-          :addresses="previewAddresses"
+          :addresses="addressStore.addresses"
           :selected-id="addressStore.selectedAddressId"
           :readonly="true"
           @select="addressStore.selectAddress($event)"
         />
       </div>
 
-      <!-- Guest: address form -->
-      <template v-if="previewAddresses.length === 0">
+      <!-- New customer: address form -->
+      <template v-else>
         <div
           v-if="addressFormValid"
           class="flex items-center gap-2 p-3 rounded-md bg-green-50 border border-green-200 text-green-800 text-sm font-medium"
@@ -165,63 +128,18 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useAddressStore } from '~/stores/address'
-import type { AddressCreate, Address } from '~/stores/address'
+import type { AddressCreate } from '~/stores/address'
 import AddressForm from '~/components/online/AddressForm.vue'
 import AddressSelector from '~/components/online/AddressSelector.vue'
 
 const cartStore = useOnlineCartStore()
 const addressStore = useAddressStore()
 
-// Address form state
+// Address form state (new customer path)
 const addressFormValid = ref(false)
-
-// Pre-OTP email preview (local — no auth required)
-const previewEmail = ref('')
-const previewLoading = ref(false)
-const previewAddresses = ref<Address[]>([])
-const previewChecked = ref(false)
-
-const isPreviewEmailValid = computed(() =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(previewEmail.value),
-)
-
-const lookupAddressesByEmail = async () => {
-  if (!isPreviewEmailValid.value || previewLoading.value) return
-  previewLoading.value = true
-  previewChecked.value = false
-  try {
-    const result = await $fetch<{ customer_id: string | null; addresses: Address[]; total: number }>(
-      '/api/online/addresses/preview',
-      { query: { email: previewEmail.value } },
-    )
-    previewAddresses.value = result.addresses
-    previewChecked.value = true
-    if (result.addresses.length > 0) {
-      addressStore.addresses = result.addresses
-      const defaultAddr = result.addresses.find(a => a.is_default) ?? result.addresses[0]
-      addressStore.selectAddress(defaultAddr.id)
-      addressFormValid.value = true
-    }
-  }
-  catch {
-    previewAddresses.value = []
-    previewChecked.value = true
-  }
-  finally {
-    previewLoading.value = false
-  }
-}
-
-const clearPreview = () => {
-  previewAddresses.value = []
-  previewChecked.value = false
-  previewEmail.value = ''
-  addressStore.addresses = []
-  addressStore.selectedAddressId = null
-  addressFormValid.value = false
-}
 
 const handleAddressSubmit = (data: AddressCreate) => {
   addressStore.setPendingAddress(data)
@@ -238,9 +156,13 @@ const minDate = computed(() => new Date().toISOString().split('T')[0])
 // Instructions
 const deliveryInstructions = ref('')
 
-// ── Exposed interface for wizard page ──────────────────────────────────────
+// ── Exposed interface for wizard page ─────────────────────────────────────
+
 const isValid = computed(() => {
-  if (cartStore.orderType === 'delivery' && !addressFormValid.value) return false
+  if (cartStore.orderType === 'delivery') {
+    if (addressStore.hasAddresses) return !!addressStore.selectedAddressId
+    if (!addressFormValid.value) return false
+  }
   if (isScheduled.value) return !!scheduledDate.value && !!scheduledTime.value
   return true
 })
