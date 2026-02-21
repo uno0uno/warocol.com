@@ -53,11 +53,12 @@
         <button
           v-if="!isInCart"
           @click.stop="handleClick"
-          :disabled="!product.is_available"
+          :disabled="isAdding || !product.is_available"
           class="w-9 h-9 flex items-center justify-center rounded-full bg-blue-600 text-white text-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label="Agregar al carrito"
         >
-          +
+          <span v-if="isAdding" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+          <span v-else>+</span>
         </button>
 
         <!-- IN cart → − N + inline controls -->
@@ -97,6 +98,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, watch } from 'vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
 
 const props = defineProps({
@@ -121,6 +123,17 @@ const totalQtyInCart = computed(() =>
 )
 
 const isInCart = computed(() => totalQtyInCart.value > 0)
+
+// Local loading state for the initial "add" action (before item appears in cart)
+const isAdding = ref(false)
+
+watch(isInCart, (nowInCart) => {
+  if (nowInCart) isAdding.value = false
+})
+
+watch(() => cartStore.isLoading, (loading) => {
+  if (!loading && !isInCart.value) isAdding.value = false
+})
 
 // Decrement: target the last item added (LIFO)
 const decrease = async () => {
@@ -151,6 +164,7 @@ const increase = async () => {
 function handleClick() {
   if (!props.product.is_available) return
   if (isInCart.value) return
+  if (!props.product.has_modifiers) isAdding.value = true
   emit('click', props.product)
 }
 
