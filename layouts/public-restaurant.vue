@@ -6,8 +6,7 @@
       <div class="flex-1 pb-8">
         <slot />
       </div>
-      <div v-if="cartStore.itemCount > 0" class="h-20" aria-hidden="true" />
-      <Footer />
+      <Footer v-if="cartStore.itemCount === 0" />
     </div>
   </div>
 </template>
