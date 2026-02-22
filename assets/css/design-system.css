@@ -23,6 +23,17 @@
     font-weight: 600;
   }
   
+  /* Restaurant page scoped typographic scale */
+  .restaurant-page h1 {
+    @apply text-3xl md:text-4xl font-bold;
+  }
+  .restaurant-page h2 {
+    @apply text-xl md:text-2xl font-bold;
+  }
+  .restaurant-page h3 {
+    @apply text-lg md:text-xl font-semibold;
+  }
+
   /* Buttons con el nuevo sistema de colores */
   .btn-primary {
     @apply bg-primary text-primary-foreground hover:bg-primary/90;

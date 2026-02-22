@@ -41,7 +41,7 @@
 
             <!-- Right: CTA button -->
             <button
-              class="flex items-center gap-2 flex-shrink-0 min-h-[44px] py-2.5 px-4 sm:py-3 sm:px-6 bg-primary text-primary-foreground rounded-xl font-semibold text-sm sm:text-base transition-opacity hover:opacity-90 active:opacity-80"
+              class="flex items-center gap-2 flex-shrink-0 min-h-[44px] py-2.5 px-4 sm:py-3 sm:px-6 bg-primary text-primary-foreground rounded-lg font-semibold text-sm sm:text-base transition-opacity hover:opacity-90 active:opacity-80"
               @click="$emit('open-cart')"
               aria-label="Ver carrito"
             >
