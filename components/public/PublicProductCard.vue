@@ -1,5 +1,7 @@
 <template>
+  <!-- Vertical layout (default) -->
   <div
+    v-if="layout === 'vertical'"
     class="bg-card rounded-xl border border-border overflow-hidden cursor-pointer group"
     :class="{ 'opacity-50': !product.is_available }"
     role="button"
@@ -100,6 +102,98 @@
       </div>
     </div>
   </div>
+
+  <!-- Horizontal layout variant (image left, text+price+button right) -->
+  <div
+    v-else
+    class="bg-card rounded-xl border border-border overflow-hidden cursor-pointer group flex flex-row"
+    :class="{ 'opacity-50': !product.is_available }"
+    role="button"
+    tabindex="0"
+    @click="handleClick"
+    @keydown.enter="handleClick"
+    @keydown.space.prevent="handleClick"
+  >
+    <!-- Left: square image 96×96 -->
+    <div class="relative w-24 h-24 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+      <img
+        v-if="product.image_url && product.image_url.startsWith('http')"
+        :src="product.image_url"
+        :alt="product.name"
+        class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+      />
+      <div v-else class="absolute inset-0 flex items-center justify-center text-4xl">
+        {{ product.image_url || '🍽️' }}
+      </div>
+
+      <!-- Availability badge (horizontal) -->
+      <div v-if="!product.is_available" class="absolute inset-0 flex items-center justify-center bg-black/40">
+        <span class="px-1.5 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full text-center leading-tight">
+          No disponible
+        </span>
+      </div>
+    </div>
+
+    <!-- Right: name, description, price + cart controls -->
+    <div class="flex flex-1 items-center px-3 py-3 gap-2 min-w-0">
+      <div class="flex-1 min-w-0">
+        <!-- Modifier indicator inline -->
+        <span
+          v-if="product.has_modifiers"
+          class="inline-block px-1.5 py-0.5 text-xs font-medium bg-primary/80 text-primary-foreground rounded-full mb-0.5"
+        >
+          Personalizable
+        </span>
+
+        <h3 class="text-sm font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+          {{ product.name }}
+        </h3>
+
+        <p v-if="product.description" class="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+          {{ product.description }}
+        </p>
+
+        <div class="flex items-center gap-2 mt-1">
+          <span class="text-base font-bold text-foreground">{{ formatPrice(product.price) }}</span>
+          <span v-if="product.preparation_time" class="text-xs text-muted-foreground">⏱️ {{ product.preparation_time }} min</span>
+        </div>
+      </div>
+
+      <!-- Cart controls (compact) -->
+      <div class="flex-shrink-0" @click.stop>
+        <!-- NOT in cart → + button -->
+        <button
+          v-if="!isInCart"
+          @click.stop="handleClick"
+          :disabled="isAdding || !product.is_available"
+          class="w-9 h-9 flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+          aria-label="Agregar al carrito"
+        >
+          <span v-if="isAdding" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+          <span v-else>+</span>
+        </button>
+
+        <!-- IN cart → − N + inline controls (compact) -->
+        <div v-else class="flex items-center gap-1">
+          <button
+            @click="decrease"
+            :disabled="cartStore.isLoading"
+            class="w-9 h-9 flex items-center justify-center rounded-xl bg-muted hover:bg-red-100 text-foreground hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-base font-bold"
+            aria-label="Quitar uno"
+          >−</button>
+          <span class="min-w-[1.25rem] text-center font-bold text-foreground text-sm">
+            {{ totalQtyInCart }}
+          </span>
+          <button
+            @click="increase"
+            :disabled="cartStore.isLoading || !product.is_available"
+            class="w-9 h-9 flex items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-base font-bold focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+            aria-label="Agregar uno más"
+          >+</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -110,6 +204,10 @@ const props = defineProps({
   product: {
     type: Object,
     required: true
+  },
+  layout: {
+    type: String as () => 'vertical' | 'horizontal',
+    default: 'vertical'
   }
 })
 
