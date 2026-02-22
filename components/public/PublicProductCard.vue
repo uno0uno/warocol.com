@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden cursor-pointer group"
+    class="bg-card rounded-xl border border-border overflow-hidden cursor-pointer group"
     :class="{ 'opacity-50': !product.is_available }"
     role="button"
     tabindex="0"
@@ -14,7 +14,7 @@
         v-if="product.image_url && product.image_url.startsWith('http')"
         :src="product.image_url"
         :alt="product.name"
-        class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+        class="absolute inset-0 w-full h-full object-cover"
       />
       <div v-else class="absolute inset-0 flex items-center justify-center text-7xl">
         {{ product.image_url || '🍽️' }}
@@ -38,19 +38,19 @@
     <!-- Product Info -->
     <div class="p-4">
       <!-- Name -->
-      <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+      <h3 class="text-lg font-semibold text-foreground mb-1 line-clamp-2 group-hover:text-primary transition-colors">
         {{ product.name }}
       </h3>
 
       <!-- Description -->
-      <p v-if="product.description" class="text-base text-gray-500 mb-3 line-clamp-2">
+      <p v-if="product.description" class="text-base text-muted-foreground mb-3 line-clamp-2">
         {{ product.description }}
       </p>
 
       <!-- Footer: Price, Category, and Cart Controls -->
       <div class="flex items-center justify-between mt-auto">
         <!-- Price -->
-        <div class="text-2xl font-bold text-gray-900">
+        <div class="text-2xl font-bold text-foreground">
           {{ formatPrice(product.price) }}
         </div>
 
@@ -59,7 +59,7 @@
           v-if="!isInCart"
           @click.stop="handleClick"
           :disabled="isAdding || !product.is_available"
-          class="w-11 h-11 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:ring-2 focus:ring-primary/50 focus:outline-none"
+          class="w-11 h-11 flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
           aria-label="Agregar al carrito"
         >
           <span v-if="isAdding" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
@@ -71,16 +71,16 @@
           <button
             @click="decrease"
             :disabled="cartStore.isLoading"
-            class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-muted hover:bg-red-100 text-foreground hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold"
             aria-label="Quitar uno"
           >−</button>
-          <span class="min-w-[1.5rem] text-center font-bold text-gray-900 text-sm">
+          <span class="min-w-[1.5rem] text-center font-bold text-foreground text-sm">
             {{ totalQtyInCart }}
           </span>
           <button
             @click="increase"
             :disabled="cartStore.isLoading || !product.is_available"
-            class="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold focus:ring-2 focus:ring-primary/50 focus:outline-none"
+            class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
             aria-label="Agregar uno más"
           >+</button>
         </div>
@@ -88,12 +88,12 @@
 
       <!-- Category badge -->
       <div class="flex items-center justify-between mt-2">
-        <div class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+        <div class="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-xl">
           {{ product.category_name }}
         </div>
 
         <!-- Preparation time -->
-        <div v-if="product.preparation_time" class="flex items-center gap-1 text-xs text-gray-500">
+        <div v-if="product.preparation_time" class="flex items-center gap-1 text-xs text-muted-foreground">
           <span>⏱️</span>
           <span>{{ product.preparation_time }} min</span>
         </div>
