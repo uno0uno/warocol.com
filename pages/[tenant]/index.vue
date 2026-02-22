@@ -46,20 +46,26 @@ const { data: menuData, error: menuError, pending: pendingMenu } = await useAsyn
 
 const restaurant = computed(() => profileData.value?.data || null)
 
-// Set tenant UUID from profile data and recover session once tenant is known
-watch(restaurant, async (val) => {
-  if (!val?.tenant_id) return
-  cartStore.setTenant(val.tenant_id)
-  // Session recovery — client-only, runs once after tenant UUID is available
-  if (!process.client || !cartStore.sessionId) return
+// Declared at setup scope so $fetch Nuxt auto-import is in context.
+const recoverCartSession = async (tenantId: string) => {
   try {
     const cart = await $fetch<{ data: any }>(`/api/online/cart/session/${cartStore.sessionId}`, {
-      query: { tenant_id: val.tenant_id }
+      query: { tenant_id: tenantId }
     })
     if (cart?.data) cartStore.hydrateFromBackend(cart.data)
   } catch {
-    // No active cart for this session, that's expected
+    // No active cart for this session — expected on first visit
   }
+}
+
+// Set tenant UUID from profile data and recover session once tenant is known.
+// The recovery promise is registered in the store so addItem() can await it
+// and avoid racing with hydrateFromBackend() on the first click.
+watch(restaurant, (val: any) => {
+  if (!val?.tenant_id) return
+  cartStore.setTenant(val.tenant_id)
+  if (!process.client || !cartStore.sessionId) return
+  cartStore.setRecoveryPromise(recoverCartSession(val.tenant_id))
 }, { immediate: true })
 
 const categories = computed(() => menuData.value?.data?.categories || [])

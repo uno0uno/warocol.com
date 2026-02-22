@@ -139,7 +139,7 @@
                   class="w-full py-2 text-sm font-semibold text-destructive hover:bg-destructive/5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   @click="confirmClear = true"
                 >
-                  🗑️ Vaciar Carrito
+                  Vaciar Carrito
                 </button>
               </Transition>
             </div>
@@ -179,12 +179,7 @@ const showError = (msg: string) => {
   errorTimeout = setTimeout(() => { errorMsg.value = null }, 4000)
 }
 
-const deliveryFee = computed(() => {
-  if (cartStore.orderType === 'delivery') {
-    return cartStore.subtotal >= 50000 ? 0 : 5000
-  }
-  return 0
-})
+const deliveryFee = computed(() => 0)
 
 const minimumOrder = computed(() => {
   return cartStore.orderType === 'delivery' ? 20000 : 0
