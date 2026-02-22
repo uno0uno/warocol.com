@@ -3,11 +3,11 @@
 
     <!-- Order type -->
     <div class="flex items-center gap-3 p-4 rounded-xl border border-border bg-card">
-      <span class="text-3xl">{{ orderTypeIcon }}</span>
+      <Icon :name="orderTypeIcon" class="w-7 h-7 text-primary flex-shrink-0" />
       <div>
         <p class="font-semibold text-foreground text-sm">{{ orderTypeLabel }}</p>
         <p v-if="cartStore.orderType === 'pickup'" class="text-xs text-muted-foreground mt-0.5">
-          You will receive a PIN when confirmed
+          Recibirás un PIN al confirmar
         </p>
       </div>
     </div>
@@ -41,7 +41,7 @@
     <div class="flex items-center gap-3 p-4 rounded-xl border border-border bg-card">
       <Icon name="heroicons:lock-closed" class="w-5 h-5 text-green-600 flex-shrink-0" />
       <div class="text-sm">
-        <p class="text-xs text-muted-foreground">Verified identity</p>
+        <p class="text-xs text-muted-foreground">Identidad verificada</p>
         <p class="font-medium text-foreground">{{ otpAuthStore.email }}</p>
       </div>
     </div>
@@ -50,7 +50,7 @@
     <div class="rounded-xl border border-border bg-card overflow-hidden">
       <div class="px-4 py-3 border-b border-border">
         <p class="text-sm font-semibold text-foreground">
-          Your order ({{ cartStore.itemCount }} {{ cartStore.itemCount === 1 ? 'item' : 'items' }})
+          Tu pedido ({{ cartStore.itemCount }} {{ cartStore.itemCount === 1 ? 'artículo' : 'artículos' }})
         </p>
       </div>
       <div class="divide-y divide-border">
@@ -89,8 +89,8 @@
 
     <!-- Payment method -->
     <div class="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
-      <span class="text-lg">💵</span>
-      <p class="text-sm text-amber-900"><strong>Payment:</strong> Cash on delivery</p>
+      <Icon name="heroicons:banknotes" class="w-5 h-5 text-amber-700 flex-shrink-0" />
+      <p class="text-sm text-amber-900"><strong>Pago:</strong> Efectivo contra entrega</p>
     </div>
 
     <!-- Checkout error -->
@@ -114,10 +114,10 @@
             <Icon name="heroicons:check" class="w-10 h-10 text-green-600" />
           </div>
 
-          <h2 class="text-2xl font-bold text-foreground mb-2">Order confirmed!</h2>
+          <h2 class="text-2xl font-bold text-foreground mb-2">¡Pedido confirmado!</h2>
 
           <p class="text-muted-foreground mb-5">
-            Order number: <strong class="text-foreground">#{{ confirmedOrder?.order_number }}</strong>
+            Número de pedido: <strong class="text-foreground">#{{ confirmedOrder?.order_number }}</strong>
           </p>
 
           <!-- Pickup PIN -->
@@ -125,28 +125,28 @@
             v-if="confirmedOrder?.pickup_pin || otpAuthStore.pickupPin"
             class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-5"
           >
-            <p class="text-xs font-semibold text-amber-800 mb-2 uppercase tracking-wide">Your pickup PIN</p>
+            <p class="text-xs font-semibold text-amber-800 mb-2 uppercase tracking-wide">Tu PIN de recogida</p>
             <p class="text-4xl font-extrabold text-amber-900 tracking-[0.2em] mb-2">
               {{ confirmedOrder?.pickup_pin || otpAuthStore.pickupPin }}
             </p>
-            <p class="text-xs text-amber-700">Show this PIN when picking up your order</p>
+            <p class="text-xs text-amber-700">Muestra este PIN al recoger tu pedido</p>
           </div>
 
           <!-- ETA message -->
           <p class="text-sm text-muted-foreground mb-6">
             <template v-if="cartStore.orderType === 'delivery'">
-              Your order will arrive in approximately <strong>30–45 minutes</strong>
+              Tu pedido llegará en aproximadamente <strong>30–45 minutos</strong>
             </template>
             <template v-else-if="cartStore.orderType === 'pickup'">
-              Your order will be ready in <strong>20–30 minutes</strong>
+              Tu pedido estará listo en <strong>20–30 minutos</strong>
             </template>
             <template v-else>
-              Your order is being prepared
+              Tu pedido está siendo preparado
             </template>
           </p>
 
           <Button class="w-full" @click="emit('success')">
-            Back to store
+            Volver al menú
           </Button>
         </div>
       </div>
@@ -155,6 +155,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useOtpAuthStore } from '~/stores/otp_auth'
 import { useAddressStore } from '~/stores/address'
@@ -180,15 +181,15 @@ const deliveryFee = computed(() =>
 )
 
 const orderTypeIcon = computed(() => ({
-  delivery: '🛵',
-  pickup: '🏪',
-  'dine-in': '🍽️',
-}[cartStore.orderType] ?? '📦'))
+  delivery: 'heroicons:truck',
+  pickup: 'heroicons:building-storefront',
+  'dine-in': 'heroicons:table-cells',
+}[cartStore.orderType] ?? 'heroicons:shopping-bag'))
 
 const orderTypeLabel = computed(() => ({
-  delivery: 'Delivery',
-  pickup: 'Pick up at the store',
-  'dine-in': 'Order from the table',
+  delivery: 'Domicilio',
+  pickup: 'Recoger en tienda',
+  'dine-in': 'En mesa',
 }[cartStore.orderType] ?? cartStore.orderType))
 
 const formatPrice = (price: number) =>

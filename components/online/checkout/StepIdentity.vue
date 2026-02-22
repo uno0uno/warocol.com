@@ -7,7 +7,7 @@
         <Icon name="heroicons:check-circle" class="w-9 h-9 text-green-600" />
       </div>
       <div>
-        <p class="font-semibold text-foreground">Identity verified</p>
+        <p class="font-semibold text-foreground">Identidad verificada</p>
         <p class="text-sm text-muted-foreground mt-0.5">{{ otpAuthStore.email }}</p>
       </div>
     </div>
@@ -15,9 +15,9 @@
     <!-- idle: phone form (email already known from StepEmail) -->
     <div v-else-if="subStep === 'idle'" class="space-y-4">
       <div class="text-center mb-2">
-        <h4 class="text-base font-semibold text-foreground">Verify your identity</h4>
+        <h4 class="text-base font-semibold text-foreground">Verifica tu identidad</h4>
         <p class="text-sm text-muted-foreground mt-0.5">
-          We'll send a one-time code to confirm your order
+          Te enviaremos un código único para confirmar tu pedido
         </p>
       </div>
 
@@ -28,7 +28,7 @@
       </div>
 
       <div class="space-y-1">
-        <label class="block text-sm font-medium text-foreground">Phone number</label>
+        <label class="block text-sm font-medium text-foreground">Número de celular</label>
         <input
           v-model="phone"
           type="tel"
@@ -37,7 +37,7 @@
           @keyup.enter="handleSendOTP"
         />
         <p v-if="phone && !isPhoneValid" class="text-xs text-destructive">
-          Enter a valid Colombian mobile number (10 digits starting with 3)
+          Ingresa un número de celular colombiano válido (10 dígitos, comienza con 3)
         </p>
       </div>
 
@@ -67,7 +67,7 @@
           name="heroicons:arrow-path"
           class="w-4 h-4 mr-2 animate-spin"
         />
-        {{ otpAuthStore.isLoading ? 'Sending…' : 'Send code' }}
+        {{ otpAuthStore.isLoading ? 'Enviando...' : 'Enviar código' }}
       </Button>
     </div>
 
@@ -77,22 +77,22 @@
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
           <Icon name="heroicons:envelope" class="w-6 h-6 text-primary" />
         </div>
-        <h4 class="text-base font-semibold text-foreground">Enter the code</h4>
+        <h4 class="text-base font-semibold text-foreground">Ingresa el código</h4>
         <p class="text-sm text-muted-foreground mt-0.5">
-          Code sent to <strong>{{ otpAuthStore.email }}</strong>
+          Código enviado a <strong>{{ otpAuthStore.email }}</strong>
           <button
             type="button"
             class="ml-2 text-xs text-primary font-medium underline underline-offset-2 hover:text-primary/80"
             @click="subStep = 'idle'"
           >
-            Change
+            Cambiar
           </button>
         </p>
       </div>
 
       <div v-if="countdown > 0" class="text-center text-sm font-medium text-amber-600">
         <Icon name="heroicons:clock" class="w-4 h-4 inline mr-1" />
-        Resend available in {{ countdown }}s
+        Reenviar disponible en {{ countdown }}s
       </div>
 
       <OTPInput
@@ -120,7 +120,7 @@
             name="heroicons:arrow-path"
             class="w-4 h-4 mr-2 animate-spin"
           />
-          {{ otpAuthStore.isLoading ? 'Verifying…' : 'Verify' }}
+          {{ otpAuthStore.isLoading ? 'Verificando...' : 'Verificar' }}
         </Button>
 
         <Button
@@ -129,7 +129,7 @@
           :disabled="countdown > 0 || otpAuthStore.isLoading"
           @click="handleResendOTP"
         >
-          Resend code
+          Reenviar código
         </Button>
       </div>
     </div>
@@ -169,7 +169,7 @@ const customerWarnings = ref<string[]>([])
 // OTP state
 const otpCode = ref('')
 const hasOtpError = ref(false)
-const otpErrorMessage = ref('Incorrect code')
+const otpErrorMessage = ref('Código incorrecto')
 const otpInputRef = ref<InstanceType<typeof OTPInput> | null>(null)
 const checkoutError = ref('')
 
@@ -196,7 +196,7 @@ const deliveryFee = computed(() =>
 const handleSendOTP = async () => {
   if (!isPhoneValid.value) return
   if (!cartStore.cartId) {
-    customerValidationError.value = 'Cart not ready. Please try again.'
+    customerValidationError.value = 'El carrito no está listo. Inténtalo de nuevo.'
     return
   }
 
@@ -211,7 +211,7 @@ const handleSendOTP = async () => {
     const validation = await otpAuthStore.validateCustomer(phone.value, safeTotal)
 
     if (!validation.can_order) {
-      customerValidationError.value = validation.reason || 'You cannot place this order.'
+      customerValidationError.value = validation.reason || 'No puedes realizar este pedido.'
       return
     }
 
@@ -220,7 +220,7 @@ const handleSendOTP = async () => {
     subStep.value = 'otp_sent'
   }
   catch (error: any) {
-    customerValidationError.value = error.message || 'Error sending code. Please try again.'
+    customerValidationError.value = error.message || 'Error al enviar el código. Inténtalo de nuevo.'
   }
 }
 
@@ -268,7 +268,7 @@ const verifyAndDetect = async () => {
     emit('verified')
   }
   catch (error: any) {
-    const message = error.data?.detail || error.message || 'Incorrect code. Please try again.'
+    const message = error.data?.detail || error.message || 'Código incorrecto. Inténtalo de nuevo.'
     hasOtpError.value = true
     otpErrorMessage.value = message
     checkoutError.value = message
@@ -288,7 +288,7 @@ const handleResendOTP = async () => {
     otpCode.value = ''
   }
   catch (error: any) {
-    checkoutError.value = error.message || 'Error resending code'
+    checkoutError.value = error.message || 'Error al reenviar el código'
   }
 }
 

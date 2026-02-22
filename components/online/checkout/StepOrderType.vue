@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="text-center mb-6">
-      <h4 class="text-xl font-semibold text-foreground">How would you like to receive your order?</h4>
-      <p class="text-sm text-muted-foreground mt-1">Choose an option to continue</p>
+      <h4 class="text-xl font-semibold text-foreground">¿Cómo quieres recibir tu pedido?</h4>
+      <p class="text-sm text-muted-foreground mt-1">Selecciona una opción para continuar</p>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -20,14 +20,14 @@
         :disabled="!isAvailable(type.value)"
         @click="select(type.value)"
       >
-        <span class="text-5xl">{{ type.icon }}</span>
+        <Icon :name="type.icon" class="w-8 h-8" />
         <div>
           <p class="font-semibold text-base">{{ type.label }}</p>
           <p class="text-xs mt-0.5" :class="cartStore.orderType === type.value ? 'text-primary/80' : 'text-muted-foreground'">
             {{ type.desc }}
           </p>
         </div>
-        <!-- Selected indicator -->
+        <!-- Indicador seleccionado -->
         <div
           v-if="cartStore.orderType === type.value"
           class="w-5 h-5 rounded-full bg-primary flex items-center justify-center"
@@ -41,6 +41,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
 
 const props = defineProps<{
@@ -50,9 +51,9 @@ const props = defineProps<{
 const cartStore = useOnlineCartStore()
 
 const orderTypes = [
-  { value: 'delivery' as const, icon: '🛵', label: 'Delivery',  desc: 'Receive at your door' },
-  { value: 'pickup'   as const, icon: '🏪', label: 'Pickup',    desc: 'Pick up at the store' },
-  { value: 'dine-in'  as const, icon: '🍽️', label: 'Dine-in',  desc: 'Order from your table' },
+  { value: 'delivery' as const, icon: 'heroicons:truck',               label: 'Domicilio',         desc: 'Lo recibimos en tu puerta' },
+  { value: 'pickup'   as const, icon: 'heroicons:building-storefront', label: 'Recoger en tienda', desc: 'Recógelo en el local' },
+  { value: 'dine-in'  as const, icon: 'heroicons:table-cells',         label: 'En mesa',           desc: 'Pide desde tu mesa' },
 ]
 
 const availableOrderTypes = computed(() =>

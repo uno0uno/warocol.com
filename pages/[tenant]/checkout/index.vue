@@ -33,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import CheckoutWizard from '~/components/online/CheckoutWizard.vue'
 import StepOrderType from '~/components/online/checkout/StepOrderType.vue'
 import StepEmail from '~/components/online/checkout/StepEmail.vue'
@@ -65,11 +66,11 @@ onMounted(() => {
 // ── Wizard steps definition ───────────────────────────────────────────────
 
 const steps = [
-  { title: 'Order type',      description: 'How would you like it?' },
-  { title: 'Email',           description: 'Confirmation & address lookup' },
-  { title: 'Delivery info',   description: 'Address & schedule' },
-  { title: 'Verify identity', description: 'Confirm with OTP' },
-  { title: 'Review & confirm', description: 'Place your order' },
+  { title: 'Tipo de pedido',      short: 'Tipo',      description: '¿Cómo lo quieres?' },
+  { title: 'Correo',              short: 'Correo',    description: 'Confirmación y direcciones' },
+  { title: 'Entrega',             short: 'Entrega',   description: 'Dirección y horario' },
+  { title: 'Verificar identidad', short: 'Verif.',    description: 'Confirmar con OTP' },
+  { title: 'Revisar y confirmar', short: 'Confirmar', description: 'Haz tu pedido' },
 ]
 
 const currentStep = ref(0)
@@ -92,29 +93,38 @@ const canContinue = computed(() => {
   return false
 })
 
-const isSubmitting = computed(() => stepConfirmRef.value?.isSubmitting.value ?? false)
+const isNavigating = ref(false)
+const isSubmitting = computed(
+  () => isNavigating.value || (stepConfirmRef.value?.isSubmitting.value ?? false),
+)
 
 // ── Step transition handlers ──────────────────────────────────────────────
 
 const handleNext = async () => {
-  // Step 1 (Email): fetch address preview before advancing
-  if (currentStep.value === 1 && stepEmailRef.value) {
-    await stepEmailRef.value.onNext()
-  }
-
-  // Step 2 (Delivery): save time + instructions to cart
-  if (currentStep.value === 2 && stepDeliveryRef.value) {
-    const info = stepDeliveryRef.value.buildDeliveryInfo() as {
-      scheduled_time?: string
-      delivery_instructions?: string
+  isNavigating.value = true
+  try {
+    // Step 1 (Email): fetch address preview before advancing
+    if (currentStep.value === 1 && stepEmailRef.value) {
+      await stepEmailRef.value.onNext()
     }
-    await cartStore.updateDeliveryInfo({
-      order_type: cartStore.orderType,
-      ...info,
-    })
-  }
 
-  currentStep.value++
+    // Step 2 (Delivery): save time + instructions to cart
+    if (currentStep.value === 2 && stepDeliveryRef.value) {
+      const info = stepDeliveryRef.value.buildDeliveryInfo() as {
+        scheduled_time?: string
+        delivery_instructions?: string
+      }
+      await cartStore.updateDeliveryInfo({
+        order_type: cartStore.orderType,
+        ...info,
+      })
+    }
+
+    currentStep.value++
+  }
+  finally {
+    isNavigating.value = false
+  }
 }
 
 const handlePrev = () => {

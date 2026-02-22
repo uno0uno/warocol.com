@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <!-- Address Section (delivery only) -->
     <div v-if="cartStore.orderType === 'delivery'">
-      <h4 class="text-base font-semibold text-foreground mb-4">Delivery address</h4>
+      <h4 class="text-base font-semibold text-foreground mb-4">Dirección de entrega</h4>
 
       <!-- Returning customer: readonly address list from preview -->
       <div v-if="addressStore.hasAddresses">
@@ -21,7 +21,7 @@
           class="flex items-center gap-2 p-3 rounded-md bg-green-50 border border-green-200 text-green-800 text-sm font-medium"
         >
           <Icon name="heroicons:check-circle" class="w-4 h-4 flex-shrink-0" />
-          Address saved — you can continue
+          Dirección guardada — puedes continuar
         </div>
         <AddressForm
           v-else
@@ -37,20 +37,25 @@
       v-else
       class="flex flex-col items-center gap-2 p-6 rounded-xl border border-border bg-muted/30 text-center"
     >
-      <span class="text-5xl">{{ cartStore.orderType === 'pickup' ? '🏪' : '🍽️' }}</span>
+      <Icon
+        v-if="cartStore.orderType === 'pickup'"
+        name="heroicons:building-storefront"
+        class="w-10 h-10 text-foreground"
+      />
+      <Icon v-else name="heroicons:table-cells" class="w-10 h-10 text-foreground" />
       <p class="font-semibold text-foreground">
-        {{ cartStore.orderType === 'pickup' ? 'Pick up at the store' : 'Order from your table' }}
+        {{ cartStore.orderType === 'pickup' ? 'Recoger en tienda' : 'En mesa' }}
       </p>
       <p class="text-sm text-muted-foreground">
         {{ cartStore.orderType === 'pickup'
-          ? 'You will receive a PIN when your order is confirmed'
-          : 'You can place your order directly from the table' }}
+          ? 'Recibirás un PIN cuando confirmes tu pedido'
+          : 'Puedes hacer tu pedido directamente desde la mesa' }}
       </p>
     </div>
 
     <!-- Time preference -->
     <div>
-      <h4 class="text-base font-semibold text-foreground mb-3">When do you need it?</h4>
+      <h4 class="text-base font-semibold text-foreground mb-3">¿Cuándo lo necesitas?</h4>
 
       <div class="grid grid-cols-2 gap-3 mb-4">
         <button
@@ -61,11 +66,11 @@
             : 'border-border bg-card text-foreground hover:border-primary/50'"
           @click="isScheduled = false"
         >
-          <span class="text-3xl">⚡</span>
+          <Icon name="heroicons:bolt" class="w-7 h-7 flex-shrink-0" />
           <div>
-            <p class="font-semibold text-sm">As soon as possible</p>
+            <p class="font-semibold text-sm">Lo antes posible</p>
             <p class="text-xs mt-0.5" :class="!isScheduled ? 'text-primary/80' : 'text-muted-foreground'">
-              30–45 minutes
+              30–45 minutos
             </p>
           </div>
         </button>
@@ -78,11 +83,11 @@
             : 'border-border bg-card text-foreground hover:border-primary/50'"
           @click="isScheduled = true"
         >
-          <span class="text-3xl">📅</span>
+          <Icon name="heroicons:calendar" class="w-7 h-7 flex-shrink-0" />
           <div>
-            <p class="font-semibold text-sm">Schedule</p>
+            <p class="font-semibold text-sm">Programar</p>
             <p class="text-xs mt-0.5" :class="isScheduled ? 'text-primary/80' : 'text-muted-foreground'">
-              Choose date and time
+              Elige fecha y hora
             </p>
           </div>
         </button>
@@ -91,7 +96,7 @@
       <!-- Date & time pickers -->
       <div v-if="isScheduled" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="space-y-1">
-          <label class="block text-sm font-medium text-foreground">Date</label>
+          <label class="block text-sm font-medium text-foreground">Fecha</label>
           <input
             v-model="scheduledDate"
             type="date"
@@ -100,7 +105,7 @@
           />
         </div>
         <div class="space-y-1">
-          <label class="block text-sm font-medium text-foreground">Time</label>
+          <label class="block text-sm font-medium text-foreground">Hora</label>
           <input
             v-model="scheduledTime"
             type="time"
@@ -113,12 +118,12 @@
     <!-- Instructions -->
     <div>
       <label class="block text-sm font-medium text-foreground mb-1">
-        Additional instructions <span class="text-muted-foreground font-normal">(optional)</span>
+        Instrucciones adicionales <span class="text-muted-foreground font-normal">(opcional)</span>
       </label>
       <textarea
         v-model="deliveryInstructions"
         class="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        placeholder="E.g. No onion, well done, ring the doorbell..."
+        placeholder="Ej: Sin cebolla, bien cocido, timbrar al portero..."
         rows="3"
         maxlength="300"
       />
