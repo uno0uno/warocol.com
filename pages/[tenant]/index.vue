@@ -188,7 +188,7 @@ const handleCheckout = () => {
         </p>
         <NuxtLink
           to="/"
-          class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          class="inline-flex items-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
         >
           <span class="mr-2">🏠</span>
           Volver al inicio
