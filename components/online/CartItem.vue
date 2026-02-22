@@ -1,73 +1,84 @@
 <template>
-  <div class="cart-item">
-    <div class="item-content">
+  <div class="px-4 py-4 border-b border-border last:border-b-0 hover:bg-muted/20 transition-colors">
+    <div class="flex gap-4 justify-between">
+
       <!-- Product Info -->
-      <div class="item-info">
-        <h4 class="item-name">{{ item.product_name }}</h4>
+      <div class="flex-1 min-w-0">
+        <h4 class="text-base font-semibold text-foreground mb-2">{{ item.product_name }}</h4>
 
         <!-- Modifiers -->
-        <div v-if="item.modifiers.length > 0" class="item-modifiers">
+        <div v-if="item.modifiers.length > 0" class="flex flex-wrap gap-1.5 mb-2">
           <span
             v-for="modifier in item.modifiers"
             :key="modifier.id"
-            class="modifier-tag"
+            class="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full"
           >
             + {{ modifier.name }}
           </span>
         </div>
 
         <!-- Notes -->
-        <p v-if="item.notes" class="item-notes">
+        <p v-if="item.notes" class="text-sm text-muted-foreground italic mb-2">
           📝 {{ item.notes }}
         </p>
 
-        <!-- Price -->
-        <p class="item-price">
+        <!-- Unit price -->
+        <p class="text-sm text-muted-foreground">
           {{ formatPrice(item.unit_price) }}
-          <span v-if="item.modifiers.length > 0" class="modifiers-price">
+          <span v-if="item.modifiers.length > 0" class="text-muted-foreground/70">
             + {{ formatPrice(modifiersTotal) }}
           </span>
         </p>
       </div>
 
-      <!-- Quantity Controls -->
-      <div class="item-actions">
-        <div class="quantity-controls">
+      <!-- Quantity Controls + Total + Remove -->
+      <div class="flex flex-col items-end gap-2 flex-shrink-0">
+
+        <!-- Quantity row -->
+        <div class="flex items-center gap-1.5 bg-muted rounded-lg p-1">
           <button
-            class="qty-btn"
-            @click="decreaseQuantity"
+            class="w-8 h-8 flex items-center justify-center bg-background rounded-md text-muted-foreground
+                   hover:bg-primary hover:text-primary-foreground transition-colors
+                   disabled:opacity-50 disabled:cursor-not-allowed
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             :disabled="loading"
             aria-label="Disminuir cantidad"
+            @click="decreaseQuantity"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              stroke-width="2"
+              stroke-width="2.5"
             >
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
           </button>
 
-          <span class="qty-value">{{ item.quantity }}</span>
+          <span class="min-w-[1.5rem] text-center text-sm font-semibold text-foreground">
+            {{ item.quantity }}
+          </span>
 
           <button
-            class="qty-btn"
-            @click="increaseQuantity"
+            class="w-8 h-8 flex items-center justify-center bg-background rounded-md text-muted-foreground
+                   hover:bg-primary hover:text-primary-foreground transition-colors
+                   disabled:opacity-50 disabled:cursor-not-allowed
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             :disabled="loading"
             aria-label="Aumentar cantidad"
+            @click="increaseQuantity"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              stroke-width="2"
+              stroke-width="2.5"
             >
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
@@ -75,20 +86,23 @@
           </button>
         </div>
 
-        <!-- Total -->
-        <p class="item-total">{{ formatPrice(item.total) }}</p>
+        <!-- Item total -->
+        <p class="text-base font-bold text-foreground">{{ formatPrice(item.total) }}</p>
 
-        <!-- Remove Button -->
+        <!-- Remove button -->
         <button
-          class="remove-btn"
-          @click="handleRemove"
+          class="w-8 h-8 flex items-center justify-center bg-transparent border border-border rounded-md text-destructive
+                 hover:bg-destructive/10 hover:border-destructive transition-colors
+                 disabled:opacity-50 disabled:cursor-not-allowed
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           :disabled="loading"
           aria-label="Eliminar producto"
+          @click="handleRemove"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
+            width="14"
+            height="14"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -104,18 +118,18 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { CartItem } from '~/stores/online_cart'
 
 const props = defineProps<{
   item: CartItem
+  loading?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'update-quantity', itemId: string, quantity: number): void
   (e: 'remove', itemId: string): void
 }>()
-
-const loading = ref(false)
 
 const modifiersTotal = computed(() => {
   return props.item.modifiers.reduce((sum, mod) => sum + mod.price, 0)
@@ -137,7 +151,6 @@ const decreaseQuantity = () => {
   if (props.item.quantity > 1) {
     emit('update-quantity', props.item.id, props.item.quantity - 1)
   } else {
-    // If quantity is 1, remove item
     handleRemove()
   }
 }
@@ -146,166 +159,3 @@ const handleRemove = () => {
   emit('remove', props.item.id)
 }
 </script>
-
-<style scoped>
-.cart-item {
-  padding: 16px;
-  border-bottom: 1px solid #e5e7eb;
-  transition: background-color 0.2s ease;
-}
-
-.cart-item:hover {
-  background-color: #f9fafb;
-}
-
-.cart-item:last-child {
-  border-bottom: none;
-}
-
-.item-content {
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
-}
-
-.item-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.item-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 8px 0;
-}
-
-.item-modifiers {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.modifier-tag {
-  font-size: 12px;
-  color: #6b7280;
-  background: #f3f4f6;
-  padding: 4px 8px;
-  border-radius: 12px;
-}
-
-.item-notes {
-  font-size: 13px;
-  color: #6b7280;
-  font-style: italic;
-  margin: 4px 0 8px 0;
-}
-
-.item-price {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
-}
-
-.modifiers-price {
-  color: #9ca3af;
-}
-
-.item-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.quantity-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #f3f4f6;
-  border-radius: 8px;
-  padding: 4px;
-}
-
-.qty-btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  color: #6b7280;
-  transition: all 0.2s ease;
-}
-
-.qty-btn:hover:not(:disabled) {
-  background: #667eea;
-  color: white;
-}
-
-.qty-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.qty-value {
-  min-width: 24px;
-  text-align: center;
-  font-weight: 600;
-  color: #111827;
-}
-
-.item-total {
-  font-size: 16px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0;
-}
-
-.remove-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  cursor: pointer;
-  color: #ef4444;
-  transition: all 0.2s ease;
-}
-
-.remove-btn:hover:not(:disabled) {
-  background: #fef2f2;
-  border-color: #ef4444;
-}
-
-.remove-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Mobile styles */
-@media (max-width: 640px) {
-  .cart-item {
-    padding: 12px;
-  }
-
-  .item-content {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .item-actions {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  }
-}
-</style>

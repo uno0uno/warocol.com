@@ -1,20 +1,21 @@
 <template>
-  <!-- Backdrop -->
   <Teleport to="body">
+    <!-- Backdrop -->
     <Transition name="fade">
       <div
         v-if="modelValue"
-        class="cart-backdrop"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]"
         @click="close"
-      ></div>
+      />
     </Transition>
 
     <!-- Drawer -->
     <Transition name="slide">
-      <aside v-if="modelValue" class="cart-drawer">
+      <aside v-if="modelValue" class="fixed top-0 right-0 bottom-0 w-full max-w-[480px] bg-background z-[101] flex flex-col shadow-2xl">
+
         <!-- Header -->
-        <header class="drawer-header">
-          <h2 class="drawer-title">
+        <header class="flex items-center justify-between px-6 py-5 border-b border-border bg-background flex-shrink-0">
+          <h2 class="flex items-center gap-3 text-xl font-bold text-foreground m-0">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -23,20 +24,25 @@
               fill="none"
               stroke="currentColor"
               stroke-width="2"
+              class="text-primary"
             >
               <circle cx="9" cy="21" r="1" />
               <circle cx="20" cy="21" r="1" />
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
             </svg>
             Mi Carrito
-            <span class="item-count">({{ cartStore.itemCount }})</span>
+            <span class="text-base font-medium text-muted-foreground">({{ cartStore.itemCount }})</span>
           </h2>
 
-          <button class="close-btn" @click="close" aria-label="Cerrar carrito">
+          <button
+            class="w-10 h-10 flex items-center justify-center bg-muted rounded-lg text-muted-foreground hover:bg-border hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Cerrar carrito"
+            @click="close"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -48,72 +54,126 @@
           </button>
         </header>
 
+        <!-- Error banner -->
+        <Transition name="fade">
+          <div
+            v-if="errorMsg"
+            class="mx-4 mt-3 flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex-shrink-0"
+          >
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            {{ errorMsg }}
+          </div>
+        </Transition>
+
         <!-- Empty State -->
-        <div v-if="cartStore.isEmpty" class="empty-cart">
-          <div class="empty-icon">🛒</div>
-          <h3>Tu carrito está vacío</h3>
-          <p>Agrega productos para comenzar tu pedido</p>
-          <button class="continue-shopping-btn" @click="close">
+        <div v-if="cartStore.isEmpty" class="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
+          <div class="text-6xl mb-4 opacity-50">🛒</div>
+          <h3 class="text-xl font-bold text-foreground mb-2">Tu carrito está vacío</h3>
+          <p class="text-muted-foreground mb-6">Agrega productos para comenzar tu pedido</p>
+          <button
+            class="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            @click="close"
+          >
             Explorar Menú
           </button>
         </div>
 
         <!-- Cart Content -->
-        <div v-else class="drawer-content">
-          <!-- Order Type Selector -->
-          <div class="order-type-section">
-            <label class="order-type-label">Tipo de pedido</label>
-            <div class="order-type-tabs">
-              <button
-                v-for="type in orderTypes"
-                :key="type.value"
-                class="order-type-tab"
-                :class="{ active: cartStore.orderType === type.value }"
-                @click="cartStore.setOrderType(type.value)"
-              >
-                {{ type.icon }} {{ type.label }}
-              </button>
+        <template v-else>
+          <!-- Scrollable area: order type selector + items list -->
+          <div class="flex-1 overflow-y-auto flex flex-col min-h-0">
+
+            <!-- Order Type Selector -->
+            <div class="px-6 py-5 bg-muted/30 border-b border-border flex-shrink-0">
+              <label class="block text-sm font-semibold text-muted-foreground mb-3">Tipo de pedido</label>
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  v-for="type in orderTypes"
+                  :key="type.value"
+                  class="py-2.5 px-2 rounded-lg text-sm font-semibold text-center border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  :class="cartStore.orderType === type.value
+                    ? 'bg-primary border-primary text-primary-foreground'
+                    : 'bg-background border-border text-muted-foreground hover:border-primary hover:text-primary'"
+                  @click="cartStore.setOrderType(type.value)"
+                >
+                  {{ type.icon }} {{ type.label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Items List -->
+            <div class="flex-1 py-4">
+              <h3 class="text-base font-bold text-foreground mb-2 px-6">
+                Productos ({{ cartStore.itemCount }})
+              </h3>
+              <div>
+                <CartItem
+                  v-for="item in cartStore.items"
+                  :key="item.id"
+                  :item="item"
+                  :loading="cartStore.isLoading"
+                  @update-quantity="handleUpdateQuantity"
+                  @remove="handleRemoveItem"
+                />
+              </div>
             </div>
           </div>
 
-          <!-- Items List -->
-          <div class="items-section">
-            <h3 class="section-title">Productos ({{ cartStore.itemCount }})</h3>
-
-            <div class="items-list">
-              <CartItem
-                v-for="item in cartStore.items"
-                :key="item.id"
-                :item="item"
-                @update-quantity="handleUpdateQuantity"
-                @remove="handleRemoveItem"
+          <!-- Pinned footer: summary + clear button -->
+          <div class="flex-shrink-0 border-t border-border">
+            <!-- Summary -->
+            <div class="px-6 pt-5 pb-4">
+              <CartSummary
+                :subtotal="cartStore.subtotal"
+                :item-count="cartStore.itemCount"
+                :order-type="cartStore.orderType"
+                :delivery-fee="deliveryFee"
+                :minimum-order="minimumOrder"
+                @checkout="handleCheckout"
               />
             </div>
-          </div>
 
-          <!-- Summary -->
-          <div class="summary-section">
-            <CartSummary
-              :subtotal="cartStore.subtotal"
-              :item-count="cartStore.itemCount"
-              :order-type="cartStore.orderType"
-              :delivery-fee="deliveryFee"
-              :minimum-order="minimumOrder"
-              @checkout="handleCheckout"
-            />
+            <!-- Clear Cart -->
+            <div class="px-6 pb-5">
+              <Transition name="fade" mode="out-in">
+                <div v-if="confirmClear" key="confirm" class="flex items-center gap-2 justify-center py-1">
+                  <span class="text-sm text-muted-foreground">¿Vaciar carrito?</span>
+                  <button
+                    class="px-3 py-1.5 text-sm font-semibold bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    :disabled="cartStore.isLoading"
+                    @click="confirmAndClearCart"
+                  >
+                    Sí, vaciar
+                  </button>
+                  <button
+                    class="px-3 py-1.5 text-sm font-semibold bg-muted text-foreground rounded-lg hover:bg-border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    @click="confirmClear = false"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+                <button
+                  v-else
+                  key="trigger"
+                  class="w-full py-2 text-sm font-semibold text-destructive hover:bg-destructive/5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  @click="confirmClear = true"
+                >
+                  🗑️ Vaciar Carrito
+                </button>
+              </Transition>
+            </div>
           </div>
+        </template>
 
-          <!-- Clear Cart Button -->
-          <button class="clear-cart-btn" @click="handleClearCart">
-            🗑️ Vaciar Carrito
-          </button>
-        </div>
       </aside>
     </Transition>
   </Teleport>
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
 import CartItem from './CartItem.vue'
 import CartSummary from './CartSummary.vue'
@@ -135,16 +195,24 @@ const orderTypes = [
   { value: 'dine-in', label: 'Comer aquí', icon: '🍽️' },
 ] as const
 
-// Mock delivery fee
+const confirmClear = ref(false)
+const errorMsg = ref<string | null>(null)
+
+let errorTimeout: ReturnType<typeof setTimeout> | null = null
+
+const showError = (msg: string) => {
+  errorMsg.value = msg
+  if (errorTimeout) clearTimeout(errorTimeout)
+  errorTimeout = setTimeout(() => { errorMsg.value = null }, 4000)
+}
+
 const deliveryFee = computed(() => {
   if (cartStore.orderType === 'delivery') {
-    // Free delivery over 50000
     return cartStore.subtotal >= 50000 ? 0 : 5000
   }
   return 0
 })
 
-// Mock minimum order
 const minimumOrder = computed(() => {
   return cartStore.orderType === 'delivery' ? 20000 : 0
 })
@@ -158,7 +226,7 @@ const handleUpdateQuantity = async (itemId: string, quantity: number) => {
     await cartStore.updateItemQuantity(itemId, quantity)
   } catch (error) {
     console.error('Error updating quantity:', error)
-    alert('Error al actualizar cantidad')
+    showError('No se pudo actualizar la cantidad')
   }
 }
 
@@ -167,18 +235,18 @@ const handleRemoveItem = async (itemId: string) => {
     await cartStore.removeItem(itemId)
   } catch (error) {
     console.error('Error removing item:', error)
-    alert('Error al eliminar producto')
+    showError('No se pudo eliminar el producto')
   }
 }
 
-const handleClearCart = async () => {
-  if (confirm('¿Estás seguro de vaciar el carrito?')) {
-    try {
-      await cartStore.clearCart()
-    } catch (error) {
-      console.error('Error clearing cart:', error)
-      alert('Error al vaciar carrito')
-    }
+const confirmAndClearCart = async () => {
+  try {
+    await cartStore.clearCart()
+    confirmClear.value = false
+  } catch (error) {
+    console.error('Error clearing cart:', error)
+    confirmClear.value = false
+    showError('No se pudo vaciar el carrito')
   }
 }
 
@@ -187,7 +255,6 @@ const handleCheckout = () => {
   emit('checkout')
 }
 
-// Close on ESC key
 onMounted(() => {
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && props.modelValue) {
@@ -202,224 +269,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Backdrop */
-.cart-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 100;
-  backdrop-filter: blur(2px);
-}
-
-/* Drawer */
-.cart-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  max-width: 480px;
-  background: white;
-  z-index: 101;
-  display: flex;
-  flex-direction: column;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-}
-
-/* Header */
-.drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background: white;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.drawer-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0;
-}
-
-.drawer-title svg {
-  color: #667eea;
-}
-
-.item-count {
-  font-size: 16px;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.close-btn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f3f4f6;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #6b7280;
-  transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-  background: #e5e7eb;
-  color: #111827;
-}
-
-/* Empty State */
-.empty-cart {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-  text-align: center;
-}
-
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.empty-cart h3 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 8px 0;
-}
-
-.empty-cart p {
-  color: #6b7280;
-  margin: 0 0 24px 0;
-}
-
-.continue-shopping-btn {
-  padding: 12px 32px;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.continue-shopping-btn:hover {
-  background: #5568d3;
-}
-
-/* Cart Content */
-.drawer-content {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.order-type-section {
-  padding: 20px 24px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.order-type-label {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 12px;
-}
-
-.order-type-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.order-type-tab {
-  padding: 10px 8px;
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: center;
-}
-
-.order-type-tab:hover {
-  border-color: #667eea;
-  color: #667eea;
-}
-
-.order-type-tab.active {
-  background: #667eea;
-  border-color: #667eea;
-  color: white;
-}
-
-.items-section {
-  flex: 1;
-  padding: 20px 0;
-}
-
-.section-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 12px 0;
-  padding: 0 24px;
-}
-
-.items-list {
-  /* Scroll container */
-}
-
-.summary-section {
-  padding: 20px 24px;
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
-}
-
-.clear-cart-btn {
-  padding: 12px 24px;
-  background: transparent;
-  color: #ef4444;
-  border: none;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.2s ease;
-}
-
-.clear-cart-btn:hover {
-  background: #fef2f2;
-}
-
-/* Transitions */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
@@ -429,33 +282,17 @@ onMounted(() => {
 .slide-leave-active {
   transition: transform 0.3s ease;
 }
-
 .slide-enter-from,
 .slide-leave-to {
   transform: translateX(100%);
 }
 
-/* Mobile styles */
-@media (max-width: 640px) {
-  .cart-drawer {
-    max-width: 100%;
-  }
-
-  .drawer-header {
-    padding: 16px 20px;
-  }
-
-  .drawer-title {
-    font-size: 18px;
-  }
-
-  .order-type-tabs {
-    gap: 6px;
-  }
-
-  .order-type-tab {
-    font-size: 12px;
-    padding: 8px 6px;
+@media (prefers-reduced-motion: reduce) {
+  .fade-enter-active,
+  .fade-leave-active,
+  .slide-enter-active,
+  .slide-leave-active {
+    transition: none;
   }
 }
 </style>
