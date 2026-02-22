@@ -1,15 +1,17 @@
 <template>
   <div>
     <div class="text-center mb-6">
-      <h4 class="text-xl font-semibold text-foreground">¿Cómo quieres recibir tu pedido?</h4>
+      <h4 class="text-base font-semibold text-foreground">¿Cómo quieres recibir tu pedido?</h4>
       <p class="text-sm text-muted-foreground mt-1">Selecciona una opción para continuar</p>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup" aria-label="Tipo de pedido">
       <button
         v-for="type in availableOrderTypes"
         :key="type.value"
         type="button"
+        role="radio"
+        :aria-checked="cartStore.orderType === type.value"
         class="flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-all duration-200 text-center
                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         :class="[

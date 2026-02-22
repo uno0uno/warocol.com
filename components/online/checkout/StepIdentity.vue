@@ -265,7 +265,6 @@ const verifyAndDetect = async () => {
     const message = error.data?.detail || error.message || 'Código incorrecto. Inténtalo de nuevo.'
     hasOtpError.value = true
     otpErrorMessage.value = message
-    checkoutError.value = message
     otpInputRef.value?.clear()
     otpCode.value = ''
   }

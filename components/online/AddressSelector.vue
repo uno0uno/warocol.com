@@ -1,52 +1,70 @@
 <template>
-  <div class="address-selector">
-    <h3 class="selector-title">Dirección de Entrega</h3>
+  <div class="w-full">
+    <h3 class="text-lg font-bold text-foreground mb-4">Dirección de Entrega</h3>
 
     <!-- Address List -->
-    <div v-if="addresses.length > 0" class="address-list">
+    <div v-if="addresses.length > 0" class="flex flex-col gap-3 mb-4">
       <button
         v-for="address in addresses"
         :key="address.id"
-        class="address-card"
-        :class="{ selected: selectedId === address.id }"
+        class="relative flex flex-col sm:flex-row gap-3 p-4 bg-background border-2 border-border rounded-xl
+               text-left cursor-pointer transition-all duration-200 w-full
+               hover:border-primary hover:shadow-sm"
+        :class="{ 'border-primary bg-primary/10': selectedId === address.id }"
         @click="$emit('select', address.id)"
       >
         <!-- Selection Indicator -->
-        <div class="selection-indicator">
-          <div class="radio-circle"></div>
+        <div class="absolute top-4 right-4 sm:static sm:flex-shrink-0 sm:pt-1">
+          <div
+            class="w-5 h-5 rounded-full border-2 transition-all"
+            :class="selectedId === address.id ? 'border-primary border-[6px]' : 'border-border'"
+          />
         </div>
 
         <!-- Address Content -->
-        <div class="address-content">
+        <div class="flex-1 min-w-0 pr-8 sm:pr-0">
           <!-- Type Badge & Default -->
-          <div class="address-header">
-            <span class="address-type-badge" :class="`type-${address.address_type}`">
+          <div class="flex items-center gap-2 mb-2 flex-wrap">
+            <span
+              class="text-xs font-semibold px-2.5 py-1 rounded-xl"
+              :class="{
+                'bg-blue-100 text-blue-800': address.address_type === 'home',
+                'bg-yellow-100 text-yellow-800': address.address_type === 'work',
+                'bg-muted text-muted-foreground': address.address_type === 'other',
+              }"
+            >
               {{ getTypeIcon(address.address_type) }} {{ getTypeLabel(address.address_type) }}
             </span>
-            <span v-if="address.is_default" class="default-badge">Predeterminada</span>
+            <span
+              v-if="address.is_default"
+              class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-green-500 text-white"
+            >
+              Predeterminada
+            </span>
           </div>
 
           <!-- Address Lines -->
-          <div class="address-lines">
-            <p class="address-line1">{{ address.address_line1 }}</p>
-            <p v-if="address.address_line2" class="address-line2">
+          <div class="mb-2">
+            <p class="text-sm font-semibold text-foreground mb-1">{{ address.address_line1 }}</p>
+            <p v-if="address.address_line2" class="text-sm text-muted-foreground mb-1">
               {{ address.address_line2 }}
             </p>
-            <p class="address-city">
+            <p class="text-sm text-muted-foreground">
               {{ address.city }}, {{ address.state }}
             </p>
           </div>
 
           <!-- Delivery Notes -->
-          <p v-if="address.delivery_notes" class="delivery-notes">
+          <p v-if="address.delivery_notes" class="text-xs text-muted-foreground italic mt-2 pt-2 border-t border-muted">
             📝 {{ address.delivery_notes }}
           </p>
         </div>
 
         <!-- Actions (hidden in readonly mode) -->
-        <div v-if="!readonly" class="address-actions" @click.stop>
+        <div v-if="!readonly" class="flex gap-1.5 items-start" @click.stop>
           <button
-            class="action-btn edit-btn"
+            class="w-8 h-8 flex items-center justify-center bg-background border border-border rounded-lg
+                   transition-all text-primary hover:bg-primary/10 hover:border-primary"
             @click="$emit('edit', address.id)"
             aria-label="Editar dirección"
           >
@@ -64,7 +82,8 @@
             </svg>
           </button>
           <button
-            class="action-btn delete-btn"
+            class="w-8 h-8 flex items-center justify-center bg-background border border-border rounded-lg
+                   transition-all text-destructive hover:bg-destructive/10 hover:border-destructive"
             @click="$emit('delete', address.id)"
             aria-label="Eliminar dirección"
           >
@@ -86,13 +105,20 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else class="empty-state">
-      <div class="empty-icon">📍</div>
-      <p>No tienes direcciones guardadas</p>
+    <div v-else class="text-center py-12 px-6 bg-muted/30 rounded-xl mb-4">
+      <div class="text-5xl mb-3 opacity-50">📍</div>
+      <p class="text-muted-foreground">No tienes direcciones guardadas</p>
     </div>
 
     <!-- Add New Address Button (hidden in readonly mode) -->
-    <button v-if="!readonly" class="add-address-btn" @click="$emit('add-new')">
+    <button
+      v-if="!readonly"
+      class="w-full flex items-center justify-center gap-2 py-3.5 px-5
+             bg-background border-2 border-dashed border-border rounded-xl
+             text-primary text-sm font-semibold cursor-pointer transition-all
+             hover:border-primary hover:bg-primary/10"
+      @click="$emit('add-new')"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="20"
@@ -144,239 +170,3 @@ const getTypeLabel = (type: string) => {
   return labels[type as keyof typeof labels] || 'Otro'
 }
 </script>
-
-<style scoped>
-.address-selector {
-  width: 100%;
-}
-
-.selector-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 16px 0;
-}
-
-.address-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.address-card {
-  display: flex;
-  gap: 12px;
-  padding: 16px;
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  width: 100%;
-}
-
-.address-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
-}
-
-.address-card.selected {
-  border-color: #667eea;
-  background: #f0f4ff;
-}
-
-.selection-indicator {
-  flex-shrink: 0;
-  padding-top: 4px;
-}
-
-.radio-circle {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #d1d5db;
-  border-radius: 50%;
-  position: relative;
-  transition: all 0.2s ease;
-}
-
-.address-card.selected .radio-circle {
-  border-color: #667eea;
-  border-width: 6px;
-}
-
-.address-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.address-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-}
-
-.address-type-badge {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 12px;
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-.address-type-badge.type-home {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.address-type-badge.type-work {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.default-badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 10px;
-  background: #10b981;
-  color: white;
-}
-
-.address-lines {
-  margin-bottom: 8px;
-}
-
-.address-line1 {
-  font-size: 15px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0 0 4px 0;
-}
-
-.address-line2 {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0 0 4px 0;
-}
-
-.address-city {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
-}
-
-.delivery-notes {
-  font-size: 13px;
-  color: #6b7280;
-  font-style: italic;
-  margin: 8px 0 0 0;
-  padding-top: 8px;
-  border-top: 1px solid #f3f4f6;
-}
-
-.address-actions {
-  display: flex;
-  gap: 6px;
-  align-items: flex-start;
-}
-
-.action-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.edit-btn {
-  color: #667eea;
-}
-
-.edit-btn:hover {
-  background: #f0f4ff;
-  border-color: #667eea;
-}
-
-.delete-btn {
-  color: #ef4444;
-}
-
-.delete-btn:hover {
-  background: #fef2f2;
-  border-color: #ef4444;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 48px 24px;
-  background: #f9fafb;
-  border-radius: 12px;
-  margin-bottom: 16px;
-}
-
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-
-.empty-state p {
-  color: #6b7280;
-  margin: 0;
-}
-
-.add-address-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 20px;
-  background: white;
-  border: 2px dashed #d1d5db;
-  border-radius: 12px;
-  color: #667eea;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.add-address-btn:hover {
-  border-color: #667eea;
-  background: #f0f4ff;
-}
-
-/* Mobile styles */
-@media (max-width: 640px) {
-  .address-card {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .selection-indicator {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-  }
-
-  .address-content {
-    padding-right: 32px;
-  }
-
-  .address-actions {
-    justify-content: flex-start;
-  }
-}
-</style>

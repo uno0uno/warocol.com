@@ -18,12 +18,21 @@
       <template v-else>
         <div
           v-if="addressFormValid"
-          class="flex items-center gap-2 p-3 rounded-md bg-green-50 border border-green-200 text-green-800 text-sm font-medium"
+          class="flex items-center justify-between gap-2 p-3 rounded-md bg-green-50 border border-green-200 text-green-800 text-sm font-medium"
         >
-          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Dirección guardada — puedes continuar
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Dirección guardada — puedes continuar
+          </div>
+          <button
+            type="button"
+            class="text-xs font-medium text-green-700 underline hover:text-green-900 flex-shrink-0"
+            @click="addressFormValid = false"
+          >
+            Cambiar
+          </button>
         </div>
         <AddressForm
           v-else
@@ -59,9 +68,11 @@
     <div>
       <h4 class="text-base font-semibold text-foreground mb-3">¿Cuándo lo necesitas?</h4>
 
-      <div class="grid grid-cols-2 gap-3 mb-4">
+      <div class="grid grid-cols-2 gap-3 mb-4" role="radiogroup" aria-label="Hora del pedido">
         <button
           type="button"
+          role="radio"
+          :aria-checked="!isScheduled"
           class="flex items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 text-left"
           :class="!isScheduled
             ? 'border-primary bg-primary/10 text-primary'
@@ -81,6 +92,8 @@
 
         <button
           type="button"
+          role="radio"
+          :aria-checked="isScheduled"
           class="flex items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 text-left"
           :class="isScheduled
             ? 'border-primary bg-primary/10 text-primary'

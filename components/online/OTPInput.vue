@@ -1,6 +1,6 @@
 <template>
-  <div class="otp-input-container">
-    <div class="otp-inputs">
+  <div class="flex flex-col items-center gap-4">
+    <div class="flex gap-2 sm:gap-3 justify-center">
       <input
         v-for="(digit, index) in digits"
         :key="index"
@@ -10,8 +10,15 @@
         inputmode="numeric"
         pattern="[0-9]"
         maxlength="1"
-        class="otp-digit"
-        :class="{ filled: digits[index] !== '', error: hasError }"
+        class="w-11 h-14 sm:w-[52px] sm:h-16 text-2xl sm:text-3xl font-bold text-center
+               rounded-xl border-2 transition-all duration-200
+               border-border bg-background text-foreground
+               focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10
+               disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
+        :class="{
+          'border-primary bg-primary/10': digits[index] !== '' && !hasError,
+          'border-destructive bg-destructive/10 otp-error-shake': hasError,
+        }"
         @input="handleInput(index, $event)"
         @keydown="handleKeydown(index, $event)"
         @paste="handlePaste"
@@ -20,7 +27,7 @@
       />
     </div>
 
-    <p v-if="hasError" class="error-message">{{ errorMessage }}</p>
+    <p v-if="hasError" class="text-sm font-medium text-destructive text-center m-0">{{ errorMessage }}</p>
   </div>
 </template>
 
@@ -136,64 +143,6 @@ defineExpose({
 </script>
 
 <style scoped>
-.otp-input-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.otp-inputs {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
-.otp-digit {
-  width: 52px;
-  height: 64px;
-  font-size: 28px;
-  font-weight: 700;
-  text-align: center;
-  border: 2px solid #d1d5db;
-  border-radius: 12px;
-  background: white;
-  color: #111827;
-  transition: all 0.2s ease;
-  caret-color: #667eea;
-}
-
-.otp-digit:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.otp-digit.filled {
-  border-color: #667eea;
-  background: #f0f4ff;
-}
-
-.otp-digit.error {
-  border-color: #ef4444;
-  background: #fef2f2;
-  animation: shake 0.4s ease;
-}
-
-.otp-digit:disabled {
-  background: #f3f4f6;
-  color: #9ca3af;
-  cursor: not-allowed;
-}
-
-.error-message {
-  color: #ef4444;
-  font-size: 14px;
-  font-weight: 500;
-  margin: 0;
-  text-align: center;
-}
-
 @keyframes shake {
   0%,
   100% {
@@ -207,16 +156,7 @@ defineExpose({
   }
 }
 
-/* Mobile styles */
-@media (max-width: 640px) {
-  .otp-inputs {
-    gap: 8px;
-  }
-
-  .otp-digit {
-    width: 44px;
-    height: 56px;
-    font-size: 24px;
-  }
+.otp-error-shake {
+  animation: shake 0.4s ease;
 }
 </style>

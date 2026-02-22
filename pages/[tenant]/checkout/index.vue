@@ -3,8 +3,8 @@
     <CheckoutWizard
       :steps="steps"
       :current-step="currentStep"
-      :can-continue="canContinue"
-      :is-submitting="isSubmitting"
+      :can-continue="canContinue && !isNavigating"
+      :is-submitting="isOrderSubmitting"
       @next="handleNext"
       @prev="handlePrev"
       @submit="handleSubmit"
@@ -82,7 +82,7 @@ const steps = [
   { title: 'Tipo de pedido',      short: 'Tipo' },
   { title: 'Correo',              short: 'Correo' },
   { title: 'Entrega',             short: 'Entrega' },
-  { title: 'Verificar identidad', short: 'Verif.' },
+  { title: 'Verificar identidad', short: 'Identidad' },
   { title: 'Revisar y confirmar', short: 'Confirmar' },
 ]
 
@@ -107,7 +107,7 @@ const canContinue = computed(() => {
 })
 
 const isNavigating = ref(false)
-const isSubmitting = computed(() => isNavigating.value)
+const isOrderSubmitting = ref(false)
 
 // ── Step transition handlers ──────────────────────────────────────────────
 
@@ -143,12 +143,12 @@ const handlePrev = () => {
 }
 
 const handleSubmit = async () => {
-  isNavigating.value = true
+  isOrderSubmitting.value = true
   try {
     await stepConfirmRef.value?.submitOrder()
   }
   finally {
-    isNavigating.value = false
+    isOrderSubmitting.value = false
   }
 }
 

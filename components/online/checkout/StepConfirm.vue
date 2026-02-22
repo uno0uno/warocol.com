@@ -1,6 +1,7 @@
 <template>
   <div>
   <div class="space-y-5">
+    <h4 class="text-base font-semibold text-foreground">Revisar y confirmar</h4>
 
     <!-- Order type -->
     <div class="flex items-center gap-3 p-4 rounded-xl border border-border bg-card">
@@ -153,10 +154,12 @@
           <!-- ETA message -->
           <p class="text-sm text-muted-foreground mb-6">
             <template v-if="cartStore.orderType === 'delivery'">
-              Tu pedido llegará en aproximadamente <strong>30–45 minutos</strong>
+              Tu pedido llegará en aproximadamente
+              <strong>{{ confirmedOrder?.estimated_preparation_time ? `${confirmedOrder.estimated_preparation_time} minutos` : '30–45 minutos' }}</strong>
             </template>
             <template v-else-if="cartStore.orderType === 'pickup'">
-              Tu pedido estará listo en <strong>20–30 minutos</strong>
+              Tu pedido estará listo en
+              <strong>{{ confirmedOrder?.estimated_preparation_time ? `${confirmedOrder.estimated_preparation_time} minutos` : '20–30 minutos' }}</strong>
             </template>
             <template v-else>
               Tu pedido está siendo preparado

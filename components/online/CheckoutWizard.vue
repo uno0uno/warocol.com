@@ -77,7 +77,7 @@
     </div>
 
     <!-- Navigation -->
-    <div class="bg-surface border-t border-border rounded-lg shadow-lg">
+    <div class="bg-surface border border-border rounded-lg shadow-lg">
       <div class="px-4 sm:px-6 py-3 sm:py-4">
         <div class="flex justify-between items-center gap-3">
 
