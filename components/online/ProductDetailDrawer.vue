@@ -54,10 +54,11 @@
           <template v-else-if="productDetail">
             <!-- Product image / emoji — hidden in wizard steps after 1 to save space -->
             <div v-if="!wizardMode" class="product-visual">
-              <div
+              <img
                 v-if="productDetail.image_url && productDetail.image_url.startsWith('http')"
+                :src="productDetail.image_url"
+                :alt="productDetail.name"
                 class="product-image"
-                :style="{ backgroundImage: `url(${productDetail.image_url})` }"
               />
               <div v-else class="product-emoji">
                 {{ productDetail.image_url || '🍽️' }}
@@ -700,8 +701,9 @@ onMounted(() => {
 .product-image {
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .product-emoji {
@@ -1045,6 +1047,15 @@ onMounted(() => {
 .product-slide-enter-from,
 .product-slide-leave-to {
   transform: translateX(100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-enter-active,
+  .fade-leave-active,
+  .product-slide-enter-active,
+  .product-slide-leave-active {
+    transition: none;
+  }
 }
 
 /* Mobile: drawer slides from bottom */

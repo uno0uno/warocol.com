@@ -169,7 +169,7 @@ const handleCheckout = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 animate-fade-in">
+  <div class="min-h-screen bg-gray-50">
     <!-- Loading State -->
     <div v-if="isLoading && !restaurant" class="min-h-screen flex items-center justify-center">
       <div class="text-center">

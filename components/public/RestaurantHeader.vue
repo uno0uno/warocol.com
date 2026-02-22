@@ -2,10 +2,11 @@
   <div class="w-full">
     <!-- Banner / Hero -->
     <div class="relative h-48 md:h-64 bg-gradient-to-r from-blue-500 to-purple-600 overflow-hidden">
-      <div
+      <img
         v-if="restaurant.banner_url && restaurant.banner_url.startsWith('http')"
-        class="absolute inset-0 bg-cover bg-center"
-        :style="{ backgroundImage: `url(${restaurant.banner_url})` }"
+        :src="restaurant.banner_url"
+        :alt="restaurant.display_name"
+        class="absolute inset-0 w-full h-full object-cover"
       />
       <div v-else class="absolute inset-0 flex items-center justify-center text-9xl">
         {{ restaurant.banner_url || '🏪' }}
@@ -24,10 +25,11 @@
             <div
               class="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-white shadow-md flex items-center justify-center border-4 border-white overflow-hidden"
             >
-              <div
+              <img
                 v-if="restaurant.logo_url && restaurant.logo_url.startsWith('http')"
-                class="w-full h-full bg-cover bg-center"
-                :style="{ backgroundImage: `url(${restaurant.logo_url})` }"
+                :src="restaurant.logo_url"
+                :alt="restaurant.display_name"
+                class="w-full h-full object-contain"
               />
               <div v-else class="text-5xl md:text-6xl">
                 {{ restaurant.logo_url || '🍽️' }}
@@ -64,7 +66,7 @@
             </p>
 
             <!-- Contact Info -->
-            <div class="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
+            <div class="mt-4 flex flex-wrap gap-4 text-base text-gray-500">
               <div v-if="restaurant.phone_number" class="flex items-center gap-2">
                 <span>📞</span>
                 <a :href="`tel:${restaurant.phone_number}`" class="hover:text-blue-600">
@@ -90,7 +92,7 @@
                 :href="`https://wa.me/${restaurant.social_media.whatsapp.replace(/[^0-9]/g, '')}`"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors text-xl"
+                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors text-xl"
                 title="WhatsApp"
               >
                 💬
@@ -101,7 +103,7 @@
                 :href="restaurant.social_media.facebook"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors text-xl"
+                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors text-xl"
                 title="Facebook"
               >
                 f
@@ -112,7 +114,7 @@
                 :href="getInstagramUrl(restaurant.social_media.instagram)"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-colors text-xl"
+                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-colors text-xl"
                 title="Instagram"
               >
                 📷
@@ -132,7 +134,7 @@
             <span>{{ showHours ? '▲' : '▼' }}</span>
           </button>
 
-          <div v-if="showHours" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <div v-if="showHours" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-base">
             <div
               v-for="(hours, day) in restaurant.business_hours"
               :key="day"

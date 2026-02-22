@@ -8,7 +8,7 @@
             v-for="category in allCategories"
             :key="category.id"
             @click="selectedCategory = category.id"
-            class="px-4 py-2 rounded-full font-medium whitespace-nowrap transition-all duration-200"
+            class="px-4 py-2 min-h-[44px] rounded-full font-medium whitespace-nowrap transition-all duration-200"
             :class="selectedCategory === category.id
               ? 'bg-blue-600 text-white shadow-md'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"

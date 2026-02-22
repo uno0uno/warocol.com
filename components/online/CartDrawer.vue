@@ -35,7 +35,7 @@
           </h2>
 
           <button
-            class="w-8 h-8 flex items-center justify-center bg-muted rounded-lg text-muted-foreground hover:bg-border hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            class="w-10 h-10 flex items-center justify-center bg-muted rounded-lg text-muted-foreground hover:bg-border hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Cerrar carrito"
             @click="close"
           >
@@ -92,7 +92,7 @@
                 <button
                   v-for="type in orderTypes"
                   :key="type.value"
-                  class="py-2 px-2 rounded-lg text-xs font-semibold text-center border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  class="py-2 px-2 min-h-[44px] rounded-lg text-xs font-semibold text-center border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   :class="cartStore.orderType === type.value
                     ? 'bg-primary border-primary text-primary-foreground'
                     : 'bg-background border-border text-muted-foreground hover:border-primary hover:text-primary'"

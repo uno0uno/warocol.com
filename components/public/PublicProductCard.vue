@@ -2,14 +2,19 @@
   <div
     class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden cursor-pointer group"
     :class="{ 'opacity-50': !product.is_available }"
+    role="button"
+    tabindex="0"
     @click="handleClick"
+    @keydown.enter="handleClick"
+    @keydown.space.prevent="handleClick"
   >
     <!-- Product Image/Emoji -->
     <div class="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-      <div
+      <img
         v-if="product.image_url && product.image_url.startsWith('http')"
-        class="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-200"
-        :style="{ backgroundImage: `url(${product.image_url})` }"
+        :src="product.image_url"
+        :alt="product.name"
+        class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
       />
       <div v-else class="absolute inset-0 flex items-center justify-center text-7xl">
         {{ product.image_url || '🍽️' }}
@@ -38,7 +43,7 @@
       </h3>
 
       <!-- Description -->
-      <p v-if="product.description" class="text-sm text-gray-500 mb-3 line-clamp-2">
+      <p v-if="product.description" class="text-base text-gray-500 mb-3 line-clamp-2">
         {{ product.description }}
       </p>
 
@@ -54,7 +59,7 @@
           v-if="!isInCart"
           @click.stop="handleClick"
           :disabled="isAdding || !product.is_available"
-          class="w-9 h-9 flex items-center justify-center rounded-full bg-blue-600 text-white text-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-11 h-11 flex items-center justify-center rounded-full bg-blue-600 text-white text-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label="Agregar al carrito"
         >
           <span v-if="isAdding" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
@@ -66,7 +71,7 @@
           <button
             @click="decrease"
             :disabled="cartStore.isLoading"
-            class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold"
+            class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold"
             aria-label="Quitar uno"
           >−</button>
           <span class="min-w-[1.5rem] text-center font-bold text-gray-900 text-sm">
@@ -75,7 +80,7 @@
           <button
             @click="increase"
             :disabled="cartStore.isLoading || !product.is_available"
-            class="w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold"
+            class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold"
             aria-label="Agregar uno más"
           >+</button>
         </div>
