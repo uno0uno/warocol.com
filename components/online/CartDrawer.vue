@@ -14,12 +14,12 @@
       <aside v-if="modelValue" class="fixed top-0 right-0 bottom-0 w-full max-w-[480px] bg-background z-[101] flex flex-col shadow-2xl">
 
         <!-- Header -->
-        <header class="flex items-center justify-between px-6 py-5 border-b border-border bg-background flex-shrink-0">
-          <h2 class="flex items-center gap-3 text-xl font-bold text-foreground m-0">
+        <header class="flex items-center justify-between px-4 py-3 border-b border-border bg-background flex-shrink-0">
+          <h2 class="flex items-center gap-2 text-base font-bold text-foreground m-0">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -31,18 +31,18 @@
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
             </svg>
             Mi Carrito
-            <span class="text-base font-medium text-muted-foreground">({{ cartStore.itemCount }})</span>
+            <span class="text-sm font-medium text-muted-foreground">({{ cartStore.itemCount }})</span>
           </h2>
 
           <button
-            class="w-10 h-10 flex items-center justify-center bg-muted rounded-lg text-muted-foreground hover:bg-border hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            class="w-8 h-8 flex items-center justify-center bg-muted rounded-lg text-muted-foreground hover:bg-border hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Cerrar carrito"
             @click="close"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -68,10 +68,10 @@
         </Transition>
 
         <!-- Empty State -->
-        <div v-if="cartStore.isEmpty" class="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
-          <div class="text-6xl mb-4 opacity-50">🛒</div>
-          <h3 class="text-xl font-bold text-foreground mb-2">Tu carrito está vacío</h3>
-          <p class="text-muted-foreground mb-6">Agrega productos para comenzar tu pedido</p>
+        <div v-if="cartStore.isEmpty" class="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center">
+          <div class="text-5xl mb-3 opacity-50">🛒</div>
+          <h3 class="text-base font-bold text-foreground mb-1">Tu carrito está vacío</h3>
+          <p class="text-sm text-muted-foreground mb-4">Agrega productos para comenzar tu pedido</p>
           <button
             class="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             @click="close"
@@ -86,13 +86,13 @@
           <div class="flex-1 overflow-y-auto flex flex-col min-h-0">
 
             <!-- Order Type Selector -->
-            <div class="px-6 py-5 bg-muted/30 border-b border-border flex-shrink-0">
-              <label class="block text-sm font-semibold text-muted-foreground mb-3">Tipo de pedido</label>
-              <div class="grid grid-cols-3 gap-2">
+            <div class="px-4 py-3 bg-muted/30 border-b border-border flex-shrink-0">
+              <label class="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Tipo de pedido</label>
+              <div class="grid grid-cols-3 gap-1.5">
                 <button
                   v-for="type in orderTypes"
                   :key="type.value"
-                  class="py-2.5 px-2 rounded-lg text-sm font-semibold text-center border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  class="py-2 px-2 rounded-lg text-xs font-semibold text-center border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   :class="cartStore.orderType === type.value
                     ? 'bg-primary border-primary text-primary-foreground'
                     : 'bg-background border-border text-muted-foreground hover:border-primary hover:text-primary'"
@@ -104,10 +104,7 @@
             </div>
 
             <!-- Items List -->
-            <div class="flex-1 py-4">
-              <h3 class="text-base font-bold text-foreground mb-2 px-6">
-                Productos ({{ cartStore.itemCount }})
-              </h3>
+            <div class="flex-1 py-1">
               <div>
                 <CartItem
                   v-for="item in cartStore.items"
@@ -124,7 +121,7 @@
           <!-- Pinned footer: summary + clear button -->
           <div class="flex-shrink-0 border-t border-border">
             <!-- Summary -->
-            <div class="px-6 pt-5 pb-4">
+            <div class="px-4 pt-3 pb-2">
               <CartSummary
                 :subtotal="cartStore.subtotal"
                 :item-count="cartStore.itemCount"
@@ -136,7 +133,7 @@
             </div>
 
             <!-- Clear Cart -->
-            <div class="px-6 pb-5">
+            <div class="px-4 pb-3">
               <Transition name="fade" mode="out-in">
                 <div v-if="confirmClear" key="confirm" class="flex items-center gap-2 justify-center py-1">
                   <span class="text-sm text-muted-foreground">¿Vaciar carrito?</span>

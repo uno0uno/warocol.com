@@ -1,8 +1,8 @@
 <template>
-  <div class="bg-card rounded-xl border border-border/50 p-5 shadow-sm">
-    <h3 class="text-lg font-bold text-foreground mb-4">Resumen del Pedido</h3>
+  <div class="bg-card rounded-xl border border-border/50 p-4 shadow-sm">
+    <h3 class="text-sm font-bold text-foreground mb-3 uppercase tracking-wide text-muted-foreground">Resumen</h3>
 
-    <div class="flex flex-col gap-3">
+    <div class="flex flex-col gap-2">
       <!-- Subtotal -->
       <div class="flex justify-between items-center text-[15px]">
         <span class="text-muted-foreground">
@@ -29,16 +29,16 @@
       </div>
     </div>
 
-    <div class="h-px bg-border my-4" />
+    <div class="h-px bg-border my-3" />
 
     <!-- Total -->
-    <div class="flex justify-between items-center mb-4">
-      <span class="text-lg font-bold text-foreground">Total</span>
-      <span class="text-2xl font-extrabold text-primary">{{ formatPrice(total) }}</span>
+    <div class="flex justify-between items-center mb-3">
+      <span class="text-base font-bold text-foreground">Total</span>
+      <span class="text-xl font-extrabold text-primary">{{ formatPrice(total) }}</span>
     </div>
 
     <!-- Minimum order warning -->
-    <div v-if="minimumOrder > subtotal" class="flex flex-col items-center text-center text-sm p-3 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 mb-4">
+    <div v-if="minimumOrder > subtotal" class="flex flex-col items-center text-center text-xs p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 mb-3">
       ⚠️ Pedido mínimo: {{ formatPrice(minimumOrder) }}
       <small class="font-semibold mt-0.5">Faltan {{ formatPrice(minimumOrder - subtotal) }}</small>
     </div>
@@ -46,7 +46,7 @@
     <!-- Checkout button -->
     <button
       v-if="showCheckoutButton"
-      class="w-full py-4 bg-primary text-primary-foreground rounded-xl text-base font-bold
+      class="w-full py-3 bg-primary text-primary-foreground rounded-xl text-sm font-bold
              hover:opacity-90 active:scale-[0.98] transition-all
              disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed disabled:active:scale-100
              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring

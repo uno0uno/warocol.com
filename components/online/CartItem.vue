@@ -1,5 +1,5 @@
 <template>
-  <div class="px-4 py-4 border-b border-border last:border-b-0 hover:bg-muted/20 transition-colors">
+  <div class="px-4 py-3 border-b border-border last:border-b-0 hover:bg-muted/20 transition-colors">
     <div class="flex gap-4 justify-between">
 
       <!-- Product Info -->
