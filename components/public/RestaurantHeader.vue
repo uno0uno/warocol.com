@@ -68,19 +68,19 @@
             <!-- Contact Info -->
             <div class="mt-2 flex flex-wrap gap-3 text-sm text-gray-500">
               <div v-if="restaurant.phone_number" class="flex items-center gap-2">
-                <span aria-hidden="true">📞</span>
-                <a :href="`tel:${restaurant.phone_number}`" class="hover:text-blue-600">
+                <Icon name="heroicons:phone" class="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+                <a :href="`tel:${restaurant.phone_number}`" class="hover:text-primary transition-colors">
                   {{ restaurant.phone_number }}
                 </a>
               </div>
 
               <div v-if="restaurant.address" class="flex items-center gap-2">
-                <span aria-hidden="true">📍</span>
+                <Icon name="heroicons:map-pin" class="w-4 h-4 flex-shrink-0" aria-hidden="true" />
                 <span>{{ restaurant.address }}</span>
               </div>
 
               <div v-if="restaurant.city" class="flex items-center gap-2">
-                <span aria-hidden="true">🏙️</span>
+                <Icon name="heroicons:building-office-2" class="w-4 h-4 flex-shrink-0" aria-hidden="true" />
                 <span>{{ restaurant.city }}{{ restaurant.neighborhood ? `, ${restaurant.neighborhood}` : '' }}</span>
               </div>
             </div>
@@ -92,11 +92,11 @@
                 :href="`https://wa.me/${restaurant.social_media.whatsapp.replace(/[^0-9]/g, '')}`"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors text-xl"
+                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors"
                 aria-label="WhatsApp"
                 title="WhatsApp"
               >
-                <span aria-hidden="true">💬</span>
+                <Icon name="mdi:whatsapp" class="w-5 h-5" aria-hidden="true" />
               </a>
 
               <a
@@ -104,11 +104,11 @@
                 :href="restaurant.social_media.facebook"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors text-xl"
+                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                 aria-label="Facebook"
                 title="Facebook"
               >
-                <span aria-hidden="true">f</span>
+                <Icon name="mdi:facebook" class="w-5 h-5" aria-hidden="true" />
               </a>
 
               <a
@@ -116,11 +116,11 @@
                 :href="getInstagramUrl(restaurant.social_media.instagram)"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-colors text-xl"
+                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-colors"
                 aria-label="Instagram"
                 title="Instagram"
               >
-                <span aria-hidden="true">📷</span>
+                <Icon name="mdi:instagram" class="w-5 h-5" aria-hidden="true" />
               </a>
             </div>
           </div>
@@ -133,9 +133,14 @@
             :aria-expanded="showHours"
             class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900"
           >
-            <span>🕐</span>
+            <Icon name="heroicons:clock" class="w-4 h-4" aria-hidden="true" />
             <span>Horarios de atención</span>
-            <span>{{ showHours ? '▲' : '▼' }}</span>
+            <Icon
+              name="heroicons:chevron-down"
+              class="w-4 h-4 transition-transform duration-200"
+              :class="{ 'rotate-180': showHours }"
+              aria-hidden="true"
+            />
           </button>
 
           <div v-if="showHours" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-base">
