@@ -1,7 +1,4 @@
 export default defineNuxtConfig({
-  alias: {
-    '@iconify/vue': './node_modules/nuxt-icon/node_modules/@iconify/vue/dist/iconify.mjs'
-  },
   ssr: true,
   devServer: {
     port: parseInt(process.env.PORT || '8080')
