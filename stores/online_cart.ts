@@ -364,6 +364,9 @@ export const useOnlineCartStore = defineStore('onlineCart', {
      */
     reset() {
       this.$reset()
+      if (process.client) {
+        localStorage.removeItem('waro_session_id')
+      }
     },
   },
 })

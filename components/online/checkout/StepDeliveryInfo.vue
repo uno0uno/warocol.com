@@ -20,7 +20,9 @@
           v-if="addressFormValid"
           class="flex items-center gap-2 p-3 rounded-md bg-green-50 border border-green-200 text-green-800 text-sm font-medium"
         >
-          <Icon name="heroicons:check-circle" class="w-4 h-4 flex-shrink-0" />
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           Dirección guardada — puedes continuar
         </div>
         <AddressForm
@@ -37,12 +39,12 @@
       v-else
       class="flex flex-col items-center gap-2 p-6 rounded-xl border border-border bg-muted/30 text-center"
     >
-      <Icon
-        v-if="cartStore.orderType === 'pickup'"
-        name="heroicons:building-storefront"
-        class="w-10 h-10 text-foreground"
-      />
-      <Icon v-else name="heroicons:table-cells" class="w-10 h-10 text-foreground" />
+      <svg v-if="cartStore.orderType === 'pickup'" class="w-10 h-10 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      </svg>
+      <svg v-else class="w-10 h-10 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+      </svg>
       <p class="font-semibold text-foreground">
         {{ cartStore.orderType === 'pickup' ? 'Recoger en tienda' : 'En mesa' }}
       </p>
@@ -66,7 +68,9 @@
             : 'border-border bg-card text-foreground hover:border-primary/50'"
           @click="isScheduled = false"
         >
-          <Icon name="heroicons:bolt" class="w-7 h-7 flex-shrink-0" />
+          <svg class="w-7 h-7 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
           <div>
             <p class="font-semibold text-sm">Lo antes posible</p>
             <p class="text-xs mt-0.5" :class="!isScheduled ? 'text-primary/80' : 'text-muted-foreground'">
@@ -83,7 +87,9 @@
             : 'border-border bg-card text-foreground hover:border-primary/50'"
           @click="isScheduled = true"
         >
-          <Icon name="heroicons:calendar" class="w-7 h-7 flex-shrink-0" />
+          <svg class="w-7 h-7 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
           <div>
             <p class="font-semibold text-sm">Programar</p>
             <p class="text-xs mt-0.5" :class="isScheduled ? 'text-primary/80' : 'text-muted-foreground'">

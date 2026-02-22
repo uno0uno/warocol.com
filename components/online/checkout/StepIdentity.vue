@@ -80,13 +80,6 @@
         <h4 class="text-base font-semibold text-foreground">Ingresa el código</h4>
         <p class="text-sm text-muted-foreground mt-0.5">
           Código enviado a <strong>{{ otpAuthStore.email }}</strong>
-          <button
-            type="button"
-            class="ml-2 text-xs text-primary font-medium underline underline-offset-2 hover:text-primary/80"
-            @click="subStep = 'idle'"
-          >
-            Cambiar
-          </button>
         </p>
       </div>
 
@@ -265,6 +258,7 @@ const verifyAndDetect = async () => {
     }
 
     subStep.value = 'verified'
+    await new Promise(resolve => setTimeout(resolve, 1200))
     emit('verified')
   }
   catch (error: any) {

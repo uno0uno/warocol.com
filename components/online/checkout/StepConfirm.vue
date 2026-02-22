@@ -1,9 +1,12 @@
 <template>
+  <div>
   <div class="space-y-5">
 
     <!-- Order type -->
     <div class="flex items-center gap-3 p-4 rounded-xl border border-border bg-card">
-      <Icon :name="orderTypeIcon" class="w-7 h-7 text-primary flex-shrink-0" />
+      <svg class="w-7 h-7 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="orderTypeIcon" />
+      </svg>
       <div>
         <p class="font-semibold text-foreground text-sm">{{ orderTypeLabel }}</p>
         <p v-if="cartStore.orderType === 'pickup'" class="text-xs text-muted-foreground mt-0.5">
@@ -14,7 +17,10 @@
 
     <!-- Delivery address -->
     <div v-if="cartStore.orderType === 'delivery' && displayAddress" class="flex items-start gap-3 p-4 rounded-xl border border-border bg-card">
-      <Icon name="heroicons:map-pin" class="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+      <svg class="w-5 h-5 text-primary flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
       <div class="text-sm">
         <p class="font-semibold text-foreground">{{ displayAddress.address_line1 }}</p>
         <p v-if="displayAddress.address_line2" class="text-muted-foreground">{{ displayAddress.address_line2 }}</p>
@@ -27,19 +33,25 @@
 
     <!-- Scheduled time -->
     <div v-if="cartStore.deliveryInfo?.scheduled_time" class="flex items-center gap-3 p-4 rounded-xl border border-border bg-card">
-      <Icon name="heroicons:calendar" class="w-5 h-5 text-primary flex-shrink-0" />
+      <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
       <p class="text-sm text-foreground">{{ formatScheduledTime(cartStore.deliveryInfo.scheduled_time) }}</p>
     </div>
 
     <!-- Delivery instructions -->
     <div v-if="cartStore.deliveryInfo?.delivery_instructions" class="flex items-start gap-3 p-4 rounded-xl border border-border bg-card">
-      <Icon name="heroicons:chat-bubble-left-ellipsis" class="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+      <svg class="w-5 h-5 text-primary flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
       <p class="text-sm text-foreground">{{ cartStore.deliveryInfo.delivery_instructions }}</p>
     </div>
 
     <!-- Verified email -->
     <div class="flex items-center gap-3 p-4 rounded-xl border border-border bg-card">
-      <Icon name="heroicons:lock-closed" class="w-5 h-5 text-green-600 flex-shrink-0" />
+      <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      </svg>
       <div class="text-sm">
         <p class="text-xs text-muted-foreground">Identidad verificada</p>
         <p class="font-medium text-foreground">{{ otpAuthStore.email }}</p>
@@ -89,13 +101,17 @@
 
     <!-- Payment method -->
     <div class="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
-      <Icon name="heroicons:banknotes" class="w-5 h-5 text-amber-700 flex-shrink-0" />
+      <svg class="w-5 h-5 text-amber-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
       <p class="text-sm text-amber-900"><strong>Pago:</strong> Efectivo contra entrega</p>
     </div>
 
     <!-- Checkout error -->
     <div v-if="checkoutError" class="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-      <Icon name="heroicons:exclamation-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5" />
+      <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
       {{ checkoutError }}
     </div>
 
@@ -111,7 +127,9 @@
         <div class="bg-background rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
           <!-- Check icon -->
           <div class="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-5">
-            <Icon name="heroicons:check" class="w-10 h-10 text-green-600" />
+            <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
           </div>
 
           <h2 class="text-2xl font-bold text-foreground mb-2">¡Pedido confirmado!</h2>
@@ -152,6 +170,7 @@
       </div>
     </Transition>
   </Teleport>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -181,10 +200,10 @@ const deliveryFee = computed(() =>
 )
 
 const orderTypeIcon = computed(() => ({
-  delivery: 'heroicons:truck',
-  pickup: 'heroicons:building-storefront',
-  'dine-in': 'heroicons:table-cells',
-}[cartStore.orderType] ?? 'heroicons:shopping-bag'))
+  delivery: 'M8 16a3 3 0 01-3-3V7a3 3 0 013-3h8a3 3 0 013 3v6a3 3 0 01-3 3H8zm-4 0h1m14 0h1M1 10h2m18 0h2M5 20h14',
+  pickup: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+  'dine-in': 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z',
+}[cartStore.orderType] ?? 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z'))
 
 const orderTypeLabel = computed(() => ({
   delivery: 'Domicilio',

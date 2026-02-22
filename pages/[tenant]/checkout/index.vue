@@ -9,6 +9,19 @@
       @prev="handlePrev"
       @submit="handleSubmit"
     >
+      <template #back-action>
+        <NuxtLink
+          :to="`/${tenantSlug}`"
+          class="btn-secondary px-4 sm:px-6 py-3 rounded-lg text-sm sm:text-base inline-flex items-center gap-1
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Carrito
+        </NuxtLink>
+      </template>
+
       <template #step-0>
         <StepOrderType />
       </template>
@@ -66,11 +79,11 @@ onMounted(() => {
 // ── Wizard steps definition ───────────────────────────────────────────────
 
 const steps = [
-  { title: 'Tipo de pedido',      short: 'Tipo',      description: '¿Cómo lo quieres?' },
-  { title: 'Correo',              short: 'Correo',    description: 'Confirmación y direcciones' },
-  { title: 'Entrega',             short: 'Entrega',   description: 'Dirección y horario' },
-  { title: 'Verificar identidad', short: 'Verif.',    description: 'Confirmar con OTP' },
-  { title: 'Revisar y confirmar', short: 'Confirmar', description: 'Haz tu pedido' },
+  { title: 'Tipo de pedido',      short: 'Tipo' },
+  { title: 'Correo',              short: 'Correo' },
+  { title: 'Entrega',             short: 'Entrega' },
+  { title: 'Verificar identidad', short: 'Verif.' },
+  { title: 'Revisar y confirmar', short: 'Confirmar' },
 ]
 
 const currentStep = ref(0)
@@ -94,9 +107,7 @@ const canContinue = computed(() => {
 })
 
 const isNavigating = ref(false)
-const isSubmitting = computed(
-  () => isNavigating.value || (stepConfirmRef.value?.isSubmitting.value ?? false),
-)
+const isSubmitting = computed(() => isNavigating.value)
 
 // ── Step transition handlers ──────────────────────────────────────────────
 
@@ -132,7 +143,13 @@ const handlePrev = () => {
 }
 
 const handleSubmit = async () => {
-  await stepConfirmRef.value?.submitOrder()
+  isNavigating.value = true
+  try {
+    await stepConfirmRef.value?.submitOrder()
+  }
+  finally {
+    isNavigating.value = false
+  }
 }
 
 const handleVerified = () => {
