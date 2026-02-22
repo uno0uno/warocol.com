@@ -29,7 +29,7 @@
 
       <!-- Modifier indicator -->
       <div v-if="product.has_modifiers" class="absolute top-3 left-3">
-        <span class="px-2 py-1 text-xs font-medium bg-blue-500 text-white rounded-full">
+        <span class="px-2 py-1 text-xs font-medium bg-primary/80 text-primary-foreground rounded-full">
           Personalizable
         </span>
       </div>
@@ -38,7 +38,7 @@
     <!-- Product Info -->
     <div class="p-4">
       <!-- Name -->
-      <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
+      <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:text-primary transition-colors">
         {{ product.name }}
       </h3>
 
@@ -59,7 +59,7 @@
           v-if="!isInCart"
           @click.stop="handleClick"
           :disabled="isAdding || !product.is_available"
-          class="w-11 h-11 flex items-center justify-center rounded-full bg-blue-600 text-white text-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-11 h-11 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:ring-2 focus:ring-primary/50 focus:outline-none"
           aria-label="Agregar al carrito"
         >
           <span v-if="isAdding" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
@@ -80,7 +80,7 @@
           <button
             @click="increase"
             :disabled="cartStore.isLoading || !product.is_available"
-            class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold"
+            class="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold focus:ring-2 focus:ring-primary/50 focus:outline-none"
             aria-label="Agregar uno más"
           >+</button>
         </div>

@@ -1,7 +1,7 @@
 <template>
   <div class="w-full">
     <!-- Categories Filter -->
-    <div v-if="categories.length > 0" class="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
+    <div v-if="categories.length > 0" class="sticky top-0 z-20 bg-gray-50 border-b border-gray-200 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-4">
         <div class="flex gap-2 overflow-x-auto scrollbar-hide">
           <button
@@ -10,7 +10,7 @@
             @click="selectedCategory = category.id"
             class="px-4 py-2 min-h-[44px] rounded-full font-medium whitespace-nowrap transition-all duration-200"
             :class="selectedCategory === category.id
-              ? 'bg-blue-600 text-white shadow-md'
+              ? 'bg-primary text-primary-foreground shadow-md'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
           >
             {{ category.name }}
@@ -25,7 +25,7 @@
     <!-- Loading State -->
     <div v-if="isLoading" class="max-w-7xl mx-auto px-4 py-12">
       <div class="flex items-center justify-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     </div>
 
@@ -37,7 +37,7 @@
           {{ category.name }}
         </h2>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <PublicProductCard
             v-for="product in category.products"
             :key="product.id"

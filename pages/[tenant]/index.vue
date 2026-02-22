@@ -200,7 +200,7 @@ const handleCheckout = () => {
     <div v-else-if="restaurant">
       <RestaurantHeader :restaurant="restaurant" />
 
-      <div class="mt-8">
+      <div class="mt-2">
         <PublicMenu
           :categories="categories"
           :products="products"
