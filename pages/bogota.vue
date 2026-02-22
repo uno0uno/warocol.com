@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { MapPinIcon, PhoneIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 
+definePageMeta({ layout: 'bogota' })
+
 const config = useRuntimeConfig()
 const siteUrl = config.public.siteUrl || 'https://warocol.com'
 
@@ -31,12 +33,18 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen bg-background animate-fade-in">
+  <div>
     <!-- Hero Section -->
-    <div class="bg-gradient-to-r from-crocus-600 to-crocus-800 text-white min-h-[280px] flex items-center px-4">
-      <div class="max-w-6xl mx-auto text-center w-full py-12">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4 tracking-tight drop-shadow-sm">Restaurantes en Bogotá</h1>
-        <p class="text-xl text-crocus-100 mb-6">Descubre los mejores restaurantes de la ciudad</p>
+    <div class="relative overflow-hidden min-h-[280px] md:min-h-[380px] flex items-center">
+      <img
+        src="/hero_bogota_waro_colombia.png"
+        alt="Bogotá"
+        class="absolute inset-0 w-full h-full object-cover"
+      />
+      <div class="absolute inset-0 bg-foreground/50" />
+      <div class="relative max-w-6xl mx-auto text-center w-full px-4 py-12">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4 tracking-tight text-white">Restaurantes en Bogotá</h1>
+        <p class="text-xl text-white/80 mb-6">Descubre los mejores restaurantes de la ciudad</p>
         <span
           v-if="!pending && restaurants.length > 0"
           class="inline-block px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold text-white"
@@ -62,7 +70,7 @@ useHead({
         <p class="text-muted-foreground mb-6">{{ error }}</p>
         <button
           @click="refreshNuxtData('restaurants-bogota')"
-          class="px-6 py-3 bg-crocus-600 text-white rounded-lg hover:bg-crocus-700 transition-colors"
+          class="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           Reintentar
         </button>
@@ -73,7 +81,7 @@ useHead({
     <div v-else-if="restaurants.length > 0" class="max-w-6xl mx-auto px-4 py-10">
       <!-- Section Header -->
       <div class="flex items-center gap-4 mb-8">
-        <h2 class="text-lg font-semibold text-foreground whitespace-nowrap">Todos los restaurantes · Bogotá</h2>
+        <h2 class="text-xl font-semibold text-foreground whitespace-nowrap">Todos los restaurantes · Bogotá</h2>
         <div class="flex-1 h-px bg-border"></div>
         <span class="text-sm text-muted-foreground font-medium whitespace-nowrap">
           {{ restaurants.length }} resultado{{ restaurants.length !== 1 ? 's' : '' }}
@@ -85,12 +93,12 @@ useHead({
           v-for="restaurant in restaurants"
           :key="restaurant.id"
           :to="`/${restaurant.slug}`"
-          class="card-item group bg-card rounded-xl border border-border/60 overflow-hidden hover:border-primary/50 hover:-translate-y-1 transition-all duration-300"
+          class="card-item group bg-card rounded-xl border border-border overflow-hidden"
         >
           <!-- Restaurant Banner/Image -->
-          <div class="relative h-48 bg-gradient-to-br from-crocus-500 to-crocus-700 overflow-hidden">
+          <div class="relative h-48 bg-gradient-to-br from-primary to-primary/70 overflow-hidden">
             <!-- Logo emoji (zoom on hover) -->
-            <span class="absolute inset-0 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform duration-300 drop-shadow-lg">
+            <span class="absolute inset-0 flex items-center justify-center text-6xl">
               {{ restaurant.logo_url || '🍽️' }}
             </span>
 
@@ -105,7 +113,7 @@ useHead({
             <!-- Neighborhood badge top-left -->
             <span
               v-if="restaurant.neighborhood"
-              class="absolute top-3 left-3 px-2.5 py-1 text-xs font-semibold bg-background/80 backdrop-blur-sm text-foreground rounded-lg"
+              class="absolute top-3 left-3 px-2.5 py-1 text-xs font-semibold bg-background/80 backdrop-blur-sm text-foreground rounded-xl"
             >
               {{ restaurant.neighborhood }}
             </span>
@@ -113,7 +121,7 @@ useHead({
 
           <!-- Restaurant Info -->
           <div class="p-6">
-            <h3 class="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
+            <h3 class="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
               {{ restaurant.display_name }}
             </h3>
 
@@ -135,7 +143,7 @@ useHead({
 
             <!-- View Menu CTA -->
             <div class="mt-4 pt-4 border-t border-border">
-              <span class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-semibold group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+              <span class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-primary/10 text-primary rounded-xl text-sm font-semibold group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                 Ver menú
                 <ChevronRightIcon class="w-4 h-4" aria-hidden="true" />
               </span>
@@ -155,14 +163,3 @@ useHead({
     </div>
   </div>
 </template>
-
-<style scoped>
-.card-item {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
-}
-
-.card-item:hover {
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
-}
-</style>
