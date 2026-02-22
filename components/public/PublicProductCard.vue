@@ -56,9 +56,9 @@
           {{ formatPrice(product.price) }}
         </div>
 
-        <!-- NOT in cart → + button -->
+        <!-- NOT in cart → + button (also show while adding) -->
         <button
-          v-if="!isInCart"
+          v-if="!isInCart || isAdding"
           @click.stop="handleClick"
           :disabled="isAdding || !product.is_available"
           class="w-11 h-11 flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
@@ -69,7 +69,7 @@
         </button>
 
         <!-- IN cart → − N + inline controls -->
-        <div v-else class="flex items-center gap-1" @click.stop>
+        <div v-else-if="!isAdding" class="flex items-center gap-1" @click.stop>
           <button
             @click="decrease"
             :disabled="cartStore.isLoading"
@@ -161,24 +161,24 @@
 
       <!-- Cart controls (compact) -->
       <div class="flex-shrink-0" @click.stop>
-        <!-- NOT in cart → + button -->
+        <!-- NOT in cart → + button (also show while adding) -->
         <button
-          v-if="!isInCart"
+          v-if="!isInCart || isAdding"
           @click.stop="handleClick"
           :disabled="isAdding || !product.is_available"
-          class="w-9 h-9 flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+          class="w-11 h-11 flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
           aria-label="Agregar al carrito"
         >
-          <span v-if="isAdding" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+          <span v-if="isAdding" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
           <span v-else>+</span>
         </button>
 
         <!-- IN cart → − N + inline controls (compact) -->
-        <div v-else class="flex items-center gap-1">
+        <div v-else-if="!isAdding" class="flex items-center gap-1">
           <button
             @click="decrease"
             :disabled="cartStore.isLoading"
-            class="w-9 h-9 flex items-center justify-center rounded-xl bg-muted hover:bg-red-100 text-foreground hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-base font-bold"
+            class="w-11 h-11 flex items-center justify-center rounded-xl bg-muted hover:bg-red-100 text-foreground hover:text-red-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-base font-bold"
             aria-label="Quitar uno"
           >−</button>
           <span class="min-w-[1.25rem] text-center font-bold text-foreground text-sm">
@@ -187,7 +187,7 @@
           <button
             @click="increase"
             :disabled="cartStore.isLoading || !product.is_available"
-            class="w-9 h-9 flex items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-base font-bold focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+            class="w-11 h-11 flex items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-base font-bold focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
             aria-label="Agregar uno más"
           >+</button>
         </div>
@@ -197,7 +197,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
 
 const props = defineProps({
@@ -230,12 +230,8 @@ const isInCart = computed(() => totalQtyInCart.value > 0)
 // Local loading state for the initial "add" action (before item appears in cart)
 const isAdding = ref(false)
 
-watch(isInCart, (nowInCart) => {
-  if (nowInCart) isAdding.value = false
-})
-
 watch(() => cartStore.isLoading, (loading) => {
-  if (!loading && !isInCart.value) isAdding.value = false
+  if (!loading) isAdding.value = false
 })
 
 // Decrement: target the last item added (LIFO)
@@ -264,10 +260,14 @@ const increase = async () => {
   }
 }
 
-function handleClick() {
+async function handleClick() {
   if (!props.product.is_available) return
   if (isInCart.value) return
-  if (!props.product.has_modifiers) isAdding.value = true
+  if (isAdding.value) return                    // double-click guard
+  if (!props.product.has_modifiers) {
+    isAdding.value = true
+    await nextTick()                            // render spinner before optimistic push flips isInCart
+  }
   emit('click', props.product)
 }
 

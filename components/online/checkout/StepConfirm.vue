@@ -198,9 +198,7 @@ const displayAddress = computed(() =>
   addressStore.selectedAddress ?? addressStore.pendingAddress,
 )
 
-const deliveryFee = computed(() =>
-  cartStore.orderType === 'delivery' && cartStore.subtotal < 50000 ? 5000 : 0,
-)
+const deliveryFee = computed(() => 0)
 
 const orderTypeIcon = computed(() => ({
   delivery: 'M8 16a3 3 0 01-3-3V7a3 3 0 013-3h8a3 3 0 013 3v6a3 3 0 01-3 3H8zm-4 0h1m14 0h1M1 10h2m18 0h2M5 20h14',

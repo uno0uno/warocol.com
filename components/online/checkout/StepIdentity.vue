@@ -181,9 +181,7 @@ onUnmounted(() => {
 })
 
 // Delivery fee (mirrors confirm.vue logic)
-const deliveryFee = computed(() =>
-  cartStore.orderType === 'delivery' && cartStore.subtotal < 50000 ? 5000 : 0,
-)
+const deliveryFee = computed(() => 0)
 
 // ── OTP send ──────────────────────────────────────────────────────────────
 const handleSendOTP = async () => {

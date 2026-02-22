@@ -4,6 +4,10 @@
  */
 import { defineStore } from 'pinia'
 
+// Module-level lock: addItem awaits this before proceeding so it never
+// races with hydrateFromBackend() during the initial session recovery.
+let _recoveryPromise: Promise<void> | null = null
+
 export interface CartModifier {
   id: string
   name: string
@@ -104,6 +108,14 @@ export const useOnlineCartStore = defineStore('onlineCart', {
     },
 
     /**
+     * Register the session-recovery promise so addItem() can await it.
+     * Called from the page before the recovery fetch starts.
+     */
+    setRecoveryPromise(p: Promise<void>) {
+      _recoveryPromise = p
+    },
+
+    /**
      * Hydrate local state from a backend cart response (session recovery)
      */
     hydrateFromBackend(cartData: BackendCart) {
@@ -151,6 +163,13 @@ export const useOnlineCartStore = defineStore('onlineCart', {
       modifiers: CartModifier[] = [],
       notes?: string
     ) {
+      // Wait for session recovery to complete before adding so we don't
+      // race with hydrateFromBackend() which would wipe the optimistic item.
+      if (_recoveryPromise) {
+        await _recoveryPromise
+        _recoveryPromise = null
+      }
+
       this.isLoading = true
 
       try {
@@ -268,7 +287,7 @@ export const useOnlineCartStore = defineStore('onlineCart', {
     },
 
     /**
-     * Update item quantity — local only (no dedicated endpoint); calls removeItem if quantity ≤ 0
+     * Update item quantity — persists full cart via batch POST; calls removeItem if quantity ≤ 0
      */
     async updateItemQuantity(itemId: string, quantity: number) {
       if (quantity <= 0) {
@@ -281,6 +300,32 @@ export const useOnlineCartStore = defineStore('onlineCart', {
       const modifiersTotal = item.modifiers.reduce((sum, mod) => sum + mod.price, 0)
       item.quantity = quantity
       item.total = (item.unit_price + modifiersTotal) * quantity
+
+      this.isLoading = true
+      try {
+        const data = await $fetch<{ data: BackendCart }>('/api/online/cart/batch', {
+          method: 'POST',
+          body: {
+            tenant_id: this.tenantId,
+            session_id: this.sessionId,
+            order_type: this.orderType,
+            items: this.items.map(i => ({
+              product_id: i.product_id,
+              product_name: i.product_name,
+              quantity: i.quantity,
+              unit_price: i.unit_price,
+              modifiers: i.modifiers,
+              notes: i.notes,
+            })),
+          },
+        })
+        this.cartId = data.data.id
+        this.syncItemIds(data.data.items)
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Error al actualizar la cantidad')
+      } finally {
+        this.isLoading = false
+      }
     },
 
     /**

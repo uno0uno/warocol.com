@@ -15,8 +15,8 @@
         type="email"
         autocomplete="email"
         class="w-full h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        placeholder="you@email.com"
-        :disabled="isFetching"
+        placeholder="tu@correo.com"
+        :disabled="isFetching || previewDone"
         @keyup.enter="onNext"
       />
       <p v-if="email && !isEmailValid" class="text-xs text-destructive">
@@ -63,7 +63,7 @@ const isEmailValid = computed(() =>
 const isValid = computed(() => isEmailValid.value)
 
 const onNext = async () => {
-  if (!isEmailValid.value || isFetching.value) return
+  if (!isEmailValid.value || isFetching.value || previewDone.value) return
 
   isFetching.value = true
   previewDone.value = false
