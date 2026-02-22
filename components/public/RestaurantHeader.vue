@@ -19,7 +19,7 @@
     <!-- Restaurant Info -->
     <div class="max-w-7xl mx-auto px-4 -mt-16 relative z-10">
       <div class="bg-white rounded-xl shadow-lg p-4">
-        <div class="flex flex-row gap-3 items-center">
+        <div class="flex flex-row gap-3 items-start">
           <!-- Logo -->
           <div class="flex-shrink-0">
             <div
