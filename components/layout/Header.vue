@@ -11,7 +11,7 @@
       <!-- Logo -->
       <NuxtLink to="/" class="flex-shrink-0">
         <img
-          src="/logo_waro_10_octubre.png"
+          src="/logo_waro_colombia.png"
           alt="Waro"
           class="h-6 sm:h-8 md:h-9 w-auto object-contain transition-all duration-300"
           :class="isDarkHeader ? 'brightness-0 invert' : ''"

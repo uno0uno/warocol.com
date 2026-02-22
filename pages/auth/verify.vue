@@ -17,7 +17,7 @@
       <div class="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-lg p-8 md:p-10">
         <!-- Logo -->
         <div class="mb-8 md:mb-16 flex justify-center">
-          <img src="/logo_waro_10_octubre.png" alt="Waro" class="h-8 md:h-10 w-auto">
+          <img src="/logo_waro_colombia.png" alt="Waro" class="h-8 md:h-10 w-auto">
         </div>
 
         <!-- Verificando token -->
