@@ -82,26 +82,8 @@
 
         <!-- Cart Content -->
         <template v-else>
-          <!-- Scrollable area: order type selector + items list -->
+          <!-- Scrollable area: items list -->
           <div class="flex-1 overflow-y-auto flex flex-col min-h-0">
-
-            <!-- Order Type Selector -->
-            <div class="px-4 py-3 bg-muted/30 border-b border-border flex-shrink-0">
-              <label class="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Tipo de pedido</label>
-              <div class="grid grid-cols-3 gap-1.5">
-                <button
-                  v-for="type in orderTypes"
-                  :key="type.value"
-                  class="py-2 px-2 min-h-[44px] rounded-lg text-xs font-semibold text-center border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  :class="cartStore.orderType === type.value
-                    ? 'bg-primary border-primary text-primary-foreground'
-                    : 'bg-background border-border text-muted-foreground hover:border-primary hover:text-primary'"
-                  @click="cartStore.setOrderType(type.value)"
-                >
-                  {{ type.icon }} {{ type.label }}
-                </button>
-              </div>
-            </div>
 
             <!-- Items List -->
             <div class="flex-1 py-1">
@@ -185,12 +167,6 @@ const emit = defineEmits<{
 }>()
 
 const cartStore = useOnlineCartStore()
-
-const orderTypes = [
-  { value: 'delivery', label: 'Domicilio', icon: '🚗' },
-  { value: 'pickup', label: 'Recoger', icon: '🏪' },
-  { value: 'dine-in', label: 'Comer aquí', icon: '🍽️' },
-] as const
 
 const confirmClear = ref(false)
 const errorMsg = ref<string | null>(null)
