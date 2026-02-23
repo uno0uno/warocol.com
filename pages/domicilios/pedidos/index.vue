@@ -77,6 +77,10 @@ const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'd
   sortDirection.value = direction
   refresh()
 }
+
+const viewOrder = (order: any) => {
+  navigateTo(`/domicilios/pedidos/${order.id}`)
+}
 </script>
 
 <template>
@@ -111,12 +115,14 @@ const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'd
         empty-sub-message="Los domicilios y recogidas aparecerán aquí."
         variant="default"
         @sort="handleSort"
+        @row-click="viewOrder"
       >
         <!-- Mobile Card -->
         <template #card="{ item }">
           <div
             v-if="item"
-            class="bg-surface border border-border rounded-xl p-4"
+            class="bg-surface border border-border rounded-xl p-4 cursor-pointer hover:bg-surface-secondary transition-colors"
+            @click="viewOrder(item)"
           >
             <div class="flex justify-between items-start mb-3">
               <div>
