@@ -57,7 +57,7 @@ const { data: salesFlowData, pending: salesFlowLoading, refresh: refreshSalesFlo
       status: statusFilter.value || undefined
     }
   }),
-  { server: false, lazy: true, default: () => ({ data: [], metadata: {} }) }
+  { server: false, lazy: true, default: () => ({ data: [], metadata: {} }), watch: [paymentMethodFilter, statusFilter] }
 )
 
 const currentMonthFrom = fnsFormat(startOfMonth(new Date()), 'yyyy-MM-dd')
@@ -156,7 +156,7 @@ onUnmounted(() => {
 })
 
 watch([paymentMethodFilter, statusFilter], async () => {
-  await Promise.all([refreshMetrics(), refreshSalesFlow()])
+  await refreshMetrics()
   lastUpdate.value = new Date()
 })
 
@@ -237,7 +237,7 @@ const formatCurrency = (value: number) =>
           <option value="cancelled">Canceladas</option>
           <option value="pending">Pendientes</option>
         </select>
-        <button v-if="dateRangeDates || paymentMethodFilter || statusFilter" @click="clearFilters" class="h-10 px-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-500 hover:text-slate-700 hover:border-indigo-500 transition-colors" title="Limpiar filtros">
+        <button v-if="dateRangeDates || paymentMethodFilter || statusFilter" @click="clearFilters" class="h-10 px-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-500 hover:text-slate-700 hover:border-indigo-500 transition-colors" title="Limpiar filtros" aria-label="Limpiar filtros">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>
