@@ -42,9 +42,14 @@ const dateRange = computed(() => {
 const { data: metricsData, pending: metricsLoading, error: metricsError, refresh: refreshMetrics } = useAsyncData(
   'ventas-metrics',
   () => $fetch('/api/orders/metrics', {
-    params: { date_from: dateRange.value.from || undefined, date_to: dateRange.value.to || undefined }
+    params: {
+      date_from: dateRange.value.from || undefined,
+      date_to: dateRange.value.to || undefined,
+      payment_method: paymentMethodFilter.value || undefined,
+      status: statusFilter.value || undefined
+    }
   }),
-  { server: false, lazy: true, default: () => ({ data: null }) }
+  { server: false, lazy: true, default: () => ({ data: null }), watch: [paymentMethodFilter, statusFilter] }
 )
 
 const { data: salesFlowData, pending: salesFlowLoading, refresh: refreshSalesFlow } = useAsyncData(
@@ -225,13 +230,13 @@ const formatCurrency = (value: number) =>
           menu-class-name="dp-custom-menu"
           calendar-cell-class-name="dp-custom-cell"
         />
-        <select v-model="paymentMethodFilter" class="h-10 pl-3 pr-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer min-w-[130px]">
+        <select v-model="paymentMethodFilter" aria-label="Filtrar por método de pago" class="h-10 pl-3 pr-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer min-w-[130px]">
           <option :value="null">Método pago</option>
           <option value="cash">Efectivo</option>
           <option value="card">Tarjeta</option>
           <option value="digital">Digital</option>
         </select>
-        <select v-model="statusFilter" class="h-10 pl-3 pr-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer min-w-[120px]">
+        <select v-model="statusFilter" aria-label="Filtrar por estado" class="h-10 pl-3 pr-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer min-w-[120px]">
           <option :value="null">Estado</option>
           <option value="completed">Completadas</option>
           <option value="cancelled">Canceladas</option>
