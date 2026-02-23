@@ -29,35 +29,18 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelado',
 }
 
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    completed: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-    delivered: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-    cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
-    pending:   'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
-    confirmed: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
-    preparing: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
-  }
-  return colors[status] || 'bg-gray-100 text-gray-800'
-}
-
 const goBack = () => router.push('/domicilios/pedidos')
 
-// Dashboard layout inject — dynamic title / status / back button
-const setPageTitle    = inject<(title: string | undefined) => void>('setPageTitle')
-const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle')
-const setPageStatus   = inject<(status: { label: string; color: string } | undefined) => void>('setPageStatus')
+// Dashboard layout inject — dynamic title / subtitle / back button
+const setPageTitle      = inject<(title: string | undefined) => void>('setPageTitle')
+const setPageSubtitle   = inject<(subtitle: string | undefined) => void>('setPageSubtitle')
 const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
-const setBackHandler  = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
+const setBackHandler    = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
 
 watch(order, (newOrder) => {
   if (newOrder) {
     setPageTitle?.(`Pedido #${newOrder.order_number}`)
     setPageSubtitle?.(formatDate(newOrder.order_date))
-    setPageStatus?.({
-      label: STATUS_LABELS[newOrder.status] ?? newOrder.status,
-      color: getStatusColor(newOrder.status),
-    })
   }
 }, { immediate: true })
 
@@ -69,7 +52,6 @@ onMounted(() => {
 onUnmounted(() => {
   setPageTitle?.(undefined)
   setPageSubtitle?.(undefined)
-  setPageStatus?.(undefined)
   setShowBackButton?.(false)
   setBackHandler?.(undefined)
 })
@@ -210,68 +192,119 @@ onUnmounted(() => {
       </div>
 
       <!-- ── Section 3: Delivery / pickup info ── -->
-      <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
+      <div class="bg-surface border border-border rounded-xl p-4 sm:p-6">
+
         <!-- Delivery -->
         <template v-if="order.order_type === 'delivery'">
-          <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center space-x-2 mb-4">
-            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <span>Dirección de entrega</span>
           </h3>
-          <div v-if="order.delivery_address" class="space-y-1 text-sm text-text-primary">
-            <p class="font-medium">
-              {{ order.delivery_address.address_line1 }}
-              <span v-if="order.delivery_address.address_line2">, {{ order.delivery_address.address_line2 }}</span>
-            </p>
-            <p class="text-text-secondary">{{ order.delivery_address.city }}</p>
-            <p v-if="order.delivery_address.delivery_notes" class="text-text-secondary italic">
-              {{ order.delivery_address.delivery_notes }}
-            </p>
-            <p v-if="order.delivery_address.label" class="text-xs text-text-secondary/70">
-              {{ order.delivery_address.label }}
-            </p>
+
+          <div v-if="order.delivery_address" class="space-y-3">
+            <!-- Street -->
+            <div class="flex items-start gap-3">
+              <svg class="w-4 h-4 text-text-secondary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <div>
+                <p class="text-xs text-text-secondary mb-0.5">Dirección</p>
+                <p class="text-sm font-medium text-text-primary">
+                  {{ order.delivery_address.address_line1 }}<span v-if="order.delivery_address.address_line2">, {{ order.delivery_address.address_line2 }}</span>
+                </p>
+                <p v-if="order.delivery_address.delivery_notes" class="text-xs text-text-secondary italic mt-0.5">
+                  {{ order.delivery_address.delivery_notes }}
+                </p>
+              </div>
+            </div>
+
+            <!-- City + label -->
+            <div class="flex items-center gap-3">
+              <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-text-primary">{{ order.delivery_address.city }}</span>
+                <UiStatusBadge v-if="order.delivery_address.label" variant="secondary" size="sm" format="text">
+                  {{ order.delivery_address.label }}
+                </UiStatusBadge>
+              </div>
+            </div>
           </div>
-          <div
-            v-if="order.delivery_instructions"
-            class="mt-3 pt-3 border-t border-border"
-          >
-            <p class="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">Instrucciones de entrega</p>
-            <p class="text-sm text-text-primary">{{ order.delivery_instructions }}</p>
+
+          <!-- Delivery instructions (cart-level note) -->
+          <div v-if="order.delivery_instructions" class="mt-4 bg-info/10 border border-info/20 rounded-lg p-3 flex items-start gap-2">
+            <svg class="w-4 h-4 text-info mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p class="text-xs font-semibold text-info uppercase tracking-wide mb-0.5">Instrucciones de entrega</p>
+              <p class="text-sm text-text-primary">{{ order.delivery_instructions }}</p>
+            </div>
           </div>
         </template>
 
         <!-- Pickup -->
         <template v-else-if="order.order_type === 'pickup'">
-          <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center space-x-2 mb-3">
-            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
             <span>Recogida en tienda</span>
           </h3>
-          <p v-if="order.scheduled_time" class="text-sm text-text-secondary">
-            Hora de recogida: <span class="font-medium text-text-primary">{{ formatDateTime(order.scheduled_time) }}</span>
-          </p>
-          <p v-else class="text-sm text-text-secondary">Sin hora programada — entrega inmediata</p>
-          <div v-if="order.delivery_instructions" class="mt-3 pt-3 border-t border-border">
-            <p class="text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">Notas</p>
-            <p class="text-sm text-text-primary">{{ order.delivery_instructions }}</p>
+
+          <!-- Scheduled time row -->
+          <div class="flex items-start gap-3">
+            <svg class="w-4 h-4 text-text-secondary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p class="text-xs text-text-secondary mb-0.5">Hora de recogida</p>
+              <p v-if="order.scheduled_time" class="text-sm font-medium text-text-primary">
+                {{ formatDateTime(order.scheduled_time) }}
+              </p>
+              <div v-else class="flex items-center gap-2 mt-0.5">
+                <span class="text-sm text-text-secondary">Sin hora programada</span>
+                <UiStatusBadge variant="success" size="sm" format="text">Inmediato</UiStatusBadge>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div v-if="order.delivery_instructions" class="mt-4 bg-info/10 border border-info/20 rounded-lg p-3 flex items-start gap-2">
+            <svg class="w-4 h-4 text-info mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p class="text-xs font-semibold text-info uppercase tracking-wide mb-0.5">Notas</p>
+              <p class="text-sm text-text-primary">{{ order.delivery_instructions }}</p>
+            </div>
           </div>
         </template>
 
         <!-- Dine-in -->
         <template v-else>
-          <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center space-x-2">
-            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center gap-2 mb-3">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
             <span>En mesa</span>
           </h3>
+          <div class="flex items-center gap-3">
+            <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-sm text-text-secondary">Pedido servido en el local</span>
+          </div>
         </template>
+
       </div>
 
     </div>
