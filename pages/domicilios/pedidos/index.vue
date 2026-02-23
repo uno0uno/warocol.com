@@ -53,24 +53,14 @@ const columns: Column[] = [
   { key: 'verified_email', title: 'Cliente',   sortable: true }
 ]
 
-// Label and color maps
+// Label maps
 const ORDER_TYPE_LABELS: Record<string, string> = {
   delivery:   'Domicilio',
   pickup:     'Recogida',
   'dine-in':  'En mesa'
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  completed: 'Completado',
-  pending:   'Pendiente',
-  cancelled: 'Cancelado'
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  completed: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-  pending:   'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-}
+const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
 
 const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'desc' }) => {
   sortField.value = field
@@ -129,9 +119,9 @@ const viewOrder = (order: any) => {
                 <p class="text-base font-bold text-text-primary"># {{ item.order_number }}</p>
                 <p class="text-sm text-text-secondary">{{ formatDateTime(item.order_date) }}</p>
               </div>
-              <span :class="['px-2 py-1 rounded-full text-xs font-medium', STATUS_COLORS[item.status] ?? 'bg-gray-100 text-gray-800']">
-                {{ STATUS_LABELS[item.status] ?? item.status }}
-              </span>
+              <UiStatusBadge :variant="getStatusVariant(item.status)" size="sm" format="text">
+                {{ getStatusText(item.status) }}
+              </UiStatusBadge>
             </div>
             <div class="space-y-1">
               <p class="text-sm text-text-secondary truncate">{{ item.verified_email ?? '—' }}</p>
@@ -168,9 +158,9 @@ const viewOrder = (order: any) => {
         </template>
 
         <template #cell-status="{ value }">
-          <span :class="['px-2 py-1 rounded-full text-xs font-medium inline-block', STATUS_COLORS[value] ?? 'bg-gray-100 text-gray-800']">
-            {{ STATUS_LABELS[value] ?? value }}
-          </span>
+          <UiStatusBadge :variant="getStatusVariant(value)" size="sm" format="text">
+            {{ getStatusText(value) }}
+          </UiStatusBadge>
         </template>
 
         <template #cell-total_amount="{ value }">
