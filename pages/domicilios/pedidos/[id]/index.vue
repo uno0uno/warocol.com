@@ -9,10 +9,30 @@ const router = useRouter()
 const orderId = route.params.id as string
 const { formatDate, formatDateTime, formatCurrency } = useFormatters()
 
-const { data: orderResponse, pending: isLoading, error: fetchError } =
+const { data: orderResponse, pending: isLoading, error: fetchError, refresh: refreshOrder } =
   useFetch(() => `/api/online/orders/${orderId}`, { server: false })
 
 const order = computed(() => (orderResponse.value as any)?.data ?? null)
+
+const isStatusUpdating = ref(false)
+const statusUpdateError = ref<string | null>(null)
+
+const updateStatus = async (newStatus: string) => {
+  if (!order.value || isStatusUpdating.value) return
+  isStatusUpdating.value = true
+  statusUpdateError.value = null
+  try {
+    await $fetch(`/api/online/orders/${orderId}/status`, {
+      method: 'PATCH',
+      body: { new_status: newStatus },
+    })
+    await refreshOrder()
+  } catch (err: any) {
+    statusUpdateError.value = err?.data?.detail ?? err?.message ?? 'Error al actualizar el estado'
+  } finally {
+    isStatusUpdating.value = false
+  }
+}
 
 const ORDER_TYPE_LABELS: Record<string, string> = {
   delivery: 'Domicilio',
@@ -20,14 +40,7 @@ const ORDER_TYPE_LABELS: Record<string, string> = {
   'dine-in': 'En mesa',
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'Pendiente',
-  confirmed: 'Confirmado',
-  preparing: 'En preparación',
-  delivered: 'Entregado',
-  completed: 'Completado',
-  cancelled: 'Cancelado',
-}
+const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
 
 const goBack = () => router.push('/domicilios/pedidos')
 
@@ -99,10 +112,12 @@ onUnmounted(() => {
           <p class="text-sm text-text-secondary mt-1">{{ formatDate(order.order_date) }}</p>
         </div>
 
-        <!-- Card 3: Estado (info accent) -->
-        <div class="bg-surface border-2 border-info rounded-xl p-4">
+        <!-- Card 3: Estado -->
+        <div class="bg-surface border border-border rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Estado</p>
-          <p class="text-lg font-bold text-info">{{ STATUS_LABELS[order.status] ?? order.status }}</p>
+          <UiStatusBadge :variant="getStatusVariant(order.status)" size="lg" format="text">
+            {{ getStatusText(order.status) }}
+          </UiStatusBadge>
         </div>
 
         <!-- Card 4: Total (primary accent) -->
@@ -110,6 +125,47 @@ onUnmounted(() => {
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Total</p>
           <p class="text-2xl font-bold text-primary">{{ formatCurrency(order.total_amount) }}</p>
         </div>
+      </div>
+
+      <!-- ── Section 1.5: Status Actions ── -->
+      <div class="bg-surface border border-border rounded-xl p-4 sm:p-6">
+        <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">Acciones del pedido</p>
+
+        <!-- Terminal states -->
+        <div v-if="order.status === 'completed'" class="flex items-center gap-3">
+          <span class="text-sm text-text-secondary">Pedido completado. No hay más acciones disponibles.</span>
+        </div>
+        <div v-else-if="order.status === 'cancelled'" class="flex items-center gap-3">
+          <span class="text-sm text-text-secondary">Pedido cancelado. No hay más acciones disponibles.</span>
+        </div>
+
+        <!-- Active states -->
+        <div v-else class="flex flex-col sm:flex-row gap-3">
+          <UiButton v-if="order.status === 'pending'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('confirmed')">
+            {{ isStatusUpdating ? 'Confirmando...' : 'Confirmar pedido' }}
+          </UiButton>
+          <UiButton v-else-if="order.status === 'confirmed'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('preparing')">
+            {{ isStatusUpdating ? 'Actualizando...' : 'Marcar en preparación' }}
+          </UiButton>
+          <UiButton v-else-if="order.status === 'preparing'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('delivered')">
+            {{ isStatusUpdating ? 'Actualizando...' : 'Marcar como entregado' }}
+          </UiButton>
+          <UiButton v-else-if="order.status === 'delivered'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('completed')">
+            {{ isStatusUpdating ? 'Completando...' : 'Completar pedido' }}
+          </UiButton>
+
+          <UiButton
+            v-if="['pending', 'confirmed', 'preparing'].includes(order.status)"
+            variant="destructive"
+            size="lg"
+            :disabled="isStatusUpdating"
+            @click="updateStatus('cancelled')"
+          >
+            {{ isStatusUpdating ? 'Cancelando...' : 'Cancelar pedido' }}
+          </UiButton>
+        </div>
+
+        <p v-if="statusUpdateError" role="alert" class="mt-3 text-sm text-destructive">{{ statusUpdateError }}</p>
       </div>
 
       <!-- ── Section 2: Items ── -->
