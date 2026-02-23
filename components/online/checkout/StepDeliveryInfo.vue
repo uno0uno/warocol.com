@@ -132,6 +132,7 @@
           />
         </div>
       </div>
+      <p v-if="scheduledTimeError" class="text-sm text-destructive mt-2">{{ scheduledTimeError }}</p>
     </div>
 
     <!-- Instructions -->
@@ -177,6 +178,15 @@ const scheduledTime = ref('')
 
 const minDate = computed(() => new Date().toISOString().split('T')[0])
 
+const scheduledTimeError = computed(() => {
+  if (!isScheduled.value || !scheduledDate.value || !scheduledTime.value) return null
+  const selected = new Date(`${scheduledDate.value}T${scheduledTime.value}:00`)
+  const min = new Date()
+  min.setMinutes(min.getMinutes() + 30)
+  if (selected < min) return 'El horario debe ser al menos 30 minutos desde ahora'
+  return null
+})
+
 // Instructions
 const deliveryInstructions = ref('')
 
@@ -187,13 +197,13 @@ const isValid = computed(() => {
     if (addressStore.hasAddresses) return !!addressStore.selectedAddressId
     if (!addressFormValid.value) return false
   }
-  if (isScheduled.value) return !!scheduledDate.value && !!scheduledTime.value
+  if (isScheduled.value) return !!scheduledDate.value && !!scheduledTime.value && !scheduledTimeError.value
   return true
 })
 
 const buildDeliveryInfo = () => ({
   scheduled_time: isScheduled.value && scheduledDate.value && scheduledTime.value
-    ? `${scheduledDate.value}T${scheduledTime.value}:00`
+    ? new Date(`${scheduledDate.value}T${scheduledTime.value}:00`).toISOString()
     : undefined,
   delivery_instructions: deliveryInstructions.value || undefined,
 })
