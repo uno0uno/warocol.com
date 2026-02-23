@@ -109,6 +109,21 @@
           <ComputerDesktopIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'pos' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
           <span v-if="!collapsed" class="whitespace-nowrap">POS</span>
         </NuxtLink>
+
+        <NuxtLink
+          to="/domicilios/pedidos"
+          :class="[
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+            collapsed ? 'justify-center' : '',
+            activePage === 'domicilios'
+              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+          ]"
+          :title="collapsed ? 'Domicilios' : ''"
+        >
+          <MapPinIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'domicilios' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+          <span v-if="!collapsed" class="whitespace-nowrap">Domicilios</span>
+        </NuxtLink>
       </div>
 
       <!-- Sección Gestión (colapsable) -->
@@ -219,6 +234,7 @@ import {
   ComputerDesktopIcon,
   CubeIcon,
   KeyIcon,
+  MapPinIcon,
   ShoppingCartIcon,
   Squares2X2Icon,
   TruckIcon,
@@ -226,7 +242,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'pos' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'gastos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
+  activePage?: 'dashboard' | 'ventas' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'gastos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
 }
 
 interface Tenant {

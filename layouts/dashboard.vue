@@ -534,6 +534,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path.startsWith('/domicilios')) {
+    return {
+      pageTitle: 'Domicilios',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar pedidos...',
+      activePage: 'domicilios' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   }
 
   return {
