@@ -2,7 +2,7 @@
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({
-  layout: false,
+  layout: 'dashboard',
   ssr: false
 })
 
