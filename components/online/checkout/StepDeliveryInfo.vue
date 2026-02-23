@@ -68,7 +68,7 @@
     <div>
       <h4 class="text-base font-semibold text-foreground mb-3">¿Cuándo lo necesitas?</h4>
 
-      <div class="grid grid-cols-2 gap-3 mb-4" role="radiogroup" aria-label="Hora del pedido">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4" role="radiogroup" aria-label="Hora del pedido">
         <button
           type="button"
           role="radio"
