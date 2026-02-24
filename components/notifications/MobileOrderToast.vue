@@ -21,7 +21,9 @@
           class="mx-3 mt-2 rounded-2xl bg-surface border border-border shadow-xl overflow-hidden"
         >
           <NuxtLink
-            :to="`/domicilios/pedidos`"
+            :to="toast.notification.payload?.order_id
+              ? `/domicilios/pedidos/${toast.notification.payload.order_id}`
+              : '/domicilios/pedidos'"
             @click="dismiss(toast.id)"
             class="flex items-center gap-3 px-4 py-3"
           >
