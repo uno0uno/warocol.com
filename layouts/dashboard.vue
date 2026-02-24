@@ -28,7 +28,7 @@
 
           <div class="flex items-center gap-3">
             <!-- Notification Bell — desktop only -->
-            <NotificationBell class="hidden lg:flex" />
+            <NotificationsNotificationBell class="hidden lg:flex" />
 
             <!-- Global Header Actions -->
             <div class="flex items-center gap-2">
