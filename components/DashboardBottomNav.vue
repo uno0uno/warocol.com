@@ -176,14 +176,23 @@
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
           >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'domicilios' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <MapPinIcon
-                class="w-6 h-6"
-                :class="activePage === 'domicilios' ? 'text-crocus-600' : 'text-titan-600'"
-              />
+            <div class="relative">
+              <div
+                class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+                :class="activePage === 'domicilios' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+              >
+                <MapPinIcon
+                  class="w-6 h-6"
+                  :class="activePage === 'domicilios' ? 'text-crocus-600' : 'text-titan-600'"
+                />
+              </div>
+              <span
+                v-if="props.notificationsCount > 0"
+                aria-label="`${props.notificationsCount} notificaciones sin leer`"
+                class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-crocus-500 text-white text-[10px] font-bold rounded-full leading-none"
+              >
+                {{ props.notificationsCount > 9 ? '9+' : props.notificationsCount }}
+              </span>
             </div>
             <span class="text-[10px] text-titan-600">Domicilios</span>
           </NuxtLink>
@@ -266,10 +275,12 @@ import { computed } from 'vue'
 interface Props {
   activePage?: 'dashboard' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'analitica' | 'reportes' | 'configuracion' | 'admin' | 'ventas' | 'inventario' | 'menu' | 'equipo' | 'integraciones'
   onRefresh?: () => void | Promise<void>
+  notificationsCount?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  activePage: 'financiero'
+  activePage: 'financiero',
+  notificationsCount: 0
 })
 
 interface Tenant {
