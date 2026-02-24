@@ -22,14 +22,14 @@ const statusHistory = computed(() => (historyResponse.value as any)?.data ?? [])
 const isStatusUpdating = ref(false)
 const statusUpdateError = ref<string | null>(null)
 
-const updateStatus = async (newStatus: string) => {
+const updateStatus = async (newStatus: string, extra: Record<string, unknown> = {}) => {
   if (!order.value || isStatusUpdating.value) return
   isStatusUpdating.value = true
   statusUpdateError.value = null
   try {
     await $fetch(`/api/online/orders/${orderId}/status`, {
       method: 'PATCH',
-      body: { new_status: newStatus },
+      body: { new_status: newStatus, ...extra },
     })
     await refreshOrder()
     await refreshHistory()
@@ -39,6 +39,8 @@ const updateStatus = async (newStatus: string) => {
     isStatusUpdating.value = false
   }
 }
+
+const confirmOrder = () => updateStatus('confirmed', { auto_complete: true })
 
 const ORDER_TYPE_LABELS: Record<string, string> = {
   delivery: 'Domicilio',
@@ -147,7 +149,7 @@ onUnmounted(() => {
 
         <!-- Active states -->
         <div v-else class="flex flex-col sm:flex-row gap-3">
-          <UiButton v-if="order.status === 'pending'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('confirmed')">
+          <UiButton v-if="order.status === 'pending'" size="lg" :disabled="isStatusUpdating" @click="confirmOrder()">
             {{ isStatusUpdating ? 'Confirmando...' : 'Confirmar pedido' }}
           </UiButton>
           <UiButton v-else-if="order.status === 'confirmed'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('preparing')">
