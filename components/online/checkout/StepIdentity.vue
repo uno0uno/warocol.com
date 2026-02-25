@@ -171,6 +171,9 @@ const countdown = ref(0)
 let countdownInterval: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
+  if (otpAuthStore.isAuthenticated) {
+    emit('verified')
+  }
   countdownInterval = setInterval(() => {
     countdown.value = otpAuthStore.otpCooldownRemaining
   }, 1000)
