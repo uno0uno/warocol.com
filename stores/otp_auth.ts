@@ -28,6 +28,8 @@ export const useOtpAuthStore = defineStore('otpAuth', {
   getters: {
     isAuthenticated: (state) => state.isVerified && !!state.customerId,
 
+    isSessionValid: (state) => state.isVerified && !!state.customerId,
+
     otpCooldownRemaining(state): number {
       if (!state.otpSentAt) return 0
 
