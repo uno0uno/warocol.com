@@ -375,7 +375,7 @@
                         v-model="item.searchTerm"
                         @input="(e) => searchIngredients(e.target.value, index)"
                         @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, index) }"
-                        @blur="() => setTimeout(() => { item.showResults = false }, 150)"
+                        @blur="() => window.setTimeout(() => { item.showResults = false }, 150)"
                         class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
                         placeholder="Buscar ingrediente..."
                       />
