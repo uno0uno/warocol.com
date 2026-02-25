@@ -54,7 +54,6 @@ import StepDeliveryInfo from '~/components/online/checkout/StepDeliveryInfo.vue'
 import StepIdentity from '~/components/online/checkout/StepIdentity.vue'
 import StepConfirm from '~/components/online/checkout/StepConfirm.vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
-import { useOtpAuthStore } from '~/stores/otp_auth'
 import { useAddressStore } from '~/stores/address'
 
 definePageMeta({
@@ -64,7 +63,6 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const cartStore = useOnlineCartStore()
-const otpAuthStore = useOtpAuthStore()
 const addressStore = useAddressStore()
 
 const tenantSlug = computed(() => route.params.tenant as string)
@@ -159,7 +157,6 @@ const handleVerified = () => {
 
 const handleSuccess = () => {
   cartStore.reset()
-  otpAuthStore.logout()
   addressStore.reset()
   router.push(`/${tenantSlug.value}`)
 }

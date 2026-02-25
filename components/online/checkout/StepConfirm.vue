@@ -166,9 +166,15 @@
             </template>
           </p>
 
-          <Button class="w-full" @click="emit('success')">
-            Volver al menú
+          <Button class="w-full" @click="goToOrder">
+            Ver mi pedido
           </Button>
+          <button
+            class="w-full mt-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            @click="emit('success')"
+          >
+            Seguir comprando
+          </button>
         </div>
       </div>
     </Transition>
@@ -178,6 +184,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useOtpAuthStore } from '~/stores/otp_auth'
 import { useAddressStore } from '~/stores/address'
@@ -188,6 +195,7 @@ const emit = defineEmits<{
   (e: 'success'): void
 }>()
 
+const router = useRouter()
 const cartStore = useOnlineCartStore()
 const otpAuthStore = useOtpAuthStore()
 const addressStore = useAddressStore()
@@ -278,6 +286,15 @@ const submitOrder = async () => {
   }
   finally {
     isSubmitting.value = false
+  }
+}
+
+// ── Post-order navigation ─────────────────────────────────────────────────
+
+const goToOrder = () => {
+  emit('success')
+  if (confirmedOrder.value?.order_id) {
+    router.push(`/mis-pedidos/${confirmedOrder.value.order_id}`)
   }
 }
 
