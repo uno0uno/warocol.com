@@ -336,14 +336,14 @@ interface OrderDetail {
   status_history: StatusHistoryEntry[]
 }
 
-useHead({ title: computed(() => order.value ? `Pedido #${order.value.order_number} — WARO` : 'Pedido — WARO') })
-
 const { data, pending, error, refresh } = await useAsyncData(
   'customer-order-' + orderId,
   () => $fetch<{ success: boolean; data: OrderDetail }>('/api/customer/orders/' + orderId)
 )
 
 const order = computed<OrderDetail | null>(() => data.value?.data ?? null)
+
+useHead({ title: computed(() => order.value ? `Pedido #${order.value.order_number} — WARO` : 'Pedido — WARO') })
 
 // Cancel state
 const showCancelConfirm = ref(false)
