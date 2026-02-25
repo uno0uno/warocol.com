@@ -160,6 +160,61 @@ export const useOtpAuthStore = defineStore('otpAuth', {
     },
 
     /**
+     * Send OTP for customer portal re-auth (no cart required)
+     */
+    async sendOTPPortal(email: string) {
+      this.isLoading = true
+      this.email = email
+
+      try {
+        const data = await $fetch<{ success: boolean; expires_in: number; message: string }>(
+          '/api/online/otp/send',
+          {
+            method: 'POST',
+            body: { email, cart_id: null },
+          }
+        )
+
+        this.otpSentAt = new Date()
+        this.otpExpiresAt = new Date(Date.now() + data.expires_in * 1000)
+
+        return data
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Error al enviar el código')
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    /**
+     * Verify OTP for customer portal re-auth (no cart required)
+     */
+    async verifyOTPPortal(email: string, code: string) {
+      this.isLoading = true
+
+      try {
+        const data = await $fetch<{
+          success: boolean
+          customer_id: string
+          is_verified: boolean
+          message: string
+        }>('/api/online/otp/verify', {
+          method: 'POST',
+          body: { email, cart_id: null, otp_code: code },
+        })
+
+        this.customerId = data.customer_id
+        this.isVerified = data.is_verified
+
+        return data
+      } catch (error: any) {
+        throw new Error(error.data?.detail || 'Código incorrecto')
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    /**
      * Logout and clear auth state
      */
     logout() {
