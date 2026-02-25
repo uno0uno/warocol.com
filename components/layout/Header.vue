@@ -41,6 +41,17 @@
         </NuxtLink>
 
         <NuxtLink
+          v-if="otpAuthStore.isSessionValid"
+          to="/mis-pedidos"
+          class="text-xs sm:text-sm font-medium tracking-wide transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-ring"
+          :class="isDarkHeader
+            ? 'text-white hover:text-crocus-200'
+            : 'text-ebony-600 hover:text-crocus-600'"
+        >
+          Mis pedidos
+        </NuxtLink>
+
+        <NuxtLink
           :to="authStore.isSessionValid ? '/ventas' : '/auth/login'"
           class="text-xs sm:text-sm font-medium tracking-wide transition-colors whitespace-nowrap"
           :class="isDarkHeader
@@ -65,9 +76,11 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
+import { useOtpAuthStore } from '~/stores/otp_auth'
 
 const route = useRoute()
 const authStore = useAuthStore()
+const otpAuthStore = useOtpAuthStore()
 
 const isDarkHeader = computed(() => {
   return route.path.startsWith('/blog')
