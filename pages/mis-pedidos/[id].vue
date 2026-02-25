@@ -277,7 +277,8 @@ import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({
   middleware: 'customer-auth',
-  layout: 'public-restaurant',
+  layout: 'dashboard',
+  ssr: false,
 })
 
 const route = useRoute()

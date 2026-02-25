@@ -108,7 +108,8 @@ import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({
   middleware: 'customer-auth',
-  layout: 'public-restaurant',
+  layout: 'dashboard',
+  ssr: false,
 })
 
 useHead({ title: 'Mis pedidos — WARO' })
