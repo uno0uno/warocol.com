@@ -170,8 +170,27 @@ const checkoutError = ref('')
 const countdown = ref(0)
 let countdownInterval: ReturnType<typeof setInterval> | null = null
 
-onMounted(() => {
+onMounted(async () => {
   if (otpAuthStore.isAuthenticated) {
+    if (cartStore.cartId) {
+      try {
+        const result = await $fetch<{ success: boolean; pickup_pin: string | null }>(
+          `/api/online/cart/${cartStore.cartId}/verify-with-session`,
+          { method: 'POST' },
+        )
+        if (result.pickup_pin) {
+          otpAuthStore.pickupPin = result.pickup_pin
+        }
+      }
+      catch {
+        // Cookie expired or cart conflict — fall back to OTP flow
+        subStep.value = 'idle'
+        countdownInterval = setInterval(() => {
+          countdown.value = otpAuthStore.otpCooldownRemaining
+        }, 1000)
+        return
+      }
+    }
     emit('verified')
   }
   countdownInterval = setInterval(() => {
