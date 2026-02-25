@@ -28,7 +28,7 @@
 
           <div class="flex items-center gap-3">
             <!-- Notification Bell — desktop only -->
-            <NotificationBell class="hidden lg:flex" />
+            <NotificationsNotificationBell class="hidden lg:flex" />
 
             <!-- Global Header Actions -->
             <div class="flex items-center gap-2">
@@ -125,8 +125,12 @@
       :on-refresh="refreshHandler"
       :show-cart-button="route.path === '/pos'"
       :cart-items-count="posCartItemsCount"
+      :notifications-count="notificationsUnreadCount"
       @open-cart="posOpenCartModal"
     />
+
+    <!-- Mobile Order Toast — shown on new notifications (mobile only) -->
+    <NotificationsMobileOrderToast />
 
     <!-- Global Purchase Action Bar -->
     <!-- <PurchasesGlobalPurchaseActionBar /> -->
@@ -138,6 +142,10 @@ import { provide, inject, ref, computed, onMounted, onUnmounted, type Ref, type 
 import {
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
+import { useNotifications } from '~/composables/useNotifications'
+
+// Notifications — init here so SSE starts on all screen sizes (not just when bell mounts)
+const { unreadCount: notificationsUnreadCount, init: initNotifications, disconnect: disconnectNotifications } = useNotifications()
 
 // Get route-based configuration
 const route = useRoute()
@@ -592,10 +600,12 @@ let dateTimeInterval: ReturnType<typeof setInterval> | null = null
 onMounted(() => {
   updateDateTime()
   dateTimeInterval = setInterval(updateDateTime, 60000)
+  if (process.client) initNotifications()
 })
 
 onUnmounted(() => {
   if (dateTimeInterval) clearInterval(dateTimeInterval)
+  disconnectNotifications()
 })
 
 // Refresh handler - will be injected by pages that need it

@@ -67,30 +67,36 @@
           <li
             v-for="notification in notifications"
             :key="notification.id"
-            @click="handleMarkAsRead(notification.id)"
-            class="flex gap-3 px-4 py-3 hover:bg-surface-secondary transition-colors cursor-pointer"
           >
-            <!-- Icon -->
-            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-              <ShoppingBagIcon class="w-4 h-4 text-primary" aria-hidden="true" />
-            </div>
+            <NuxtLink
+              :to="notification.payload?.order_id
+                ? `/domicilios/pedidos/${notification.payload.order_id}`
+                : '/domicilios/pedidos'"
+              @click="handleMarkAsRead(notification.id); close()"
+              class="flex gap-3 px-4 py-3 hover:bg-surface-secondary transition-colors"
+            >
+              <!-- Icon -->
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                <ShoppingBagIcon class="w-4 h-4 text-primary" aria-hidden="true" />
+              </div>
 
-            <!-- Content -->
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-text-primary leading-snug">
-                Nuevo pedido #{{ notification.payload?.order_number ?? '—' }}
-              </p>
-              <p class="text-xs text-muted-foreground mt-0.5">
-                {{ formatRelativeTime(notification.created_at) }}
-              </p>
-            </div>
+              <!-- Content -->
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-text-primary leading-snug">
+                  Nuevo pedido #{{ notification.payload?.order_number ?? '—' }}
+                </p>
+                <p class="text-xs text-muted-foreground mt-0.5">
+                  {{ formatRelativeTime(notification.created_at) }}
+                </p>
+              </div>
 
-            <!-- Unread dot -->
-            <div
-              v-if="!notification.read_at"
-              class="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-1.5"
-              aria-hidden="true"
-            />
+              <!-- Unread dot -->
+              <div
+                v-if="!notification.read_at"
+                class="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-1.5"
+                aria-hidden="true"
+              />
+            </NuxtLink>
           </li>
         </ul>
       </div>

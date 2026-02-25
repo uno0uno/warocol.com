@@ -22,6 +22,7 @@
         <!-- Refresh Button - always visible -->
         <button
           @click="onRefresh ? onRefresh() : $router.go(0)"
+          aria-label="Actualizar página"
           class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100"
         >
           <svg class="w-5 h-5 text-titan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,9 +30,27 @@
           </svg>
         </button>
 
+        <!-- Notificaciones -->
+        <button
+          @click="showNotificationsModal = true"
+          aria-label="Ver notificaciones"
+          class="relative w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100"
+        >
+          <BellAlertIcon v-if="notificationsCount > 0" class="w-5 h-5 text-primary" aria-hidden="true" />
+          <BellIcon v-else class="w-5 h-5 text-titan-500" aria-hidden="true" />
+          <span
+            v-if="notificationsCount > 0"
+            class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-crocus-500 text-white text-[10px] font-bold rounded-full leading-none"
+            aria-hidden="true"
+          >
+            {{ notificationsCount > 9 ? '9+' : notificationsCount }}
+          </span>
+        </button>
+
         <!-- Menú (all navigation) -->
         <button
           @click="showMenuModal = true"
+          aria-label="Abrir navegación"
           class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100"
         >
           <Bars3Icon class="w-5 h-5 text-titan-500" />
@@ -40,6 +59,7 @@
         <!-- Configuración/Tenant -->
         <button
           @click="showTenantModal = true"
+          aria-label="Configuración"
           class="w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100"
         >
           <Cog6ToothIcon class="w-5 h-5 text-titan-500" />
@@ -176,19 +196,61 @@
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
           >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'domicilios' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <MapPinIcon
-                class="w-6 h-6"
-                :class="activePage === 'domicilios' ? 'text-crocus-600' : 'text-titan-600'"
-              />
+            <div class="relative">
+              <div
+                class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+                :class="activePage === 'domicilios' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+              >
+                <MapPinIcon
+                  class="w-6 h-6"
+                  :class="activePage === 'domicilios' ? 'text-crocus-600' : 'text-titan-600'"
+                />
+              </div>
+              <span
+                v-if="props.notificationsCount > 0"
+                aria-label="`${props.notificationsCount} notificaciones sin leer`"
+                class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-crocus-500 text-white text-[10px] font-bold rounded-full leading-none"
+              >
+                {{ props.notificationsCount > 9 ? '9+' : props.notificationsCount }}
+              </span>
             </div>
             <span class="text-[10px] text-titan-600">Domicilios</span>
           </NuxtLink>
         </div>
       </div>
+    </UiBottomSheetModal>
+
+    <!-- Notifications Modal -->
+    <UiBottomSheetModal v-model="showNotificationsModal" title="Notificaciones" max-height="lg">
+      <!-- Empty state -->
+      <div v-if="notifications.length === 0" class="flex flex-col items-center justify-center py-10 px-4 gap-2">
+        <BellIcon class="w-8 h-8 text-muted-foreground/40" aria-hidden="true" />
+        <p class="text-sm text-muted-foreground text-center">Sin notificaciones nuevas</p>
+      </div>
+      <!-- List -->
+      <ul v-else class="divide-y divide-titan-100">
+        <li v-for="notification in notifications" :key="notification.id">
+          <NuxtLink
+            :to="notification.payload?.order_id
+              ? `/domicilios/pedidos/${notification.payload.order_id}`
+              : '/domicilios/pedidos'"
+            @click="handleMarkAsRead(notification.id); showNotificationsModal = false"
+            class="flex items-start gap-3 px-4 py-3 hover:bg-titan-50 transition-colors"
+            :class="!notification.read_at ? 'bg-crocus-50/40' : ''"
+          >
+            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-crocus-100 flex items-center justify-center mt-0.5">
+              <ShoppingBagIcon class="w-4 h-4 text-crocus-600" aria-hidden="true" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-ebony-800 leading-snug">
+                Nuevo pedido #{{ notification.payload?.order_number ?? '—' }}
+              </p>
+              <p class="text-xs text-titan-500 mt-0.5">{{ formatRelativeTime(notification.created_at) }}</p>
+            </div>
+            <span v-if="!notification.read_at" class="flex-shrink-0 w-2 h-2 rounded-full bg-crocus-500 mt-1.5" aria-hidden="true" />
+          </NuxtLink>
+        </li>
+      </ul>
     </UiBottomSheetModal>
 
     <!-- Tenant Selector Modal -->
@@ -260,16 +322,21 @@ import {
   CubeIcon,
   ChartBarIcon,
   UserGroupIcon,
+  BellIcon,
+  BellAlertIcon,
+  ShoppingBagIcon,
 } from '@heroicons/vue/24/outline'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 interface Props {
   activePage?: 'dashboard' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'analitica' | 'reportes' | 'configuracion' | 'admin' | 'ventas' | 'inventario' | 'menu' | 'equipo' | 'integraciones'
   onRefresh?: () => void | Promise<void>
+  notificationsCount?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  activePage: 'financiero'
+  activePage: 'financiero',
+  notificationsCount: 0
 })
 
 interface Tenant {
@@ -281,6 +348,25 @@ interface Tenant {
 // Modal state
 const showTenantModal = ref(false)
 const showMenuModal = ref(false)
+const showNotificationsModal = ref(false)
+
+// Notifications
+const { notifications, markAsRead } = useNotifications()
+
+const handleMarkAsRead = async (id: string) => {
+  await markAsRead(id)
+}
+
+const formatRelativeTime = (dateStr: string): string => {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const minutes = Math.floor(diff / 60_000)
+  if (minutes < 1) return 'Ahora'
+  if (minutes < 60) return `Hace ${minutes} min`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `Hace ${hours} h`
+  const days = Math.floor(hours / 24)
+  return `Hace ${days} d`
+}
 
 // Use tenants store
 const tenantsStore = useTenantsStore()
