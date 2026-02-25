@@ -374,7 +374,8 @@
                         type="text"
                         v-model="item.searchTerm"
                         @input="(e) => searchIngredients(e.target.value, index)"
-                        @focus="item.showResults = true"
+                        @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, index) }"
+                        @blur="() => setTimeout(() => { item.showResults = false }, 150)"
                         class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
                         placeholder="Buscar ingrediente..."
                       />
@@ -960,6 +961,7 @@ interface PurchaseItem {
   ocr_description?: string // texto libre de la factura, solo para UI
   grams_per_unit?: number | null // solo para ingredientes und: peso en gr por unidad
   searchTerm?: string // para el input de busqueda
+  showResults?: boolean // controla visibilidad del dropdown de búsqueda
 }
 
 interface NewUnitForm {
@@ -976,6 +978,7 @@ const currentStep = ref(1)
 const isSubmitting = ref(false)
 const supplierCatalog = ref<any[]>([])
 const newUnitForms = ref<Record<number, NewUnitForm>>({})
+const ingredientResults = ref<Record<number, any[]>>({})
 
 interface LocalPurchaseUnit {
   ingredient_id: string
@@ -1008,7 +1011,8 @@ function createEmptyItem(): PurchaseItem {
     total_cost: 0,
     notes: '',
     suggested_price: null,
-    grams_per_unit: null
+    grams_per_unit: null,
+    showResults: false
   }
 }
 
@@ -1532,6 +1536,31 @@ const createSupplierFromOcr = async () => {
   } finally {
     isCreatingSupplier.value = false
   }
+}
+
+const searchIngredients = (term: string, index: number) => {
+  const item = form.value.items[index]
+  item.ingredient_id = ''
+  if (!term || term.trim().length < 1) {
+    ingredientResults.value[index] = []
+    item.showResults = false
+    return
+  }
+  const normalized = normalizeForMatch(term)
+  const results = ingredients.value
+    .filter((ing: any) => normalizeForMatch(ing.name).includes(normalized))
+    .slice(0, 10)
+  ingredientResults.value[index] = results
+  item.showResults = true
+}
+
+const selectIngredient = (ingredient: any, index: number) => {
+  const item = form.value.items[index]
+  item.ingredient_id = ingredient.id
+  item.searchTerm = ingredient.name
+  item.showResults = false
+  ingredientResults.value[index] = []
+  onIngredientChange(index)
 }
 
 const findIngredientMatch = (ocrDescription: string): string => {
