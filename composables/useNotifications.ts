@@ -54,7 +54,6 @@ export const useNotifications = () => {
     }
 
     eventSource.onerror = () => {
-      // EventSource auto-reconnects on error — no manual intervention needed
       console.warn('[useNotifications] SSE connection error, will auto-reconnect')
     }
   }
@@ -72,21 +71,16 @@ export const useNotifications = () => {
 
   // Hard-resets SSE and state on tenant change — bypasses ref-count guard intentionally
   const resetForTenantChange = async () => {
-    console.log('[useNotifications] resetForTenantChange called')
     isTenantResetting.value = true
     if (eventSource) {
       eventSource.close()
       eventSource = null
-      console.log('[useNotifications] SSE closed')
     }
     initialized.value = false
     notifications.value = []
-    console.log('[useNotifications] Fetching notifications for new tenant...')
     await fetchNotifications()
-    console.log('[useNotifications] Fetched', notifications.value.length, 'notifications, reconnecting SSE...')
     connect()
     isTenantResetting.value = false
-    console.log('[useNotifications] Reset complete')
   }
 
   const init = async () => {
@@ -103,18 +97,14 @@ export const useNotifications = () => {
   if (process.client && !tenantWatcherSetup) {
     tenantWatcherSetup = true
     const tenantsStore = useTenantsStore()
-    console.log('[useNotifications] Registering tenantChangeCounter watcher, current value:', tenantsStore.tenantChangeCounter)
     watch(
       () => tenantsStore.tenantChangeCounter,
       async (newVal, oldVal) => {
-        console.log('[useNotifications] tenantChangeCounter changed:', oldVal, '→', newVal)
         if (newVal !== oldVal && newVal > 0) {
           await resetForTenantChange()
         }
       }
     )
-  } else if (process.client) {
-    console.log('[useNotifications] Watcher already registered (tenantWatcherSetup=true), skipping')
   }
 
   const markAsRead = async (id: string) => {

@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <div
-      class="lg:hidden fixed top-0 left-0 right-0 z-[60] flex flex-col gap-2"
+      class="fixed top-0 left-0 right-0 z-[60] flex flex-col gap-2"
       :style="{ paddingTop: 'env(safe-area-inset-top)' }"
       role="status"
       aria-live="polite"

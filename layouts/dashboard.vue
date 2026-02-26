@@ -129,8 +129,10 @@
       @open-cart="posOpenCartModal"
     />
 
-    <!-- Mobile Order Toast — shown on new notifications (mobile only) -->
-    <NotificationsMobileOrderToast />
+    <!-- Mobile Order Toast — client-only to avoid SSR/Teleport hydration mismatch -->
+    <ClientOnly>
+      <NotificationsMobileOrderToast />
+    </ClientOnly>
 
     <!-- Global Purchase Action Bar -->
     <!-- <PurchasesGlobalPurchaseActionBar /> -->
