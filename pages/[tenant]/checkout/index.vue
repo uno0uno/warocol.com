@@ -139,7 +139,7 @@ const handleNext = async () => {
 }
 
 const handlePrev = () => {
-  currentStep.value--
+  if (currentStep.value > 1) currentStep.value--
 }
 
 const handleSubmit = async () => {
