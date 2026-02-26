@@ -118,6 +118,12 @@ onUnmounted(() => {
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Pedido</p>
           <p class="text-lg font-bold text-text-primary">#{{ order.order_number }}</p>
           <p class="text-sm text-text-secondary mt-1">{{ formatDate(order.order_date) }}</p>
+          <UiStatusBadge v-if="order.scheduled_time" variant="warning" size="sm" format="text" class="mt-1 border-0">
+            Programado · {{ formatDateTime(order.scheduled_time) }}
+          </UiStatusBadge>
+          <UiStatusBadge v-else variant="success" size="sm" format="text" class="mt-1 border-0">
+            Entrega inmediata
+          </UiStatusBadge>
         </div>
 
         <!-- Card 3: Estado -->
@@ -324,23 +330,6 @@ onUnmounted(() => {
             <span>Recogida en tienda</span>
           </h3>
 
-          <!-- Scheduled time row -->
-          <div class="flex items-start gap-3">
-            <svg class="w-4 h-4 text-text-secondary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div>
-              <p class="text-xs text-text-secondary mb-0.5">Hora de recogida</p>
-              <p v-if="order.scheduled_time" class="text-sm font-medium text-text-primary">
-                {{ formatDateTime(order.scheduled_time) }}
-              </p>
-              <div v-else class="flex items-center gap-2 mt-0.5">
-                <span class="text-sm text-text-secondary">Sin hora programada</span>
-                <UiStatusBadge variant="success" size="sm" format="text">Inmediato</UiStatusBadge>
-              </div>
-            </div>
-          </div>
-
           <!-- Notes -->
           <div v-if="order.delivery_instructions" class="mt-4 bg-info/10 border border-info/20 rounded-lg p-3 flex items-start gap-2">
             <svg class="w-4 h-4 text-info mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -369,6 +358,23 @@ onUnmounted(() => {
             <span class="text-sm text-text-secondary">Pedido servido en el local</span>
           </div>
         </template>
+
+        <!-- Scheduled time (all order types) -->
+        <div class="flex items-start gap-3 mt-3">
+          <svg class="w-4 h-4 text-text-secondary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p class="text-xs text-text-secondary mb-0.5">Hora programada</p>
+            <p v-if="order.scheduled_time" class="text-sm font-medium text-text-primary">
+              {{ formatDateTime(order.scheduled_time) }}
+            </p>
+            <div v-else class="flex items-center gap-2 mt-0.5">
+              <span class="text-sm text-text-secondary">Sin hora programada</span>
+              <UiStatusBadge variant="success" size="sm" format="text">Inmediato</UiStatusBadge>
+            </div>
+          </div>
+        </div>
 
       </div>
 
