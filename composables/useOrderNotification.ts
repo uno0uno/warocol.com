@@ -1,7 +1,7 @@
 /**
  * useOrderNotification
  * Orchestrates order status notifications:
- * - Sound (chime via Web Audio API oscillator — no MP3 file required)
+ * - Sound (mixkit-gold-coin-prize-1999.wav via HTMLAudioElement)
  * - Favicon badge (canvas badge via useFaviconBadge)
  * - Tab title change
  * Automatically resets when user focuses the tab.
@@ -18,28 +18,12 @@ export function useOrderNotification() {
   function playChime() {
     if (!process.client) return
     try {
-      // Web Audio API oscillator — no file needed
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext
-      if (!AudioContext) return
-      const ctx = new AudioContext()
-      const oscillator = ctx.createOscillator()
-      const gainNode = ctx.createGain()
-
-      oscillator.connect(gainNode)
-      gainNode.connect(ctx.destination)
-
-      oscillator.type = 'sine'
-      oscillator.frequency.setValueAtTime(880, ctx.currentTime)         // A5
-      oscillator.frequency.setValueAtTime(1108, ctx.currentTime + 0.15) // C#6
-      gainNode.gain.setValueAtTime(0.4, ctx.currentTime)
-      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6)
-
-      oscillator.start(ctx.currentTime)
-      oscillator.stop(ctx.currentTime + 0.6)
-      oscillator.onended = () => ctx.close()
+      const chime = new Audio('/sounds/order-confirmed.wav')
+      chime.volume = 0.6
+      chime.play().catch(() => {}) // silently ignore autoplay block
     }
     catch {
-      // Autoplay blocked or API not available — fail silently
+      // Audio API not available — fail silently
     }
   }
 
