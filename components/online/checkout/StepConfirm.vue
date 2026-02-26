@@ -159,7 +159,11 @@
 
           <!-- ETA message -->
           <p class="text-sm text-muted-foreground mb-6">
-            <template v-if="cartStore.orderType === 'delivery'">
+            <template v-if="cartStore.deliveryInfo?.scheduled_time">
+              Tu pedido está programado para
+              <strong>{{ formatScheduledTime(cartStore.deliveryInfo.scheduled_time) }}</strong>
+            </template>
+            <template v-else-if="cartStore.orderType === 'delivery'">
               Tu pedido llegará en aproximadamente
               <strong>{{ confirmedOrder?.estimated_preparation_time ? `${confirmedOrder.estimated_preparation_time} minutos` : '30–45 minutos' }}</strong>
             </template>

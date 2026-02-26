@@ -67,11 +67,13 @@ const addressStore = useAddressStore()
 
 const tenantSlug = computed(() => route.params.tenant as string)
 
-// Guard: redirect home if cart is empty
+// Guard: redirect home if cart is empty; lock order type to delivery
 onMounted(() => {
   if (cartStore.isEmpty) {
     router.push(`/${tenantSlug.value}`)
+    return
   }
+  cartStore.setOrderType('delivery')
 })
 
 // ── Wizard steps definition ───────────────────────────────────────────────
@@ -84,7 +86,7 @@ const steps = [
   { title: 'Revisar y confirmar', short: 'Confirmar' },
 ]
 
-const currentStep = ref(0)
+const currentStep = ref(1)
 
 // ── Step template refs ────────────────────────────────────────────────────
 
