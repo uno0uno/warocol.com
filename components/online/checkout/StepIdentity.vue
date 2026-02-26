@@ -1,8 +1,16 @@
 <template>
   <div class="space-y-6">
 
+    <!-- Checking session -->
+    <div v-if="subStep === 'loading'" class="flex flex-col items-center gap-3 py-8">
+      <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+        <Icon name="heroicons:arrow-path" class="w-5 h-5 text-primary animate-spin" />
+      </div>
+      <p class="text-sm text-muted-foreground">Verificando sesión...</p>
+    </div>
+
     <!-- Already verified -->
-    <div v-if="subStep === 'verified'" class="flex flex-col items-center gap-3 py-6 text-center">
+    <div v-else-if="subStep === 'verified'" class="flex flex-col items-center gap-3 py-6 text-center">
       <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
         <Icon name="heroicons:check-circle" class="w-9 h-9 text-green-600" />
       </div>
@@ -146,8 +154,8 @@ const cartStore = useOnlineCartStore()
 const otpAuthStore = useOtpAuthStore()
 const addressStore = useAddressStore()
 
-type IdentitySubStep = 'idle' | 'otp_sent' | 'verified'
-const subStep = ref<IdentitySubStep>('idle')
+type IdentitySubStep = 'loading' | 'idle' | 'otp_sent' | 'verified'
+const subStep = ref<IdentitySubStep>(cartStore.cartId ? 'loading' : 'idle')
 
 // Phone
 const phone = ref('')
@@ -205,13 +213,12 @@ onMounted(async () => {
       otpAuthStore.isVerified = result.is_verified
       if (result.pickup_pin) otpAuthStore.pickupPin = result.pickup_pin
       await applyDeliveryAddress()
-      subStep.value = 'verified'
-      await new Promise(resolve => setTimeout(resolve, 1200))
       emit('verified')
       return
     }
     catch {
       // 401 = no valid cookie (new customer) — fall through to OTP form
+      subStep.value = 'idle'
     }
   }
   countdownInterval = setInterval(() => {
