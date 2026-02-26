@@ -20,7 +20,7 @@
           :key="toast.id"
           class="relative rounded-xl bg-surface border border-border shadow-xl overflow-hidden"
         >
-          <div class="absolute left-0 top-0 bottom-0 w-1 bg-warning rounded-l-xl" aria-hidden="true" />
+          <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl" aria-hidden="true" />
           <NuxtLink
             :to="toast.notification.payload?.order_id
               ? `/domicilios/pedidos/${toast.notification.payload.order_id}`
@@ -28,8 +28,8 @@
             @click="dismiss(toast.id)"
             class="flex items-center gap-2 pl-4 pr-10 py-2.5"
           >
-            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-warning/15 flex items-center justify-center">
-              <ShoppingBagIcon class="w-4 h-4 text-warning" aria-hidden="true" />
+            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center">
+              <ShoppingBagIcon class="w-4 h-4 text-primary" aria-hidden="true" />
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-bold text-text-primary leading-snug">
@@ -43,7 +43,7 @@
                 ${{ Number(toast.notification.payload.total_amount).toLocaleString('es-CO') }}
               </p>
             </div>
-            <span class="flex-shrink-0 text-xs font-semibold text-warning-foreground bg-warning px-2 py-1 rounded-md">Ver</span>
+            <span class="flex-shrink-0 text-xs font-semibold text-primary-foreground bg-primary px-2 py-1 rounded-md">Ver</span>
           </NuxtLink>
           <button
             @click.stop="dismiss(toast.id)"
@@ -52,8 +52,8 @@
           >
             <XMarkIcon class="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
           </button>
-          <div class="h-0.5 bg-warning/20">
-            <div class="h-full bg-warning toast-progress" :style="{ animationDuration: `${DISMISS_AFTER_MS}ms` }" />
+          <div class="h-0.5 bg-primary/20">
+            <div class="h-full bg-primary toast-progress" :style="{ animationDuration: `${DISMISS_AFTER_MS}ms` }" />
           </div>
         </div>
       </TransitionGroup>
@@ -81,14 +81,14 @@
             ? `/domicilios/pedidos/${toast.notification.payload.order_id}`
             : '/domicilios/pedidos'"
           @click="dismiss(toast.id)"
-          class="flex items-center gap-2.5 px-3 py-2 rounded-full bg-surface/95 backdrop-blur border border-warning/30 shadow-lg overflow-hidden"
+          class="flex items-center gap-2.5 px-3 py-2 rounded-full bg-surface/95 backdrop-blur border border-primary/30 shadow-lg overflow-hidden"
         >
-          <div class="w-6 h-6 rounded-full bg-warning/15 flex items-center justify-center flex-shrink-0">
-            <ShoppingBagIcon class="w-3.5 h-3.5 text-warning" aria-hidden="true" />
+          <div class="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
+            <ShoppingBagIcon class="w-3.5 h-3.5 text-primary" aria-hidden="true" />
           </div>
           <span class="text-xs font-semibold text-text-primary truncate flex-1">
             Nuevo pedido
-            <span v-if="toast.notification.payload?.order_number" class="text-warning">#{{ toast.notification.payload.order_number }}</span>
+            <span v-if="toast.notification.payload?.order_number" class="text-primary">#{{ toast.notification.payload.order_number }}</span>
           </span>
           <span v-if="toast.notification.payload?.total_amount" class="text-xs text-muted-foreground flex-shrink-0">
             ${{ Number(toast.notification.payload.total_amount).toLocaleString('es-CO') }}
