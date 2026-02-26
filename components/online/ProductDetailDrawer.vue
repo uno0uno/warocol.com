@@ -514,12 +514,12 @@ async function handleAddToCart() {
   try {
     if (wizardMode.value) {
       await cartStore.addItemsBatch(
-        { id: props.product.id, name: props.product.name, price: props.product.price },
+        { id: props.product.id, name: props.product.name, price: props.product.price, has_modifiers: props.product.has_modifiers ?? true },
         wizardUnits.value.map(u => ({ modifiers: u.modifiers, notes: u.notes || undefined }))
       )
     } else {
       await cartStore.addItem(
-        { id: props.product.id, name: props.product.name, price: props.product.price },
+        { id: props.product.id, name: props.product.name, price: props.product.price, has_modifiers: props.product.has_modifiers ?? true },
         quantity.value,
         [...selectedModifiers.value],
         notes.value || undefined

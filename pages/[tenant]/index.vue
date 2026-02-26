@@ -168,6 +168,12 @@ const handleProductClick = async (product) => {
   }
 }
 
+// Handle + button on a customizable cart item — open ingredient selector for 1 new unit
+const handleOpenProductFromCart = (product: { id: string; name: string; price: number; has_modifiers: boolean }) => {
+  selectedProduct.value = product
+  isProductDrawerOpen.value = true
+}
+
 // Handle checkout - Navigate to delivery step
 const handleCheckout = () => {
   router.push(`/${tenantSlug}/checkout`)
@@ -222,6 +228,7 @@ const handleCheckout = () => {
       <CartDrawer
         v-model="isCartOpen"
         @checkout="handleCheckout"
+        @open-product="handleOpenProductFromCart"
       />
 
       <!-- Product Detail Drawer -->

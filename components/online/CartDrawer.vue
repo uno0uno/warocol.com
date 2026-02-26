@@ -95,6 +95,7 @@
                   :loading="cartStore.isLoading"
                   @update-quantity="handleUpdateQuantity"
                   @remove="handleRemoveItem"
+                  @customize-add="handleCustomizeAdd"
                 />
               </div>
             </div>
@@ -153,7 +154,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useOnlineCartStore } from '~/stores/online_cart'
+import { useOnlineCartStore, type CartItem as CartItemType } from '~/stores/online_cart'
 import CartItem from './CartItem.vue'
 import CartSummary from './CartSummary.vue'
 
@@ -164,6 +165,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'checkout'): void
+  (e: 'open-product', product: { id: string; name: string; price: number; has_modifiers: boolean }): void
 }>()
 
 const cartStore = useOnlineCartStore()
@@ -216,6 +218,15 @@ const confirmAndClearCart = async () => {
     confirmClear.value = false
     showError('No se pudo vaciar el carrito')
   }
+}
+
+const handleCustomizeAdd = (item: CartItemType) => {
+  emit('open-product', {
+    id: item.product_id,
+    name: item.product_name,
+    price: item.unit_price,
+    has_modifiers: true,
+  })
 }
 
 const handleCheckout = () => {

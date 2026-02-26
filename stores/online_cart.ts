@@ -24,6 +24,7 @@ export interface CartItem {
   modifiers: CartModifier[]
   notes?: string
   total: number
+  has_modifiers?: boolean   // true = cart + button should open ingredient selector
 }
 
 export interface DeliveryInfo {
@@ -135,6 +136,7 @@ export const useOnlineCartStore = defineStore('onlineCart', {
         })),
         notes: item.notes,
         total: Number(item.subtotal),
+        has_modifiers: false, // not stored in backend — safe default after page refresh
       }))
     },
 
@@ -158,7 +160,7 @@ export const useOnlineCartStore = defineStore('onlineCart', {
      * Add item to cart with modifiers — POST /api/online/cart/batch
      */
     async addItem(
-      product: { id: string; name: string; price: number },
+      product: { id: string; name: string; price: number; has_modifiers?: boolean },
       quantity: number,
       modifiers: CartModifier[] = [],
       notes?: string
@@ -196,6 +198,7 @@ export const useOnlineCartStore = defineStore('onlineCart', {
             modifiers,
             notes,
             total: itemTotal,
+            has_modifiers: product.has_modifiers ?? false,
           })
         }
 
@@ -230,7 +233,7 @@ export const useOnlineCartStore = defineStore('onlineCart', {
      * Used by the per-item wizard when qty > 1 with individual customization.
      */
     async addItemsBatch(
-      product: { id: string; name: string; price: number },
+      product: { id: string; name: string; price: number; has_modifiers?: boolean },
       units: Array<{ modifiers: CartModifier[]; notes?: string }>
     ) {
       this.isLoading = true
@@ -256,6 +259,7 @@ export const useOnlineCartStore = defineStore('onlineCart', {
               modifiers: unit.modifiers,
               notes: unit.notes,
               total: product.price + modifiersTotal,
+              has_modifiers: product.has_modifiers ?? false,
             })
           }
         }

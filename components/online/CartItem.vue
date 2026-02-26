@@ -129,6 +129,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update-quantity', itemId: string, quantity: number): void
   (e: 'remove', itemId: string): void
+  (e: 'customize-add', item: CartItem): void
 }>()
 
 const modifiersTotal = computed(() => {
@@ -144,7 +145,11 @@ const formatPrice = (price: number) => {
 }
 
 const increaseQuantity = () => {
-  emit('update-quantity', props.item.id, props.item.quantity + 1)
+  if (props.item.has_modifiers) {
+    emit('customize-add', props.item)
+  } else {
+    emit('update-quantity', props.item.id, props.item.quantity + 1)
+  }
 }
 
 const decreaseQuantity = () => {
