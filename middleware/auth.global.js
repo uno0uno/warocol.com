@@ -5,8 +5,9 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   // Define public routes that don't require authentication
   const publicRoutes = ['/auth/login', '/auth/verify', '/', '/bogota'] // Add other public routes as needed
 
-  // Check if route uses public-restaurant layout (for tenant public pages)
+  // Check if route uses a layout that doesn't require operator auth
   const isPublicRestaurant = to.meta?.layout === 'public-restaurant'
+  const isCustomerPortal = to.meta?.layout === 'customer-portal'
 
   const authStore = useAuthStore()
 
@@ -22,7 +23,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       to.path.startsWith('/auth/') ||
       to.path.startsWith('/proveedor/') ||
       to.path.startsWith('/blog') ||
-      isPublicRestaurant) {
+      isPublicRestaurant ||
+      isCustomerPortal) {
     return
   }
 
