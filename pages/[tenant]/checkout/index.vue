@@ -1,6 +1,13 @@
 <template>
   <div class="py-8 px-4">
+
+    <!-- Session pre-flight loading -->
+    <div v-if="isCheckingSession" class="flex justify-center py-16">
+      <Icon name="heroicons:arrow-path" class="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
+    </div>
+
     <CheckoutWizard
+      v-else
       :steps="steps"
       :current-step="currentStep"
       :can-continue="canContinue && !isNavigating"
@@ -55,6 +62,7 @@ import StepIdentity from '~/components/online/checkout/StepIdentity.vue'
 import StepConfirm from '~/components/online/checkout/StepConfirm.vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useAddressStore } from '~/stores/address'
+import { useOtpAuthStore } from '~/stores/otp_auth'
 
 definePageMeta({
   layout: 'public-restaurant',
@@ -64,16 +72,39 @@ const route = useRoute()
 const router = useRouter()
 const cartStore = useOnlineCartStore()
 const addressStore = useAddressStore()
+const otpAuthStore = useOtpAuthStore()
 
 const tenantSlug = computed(() => route.params.tenant as string)
 
 // Guard: redirect home if cart is empty; lock order type to delivery
-onMounted(() => {
+// Pre-flight session check: skip StepEmail for returning customers with a valid cookie
+onMounted(async () => {
   if (cartStore.isEmpty) {
     router.push(`/${tenantSlug.value}`)
+    isCheckingSession.value = false
     return
   }
   cartStore.setOrderType('delivery')
+
+  if (cartStore.cartId) {
+    try {
+      const result = await $fetch<{ success: boolean; customer_id: string; email: string; is_verified: boolean; pickup_pin: string | null }>(
+        `/api/online/cart/${cartStore.cartId}/verify-with-session`,
+        { method: 'POST' },
+      )
+      otpAuthStore.email = result.email
+      otpAuthStore.customerId = result.customer_id
+      otpAuthStore.isVerified = result.is_verified
+      if (result.pickup_pin) otpAuthStore.pickupPin = result.pickup_pin
+      await addressStore.fetchAddresses(result.customer_id)
+      currentStep.value = 2
+    }
+    catch {
+      // 401 = no valid session → start at StepEmail as normal
+    }
+  }
+
+  isCheckingSession.value = false
 })
 
 // ── Wizard steps definition ───────────────────────────────────────────────
@@ -87,6 +118,7 @@ const steps = [
 ]
 
 const currentStep = ref(1)
+const isCheckingSession = ref(true)
 
 // ── Step template refs ────────────────────────────────────────────────────
 
