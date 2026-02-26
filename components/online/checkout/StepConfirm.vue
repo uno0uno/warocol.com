@@ -32,12 +32,18 @@
       </div>
     </div>
 
-    <!-- Scheduled time -->
+    <!-- Scheduled time / Immediate -->
     <div v-if="cartStore.deliveryInfo?.scheduled_time" class="flex items-center gap-3 p-4 rounded-xl border border-border bg-card">
       <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
       <p class="text-sm text-foreground">{{ formatScheduledTime(cartStore.deliveryInfo.scheduled_time) }}</p>
+    </div>
+    <div v-else class="flex items-center gap-3 p-4 rounded-xl border border-border bg-card">
+      <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+      <p class="text-sm text-foreground">Lo antes posible · <span class="font-medium">Entrega inmediata</span></p>
     </div>
 
     <!-- Delivery instructions -->
@@ -260,11 +266,15 @@ const submitOrder = async () => {
   checkoutError.value = ''
 
   try {
-    // Ensure delivery_address_id is set on the cart if address was selected
+    // Ensure delivery_address_id is set on the cart if address was selected,
+    // forwarding all existing delivery info to prevent overwriting scheduled_time
+    // and delivery_instructions (backend does a full UPDATE, not a partial PATCH)
     if (cartStore.orderType === 'delivery' && addressStore.selectedAddressId) {
       await cartStore.updateDeliveryInfo({
         order_type: 'delivery',
         delivery_address_id: addressStore.selectedAddressId,
+        scheduled_time: cartStore.deliveryInfo?.scheduled_time,
+        delivery_instructions: cartStore.deliveryInfo?.delivery_instructions,
       })
     }
 
