@@ -263,6 +263,8 @@ const verifyAndDetect = async () => {
         await cartStore.updateDeliveryInfo({
           order_type: 'delivery',
           delivery_address_id: addressStore.selectedAddressId,
+          scheduled_time: cartStore.deliveryInfo?.scheduled_time,
+          delivery_instructions: cartStore.deliveryInfo?.delivery_instructions,
         })
       }
       else if (addressStore.pendingAddress) {
@@ -272,6 +274,8 @@ const verifyAndDetect = async () => {
           await cartStore.updateDeliveryInfo({
             order_type: 'delivery',
             delivery_address_id: addressId,
+            scheduled_time: cartStore.deliveryInfo?.scheduled_time,
+            delivery_instructions: cartStore.deliveryInfo?.delivery_instructions,
           })
         }
       }
