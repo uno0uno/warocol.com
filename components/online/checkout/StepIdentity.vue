@@ -147,9 +147,7 @@ const otpAuthStore = useOtpAuthStore()
 const addressStore = useAddressStore()
 
 type IdentitySubStep = 'idle' | 'otp_sent' | 'verified'
-const subStep = ref<IdentitySubStep>(
-  otpAuthStore.isAuthenticated ? 'verified' : 'idle',
-)
+const subStep = ref<IdentitySubStep>('idle')
 
 // Phone
 const phone = ref('')
@@ -170,28 +168,51 @@ const checkoutError = ref('')
 const countdown = ref(0)
 let countdownInterval: ReturnType<typeof setInterval> | null = null
 
-onMounted(async () => {
-  if (otpAuthStore.isAuthenticated) {
-    if (cartStore.cartId) {
-      try {
-        const result = await $fetch<{ success: boolean; pickup_pin: string | null }>(
-          `/api/online/cart/${cartStore.cartId}/verify-with-session`,
-          { method: 'POST' },
-        )
-        if (result.pickup_pin) {
-          otpAuthStore.pickupPin = result.pickup_pin
-        }
-      }
-      catch {
-        // Cookie expired or cart conflict — fall back to OTP flow
-        subStep.value = 'idle'
-        countdownInterval = setInterval(() => {
-          countdown.value = otpAuthStore.otpCooldownRemaining
-        }, 1000)
-        return
+// ── Delivery address application (shared by OTP verify and session paths) ──
+const applyDeliveryAddress = async () => {
+  if (cartStore.orderType === 'delivery') {
+    if (addressStore.selectedAddressId) {
+      await cartStore.updateDeliveryInfo({
+        order_type: 'delivery',
+        delivery_address_id: addressStore.selectedAddressId,
+        scheduled_time: cartStore.deliveryInfo?.scheduled_time,
+        delivery_instructions: cartStore.deliveryInfo?.delivery_instructions,
+      })
+    }
+    else if (addressStore.pendingAddress) {
+      const addressId = await addressStore.persistPendingAddress(otpAuthStore.customerId!)
+      if (addressId) {
+        await cartStore.updateDeliveryInfo({
+          order_type: 'delivery',
+          delivery_address_id: addressId,
+          scheduled_time: cartStore.deliveryInfo?.scheduled_time,
+          delivery_instructions: cartStore.deliveryInfo?.delivery_instructions,
+        })
       }
     }
-    emit('verified')
+  }
+}
+
+onMounted(async () => {
+  // Always try session first — if the cookie is valid, skip OTP entirely
+  if (cartStore.cartId) {
+    try {
+      const result = await $fetch<{ success: boolean; customer_id: string; is_verified: boolean; pickup_pin: string | null }>(
+        `/api/online/cart/${cartStore.cartId}/verify-with-session`,
+        { method: 'POST' },
+      )
+      otpAuthStore.customerId = result.customer_id
+      otpAuthStore.isVerified = result.is_verified
+      if (result.pickup_pin) otpAuthStore.pickupPin = result.pickup_pin
+      await applyDeliveryAddress()
+      subStep.value = 'verified'
+      await new Promise(resolve => setTimeout(resolve, 1200))
+      emit('verified')
+      return
+    }
+    catch {
+      // 401 = no valid cookie (new customer) — fall through to OTP form
+    }
   }
   countdownInterval = setInterval(() => {
     countdown.value = otpAuthStore.otpCooldownRemaining
@@ -256,30 +277,7 @@ const verifyAndDetect = async () => {
   try {
     await otpAuthStore.verifyOTP(otpAuthStore.email, cartStore.cartId, otpCode.value)
 
-    // Apply delivery address — chosen at step 3 (StepDeliveryInfo)
-    if (cartStore.orderType === 'delivery') {
-      if (addressStore.selectedAddressId) {
-        // Returning customer: address was selected from preview
-        await cartStore.updateDeliveryInfo({
-          order_type: 'delivery',
-          delivery_address_id: addressStore.selectedAddressId,
-          scheduled_time: cartStore.deliveryInfo?.scheduled_time,
-          delivery_instructions: cartStore.deliveryInfo?.delivery_instructions,
-        })
-      }
-      else if (addressStore.pendingAddress) {
-        // New customer: persist address now that we have customerId
-        const addressId = await addressStore.persistPendingAddress(otpAuthStore.customerId!)
-        if (addressId) {
-          await cartStore.updateDeliveryInfo({
-            order_type: 'delivery',
-            delivery_address_id: addressId,
-            scheduled_time: cartStore.deliveryInfo?.scheduled_time,
-            delivery_instructions: cartStore.deliveryInfo?.delivery_instructions,
-          })
-        }
-      }
-    }
+    await applyDeliveryAddress()
 
     subStep.value = 'verified'
     await new Promise(resolve => setTimeout(resolve, 1200))
