@@ -2,6 +2,8 @@
 import { inject, watch, onMounted, onUnmounted } from 'vue'
 import { useOnlineOrderStatus } from '~/composables/useOnlineOrderStatus'
 import { useFormatters } from '~/composables/useFormatters'
+import { useNotifications, type Notification } from '~/composables/useNotifications'
+import { useOrderNotification } from '~/composables/useOrderNotification'
 
 definePageMeta({
   middleware: 'customer-auth',
@@ -101,10 +103,32 @@ watch(order, (newOrder) => {
   }
 }, { immediate: true })
 
+// ── Order status notifications ─────────────────────────────────────────────
+
+const { notifications, init: initNotifications, disconnect: disconnectNotifications } = useNotifications()
+const { notify, reset: resetNotification } = useOrderNotification()
+
+// Watch SSE notifications — fire notify() when a matching event arrives
+// while the tab is hidden so the user sees the badge + title change
+watch(notifications, (newList, oldList) => {
+  const previousIds = new Set((oldList ?? []).map(n => n.id))
+  const incoming = newList.filter(n => !previousIds.has(n.id))
+
+  for (const n of incoming) {
+    if (n.order_id === orderId && document.hidden) {
+      notify('Tu pedido fue actualizado')
+      // Refresh order data so the page is up to date when user returns
+      refresh()
+      break
+    }
+  }
+}, { deep: true })
+
 onMounted(() => {
   setShowBackButton?.(true)
   setBackHandler?.(goBack)
   setRefreshHandler?.(refresh)
+  initNotifications()
 })
 
 onUnmounted(() => {
@@ -112,6 +136,8 @@ onUnmounted(() => {
   setShowBackButton?.(false)
   setBackHandler?.(undefined)
   setRefreshHandler?.(undefined)
+  disconnectNotifications()
+  resetNotification()
 })
 
 // Cancel flow

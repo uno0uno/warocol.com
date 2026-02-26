@@ -198,6 +198,7 @@ import { useRouter } from 'vue-router'
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useOtpAuthStore } from '~/stores/otp_auth'
 import { useAddressStore } from '~/stores/address'
+import { useOrderNotification } from '~/composables/useOrderNotification'
 import CartSummary from '~/components/online/CartSummary.vue'
 import { Button } from '~/components/ui'
 
@@ -258,6 +259,8 @@ interface ConfirmedOrder {
   estimated_preparation_time: number | null
 }
 
+const { notify: notifyOrderConfirmed } = useOrderNotification()
+
 const isSubmitting = ref(false)
 const checkoutError = ref('')
 const confirmedOrder = ref<ConfirmedOrder | null>(null)
@@ -289,11 +292,13 @@ const submitOrder = async () => {
 
     confirmedOrder.value = response.data
     showSuccessModal.value = true
+    notifyOrderConfirmed('Tu pedido fue confirmado')
   }
   catch (error: any) {
     if (error.status === 409) {
       // Order already placed — treat as success
       showSuccessModal.value = true
+      notifyOrderConfirmed('Tu pedido fue confirmado')
       return
     }
     checkoutError.value = error.data?.detail || error.message || 'Error placing order. Please try again.'
