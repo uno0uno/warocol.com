@@ -18,47 +18,61 @@
         <div
           v-for="toast in toasts"
           :key="toast.id"
-          class="mx-3 mt-2 rounded-2xl bg-surface border border-border shadow-xl overflow-hidden"
+          class="relative mx-3 mt-2 rounded-2xl bg-surface border border-border shadow-xl overflow-hidden"
         >
+          <!-- Left accent strip -->
+          <div class="absolute left-0 top-0 bottom-0 w-1 bg-warning rounded-l-2xl" aria-hidden="true" />
+
           <NuxtLink
             :to="toast.notification.payload?.order_id
               ? `/domicilios/pedidos/${toast.notification.payload.order_id}`
               : '/domicilios/pedidos'"
             @click="dismiss(toast.id)"
-            class="flex items-center gap-3 px-4 py-3"
+            class="flex items-center gap-3 pl-5 pr-14 py-3"
           >
             <!-- Icon -->
-            <div class="flex-shrink-0 w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-              <ShoppingBagIcon class="w-5 h-5 text-primary" aria-hidden="true" />
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-warning/15 flex items-center justify-center">
+              <ShoppingBagIcon class="w-5 h-5 text-warning" aria-hidden="true" />
             </div>
 
             <!-- Content -->
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-text-primary leading-snug">
+              <p class="text-base font-bold text-text-primary leading-snug">
                 Nuevo pedido
                 <span v-if="toast.notification.payload?.order_number">
                   #{{ toast.notification.payload.order_number }}
                 </span>
               </p>
-              <p v-if="toast.notification.payload?.total_amount" class="text-xs text-muted-foreground mt-0.5">
-                Total: ${{ Number(toast.notification.payload.total_amount).toLocaleString('es-CO') }}
+              <p v-if="toast.notification.payload?.customer_name" class="text-sm text-muted-foreground leading-snug truncate">
+                {{ toast.notification.payload.customer_name }}
+              </p>
+              <p v-if="toast.notification.payload?.total_amount" class="text-sm font-medium text-text-primary mt-0.5">
+                ${{ Number(toast.notification.payload.total_amount).toLocaleString('es-CO') }}
               </p>
             </div>
 
-            <!-- CTA pill -->
-            <span class="flex-shrink-0 text-xs font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
+            <!-- CTA button -->
+            <span class="flex-shrink-0 text-sm font-semibold text-warning-foreground bg-warning px-3 py-1.5 rounded-lg">
               Ver
             </span>
           </NuxtLink>
 
-          <!-- Dismiss button -->
+          <!-- Dismiss button — 44×44px touch target -->
           <button
             @click.stop="dismiss(toast.id)"
             :aria-label="`Cerrar notificación pedido ${toast.notification.payload?.order_number ?? ''}`"
-            class="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full hover:bg-surface-secondary transition-colors"
+            class="absolute top-1 right-1 w-11 h-11 flex items-center justify-center rounded-full hover:bg-surface-secondary transition-colors"
           >
             <XMarkIcon class="w-4 h-4 text-muted-foreground" aria-hidden="true" />
           </button>
+
+          <!-- Progress bar — shrinks over DISMISS_AFTER_MS -->
+          <div class="h-0.5 bg-warning/20">
+            <div
+              class="h-full bg-warning toast-progress"
+              :style="{ animationDuration: `${DISMISS_AFTER_MS}ms` }"
+            />
+          </div>
         </div>
       </TransitionGroup>
     </div>
@@ -124,3 +138,14 @@ onMounted(() => {
   )
 })
 </script>
+
+<style scoped>
+@keyframes toast-shrink {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+.toast-progress {
+  animation: toast-shrink linear forwards;
+}
+</style>
