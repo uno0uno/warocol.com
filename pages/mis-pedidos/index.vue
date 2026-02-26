@@ -1,120 +1,132 @@
 <template>
-  <div class="max-w-2xl mx-auto px-4 py-8 space-y-6">
+  <div>
 
-    <!-- Page header -->
-    <div>
-      <h1 class="text-2xl font-bold text-foreground">Mis pedidos</h1>
-      <p v-if="customerEmail" class="text-sm text-muted-foreground mt-0.5">{{ customerEmail }}</p>
+    <!-- Loading State -->
+    <div v-if="pending" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Loading skeletons -->
-    <div v-if="pending" class="space-y-3" aria-busy="true" aria-label="Cargando pedidos">
-      <div
-        v-for="n in 3"
-        :key="n"
-        class="rounded-xl border border-border bg-card p-4 space-y-3"
-      >
-        <div class="flex items-center justify-between">
-          <UiSkeleton size="sm" shape="rounded" class="w-20 h-4" />
-          <UiSkeleton size="sm" shape="rounded" class="w-16 h-5" />
-        </div>
-        <UiSkeleton size="sm" shape="rounded" class="w-40 h-3" />
-        <div class="flex items-center justify-between">
-          <UiSkeleton size="sm" shape="rounded" class="w-24 h-4" />
-          <UiSkeleton size="sm" shape="rounded" class="w-16 h-3" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Error state -->
-    <div
-      v-else-if="error"
-      class="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center space-y-3"
-    >
-      <p class="text-base text-destructive">No se pudo cargar tus pedidos</p>
-      <button
-        class="min-h-[44px] px-4 rounded-lg text-sm font-medium border border-border
-               hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-        @click="refresh()"
-      >
-        Reintentar
-      </button>
-    </div>
-
-    <!-- Empty state -->
-    <div
-      v-else-if="orders.length === 0"
-      class="rounded-xl border border-border bg-card p-10 text-center space-y-4"
-    >
-      <div class="mx-auto w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-        <Icon name="heroicons:shopping-bag" class="w-7 h-7 text-muted-foreground" aria-hidden="true" />
-      </div>
-      <div>
-        <p class="text-base font-medium text-foreground">Aún no tienes pedidos</p>
-        <p class="text-sm text-muted-foreground mt-1">Haz tu primer pedido en nuestros restaurantes</p>
-      </div>
-      <NuxtLink
-        to="/bogota"
-        class="inline-flex items-center justify-center min-h-[44px] px-6 rounded-lg
-               text-sm font-medium text-primary-foreground bg-primary
-               hover:bg-primary/90 transition-colors
-               focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-      >
-        Explorar restaurantes
-      </NuxtLink>
-    </div>
-
-    <!-- Order list -->
-    <ul v-else class="space-y-3" aria-label="Lista de pedidos">
-      <li v-for="order in orders" :key="order.order_id">
-        <NuxtLink
-          :to="`/mis-pedidos/${order.order_id}`"
-          class="block rounded-xl border border-border bg-card p-4 space-y-2
-                 hover:border-primary/40 hover:shadow-sm transition-all
-                 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          :aria-label="`Pedido #${order.order_number} — ${getStatusText(order.status)} — ${formatCurrency(order.total_amount)}`"
+    <!-- Error State -->
+    <div v-else-if="error" class="flex items-center justify-center min-h-[400px]">
+      <div class="text-center">
+        <p class="text-xl font-semibold text-text-primary mb-2">No se pudo cargar tus pedidos.</p>
+        <p class="text-sm text-text-secondary mb-4">{{ error.message }}</p>
+        <button
+          class="min-h-[44px] px-4 py-2 bg-primary text-primary-foreground rounded-lg
+                 hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+          @click="refresh()"
         >
-          <!-- Row 1: order number + status badge -->
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-base font-semibold text-foreground">#{{ order.order_number }}</span>
-            <UiStatusBadge
-              :variant="getStatusVariant(order.status)"
-              size="sm"
-              format="text"
+          Reintentar
+        </button>
+      </div>
+    </div>
+
+    <!-- Data view -->
+    <div v-else class="flex flex-col gap-3 md:gap-4">
+
+      <!-- Filters -->
+      <SharedFiltersBar
+        v-model:status-filter="statusFilter"
+        v-model:date-filter="dateFilter"
+        v-model:supplier-filter="restaurantFilter"
+        :suppliers="restaurantOptions"
+        :status-options="statusOptions"
+        :show-search="false"
+        show-status-filter
+        show-date-filter
+        show-supplier-filter
+        status-placeholder="Todos los estados"
+        @clear-filters="clearFilters"
+      />
+
+      <!-- Table -->
+      <UiResponsiveDataView
+        :columns="columns"
+        :data="filteredOrders"
+        :item-key="'order_id'"
+        :empty-message="emptyMessage"
+        :empty-sub-message="emptySubMessage"
+        variant="default"
+        @row-click="(order) => navigateTo('/mis-pedidos/' + order.order_id)"
+      >
+        <!-- Mobile Card -->
+        <template #card="{ item }">
+          <div
+            v-if="item"
+            class="bg-surface border border-border rounded-xl p-4
+                   hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer"
+            @click="navigateTo('/mis-pedidos/' + item.order_id)"
+          >
+            <!-- Row 1: order number + status -->
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <span class="text-base font-bold text-text-primary">#{{ item.order_number }}</span>
+              <UiStatusBadge :variant="getStatusVariant(item.status)" size="sm" format="text">
+                {{ getStatusText(item.status) }}
+              </UiStatusBadge>
+            </div>
+            <!-- Row 2: restaurant -->
+            <p class="text-sm text-text-secondary leading-snug mb-2">{{ item.restaurant_name }}</p>
+            <!-- Row 3: total + date -->
+            <div class="flex items-center justify-between gap-2 pt-2 border-t border-border">
+              <span class="text-sm font-bold text-primary">{{ formatCurrency(item.total_amount) }}</span>
+              <span class="text-xs text-text-secondary">{{ formatRelativeDate(item.created_at) }}</span>
+            </div>
+          </div>
+        </template>
+
+        <!-- Desktop Cells -->
+        <template #cell-order_number="{ value }">
+          <span class="text-sm font-bold text-text-primary">#{{ value }}</span>
+        </template>
+
+        <template #cell-restaurant_name="{ value }">
+          <span class="text-sm text-text-primary">{{ value }}</span>
+        </template>
+
+        <template #cell-status="{ value }">
+          <UiStatusBadge :variant="getStatusVariant(value)" size="sm" format="text">
+            {{ getStatusText(value) }}
+          </UiStatusBadge>
+        </template>
+
+        <template #cell-total_amount="{ value }">
+          <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
+        </template>
+
+        <template #cell-created_at="{ value }">
+          <span class="text-sm text-text-secondary">{{ formatRelativeDate(value) }}</span>
+        </template>
+
+        <template #cell-actions="{ row }">
+          <div class="flex justify-center">
+            <button
+              title="Ver detalle"
+              class="text-crocus-600 hover:text-crocus-900 transition-colors"
+              @click.stop="navigateTo('/mis-pedidos/' + row.order_id)"
             >
-              {{ getStatusText(order.status) }}
-            </UiStatusBadge>
+              <EyeIcon class="h-4 w-4" />
+            </button>
           </div>
-
-          <!-- Row 2: restaurant name -->
-          <p class="text-sm text-muted-foreground leading-snug">{{ order.restaurant_name }}</p>
-
-          <!-- Row 3: total + relative date -->
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-sm font-medium text-foreground">{{ formatCurrency(order.total_amount) }}</span>
-            <span class="text-xs text-muted-foreground">{{ formatRelativeDate(order.created_at) }}</span>
-          </div>
-        </NuxtLink>
-      </li>
-    </ul>
+        </template>
+      </UiResponsiveDataView>
+    </div>
 
   </div>
 </template>
 
 <script setup lang="ts">
-import { useOtpAuthStore } from '~/stores/otp_auth'
+import { EyeIcon } from '@heroicons/vue/24/outline'
 import { useOnlineOrderStatus } from '~/composables/useOnlineOrderStatus'
 import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({
   middleware: 'customer-auth',
-  layout: 'dashboard',
+  layout: 'customer-portal',
   ssr: false,
 })
 
-useHead({ title: 'Mis pedidos — WARO' })
+useHead({ title: 'Mis pedidos' })
 
-const otpStore = useOtpAuthStore()
 const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
 const { formatCurrency, formatRelativeDate } = useFormatters()
 
@@ -130,22 +142,120 @@ interface OrderSummary {
   item_count: number
 }
 
-// Fetch customer identity (authoritative — survives page refresh)
-const { data: meData } = await useAsyncData('customer-me', () =>
-  $fetch<{ customer_id: string; email: string }>('/api/customer/me')
-)
+interface Column {
+  key: string
+  title: string
+  sortable?: boolean
+  align?: 'left' | 'center' | 'right'
+  format?: 'currency' | 'percentage' | 'number' | 'text'
+}
 
-// Hydrate store email if empty (e.g. after page refresh)
-const customerEmail = computed(() => meData.value?.email ?? otpStore.email ?? '')
-watch(meData, (me) => {
-  if (me?.email && !otpStore.email) otpStore.email = me.email
-}, { immediate: true })
+const columns: Column[] = [
+  { key: 'order_number', title: 'Nº Pedido', sortable: false },
+  { key: 'restaurant_name', title: 'Restaurante', sortable: false },
+  { key: 'status', title: 'Estado', sortable: false },
+  { key: 'total_amount', title: 'Total', sortable: false, align: 'right' },
+  { key: 'created_at', title: 'Fecha', sortable: false },
+  { key: 'actions', title: '', sortable: false, align: 'center' },
+]
 
-// Fetch order list
-const { data: ordersData, pending, error, refresh } = await useAsyncData(
-  'customer-orders',
-  () => $fetch<{ data: OrderSummary[] }>('/api/customer/orders')
-)
+// Filter state
+const statusFilter = ref('')
+const dateFilter = ref('')
+const restaurantFilter = ref('')
+
+// Status options
+const statusOptions = [
+  { value: 'pending', label: 'Pendiente' },
+  { value: 'confirmed', label: 'Confirmado' },
+  { value: 'preparing', label: 'En preparación' },
+  { value: 'delivered', label: 'Entregado' },
+  { value: 'completed', label: 'Completado' },
+  { value: 'cancelled', label: 'Cancelado' },
+]
+
+// Fetch — status filter is server-side
+const { data: ordersData, pending, error, refresh } = useFetch<{ data: OrderSummary[] }>('/api/customer/orders', {
+  query: computed(() => ({
+    status: statusFilter.value || undefined,
+  })),
+  server: false,
+  watch: [statusFilter],
+})
 
 const orders = computed<OrderSummary[]>(() => ordersData.value?.data ?? [])
+
+// Restaurant options derived from fetched data (for the supplier filter slot)
+const restaurantOptions = computed(() =>
+  [...new Set(orders.value.map(o => o.restaurant_name))]
+    .sort()
+    .map(name => ({ id: name, name }))
+)
+
+// Date filter helper (local midnight boundaries)
+function isInDateRange(dateStr: string, filter: string): boolean {
+  if (!filter) return true
+  const date = new Date(dateStr)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  switch (filter) {
+    case 'today':
+      return date >= today
+    case 'yesterday': {
+      const yesterday = new Date(today)
+      yesterday.setDate(yesterday.getDate() - 1)
+      return date >= yesterday && date < today
+    }
+    case 'last_week': {
+      const weekAgo = new Date(today)
+      weekAgo.setDate(weekAgo.getDate() - 7)
+      return date >= weekAgo
+    }
+    case '15_days': {
+      const ago = new Date(today)
+      ago.setDate(ago.getDate() - 15)
+      return date >= ago
+    }
+    case '1_month': {
+      const ago = new Date(today)
+      ago.setMonth(ago.getMonth() - 1)
+      return date >= ago
+    }
+    case '3_months': {
+      const ago = new Date(today)
+      ago.setMonth(ago.getMonth() - 3)
+      return date >= ago
+    }
+    default:
+      return true
+  }
+}
+
+// Client-side filtered orders (date + restaurant on already-fetched array)
+const filteredOrders = computed(() =>
+  orders.value.filter(o =>
+    isInDateRange(o.created_at, dateFilter.value) &&
+    (!restaurantFilter.value || o.restaurant_name === restaurantFilter.value)
+  )
+)
+
+// Dynamic empty state
+const hasActiveFilters = computed(() =>
+  !!(statusFilter.value || dateFilter.value || restaurantFilter.value)
+)
+const emptyMessage = computed(() =>
+  hasActiveFilters.value ? 'No hay pedidos con estos filtros' : 'Aún no tienes pedidos'
+)
+const emptySubMessage = computed(() =>
+  hasActiveFilters.value
+    ? 'Intenta cambiar o limpiar los filtros activos'
+    : 'Haz tu primer pedido en nuestros restaurantes'
+)
+
+function clearFilters() {
+  statusFilter.value = ''
+  dateFilter.value = ''
+  restaurantFilter.value = ''
+}
 </script>

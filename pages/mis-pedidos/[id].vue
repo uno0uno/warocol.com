@@ -1,287 +1,16 @@
-<template>
-  <div class="max-w-2xl mx-auto px-4 py-8 space-y-6">
-
-    <!-- Back link -->
-    <NuxtLink
-      to="/mis-pedidos"
-      class="inline-flex items-center gap-1.5 text-sm text-muted-foreground
-             hover:text-foreground transition-colors
-             focus:outline-none focus:ring-2 focus:ring-ring rounded"
-    >
-      <Icon name="heroicons:arrow-left" class="w-4 h-4" aria-hidden="true" />
-      Mis pedidos
-    </NuxtLink>
-
-    <!-- Loading skeletons -->
-    <div v-if="pending" class="space-y-4" aria-busy="true" aria-label="Cargando pedido">
-      <!-- Header skeleton -->
-      <div class="rounded-xl border border-border bg-card p-4 space-y-3">
-        <div class="flex items-center justify-between">
-          <UiSkeleton size="sm" shape="rounded" class="w-28 h-6" />
-          <UiSkeleton size="sm" shape="rounded" class="w-20 h-5" />
-        </div>
-        <UiSkeleton size="sm" shape="rounded" class="w-36 h-4" />
-        <UiSkeleton size="sm" shape="rounded" class="w-44 h-3" />
-      </div>
-      <!-- Items skeleton -->
-      <div class="rounded-xl border border-border bg-card p-4 space-y-3">
-        <UiSkeleton size="sm" shape="rounded" class="w-16 h-4" />
-        <div v-for="n in 2" :key="n" class="space-y-1 pt-2 border-t border-border first:border-0 first:pt-0">
-          <div class="flex items-center justify-between">
-            <UiSkeleton size="sm" shape="rounded" class="w-40 h-4" />
-            <UiSkeleton size="sm" shape="rounded" class="w-16 h-4" />
-          </div>
-          <UiSkeleton size="sm" shape="rounded" class="w-24 h-3" />
-        </div>
-      </div>
-      <!-- Totals skeleton -->
-      <div class="rounded-xl border border-border bg-card p-4 space-y-2">
-        <div class="flex items-center justify-between">
-          <UiSkeleton size="sm" shape="rounded" class="w-20 h-4" />
-          <UiSkeleton size="sm" shape="rounded" class="w-16 h-4" />
-        </div>
-        <div class="flex items-center justify-between">
-          <UiSkeleton size="sm" shape="rounded" class="w-12 h-5" />
-          <UiSkeleton size="sm" shape="rounded" class="w-20 h-5" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Error state -->
-    <div
-      v-else-if="error"
-      class="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center space-y-3"
-    >
-      <p class="text-base text-destructive">No se pudo cargar el pedido</p>
-      <button
-        class="min-h-[44px] px-4 rounded-lg text-sm font-medium border border-border
-               hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-        @click="refresh()"
-      >
-        Reintentar
-      </button>
-    </div>
-
-    <!-- Not found state -->
-    <div
-      v-else-if="!order"
-      class="rounded-xl border border-border bg-card p-10 text-center space-y-4"
-    >
-      <div class="mx-auto w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-        <Icon name="heroicons:document-magnifying-glass" class="w-7 h-7 text-muted-foreground" aria-hidden="true" />
-      </div>
-      <div>
-        <p class="text-base font-medium text-foreground">Pedido no encontrado</p>
-        <p class="text-sm text-muted-foreground mt-1">Este pedido no existe o no te pertenece</p>
-      </div>
-      <NuxtLink
-        to="/mis-pedidos"
-        class="inline-flex items-center justify-center min-h-[44px] px-6 rounded-lg
-               text-sm font-medium border border-border
-               hover:bg-muted transition-colors
-               focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-      >
-        Ver mis pedidos
-      </NuxtLink>
-    </div>
-
-    <!-- Content -->
-    <template v-else>
-
-      <!-- Section A: Order Header -->
-      <div class="rounded-xl border border-border bg-card p-4 space-y-3">
-        <div class="flex items-start justify-between gap-2">
-          <h1 class="text-xl font-bold text-foreground">#{{ order.order_number }}</h1>
-          <UiStatusBadge
-            :variant="getStatusVariant(order.status)"
-            size="sm"
-            format="text"
-          >
-            {{ getStatusText(order.status) }}
-          </UiStatusBadge>
-        </div>
-        <p class="text-sm font-medium text-foreground">{{ order.restaurant_name }}</p>
-        <p class="text-sm text-muted-foreground">{{ formatDateTime(order.created_at) }}</p>
-        <p v-if="order.payment_method" class="text-xs text-muted-foreground capitalize">
-          Pago: {{ order.payment_method }}
-        </p>
-      </div>
-
-      <!-- Section B: Items List -->
-      <div class="rounded-xl border border-border bg-card p-4 space-y-1">
-        <h2 class="text-sm font-semibold text-foreground mb-3">Productos</h2>
-        <ul class="divide-y divide-border">
-          <li
-            v-for="(item, index) in order.items"
-            :key="index"
-            class="py-3 first:pt-0 last:pb-0 space-y-1"
-          >
-            <!-- Item row -->
-            <div class="flex items-start justify-between gap-2">
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-foreground leading-snug">{{ item.product_name }}</p>
-                <p class="text-xs text-muted-foreground">
-                  {{ item.quantity }} × {{ formatCurrency(item.unit_price) }}
-                </p>
-              </div>
-              <span class="text-sm font-medium text-foreground shrink-0">
-                {{ formatCurrency(item.subtotal) }}
-              </span>
-            </div>
-            <!-- Modifiers -->
-            <ul
-              v-if="item.modifiers && item.modifiers.length"
-              class="pl-3 space-y-0.5"
-            >
-              <li
-                v-for="(mod, mIndex) in item.modifiers"
-                :key="mIndex"
-                class="text-xs text-muted-foreground flex items-center justify-between gap-2"
-              >
-                <span>
-                  <span v-if="mod.quantity > 1">{{ mod.quantity }}× </span>{{ mod.name }}
-                </span>
-                <span v-if="mod.price > 0">+{{ formatCurrency(mod.price * mod.quantity) }}</span>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Section C: Delivery / Pickup Info -->
-      <div
-        v-if="order.order_type === 'delivery' && order.delivery_address"
-        class="rounded-xl border border-border bg-card p-4 space-y-1"
-      >
-        <h2 class="text-sm font-semibold text-foreground mb-2">Dirección de entrega</h2>
-        <p class="text-sm text-foreground">{{ order.delivery_address.address_line1 }}</p>
-        <p v-if="order.delivery_address.address_line2" class="text-sm text-muted-foreground">
-          {{ order.delivery_address.address_line2 }}
-        </p>
-        <p v-if="order.delivery_address.city" class="text-sm text-muted-foreground">
-          {{ order.delivery_address.city }}
-        </p>
-        <p v-if="order.delivery_address.delivery_notes" class="text-xs text-muted-foreground mt-1">
-          Nota: {{ order.delivery_address.delivery_notes }}
-        </p>
-        <p
-          v-if="order.delivery_instructions"
-          class="text-xs text-muted-foreground mt-1"
-        >
-          Instrucciones: {{ order.delivery_instructions }}
-        </p>
-        <p
-          v-if="order.scheduled_time"
-          class="text-xs text-muted-foreground mt-1"
-        >
-          Programado para: {{ formatDateTime(order.scheduled_time) }}
-        </p>
-      </div>
-
-      <div
-        v-else-if="order.order_type === 'pickup'"
-        class="rounded-xl border border-border bg-card p-4 space-y-1"
-      >
-        <h2 class="text-sm font-semibold text-foreground mb-2">Recogida en restaurante</h2>
-        <div v-if="order.pickup_pin" class="flex items-center gap-2">
-          <span class="text-sm text-muted-foreground">Código de recogida:</span>
-          <span class="text-base font-bold text-foreground tracking-widest">{{ order.pickup_pin }}</span>
-        </div>
-        <p
-          v-if="order.scheduled_time"
-          class="text-xs text-muted-foreground"
-        >
-          Programado para: {{ formatDateTime(order.scheduled_time) }}
-        </p>
-      </div>
-
-      <!-- Section D: Totals -->
-      <div class="rounded-xl border border-border bg-card p-4 space-y-2">
-        <h2 class="text-sm font-semibold text-foreground mb-1">Resumen</h2>
-        <div class="flex items-center justify-between text-sm">
-          <span class="text-muted-foreground">Subtotal</span>
-          <span class="text-foreground">{{ formatCurrency(order.subtotal) }}</span>
-        </div>
-        <div v-if="order.delivery_fee > 0" class="flex items-center justify-between text-sm">
-          <span class="text-muted-foreground">Domicilio</span>
-          <span class="text-foreground">{{ formatCurrency(order.delivery_fee) }}</span>
-        </div>
-        <div class="flex items-center justify-between text-sm font-bold pt-2 border-t border-border">
-          <span class="text-foreground">Total</span>
-          <span class="text-foreground">{{ formatCurrency(order.total_amount) }}</span>
-        </div>
-      </div>
-
-      <!-- Section E: Cancel -->
-      <div v-if="order.can_cancel" class="space-y-3">
-        <!-- Cancel trigger button -->
-        <button
-          v-if="!showCancelConfirm"
-          class="w-full min-h-[44px] px-4 rounded-xl text-sm font-medium
-                 border border-destructive/40 text-destructive
-                 hover:bg-destructive/5 transition-colors
-                 focus:outline-none focus:ring-2 focus:ring-destructive/50"
-          @click="showCancelConfirm = true"
-        >
-          Cancelar pedido
-        </button>
-
-        <!-- Inline cancel confirmation -->
-        <div
-          v-else
-          class="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-3"
-        >
-          <p class="text-sm font-medium text-destructive">¿Cancelar este pedido?</p>
-          <p class="text-sm text-muted-foreground">Esta acción no se puede deshacer.</p>
-          <p v-if="cancelError" class="text-sm text-destructive">{{ cancelError }}</p>
-          <div class="flex gap-3">
-            <button
-              class="flex-1 min-h-[44px] px-4 rounded-lg text-sm font-medium
-                     border border-border hover:bg-muted transition-colors
-                     focus:outline-none focus:ring-2 focus:ring-ring
-                     disabled:opacity-50"
-              :disabled="cancelling"
-              @click="showCancelConfirm = false; cancelError = ''"
-            >
-              No, mantener
-            </button>
-            <button
-              class="flex-1 min-h-[44px] px-4 rounded-lg text-sm font-medium
-                     bg-destructive text-destructive-foreground
-                     hover:bg-destructive/90 transition-colors
-                     focus:outline-none focus:ring-2 focus:ring-destructive/50
-                     disabled:opacity-50 disabled:cursor-not-allowed
-                     flex items-center justify-center gap-2"
-              :disabled="cancelling"
-              @click="confirmCancel"
-            >
-              <Icon
-                v-if="cancelling"
-                name="heroicons:arrow-path"
-                class="w-4 h-4 animate-spin"
-                aria-hidden="true"
-              />
-              {{ cancelling ? 'Cancelando...' : 'Sí, cancelar' }}
-            </button>
-          </div>
-        </div>
-      </div>
-
-    </template>
-  </div>
-</template>
-
 <script setup lang="ts">
+import { inject, watch, onMounted, onUnmounted } from 'vue'
 import { useOnlineOrderStatus } from '~/composables/useOnlineOrderStatus'
 import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({
   middleware: 'customer-auth',
-  layout: 'dashboard',
+  layout: 'customer-portal',
   ssr: false,
 })
 
 const route = useRoute()
+const router = useRouter()
 const orderId = route.params.id as string
 
 const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
@@ -337,16 +66,55 @@ interface OrderDetail {
   status_history: StatusHistoryEntry[]
 }
 
-const { data, pending, error, refresh } = await useAsyncData(
+const { data, pending, error, refresh } = useAsyncData(
   'customer-order-' + orderId,
-  () => $fetch<{ success: boolean; data: OrderDetail }>('/api/customer/orders/' + orderId)
+  () => $fetch<{ success: boolean; data: OrderDetail }>('/api/customer/orders/' + orderId),
+  { server: false }
 )
 
 const order = computed<OrderDetail | null>(() => data.value?.data ?? null)
 
-useHead({ title: computed(() => order.value ? `Pedido #${order.value.order_number} — WARO` : 'Pedido — WARO') })
+// Map customer API fields → DomiciliosOnlineOrderStatusTimeline expected fields
+const statusHistoryForTimeline = computed(() =>
+  (order.value?.status_history ?? []).map((entry, idx) => ({
+    id: idx,
+    old_status: null,
+    new_status: entry.status,
+    change_date: entry.changed_at,
+    reason: entry.note,
+  }))
+)
 
-// Cancel state
+useHead({ title: computed(() => order.value ? `Pedido #${order.value.order_number}` : 'Pedido') })
+
+// Layout inject — dynamic title / back button
+const setPageTitle      = inject<(title: string | undefined) => void>('setPageTitle')
+const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
+const setBackHandler    = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
+const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>('setRefreshHandler')
+
+const goBack = () => router.push('/mis-pedidos')
+
+watch(order, (newOrder) => {
+  if (newOrder) {
+    setPageTitle?.(`Pedido #${newOrder.order_number}`)
+  }
+}, { immediate: true })
+
+onMounted(() => {
+  setShowBackButton?.(true)
+  setBackHandler?.(goBack)
+  setRefreshHandler?.(refresh)
+})
+
+onUnmounted(() => {
+  setPageTitle?.(undefined)
+  setShowBackButton?.(false)
+  setBackHandler?.(undefined)
+  setRefreshHandler?.(undefined)
+})
+
+// Cancel flow
 const showCancelConfirm = ref(false)
 const cancelling = ref(false)
 const cancelError = ref('')
@@ -365,3 +133,333 @@ async function confirmCancel() {
   }
 }
 </script>
+
+<template>
+  <div>
+
+    <!-- Loading State -->
+    <div v-if="pending" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="flex items-center justify-center min-h-[400px]">
+      <div class="text-center">
+        <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar el pedido.</p>
+        <p class="text-sm text-text-secondary mb-4">{{ error.message }}</p>
+        <button
+          class="min-h-[44px] px-4 py-2 bg-primary text-primary-foreground rounded-lg
+                 hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+          @click="refresh()"
+        >
+          Reintentar
+        </button>
+      </div>
+    </div>
+
+    <!-- Not found -->
+    <div v-else-if="!order" class="flex items-center justify-center min-h-[400px]">
+      <div class="text-center space-y-4">
+        <p class="text-base font-medium text-text-primary">Pedido no encontrado</p>
+        <p class="text-sm text-text-secondary">Este pedido no existe o no te pertenece</p>
+        <NuxtLink
+          to="/mis-pedidos"
+          class="inline-flex items-center justify-center min-h-[44px] px-6 rounded-lg
+                 text-sm font-medium border border-border
+                 hover:bg-surface-secondary transition-colors
+                 focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          Ver mis pedidos
+        </NuxtLink>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div v-else class="space-y-6">
+
+      <!-- ── Section 1: Info Cards ── -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Card 1: Restaurante -->
+        <div class="bg-surface border border-border rounded-xl p-4">
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Restaurante</p>
+          <p class="text-lg font-bold text-text-primary truncate">{{ order.restaurant_name }}</p>
+          <UiStatusBadge variant="info" format="text" class="mt-1 border-0" size="sm">
+            {{ order.order_type === 'delivery' ? 'Domicilio' : order.order_type === 'pickup' ? 'Recogida' : 'En mesa' }}
+          </UiStatusBadge>
+        </div>
+
+        <!-- Card 2: Pedido -->
+        <div class="bg-surface border border-border rounded-xl p-4">
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Pedido</p>
+          <p class="text-lg font-bold text-text-primary">#{{ order.order_number }}</p>
+          <p class="text-sm text-text-secondary mt-1">{{ formatDateTime(order.created_at) }}</p>
+          <UiStatusBadge v-if="order.scheduled_time" variant="warning" size="sm" format="text" class="mt-1 border-0">
+            Programado · {{ formatDateTime(order.scheduled_time) }}
+          </UiStatusBadge>
+          <UiStatusBadge v-else variant="success" size="sm" format="text" class="mt-1 border-0">
+            Entrega inmediata
+          </UiStatusBadge>
+        </div>
+
+        <!-- Card 3: Estado -->
+        <div class="bg-surface border border-border rounded-xl p-4">
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Estado</p>
+          <UiStatusBadge :variant="getStatusVariant(order.status)" size="lg" format="text">
+            {{ getStatusText(order.status) }}
+          </UiStatusBadge>
+        </div>
+
+        <!-- Card 4: Total (primary accent) -->
+        <div class="bg-surface border-2 border-primary rounded-xl p-4">
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Total</p>
+          <p class="text-2xl font-bold text-primary">{{ formatCurrency(order.total_amount) }}</p>
+        </div>
+      </div>
+
+      <!-- ── Section 2: Items ── -->
+      <div class="bg-surface border border-border rounded-xl overflow-hidden">
+        <div class="p-6 border-b border-border">
+          <h2 class="text-lg font-semibold text-text-primary">
+            Productos ({{ order.items.length }})
+          </h2>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <caption class="sr-only">Productos del pedido</caption>
+            <thead class="bg-surface-secondary">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">Producto</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">Cant.</th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Precio</th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody
+              v-for="(item, index) in order.items"
+              :key="index"
+              class="divide-y divide-border"
+            >
+              <!-- Product Row -->
+              <tr class="bg-surface hover:bg-surface-secondary/50 transition-colors">
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-lg flex-shrink-0" aria-hidden="true">
+                      🍽️
+                    </div>
+                    <span class="text-sm font-semibold text-text-primary">{{ item.product_name }}</span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                    {{ item.quantity }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <span class="text-sm font-medium text-text-primary">{{ formatCurrency(item.unit_price) }}</span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <span class="text-sm font-bold text-primary">{{ formatCurrency(item.subtotal) }}</span>
+                </td>
+              </tr>
+
+              <!-- Modifier Rows -->
+              <tr
+                v-for="(mod, mIndex) in item.modifiers"
+                :key="`mod-${index}-${mIndex}`"
+                class="bg-surface-secondary/30"
+              >
+                <td class="px-6 py-2 pl-14">
+                  <div class="flex items-center gap-2">
+                    <span class="text-primary text-xs">+</span>
+                    <span class="text-xs text-text-secondary">{{ mod.name }}</span>
+                  </div>
+                </td>
+                <td class="px-6 py-2 text-center">
+                  <span class="text-xs text-text-secondary">x{{ mod.quantity }}</span>
+                </td>
+                <td class="px-6 py-2 text-right">
+                  <span class="text-xs text-text-secondary">{{ formatCurrency(mod.price) }}</span>
+                </td>
+                <td class="px-6 py-2 text-right">
+                  <span class="text-xs text-primary/70">{{ formatCurrency(mod.price * mod.quantity) }}</span>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="bg-surface-secondary border-t border-border">
+              <tr v-if="order.subtotal !== order.total_amount">
+                <td colspan="3" class="px-6 py-3 text-right text-sm text-text-secondary">
+                  Subtotal
+                </td>
+                <td class="px-6 py-3 text-right">
+                  <span class="text-sm text-text-primary">{{ formatCurrency(order.subtotal) }}</span>
+                </td>
+              </tr>
+              <tr v-if="order.delivery_fee > 0">
+                <td colspan="3" class="px-6 py-3 text-right text-sm text-text-secondary">
+                  Domicilio
+                </td>
+                <td class="px-6 py-3 text-right">
+                  <span class="text-sm text-text-primary">{{ formatCurrency(order.delivery_fee) }}</span>
+                </td>
+              </tr>
+              <tr class="border-t-2 border-border">
+                <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary">
+                  Total del pedido
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <span class="text-xl font-bold text-primary">{{ formatCurrency(order.total_amount) }}</span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Section 3: Delivery / Pickup info ── -->
+      <div class="bg-surface border border-border rounded-xl p-4 sm:p-6">
+
+        <!-- Delivery -->
+        <template v-if="order.order_type === 'delivery'">
+          <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span>Dirección de entrega</span>
+          </h3>
+
+          <div v-if="order.delivery_address" class="space-y-3">
+            <div class="flex items-start gap-3">
+              <svg class="w-4 h-4 text-text-secondary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <div>
+                <p class="text-xs text-text-secondary mb-0.5">Dirección</p>
+                <p class="text-sm font-medium text-text-primary">
+                  {{ order.delivery_address.address_line1 }}<span v-if="order.delivery_address.address_line2">, {{ order.delivery_address.address_line2 }}</span>
+                </p>
+                <p v-if="order.delivery_address.city" class="text-xs text-text-secondary mt-0.5">
+                  {{ order.delivery_address.city }}
+                </p>
+                <p v-if="order.delivery_address.delivery_notes" class="text-xs text-text-secondary italic mt-0.5">
+                  {{ order.delivery_address.delivery_notes }}
+                </p>
+              </div>
+            </div>
+
+            <div v-if="order.delivery_instructions" class="flex items-start gap-3">
+              <svg class="w-4 h-4 text-text-secondary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+              </svg>
+              <div>
+                <p class="text-xs text-text-secondary mb-0.5">Instrucciones</p>
+                <p class="text-sm text-text-primary">{{ order.delivery_instructions }}</p>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Pickup -->
+        <template v-else-if="order.order_type === 'pickup'">
+          <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span>Recogida en restaurante</span>
+          </h3>
+          <div v-if="order.pickup_pin" class="flex items-center gap-3">
+            <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            <div>
+              <p class="text-xs text-text-secondary mb-0.5">Código de recogida</p>
+              <p class="text-base font-bold text-text-primary tracking-widest">{{ order.pickup_pin }}</p>
+            </div>
+          </div>
+        </template>
+
+        <!-- Scheduled time (any type) -->
+        <div class="flex items-start gap-3 mt-3">
+          <svg class="w-4 h-4 text-text-secondary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p class="text-xs text-text-secondary mb-0.5">Hora programada</p>
+            <p v-if="order.scheduled_time" class="text-sm font-medium text-text-primary">
+              {{ formatDateTime(order.scheduled_time) }}
+            </p>
+            <div v-else class="flex items-center gap-2 mt-0.5">
+              <span class="text-sm text-text-secondary">Sin hora programada</span>
+              <UiStatusBadge variant="success" size="sm" format="text">Inmediato</UiStatusBadge>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Section 4: Status Timeline ── -->
+      <div
+        v-if="statusHistoryForTimeline.length"
+        class="bg-surface border border-border rounded-xl p-4 sm:p-6"
+      >
+        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Historial de estado</h3>
+        <DomiciliosOnlineOrderStatusTimeline :history="statusHistoryForTimeline" />
+      </div>
+
+      <!-- ── Section 5: Cancel ── -->
+      <div v-if="order.can_cancel" class="space-y-3">
+        <!-- Cancel trigger -->
+        <button
+          v-if="!showCancelConfirm"
+          class="w-full min-h-[44px] px-4 rounded-xl text-sm font-medium
+                 border border-destructive/40 text-destructive
+                 hover:bg-destructive/5 transition-colors
+                 focus:outline-none focus:ring-2 focus:ring-destructive/50"
+          @click="showCancelConfirm = true"
+        >
+          Cancelar pedido
+        </button>
+
+        <!-- Inline confirm -->
+        <div
+          v-else
+          class="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-3"
+        >
+          <p class="text-sm font-medium text-destructive">¿Cancelar este pedido?</p>
+          <p class="text-sm text-text-secondary">Esta acción no se puede deshacer.</p>
+          <p v-if="cancelError" role="alert" class="text-sm text-destructive">{{ cancelError }}</p>
+          <div class="flex gap-3">
+            <button
+              class="flex-1 min-h-[44px] px-4 rounded-lg text-sm font-medium
+                     border border-border hover:bg-surface-secondary transition-colors
+                     focus:outline-none focus:ring-2 focus:ring-ring
+                     disabled:opacity-50"
+              :disabled="cancelling"
+              @click="showCancelConfirm = false; cancelError = ''"
+            >
+              No, mantener
+            </button>
+            <button
+              class="flex-1 min-h-[44px] px-4 rounded-lg text-sm font-medium
+                     bg-destructive text-destructive-foreground
+                     hover:bg-destructive/90 transition-colors
+                     focus:outline-none focus:ring-2 focus:ring-destructive/50
+                     disabled:opacity-50 disabled:cursor-not-allowed
+                     flex items-center justify-center gap-2"
+              :disabled="cancelling"
+              @click="confirmCancel"
+            >
+              <svg v-if="cancelling" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              {{ cancelling ? 'Cancelando...' : 'Sí, cancelar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</template>
