@@ -63,7 +63,7 @@
         <!-- Actions (hidden in readonly mode) -->
         <div v-if="!readonly" class="flex gap-1.5 items-start" @click.stop>
           <button
-            class="w-8 h-8 flex items-center justify-center bg-background border border-border rounded-lg
+            class="min-h-[44px] min-w-[44px] flex items-center justify-center bg-background border border-border rounded-lg
                    transition-all text-primary hover:bg-primary/10 hover:border-primary"
             @click="$emit('edit', address.id)"
             aria-label="Editar dirección"
@@ -82,7 +82,7 @@
             </svg>
           </button>
           <button
-            class="w-8 h-8 flex items-center justify-center bg-background border border-border rounded-lg
+            class="min-h-[44px] min-w-[44px] flex items-center justify-center bg-background border border-border rounded-lg
                    transition-all text-destructive hover:bg-destructive/10 hover:border-destructive"
             @click="$emit('delete', address.id)"
             aria-label="Eliminar dirección"
@@ -110,9 +110,9 @@
       <p class="text-muted-foreground">No tienes direcciones guardadas</p>
     </div>
 
-    <!-- Add New Address Button (hidden in readonly mode) -->
+    <!-- Add New Address Button (shown when canAdd is true) -->
     <button
-      v-if="!readonly"
+      v-if="canAdd"
       class="w-full flex items-center justify-center gap-2 py-3.5 px-5
              bg-background border-2 border-dashed border-border rounded-xl
              text-primary text-sm font-semibold cursor-pointer transition-all
@@ -143,6 +143,7 @@ defineProps<{
   addresses: Address[]
   selectedId: string | null
   readonly?: boolean
+  canAdd?: boolean
 }>()
 
 defineEmits<{

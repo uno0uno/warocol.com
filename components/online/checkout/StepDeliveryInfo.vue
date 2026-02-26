@@ -4,13 +4,35 @@
     <div v-if="cartStore.orderType === 'delivery'">
       <h4 class="text-base font-semibold text-foreground mb-4">Dirección de entrega</h4>
 
-      <!-- Returning customer: readonly address list from preview -->
+      <!-- Returning customer: address list with management -->
       <div v-if="addressStore.hasAddresses">
+        <!-- Inline AddressForm (add / edit) -->
+        <div v-if="showAddressForm" class="mb-4">
+          <p
+            v-if="addressFormError"
+            class="mb-3 flex items-center gap-2 text-sm text-destructive"
+          >
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            {{ addressFormError }}
+          </p>
+          <AddressForm
+            :address="editingAddress"
+            :loading="addressFormLoading"
+            @submit="handleSavedAddressFormSubmit"
+            @cancel="cancelAddressForm"
+          />
+        </div>
         <AddressSelector
+          v-else
           :addresses="addressStore.addresses"
           :selected-id="addressStore.selectedAddressId"
-          :readonly="true"
+          :can-add="addressStore.addresses.length < 5"
           @select="addressStore.selectAddress($event)"
+          @add-new="openAddForm"
+          @edit="openEditForm"
+          @delete="handleDeleteAddress"
         />
       </div>
 
@@ -156,19 +178,79 @@
 import { ref, computed } from 'vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useAddressStore } from '~/stores/address'
-import type { AddressCreate } from '~/stores/address'
+import { useOtpAuthStore } from '~/stores/otp_auth'
+import type { AddressCreate, Address } from '~/stores/address'
 import AddressForm from '~/components/online/AddressForm.vue'
 import AddressSelector from '~/components/online/AddressSelector.vue'
 
 const cartStore = useOnlineCartStore()
 const addressStore = useAddressStore()
+const otpAuthStore = useOtpAuthStore()
 
-// Address form state (new customer path)
+// Address form state (new customer path — pre-OTP pending address)
 const addressFormValid = ref(false)
 
 const handleAddressSubmit = (data: AddressCreate) => {
   addressStore.setPendingAddress(data)
   addressFormValid.value = true
+}
+
+// Address management (returning customer path — post-verification CRUD)
+const showAddressForm = ref(false)
+const editingAddress = ref<Address | null>(null)
+const addressFormLoading = ref(false)
+const addressFormError = ref<string | null>(null)
+
+const openAddForm = () => {
+  editingAddress.value = null
+  addressFormError.value = null
+  showAddressForm.value = true
+}
+
+const openEditForm = (addressId: string) => {
+  editingAddress.value = addressStore.addresses.find(a => a.id === addressId) ?? null
+  addressFormError.value = null
+  showAddressForm.value = true
+}
+
+const cancelAddressForm = () => {
+  showAddressForm.value = false
+  editingAddress.value = null
+  addressFormError.value = null
+}
+
+const handleSavedAddressFormSubmit = async (data: AddressCreate) => {
+  if (!otpAuthStore.customerId) return
+  addressFormLoading.value = true
+  addressFormError.value = null
+  try {
+    if (editingAddress.value) {
+      const updated = await addressStore.updateAddress(otpAuthStore.customerId, editingAddress.value.id, data)
+      addressStore.selectAddress(updated.id)
+    }
+    else {
+      const created = await addressStore.createAddress(otpAuthStore.customerId, data)
+      addressStore.selectAddress(created.id)
+    }
+    showAddressForm.value = false
+    editingAddress.value = null
+  }
+  catch (e: any) {
+    addressFormError.value = e.message || 'Error al guardar la dirección'
+  }
+  finally {
+    addressFormLoading.value = false
+  }
+}
+
+const handleDeleteAddress = async (addressId: string) => {
+  if (!otpAuthStore.customerId) return
+  try {
+    await addressStore.deleteAddress(otpAuthStore.customerId, addressId)
+  }
+  catch {
+    // address list reflects actual DB state
+  }
 }
 
 // Time picker
@@ -194,7 +276,10 @@ const deliveryInstructions = ref('')
 
 const isValid = computed(() => {
   if (cartStore.orderType === 'delivery') {
-    if (addressStore.hasAddresses) return !!addressStore.selectedAddressId
+    if (addressStore.hasAddresses) {
+      if (showAddressForm.value) return false
+      return !!addressStore.selectedAddressId
+    }
     if (!addressFormValid.value) return false
   }
   if (isScheduled.value) return !!scheduledDate.value && !!scheduledTime.value && !scheduledTimeError.value
