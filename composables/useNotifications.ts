@@ -33,10 +33,7 @@ export const useNotifications = () => {
 
   const connect = () => {
     if (!process.client) return
-
-    connectionRefCount++
-
-    if (eventSource) return // Already connected
+    if (eventSource) return // Already connected — singleton guard only
 
     eventSource = new EventSource('/api/notifications/stream', { withCredentials: true })
 
@@ -63,10 +60,13 @@ export const useNotifications = () => {
   }
 
   const init = async () => {
-    if (!process.client || initialized.value) return
-    initialized.value = true
-    await fetchNotifications()
-    connect()
+    if (!process.client) return
+    connectionRefCount++ // always track this caller (fixes ref-count mismatch on re-navigation)
+    await fetchNotifications() // always fetch fresh data (not guarded by initialized)
+    if (!initialized.value) {
+      initialized.value = true
+      connect() // open SSE only once
+    }
   }
 
   const markAsRead = async (id: string) => {
