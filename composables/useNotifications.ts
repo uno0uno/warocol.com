@@ -1,4 +1,5 @@
-import { ref, computed, readonly } from 'vue'
+import { ref, computed, readonly, watch } from 'vue'
+import { useTenantsStore } from '~/stores/tenants'
 
 export interface Notification {
   id: string
@@ -12,8 +13,10 @@ export interface Notification {
 // Singleton state — shared across all callers, prevents multiple SSE connections
 const notifications = ref<Notification[]>([])
 const initialized = ref(false)
+const isTenantResetting = ref(false)
 let eventSource: EventSource | null = null
 let connectionRefCount = 0
+let tenantWatcherSetup = false
 
 export const useNotifications = () => {
   const unreadCount = computed(() => notifications.value.filter(n => !n.read_at).length)
@@ -59,6 +62,20 @@ export const useNotifications = () => {
     }
   }
 
+  // Hard-resets SSE and state on tenant change — bypasses ref-count guard intentionally
+  const resetForTenantChange = async () => {
+    isTenantResetting.value = true
+    if (eventSource) {
+      eventSource.close()
+      eventSource = null
+    }
+    initialized.value = false
+    notifications.value = []
+    await fetchNotifications()
+    connect()
+    isTenantResetting.value = false
+  }
+
   const init = async () => {
     if (!process.client) return
     connectionRefCount++ // always track this caller (fixes ref-count mismatch on re-navigation)
@@ -67,6 +84,20 @@ export const useNotifications = () => {
       initialized.value = true
       connect() // open SSE only once
     }
+  }
+
+  // Wire tenant change once — the watcher lives in the first caller's setup context (dashboard layout)
+  if (process.client && !tenantWatcherSetup) {
+    tenantWatcherSetup = true
+    const tenantsStore = useTenantsStore()
+    watch(
+      () => tenantsStore.tenantChangeCounter,
+      async (newVal, oldVal) => {
+        if (newVal !== oldVal && newVal > 0) {
+          await resetForTenantChange()
+        }
+      }
+    )
   }
 
   const markAsRead = async (id: string) => {
@@ -96,6 +127,7 @@ export const useNotifications = () => {
   return {
     notifications: readonly(notifications),
     unreadCount,
+    isTenantResetting: readonly(isTenantResetting),
     init,
     connect,
     disconnect,

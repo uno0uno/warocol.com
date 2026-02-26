@@ -79,7 +79,7 @@ interface MobileToast {
 const MAX_TOASTS = 3
 const DISMISS_AFTER_MS = 8000
 
-const { notifications } = useNotifications()
+const { notifications, isTenantResetting } = useNotifications()
 const toasts = ref<MobileToast[]>([])
 let toastIdCounter = 0
 let baselineCount = 0
@@ -112,6 +112,7 @@ onMounted(() => {
   watch(
     () => notifications.value.length,
     (newLen, oldLen) => {
+      if (isTenantResetting.value) return // skip post-reset repopulation — not genuine new arrivals
       if (newLen > oldLen) {
         // One or more new notifications arrived — toast the newest ones
         const newNotifications = notifications.value.slice(0, newLen - oldLen)
