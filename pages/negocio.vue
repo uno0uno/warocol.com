@@ -1,114 +1,135 @@
 <template>
   <div class="page-layout">
-    <!-- Saving overlay -->
-    <div
-      v-if="isSaving"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-    >
-      <div class="bg-white rounded-lg p-8 flex flex-col items-center">
-        <CommonsTheCustomLoader size="large" />
-        <p class="mt-4 text-lg font-semibold text-text-primary">Guardando cambios...</p>
-      </div>
-    </div>
 
-    <!-- Loading State -->
-    <div v-if="isBusinessProfileLoading" class="flex items-center justify-center min-h-[400px]">
+    <!-- Loading / Saving -->
+    <div v-if="isBusinessProfileLoading || isSaving" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- No Profile State -->
+    <!-- No profile -->
     <div
-      v-else-if="!businessProfile"
-      class="flex flex-col items-center justify-center min-h-[400px] gap-4 px-4"
+      v-else-if="!businessProfile && !isSaving"
+      class="flex flex-col items-center justify-center min-h-[400px] gap-4"
     >
-      <div class="w-16 h-16 rounded-full bg-surface border-2 border-border flex items-center justify-center">
+      <div class="w-16 h-16 rounded-2xl bg-surface border-2 border-border flex items-center justify-center">
         <BuildingStorefrontIcon class="w-8 h-8 text-text-secondary" />
       </div>
       <div class="text-center">
         <p class="text-base font-semibold text-text-primary">Sin perfil configurado</p>
-        <p class="text-sm text-text-secondary mt-1">
-          Este negocio aún no tiene un perfil público. Configúralo desde el panel de administración.
+        <p class="text-sm text-text-secondary mt-1 max-w-sm">
+          Este negocio aún no tiene un perfil público.
         </p>
       </div>
     </div>
 
-    <!-- Main Content -->
-    <div v-else class="space-y-4 sm:space-y-6">
+    <!-- ─── Main ─── -->
+    <div v-else-if="businessProfile" class="space-y-4 sm:space-y-6">
 
-      <!-- Global edit toggle -->
-      <div class="flex justify-end">
-        <button
-          v-if="!isEditMode"
-          @click="enterEditMode"
-          class="px-3 py-1.5 text-xs font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors flex items-center gap-1.5 min-h-[36px]"
+      <!-- ══════ PROFILE HERO ══════ -->
+      <div class="bg-surface border-2 border-border rounded-xl overflow-hidden">
+
+        <!-- Banner strip -->
+        <div
+          class="relative h-28 sm:h-36"
+          :style="effectiveBannerStyle"
         >
-          <PencilSquareIcon class="w-4 h-4" />
-          <span>Editar</span>
-        </button>
-        <div v-else class="flex items-center gap-2">
-          <button
-            @click="cancelEdit"
-            class="px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:bg-background transition-colors min-h-[36px]"
-          >
-            Cancelar
-          </button>
-          <button
-            @click="saveChanges"
-            :disabled="isSaving"
-            class="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5 min-h-[36px]"
-          >
-            <CheckIcon class="w-4 h-4" />
-            <span>Guardar</span>
-          </button>
+          <div class="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent" />
+
+          <!-- Edit / Save buttons — top-right of banner -->
+          <div class="absolute top-3 right-3 flex items-center gap-2">
+            <button
+              v-if="!isEditMode"
+              @click="enterEditMode"
+              class="px-3 py-1.5 text-xs font-medium bg-white/80 backdrop-blur-sm text-text-primary border border-white/40 rounded-lg hover:bg-white transition-colors flex items-center gap-1.5 shadow-sm"
+            >
+              <PencilSquareIcon class="w-3.5 h-3.5" />
+              Editar perfil
+            </button>
+            <template v-else>
+              <button
+                @click="cancelEdit"
+                class="px-3 py-1.5 text-xs font-medium bg-white/80 backdrop-blur-sm text-text-secondary border border-white/40 rounded-lg hover:bg-white transition-colors shadow-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                @click="saveChanges"
+                :disabled="isSaving || !editForm.display_name.trim()"
+                class="px-3 py-1.5 text-xs font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+              >
+                <CheckIcon class="w-3.5 h-3.5" />
+                Guardar
+              </button>
+            </template>
+          </div>
         </div>
-      </div>
 
-      <!-- ─── Header: 3-column info card grid ─── -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-        <!-- Card 1: Identidad -->
-        <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">Identidad</p>
-
-          <!-- View mode -->
-          <template v-if="!isEditMode">
-            <div class="flex items-start gap-3">
-              <div v-if="businessProfile.logo_url" class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border border-border">
-                <img :src="businessProfile.logo_url" :alt="businessProfile.display_name" class="w-full h-full object-cover" />
+        <!-- Profile info row (overlaps banner) -->
+        <div class="px-4 sm:px-6 pb-4 sm:pb-6">
+          <div class="flex items-end gap-4 -mt-8 mb-4">
+            <!-- Logo -->
+            <div class="flex-shrink-0 relative">
+              <!-- Con logo: imagen en caja redondeada -->
+              <div
+                v-if="logoSrc"
+                class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl border-4 border-background overflow-hidden shadow-sm"
+              >
+                <img :src="logoSrc" :alt="businessProfile.display_name" class="w-full h-full object-cover" />
               </div>
-              <div v-else class="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <BuildingStorefrontIcon class="w-7 h-7 text-primary" />
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-base font-semibold text-text-primary truncate">{{ businessProfile.display_name }}</p>
-                <p v-if="businessProfile.description" class="text-sm text-text-secondary mt-1">
-                  {{ businessProfile.description }}
-                </p>
-              </div>
+              <!-- Sin logo: solo el ícono -->
+              <BuildingStorefrontIcon v-else class="w-10 h-10 sm:w-12 sm:h-12 text-white drop-shadow mb-1" />
             </div>
-          </template>
 
-          <!-- Edit mode -->
-          <template v-else>
-            <div class="space-y-3">
-              <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Nombre del negocio *</label>
-                <input
-                  v-model="editForm.display_name"
-                  type="text"
-                  class="input-base w-full px-3 py-2 text-sm"
-                  placeholder="Nombre del negocio"
+            <!-- Name + badges (view mode) -->
+            <div v-if="!isEditMode" class="flex-1 min-w-0 pb-1">
+              <h1 class="text-lg sm:text-xl font-bold text-text-primary truncate">
+                {{ businessProfile.display_name }}
+              </h1>
+              <div class="flex items-center gap-2 mt-1 flex-wrap">
+                <UiStatusBadge
+                  :variant="isOpenNow ? 'success' : 'destructive'"
+                  :value="isOpenNow ? 'Abierto' : 'Cerrado'"
+                  format="text"
+                />
+                <UiStatusBadge
+                  :variant="businessProfile.is_active ? 'success' : 'warning'"
+                  :value="businessProfile.is_active ? 'Activo' : 'Oculto'"
+                  format="text"
                 />
               </div>
-              <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">Descripción</label>
-                <textarea
-                  v-model="editForm.description"
-                  class="input-base w-full px-3 py-2 text-sm"
-                  rows="3"
-                  placeholder="Descripción pública del negocio"
-                ></textarea>
-              </div>
+            </div>
+
+            <!-- Name edit (edit mode) -->
+            <div v-else class="flex-1 min-w-0 pb-1">
+              <input
+                v-model="editForm.display_name"
+                type="text"
+                class="input-base w-full px-3 py-2 text-base font-semibold"
+                placeholder="Nombre del negocio"
+              />
+            </div>
+          </div>
+
+          <!-- Description (view) -->
+          <p v-if="!isEditMode && businessProfile.description" class="text-sm text-text-secondary leading-relaxed">
+            {{ businessProfile.description }}
+          </p>
+          <p v-else-if="!isEditMode && !businessProfile.description" class="text-sm text-text-secondary italic">
+            Sin descripción
+          </p>
+
+          <!-- Edit fields: description + urls -->
+          <div v-if="isEditMode" class="space-y-3 mt-3">
+            <div>
+              <label class="block text-xs font-medium text-text-secondary mb-1">Descripción pública</label>
+              <textarea
+                v-model="editForm.description"
+                class="input-base w-full px-3 py-2 text-sm"
+                rows="2"
+                placeholder="Breve descripción de tu negocio"
+              />
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-medium text-text-secondary mb-1">URL del logo</label>
                 <input
@@ -128,76 +149,54 @@
                 />
               </div>
             </div>
-          </template>
-        </div>
-
-        <!-- Card 2: Estado -->
-        <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">Estado</p>
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Apertura</span>
-              <UiStatusBadge
-                :variant="isOpenNow ? 'success' : 'destructive'"
-                :value="isOpenNow ? 'Abierto' : 'Cerrado'"
-                format="text"
-              />
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Perfil público</span>
-              <UiStatusBadge
-                :variant="businessProfile.is_active ? 'success' : 'warning'"
-                :value="businessProfile.is_active ? 'Activo' : 'Oculto'"
-                format="text"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 3: Operación (summary, view only) -->
-        <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">Operación</p>
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Tiempo estimado</span>
-              <span class="text-sm font-semibold text-text-primary">
-                {{ isEditMode ? editForm.estimated_preparation_time : businessProfile.estimated_preparation_time }} min
-              </span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Pedido mínimo</span>
-              <span class="text-sm font-semibold text-text-primary">
-                {{ formatCurrency(isEditMode ? editForm.min_order_amount : businessProfile.min_order_amount) }}
-              </span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Pedidos en línea</span>
-              <UiStatusBadge
-                :variant="(isEditMode ? editForm.accepts_online_orders : businessProfile.accepts_online_orders) ? 'success' : 'secondary'"
-                :value="(isEditMode ? editForm.accepts_online_orders : businessProfile.accepts_online_orders) ? 'Activos' : 'Inactivos'"
-                format="text"
-              />
-            </div>
           </div>
         </div>
       </div>
 
-      <!-- ─── Contacto ─── -->
-      <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
+      <!-- ══════ STATS STRIP ══════ -->
+      <div class="grid grid-cols-3 divide-x divide-border bg-surface border-2 border-border rounded-xl overflow-hidden">
+        <div class="px-3 sm:px-5 py-3 sm:py-4 text-center">
+          <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
+            Tiempo prep.
+          </p>
+          <p class="text-base sm:text-lg font-bold text-text-primary">
+            {{ businessProfile.estimated_preparation_time }} min
+          </p>
+        </div>
+        <div class="px-3 sm:px-5 py-3 sm:py-4 text-center">
+          <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
+            Pedido mínimo
+          </p>
+          <p class="text-base sm:text-lg font-bold text-text-primary">
+            {{ formatCurrencyCompact(businessProfile.min_order_amount) }}
+          </p>
+        </div>
+        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col items-center justify-center gap-1">
+          <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider">
+            Pedidos online
+          </p>
+          <UiStatusBadge
+            :variant="businessProfile.accepts_online_orders ? 'success' : 'secondary'"
+            :value="businessProfile.accepts_online_orders ? 'Activos' : 'Inactivos'"
+            format="text"
+            size="sm"
+          />
+        </div>
+      </div>
+
+      <!-- ══════ CONTACTO ══════ -->
+      <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-          <MapPinIcon class="w-5 h-5 text-primary" />
+          <MapPinIcon class="w-5 h-5 text-primary flex-shrink-0" />
           Contacto
         </h3>
 
-        <!-- View mode -->
+        <!-- View -->
         <template v-if="!isEditMode">
-          <div class="space-y-2">
-            <div
-              v-if="businessProfile.address || businessProfile.city"
-              class="flex items-start gap-3"
-            >
+          <div class="space-y-2.5">
+            <div v-if="businessProfile.address || businessProfile.city" class="flex items-start gap-3">
               <MapPinIcon class="w-4 h-4 text-text-secondary flex-shrink-0 mt-0.5" />
-              <span class="text-sm text-text-primary">
+              <span class="text-sm text-text-primary leading-snug">
                 {{ [businessProfile.address, businessProfile.neighborhood, businessProfile.city].filter(Boolean).join(', ') }}
               </span>
             </div>
@@ -213,91 +212,70 @@
               v-if="!businessProfile.address && !businessProfile.city && !businessProfile.phone_number && !businessProfile.email"
               class="text-sm text-text-secondary italic"
             >
-              Sin información de contacto configurada
+              Sin información de contacto
             </p>
           </div>
         </template>
 
-        <!-- Edit mode -->
+        <!-- Edit -->
         <template v-else>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+            <div class="sm:col-span-2">
               <label class="block text-xs font-medium text-text-secondary mb-1">Dirección</label>
-              <input
-                v-model="editForm.address"
-                type="text"
-                class="input-base w-full px-3 py-2 text-sm"
-                placeholder="Calle 123 # 45-67"
-              />
+              <input v-model="editForm.address" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="Calle 123 # 45-67" />
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">Barrio</label>
-              <input
-                v-model="editForm.neighborhood"
-                type="text"
-                class="input-base w-full px-3 py-2 text-sm"
-                placeholder="Chapinero"
-              />
+              <input v-model="editForm.neighborhood" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="Chapinero" />
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">Ciudad</label>
-              <input
-                v-model="editForm.city"
-                type="text"
-                class="input-base w-full px-3 py-2 text-sm"
-                placeholder="Bogotá"
-              />
+              <input v-model="editForm.city" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="Bogotá" />
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">Teléfono</label>
-              <input
-                v-model="editForm.phone_number"
-                type="text"
-                class="input-base w-full px-3 py-2 text-sm"
-                placeholder="+57 300 000 0000"
-              />
+              <input v-model="editForm.phone_number" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="+57 300 000 0000" />
             </div>
-            <div class="sm:col-span-2">
+            <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">Email</label>
-              <input
-                v-model="editForm.email"
-                type="email"
-                class="input-base w-full px-3 py-2 text-sm"
-                placeholder="contacto@negocio.com"
-              />
+              <input v-model="editForm.email" type="email" class="input-base w-full px-3 py-2 text-sm" placeholder="contacto@negocio.com" />
             </div>
           </div>
         </template>
       </div>
 
-      <!-- ─── Horario ─── -->
-      <div v-if="businessProfile.business_hours || isEditMode" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
+      <!-- ══════ HORARIO ══════ -->
+      <div v-if="businessProfile.business_hours || isEditMode" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-          <ClockIcon class="w-5 h-5 text-primary" />
+          <ClockIcon class="w-5 h-5 text-primary flex-shrink-0" />
           Horario
         </h3>
 
-        <!-- View mode -->
+        <!-- View -->
         <template v-if="!isEditMode">
-          <div class="space-y-1.5">
+          <div class="space-y-0">
             <div
               v-for="(dayKey, index) in DAY_ORDER"
               :key="dayKey"
-              class="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0"
-              :class="isToday(index) ? 'bg-primary/5 -mx-2 px-2 rounded-md' : ''"
+              class="flex items-center justify-between py-2 border-b border-border/40 last:border-0"
+              :class="isToday(index) ? 'bg-primary/5 -mx-2 px-2 rounded-lg' : ''"
             >
-              <span
-                class="text-sm w-28"
-                :class="isToday(index) ? 'font-semibold text-primary' : 'text-text-primary'"
-              >
-                {{ DAY_LABELS[dayKey] }}
-                <span v-if="isToday(index)" class="text-[10px] text-primary/60 ml-1">(hoy)</span>
-              </span>
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-sm w-24"
+                  :class="isToday(index) ? 'font-semibold text-primary' : 'text-text-primary'"
+                >
+                  {{ DAY_LABELS[dayKey] }}
+                </span>
+                <span v-if="isToday(index)" class="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                  hoy
+                </span>
+              </div>
               <span
                 class="text-sm"
                 :class="businessProfile.business_hours?.[dayKey]?.closed
                   ? 'text-text-secondary'
-                  : isToday(index) ? 'text-primary font-medium' : 'text-text-primary'"
+                  : isToday(index) ? 'text-primary font-semibold' : 'text-text-primary'"
               >
                 <template v-if="!businessProfile.business_hours?.[dayKey] || businessProfile.business_hours?.[dayKey]?.closed">
                   Cerrado
@@ -310,9 +288,9 @@
           </div>
         </template>
 
-        <!-- Edit mode -->
+        <!-- Edit -->
         <template v-else>
-          <div class="space-y-2">
+          <div class="space-y-1">
             <div
               v-for="(dayKey, index) in DAY_ORDER"
               :key="dayKey"
@@ -332,19 +310,22 @@
                 />
                 <span class="text-xs text-text-secondary">Cerrado</span>
               </label>
-              <div class="flex items-center gap-2 flex-1" :class="editForm.business_hours[dayKey].closed ? 'opacity-40 pointer-events-none' : ''">
+              <div
+                class="flex items-center gap-2 flex-1 min-w-0"
+                :class="editForm.business_hours[dayKey].closed ? 'opacity-30 pointer-events-none' : ''"
+              >
                 <input
                   v-model="editForm.business_hours[dayKey].open"
                   type="time"
                   :disabled="editForm.business_hours[dayKey].closed"
-                  class="input-base px-2 py-1.5 text-sm w-28"
+                  class="input-base px-2 py-1.5 text-sm flex-1 min-w-0"
                 />
                 <span class="text-text-secondary text-sm flex-shrink-0">–</span>
                 <input
                   v-model="editForm.business_hours[dayKey].close"
                   type="time"
                   :disabled="editForm.business_hours[dayKey].closed"
-                  class="input-base px-2 py-1.5 text-sm w-28"
+                  class="input-base px-2 py-1.5 text-sm flex-1 min-w-0"
                 />
               </div>
             </div>
@@ -352,18 +333,18 @@
         </template>
       </div>
 
-      <!-- ─── Pedidos en línea ─── -->
-      <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
+      <!-- ══════ PEDIDOS EN LÍNEA ══════ -->
+      <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-          <ShoppingCartIcon class="w-5 h-5 text-primary" />
+          <ShoppingCartIcon class="w-5 h-5 text-primary flex-shrink-0" />
           Pedidos en línea
         </h3>
 
-        <!-- View mode -->
+        <!-- View -->
         <template v-if="!isEditMode">
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary">Pedidos en línea</span>
+              <span class="text-sm text-text-secondary">Estado de pedidos</span>
               <UiStatusBadge
                 :variant="businessProfile.accepts_online_orders ? 'success' : 'secondary'"
                 :value="businessProfile.accepts_online_orders ? 'Activos' : 'Desactivados'"
@@ -374,28 +355,24 @@
               <span class="text-sm text-text-secondary">Tiempo de preparación estimado</span>
               <span class="text-sm font-semibold text-text-primary">{{ businessProfile.estimated_preparation_time }} min</span>
             </div>
-            <div v-if="businessProfile.min_order_amount > 0" class="flex items-center justify-between">
+            <div class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">Pedido mínimo</span>
               <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(businessProfile.min_order_amount) }}</span>
             </div>
           </div>
         </template>
 
-        <!-- Edit mode -->
+        <!-- Edit -->
         <template v-else>
           <div class="space-y-4">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between py-1">
               <div>
                 <p class="text-sm font-medium text-text-primary">Pedidos en línea</p>
-                <p class="text-xs text-text-secondary">Permite a los clientes hacer pedidos en línea</p>
+                <p class="text-xs text-text-secondary mt-0.5">Permite pedidos desde la plataforma</p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
-                <input
-                  v-model="editForm.accepts_online_orders"
-                  type="checkbox"
-                  class="sr-only peer"
-                />
-                <div class="w-10 h-6 bg-border peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                <input v-model="editForm.accepts_online_orders" type="checkbox" class="sr-only peer" />
+                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
               </label>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -424,72 +401,47 @@
         </template>
       </div>
 
-      <!-- ─── Redes sociales ─── -->
-      <div v-if="hasSocialMedia || isEditMode" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
+      <!-- ══════ REDES SOCIALES ══════ -->
+      <div v-if="hasSocialMedia || isEditMode" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-          <GlobeAltIcon class="w-5 h-5 text-primary" />
+          <GlobeAltIcon class="w-5 h-5 text-primary flex-shrink-0" />
           Redes sociales
         </h3>
 
-        <!-- View mode -->
+        <!-- View -->
         <template v-if="!isEditMode">
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             <div v-for="(value, key) in businessProfile.social_media" :key="key">
               <div v-if="value" class="flex items-center gap-3">
-                <span class="text-sm text-text-secondary w-24 capitalize">{{ key }}</span>
-                <span class="text-sm text-text-primary">{{ value }}</span>
+                <span class="text-xs font-medium text-text-secondary uppercase tracking-wide w-20 flex-shrink-0">{{ key }}</span>
+                <span class="text-sm text-text-primary truncate">{{ value }}</span>
               </div>
             </div>
           </div>
         </template>
 
-        <!-- Edit mode -->
+        <!-- Edit -->
         <template v-else>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">Instagram</label>
-              <input
-                v-model="editForm.social_media.instagram"
-                type="text"
-                class="input-base w-full px-3 py-2 text-sm"
-                placeholder="@usuario o URL"
-              />
+              <input v-model="editForm.social_media.instagram" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="@usuario o URL" />
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">WhatsApp</label>
-              <input
-                v-model="editForm.social_media.whatsapp"
-                type="text"
-                class="input-base w-full px-3 py-2 text-sm"
-                placeholder="+57 300 000 0000"
-              />
+              <input v-model="editForm.social_media.whatsapp" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="+57 300 000 0000" />
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">Facebook</label>
-              <input
-                v-model="editForm.social_media.facebook"
-                type="text"
-                class="input-base w-full px-3 py-2 text-sm"
-                placeholder="URL o nombre de página"
-              />
+              <input v-model="editForm.social_media.facebook" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="URL o nombre de página" />
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">Twitter / X</label>
-              <input
-                v-model="editForm.social_media.twitter"
-                type="text"
-                class="input-base w-full px-3 py-2 text-sm"
-                placeholder="@usuario"
-              />
+              <input v-model="editForm.social_media.twitter" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="@usuario" />
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">TikTok</label>
-              <input
-                v-model="editForm.social_media.tiktok"
-                type="text"
-                class="input-base w-full px-3 py-2 text-sm"
-                placeholder="@usuario"
-              />
+              <input v-model="editForm.social_media.tiktok" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="@usuario" />
             </div>
           </div>
         </template>
@@ -520,7 +472,7 @@ const tenantsStore = useTenantsStore()
 const isBusinessProfileLoading = computed(() => tenantsStore.isBusinessProfileLoading)
 const toast = useToast()
 
-// ─── Edit mode state ───
+// ─── Edit state ───
 const isEditMode = ref(false)
 const isSaving = ref(false)
 
@@ -542,6 +494,18 @@ const editForm = reactive({
   social_media: { instagram: '', whatsapp: '', facebook: '', twitter: '', tiktok: '' },
 })
 
+// ─── Computed visuals ───
+const logoSrc = computed(() => {
+  if (isEditMode.value) return editForm.logo_url || null
+  return businessProfile.value?.logo_url || null
+})
+
+const effectiveBannerStyle = computed(() => {
+  const url = isEditMode.value ? editForm.banner_url : businessProfile.value?.banner_url
+  if (url) return { backgroundImage: `url(${url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+  return {}
+})
+
 // ─── Constants ───
 const DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 const DAY_LABELS: Record<string, string> = {
@@ -555,9 +519,9 @@ const DAY_LABELS: Record<string, string> = {
 }
 const DAY_NAMES_JS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
-const isToday = (dayOrderIndex: number) => {
-  const bogotaDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }))
-  return DAY_ORDER[dayOrderIndex] === DAY_NAMES_JS[bogotaDate.getDay()]
+const isToday = (i: number) => {
+  const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }))
+  return DAY_ORDER[i] === DAY_NAMES_JS[d.getDay()]
 }
 
 const hasSocialMedia = computed(() => {
@@ -567,14 +531,18 @@ const hasSocialMedia = computed(() => {
 
 const formatCurrency = (value: number) => {
   if (!value) return '$0'
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(value)
+  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
 }
 
-// ─── Edit mode actions ───
+const formatCurrencyCompact = (value: number) => {
+  if (!value) return '$0'
+  if (value >= 1000) {
+    return `$${(value / 1000).toFixed(0)}k`
+  }
+  return `$${value}`
+}
+
+// ─── Edit actions ───
 const enterEditMode = () => {
   if (!businessProfile.value) return
   const bp = businessProfile.value
@@ -592,7 +560,6 @@ const enterEditMode = () => {
   editForm.min_order_amount = Number(bp.min_order_amount) ?? 0
   editForm.estimated_preparation_time = bp.estimated_preparation_time ?? 30
 
-  // Deep copy business_hours — guard missing open/close on closed days (e.g. Sunday)
   editForm.business_hours = {}
   for (const day of DAY_ORDER) {
     const d = bp.business_hours?.[day]
@@ -603,7 +570,6 @@ const enterEditMode = () => {
     }
   }
 
-  // Deep copy social_media
   const sm = bp.social_media || {}
   editForm.social_media = {
     instagram: sm.instagram || '',
@@ -623,22 +589,12 @@ const cancelEdit = () => {
 const saveChanges = async () => {
   isSaving.value = true
   try {
-    // Build clean business_hours — omit open/close when closed (matches DB shape)
     const cleanedHours: Record<string, any> = {}
     for (const day of DAY_ORDER) {
       const d = editForm.business_hours[day]
       cleanedHours[day] = d.closed
         ? { closed: true }
         : { open: d.open, close: d.close, closed: false }
-    }
-
-    // Build social_media — send empty strings as null (backend handles Optional)
-    const cleanedSocialMedia = {
-      instagram: editForm.social_media.instagram || null,
-      whatsapp: editForm.social_media.whatsapp || null,
-      facebook: editForm.social_media.facebook || null,
-      twitter: editForm.social_media.twitter || null,
-      tiktok: editForm.social_media.tiktok || null,
     }
 
     const payload = {
@@ -655,7 +611,13 @@ const saveChanges = async () => {
       min_order_amount: editForm.min_order_amount,
       estimated_preparation_time: editForm.estimated_preparation_time,
       business_hours: cleanedHours,
-      social_media: cleanedSocialMedia,
+      social_media: {
+        instagram: editForm.social_media.instagram || null,
+        whatsapp: editForm.social_media.whatsapp || null,
+        facebook: editForm.social_media.facebook || null,
+        twitter: editForm.social_media.twitter || null,
+        tiktok: editForm.social_media.tiktok || null,
+      },
     }
 
     await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: payload })
@@ -669,7 +631,7 @@ const saveChanges = async () => {
   }
 }
 
-// ─── Refresh handler for dashboard layout ───
+// ─── Refresh handler ───
 const setRefreshHandler = inject('setRefreshHandler', () => {})
 onMounted(() => {
   setRefreshHandler(() => tenantsStore.fetchBusinessProfile())

@@ -229,6 +229,7 @@ defineOptions({
 import { computed, ref, reactive } from 'vue'
 import {
   ArrowRightOnRectangleIcon,
+  BuildingStorefrontIcon,
   ChartBarIcon,
   ChevronDownIcon,
   ComputerDesktopIcon,
@@ -242,7 +243,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'gastos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin'
+  activePage?: 'dashboard' | 'ventas' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'gastos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio'
 }
 
 interface Tenant {
@@ -284,10 +285,11 @@ const gestionItems = [
   { to: '/abastecimiento/compras-directas', page: 'abastecimiento', label: 'Abastecimiento', icon: TruckIcon },
   { to: '/equipo/miembros', page: 'equipo', label: 'Equipo', icon: UserGroupIcon },
   { to: '/integraciones', page: 'integraciones', label: 'Integraciones', icon: KeyIcon },
+  { to: '/negocio', page: 'negocio', label: 'Mi Negocio', icon: BuildingStorefrontIcon },
 ]
 
 // Collapsible sections state — auto-expand section containing active page
-const gestionPages = ['menu', 'abastecimiento', 'integraciones']
+const gestionPages = ['menu', 'abastecimiento', 'integraciones', 'negocio']
 
 const sections = reactive({
   gestion: true,

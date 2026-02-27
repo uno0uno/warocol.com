@@ -1,5 +1,35 @@
 import { defineStore } from 'pinia'
 
+export interface BusinessHours {
+  open?: string    // "HH:MM" — may be absent when closed: true
+  close?: string   // "HH:MM" — may be absent when closed: true
+  closed: boolean
+}
+
+export interface TenantBusinessProfile {
+  id: string
+  tenant_id: string
+  slug: string
+  display_name: string
+  description: string | null
+  logo_url: string | null
+  banner_url: string | null
+  phone_number: string | null
+  email: string | null
+  address: string | null
+  city: string | null
+  neighborhood: string | null
+  latitude: number | null
+  longitude: number | null
+  business_hours: Record<string, BusinessHours> | null
+  social_media: Record<string, string> | null
+  accepts_online_orders: boolean
+  min_order_amount: number
+  estimated_preparation_time: number
+  is_active: boolean
+  is_currently_open: boolean | null
+}
+
 export interface Tenant {
   id: string
   name: string
@@ -15,6 +45,10 @@ export const useTenantsStore = defineStore('tenants', () => {
 
   // Global tenant change counter - increments when tenant changes
   const tenantChangeCounter = ref(0)
+
+  // Business profile state
+  const businessProfile = ref<TenantBusinessProfile | null>(null)
+  const isBusinessProfileLoading = ref(false)
 
   // Getters
   const hasTenants = computed(() => tenants.value.length > 0)
@@ -49,6 +83,9 @@ export const useTenantsStore = defineStore('tenants', () => {
         if (!selectedTenant.value && tenants.value.length > 0) {
           selectedTenant.value = tenants.value[0]
         }
+
+        // Load business profile for the selected tenant
+        await fetchBusinessProfile()
       } else {
         error.value = tenantsResponse.message || 'Error loading tenants'
         console.error('❌ Tenants response not successful:', tenantsResponse)
@@ -58,6 +95,20 @@ export const useTenantsStore = defineStore('tenants', () => {
       console.error('❌ Error fetching user tenants:', err)
     } finally {
       isLoading.value = false
+    }
+  }
+
+  const fetchBusinessProfile = async () => {
+    isBusinessProfileLoading.value = true
+    try {
+      const response = await $fetch<{ success: boolean; data: TenantBusinessProfile }>(
+        '/api/api/tenant/public-profile'
+      )
+      businessProfile.value = response?.data ?? null
+    } catch {
+      businessProfile.value = null
+    } finally {
+      isBusinessProfileLoading.value = false
     }
   }
 
@@ -92,7 +143,9 @@ export const useTenantsStore = defineStore('tenants', () => {
 
       if (response.success) {
         selectedTenant.value = tenant
-        tenantChangeCounter.value++ // Increment counter to trigger reactivity globally
+        businessProfile.value = null          // clear stale profile immediately
+        tenantChangeCounter.value++           // trigger reactivity globally
+        fetchBusinessProfile()                // fire-and-forget
         return true
       } else {
         error.value = response.message || 'Error switching tenant'
@@ -118,16 +171,19 @@ export const useTenantsStore = defineStore('tenants', () => {
   const clearTenants = () => {
     tenants.value = []
     selectedTenant.value = null
+    businessProfile.value = null
     error.value = null
   }
 
   return {
-    // State  
+    // State
     tenants,
     selectedTenant,
     isLoading,
     error,
     tenantChangeCounter,
+    businessProfile,
+    isBusinessProfileLoading,
 
     // Getters
     hasTenants,
@@ -135,6 +191,7 @@ export const useTenantsStore = defineStore('tenants', () => {
 
     // Actions
     fetchUserTenants,
+    fetchBusinessProfile,
     selectTenant,
     selectTenantBySlug,
     clearTenants

@@ -47,9 +47,9 @@ export const useNotifications = () => {
       if (notifications.value.length > prevCount) {
         try {
           const chime = new Audio('/sounds/order-confirmed.wav')
-          chime.volume = 0.6
-          chime.play().catch(() => {}) // silently ignore autoplay block
-        } catch {}
+          chime.volume = 0.2
+          chime.play().catch(() => { }) // silently ignore autoplay block
+        } catch { }
       }
     }
 
