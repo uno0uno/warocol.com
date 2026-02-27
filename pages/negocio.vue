@@ -122,22 +122,44 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">URL del logo</label>
-                <input
-                  v-model="editForm.logo_url"
-                  type="text"
-                  class="input-base w-full px-3 py-2 text-sm"
-                  placeholder="https://..."
-                />
+                <label class="block text-xs font-medium text-text-secondary mb-1">Logo</label>
+                <div class="flex gap-2">
+                  <input
+                    v-model="editForm.logo_url"
+                    type="text"
+                    class="input-base flex-1 px-3 py-2 text-sm min-w-0"
+                    placeholder="https://..."
+                  />
+                  <button
+                    type="button"
+                    @click="openImageModal('logo')"
+                    class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-primary border border-primary/40 rounded-lg hover:bg-primary/10 transition-colors"
+                    aria-label="Subir imagen de logo"
+                  >
+                    <ArrowUpTrayIcon class="w-3.5 h-3.5" aria-hidden="true" />
+                    Subir
+                  </button>
+                </div>
               </div>
               <div>
-                <label class="block text-xs font-medium text-text-secondary mb-1">URL del banner</label>
-                <input
-                  v-model="editForm.banner_url"
-                  type="text"
-                  class="input-base w-full px-3 py-2 text-sm"
-                  placeholder="https://..."
-                />
+                <label class="block text-xs font-medium text-text-secondary mb-1">Banner</label>
+                <div class="flex gap-2">
+                  <input
+                    v-model="editForm.banner_url"
+                    type="text"
+                    class="input-base flex-1 px-3 py-2 text-sm min-w-0"
+                    placeholder="https://..."
+                  />
+                  <button
+                    type="button"
+                    @click="openImageModal('banner')"
+                    class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-primary border border-primary/40 rounded-lg hover:bg-primary/10 transition-colors"
+                    aria-label="Subir imagen de banner"
+                  >
+                    <ArrowUpTrayIcon class="w-3.5 h-3.5" aria-hidden="true" />
+                    Subir
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -439,6 +461,14 @@
       </div>
 
     </div>
+
+    <!-- Image Upload Modal -->
+    <NegocioImageUploadModal
+      v-if="imageModalOpen"
+      :image-type="imageModalType"
+      @upload="handleImageUploaded"
+      @close="imageModalOpen = false"
+    />
   </div>
 </template>
 
@@ -453,6 +483,7 @@ import {
   GlobeAltIcon,
   PencilSquareIcon,
   CheckIcon,
+  ArrowUpTrayIcon,
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({ layout: 'dashboard' })
@@ -619,6 +650,22 @@ const saveChanges = async () => {
   } finally {
     isSaving.value = false
   }
+}
+
+// ─── Image upload modal ───
+const imageModalOpen = ref(false)
+const imageModalType = ref<'logo' | 'banner'>('logo')
+
+const openImageModal = (type: 'logo' | 'banner') => {
+  imageModalType.value = type
+  imageModalOpen.value = true
+}
+
+const handleImageUploaded = (url: string) => {
+  if (imageModalType.value === 'logo') editForm.logo_url = url
+  else editForm.banner_url = url
+  imageModalOpen.value = false
+  toast.success('Imagen lista. Guarda el perfil para aplicar los cambios.', { title: 'Imagen subida' })
 }
 
 // ─── Auto-enter edit mode when no profile ───
