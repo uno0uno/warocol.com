@@ -97,18 +97,23 @@ useHead({
         >
           <!-- Restaurant Banner/Image -->
           <div class="relative h-48 bg-gradient-to-br from-primary to-primary/70 overflow-hidden">
-            <!-- Logo emoji (zoom on hover) -->
-            <span class="absolute inset-0 flex items-center justify-center text-6xl">
-              {{ restaurant.logo_url || '🍽️' }}
-            </span>
+            <!-- Banner image if URL available, else logo image, else emoji -->
+            <img
+              v-if="restaurant.banner_url && restaurant.banner_url.startsWith('http')"
+              :src="restaurant.banner_url"
+              :alt="restaurant.display_name"
+              class="absolute inset-0 w-full h-full object-cover"
+            />
+            <img
+              v-else-if="restaurant.logo_url && restaurant.logo_url.startsWith('http')"
+              :src="restaurant.logo_url"
+              :alt="restaurant.display_name"
+              class="absolute inset-0 w-full h-full object-contain p-8"
+            />
+            <span v-else class="absolute inset-0 flex items-center justify-center text-6xl">🍽️</span>
 
             <!-- Dark gradient overlay for depth -->
             <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
-
-            <!-- Banner emoji bottom-right -->
-            <span v-if="restaurant.banner_url" class="absolute bottom-2 right-3 text-2xl opacity-70">
-              {{ restaurant.banner_url }}
-            </span>
 
             <!-- Neighborhood badge top-left -->
             <span
