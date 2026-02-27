@@ -123,43 +123,27 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-medium text-text-secondary mb-1">Logo</label>
-                <div class="flex gap-2">
-                  <input
-                    v-model="editForm.logo_url"
-                    type="text"
-                    class="input-base flex-1 px-3 py-2 text-sm min-w-0"
-                    placeholder="https://..."
-                  />
-                  <button
-                    type="button"
-                    @click="openImageModal('logo')"
-                    class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-primary border border-primary/40 rounded-lg hover:bg-primary/10 transition-colors"
-                    aria-label="Subir imagen de logo"
-                  >
-                    <ArrowUpTrayIcon class="w-3.5 h-3.5" aria-hidden="true" />
-                    Subir
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  @click="openImageModal('logo')"
+                  class="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-primary border-2 border-primary/30 border-dashed rounded-lg hover:bg-primary/5 hover:border-primary/60 transition-colors"
+                  aria-label="Subir imagen de logo"
+                >
+                  <ArrowUpTrayIcon class="w-4 h-4" aria-hidden="true" />
+                  {{ editForm.logo_url ? 'Cambiar logo' : 'Subir logo' }}
+                </button>
               </div>
               <div>
                 <label class="block text-xs font-medium text-text-secondary mb-1">Banner</label>
-                <div class="flex gap-2">
-                  <input
-                    v-model="editForm.banner_url"
-                    type="text"
-                    class="input-base flex-1 px-3 py-2 text-sm min-w-0"
-                    placeholder="https://..."
-                  />
-                  <button
-                    type="button"
-                    @click="openImageModal('banner')"
-                    class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-primary border border-primary/40 rounded-lg hover:bg-primary/10 transition-colors"
-                    aria-label="Subir imagen de banner"
-                  >
-                    <ArrowUpTrayIcon class="w-3.5 h-3.5" aria-hidden="true" />
-                    Subir
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  @click="openImageModal('banner')"
+                  class="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-primary border-2 border-primary/30 border-dashed rounded-lg hover:bg-primary/5 hover:border-primary/60 transition-colors"
+                  aria-label="Subir imagen de banner"
+                >
+                  <ArrowUpTrayIcon class="w-4 h-4" aria-hidden="true" />
+                  {{ editForm.banner_url ? 'Cambiar banner' : 'Subir banner' }}
+                </button>
               </div>
             </div>
           </div>
