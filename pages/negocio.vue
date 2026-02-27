@@ -470,15 +470,12 @@ import {
   ArrowUpTrayIcon,
 } from '@heroicons/vue/24/outline'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', ssr: false })
 useHead({ title: 'Mi Negocio' })
 
 const { businessProfile, isOpenNow } = useTenantReactive()
 const tenantsStore = useTenantsStore()
-const { pending: isBusinessProfileLoading } = await useAsyncData(
-  'negocio-business-profile',
-  () => tenantsStore.fetchBusinessProfile()
-)
+const isBusinessProfileLoading = computed(() => tenantsStore.isLoading || tenantsStore.isBusinessProfileLoading)
 const toast = useToast()
 
 // ─── Edit state ───
