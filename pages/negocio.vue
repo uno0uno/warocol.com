@@ -473,9 +473,13 @@ import {
 definePageMeta({ layout: 'dashboard', ssr: false })
 useHead({ title: 'Mi Negocio' })
 
-const { businessProfile, isOpenNow } = useTenantReactive()
-const tenantsStore = useTenantsStore()
-const isBusinessProfileLoading = computed(() => tenantsStore.isLoading || tenantsStore.isBusinessProfileLoading)
+const { isOpenNow } = useTenantReactive()
+const { data: profileData, pending: isBusinessProfileLoading, refresh: refreshProfile } = useAsyncData(
+  'negocio-business-profile',
+  () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
+  { server: false }
+)
+const businessProfile = computed(() => profileData.value?.data ?? null)
 const toast = useToast()
 
 // ─── Edit state ───
@@ -626,7 +630,7 @@ const saveChanges = async () => {
     }
 
     await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: payload })
-    await tenantsStore.fetchBusinessProfile()
+    await refreshProfile()
     isEditMode.value = false
     toast.success('Perfil actualizado exitosamente', { title: 'Guardado' })
   } catch (error: any) {
@@ -657,7 +661,7 @@ const handleImageUploaded = async (url: string) => {
         body: { [field]: url },
       })
       // Update store directly from PATCH response — avoids a second GET that can fail
-      if (res?.data) tenantsStore.businessProfile = res.data
+      if (res?.data) await refreshProfile()
       toast.success('Imagen guardada correctamente.', { title: 'Imagen subida' })
     } catch {
       toast.error('La imagen se subió pero no se pudo guardar. Inténtalo de nuevo.', { title: 'Error' })
@@ -685,6 +689,6 @@ watch(
 // ─── Refresh handler ───
 const setRefreshHandler = inject('setRefreshHandler', () => {})
 onMounted(() => {
-  setRefreshHandler(() => tenantsStore.fetchBusinessProfile())
+  setRefreshHandler(refreshProfile)
 })
 </script>
