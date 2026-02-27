@@ -70,6 +70,9 @@
             </span>
 
             <div class="flex gap-2 md:gap-3">
+              <!-- Restaurant open/close toggle -->
+              <DashboardBusinessStatusToggle />
+
               <!-- Refresh Button (Desktop only) - always visible -->
               <button @click="refreshHandler ? refreshHandler() : $router.go(0)"
                 class="hidden md:flex w-11 h-11 items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring"

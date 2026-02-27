@@ -43,6 +43,14 @@
       <small class="font-semibold mt-0.5">Faltan {{ formatPrice(minimumOrder - subtotal) }}</small>
     </div>
 
+    <!-- Restaurant closed notice -->
+    <div v-if="showCheckoutButton && !restaurantOpen" class="flex items-center gap-2 p-3 mb-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+      <svg class="w-4 h-4 flex-shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+      </svg>
+      El restaurante está cerrado en este momento
+    </div>
+
     <!-- Checkout button -->
     <button
       v-if="showCheckoutButton"
@@ -54,8 +62,9 @@
       :disabled="isCheckoutDisabled"
       @click="$emit('checkout')"
     >
-      <span v-if="!isCheckoutDisabled">Continuar a Checkout</span>
-      <span v-else>Pedido mínimo no alcanzado</span>
+      <span v-if="!restaurantOpen">Restaurante cerrado</span>
+      <span v-else-if="minimumOrder > subtotal">Pedido mínimo no alcanzado</span>
+      <span v-else>Continuar a Checkout</span>
     </button>
   </div>
 </template>
@@ -72,6 +81,7 @@ const props = withDefaults(
     discount?: number
     minimumOrder?: number
     showCheckoutButton?: boolean
+    restaurantOpen?: boolean
   }>(),
   {
     orderType: 'delivery',
@@ -79,6 +89,7 @@ const props = withDefaults(
     discount: 0,
     minimumOrder: 0,
     showCheckoutButton: true,
+    restaurantOpen: true,
   }
 )
 
@@ -91,6 +102,7 @@ const total = computed(() => {
 })
 
 const isCheckoutDisabled = computed(() => {
+  if (!props.restaurantOpen) return true
   return props.minimumOrder > 0 && props.subtotal < props.minimumOrder
 })
 

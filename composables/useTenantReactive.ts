@@ -47,6 +47,7 @@ export const useTenantReactive = () => {
    */
   const isOpenNow = computed(() => {
     if (!businessProfile.value) return true        // no profile → fail-open
+    if (businessProfile.value.is_manually_open === false) return false  // manual override
     const hours = currentDayHours.value
     if (!hours) return true
     if (hours.closed) return false

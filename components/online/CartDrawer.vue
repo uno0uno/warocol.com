@@ -111,6 +111,7 @@
                 :order-type="cartStore.orderType"
                 :delivery-fee="deliveryFee"
                 :minimum-order="minimumOrder"
+                :restaurant-open="props.restaurantOpen"
                 @checkout="handleCheckout"
               />
             </div>
@@ -160,6 +161,7 @@ import CartSummary from './CartSummary.vue'
 
 const props = defineProps<{
   modelValue: boolean
+  restaurantOpen?: boolean
 }>()
 
 const emit = defineEmits<{

@@ -227,6 +227,7 @@ const handleCheckout = () => {
       <!-- Cart Drawer -->
       <CartDrawer
         v-model="isCartOpen"
+        :restaurant-open="restaurant.is_currently_open ?? true"
         @checkout="handleCheckout"
         @open-product="handleOpenProductFromCart"
       />
