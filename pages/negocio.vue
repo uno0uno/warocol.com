@@ -6,24 +6,8 @@
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- No profile -->
-    <div
-      v-else-if="!businessProfile && !isSaving"
-      class="flex flex-col items-center justify-center min-h-[400px] gap-4"
-    >
-      <div class="w-16 h-16 rounded-2xl bg-surface border-2 border-border flex items-center justify-center">
-        <BuildingStorefrontIcon class="w-8 h-8 text-text-secondary" />
-      </div>
-      <div class="text-center">
-        <p class="text-base font-semibold text-text-primary">Sin perfil configurado</p>
-        <p class="text-sm text-text-secondary mt-1 max-w-sm">
-          Este negocio aún no tiene un perfil público.
-        </p>
-      </div>
-    </div>
-
     <!-- ─── Main ─── -->
-    <div v-else-if="businessProfile" class="space-y-4 sm:space-y-6">
+    <div v-else class="space-y-4 sm:space-y-6">
 
       <!-- ══════ PROFILE HERO ══════ -->
       <div class="bg-surface border-2 border-border rounded-xl overflow-hidden">
@@ -34,6 +18,13 @@
           :style="effectiveBannerStyle"
         >
           <div class="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent" />
+
+          <!-- First-time setup hint -->
+          <div v-if="!businessProfile && isEditMode" class="absolute inset-x-0 bottom-3 flex justify-center">
+            <span class="text-white/90 text-xs font-medium drop-shadow bg-black/20 px-3 py-1 rounded-full backdrop-blur-sm">
+              Completa tu perfil para que tus clientes te encuentren
+            </span>
+          </div>
 
           <!-- Edit / Save buttons — top-right of banner -->
           <div class="absolute top-3 right-3 flex items-center gap-2">
@@ -74,7 +65,7 @@
                 v-if="logoSrc"
                 class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl border-4 border-background overflow-hidden shadow-sm"
               >
-                <img :src="logoSrc" :alt="businessProfile.display_name" class="w-full h-full object-cover" />
+                <img :src="logoSrc" :alt="businessProfile?.display_name" class="w-full h-full object-cover" />
               </div>
               <!-- Sin logo: solo el ícono -->
               <BuildingStorefrontIcon v-else class="w-10 h-10 sm:w-12 sm:h-12 text-white drop-shadow mb-1" />
@@ -83,7 +74,7 @@
             <!-- Name + badges (view mode) -->
             <div v-if="!isEditMode" class="flex-1 min-w-0 pb-1">
               <h1 class="text-lg sm:text-xl font-bold text-text-primary truncate">
-                {{ businessProfile.display_name }}
+                {{ businessProfile?.display_name }}
               </h1>
               <div class="flex items-center gap-2 mt-1 flex-wrap">
                 <UiStatusBadge
@@ -92,8 +83,8 @@
                   format="text"
                 />
                 <UiStatusBadge
-                  :variant="businessProfile.is_active ? 'success' : 'warning'"
-                  :value="businessProfile.is_active ? 'Activo' : 'Oculto'"
+                  :variant="businessProfile?.is_active ? 'success' : 'warning'"
+                  :value="businessProfile?.is_active ? 'Activo' : 'Oculto'"
                   format="text"
                 />
               </div>
@@ -111,10 +102,10 @@
           </div>
 
           <!-- Description (view) -->
-          <p v-if="!isEditMode && businessProfile.description" class="text-sm text-text-secondary leading-relaxed">
+          <p v-if="!isEditMode && businessProfile?.description" class="text-sm text-text-secondary leading-relaxed">
             {{ businessProfile.description }}
           </p>
-          <p v-else-if="!isEditMode && !businessProfile.description" class="text-sm text-text-secondary italic">
+          <p v-else-if="!isEditMode && !businessProfile?.description" class="text-sm text-text-secondary italic">
             Sin descripción
           </p>
 
@@ -154,7 +145,7 @@
       </div>
 
       <!-- ══════ STATS STRIP ══════ -->
-      <div class="grid grid-cols-3 divide-x divide-border bg-surface border-2 border-border rounded-xl overflow-hidden">
+      <div v-if="businessProfile" class="grid grid-cols-3 divide-x divide-border bg-surface border-2 border-border rounded-xl overflow-hidden">
         <div class="px-3 sm:px-5 py-3 sm:py-4 text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
             Tiempo prep.
@@ -194,22 +185,22 @@
         <!-- View -->
         <template v-if="!isEditMode">
           <div class="space-y-2.5">
-            <div v-if="businessProfile.address || businessProfile.city" class="flex items-start gap-3">
+            <div v-if="businessProfile?.address || businessProfile?.city" class="flex items-start gap-3">
               <MapPinIcon class="w-4 h-4 text-text-secondary flex-shrink-0 mt-0.5" />
               <span class="text-sm text-text-primary leading-snug">
-                {{ [businessProfile.address, businessProfile.neighborhood, businessProfile.city].filter(Boolean).join(', ') }}
+                {{ [businessProfile?.address, businessProfile?.neighborhood, businessProfile?.city].filter(Boolean).join(', ') }}
               </span>
             </div>
-            <div v-if="businessProfile.phone_number" class="flex items-center gap-3">
+            <div v-if="businessProfile?.phone_number" class="flex items-center gap-3">
               <PhoneIcon class="w-4 h-4 text-text-secondary flex-shrink-0" />
-              <span class="text-sm text-text-primary">{{ businessProfile.phone_number }}</span>
+              <span class="text-sm text-text-primary">{{ businessProfile?.phone_number }}</span>
             </div>
-            <div v-if="businessProfile.email" class="flex items-center gap-3">
+            <div v-if="businessProfile?.email" class="flex items-center gap-3">
               <EnvelopeIcon class="w-4 h-4 text-text-secondary flex-shrink-0" />
-              <span class="text-sm text-text-primary">{{ businessProfile.email }}</span>
+              <span class="text-sm text-text-primary">{{ businessProfile?.email }}</span>
             </div>
             <p
-              v-if="!businessProfile.address && !businessProfile.city && !businessProfile.phone_number && !businessProfile.email"
+              v-if="!businessProfile?.address && !businessProfile?.city && !businessProfile?.phone_number && !businessProfile?.email"
               class="text-sm text-text-secondary italic"
             >
               Sin información de contacto
@@ -245,7 +236,7 @@
       </div>
 
       <!-- ══════ HORARIO ══════ -->
-      <div v-if="businessProfile.business_hours || isEditMode" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+      <div v-if="businessProfile?.business_hours || isEditMode" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
           <ClockIcon class="w-5 h-5 text-primary flex-shrink-0" />
           Horario
@@ -346,18 +337,18 @@
             <div class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">Estado de pedidos</span>
               <UiStatusBadge
-                :variant="businessProfile.accepts_online_orders ? 'success' : 'secondary'"
-                :value="businessProfile.accepts_online_orders ? 'Activos' : 'Desactivados'"
+                :variant="businessProfile?.accepts_online_orders ? 'success' : 'secondary'"
+                :value="businessProfile?.accepts_online_orders ? 'Activos' : 'Desactivados'"
                 format="text"
               />
             </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">Tiempo de preparación estimado</span>
-              <span class="text-sm font-semibold text-text-primary">{{ businessProfile.estimated_preparation_time }} min</span>
+              <span class="text-sm font-semibold text-text-primary">{{ businessProfile?.estimated_preparation_time }} min</span>
             </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">Pedido mínimo</span>
-              <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(businessProfile.min_order_amount) }}</span>
+              <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(businessProfile?.min_order_amount ?? 0) }}</span>
             </div>
           </div>
         </template>
@@ -402,7 +393,7 @@
       </div>
 
       <!-- ══════ REDES SOCIALES ══════ -->
-      <div v-if="hasSocialMedia || isEditMode" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+      <div v-if="hasSocialMedia || isEditMode" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6 pb-safe">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
           <GlobeAltIcon class="w-5 h-5 text-primary flex-shrink-0" />
           Redes sociales
@@ -544,25 +535,24 @@ const formatCurrencyCompact = (value: number) => {
 
 // ─── Edit actions ───
 const enterEditMode = () => {
-  if (!businessProfile.value) return
-  const bp = businessProfile.value
+  const bp = businessProfile.value  // may be null for first-time setup
 
-  editForm.display_name = bp.display_name || ''
-  editForm.description = bp.description || ''
-  editForm.logo_url = bp.logo_url || ''
-  editForm.banner_url = bp.banner_url || ''
-  editForm.phone_number = bp.phone_number || ''
-  editForm.email = bp.email || ''
-  editForm.address = bp.address || ''
-  editForm.city = bp.city || ''
-  editForm.neighborhood = bp.neighborhood || ''
-  editForm.accepts_online_orders = bp.accepts_online_orders ?? false
-  editForm.min_order_amount = Number(bp.min_order_amount) ?? 0
-  editForm.estimated_preparation_time = bp.estimated_preparation_time ?? 30
+  editForm.display_name = bp?.display_name || ''
+  editForm.description = bp?.description || ''
+  editForm.logo_url = bp?.logo_url || ''
+  editForm.banner_url = bp?.banner_url || ''
+  editForm.phone_number = bp?.phone_number || ''
+  editForm.email = bp?.email || ''
+  editForm.address = bp?.address || ''
+  editForm.city = bp?.city || ''
+  editForm.neighborhood = bp?.neighborhood || ''
+  editForm.accepts_online_orders = bp?.accepts_online_orders ?? false
+  editForm.min_order_amount = Number(bp?.min_order_amount) || 0
+  editForm.estimated_preparation_time = bp?.estimated_preparation_time ?? 30
 
   editForm.business_hours = {}
   for (const day of DAY_ORDER) {
-    const d = bp.business_hours?.[day]
+    const d = bp?.business_hours?.[day]
     editForm.business_hours[day] = {
       open: d?.open ?? '',
       close: d?.close ?? '',
@@ -570,7 +560,7 @@ const enterEditMode = () => {
     }
   }
 
-  const sm = bp.social_media || {}
+  const sm = bp?.social_media || {}
   editForm.social_media = {
     instagram: sm.instagram || '',
     whatsapp: sm.whatsapp || '',
@@ -630,6 +620,17 @@ const saveChanges = async () => {
     isSaving.value = false
   }
 }
+
+// ─── Auto-enter edit mode when no profile ───
+watch(
+  [isBusinessProfileLoading, businessProfile] as const,
+  ([loading, profile]) => {
+    if (!loading && !profile && !isEditMode.value) {
+      enterEditMode()
+    }
+  },
+  { immediate: true }
+)
 
 // ─── Refresh handler ───
 const setRefreshHandler = inject('setRefreshHandler', () => {})
