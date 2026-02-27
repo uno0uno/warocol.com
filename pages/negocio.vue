@@ -475,7 +475,10 @@ useHead({ title: 'Mi Negocio' })
 
 const { businessProfile, isOpenNow } = useTenantReactive()
 const tenantsStore = useTenantsStore()
-const isBusinessProfileLoading = computed(() => tenantsStore.isBusinessProfileLoading)
+const { pending: isBusinessProfileLoading } = await useAsyncData(
+  'negocio-business-profile',
+  () => tenantsStore.fetchBusinessProfile()
+)
 const toast = useToast()
 
 // ─── Edit state ───
@@ -645,11 +648,30 @@ const openImageModal = (type: 'logo' | 'banner') => {
   imageModalOpen.value = true
 }
 
-const handleImageUploaded = (url: string) => {
-  if (imageModalType.value === 'logo') editForm.logo_url = url
-  else editForm.banner_url = url
+const handleImageUploaded = async (url: string) => {
+  const field = imageModalType.value === 'logo' ? 'logo_url' : 'banner_url'
   imageModalOpen.value = false
-  toast.success('Imagen lista. Guarda el perfil para aplicar los cambios.', { title: 'Imagen subida' })
+
+  // If profile exists, auto-save the image URL immediately via PATCH
+  if (businessProfile.value) {
+    try {
+      const res = await $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile', {
+        method: 'PATCH',
+        body: { [field]: url },
+      })
+      // Update store directly from PATCH response — avoids a second GET that can fail
+      if (res?.data) tenantsStore.businessProfile = res.data
+      toast.success('Imagen guardada correctamente.', { title: 'Imagen subida' })
+    } catch {
+      toast.error('La imagen se subió pero no se pudo guardar. Inténtalo de nuevo.', { title: 'Error' })
+    }
+    return
+  }
+
+  // No profile yet — enter edit mode so user can complete required fields
+  if (!isEditMode.value) enterEditMode()
+  editForm[field] = url
+  toast.success('Imagen lista. Completa los datos y guarda el perfil.', { title: 'Imagen subida' })
 }
 
 // ─── Auto-enter edit mode when no profile ───
