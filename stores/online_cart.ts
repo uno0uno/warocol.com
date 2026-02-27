@@ -8,6 +8,13 @@ import { defineStore } from 'pinia'
 // races with hydrateFromBackend() during the initial session recovery.
 let _recoveryPromise: Promise<void> | null = null
 
+// Order-insensitive modifier comparison key.
+// JSON.stringify is order-sensitive; sorting by id first ensures
+// [A, B] and [B, A] produce the same key and deduplicate correctly.
+function modifiersKey(mods: CartModifier[]): string {
+  return JSON.stringify([...mods].sort((a, b) => a.id.localeCompare(b.id)))
+}
+
 export interface CartModifier {
   id: string
   name: string
@@ -148,7 +155,7 @@ export const useOnlineCartStore = defineStore('onlineCart', {
         const localItem = this.items.find(
           item =>
             item.product_id === backendItem.product_id &&
-            JSON.stringify(item.modifiers) === JSON.stringify(backendItem.modifiers)
+            modifiersKey(item.modifiers) === modifiersKey(backendItem.modifiers)
         )
         if (localItem) {
           localItem.backendId = backendItem.id
@@ -178,10 +185,11 @@ export const useOnlineCartStore = defineStore('onlineCart', {
         const modifiersTotal = modifiers.reduce((sum, mod) => sum + mod.price, 0)
         const itemTotal = (product.price + modifiersTotal) * quantity
 
+        const sortedModifiers = [...modifiers].sort((a, b) => a.id.localeCompare(b.id))
         const existingIndex = this.items.findIndex(
           item =>
             item.product_id === product.id &&
-            JSON.stringify(item.modifiers) === JSON.stringify(modifiers)
+            modifiersKey(item.modifiers) === modifiersKey(modifiers)
         )
 
         if (existingIndex >= 0) {
@@ -195,7 +203,7 @@ export const useOnlineCartStore = defineStore('onlineCart', {
             product_name: product.name,
             quantity,
             unit_price: product.price,
-            modifiers,
+            modifiers: sortedModifiers,
             notes,
             total: itemTotal,
             has_modifiers: product.has_modifiers ?? false,
@@ -239,11 +247,12 @@ export const useOnlineCartStore = defineStore('onlineCart', {
       this.isLoading = true
       try {
         for (const unit of units) {
+          const sortedModifiers = [...unit.modifiers].sort((a, b) => a.id.localeCompare(b.id))
           const modifiersTotal = unit.modifiers.reduce((sum, mod) => sum + mod.price, 0)
           const existingIndex = this.items.findIndex(
             item =>
               item.product_id === product.id &&
-              JSON.stringify(item.modifiers) === JSON.stringify(unit.modifiers)
+              modifiersKey(item.modifiers) === modifiersKey(unit.modifiers)
           )
           if (existingIndex >= 0) {
             this.items[existingIndex].quantity += 1
@@ -256,7 +265,7 @@ export const useOnlineCartStore = defineStore('onlineCart', {
               product_name: product.name,
               quantity: 1,
               unit_price: product.price,
-              modifiers: unit.modifiers,
+              modifiers: sortedModifiers,
               notes: unit.notes,
               total: product.price + modifiersTotal,
               has_modifiers: product.has_modifiers ?? false,
