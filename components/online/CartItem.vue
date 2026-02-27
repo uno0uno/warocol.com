@@ -7,14 +7,17 @@
         <h4 class="text-base font-semibold text-foreground mb-2">{{ item.product_name }}</h4>
 
         <!-- Modifiers -->
-        <div v-if="item.modifiers.length > 0" class="flex flex-wrap gap-1.5 mb-2">
-          <span
+        <div v-if="item.modifiers.length > 0" class="flex flex-col space-y-0.5 mb-2">
+          <div
             v-for="modifier in item.modifiers"
             :key="modifier.id"
-            class="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full"
+            class="flex justify-between text-xs text-muted-foreground"
           >
-            + {{ modifier.name }}
-          </span>
+            <span>+ {{ modifier.name }}</span>
+            <span class="ml-4" :class="modifier.price === 0 ? 'text-success' : ''">
+              {{ modifier.price === 0 ? 'Gratis' : formatPrice(modifier.price) }}
+            </span>
+          </div>
         </div>
 
         <!-- Notes -->
@@ -24,10 +27,7 @@
 
         <!-- Unit price -->
         <p class="text-sm text-muted-foreground">
-          {{ formatPrice(item.unit_price) }}
-          <span v-if="item.modifiers.length > 0" class="text-muted-foreground/70">
-            + {{ formatPrice(modifiersTotal) }}
-          </span>
+          {{ formatPrice(item.unit_price) }} c/u
         </p>
       </div>
 
@@ -118,7 +118,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { CartItem } from '~/stores/online_cart'
 
 const props = defineProps<{
@@ -131,10 +130,6 @@ const emit = defineEmits<{
   (e: 'remove', itemId: string): void
   (e: 'customize-add', item: CartItem): void
 }>()
-
-const modifiersTotal = computed(() => {
-  return props.item.modifiers.reduce((sum, mod) => sum + mod.price, 0)
-})
 
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('es-CO', {
