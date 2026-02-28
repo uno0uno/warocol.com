@@ -106,12 +106,12 @@
                   :aria-checked="item.is_available_online"
                   :aria-label="item.is_available_online ? `Deshabilitar ${item.name} para domicilios` : `Habilitar ${item.name} para domicilios`"
                   :title="item.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
-                  class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-1"
-                  :class="item.is_available_online ? 'bg-crocus-500' : 'bg-titan-300'"
+                  class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-2"
+                  :class="item.is_available_online ? 'bg-success' : 'bg-titan-300'"
                 >
                   <span
-                    class="inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform duration-200"
-                    :class="item.is_available_online ? 'translate-x-5' : 'translate-x-1'"
+                    class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out"
+                    :class="item.is_available_online ? 'translate-x-6' : 'translate-x-0.5'"
                   />
                 </button>
               </div>
@@ -183,12 +183,12 @@
                 :aria-checked="row.is_available_online"
                 :aria-label="row.is_available_online ? `Deshabilitar ${row.name} para domicilios` : `Habilitar ${row.name} para domicilios`"
                 :title="row.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
-                class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-1"
-                :class="row.is_available_online ? 'bg-crocus-500' : 'bg-titan-300'"
+                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-2"
+                :class="row.is_available_online ? 'bg-success' : 'bg-titan-300'"
               >
                 <span
-                  class="inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform duration-200"
-                  :class="row.is_available_online ? 'translate-x-5' : 'translate-x-1'"
+                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out"
+                  :class="row.is_available_online ? 'translate-x-6' : 'translate-x-0.5'"
                 />
               </button>
             </div>
@@ -292,6 +292,7 @@
 
 <script setup lang="ts">
 import { useTenantReactive } from '@/composables/useTenantReactive'
+import { useToast } from '@/composables/useToast'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -588,6 +589,8 @@ const formatMargin = (product: any) => {
 }
 
 // Inline toggle for online availability
+const toast = useToast()
+
 const toggleOnlineAvailability = async (product: any) => {
   const newValue = !product.is_available_online
   product.is_available_online = newValue
@@ -596,8 +599,13 @@ const toggleOnlineAvailability = async (product: any) => {
       method: 'PUT',
       body: { is_available_online: newValue }
     })
+    toast.success(
+      newValue ? `${product.name} ahora aparece en domicilios` : `${product.name} ocultado del menú online`,
+      { duration: 3000 }
+    )
   } catch (e) {
     product.is_available_online = !newValue
+    toast.error('Error al actualizar. Intenta de nuevo.')
   }
 }
 
