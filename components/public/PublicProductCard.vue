@@ -60,7 +60,7 @@
         <button
           v-if="!isInCart || isAdding"
           @click.stop="handleClick"
-          :disabled="isAdding || !product.is_available"
+          :disabled="isAdding || !product.is_available || restaurantClosed"
           class="w-11 h-11 flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
           aria-label="Agregar al carrito"
         >
@@ -81,7 +81,7 @@
           </span>
           <button
             @click="increase"
-            :disabled="cartStore.isLoading || !product.is_available"
+            :disabled="cartStore.isLoading || !product.is_available || restaurantClosed"
             class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-lg font-bold focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
             aria-label="Agregar uno más"
           >+</button>
@@ -165,7 +165,7 @@
         <button
           v-if="!isInCart || isAdding"
           @click.stop="handleClick"
-          :disabled="isAdding || !product.is_available"
+          :disabled="isAdding || !product.is_available || restaurantClosed"
           class="w-11 h-11 flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
           aria-label="Agregar al carrito"
         >
@@ -186,7 +186,7 @@
           </span>
           <button
             @click="increase"
-            :disabled="cartStore.isLoading || !product.is_available"
+            :disabled="cartStore.isLoading || !product.is_available || restaurantClosed"
             class="w-11 h-11 flex items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-base font-bold focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
             aria-label="Agregar uno más"
           >+</button>
@@ -208,6 +208,10 @@ const props = defineProps({
   layout: {
     type: String as () => 'vertical' | 'horizontal',
     default: 'vertical'
+  },
+  restaurantClosed: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -262,6 +266,7 @@ const increase = async () => {
 
 async function handleClick() {
   if (!props.product.is_available) return
+  if (props.restaurantClosed) return
   if (isInCart.value) return
   if (isAdding.value) return                    // double-click guard
   if (!props.product.has_modifiers) {

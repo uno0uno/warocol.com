@@ -29,8 +29,16 @@
       </div>
     </div>
 
+    <!-- Closed Banner -->
+    <div v-if="!restaurantOpen" class="max-w-7xl mx-auto px-4 pt-6">
+      <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
+        <span>🔒</span>
+        <span>El restaurante está cerrado temporalmente. Puedes explorar el menú pero no se pueden realizar pedidos.</span>
+      </div>
+    </div>
+
     <!-- Products Grid -->
-    <div v-else-if="filteredProducts.length > 0" class="max-w-7xl mx-auto px-4 py-8">
+    <div v-if="!isLoading && filteredProducts.length > 0" class="max-w-7xl mx-auto px-4 py-8">
       <!-- Products by category -->
       <div v-for="category in categoriesWithProducts" :key="category.id" class="mb-12">
         <h2 class="font-bold text-foreground mb-6">
@@ -42,6 +50,7 @@
             v-for="product in category.products"
             :key="product.id"
             :product="product"
+            :restaurant-closed="!restaurantOpen"
             @click="handleProductClick"
           />
         </div>
@@ -49,7 +58,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else class="max-w-7xl mx-auto px-4 py-12">
+    <div v-if="!isLoading && filteredProducts.length === 0" class="max-w-7xl mx-auto px-4 py-12">
       <div class="text-center">
         <div class="text-6xl mb-4">🍽️</div>
         <h3 class="text-xl font-semibold text-foreground mb-2">No hay productos disponibles</h3>
@@ -75,6 +84,10 @@ const props = defineProps({
   isLoading: {
     type: Boolean,
     default: false
+  },
+  restaurantOpen: {
+    type: Boolean,
+    default: true
   }
 })
 
