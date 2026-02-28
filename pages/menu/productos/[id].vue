@@ -301,6 +301,23 @@
                 </div>
               </div>
 
+              <div class="flex items-start space-x-3">
+                <input
+                  v-model="form.is_available_online"
+                  type="checkbox"
+                  id="is_available_online"
+                  class="h-4 w-4 mt-0.5 text-primary focus:ring-primary border-border rounded"
+                />
+                <div>
+                  <label for="is_available_online" class="text-sm font-medium text-text-primary block">
+                    Disponible para domicilios
+                  </label>
+                  <p class="text-xs text-text-secondary mt-1">
+                    El producto aparece en el menú de pedidos online (delivery/pickup)
+                  </p>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -496,6 +513,7 @@ const form = ref({
   preparation_time: 15,
   controla_stock: true,
   is_available: true,
+  is_available_online: true,
   is_combo: false,
   allow_modifiers: true,
   recipe_base_ids: [] as string[],
@@ -516,6 +534,7 @@ watch(productData, (data) => {
       preparation_time: product.preparation_time || 15,
       controla_stock: product.controla_stock,
       is_available: product.is_available,
+      is_available_online: product.is_available_online ?? true,
       is_combo: product.is_combo,
       allow_modifiers: product.allow_modifiers,
       recipe_base_ids: product.recipe_base_ids || [],
