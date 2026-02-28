@@ -122,6 +122,22 @@ useHead({
             >
               {{ restaurant.neighborhood }}
             </span>
+
+            <!-- Open/Closed badge top-right -->
+            <span
+              v-if="restaurant.is_currently_open"
+              class="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-success/90 text-success-foreground rounded-xl backdrop-blur-sm"
+            >
+              <span class="w-1.5 h-1.5 bg-success-foreground rounded-full animate-pulse" aria-hidden="true" />
+              Abierto
+            </span>
+            <span
+              v-else
+              class="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-background/80 backdrop-blur-sm text-muted-foreground rounded-xl"
+            >
+              <span class="w-1.5 h-1.5 bg-muted-foreground rounded-full" aria-hidden="true" />
+              Cerrado
+            </span>
           </div>
 
           <!-- Restaurant Info -->
