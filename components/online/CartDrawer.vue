@@ -93,6 +93,7 @@
                   :key="item.id"
                   :item="item"
                   :loading="cartStore.isLoading"
+                  :restaurant-closed="!props.restaurantOpen"
                   @update-quantity="handleUpdateQuantity"
                   @remove="handleRemoveItem"
                   @customize-add="handleCustomizeAdd"

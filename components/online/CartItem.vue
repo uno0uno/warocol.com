@@ -67,7 +67,7 @@
                    hover:bg-primary hover:text-primary-foreground transition-colors
                    disabled:opacity-50 disabled:cursor-not-allowed
                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            :disabled="loading"
+            :disabled="loading || restaurantClosed"
             aria-label="Aumentar cantidad"
             @click="increaseQuantity"
           >
@@ -123,6 +123,7 @@ import type { CartItem } from '~/stores/online_cart'
 const props = defineProps<{
   item: CartItem
   loading?: boolean
+  restaurantClosed?: boolean
 }>()
 
 const emit = defineEmits<{
