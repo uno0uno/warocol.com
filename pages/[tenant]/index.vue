@@ -5,6 +5,7 @@ import CartBottomBar from '~/components/online/CartBottomBar.vue'
 import CartDrawer from '~/components/online/CartDrawer.vue'
 import ProductDetailDrawer from '~/components/online/ProductDetailDrawer.vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
+import { useToast } from '~/composables/useToast'
 
 definePageMeta({
   layout: 'public-restaurant'
@@ -17,6 +18,7 @@ const tenantSlug = route.params.tenant
 
 // Initialize cart store
 const cartStore = useOnlineCartStore()
+const toast = useToast()
 
 // Session init must happen before useFetch so sessionId is set at call time
 if (process.client) {
@@ -198,10 +200,26 @@ const handleCheckout = async () => {
   router.push(`/${tenantSlug}/checkout`)
 }
 
-// Handle cart open - fire-and-forget refresh so data is fresh when drawer opens
-const handleCartOpen = () => {
+// Handle cart open - refresh profile + purge products no longer available online
+const handleCartOpen = async () => {
   isCartOpen.value = true
   refreshProfile()
+
+  // Products list only contains is_available_online=true items (filtered by backend)
+  // Any cart item missing from the current list has been taken offline since it was added
+  const onlineIds = new Set(products.value.map((p: any) => p.id))
+  const offlineItems = cartStore.items.filter((item: { product_id: string }) => !onlineIds.has(item.product_id))
+
+  if (offlineItems.length > 0) {
+    for (const item of offlineItems) {
+      await cartStore.removeItem(item.id)
+    }
+    const names = offlineItems.map((i: { product_name: string }) => i.product_name).join(', ')
+    toast.warning(
+      `Producto(s) eliminado(s) del carrito: ${names}. Ya no están disponibles para domicilios.`,
+      { duration: 6000 }
+    )
+  }
 }
 
 // Cross-tenant switch: confirm clears old cart and activates the new restaurant
