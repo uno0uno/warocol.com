@@ -100,6 +100,19 @@
                   variant="info"
                   size="sm"
                 />
+                <button
+                  @click="toggleOnlineAvailability(item)"
+                  :title="item.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
+                  :aria-label="item.is_available_online ? `Deshabilitar ${item.name} para domicilios` : `Habilitar ${item.name} para domicilios`"
+                  class="cursor-pointer hover:opacity-75 transition-opacity"
+                >
+                  <UiStatusBadge
+                    :value="item.is_available_online ? 'Online' : 'Solo POS'"
+                    format="text"
+                    :variant="item.is_available_online ? 'success' : 'default'"
+                    size="sm"
+                  />
+                </button>
               </div>
 
               <div class="flex gap-2 mt-3">
@@ -158,6 +171,24 @@
                 :variant="value ? 'success' : 'default'"
                 size="sm"
               />
+            </div>
+          </template>
+
+          <template #cell-is_available_online="{ row }">
+            <div class="flex justify-center">
+              <button
+                @click="toggleOnlineAvailability(row)"
+                :title="row.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
+                :aria-label="row.is_available_online ? `Deshabilitar ${row.name} para domicilios` : `Habilitar ${row.name} para domicilios`"
+                class="cursor-pointer hover:opacity-75 transition-opacity"
+              >
+                <UiStatusBadge
+                  :value="row.is_available_online ? 'Online' : 'Solo POS'"
+                  format="text"
+                  :variant="row.is_available_online ? 'success' : 'default'"
+                  size="sm"
+                />
+              </button>
             </div>
           </template>
 
@@ -519,6 +550,13 @@ const productosTableColumns = [
     align: 'center'
   },
   {
+    key: 'is_available_online',
+    title: 'Online',
+    sortable: true,
+    format: 'boolean',
+    align: 'center'
+  },
+  {
     key: 'actions',
     title: 'Acciones',
     sortable: false,
@@ -545,6 +583,20 @@ const formatMargin = (product: any) => {
   const margin = ((price - cost) / cost) * 100
   if (!isFinite(margin)) return '—'
   return `${margin.toFixed(1)}%`
+}
+
+// Inline toggle for online availability
+const toggleOnlineAvailability = async (product: any) => {
+  const newValue = !product.is_available_online
+  product.is_available_online = newValue
+  try {
+    await $fetch(`/api/menu/products/${product.id}`, {
+      method: 'PUT',
+      body: { is_available_online: newValue }
+    })
+  } catch (e) {
+    product.is_available_online = !newValue
+  }
 }
 
 // Navigation
