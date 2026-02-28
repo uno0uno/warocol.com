@@ -106,12 +106,12 @@
                   :aria-checked="item.is_available_online"
                   :aria-label="item.is_available_online ? `Deshabilitar ${item.name} para domicilios` : `Habilitar ${item.name} para domicilios`"
                   :title="item.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
-                  class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-2"
+                  class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-1"
                   :class="item.is_available_online ? 'bg-success' : 'bg-titan-300'"
                 >
                   <span
-                    class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out"
-                    :class="item.is_available_online ? 'translate-x-6' : 'translate-x-0.5'"
+                    class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
+                    :class="item.is_available_online ? 'translate-x-4' : 'translate-x-0.5'"
                   />
                 </button>
               </div>
@@ -183,12 +183,12 @@
                 :aria-checked="row.is_available_online"
                 :aria-label="row.is_available_online ? `Deshabilitar ${row.name} para domicilios` : `Habilitar ${row.name} para domicilios`"
                 :title="row.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
-                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-2"
+                class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-1"
                 :class="row.is_available_online ? 'bg-success' : 'bg-titan-300'"
               >
                 <span
-                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out"
-                  :class="row.is_available_online ? 'translate-x-6' : 'translate-x-0.5'"
+                  class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
+                  :class="row.is_available_online ? 'translate-x-4' : 'translate-x-0.5'"
                 />
               </button>
             </div>
