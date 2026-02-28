@@ -32,7 +32,7 @@ const isProductDrawerOpen = ref(false)
 const selectedProduct = ref<Record<string, any> | null>(null)
 
 // SSR data fetching — await ensures data is ready before rendering on server
-const { data: profileData, error: profileError, pending: pendingProfile } = await useAsyncData(
+const { data: profileData, error: profileError, pending: pendingProfile, refresh: refreshProfile } = await useAsyncData(
   `restaurant-${tenantSlug}`,
   () => $fetch(`/api/public/restaurant/${tenantSlug}`),
   { server: true }
@@ -174,9 +174,17 @@ const handleOpenProductFromCart = (product: { id: string; name: string; price: n
   isProductDrawerOpen.value = true
 }
 
-// Handle checkout - Navigate to delivery step
-const handleCheckout = () => {
+// Handle checkout - refresh restaurant status first, block if now closed
+const handleCheckout = async () => {
+  await refreshProfile()
+  if (!(restaurant.value?.is_currently_open ?? true)) return
   router.push(`/${tenantSlug}/checkout`)
+}
+
+// Handle cart open - fire-and-forget refresh so data is fresh when drawer opens
+const handleCartOpen = () => {
+  isCartOpen.value = true
+  refreshProfile()
 }
 </script>
 
@@ -223,7 +231,7 @@ const handleCheckout = () => {
       </div>
 
       <!-- Cart Bottom Bar -->
-      <CartBottomBar @open-cart="isCartOpen = true" />
+      <CartBottomBar @open-cart="handleCartOpen" />
 
       <!-- Cart Drawer -->
       <CartDrawer
