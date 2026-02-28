@@ -620,13 +620,10 @@ const saveChanges = async () => {
       min_order_amount: editForm.min_order_amount,
       estimated_preparation_time: editForm.estimated_preparation_time,
       business_hours: cleanedHours,
-      social_media: {
-        instagram: editForm.social_media.instagram || null,
-        whatsapp: editForm.social_media.whatsapp || null,
-        facebook: editForm.social_media.facebook || null,
-        twitter: editForm.social_media.twitter || null,
-        tiktok: editForm.social_media.tiktok || null,
-      },
+      social_media: (() => {
+        const smEntries = Object.entries(editForm.social_media).filter(([_, v]) => v?.trim())
+        return smEntries.length > 0 ? Object.fromEntries(smEntries) : null
+      })(),
     }
 
     await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: payload })
