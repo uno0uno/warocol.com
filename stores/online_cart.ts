@@ -74,6 +74,7 @@ export const useOnlineCartStore = defineStore('onlineCart', {
     deliveryInfo: null as DeliveryInfo | null,
     isLoading: false,
     tenantId: null as string | null,
+    tenantName: null as string | null,
   }),
 
   getters: {
@@ -109,10 +110,11 @@ export const useOnlineCartStore = defineStore('onlineCart', {
     },
 
     /**
-     * Set tenant ID for the cart
+     * Set tenant ID (and optional display name) for the cart
      */
-    setTenant(tenantId: string) {
+    setTenant(tenantId: string, tenantName?: string) {
       this.tenantId = tenantId
+      this.tenantName = tenantName ?? null
     },
 
     /**

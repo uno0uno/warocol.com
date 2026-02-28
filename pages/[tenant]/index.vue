@@ -27,6 +27,10 @@ if (process.client) {
 // Cart drawer state
 const isCartOpen = ref(false)
 
+// Cross-tenant switch guard
+const switchDialogVisible = ref(false)
+const pendingTenant = ref<{ id: string; name: string } | null>(null)
+
 // Product detail drawer state
 const isProductDrawerOpen = ref(false)
 const selectedProduct = ref<Record<string, any> | null>(null)
@@ -63,7 +67,20 @@ const recoverCartSession = async (tenantId: string) => {
 // and avoid racing with hydrateFromBackend() on the first click.
 watch(restaurant, (val: any) => {
   if (!val?.tenant_id) return
-  cartStore.setTenant(val.tenant_id)
+
+  // Cross-tenant guard: if cart has items from a different restaurant, ask before switching
+  if (
+    process.client &&
+    cartStore.tenantId &&
+    cartStore.tenantId !== val.tenant_id &&
+    !cartStore.isEmpty
+  ) {
+    pendingTenant.value = { id: val.tenant_id, name: val.display_name }
+    switchDialogVisible.value = true
+    return // defer setTenant + recoverCartSession until user confirms
+  }
+
+  cartStore.setTenant(val.tenant_id, val.display_name)
   if (!process.client || !cartStore.sessionId) return
   cartStore.setRecoveryPromise(recoverCartSession(val.tenant_id))
 }, { immediate: true })
@@ -186,6 +203,27 @@ const handleCartOpen = () => {
   isCartOpen.value = true
   refreshProfile()
 }
+
+// Cross-tenant switch: confirm clears old cart and activates the new restaurant
+const confirmSwitch = async () => {
+  if (!pendingTenant.value) return
+  try {
+    await cartStore.clearCart()
+  } catch {
+    // clearCart failure is non-critical; proceed anyway
+  }
+  const { id, name } = pendingTenant.value
+  cartStore.setTenant(id, name)
+  if (cartStore.sessionId) cartStore.setRecoveryPromise(recoverCartSession(id))
+  pendingTenant.value = null
+  switchDialogVisible.value = false
+}
+
+// Cross-tenant switch: cancel keeps the existing cart untouched
+const cancelSwitch = () => {
+  pendingTenant.value = null
+  switchDialogVisible.value = false
+}
 </script>
 
 <template>
@@ -248,6 +286,57 @@ const handleCartOpen = () => {
         :tenant-slug="String(tenantSlug)"
         @close="isProductDrawerOpen = false"
       />
+
+      <!-- Cross-restaurant switch confirmation banner -->
+      <Transition name="slide-up">
+        <div
+          v-if="switchDialogVisible"
+          class="fixed bottom-0 left-0 right-0 z-[200] p-4 bg-background border-t border-border shadow-2xl"
+          role="alertdialog"
+          aria-live="assertive"
+          aria-label="Cambio de restaurante"
+        >
+          <p class="text-sm text-center text-muted-foreground mb-3">
+            Tu carrito tiene productos de
+            <strong class="text-foreground">{{ cartStore.tenantName }}</strong>.
+            Al continuar, tu carrito será vaciado.
+          </p>
+          <div class="flex items-center gap-2 justify-center">
+            <button
+              class="min-h-[44px] px-4 py-2 text-sm font-semibold bg-destructive text-destructive-foreground rounded-lg hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="cartStore.isLoading"
+              @click="confirmSwitch"
+            >
+              <span v-if="cartStore.isLoading">Vaciando...</span>
+              <span v-else>Sí, continuar</span>
+            </button>
+            <button
+              class="min-h-[44px] px-4 py-2 text-sm font-semibold bg-muted text-foreground rounded-lg hover:bg-border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              @click="cancelSwitch"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </Transition>
     </div>
   </div>
 </template>
+
+<style scoped>
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.25s ease;
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-up-enter-active,
+  .slide-up-leave-active {
+    transition: none;
+  }
+}
+</style>
