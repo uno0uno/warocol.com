@@ -51,6 +51,28 @@
             <div class="skeleton skeleton-group" />
           </template>
 
+          <!-- Generic fetch error (e.g. product no longer exists) -->
+          <template v-else-if="fetchError">
+            <div class="unavailable-banner unavailable-banner--error">
+              <div class="unavailable-icon-wrap unavailable-icon-wrap--error">
+                <Icon name="heroicons:exclamation-triangle" class="unavailable-icon" aria-hidden="true" />
+              </div>
+              <p class="unavailable-title">Producto no disponible</p>
+              <p class="unavailable-msg">Este producto ya no está disponible. Por favor recarga el menú.</p>
+            </div>
+          </template>
+
+          <!-- Product disabled for online orders -->
+          <template v-else-if="productDetail && productDetail.is_available_online === false">
+            <div class="unavailable-banner unavailable-banner--offline">
+              <div class="unavailable-icon-wrap unavailable-icon-wrap--offline">
+                <Icon name="heroicons:x-circle" class="unavailable-icon" aria-hidden="true" />
+              </div>
+              <p class="unavailable-title">No disponible para domicilios</p>
+              <p class="unavailable-msg">Este producto no está disponible para pedidos en línea en este momento.</p>
+            </div>
+          </template>
+
           <template v-else-if="productDetail">
             <!-- Product image / emoji — hidden in wizard steps after 1 to save space -->
             <div v-if="!wizardMode" class="product-visual">
@@ -92,47 +114,49 @@
 
               <div class="group-options">
                 <!-- Radio (single choice) -->
-                <label
-                  v-if="group.max_qty === 1"
-                  v-for="mod in availableModifiers(group)"
-                  :key="mod.id"
-                  class="option-label"
-                >
-                  <input
-                    type="radio"
-                    :name="`group-${group.id}-step-${wizardStep}`"
-                    :value="mod.id"
-                    :checked="isSelected(mod.id)"
-                    @change="selectRadio(group, mod)"
-                    class="option-input"
-                  />
-                  <span class="option-name">{{ mod.name }}</span>
-                  <span class="option-price" :class="{ 'option-price-free': mod.price === 0 }">
-                    {{ mod.price === 0 ? 'Gratis' : `+${formatPrice(mod.price)}` }}
-                  </span>
-                </label>
+                <template v-if="group.max_qty === 1">
+                  <label
+                    v-for="mod in availableModifiers(group)"
+                    :key="mod.id"
+                    class="option-label"
+                  >
+                    <input
+                      type="radio"
+                      :name="`group-${group.id}-step-${wizardStep}`"
+                      :value="mod.id"
+                      :checked="isSelected(mod.id)"
+                      @change="selectRadio(group, mod)"
+                      class="option-input"
+                    />
+                    <span class="option-name">{{ mod.name }}</span>
+                    <span class="option-price" :class="{ 'option-price-free': mod.price === 0 }">
+                      {{ mod.price === 0 ? 'Gratis' : `+${formatPrice(mod.price)}` }}
+                    </span>
+                  </label>
+                </template>
 
                 <!-- Checkbox (multi-choice) -->
-                <label
-                  v-if="group.max_qty > 1"
-                  v-for="mod in availableModifiers(group)"
-                  :key="mod.id"
-                  class="option-label"
-                  :class="{ 'option-disabled': !isSelected(mod.id) && groupSelectionCount(group.id) >= group.max_qty }"
-                >
-                  <input
-                    type="checkbox"
-                    :value="mod.id"
-                    :checked="isSelected(mod.id)"
-                    :disabled="!isSelected(mod.id) && groupSelectionCount(group.id) >= group.max_qty"
-                    @change="toggleCheckbox(mod)"
-                    class="option-input"
-                  />
-                  <span class="option-name">{{ mod.name }}</span>
-                  <span class="option-price" :class="{ 'option-price-free': mod.price === 0 }">
-                    {{ mod.price === 0 ? 'Gratis' : `+${formatPrice(mod.price)}` }}
-                  </span>
-                </label>
+                <template v-else>
+                  <label
+                    v-for="mod in availableModifiers(group)"
+                    :key="mod.id"
+                    class="option-label"
+                    :class="{ 'option-disabled': !isSelected(mod.id) && groupSelectionCount(group.id) >= group.max_qty }"
+                  >
+                    <input
+                      type="checkbox"
+                      :value="mod.id"
+                      :checked="isSelected(mod.id)"
+                      :disabled="!isSelected(mod.id) && groupSelectionCount(group.id) >= group.max_qty"
+                      @change="toggleCheckbox(mod)"
+                      class="option-input"
+                    />
+                    <span class="option-name">{{ mod.name }}</span>
+                    <span class="option-price" :class="{ 'option-price-free': mod.price === 0 }">
+                      {{ mod.price === 0 ? 'Gratis' : `+${formatPrice(mod.price)}` }}
+                    </span>
+                  </label>
+                </template>
               </div>
             </div>
 
@@ -220,7 +244,7 @@
           <button
             v-else
             class="cta-btn"
-            :disabled="!isValid || cartStore.isLoading || isLoading"
+            :disabled="!isValid || cartStore.isLoading || isLoading || fetchError || productDetail?.is_available_online === false"
             @click="handleAddToCart"
           >
             <span v-if="cartStore.isLoading">Agregando...</span>
@@ -263,6 +287,7 @@ interface ProductDetail {
   description?: string
   preparation_time?: number
   image_url?: string
+  is_available_online?: boolean
   modifier_groups: ModifierGroup[]
 }
 
@@ -286,6 +311,7 @@ const cartStore = useOnlineCartStore()
 
 const productDetail = ref<ProductDetail | null>(null)
 const isLoading = ref(false)
+const fetchError = ref(false)
 const selectedModifiers = ref<CartModifier[]>([])
 const quantity = ref(1)
 const notes = ref('')
@@ -359,6 +385,7 @@ const activeNotes = computed<string>({
 watch(() => props.modelValue, async (val) => {
   if (val && props.product) {
     isLoading.value = true
+    fetchError.value = false
     selectedModifiers.value = []
     quantity.value = 1
     notes.value = ''
@@ -382,11 +409,13 @@ watch(() => props.modelValue, async (val) => {
       }
     } catch (err) {
       console.error('Error fetching product detail:', err)
+      fetchError.value = true
     } finally {
       isLoading.value = false
     }
   } else if (!val) {
     productDetail.value = null
+    fetchError.value = false
     selectedModifiers.value = []
     quantity.value = 1
     notes.value = ''
@@ -1056,6 +1085,68 @@ onMounted(() => {
   .product-slide-leave-active {
     transition: none;
   }
+}
+
+/* Unavailability banner */
+.unavailable-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 36px 24px;
+  text-align: center;
+  border-radius: 14px;
+}
+
+.unavailable-banner--error {
+  background: hsl(var(--destructive) / 0.06);
+  border: 1px solid hsl(var(--destructive) / 0.2);
+}
+
+.unavailable-banner--offline {
+  background: hsl(var(--warning) / 0.06);
+  border: 1px solid hsl(var(--warning) / 0.2);
+}
+
+.unavailable-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.unavailable-icon-wrap--error {
+  background: hsl(var(--destructive) / 0.12);
+  color: hsl(var(--destructive));
+}
+
+.unavailable-icon-wrap--offline {
+  background: hsl(var(--warning) / 0.15);
+  color: hsl(var(--warning-foreground));
+}
+
+.unavailable-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.unavailable-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.unavailable-msg {
+  font-size: 14px;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+  line-height: 1.55;
+  max-width: 28ch;
 }
 
 /* Mobile: drawer slides from bottom */

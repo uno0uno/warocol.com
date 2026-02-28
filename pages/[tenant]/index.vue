@@ -44,7 +44,7 @@ const { data: profileData, error: profileError, pending: pendingProfile, refresh
   { server: true }
 )
 
-const { data: menuData, error: menuError, pending: pendingMenu } = await useAsyncData(
+const { data: menuData, error: menuError, pending: pendingMenu, refresh: refreshMenu } = await useAsyncData(
   `menu-${tenantSlug}`,
   () => $fetch(`/api/public/restaurant/${tenantSlug}/menu`),
   { server: true }
@@ -167,24 +167,10 @@ useHead({
 })
 
 
-// Handle product click - Open detail drawer if has modifiers, else add directly
-const handleProductClick = async (product) => {
-  if (product.has_modifiers) {
-    selectedProduct.value = product
-    isProductDrawerOpen.value = true
-  } else {
-    try {
-      await cartStore.addItem(
-        { id: product.id, name: product.name, price: product.price },
-        1,
-        [],
-        undefined
-      )
-    } catch (error) {
-      console.error('Error al agregar producto:', error)
-      alert('Error al agregar producto al carrito')
-    }
-  }
+// Handle product click - Always open drawer for availability check + modifier selection
+const handleProductClick = (product: Record<string, any>) => {
+  selectedProduct.value = product
+  isProductDrawerOpen.value = true
 }
 
 // Handle + button on a customizable cart item — open ingredient selector for 1 new unit
@@ -193,10 +179,26 @@ const handleOpenProductFromCart = (product: { id: string; name: string; price: n
   isProductDrawerOpen.value = true
 }
 
-// Handle checkout - refresh restaurant status first, block if now closed
+// Handle checkout - refresh profile + menu, purge unavailable items, block if closed or cart empty
 const handleCheckout = async () => {
-  await refreshProfile()
+  await Promise.all([refreshProfile(), refreshMenu()])
   if (!(restaurant.value?.is_currently_open ?? true)) return
+
+  // Purge items that are no longer available online (same logic as handleCartOpen)
+  const onlineIds = new Set(products.value.map((p: any) => p.id))
+  const offlineItems = cartStore.items.filter((item: { product_id: string }) => !onlineIds.has(item.product_id))
+  if (offlineItems.length > 0) {
+    for (const item of offlineItems) {
+      await cartStore.removeItem(item.id)
+    }
+    const names = offlineItems.map((i: { product_name: string }) => i.product_name).join(', ')
+    toast.warning(
+      `Producto(s) eliminado(s) del carrito: ${names}. Ya no están disponibles para domicilios.`,
+      { duration: 6000 }
+    )
+    if (cartStore.isEmpty) return
+  }
+
   router.push(`/${tenantSlug}/checkout`)
 }
 

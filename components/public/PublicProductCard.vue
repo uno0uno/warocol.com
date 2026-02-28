@@ -56,20 +56,17 @@
           {{ formatPrice(product.price) }}
         </div>
 
-        <!-- NOT in cart → + button (also show while adding) -->
+        <!-- NOT in cart → + button -->
         <button
-          v-if="!isInCart || isAdding"
+          v-if="!isInCart"
           @click.stop="handleClick"
-          :disabled="isAdding || !product.is_available || restaurantClosed"
+          :disabled="!product.is_available || restaurantClosed"
           class="w-11 h-11 flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
           aria-label="Agregar al carrito"
-        >
-          <span v-if="isAdding" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
-          <span v-else>+</span>
-        </button>
+        >+</button>
 
         <!-- IN cart → − N + inline controls -->
-        <div v-else-if="!isAdding" class="flex items-center gap-1" @click.stop>
+        <div v-else class="flex items-center gap-1" @click.stop>
           <button
             @click="decrease"
             :disabled="cartStore.isLoading"
@@ -161,20 +158,17 @@
 
       <!-- Cart controls (compact) -->
       <div class="flex-shrink-0" @click.stop>
-        <!-- NOT in cart → + button (also show while adding) -->
+        <!-- NOT in cart → + button -->
         <button
-          v-if="!isInCart || isAdding"
+          v-if="!isInCart"
           @click.stop="handleClick"
-          :disabled="isAdding || !product.is_available || restaurantClosed"
+          :disabled="!product.is_available || restaurantClosed"
           class="w-11 h-11 flex items-center justify-center rounded-xl bg-primary text-primary-foreground text-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
           aria-label="Agregar al carrito"
-        >
-          <span v-if="isAdding" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
-          <span v-else>+</span>
-        </button>
+        >+</button>
 
         <!-- IN cart → − N + inline controls (compact) -->
-        <div v-else-if="!isAdding" class="flex items-center gap-1">
+        <div v-else class="flex items-center gap-1">
           <button
             @click="decrease"
             :disabled="cartStore.isLoading"
@@ -197,7 +191,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { computed } from 'vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
 
 const props = defineProps({
@@ -231,13 +225,6 @@ const totalQtyInCart = computed(() =>
 
 const isInCart = computed(() => totalQtyInCart.value > 0)
 
-// Local loading state for the initial "add" action (before item appears in cart)
-const isAdding = ref(false)
-
-watch(() => cartStore.isLoading, (loading) => {
-  if (!loading) isAdding.value = false
-})
-
 // Decrement: target the last item added (LIFO)
 const decrease = async () => {
   const item = cartItemsForProduct.value.at(-1)
@@ -249,30 +236,14 @@ const decrease = async () => {
   }
 }
 
-// Increment: for modifier products → open drawer; for plain products → increment first item
-const increase = async () => {
-  if (props.product.has_modifiers) {
-    emit('click', props.product)
-    return
-  }
-  const item = cartItemsForProduct.value[0]
-  if (!item) return
-  try {
-    await cartStore.updateItemQuantity(item.id, item.quantity + 1)
-  } catch (e) {
-    console.error('Error al agregar producto:', e)
-  }
+// Increment: always open drawer so user confirms via "Agregar al carrito"
+const increase = () => {
+  emit('click', props.product)
 }
 
-async function handleClick() {
+function handleClick() {
   if (!props.product.is_available) return
   if (props.restaurantClosed) return
-  if (isInCart.value) return
-  if (isAdding.value) return                    // double-click guard
-  if (!props.product.has_modifiers) {
-    isAdding.value = true
-    await nextTick()                            // render spinner before optimistic push flips isInCart
-  }
   emit('click', props.product)
 }
 
