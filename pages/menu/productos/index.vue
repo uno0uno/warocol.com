@@ -104,12 +104,26 @@
                   @click="toggleOnlineAvailability(item)"
                   role="switch"
                   :aria-checked="item.is_available_online"
+                  :disabled="togglingIds.has(item.id)"
                   :aria-label="item.is_available_online ? `Deshabilitar ${item.name} para domicilios` : `Habilitar ${item.name} para domicilios`"
                   :title="item.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
-                  class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-1"
-                  :class="item.is_available_online ? 'bg-success' : 'bg-titan-300'"
+                  class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-1"
+                  :class="[
+                    item.is_available_online ? 'bg-success' : 'bg-titan-300',
+                    togglingIds.has(item.id) ? 'cursor-wait opacity-70' : 'cursor-pointer'
+                  ]"
                 >
+                  <svg
+                    v-if="togglingIds.has(item.id)"
+                    class="animate-spin h-3.5 w-3.5 text-white"
+                    :class="item.is_available_online ? 'translate-x-4' : 'translate-x-0.5'"
+                    fill="none" viewBox="0 0 24 24"
+                  >
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
                   <span
+                    v-else
                     class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
                     :class="item.is_available_online ? 'translate-x-4' : 'translate-x-0.5'"
                   />
@@ -181,12 +195,26 @@
                 @click="toggleOnlineAvailability(row)"
                 role="switch"
                 :aria-checked="row.is_available_online"
+                :disabled="togglingIds.has(row.id)"
                 :aria-label="row.is_available_online ? `Deshabilitar ${row.name} para domicilios` : `Habilitar ${row.name} para domicilios`"
                 :title="row.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
-                class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-1"
-                :class="row.is_available_online ? 'bg-success' : 'bg-titan-300'"
+                class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-1"
+                :class="[
+                  row.is_available_online ? 'bg-success' : 'bg-titan-300',
+                  togglingIds.has(row.id) ? 'cursor-wait opacity-70' : 'cursor-pointer'
+                ]"
               >
+                <svg
+                  v-if="togglingIds.has(row.id)"
+                  class="animate-spin h-3.5 w-3.5 text-white"
+                  :class="row.is_available_online ? 'translate-x-4' : 'translate-x-0.5'"
+                  fill="none" viewBox="0 0 24 24"
+                >
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
                 <span
+                  v-else
                   class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
                   :class="row.is_available_online ? 'translate-x-4' : 'translate-x-0.5'"
                 />
@@ -590,8 +618,12 @@ const formatMargin = (product: any) => {
 
 // Inline toggle for online availability
 const toast = useToast()
+const togglingIds = ref<Set<string>>(new Set())
 
 const toggleOnlineAvailability = async (product: any) => {
+  if (togglingIds.value.has(product.id)) return
+  togglingIds.value = new Set([...togglingIds.value, product.id])
+
   const newValue = !product.is_available_online
   product.is_available_online = newValue
   try {
@@ -606,6 +638,8 @@ const toggleOnlineAvailability = async (product: any) => {
   } catch (e) {
     product.is_available_online = !newValue
     toast.error('Error al actualizar. Intenta de nuevo.')
+  } finally {
+    togglingIds.value = new Set([...togglingIds.value].filter(id => id !== product.id))
   }
 }
 
