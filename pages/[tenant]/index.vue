@@ -217,7 +217,7 @@ const handleCheckout = () => {
           :categories="categories"
           :products="products"
           :is-loading="pendingMenu"
-          :restaurant-open="restaurant.is_manually_open !== false"
+          :restaurant-open="restaurant.is_currently_open ?? true"
           @product-click="handleProductClick"
         />
       </div>
