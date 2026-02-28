@@ -102,15 +102,16 @@
                 />
                 <button
                   @click="toggleOnlineAvailability(item)"
-                  :title="item.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
+                  role="switch"
+                  :aria-checked="item.is_available_online"
                   :aria-label="item.is_available_online ? `Deshabilitar ${item.name} para domicilios` : `Habilitar ${item.name} para domicilios`"
-                  class="cursor-pointer hover:opacity-75 transition-opacity"
+                  :title="item.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
+                  class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-1"
+                  :class="item.is_available_online ? 'bg-crocus-500' : 'bg-titan-300'"
                 >
-                  <UiStatusBadge
-                    :value="item.is_available_online ? 'Online' : 'Solo POS'"
-                    format="text"
-                    :variant="item.is_available_online ? 'success' : 'default'"
-                    size="sm"
+                  <span
+                    class="inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform duration-200"
+                    :class="item.is_available_online ? 'translate-x-5' : 'translate-x-1'"
                   />
                 </button>
               </div>
@@ -178,15 +179,16 @@
             <div class="flex justify-center">
               <button
                 @click="toggleOnlineAvailability(row)"
-                :title="row.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
+                role="switch"
+                :aria-checked="row.is_available_online"
                 :aria-label="row.is_available_online ? `Deshabilitar ${row.name} para domicilios` : `Habilitar ${row.name} para domicilios`"
-                class="cursor-pointer hover:opacity-75 transition-opacity"
+                :title="row.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
+                class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-1"
+                :class="row.is_available_online ? 'bg-crocus-500' : 'bg-titan-300'"
               >
-                <UiStatusBadge
-                  :value="row.is_available_online ? 'Online' : 'Solo POS'"
-                  format="text"
-                  :variant="row.is_available_online ? 'success' : 'default'"
-                  size="sm"
+                <span
+                  class="inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform duration-200"
+                  :class="row.is_available_online ? 'translate-x-5' : 'translate-x-1'"
                 />
               </button>
             </div>
