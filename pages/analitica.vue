@@ -8,8 +8,6 @@
 </template>
 
 <script setup lang="ts">
-import { provide, inject } from 'vue'
-
 const route = useRoute()
 
 definePageMeta({
@@ -20,9 +18,6 @@ const navigationItems = [
   { to: '/analitica/ventas', label: 'Ventas' },
   { to: '/analitica/rentabilidad', label: 'Rentabilidad' },
 ]
-
-const setRefreshHandler = inject('setRefreshHandler', () => {})
-provide('setRefreshHandler', setRefreshHandler)
 
 useHead({
   title: 'Analítica - Warocol',

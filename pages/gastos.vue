@@ -9,8 +9,6 @@
 </template>
 
 <script setup lang="ts">
-import { provide, inject } from 'vue'
-
 const route = useRoute()
 
 definePageMeta({
@@ -21,10 +19,6 @@ definePageMeta({
 const navigationItems = [
   { to: '/gastos', label: 'Gastos' }
 ]
-
-// Pass through the refresh handler from layout to child pages
-const setRefreshHandler = inject('setRefreshHandler', () => {})
-provide('setRefreshHandler', setRefreshHandler)
 
 // Meta tags
 useHead({
