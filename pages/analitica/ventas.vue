@@ -275,7 +275,7 @@ const paymentLabel: Record<string, string> = {
 <template>
   <div class="space-y-4">
     <!-- Loading State -->
-    <div v-if="metricsLoading || filteredMetricsPending" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="metricsLoading || (hasDateFilter && filteredMetricsPending)" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
