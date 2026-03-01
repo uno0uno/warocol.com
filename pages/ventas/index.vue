@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat, startOfMonth, startOfYear, getDaysInMonth, getDaysInYear, differenceInCalendarDays } from 'date-fns'
+import { format as fnsFormat } from 'date-fns'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({
@@ -81,7 +81,7 @@ watch(dateRangeDates, (val) => {
 
 // Load orders from API
 const { data: ordersData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  `orders-list-${currentTenant.value?.id || 'default'}`,
+  'ventas-orders-list',
   () => $fetch('/api/orders', {
     params: {
       limit: PAGE_SIZE,
@@ -98,12 +98,14 @@ const { data: ordersData, pending: isLoading, error: fetchError, refresh } = use
   }),
   {
     server: false,
-    watch: [currentTenant]
+    lazy: true,
+    default: () => ({ data: [], pagination: { total: 0, limit: PAGE_SIZE, offset: 0, has_more: false } })
   }
 )
 
-// Refresh on tenant change
+// Refresh on tenant change — single source of truth (no watch: [currentTenant] to avoid double fetch)
 onTenantChange(async () => {
+  currentPage.value = 1
   await refresh()
 })
 
