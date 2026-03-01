@@ -164,11 +164,10 @@ onUnmounted(() => {
 
 watch(dateRangeDates, async (val) => {
   if (!val || (val.length === 2 && val[0] && val[1])) {
-    currentPage.value = 1
     if (val) {
-      await Promise.all([refreshFilteredMetrics(), refreshSalesFlow(), refreshOrders()])
+      await Promise.all([refreshFilteredMetrics(), refreshSalesFlow()])
     } else {
-      await Promise.all([refreshDashboard(), refreshSalesFlow(), refreshOrders()])
+      await Promise.all([refreshDashboard(), refreshSalesFlow()])
     }
     lastUpdate.value = new Date()
   }
@@ -179,8 +178,7 @@ const clearFilters = async () => {
   statusFilter.value = null
   dateRangeDates.value = null
   filteredMetricsData.value = { data: null }
-  currentPage.value = 1
-  await Promise.all([refreshDashboard(), refreshSalesFlow(), refreshOrders()])
+  await Promise.all([refreshDashboard(), refreshSalesFlow()])
   lastUpdate.value = new Date()
 }
 
@@ -206,70 +204,6 @@ const metrics = computed(() => {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)
 
-// --- Orders table with pagination ---
-const PAGE_SIZE = 25
-const currentPage = ref(1)
-const ordersOffset = computed(() => (currentPage.value - 1) * PAGE_SIZE)
-
-const { data: ordersData, pending: ordersLoading, refresh: refreshOrders } = useAsyncData(
-  'ventas-orders-list',
-  () => $fetch('/api/orders', {
-    params: {
-      limit: PAGE_SIZE,
-      offset: ordersOffset.value,
-      date_from: dateRange.value.from || undefined,
-      date_to: dateRange.value.to || undefined,
-      payment_method: paymentMethodFilter.value || undefined,
-      status: statusFilter.value || undefined,
-      sort_field: 'order_date',
-      sort_direction: 'desc',
-    }
-  }),
-  {
-    server: false,
-    lazy: true,
-    default: () => ({ data: [], pagination: { total: 0, limit: PAGE_SIZE, offset: 0, has_more: false } }),
-    // Only watch ordersOffset: payment/status filter changes reset currentPage → offset → triggers re-fetch
-    watch: [ordersOffset],
-  }
-)
-
-const ordersTotalPages = computed(() => {
-  const total = ordersData.value?.pagination?.total ?? 0
-  return Math.max(1, Math.ceil(total / PAGE_SIZE))
-})
-
-const ordersTotal = computed(() => ordersData.value?.pagination?.total ?? 0)
-
-const goToPage = (page: number) => {
-  currentPage.value = Math.max(1, Math.min(page, ordersTotalPages.value))
-}
-
-// Reset page when payment/status filters change.
-// If already on page 1, offset won't change so we must refresh explicitly.
-watch([paymentMethodFilter, statusFilter], () => {
-  if (currentPage.value === 1) {
-    refreshOrders()
-  } else {
-    currentPage.value = 1 // triggers ordersOffset change → re-fetch via watch above
-  }
-})
-
-const statusLabel: Record<string, string> = {
-  completed: 'Completada',
-  cancelled: 'Cancelada',
-  pending: 'Pendiente',
-}
-const statusClass: Record<string, string> = {
-  completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-red-100 text-red-700',
-  pending: 'bg-yellow-100 text-yellow-700',
-}
-const paymentLabel: Record<string, string> = {
-  cash: 'Efectivo',
-  card: 'Tarjeta',
-  digital: 'Digital',
-}
 </script>
 
 <template>
@@ -358,123 +292,6 @@ const paymentLabel: Record<string, string> = {
         </div>
       </section>
 
-      <!-- Orders Table -->
-      <section>
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-            <h4 class="text-slate-700 font-semibold">
-              Ventas
-              <span v-if="ordersTotal > 0" class="ml-2 text-sm font-normal text-slate-400">
-                {{ ordersTotal.toLocaleString('es-CO') }} registros
-              </span>
-            </h4>
-          </div>
-
-          <!-- Loading skeleton -->
-          <div v-if="ordersLoading" class="divide-y divide-slate-100">
-            <div v-for="n in 5" :key="n" class="px-6 py-4 animate-pulse flex gap-4">
-              <div class="h-4 bg-slate-100 rounded w-16"></div>
-              <div class="h-4 bg-slate-100 rounded w-32"></div>
-              <div class="h-4 bg-slate-100 rounded w-24 ml-auto"></div>
-            </div>
-          </div>
-
-          <!-- Empty state -->
-          <div v-else-if="!ordersData?.data?.length" class="flex flex-col items-center justify-center py-16 text-slate-400 gap-2">
-            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <p class="text-sm">Sin ventas para este período</p>
-          </div>
-
-          <!-- Table -->
-          <div v-else class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="bg-slate-50 text-slate-500 text-xs font-medium">
-                  <th class="px-6 py-3 text-left">#</th>
-                  <th class="px-4 py-3 text-left">Fecha</th>
-                  <th class="px-4 py-3 text-left">Cliente</th>
-                  <th class="px-4 py-3 text-center">Items</th>
-                  <th class="px-4 py-3 text-left">Método</th>
-                  <th class="px-4 py-3 text-right">Total</th>
-                  <th class="px-6 py-3 text-left">Estado</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr
-                  v-for="order in ordersData?.data"
-                  :key="order.id"
-                  class="hover:bg-slate-50 transition-colors"
-                >
-                  <td class="px-6 py-3.5 text-slate-500 font-mono text-xs tabular-nums">#{{ order.order_number }}</td>
-                  <td class="px-4 py-3.5 text-slate-600 whitespace-nowrap">
-                    {{ new Date(order.order_date).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) }}
-                    <span class="text-slate-400 ml-1 text-xs">
-                      {{ new Date(order.order_date).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-3.5 text-slate-700">
-                    {{ order.customer?.name || '—' }}
-                  </td>
-                  <td class="px-4 py-3.5 text-center text-slate-500">{{ order.items_count }}</td>
-                  <td class="px-4 py-3.5 text-slate-500">{{ paymentLabel[order.payment_method] || order.payment_method }}</td>
-                  <td class="px-4 py-3.5 text-right font-medium text-slate-700 tabular-nums">
-                    {{ formatCurrency(order.total_amount) }}
-                  </td>
-                  <td class="px-6 py-3.5">
-                    <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', statusClass[order.status] || 'bg-slate-100 text-slate-600']">
-                      {{ statusLabel[order.status] || order.status }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Pagination -->
-          <div v-if="ordersTotalPages > 1" class="flex items-center justify-between px-6 py-4 border-t border-slate-100">
-            <p class="text-sm text-slate-500">
-              Página {{ currentPage }} de {{ ordersTotalPages }}
-            </p>
-            <div class="flex items-center gap-1">
-              <button
-                :disabled="currentPage <= 1"
-                @click="goToPage(1)"
-                class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                aria-label="Primera página"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-              </button>
-              <button
-                :disabled="currentPage <= 1"
-                @click="goToPage(currentPage - 1)"
-                class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                aria-label="Página anterior"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-              </button>
-              <span class="px-3 py-1 text-sm font-medium text-slate-700">{{ currentPage }}</span>
-              <button
-                :disabled="currentPage >= ordersTotalPages"
-                @click="goToPage(currentPage + 1)"
-                class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                aria-label="Página siguiente"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-              </button>
-              <button
-                :disabled="currentPage >= ordersTotalPages"
-                @click="goToPage(ordersTotalPages)"
-                class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                aria-label="Última página"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   </div>
 </template>
