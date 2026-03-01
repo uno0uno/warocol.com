@@ -1,22 +1,5 @@
 export default defineNuxtConfig({
-  ssr: true,
-  routeRules: {
-    // Protected dashboard routes — client-only (no SSR needed, auth is client-side)
-    '/ventas/**': { ssr: false },
-    '/menu/**': { ssr: false },
-    '/abastecimiento/**': { ssr: false },
-    '/analitica/**': { ssr: false },
-    '/domicilios/**': { ssr: false },
-    '/equipo/**': { ssr: false },
-    '/financiero/**': { ssr: false },
-    '/gastos/**': { ssr: false },
-    '/inventario/**': { ssr: false },
-    '/negocio/**': { ssr: false },
-    '/pagos/**': { ssr: false },
-    '/pos/**': { ssr: false },
-    '/integraciones/**': { ssr: false },
-    '/mis-pedidos/**': { ssr: false },
-  },
+  ssr: false,
   experimental: {
     payloadExtraction: false
   },
