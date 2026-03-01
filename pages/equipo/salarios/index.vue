@@ -115,7 +115,7 @@ const deleteEmployee = async (employeeId: string) => {
 }
 
 // Set refresh handler for layout
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions() => {})
 onMounted(() => {
   setRefreshHandler(refresh)
 })

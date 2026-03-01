@@ -565,7 +565,7 @@ const toggleExpanded = (recipeId: number) => {
   expandedRows.value = new Set(expandedRows.value)
 }
 
-const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions()
 
 onMounted(() => {
   setRefreshHandler(refresh)

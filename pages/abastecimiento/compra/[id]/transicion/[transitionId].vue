@@ -327,7 +327,7 @@ const error = computed(() => {
 })
 
 // Inject refresh handler setter from layout
-const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions()
 
 // Register refresh handler for mobile bottom nav and desktop header
 // Register refresh handler for mobile bottom nav and desktop header

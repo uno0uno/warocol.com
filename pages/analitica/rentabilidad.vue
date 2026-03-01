@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted, inject } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceToNow } from 'date-fns'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
-const setRefreshHandler = inject<((handler: (() => void | Promise<void>) | undefined) => void) | undefined>('setRefreshHandler')
-const setLastUpdateText = inject<((text: string | undefined) => void) | undefined>('setLastUpdateText')
+const { setRefreshHandler, setLastUpdateText } = useLayoutActions()
 const { onTenantChange } = useTenantReactive()
 
 const lastUpdate = ref<Date>(new Date())

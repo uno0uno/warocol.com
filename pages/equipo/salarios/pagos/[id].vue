@@ -274,9 +274,7 @@ useHead({
 })
 
 // Set refresh handler for layout
-const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>(
-  'setRefreshHandler',
-  () => () => {}
+const { setRefreshHandler } = useLayoutActions()
 )
 onMounted(() => {
   setRefreshHandler(refresh)

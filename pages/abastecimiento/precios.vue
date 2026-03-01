@@ -173,7 +173,7 @@ const ingredients = computed(() => ingredientsData.value?.data || []);
 const totalIngredients = computed(() => ingredientsData.value?.total || 0);
 
 // Inject refresh handler setter from layout
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions() => {})
 
 // Register refresh handler for mobile bottom nav and desktop header
 onMounted(() => {

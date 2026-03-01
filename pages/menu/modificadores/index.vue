@@ -457,7 +457,7 @@ const goToEditGroup = (groupId: string) => {
   router.push(`/menu/modificadores/${groupId}`)
 }
 
-const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions()
 const refresh = async () => {
   await Promise.all([refreshGroups(), refreshStats()])
 }

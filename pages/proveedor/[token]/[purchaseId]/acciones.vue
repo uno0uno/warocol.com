@@ -372,7 +372,7 @@ async function handleActionCompleted() {
 }
 
 // Inject refresh handler setter from layout
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions() => {})
 
 onMounted(() => {
   setRefreshHandler(loadPurchase)

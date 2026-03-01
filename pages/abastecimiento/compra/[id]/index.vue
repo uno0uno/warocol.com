@@ -1020,7 +1020,7 @@ const refresh = async () => {
 }
 
 // Inject refresh handler setter from layout (must be at setup level)
-const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions()
 
 // Load on mount and set as current purchase
 onMounted(async () => {

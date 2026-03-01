@@ -245,7 +245,7 @@ const getSalaryTypeLabel = (type: string) => {
 }
 
 // Set refresh handler for layout
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions() => {})
 onMounted(() => {
   setRefreshHandler(refresh)
 })

@@ -92,7 +92,7 @@ useHead({ title: computed(() => order.value ? `Pedido #${order.value.order_numbe
 const setPageTitle      = inject<(title: string | undefined) => void>('setPageTitle')
 const setShowBackButton = inject<(show: boolean) => void>('setShowBackButton')
 const setBackHandler    = inject<(handler: (() => void) | undefined) => void>('setBackHandler')
-const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>('setRefreshHandler')
+const { setRefreshHandler } = useLayoutActions()
 
 const goBack = () => router.push('/mis-pedidos')
 

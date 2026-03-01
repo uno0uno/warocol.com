@@ -456,7 +456,7 @@ const formatNumber = (value: number) => {
 }
 
 // Set refresh handler for layout
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions() => {})
 onMounted(() => {
   setRefreshHandler(refresh)
 })

@@ -442,6 +442,6 @@ const deleteToken = async () => {
   }
 }
 
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions() => {})
 onMounted(() => { setRefreshHandler(refresh) })
 </script>

@@ -370,7 +370,7 @@ const nextPage = () => {
 }
 
 // Inject refresh handler
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions() => {})
 onMounted(() => {
   setRefreshHandler(refresh)
 })

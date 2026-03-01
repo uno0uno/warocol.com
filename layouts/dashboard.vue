@@ -617,24 +617,9 @@ onUnmounted(() => {
   disconnectNotifications()
 })
 
-// Refresh handler - will be injected by pages that need it
-const refreshHandler = ref<(() => void | Promise<void>) | undefined>(undefined)
-const isRefreshing = ref(false)
-
-const handleRefresh = async () => {
-  if (!refreshHandler.value || isRefreshing.value) return
-  isRefreshing.value = true
-  try {
-    await refreshHandler.value()
-  } finally {
-    isRefreshing.value = false
-  }
-}
-
-// Provide refresh setter for child pages
-provide('setRefreshHandler', (handler: (() => void | Promise<void>) | undefined) => {
-  refreshHandler.value = handler
-})
+// Refresh handler - shared via composable (provide/inject unreliable in Nuxt 3 layout↔page)
+const { refreshHandler, isRefreshing, lastUpdateText: composableLastUpdateText, triggerRefresh } = useLayoutActions()
+const handleRefresh = triggerRefresh
 
 // Dynamic title - can be set by child pages
 const dynamicTitle = ref<string | undefined>(undefined)
@@ -652,13 +637,8 @@ provide('setPageSubtitle', (subtitle: string | undefined) => {
   dynamicSubtitle.value = subtitle
 })
 
-// Last update text - can be set by child pages (e.g. analytics ventas)
-const dynamicLastUpdateText = ref<string | undefined>(undefined)
-
-// Provide last update text setter for child pages
-provide('setLastUpdateText', (text: string | undefined) => {
-  dynamicLastUpdateText.value = text
-})
+// Last update text - shared via composable
+const dynamicLastUpdateText = composableLastUpdateText
 
 // Dynamic status badge - can be set by child pages
 const dynamicStatus = ref<{ label: string; color: string } | undefined>(undefined)

@@ -271,7 +271,7 @@ const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = 
 );
 
 // Inject refresh handler setter from layout
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions() => {})
 
 // Register refresh handler for mobile bottom nav and desktop header
 onMounted(() => {

@@ -542,7 +542,7 @@ function clearFilters() {
 }
 
 // Inject refresh handler setter from layout
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions() => {})
 
 // Register refresh handler for header and mobile bottom nav
 onMounted(() => {

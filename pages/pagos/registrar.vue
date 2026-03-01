@@ -101,7 +101,7 @@ async function handlePaid() {
 }
 
 // Inject refresh handler setter from layout
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions() => {})
 
 onMounted(() => {
   setRefreshHandler(loadPurchases)

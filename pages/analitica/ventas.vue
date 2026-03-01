@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { es } from 'date-fns/locale';
 import { format as fnsFormat, startOfMonth, startOfYear, differenceInCalendarDays, getDaysInMonth, getDaysInYear, formatDistanceToNow } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
 import SalesChart from '~/components/analytics/SalesChart.vue';
 
-const setRefreshHandler = inject<((handler: (() => void | Promise<void>) | undefined) => void) | undefined>('setRefreshHandler');
-const setLastUpdateText = inject<((text: string | undefined) => void) | undefined>('setLastUpdateText');
+const { setRefreshHandler, setLastUpdateText } = useLayoutActions()
 const { onTenantChange } = useTenantReactive();
 
 const lastUpdate = ref<Date>(new Date());

@@ -489,7 +489,7 @@ const categories = computed(() => {
 })
 
 // Set refresh handler for layout
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions() => {})
 const refreshCategories = async () => {
   // Refresh categories when refresh button is clicked
   await refreshNuxtData(`expense-categories-${currentTenant.value?.id || 'default'}`)

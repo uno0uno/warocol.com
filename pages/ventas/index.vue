@@ -269,7 +269,7 @@ const viewOrderDetails = (order: any) => {
 }
 
 // Set refresh handler for layout
-const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions()
 onMounted(async () => {
   setRefreshHandler(async () => {
     await refresh()

@@ -114,7 +114,7 @@ const formatDateTime = (date: string) => {
   }).format(new Date(date))
 }
 
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const { setRefreshHandler } = useLayoutActions() => {})
 const refresh = () => {
   console.log('Refreshing orders...')
 }
