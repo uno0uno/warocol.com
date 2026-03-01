@@ -1,28 +1,14 @@
 export default defineNuxtConfig({
-  ssr: true,
-  routeRules: {
-    // Protected dashboard routes — client-only (no SSR needed, auth is client-side)
-    '/ventas/**': { ssr: false },
-    '/menu/**': { ssr: false },
-    '/abastecimiento/**': { ssr: false },
-    '/analitica/**': { ssr: false },
-    '/domicilios/**': { ssr: false },
-    '/equipo/**': { ssr: false },
-    '/financiero/**': { ssr: false },
-    '/gastos/**': { ssr: false },
-    '/inventario/**': { ssr: false },
-    '/negocio/**': { ssr: false },
-    '/pagos/**': { ssr: false },
-    '/pos/**': { ssr: false },
-    '/integraciones/**': { ssr: false },
-    '/mis-pedidos/**': { ssr: false },
-  },
+  ssr: false,
   devServer: {
     port: parseInt(process.env.PORT || '8080')
   },
   nitro: {
     preset: 'node-server',
     routeRules: {
+      // Assets estáticos — cache 1 día en browser + CDN
+      '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=3600' } },
+      '/favicon.ico': { headers: { 'cache-control': 'public, max-age=86400' } },
       // Client-only pages (no SSR)
       '/api/auth/**': {
         proxy: {
