@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: warocol-nuxt
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgres://saifer:96&Gd'2H+zjR@saifer-postgres-1:5432/postresWaroLabs
