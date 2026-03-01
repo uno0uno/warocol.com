@@ -61,9 +61,15 @@ const dateRange = computed(() => {
   }
 })
 
+// Pagination state
+const PAGE_SIZE = 25
+const currentPage = ref(1)
+const ordersOffset = computed(() => (currentPage.value - 1) * PAGE_SIZE)
+
 // Refresh data when date range changes (only when both dates are selected or cleared)
 watch(dateRangeDates, (val) => {
   if (!val || (val.length === 2 && val[0] && val[1])) {
+    currentPage.value = 1
     refresh()
   }
 })
@@ -78,7 +84,8 @@ const { data: ordersData, pending: isLoading, error: fetchError, refresh } = use
   `orders-list-${currentTenant.value?.id || 'default'}`,
   () => $fetch('/api/orders', {
     params: {
-      limit: 250,
+      limit: PAGE_SIZE,
+      offset: ordersOffset.value,
       search: localSearchTerm.value || undefined,
       search_field: apiSearchField.value || undefined,
       payment_method: paymentMethodFilter.value || undefined,
@@ -99,6 +106,18 @@ const { data: ordersData, pending: isLoading, error: fetchError, refresh } = use
 onTenantChange(async () => {
   await refresh()
 })
+
+// Pagination computed (after ordersData is declared)
+const ordersTotalPages = computed(() => {
+  const total = ordersData.value?.pagination?.total ?? 0
+  return Math.max(1, Math.ceil(total / PAGE_SIZE))
+})
+const ordersTotal = computed(() => ordersData.value?.pagination?.total ?? 0)
+
+const goToPage = (page: number) => {
+  currentPage.value = Math.max(1, Math.min(page, ordersTotalPages.value))
+  refresh()
+}
 
 // Metrics computed
 
@@ -135,6 +154,7 @@ const ordersTableColumns: Column[] = [
 
 // Methods
 const performSearch = () => {
+  currentPage.value = 1
   refresh()
 }
 
@@ -146,7 +166,8 @@ const clearFilters = () => {
   dateRangeDates.value = null
   sortField.value = 'order_date'
   sortDirection.value = 'desc'
-  Promise.all([refresh()])
+  currentPage.value = 1
+  refresh()
 }
 
 // Export functionality
@@ -191,6 +212,7 @@ const exportOrders = async () => {
 const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'desc' }) => {
   sortField.value = field
   sortDirection.value = direction
+  currentPage.value = 1
   refresh()
 }
 
@@ -509,6 +531,48 @@ onUnmounted(() => {
           </span>
         </template>
       </UiResponsiveDataView>
+
+      <!-- Pagination -->
+      <div v-if="ordersTotal > 0" class="flex items-center justify-between px-1 py-2">
+        <p class="text-sm text-text-secondary">
+          {{ ordersTotal.toLocaleString('es-CO') }} registros · Página {{ currentPage }} de {{ ordersTotalPages }}
+        </p>
+        <div class="flex items-center gap-1">
+          <button
+            :disabled="currentPage <= 1"
+            @click="goToPage(1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            aria-label="Primera página"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+          </button>
+          <button
+            :disabled="currentPage <= 1"
+            @click="goToPage(currentPage - 1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            aria-label="Página anterior"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <span class="px-3 py-1 text-sm font-medium text-text-primary">{{ currentPage }}</span>
+          <button
+            :disabled="currentPage >= ordersTotalPages"
+            @click="goToPage(currentPage + 1)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            aria-label="Página siguiente"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </button>
+          <button
+            :disabled="currentPage >= ordersTotalPages"
+            @click="goToPage(ordersTotalPages)"
+            class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            aria-label="Última página"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Export Result Modal -->
