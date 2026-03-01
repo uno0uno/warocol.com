@@ -66,14 +66,6 @@ const PAGE_SIZE = 25
 const currentPage = ref(1)
 const ordersOffset = computed(() => (currentPage.value - 1) * PAGE_SIZE)
 
-// Refresh data when date range changes (only when both dates are selected or cleared)
-watch(dateRangeDates, (val) => {
-  if (!val || (val.length === 2 && val[0] && val[1])) {
-    currentPage.value = 1
-    refresh()
-  }
-})
-
 
 // Metrics removed based on request
 
@@ -107,6 +99,14 @@ const { data: ordersData, pending: isLoading, error: fetchError, refresh } = use
 onTenantChange(async () => {
   currentPage.value = 1
   await refresh()
+})
+
+// Refresh when date range changes (only when both dates selected or cleared)
+watch(dateRangeDates, (val) => {
+  if (!val || (val.length === 2 && val[0] && val[1])) {
+    currentPage.value = 1
+    refresh()
+  }
 })
 
 // Pagination computed (after ordersData is declared)
