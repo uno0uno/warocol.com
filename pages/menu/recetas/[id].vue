@@ -253,7 +253,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
@@ -443,6 +443,10 @@ const deleteRecipe = async () => {
     isSubmitting.value = false
   }
 }
+
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+onMounted(() => { setRefreshHandler(refresh) })
+onUnmounted(() => { clearRefreshHandler(refresh) })
 </script>
 
 <style scoped>

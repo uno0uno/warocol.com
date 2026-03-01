@@ -85,7 +85,7 @@ onMounted(() => {
   if (setLastUpdateText) setLastUpdateText(lastUpdateText.value)
 })
 onUnmounted(() => {
-  if (setRefreshHandler) setRefreshHandler(undefined)
+  if (setRefreshHandler) clearRefreshHandler(handleRefresh)
   if (setLastUpdateText) setLastUpdateText(undefined)
 })
 </script>

@@ -269,15 +269,10 @@ const viewOrderDetails = (order: any) => {
 }
 
 // Set refresh handler for layout
-const { setRefreshHandler } = useLayoutActions()
-onMounted(async () => {
-  setRefreshHandler(async () => {
-    await refresh()
-  })
-})
-onUnmounted(() => {
-  setRefreshHandler(undefined)
-})
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const _refreshFn = async () => { await refresh() }
+onMounted(() => { setRefreshHandler(_refreshFn) })
+onUnmounted(() => { clearRefreshHandler(_refreshFn) })
 </script>
 
 <template>
@@ -399,15 +394,9 @@ onUnmounted(() => {
       </div>
 
       <!-- Responsive Data View -->
-      <!-- Loading skeleton -->
-      <div v-if="isLoading" class="bg-white rounded-xl border border-border divide-y divide-border">
-        <div v-for="n in 8" :key="n" class="px-4 py-3 animate-pulse flex items-center gap-4">
-          <div class="h-3.5 bg-slate-100 rounded w-16 flex-shrink-0"></div>
-          <div class="h-3.5 bg-slate-100 rounded w-28"></div>
-          <div class="h-3.5 bg-slate-100 rounded w-20"></div>
-          <div class="h-3.5 bg-slate-100 rounded w-16 ml-auto"></div>
-          <div class="h-3.5 bg-slate-100 rounded w-20"></div>
-        </div>
+      <!-- Loading State -->
+      <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+        <CommonsTheCustomLoader size="large" />
       </div>
 
       <UiResponsiveDataView
@@ -542,10 +531,7 @@ onUnmounted(() => {
       </UiResponsiveDataView>
 
       <!-- Pagination -->
-      <div v-if="ordersTotal > 0" class="flex items-center justify-between px-1 py-2">
-        <p class="text-sm text-text-secondary">
-          {{ ordersTotal.toLocaleString('es-CO') }} registros · Página {{ currentPage }} de {{ ordersTotalPages }}
-        </p>
+      <div v-if="ordersTotal > 0" class="flex items-center justify-end px-1 py-2">
         <div class="flex items-center gap-1">
           <button
             :disabled="currentPage <= 1"

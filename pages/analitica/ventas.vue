@@ -157,7 +157,7 @@ onMounted(() => {
 })
 onUnmounted(() => {
   if (clockInterval) clearInterval(clockInterval)
-  if (setRefreshHandler) setRefreshHandler(undefined)
+  if (setRefreshHandler) clearRefreshHandler(handleRefresh)
   if (setLastUpdateText) setLastUpdateText(undefined)
 })
 

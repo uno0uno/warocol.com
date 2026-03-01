@@ -1,7 +1,7 @@
 <template>
   <div class="page-layout">
-    <!-- Loading State (solo en carga inicial sin datos) -->
-    <div v-if="isLoading && !filteredGroups.length" class="flex items-center justify-center min-h-[400px]">
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
@@ -457,7 +457,7 @@ const goToEditGroup = (groupId: string) => {
   router.push(`/menu/modificadores/${groupId}`)
 }
 
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 const refresh = async () => {
   await Promise.all([refreshGroups(), refreshStats()])
 }
@@ -466,7 +466,7 @@ onMounted(() => {
   setRefreshHandler(refresh)
 })
 onUnmounted(() => {
-  setRefreshHandler(undefined)
+  clearRefreshHandler(refresh)
 })
 
 </script>

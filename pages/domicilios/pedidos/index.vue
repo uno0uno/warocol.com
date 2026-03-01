@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({
@@ -70,6 +71,10 @@ const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'd
 const viewOrder = (order: any) => {
   navigateTo(`/domicilios/pedidos/${order.id}`)
 }
+
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+onMounted(() => { setRefreshHandler(refresh) })
+onUnmounted(() => { clearRefreshHandler(refresh) })
 </script>
 
 <template>

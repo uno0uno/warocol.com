@@ -421,7 +421,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
@@ -686,4 +686,8 @@ const calculateMargin = (price: number, cost: number) => {
 useHead({
   title: computed(() => productData.value?.data ? `Editar ${productData.value.data.name} - Menú` : 'Editar Producto')
 })
+
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+onMounted(() => { setRefreshHandler(refresh) })
+onUnmounted(() => { clearRefreshHandler(refresh) })
 </script>

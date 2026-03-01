@@ -934,4 +934,8 @@ const getAttachmentTypeLabel = (type: string) => {
   }
   return typeMap[type] || type
 }
+
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+onMounted(() => { setRefreshHandler(refresh) })
+onUnmounted(() => { clearRefreshHandler(refresh) })
 </script>

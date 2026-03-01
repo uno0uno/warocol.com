@@ -457,6 +457,7 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue'
 import {
   BuildingStorefrontIcon,
   MapPinIcon,
@@ -473,12 +474,14 @@ import {
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Mi Negocio' })
 
-const { isOpenNow } = useTenantReactive()
+const { isOpenNow, onTenantChange, currentTenant } = useTenantReactive()
 const { data: profileData, pending: isBusinessProfileLoading, refresh: refreshProfile } = useAsyncData(
-  'negocio-business-profile',
+  `negocio-business-profile-${currentTenant.value?.id || 'default'}`,
   () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
-  { server: false }
+  { server: false, watch: [currentTenant] }
 )
+
+onTenantChange(refreshProfile)
 const businessProfile = computed(() => profileData.value?.data ?? null)
 const toast = useToast()
 
@@ -673,19 +676,21 @@ const handleImageUploaded = async (url: string) => {
 }
 
 // ─── Auto-enter edit mode when no profile ───
+// NOTE: No { immediate: true } — with server: false, useAsyncData hasn't started
+// on the first synchronous tick (pending=false, data=null), which would incorrectly
+// trigger enterEditMode() on every navigation. This watch fires once the fetch
+// actually completes (pending goes true→false), so the nil-profile check is reliable.
 watch(
   [isBusinessProfileLoading, businessProfile] as const,
   ([loading, profile]) => {
     if (!loading && !profile && !isEditMode.value) {
       enterEditMode()
     }
-  },
-  { immediate: true }
+  }
 )
 
 // ─── Refresh handler ───
-const { setRefreshHandler } = useLayoutActions()
-onMounted(() => {
-  setRefreshHandler(refreshProfile)
-})
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+onMounted(() => { setRefreshHandler(refreshProfile) })
+onUnmounted(() => { clearRefreshHandler(refreshProfile) })
 </script>

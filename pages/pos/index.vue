@@ -188,10 +188,7 @@ onMounted(() => {
   <div>
     <!-- Loading State (initial page load) -->
     <div v-if="loadingProducts" class="flex items-center justify-center min-h-[70vh]">
-      <div class="text-center">
-        <CommonsTheCustomLoader size="large" />
-        <p class="text-text-secondary font-medium mt-6">Cargando POS...</p>
-      </div>
+      <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- POS Content (shown always after loading) -->

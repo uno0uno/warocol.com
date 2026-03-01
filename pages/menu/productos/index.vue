@@ -1,12 +1,12 @@
 <template>
   <div>
-    <!-- Loading State (solo en carga inicial sin datos) -->
-    <div v-if="isLoading && !products.length" class="flex items-center justify-center min-h-[400px]">
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- Error State -->
-    <div v-else-if="fetchError && !products.length" class="flex items-center justify-center min-h-[400px]">
+    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
         <p class="text-xl font-semibold text-ebony-800 mb-2">Error al cargar los productos.</p>
         <p class="text-sm text-ebony-600">{{ fetchError.message }}</p>
@@ -529,14 +529,14 @@ const handleSort = (field: string) => {
 }
 
 // Inject refresh handler setter from layout
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 
 // Register refresh handler for mobile bottom nav and desktop header
 onMounted(() => {
   setRefreshHandler(refresh)
 })
 onUnmounted(() => {
-  setRefreshHandler(undefined)
+  clearRefreshHandler(refresh)
 })
 
 // Table columns configuration

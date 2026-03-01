@@ -12,6 +12,15 @@ export const useLayoutActions = () => {
     _refreshHandler.value = handler
   }
 
+  // Safe clear: only clears if the current handler is exactly the one we registered.
+  // Prevents the race condition where the new page's onMounted fires before the old
+  // page's onUnmounted, causing the old page cleanup to wipe the new handler.
+  const clearRefreshHandler = (handler: () => void | Promise<void>) => {
+    if (_refreshHandler.value === handler) {
+      _refreshHandler.value = undefined
+    }
+  }
+
   const triggerRefresh = async () => {
     if (!_refreshHandler.value || _isRefreshing.value) return
     _isRefreshing.value = true
@@ -31,6 +40,7 @@ export const useLayoutActions = () => {
     isRefreshing: readonly(_isRefreshing),
     lastUpdateText: readonly(_lastUpdateText),
     setRefreshHandler,
+    clearRefreshHandler,
     setLastUpdateText,
     triggerRefresh,
   }

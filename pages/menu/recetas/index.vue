@@ -1,12 +1,12 @@
 <template>
   <div>
-    <!-- Loading State (solo en carga inicial sin datos) -->
-    <div v-if="isLoading && !recetas.length" class="flex items-center justify-center min-h-[400px]">
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- Error State -->
-    <div v-else-if="fetchError && !recetas.length" class="flex items-center justify-center min-h-[400px]">
+    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
         <Icon name="heroicons:exclamation-circle" class="h-16 w-16 mx-auto text-text-secondary mb-4" />
         <p class="text-text-secondary">{{ fetchError }}</p>
@@ -565,13 +565,13 @@ const toggleExpanded = (recipeId: number) => {
   expandedRows.value = new Set(expandedRows.value)
 }
 
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 
 onMounted(() => {
   setRefreshHandler(refresh)
 })
 onUnmounted(() => {
-  setRefreshHandler(undefined)
+  clearRefreshHandler(refresh)
 })
 
 </script>
