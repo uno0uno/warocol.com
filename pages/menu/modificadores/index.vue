@@ -302,7 +302,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, inject } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
@@ -457,13 +457,16 @@ const goToEditGroup = (groupId: string) => {
   router.push(`/menu/modificadores/${groupId}`)
 }
 
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>('setRefreshHandler', () => {})
 const refresh = async () => {
   await Promise.all([refreshGroups(), refreshStats()])
 }
 
 onMounted(() => {
   setRefreshHandler(refresh)
+})
+onUnmounted(() => {
+  setRefreshHandler(undefined)
 })
 
 </script>

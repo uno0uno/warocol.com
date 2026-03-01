@@ -338,7 +338,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, inject, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
@@ -565,10 +565,13 @@ const toggleExpanded = (recipeId: number) => {
   expandedRows.value = new Set(expandedRows.value)
 }
 
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>('setRefreshHandler', () => {})
 
 onMounted(() => {
   setRefreshHandler(refresh)
+})
+onUnmounted(() => {
+  setRefreshHandler(undefined)
 })
 
 </script>

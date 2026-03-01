@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, watch } from 'vue'
+import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, startOfMonth, startOfYear, getDaysInMonth, getDaysInYear, differenceInCalendarDays } from 'date-fns'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
@@ -246,11 +246,14 @@ const viewOrderDetails = (order: any) => {
 }
 
 // Set refresh handler for layout
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>('setRefreshHandler', () => {})
 onMounted(async () => {
   setRefreshHandler(async () => {
     await refresh()
   })
+})
+onUnmounted(() => {
+  setRefreshHandler(undefined)
 })
 </script>
 

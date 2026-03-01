@@ -319,6 +319,7 @@
 </template>
 
 <script setup lang="ts">
+import { onUnmounted } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useToast } from '@/composables/useToast'
 
@@ -528,11 +529,14 @@ const handleSort = (field: string) => {
 }
 
 // Inject refresh handler setter from layout
-const setRefreshHandler = inject('setRefreshHandler', () => {})
+const setRefreshHandler = inject<(handler: (() => void | Promise<void>) | undefined) => void>('setRefreshHandler', () => {})
 
 // Register refresh handler for mobile bottom nav and desktop header
 onMounted(() => {
   setRefreshHandler(refresh)
+})
+onUnmounted(() => {
+  setRefreshHandler(undefined)
 })
 
 // Table columns configuration

@@ -74,7 +74,7 @@
               <DashboardBusinessStatusToggle />
 
               <!-- Refresh Button (Desktop only) - always visible -->
-              <button @click="refreshHandler ? refreshHandler() : $router.go(0)"
+              <button @click="refreshHandler && refreshHandler()"
                 class="hidden md:flex w-11 h-11 items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring"
                 title="Refrescar">
                 <svg class="w-5 h-5 transition-transform hover:rotate-180 duration-300" fill="none" stroke="currentColor"
