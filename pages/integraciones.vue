@@ -442,6 +442,6 @@ const deleteToken = async () => {
   }
 }
 
-const { setRefreshHandler } = useLayoutActions() => {})
+const { setRefreshHandler } = useLayoutActions()
 onMounted(() => { setRefreshHandler(refresh) })
 </script>

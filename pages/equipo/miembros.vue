@@ -978,7 +978,7 @@ const formatExpirationDate = (dateString) => {
 }
 
 // Inject refresh handler setter from layout
-const { setRefreshHandler } = useLayoutActions() => {})
+const { setRefreshHandler } = useLayoutActions()
 
 // Register refresh handler for mobile bottom nav and desktop header
 onMounted(() => {

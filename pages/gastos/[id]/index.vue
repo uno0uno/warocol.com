@@ -694,7 +694,7 @@ useHead({
 })
 
 // Set refresh handler for layout
-const { setRefreshHandler } = useLayoutActions() => {})
+const { setRefreshHandler } = useLayoutActions()
 onMounted(() => {
   setRefreshHandler(refresh)
 })

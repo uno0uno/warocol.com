@@ -684,7 +684,7 @@ watch(
 )
 
 // ─── Refresh handler ───
-const { setRefreshHandler } = useLayoutActions() => {})
+const { setRefreshHandler } = useLayoutActions()
 onMounted(() => {
   setRefreshHandler(refreshProfile)
 })

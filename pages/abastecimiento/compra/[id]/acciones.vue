@@ -250,7 +250,7 @@ const loadPurchase = async (forceRefresh = false) => {
 }
 
 // Inject refresh handler setter from layout
-const { setRefreshHandler } = useLayoutActions() => {})
+const { setRefreshHandler } = useLayoutActions()
 
 // Load on mount
 onMounted(async () => {

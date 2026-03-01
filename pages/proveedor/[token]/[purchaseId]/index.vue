@@ -439,7 +439,7 @@ const refresh = async () => {
 }
 
 // Inject refresh handler setter from layout
-const { setRefreshHandler } = useLayoutActions() => { })
+const { setRefreshHandler } = useLayoutActions()
 
 
 
