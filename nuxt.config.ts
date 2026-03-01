@@ -1,5 +1,8 @@
 export default defineNuxtConfig({
   ssr: false,
+  experimental: {
+    payloadExtraction: false
+  },
   devServer: {
     port: parseInt(process.env.PORT || '8080')
   },

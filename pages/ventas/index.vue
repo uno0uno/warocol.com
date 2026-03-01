@@ -282,13 +282,8 @@ onUnmounted(() => {
 
 <template>
   <div class="page-layout">
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
-      <CommonsTheCustomLoader size="large" />
-    </div>
-
     <!-- Error State -->
-    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="fetchError" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
         <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar las ventas.</p>
         <p class="text-sm text-text-secondary">{{ fetchError.message }}</p>
@@ -404,7 +399,19 @@ onUnmounted(() => {
       </div>
 
       <!-- Responsive Data View -->
+      <!-- Loading skeleton -->
+      <div v-if="isLoading" class="bg-white rounded-xl border border-border divide-y divide-border">
+        <div v-for="n in 8" :key="n" class="px-4 py-3 animate-pulse flex items-center gap-4">
+          <div class="h-3.5 bg-slate-100 rounded w-16 flex-shrink-0"></div>
+          <div class="h-3.5 bg-slate-100 rounded w-28"></div>
+          <div class="h-3.5 bg-slate-100 rounded w-20"></div>
+          <div class="h-3.5 bg-slate-100 rounded w-16 ml-auto"></div>
+          <div class="h-3.5 bg-slate-100 rounded w-20"></div>
+        </div>
+      </div>
+
       <UiResponsiveDataView
+        v-else
         :columns="ordersTableColumns"
         :data="orders"
         :sort-field="sortField"
