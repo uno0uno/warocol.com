@@ -2,8 +2,7 @@
 import { ref, computed, inject, onMounted } from 'vue'
 
 definePageMeta({
-  layout: 'dashboard',
-  ssr: false
+  layout: 'dashboard'
 })
 
 useHead({ title: 'Gastos' })

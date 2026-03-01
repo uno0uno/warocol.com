@@ -2,8 +2,7 @@
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({
-  layout: 'dashboard',
-  ssr: false
+  layout: 'dashboard'
 })
 
 useHead({ title: 'Pedidos Online — WARO' })

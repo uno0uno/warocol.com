@@ -5,8 +5,7 @@ import { format as fnsFormat, startOfMonth, startOfYear, getDaysInMonth, getDays
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({
-  layout: 'dashboard',
-  ssr: false
+  layout: 'dashboard'
 })
 
 useHead({ title: 'Ventas' })

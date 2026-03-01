@@ -8,7 +8,6 @@ import { useOrderNotification } from '~/composables/useOrderNotification'
 definePageMeta({
   middleware: 'customer-auth',
   layout: 'customer-portal',
-  ssr: false,
 })
 
 const route = useRoute()

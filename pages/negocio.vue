@@ -470,7 +470,7 @@ import {
   ArrowUpTrayIcon,
 } from '@heroicons/vue/24/outline'
 
-definePageMeta({ layout: 'dashboard', ssr: false })
+definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Mi Negocio' })
 
 const { isOpenNow } = useTenantReactive()

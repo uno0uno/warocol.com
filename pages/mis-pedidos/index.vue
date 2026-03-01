@@ -122,7 +122,6 @@ import { useFormatters } from '~/composables/useFormatters'
 definePageMeta({
   middleware: 'customer-auth',
   layout: 'customer-portal',
-  ssr: false,
 })
 
 useHead({ title: 'Mis pedidos' })

@@ -2,8 +2,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 
 definePageMeta({
-  layout: 'dashboard',
-  ssr: false
+  layout: 'dashboard'
 })
 
 const route = useRoute()

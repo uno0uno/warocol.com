@@ -2,8 +2,7 @@
 import { ref, computed } from 'vue'
 
 definePageMeta({
-  layout: 'dashboard',
-  ssr: false
+  layout: 'dashboard'
 })
 
 useHead({ title: 'Detalle de Venta' })

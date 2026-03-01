@@ -74,11 +74,15 @@
               <DashboardBusinessStatusToggle />
 
               <!-- Refresh Button (Desktop only) - always visible -->
-              <button @click="refreshHandler && refreshHandler()"
-                class="hidden md:flex w-11 h-11 items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring"
+              <button
+                @click="handleRefresh"
+                :disabled="isRefreshing"
+                aria-label="Refrescar datos"
+                class="hidden md:flex w-11 h-11 items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Refrescar">
-                <svg class="w-5 h-5 transition-transform hover:rotate-180 duration-300" fill="none" stroke="currentColor"
-                  viewBox="0 0 24 24">
+                <svg
+                  :class="['w-5 h-5 transition-transform duration-300', isRefreshing ? 'animate-spin' : 'hover:rotate-180']"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
                   </path>
@@ -615,6 +619,17 @@ onUnmounted(() => {
 
 // Refresh handler - will be injected by pages that need it
 const refreshHandler = ref<(() => void | Promise<void>) | undefined>(undefined)
+const isRefreshing = ref(false)
+
+const handleRefresh = async () => {
+  if (!refreshHandler.value || isRefreshing.value) return
+  isRefreshing.value = true
+  try {
+    await refreshHandler.value()
+  } finally {
+    isRefreshing.value = false
+  }
+}
 
 // Provide refresh setter for child pages
 provide('setRefreshHandler', (handler: (() => void | Promise<void>) | undefined) => {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, watch, onMounted, onUnmounted } from 'vue'
 
-definePageMeta({ layout: 'dashboard', ssr: false })
+definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Detalle Pedido — WARO' })
 
 const route = useRoute()

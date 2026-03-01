@@ -11,9 +11,15 @@
 </template>
 
 <script setup lang="ts">
+import { provide, inject } from 'vue'
+
 definePageMeta({
   layout: 'dashboard'
 })
+
+// Re-provide layout's setRefreshHandler so child pages (menu/*) can inject it
+const setRefreshHandler = inject('setRefreshHandler', () => {})
+provide('setRefreshHandler', setRefreshHandler)
 
 const route = useRoute()
 
