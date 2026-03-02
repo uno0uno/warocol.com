@@ -3,12 +3,12 @@
 
     <!-- Success state -->
     <div v-if="isSuccess" class="flex flex-col items-center gap-4 py-4 text-center">
-      <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
-        <Icon name="heroicons:check-circle" class="w-8 h-8 text-green-600" aria-hidden="true" />
+      <div class="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center">
+        <Icon name="heroicons:check-circle" class="w-8 h-8 text-success" aria-hidden="true" />
       </div>
       <div>
-        <p class="text-base font-semibold text-ebony-900">¡Gracias por escribirnos!</p>
-        <p class="text-sm text-ebony-500 mt-1">Nos pondremos en contacto contigo pronto.</p>
+        <p class="text-base font-semibold leading-tight text-ebony-900">¡Gracias por escribirnos!</p>
+        <p class="text-base leading-relaxed text-ebony-500 mt-1">Nos pondremos en contacto contigo pronto.</p>
       </div>
       <button
         class="mt-2 text-sm text-crocus-600 hover:text-crocus-700 underline underline-offset-2"
@@ -24,7 +24,7 @@
       <!-- Email -->
       <div class="flex flex-col gap-1">
         <label for="lead-email" class="text-sm font-medium text-ebony-700">
-          Correo electrónico <span class="text-red-500" aria-hidden="true">*</span>
+          Correo electrónico <span class="text-destructive" aria-hidden="true">*</span>
         </label>
         <input
           id="lead-email"
@@ -38,7 +38,7 @@
                  disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="isSubmitting"
         />
-        <p v-if="errors.email" class="flex items-center gap-1 text-sm text-red-600" role="alert">
+        <p v-if="errors.email" class="flex items-center gap-1 text-sm leading-normal text-destructive" role="alert">
           <Icon name="heroicons:exclamation-circle" class="w-4 h-4 flex-shrink-0" aria-hidden="true" />
           {{ errors.email }}
         </p>
@@ -47,7 +47,7 @@
       <!-- Phone -->
       <div class="flex flex-col gap-1">
         <label for="lead-phone" class="text-sm font-medium text-ebony-700">
-          Teléfono <span class="text-red-500" aria-hidden="true">*</span>
+          Teléfono <span class="text-destructive" aria-hidden="true">*</span>
         </label>
         <div class="flex">
           <span
@@ -71,7 +71,7 @@
             :disabled="isSubmitting"
           />
         </div>
-        <p v-if="errors.phone" class="flex items-center gap-1 text-sm text-red-600" role="alert">
+        <p v-if="errors.phone" class="flex items-center gap-1 text-sm leading-normal text-destructive" role="alert">
           <Icon name="heroicons:exclamation-circle" class="w-4 h-4 flex-shrink-0" aria-hidden="true" />
           {{ errors.phone }}
         </p>
@@ -81,7 +81,7 @@
       <button
         type="submit"
         :disabled="isSubmitting"
-        class="w-full min-h-[44px] py-2.5 px-4 rounded-lg font-semibold text-sm text-white
+        class="w-full min-h-[44px] py-2.5 px-4 rounded-lg font-semibold text-base text-white
                bg-crocus-600 hover:bg-crocus-700 active:scale-[0.98]
                focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-2
                disabled:opacity-50 disabled:cursor-not-allowed transition-all"
