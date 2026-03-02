@@ -66,6 +66,8 @@
           :class="isDarkHeader
             ? 'bg-transparent border-white text-white hover:bg-white hover:text-crocus-900'
             : 'bg-white border-crocus-600 text-crocus-600 hover:bg-crocus-600 hover:text-white'"
+          aria-haspopup="dialog"
+          @click="leadModal.open('comenzar')"
         >
           Comenzar
         </button>
@@ -81,6 +83,7 @@ import { useOtpAuthStore } from '~/stores/otp_auth'
 const route = useRoute()
 const authStore = useAuthStore()
 const otpAuthStore = useOtpAuthStore()
+const leadModal = useLeadModal()
 
 const isDarkHeader = computed(() => {
   return route.path.startsWith('/blog')

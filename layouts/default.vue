@@ -10,6 +10,8 @@
       <Footer />
     </div>
 
+    <LeadModal />
+
   </div>
 </template>
 
