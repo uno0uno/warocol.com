@@ -5,6 +5,7 @@
       </NuxtLayout>
       <CommonsToastContainer />
       <LazyModalsLeadModal />
+      <LazyModalsAccessRequestModal />
     </div>
 </template>
 

@@ -301,7 +301,13 @@ async function handleSubmit() {
     emailSent.value = true
   } catch (err) {
     console.error('❌ Error al enviar magic link:', err)
-    error.value = err.message || 'Error al enviar el magic link. Intenta nuevamente.'
+    const isUserNotFound = err?.status === 401 &&
+      err?.data?.message?.toLowerCase().includes('user not found')
+    if (isUserNotFound) {
+      useAccessRequestModal().open(email.value)
+    } else {
+      error.value = err?.data?.message || err?.message || 'Error al enviar el magic link. Intenta nuevamente.'
+    }
   } finally {
     loading.value = false
   }
