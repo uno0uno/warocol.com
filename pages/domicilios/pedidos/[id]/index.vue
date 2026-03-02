@@ -130,7 +130,7 @@ onUnmounted(() => {
         <div class="bg-surface border border-border rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Estado</p>
           <UiStatusBadge :variant="getStatusVariant(order.status)" size="lg" format="text">
-            {{ getStatusText(order.status) }}
+            {{ getStatusText(order.status, order.order_type) }}
           </UiStatusBadge>
         </div>
 
@@ -147,7 +147,10 @@ onUnmounted(() => {
 
         <!-- Terminal states -->
         <div v-if="order.status === 'completed'" class="flex items-center gap-3">
-          <span class="text-sm text-text-secondary">Pedido completado. No hay más acciones disponibles.</span>
+          <span class="text-sm text-text-secondary">
+            {{ order.order_type === 'delivery' ? 'Pedido aceptado.' : 'Pedido completado.' }}
+            No hay más acciones disponibles.
+          </span>
         </div>
         <div v-else-if="order.status === 'cancelled'" class="flex items-center gap-3">
           <span class="text-sm text-text-secondary">Pedido cancelado. No hay más acciones disponibles.</span>
@@ -383,6 +386,7 @@ onUnmounted(() => {
         :history="statusHistory"
         :is-loading="isHistoryLoading"
         :error="historyError"
+        :order-type="order.order_type"
       />
 
     </div>

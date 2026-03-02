@@ -11,9 +11,10 @@ interface Props {
   history: HistoryEntry[]
   isLoading: boolean
   error: any
+  orderType?: string
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
 const { formatDateTime } = useFormatters()
@@ -97,12 +98,12 @@ function getStatusIcon(status: string): string {
             <div class="bg-background border border-border rounded-lg p-4">
               <!-- Status title -->
               <h4 class="font-semibold text-text-primary">
-                {{ entry.old_status === null ? 'Pedido creado' : getStatusText(entry.new_status) }}
+                {{ entry.old_status === null ? 'Pedido creado' : getStatusText(entry.new_status, props.orderType) }}
               </h4>
 
               <!-- Previous status (skip on creation event) -->
               <p v-if="entry.old_status !== null" class="text-xs text-text-secondary mt-0.5">
-                Desde: {{ getStatusText(entry.old_status) }}
+                Desde: {{ getStatusText(entry.old_status, props.orderType) }}
               </p>
 
               <!-- Date/time -->

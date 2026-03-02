@@ -1,7 +1,8 @@
 // Composable for online order status management (delivery, pickup, dine-in)
 // Shared by: pages/domicilios/pedidos/index.vue and pages/domicilios/pedidos/[id]/index.vue
 export const useOnlineOrderStatus = () => {
-  const getStatusText = (status: string): string => {
+  const getStatusText = (status: string, orderType?: string): string => {
+    if (status === 'completed' && orderType === 'delivery') return 'Aceptado'
     const statusMap: Record<string, string> = {
       pending:   'Pendiente',
       confirmed: 'Confirmado',

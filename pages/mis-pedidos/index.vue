@@ -61,7 +61,7 @@
             <div class="flex items-center justify-between gap-2 mb-2">
               <span class="text-base font-bold text-text-primary">#{{ item.order_number }}</span>
               <UiStatusBadge :variant="getStatusVariant(item.status)" size="sm" format="text">
-                {{ getStatusText(item.status) }}
+                {{ getStatusText(item.status, item.order_type) }}
               </UiStatusBadge>
             </div>
             <!-- Row 2: restaurant -->
@@ -83,9 +83,9 @@
           <span class="text-sm text-text-primary">{{ value }}</span>
         </template>
 
-        <template #cell-status="{ value }">
+        <template #cell-status="{ value, row }">
           <UiStatusBadge :variant="getStatusVariant(value)" size="sm" format="text">
-            {{ getStatusText(value) }}
+            {{ getStatusText(value, row.order_type) }}
           </UiStatusBadge>
         </template>
 

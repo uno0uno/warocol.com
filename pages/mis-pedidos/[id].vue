@@ -230,7 +230,7 @@ async function confirmCancel() {
         <div class="bg-surface border border-border rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Estado</p>
           <UiStatusBadge :variant="getStatusVariant(order.status)" size="lg" format="text">
-            {{ getStatusText(order.status) }}
+            {{ getStatusText(order.status, order.order_type) }}
           </UiStatusBadge>
         </div>
 
@@ -429,7 +429,7 @@ async function confirmCancel() {
         class="bg-surface border border-border rounded-xl p-4 sm:p-6"
       >
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Historial de estado</h3>
-        <DomiciliosOnlineOrderStatusTimeline :history="statusHistoryForTimeline" />
+        <DomiciliosOnlineOrderStatusTimeline :history="statusHistoryForTimeline" :order-type="order.order_type" />
       </div>
 
       <!-- ── Section 5: Cancel ── -->

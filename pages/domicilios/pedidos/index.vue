@@ -124,7 +124,7 @@ onUnmounted(() => { clearRefreshHandler(refresh) })
                 <p class="text-sm text-text-secondary">{{ formatDateTime(item.order_date) }}</p>
               </div>
               <UiStatusBadge :variant="getStatusVariant(item.status)" size="sm" format="text">
-                {{ getStatusText(item.status) }}
+                {{ getStatusText(item.status, item.order_type) }}
               </UiStatusBadge>
             </div>
             <div class="space-y-1">
@@ -161,9 +161,9 @@ onUnmounted(() => { clearRefreshHandler(refresh) })
           </span>
         </template>
 
-        <template #cell-status="{ value }">
+        <template #cell-status="{ value, row }">
           <UiStatusBadge :variant="getStatusVariant(value)" size="sm" format="text">
-            {{ getStatusText(value) }}
+            {{ getStatusText(value, row.order_type) }}
           </UiStatusBadge>
         </template>
 
