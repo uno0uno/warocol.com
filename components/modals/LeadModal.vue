@@ -1,11 +1,11 @@
 <template>
   <!-- Desktop -->
-  <Modal v-model="isOpen" title="¡Hablemos!">
+  <Modal :model-value="isOpen" title="¡Hablemos!" @update:model-value="close">
     <LeadModalForm :button-source="buttonSource" @close="close" />
   </Modal>
 
   <!-- Mobile -->
-  <BottomSheetModal v-model="isOpen" title="¡Hablemos!">
+  <BottomSheetModal :model-value="isOpen" title="¡Hablemos!" @update:model-value="close">
     <LeadModalForm :button-source="buttonSource" @close="close" />
   </BottomSheetModal>
 </template>
