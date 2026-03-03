@@ -130,31 +130,6 @@ onUnmounted(() => {
 <template>
   <div class="space-y-4">
 
-    <!-- Analytics Sub-Nav -->
-    <nav class="flex gap-1 border-b border-border pb-0 -mt-2" aria-label="Sección de analítica">
-      <NuxtLink
-        to="/analitica/ventas"
-        class="px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors"
-        :class="$route.path.startsWith('/analitica/ventas') ? 'bg-surface border border-b-transparent border-border text-text-primary -mb-px' : 'text-text-secondary hover:text-text-primary'"
-      >
-        Ventas
-      </NuxtLink>
-      <NuxtLink
-        to="/analitica/rentabilidad"
-        class="px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors"
-        :class="$route.path.startsWith('/analitica/rentabilidad') ? 'bg-surface border border-b-transparent border-border text-text-primary -mb-px' : 'text-text-secondary hover:text-text-primary'"
-      >
-        Rentabilidad
-      </NuxtLink>
-      <NuxtLink
-        to="/analitica/clientes"
-        class="px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors"
-        :class="$route.path.startsWith('/analitica/clientes') ? 'bg-surface border border-b-transparent border-border text-text-primary -mb-px' : 'text-text-secondary hover:text-text-primary'"
-      >
-        Clientes
-      </NuxtLink>
-    </nav>
-
     <!-- Loading -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
