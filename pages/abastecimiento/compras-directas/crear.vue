@@ -845,6 +845,12 @@
                     <p class="text-sm font-semibold text-text-primary text-right max-w-[60%] leading-tight">{{ getSupplierName(form.supplier_id) }}</p>
                   </div>
                   <div class="flex justify-between items-center">
+                    <p class="text-xs text-text-secondary">Fecha de compra</p>
+                    <p class="text-xs font-medium text-text-primary">
+                      {{ form.purchase_date ? fnsFormat(form.purchase_date, 'dd/MM/yyyy', { locale: es }) : '-' }}
+                    </p>
+                  </div>
+                  <div class="flex justify-between items-center">
                     <p class="text-xs text-text-secondary">Pago</p>
                     <p class="text-xs font-medium text-text-primary">{{ getPaymentTypeText(form.payment_type) }}</p>
                   </div>

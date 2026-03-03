@@ -424,6 +424,26 @@
           </div>
         </div>
 
+        <!-- Purchase Date (edit mode only) -->
+        <div v-if="isEditMode" class="mt-4 sm:mt-6">
+          <h4 class="font-medium text-text-primary text-sm sm:text-base mb-2">Fecha de compra</h4>
+          <ClientOnly>
+            <VueDatePicker
+              v-model="editPurchaseDate"
+              :enable-time-picker="false"
+              :locale="es"
+              auto-apply
+              :teleport="true"
+              :max-date="new Date()"
+              :format="formatPurchaseDateFn"
+              input-class-name="dp-custom-input"
+              menu-class-name="dp-custom-menu"
+              calendar-cell-class-name="dp-custom-cell"
+              placeholder="Seleccionar fecha..."
+            />
+          </ClientOnly>
+        </div>
+
         <!-- Notes -->
         <div class="mt-4 sm:mt-6">
           <h4 class="font-medium text-text-primary text-sm sm:text-base mb-2">Observaciones</h4>
@@ -549,9 +569,14 @@
 </template>
 
 <script setup lang="ts">
+import { format as fnsFormat } from 'date-fns'
+import { es } from 'date-fns/locale'
+
 const route = useRoute()
 const purchaseId = route.params.id as string
 const toast = useToast()
+
+const formatPurchaseDateFn = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
 
 useHead({
   title: 'Detalle Compra Directa - Abastecimiento'
@@ -568,6 +593,7 @@ const paymentFileInput = ref<HTMLInputElement | null>(null)
 // Edit state
 const editItems = ref<any[]>([])
 const editNotes = ref('')
+const editPurchaseDate = ref<Date | null>(null)
 
 // New item state
 const newItem = ref({
@@ -638,6 +664,7 @@ const enterEditMode = () => {
     }
   })
   editNotes.value = purchase.value.notes || ''
+  editPurchaseDate.value = purchase.value.purchase_date ? new Date(purchase.value.purchase_date) : new Date()
   isEditMode.value = true
 }
 
@@ -645,6 +672,7 @@ const cancelEdit = () => {
   isEditMode.value = false
   editItems.value = []
   editNotes.value = ''
+  editPurchaseDate.value = null
 }
 
 // Returns price per purchase unit (for view mode display)
@@ -769,6 +797,7 @@ const saveChanges = async () => {
         purchase_unit: item.purchase_unit,
         notes: item.notes
       }))),
+      purchase_date: editPurchaseDate.value ? editPurchaseDate.value.toISOString() : null,
       notes: editNotes.value || ''
     }
 
