@@ -66,9 +66,7 @@ const { data: customersResponse, pending: isLoading, error: fetchError, refresh 
 
 const customers = computed(() => customersResponse.value?.data || [])
 const totalCustomers = computed(() => customersResponse.value?.total || 0)
-const totalRevenue = computed(() =>
-  customers.value.reduce((sum: number, c: any) => sum + (c.total_spent || 0), 0)
-)
+const totalRevenue = computed(() => customersResponse.value?.total_revenue || 0)
 
 const totalPages = computed(() => Math.ceil(totalCustomers.value / itemsPerPage.value))
 const canGoPrevious = computed(() => currentPage.value > 1)
