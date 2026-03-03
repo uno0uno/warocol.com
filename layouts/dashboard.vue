@@ -379,6 +379,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path.includes('/analitica/clientes')) {
+    return {
+      pageTitle: 'Clientes',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar clientes...',
+      activePage: 'analytics' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path.includes('/analytics') || path.includes('/analitica')) {
     return {
       pageTitle: 'Mis Ventas',
