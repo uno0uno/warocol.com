@@ -1715,6 +1715,11 @@ const handleScanFileSelect = async (event: Event) => {
         })
         ocrItemsLoaded.value = true
       }
+      // Pre-fill purchase date from extracted invoice date
+      if (data.fecha) {
+        const parsed = new Date(data.fecha + 'T12:00:00')
+        if (!isNaN(parsed.getTime())) form.value.purchase_date = parsed
+      }
       // Pre-fill invoice fields for Step 3
       if (data.numero_factura) form.value.invoice_number = data.numero_factura
       form.value.invoice_file = optimizedFile
