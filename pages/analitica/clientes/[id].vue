@@ -2,6 +2,7 @@
 import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue';
 import { es } from 'date-fns/locale';
 import { format as fnsFormat } from 'date-fns';
+import MetricCard from '~/components/shared/MetricCard.vue';
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -181,23 +182,11 @@ onUnmounted(() => {
         </div>
 
         <!-- Stats Grid -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-          <div class="bg-surface-secondary rounded-lg p-3">
-            <p class="text-xs text-text-secondary mb-1">Total pedidos</p>
-            <p class="text-xl font-bold text-text-primary">{{ customer.total_orders }}</p>
-          </div>
-          <div class="bg-surface-secondary rounded-lg p-3">
-            <p class="text-xs text-text-secondary mb-1">Total comprado</p>
-            <p class="text-xl font-bold text-text-primary">{{ formatCurrency(customer.total_spent) }}</p>
-          </div>
-          <div class="bg-surface-secondary rounded-lg p-3">
-            <p class="text-xs text-text-secondary mb-1">Primera compra</p>
-            <p class="text-base font-semibold text-text-primary">{{ formatDate(customer.first_purchase) }}</p>
-          </div>
-          <div class="bg-surface-secondary rounded-lg p-3">
-            <p class="text-xs text-text-secondary mb-1">Última compra</p>
-            <p class="text-base font-semibold text-text-primary">{{ formatDate(customer.last_purchase) }}</p>
-          </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <MetricCard title="Total pedidos" :value="customer.total_orders" format="number" variant="primary" />
+          <MetricCard title="Total comprado" :value="customer.total_spent" format="currency" variant="primary" />
+          <MetricCard title="Primera compra" :value="formatDate(customer.first_purchase)" format="text" variant="secondary" />
+          <MetricCard title="Última compra" :value="formatDate(customer.last_purchase)" format="text" variant="secondary" />
         </div>
       </div>
 

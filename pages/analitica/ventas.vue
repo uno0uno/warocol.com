@@ -5,7 +5,7 @@ import { format as fnsFormat, startOfMonth, startOfYear, differenceInCalendarDay
 import MetricCard from '~/components/shared/MetricCard.vue';
 import SalesChart from '~/components/analytics/SalesChart.vue';
 
-const { setRefreshHandler, setLastUpdateText } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, setLastUpdateText } = useLayoutActions()
 const { onTenantChange } = useTenantReactive();
 
 const lastUpdate = ref<Date>(new Date());

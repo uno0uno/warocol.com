@@ -4,7 +4,7 @@ import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceToNow } from 'date-fns'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
-const { setRefreshHandler, setLastUpdateText } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, setLastUpdateText } = useLayoutActions()
 const { onTenantChange } = useTenantReactive()
 
 const lastUpdate = ref<Date>(new Date())

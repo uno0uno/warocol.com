@@ -2,10 +2,11 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { es } from 'date-fns/locale';
 import { format as fnsFormat, formatDistanceToNow } from 'date-fns';
+import MetricCard from '~/components/shared/MetricCard.vue';
 
 definePageMeta({ layout: 'dashboard' })
 
-const { setRefreshHandler, setLastUpdateText } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, setLastUpdateText } = useLayoutActions()
 const { onTenantChange } = useTenantReactive();
 
 const lastUpdate = ref<Date>(new Date());
@@ -178,21 +179,10 @@ onUnmounted(() => {
       </ClientOnly>
 
       <!-- Summary Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <div class="bg-white border border-border rounded-xl p-4">
-          <p class="text-xs text-text-secondary mb-1">Clientes únicos</p>
-          <p class="text-2xl font-bold text-text-primary">{{ totalCustomers }}</p>
-        </div>
-        <div class="bg-white border border-border rounded-xl p-4">
-          <p class="text-xs text-text-secondary mb-1">Total comprado</p>
-          <p class="text-2xl font-bold text-text-primary">{{ formatCurrency(totalRevenue) }}</p>
-        </div>
-        <div class="hidden md:block bg-white border border-border rounded-xl p-4">
-          <p class="text-xs text-text-secondary mb-1">Ticket promedio</p>
-          <p class="text-2xl font-bold text-text-primary">
-            {{ totalCustomers > 0 ? formatCurrency(totalRevenue / totalCustomers) : '$0' }}
-          </p>
-        </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <MetricCard title="Clientes únicos" :value="totalCustomers" format="number" variant="primary" />
+        <MetricCard title="Total comprado" :value="totalRevenue" format="currency" variant="primary" />
+        <MetricCard title="Ticket promedio" :value="totalCustomers > 0 ? totalRevenue / totalCustomers : 0" format="currency" variant="primary" />
       </div>
 
       <!-- Table -->
