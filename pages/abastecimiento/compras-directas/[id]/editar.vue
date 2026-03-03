@@ -186,6 +186,27 @@
               </button>
             </div>
 
+            <div class="mb-4 sm:mb-6">
+              <label class="block text-sm font-medium text-text-primary mb-2">
+                Fecha de compra
+              </label>
+              <ClientOnly>
+                <VueDatePicker
+                  v-model="form.purchase_date"
+                  :enable-time-picker="false"
+                  :locale="es"
+                  auto-apply
+                  :teleport="true"
+                  :max-date="new Date()"
+                  :format="formatPurchaseDate"
+                  input-class-name="dp-custom-input"
+                  menu-class-name="dp-custom-menu"
+                  calendar-cell-class-name="dp-custom-cell"
+                  placeholder="Seleccionar fecha..."
+                />
+              </ClientOnly>
+            </div>
+
             <div class="space-y-4">
               <div
                 v-for="(item, index) in form.items"
@@ -743,6 +764,10 @@
 
 <script setup lang="ts">
 import { TrashIcon, DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { es } from 'date-fns/locale'
+import { format as fnsFormat } from 'date-fns'
+
+const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
 
 const route = useRoute()
 const purchaseId = route.params.id as string
@@ -769,6 +794,7 @@ const isSubmitting = ref(false)
 
 // Form
 const form = ref({
+  purchase_date: null as Date | null,
   notes: '',
   invoice_number: '',
   invoice_files: [] as File[],
@@ -796,6 +822,7 @@ const existingPaymentAttachments = computed(() =>
 // Initialize form when purchase loads
 watch(originalPurchase, (purchase) => {
   if (purchase) {
+    form.value.purchase_date = purchase.purchase_date ? new Date(purchase.purchase_date) : new Date()
     form.value.notes = purchase.notes || ''
     form.value.invoice_number = purchase.invoice_number || ''
     form.value.payment_method = purchase.payment_method || ''
@@ -1041,6 +1068,7 @@ const handleSubmit = async () => {
         unit_cost: item.unit_cost,
         notes: item.notes
       }))),
+      purchase_date: form.value.purchase_date ? form.value.purchase_date.toISOString() : null,
       notes: form.value.notes,
       invoice_number: form.value.invoice_number,
       payment_method: form.value.payment_method || null,

@@ -48,7 +48,7 @@
                   Fecha de Compra
                 </p>
                 <p class="text-sm sm:text-lg font-semibold text-text-primary">
-                  Al momento de crear
+                  {{ form.purchase_date ? fnsFormat(form.purchase_date, 'dd/MM/yyyy', { locale: es }) : 'Seleccionar fecha' }}
                 </p>
               </div>
             </div>
@@ -273,6 +273,27 @@
                   <option value="credito">Credito - Pago Diferido</option>
                   <option value="contraentrega">Contraentrega</option>
                 </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Fecha de compra
+                </label>
+                <ClientOnly>
+                  <VueDatePicker
+                    v-model="form.purchase_date"
+                    :enable-time-picker="false"
+                    :locale="es"
+                    auto-apply
+                    :teleport="true"
+                    :max-date="new Date()"
+                    :format="formatPurchaseDate"
+                    input-class-name="dp-custom-input"
+                    menu-class-name="dp-custom-menu"
+                    calendar-cell-class-name="dp-custom-cell"
+                    placeholder="Seleccionar fecha..."
+                  />
+                </ClientOnly>
               </div>
 
               <div class="md:col-span-2">
@@ -943,6 +964,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { TrashIcon, DocumentTextIcon, CreditCardIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
+import { es } from 'date-fns/locale'
+import { format as fnsFormat } from 'date-fns'
+
+const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
 
 useHead({
   title: 'Nueva Compra Directa - Abastecimiento'
@@ -990,6 +1015,7 @@ const localPurchaseUnits = ref<LocalPurchaseUnit[]>([])
 const form = ref({
   supplier_id: '',
   payment_type: 'contado',
+  purchase_date: new Date() as Date | null,
   notes: '',
   invoice_number: '',
   invoice_file: null as File | null,
@@ -1761,6 +1787,7 @@ const handleSubmit = async () => {
       payload.new_units_data = JSON.stringify(localPurchaseUnits.value)
     }
 
+    if (form.value.purchase_date) payload.purchase_date = form.value.purchase_date.toISOString()
     if (form.value.notes) payload.notes = form.value.notes
     if (form.value.invoice_number) payload.invoice_number = form.value.invoice_number
     if (form.value.payment_method) {
