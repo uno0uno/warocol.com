@@ -68,6 +68,16 @@ const { data: apiData, pending: isLoading, error: fetchError, refresh } = useAsy
 )
 
 const customer = computed(() => (apiData.value as any)?.customer || null)
+const realEmail = computed(() => {
+  const email = customer.value?.email
+  if (!email || email.endsWith('@customer.temp')) return null
+  return email
+})
+const avgTicket = computed(() => {
+  const c = customer.value
+  if (!c || !c.total_orders) return 0
+  return c.total_spent / c.total_orders
+})
 const ordersData = computed(() => (apiData.value as any)?.orders || { items: [], total: 0, page: 1, per_page: perPage })
 const orders = computed(() => ordersData.value?.items || [])
 const totalOrders = computed(() => ordersData.value?.total || 0)
@@ -161,33 +171,77 @@ onUnmounted(() => {
     <div v-else-if="customer" class="flex flex-col gap-4 pb-20">
 
       <!-- Customer Header Card -->
-      <div class="bg-white border border-border rounded-xl p-5">
-        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <!-- Identity -->
-          <div>
-            <h2 class="text-xl font-bold text-text-primary">{{ customer.name }}</h2>
-            <div class="flex flex-col gap-1 mt-1">
-              <p v-if="customer.phone" class="text-sm text-text-secondary">📞 {{ customer.phone }}</p>
-              <p v-if="customer.email" class="text-sm text-text-secondary">✉️ {{ customer.email }}</p>
+      <div class="bg-white border border-border rounded-xl overflow-hidden">
+        <!-- Top: Identity + Total -->
+        <div class="p-5 sm:p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <!-- Avatar + Name -->
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span class="text-lg font-bold text-primary">{{ customer.name?.[0]?.toUpperCase() || '?' }}</span>
+              </div>
+              <div class="min-w-0">
+                <h2 class="text-xl font-bold text-text-primary truncate">{{ customer.name }}</h2>
+                <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">Cliente POS</p>
+              </div>
+            </div>
+            <!-- Total comprado (prominent, right) -->
+            <div class="text-left sm:text-right flex-shrink-0">
+              <p class="text-2xl sm:text-3xl font-bold text-text-primary">{{ formatCurrency(customer.total_spent) }}</p>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">Total comprado</p>
             </div>
           </div>
-          <!-- Back button (inline, visible on mobile) -->
-          <button
-            @click="goBack"
-            class="sm:hidden self-start flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors min-h-[44px] px-3 py-2 rounded-lg border border-border"
-            aria-label="Volver a la lista de clientes"
-          >
-            ← Volver
-          </button>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <MetricCard title="Total pedidos" :value="customer.total_orders" format="number" variant="primary" />
-          <MetricCard title="Total comprado" :value="customer.total_spent" format="currency" variant="primary" />
-          <MetricCard title="Primera compra" :value="formatDate(customer.first_purchase)" format="text" variant="secondary" />
-          <MetricCard title="Última compra" :value="formatDate(customer.last_purchase)" format="text" variant="secondary" />
+        <!-- Info Grid (factura style) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 border-t border-border divide-border">
+          <!-- Phone -->
+          <div class="p-4 border-b sm:border-b-0 border-r border-border">
+            <div class="flex items-center gap-1.5 mb-1.5">
+              <svg class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Teléfono</p>
+            </div>
+            <p class="text-sm font-semibold text-text-primary">{{ customer.phone || '-' }}</p>
+          </div>
+          <!-- Email -->
+          <div class="p-4 border-b sm:border-b-0 sm:border-r border-border">
+            <div class="flex items-center gap-1.5 mb-1.5">
+              <svg class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Email</p>
+            </div>
+            <p class="text-sm font-semibold text-text-primary truncate">{{ realEmail || '-' }}</p>
+          </div>
+          <!-- Primera compra -->
+          <div class="p-4 border-r border-border">
+            <div class="flex items-center gap-1.5 mb-1.5">
+              <svg class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Primera compra</p>
+            </div>
+            <p class="text-sm font-semibold text-text-primary">{{ formatDate(customer.first_purchase) }}</p>
+          </div>
+          <!-- Última compra -->
+          <div class="p-4">
+            <div class="flex items-center gap-1.5 mb-1.5">
+              <svg class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Última compra</p>
+            </div>
+            <p class="text-sm font-semibold text-text-primary">{{ formatDate(customer.last_purchase) }}</p>
+          </div>
         </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-2 gap-4">
+        <MetricCard title="Total pedidos" :value="customer.total_orders" format="number" variant="primary" />
+        <MetricCard title="Ticket promedio" :value="avgTicket" format="currency" variant="primary" />
       </div>
 
       <!-- Date Filter -->

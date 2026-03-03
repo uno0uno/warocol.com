@@ -222,12 +222,7 @@ onUnmounted(() => {
 
         <!-- Desktop Cell Customizations -->
         <template #cell-name="{ row }">
-          <NuxtLink
-            :to="`/analitica/clientes/${row.customer_id}`"
-            class="text-sm font-semibold text-indigo-600 hover:text-indigo-800 hover:underline transition-colors"
-          >
-            {{ row.name }}
-          </NuxtLink>
+          <span class="text-sm font-semibold text-text-primary">{{ row.name }}</span>
         </template>
 
         <template #cell-phone="{ value }">
