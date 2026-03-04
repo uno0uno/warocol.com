@@ -203,18 +203,22 @@ async function submit() {
     >
 
       <!-- ── Compact Header ──────────────────────────────────────────────── -->
-      <div class="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface p-4">
-        <NuxtLink
-          to="/ventas"
-          class="flex items-center justify-center w-9 h-9 shrink-0 rounded-lg border border-border hover:bg-surface-secondary transition-colors"
-          aria-label="Volver a ventas"
-        >
-          <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-        </NuxtLink>
-        <h1 class="text-base font-bold text-text-primary flex-1 min-w-0">Nueva venta manual</h1>
-        <div class="flex flex-wrap items-center gap-2">
+      <div class="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
+        <!-- Row 1: back + title -->
+        <div class="flex items-center gap-3">
+          <NuxtLink
+            to="/ventas"
+            class="flex items-center justify-center w-9 h-9 shrink-0 rounded-lg border border-border hover:bg-surface-secondary transition-colors"
+            aria-label="Volver a ventas"
+          >
+            <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </NuxtLink>
+          <h1 class="text-base font-bold text-text-primary">Nueva venta manual</h1>
+        </div>
+        <!-- Row 2: date + payment -->
+        <div class="grid grid-cols-2 gap-2">
           <input
             id="order_date"
             v-model="form.order_date"
@@ -222,14 +226,14 @@ async function submit() {
             :max="new Date().toISOString().slice(0, 16)"
             required
             aria-label="Fecha y hora de la venta"
-            class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            class="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           />
           <select
             id="payment_method"
             v-model="form.payment_method"
             required
             aria-label="Método de pago"
-            class="h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+            class="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
           >
             <option value="cash">Efectivo</option>
             <option value="card">Tarjeta</option>
