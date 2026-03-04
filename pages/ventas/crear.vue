@@ -58,14 +58,7 @@ const activeItem = computed(() =>
 
 function addProductToCart(product: any) {
   if (!product) return
-  const existingIdx = form.value.items.findIndex(i => i.product_id === product.id)
-  if (existingIdx !== -1) {
-    form.value.items[existingIdx].quantity++
-    if (form.value.items[existingIdx].modifier_groups.length > 0) {
-      activeItemIndex.value = existingIdx
-    }
-    return
-  }
+  // Always create a new line item (same product can appear multiple times with different modifiers)
   form.value.items.push({
     product_id: product.id,
     quantity: 1,
@@ -101,7 +94,9 @@ function decrementItem(index: number) {
 }
 
 function cartQtyFor(productId: string) {
-  return form.value.items.find(i => i.product_id === productId)?.quantity ?? 0
+  return form.value.items
+    .filter((i: LineItem) => i.product_id === productId)
+    .reduce((sum: number, i: LineItem) => sum + i.quantity, 0)
 }
 
 function productFor(item: LineItem) {
