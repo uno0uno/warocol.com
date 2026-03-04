@@ -16,9 +16,9 @@ interface ModifierOption {
 interface ModifierGroup {
   id: string
   name: string
-  required: boolean
-  maxSelections: number
-  options: ModifierOption[]
+  is_required: boolean
+  max_qty: number
+  modifiers: ModifierOption[]
 }
 
 interface LineItem {
@@ -67,7 +67,7 @@ function onProductChange(index: number) {
   const item = form.value.items[index]
   const product = products.value.find((p: any) => p.id === item.product_id)
   if (product) {
-    item.unit_price = product.price
+    item.unit_price = Number(product.price) || 0
     item.modifier_groups = product.modifier_groups || []
     item.selected_modifiers = []
   }
@@ -79,14 +79,14 @@ function toggleModifier(item: LineItem, option: ModifierOption, group: ModifierG
     item.selected_modifiers.splice(idx, 1)
     return
   }
-  // Enforce maxSelections per group
+  // Enforce max_qty per group
   const countInGroup = item.selected_modifiers.filter(m =>
-    group.options.some(o => o.id === m.id)
+    group.modifiers.some(o => o.id === m.id)
   ).length
-  if (countInGroup >= group.maxSelections) {
+  if (countInGroup >= group.max_qty) {
     // Remove oldest in group
     const oldestIdx = item.selected_modifiers.findIndex(m =>
-      group.options.some(o => o.id === m.id)
+      group.modifiers.some(o => o.id === m.id)
     )
     if (oldestIdx !== -1) item.selected_modifiers.splice(oldestIdx, 1)
   }
@@ -100,8 +100,8 @@ function isModifierSelected(item: LineItem, modifierId: string) {
 // ─── Totals ───────────────────────────────────────────────────────────────────
 
 function itemTotal(item: LineItem) {
-  const base = item.quantity * item.unit_price
-  const extras = item.selected_modifiers.reduce((s, m) => s + m.price, 0)
+  const base = Number(item.quantity) * Number(item.unit_price)
+  const extras = item.selected_modifiers.reduce((s, m) => s + Number(m.price), 0)
   return base + extras
 }
 
@@ -111,8 +111,7 @@ const total = computed(() =>
 
 const canSubmit = computed(() =>
   form.value.items.length > 0 &&
-  form.value.items.every(i => i.product_id && i.quantity > 0) &&
-  total.value > 0 &&
+  form.value.items.every(i => i.product_id && Number(i.quantity) > 0) &&
   !loading.value
 )
 
@@ -299,12 +298,12 @@ async function submit() {
               >
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
                   {{ group.name }}
-                  <span v-if="group.required" class="text-destructive">*</span>
-                  <span class="normal-case font-normal ml-1">(máx. {{ group.maxSelections }})</span>
+                  <span v-if="group.is_required" class="text-destructive">*</span>
+                  <span class="normal-case font-normal ml-1">(máx. {{ group.max_qty }})</span>
                 </p>
                 <div class="flex flex-wrap gap-2">
                   <button
-                    v-for="option in group.options"
+                    v-for="option in group.modifiers"
                     :key="option.id"
                     type="button"
                     class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm transition-all"

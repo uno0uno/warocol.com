@@ -31,24 +31,22 @@
             <NotificationsNotificationBell class="hidden lg:flex" />
 
             <!-- Global Header Actions -->
-            <div class="flex items-center gap-2">
-              <NuxtLink
-                to="/abastecimiento/compras-directas/crear"
-                class="flex items-center gap-1 md:gap-2 bg-primary text-primary-foreground px-2 md:px-4 py-2 md:py-2.5 rounded-xl font-medium hover:bg-primary/90 transition-all"
-                title="Cargar Factura IA"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/></svg>
-                <span class="hidden sm:inline">Cargar Factura IA</span>
-              </NuxtLink>
-              <NuxtLink
-                to="/pos"
-                class="flex items-center gap-1 md:gap-2 bg-card border border-border text-foreground px-2 md:px-4 py-2 md:py-2.5 rounded-xl font-medium hover:bg-accent transition-all"
-                title="Venta Nueva"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                <span class="hidden sm:inline">Venta Nueva</span>
-              </NuxtLink>
-            </div>
+            <NuxtLink
+              to="/abastecimiento/compras-directas/crear"
+              class="flex items-center gap-1 md:gap-2 bg-primary text-primary-foreground px-2 md:px-4 py-2 md:py-2.5 rounded-xl font-medium hover:bg-primary/90 transition-all"
+              title="Cargar Factura IA"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/></svg>
+              <span class="hidden sm:inline">Cargar Factura IA</span>
+            </NuxtLink>
+            <NuxtLink
+              to="/pos"
+              class="flex items-center gap-1 md:gap-2 bg-card border border-border text-foreground px-2 md:px-4 py-2 md:py-2.5 rounded-xl font-medium hover:bg-accent transition-all"
+              title="Venta POS"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              <span class="hidden sm:inline">Venta POS</span>
+            </NuxtLink>
             <!-- Portal Target for Custom Actions (pages can still inject extra actions) -->
             <div id="dashboard-header-actions" class="flex items-center gap-2"></div>
 
@@ -69,31 +67,30 @@
               {{ dynamicStatus.label }}
             </span>
 
-            <div class="flex gap-2 md:gap-3">
-              <!-- Restaurant open/close toggle -->
-              <DashboardBusinessStatusToggle />
+            <!-- Restaurant open/close toggle -->
+            <DashboardBusinessStatusToggle />
 
-              <!-- Refresh Button (Desktop only) - always visible -->
-              <button
-                @click="handleRefresh"
-                :disabled="isRefreshing"
-                aria-label="Refrescar datos"
-                class="hidden md:flex w-11 h-11 items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Refrescar">
-                <UiLoadingMatrix v-if="isRefreshing" size="5.5px" />
-                <svg v-else
-                  class="w-5 h-5 transition-transform duration-300 hover:rotate-180"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                  </path>
-                </svg>
-              </button>
-              <!-- Back Button -->
-              <button v-if="backButton" @click="goBack" class="btn-secondary px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold">
-                {{ backButton.label }}
-              </button>
-            </div>
+            <!-- Refresh Button (Desktop only) - always visible -->
+            <button
+              @click="handleRefresh"
+              :disabled="isRefreshing"
+              aria-label="Refrescar datos"
+              class="hidden md:flex w-11 h-11 items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Refrescar">
+              <UiLoadingMatrix v-if="isRefreshing" size="5.5px" />
+              <svg v-else
+                class="w-5 h-5 transition-transform duration-300 hover:rotate-180"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+              </svg>
+            </button>
+
+            <!-- Back Button -->
+            <button v-if="backButton" @click="goBack" class="btn-secondary px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold">
+              {{ backButton.label }}
+            </button>
           </div>
         </div>
       </header>

@@ -46,7 +46,7 @@
   --popover: 0 0% 100%; /* Popovers blancos */
   --popover-foreground: var(--ebony-900); /* Texto en popovers */
   
-  --primary: var(--crocus-500); /* Púrpura principal */
+  --primary: var(--crocus-600); /* Púrpura principal — crocus-600 para contraste WCAG AA (5.7:1 vs blanco) */
   --primary-foreground: 0 0% 100%; /* Texto en botones primarios */
   
   --secondary: var(--titan-400); /* Gris claro secundario */
@@ -55,7 +55,7 @@
   --muted: var(--titan-300); /* Elementos silenciados */
   --muted-foreground: var(--ebony-600); /* Texto silenciado */
   
-  --accent: var(--crocus-500); /* Acentos púrpura */
+  --accent: var(--crocus-600); /* Acentos púrpura */
   --accent-foreground: 0 0% 100%; /* Texto en acentos */
   
   --destructive: 0 84% 60%; /* Rojo para destructivo */
@@ -63,7 +63,7 @@
   
   --border: var(--titan-400); /* Bordes grises claros */
   --input: 0 0% 100%; /* Inputs blancos */
-  --ring: var(--crocus-500); /* Anillos de foco púrpura */
+  --ring: var(--crocus-600); /* Anillos de foco púrpura */
   
   --radius: 0.5rem; /* Border radius */
 

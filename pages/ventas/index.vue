@@ -368,9 +368,9 @@ onUnmounted(() => { clearRefreshHandler(_refreshFn) })
           v-if="localSearchTerm || dateRangeDates || paymentMethodFilter || statusFilter"
           @click="clearFilters"
           class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-          title="Limpiar filtros"
+          aria-label="Limpiar filtros"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -379,8 +379,8 @@ onUnmounted(() => { clearRefreshHandler(_refreshFn) })
         <button
           @click="exportOrders"
           :disabled="isExporting"
-          class="hidden md:flex h-10 px-4 items-center gap-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Exportar ventas a correo"
+          class="hidden md:flex h-10 px-3 items-center gap-2 rounded-lg border-2 border-border bg-background text-text-secondary text-sm font-medium hover:text-text-primary hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          :aria-label="isExporting ? 'Exportando ventas...' : 'Exportar ventas a correo'"
         >
           <svg v-if="!isExporting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -395,13 +395,13 @@ onUnmounted(() => { clearRefreshHandler(_refreshFn) })
         <!-- Nueva Venta Button (Desktop only) -->
         <NuxtLink
           to="/ventas/crear"
-          class="hidden md:flex h-10 px-4 items-center gap-2 rounded-lg border-2 border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors"
-          title="Registrar venta manual"
+          class="hidden md:flex h-10 px-3 items-center gap-1.5 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors whitespace-nowrap shrink-0"
+          aria-label="Registrar venta manual"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          <span>Nueva venta</span>
+          <span>Manual</span>
         </NuxtLink>
       </div>
 
@@ -477,7 +477,7 @@ onUnmounted(() => { clearRefreshHandler(_refreshFn) })
 
             <div class="space-y-2">
               <div class="flex items-center gap-2">
-                <span class="text-2xl">👤</span>
+                <span class="text-2xl" aria-hidden="true">👤</span>
                 <div class="flex-1">
                   <p class="text-sm font-medium text-text-primary">{{ item.customer_name }}</p>
                   <p class="text-xs text-text-secondary">{{ item.customer_phone }}</p>
@@ -671,7 +671,7 @@ onUnmounted(() => { clearRefreshHandler(_refreshFn) })
   color: hsl(var(--foreground)) !important;
   padding-left: 0.75rem !important;
   padding-right: 0.75rem !important;
-  min-width: 220px;
+  min-width: 150px;
 }
 .dp-custom-input:focus {
   outline: none !important;
