@@ -391,6 +391,18 @@ onUnmounted(() => { clearRefreshHandler(_refreshFn) })
           </svg>
           <span>{{ isExporting ? 'Enviando...' : 'Exportar' }}</span>
         </button>
+
+        <!-- Nueva Venta Button (Desktop only) -->
+        <NuxtLink
+          to="/ventas/crear"
+          class="hidden md:flex h-10 px-4 items-center gap-2 rounded-lg border-2 border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors"
+          title="Registrar venta manual"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Nueva venta</span>
+        </NuxtLink>
       </div>
 
       <!-- Responsive Data View -->
