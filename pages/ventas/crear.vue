@@ -18,7 +18,7 @@ const form = ref({
 
 // ─── Products catalog ─────────────────────────────────────────────────────────
 
-const { data: productsData } = await useFetch('/api/menu/products', {
+const { data: productsData, pending: loadingProducts } = useFetch('/api/menu/products', {
   query: { is_available: true, limit: 250 }
 })
 
@@ -91,7 +91,12 @@ async function submit() {
 
 <template>
   <div class="page-layout">
-    <div class="flex flex-col gap-6">
+    <!-- Loading State -->
+    <div v-if="loadingProducts" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
+    </div>
+
+    <div v-else class="flex flex-col gap-6">
 
       <!-- Header -->
       <div class="flex items-center gap-3">
@@ -285,5 +290,6 @@ async function submit() {
       </div>
 
     </div>
+
   </div>
 </template>
