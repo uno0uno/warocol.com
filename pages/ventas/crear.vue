@@ -160,7 +160,7 @@ async function submit() {
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <div v-else class="flex flex-col gap-6">
+    <form v-else class="flex flex-col gap-6" @submit.prevent="submit" novalidate>
 
       <!-- Header -->
       <div class="flex items-center gap-3">
@@ -194,7 +194,7 @@ async function submit() {
               type="datetime-local"
               :max="new Date().toISOString().slice(0, 16)"
               required
-              class="h-10 px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              class="h-10 px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             />
           </div>
 
@@ -206,7 +206,7 @@ async function submit() {
               id="payment_method"
               v-model="form.payment_method"
               required
-              class="h-10 px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+              class="h-10 px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
             >
               <option value="cash">Efectivo</option>
               <option value="card">Tarjeta</option>
@@ -234,14 +234,14 @@ async function submit() {
 
                 <!-- Product selector -->
                 <div class="flex flex-col gap-1 sm:col-span-2">
-                  <label :for="`product-${index}`" class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                  <label :for="`product-${index}`" class="text-sm font-medium text-text-secondary">
                     Producto
                   </label>
                   <select
                     :id="`product-${index}`"
                     v-model="item.product_id"
                     required
-                    class="h-10 px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                    class="h-10 px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
                     @change="onProductChange(index)"
                   >
                     <option value="" disabled>Seleccione producto</option>
@@ -253,7 +253,7 @@ async function submit() {
 
                 <!-- Quantity -->
                 <div class="flex flex-col gap-1">
-                  <label :for="`qty-${index}`" class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                  <label :for="`qty-${index}`" class="text-sm font-medium text-text-secondary">
                     Cantidad
                   </label>
                   <input
@@ -263,7 +263,7 @@ async function submit() {
                     min="1"
                     step="1"
                     required
-                    class="h-10 px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    class="h-10 px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   />
                 </div>
               </div>
@@ -278,13 +278,14 @@ async function submit() {
                 </span>
                 <button
                   type="button"
-                  class="flex items-center justify-center min-h-[36px] min-w-[36px] rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+                  class="flex items-center gap-1 min-h-[44px] min-w-[44px] px-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
                   :aria-label="`Eliminar producto ${index + 1}`"
                   @click="removeItem(index)"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
+                  <span class="hidden sm:inline text-xs">Eliminar</span>
                 </button>
               </div>
             </div>
@@ -296,7 +297,7 @@ async function submit() {
                 :key="group.id"
                 class="flex flex-col gap-2"
               >
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                <p class="text-sm font-medium text-text-secondary">
                   {{ group.name }}
                   <span v-if="group.is_required" class="text-destructive">*</span>
                   <span class="normal-case font-normal ml-1">(máx. {{ group.max_qty }})</span>
@@ -306,7 +307,7 @@ async function submit() {
                     v-for="option in group.modifiers"
                     :key="option.id"
                     type="button"
-                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm transition-all"
+                    class="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm transition-all"
                     :class="isModifierSelected(item, option.id)
                       ? 'border-primary bg-primary/10 text-primary font-medium'
                       : 'border-border bg-background text-text-primary hover:border-primary/50'"
@@ -329,10 +330,10 @@ async function submit() {
                       />
                     </svg>
                     <span>{{ option.name }}</span>
-                    <span v-if="option.price > 0" class="text-xs opacity-70">
+                    <span v-if="option.price > 0" class="text-xs text-text-secondary">
                       +{{ formatCurrency(option.price) }}
                     </span>
-                    <span v-else-if="option.price === 0" class="text-xs opacity-70">
+                    <span v-else-if="option.price === 0" class="text-xs text-text-secondary">
                       Incluido
                     </span>
                   </button>
@@ -378,19 +379,18 @@ async function submit() {
       </div>
 
       <!-- Total + Submit -->
-      <div class="rounded-xl border border-border bg-surface p-5 flex items-center justify-between gap-4">
+      <div class="rounded-xl border border-primary bg-primary/5 p-5 flex items-center justify-between gap-4">
         <div>
           <p class="text-sm text-text-secondary">Total</p>
           <p class="text-2xl font-bold text-primary">{{ formatCurrency(total) }}</p>
         </div>
 
         <button
-          type="button"
+          type="submit"
           :disabled="!canSubmit"
           class="h-11 px-6 rounded-lg bg-primary text-primary-foreground text-sm font-semibold transition-all
-                 hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+                 hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
                  active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
-          @click="submit"
         >
           <span v-if="loading" class="flex items-center gap-2">
             <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -403,6 +403,6 @@ async function submit() {
         </button>
       </div>
 
-    </div>
+    </form>
   </div>
 </template>
