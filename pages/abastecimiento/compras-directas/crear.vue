@@ -17,7 +17,7 @@
     <div v-else>
       <!-- Order Information Card -->
       <div class="bg-surface border-2 border-border rounded-lg mb-4 sm:mb-6">
-        <div class="p-4 sm:p-6">
+        <div class="p-3 sm:p-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <!-- Purchase Number -->
             <div class="flex items-center space-x-2 sm:space-x-3">
@@ -79,8 +79,8 @@
       </div>
 
       <!-- Progress Steps -->
-      <div class="bg-surface border-border border rounded-lg mb-4 sm:mb-6">
-        <div class="p-3 sm:p-6">
+      <div class="bg-surface border-border border rounded-lg mb-2 sm:mb-3">
+        <div class="p-3 sm:p-4">
           <div class="flex items-center justify-between">
             <!-- Step 1 -->
             <div class="flex items-center flex-1">
@@ -185,8 +185,8 @@
         <!-- Step 1: Proveedor -->
         <Transition name="fade" mode="out-in">
         <div v-if="currentStep === 1" key="step-1" class="bg-surface border-border border rounded-lg">
-          <div class="p-4 sm:p-6">
-            <div class="flex items-center justify-between mb-4 sm:mb-6">
+          <div class="p-3 sm:p-4">
+            <div class="flex items-center justify-between mb-2 sm:mb-3">
               <h3 class="text-base sm:text-lg font-semibold text-text-primary">Seleccionar Proveedor</h3>
               <div>
                 <!-- Hidden scan input (moved here from Step 2) -->
@@ -213,7 +213,7 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-text-primary mb-2">Proveedor *</label>
                 <div class="flex items-stretch gap-3">
@@ -314,7 +314,7 @@
         <!-- Step 2: Items -->
         <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border-border border rounded-lg">
           <div class="p-4 sm:p-6">
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-4 sm:mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-2 sm:mb-3">
               <h3 class="text-base sm:text-lg font-semibold text-text-primary">Items de la Compra</h3>
               <div class="flex items-center gap-2">
                 <button
@@ -336,7 +336,7 @@
             </div>
 
             <!-- Tabs de Filtro por Tipo de Ingrediente -->
-            <div class="flex flex-wrap gap-2 mb-4 sm:mb-6 p-1 bg-background rounded-lg border border-border">
+            <div class="flex flex-wrap gap-2 mb-2 sm:mb-3 p-1 bg-background rounded-lg border border-border">
               <button
                 v-for="typeOption in ingredientTypeOptions"
                 :key="typeOption.value"
@@ -364,7 +364,7 @@
             </div>
 
             <!-- Items List -->
-            <div v-else class="space-y-3">
+            <div v-else class="space-y-2">
               <div
                 v-for="(item, index) in form.items"
                 :key="index"
@@ -633,17 +633,17 @@
         <div v-else-if="currentStep === 3" key="step-3" class="bg-surface border-border border rounded-lg">
           <div class="p-4 sm:p-6">
             <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-2">Documentos (Opcional)</h3>
-            <p class="text-sm text-text-secondary mb-6">Puedes agregar la factura y comprobante de pago ahora o despues</p>
+            <p class="text-sm text-text-secondary mb-4">Puedes agregar la factura y comprobante de pago ahora o despues</p>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <!-- Factura Section -->
               <div class="border-2 border-border rounded-lg p-4 bg-background/50">
-                <h4 class="font-semibold text-text-primary mb-4 flex items-center gap-2">
+                <h4 class="font-semibold text-text-primary mb-3 flex items-center gap-2">
                   <DocumentTextIcon class="w-5 h-5 text-primary" />
                   Factura
                 </h4>
 
-                <div class="space-y-4">
+                <div class="space-y-3">
                   <div>
                     <label class="block text-sm font-medium text-text-secondary mb-2">
                       Numero de Factura
@@ -709,12 +709,12 @@
 
               <!-- Comprobante de Pago Section -->
               <div class="border-2 border-border rounded-lg p-4 bg-background/50">
-                <h4 class="font-semibold text-text-primary mb-4 flex items-center gap-2">
+                <h4 class="font-semibold text-text-primary mb-3 flex items-center gap-2">
                   <CreditCardIcon class="w-5 h-5 text-primary" />
                   Comprobante de Pago
                 </h4>
 
-                <div class="space-y-4">
+                <div class="space-y-3">
                   <div>
                     <label class="block text-sm font-medium text-text-secondary mb-2">
                       Metodo de Pago
