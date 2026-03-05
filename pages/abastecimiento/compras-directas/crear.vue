@@ -376,7 +376,7 @@
                     type="button"
                     @click="removeItem(index)"
                     :disabled="form.items.length === 1"
-                    class="text-destructive hover:text-destructive/80 disabled:opacity-50 p-1"
+                    class="text-destructive hover:text-destructive/80 disabled:opacity-50 p-2"
                   >
                     <TrashIcon class="w-4 h-4" />
                   </button>
@@ -422,7 +422,7 @@
                       </div>
                     </div>
                     <!-- OCR hint -->
-                    <p v-if="item.ocr_description" class="mt-1 text-[10px] leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-amber-600'">
+                    <p v-if="item.ocr_description" class="mt-1 text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-amber-600'">
                       <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -494,30 +494,25 @@
 
                     <!-- Bottom Row: Unit Section -->
                     <div class="w-full">
-                       <div class="flex items-center justify-between mb-1">
-                        <div class="flex items-center gap-2">
-                          <label class="text-xs font-medium text-text-primary">Unidad *</label>
-                          <button
-                            v-if="item.ingredient_id && !newUnitForms[index]?.show"
-                            type="button"
-                            class="text-[10px] text-primary hover:underline flex items-center gap-0.5"
-                            @click="initNewUnitForm(index)"
-                          >
-                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                            </svg>
-                            Nueva
-                          </button>
-                        </div>
-                        <p v-if="item.ingredient_id && item.purchase_unit" class="text-[10px] text-text-secondary truncate">
-                          = {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
-                        </p>
+                      <div class="flex items-center gap-2 mb-1">
+                        <label class="text-xs font-medium text-text-primary">Unidad *</label>
+                        <button
+                          v-if="item.ingredient_id && !newUnitForms[index]?.show"
+                          type="button"
+                          class="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                          @click="initNewUnitForm(index)"
+                        >
+                          <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                          </svg>
+                          Nueva
+                        </button>
                       </div>
 
-                      <div class="flex items-end gap-2">
+                      <div class="flex items-start gap-2">
                         <!-- Unit Select -->
                         <div class="flex-1 min-w-[120px]">
-                           <select
+                          <select
                             v-model="item.purchase_unit"
                             required
                             :disabled="!item.ingredient_id"
@@ -534,6 +529,10 @@
                               {{ unitOpt.label }}
                             </option>
                           </select>
+                          <!-- Conversion text: shown below select, contextually close -->
+                          <p v-if="item.ingredient_id && item.purchase_unit" class="text-[10px] text-text-secondary mt-0.5">
+                            = {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
+                          </p>
                         </div>
 
                         <!-- Peso por unidad -->
@@ -542,7 +541,7 @@
                           class="rounded-md p-1 transition-colors"
                           :class="getExistingGramsPerUnit(item.ingredient_id) ? 'bg-success/8 border border-success/25' : ''"
                         >
-                          <label class="block text-[10px] font-semibold text-text-primary mb-0.5 text-center">
+                          <label class="block text-[10px] font-semibold text-text-primary mb-0.5">
                             Peso(gr){{ getExistingGramsPerUnit(item.ingredient_id) ? ' ✓' : '' }}
                           </label>
                           <input
@@ -553,7 +552,7 @@
                             placeholder="0"
                             class="input-base w-20 px-1 py-1.5 text-xs text-center h-[34px]"
                           />
-                          <p class="text-[11px] text-center mt-0.5 text-text-secondary font-medium">
+                          <p class="text-[10px] mt-0.5 text-text-secondary font-medium">
                             {{ getExistingGramsPerUnit(item.ingredient_id) ? 'Guardado' : 'Solo esta vez' }}
                           </p>
                         </div>
@@ -1691,7 +1690,7 @@ const handleScanFileSelect = async (event: Event) => {
             purchase_unit: '',
             unit_cost: ocrItem.precio_unitario || 0,
             total_cost: ocrItem.total || 0,
-            notes: ocrItem.descripcion ? `Fac: "${ocrItem.descripcion}"` : '',
+            notes: '',
             suggested_price: null,
             ocr_description: ocrItem.descripcion || ''
           }
