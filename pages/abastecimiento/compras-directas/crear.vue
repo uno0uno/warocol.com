@@ -537,11 +537,12 @@
                         </div>
 
                         <!-- Peso por unidad -->
-                        <div v-if="needsGramsPerUnit(item.ingredient_id)">
-                          <label
-                            class="block text-[10px] font-medium mb-0.5 text-center"
-                            :class="getExistingGramsPerUnit(item.ingredient_id) ? 'text-success' : 'text-text-secondary'"
-                          >
+                        <div
+                          v-if="needsGramsPerUnit(item.ingredient_id)"
+                          class="rounded-md p-1 transition-colors"
+                          :class="getExistingGramsPerUnit(item.ingredient_id) ? 'bg-success/8 border border-success/25' : ''"
+                        >
+                          <label class="block text-[10px] font-semibold text-text-primary mb-0.5 text-center">
                             Peso(gr){{ getExistingGramsPerUnit(item.ingredient_id) ? ' ✓' : '' }}
                           </label>
                           <input
@@ -551,13 +552,9 @@
                             step="1"
                             placeholder="0"
                             class="input-base w-20 px-1 py-1.5 text-xs text-center h-[34px]"
-                            :class="getExistingGramsPerUnit(item.ingredient_id) ? 'border-success/50' : ''"
                           />
-                          <p
-                            class="text-[9px] text-center mt-0.5"
-                            :class="getExistingGramsPerUnit(item.ingredient_id) ? 'text-success' : 'text-text-secondary'"
-                          >
-                            {{ getExistingGramsPerUnit(item.ingredient_id) ? 'Guardado' : 'Se guarda automáticamente' }}
+                          <p class="text-[11px] text-center mt-0.5 text-text-secondary font-medium">
+                            {{ getExistingGramsPerUnit(item.ingredient_id) ? 'Guardado' : 'Solo esta vez' }}
                           </p>
                         </div>
 
