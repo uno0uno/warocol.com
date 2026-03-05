@@ -538,15 +538,27 @@
 
                         <!-- Peso por unidad -->
                         <div v-if="needsGramsPerUnit(item.ingredient_id)">
-                           <label class="block text-[10px] font-medium text-text-secondary mb-0.5 text-center">Peso(gr)</label>
-                           <input
+                          <label
+                            class="block text-[10px] font-medium mb-0.5 text-center"
+                            :class="getExistingGramsPerUnit(item.ingredient_id) ? 'text-success' : 'text-text-secondary'"
+                          >
+                            Peso(gr){{ getExistingGramsPerUnit(item.ingredient_id) ? ' ✓' : '' }}
+                          </label>
+                          <input
                             v-model.number="item.grams_per_unit"
                             type="number"
                             min="1"
                             step="1"
                             placeholder="0"
                             class="input-base w-20 px-1 py-1.5 text-xs text-center h-[34px]"
+                            :class="getExistingGramsPerUnit(item.ingredient_id) ? 'border-success/50' : ''"
                           />
+                          <p
+                            class="text-[9px] text-center mt-0.5"
+                            :class="getExistingGramsPerUnit(item.ingredient_id) ? 'text-success' : 'text-text-secondary'"
+                          >
+                            {{ getExistingGramsPerUnit(item.ingredient_id) ? 'Guardado' : 'Se guarda automáticamente' }}
+                          </p>
                         </div>
 
                         <!-- New Unit Form Fields -->
