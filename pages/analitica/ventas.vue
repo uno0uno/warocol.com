@@ -172,6 +172,13 @@ watch(dateRangeDates, async (val) => {
   }
 })
 
+watch([paymentMethodFilter, statusFilter], async () => {
+  if (hasDateFilter.value) {
+    await refreshFilteredMetrics()
+    lastUpdate.value = new Date()
+  }
+})
+
 const clearFilters = async () => {
   paymentMethodFilter.value = null
   statusFilter.value = null
