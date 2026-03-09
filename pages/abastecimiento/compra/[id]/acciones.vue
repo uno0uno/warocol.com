@@ -184,6 +184,7 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import { usePurchasesStore } from '~/stores/purchases'
+import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 
 // Get order ID from route
 const route = useRoute()
@@ -215,7 +216,7 @@ const purchasesStore = usePurchasesStore()
 // Fetch ingredients
 const { data: ingredientsData, pending: loadingIngredients } = useFetch('/api/suppliers/ingredients', {
   server: false,
-  query: { limit: 250 }
+  query: { limit: INGREDIENTS_FETCH_LIMIT }
 })
 
 const ingredients = computed(() => ingredientsData.value?.data || [])

@@ -179,6 +179,7 @@
 
 <script setup lang="ts">
 import { useTenantReactive } from '@/composables/useTenantReactive'
+import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -222,7 +223,7 @@ const { data: ingredientsData, pending: loadingIngredients } = useAsyncData(
   `ingredients-resale-manage-${currentTenant.value?.id || 'default'}`,
   () => $fetch('/api/suppliers/ingredients', {
     query: {
-      limit: 250,
+      limit: INGREDIENTS_FETCH_LIMIT,
       is_resale: true
     }
   }),

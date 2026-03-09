@@ -766,6 +766,7 @@
 import { TrashIcon, DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
+import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
 
@@ -848,7 +849,7 @@ watch(originalPurchase, (purchase) => {
 // Fetch ingredients
 const { data: ingredientsData, pending: loadingIngredients } = useFetch('/api/suppliers/ingredients', {
   server: false,
-  query: { limit: 500 }
+  query: { limit: INGREDIENTS_FETCH_LIMIT }
 })
 
 const ingredients = computed(() => ingredientsData.value?.data || [])

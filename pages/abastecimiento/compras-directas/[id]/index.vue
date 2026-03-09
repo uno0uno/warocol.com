@@ -571,6 +571,7 @@
 <script setup lang="ts">
 import { format as fnsFormat } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 
 const route = useRoute()
 const purchaseId = route.params.id as string
@@ -614,7 +615,7 @@ const purchase = computed(() => (purchaseResponse.value as any)?.data || null)
 // Fetch ingredients for add item modal
 const { data: ingredientsData } = useFetch('/api/suppliers/ingredients', {
   server: false,
-  query: { limit: 500 }
+  query: { limit: INGREDIENTS_FETCH_LIMIT }
 })
 
 const ingredients = computed(() => ingredientsData.value?.data || [])

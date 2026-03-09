@@ -230,6 +230,7 @@
 <script setup lang="ts">
 import { usePurchasesStore } from '~/stores/purchases'
 import { storeToRefs } from 'pinia'
+import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 
 const purchasesStore = usePurchasesStore()
 const { currentPurchaseId, currentPurchase, showActionBar, isLoading } = storeToRefs(purchasesStore)
@@ -288,7 +289,7 @@ const shouldShowPaymentReminder = computed(() => {
 // Fetch ingredients for modals
 const { data: ingredientsData } = useFetch('/api/suppliers/ingredients', {
   server: false,
-  query: { limit: 250 }
+  query: { limit: INGREDIENTS_FETCH_LIMIT }
 })
 
 const ingredients = computed(() => ingredientsData.value?.data || [])

@@ -685,6 +685,7 @@
 import { inject } from 'vue'
 import { usePurchasesStore } from '~/stores/purchases'
 import { storeToRefs } from 'pinia'
+import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 
 // Get order ID from route
 const route = useRoute()
@@ -710,7 +711,7 @@ const suppliers = computed(() => suppliersData.value?.data || [])
 // Fetch ingredients (NO await to show loading)
 const { data: ingredientsData, pending: loadingIngredients } = useFetch('/api/suppliers/ingredients', {
   server: false,
-  query: { limit: 250 }
+  query: { limit: INGREDIENTS_FETCH_LIMIT }
 })
 
 const ingredients = computed(() => ingredientsData.value?.data || [])

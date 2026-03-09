@@ -673,6 +673,8 @@
 </template>
 
 <script setup lang="ts">
+import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
+
 useHead({
   title: 'Crear Cotización - Abastecimiento'
 })
@@ -701,7 +703,7 @@ const supplierOptions = computed(() =>
 // Fetch ingredients
 const { data: ingredientsData, pending: loadingIngredients } = useFetch('/api/suppliers/ingredients', {
   server: false,
-  query: { limit: 250 }
+  query: { limit: INGREDIENTS_FETCH_LIMIT }
 })
 
 const ingredients = computed(() => ingredientsData.value?.data || [])
