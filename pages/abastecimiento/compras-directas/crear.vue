@@ -1668,19 +1668,24 @@ const handleScanFileSelect = async (event: Event) => {
       if (data.items && data.items.length > 0) {
         form.value.items = data.items.map((ocrItem: any, index: number) => {
           let matchedId = ''
-          
-          // Try AI hint first
-          if (ocrItem.detected_ingredient) {
+
+          // 1. Use backend-resolved ingredient_id (Gemini matched or AI-created)
+          if (ocrItem.detected_ingredient_id) {
+            matchedId = ocrItem.detected_ingredient_id
+          }
+
+          // 2. Fallback: local fuzzy match against loaded catalog
+          if (!matchedId && ocrItem.detected_ingredient) {
             matchedId = findIngredientMatch(ocrItem.detected_ingredient)
           }
-          
-          // Fallback to description if no match
+
+          // 3. Last resort: match against raw invoice description
           if (!matchedId && ocrItem.descripcion) {
             matchedId = findIngredientMatch(ocrItem.descripcion)
           }
 
-          const ingredientName = matchedId 
-            ? getIngredientName(matchedId) 
+          const ingredientName = matchedId
+            ? getIngredientName(matchedId)
             : (ocrItem.detected_ingredient || ocrItem.descripcion || '')
 
           const item: PurchaseItem = {
