@@ -363,265 +363,741 @@
               </p>
             </div>
 
-            <!-- Items List -->
-            <div v-else class="space-y-2">
-              <div
-                v-for="(item, index) in form.items"
-                :key="index"
-                class="border border-border rounded-lg p-3 bg-background"
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <h4 class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Item #{{ index + 1 }}</h4>
-                  <button
-                    type="button"
-                    @click="removeItem(index)"
-                    :disabled="form.items.length === 1"
-                    class="text-destructive hover:text-destructive/80 disabled:opacity-50 p-2"
-                  >
-                    <TrashIcon class="w-4 h-4" />
-                  </button>
+            <!-- Items List (grouped by type) -->
+            <div v-else class="space-y-4">
+
+              <!-- Section: Alimentos -->
+              <div v-if="itemsByType.food.length > 0 || selectedIngredientType === 'food'">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">🥦 Alimentos</span>
+                  <span class="text-xs text-text-secondary bg-background px-1.5 py-0.5 rounded border border-border">{{ itemsByType.food.length }}</span>
                 </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
-                  <!-- Ingredient Search (lg: 4 cols) -->
-                  <div class="sm:col-span-12 lg:col-span-4 relative z-10">
-                    <label class="block text-xs font-medium text-text-primary mb-1">
-                      Ítem / Ingrediente *
-                    </label>
-                    <div class="relative">
-                      <input
-                        type="text"
-                        v-model="item.searchTerm"
-                        @input="(e) => searchIngredients(e.target.value, index)"
-                        @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, index) }"
-                        @blur="() => window.setTimeout(() => { item.showResults = false }, 150)"
-                        class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
-                        placeholder="Buscar ingrediente..."
-                      />
-                      <span class="absolute left-2.5 top-2 text-text-secondary">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-                        </svg>
-                      </span>
-
-                      <!-- Search Results Dropdown -->
-                      <div
-                        v-if="item.showResults && ingredientResults[index]?.length"
-                        class="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                <div class="space-y-2">
+                  <div
+                    v-for="item in itemsByType.food"
+                    :key="form.items.indexOf(item)"
+                    class="border border-border rounded-lg p-3 bg-background"
+                  >
+                    <div class="flex justify-between items-start mb-2">
+                      <h4 class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Item #{{ form.items.indexOf(item) + 1 }}</h4>
+                      <button
+                        type="button"
+                        @click="removeItem(form.items.indexOf(item))"
+                        :disabled="form.items.length === 1"
+                        class="text-destructive hover:text-destructive/80 disabled:opacity-50 p-2"
                       >
-                        <ul class="py-1">
-                          <li
-                            v-for="ing in ingredientResults[index]"
-                            :key="ing.id"
-                            @click="selectIngredient(ing, index)"
-                            class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary"
-                          >
-                            {{ ing.name }}
-                          </li>
-                        </ul>
-                      </div>
+                        <TrashIcon class="w-4 h-4" />
+                      </button>
                     </div>
-                    <!-- OCR hint -->
-                    <p v-if="item.ocr_description" class="mt-1 text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-amber-600'">
-                      <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span class="truncate">Fac: "{{ item.ocr_description }}"</span>
-                    </p>
-                  </div>
 
-                  <!-- Wrapper for Unit and Financials (lg: 8 cols) -->
-                  <div class="sm:col-span-12 lg:col-span-8 flex flex-col gap-2">
-
-                    <!-- Top Row: Financials -->
-                    <div class="grid grid-cols-3 gap-3">
-                      <!-- Quantity -->
-                      <div>
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                      <!-- Ingredient Search (lg: 4 cols) -->
+                      <div class="sm:col-span-12 lg:col-span-4 relative z-10">
                         <label class="block text-xs font-medium text-text-primary mb-1">
-                          Cant. *
-                        </label>
-                        <input
-                          v-model.number="item.purchase_quantity"
-                          type="number"
-                          min="0.01"
-                          step="0.01"
-                          required
-                          class="input-base w-full px-2 py-1.5 text-sm"
-                          @input="() => updateItemTotal(index)"
-                          placeholder="0"
-                        />
-                      </div>
-
-                      <!-- Unit Price -->
-                      <div>
-                         <label class="block text-xs font-medium text-text-primary mb-1 whitespace-nowrap">
-                          P. Unit *
-                          <span
-                            v-if="item.suggested_price"
-                            class="text-[10px] text-success cursor-pointer ml-0.5"
-                            @click="item.unit_cost = item.suggested_price; updateItemTotal(index)"
-                            title="Usar precio sugerido"
-                          >
-                            (Sug: {{ formatPrice(item.suggested_price) }})
-                          </span>
+                          Ítem / Ingrediente *
                         </label>
                         <div class="relative">
-                          <span class="absolute left-2 top-1.5 text-text-secondary text-xs">$</span>
                           <input
-                            v-model.number="item.unit_cost"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            required
-                            class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
-                            @input="() => updateItemTotal(index)"
-                            placeholder="0"
+                            type="text"
+                            v-model="item.searchTerm"
+                            @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
+                            @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
+                            @blur="() => window.setTimeout(() => { item.showResults = false }, 150)"
+                            class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
+                            placeholder="Buscar ingrediente..."
                           />
-                        </div>
-                      </div>
-
-                      <!-- Total -->
-                      <div>
-                         <label class="block text-xs font-medium text-text-primary mb-1">
-                          Total
-                        </label>
-                        <div class="input-base w-full px-2 py-1.5 text-sm bg-surface-secondary font-medium text-text-primary flex items-center h-[34px]">
-                          ${{ formatPrice(item.total_cost) }}
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Bottom Row: Unit Section -->
-                    <div class="w-full">
-                      <div class="flex items-center gap-2 mb-1">
-                        <label class="text-xs font-medium text-text-primary">Unidad *</label>
-                        <button
-                          v-if="item.ingredient_id && !newUnitForms[index]?.show"
-                          type="button"
-                          class="text-[10px] text-primary hover:underline flex items-center gap-0.5"
-                          @click="initNewUnitForm(index)"
-                        >
-                          <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                          </svg>
-                          Nueva
-                        </button>
-                      </div>
-
-                      <div class="flex items-start gap-2">
-                        <!-- Unit Select -->
-                        <div class="flex-1 min-w-[120px]">
-                          <select
-                            v-model="item.purchase_unit"
-                            required
-                            :disabled="!item.ingredient_id"
-                            class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
-                            :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id }"
-                            @change="() => onUnitChange(index)"
+                          <span class="absolute left-2.5 top-2 text-text-secondary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                            </svg>
+                          </span>
+                          <!-- Search Results Dropdown -->
+                          <div
+                            v-if="item.showResults && ingredientResults[form.items.indexOf(item)]?.length"
+                            class="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
                           >
-                            <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
-                            <option
-                              v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
-                              :key="unitOpt.value"
-                              :value="unitOpt.value"
-                            >
-                              {{ unitOpt.label }}
-                            </option>
-                          </select>
-                          <!-- Conversion text: shown below select, contextually close -->
-                          <p v-if="item.ingredient_id && item.purchase_unit" class="text-[10px] text-text-secondary mt-0.5">
-                            = {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
-                          </p>
-                        </div>
-
-                        <!-- Peso por unidad -->
-                        <div
-                          v-if="needsGramsPerUnit(item.ingredient_id)"
-                          class="rounded-md p-1 transition-colors"
-                          :class="getExistingGramsPerUnit(item.ingredient_id) ? 'bg-success/8 border border-success/25' : ''"
-                        >
-                          <label class="block text-[10px] font-semibold text-text-primary mb-0.5">
-                            Peso(gr){{ getExistingGramsPerUnit(item.ingredient_id) ? ' ✓' : '' }}
-                          </label>
-                          <input
-                            v-model.number="item.grams_per_unit"
-                            type="number"
-                            min="1"
-                            step="1"
-                            placeholder="0"
-                            class="input-base w-20 px-1 py-1.5 text-xs text-center h-[34px]"
-                          />
-                          <p class="text-[10px] mt-0.5 text-text-secondary font-medium">
-                            {{ getExistingGramsPerUnit(item.ingredient_id) ? 'Guardado' : 'Solo esta vez' }}
-                          </p>
-                        </div>
-
-                        <!-- New Unit Form Fields -->
-                        <template v-if="newUnitForms[index]?.show">
-                          <!-- Nombre -->
-                          <div>
-                            <label class="block text-[10px] font-medium text-text-secondary mb-0.5">Nombre</label>
-                            <input
-                              v-model="newUnitForms[index].label"
-                              type="text"
-                              placeholder="Ej: Caja"
-                              class="input-base w-24 px-1.5 py-1.5 text-[10px] h-[34px]"
-                            />
+                            <ul class="py-1">
+                              <li
+                                v-for="ing in ingredientResults[form.items.indexOf(item)]"
+                                :key="ing.id"
+                                @click="selectIngredient(ing, form.items.indexOf(item))"
+                                class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary"
+                              >
+                                {{ ing.name }}
+                              </li>
+                            </ul>
                           </div>
+                        </div>
+                        <!-- OCR hint -->
+                        <p v-if="item.ocr_description" class="mt-1 text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-amber-600'">
+                          <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span class="truncate">Fac: "{{ item.ocr_description }}"</span>
+                        </p>
+                      </div>
 
-                          <!-- Factor/Cant -->
+                      <!-- Wrapper for Unit and Financials (lg: 8 cols) -->
+                      <div class="sm:col-span-12 lg:col-span-8 flex flex-col gap-2">
+                        <!-- Top Row: Financials -->
+                        <div class="grid grid-cols-3 gap-3">
+                          <!-- Quantity -->
                           <div>
-                            <label class="block text-[10px] font-medium text-text-secondary mb-0.5 text-center">Cant.</label>
+                            <label class="block text-xs font-medium text-text-primary mb-1">Cant. *</label>
                             <input
-                              v-model.number="newUnitForms[index].factor"
+                              v-model.number="item.purchase_quantity"
                               type="number"
-                              min="1"
-                              placeholder="1"
-                              class="input-base w-16 px-1 py-1.5 text-[10px] text-center h-[34px]"
+                              min="0.01"
+                              step="0.01"
+                              required
+                              class="input-base w-full px-2 py-1.5 text-sm"
+                              @input="() => updateItemTotal(form.items.indexOf(item))"
+                              placeholder="0"
                             />
                           </div>
-
-                          <!-- Actions -->
-                          <div class="flex gap-0.5 h-[34px] items-center">
-                              <button
-                                type="button"
-                                class="p-1 bg-primary text-white rounded hover:bg-primary/90 transition-colors h-7 w-7 flex items-center justify-center"
-                                title="Guardar"
-                                @click="saveNewUnit(index)"
+                          <!-- Unit Price -->
+                          <div>
+                            <label class="block text-xs font-medium text-text-primary mb-1 whitespace-nowrap">
+                              P. Unit *
+                              <span
+                                v-if="item.suggested_price"
+                                class="text-[10px] text-success cursor-pointer ml-0.5"
+                                @click="item.unit_cost = item.suggested_price; updateItemTotal(form.items.indexOf(item))"
+                                title="Usar precio sugerido"
                               >
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                              </button>
-                              <button
-                                type="button"
-                                class="p-1 border border-border text-text-secondary rounded hover:bg-surface-secondary transition-colors h-7 w-7 flex items-center justify-center"
-                                title="Cancelar"
-                                @click="newUnitForms[index] = { ...newUnitForms[index], show: false }"
-                              >
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                              </button>
+                                (Sug: {{ formatPrice(item.suggested_price) }})
+                              </span>
+                            </label>
+                            <div class="relative">
+                              <span class="absolute left-2 top-1.5 text-text-secondary text-xs">$</span>
+                              <input
+                                v-model.number="item.unit_cost"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                required
+                                class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
+                                @input="() => updateItemTotal(form.items.indexOf(item))"
+                                placeholder="0"
+                              />
+                            </div>
                           </div>
-                        </template>
+                          <!-- Total -->
+                          <div>
+                            <label class="block text-xs font-medium text-text-primary mb-1">Total</label>
+                            <div class="input-base w-full px-2 py-1.5 text-sm bg-surface-secondary font-medium text-text-primary flex items-center h-[34px]">
+                              ${{ formatPrice(item.total_cost) }}
+                            </div>
+                          </div>
+                        </div>
+                        <!-- Bottom Row: Unit Section -->
+                        <div class="w-full">
+                          <div class="flex items-center gap-2 mb-1">
+                            <label class="text-xs font-medium text-text-primary">Unidad *</label>
+                            <button
+                              v-if="item.ingredient_id && !newUnitForms[form.items.indexOf(item)]?.show"
+                              type="button"
+                              class="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                              @click="initNewUnitForm(form.items.indexOf(item))"
+                            >
+                              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                              </svg>
+                              Nueva
+                            </button>
+                          </div>
+                          <div class="flex items-start gap-2">
+                            <!-- Unit Select -->
+                            <div class="flex-1 min-w-[120px]">
+                              <select
+                                v-model="item.purchase_unit"
+                                required
+                                :disabled="!item.ingredient_id"
+                                class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
+                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id }"
+                                @change="() => onUnitChange(form.items.indexOf(item))"
+                              >
+                                <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
+                                <option
+                                  v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
+                                  :key="unitOpt.value"
+                                  :value="unitOpt.value"
+                                >
+                                  {{ unitOpt.label }}
+                                </option>
+                              </select>
+                              <p v-if="item.ingredient_id && item.purchase_unit" class="text-[10px] text-text-secondary mt-0.5">
+                                = {{ getConvertedQuantity(form.items.indexOf(item)) }} {{ getIngredientUnit(item.ingredient_id) }}
+                              </p>
+                            </div>
+                            <!-- Peso por unidad -->
+                            <div
+                              v-if="needsGramsPerUnit(item.ingredient_id)"
+                              class="rounded-md p-1 transition-colors"
+                              :class="getExistingGramsPerUnit(item.ingredient_id) ? 'bg-success/8 border border-success/25' : ''"
+                            >
+                              <label class="block text-[10px] font-semibold text-text-primary mb-0.5">
+                                Peso(gr){{ getExistingGramsPerUnit(item.ingredient_id) ? ' ✓' : '' }}
+                              </label>
+                              <input
+                                v-model.number="item.grams_per_unit"
+                                type="number"
+                                min="1"
+                                step="1"
+                                placeholder="0"
+                                class="input-base w-20 px-1 py-1.5 text-xs text-center h-[34px]"
+                              />
+                              <p class="text-[10px] mt-0.5 text-text-secondary font-medium">
+                                {{ getExistingGramsPerUnit(item.ingredient_id) ? 'Guardado' : 'Solo esta vez' }}
+                              </p>
+                            </div>
+                            <!-- New Unit Form Fields -->
+                            <template v-if="newUnitForms[form.items.indexOf(item)]?.show">
+                              <div>
+                                <label class="block text-[10px] font-medium text-text-secondary mb-0.5">Nombre</label>
+                                <input
+                                  v-model="newUnitForms[form.items.indexOf(item)].label"
+                                  type="text"
+                                  placeholder="Ej: Caja"
+                                  class="input-base w-24 px-1.5 py-1.5 text-[10px] h-[34px]"
+                                />
+                              </div>
+                              <div>
+                                <label class="block text-[10px] font-medium text-text-secondary mb-0.5 text-center">Cant.</label>
+                                <input
+                                  v-model.number="newUnitForms[form.items.indexOf(item)].factor"
+                                  type="number"
+                                  min="1"
+                                  placeholder="1"
+                                  class="input-base w-16 px-1 py-1.5 text-[10px] text-center h-[34px]"
+                                />
+                              </div>
+                              <div class="flex gap-0.5 h-[34px] items-center">
+                                <button
+                                  type="button"
+                                  class="p-1 bg-primary text-white rounded hover:bg-primary/90 transition-colors h-7 w-7 flex items-center justify-center"
+                                  title="Guardar"
+                                  @click="saveNewUnit(form.items.indexOf(item))"
+                                >
+                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  class="p-1 border border-border text-text-secondary rounded hover:bg-surface-secondary transition-colors h-7 w-7 flex items-center justify-center"
+                                  title="Cancelar"
+                                  @click="newUnitForms[form.items.indexOf(item)] = { ...newUnitForms[form.items.indexOf(item)], show: false }"
+                                >
+                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                  </svg>
+                                </button>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
+                    <!-- Notes Row (Full width) -->
+                    <div class="mt-2">
+                      <input
+                        v-model="item.notes"
+                        type="text"
+                        class="input-base w-full px-2 py-1.5 text-xs text-text-secondary border-dashed bg-transparent focus:bg-background focus:border-solid transition-colors"
+                        placeholder="+ Agregar notas u observaciones del item (opcional)"
+                      />
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                <!-- Notes Row (Full width) -->
-                <div class="mt-2">
-                  <input
-                    v-model="item.notes"
-                    type="text"
-                    class="input-base w-full px-2 py-1.5 text-xs text-text-secondary border-dashed bg-transparent focus:bg-background focus:border-solid transition-colors"
-                    placeholder="+ Agregar notas u observaciones del item (opcional)"
-                  />
+              <!-- Section: Servicios -->
+              <div v-if="itemsByType.service.length > 0 || selectedIngredientType === 'service'">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">🛠 Servicios</span>
+                  <span class="text-xs text-text-secondary bg-background px-1.5 py-0.5 rounded border border-border">{{ itemsByType.service.length }}</span>
+                </div>
+                <div class="space-y-2">
+                  <div
+                    v-for="item in itemsByType.service"
+                    :key="form.items.indexOf(item)"
+                    class="border border-border rounded-lg p-3 bg-background"
+                  >
+                    <div class="flex justify-between items-start mb-2">
+                      <h4 class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Item #{{ form.items.indexOf(item) + 1 }}</h4>
+                      <button
+                        type="button"
+                        @click="removeItem(form.items.indexOf(item))"
+                        :disabled="form.items.length === 1"
+                        class="text-destructive hover:text-destructive/80 disabled:opacity-50 p-2"
+                      >
+                        <TrashIcon class="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                      <!-- Ingredient Search (lg: 4 cols) -->
+                      <div class="sm:col-span-12 lg:col-span-4 relative z-10">
+                        <label class="block text-xs font-medium text-text-primary mb-1">
+                          Ítem / Ingrediente *
+                        </label>
+                        <div class="relative">
+                          <input
+                            type="text"
+                            v-model="item.searchTerm"
+                            @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
+                            @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
+                            @blur="() => window.setTimeout(() => { item.showResults = false }, 150)"
+                            class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
+                            placeholder="Buscar ingrediente..."
+                          />
+                          <span class="absolute left-2.5 top-2 text-text-secondary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                            </svg>
+                          </span>
+                          <!-- Search Results Dropdown -->
+                          <div
+                            v-if="item.showResults && ingredientResults[form.items.indexOf(item)]?.length"
+                            class="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                          >
+                            <ul class="py-1">
+                              <li
+                                v-for="ing in ingredientResults[form.items.indexOf(item)]"
+                                :key="ing.id"
+                                @click="selectIngredient(ing, form.items.indexOf(item))"
+                                class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary"
+                              >
+                                {{ ing.name }}
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                        <!-- OCR hint -->
+                        <p v-if="item.ocr_description" class="mt-1 text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-amber-600'">
+                          <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span class="truncate">Fac: "{{ item.ocr_description }}"</span>
+                        </p>
+                      </div>
+
+                      <!-- Wrapper for Unit and Financials (lg: 8 cols) -->
+                      <div class="sm:col-span-12 lg:col-span-8 flex flex-col gap-2">
+                        <!-- Top Row: Financials -->
+                        <div class="grid grid-cols-3 gap-3">
+                          <div>
+                            <label class="block text-xs font-medium text-text-primary mb-1">Cant. *</label>
+                            <input
+                              v-model.number="item.purchase_quantity"
+                              type="number"
+                              min="0.01"
+                              step="0.01"
+                              required
+                              class="input-base w-full px-2 py-1.5 text-sm"
+                              @input="() => updateItemTotal(form.items.indexOf(item))"
+                              placeholder="0"
+                            />
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-text-primary mb-1 whitespace-nowrap">
+                              P. Unit *
+                              <span
+                                v-if="item.suggested_price"
+                                class="text-[10px] text-success cursor-pointer ml-0.5"
+                                @click="item.unit_cost = item.suggested_price; updateItemTotal(form.items.indexOf(item))"
+                                title="Usar precio sugerido"
+                              >
+                                (Sug: {{ formatPrice(item.suggested_price) }})
+                              </span>
+                            </label>
+                            <div class="relative">
+                              <span class="absolute left-2 top-1.5 text-text-secondary text-xs">$</span>
+                              <input
+                                v-model.number="item.unit_cost"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                required
+                                class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
+                                @input="() => updateItemTotal(form.items.indexOf(item))"
+                                placeholder="0"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-text-primary mb-1">Total</label>
+                            <div class="input-base w-full px-2 py-1.5 text-sm bg-surface-secondary font-medium text-text-primary flex items-center h-[34px]">
+                              ${{ formatPrice(item.total_cost) }}
+                            </div>
+                          </div>
+                        </div>
+                        <!-- Bottom Row: Unit Section -->
+                        <div class="w-full">
+                          <div class="flex items-center gap-2 mb-1">
+                            <label class="text-xs font-medium text-text-primary">Unidad *</label>
+                            <button
+                              v-if="item.ingredient_id && !newUnitForms[form.items.indexOf(item)]?.show"
+                              type="button"
+                              class="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                              @click="initNewUnitForm(form.items.indexOf(item))"
+                            >
+                              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                              </svg>
+                              Nueva
+                            </button>
+                          </div>
+                          <div class="flex items-start gap-2">
+                            <div class="flex-1 min-w-[120px]">
+                              <select
+                                v-model="item.purchase_unit"
+                                required
+                                :disabled="!item.ingredient_id"
+                                class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
+                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id }"
+                                @change="() => onUnitChange(form.items.indexOf(item))"
+                              >
+                                <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
+                                <option
+                                  v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
+                                  :key="unitOpt.value"
+                                  :value="unitOpt.value"
+                                >
+                                  {{ unitOpt.label }}
+                                </option>
+                              </select>
+                              <p v-if="item.ingredient_id && item.purchase_unit" class="text-[10px] text-text-secondary mt-0.5">
+                                = {{ getConvertedQuantity(form.items.indexOf(item)) }} {{ getIngredientUnit(item.ingredient_id) }}
+                              </p>
+                            </div>
+                            <div
+                              v-if="needsGramsPerUnit(item.ingredient_id)"
+                              class="rounded-md p-1 transition-colors"
+                              :class="getExistingGramsPerUnit(item.ingredient_id) ? 'bg-success/8 border border-success/25' : ''"
+                            >
+                              <label class="block text-[10px] font-semibold text-text-primary mb-0.5">
+                                Peso(gr){{ getExistingGramsPerUnit(item.ingredient_id) ? ' ✓' : '' }}
+                              </label>
+                              <input
+                                v-model.number="item.grams_per_unit"
+                                type="number"
+                                min="1"
+                                step="1"
+                                placeholder="0"
+                                class="input-base w-20 px-1 py-1.5 text-xs text-center h-[34px]"
+                              />
+                              <p class="text-[10px] mt-0.5 text-text-secondary font-medium">
+                                {{ getExistingGramsPerUnit(item.ingredient_id) ? 'Guardado' : 'Solo esta vez' }}
+                              </p>
+                            </div>
+                            <template v-if="newUnitForms[form.items.indexOf(item)]?.show">
+                              <div>
+                                <label class="block text-[10px] font-medium text-text-secondary mb-0.5">Nombre</label>
+                                <input
+                                  v-model="newUnitForms[form.items.indexOf(item)].label"
+                                  type="text"
+                                  placeholder="Ej: Caja"
+                                  class="input-base w-24 px-1.5 py-1.5 text-[10px] h-[34px]"
+                                />
+                              </div>
+                              <div>
+                                <label class="block text-[10px] font-medium text-text-secondary mb-0.5 text-center">Cant.</label>
+                                <input
+                                  v-model.number="newUnitForms[form.items.indexOf(item)].factor"
+                                  type="number"
+                                  min="1"
+                                  placeholder="1"
+                                  class="input-base w-16 px-1 py-1.5 text-[10px] text-center h-[34px]"
+                                />
+                              </div>
+                              <div class="flex gap-0.5 h-[34px] items-center">
+                                <button
+                                  type="button"
+                                  class="p-1 bg-primary text-white rounded hover:bg-primary/90 transition-colors h-7 w-7 flex items-center justify-center"
+                                  title="Guardar"
+                                  @click="saveNewUnit(form.items.indexOf(item))"
+                                >
+                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  class="p-1 border border-border text-text-secondary rounded hover:bg-surface-secondary transition-colors h-7 w-7 flex items-center justify-center"
+                                  title="Cancelar"
+                                  @click="newUnitForms[form.items.indexOf(item)] = { ...newUnitForms[form.items.indexOf(item)], show: false }"
+                                >
+                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                  </svg>
+                                </button>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Notes Row (Full width) -->
+                    <div class="mt-2">
+                      <input
+                        v-model="item.notes"
+                        type="text"
+                        class="input-base w-full px-2 py-1.5 text-xs text-text-secondary border-dashed bg-transparent focus:bg-background focus:border-solid transition-colors"
+                        placeholder="+ Agregar notas u observaciones del item (opcional)"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              <!-- Section: Insumos -->
+              <div v-if="itemsByType.supply.length > 0 || selectedIngredientType === 'supply'">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">📦 Insumos</span>
+                  <span class="text-xs text-text-secondary bg-background px-1.5 py-0.5 rounded border border-border">{{ itemsByType.supply.length }}</span>
+                </div>
+                <div class="space-y-2">
+                  <div
+                    v-for="item in itemsByType.supply"
+                    :key="form.items.indexOf(item)"
+                    class="border border-border rounded-lg p-3 bg-background"
+                  >
+                    <div class="flex justify-between items-start mb-2">
+                      <h4 class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Item #{{ form.items.indexOf(item) + 1 }}</h4>
+                      <button
+                        type="button"
+                        @click="removeItem(form.items.indexOf(item))"
+                        :disabled="form.items.length === 1"
+                        class="text-destructive hover:text-destructive/80 disabled:opacity-50 p-2"
+                      >
+                        <TrashIcon class="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                      <!-- Ingredient Search (lg: 4 cols) -->
+                      <div class="sm:col-span-12 lg:col-span-4 relative z-10">
+                        <label class="block text-xs font-medium text-text-primary mb-1">
+                          Ítem / Ingrediente *
+                        </label>
+                        <div class="relative">
+                          <input
+                            type="text"
+                            v-model="item.searchTerm"
+                            @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
+                            @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
+                            @blur="() => window.setTimeout(() => { item.showResults = false }, 150)"
+                            class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
+                            placeholder="Buscar ingrediente..."
+                          />
+                          <span class="absolute left-2.5 top-2 text-text-secondary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                            </svg>
+                          </span>
+                          <!-- Search Results Dropdown -->
+                          <div
+                            v-if="item.showResults && ingredientResults[form.items.indexOf(item)]?.length"
+                            class="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                          >
+                            <ul class="py-1">
+                              <li
+                                v-for="ing in ingredientResults[form.items.indexOf(item)]"
+                                :key="ing.id"
+                                @click="selectIngredient(ing, form.items.indexOf(item))"
+                                class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary"
+                              >
+                                {{ ing.name }}
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                        <!-- OCR hint -->
+                        <p v-if="item.ocr_description" class="mt-1 text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-amber-600'">
+                          <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span class="truncate">Fac: "{{ item.ocr_description }}"</span>
+                        </p>
+                      </div>
+
+                      <!-- Wrapper for Unit and Financials (lg: 8 cols) -->
+                      <div class="sm:col-span-12 lg:col-span-8 flex flex-col gap-2">
+                        <!-- Top Row: Financials -->
+                        <div class="grid grid-cols-3 gap-3">
+                          <div>
+                            <label class="block text-xs font-medium text-text-primary mb-1">Cant. *</label>
+                            <input
+                              v-model.number="item.purchase_quantity"
+                              type="number"
+                              min="0.01"
+                              step="0.01"
+                              required
+                              class="input-base w-full px-2 py-1.5 text-sm"
+                              @input="() => updateItemTotal(form.items.indexOf(item))"
+                              placeholder="0"
+                            />
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-text-primary mb-1 whitespace-nowrap">
+                              P. Unit *
+                              <span
+                                v-if="item.suggested_price"
+                                class="text-[10px] text-success cursor-pointer ml-0.5"
+                                @click="item.unit_cost = item.suggested_price; updateItemTotal(form.items.indexOf(item))"
+                                title="Usar precio sugerido"
+                              >
+                                (Sug: {{ formatPrice(item.suggested_price) }})
+                              </span>
+                            </label>
+                            <div class="relative">
+                              <span class="absolute left-2 top-1.5 text-text-secondary text-xs">$</span>
+                              <input
+                                v-model.number="item.unit_cost"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                required
+                                class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
+                                @input="() => updateItemTotal(form.items.indexOf(item))"
+                                placeholder="0"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-text-primary mb-1">Total</label>
+                            <div class="input-base w-full px-2 py-1.5 text-sm bg-surface-secondary font-medium text-text-primary flex items-center h-[34px]">
+                              ${{ formatPrice(item.total_cost) }}
+                            </div>
+                          </div>
+                        </div>
+                        <!-- Bottom Row: Unit Section -->
+                        <div class="w-full">
+                          <div class="flex items-center gap-2 mb-1">
+                            <label class="text-xs font-medium text-text-primary">Unidad *</label>
+                            <button
+                              v-if="item.ingredient_id && !newUnitForms[form.items.indexOf(item)]?.show"
+                              type="button"
+                              class="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                              @click="initNewUnitForm(form.items.indexOf(item))"
+                            >
+                              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                              </svg>
+                              Nueva
+                            </button>
+                          </div>
+                          <div class="flex items-start gap-2">
+                            <div class="flex-1 min-w-[120px]">
+                              <select
+                                v-model="item.purchase_unit"
+                                required
+                                :disabled="!item.ingredient_id"
+                                class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
+                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id }"
+                                @change="() => onUnitChange(form.items.indexOf(item))"
+                              >
+                                <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
+                                <option
+                                  v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
+                                  :key="unitOpt.value"
+                                  :value="unitOpt.value"
+                                >
+                                  {{ unitOpt.label }}
+                                </option>
+                              </select>
+                              <p v-if="item.ingredient_id && item.purchase_unit" class="text-[10px] text-text-secondary mt-0.5">
+                                = {{ getConvertedQuantity(form.items.indexOf(item)) }} {{ getIngredientUnit(item.ingredient_id) }}
+                              </p>
+                            </div>
+                            <div
+                              v-if="needsGramsPerUnit(item.ingredient_id)"
+                              class="rounded-md p-1 transition-colors"
+                              :class="getExistingGramsPerUnit(item.ingredient_id) ? 'bg-success/8 border border-success/25' : ''"
+                            >
+                              <label class="block text-[10px] font-semibold text-text-primary mb-0.5">
+                                Peso(gr){{ getExistingGramsPerUnit(item.ingredient_id) ? ' ✓' : '' }}
+                              </label>
+                              <input
+                                v-model.number="item.grams_per_unit"
+                                type="number"
+                                min="1"
+                                step="1"
+                                placeholder="0"
+                                class="input-base w-20 px-1 py-1.5 text-xs text-center h-[34px]"
+                              />
+                              <p class="text-[10px] mt-0.5 text-text-secondary font-medium">
+                                {{ getExistingGramsPerUnit(item.ingredient_id) ? 'Guardado' : 'Solo esta vez' }}
+                              </p>
+                            </div>
+                            <template v-if="newUnitForms[form.items.indexOf(item)]?.show">
+                              <div>
+                                <label class="block text-[10px] font-medium text-text-secondary mb-0.5">Nombre</label>
+                                <input
+                                  v-model="newUnitForms[form.items.indexOf(item)].label"
+                                  type="text"
+                                  placeholder="Ej: Caja"
+                                  class="input-base w-24 px-1.5 py-1.5 text-[10px] h-[34px]"
+                                />
+                              </div>
+                              <div>
+                                <label class="block text-[10px] font-medium text-text-secondary mb-0.5 text-center">Cant.</label>
+                                <input
+                                  v-model.number="newUnitForms[form.items.indexOf(item)].factor"
+                                  type="number"
+                                  min="1"
+                                  placeholder="1"
+                                  class="input-base w-16 px-1 py-1.5 text-[10px] text-center h-[34px]"
+                                />
+                              </div>
+                              <div class="flex gap-0.5 h-[34px] items-center">
+                                <button
+                                  type="button"
+                                  class="p-1 bg-primary text-white rounded hover:bg-primary/90 transition-colors h-7 w-7 flex items-center justify-center"
+                                  title="Guardar"
+                                  @click="saveNewUnit(form.items.indexOf(item))"
+                                >
+                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  class="p-1 border border-border text-text-secondary rounded hover:bg-surface-secondary transition-colors h-7 w-7 flex items-center justify-center"
+                                  title="Cancelar"
+                                  @click="newUnitForms[form.items.indexOf(item)] = { ...newUnitForms[form.items.indexOf(item)], show: false }"
+                                >
+                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                  </svg>
+                                </button>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Notes Row (Full width) -->
+                    <div class="mt-2">
+                      <input
+                        v-model="item.notes"
+                        type="text"
+                        class="input-base w-full px-2 py-1.5 text-xs text-text-secondary border-dashed bg-transparent focus:bg-background focus:border-solid transition-colors"
+                        placeholder="+ Agregar notas u observaciones del item (opcional)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
           </div>
@@ -995,6 +1471,7 @@ interface PurchaseItem {
   total_cost: number
   notes: string
   suggested_price: number | null
+  item_type?: string // 'food' | 'service' | 'supply'
   ocr_description?: string // texto libre de la factura, solo para UI
   grams_per_unit?: number | null // solo para ingredientes und: peso en gr por unidad
   searchTerm?: string // para el input de busqueda
@@ -1039,7 +1516,7 @@ const form = ref({
   items: [createEmptyItem()] as PurchaseItem[]
 })
 
-function createEmptyItem(): PurchaseItem {
+function createEmptyItem(itemType: string = 'food'): PurchaseItem {
   return {
     ingredient_id: '',
     searchTerm: '',
@@ -1049,6 +1526,7 @@ function createEmptyItem(): PurchaseItem {
     total_cost: 0,
     notes: '',
     suggested_price: null,
+    item_type: itemType,
     grams_per_unit: null,
     showResults: false
   }
@@ -1108,6 +1586,13 @@ const filteredIngredients = computed(() =>
     !selectedIngredientType.value || i.type === selectedIngredientType.value
   )
 )
+
+// Items agrupados por tipo
+const itemsByType = computed(() => ({
+  food: form.value.items.filter(item => (item.item_type || 'food') === 'food'),
+  service: form.value.items.filter(item => item.item_type === 'service'),
+  supply: form.value.items.filter(item => item.item_type === 'supply')
+}))
 
 // Opciones de ingredientes (usando los filtrados)
 const ingredientOptions = computed(() =>
@@ -1418,7 +1903,7 @@ const updateItemTotal = (index: number) => {
 }
 
 const addItem = () => {
-  form.value.items.push(createEmptyItem())
+  form.value.items.push(createEmptyItem(selectedIngredientType.value))
 }
 
 const removeItem = (index: number) => {
@@ -1597,6 +2082,7 @@ const selectIngredient = (ingredient: any, index: number) => {
   item.ingredient_id = ingredient.id
   item.searchTerm = ingredient.name
   item.showResults = false
+  if (ingredient.type) item.item_type = ingredient.type
   ingredientResults.value[index] = []
   onIngredientChange(index)
 }
@@ -1697,6 +2183,7 @@ const handleScanFileSelect = async (event: Event) => {
             total_cost: ocrItem.total || 0,
             notes: '',
             suggested_price: null,
+            item_type: 'food',
             ocr_description: ocrItem.descripcion || ''
           }
           return item
