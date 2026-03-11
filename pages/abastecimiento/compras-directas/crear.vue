@@ -2147,8 +2147,18 @@ const handleScanFileSelect = async (event: Event) => {
         // Resolve ingredient matches in parallel via backend pg_trgm endpoint
         const matchedIngredients = await Promise.all(
           data.items.map(async (ocrItem: any) => {
-            // Priority 1: backend already resolved the ingredient_id
-            if (ocrItem.detected_ingredient_id) return null
+            // Priority 1: backend already resolved the ingredient_id — fetch full details to populate cache
+            if (ocrItem.detected_ingredient_id) {
+              const nameToFetch = ocrItem.detected_ingredient || ocrItem.descripcion || ''
+              if (!nameToFetch) return null
+              try {
+                const res = await $fetch<any>('/api/suppliers/ingredients/match', {
+                  query: { name: nameToFetch, threshold: 0.8 }
+                })
+                if (res?.data) return { ...res.data, id: ocrItem.detected_ingredient_id }
+              } catch { /* fall through */ }
+              return null
+            }
 
             // Priority 2: call /ingredients/match for the Gemini-detected name or raw description
             const nameToMatch = ocrItem.detected_ingredient || ocrItem.descripcion || ''
