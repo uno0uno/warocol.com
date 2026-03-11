@@ -2164,25 +2164,17 @@ const handleScanFileSelect = async (event: Event) => {
         // Resolve ingredient matches in parallel via backend pg_trgm endpoint
         const matchedIngredients = await Promise.all(
           data.items.map(async (ocrItem: any, idx: number) => {
-            // Priority 1: backend already resolved the ingredient_id — fetch full details to populate cache
+            // Priority 1: backend already resolved the ingredient_id — fetch by ID directly (no name guessing)
             if (ocrItem.detected_ingredient_id) {
-              const nameToFetch = ocrItem.detected_ingredient || ocrItem.descripcion || ''
-              if (!nameToFetch) {
-                console.warn(`[OCR] Item ${idx+1} has detected_ingredient_id but no name to fetch`)
-                return null
-              }
               try {
-                const res = await $fetch<any>('/api/suppliers/ingredients/match', {
-                  query: { name: nameToFetch, threshold: 0.8 }
-                })
+                const res = await $fetch<any>(`/api/suppliers/ingredients/${ocrItem.detected_ingredient_id}`)
                 if (res?.data) {
-                  const result = { ...res.data, id: ocrItem.detected_ingredient_id }
-                  console.log(`[OCR] Item ${idx+1} '${ocrItem.descripcion}' → id match ✅`, result)
-                  return result
+                  console.log(`[OCR] Item ${idx+1} '${ocrItem.descripcion}' → fetch by id ✅`, res.data)
+                  return res.data
                 }
-                console.warn(`[OCR] Item ${idx+1} '${ocrItem.descripcion}' → /match returned null for name='${nameToFetch}' threshold=0.8`)
+                console.warn(`[OCR] Item ${idx+1} '${ocrItem.descripcion}' → fetch by id returned null`)
               } catch (e) {
-                console.error(`[OCR] Item ${idx+1} '${ocrItem.descripcion}' → /match fetch error`, e)
+                console.error(`[OCR] Item ${idx+1} '${ocrItem.descripcion}' → fetch by id error`, e)
               }
               return null
             }
