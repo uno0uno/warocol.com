@@ -181,6 +181,7 @@
 
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, watch } from 'vue'
+import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 
 useHead({ title: 'Ajustes de Inventario' })
 
@@ -202,7 +203,7 @@ const { data: ingredientsData } = useAsyncData(
   `ingredients-list-${currentTenant.value?.id || 'default'}`,
   () => $fetch('/api/suppliers/ingredients', {
     params: {
-      limit: 10000
+      limit: INGREDIENTS_FETCH_LIMIT
     }
   }),
   {

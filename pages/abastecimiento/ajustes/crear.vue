@@ -345,6 +345,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -372,7 +373,7 @@ const purchaseUnits = ref([])
 
 // Load ingredients
 const { data: ingredientsData, pending: ingredientsLoading } = useFetch('/api/suppliers/ingredients', {
-  params: { limit: 10000 },
+  params: { limit: INGREDIENTS_FETCH_LIMIT },
   server: false
 })
 

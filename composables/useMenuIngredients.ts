@@ -4,7 +4,7 @@ import { useTenantReactive } from '@/composables/useTenantReactive'
  * Standard limit for full-catalog ingredient fetches across all pages.
  * Change this single value to adjust the limit everywhere at once.
  */
-export const INGREDIENTS_FETCH_LIMIT = 1000
+export const INGREDIENTS_FETCH_LIMIT = 3000
 
 /**
  * Shared composable for fetching ingredients across all /menu/* pages.
