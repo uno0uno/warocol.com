@@ -404,7 +404,7 @@
                             v-model="item.searchTerm"
                             @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
                             @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
-                            @blur="() => setTimeout(() => { item.showResults = false }, 150)"
+                            @blur="() => hideResults(item)"
                             class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
                             placeholder="Buscar ingrediente..."
                           />
@@ -654,7 +654,7 @@
                             v-model="item.searchTerm"
                             @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
                             @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
-                            @blur="() => setTimeout(() => { item.showResults = false }, 150)"
+                            @blur="() => hideResults(item)"
                             class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
                             placeholder="Buscar ingrediente..."
                           />
@@ -898,7 +898,7 @@
                             v-model="item.searchTerm"
                             @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
                             @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
-                            @blur="() => setTimeout(() => { item.showResults = false }, 150)"
+                            @blur="() => hideResults(item)"
                             class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
                             placeholder="Buscar ingrediente..."
                           />
@@ -2084,6 +2084,10 @@ const searchIngredients = async (term: string, index: number) => {
     },
     { immediate: true }
   )
+}
+
+const hideResults = (item: any) => {
+  setTimeout(() => { item.showResults = false }, 150)
 }
 
 const selectIngredient = (ingredient: any, index: number) => {
