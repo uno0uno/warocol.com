@@ -404,7 +404,7 @@
                             v-model="item.searchTerm"
                             @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
                             @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
-                            @blur="() => window.setTimeout(() => { item.showResults = false }, 150)"
+                            @blur="() => setTimeout(() => { item.showResults = false }, 150)"
                             class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
                             placeholder="Buscar ingrediente..."
                           />
@@ -654,7 +654,7 @@
                             v-model="item.searchTerm"
                             @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
                             @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
-                            @blur="() => window.setTimeout(() => { item.showResults = false }, 150)"
+                            @blur="() => setTimeout(() => { item.showResults = false }, 150)"
                             class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
                             placeholder="Buscar ingrediente..."
                           />
@@ -898,7 +898,7 @@
                             v-model="item.searchTerm"
                             @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
                             @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
-                            @blur="() => window.setTimeout(() => { item.showResults = false }, 150)"
+                            @blur="() => setTimeout(() => { item.showResults = false }, 150)"
                             class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
                             placeholder="Buscar ingrediente..."
                           />
@@ -1558,13 +1558,14 @@ const supplierOptions = computed(() => suppliers.value.map((s: any) => ({
 })))
 
 // Per-index server-side ingredient search (replaces full catalog fetch)
-const ingredientSearches = ref<Record<number, ReturnType<typeof useIngredientSearch>>>({})
+// Plain object (not ref) to avoid Vue deep-unwrapping inner refs from useIngredientSearch()
+const ingredientSearches: Record<number, ReturnType<typeof useIngredientSearch>> = {}
 
 const getIngredientSearch = (index: number) => {
-  if (!ingredientSearches.value[index]) {
-    ingredientSearches.value[index] = useIngredientSearch()
+  if (!ingredientSearches[index]) {
+    ingredientSearches[index] = useIngredientSearch()
   }
-  return ingredientSearches.value[index]
+  return ingredientSearches[index]
 }
 
 // Cache of ingredient details keyed by ingredient_id (populated on select + OCR match)
