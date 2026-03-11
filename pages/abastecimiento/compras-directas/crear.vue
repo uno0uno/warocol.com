@@ -1462,7 +1462,7 @@ import { ref, computed } from 'vue'
 import { TrashIcon, DocumentTextIcon, CreditCardIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
-import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
+import { useIngredientSearch } from '@/composables/useIngredientSearch'
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
 
@@ -1557,13 +1557,30 @@ const supplierOptions = computed(() => suppliers.value.map((s: any) => ({
   label: s.name
 })))
 
-// Fetch ingredients
-const { data: ingredientsData, pending: loadingIngredients } = useFetch('/api/suppliers/ingredients', {
-  server: false,
-  query: { limit: INGREDIENTS_FETCH_LIMIT }
-})
+// Per-index server-side ingredient search (replaces full catalog fetch)
+const ingredientSearches = ref<Record<number, ReturnType<typeof useIngredientSearch>>>({})
 
-const ingredients = computed(() => ingredientsData.value?.data || [])
+const getIngredientSearch = (index: number) => {
+  if (!ingredientSearches.value[index]) {
+    ingredientSearches.value[index] = useIngredientSearch()
+  }
+  return ingredientSearches.value[index]
+}
+
+// Cache of ingredient details keyed by ingredient_id (populated on select + OCR match)
+const ingredientCache = ref<Record<string, { id: string, name: string, unit: string, unit_weight_gr?: number | null, type?: string }>>({})
+
+const cacheIngredient = (ing: any) => {
+  if (ing?.id) {
+    ingredientCache.value[ing.id] = {
+      id: ing.id,
+      name: ing.name,
+      unit: ing.unit,
+      unit_weight_gr: ing.unit_weight_gr ?? null,
+      type: ing.type
+    }
+  }
+}
 
 // Estado para filtro de tipo de ingrediente
 const selectedIngredientType = ref('food')
@@ -1587,29 +1604,12 @@ const unitConversions: Record<string, number> = {
   'und-und': 1
 }
 
-// Ingredientes filtrados por tipo
-const filteredIngredients = computed(() =>
-  ingredients.value.filter((i: any) =>
-    !selectedIngredientType.value || i.type === selectedIngredientType.value
-  )
-)
-
 // Items agrupados por tipo
 const itemsByType = computed(() => ({
   food: form.value.items.filter(item => (item.item_type || 'food') === 'food'),
   service: form.value.items.filter(item => item.item_type === 'service'),
   supply: form.value.items.filter(item => item.item_type === 'supply')
 }))
-
-// Opciones de ingredientes (usando los filtrados)
-const ingredientOptions = computed(() =>
-  filteredIngredients.value.map((i: any) => ({
-    value: i.id,
-    label: i.name,
-    unit: i.unit,
-    type: i.type
-  }))
-)
 
 // Fetch purchase units
 const { data: purchaseUnitsData, pending: loadingPurchaseUnits, refresh: refreshPurchaseUnits } = useFetch('/api/suppliers/ingredient-purchase-units', {
@@ -1621,7 +1621,7 @@ const purchaseUnits = computed(() => purchaseUnitsData.value?.data || [])
 
 // Loading state
 const isLoadingData = computed(() =>
-  loadingSuppliers.value || loadingIngredients.value || loadingPurchaseUnits.value
+  loadingSuppliers.value || loadingPurchaseUnits.value
 )
 
 // Computed
@@ -1666,8 +1666,7 @@ const getSupplierName = (id: string) => {
 }
 
 const getIngredientName = (id: string) => {
-  const ingredient = ingredients.value.find((i: any) => i.id === id)
-  return ingredient?.name || ''
+  return ingredientCache.value[id]?.name || ''
 }
 
 const getPaymentTypeText = (type: string) => {
@@ -1692,7 +1691,7 @@ const getPaymentMethodText = (method: string) => {
 const getPurchaseUnitOptions = (ingredientId: string) => {
   if (!ingredientId) return []
 
-  const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
+  const ingredient = ingredientCache.value[ingredientId]
   const baseUnit = ingredient?.unit || ''
 
   const units = purchaseUnits.value.filter((u: any) => u.ingredient_id === ingredientId)
@@ -1748,21 +1747,18 @@ const getItemUnitLabel = (item: PurchaseItem): string => {
 // Obtener la unidad base del ingrediente
 const getIngredientUnit = (ingredientId: string) => {
   if (!ingredientId) return ''
-  const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
-  return ingredient?.unit || ''
+  return ingredientCache.value[ingredientId]?.unit || ''
 }
 
 // Detecta si el ingrediente es 'und' — siempre se pide el peso
 const needsGramsPerUnit = (ingredientId: string) => {
   if (!ingredientId) return false
-  const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
-  return ingredient?.unit === 'und'
+  return ingredientCache.value[ingredientId]?.unit === 'und'
 }
 
-// Obtiene el peso existente desde ingredients.unit_weight_gr
+// Obtiene el peso existente desde ingredientCache.unit_weight_gr
 const getExistingGramsPerUnit = (ingredientId: string): number | null => {
-  const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
-  return ingredient?.unit_weight_gr || null
+  return ingredientCache.value[ingredientId]?.unit_weight_gr || null
 }
 
 // Obtener el factor de conversión para una unidad de compra
@@ -1782,7 +1778,7 @@ const getConversionFactor = (purchaseUnitLabel: string, ingredientId: string) =>
   if (unit) return unit.conversion_factor
 
   // Fallback: buscar en conversiones legacy
-  const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
+  const ingredient = ingredientCache.value[ingredientId]
   if (ingredient) {
     const key = `${purchaseUnitLabel}-${ingredient.unit}`
     return unitConversions[key] || 1
@@ -1859,7 +1855,7 @@ const onSupplierChange = async (supplierId: string) => {
 
 const onIngredientChange = (index: number) => {
   const item = form.value.items[index]
-  const ingredient = ingredients.value.find((i: any) => i.id === item.ingredient_id)
+  const ingredient = ingredientCache.value[item.ingredient_id]
 
   if (ingredient) {
     // Set default unit
@@ -2068,7 +2064,7 @@ const createSupplierFromOcr = async () => {
   }
 }
 
-const searchIngredients = (term: string, index: number) => {
+const searchIngredients = async (term: string, index: number) => {
   const item = form.value.items[index]
   item.ingredient_id = ''
   if (!term || term.trim().length < 1) {
@@ -2076,12 +2072,17 @@ const searchIngredients = (term: string, index: number) => {
     item.showResults = false
     return
   }
-  const normalized = normalizeForMatch(term)
-  const results = ingredients.value
-    .filter((ing: any) => normalizeForMatch(ing.name).includes(normalized))
-    .slice(0, 10)
-  ingredientResults.value[index] = results
-  item.showResults = true
+  const search = getIngredientSearch(index)
+  search.query.value = term
+  // results are reactive — watch them to update ingredientResults
+  watch(
+    () => search.results.value,
+    (results) => {
+      ingredientResults.value[index] = results
+      item.showResults = results.length > 0
+    },
+    { immediate: true }
+  )
 }
 
 const selectIngredient = (ingredient: any, index: number) => {
@@ -2091,25 +2092,8 @@ const selectIngredient = (ingredient: any, index: number) => {
   item.showResults = false
   if (ingredient.type) item.item_type = ingredient.type
   ingredientResults.value[index] = []
+  cacheIngredient(ingredient)
   onIngredientChange(index)
-}
-
-const findIngredientMatch = (ocrDescription: string): string => {
-  const normalized = normalizeForMatch(ocrDescription)
-  const words = normalized.split(' ').filter(w => w.length > 2)
-  let bestMatch: any = null
-  let bestScore = 0
-  for (const ing of ingredients.value) {
-    const ingNorm = normalizeForMatch(ing.name)
-    // Score: how many words from the OCR description appear in the ingredient name
-    const score = words.filter(w => ingNorm.includes(w)).length
-    if (score > bestScore) {
-      bestScore = score
-      bestMatch = ing
-    }
-  }
-  // Only accept if at least one meaningful word matched
-  return bestScore > 0 ? bestMatch.id : ''
 }
 
 
@@ -2159,27 +2143,45 @@ const handleScanFileSelect = async (event: Event) => {
 
       // 2. Pre-fill items from OCR
       if (data.items && data.items.length > 0) {
+        // Resolve ingredient matches in parallel via backend pg_trgm endpoint
+        const matchedIngredients = await Promise.all(
+          data.items.map(async (ocrItem: any) => {
+            // Priority 1: backend already resolved the ingredient_id
+            if (ocrItem.detected_ingredient_id) return null
+
+            // Priority 2: call /ingredients/match for the Gemini-detected name or raw description
+            const nameToMatch = ocrItem.detected_ingredient || ocrItem.descripcion || ''
+            if (!nameToMatch) return null
+
+            try {
+              const res = await useNuxtApp().$fetch<any>('/api/suppliers/ingredients/match', {
+                query: { name: nameToMatch, threshold: 0.35 }
+              })
+              return res?.data ?? null
+            } catch {
+              return null
+            }
+          })
+        )
+
+        // Cache all resolved ingredients
+        matchedIngredients.forEach(ing => { if (ing) cacheIngredient(ing) })
+
         form.value.items = data.items.map((ocrItem: any, index: number) => {
           let matchedId = ''
+          let ingredientName = ''
 
-          // 1. Use backend-resolved ingredient_id (Gemini matched or AI-created)
+          // Priority 1: backend-resolved id from Gemini (invoice scan service)
           if (ocrItem.detected_ingredient_id) {
             matchedId = ocrItem.detected_ingredient_id
+            ingredientName = ocrItem.detected_ingredient || ocrItem.descripcion || ''
+          } else if (matchedIngredients[index]) {
+            // Priority 2: pg_trgm server-side match
+            matchedId = matchedIngredients[index].id
+            ingredientName = matchedIngredients[index].name
+          } else {
+            ingredientName = ocrItem.detected_ingredient || ocrItem.descripcion || ''
           }
-
-          // 2. Fallback: local fuzzy match against loaded catalog
-          if (!matchedId && ocrItem.detected_ingredient) {
-            matchedId = findIngredientMatch(ocrItem.detected_ingredient)
-          }
-
-          // 3. Last resort: match against raw invoice description
-          if (!matchedId && ocrItem.descripcion) {
-            matchedId = findIngredientMatch(ocrItem.descripcion)
-          }
-
-          const ingredientName = matchedId
-            ? getIngredientName(matchedId)
-            : (ocrItem.detected_ingredient || ocrItem.descripcion || '')
 
           const item: PurchaseItem = {
             ingredient_id: matchedId,
@@ -2195,16 +2197,18 @@ const handleScanFileSelect = async (event: Event) => {
           }
           return item
         })
+
         // Auto-set default purchase unit for matched items
         form.value.items.forEach((item, index) => {
           if (item.ingredient_id) onIngredientChange(index)
         })
+
         // Aplicar peso_unidad_gr del OCR: auto-seleccionar unidad de compra y/o pre-llenar peso
         data.items.forEach((ocrItem: any, index: number) => {
           const item = form.value.items[index]
           if (!ocrItem.peso_unidad_gr || !item.ingredient_id) return
 
-          const ingredient = ingredients.value.find((i: any) => i.id === item.ingredient_id)
+          const ingredient = ingredientCache.value[item.ingredient_id]
           if (!ingredient) return
 
           const pesoGr = ocrItem.peso_unidad_gr
