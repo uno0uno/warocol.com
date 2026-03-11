@@ -1862,11 +1862,8 @@ const onIngredientChange = (index: number) => {
     // Set default unit
     const units = getPurchaseUnitOptions(item.ingredient_id)
     const defaultUnit = units.find((u: any) => u.is_default) || units[0]
-    console.log(`[onIngredientChange] index=${index} id=${item.ingredient_id} ingredient='${ingredient.name}' units=${units.length} defaultUnit=`, defaultUnit)
     if (defaultUnit) {
       item.purchase_unit = defaultUnit.value
-    } else {
-      console.warn(`[onIngredientChange] index=${index} '${ingredient.name}' → no units found, purchase_unit stays empty`)
     }
 
     // Pre-populate grams_per_unit for 'und' ingredients
@@ -1876,8 +1873,6 @@ const onIngredientChange = (index: number) => {
 
     // Update suggested price from catalog
     updateSuggestedPrice(index)
-  } else {
-    console.warn(`[onIngredientChange] index=${index} id='${item.ingredient_id}' → NOT IN CACHE, purchase_unit won't be set`)
   }
 }
 
@@ -2153,29 +2148,15 @@ const handleScanFileSelect = async (event: Event) => {
 
       // 2. Pre-fill items from OCR
       if (data.items && data.items.length > 0) {
-        console.group('[OCR] Item resolution')
-        console.log('[OCR] Raw items from backend:', data.items.map((it: any) => ({
-          descripcion: it.descripcion,
-          detected_ingredient: it.detected_ingredient,
-          detected_ingredient_id: it.detected_ingredient_id,
-          ingredient_match: it.ingredient_match
-        })))
-
-        // Resolve ingredient matches in parallel via backend pg_trgm endpoint
+        // Resolve ingredient matches in parallel
         const matchedIngredients = await Promise.all(
-          data.items.map(async (ocrItem: any, idx: number) => {
+          data.items.map(async (ocrItem: any) => {
             // Priority 1: backend already resolved the ingredient_id — fetch by ID directly (no name guessing)
             if (ocrItem.detected_ingredient_id) {
               try {
                 const res = await $fetch<any>(`/api/suppliers/ingredients/${ocrItem.detected_ingredient_id}`)
-                if (res?.data) {
-                  console.log(`[OCR] Item ${idx+1} '${ocrItem.descripcion}' → fetch by id ✅`, res.data)
-                  return res.data
-                }
-                console.warn(`[OCR] Item ${idx+1} '${ocrItem.descripcion}' → fetch by id returned null`)
-              } catch (e) {
-                console.error(`[OCR] Item ${idx+1} '${ocrItem.descripcion}' → fetch by id error`, e)
-              }
+                if (res?.data) return res.data
+              } catch { /* fall through */ }
               return null
             }
 
@@ -2187,21 +2168,12 @@ const handleScanFileSelect = async (event: Event) => {
               const res = await useNuxtApp().$fetch<any>('/api/suppliers/ingredients/match', {
                 query: { name: nameToMatch, threshold: 0.35 }
               })
-              const result = res?.data ?? null
-              if (result) {
-                console.log(`[OCR] Item ${idx+1} '${ocrItem.descripcion}' → pg_trgm match ✅`, result)
-              } else {
-                console.warn(`[OCR] Item ${idx+1} '${ocrItem.descripcion}' → pg_trgm no match (threshold=0.35)`)
-              }
-              return result
+              return res?.data ?? null
             } catch {
               return null
             }
           })
         )
-
-        console.log('[OCR] ingredientCache after resolution:', { ...ingredientCache.value })
-        console.groupEnd()
 
         // Cache all resolved ingredients
         matchedIngredients.forEach(ing => { if (ing) cacheIngredient(ing) })
