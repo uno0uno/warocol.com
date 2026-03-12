@@ -62,6 +62,7 @@ const offset = computed(() => (currentPage.value - 1) * itemsPerPage.value)
 
 // ── Data fetch ────────────────────────────────────────────────────────────
 const { currentTenant } = useTenantReactive()
+const hasLoaded = ref(false)
 
 const { data: customersResponse, pending: isLoading, error: fetchError, refresh } = useAsyncData(
   'clientes-list',
@@ -136,6 +137,7 @@ const handleRefresh = async () => {
 
 watch(lastUpdate, () => { if (setLastUpdateText) setLastUpdateText(lastUpdateText.value) })
 watch(dateRangeDates, () => { currentPage.value = 1 })
+watch(isLoading, (val) => { if (!val && !fetchError.value) hasLoaded.value = true })
 
 onTenantChange(handleRefresh)
 
@@ -152,8 +154,8 @@ onUnmounted(() => {
 <template>
   <div class="space-y-4">
 
-    <!-- Loading -->
-    <div v-if="isLoading || isSearchPending" class="flex items-center justify-center min-h-[400px]">
+    <!-- Loading (initial only) -->
+    <div v-if="isLoading && !hasLoaded" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
@@ -187,13 +189,23 @@ onUnmounted(() => {
             menu-class-name="dp-custom-menu"
             calendar-cell-class-name="dp-custom-cell"
           />
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Buscar cliente..."
-            aria-label="Buscar cliente por nombre o teléfono"
-            class="h-10 min-w-[180px] px-3 text-sm border-2 border-slate-200 rounded-lg bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
-          />
+          <div class="relative">
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Buscar cliente..."
+              aria-label="Buscar cliente por nombre o teléfono"
+              class="h-10 min-w-[180px] px-3 pr-8 text-sm border-2 border-slate-200 rounded-lg bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
+            />
+            <svg
+              v-if="isLoading && hasLoaded || isSearchPending"
+              class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 animate-spin"
+              fill="none" viewBox="0 0 24 24"
+            >
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          </div>
           <button
             v-if="hasFilters"
             @click="clearFilters"
