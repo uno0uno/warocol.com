@@ -62,8 +62,6 @@ const offset = computed(() => (currentPage.value - 1) * itemsPerPage.value)
 
 // ── Data fetch ────────────────────────────────────────────────────────────
 const { currentTenant } = useTenantReactive()
-const hasLoaded = ref(false)
-
 const { data: customersResponse, pending: isLoading, error: fetchError, refresh } = useAsyncData(
   'clientes-list',
   () => $fetch('/api/orders/customers', {
@@ -136,7 +134,6 @@ const handleRefresh = async () => {
 
 watch(lastUpdate, () => { if (setLastUpdateText) setLastUpdateText(lastUpdateText.value) })
 watch(dateRangeDates, () => { currentPage.value = 1 })
-watch(isLoading, (val) => { if (!val && !fetchError.value) hasLoaded.value = true })
 
 onTenantChange(handleRefresh)
 
@@ -153,26 +150,10 @@ onUnmounted(() => {
 <template>
   <div class="space-y-4">
 
-    <!-- Loading (initial only) -->
-    <div v-if="isLoading && !hasLoaded" class="flex items-center justify-center min-h-[400px]">
-      <CommonsTheCustomLoader size="large" />
-    </div>
-
-    <!-- Error -->
-    <div v-else-if="fetchError" class="flex flex-col items-center justify-center min-h-[400px] gap-4">
-      <div class="text-red-600 text-lg font-semibold">Error al cargar clientes</div>
-      <div class="text-slate-600">{{ fetchError.message || 'No se pudo conectar con el servidor' }}</div>
-      <button @click="handleRefresh()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-        Reintentar
-      </button>
-    </div>
-
-    <!-- Main Content -->
-    <div v-else class="flex flex-col gap-4 pb-20">
-
-      <!-- Filters Bar -->
-      <ClientOnly>
-        <div class="flex items-center gap-2 w-full overflow-x-auto pb-2">
+    <!-- Filters Bar — always visible -->
+    <ClientOnly>
+      <div class="flex items-center gap-2 w-full">
+        <div class="flex-1 min-w-0">
           <VueDatePicker
             v-model="dateRangeDates"
             range
@@ -188,34 +169,42 @@ onUnmounted(() => {
             menu-class-name="dp-custom-menu"
             calendar-cell-class-name="dp-custom-cell"
           />
-          <div class="relative">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Buscar cliente..."
-              aria-label="Buscar cliente por nombre o teléfono"
-              class="h-10 min-w-[180px] px-3 pr-8 text-sm border-2 border-slate-200 rounded-lg bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
-            />
-            <svg
-              v-if="isLoading && hasLoaded || isSearchPending"
-              class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 animate-spin"
-              fill="none" viewBox="0 0 24 24"
-            >
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          </div>
-          <button
-            v-if="hasFilters"
-            @click="clearFilters"
-            class="h-10 px-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-500 hover:text-slate-700 hover:border-indigo-500 transition-colors"
-            title="Limpiar filtros"
-            aria-label="Limpiar filtros"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
         </div>
-      </ClientOnly>
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Buscar cliente..."
+          aria-label="Buscar cliente por nombre o teléfono"
+          class="flex-1 min-w-0 h-10 px-3 text-sm border-2 border-slate-200 rounded-lg bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
+        />
+        <button
+          v-if="hasFilters"
+          @click="clearFilters"
+          class="h-10 px-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-500 hover:text-slate-700 hover:border-indigo-500 transition-colors flex-shrink-0"
+          title="Limpiar filtros"
+          aria-label="Limpiar filtros"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+    </ClientOnly>
+
+    <!-- Loading -->
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="fetchError" class="flex flex-col items-center justify-center min-h-[400px] gap-4">
+      <div class="text-red-600 text-lg font-semibold">Error al cargar clientes</div>
+      <div class="text-slate-600">{{ fetchError.message || 'No se pudo conectar con el servidor' }}</div>
+      <button @click="handleRefresh()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+        Reintentar
+      </button>
+    </div>
+
+    <!-- Main Content -->
+    <div v-else class="flex flex-col gap-4 pb-20">
 
       <!-- Summary Cards -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -342,6 +331,7 @@ onUnmounted(() => {
 <style>
 .dp-custom-input {
   height: 40px !important;
+  width: 100% !important;
   border: 2px solid hsl(var(--border)) !important;
   border-radius: 0.5rem !important;
   background: hsl(var(--background)) !important;
@@ -349,7 +339,6 @@ onUnmounted(() => {
   color: hsl(var(--foreground)) !important;
   padding-left: 0.75rem !important;
   padding-right: 0.75rem !important;
-  min-width: 220px;
 }
 .dp-custom-input:focus {
   outline: none !important;
