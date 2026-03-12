@@ -132,21 +132,36 @@
 
           </div>
 
-          <!-- Footer: always-visible actions -->
-          <div class="p-4 border-t border-border flex-shrink-0 flex gap-3">
+          <!-- Footer: always-visible actions as cards -->
+          <div class="p-4 border-t border-border flex-shrink-0 grid grid-cols-2 gap-3">
+            <!-- Nuevo cliente card -->
             <button
               @click="state = 'create'"
-              class="flex-1 min-h-[44px] px-4 py-3 bg-surface border border-border text-text-primary font-medium rounded-xl hover:bg-surface-secondary transition-colors text-sm"
+              class="flex flex-col items-start gap-0.5 px-4 py-3 min-h-[64px] bg-surface border-2 border-border rounded-xl hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all text-left active:scale-95"
             >
-              + Nuevo cliente
+              <span class="flex items-center gap-1.5 font-semibold text-sm text-text-primary">
+                <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                Nuevo cliente
+              </span>
+              <span class="text-xs text-text-tertiary leading-tight">Registrar datos</span>
             </button>
+
+            <!-- Sin datos card -->
             <button
               @click="selectGenericCustomer"
               :disabled="isCreatingGeneric"
-              class="flex-1 min-h-[44px] px-4 py-3 bg-surface border border-border text-text-secondary font-medium rounded-xl hover:bg-surface-secondary transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex flex-col items-start gap-0.5 px-4 py-3 min-h-[64px] bg-surface border-2 border-border rounded-xl hover:border-border hover:bg-surface-secondary transition-all text-left active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span v-if="isCreatingGeneric">...</span>
-              <span v-else>Sin datos</span>
+              <span class="flex items-center gap-1.5 font-semibold text-sm text-text-primary">
+                <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+                <span v-if="isCreatingGeneric">Procesando...</span>
+                <span v-else>Sin datos</span>
+              </span>
+              <span class="text-xs text-text-tertiary leading-tight">Venta rápida</span>
             </button>
           </div>
         </template>
@@ -226,6 +241,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
+import { $fetch } from 'ofetch'
 
 interface CustomerSummary {
   id: string
