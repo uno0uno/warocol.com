@@ -137,31 +137,37 @@
             <!-- Nuevo cliente card -->
             <button
               @click="state = 'create'"
-              class="flex flex-col items-start gap-0.5 px-4 py-3 min-h-[64px] bg-surface border-2 border-border rounded-xl hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all text-left active:scale-95"
+              class="flex flex-row items-center gap-3 px-4 py-3 min-h-[64px] bg-surface border-2 border-border rounded-xl hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all text-left active:scale-95"
             >
-              <span class="flex items-center gap-1.5 font-semibold text-sm text-text-primary">
-                <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
-                Nuevo cliente
-              </span>
-              <span class="text-xs text-text-tertiary leading-tight">Registrar datos</span>
+              </div>
+              <div class="flex flex-col gap-0.5 min-w-0">
+                <span class="font-semibold text-sm text-text-primary leading-tight">Nuevo cliente</span>
+                <span class="text-xs text-text-tertiary leading-tight">Registrar datos</span>
+              </div>
             </button>
 
             <!-- Sin datos card -->
             <button
               @click="selectGenericCustomer"
               :disabled="isCreatingGeneric"
-              class="flex flex-col items-start gap-0.5 px-4 py-3 min-h-[64px] bg-surface border-2 border-border rounded-xl hover:border-border hover:bg-surface-secondary transition-all text-left active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex flex-row items-center gap-3 px-4 py-3 min-h-[64px] bg-surface border-2 border-border rounded-xl hover:border-border hover:bg-surface-secondary transition-all text-left active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span class="flex items-center gap-1.5 font-semibold text-sm text-text-primary">
-                <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-surface-secondary text-text-secondary flex items-center justify-center">
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                 </svg>
-                <span v-if="isCreatingGeneric">Procesando...</span>
-                <span v-else>Sin datos</span>
-              </span>
-              <span class="text-xs text-text-tertiary leading-tight">Venta rápida</span>
+              </div>
+              <div class="flex flex-col gap-0.5 min-w-0">
+                <span class="font-semibold text-sm text-text-primary leading-tight">
+                  <span v-if="isCreatingGeneric">Procesando...</span>
+                  <span v-else>Sin datos</span>
+                </span>
+                <span class="text-xs text-text-tertiary leading-tight">Venta rápida</span>
+              </div>
             </button>
           </div>
         </template>
