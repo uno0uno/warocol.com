@@ -25,11 +25,9 @@ const syncError = ref('')
 const showSuccessModal = ref(false)
 const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string } | null>(null)
 
-// Customer identification (inline form, not modal)
-const customerForm = ref({
-  phone_number: '',
-  name: ''
-})
+// Customer identification via modal
+const showCustomerModal = ref(false)
+const selectedCustomer = ref<{ id: string; name: string | null; phone_number: string | null } | null>(null)
 
 // Computed
 const cartItems = computed(() => posStore.cart)
@@ -51,9 +49,9 @@ const getItemTotal = (item: any) => {
 }
 
 const processOrder = async () => {
-  // Validar que hay teléfono del cliente
-  if (!customerForm.value.phone_number) {
-    processingError.value = 'Ingresa el número de teléfono del cliente'
+  // Validar que hay cliente seleccionado
+  if (!selectedCustomer.value) {
+    processingError.value = 'Selecciona o identifica al cliente antes de continuar'
     return
   }
 
@@ -67,35 +65,12 @@ const processOrder = async () => {
     isProcessing.value = true
     processingError.value = ''
 
-    // 1. Crear/buscar cliente
-    const customerResponse = await $fetch('/api/customers/search-or-create', {
-      method: 'POST',
-      body: {
-        phone_number: customerForm.value.phone_number,
-        name: customerForm.value.name || null
-      }
-    }) as {
-      success: boolean
-      data: {
-        id: string
-        phone_number: string
-        name: string | null
-        email: string | null
-      }
-      is_new: boolean
-    }
-
-    if (!customerResponse.success) {
-      processingError.value = 'Error al procesar el cliente'
-      return
-    }
-
-    // 2. Completar orden (pasando customer_id en el body)
+    // Completar orden con el customer_id ya resuelto por el modal
     const response = await $fetch(`/api/pos/cart/${posStore.cartId}/complete`, {
       method: 'POST',
       body: {
         payment_method: selectedPaymentMethod.value,
-        customer_id: customerResponse.data.id
+        customer_id: selectedCustomer.value.id
       }
     }) as {
       success: boolean
@@ -128,6 +103,11 @@ const processOrder = async () => {
   } finally {
     isProcessing.value = false
   }
+}
+
+const onCustomerIdentified = (customer: { id: string; name: string | null; phone_number: string | null }) => {
+  selectedCustomer.value = customer
+  processingError.value = ''
 }
 
 const getPaymentMethodLabel = (method: string) => {
@@ -432,49 +412,41 @@ onUnmounted(() => {
             Datos del Cliente
           </h2>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <!-- Phone Number -->
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1.5">
-                Teléfono *
-              </label>
-              <div class="relative">
-                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary text-lg">
-                  📱
-                </span>
-                <input
-                  v-model="customerForm.phone_number"
-                  type="tel"
-                  placeholder="3001234567"
-                  class="w-full pl-10 pr-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background"
-                  required
-                />
-              </div>
+          <!-- Customer selected: show card -->
+          <div v-if="selectedCustomer" class="flex items-center gap-4 p-4 bg-primary/5 border border-primary/20 rounded-xl">
+            <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
+              {{ selectedCustomer.name?.charAt(0)?.toUpperCase() || selectedCustomer.phone_number?.charAt(0) || '?' }}
             </div>
-
-            <!-- Name (Optional) -->
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1.5">
-                Nombre (opcional)
-              </label>
-              <div class="relative">
-                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary text-lg">
-                  👤
-                </span>
-                <input
-                  v-model="customerForm.name"
-                  type="text"
-                  placeholder="Juan Pérez"
-                  class="w-full pl-10 pr-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background"
-                />
-              </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-text-primary truncate">{{ selectedCustomer.name || 'Cliente sin datos' }}</p>
+              <p class="text-sm text-text-secondary truncate">{{ selectedCustomer.phone_number || 'Sin teléfono' }}</p>
             </div>
+            <button
+              @click="showCustomerModal = true"
+              class="min-h-[44px] px-3 py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors flex-shrink-0"
+            >
+              Cambiar
+            </button>
           </div>
 
-          <p class="mt-3 text-xs text-text-tertiary">
-            Si el cliente existe, se asociará automáticamente. Si no, se creará uno nuevo.
-          </p>
+          <!-- No customer yet: open modal button -->
+          <button
+            v-else
+            @click="showCustomerModal = true"
+            class="w-full min-h-[56px] flex items-center justify-center gap-3 border-2 border-dashed border-border rounded-xl text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all"
+          >
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <span class="font-medium">Buscar o identificar cliente</span>
+          </button>
         </div>
+
+        <!-- Customer Search Modal -->
+        <PosCustomerIdentificationModal
+          v-model="showCustomerModal"
+          @customer-identified="onCustomerIdentified"
+        />
 
       </div>
 
