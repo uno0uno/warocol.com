@@ -70,8 +70,7 @@ const { data: customersResponse, pending: isLoading, error: fetchError, refresh 
     params: {
       date_from: dateRange.value.from || undefined,
       date_to: dateRange.value.to || undefined,
-      search_name: debouncedSearch.value || undefined,
-      search_phone: debouncedSearch.value || undefined,
+      search: debouncedSearch.value || undefined,
       limit: itemsPerPage.value,
       offset: offset.value,
     }
