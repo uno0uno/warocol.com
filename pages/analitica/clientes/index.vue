@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useDebounceFn } from '@vueuse/core'
 import { es } from 'date-fns/locale';
 import { format as fnsFormat, formatDistanceToNow } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
@@ -13,6 +14,22 @@ const lastUpdate = ref<Date>(new Date());
 
 // ── Filters ──────────────────────────────────────────────────────────────
 const dateRangeDates = ref<Date[] | null>(null);
+
+// ── Search ────────────────────────────────────────────────────────────────
+const searchQuery = ref('')
+const debouncedSearch = ref('')
+const isSearchPending = ref(false)
+
+const commitSearch = useDebounceFn(() => {
+  debouncedSearch.value = searchQuery.value.trim()
+  currentPage.value = 1
+  isSearchPending.value = false
+}, 300)
+
+watch(searchQuery, () => {
+  isSearchPending.value = !!searchQuery.value.trim()
+  commitSearch()
+})
 
 const presetDates = ref([
   { label: 'Hoy', value: [new Date(), new Date()] },
@@ -52,6 +69,8 @@ const { data: customersResponse, pending: isLoading, error: fetchError, refresh 
     params: {
       date_from: dateRange.value.from || undefined,
       date_to: dateRange.value.to || undefined,
+      search_name: debouncedSearch.value || undefined,
+      search_phone: debouncedSearch.value || undefined,
       limit: itemsPerPage.value,
       offset: offset.value,
     }
@@ -60,7 +79,7 @@ const { data: customersResponse, pending: isLoading, error: fetchError, refresh 
     server: false,
     lazy: true,
     default: () => ({ success: false, data: [], total: 0 }),
-    watch: [currentTenant, dateRangeDates, currentPage],
+    watch: [currentTenant, dateRangeDates, currentPage, debouncedSearch],
   }
 )
 
@@ -100,10 +119,13 @@ const nextPage = () => { if (canGoNext.value) currentPage.value++ }
 
 const clearFilters = () => {
   dateRangeDates.value = null
+  searchQuery.value = ''
+  debouncedSearch.value = ''
+  isSearchPending.value = false
   currentPage.value = 1
 }
 
-const hasFilters = computed(() => !!dateRangeDates.value)
+const hasFilters = computed(() => !!dateRangeDates.value || !!searchQuery.value)
 
 const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
 
@@ -131,7 +153,7 @@ onUnmounted(() => {
   <div class="space-y-4">
 
     <!-- Loading -->
-    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="isLoading || isSearchPending" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
@@ -164,6 +186,13 @@ onUnmounted(() => {
             input-class-name="dp-custom-input"
             menu-class-name="dp-custom-menu"
             calendar-cell-class-name="dp-custom-cell"
+          />
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Buscar cliente..."
+            aria-label="Buscar cliente por nombre o teléfono"
+            class="h-10 min-w-[180px] px-3 text-sm border-2 border-slate-200 rounded-lg bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
           />
           <button
             v-if="hasFilters"
