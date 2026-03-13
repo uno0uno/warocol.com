@@ -2,10 +2,10 @@
   <Transition name="sheet">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 bg-black/50"
+      class="fixed inset-0 z-[60] flex items-end md:items-center justify-center md:p-4 bg-black/50"
       @click.self="handleClose"
     >
-      <div class="bottom-sheet-panel bg-surface w-full md:max-w-md border border-border flex flex-col rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[calc(85vh-80px)] md:max-h-[90vh] mb-20 md:mb-0" @click.stop>
+      <div class="bottom-sheet-panel bg-surface w-full md:max-w-md border border-border flex flex-col rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[85vh] md:max-h-[90vh]" @click.stop>
 
         <!-- Mobile drag handle -->
         <div class="flex justify-center pt-3 pb-1 md:hidden flex-shrink-0" aria-hidden="true">
@@ -138,7 +138,7 @@
           </div>
 
           <!-- Footer: always-visible actions as cards -->
-          <div class="p-4 border-t border-border flex-shrink-0 grid grid-cols-2 gap-3">
+          <div class="p-4 pb-6 md:pb-4 border-t border-border flex-shrink-0 grid grid-cols-2 gap-3">
             <!-- Nuevo cliente card -->
             <button
               @click="state = 'create'"
@@ -224,7 +224,7 @@
             </div>
 
             <!-- Footer buttons -->
-            <div class="p-4 border-t border-border flex-shrink-0 flex gap-3">
+            <div class="p-4 pb-6 md:pb-4 border-t border-border flex-shrink-0 flex gap-3">
               <button
                 type="button"
                 @click="state = 'search'"
