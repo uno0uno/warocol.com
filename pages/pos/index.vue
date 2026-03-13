@@ -215,15 +215,6 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Sin cliente - Banner informativo -->
-      <div v-else class="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-700 rounded-lg mb-4 p-3">
-        <div class="flex items-center gap-2">
-          <span class="text-amber-600 dark:text-amber-400">👤</span>
-          <p class="text-sm text-amber-800 dark:text-amber-200">
-            <span class="font-medium">Sin cliente identificado</span> — Se pedirá al procesar la orden
-          </p>
-        </div>
-      </div>
 
       <!-- Main POS Container -->
     <div class="flex flex-col lg:flex-row gap-4 md:gap-6 lg:max-h-[calc(100vh-10rem)]">

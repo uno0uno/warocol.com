@@ -46,7 +46,7 @@ const selectedCustomer = ref<{ id: string; name: string | null; phone_number: st
 // Customer insights
 const customerInsights = ref<CustomerInsights | null>(null)
 const insightsLoading = ref(false)
-const activeAccordion = ref<'insights' | 'summary'>('summary')
+const activeAccordion = ref<'insights' | 'summary' | null>('summary')
 
 watch(selectedCustomer, async (customer) => {
   customerInsights.value = null
@@ -498,7 +498,7 @@ onUnmounted(() => {
         >
           <!-- Trigger -->
           <button
-            @click="activeAccordion = 'insights'"
+            @click="activeAccordion = activeAccordion === 'insights' ? null : 'insights'"
             class="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-surface-secondary/40 transition-colors"
           >
             <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0 select-none">
@@ -541,7 +541,7 @@ onUnmounted(() => {
         <div class="bg-surface rounded-2xl border border-border overflow-hidden shadow-lg">
           <!-- Trigger -->
           <button
-            @click="activeAccordion = 'summary'"
+            @click="activeAccordion = activeAccordion === 'summary' ? null : 'summary'"
             class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-secondary/40 transition-colors"
           >
             <h3 class="font-bold text-text-primary">Resumen de la Orden</h3>
