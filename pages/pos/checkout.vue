@@ -45,18 +45,25 @@ const selectedCustomer = ref<{ id: string; name: string | null; phone_number: st
 
 // Customer insights
 const customerInsights = ref<CustomerInsights | null>(null)
+const insightsLoading = ref(false)
 const activeAccordion = ref<'insights' | 'summary'>('summary')
 
 watch(selectedCustomer, async (customer) => {
   customerInsights.value = null
+  insightsLoading.value = false
   activeAccordion.value = 'summary'
   if (!customer || customer.phone_number === '0000000000') return
+  insightsLoading.value = true
+  activeAccordion.value = 'insights'
   try {
     const res = await $fetch<{ data: CustomerInsights }>(`/api/customers/${customer.id}/insights`)
     customerInsights.value = res.data
-    if (res.data.orders_count > 0) activeAccordion.value = 'insights'
+    if (res.data.orders_count === 0) activeAccordion.value = 'summary'
   } catch {
     customerInsights.value = null
+    activeAccordion.value = 'summary'
+  } finally {
+    insightsLoading.value = false
   }
 })
 
@@ -484,9 +491,9 @@ onUnmounted(() => {
       <!-- RIGHT COLUMN: Accordion (Desktop Only) -->
       <div class="hidden lg:block lg:col-span-4 lg:sticky lg:top-8 space-y-3">
 
-        <!-- ACCORDION 1: Customer Insights (only when customer has history) -->
+        <!-- ACCORDION 1: Customer Insights (loading or has history) -->
         <div
-          v-if="customerInsights && customerInsights.orders_count > 0"
+          v-if="insightsLoading || (customerInsights && customerInsights.orders_count > 0)"
           class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
         >
           <!-- Trigger -->
@@ -514,7 +521,19 @@ onUnmounted(() => {
 
           <!-- Body -->
           <div v-show="activeAccordion === 'insights'" class="border-t border-border">
-            <PosCustomerInsightsCard :insights="customerInsights" />
+            <!-- Skeleton while loading -->
+            <div v-if="insightsLoading" class="p-4 grid grid-cols-2 gap-2.5">
+              <div
+                v-for="i in 4" :key="i"
+                class="bg-surface-secondary rounded-xl p-4 flex flex-col gap-2 animate-pulse"
+              >
+                <div class="h-4 w-4 rounded bg-surface"></div>
+                <div class="h-5 w-16 rounded bg-surface mt-1"></div>
+                <div class="h-3 w-12 rounded bg-surface"></div>
+              </div>
+            </div>
+            <!-- Actual insights -->
+            <PosCustomerInsightsCard v-else-if="customerInsights" :insights="customerInsights" />
           </div>
         </div>
 
