@@ -600,7 +600,7 @@ onUnmounted(() => {
             <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
-            <span>{{ isProcessing ? 'Procesando...' : 'Confirmar Orden' }}</span>
+            <span v-if="!isProcessing">Confirmar Orden</span>
             <svg v-if="!isProcessing" class="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
             </svg>
@@ -724,11 +724,11 @@ onUnmounted(() => {
           :disabled="isProcessing"
           class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <CommonsTheCustomLoader v-if="isProcessing" size="small" />
+          <UiLoadingDots v-if="isProcessing" size="9px" />
           <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
           </svg>
-          <span>{{ isProcessing ? 'Procesando...' : 'Confirmar Orden' }}</span>
+          <span v-if="!isProcessing">Confirmar Orden</span>
         </button>
         <button
           @click="cancelOrder"
