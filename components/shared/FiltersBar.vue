@@ -1,10 +1,10 @@
 <template>
   <div class="w-full">
     <!-- Mobile: Compact Search + Filter Button -->
-    <div class="md:hidden bg-surface border-2 border-border rounded-lg p-3 w-full">
-      <div class="flex gap-2">
+    <div class="md:hidden bg-surface border-2 border-border rounded-lg p-3 w-full overflow-hidden">
+      <div class="flex gap-2 min-w-0">
         <!-- Search Field -->
-        <div v-if="showSearch" class="relative flex-1">
+        <div v-if="showSearch" class="relative flex-1 min-w-0">
           <UiSearchWithField
             v-if="searchFields.length > 0"
             :model-value="search"
