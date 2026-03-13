@@ -89,8 +89,8 @@
               </svg>
             </button>
 
-            <!-- Back Button -->
-            <button v-if="backButton" @click="goBack" class="btn-secondary px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold">
+            <!-- Back Button — text label on desktop only (mobile uses the left arrow icon) -->
+            <button v-if="backButton" @click="goBack" class="hidden md:inline-flex btn-secondary px-4 py-2 rounded-lg text-sm font-semibold">
               {{ backButton.label }}
             </button>
           </div>
