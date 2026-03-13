@@ -9,8 +9,9 @@
     </div>
 
     <!-- Loading State -->
-    <div v-if="isLoadingData" class="flex items-center justify-center min-h-[400px]">
-      <CommonsTheCustomLoader size="large" />
+    <div v-if="isLoadingData" class="flex flex-col items-center justify-center min-h-[200px] gap-3">
+      <UiLoadingDots size="10px" />
+      <p class="text-xs text-text-secondary">Cargando...</p>
     </div>
 
     <!-- Main Content -->
@@ -338,14 +339,9 @@
 
           <div class="relative">
              <!-- AI Loading Overlay -->
-            <div v-if="isScanning" class="w-full py-5 flex flex-row items-center justify-center gap-3 bg-surface rounded-lg border border-dashed border-border">
-              <CommonsTheCustomLoader size="small" />
-              <p class="text-sm font-medium text-text-primary animate-pulse flex items-center gap-2 m-0">
-                <svg class="w-4 h-4 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                {{ currentPhrase }}
-              </p>
+            <div v-if="isScanning" class="w-full py-4 flex flex-col items-center justify-center gap-2 bg-surface rounded-lg border border-dashed border-border">
+              <UiLoadingDots size="9px" />
+              <p class="text-xs font-medium text-text-secondary animate-pulse">{{ currentPhrase }}</p>
             </div>
 
             <!-- Items List (grouped by type) -->
