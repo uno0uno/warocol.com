@@ -3,12 +3,16 @@ import { ref, computed, inject, watch, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
 import { usePOSStore } from '~/stores/usePOSStore'
 
+interface TopProduct {
+  name: string
+  count: number
+}
+
 interface CustomerInsights {
   orders_count: number
   last_order_date: string | null
   avg_ticket: number | null
-  top_product_name: string | null
-  top_product_count: number | null
+  top_products: TopProduct[] | null
   avg_days_between_visits: number | null
 }
 
@@ -41,14 +45,16 @@ const selectedCustomer = ref<{ id: string; name: string | null; phone_number: st
 
 // Customer insights
 const customerInsights = ref<CustomerInsights | null>(null)
-const showInsightsCol = computed(() => customerInsights.value !== null && customerInsights.value.orders_count > 0)
+const activeAccordion = ref<'insights' | 'summary'>('summary')
 
 watch(selectedCustomer, async (customer) => {
   customerInsights.value = null
+  activeAccordion.value = 'summary'
   if (!customer || customer.phone_number === '0000000000') return
   try {
     const res = await $fetch<{ data: CustomerInsights }>(`/api/customers/${customer.id}/insights`)
     customerInsights.value = res.data
+    if (res.data.orders_count > 0) activeAccordion.value = 'insights'
   } catch {
     customerInsights.value = null
   }
@@ -241,7 +247,7 @@ onUnmounted(() => {
     <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
       <!-- LEFT COLUMN: Order Items & Payment Method -->
-      <div :class="showInsightsCol ? 'lg:col-span-5' : 'lg:col-span-8'" class="space-y-6">
+      <div class="lg:col-span-8 space-y-6">
 
         <!-- Section: Order Items -->
         <div class="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
@@ -475,86 +481,127 @@ onUnmounted(() => {
 
       </div>
 
-      <!-- MIDDLE COLUMN: Sticky Summary (Desktop Only) -->
-      <div :class="showInsightsCol ? 'lg:col-span-3' : 'lg:col-span-4'" class="hidden lg:block lg:sticky lg:top-8">
-        <div class="bg-surface rounded-2xl shadow-lg border border-border p-6">
-          <h3 class="text-lg font-bold text-text-primary mb-6">Resumen de la Orden</h3>
+      <!-- RIGHT COLUMN: Accordion (Desktop Only) -->
+      <div class="hidden lg:block lg:col-span-4 lg:sticky lg:top-8 space-y-3">
 
-          <div class="space-y-3 mb-6">
-            <div class="flex justify-between text-sm text-text-secondary">
-              <span>Subtotal ({{ cartItems.length }} productos)</span>
-              <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
+        <!-- ACCORDION 1: Customer Insights (only when customer has history) -->
+        <div
+          v-if="customerInsights && customerInsights.orders_count > 0"
+          class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
+        >
+          <!-- Trigger -->
+          <button
+            @click="activeAccordion = 'insights'"
+            class="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-surface-secondary/40 transition-colors"
+          >
+            <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0 select-none">
+              {{ selectedCustomer?.name?.charAt(0)?.toUpperCase() || selectedCustomer?.phone_number?.charAt(0) || '?' }}
             </div>
-            <div class="flex justify-between text-sm text-text-secondary">
-              <span>Impuestos (0%)</span>
-              <span class="font-medium text-text-primary">{{ formatCurrency(0) }}</span>
-            </div>
-            <div class="flex justify-between text-sm text-green-600">
-              <span>Descuento</span>
-              <span class="font-medium">- {{ formatCurrency(0) }}</span>
-            </div>
-          </div>
-
-          <div class="border-t border-dashed border-border my-4 pt-4">
-            <div class="flex justify-between items-end mb-1">
-              <span class="text-text-secondary font-medium">Total a Pagar</span>
-              <span class="text-3xl font-bold text-primary">{{ formatCurrency(cartTotal) }}</span>
-            </div>
-            <p class="text-right text-xs text-text-tertiary">COP</p>
-          </div>
-
-          <!-- Error Message -->
-          <div v-if="processingError" class="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 mt-4">
-            <div class="flex items-start gap-3">
-              <span class="text-xl">⚠️</span>
-              <p class="text-sm text-red-800 dark:text-red-200">
-                {{ processingError }}
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-text-primary text-sm leading-tight truncate">
+                {{ selectedCustomer?.name || 'Cliente' }}
               </p>
+              <p class="text-xs text-text-secondary leading-tight mt-0.5">{{ selectedCustomer?.phone_number }}</p>
             </div>
-          </div>
-
-          <!-- Action Buttons (Desktop) -->
-          <div class="hidden lg:flex flex-col gap-3 mt-6">
-            <button
-              @click="processOrder"
-              :disabled="isProcessing"
-              class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
+            <svg
+              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+              :class="activeAccordion === 'insights' ? 'rotate-0' : 'rotate-180'"
+              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
             >
-              <UiLoadingDots v-if="isProcessing" size="9px" />
-              <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-              </svg>
-              <span>{{ isProcessing ? 'Procesando...' : 'Confirmar Orden' }}</span>
-              <svg v-if="!isProcessing" class="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-              </svg>
-            </button>
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+            </svg>
+          </button>
 
-            <button
-              @click="cancelOrder"
-              class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
-            >
-              Cancelar
-            </button>
+          <!-- Body -->
+          <div v-show="activeAccordion === 'insights'" class="border-t border-border">
+            <PosCustomerInsightsCard :insights="customerInsights" />
           </div>
         </div>
 
+        <!-- ACCORDION 2: Resumen de la Orden -->
+        <div class="bg-surface rounded-2xl border border-border overflow-hidden shadow-lg">
+          <!-- Trigger -->
+          <button
+            @click="activeAccordion = 'summary'"
+            class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-secondary/40 transition-colors"
+          >
+            <h3 class="font-bold text-text-primary">Resumen de la Orden</h3>
+            <svg
+              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+              :class="activeAccordion === 'summary' ? 'rotate-0' : 'rotate-180'"
+              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+            </svg>
+          </button>
+
+          <!-- Body -->
+          <div v-show="activeAccordion === 'summary'" class="border-t border-border px-5 py-4">
+            <div class="space-y-3 mb-4">
+              <div class="flex justify-between text-sm text-text-secondary">
+                <span>Subtotal ({{ cartItems.length }} productos)</span>
+                <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
+              </div>
+              <div class="flex justify-between text-sm text-text-secondary">
+                <span>Impuestos (0%)</span>
+                <span class="font-medium text-text-primary">{{ formatCurrency(0) }}</span>
+              </div>
+              <div class="flex justify-between text-sm text-green-600">
+                <span>Descuento</span>
+                <span class="font-medium">- {{ formatCurrency(0) }}</span>
+              </div>
+            </div>
+
+            <div class="border-t border-dashed border-border pt-4">
+              <div class="flex justify-between items-end mb-1">
+                <span class="text-text-secondary font-medium">Total a Pagar</span>
+                <span class="text-3xl font-bold text-primary">{{ formatCurrency(cartTotal) }}</span>
+              </div>
+              <p class="text-right text-xs text-text-tertiary">COP</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div v-if="processingError" class="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4">
+          <div class="flex items-start gap-3">
+            <span class="text-xl">⚠️</span>
+            <p class="text-sm text-red-800 dark:text-red-200">{{ processingError }}</p>
+          </div>
+        </div>
+
+        <!-- Action Buttons (always visible) -->
+        <div class="flex flex-col gap-3">
+          <button
+            @click="processOrder"
+            :disabled="isProcessing"
+            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <UiLoadingDots v-if="isProcessing" size="9px" />
+            <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            </svg>
+            <span>{{ isProcessing ? 'Procesando...' : 'Confirmar Orden' }}</span>
+            <svg v-if="!isProcessing" class="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+            </svg>
+          </button>
+          <button
+            @click="cancelOrder"
+            class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
+          >
+            Cancelar
+          </button>
+        </div>
+
         <!-- Security Note -->
-        <div class="mt-4 flex items-center justify-center gap-2 text-xs text-text-tertiary">
+        <div class="flex items-center justify-center gap-2 text-xs text-text-tertiary">
           <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
           </svg>
           <span>Transacción segura y encriptada</span>
         </div>
-      </div>
 
-      <!-- RIGHT COLUMN: Customer Insights (Desktop Only, when customer has history) -->
-      <div v-if="showInsightsCol && customerInsights" class="hidden lg:block lg:col-span-4 lg:sticky lg:top-8">
-        <PosCustomerInsightsCard
-          :insights="customerInsights"
-          :customer-name="selectedCustomer?.name ?? null"
-          :customer-phone="selectedCustomer?.phone_number ?? null"
-        />
       </div>
 
     </div>
