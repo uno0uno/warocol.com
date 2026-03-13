@@ -55,47 +55,47 @@ interface ColorEntry {
 const colorEntries: ColorEntry[] = [
   {
     keywords: ['veg', 'viggi', 'saludab', 'ensalad', 'orella', 'bowl', 'organico', 'orgánico'],
-    bg: '#BBF7D0', hoverBg: '#86EFAC', border: '#16A34A'   // 🟢 verde
+    bg: '#DCFCE7', hoverBg: '#BBF7D0', border: '#16A34A'   // 🟢 verde
   },
   {
     keywords: ['bebida', 'jugo', 'agua', 'cafe', 'café', 'limon', 'cerveza', 'coctel', 'fresco', 'smoothie', 'soda', 'refresc', 'gaseosa', 'drink'],
-    bg: '#BAE6FD', hoverBg: '#7DD3FC', border: '#0284C7'   // 🔵 azul cielo
+    bg: '#E0F2FE', hoverBg: '#BAE6FD', border: '#0284C7'   // 🔵 azul cielo
   },
   {
     keywords: ['postre', 'torta', 'helado', 'dulce', 'brownie', 'galleta', 'donut', 'cake', 'tarta', 'flan', 'mousse', 'crepe', 'pastel'],
-    bg: '#FBCFE8', hoverBg: '#F9A8D4', border: '#DB2777'   // 🩷 rosa
+    bg: '#FCE7F3', hoverBg: '#FBCFE8', border: '#DB2777'   // 🩷 rosa
   },
   {
     keywords: ['hamburgues', 'burg', 'hot dog', 'hotdog', 'chorizo', 'chori', 'pollo', 'res', 'carne', 'chicken', 'beef', 'costilla', 'cerdo', 'lomo', 'filete', 'asado', 'bestial', 'sencill'],
-    bg: '#FED7AA', hoverBg: '#FDBA74', border: '#EA580C'   // 🟠 naranja
+    bg: '#FFEDD5', hoverBg: '#FED7AA', border: '#EA580C'   // 🟠 naranja
   },
   {
     keywords: ['pizza', 'calzone'],
-    bg: '#FECDD3', hoverBg: '#FDA4AF', border: '#E11D48'   // 🔴 rojo coral
+    bg: '#FFE4E6', hoverBg: '#FECDD3', border: '#E11D48'   // 🔴 rojo coral
   },
   {
     keywords: ['pasta', 'sopa', 'crema', 'arroz', 'fideo', 'lasaña', 'espagueti'],
-    bg: '#FEF08A', hoverBg: '#FDE047', border: '#CA8A04'   // 🟡 amarillo
+    bg: '#FEF9C3', hoverBg: '#FEF08A', border: '#CA8A04'   // 🟡 amarillo
   },
   {
     keywords: ['papa', 'frit', 'empanada', 'snack', 'alita', 'croqueta', 'entrada'],
-    bg: '#99F6E4', hoverBg: '#5EEAD4', border: '#0D9488'   // 🩵 teal
+    bg: '#CCFBF1', hoverBg: '#99F6E4', border: '#0D9488'   // 🩵 teal
   },
   {
     keywords: ['pescado', 'marisco', 'salmon', 'salmón', 'atun', 'atún', 'camaron', 'camarón', 'langosta', 'pulpo', 'seafood'],
-    bg: '#C7D2FE', hoverBg: '#A5B4FC', border: '#4338CA'   // 🔷 índigo
+    bg: '#E0E7FF', hoverBg: '#C7D2FE', border: '#4338CA'   // 🔷 índigo
   },
   {
     keywords: ['desayuno', 'huevo', 'tostada', 'pancake', 'waffle', 'arepa', 'tamal', 'breakfast'],
-    bg: '#FDE68A', hoverBg: '#FCD34D', border: '#D97706'   // 🟤 ámbar
+    bg: '#FEF3C7', hoverBg: '#FDE68A', border: '#D97706'   // 🟤 ámbar
   },
   {
     keywords: ['caja', 'llevar', 'empaque', 'bolsa', 'envase'],
-    bg: '#DDD6FE', hoverBg: '#C4B5FD', border: '#7C3AED'   // 🟣 violeta
+    bg: '#EDE9FE', hoverBg: '#DDD6FE', border: '#7C3AED'   // 🟣 violeta
   },
   {
     keywords: ['sandwich', 'wrap', 'panini', 'taco', 'burrito', 'quesadilla'],
-    bg: '#F5D0FE', hoverBg: '#F0ABFC', border: '#C026D3'   // 💜 fucsia
+    bg: '#FAE8FF', hoverBg: '#F5D0FE', border: '#C026D3'   // 💜 fucsia
   },
 ]
 
