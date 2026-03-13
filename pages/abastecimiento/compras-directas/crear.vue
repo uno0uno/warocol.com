@@ -350,16 +350,17 @@
                   <div
                     v-for="item in itemsByType.food"
                     :key="form.items.indexOf(item)"
-                    class="border border-border rounded-lg p-3 bg-background relative"
+                    class="border-2 border-border rounded-lg p-3 bg-background relative"
                     :class="{ 'z-20': item.showResults }"
                   >
-                    <div class="flex justify-between items-start mb-2">
-                      <h4 class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Item #{{ form.items.indexOf(item) + 1 }}</h4>
+                    <div class="flex justify-between items-center mb-2">
+                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">{{ form.items.indexOf(item) + 1 }}</span>
                       <button
                         type="button"
                         @click="removeItem(form.items.indexOf(item))"
                         :disabled="form.items.length === 1"
-                        class="text-destructive hover:text-destructive/80 disabled:opacity-50 p-2"
+                        class="text-destructive hover:text-destructive/80 hover:bg-destructive/10 disabled:opacity-30 p-1.5 rounded-md transition-colors"
+                        aria-label="Eliminar item"
                       >
                         <TrashIcon class="w-4 h-4" />
                       </button>
@@ -600,16 +601,17 @@
                   <div
                     v-for="item in itemsByType.service"
                     :key="form.items.indexOf(item)"
-                    class="border border-border rounded-lg p-3 bg-background relative"
+                    class="border-2 border-border rounded-lg p-3 bg-background relative"
                     :class="{ 'z-20': item.showResults }"
                   >
-                    <div class="flex justify-between items-start mb-2">
-                      <h4 class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Item #{{ form.items.indexOf(item) + 1 }}</h4>
+                    <div class="flex justify-between items-center mb-2">
+                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">{{ form.items.indexOf(item) + 1 }}</span>
                       <button
                         type="button"
                         @click="removeItem(form.items.indexOf(item))"
                         :disabled="form.items.length === 1"
-                        class="text-destructive hover:text-destructive/80 disabled:opacity-50 p-2"
+                        class="text-destructive hover:text-destructive/80 hover:bg-destructive/10 disabled:opacity-30 p-1.5 rounded-md transition-colors"
+                        aria-label="Eliminar item"
                       >
                         <TrashIcon class="w-4 h-4" />
                       </button>
@@ -844,16 +846,17 @@
                   <div
                     v-for="item in itemsByType.supply"
                     :key="form.items.indexOf(item)"
-                    class="border border-border rounded-lg p-3 bg-background relative"
+                    class="border-2 border-border rounded-lg p-3 bg-background relative"
                     :class="{ 'z-20': item.showResults }"
                   >
-                    <div class="flex justify-between items-start mb-2">
-                      <h4 class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Item #{{ form.items.indexOf(item) + 1 }}</h4>
+                    <div class="flex justify-between items-center mb-2">
+                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">{{ form.items.indexOf(item) + 1 }}</span>
                       <button
                         type="button"
                         @click="removeItem(form.items.indexOf(item))"
                         :disabled="form.items.length === 1"
-                        class="text-destructive hover:text-destructive/80 disabled:opacity-50 p-2"
+                        class="text-destructive hover:text-destructive/80 hover:bg-destructive/10 disabled:opacity-30 p-1.5 rounded-md transition-colors"
+                        aria-label="Eliminar item"
                       >
                         <TrashIcon class="w-4 h-4" />
                       </button>
@@ -1091,15 +1094,15 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <!-- Factura Section -->
-              <div class="border-2 border-border rounded-lg p-4 bg-background/50">
-                <h4 class="font-semibold text-text-primary mb-3 flex items-center gap-2">
+              <div class="border-2 border-border rounded-lg p-4 bg-background">
+                <h4 class="text-base font-semibold text-text-primary mb-3 flex items-center gap-2">
                   <DocumentTextIcon class="w-5 h-5 text-primary" />
                   Factura
                 </h4>
 
                 <div class="space-y-3">
                   <div>
-                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                    <label class="block text-sm font-medium text-text-primary mb-1.5">
                       Numero de Factura
                     </label>
                     <input
@@ -1112,7 +1115,7 @@
 
                   <!-- Attachment Uploader Style -->
                   <div>
-                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                    <label class="block text-sm font-medium text-text-primary mb-1.5">
                       Adjuntar Factura
                     </label>
                     <div class="space-y-3">
@@ -1127,9 +1130,9 @@
                         <button
                           type="button"
                           @click="($refs.invoiceFileInput as HTMLInputElement).click()"
-                          class="px-4 py-2 bg-primary/10 text-primary border-2 border-primary/30 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium"
+                          class="px-4 py-2 bg-primary/10 text-primary border-2 border-primary/30 rounded-lg hover:bg-primary/20 active:scale-95 transition-all text-sm font-medium flex items-center gap-2"
                         >
-                          <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                           </svg>
                           Seleccionar Archivo
@@ -1162,15 +1165,15 @@
               </div>
 
               <!-- Comprobante de Pago Section -->
-              <div class="border-2 border-border rounded-lg p-4 bg-background/50">
-                <h4 class="font-semibold text-text-primary mb-3 flex items-center gap-2">
+              <div class="border-2 border-border rounded-lg p-4 bg-background">
+                <h4 class="text-base font-semibold text-text-primary mb-3 flex items-center gap-2">
                   <CreditCardIcon class="w-5 h-5 text-primary" />
                   Comprobante de Pago
                 </h4>
 
                 <div class="space-y-3">
                   <div>
-                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                    <label class="block text-sm font-medium text-text-primary mb-1.5">
                       Metodo de Pago
                     </label>
                     <select
@@ -1186,7 +1189,7 @@
                   </div>
 
                   <div v-if="form.payment_method">
-                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                    <label class="block text-sm font-medium text-text-primary mb-1.5">
                       Referencia de Pago
                     </label>
                     <input
@@ -1199,7 +1202,7 @@
 
                   <!-- Attachment Uploader Style -->
                   <div v-if="form.payment_method">
-                    <label class="block text-sm font-medium text-text-secondary mb-2">
+                    <label class="block text-sm font-medium text-text-primary mb-1.5">
                       Adjuntar Comprobante
                     </label>
                     <div class="space-y-3">
@@ -1214,9 +1217,9 @@
                         <button
                           type="button"
                           @click="($refs.paymentFileInput as HTMLInputElement).click()"
-                          class="px-4 py-2 bg-primary/10 text-primary border-2 border-primary/30 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium"
+                          class="px-4 py-2 bg-primary/10 text-primary border-2 border-primary/30 rounded-lg hover:bg-primary/20 active:scale-95 transition-all text-sm font-medium flex items-center gap-2"
                         >
-                          <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                           </svg>
                           Seleccionar Archivo
@@ -1275,10 +1278,10 @@
                   <div
                     v-for="(item, index) in form.items"
                     :key="index"
-                    class="flex items-start gap-3 p-3 rounded-lg border border-border bg-background"
+                    class="flex items-start gap-3 p-3 rounded-lg border-2 border-border bg-background"
                   >
                     <!-- Ícono inicial -->
-                    <div class="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary text-xs font-bold">
+                    <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary text-sm font-bold">
                       {{ getIngredientName(item.ingredient_id).charAt(0) }}
                     </div>
                     <div class="flex-1 min-w-0">
@@ -1304,22 +1307,22 @@
                 <!-- Proveedor + pago -->
                 <div class="p-4 space-y-2">
                   <div class="flex justify-between items-start">
-                    <p class="text-xs text-text-secondary">Proveedor</p>
+                    <p class="text-xs font-medium text-text-secondary">Proveedor</p>
                     <p class="text-sm font-semibold text-text-primary text-right max-w-[60%] leading-tight">{{ getSupplierName(form.supplier_id) }}</p>
                   </div>
                   <div class="flex justify-between items-center">
-                    <p class="text-xs text-text-secondary">Fecha de compra</p>
-                    <p class="text-xs font-medium text-text-primary">
+                    <p class="text-xs font-medium text-text-secondary">Fecha</p>
+                    <p class="text-xs font-semibold text-text-primary">
                       {{ form.purchase_date ? fnsFormat(form.purchase_date, 'dd/MM/yyyy', { locale: es }) : '-' }}
                     </p>
                   </div>
                   <div class="flex justify-between items-center">
-                    <p class="text-xs text-text-secondary">Pago</p>
-                    <p class="text-xs font-medium text-text-primary">{{ getPaymentTypeText(form.payment_type) }}</p>
+                    <p class="text-xs font-medium text-text-secondary">Pago</p>
+                    <p class="text-xs font-semibold text-text-primary">{{ getPaymentTypeText(form.payment_type) }}</p>
                   </div>
                   <div v-if="form.payment_method" class="flex justify-between items-center">
-                    <p class="text-xs text-text-secondary">Método</p>
-                    <p class="text-xs font-medium text-text-primary">{{ getPaymentMethodText(form.payment_method) }}</p>
+                    <p class="text-xs font-medium text-text-secondary">Método</p>
+                    <p class="text-xs font-semibold text-text-primary">{{ getPaymentMethodText(form.payment_method) }}</p>
                   </div>
                 </div>
 
@@ -1368,7 +1371,7 @@
                     type="button"
                     @click="handleSubmit"
                     :disabled="isSubmitting"
-                    class="w-full py-3 rounded-lg font-semibold text-sm bg-success text-white hover:bg-success/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                    class="w-full py-3 rounded-lg font-semibold text-sm bg-success text-white hover:bg-success/90 active:scale-[0.98] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                   >
                     <svg v-if="!isSubmitting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -1378,7 +1381,7 @@
                   <button
                     type="button"
                     @click="previousStep"
-                    class="w-full py-2 rounded-lg text-xs text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors"
+                    class="w-full py-2 rounded-lg text-xs text-text-secondary border border-border hover:text-text-primary hover:bg-surface-secondary transition-colors"
                   >
                     ← Editar compra
                   </button>
@@ -1392,14 +1395,14 @@
       </form>
 
       <!-- Navigation Buttons -->
-      <div class="bg-surface border-t border-border shadow-lg mt-6">
+      <div class="bg-surface border-t border-border shadow-lg mt-4">
         <div class="px-4 sm:px-6 md:px-8 py-3 sm:py-4">
           <div class="flex justify-between items-center gap-3">
             <button
               v-if="currentStep > 1"
               type="button"
               @click="previousStep"
-              class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
+              class="btn-secondary px-4 sm:px-6 py-2 min-h-[44px] rounded-lg text-sm sm:text-base"
             >
               <span class="hidden sm:inline">← Anterior</span>
               <span class="sm:hidden">←</span>
@@ -1407,7 +1410,7 @@
             <NuxtLink
               v-else
               to="/abastecimiento/compras-directas"
-              class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
+              class="btn-secondary px-4 sm:px-6 py-2 min-h-[44px] rounded-lg text-sm sm:text-base"
             >
               Cancelar
             </NuxtLink>
@@ -1417,7 +1420,7 @@
               type="button"
               @click="handleNext"
               :disabled="!isStepValid"
-              class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
+              class="btn-primary px-4 sm:px-6 py-2 min-h-[44px] rounded-lg transition-opacity text-sm sm:text-base"
               :class="{ 'opacity-50 cursor-not-allowed': !isStepValid }"
             >
               <span class="hidden sm:inline">Siguiente →</span>
