@@ -18,8 +18,6 @@
           :style="effectiveBannerStyle"
         >
           <div class="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent" />
-          <!-- Bottom scrim: ensures the logo overlap zone is always readable -->
-          <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background/60 to-transparent" />
 
           <!-- First-time setup hint -->
           <div v-if="!businessProfile && isEditMode" class="absolute inset-x-0 bottom-3 flex justify-center">
@@ -55,35 +53,23 @@
               </button>
             </template>
           </div>
+
+          <!-- Logo — anchored to banner bottom, extends below via translate-y -->
+          <div class="absolute bottom-0 left-4 sm:left-6 translate-y-1/2">
+            <div
+              v-if="logoSrc"
+              class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl border-4 border-background overflow-hidden shadow-md"
+            >
+              <img :src="logoSrc" :alt="businessProfile?.display_name" class="w-full h-full object-cover" />
+            </div>
+            <BuildingStorefrontIcon v-else class="w-12 h-12 sm:w-14 sm:h-14 text-white drop-shadow" />
+          </div>
         </div>
 
-        <!-- Profile info -->
-        <div class="px-4 sm:px-6 pb-4 sm:pb-6">
+        <!-- Profile info — pt clears the logo overlap -->
+        <div class="px-4 sm:px-6 pb-4 sm:pb-6 pt-10 sm:pt-12">
 
-          <!-- Logo row — overlaps banner bottom -->
-          <div class="-mt-10 mb-3 flex items-end justify-between">
-            <div class="flex-shrink-0">
-              <div
-                v-if="logoSrc"
-                class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl border-4 border-background overflow-hidden shadow-md"
-              >
-                <img :src="logoSrc" :alt="businessProfile?.display_name" class="w-full h-full object-cover" />
-              </div>
-              <BuildingStorefrontIcon v-else class="w-12 h-12 sm:w-14 sm:h-14 text-white drop-shadow" />
-            </div>
-
-            <!-- Edit / Name input (edit mode only, in this row) -->
-            <div v-if="isEditMode" class="flex-1 min-w-0 ml-4 pb-1">
-              <input
-                v-model="editForm.display_name"
-                type="text"
-                class="input-base w-full px-3 py-2 text-base font-semibold"
-                placeholder="Nombre del negocio"
-              />
-            </div>
-          </div>
-
-          <!-- Name + badges — always on solid card background (view mode) -->
+          <!-- Name + badges (view mode) -->
           <div v-if="!isEditMode" class="mb-2">
             <h1 class="text-xl sm:text-2xl font-bold text-text-primary leading-tight">
               {{ businessProfile?.display_name }}
@@ -102,11 +88,21 @@
             </div>
           </div>
 
+          <!-- Name input (edit mode) -->
+          <div v-else class="mb-3">
+            <input
+              v-model="editForm.display_name"
+              type="text"
+              class="input-base w-full px-3 py-2 text-base font-semibold"
+              placeholder="Nombre del negocio"
+            />
+          </div>
+
           <!-- Description (view) -->
-          <p v-if="!isEditMode && businessProfile?.description" class="text-sm text-text-primary/80 leading-relaxed mt-1">
+          <p v-if="!isEditMode && businessProfile?.description" class="text-sm text-text-primary/80 leading-relaxed">
             {{ businessProfile.description }}
           </p>
-          <p v-else-if="!isEditMode && !businessProfile?.description" class="text-sm text-text-secondary italic mt-1">
+          <p v-else-if="!isEditMode && !businessProfile?.description" class="text-sm text-text-secondary italic">
             Sin descripción
           </p>
 
