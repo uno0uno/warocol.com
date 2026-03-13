@@ -82,17 +82,11 @@
                   :value="isOpenNow ? 'Abierto' : 'Cerrado'"
                   format="text"
                 />
-                <button
-                  type="button"
-                  @click="toggleActive"
-                  :disabled="isTogglingActive"
-                  :title="businessProfile?.is_active ? 'Visible en el directorio — click para ocultar' : 'Oculto del directorio — click para activar'"
-                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold transition-opacity hover:opacity-70 disabled:opacity-40 cursor-pointer"
-                  :class="businessProfile?.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'"
-                >
-                  <span v-if="isTogglingActive">...</span>
-                  <span v-else>{{ businessProfile?.is_active ? 'Activo' : 'Oculto' }}</span>
-                </button>
+                <UiStatusBadge
+                  :variant="businessProfile?.is_active ? 'success' : 'warning'"
+                  :value="businessProfile?.is_active ? 'Activo' : 'Oculto'"
+                  format="text"
+                />
               </div>
             </div>
 
@@ -154,6 +148,44 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- ══════ DIRECTORIO TOGGLE ══════ -->
+      <div
+        v-if="businessProfile && !isEditMode"
+        class="flex items-center justify-between gap-4 rounded-xl border-2 px-4 py-3 transition-colors"
+        :class="businessProfile.is_active
+          ? 'border-border bg-surface'
+          : 'border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20'"
+      >
+        <div class="min-w-0">
+          <p
+            class="text-sm font-semibold leading-snug"
+            :class="businessProfile.is_active ? 'text-text-primary' : 'text-amber-800 dark:text-amber-300'"
+          >
+            {{ businessProfile.is_active ? 'Visible en el directorio' : 'Tu negocio está oculto' }}
+          </p>
+          <p
+            class="text-xs mt-0.5 leading-snug"
+            :class="businessProfile.is_active ? 'text-text-secondary' : 'text-amber-700 dark:text-amber-400'"
+          >
+            {{ businessProfile.is_active ? 'Aparece en warocol.com/bogota' : 'Actívalo para aparecer en el directorio de WaRo Colombia' }}
+          </p>
+        </div>
+        <label
+          class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+          :class="isTogglingActive ? 'opacity-50 pointer-events-none' : ''"
+          :aria-label="businessProfile.is_active ? 'Desactivar visibilidad en el directorio' : 'Activar visibilidad en el directorio'"
+        >
+          <input
+            type="checkbox"
+            class="sr-only peer"
+            :checked="businessProfile.is_active"
+            @change="toggleActive"
+            :disabled="isTogglingActive"
+          />
+          <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+        </label>
       </div>
 
       <!-- ══════ STATS STRIP ══════ -->
