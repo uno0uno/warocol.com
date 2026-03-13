@@ -152,7 +152,7 @@
 
       <!-- ══════ STATS STRIP ══════ -->
       <div v-if="businessProfile" class="grid grid-cols-3 divide-x divide-border bg-surface border-2 border-border rounded-xl overflow-hidden">
-        <div class="px-3 sm:px-5 py-3 sm:py-4 text-center">
+        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-left sm:text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
             Tiempo prep.
           </p>
@@ -160,7 +160,7 @@
             {{ businessProfile.estimated_preparation_time }} min
           </p>
         </div>
-        <div class="px-3 sm:px-5 py-3 sm:py-4 text-center">
+        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-left sm:text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
             Pedido mínimo
           </p>
@@ -168,8 +168,8 @@
             {{ formatCurrencyCompact(businessProfile.min_order_amount) }}
           </p>
         </div>
-        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col items-center justify-center gap-1">
-          <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider">
+        <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between items-start sm:items-center text-left sm:text-center">
+          <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
             Pedidos online
           </p>
           <UiStatusBadge

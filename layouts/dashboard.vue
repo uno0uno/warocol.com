@@ -7,7 +7,7 @@
     <main class="flex-1 flex flex-col min-w-0 h-screen md:h-auto">
       <!-- Main Content Header -->
       <header class="bg-surface border-b border-border px-6 py-4 md:px-8 md:py-4 flex-shrink-0">
-        <div class="flex items-center justify-between">
+        <div class="flex items-start md:items-center justify-between">
           <div class="flex items-center gap-4">
             <!-- Back Button (if dynamic back is enabled) -->
             <button
@@ -26,35 +26,37 @@
             </div>
           </div>
 
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 mt-1 md:mt-0">
             <!-- Notification Bell — desktop only -->
             <NotificationsNotificationBell class="hidden lg:flex" />
 
             <!-- Global Header Actions -->
             <NuxtLink
               to="/abastecimiento/compras-directas/crear"
-              class="flex items-center gap-1 md:gap-2 bg-primary text-primary-foreground px-2 md:px-4 py-2 md:py-2.5 rounded-xl font-medium hover:bg-primary/90 transition-all"
+              class="flex items-center gap-1 md:gap-2 h-11 bg-primary text-primary-foreground px-2 md:px-4 rounded-xl font-medium hover:bg-primary/90 transition-all"
               title="Cargar Factura IA"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/></svg>
               <span class="hidden sm:inline">Cargar Factura IA</span>
             </NuxtLink>
+
             <NuxtLink
               to="/pos"
-              class="flex items-center gap-1 md:gap-2 bg-card border border-border text-foreground px-2 md:px-4 py-2 md:py-2.5 rounded-xl font-medium hover:bg-accent transition-all"
+              class="flex items-center gap-1 md:gap-2 h-11 bg-card border border-border text-foreground px-2 md:px-4 rounded-xl font-medium hover:bg-accent transition-all"
               title="Venta POS"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
               <span class="hidden sm:inline">Venta POS</span>
             </NuxtLink>
+
             <!-- Portal Target for Custom Actions (pages can still inject extra actions) -->
-            <div id="dashboard-header-actions" class="flex items-center gap-2"></div>
+            <div id="dashboard-header-actions" class="flex items-center"></div>
 
             <!-- Header Action Button (e.g., Print) -->
             <button
               v-if="dynamicHeaderAction"
               @click="dynamicHeaderAction.handler"
-              class="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
+              class="h-11 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
             >
               <svg v-if="dynamicHeaderAction.icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -63,7 +65,7 @@
             </button>
 
             <!-- Status Badge -->
-            <span v-if="dynamicStatus" :class="['px-3 py-1.5 rounded-full text-sm font-medium', dynamicStatus.color]">
+            <span v-if="dynamicStatus" :class="['h-11 flex items-center px-3 rounded-full text-sm font-medium', dynamicStatus.color]">
               {{ dynamicStatus.label }}
             </span>
 
@@ -695,6 +697,13 @@ useHead({
   ]
 })
 </script>
+
+<style>
+/* Hide empty portal target to prevent extra flex gaps */
+#dashboard-header-actions:empty {
+  display: none;
+}
+</style>
 
 <style scoped>
 /* Page transition animations */
