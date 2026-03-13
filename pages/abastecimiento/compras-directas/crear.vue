@@ -82,14 +82,11 @@
                 </svg>
                 <span v-else class="font-semibold text-sm sm:text-base">1</span>
               </div>
-              <div class="ml-1 sm:ml-3 flex-1 min-w-0">
-                <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 1 ? 'text-text-primary' : 'text-text-secondary'">
-                  <span class="hidden sm:inline">Proveedor</span>
-                  <span class="sm:hidden">Prov.</span>
-                </p>
-                <p class="text-xs text-text-secondary hidden sm:block">Seleccionar proveedor</p>
+              <div class="hidden sm:block ml-3 flex-1 min-w-0">
+                <p class="text-sm font-medium truncate" :class="currentStep >= 1 ? 'text-text-primary' : 'text-text-secondary'">Proveedor</p>
+                <p class="text-xs text-text-secondary">Seleccionar proveedor</p>
               </div>
-              <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 1 ? 'bg-secondary' : 'bg-border'"></div>
+              <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 1 ? 'bg-secondary' : 'bg-border'"></div>
             </div>
 
             <!-- Step 2 -->
@@ -107,13 +104,11 @@
                 </svg>
                 <span v-else class="font-semibold text-sm sm:text-base">2</span>
               </div>
-              <div class="ml-1 sm:ml-3 flex-1 min-w-0">
-                <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">
-                  Items
-                </p>
-                <p class="text-xs text-text-secondary hidden sm:block">Productos y precios</p>
+              <div class="hidden sm:block ml-3 flex-1 min-w-0">
+                <p class="text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">Items</p>
+                <p class="text-xs text-text-secondary">Productos y precios</p>
               </div>
-              <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'"></div>
+              <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'"></div>
             </div>
 
             <!-- Step 3 -->
@@ -131,14 +126,11 @@
                 </svg>
                 <span v-else class="font-semibold text-sm sm:text-base">3</span>
               </div>
-              <div class="ml-1 sm:ml-3 flex-1 min-w-0">
-                <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">
-                  <span class="hidden sm:inline">Documentos</span>
-                  <span class="sm:hidden">Docs</span>
-                </p>
-                <p class="text-xs text-text-secondary hidden sm:block">Factura y pago (opcional)</p>
+              <div class="hidden sm:block ml-3 flex-1 min-w-0">
+                <p class="text-sm font-medium truncate" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">Documentos</p>
+                <p class="text-xs text-text-secondary">Factura y pago (opcional)</p>
               </div>
-              <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 3 ? 'bg-secondary' : 'bg-border'"></div>
+              <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 3 ? 'bg-secondary' : 'bg-border'"></div>
             </div>
 
             <!-- Step 4 -->
@@ -153,12 +145,9 @@
               >
                 <span class="font-semibold text-sm sm:text-base">4</span>
               </div>
-              <div class="ml-1 sm:ml-3 min-w-0">
-                <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 4 ? 'text-text-primary' : 'text-text-secondary'">
-                  <span class="hidden sm:inline">Confirmar</span>
-                  <span class="sm:hidden">OK</span>
-                </p>
-                <p class="text-xs text-text-secondary hidden sm:block">Revisar y guardar</p>
+              <div class="hidden sm:block ml-3 min-w-0">
+                <p class="text-sm font-medium truncate" :class="currentStep >= 4 ? 'text-text-primary' : 'text-text-secondary'">Confirmar</p>
+                <p class="text-xs text-text-secondary">Revisar y guardar</p>
               </div>
             </div>
           </div>
