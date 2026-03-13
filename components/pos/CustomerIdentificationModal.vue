@@ -5,7 +5,7 @@
       class="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 bg-black/50"
       @click.self="handleClose"
     >
-      <div class="bottom-sheet-panel bg-surface w-full md:max-w-md border border-border flex flex-col rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[85vh] md:max-h-[90vh]" @click.stop>
+      <div class="bottom-sheet-panel bg-surface w-full md:max-w-md border border-border flex flex-col rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[calc(85vh-80px)] md:max-h-[90vh] mb-20 md:mb-0" @click.stop>
 
         <!-- Mobile drag handle -->
         <div class="flex justify-center pt-3 pb-1 md:hidden flex-shrink-0" aria-hidden="true">
