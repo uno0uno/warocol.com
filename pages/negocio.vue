@@ -82,11 +82,17 @@
                   :value="isOpenNow ? 'Abierto' : 'Cerrado'"
                   format="text"
                 />
-                <UiStatusBadge
-                  :variant="businessProfile?.is_active ? 'success' : 'warning'"
-                  :value="businessProfile?.is_active ? 'Activo' : 'Oculto'"
-                  format="text"
-                />
+                <button
+                  type="button"
+                  @click="toggleActive"
+                  :disabled="isTogglingActive"
+                  :title="businessProfile?.is_active ? 'Visible en el directorio — click para ocultar' : 'Oculto del directorio — click para activar'"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold transition-opacity hover:opacity-70 disabled:opacity-40 cursor-pointer"
+                  :class="businessProfile?.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'"
+                >
+                  <span v-if="isTogglingActive">...</span>
+                  <span v-else>{{ businessProfile?.is_active ? 'Activo' : 'Oculto' }}</span>
+                </button>
               </div>
             </div>
 
@@ -596,6 +602,29 @@ const enterEditMode = () => {
 
 const cancelEdit = () => {
   isEditMode.value = false
+}
+
+// ─── Toggle active ───
+const isTogglingActive = ref(false)
+const toggleActive = async () => {
+  if (!businessProfile.value || isTogglingActive.value) return
+  isTogglingActive.value = true
+  const newState = !businessProfile.value.is_active
+  try {
+    await $fetch('/api/api/tenant/public-profile/toggle', {
+      method: 'POST',
+      body: { is_active: newState },
+    })
+    await refreshProfile()
+    toast.success(
+      newState ? 'Tu negocio ahora es visible en el directorio' : 'Tu negocio está oculto del directorio',
+      { title: newState ? '¡Negocio activado!' : 'Negocio oculto' }
+    )
+  } catch (error: any) {
+    toast.error(error.data?.detail || 'Error al cambiar estado', { title: 'Error' })
+  } finally {
+    isTogglingActive.value = false
+  }
 }
 
 const saveChanges = async () => {
