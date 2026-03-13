@@ -1,17 +1,17 @@
 <template>
-  <div class="flex flex-col lg:w-96 border-2 border-border rounded-lg bg-surface overflow-hidden">
+  <div class="flex flex-col lg:w-96 border border-border rounded-xl bg-surface overflow-hidden">
     <!-- Cart Header -->
-    <div class="p-4 border-b-2 border-border bg-primary">
+    <div class="p-4 border-b border-crocus-700 bg-primary">
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-bold text-primary-foreground">Orden Actual</h2>
-        <span class="px-2.5 py-0.5 text-xs rounded-full font-semibold bg-primary-foreground/10 text-primary-foreground border border-primary-foreground/20">
+        <h2 class="text-base font-bold text-primary-foreground tracking-wide">Orden Actual</h2>
+        <span class="px-2.5 py-1 text-xs rounded-full font-bold bg-primary-foreground/15 text-primary-foreground border border-primary-foreground/20">
           {{ items.length }} {{ items.length === 1 ? 'producto' : 'productos' }}
         </span>
       </div>
     </div>
 
     <!-- Cart Items -->
-    <div class="flex-1 overflow-y-auto p-4 space-y-3">
+    <div class="flex-1 overflow-y-auto p-4 space-y-2.5">
       <!-- Empty State -->
       <div
         v-if="items.length === 0"
@@ -39,11 +39,11 @@
     </div>
 
     <!-- Cart Footer -->
-    <div class="p-4 border-t-2 border-border space-y-3">
+    <div class="p-5 border-t border-border space-y-3">
       <!-- Total -->
       <div class="flex items-center justify-between py-2">
-        <span class="text-lg font-semibold text-text-primary">Total:</span>
-        <span class="text-2xl font-bold text-primary">{{ formatCurrency(total) }}</span>
+        <span class="text-sm font-semibold text-text-secondary uppercase tracking-wide">Total</span>
+        <span class="text-2xl font-bold text-primary tabular-nums">{{ formatCurrency(total) }}</span>
       </div>
 
       <!-- Actions -->

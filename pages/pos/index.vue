@@ -194,21 +194,21 @@ onMounted(() => {
     <!-- POS Content (shown always after loading) -->
     <div v-else>
       <!-- Customer Header (when customer is identified) -->
-      <div v-if="posStore.currentCustomer" class="bg-surface border-2 border-border rounded-lg mb-4 p-4">
+      <div v-if="posStore.currentCustomer" class="bg-crocus-600/5 border border-crocus-500/25 rounded-xl mb-4 p-4">
         <div class="flex items-center gap-3">
-          <div class="bg-background p-3 rounded-lg border border-border">
-            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-crocus-600/10 p-3 rounded-xl border border-crocus-500/20 flex-shrink-0">
+            <svg class="w-5 h-5 text-crocus-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
           <div>
-            <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+            <p class="text-[10px] font-bold text-crocus-600 uppercase tracking-widest">
               Cliente Actual
             </p>
-            <p class="text-lg font-semibold text-text-primary">
+            <p class="text-base font-bold text-text-primary leading-tight">
               {{ posStore.currentCustomer.name || 'Sin nombre' }}
             </p>
-            <p class="text-xs text-text-secondary">
+            <p class="text-xs text-text-secondary mt-0.5">
               📱 {{ posStore.currentCustomer.phone_number }}
             </p>
           </div>
@@ -219,7 +219,7 @@ onMounted(() => {
       <!-- Main POS Container -->
     <div class="flex flex-col lg:flex-row gap-4 md:gap-6 lg:max-h-[calc(100vh-10rem)]">
       <!-- Products Panel (Left) -->
-      <div class="flex-1 flex flex-col space-y-4 lg:overflow-hidden gap-2">
+      <div class="flex-1 flex flex-col space-y-4 lg:overflow-hidden">
         <!-- Search and Filters -->
         <div class="flex flex-col sm:flex-row gap-3">
           <div class="flex-1">
@@ -231,14 +231,14 @@ onMounted(() => {
         </div>
 
         <!-- Category Tabs -->
-        <div class="flex gap-2 overflow-x-auto">
+        <div class="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
           <button
             v-for="cat in categories"
             :key="cat"
-            class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap theme-transition"
+            class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap theme-transition"
             :class="selectedCategory === cat
-              ? 'bg-primary text-primary-foreground shadow-crocus'
-              : 'bg-surface-secondary text-text-secondary hover:bg-surface-tertiary hover:shadow-titan'"
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'bg-surface border border-border text-text-secondary hover:border-primary/30 hover:text-text-primary'"
             @click="selectedCategory = cat"
           >
             {{ cat === 'all' ? 'Todos' : cat }}
@@ -257,7 +257,7 @@ onMounted(() => {
           </div>
 
           <!-- Products Grid -->
-          <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4 p-1">
+          <div v-else class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5 p-1 pb-4">
             <PosProductCard
               v-for="product in filteredProducts"
               :key="product.id"

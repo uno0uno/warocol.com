@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-start gap-3 p-3 border border-border rounded-lg bg-surface-secondary theme-transition hover:shadow-titan">
+  <div class="flex items-start gap-3 p-4 border border-border rounded-xl bg-surface-secondary theme-transition hover:border-primary/20 hover:bg-surface">
     <!-- Order Number -->
     <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
       {{ orderNumber }}
@@ -8,7 +8,7 @@
     <!-- Item Details -->
     <div class="flex-1 min-w-0">
       <div class="flex justify-between items-start">
-        <p class="text-sm font-medium text-text-primary truncate">{{ item.product.name }}</p>
+        <p class="text-sm font-semibold text-text-primary truncate">{{ item.product.name }}</p>
         <p class="text-sm font-bold text-primary ml-2">{{ formatCurrency(itemTotal) }}</p>
       </div>
       <p class="text-xs text-text-secondary">{{ formatCurrency(Number(item.product.price)) }} c/u</p>
