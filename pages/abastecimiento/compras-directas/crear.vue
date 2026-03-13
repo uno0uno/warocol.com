@@ -2,9 +2,9 @@
   <div class="page-layout">
     <!-- Loading overlay during submit -->
     <div v-if="isSubmitting" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-background rounded-xl p-6 flex flex-col items-center shadow-xl">
-        <CommonsTheCustomLoader size="large" />
-        <p class="mt-3 text-base font-semibold text-text-primary">Registrando compra directa...</p>
+      <div class="bg-background rounded-xl p-6 flex flex-col items-center gap-3 shadow-xl">
+        <UiLoadingDots size="12px" />
+        <p class="text-base font-semibold text-text-primary">Registrando compra directa...</p>
       </div>
     </div>
 
@@ -1096,164 +1096,133 @@
 
         <!-- Step 3: Documentos -->
         <div v-else-if="currentStep === 3" key="step-3" class="bg-surface border-border border rounded-lg">
-          <div class="p-3 sm:p-4">
-            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-2">Documentos (Opcional)</h3>
+          <div class="p-4">
+            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">Documentos (Opcional)</h3>
             <p class="text-sm text-text-secondary mb-4">Puedes agregar la factura y comprobante de pago ahora o despues</p>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <!-- Factura Section -->
-              <div class="border-2 border-border rounded-lg p-4 bg-background">
-                <h4 class="text-base font-semibold text-text-primary mb-3 flex items-center gap-2">
-                  <DocumentTextIcon class="w-5 h-5 text-primary" />
+              <div class="border-2 border-border rounded-lg p-4 bg-background space-y-4">
+                <h4 class="text-base font-semibold text-text-primary flex items-center gap-2">
+                  <DocumentTextIcon class="w-5 h-5 text-primary flex-shrink-0" />
                   Factura
                 </h4>
 
-                <div class="space-y-3">
-                  <div>
-                    <label class="block text-sm font-medium text-text-primary mb-1.5">
-                      Numero de Factura
-                    </label>
-                    <input
-                      v-model="form.invoice_number"
-                      type="text"
-                      class="input-base w-full px-4 py-2"
-                      placeholder="Ej: FV-12345"
-                    />
-                  </div>
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-1.5">Numero de Factura</label>
+                  <input
+                    v-model="form.invoice_number"
+                    type="text"
+                    class="input-base w-full px-4 py-2"
+                    placeholder="Ej: FV-12345"
+                  />
+                </div>
 
-                  <!-- Attachment Uploader Style -->
-                  <div>
-                    <label class="block text-sm font-medium text-text-primary mb-1.5">
-                      Adjuntar Factura
-                    </label>
-                    <div class="space-y-3">
-                      <div class="flex items-center space-x-2">
-                        <input
-                          ref="invoiceFileInput"
-                          type="file"
-                          class="hidden"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          @change="handleInvoiceFileSelect"
-                        />
-                        <button
-                          type="button"
-                          @click="($refs.invoiceFileInput as HTMLInputElement).click()"
-                          class="px-4 py-2 bg-primary/10 text-primary border-2 border-primary/30 rounded-lg hover:bg-primary/20 active:scale-95 transition-all text-sm font-medium flex items-center gap-2"
-                        >
-                          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                          </svg>
-                          Seleccionar Archivo
-                        </button>
-                        <span class="text-xs text-text-secondary">PDF o imagen (max. 10MB)</span>
-                      </div>
+                <!-- Attachment Uploader -->
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-1.5">Adjuntar Factura</label>
+                  <input
+                    ref="invoiceFileInput"
+                    type="file"
+                    class="hidden"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    @change="handleInvoiceFileSelect"
+                  />
+                  <button
+                    type="button"
+                    @click="($refs.invoiceFileInput as HTMLInputElement).click()"
+                    class="w-full px-4 py-2.5 bg-primary/10 text-primary border-2 border-primary/30 border-dashed rounded-lg hover:bg-primary/20 active:scale-[0.99] transition-all text-sm font-medium flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Seleccionar Archivo
+                  </button>
+                  <p class="text-xs text-text-secondary mt-1.5">PDF o imagen · máx. 10MB</p>
 
-                      <!-- Selected File Preview -->
-                      <div v-if="form.invoice_file" class="flex items-center justify-between p-2 bg-surface border border-border rounded-lg">
-                        <div class="flex items-center space-x-2 flex-1 min-w-0">
-                          <svg class="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                          <span class="text-xs text-text-primary truncate">{{ form.invoice_file.name }}</span>
-                          <span class="text-xs text-text-secondary">({{ formatFileSize(form.invoice_file.size) }})</span>
-                        </div>
-                        <button
-                          type="button"
-                          @click="form.invoice_file = null"
-                          class="text-destructive hover:bg-destructive/10 p-1 rounded"
-                        >
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
+                  <!-- Selected File Preview -->
+                  <div v-if="form.invoice_file" class="mt-2 flex items-center justify-between p-2.5 bg-surface border border-border rounded-lg">
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                      <svg class="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      <span class="text-xs text-text-primary truncate">{{ form.invoice_file.name }}</span>
+                      <span class="text-xs text-text-secondary flex-shrink-0">{{ formatFileSize(form.invoice_file.size) }}</span>
                     </div>
+                    <button type="button" @click="form.invoice_file = null" class="text-destructive hover:bg-destructive/10 p-1 rounded ml-1 flex-shrink-0">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>
 
               <!-- Comprobante de Pago Section -->
-              <div class="border-2 border-border rounded-lg p-4 bg-background">
-                <h4 class="text-base font-semibold text-text-primary mb-3 flex items-center gap-2">
-                  <CreditCardIcon class="w-5 h-5 text-primary" />
+              <div class="border-2 border-border rounded-lg p-4 bg-background space-y-4">
+                <h4 class="text-base font-semibold text-text-primary flex items-center gap-2">
+                  <CreditCardIcon class="w-5 h-5 text-primary flex-shrink-0" />
                   Comprobante de Pago
                 </h4>
 
-                <div class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-1.5">Metodo de Pago</label>
+                  <select v-model="form.payment_method" class="input-base w-full px-4 py-2">
+                    <option value="">Sin pago aun</option>
+                    <option value="transfer">Transferencia</option>
+                    <option value="cash">Efectivo</option>
+                    <option value="check">Cheque</option>
+                    <option value="credit_card">Tarjeta de Credito</option>
+                  </select>
+                </div>
+
+                <div v-if="form.payment_method">
+                  <label class="block text-sm font-medium text-text-primary mb-1.5">Referencia de Pago</label>
+                  <input
+                    v-model="form.payment_reference"
+                    type="text"
+                    class="input-base w-full px-4 py-2"
+                    placeholder="Numero de transferencia, etc."
+                  />
+                </div>
+
+                <!-- Attachment Uploader -->
+                <div v-if="form.payment_method">
+                  <label class="block text-sm font-medium text-text-primary mb-1.5">Adjuntar Comprobante</label>
                   <div>
-                    <label class="block text-sm font-medium text-text-primary mb-1.5">
-                      Metodo de Pago
-                    </label>
-                    <select
-                      v-model="form.payment_method"
-                      class="input-base w-full px-4 py-2"
-                    >
-                      <option value="">Sin pago aun</option>
-                      <option value="transfer">Transferencia</option>
-                      <option value="cash">Efectivo</option>
-                      <option value="check">Cheque</option>
-                      <option value="credit_card">Tarjeta de Credito</option>
-                    </select>
-                  </div>
-
-                  <div v-if="form.payment_method">
-                    <label class="block text-sm font-medium text-text-primary mb-1.5">
-                      Referencia de Pago
-                    </label>
                     <input
-                      v-model="form.payment_reference"
-                      type="text"
-                      class="input-base w-full px-4 py-2"
-                      placeholder="Numero de transferencia, etc."
+                      ref="paymentFileInput"
+                      type="file"
+                      class="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      @change="handlePaymentFileSelect"
                     />
-                  </div>
+                    <button
+                      type="button"
+                      @click="($refs.paymentFileInput as HTMLInputElement).click()"
+                      class="w-full px-4 py-2.5 bg-primary/10 text-primary border-2 border-primary/30 border-dashed rounded-lg hover:bg-primary/20 active:scale-[0.99] transition-all text-sm font-medium flex items-center justify-center gap-2 whitespace-nowrap"
+                    >
+                      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                      </svg>
+                      Seleccionar Archivo
+                    </button>
+                    <p class="text-xs text-text-secondary mt-1.5">PDF o imagen · máx. 10MB</p>
 
-                  <!-- Attachment Uploader Style -->
-                  <div v-if="form.payment_method">
-                    <label class="block text-sm font-medium text-text-primary mb-1.5">
-                      Adjuntar Comprobante
-                    </label>
-                    <div class="space-y-3">
-                      <div class="flex items-center space-x-2">
-                        <input
-                          ref="paymentFileInput"
-                          type="file"
-                          class="hidden"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          @change="handlePaymentFileSelect"
-                        />
-                        <button
-                          type="button"
-                          @click="($refs.paymentFileInput as HTMLInputElement).click()"
-                          class="px-4 py-2 bg-primary/10 text-primary border-2 border-primary/30 rounded-lg hover:bg-primary/20 active:scale-95 transition-all text-sm font-medium flex items-center gap-2"
-                        >
-                          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                          </svg>
-                          Seleccionar Archivo
-                        </button>
-                        <span class="text-xs text-text-secondary">PDF o imagen (max. 10MB)</span>
+                    <!-- Selected File Preview -->
+                    <div v-if="form.payment_file" class="mt-2 flex items-center justify-between p-2.5 bg-surface border border-border rounded-lg">
+                      <div class="flex items-center gap-2 flex-1 min-w-0">
+                        <svg class="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        <span class="text-xs text-text-primary truncate">{{ form.payment_file.name }}</span>
+                        <span class="text-xs text-text-secondary flex-shrink-0">{{ formatFileSize(form.payment_file.size) }}</span>
                       </div>
-
-                      <!-- Selected File Preview -->
-                      <div v-if="form.payment_file" class="flex items-center justify-between p-2 bg-surface border border-border rounded-lg">
-                        <div class="flex items-center space-x-2 flex-1 min-w-0">
-                          <svg class="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                          <span class="text-xs text-text-primary truncate">{{ form.payment_file.name }}</span>
-                          <span class="text-xs text-text-secondary">({{ formatFileSize(form.payment_file.size) }})</span>
-                        </div>
-                        <button
-                          type="button"
-                          @click="form.payment_file = null"
-                          class="text-destructive hover:bg-destructive/10 p-1 rounded"
-                        >
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
+                      <button type="button" @click="form.payment_file = null" class="text-destructive hover:bg-destructive/10 p-1 rounded ml-1 flex-shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1264,56 +1233,16 @@
 
         <!-- Step 4: Revision -->
         <div v-else-if="currentStep === 4" key="step-4">
-          <!-- Header compacto -->
-          <div class="bg-surface border border-border rounded-lg px-4 sm:px-6 py-3 mb-3 flex items-center justify-between">
-            <div>
-              <p class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Compra Directa · Resumen</p>
-              <p class="text-base font-bold text-text-primary">{{ nextPurchaseNumber }}</p>
-            </div>
-            <p class="text-xs text-text-secondary">{{ new Date().toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' }) }}</p>
-          </div>
-
           <!-- Layout: items (izq) + panel resumen (der) -->
+          <!-- En mobile: panel primero (CTA visible sin scroll), items después -->
           <div class="flex flex-col lg:flex-row gap-4 items-start">
 
-            <!-- ── Columna izquierda: items ── -->
-            <div class="w-full lg:flex-1">
-              <div class="bg-surface border border-border rounded-lg p-4">
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
-                  {{ form.items.length }} {{ form.items.length === 1 ? 'producto' : 'productos' }}
-                </p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div
-                    v-for="(item, index) in form.items"
-                    :key="index"
-                    class="flex items-start gap-3 p-3 rounded-lg border-2 border-border bg-background"
-                  >
-                    <!-- Ícono inicial -->
-                    <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary text-sm font-bold">
-                      {{ getIngredientName(item.ingredient_id).charAt(0) }}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <p class="font-medium text-text-primary text-sm truncate">{{ getIngredientName(item.ingredient_id) }}</p>
-                      <p v-if="item.notes" class="text-xs text-text-secondary truncate">{{ item.notes }}</p>
-                      <div class="mt-1.5 flex items-center justify-between gap-2">
-                        <span class="text-xs bg-surface-secondary px-2 py-0.5 rounded font-medium text-text-secondary">
-                          {{ item.purchase_quantity }} × {{ getItemUnitLabel(item) }}
-                        </span>
-                        <span class="text-sm font-bold text-primary">${{ formatPrice(item.total_cost) }}</span>
-                      </div>
-                      <p v-if="item.grams_per_unit" class="text-xs text-text-secondary mt-0.5">{{ item.grams_per_unit }} gr/und</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- ── Columna derecha: panel sticky ── -->
-            <div class="w-full lg:w-72 xl:w-80 lg:sticky lg:top-4">
-              <div class="bg-surface border border-border rounded-lg divide-y divide-border overflow-hidden">
+            <!-- ── Columna derecha: panel sticky (primero en mobile) ── -->
+            <div class="w-full lg:w-72 xl:w-80 lg:sticky lg:top-4 order-first lg:order-last">
+              <div class="bg-surface border-2 border-border rounded-lg divide-y divide-border overflow-hidden">
 
                 <!-- Proveedor + pago -->
-                <div class="p-4 space-y-2">
+                <div class="p-4 space-y-3">
                   <div class="flex justify-between items-start">
                     <p class="text-xs font-medium text-text-secondary">Proveedor</p>
                     <p class="text-sm font-semibold text-text-primary text-right max-w-[60%] leading-tight">{{ getSupplierName(form.supplier_id) }}</p>
@@ -1335,7 +1264,7 @@
                 </div>
 
                 <!-- Documentos -->
-                <div v-if="form.invoice_number || form.invoice_file || form.payment_file" class="p-4 space-y-1.5">
+                <div v-if="form.invoice_number || form.invoice_file || form.payment_file" class="p-4 space-y-2">
                   <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Documentos</p>
                   <div v-if="form.invoice_number" class="flex items-center gap-2 text-xs">
                     <svg class="w-3.5 h-3.5 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1351,20 +1280,20 @@
                     <span class="text-text-primary font-medium">Ref: {{ form.payment_reference }}</span>
                     <span v-if="form.payment_file" class="text-success">· Comprobante</span>
                   </div>
-                  <div v-if="form.notes" class="flex items-start gap-2 text-xs mt-1">
-                    <span class="text-text-secondary">Nota:</span>
+                  <div v-if="form.notes" class="flex items-start gap-2 text-xs">
+                    <span class="text-text-secondary flex-shrink-0">Nota:</span>
                     <span class="text-text-primary">{{ form.notes }}</span>
                   </div>
                 </div>
 
                 <!-- Total -->
                 <div class="p-4 bg-primary/5">
-                  <div class="flex justify-between items-center mb-1">
+                  <div class="flex justify-between items-center mb-1.5">
                     <p class="text-xs text-text-secondary">Subtotal ({{ form.items.length }} ítems)</p>
                     <p class="text-sm text-text-primary">${{ formatPrice(totalAmount) }}</p>
                   </div>
                   <div class="flex justify-between items-center pt-2 border-t border-primary/20">
-                    <p class="font-bold text-text-primary">Total</p>
+                    <p class="text-sm font-bold text-text-primary">Total</p>
                     <p class="text-xl font-bold text-primary">${{ formatPrice(totalAmount) }}</p>
                   </div>
                 </div>
@@ -1379,20 +1308,59 @@
                     type="button"
                     @click="handleSubmit"
                     :disabled="isSubmitting"
-                    class="w-full py-3 rounded-lg font-semibold text-sm bg-success text-white hover:bg-success/90 active:scale-[0.98] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                    class="w-full min-h-[48px] rounded-lg font-semibold text-base bg-success text-white hover:bg-success/90 active:scale-[0.98] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                   >
-                    <svg v-if="!isSubmitting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg v-if="!isSubmitting" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    {{ isSubmitting ? 'Guardando...' : 'Confirmar y Guardar' }}
+                    <UiLoadingDots v-else size="9px" class="opacity-80" />
+                    <span>{{ isSubmitting ? 'Guardando...' : 'Confirmar y Guardar' }}</span>
                   </button>
                   <button
                     type="button"
                     @click="previousStep"
-                    class="w-full py-2 rounded-lg text-xs text-text-secondary border border-border hover:text-text-primary hover:bg-surface-secondary transition-colors"
+                    class="w-full min-h-[44px] rounded-lg text-xs font-medium text-text-secondary border border-border hover:text-text-primary hover:bg-surface-secondary active:scale-[0.99] transition-all"
                   >
                     ← Editar compra
                   </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Columna izquierda: items (segundo en mobile) ── -->
+            <div class="w-full lg:flex-1 order-last lg:order-first">
+              <div class="bg-surface border-2 border-border rounded-lg p-4">
+                <!-- Header con conteo -->
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="text-xs font-bold text-white bg-primary rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">{{ form.items.length }}</span>
+                  <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ form.items.length === 1 ? 'producto' : 'productos' }}</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div
+                    v-for="(item, index) in form.items"
+                    :key="index"
+                    class="flex items-start gap-3 p-3.5 rounded-lg border-2 border-border bg-background"
+                  >
+                    <!-- Avatar inicial -->
+                    <div class="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 text-primary text-sm font-bold">
+                      {{ getIngredientName(item.ingredient_id).charAt(0) }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <!-- Nombre + precio: siempre en la misma fila -->
+                      <div class="flex items-start justify-between gap-2">
+                        <p class="font-semibold text-text-primary text-sm leading-snug min-w-0 truncate">{{ getIngredientName(item.ingredient_id) }}</p>
+                        <span class="text-base font-bold text-primary flex-shrink-0 leading-snug">${{ formatPrice(item.total_cost) }}</span>
+                      </div>
+                      <!-- Cantidad + gr: siempre abajo, sin conflicto con precio -->
+                      <div class="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                        <span class="text-xs bg-surface-secondary border border-border px-2 py-0.5 rounded-md font-medium text-text-secondary">
+                          {{ item.purchase_quantity }} × {{ getItemUnitLabel(item) }}
+                        </span>
+                        <span v-if="item.grams_per_unit" class="text-xs text-text-secondary">· {{ item.grams_per_unit }} gr</span>
+                      </div>
+                      <p v-if="item.notes" class="text-xs text-text-secondary truncate mt-1">{{ item.notes }}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
