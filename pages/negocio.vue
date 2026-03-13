@@ -14,10 +14,12 @@
 
         <!-- Banner strip -->
         <div
-          class="relative h-28 sm:h-36"
+          class="relative h-32 sm:h-40"
           :style="effectiveBannerStyle"
         >
           <div class="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent" />
+          <!-- Bottom scrim: ensures the logo overlap zone is always readable -->
+          <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background/60 to-transparent" />
 
           <!-- First-time setup hint -->
           <div v-if="!businessProfile && isEditMode" class="absolute inset-x-0 bottom-3 flex justify-center">
@@ -55,43 +57,23 @@
           </div>
         </div>
 
-        <!-- Profile info row (overlaps banner) -->
+        <!-- Profile info -->
         <div class="px-4 sm:px-6 pb-4 sm:pb-6">
-          <div class="flex items-end gap-4 -mt-8 mb-4">
-            <!-- Logo -->
-            <div class="flex-shrink-0 relative">
-              <!-- Con logo: imagen en caja redondeada -->
+
+          <!-- Logo row — overlaps banner bottom -->
+          <div class="-mt-10 mb-3 flex items-end justify-between">
+            <div class="flex-shrink-0">
               <div
                 v-if="logoSrc"
-                class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl border-4 border-background overflow-hidden shadow-sm"
+                class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl border-4 border-background overflow-hidden shadow-md"
               >
                 <img :src="logoSrc" :alt="businessProfile?.display_name" class="w-full h-full object-cover" />
               </div>
-              <!-- Sin logo: solo el ícono -->
-              <BuildingStorefrontIcon v-else class="w-10 h-10 sm:w-12 sm:h-12 text-white drop-shadow mb-1" />
+              <BuildingStorefrontIcon v-else class="w-12 h-12 sm:w-14 sm:h-14 text-white drop-shadow" />
             </div>
 
-            <!-- Name + badges (view mode) -->
-            <div v-if="!isEditMode" class="flex-1 min-w-0 pb-1">
-              <h1 class="text-lg sm:text-xl font-bold text-text-primary truncate">
-                {{ businessProfile?.display_name }}
-              </h1>
-              <div class="flex items-center gap-2 mt-1 flex-wrap">
-                <UiStatusBadge
-                  :variant="isOpenNow ? 'success' : 'destructive'"
-                  :value="isOpenNow ? 'Abierto' : 'Cerrado'"
-                  format="text"
-                />
-                <UiStatusBadge
-                  :variant="businessProfile?.is_active ? 'success' : 'warning'"
-                  :value="businessProfile?.is_active ? 'Activo' : 'Oculto'"
-                  format="text"
-                />
-              </div>
-            </div>
-
-            <!-- Name edit (edit mode) -->
-            <div v-else class="flex-1 min-w-0 pb-1">
+            <!-- Edit / Name input (edit mode only, in this row) -->
+            <div v-if="isEditMode" class="flex-1 min-w-0 ml-4 pb-1">
               <input
                 v-model="editForm.display_name"
                 type="text"
@@ -101,11 +83,30 @@
             </div>
           </div>
 
+          <!-- Name + badges — always on solid card background (view mode) -->
+          <div v-if="!isEditMode" class="mb-2">
+            <h1 class="text-xl sm:text-2xl font-bold text-text-primary leading-tight">
+              {{ businessProfile?.display_name }}
+            </h1>
+            <div class="flex items-center gap-2 mt-2 flex-wrap">
+              <UiStatusBadge
+                :variant="isOpenNow ? 'success' : 'destructive'"
+                :value="isOpenNow ? 'Abierto' : 'Cerrado'"
+                format="text"
+              />
+              <UiStatusBadge
+                :variant="businessProfile?.is_active ? 'success' : 'warning'"
+                :value="businessProfile?.is_active ? 'Activo' : 'Oculto'"
+                format="text"
+              />
+            </div>
+          </div>
+
           <!-- Description (view) -->
-          <p v-if="!isEditMode && businessProfile?.description" class="text-sm text-text-secondary leading-relaxed">
+          <p v-if="!isEditMode && businessProfile?.description" class="text-sm text-text-primary/80 leading-relaxed mt-1">
             {{ businessProfile.description }}
           </p>
-          <p v-else-if="!isEditMode && !businessProfile?.description" class="text-sm text-text-secondary italic">
+          <p v-else-if="!isEditMode && !businessProfile?.description" class="text-sm text-text-secondary italic mt-1">
             Sin descripción
           </p>
 
