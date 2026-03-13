@@ -36,7 +36,7 @@
         <!-- STATE: Search -->
         <template v-if="state === 'search'">
           <!-- Search Input -->
-          <div class="p-4 border-b border-border flex-shrink-0">
+          <div class="px-4 pt-4 pb-3 flex-shrink-0">
             <div class="relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none">
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -65,10 +65,10 @@
           </div>
 
           <!-- Results Area (scrollable) -->
-          <div class="flex-1 overflow-y-auto min-h-[200px]">
+          <div class="flex-1 overflow-y-auto">
 
             <!-- Empty state: no query -->
-            <div v-if="!searchQuery" class="flex flex-col items-center justify-center h-full py-10 text-text-secondary">
+            <div v-if="!searchQuery" class="flex flex-col items-center justify-center py-8 text-text-secondary">
               <svg class="h-12 w-12 mb-3 opacity-40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
               </svg>
@@ -138,41 +138,34 @@
           </div>
 
           <!-- Footer: always-visible actions as cards -->
-          <div class="p-4 pb-6 md:pb-4 border-t border-border flex-shrink-0 grid grid-cols-2 gap-3">
+          <div class="px-4 pt-3 pb-6 md:pb-4 border-t border-border flex-shrink-0 grid grid-cols-2 gap-3">
             <!-- Nuevo cliente card -->
             <button
               @click="state = 'create'"
-              class="flex flex-row items-center gap-3 px-4 py-3 min-h-[64px] bg-surface border-2 border-border rounded-xl hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all text-left active:scale-95"
+              class="flex flex-col items-center justify-center gap-2 py-4 bg-surface border-2 border-border rounded-xl hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all active:scale-95 min-h-[88px]"
             >
-              <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
               </div>
-              <div class="flex flex-col gap-0.5 min-w-0">
-                <span class="font-semibold text-sm text-text-primary leading-tight">Nuevo cliente</span>
-                <span class="text-xs text-text-tertiary leading-tight">Registrar datos</span>
-              </div>
+              <span class="font-semibold text-sm text-text-primary leading-tight text-center">Nuevo cliente</span>
             </button>
 
             <!-- Sin datos card -->
             <button
               @click="selectGenericCustomer"
               :disabled="isCreatingGeneric"
-              class="flex flex-row items-center gap-3 px-4 py-3 min-h-[64px] bg-surface border-2 border-border rounded-xl hover:border-border hover:bg-surface-secondary transition-all text-left active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex flex-col items-center justify-center gap-2 py-4 bg-surface border-2 border-border rounded-xl hover:bg-surface-secondary transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed min-h-[88px]"
             >
-              <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-surface-secondary text-text-secondary flex items-center justify-center">
+              <div class="w-10 h-10 rounded-xl bg-surface-secondary text-text-secondary flex items-center justify-center">
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                 </svg>
               </div>
-              <div class="flex flex-col gap-0.5 min-w-0">
-                <span class="font-semibold text-sm text-text-primary leading-tight">
-                  <span v-if="isCreatingGeneric">Procesando...</span>
-                  <span v-else>Sin datos</span>
-                </span>
-                <span class="text-xs text-text-tertiary leading-tight">Venta rápida</span>
-              </div>
+              <span class="font-semibold text-sm text-text-primary leading-tight text-center">
+                {{ isCreatingGeneric ? 'Procesando...' : 'Sin datos' }}
+              </span>
             </button>
           </div>
         </template>
