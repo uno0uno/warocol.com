@@ -1,11 +1,16 @@
 <template>
-  <Transition name="modal-fade">
+  <Transition name="sheet">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      class="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 bg-black/50"
       @click.self="handleClose"
     >
-      <div class="bg-surface rounded-2xl shadow-2xl w-full max-w-md border border-border flex flex-col max-h-[90vh]" @click.stop>
+      <div class="bottom-sheet-panel bg-surface w-full md:max-w-md border border-border flex flex-col rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[85vh] md:max-h-[90vh]" @click.stop>
+
+        <!-- Mobile drag handle -->
+        <div class="flex justify-center pt-3 pb-1 md:hidden flex-shrink-0" aria-hidden="true">
+          <div class="w-10 h-1 rounded-full bg-border"></div>
+        </div>
 
         <!-- Header -->
         <div class="p-5 border-b border-border flex items-center justify-between flex-shrink-0">
@@ -420,13 +425,31 @@ const handleClose = () => {
 </script>
 
 <style scoped>
-.modal-fade-enter-active,
-.modal-fade-leave-active {
-  transition: opacity 0.2s ease;
+/* Backdrop fade */
+.sheet-enter-active,
+.sheet-leave-active {
+  transition: opacity 0.25s ease;
+}
+.sheet-enter-from,
+.sheet-leave-to {
+  opacity: 0;
 }
 
-.modal-fade-enter-from,
-.modal-fade-leave-to {
-  opacity: 0;
+/* Panel — mobile: slide up from bottom */
+.sheet-enter-active .bottom-sheet-panel,
+.sheet-leave-active .bottom-sheet-panel {
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.sheet-enter-from .bottom-sheet-panel,
+.sheet-leave-to .bottom-sheet-panel {
+  transform: translateY(100%);
+}
+
+/* Panel — desktop: no slide, just backdrop fade */
+@media (min-width: 768px) {
+  .sheet-enter-from .bottom-sheet-panel,
+  .sheet-leave-to .bottom-sheet-panel {
+    transform: translateY(0);
+  }
 }
 </style>
