@@ -455,6 +455,11 @@ onUnmounted(() => {
         <div class="bg-surface rounded-2xl shadow-lg border border-border p-6">
           <h3 class="text-lg font-bold text-text-primary mb-6">Resumen de la Orden</h3>
 
+          <!-- Customer insights grid (only for identified customers with history) -->
+          <PosCustomerInsightsCard
+            :customer-id="selectedCustomer?.phone_number === '0000000000' ? null : (selectedCustomer?.id ?? null)"
+          />
+
           <div class="space-y-3 mb-6">
             <div class="flex justify-between text-sm text-text-secondary">
               <span>Subtotal ({{ cartItems.length }} productos)</span>
