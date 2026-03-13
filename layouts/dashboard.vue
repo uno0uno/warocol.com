@@ -6,27 +6,27 @@
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col min-w-0 h-screen md:h-auto">
       <!-- Main Content Header -->
-      <header class="bg-surface border-b border-border px-6 py-4 md:px-8 md:py-4 flex-shrink-0">
-        <div class="flex items-start md:items-center justify-between">
-          <div class="flex items-center gap-4">
+      <header class="bg-surface border-b border-border px-4 py-3 md:px-8 md:py-4 flex-shrink-0">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2 sm:gap-4 min-w-0">
             <!-- Back Button (if dynamic back is enabled) -->
             <button
               v-if="showBackBtn && backBtnHandler"
               @click="backBtnHandler"
-              class="p-2 hover:bg-surface-secondary rounded-lg transition-colors"
+              class="flex-shrink-0 p-2 hover:bg-surface-secondary rounded-lg transition-colors"
             >
-              <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <svg class="h-5 w-5 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
               </svg>
             </button>
 
-            <div>
-              <h1 class="text-[26px] md:text-3xl font-bold text-text-primary">{{ displayTitle }}</h1>
-              <p class="text-xs sm:text-sm text-muted-foreground mt-1">{{ dynamicLastUpdateText || displaySubtitle || currentDateTime }}</p>
+            <div class="min-w-0">
+              <h1 class="text-lg sm:text-xl md:text-3xl font-bold text-text-primary leading-tight truncate">{{ displayTitle }}</h1>
+              <p class="text-xs text-muted-foreground mt-0.5 truncate">{{ dynamicLastUpdateText || displaySubtitle || currentDateTime }}</p>
             </div>
           </div>
 
-          <div class="flex items-center gap-2 mt-1 md:mt-0">
+          <div class="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
             <!-- Notification Bell — desktop only -->
             <NotificationsNotificationBell class="hidden lg:flex" />
 

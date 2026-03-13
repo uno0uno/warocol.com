@@ -628,59 +628,118 @@ onUnmounted(() => {
     <!-- Mobile Bottom Summary -->
     <div
       v-if="cartItems.length > 0 && !isSyncingCart && !syncError"
-      class="lg:hidden mt-6 pb-4"
+      class="lg:hidden mt-6 pb-4 space-y-3"
     >
-      <div class="bg-surface rounded-2xl shadow-lg border border-border p-6">
-        <h3 class="text-lg font-bold text-text-primary mb-6">Resumen de la Orden</h3>
 
-        <div class="space-y-3 mb-6">
-          <div class="flex justify-between text-sm text-text-secondary">
-            <span>Subtotal ({{ cartItems.length }} productos)</span>
-            <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
+      <!-- ACCORDION: Customer Insights (same as desktop) -->
+      <div
+        v-if="insightsLoading || (customerInsights && customerInsights.orders_count > 0)"
+        class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
+      >
+        <button
+          @click="activeAccordion = activeAccordion === 'insights' ? null : 'insights'"
+          class="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-surface-secondary/40 transition-colors"
+        >
+          <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0 select-none">
+            {{ selectedCustomer?.name?.charAt(0)?.toUpperCase() || selectedCustomer?.phone_number?.charAt(0) || '?' }}
           </div>
-          <div class="flex justify-between text-sm text-text-secondary">
-            <span>Impuestos (0%)</span>
-            <span class="font-medium text-text-primary">{{ formatCurrency(0) }}</span>
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-text-primary text-sm leading-tight truncate">
+              {{ selectedCustomer?.name || 'Cliente' }}
+            </p>
+            <p class="text-xs text-text-secondary leading-tight mt-0.5">{{ selectedCustomer?.phone_number }}</p>
           </div>
-          <div class="flex justify-between text-sm text-green-600">
-            <span>Descuento</span>
-            <span class="font-medium">- {{ formatCurrency(0) }}</span>
-          </div>
-        </div>
-
-        <div class="border-t border-dashed border-border my-4 pt-4">
-          <div class="flex justify-between items-end mb-1">
-            <span class="text-text-secondary font-medium">Total a Pagar</span>
-            <span class="text-3xl font-bold text-primary">{{ formatCurrency(cartTotal) }}</span>
-          </div>
-          <p class="text-right text-xs text-text-tertiary">COP</p>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="flex flex-col gap-3 mt-6">
-          <button
-            @click="processOrder"
-            :disabled="isProcessing"
-            class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          <svg
+            class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+            :class="activeAccordion === 'insights' ? 'rotate-0' : 'rotate-180'"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
           >
-            <CommonsTheCustomLoader v-if="isProcessing" size="small" />
-            <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            </svg>
-            <span>{{ isProcessing ? 'Procesando...' : 'Confirmar Orden' }}</span>
-          </button>
-
-          <button
-            @click="cancelOrder"
-            class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
-          >
-            Cancelar
-          </button>
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+          </svg>
+        </button>
+        <div v-show="activeAccordion === 'insights'" class="border-t border-border">
+          <div v-if="insightsLoading" class="p-4 grid grid-cols-2 gap-2.5">
+            <div v-for="i in 4" :key="i" class="bg-surface-secondary rounded-xl p-4 flex flex-col gap-2 animate-pulse">
+              <div class="h-4 w-4 rounded bg-surface"></div>
+              <div class="h-5 w-16 rounded bg-surface mt-1"></div>
+              <div class="h-3 w-12 rounded bg-surface"></div>
+            </div>
+          </div>
+          <PosCustomerInsightsCard v-else-if="customerInsights" :insights="customerInsights" />
         </div>
       </div>
 
+      <!-- ACCORDION: Resumen de la Orden -->
+      <div class="bg-surface rounded-2xl border border-border overflow-hidden shadow-lg">
+        <button
+          @click="activeAccordion = activeAccordion === 'summary' ? null : 'summary'"
+          class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-secondary/40 transition-colors"
+        >
+          <h3 class="font-bold text-text-primary">Resumen de la Orden</h3>
+          <svg
+            class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+            :class="activeAccordion === 'summary' ? 'rotate-0' : 'rotate-180'"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+          </svg>
+        </button>
+        <div v-show="activeAccordion === 'summary'" class="border-t border-border px-5 py-4">
+          <div class="space-y-3 mb-4">
+            <div class="flex justify-between text-sm text-text-secondary">
+              <span>Subtotal ({{ cartItems.length }} productos)</span>
+              <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
+            </div>
+            <div class="flex justify-between text-sm text-text-secondary">
+              <span>Impuestos (0%)</span>
+              <span class="font-medium text-text-primary">{{ formatCurrency(0) }}</span>
+            </div>
+            <div class="flex justify-between text-sm text-green-600">
+              <span>Descuento</span>
+              <span class="font-medium">- {{ formatCurrency(0) }}</span>
+            </div>
+          </div>
+          <div class="border-t border-dashed border-border pt-4">
+            <div class="flex justify-between items-end mb-1">
+              <span class="text-text-secondary font-medium">Total a Pagar</span>
+              <span class="text-3xl font-bold text-primary">{{ formatCurrency(cartTotal) }}</span>
+            </div>
+            <p class="text-right text-xs text-text-tertiary">COP</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div v-if="processingError" class="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4">
+        <div class="flex items-start gap-3">
+          <span class="text-xl">⚠️</span>
+          <p class="text-sm text-red-800 dark:text-red-200">{{ processingError }}</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col gap-3">
+        <button
+          @click="processOrder"
+          :disabled="isProcessing"
+          class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <CommonsTheCustomLoader v-if="isProcessing" size="small" />
+          <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+          <span>{{ isProcessing ? 'Procesando...' : 'Confirmar Orden' }}</span>
+        </button>
+        <button
+          @click="cancelOrder"
+          class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
+        >
+          Cancelar
+        </button>
+      </div>
+
       <!-- Security Note -->
-      <div class="mt-4 flex items-center justify-center gap-2 text-xs text-text-tertiary">
+      <div class="flex items-center justify-center gap-2 text-xs text-text-tertiary">
         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
         </svg>
