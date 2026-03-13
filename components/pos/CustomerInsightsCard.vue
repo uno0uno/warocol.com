@@ -1,10 +1,4 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-
-const props = defineProps<{
-  customerId: string | null
-}>()
-
 interface CustomerInsights {
   orders_count: number
   last_order_date: string | null
@@ -14,109 +8,99 @@ interface CustomerInsights {
   avg_days_between_visits: number | null
 }
 
-const insights = ref<CustomerInsights | null>(null)
-const loading = ref(false)
-const showSkeleton = ref(false)
+defineProps<{
+  insights: CustomerInsights
+  customerName: string | null
+  customerPhone: string | null
+}>()
 
 const { formatCurrency, formatRelativeDate } = useFormatters()
-
-const fetchInsights = async (id: string | null) => {
-  insights.value = null
-  loading.value = false
-  showSkeleton.value = false
-
-  if (!id) return
-
-  loading.value = true
-
-  // Anti-flash: only show skeleton if fetch takes > 200ms
-  const skeletonTimer = setTimeout(() => {
-    if (loading.value) showSkeleton.value = true
-  }, 200)
-
-  try {
-    const res = await $fetch<{ success: boolean; data: CustomerInsights }>(
-      `/api/customers/${id}/insights`
-    )
-    insights.value = res.data
-  } catch {
-    insights.value = null
-  } finally {
-    clearTimeout(skeletonTimer)
-    loading.value = false
-    showSkeleton.value = false
-  }
-}
-
-watch(() => props.customerId, fetchInsights, { immediate: true })
-
-const hasData = computed(() => insights.value !== null && insights.value.orders_count > 0)
 </script>
 
 <template>
-  <!-- Only render when there's actual purchase history -->
-  <div v-if="showSkeleton || hasData" class="mb-5">
+  <div class="bg-surface rounded-2xl shadow-lg border border-border overflow-hidden">
 
-    <!-- Skeleton state -->
-    <div v-if="showSkeleton" class="grid grid-cols-3 gap-2">
-      <UiSkeleton v-for="i in 3" :key="i" shape="rounded" class="h-16" />
-    </div>
-
-    <!-- Data state: orders_count > 0 -->
-    <div v-else-if="hasData && insights">
-      <!-- 3-tile grid -->
-      <div class="grid grid-cols-3 gap-2 mb-2">
-
-        <!-- Visitas -->
-        <div class="bg-surface-secondary rounded-xl p-3 flex flex-col gap-1">
-          <div class="flex items-center gap-1.5">
-            <!-- chart-bar icon -->
-            <svg class="h-3.5 w-3.5 text-primary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
-            </svg>
-            <span class="text-[10px] text-text-tertiary font-medium leading-none">Visitas</span>
-          </div>
-          <span class="text-lg font-bold text-text-primary leading-none">{{ insights.orders_count }}</span>
+    <!-- Customer header -->
+    <div class="px-5 pt-5 pb-4 border-b border-border bg-surface-secondary/40">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
+          {{ customerName?.charAt(0)?.toUpperCase() || customerPhone?.charAt(0) || '?' }}
         </div>
-
-        <!-- Ticket promedio -->
-        <div class="bg-surface-secondary rounded-xl p-3 flex flex-col gap-1">
-          <div class="flex items-center gap-1.5">
-            <!-- banknotes icon -->
-            <svg class="h-3.5 w-3.5 text-primary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
-            </svg>
-            <span class="text-[10px] text-text-tertiary font-medium leading-none">T. prom.</span>
-          </div>
-          <span class="text-sm font-bold text-text-primary leading-none">
-            {{ insights.avg_ticket ? formatCurrency(insights.avg_ticket) : '—' }}
-          </span>
-        </div>
-
-        <!-- Más pide -->
-        <div class="bg-surface-secondary rounded-xl p-3 flex flex-col gap-1">
-          <div class="flex items-center gap-1.5">
-            <!-- star icon -->
-            <svg class="h-3.5 w-3.5 text-primary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
-            </svg>
-            <span class="text-[10px] text-text-tertiary font-medium leading-none">Más pide</span>
-          </div>
-          <span class="text-sm font-bold text-text-primary leading-none truncate" :title="insights.top_product_name ?? ''">
-            {{ insights.top_product_name ?? '—' }}
-          </span>
+        <div class="min-w-0">
+          <p class="font-semibold text-text-primary truncate text-sm leading-tight">
+            {{ customerName || 'Cliente' }}
+          </p>
+          <p class="text-xs text-text-secondary leading-tight mt-0.5">{{ customerPhone }}</p>
         </div>
       </div>
+    </div>
 
-      <!-- Secondary row: Última visita + Frecuencia -->
-      <div class="flex items-center gap-3 px-1">
-        <span v-if="insights.last_order_date" class="text-xs text-text-tertiary">
+    <!-- Metrics list -->
+    <div class="px-5 py-4 space-y-3">
+      <!-- Visitas -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-text-secondary">
+          <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+          </svg>
+          <span class="text-sm">Visitas</span>
+        </div>
+        <span class="font-bold text-text-primary text-sm">{{ insights.orders_count }}</span>
+      </div>
+
+      <!-- Ticket promedio -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-text-secondary">
+          <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+          </svg>
+          <span class="text-sm">Ticket prom.</span>
+        </div>
+        <span class="font-bold text-text-primary text-sm">
+          {{ insights.avg_ticket ? formatCurrency(insights.avg_ticket) : '—' }}
+        </span>
+      </div>
+
+      <!-- Última visita -->
+      <div v-if="insights.last_order_date" class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-text-secondary">
+          <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+          </svg>
+          <span class="text-sm">Última visita</span>
+        </div>
+        <span class="font-medium text-text-primary text-sm">
           {{ formatRelativeDate(insights.last_order_date) }}
         </span>
-        <span v-if="insights.last_order_date && insights.avg_days_between_visits" class="text-text-tertiary/40 text-xs">·</span>
-        <span v-if="insights.avg_days_between_visits" class="text-xs text-text-tertiary">
+      </div>
+
+      <!-- Frecuencia -->
+      <div v-if="insights.avg_days_between_visits" class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-text-secondary">
+          <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+          <span class="text-sm">Frecuencia</span>
+        </div>
+        <span class="font-medium text-text-primary text-sm">
           cada {{ Math.round(insights.avg_days_between_visits) }} días
         </span>
+      </div>
+    </div>
+
+    <!-- Top product -->
+    <div v-if="insights.top_product_name" class="px-5 pb-5">
+      <div class="bg-primary/5 border border-primary/15 rounded-xl p-3.5">
+        <p class="text-[10px] text-primary font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd" />
+          </svg>
+          Más pide
+        </p>
+        <p class="font-bold text-text-primary text-sm leading-tight">{{ insights.top_product_name }}</p>
+        <p v-if="insights.top_product_count" class="text-xs text-text-secondary mt-0.5">
+          {{ insights.top_product_count }} {{ insights.top_product_count === 1 ? 'vez' : 'veces' }}
+        </p>
       </div>
     </div>
 

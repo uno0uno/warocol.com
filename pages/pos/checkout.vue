@@ -1,6 +1,16 @@
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, onUnmounted } from 'vue'
+import { ref, computed, inject, watch, onMounted, onUnmounted } from 'vue'
+import { $fetch } from 'ofetch'
 import { usePOSStore } from '~/stores/usePOSStore'
+
+interface CustomerInsights {
+  orders_count: number
+  last_order_date: string | null
+  avg_ticket: number | null
+  top_product_name: string | null
+  top_product_count: number | null
+  avg_days_between_visits: number | null
+}
 
 definePageMeta({
   layout: 'dashboard'
@@ -28,6 +38,21 @@ const orderResult = ref<{ order_number: number; total_amount: number; payment_me
 // Customer identification via modal
 const showCustomerModal = ref(false)
 const selectedCustomer = ref<{ id: string; name: string | null; phone_number: string | null } | null>(null)
+
+// Customer insights
+const customerInsights = ref<CustomerInsights | null>(null)
+const showInsightsCol = computed(() => customerInsights.value !== null && customerInsights.value.orders_count > 0)
+
+watch(selectedCustomer, async (customer) => {
+  customerInsights.value = null
+  if (!customer || customer.phone_number === '0000000000') return
+  try {
+    const res = await $fetch<{ data: CustomerInsights }>(`/api/customers/${customer.id}/insights`)
+    customerInsights.value = res.data
+  } catch {
+    customerInsights.value = null
+  }
+})
 
 // Computed
 const cartItems = computed(() => posStore.cart)
@@ -216,7 +241,7 @@ onUnmounted(() => {
     <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
       <!-- LEFT COLUMN: Order Items & Payment Method -->
-      <div class="lg:col-span-8 space-y-6">
+      <div :class="showInsightsCol ? 'lg:col-span-5' : 'lg:col-span-8'" class="space-y-6">
 
         <!-- Section: Order Items -->
         <div class="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden">
@@ -450,15 +475,10 @@ onUnmounted(() => {
 
       </div>
 
-      <!-- RIGHT COLUMN: Sticky Summary (Desktop Only) -->
-      <div class="hidden lg:block lg:col-span-4 lg:sticky lg:top-8">
+      <!-- MIDDLE COLUMN: Sticky Summary (Desktop Only) -->
+      <div :class="showInsightsCol ? 'lg:col-span-3' : 'lg:col-span-4'" class="hidden lg:block lg:sticky lg:top-8">
         <div class="bg-surface rounded-2xl shadow-lg border border-border p-6">
           <h3 class="text-lg font-bold text-text-primary mb-6">Resumen de la Orden</h3>
-
-          <!-- Customer insights grid (only for identified customers with history) -->
-          <PosCustomerInsightsCard
-            :customer-id="selectedCustomer?.phone_number === '0000000000' ? null : (selectedCustomer?.id ?? null)"
-          />
 
           <div class="space-y-3 mb-6">
             <div class="flex justify-between text-sm text-text-secondary">
@@ -526,6 +546,15 @@ onUnmounted(() => {
           </svg>
           <span>Transacción segura y encriptada</span>
         </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Customer Insights (Desktop Only, when customer has history) -->
+      <div v-if="showInsightsCol && customerInsights" class="hidden lg:block lg:col-span-4 lg:sticky lg:top-8">
+        <PosCustomerInsightsCard
+          :insights="customerInsights"
+          :customer-name="selectedCustomer?.name ?? null"
+          :customer-phone="selectedCustomer?.phone_number ?? null"
+        />
       </div>
 
     </div>
