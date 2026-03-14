@@ -300,16 +300,8 @@
               <p class="text-sm">Agrega opciones que los clientes puedan seleccionar</p>
             </div>
 
-            <!-- Loading ingredients -->
-            <div v-if="loadingIngredients" class="flex items-center justify-center py-8">
-              <div class="flex flex-col items-center gap-2">
-                <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                <span class="text-sm text-text-secondary">Cargando ingredientes...</span>
-              </div>
-            </div>
-
             <!-- Modifiers List -->
-            <div v-else class="space-y-4">
+            <div class="space-y-4">
               <div
                 v-for="(modifier, index) in form.modifiers"
                 :key="index"
@@ -319,41 +311,50 @@
                   <!-- Ingredient Selector -->
                   <div class="md:col-span-4">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente *</label>
-                    <select
-                      v-model="modifier.ingredient_id"
-                      @change="onIngredientChange(modifier, modifier.ingredient_id)"
-                      class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
-                      required
-                    >
-                      <option value="" disabled>Seleccionar ingrediente</option>
-                      <option
-                        v-for="ingredient in ingredients"
-                        :key="ingredient.id"
-                        :value="ingredient.id"
-                      >
-                        {{ ingredient.name }} ({{ ingredient.unit }})
-                      </option>
-                    </select>
+                    <UiIngredientSearchInput
+                      :initialValue="modifier.ingredient_name || ''"
+                      @select="(ing) => selectIngredient(modifier, ing)"
+                    />
                     <!-- Show ingredient cost for reference -->
                     <p v-if="modifier.ingredient_id" class="text-xs text-text-secondary mt-1">
                       Costo: {{ formatCurrency(getIngredientById(modifier.ingredient_id)?.costo_unitario || 0) }}/{{ getIngredientById(modifier.ingredient_id)?.unit }}
                     </p>
                   </div>
 
-                  <!-- Quantity + Unit -->
-                  <div class="md:col-span-2">
+                  <!-- Quantity -->
+                  <div class="md:col-span-1">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad</label>
-                    <div class="flex gap-1">
-                      <input
-                        type="number"
-                        v-model.number="modifier.ingredient_quantity"
-                        placeholder="50"
-                        min="0"
-                        step="0.01"
-                        class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary"
-                      />
+                    <input
+                      type="number"
+                      v-model.number="modifier.ingredient_quantity"
+                      placeholder="50"
+                      min="0"
+                      step="0.01"
+                      class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary"
+                    />
+                  </div>
+
+                  <!-- Unit -->
+                  <div class="md:col-span-1">
+                    <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
+                    <div class="relative">
+                      <select
+                        v-model="modifier.ingredient_unit"
+                        class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
+                      >
+                        <option
+                          v-for="opt in getIngredientUnitOptions(modifier.ingredient_id)"
+                          :key="opt.value"
+                          :value="opt.value"
+                        >{{ opt.label }}</option>
+                      </select>
+                      <span v-if="modifier.ingredient_id && loadingUnits.has(modifier.ingredient_id)" class="absolute right-7 top-2.5 pointer-events-none">
+                        <svg class="w-4 h-4 animate-spin text-text-secondary" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                        </svg>
+                      </span>
                     </div>
-                    <p class="text-xs text-text-secondary mt-1">{{ modifier.ingredient_unit || 'unidad' }}</p>
                   </div>
 
                   <!-- Price -->
@@ -655,6 +656,7 @@ const form = ref({
     is_available: boolean
     sort_order: number
     ingredient_id: string | null
+    ingredient_name: string | null
     ingredient_quantity: number | null
     ingredient_unit: string | null
   }>,
@@ -685,8 +687,58 @@ const { data: productsData, pending: loadingProducts } = useAsyncData(
   }
 )
 
-// Shared ingredients (deduplicated across all /menu/* pages)
-const { availableIngredients: ingredients } = useMenuIngredients()
+// Ingredient cache and purchase units
+const ingredientCache = ref<Record<string, any>>({})
+const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
+const loadingUnits = ref<Set<string>>(new Set())
+
+const unitLabels: Record<string, string> = {
+  g: 'Gramos (g)', kg: 'Kilogramos (kg)', ml: 'Mililitros (ml)',
+  l: 'Litros (l)', u: 'Unidades (u)', lb: 'Libras (lb)',
+  und: 'Unidades (und)', gr: 'Gramos (gr)',
+}
+
+function getIngredientUnitOptions(ingredientId: string | null) {
+  if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
+  const ingredient = ingredientCache.value[ingredientId]
+  const baseUnit = ingredient?.unit || 'g'
+  const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
+  const unitSet = new Set<string>([baseUnit])
+  purchaseUnits.forEach((pu: any) => { if (pu.purchase_unit) unitSet.add(pu.purchase_unit) })
+  return Array.from(unitSet).map(u => ({ value: u, label: unitLabels[u] || u }))
+}
+
+function getIngredientById(id: string) {
+  return ingredientCache.value[id]
+}
+
+async function loadPurchaseUnits(ingredientId: string) {
+  if (!ingredientId || purchaseUnitsCache.value.has(ingredientId)) return
+  loadingUnits.value = new Set([...loadingUnits.value, ingredientId])
+  try {
+    const res = await $fetch<any>(`/api/suppliers/ingredient-purchase-units/ingredient/${ingredientId}`)
+    const updated = new Map(purchaseUnitsCache.value)
+    updated.set(ingredientId, res.data || [])
+    purchaseUnitsCache.value = updated
+  } catch {
+    const updated = new Map(purchaseUnitsCache.value)
+    updated.set(ingredientId, [])
+    purchaseUnitsCache.value = updated
+  } finally {
+    const next = new Set(loadingUnits.value)
+    next.delete(ingredientId)
+    loadingUnits.value = next
+  }
+}
+
+function selectIngredient(modifier: any, ing: any) {
+  modifier.ingredient_id = ing.id
+  modifier.name = ing.name
+  modifier.ingredient_name = ing.name
+  modifier.ingredient_unit = ing.unit || 'g'
+  ingredientCache.value[ing.id] = ing
+  loadPurchaseUnits(ing.id)
+}
 
 // Computed
 const products = computed(() => productsData.value?.data || [])
@@ -716,17 +768,29 @@ watch(groupData, (data) => {
       max_qty: group.max_qty,
       is_required: group.is_required,
       sort_order: group.sort_order,
-      modifiers: group.modifiers.map((m: any) => ({
-        name: m.name,
-        price: Number(m.price),
-        max_limit: m.max_limit,
-        is_default: m.is_default,
-        is_available: m.is_available,
-        sort_order: m.sort_order,
-        ingredient_id: m.ingredient_id || null,
-        ingredient_quantity: m.ingredient_quantity ? Number(m.ingredient_quantity) : null,
-        ingredient_unit: m.ingredient_unit || null
-      })),
+      modifiers: group.modifiers.map((m: any) => {
+        if (m.ingredient_id && m.ingredient) {
+          ingredientCache.value[m.ingredient_id] = {
+            id: m.ingredient_id,
+            name: m.ingredient.name,
+            unit: m.ingredient.unit,
+            costo_unitario: m.ingredient.costo_unitario
+          }
+          loadPurchaseUnits(m.ingredient_id)
+        }
+        return {
+          name: m.name,
+          price: Number(m.price),
+          max_limit: m.max_limit,
+          is_default: m.is_default,
+          is_available: m.is_available,
+          sort_order: m.sort_order,
+          ingredient_id: m.ingredient_id || null,
+          ingredient_name: m.ingredient?.name || null,
+          ingredient_quantity: m.ingredient_quantity ? Number(m.ingredient_quantity) : null,
+          ingredient_unit: m.ingredient_unit || null
+        }
+      }),
       tenant_id: currentTenant.value?.id || ''
     }
   }
@@ -759,21 +823,10 @@ function addModifier() {
     is_available: true,
     sort_order: form.value.modifiers.length,
     ingredient_id: null,
+    ingredient_name: null,
     ingredient_quantity: null,
     ingredient_unit: null
   })
-}
-
-function getIngredientById(id: string) {
-  return ingredients.value.find((i: any) => i.id === id)
-}
-
-function onIngredientChange(modifier: any, ingredientId: string) {
-  const ingredient = getIngredientById(ingredientId)
-  if (ingredient) {
-    modifier.name = ingredient.name
-    modifier.ingredient_unit = ingredient.unit
-  }
 }
 
 function removeModifier(index: number) {
