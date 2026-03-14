@@ -247,17 +247,36 @@
                   <!-- Ingredient -->
                   <div class="md:col-span-4">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente *</label>
-                    <select
-                      v-model="ingredient.ingredient_id"
-                      class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
-                      required
-                      @change="onIngredientChange(index, ingredient.ingredient_id)"
-                    >
-                      <option value="">Seleccionar...</option>
-                      <option v-for="ing in availableIngredients" :key="ing.id" :value="ing.id">
-                        {{ ing.name }} ({{ ing.unit }})
-                      </option>
-                    </select>
+                    <div class="relative">
+                      <input
+                        type="text"
+                        v-model="ingredient.searchTerm"
+                        @input="(e: Event) => searchIngredients((e.target as HTMLInputElement).value, form.ingredients.indexOf(ingredient))"
+                        @focus="() => { if (ingredient.searchTerm) searchIngredients(ingredient.searchTerm, form.ingredients.indexOf(ingredient)) }"
+                        @blur="() => hideResults(ingredient)"
+                        class="w-full px-3 py-2 pl-8 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
+                        placeholder="Buscar ingrediente..."
+                        autocomplete="off"
+                      />
+                      <span class="absolute left-2.5 top-2.5 text-text-secondary pointer-events-none">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                        </svg>
+                      </span>
+                      <ul
+                        v-if="ingredient.showResults && ingredientResults[form.ingredients.indexOf(ingredient)]?.length"
+                        class="absolute z-50 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                      >
+                        <li
+                          v-for="result in ingredientResults[form.ingredients.indexOf(ingredient)]"
+                          :key="result.id"
+                          @mousedown.prevent="selectIngredient(result, form.ingredients.indexOf(ingredient))"
+                          class="px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary cursor-pointer"
+                        >
+                          {{ result.name }} <span class="text-text-secondary">({{ result.unit }})</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
 
                   <!-- Quantity -->
@@ -494,7 +513,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
@@ -517,6 +536,8 @@ const form = ref({
   is_active: true,
   ingredients: [] as Array<{
     ingredient_id: string
+    searchTerm: string
+    showResults: boolean
     base_quantity: number
     unit: string
     is_required: boolean
@@ -525,8 +546,15 @@ const form = ref({
   tenant_id: currentTenant.value?.id || ''
 })
 
-// Shared ingredients (deduplicated across all /menu/* pages)
-const { availableIngredients, ingredientsLoading } = useMenuIngredients()
+// Per-row ingredient search (server-side debounced, replaces bulk useMenuIngredients)
+// Plain object to avoid Vue deep-unwrapping inner refs from useIngredientSearch()
+const ingredientSearches: Record<number, any> = {}
+const getIngredientSearch = (index: number) => {
+  if (!ingredientSearches[index]) ingredientSearches[index] = useIngredientSearch()
+  return ingredientSearches[index]
+}
+const ingredientResults = ref<Record<number, any[]>>({})
+const ingredientCache = ref<Record<string, any>>({})
 
 // Purchase units cache per ingredient
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
@@ -544,7 +572,7 @@ const unitLabels: Record<string, string> = {
 
 function getIngredientUnitOptions(ingredientId: string) {
   if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
-  const ingredient = availableIngredients.value.find((i: any) => i.id === ingredientId)
+  const ingredient = ingredientCache.value[ingredientId]
   const baseUnit = ingredient?.unit || 'g'
   const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
   const unitSet = new Set<string>([baseUnit])
@@ -554,7 +582,7 @@ function getIngredientUnitOptions(ingredientId: string) {
 
 async function onIngredientChange(index: number, ingredientId: string) {
   if (!ingredientId) return
-  const ingredient = availableIngredients.value.find((i: any) => i.id === ingredientId)
+  const ingredient = ingredientCache.value[ingredientId]
   form.value.ingredients[index].unit = ingredient?.unit || 'g'
   if (!purchaseUnitsCache.value.has(ingredientId)) {
     try {
@@ -570,7 +598,42 @@ async function onIngredientChange(index: number, ingredientId: string) {
   }
 }
 
-const isLoadingData = computed(() => ingredientsLoading.value)
+// Ingredient search functions
+function searchIngredients(term: string, index: number) {
+  const item = form.value.ingredients[index]
+  item.ingredient_id = ''
+  if (!term || term.trim().length < 1) {
+    ingredientResults.value[index] = []
+    item.showResults = false
+    return
+  }
+  const search = getIngredientSearch(index)
+  search.query.value = term
+  watch(
+    () => search.results.value,
+    (results: any[]) => {
+      ingredientResults.value[index] = results
+      item.showResults = results.length > 0
+    },
+    { immediate: true }
+  )
+}
+
+function selectIngredient(ingredient: any, index: number) {
+  const item = form.value.ingredients[index]
+  item.ingredient_id = ingredient.id
+  item.searchTerm = ingredient.name
+  item.showResults = false
+  ingredientResults.value[index] = []
+  ingredientCache.value[ingredient.id] = ingredient
+  onIngredientChange(index, ingredient.id)
+}
+
+function hideResults(item: any) {
+  setTimeout(() => { item.showResults = false }, 150)
+}
+
+const isLoadingData = computed(() => false)
 
 const canProceed = computed(() => {
   if (currentStep.value === 1) {
@@ -585,13 +648,14 @@ const canProceed = computed(() => {
 
 // Methods
 function getIngredientName(ingredientId: string) {
-  const ingredient = availableIngredients.value.find((i: any) => i.id === ingredientId)
-  return ingredient?.name || 'Ingrediente desconocido'
+  return ingredientCache.value[ingredientId]?.name || 'Ingrediente desconocido'
 }
 
 function addIngredient() {
   form.value.ingredients.push({
     ingredient_id: '',
+    searchTerm: '',
+    showResults: false,
     base_quantity: 0,
     unit: 'g',
     is_required: true,
