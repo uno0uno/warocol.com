@@ -247,36 +247,9 @@
                   <!-- Ingredient -->
                   <div class="md:col-span-4">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente *</label>
-                    <div class="relative">
-                      <input
-                        type="text"
-                        v-model="ingredient.searchTerm"
-                        @input="(e: Event) => searchIngredients((e.target as HTMLInputElement).value, form.ingredients.indexOf(ingredient))"
-                        @focus="() => { if (ingredient.searchTerm) searchIngredients(ingredient.searchTerm, form.ingredients.indexOf(ingredient)) }"
-                        @blur="() => hideResults(ingredient)"
-                        class="w-full px-3 py-2 pl-8 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
-                        placeholder="Buscar ingrediente..."
-                        autocomplete="off"
-                      />
-                      <span class="absolute left-2.5 top-2.5 text-text-secondary pointer-events-none">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-                        </svg>
-                      </span>
-                      <ul
-                        v-if="ingredient.showResults && ingredientResults[form.ingredients.indexOf(ingredient)]?.length"
-                        class="absolute z-50 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto"
-                      >
-                        <li
-                          v-for="result in ingredientResults[form.ingredients.indexOf(ingredient)]"
-                          :key="result.id"
-                          @mousedown.prevent="selectIngredient(result, form.ingredients.indexOf(ingredient))"
-                          class="px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary cursor-pointer"
-                        >
-                          {{ result.name }} <span class="text-text-secondary">({{ result.unit }})</span>
-                        </li>
-                      </ul>
-                    </div>
+                    <UiIngredientSearchInput
+                      @select="(ing) => selectIngredient(ing, index)"
+                    />
                   </div>
 
                   <!-- Quantity -->
@@ -513,7 +486,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
@@ -536,8 +509,6 @@ const form = ref({
   is_active: true,
   ingredients: [] as Array<{
     ingredient_id: string
-    searchTerm: string
-    showResults: boolean
     base_quantity: number
     unit: string
     is_required: boolean
@@ -546,14 +517,7 @@ const form = ref({
   tenant_id: currentTenant.value?.id || ''
 })
 
-// Per-row ingredient search (server-side debounced, replaces bulk useMenuIngredients)
-// Plain object to avoid Vue deep-unwrapping inner refs from useIngredientSearch()
-const ingredientSearches: Record<number, any> = {}
-const getIngredientSearch = (index: number) => {
-  if (!ingredientSearches[index]) ingredientSearches[index] = useIngredientSearch()
-  return ingredientSearches[index]
-}
-const ingredientResults = ref<Record<number, any[]>>({})
+// Ingredient cache: populated when user selects via UiIngredientSearchInput
 const ingredientCache = ref<Record<string, any>>({})
 
 // Purchase units cache per ingredient
@@ -598,42 +562,13 @@ async function onIngredientChange(index: number, ingredientId: string) {
   }
 }
 
-// Ingredient search functions
-function searchIngredients(term: string, index: number) {
-  const item = form.value.ingredients[index]
-  item.ingredient_id = ''
-  if (!term || term.trim().length < 1) {
-    ingredientResults.value[index] = []
-    item.showResults = false
-    return
-  }
-  const search = getIngredientSearch(index)
-  search.query.value = term
-  watch(
-    () => search.results.value,
-    (results: any[]) => {
-      ingredientResults.value[index] = results
-      item.showResults = results.length > 0
-    },
-    { immediate: true }
-  )
-}
-
 function selectIngredient(ingredient: any, index: number) {
-  const item = form.value.ingredients[index]
-  item.ingredient_id = ingredient.id
-  item.searchTerm = ingredient.name
-  item.showResults = false
-  ingredientResults.value[index] = []
+  form.value.ingredients[index].ingredient_id = ingredient.id
   ingredientCache.value[ingredient.id] = ingredient
   onIngredientChange(index, ingredient.id)
 }
 
-function hideResults(item: any) {
-  setTimeout(() => { item.showResults = false }, 150)
-}
-
-const isLoadingData = computed(() => false)
+const isLoadingData = ref(false)
 
 const canProceed = computed(() => {
   if (currentStep.value === 1) {
@@ -654,8 +589,6 @@ function getIngredientName(ingredientId: string) {
 function addIngredient() {
   form.value.ingredients.push({
     ingredient_id: '',
-    searchTerm: '',
-    showResults: false,
     base_quantity: 0,
     unit: 'g',
     is_required: true,
