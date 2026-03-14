@@ -232,7 +232,7 @@
                       v-model.number="ingredient.quantity"
                       type="number"
                       min="0.01"
-                      step="0.01"
+                      step="any"
                       placeholder="Cantidad"
                       required
                       class="input-base w-full px-3 py-2 text-sm"
