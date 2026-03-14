@@ -334,7 +334,7 @@
                   </div>
 
                   <!-- Unit -->
-                  <div class="md:col-span-1">
+                  <div class="md:col-span-2">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
                     <select
                       v-model="modifier.ingredient_unit"
@@ -371,7 +371,7 @@
                   </div>
 
                   <!-- Max Limit -->
-                  <div class="md:col-span-2">
+                  <div class="md:col-span-1">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Máx</label>
                     <input
                       type="number"
