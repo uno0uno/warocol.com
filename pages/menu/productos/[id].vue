@@ -231,7 +231,7 @@
                     <input
                       v-model.number="ingredient.quantity"
                       type="number"
-                      min="0"
+                      min="0.01"
                       step="0.01"
                       placeholder="Cantidad"
                       required
@@ -669,6 +669,13 @@ const getIngredientName = (ingredientId: string) => {
 }
 
 const handleSubmit = async () => {
+  // Validate ingredient quantities > 0
+  const hasZeroQuantity = form.value.ingredients.some(ing => !ing.quantity || ing.quantity <= 0)
+  if (hasZeroQuantity) {
+    alert('Error: Todos los ingredientes deben tener una cantidad mayor a 0.')
+    return
+  }
+
   isSubmitting.value = true
 
   try {
