@@ -327,8 +327,8 @@
                       type="number"
                       v-model.number="modifier.ingredient_quantity"
                       placeholder="50"
-                      min="0"
-                      step="0.01"
+                      min="0.01"
+                      step="any"
                       class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary"
                     />
                   </div>
