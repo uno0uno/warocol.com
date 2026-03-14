@@ -222,16 +222,10 @@
               >
                 <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <select
-                      v-model="ingredient.ingredient_id"
-                      required
-                      class="input-base w-full px-3 py-2 text-sm"
-                    >
-                      <option value="" disabled>Seleccione ingrediente</option>
-                      <option v-for="ing in ingredients" :key="ing.id" :value="ing.id">
-                        {{ ing.name }} ({{ formatCurrency(ing.costo_unitario || ing.price || 0) }}/{{ ing.unit }})
-                      </option>
-                    </select>
+                    <UiIngredientSearchInput
+                      :initialValue="ingredient.ingredient_name"
+                      @select="(ing) => selectIngredient(ing, index)"
+                    />
                   </div>
                   <div>
                     <input
@@ -244,14 +238,25 @@
                       class="input-base w-full px-3 py-2 text-sm"
                     />
                   </div>
-                  <div>
-                    <input
+                  <div class="relative">
+                    <select
                       v-model="ingredient.unit"
-                      type="text"
-                      placeholder="Unidad (g, ml, u)"
-                      required
-                      class="input-base w-full px-3 py-2 text-sm"
-                    />
+                      :disabled="loadingUnits.has(ingredient.ingredient_id)"
+                      class="input-base w-full py-2 pr-3 text-sm disabled:opacity-50"
+                      :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
+                    >
+                      <option
+                        v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
+                        :key="opt.value"
+                        :value="opt.value"
+                      >{{ opt.label }}</option>
+                    </select>
+                    <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
+                      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                      </svg>
+                    </span>
                   </div>
                 </div>
                 <button
@@ -484,8 +489,57 @@ const { data: recipeBasesData } = useAsyncData(
   }
 )
 
-// Shared ingredients (deduplicated across all /menu/* pages)
+// Shared ingredients — kept only for recipe-base cost calculation
 const { availableIngredients: ingredients } = useMenuIngredients()
+
+// Ingredient cache: populated from API response on load or when user selects via UiIngredientSearchInput
+const ingredientCache = ref<Record<string, any>>({})
+const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
+const loadingUnits = ref<Set<string>>(new Set())
+
+const unitLabels: Record<string, string> = {
+  g: 'Gramos (g)', kg: 'Kilogramos (kg)', ml: 'Mililitros (ml)',
+  l: 'Litros (l)', u: 'Unidades (u)', lb: 'Libras (lb)',
+  und: 'Unidades (und)', gr: 'Gramos (gr)',
+}
+
+function getIngredientUnitOptions(ingredientId: string) {
+  if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
+  const ingredient = ingredientCache.value[ingredientId]
+  const baseUnit = ingredient?.unit || 'g'
+  const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
+  const unitSet = new Set<string>([baseUnit])
+  purchaseUnits.forEach((pu: any) => { if (pu.purchase_unit) unitSet.add(pu.purchase_unit) })
+  return Array.from(unitSet).map(u => ({ value: u, label: unitLabels[u] || u }))
+}
+
+async function loadPurchaseUnits(ingredientId: string) {
+  if (!ingredientId || purchaseUnitsCache.value.has(ingredientId)) return
+  loadingUnits.value = new Set([...loadingUnits.value, ingredientId])
+  try {
+    const res = await $fetch<any>(`/api/suppliers/ingredient-purchase-units/ingredient/${ingredientId}`)
+    const updated = new Map(purchaseUnitsCache.value)
+    updated.set(ingredientId, res.data || [])
+    purchaseUnitsCache.value = updated
+  } catch {
+    const updated = new Map(purchaseUnitsCache.value)
+    updated.set(ingredientId, [])
+    purchaseUnitsCache.value = updated
+  } finally {
+    const next = new Set(loadingUnits.value)
+    next.delete(ingredientId)
+    loadingUnits.value = next
+  }
+}
+
+function selectIngredient(ing: any, index: number) {
+  form.value.ingredients[index].ingredient_id = ing.id
+  form.value.ingredients[index].ingredient_name = ing.name
+  form.value.ingredients[index].unit = ing.unit || 'g'
+  ingredientCache.value[ing.id] = ing
+  loadPurchaseUnits(ing.id)
+  form.value.ingredients = [...form.value.ingredients]
+}
 
 const categories = computed(() => categoriesData.value?.data || [])
 const recipeBases = computed(() => recipeBasesData.value?.data || [])
@@ -517,7 +571,7 @@ const form = ref({
   is_combo: false,
   allow_modifiers: true,
   recipe_base_ids: [] as string[],
-  ingredients: [] as Array<{ ingredient_id: string, quantity: number, unit: string }>
+  ingredients: [] as Array<{ ingredient_id: string, ingredient_name: string, quantity: number, unit: string }>
 })
 
 const isSubmitting = ref(false)
@@ -538,11 +592,18 @@ watch(productData, (data) => {
       is_combo: product.is_combo,
       allow_modifiers: product.allow_modifiers,
       recipe_base_ids: product.recipe_base_ids || [],
-      ingredients: product.ingredients.map((ing: any) => ({
-        ingredient_id: ing.ingredient_id,
-        quantity: Number(ing.quantity),
-        unit: ing.unit
-      }))
+      ingredients: product.ingredients.map((ing: any) => {
+        if (ing.ingredient_id) {
+          ingredientCache.value[ing.ingredient_id] = { id: ing.ingredient_id, name: ing.ingredient_name || '', unit: ing.unit }
+          loadPurchaseUnits(ing.ingredient_id)
+        }
+        return {
+          ingredient_id: ing.ingredient_id,
+          ingredient_name: ing.ingredient_name || '',
+          quantity: Number(ing.quantity),
+          unit: ing.unit
+        }
+      })
     }
   }
 }, { immediate: true })
@@ -562,7 +623,7 @@ const calculatedCost = computed(() => {
 
   // Add cost from additional ingredients
   totalCost += form.value.ingredients.reduce((sum, ing) => {
-    const ingredient = ingredients.value.find((i: any) => i.id === ing.ingredient_id)
+    const ingredient = ingredientCache.value[ing.ingredient_id]
     const costPerUnit = ingredient?.costo_unitario || ingredient?.price || 0
     return sum + (ing.quantity * Number(costPerUnit))
   }, 0)
@@ -592,6 +653,7 @@ const onRecipeBaseChange = () => {
 const addIngredient = () => {
   form.value.ingredients.push({
     ingredient_id: '',
+    ingredient_name: '',
     quantity: 0,
     unit: 'g'
   })
@@ -602,7 +664,7 @@ const removeIngredient = (index: number) => {
 }
 
 const getIngredientName = (ingredientId: string) => {
-  const ingredient = ingredients.value.find((i: any) => i.id === ingredientId)
+  const ingredient = ingredientCache.value[ingredientId]
   return ingredient?.name || 'Seleccione un ingrediente'
 }
 

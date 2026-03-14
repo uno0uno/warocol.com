@@ -100,17 +100,10 @@
                   <!-- Ingrediente -->
                   <div class="md:col-span-5">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente *</label>
-                    <select
-                      v-model="ingredient.ingredient_id"
-                      required
-                      class="input-base w-full px-3 py-2 text-sm"
-                      @change="onIngredientChange(index, ingredient.ingredient_id)"
-                    >
-                      <option value="" disabled>Seleccionar...</option>
-                      <option v-for="ing in availableIngredients" :key="ing.id" :value="ing.id">
-                        {{ ing.name }} ({{ ing.unit }})
-                      </option>
-                    </select>
+                    <UiIngredientSearchInput
+                      :initialValue="ingredient.ingredient_name"
+                      @select="(ing) => selectIngredient(ing, index)"
+                    />
                   </div>
 
                   <!-- Cantidad -->
@@ -120,7 +113,7 @@
                       v-model.number="ingredient.base_quantity"
                       type="number"
                       required
-                      min="0"
+                      min="0.01"
                       step="0.1"
                       class="input-base w-full px-3 py-2 text-sm"
                       placeholder="0"
@@ -130,16 +123,26 @@
                   <!-- Unidad -->
                   <div class="md:col-span-3">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
-                    <select
-                      v-model="ingredient.unit"
-                      class="input-base w-full px-3 py-2 text-sm"
-                    >
-                      <option
-                        v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
-                        :key="opt.value"
-                        :value="opt.value"
-                      >{{ opt.label }}</option>
-                    </select>
+                    <div class="relative">
+                      <select
+                        v-model="ingredient.unit"
+                        :disabled="loadingUnits.has(ingredient.ingredient_id)"
+                        class="input-base w-full py-2 pr-3 text-sm disabled:opacity-50"
+                        :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
+                      >
+                        <option
+                          v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
+                          :key="opt.value"
+                          :value="opt.value"
+                        >{{ opt.label }}</option>
+                      </select>
+                      <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
+                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                        </svg>
+                      </span>
+                    </div>
                   </div>
 
                   <!-- Requerido -->
@@ -289,13 +292,16 @@ const { data: recipeData, pending: isLoading, error: fetchError, refresh } = use
   }
 )
 
-// Shared ingredients (deduplicated across all /menu/* pages)
-const { availableIngredients, ingredientsLoading } = useMenuIngredients()
+const isPageLoading = computed(() => isLoading.value)
 
-const isPageLoading = computed(() => isLoading.value || ingredientsLoading.value)
+// Ingredient cache: populated from API response on load or when user selects via UiIngredientSearchInput
+const ingredientCache = ref<Record<string, any>>({})
 
 // Purchase units cache for dynamic unit options
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
+
+// Tracks which ingredient IDs are currently fetching purchase units
+const loadingUnits = ref<Set<string>>(new Set())
 
 const unitLabels: Record<string, string> = {
   g: 'Gramos (g)', kg: 'Kilogramos (kg)', ml: 'Mililitros (ml)',
@@ -305,7 +311,7 @@ const unitLabels: Record<string, string> = {
 
 function getIngredientUnitOptions(ingredientId: string) {
   if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
-  const ingredient = availableIngredients.value.find((i: any) => i.id === ingredientId)
+  const ingredient = ingredientCache.value[ingredientId]
   const baseUnit = ingredient?.unit || 'g'
   const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
   const unitSet = new Set<string>([baseUnit])
@@ -315,19 +321,30 @@ function getIngredientUnitOptions(ingredientId: string) {
 
 async function loadPurchaseUnits(ingredientId: string) {
   if (!ingredientId || purchaseUnitsCache.value.has(ingredientId)) return
+  loadingUnits.value = new Set([...loadingUnits.value, ingredientId])
   try {
     const res = await $fetch<any>(`/api/suppliers/ingredient-purchase-units/ingredient/${ingredientId}`)
     const updated = new Map(purchaseUnitsCache.value)
     updated.set(ingredientId, res.data || [])
     purchaseUnitsCache.value = updated
-  } catch {}
+  } catch {
+    const updated = new Map(purchaseUnitsCache.value)
+    updated.set(ingredientId, [])
+    purchaseUnitsCache.value = updated
+  } finally {
+    const next = new Set(loadingUnits.value)
+    next.delete(ingredientId)
+    loadingUnits.value = next
+  }
 }
 
-async function onIngredientChange(index: number, ingredientId: string) {
-  if (!ingredientId) return
-  const ingredient = availableIngredients.value.find((i: any) => i.id === ingredientId)
-  form.value.ingredients[index].unit = ingredient?.unit || 'g'
-  await loadPurchaseUnits(ingredientId)
+function selectIngredient(ing: any, index: number) {
+  form.value.ingredients[index].ingredient_id = ing.id
+  form.value.ingredients[index].ingredient_name = ing.name
+  form.value.ingredients[index].unit = ing.unit || 'g'
+  ingredientCache.value[ing.id] = ing
+  loadPurchaseUnits(ing.id)
+  form.value.ingredients = [...form.value.ingredients]
 }
 
 // Form state
@@ -337,6 +354,7 @@ const form = ref({
   is_active: true,
   ingredients: [] as Array<{
     ingredient_id: string
+    ingredient_name: string
     base_quantity: number
     unit: string
     is_required: boolean
@@ -354,13 +372,20 @@ watch(recipeData, (data) => {
       name: recipe.name,
       description: recipe.description || '',
       is_active: recipe.is_active,
-      ingredients: recipe.ingredients.map((ing: any) => ({
-        ingredient_id: ing.ingredient_id,
-        base_quantity: Number(ing.base_quantity),
-        unit: ing.unit,
-        is_required: ing.is_required,
-        notes: ing.notes || ''
-      }))
+      ingredients: recipe.ingredients.map((ing: any) => {
+        if (ing.ingredient_id) {
+          ingredientCache.value[ing.ingredient_id] = { id: ing.ingredient_id, name: ing.ingredient_name || '', unit: ing.unit }
+          loadPurchaseUnits(ing.ingredient_id)
+        }
+        return {
+          ingredient_id: ing.ingredient_id,
+          ingredient_name: ing.ingredient_name || '',
+          base_quantity: Number(ing.base_quantity),
+          unit: ing.unit,
+          is_required: ing.is_required,
+          notes: ing.notes || ''
+        }
+      })
     }
   }
 }, { immediate: true })
@@ -369,6 +394,7 @@ watch(recipeData, (data) => {
 const addIngredient = () => {
   form.value.ingredients.push({
     ingredient_id: '',
+    ingredient_name: '',
     base_quantity: 0,
     unit: 'g',
     is_required: true,
@@ -382,6 +408,13 @@ const removeIngredient = (index: number) => {
 
 const handleSubmit = async () => {
   if (isSubmitting.value) return
+
+  // Validate quantities > 0
+  const hasZeroQuantity = form.value.ingredients.some(ing => !ing.base_quantity || ing.base_quantity <= 0)
+  if (hasZeroQuantity) {
+    alert('Error: Todos los ingredientes deben tener una cantidad mayor a 0.')
+    return
+  }
 
   // Validate no duplicate ingredients
   const ingredientIds = form.value.ingredients
