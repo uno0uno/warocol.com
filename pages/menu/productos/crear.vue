@@ -379,16 +379,9 @@
                   <!-- Ingredient -->
                   <div class="md:col-span-5">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente</label>
-                    <select
-                      v-model="ingredient.ingredient_id"
-                      @change="updateIngredientCost(index)"
-                      class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
-                    >
-                      <option value="">Seleccionar...</option>
-                      <option v-for="ing in availableIngredients" :key="ing.id" :value="ing.id">
-                        {{ ing.name }} ({{ formatCurrency(ing.price || 0) }}/{{ ing.unit }})
-                      </option>
-                    </select>
+                    <UiIngredientSearchInput
+                      @select="(ing) => selectIngredient(ing, index)"
+                    />
                   </div>
 
                   <!-- Quantity -->
@@ -408,16 +401,28 @@
                   <!-- Unit -->
                   <div class="md:col-span-3">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
-                    <select
-                      v-model="ingredient.unit"
-                      class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
-                    >
-                      <option value="g">Gramos (g)</option>
-                      <option value="kg">Kilogramos (kg)</option>
-                      <option value="ml">Mililitros (ml)</option>
-                      <option value="l">Litros (l)</option>
-                      <option value="u">Unidades (u)</option>
-                    </select>
+                    <div class="relative">
+                      <select
+                        v-model="ingredient.unit"
+                        :disabled="loadingUnits.has(ingredient.ingredient_id)"
+                        class="w-full py-2 pr-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface disabled:opacity-50"
+                        :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
+                      >
+                        <option
+                          v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
+                          :key="opt.value"
+                          :value="opt.value"
+                        >
+                          {{ opt.label }}
+                        </option>
+                      </select>
+                      <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
+                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                        </svg>
+                      </span>
+                    </div>
                   </div>
 
                   <!-- Delete Button -->
@@ -660,8 +665,61 @@ const { data: categoriesData } = useAsyncData(
   }
 )
 
-// Shared ingredients (deduplicated across all /menu/* pages)
-const { availableIngredients, ingredientsLoading } = useMenuIngredients()
+// Shared ingredients — kept for recipe-base cost calculation only (loads in background)
+const { availableIngredients } = useMenuIngredients()
+
+// Cache populated when user selects an ingredient via UiIngredientSearchInput
+const ingredientCache = ref<Record<string, any>>({})
+
+// Purchase units cache per ingredient
+const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
+
+// Tracks which ingredient IDs are currently fetching their purchase units
+const loadingUnits = ref<Set<string>>(new Set())
+
+const unitLabels: Record<string, string> = {
+  g: 'Gramos (g)',
+  gr: 'Gramos (gr)',
+  kg: 'Kilogramos (kg)',
+  ml: 'Mililitros (ml)',
+  l: 'Litros (l)',
+  u: 'Unidades (u)',
+  und: 'Unidades (und)',
+  lb: 'Libras (lb)',
+}
+
+function getIngredientUnitOptions(ingredientId: string) {
+  if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
+  const ingredient = ingredientCache.value[ingredientId]
+  const baseUnit = ingredient?.unit || 'g'
+  const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
+  const unitSet = new Set<string>([baseUnit])
+  purchaseUnits.forEach((pu: any) => { if (pu.purchase_unit) unitSet.add(pu.purchase_unit) })
+  return Array.from(unitSet).map(u => ({ value: u, label: unitLabels[u] || u }))
+}
+
+async function onIngredientChange(index: number, ingredientId: string) {
+  if (!ingredientId) return
+  const ingredient = ingredientCache.value[ingredientId]
+  form.value.ingredients[index].unit = ingredient?.unit || 'g'
+  if (!purchaseUnitsCache.value.has(ingredientId)) {
+    loadingUnits.value = new Set([...loadingUnits.value, ingredientId])
+    try {
+      const res = await $fetch<any>(`/api/suppliers/ingredient-purchase-units/ingredient/${ingredientId}`)
+      const updated = new Map(purchaseUnitsCache.value)
+      updated.set(ingredientId, res.data || [])
+      purchaseUnitsCache.value = updated
+    } catch {
+      const updated = new Map(purchaseUnitsCache.value)
+      updated.set(ingredientId, [])
+      purchaseUnitsCache.value = updated
+    } finally {
+      const next = new Set(loadingUnits.value)
+      next.delete(ingredientId)
+      loadingUnits.value = next
+    }
+  }
+}
 
 // Fetch recipe bases
 const { data: recipeBasesData } = useAsyncData(
@@ -699,7 +757,7 @@ const selectedRecipeBaseIngredients = computed(() => {
 })
 
 const isLoadingData = computed(() => {
-  return !categoriesData.value || ingredientsLoading.value
+  return !categoriesData.value
 })
 
 const calculatedCost = computed(() => {
@@ -715,7 +773,8 @@ const calculatedCost = computed(() => {
 
   // Add cost from additional ingredients
   totalCost += form.value.ingredients.reduce((sum, ing) => {
-    const ingredient = availableIngredients.value.find((i: any) => i.id === ing.ingredient_id)
+    const cached = ingredientCache.value[ing.ingredient_id]
+    const ingredient = cached || availableIngredients.value.find((i: any) => i.id === ing.ingredient_id)
     if (!ingredient) return sum
     return sum + (ing.quantity * (ingredient.price || 0))
   }, 0)
@@ -747,19 +806,25 @@ function getCategoryName(categoryId: string) {
 }
 
 function getIngredientName(ingredientId: string) {
-  const ingredient = availableIngredients.value.find((i: any) => i.id === ingredientId)
-  return ingredient?.name || 'Ingrediente desconocido'
-}
-
-function getIngredientUnitCost(ingredientId: string) {
-  const ingredient = availableIngredients.value.find((i: any) => i.id === ingredientId)
-  return ingredient?.price || 0
+  const cached = ingredientCache.value[ingredientId]
+  if (cached) return cached.name
+  const ing = availableIngredients.value.find((i: any) => i.id === ingredientId)
+  return ing?.name || 'Ingrediente desconocido'
 }
 
 function getIngredientCost(ingredient: any) {
+  const cached = ingredientCache.value[ingredient.ingredient_id]
+  if (cached) return ingredient.quantity * (cached.price || 0)
   const ing = availableIngredients.value.find((i: any) => i.id === ingredient.ingredient_id)
   if (!ing) return 0
   return ingredient.quantity * (ing.price || 0)
+}
+
+function selectIngredient(ing: any, index: number) {
+  form.value.ingredients[index].ingredient_id = ing.id
+  ingredientCache.value[ing.id] = ing
+  onIngredientChange(index, ing.id)
+  form.value.ingredients = [...form.value.ingredients]
 }
 
 function addIngredient() {
@@ -774,9 +839,6 @@ function removeIngredient(index: number) {
   form.value.ingredients.splice(index, 1)
 }
 
-function updateIngredientCost(index: number) {
-  form.value.ingredients = [...form.value.ingredients]
-}
 
 function addRecipeBase() {
   form.value.recipe_base_ids.push('')
