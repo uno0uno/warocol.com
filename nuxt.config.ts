@@ -151,7 +151,7 @@ export default defineNuxtConfig({
         }
       ]
     },
-    pageTransition: { name: 'page', mode: 'out-in' }
+    pageTransition: { name: 'page' }
   },
   modules: [
     ['@nuxtjs/google-fonts', {
