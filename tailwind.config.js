@@ -75,6 +75,17 @@ module.exports = {
           DEFAULT: "hsl(var(--info) / <alpha-value>)",
           foreground: "hsl(var(--info-foreground) / <alpha-value>)",
         },
+        // Status badge tokens — OKLCH perceptually uniform
+        // bg: very low chroma (barely tinted) / text: readable contrast
+        // Usage: bg-status-critical-bg, text-status-critical-text, etc.
+        "status-critical-bg":   "var(--status-critical-bg)",
+        "status-critical-text": "var(--status-critical-text)",
+        "status-warning-bg":    "var(--status-warning-bg)",
+        "status-warning-text":  "var(--status-warning-text)",
+        "status-info-bg":       "var(--status-info-bg)",
+        "status-info-text":     "var(--status-info-text)",
+        "status-success-bg":    "var(--status-success-bg)",
+        "status-success-text":  "var(--status-success-text)",
         // Nueva Paleta de Colores - Titan White (Grises Claros)
         titan: {
           50: "hsl(var(--titan-50) / <alpha-value>)",

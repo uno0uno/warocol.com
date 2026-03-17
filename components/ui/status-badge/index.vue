@@ -8,18 +8,18 @@ const statusBadgeVariants = cva(
   {
     variants: {
       variant: {
-        // Success: For positive values (TIR positive, margins good)
-        success: 'bg-success/10 text-success border border-success/20',
-        // Destructive: For negative values (TIR negative, losses)
-        destructive: 'bg-destructive/10 text-destructive border border-destructive/20',
-        // Warning: For values needing attention
-        warning: 'bg-warning/10 text-warning border border-warning/20',
-        // Info: For informational values
-        info: 'bg-info/10 text-info border border-info/20',
-        // Secondary: For neutral values
-        secondary: 'bg-secondary text-secondary-foreground border border-border',
-        // Primary: For highlighted values
-        primary: 'bg-primary/10 text-primary border border-primary/20'
+        // Success: positive values — green, hue 145°
+        success:     'bg-status-success-bg text-status-success-text',
+        // Destructive/Critical: errors, critical alerts — red, hue 25°
+        destructive: 'bg-status-critical-bg text-status-critical-text',
+        // Warning: caution, needs attention — amber, hue 75°
+        warning:     'bg-status-warning-bg text-status-warning-text',
+        // Info: informational, no urgency — blue, hue 250°
+        info:        'bg-status-info-bg text-status-info-text',
+        // Secondary: neutral values
+        secondary:   'bg-secondary text-secondary-foreground',
+        // Primary: brand-highlighted values — purple
+        primary:     'bg-primary/10 text-primary'
       },
       size: {
         sm: 'px-2 py-0.5 text-xs rounded-md',

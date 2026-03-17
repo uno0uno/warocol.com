@@ -116,10 +116,10 @@
               <div class="flex-1 min-w-0 pr-3">
                 <p class="font-bold text-text-primary truncate">{{ item.ingredient_name }}</p>
                 <span class="inline-flex items-center gap-1 text-xs text-text-secondary mt-0.5">
-                  <svg v-if="item.alert_type === 'price_spike'" class="w-3.5 h-3.5 shrink-0 text-destructive/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg v-if="item.alert_type === 'price_spike'" class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                   </svg>
-                  <svg v-else class="w-3.5 h-3.5 shrink-0 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg v-else class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                   </svg>
                   {{ item.alert_type === 'price_spike' ? 'Subida' : 'Bajada' }}
@@ -194,12 +194,10 @@
 
         <template #cell-alert_type="{ value }">
           <span class="inline-flex items-center gap-1 text-xs text-text-secondary">
-            <!-- Up arrow — price spike -->
-            <svg v-if="value === 'price_spike'" class="w-3.5 h-3.5 shrink-0 text-destructive/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg v-if="value === 'price_spike'" class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
             </svg>
-            <!-- Down arrow — price drop -->
-            <svg v-else class="w-3.5 h-3.5 shrink-0 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg v-else class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
             {{ value === 'price_spike' ? 'Subida' : 'Bajada' }}

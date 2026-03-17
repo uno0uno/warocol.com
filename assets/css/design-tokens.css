@@ -78,12 +78,33 @@
   
   --success: 142 71% 45%; /* Verde éxito */
   --success-foreground: 0 0% 100%; /* Texto éxito */
-  
+
   --warning: 38 92% 50%; /* Naranja advertencia */
   --warning-foreground: 0 0% 0%; /* Texto advertencia */
-  
-  --info: var(--crocus-600); /* Azul información púrpura */
+
+  --info: 218 68% 47%; /* Azul información — separado del primary púrpura */
   --info-foreground: 0 0% 100%; /* Texto información */
+
+  /* === STATUS BADGE TOKENS (OKLCH — perceptualmente uniformes) ===
+     Backgrounds: chroma muy bajo (~0.04) para no saturar tablas densas
+     Texts: chroma medio (~0.16–0.18) para legibilidad con buen contraste
+     Mismo L% y C% en todos los roles — solo varía el hue → peso visual idéntico */
+
+  /* Critical / Error — hue 25° (rojo) */
+  --status-critical-bg:   oklch(94% 0.04 25);
+  --status-critical-text: oklch(36% 0.18 25);
+
+  /* Warning / Caution — hue 75° (ámbar) */
+  --status-warning-bg:    oklch(95% 0.05 75);
+  --status-warning-text:  oklch(38% 0.16 75);
+
+  /* Info — hue 250° (azul) — nunca confundir con primary purple (hue 262°) */
+  --status-info-bg:       oklch(94% 0.04 250);
+  --status-info-text:     oklch(38% 0.15 250);
+
+  /* Success — hue 145° (verde) */
+  --status-success-bg:    oklch(94% 0.04 145);
+  --status-success-text:  oklch(35% 0.18 145);
 }
 
 /* === TEMA OSCURO (Ebony Clay Base) === */
@@ -131,7 +152,7 @@
   --warning: 38 92% 50%; /* Naranja advertencia */
   --warning-foreground: var(--ebony-900); /* Texto advertencia */
   
-  --info: var(--crocus-400); /* Información púrpura clara */
+  --info: 218 68% 60%; /* Azul información — más claro para tema oscuro */
   --info-foreground: var(--ebony-900); /* Texto información */
 }
 
@@ -180,6 +201,6 @@
   --warning: 38 92% 50%; /* Naranja advertencia */
   --warning-foreground: var(--ebony-900); /* Texto advertencia */
   
-  --info: var(--crocus-600); /* Información púrpura */
+  --info: 218 68% 47%; /* Azul información */
   --info-foreground: var(--titan-50); /* Texto información */
 }
