@@ -115,7 +115,22 @@
             <div class="flex justify-between items-start mb-3">
               <div class="flex-1 min-w-0 pr-3">
                 <p class="font-bold text-text-primary truncate">{{ item.ingredient_name }}</p>
-                <p class="text-sm text-text-secondary mt-0.5">{{ getAlertTypeLabel(item.alert_type) }}</p>
+                <span
+                  :class="[
+                    'inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full mt-0.5',
+                    item.alert_type === 'price_spike'
+                      ? 'bg-destructive/10 text-destructive'
+                      : 'bg-warning/10 text-warning'
+                  ]"
+                >
+                  <svg v-if="item.alert_type === 'price_spike'" class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  </svg>
+                  <svg v-else class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                  {{ item.alert_type === 'price_spike' ? 'Subida' : 'Bajada' }}
+                </span>
               </div>
               <UiStatusBadge
                 :value="getSeverityLabel(item.severity)"
@@ -185,7 +200,24 @@
         </template>
 
         <template #cell-alert_type="{ value }">
-          <span class="text-sm text-text-secondary">{{ getAlertTypeLabel(value) }}</span>
+          <span
+            :class="[
+              'inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full',
+              value === 'price_spike'
+                ? 'bg-destructive/10 text-destructive'
+                : 'bg-warning/10 text-warning'
+            ]"
+          >
+            <!-- Up arrow — price spike -->
+            <svg v-if="value === 'price_spike'" class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+            <!-- Down arrow — price drop -->
+            <svg v-else class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+            {{ value === 'price_spike' ? 'Subida' : 'Bajada' }}
+          </span>
         </template>
 
         <template #cell-severity="{ value }">
