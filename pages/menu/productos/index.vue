@@ -90,7 +90,10 @@
 
           <!-- Mobile Card Slot -->
           <template #card="{ item }">
-            <div class="bg-surface border border-border rounded-lg p-4">
+            <div
+              class="border border-border rounded-lg p-4"
+              :class="costIssueProductIds?.has(item.id) ? 'bg-status-critical-bg' : 'bg-surface'"
+            >
               <div class="flex justify-between items-start mb-3">
                 <div class="flex-1">
                   <h4 class="font-semibold text-text-primary mb-1">{{ toTitleCase(item.name) }}</h4>
@@ -119,8 +122,7 @@
                     v-if="getMarginValue(item) !== null"
                     :value="getMarginValue(item)!"
                     format="percentage"
-                    :auto-color="true"
-                    :threshold="{ success: 0 }"
+                    :variant="getMarginValue(item)! >= 0 ? 'success' : 'secondary'"
                     size="sm"
                     class="mt-0.5"
                   />
@@ -219,8 +221,7 @@
                 v-if="getMarginValue(row) !== null"
                 :value="getMarginValue(row)!"
                 format="percentage"
-                :auto-color="true"
-                :threshold="{ success: 0 }"
+                :variant="getMarginValue(row)! >= 0 ? 'success' : 'secondary'"
                 size="sm"
               />
               <span v-else class="text-sm text-text-secondary">—</span>
@@ -557,7 +558,10 @@ const costIssueCount = computed(() => costIssueProductIds.value.size)
 
 const bannerDismissed = ref(false)
 
-const getRowClass = (_row: any): string | undefined => undefined
+const getRowClass = (row: any): string | undefined => {
+  if (costIssueProductIds.value.has(row.id)) return 'bg-status-critical-bg'
+  return undefined
+}
 
 // Sorting
 const sortedProducts = computed(() => {
