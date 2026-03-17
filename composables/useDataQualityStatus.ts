@@ -7,8 +7,9 @@ let pollingInterval: ReturnType<typeof setInterval> | null = null
 
 const fetchStatus = async () => {
   try {
-    const data = await $fetch<{ critical: number }>('/api/analytics/data-quality')
-    hasCritical.value = (data?.critical ?? 0) > 0
+    const res = await $fetch<{ data?: { critical: number }; critical?: number }>('/api/analytics/data-quality')
+    const critical = (res as any)?.data?.critical ?? (res as any)?.critical ?? 0
+    hasCritical.value = critical > 0
   } catch {
     // Silently fail — do not break nav if the endpoint is unreachable
   }

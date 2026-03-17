@@ -96,7 +96,7 @@
           <template #card="{ item }">
             <div
               class="bg-surface rounded-lg p-4"
-              :class="costIssueProductIds.has(item.id) ? 'border border-destructive/50 bg-destructive/5' : 'border border-border'"
+              :class="costIssueProductIds?.has(item.id) ? 'border border-destructive/50 bg-destructive/5' : 'border border-border'"
             >
               <div class="flex justify-between items-start mb-3">
                 <div class="flex-1">

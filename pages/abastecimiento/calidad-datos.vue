@@ -141,7 +141,12 @@ const { setRefreshHandler } = useLayoutActions()
 const { data: qualityData, pending, error: fetchError, refresh } = useAsyncData(
   'data-quality',
   () => $fetch('/api/analytics/data-quality'),
-  { server: false, lazy: true, default: () => null }
+  {
+    server: false,
+    lazy: true,
+    default: () => null,
+    transform: (r: any) => r?.data ?? r
+  }
 )
 
 // Reload on tenant change
