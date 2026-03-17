@@ -111,7 +111,10 @@ export interface DataTableProps {
   
   // Header alignment (deprecated - headers should match content alignment)
   centerHeaders?: boolean
-  
+
+  // Per-row class function — return a class string for a row, or undefined for default styling
+  rowClass?: (row: any) => string | undefined
+
   class?: string
 }
 
@@ -267,7 +270,7 @@ function getCellColor(value: any, column: TableColumn): string {
             :key="index"
             :class="[
               tableRowVariants({ variant, rowType: 'normal' }),
-              index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30',
+              rowClass?.(row) || (index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'),
               'cursor-pointer hover:bg-surface-secondary transition-colors'
             ]"
             @click="emit('rowClick', row)"

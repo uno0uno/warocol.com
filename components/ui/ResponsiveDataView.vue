@@ -44,6 +44,7 @@
         :variant="variant"
         :sort-field="sortField"
         :sort-direction="sortDirection"
+        :row-class="rowClass"
         @sort="$emit('sort', $event)"
         @row-click="$emit('row-click', $event)"
       >
@@ -89,6 +90,8 @@ interface Props {
   // Sorting props
   sortField?: string
   sortDirection?: 'asc' | 'desc'
+  // Per-row class function for desktop table highlighting
+  rowClass?: (row: any) => string | undefined
 }
 
 const props = withDefaults(defineProps<Props>(), {
