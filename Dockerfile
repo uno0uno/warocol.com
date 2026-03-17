@@ -1,18 +1,16 @@
-# ─── Stage 1: Build ──────────────────────────────────────────────────────────
-FROM oven/bun:1-alpine AS build
+# ─── Stage 1: Build (Node.js — full ecosystem for native addons) ──────────────
+FROM node:20-alpine AS build
 WORKDIR /app
 
-# Install dependencies (layer cached separately from source)
 COPY package.json bun.lock ./
-RUN --mount=type=cache,target=/root/.bun/install/cache,id=bun-cache-warocol \
-    bun install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.npm,id=npm-cache-warocol \
+    npm install
 
-# Copy source and build
 COPY . .
 RUN --mount=type=cache,target=/app/.nuxt,id=nuxt-cache-warocol \
-    bun run build
+    npm run build
 
-# ─── Stage 2: Production ─────────────────────────────────────────────────────
+# ─── Stage 2: Production (Bun — fast native HTTP runtime) ────────────────────
 FROM oven/bun:1-alpine
 WORKDIR /app
 
