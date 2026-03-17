@@ -8,9 +8,9 @@
     <!-- Error State -->
     <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
-        <p class="text-xl font-semibold text-ebony-800 mb-2">Error al cargar los productos.</p>
-        <p class="text-sm text-ebony-600">{{ fetchError.message }}</p>
-        <button @click="refresh" class="mt-4 min-h-[44px] px-4 py-2 bg-crocus-500 text-white rounded-lg hover:bg-crocus-600">
+        <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar los productos.</p>
+        <p class="text-sm text-text-secondary">{{ fetchError.message }}</p>
+        <button @click="refresh" class="mt-4 min-h-[44px] px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
           Reintentar
         </button>
       </div>
@@ -90,13 +90,10 @@
 
           <!-- Mobile Card Slot -->
           <template #card="{ item }">
-            <div
-              class="bg-surface rounded-lg p-4"
-              :class="costIssueProductIds?.has(item.id) ? 'border border-border bg-status-critical-bg' : 'border border-border'"
-            >
+            <div class="bg-surface border border-border rounded-lg p-4">
               <div class="flex justify-between items-start mb-3">
                 <div class="flex-1">
-                  <h4 class="font-semibold text-text-primary mb-1">{{ item.name }}</h4>
+                  <h4 class="font-semibold text-text-primary mb-1">{{ toTitleCase(item.name) }}</h4>
                   <p class="text-xs text-text-secondary">{{ item.category_name || 'Sin categoría' }}</p>
                 </div>
                 <UiStatusBadge
@@ -118,7 +115,16 @@
                 </div>
                 <div>
                   <p class="text-text-secondary text-xs">Margen</p>
-                  <p class="font-semibold text-primary">{{ formatMargin(item) }}</p>
+                  <UiStatusBadge
+                    v-if="getMarginValue(item) !== null"
+                    :value="getMarginValue(item)!"
+                    format="percentage"
+                    :auto-color="true"
+                    :threshold="{ success: 0 }"
+                    size="sm"
+                    class="mt-0.5"
+                  />
+                  <p v-else class="font-semibold text-text-secondary">—</p>
                 </div>
                 <div>
                   <p class="text-text-secondary text-xs">Ingredientes</p>
@@ -192,7 +198,7 @@
 
           <!-- Desktop Table Cell Customizations -->
           <template #cell-name="{ value }">
-            <span class="text-sm font-medium text-ebony-800">{{ value }}</span>
+            <span class="text-sm font-medium text-text-primary">{{ toTitleCase(value) }}</span>
           </template>
 
           <template #cell-category_name="{ value }">
@@ -208,7 +214,17 @@
           </template>
 
           <template #cell-margen="{ row }">
-            <span class="text-sm font-semibold text-primary">{{ formatMargin(row) }}</span>
+            <div class="flex justify-end">
+              <UiStatusBadge
+                v-if="getMarginValue(row) !== null"
+                :value="getMarginValue(row)!"
+                format="percentage"
+                :auto-color="true"
+                :threshold="{ success: 0 }"
+                size="sm"
+              />
+              <span v-else class="text-sm text-text-secondary">—</span>
+            </div>
           </template>
 
           <!-- REMOVED: cell-controla_stock - ALL products now control inventory automatically -->
@@ -541,12 +557,7 @@ const costIssueCount = computed(() => costIssueProductIds.value.size)
 
 const bannerDismissed = ref(false)
 
-const getRowClass = (row: any): string | undefined => {
-  if (costIssueProductIds.value.has(row.id)) {
-    return 'bg-status-critical-bg'
-  }
-  return undefined
-}
+const getRowClass = (_row: any): string | undefined => undefined
 
 // Sorting
 const sortedProducts = computed(() => {
@@ -677,6 +688,18 @@ const formatMargin = (product: any) => {
   if (!isFinite(margin)) return '—'
   return `${margin.toFixed(1)}%`
 }
+
+// Raw margin value for badge autoColor (null = no data)
+const getMarginValue = (product: any): number | null => {
+  const price = Number(product.price) || 0
+  const cost = Number(product.costo_calculado) || 0
+  if (price <= 0 || cost <= 0) return null
+  const margin = ((price - cost) / cost) * 100
+  return isFinite(margin) ? margin : null
+}
+
+// Display product names in Title Case (DB stores them as ALL CAPS)
+const toTitleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
 
 // Inline toggle for online availability
 const toast = useToast()
