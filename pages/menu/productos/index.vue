@@ -24,9 +24,9 @@
         <div
           v-if="costIssueCount > 0 && !bannerDismissed"
           role="alert"
-          class="flex items-start gap-3 px-4 py-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm"
+          class="flex items-start gap-3 px-4 py-3 bg-status-critical-bg border border-border rounded-lg text-sm"
         >
-          <svg class="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="w-5 h-5 text-status-critical-text flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.962-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
           <div class="flex-1 min-w-0">
@@ -37,7 +37,7 @@
               Esto puede deberse a compras mal registradas.
               <NuxtLink
                 to="/abastecimiento/calidad-datos"
-                class="font-medium text-destructive underline hover:no-underline ml-1"
+                class="font-medium text-status-critical-text underline hover:no-underline ml-1"
               >
                 Ver en Calidad de Datos →
               </NuxtLink>
@@ -96,7 +96,7 @@
           <template #card="{ item }">
             <div
               class="bg-surface rounded-lg p-4"
-              :class="costIssueProductIds?.has(item.id) ? 'border border-destructive/50 bg-destructive/5' : 'border border-border'"
+              :class="costIssueProductIds?.has(item.id) ? 'border border-border bg-status-critical-bg' : 'border border-border'"
             >
               <div class="flex justify-between items-start mb-3">
                 <div class="flex-1">
@@ -106,7 +106,7 @@
                 <UiStatusBadge
                   :value="item.is_available ? 'Disponible' : 'No disponible'"
                   format="text"
-                  :variant="item.is_available ? 'success' : 'default'"
+                  :variant="item.is_available ? 'success' : 'secondary'"
                   size="sm"
                 />
               </div>
@@ -122,7 +122,7 @@
                 </div>
                 <div>
                   <p class="text-text-secondary text-xs">Margen</p>
-                  <p class="font-semibold text-crocus-600">{{ formatMargin(item) }}</p>
+                  <p class="font-semibold text-primary">{{ formatMargin(item) }}</p>
                 </div>
                 <div>
                   <p class="text-text-secondary text-xs">Ingredientes</p>
@@ -146,7 +146,7 @@
                   :disabled="togglingIds.has(item.id)"
                   :aria-label="item.is_available_online ? `Deshabilitar ${item.name} para domicilios` : `Habilitar ${item.name} para domicilios`"
                   :title="item.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
-                  class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-1"
+                  class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                   :class="[
                     item.is_available_online ? 'bg-success' : 'bg-titan-300',
                     togglingIds.has(item.id) ? 'cursor-wait opacity-70' : 'cursor-pointer'
@@ -212,7 +212,7 @@
           </template>
 
           <template #cell-margen="{ row }">
-            <span class="text-sm font-semibold text-crocus-600">{{ formatMargin(row) }}</span>
+            <span class="text-sm font-semibold text-primary">{{ formatMargin(row) }}</span>
           </template>
 
           <!-- REMOVED: cell-controla_stock - ALL products now control inventory automatically -->
@@ -222,7 +222,7 @@
               <UiStatusBadge
                 :value="value ? 'Disponible' : 'No disponible'"
                 format="text"
-                :variant="value ? 'success' : 'default'"
+                :variant="value ? 'success' : 'secondary'"
                 size="sm"
               />
             </div>
@@ -237,7 +237,7 @@
                 :disabled="togglingIds.has(row.id)"
                 :aria-label="row.is_available_online ? `Deshabilitar ${row.name} para domicilios` : `Habilitar ${row.name} para domicilios`"
                 :title="row.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
-                class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-1"
+                class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                 :class="[
                   row.is_available_online ? 'bg-success' : 'bg-titan-300',
                   togglingIds.has(row.id) ? 'cursor-wait opacity-70' : 'cursor-pointer'
@@ -265,7 +265,7 @@
             <div class="flex justify-center space-x-2">
               <button
                 @click="editProduct(row)"
-                class="text-crocus-600 hover:text-crocus-900 transition-colors"
+                class="text-primary hover:text-primary/70 transition-colors"
                 :aria-label="`Editar ${row.name}`"
                 title="Editar producto"
               >
@@ -332,7 +332,7 @@
                   :class="[
                     'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
                     page === currentPage
-                      ? 'z-10 bg-crocus-50 border-crocus-500 text-crocus-600'
+                      ? 'z-10 bg-primary/10 border-primary text-primary'
                       : 'bg-white border-titan-300 text-titan-700 hover:bg-titan-50'
                   ]">
                   {{ page }}
@@ -547,7 +547,7 @@ const bannerDismissed = ref(false)
 
 const getRowClass = (row: any): string | undefined => {
   if (costIssueProductIds.value.has(row.id)) {
-    return 'bg-destructive/10 hover:bg-destructive/20'
+    return 'bg-status-critical-bg'
   }
   return undefined
 }
