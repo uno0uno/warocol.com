@@ -8,8 +8,8 @@
     <!-- Error State -->
     <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
-        <p class="text-xl font-semibold text-ebony-800 mb-2">Error al cargar los datos de calidad.</p>
-        <p class="text-sm text-ebony-600">{{ fetchError.message }}</p>
+        <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar los datos de calidad.</p>
+        <p class="text-sm text-text-secondary">{{ fetchError.message }}</p>
         <button
           class="mt-4 min-h-[44px] px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
           @click="refresh"
@@ -143,12 +143,13 @@
               </div>
               <div>
                 <p class="text-text-secondary text-xs mb-0.5">Desviación</p>
-                <p
-                  class="font-semibold"
-                  :class="item.deviation_pct > 50 ? 'text-destructive' : 'text-warning'"
-                >
-                  {{ item.deviation_pct?.toFixed(1) }}%
-                </p>
+                <UiStatusBadge
+                  :value="item.deviation_pct"
+                  format="percentage"
+                  :variant="getSeverityVariant(item.severity)"
+                  size="sm"
+                  class="mt-0.5"
+                />
               </div>
             </div>
             <div class="flex gap-4 pt-2 border-t border-border justify-end">
@@ -189,7 +190,7 @@
 
         <!-- Desktop Cell Slots -->
         <template #cell-ingredient_name="{ value }">
-          <span class="text-sm font-medium text-ebony-800">{{ value }}</span>
+          <span class="text-sm font-medium text-text-primary">{{ value }}</span>
         </template>
 
         <template #cell-alert_type="{ value }">
@@ -221,13 +222,15 @@
           <span class="text-sm text-text-secondary">${{ formatValue(value) }}</span>
         </template>
 
-        <template #cell-deviation_pct="{ value }">
-          <span
-            class="text-sm font-semibold"
-            :class="value > 50 ? 'text-destructive' : 'text-warning'"
-          >
-            {{ value?.toFixed(1) }}%
-          </span>
+        <template #cell-deviation_pct="{ value, row }">
+          <div class="flex justify-end">
+            <UiStatusBadge
+              :value="value"
+              format="percentage"
+              :variant="getSeverityVariant(row.severity)"
+              size="sm"
+            />
+          </div>
         </template>
 
         <template #cell-actions="{ row }">
