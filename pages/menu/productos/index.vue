@@ -10,7 +10,7 @@
       <div class="text-center">
         <p class="text-xl font-semibold text-ebony-800 mb-2">Error al cargar los productos.</p>
         <p class="text-sm text-ebony-600">{{ fetchError.message }}</p>
-        <button @click="refresh" class="mt-4 px-4 py-2 bg-crocus-500 text-white rounded-lg hover:bg-crocus-600">
+        <button @click="refresh" class="mt-4 min-h-[44px] px-4 py-2 bg-crocus-500 text-white rounded-lg hover:bg-crocus-600">
           Reintentar
         </button>
       </div>
@@ -19,6 +19,41 @@
     <!-- Main Content -->
     <div v-else class="page-layout">
       <div class="flex flex-col gap-3 md:gap-4">
+
+        <!-- Cost Warning Banner -->
+        <div
+          v-if="costIssueCount > 0 && !bannerDismissed"
+          role="alert"
+          class="flex items-start gap-3 px-4 py-3 bg-destructive/10 border border-destructive/30 rounded-lg text-sm"
+        >
+          <svg class="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.962-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <div class="flex-1 min-w-0">
+            <p class="text-text-primary font-medium">
+              {{ costIssueCount }} producto{{ costIssueCount !== 1 ? 's tienen' : ' tiene' }} un costo calculado mayor al precio de venta.
+            </p>
+            <p class="text-text-secondary mt-0.5">
+              Esto puede deberse a compras mal registradas.
+              <NuxtLink
+                to="/abastecimiento/calidad-datos"
+                class="font-medium text-destructive underline hover:no-underline ml-1"
+              >
+                Ver en Calidad de Datos →
+              </NuxtLink>
+            </p>
+          </div>
+          <button
+            class="flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center p-1 rounded-lg hover:bg-destructive/10 transition-colors text-text-secondary hover:text-text-primary"
+            aria-label="Cerrar aviso"
+            @click="bannerDismissed = true"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
         <!-- Filters Bar -->
         <SharedFiltersBar
           v-model:search="localSearchTerm"
@@ -42,6 +77,7 @@
           :data="sortedProducts"
           :sort-field="sortField"
           :sort-direction="sortDirection"
+          :row-class="getRowClass"
           @sort="handleSort"
           title="Catálogo de Productos"
           empty-message="No hay productos registrados"
@@ -58,7 +94,10 @@
 
           <!-- Mobile Card Slot -->
           <template #card="{ item }">
-            <div class="bg-surface border border-border rounded-lg p-4">
+            <div
+              class="bg-surface rounded-lg p-4"
+              :class="costIssueProductIds.has(item.id) ? 'border border-destructive/50 bg-destructive/5' : 'border border-border'"
+            >
               <div class="flex justify-between items-start mb-3">
                 <div class="flex-1">
                   <h4 class="font-semibold text-text-primary mb-1">{{ item.name }}</h4>
@@ -227,6 +266,7 @@
               <button
                 @click="editProduct(row)"
                 class="text-crocus-600 hover:text-crocus-900 transition-colors"
+                :aria-label="`Editar ${row.name}`"
                 title="Editar producto"
               >
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -489,6 +529,28 @@ const { data: productsData, pending: isLoading, error: fetchError, refresh } = u
 
 // Computed properties for data
 const products = computed(() => productsData.value?.data || [])
+
+// Cost issue detection — products where costo_calculado > price
+const costIssueProductIds = computed(() => {
+  const ids = new Set<string>()
+  for (const p of products.value) {
+    if (p.costo_calculado != null && Number(p.costo_calculado) > Number(p.price)) {
+      ids.add(p.id)
+    }
+  }
+  return ids
+})
+
+const costIssueCount = computed(() => costIssueProductIds.value.size)
+
+const bannerDismissed = ref(false)
+
+const getRowClass = (row: any): string | undefined => {
+  if (costIssueProductIds.value.has(row.id)) {
+    return 'bg-destructive/10 hover:bg-destructive/20'
+  }
+  return undefined
+}
 
 // Sorting
 const sortedProducts = computed(() => {
