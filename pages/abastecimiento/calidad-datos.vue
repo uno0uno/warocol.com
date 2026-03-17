@@ -120,6 +120,14 @@
       </div>
 
     </div>
+
+    <!-- Correct Alert Modal (#238) -->
+    <DataQualityCorrectAlertModal
+      v-model="showCorrectModal"
+      :alert="selectedAlertForCorrection"
+      @resolved="onAlertCorrected"
+    />
+
   </div>
 </template>
 
@@ -214,11 +222,20 @@ const markAsValid = async (alertId: string) => {
   }
 }
 
-// Correct modal — placeholder for #238
+// Correct modal
 const selectedAlertForCorrection = ref<any>(null)
 
+const showCorrectModal = computed({
+  get: () => selectedAlertForCorrection.value !== null,
+  set: (value) => { if (!value) selectedAlertForCorrection.value = null }
+})
+
 const openCorrectModal = (alert: any) => {
-  // Modal implemented in #238 — store selected alert for future modal slot
   selectedAlertForCorrection.value = alert
+}
+
+const onAlertCorrected = () => {
+  selectedAlertForCorrection.value = null
+  refresh()
 }
 </script>
