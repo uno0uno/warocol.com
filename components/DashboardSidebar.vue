@@ -154,11 +154,11 @@
               :is="item.icon"
               :class="['w-5 h-5 flex-shrink-0', activePage === item.page ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']"
             />
-            <span v-if="!collapsed" class="whitespace-nowrap inline-flex items-center gap-1.5 leading-none">
-              {{ item.label }}
+            <span v-if="!collapsed" class="whitespace-nowrap inline-flex items-center gap-1.5">
+              <span>{{ item.label }}</span>
               <span
                 v-if="item.page === 'abastecimiento' && hasCriticalAlerts"
-                class="inline-block w-2 h-2 rounded-full bg-destructive flex-shrink-0 self-center"
+                class="w-2 h-2 rounded-full bg-destructive flex-shrink-0"
                 aria-label="Alertas críticas en abastecimiento"
               />
             </span>
