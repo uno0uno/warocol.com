@@ -115,6 +115,9 @@ export interface DataTableProps {
   // Per-row class function — return a class string for a row, or undefined for default styling
   rowClass?: (row: any) => string | undefined
 
+  // Row density: 'sm' uses tighter padding for information-dense tables
+  rowSize?: 'sm' | 'default'
+
   class?: string
 }
 
@@ -126,7 +129,8 @@ const props = withDefaults(defineProps<Props>(), {
   emptyMessage: 'No data available',
   sortDirection: 'asc',
   showFooter: false,
-  centerHeaders: false
+  centerHeaders: false,
+  rowSize: 'default'
 })
 
 const emit = defineEmits<{
@@ -212,7 +216,8 @@ function getCellColor(value: any, column: TableColumn): string {
               v-for="column in columns"
               :key="column.key"
               :class="cn(
-                'py-3 px-4 border-r border-dashed border-border/60 last:border-r-0',
+                rowSize === 'sm' ? 'py-2 px-3' : 'py-3 px-4',
+                'border-r border-dashed border-border/60 last:border-r-0',
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
                 column.class
@@ -279,7 +284,8 @@ function getCellColor(value: any, column: TableColumn): string {
               v-for="column in columns"
               :key="column.key"
               :class="cn(
-                'py-3.5 px-4 text-sm font-medium border-r border-dashed border-border/60 last:border-r-0',
+                rowSize === 'sm' ? 'py-2 px-3' : 'py-3.5 px-4',
+                'text-sm font-medium border-r border-dashed border-border/60 last:border-r-0',
                 getCellColor(row[column.key], column),
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',

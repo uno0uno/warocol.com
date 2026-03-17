@@ -45,6 +45,7 @@
         :sort-field="sortField"
         :sort-direction="sortDirection"
         :row-class="rowClass"
+        :row-size="rowSize"
         @sort="$emit('sort', $event)"
         @row-click="$emit('row-click', $event)"
       >
@@ -92,6 +93,8 @@ interface Props {
   sortDirection?: 'asc' | 'desc'
   // Per-row class function for desktop table highlighting
   rowClass?: (row: any) => string | undefined
+  // Row density for desktop table
+  rowSize?: 'sm' | 'default'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -99,7 +102,8 @@ const props = withDefaults(defineProps<Props>(), {
   emptyMessage: 'No hay elementos para mostrar',
   emptySubMessage: 'Los elementos aparecerán aquí cuando estén disponibles',
   itemKey: 'id',
-  sortDirection: 'asc'
+  sortDirection: 'asc',
+  rowSize: 'default'
 })
 
 // Define emits

@@ -70,6 +70,18 @@
               role="status"
               aria-live="polite"
             >
+              <!-- ok -->
+              <svg v-if="deviationStatus.type === 'ok'" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <!-- warning -->
+              <svg v-else-if="deviationStatus.type === 'warning'" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <!-- error -->
+              <svg v-else class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               {{ deviationStatus.label }}
             </div>
           </div>
@@ -194,7 +206,7 @@ const deviationStatus = computed(() => {
 
   if (price === null || price === undefined || price === 0) return null
   if (price <= 0) {
-    return { type: 'error', label: '🔴 El precio debe ser mayor a cero' }
+    return { type: 'error', label: 'El precio debe ser mayor a cero' }
   }
   if (!avg) return null
 
@@ -202,12 +214,12 @@ const deviationStatus = computed(() => {
   const direction = price > avg ? 'sobre' : 'bajo'
 
   if (dev > 50) {
-    return { type: 'error', label: `🔴 Aún ${Math.round(dev)}% ${direction} el promedio — sigue siendo anómalo` }
+    return { type: 'error', label: `Aún ${Math.round(dev)}% ${direction} el promedio — sigue siendo anómalo` }
   }
   if (dev > 25) {
-    return { type: 'warning', label: `⚠️ Aún ${Math.round(dev)}% ${direction} el promedio — ¿estás seguro?` }
+    return { type: 'warning', label: `Aún ${Math.round(dev)}% ${direction} el promedio — ¿estás seguro?` }
   }
-  return { type: 'ok', label: '✅ Este valor está dentro del rango normal' }
+  return { type: 'ok', label: 'Este valor está dentro del rango normal' }
 })
 
 const canSave = computed(() => {

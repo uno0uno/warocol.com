@@ -28,7 +28,7 @@
           title="Score de Calidad"
           :value="qualityData?.score ?? 0"
           subtitle="/ 100"
-          :variant="scoreVariant"
+          variant="primary"
           format="number"
           :show-icon="false"
         />
@@ -36,7 +36,7 @@
           title="Críticos"
           :value="qualityData?.critical ?? 0"
           subtitle="anomalías críticas"
-          variant="destructive"
+          variant="primary"
           format="number"
           :show-icon="false"
         />
@@ -44,7 +44,7 @@
           title="Avisos"
           :value="qualityData?.warning ?? 0"
           subtitle="advertencias"
-          variant="warning"
+          variant="primary"
           format="number"
           :show-icon="false"
         />
@@ -52,7 +52,7 @@
           title="Resueltos"
           :value="qualityData?.resolved ?? 0"
           subtitle="últimos 30 días"
-          variant="success"
+          variant="primary"
           format="number"
           :show-icon="false"
         />
@@ -78,6 +78,7 @@
         empty-message="Sin anomalías detectadas"
         empty-sub-message="No se detectaron anomalías de precios en los últimos 30 días."
         variant="default"
+        row-size="sm"
       >
         <!-- Mobile Card Slot -->
         <template #card="{ item }">
@@ -113,22 +114,32 @@
                 </p>
               </div>
             </div>
-            <div class="flex gap-2 pt-2 border-t border-border">
+            <div class="flex gap-4 pt-2 border-t border-border justify-end">
               <button
                 :disabled="validatingId === item.id"
-                class="flex-1 min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm font-medium
-                       text-text-primary hover:bg-surface-secondary transition-colors
-                       disabled:opacity-50 disabled:cursor-not-allowed"
+                :aria-label="`Marcar ${item.ingredient_name} como válido`"
+                class="min-h-[44px] min-w-[44px] flex items-center justify-center
+                       text-text-secondary hover:text-success transition-colors
+                       disabled:opacity-40 disabled:cursor-not-allowed"
                 @click="markAsValid(item.id)"
               >
-                {{ validatingId === item.id ? 'Validando...' : 'Marcar válido' }}
+                <svg v-if="validatingId !== item.id" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <svg v-else class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
               </button>
               <button
-                class="flex-1 min-h-[44px] px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium
-                       hover:bg-primary/90 transition-colors"
+                :aria-label="`Corregir precio de ${item.ingredient_name}`"
+                class="min-h-[44px] min-w-[44px] flex items-center justify-center
+                       text-text-secondary hover:text-primary transition-colors"
                 @click="openCorrectModal(item)"
               >
-                Corregir
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
               </button>
             </div>
           </div>
@@ -179,20 +190,28 @@
             <button
               :disabled="validatingId === row.id"
               :aria-label="`Marcar ${row.ingredient_name} como válido`"
-              class="min-h-[44px] px-3 py-1.5 border border-border rounded-lg text-xs font-medium
-                     text-text-primary hover:bg-surface-secondary transition-colors
-                     disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center
+                     text-text-secondary hover:text-success transition-colors
+                     disabled:opacity-40 disabled:cursor-not-allowed"
               @click="markAsValid(row.id)"
             >
-              {{ validatingId === row.id ? '...' : 'Válido' }}
+              <svg v-if="validatingId !== row.id" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <svg v-else class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
             </button>
             <button
               :aria-label="`Corregir precio de ${row.ingredient_name}`"
-              class="min-h-[44px] px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-medium
-                     hover:bg-primary/90 transition-colors whitespace-nowrap"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center
+                     text-text-secondary hover:text-primary transition-colors"
               @click="openCorrectModal(row)"
             >
-              Corregir
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
             </button>
           </div>
         </template>
@@ -270,14 +289,6 @@ const clearFilters = () => {
   severityFilter.value = ''
   searchIngredient.value = ''
 }
-
-// Score card variant
-const scoreVariant = computed(() => {
-  const score = qualityData.value?.score ?? 0
-  if (score >= 80) return 'success'
-  if (score >= 60) return 'warning'
-  return 'destructive'
-})
 
 // Table columns
 const alertTableColumns = [
