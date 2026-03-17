@@ -215,6 +215,7 @@ const markAsValid = async (alertId: string) => {
       body: { resolution_type: 'valid' }
     })
     await refresh()
+    useDataQualityStatus().refresh()
   } catch (e) {
     console.error('Error marking alert as valid:', e)
   } finally {
@@ -237,5 +238,6 @@ const openCorrectModal = (alert: any) => {
 const onAlertCorrected = () => {
   selectedAlertForCorrection.value = null
   refresh()
+  useDataQualityStatus().refresh()
 }
 </script>

@@ -154,7 +154,14 @@
               :is="item.icon"
               :class="['w-5 h-5 flex-shrink-0', activePage === item.page ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']"
             />
-            <span v-if="!collapsed" class="whitespace-nowrap">{{ item.label }}</span>
+            <span v-if="!collapsed" class="whitespace-nowrap flex items-center gap-1.5">
+              {{ item.label }}
+              <span
+                v-if="item.page === 'abastecimiento' && hasCriticalAlerts"
+                class="w-2 h-2 rounded-full bg-destructive flex-shrink-0"
+                aria-label="Alertas críticas en abastecimiento"
+              />
+            </span>
           </NuxtLink>
         </div>
       </div>
@@ -261,6 +268,9 @@ const showTenantDropdown = ref(false)
 const isLoggingOut = ref(false)
 const route = useRoute()
 const router = useRouter()
+
+// Data quality dot indicator
+const { hasCriticalAlerts } = useDataQualityStatus()
 
 // Use tenants store
 const tenantsStore = useTenantsStore()
