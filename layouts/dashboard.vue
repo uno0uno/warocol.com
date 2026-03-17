@@ -235,6 +235,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path === '/abastecimiento/calidad-datos') {
+    return {
+      pageTitle: 'Calidad de Datos',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   // } else if (path === '/abastecimiento/precios') {
   //   return {
   //     pageTitle: 'Lista de Precios',
