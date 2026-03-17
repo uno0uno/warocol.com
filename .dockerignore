@@ -1,6 +1,10 @@
-.node_modules
+node_modules
 .output
 .nuxt
 .git
 .gitignore
-README.md
+*.md
+.env
+.env.*
+Dockerfile*
+docker-compose*

@@ -7,7 +7,7 @@ export default defineNuxtConfig({
     port: parseInt(process.env.PORT || '8080')
   },
   nitro: {
-    preset: 'node-server',
+    preset: 'bun',
     routeRules: {
       // Assets estáticos — cache 1 día en browser + CDN
       '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=3600' } },
