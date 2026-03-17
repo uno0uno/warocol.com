@@ -59,16 +59,45 @@
       </div>
 
       <!-- Filters Bar -->
-      <SharedFiltersBar
-        v-model:search="searchIngredient"
-        v-model:status-filter="severityFilter"
-        :status-options="severityOptions"
-        status-label="Severidad"
-        status-placeholder="Todas"
-        show-status-filter
-        @search="() => {}"
-        @clear-filters="clearFilters"
-      />
+      <div class="flex items-center gap-2 w-full overflow-x-auto pb-1">
+        <!-- Search -->
+        <div class="relative flex-1 min-w-[160px]">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            v-model="searchIngredient"
+            type="search"
+            placeholder="Buscar ingrediente..."
+            aria-label="Buscar ingrediente"
+            class="h-10 w-full pl-9 pr-4 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+          />
+        </div>
+
+        <!-- Severity select -->
+        <select
+          v-model="severityFilter"
+          aria-label="Filtrar por severidad"
+          class="h-10 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer min-w-[130px] transition-colors"
+        >
+          <option value="">Todas</option>
+          <option v-for="opt in severityOptions" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+
+        <!-- Clear button -->
+        <button
+          v-if="searchIngredient || severityFilter"
+          aria-label="Limpiar filtros"
+          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex items-center justify-center"
+          @click="clearFilters"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
       <!-- Alert List -->
       <UiResponsiveDataView
