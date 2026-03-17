@@ -158,7 +158,7 @@
               {{ item.label }}
               <span
                 v-if="item.page === 'abastecimiento' && hasCriticalAlerts"
-                class="inline-block w-2 h-2 rounded-full bg-destructive align-middle ml-0.5"
+                class="inline-block w-2 h-2 rounded-full bg-destructive align-middle ml-2"
                 aria-label="Alertas críticas en abastecimiento"
               />
             </span>
