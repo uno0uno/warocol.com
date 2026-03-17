@@ -146,7 +146,7 @@
                 <UiStatusBadge
                   :value="item.deviation_pct"
                   format="percentage"
-                  :variant="getSeverityVariant(item.severity)"
+                  variant="secondary"
                   size="sm"
                   class="mt-0.5"
                 />
@@ -157,7 +157,7 @@
                 :disabled="validatingId === item.id"
                 :aria-label="`Marcar ${item.ingredient_name} como válido`"
                 class="min-h-[44px] min-w-[44px] flex items-center justify-center
-                       text-text-secondary hover:text-success transition-colors
+                       text-status-success-text hover:text-success transition-colors
                        disabled:opacity-40 disabled:cursor-not-allowed"
                 @click="markAsValid(item.id)"
               >
@@ -172,7 +172,7 @@
               <button
                 :aria-label="`Corregir precio de ${item.ingredient_name}`"
                 class="min-h-[44px] min-w-[44px] flex items-center justify-center
-                       text-text-secondary hover:text-primary transition-colors"
+                       text-primary/60 hover:text-primary transition-colors"
                 @click="openCorrectModal(item)"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -222,12 +222,12 @@
           <span class="text-sm text-text-secondary">${{ formatValue(value) }}</span>
         </template>
 
-        <template #cell-deviation_pct="{ value, row }">
+        <template #cell-deviation_pct="{ value }">
           <div class="flex justify-end">
             <UiStatusBadge
               :value="value"
               format="percentage"
-              :variant="getSeverityVariant(row.severity)"
+              variant="secondary"
               size="sm"
             />
           </div>
@@ -239,7 +239,7 @@
               :disabled="validatingId === row.id"
               :aria-label="`Marcar ${row.ingredient_name} como válido`"
               class="min-h-[36px] min-w-[36px] flex items-center justify-center
-                     text-text-secondary hover:text-success transition-colors
+                     text-status-success-text hover:text-success transition-colors
                      disabled:opacity-40 disabled:cursor-not-allowed"
               @click="markAsValid(row.id)"
             >
@@ -254,7 +254,7 @@
             <button
               :aria-label="`Corregir precio de ${row.ingredient_name}`"
               class="min-h-[36px] min-w-[36px] flex items-center justify-center
-                     text-text-secondary hover:text-primary transition-colors"
+                     text-primary/60 hover:text-primary transition-colors"
               @click="openCorrectModal(row)"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
