@@ -24,32 +24,28 @@
         <div
           v-if="costIssueCount > 0 && !bannerDismissed"
           role="alert"
-          class="flex items-start gap-3 px-4 py-3 bg-status-critical-bg border border-border rounded-lg text-sm"
+          class="flex items-center gap-3 px-4 py-3 bg-status-critical-bg border border-border rounded-lg"
         >
-          <svg class="w-5 h-5 text-status-critical-text flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="w-4 h-4 text-status-critical-text flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.962-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
-          <div class="flex-1 min-w-0">
-            <p class="text-text-primary font-medium">
-              {{ costIssueCount }} producto{{ costIssueCount !== 1 ? 's tienen' : ' tiene' }} un costo calculado mayor al precio de venta.
-            </p>
-            <p class="text-text-secondary mt-0.5">
-              Esto puede deberse a compras mal registradas.
-              <NuxtLink
-                to="/abastecimiento/calidad-datos"
-                class="font-medium text-status-critical-text underline hover:no-underline ml-1"
-              >
-                Ver en Calidad de Datos →
-              </NuxtLink>
-            </p>
-          </div>
+          <p class="flex-1 min-w-0 text-sm flex flex-wrap items-baseline gap-x-1">
+            <span class="font-bold text-status-critical-text">{{ costIssueCount }} producto{{ costIssueCount !== 1 ? 's' : '' }}</span>
+            <span class="text-text-secondary">con costo mayor al precio de venta — posibles compras mal registradas.</span>
+            <NuxtLink
+              to="/abastecimiento/calidad-datos"
+              class="font-semibold text-status-critical-text hover:underline whitespace-nowrap"
+            >
+              Ver Calidad de Datos →
+            </NuxtLink>
+          </p>
           <button
-            class="flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center p-1 rounded-lg hover:bg-destructive/10 transition-colors text-text-secondary hover:text-text-primary"
+            class="flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-black/5 transition-colors text-text-tertiary hover:text-text-primary"
             aria-label="Cerrar aviso"
             @click="bannerDismissed = true"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
