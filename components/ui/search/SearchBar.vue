@@ -25,7 +25,7 @@ const handleInput = (event) => {
 </script>
 
 <template>
-  <div :class="cn('flex items-center bg-input border border-border rounded-lg px-3 py-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:border-ring', props.class)">
+  <div :class="cn('flex items-center bg-transparent border border-border rounded-lg px-3 py-2 transition-all duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:border-ring', props.class)">
     <MagnifyingGlassIcon class="w-4 h-4 text-muted-foreground" />
     <input
       :value="modelValue"

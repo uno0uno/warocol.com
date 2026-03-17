@@ -52,7 +52,7 @@ const handleFieldChange = (event) => {
         :placeholder="placeholder"
         @input="handleInput"
         @keydown.enter="emit('search')"
-        class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+        class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-transparent text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
       />
     </div>
 
@@ -61,7 +61,7 @@ const handleFieldChange = (event) => {
       <select
         :value="fieldValue"
         @change="handleFieldChange"
-        class="h-10 pl-3 pr-8 rounded-lg border-2 border-border bg-background bg-none text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary appearance-none cursor-pointer min-w-[120px]"
+        class="h-10 pl-3 pr-8 rounded-lg border-2 border-border bg-transparent bg-none text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary appearance-none cursor-pointer min-w-[120px]"
       >
         <option v-for="field in fields" :key="field.value" :value="field.value">
           {{ field.label }}

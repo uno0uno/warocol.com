@@ -1,7 +1,7 @@
 <template>
   <div class="w-full">
     <!-- Mobile: Compact Search + Filter Button -->
-    <div class="md:hidden bg-surface border-2 border-border rounded-lg p-3 w-full overflow-hidden">
+    <div class="md:hidden border-2 border-border rounded-lg p-3 w-full overflow-hidden">
       <div class="flex gap-2 min-w-0">
         <!-- Search Field -->
         <div v-if="showSearch" class="relative flex-1 min-w-0">
@@ -30,7 +30,7 @@
         <button
           v-if="hasFilters"
           @click="showFiltersModal = true"
-          class="px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary transition-colors flex items-center gap-2"
+          class="px-4 py-2 bg-transparent border-2 border-border rounded-lg text-text-primary hover:bg-surface-secondary transition-colors flex items-center gap-2"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -44,7 +44,7 @@
     </div>
 
     <!-- Desktop: Full Filters -->
-    <div class="hidden md:block bg-surface w-full">
+    <div class="hidden md:block w-full">
       <div :class="['grid gap-3 sm:gap-4 w-full', gridColsClass]">
         <!-- Search Field -->
         <div v-if="showSearch" class="w-full">
@@ -74,7 +74,7 @@
           <select
             :value="supplierFilter"
             @change="$emit('update:supplierFilter', $event.target.value)"
-            class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            class="w-full px-4 py-2 bg-transparent border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">Todos los proveedores</option>
             <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
@@ -88,7 +88,7 @@
           <select
             :value="statusFilter"
             @change="$emit('update:statusFilter', $event.target.value)"
-            class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            class="w-full px-4 py-2 bg-transparent border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">{{ statusPlaceholder }}</option>
             <option v-for="status in statusOptions" :key="status.value" :value="status.value">
@@ -102,7 +102,7 @@
           <select
             :value="dateFilter"
             @change="$emit('update:dateFilter', $event.target.value)"
-            class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            class="w-full px-4 py-2 bg-transparent border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">Todos</option>
             <option value="today">Hoy</option>
@@ -140,7 +140,7 @@
           <select
             :value="supplierFilter"
             @change="$emit('update:supplierFilter', $event.target.value)"
-            class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            class="w-full px-4 py-2 bg-transparent border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">Todos los proveedores</option>
             <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
@@ -154,7 +154,7 @@
           <select
             :value="statusFilter"
             @change="$emit('update:statusFilter', $event.target.value)"
-            class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            class="w-full px-4 py-2 bg-transparent border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">{{ statusPlaceholder }}</option>
             <option v-for="status in statusOptions" :key="status.value" :value="status.value">
@@ -168,7 +168,7 @@
           <select
             :value="dateFilter"
             @change="$emit('update:dateFilter', $event.target.value)"
-            class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            class="w-full px-4 py-2 bg-transparent border-2 border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">Todos</option>
             <option value="today">Hoy</option>
