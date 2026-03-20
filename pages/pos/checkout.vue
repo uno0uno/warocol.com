@@ -48,7 +48,33 @@ const customerInsights = ref<CustomerInsights | null>(null)
 const insightsLoading = ref(false)
 const activeAccordion = ref<'insights' | 'summary' | null>('summary')
 
+// Waros
+const { summary: warosSummary, isLoadingSummary: isLoadingWaros, fetchSummary: fetchWarosSummary } = useWarosCliente()
+const { estimatedWaros, isLoadingEstimate, systemEnabled: warosSystemEnabled, fetchEstimate } = useWarosEstimate()
+const showWarosModal = ref(false)
+const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
+const isAnonymousCustomer = computed(() => selectedCustomer.value?.phone_number === '0000000000')
+
+let estimateTimer: ReturnType<typeof setTimeout> | null = null
+
+watch(cartTotal, (total) => {
+  if (!selectedCustomer.value || isAnonymousCustomer.value) return
+  if (total <= 0) return
+  if (estimateTimer) clearTimeout(estimateTimer)
+  estimateTimer = setTimeout(() => {
+    fetchEstimate(total, selectedCustomer.value!.id)
+  }, 400)
+})
+
+const onWarosAssigned = async (payload: { newBalance: number }) => {
+  if (warosSummary.value) warosSummary.value.current_balance = payload.newBalance
+  await fetchWarosSummary(selectedCustomer.value!.id)
+}
+
 watch(selectedCustomer, async (customer) => {
+  // Reset Waros state on customer change
+  warosSummary.value = null
+  estimatedWaros.value = null
   customerInsights.value = null
   insightsLoading.value = false
   activeAccordion.value = 'summary'
@@ -64,6 +90,11 @@ watch(selectedCustomer, async (customer) => {
     activeAccordion.value = 'summary'
   } finally {
     insightsLoading.value = false
+  }
+  // Fetch Waros data (non-blocking — fires after insights)
+  fetchWarosSummary(customer.id)
+  if (cartTotal.value > 0) {
+    fetchEstimate(cartTotal.value, customer.id)
   }
 })
 
@@ -206,9 +237,10 @@ onMounted(async () => {
   await syncCart()
 })
 
-// Clear subtitle on unmount
+// Clear subtitle and pending timers on unmount
 onUnmounted(() => {
   setPageSubtitle(undefined)
+  if (estimateTimer) clearTimeout(estimateTimer)
 })
 </script>
 
@@ -542,6 +574,49 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- WAROS CARD (desktop) -->
+        <div
+          v-if="selectedCustomer && !isAnonymousCustomer && warosSystemEnabled"
+          class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
+        >
+          <div class="px-5 py-4">
+            <h3 class="font-bold text-text-primary text-sm mb-3">Puntos Waros</h3>
+            <!-- Skeleton while loading balance -->
+            <div v-if="isLoadingWaros" class="grid grid-cols-2 gap-3 mb-3">
+              <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14"></div>
+              <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14"></div>
+            </div>
+            <!-- Data -->
+            <div v-else class="grid grid-cols-2 gap-3 mb-3">
+              <div class="bg-amber-50 rounded-xl p-3">
+                <p class="text-xs text-text-secondary mb-0.5">Balance actual</p>
+                <p class="text-lg font-bold text-amber-700 leading-tight">
+                  {{ warosBalance.toLocaleString('es-CO') }}
+                </p>
+              </div>
+              <div class="bg-green-50 rounded-xl p-3">
+                <p class="text-xs text-text-secondary mb-0.5">Ganarías esta compra</p>
+                <p
+                  class="text-lg font-bold text-green-700 leading-tight"
+                  aria-live="polite"
+                  aria-label="Puntos estimados para esta compra"
+                >
+                  <span v-if="isLoadingEstimate" class="text-text-tertiary text-base">...</span>
+                  <span v-else-if="estimatedWaros === null">—</span>
+                  <span v-else>+ {{ estimatedWaros.toLocaleString('es-CO') }}</span>
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="showWarosModal = true"
+              class="w-full min-h-[44px] px-4 py-2.5 text-sm font-medium border border-border rounded-lg hover:bg-surface-secondary transition-colors text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              Asignar manualmente
+            </button>
+          </div>
+        </div>
+
         <!-- Error Message -->
         <div v-if="processingError" class="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4">
           <div class="flex items-start gap-3">
@@ -671,6 +746,43 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <!-- WAROS CARD (mobile) -->
+      <div
+        v-if="selectedCustomer && !isAnonymousCustomer && warosSystemEnabled"
+        class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
+      >
+        <div class="px-5 py-4">
+          <h3 class="font-bold text-text-primary text-sm mb-3">Puntos Waros</h3>
+          <div v-if="isLoadingWaros" class="grid grid-cols-2 gap-3 mb-3">
+            <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14"></div>
+            <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14"></div>
+          </div>
+          <div v-else class="grid grid-cols-2 gap-3 mb-3">
+            <div class="bg-amber-50 rounded-xl p-3">
+              <p class="text-xs text-text-secondary mb-0.5">Balance actual</p>
+              <p class="text-lg font-bold text-amber-700 leading-tight">
+                {{ warosBalance.toLocaleString('es-CO') }}
+              </p>
+            </div>
+            <div class="bg-green-50 rounded-xl p-3">
+              <p class="text-xs text-text-secondary mb-0.5">Ganarías esta compra</p>
+              <p class="text-lg font-bold text-green-700 leading-tight" aria-live="polite">
+                <span v-if="isLoadingEstimate" class="text-text-tertiary text-base">...</span>
+                <span v-else-if="estimatedWaros === null">—</span>
+                <span v-else>+ {{ estimatedWaros.toLocaleString('es-CO') }}</span>
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            @click="showWarosModal = true"
+            class="w-full min-h-[44px] px-4 py-2.5 text-sm font-medium border border-border rounded-lg hover:bg-surface-secondary transition-colors text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            Asignar manualmente
+          </button>
+        </div>
+      </div>
+
       <!-- Error Message -->
       <div v-if="processingError" class="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4">
         <div class="flex items-start gap-3">
@@ -769,6 +881,16 @@ onUnmounted(() => {
         </div>
       </div>
     </Teleport>
+
+    <!-- Waros Manual Assignment Modal -->
+    <PuntosAsignarWarosModal
+      v-if="selectedCustomer"
+      v-model="showWarosModal"
+      :profile-id="selectedCustomer.id"
+      :customer-name="selectedCustomer.name || selectedCustomer.phone_number || ''"
+      :current-balance="warosBalance"
+      @assigned="onWarosAssigned"
+    />
   </div>
 </template>
 
