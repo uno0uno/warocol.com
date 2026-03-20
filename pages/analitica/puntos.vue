@@ -13,7 +13,10 @@ const {
   fetchRules,
   toggleRule,
   toggleGlobal,
+  getRuleMeta,
 } = useWarosConfig()
+
+const { show: showToast } = useToast()
 
 // ── Edit modal ────────────────────────────────────────────────────────────
 const showModal = ref(false)
@@ -24,6 +27,23 @@ const openEdit = (rule: WaroRule) => {
   showModal.value = true
 }
 
+const onRuleSaved = async () => {
+  await handleRefresh()
+  const label = selectedRule.value ? getRuleMeta(selectedRule.value.rule_type).label : 'Regla'
+  showToast(`${label} actualizada`, 'success')
+}
+
+// ── Global toggle ─────────────────────────────────────────────────────────
+const handleToggleGlobal = async () => {
+  const newValue = !isEnabled.value
+  try {
+    await toggleGlobal(newValue)
+    showToast(newValue ? 'Sistema Waros activado' : 'Sistema Waros desactivado', 'success')
+  } catch {
+    showToast('Error al cambiar el estado del sistema', 'error')
+  }
+}
+
 // ── Inline toggle (optimistic) ────────────────────────────────────────────
 const togglingRuleType = ref<string | null>(null)
 
@@ -31,10 +51,16 @@ const handleToggle = async (rule: WaroRule) => {
   togglingRuleType.value = rule.rule_type
   const prev = rule.is_active
   rule.is_active = !prev
+  const label = getRuleMeta(rule.rule_type).label
   try {
     await toggleRule(rule.rule_type)
+    showToast(
+      rule.is_active ? `${label} activada` : `${label} desactivada`,
+      'success'
+    )
   } catch {
-    rule.is_active = prev // revert on error
+    rule.is_active = prev
+    showToast(`Error al cambiar ${label}`, 'error')
   } finally {
     togglingRuleType.value = null
   }
@@ -71,7 +97,7 @@ onUnmounted(() => {
         role="switch"
         :aria-checked="isEnabled"
         aria-label="Activar o desactivar el sistema de puntos Waros"
-        @click="toggleGlobal(!isEnabled)"
+        @click="handleToggleGlobal"
         :class="[
           'flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
           isEnabled ? 'bg-primary' : 'bg-slate-300'
@@ -138,7 +164,7 @@ onUnmounted(() => {
     <PuntosEditarReglaModal
       v-model="showModal"
       :rule="selectedRule"
-      @saved="handleRefresh"
+      @saved="onRuleSaved"
     />
 
   </div>

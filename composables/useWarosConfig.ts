@@ -136,8 +136,9 @@ export const useWarosConfig = () => {
         method: 'PATCH',
         body: { is_enabled: value },
       })
-    } catch {
+    } catch (e) {
       isEnabled.value = prev
+      throw e
     }
   }
 
