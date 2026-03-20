@@ -113,9 +113,9 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- Rules list -->
+    <!-- Rules grid -->
     <template v-else>
-      <div class="space-y-3">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <PuntosReglaCard
           v-for="rule in rules"
           :key="rule.rule_type"
@@ -125,17 +125,17 @@ onUnmounted(() => {
           @toggle="handleToggle"
           @edit="openEdit"
         />
+      </div>
 
-        <!-- Empty state -->
-        <div
-          v-if="rules.length === 0"
-          class="flex flex-col items-center justify-center min-h-[200px] gap-2 text-text-secondary"
-        >
-          <svg class="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          <p class="text-sm font-medium">No hay reglas disponibles</p>
-        </div>
+      <!-- Empty state -->
+      <div
+        v-if="rules.length === 0"
+        class="flex flex-col items-center justify-center min-h-[200px] gap-2 text-text-secondary"
+      >
+        <svg class="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        <p class="text-sm font-medium">No hay reglas disponibles</p>
       </div>
     </template>
 
