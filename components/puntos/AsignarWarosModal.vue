@@ -137,7 +137,7 @@
               : 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
           ]"
         >
-          <span v-if="isSaving">Guardando...</span>
+          <UiLoadingDots v-if="isSaving" size="9px" />
           <span v-else>{{ mode === 'dar' ? '+ Dar Waros' : '− Quitar Waros' }}</span>
         </button>
       </div>
