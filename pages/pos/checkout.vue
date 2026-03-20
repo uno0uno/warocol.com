@@ -79,6 +79,7 @@ watch(selectedCustomer, async (customer) => {
   // Reset Waros state on customer change
   warosSummary.value = null
   estimatedWaros.value = null
+  warosSystemEnabled.value = null
   customerInsights.value = null
   insightsLoading.value = false
   activeAccordion.value = 'summary'

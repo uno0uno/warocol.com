@@ -21,8 +21,8 @@ export interface WarosEstimateResult {
 export const useWarosEstimate = () => {
   const estimatedWaros = ref<number | null>(null)
   const isLoadingEstimate = ref(false)
-  // Optimistic default true — avoids card flash-hiding on initial load
-  const systemEnabled = ref(true)
+  // null = unknown (card hidden until first API response confirms system_enabled)
+  const systemEnabled = ref<boolean | null>(null)
 
   const fetchEstimate = async (totalAmount: number, customerId?: string) => {
     if (totalAmount <= 0) return
