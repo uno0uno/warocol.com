@@ -48,6 +48,10 @@ const customerInsights = ref<CustomerInsights | null>(null)
 const insightsLoading = ref(false)
 const activeAccordion = ref<'insights' | 'summary' | null>('summary')
 
+// Computed (must be before any watchers that reference cartTotal)
+const cartItems = computed(() => posStore.cart)
+const cartTotal = computed(() => posStore.cartTotal)
+
 // Waros
 const { summary: warosSummary, isLoadingSummary: isLoadingWaros, fetchSummary: fetchWarosSummary } = useWarosCliente()
 const { estimatedWaros, isLoadingEstimate, systemEnabled: warosSystemEnabled, fetchEstimate } = useWarosEstimate()
@@ -97,10 +101,6 @@ watch(selectedCustomer, async (customer) => {
     fetchEstimate(cartTotal.value, customer.id)
   }
 })
-
-// Computed
-const cartItems = computed(() => posStore.cart)
-const cartTotal = computed(() => posStore.cartTotal)
 
 // Methods
 const formatCurrency = (value: number) => {
