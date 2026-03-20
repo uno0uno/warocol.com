@@ -29,14 +29,56 @@
         </div>
 
         <!-- Header -->
-        <div class="flex-shrink-0 flex items-start justify-between gap-3 border-b border-border px-6 py-4">
-          <div class="min-w-0 flex-1">
-            <p class="text-base font-semibold text-text-primary leading-tight">{{ meta.label }}</p>
-            <p class="text-sm text-text-secondary leading-snug mt-0.5">{{ meta.description }}</p>
+        <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
+          <div class="flex items-start justify-between gap-3">
+            <!-- Icon + title -->
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
+                <!-- bag -->
+                <svg v-if="meta.icon === 'bag'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                <!-- count -->
+                <svg v-else-if="meta.icon === 'count'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                </svg>
+                <!-- calendar -->
+                <svg v-else-if="meta.icon === 'calendar'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <!-- ticket -->
+                <svg v-else-if="meta.icon === 'ticket'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                </svg>
+                <!-- fallback -->
+                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <h2 class="text-base font-bold text-text-primary leading-tight">{{ meta.label }}</h2>
+                <p class="text-xs text-text-secondary leading-snug mt-0.5">{{ meta.description }}</p>
+              </div>
+            </div>
+            <!-- Close -->
+            <button
+              @click="close"
+              type="button"
+              aria-label="Cerrar panel"
+              class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <!-- Toggle + close -->
-          <div class="flex items-center gap-3 flex-shrink-0">
-            <div class="flex flex-col items-center gap-0.5">
+          <!-- Toggle row -->
+          <div class="flex items-center justify-between mt-4 pt-3 border-t border-border/60">
+            <span class="text-sm font-medium text-text-primary">Estado de la regla</span>
+            <div class="flex items-center gap-2">
+              <span :class="['text-xs font-medium', localActive ? 'text-green-600' : 'text-slate-400']">
+                {{ localActive ? 'Activa' : 'Inactiva' }}
+              </span>
               <button
                 role="switch"
                 :aria-checked="localActive"
@@ -49,18 +91,7 @@
               >
                 <span :class="['inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform', localActive ? 'translate-x-6' : 'translate-x-1']" />
               </button>
-              <span class="text-xs text-text-secondary">{{ localActive ? 'Activa' : 'Inactiva' }}</span>
             </div>
-            <button
-              @click="close"
-              type="button"
-              aria-label="Cerrar panel"
-              class="flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
           </div>
         </div>
 
@@ -69,232 +100,271 @@
 
       <!-- ── ticket_value ── -->
       <template v-if="rule.rule_type === 'ticket_value'">
-        <p class="text-sm font-semibold text-text-primary">Tasa base</p>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="flex flex-col gap-1">
-            <label for="field-base_waros" class="text-sm font-medium text-text-primary">Waros a otorgar</label>
-            <input
-              id="field-base_waros"
-              v-model.number="tvConfig.base_waros"
-              type="number" min="1" step="1"
-              placeholder="1"
-              :class="inputClass"
-            />
+        <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-3">
+          <p class="text-xs font-semibold uppercase tracking-wider text-primary">Tasa base</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1.5">
+              <label for="field-base_waros" class="text-sm font-medium text-text-primary">Waros a otorgar</label>
+              <input
+                id="field-base_waros"
+                v-model.number="tvConfig.base_waros"
+                type="number" min="1" step="1"
+                placeholder="1"
+                :class="inputClass"
+              />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="field-base_pesos" class="text-sm font-medium text-text-primary">Por cada (COP)</label>
+              <input
+                id="field-base_pesos"
+                v-model.number="tvConfig.base_pesos"
+                type="number" min="1" step="100"
+                placeholder="1000"
+                :class="inputClass"
+              />
+            </div>
           </div>
-          <div class="flex flex-col gap-1">
-            <label for="field-base_pesos" class="text-sm font-medium text-text-primary">Por cada (COP)</label>
-            <input
-              id="field-base_pesos"
-              v-model.number="tvConfig.base_pesos"
-              type="number" min="1" step="100"
-              placeholder="1000"
-              :class="inputClass"
-            />
-          </div>
+          <p class="text-xs text-text-secondary bg-white/60 rounded-lg px-3 py-2 border border-border/50">
+            Ej. compra de ${{ (tvConfig.base_pesos * 10).toLocaleString('es-CO') }} → <strong class="text-text-primary">{{ tvConfig.base_waros * 10 }} Waros</strong>
+          </p>
         </div>
-        <p class="text-xs text-text-secondary -mt-2">
-          Compra de ${{ (tvConfig.base_pesos * 10).toLocaleString('es-CO') }} COP → {{ tvConfig.base_waros * 10 }} Waros
-        </p>
-
-        <hr class="border-border" />
 
         <!-- Tiers -->
-        <div class="flex items-center justify-between">
-          <p class="text-sm font-semibold text-text-primary">Tiers por monto</p>
-          <button @click="addTier" type="button" class="text-xs text-primary hover:text-primary/80 font-medium transition-colors focus:outline-none">
-            + Agregar tier
-          </button>
-        </div>
-
-        <div v-if="tierGapWarning" class="flex items-center gap-2 text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
-          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-          </svg>
-          <span class="text-xs">{{ tierGapWarning }}</span>
-        </div>
-
-        <div v-if="tvConfig.tiers.length === 0" class="text-sm text-text-secondary text-center py-3 bg-surface-secondary rounded-lg">
-          Sin tiers — se aplica la tasa base para todos los montos
-        </div>
-
-        <div v-for="(tier, i) in tvConfig.tiers" :key="i" class="flex items-end gap-2">
-          <div class="flex flex-col gap-1 flex-1">
-            <label :for="`tier-from-${i}`" class="text-xs font-medium text-text-secondary">Desde (COP)</label>
-            <input
-              :id="`tier-from-${i}`"
-              v-model.number="tier.from"
-              type="number" min="0" step="1000"
-              placeholder="0"
-              :class="inputClass"
-            />
+        <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <p class="text-xs font-semibold uppercase tracking-wider text-primary">Tiers por monto <span class="text-xs normal-case tracking-normal font-normal text-text-tertiary ml-1">(opcional)</span></p>
+            <button
+              @click="addTier"
+              type="button"
+              class="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 bg-primary/8 hover:bg-primary/15 px-2.5 py-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+              </svg>
+              Agregar tier
+            </button>
           </div>
-          <div class="flex flex-col gap-1 flex-1">
-            <label :for="`tier-to-${i}`" class="text-xs font-medium text-text-secondary">Hasta (COP)</label>
-            <input
-              :id="`tier-to-${i}`"
-              v-model.number="tier.to"
-              type="number" min="0" step="1000"
-              placeholder="Sin límite"
-              :class="inputClass"
-            />
-          </div>
-          <div class="flex flex-col gap-1 flex-1">
-            <label :for="`tier-mult-${i}`" class="text-xs font-medium text-text-secondary">Multiplicador</label>
-            <input
-              :id="`tier-mult-${i}`"
-              v-model.number="tier.multiplier"
-              type="number" min="0.1" step="0.1"
-              placeholder="1.0"
-              :class="inputClass"
-            />
-          </div>
-          <button
-            @click="removeTier(i)"
-            type="button"
-            :aria-label="`Eliminar tier ${i + 1}`"
-            class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-200 mb-0"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+
+          <div v-if="tierGapWarning" class="flex items-center gap-2 text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
             </svg>
-          </button>
+            <span class="text-xs">{{ tierGapWarning }}</span>
+          </div>
+
+          <div v-if="tvConfig.tiers.length === 0" class="flex flex-col items-center gap-1.5 text-center py-4 bg-white/60 rounded-lg border border-border/50">
+            <svg class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            <p class="text-xs text-text-tertiary">Se aplica la tasa base para todos los montos</p>
+          </div>
+
+          <div v-for="(tier, i) in tvConfig.tiers" :key="i" class="flex items-end gap-2 bg-white/70 rounded-lg p-3 border border-border/40">
+            <div class="flex flex-col gap-1 flex-1">
+              <label :for="`tier-from-${i}`" class="text-xs font-medium text-text-secondary">Desde (COP)</label>
+              <input
+                :id="`tier-from-${i}`"
+                v-model.number="tier.from"
+                type="number" min="0" step="1000"
+                placeholder="0"
+                :class="inputClass"
+              />
+            </div>
+            <div class="flex flex-col gap-1 flex-1">
+              <label :for="`tier-to-${i}`" class="text-xs font-medium text-text-secondary">Hasta (COP)</label>
+              <input
+                :id="`tier-to-${i}`"
+                v-model.number="tier.to"
+                type="number" min="0" step="1000"
+                placeholder="Sin límite"
+                :class="inputClass"
+              />
+            </div>
+            <div class="flex flex-col gap-1 flex-1">
+              <label :for="`tier-mult-${i}`" class="text-xs font-medium text-text-secondary">Multiplicador</label>
+              <input
+                :id="`tier-mult-${i}`"
+                v-model.number="tier.multiplier"
+                type="number" min="0.1" step="0.1"
+                placeholder="1.0"
+                :class="inputClass"
+              />
+            </div>
+            <button
+              @click="removeTier(i)"
+              type="button"
+              :aria-label="`Eliminar tier ${i + 1}`"
+              class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-200"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </div>
       </template>
 
       <!-- ── purchase_count ── -->
       <template v-else-if="rule.rule_type === 'purchase_count'">
-        <div class="flex items-center justify-between">
-          <p class="text-sm font-semibold text-text-primary">Hitos de compra</p>
-          <button @click="addMilestone" type="button" class="text-xs text-primary hover:text-primary/80 font-medium transition-colors focus:outline-none">
-            + Agregar hito
-          </button>
-        </div>
-
-        <div v-if="milestoneDupWarning" class="flex items-center gap-2 text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
-          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-          </svg>
-          <span class="text-xs">{{ milestoneDupWarning }}</span>
-        </div>
-
-        <div v-if="pcConfig.milestones.length === 0" class="text-sm text-text-secondary text-center py-3 bg-surface-secondary rounded-lg">
-          Sin hitos — agrega al menos uno para activar la regla
-        </div>
-
-        <div v-for="(m, i) in pcConfig.milestones" :key="i" class="flex items-end gap-2">
-          <div class="flex flex-col gap-1 flex-1">
-            <label :for="`m-num-${i}`" class="text-xs font-medium text-text-secondary">Compra #</label>
-            <input
-              :id="`m-num-${i}`"
-              v-model.number="m.purchase_number"
-              type="number" min="1" step="1"
-              placeholder="1"
-              :class="inputClass"
-            />
+        <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <p class="text-xs font-semibold uppercase tracking-wider text-primary">Hitos de compra</p>
+            <button
+              @click="addMilestone"
+              type="button"
+              class="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 bg-primary/8 hover:bg-primary/15 px-2.5 py-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+              </svg>
+              Agregar hito
+            </button>
           </div>
-          <div class="flex flex-col gap-1 flex-1">
-            <label :for="`m-bonus-${i}`" class="text-xs font-medium text-text-secondary">Waros bonus</label>
-            <input
-              :id="`m-bonus-${i}`"
-              v-model.number="m.bonus"
-              type="number" min="1" step="1"
-              placeholder="50"
-              :class="inputClass"
-            />
-          </div>
-          <button
-            @click="removeMilestone(i)"
-            type="button"
-            :aria-label="`Eliminar hito ${i + 1}`"
-            class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-200"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+
+          <div v-if="milestoneDupWarning" class="flex items-center gap-2 text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
             </svg>
-          </button>
+            <span class="text-xs">{{ milestoneDupWarning }}</span>
+          </div>
+
+          <div v-if="pcConfig.milestones.length === 0" class="flex flex-col items-center gap-1.5 text-center py-5 bg-white/60 rounded-lg border border-border/50">
+            <svg class="w-7 h-7 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p class="text-sm font-medium text-text-secondary">Sin hitos configurados</p>
+            <p class="text-xs text-text-tertiary">Agrega al menos uno para activar la regla</p>
+          </div>
+
+          <div v-for="(m, i) in pcConfig.milestones" :key="i" class="flex items-end gap-2 bg-white/70 rounded-lg p-3 border border-border/40">
+            <div class="flex flex-col gap-1 flex-1">
+              <label :for="`m-num-${i}`" class="text-xs font-medium text-text-secondary">Compra #</label>
+              <input
+                :id="`m-num-${i}`"
+                v-model.number="m.purchase_number"
+                type="number" min="1" step="1"
+                placeholder="1"
+                :class="inputClass"
+              />
+            </div>
+            <div class="flex flex-col gap-1 flex-1">
+              <label :for="`m-bonus-${i}`" class="text-xs font-medium text-text-secondary">Waros bonus</label>
+              <input
+                :id="`m-bonus-${i}`"
+                v-model.number="m.bonus"
+                type="number" min="1" step="1"
+                placeholder="50"
+                :class="inputClass"
+              />
+            </div>
+            <button
+              @click="removeMilestone(i)"
+              type="button"
+              :aria-label="`Eliminar hito ${i + 1}`"
+              class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-200"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </div>
       </template>
 
       <!-- ── frequency ── -->
       <template v-else-if="rule.rule_type === 'frequency'">
-        <div class="flex flex-col gap-1">
-          <label for="field-purchases" class="text-sm font-medium text-text-primary">Número de compras</label>
-          <input
-            id="field-purchases"
-            v-model.number="freqConfig.purchases"
-            type="number" min="1" step="1"
-            placeholder="2"
-            :class="inputClass"
-          />
-          <p class="text-xs text-text-secondary">Compras consecutivas requeridas para activar el bonus</p>
+        <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-4">
+          <p class="text-xs font-semibold uppercase tracking-wider text-primary">Condición de frecuencia</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1.5">
+              <label for="field-purchases" class="text-sm font-medium text-text-primary">Compras requeridas</label>
+              <input
+                id="field-purchases"
+                v-model.number="freqConfig.purchases"
+                type="number" min="1" step="1"
+                placeholder="2"
+                :class="inputClass"
+              />
+              <p class="text-xs text-text-tertiary leading-snug">Nº de compras seguidas</p>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="field-within_days" class="text-sm font-medium text-text-primary">Ventana (días)</label>
+              <input
+                id="field-within_days"
+                v-model.number="freqConfig.within_days"
+                type="number" min="1" step="1"
+                placeholder="60"
+                :class="inputClass"
+              />
+              <p class="text-xs text-text-tertiary leading-snug">Período de tiempo</p>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label for="field-freq-bonus" class="text-sm font-medium text-text-primary">Waros bonus</label>
+            <input
+              id="field-freq-bonus"
+              v-model.number="freqConfig.bonus"
+              type="number" min="1" step="1"
+              placeholder="75"
+              :class="inputClass"
+            />
+          </div>
+          <p class="text-xs text-text-secondary bg-white/60 rounded-lg px-3 py-2 border border-border/50">
+            Ejemplo: {{ freqConfig.purchases ?? 2 }} compras en {{ freqConfig.within_days ?? 60 }} días → <strong class="text-text-primary">{{ freqConfig.bonus ?? 75 }} Waros</strong>
+          </p>
         </div>
-        <div class="flex flex-col gap-1">
-          <label for="field-within_days" class="text-sm font-medium text-text-primary">Ventana de días</label>
-          <input
-            id="field-within_days"
-            v-model.number="freqConfig.within_days"
-            type="number" min="1" step="1"
-            placeholder="60"
-            :class="inputClass"
-          />
-          <p class="text-xs text-text-secondary">Las compras deben ocurrir dentro de este período</p>
-        </div>
-        <div class="flex flex-col gap-1">
-          <label for="field-freq-bonus" class="text-sm font-medium text-text-primary">Waros bonus</label>
-          <input
-            id="field-freq-bonus"
-            v-model.number="freqConfig.bonus"
-            type="number" min="1" step="1"
-            placeholder="75"
-            :class="inputClass"
-          />
-        </div>
-        <p class="text-xs text-text-secondary bg-surface-secondary rounded-lg px-3 py-2">
-          Ejemplo: {{ freqConfig.purchases ?? 2 }} compras en {{ freqConfig.within_days ?? 60 }} días → <strong>{{ freqConfig.bonus ?? 75 }} Waros</strong>
-        </p>
       </template>
 
       <!-- ── per_ticket_qty ── -->
       <template v-else-if="rule.rule_type === 'per_ticket_qty'">
-        <div class="flex flex-col gap-1">
-          <label for="field-pti" class="text-sm font-medium text-text-primary">Waros por boleta</label>
-          <input
-            id="field-pti"
-            v-model.number="ptqConfig.points_per_item"
-            type="number" min="1" step="1"
-            placeholder="10"
-            :class="inputClass"
-          />
-        </div>
-
-        <hr class="border-border" />
-        <p class="text-sm font-semibold text-text-primary">Bonus por cantidad <span class="text-xs font-normal text-text-secondary ml-1">(opcional)</span></p>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div class="flex flex-col gap-1">
-            <label for="field-bonus_from_qty" class="text-sm font-medium text-text-primary">Desde # boletas</label>
+        <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-4">
+          <p class="text-xs font-semibold uppercase tracking-wider text-primary">Waros por boleta</p>
+          <div class="flex flex-col gap-1.5">
+            <label for="field-pti" class="text-sm font-medium text-text-primary">Waros por cada boleta</label>
             <input
-              id="field-bonus_from_qty"
-              v-model.number="ptqConfig.bonus_from_qty"
+              id="field-pti"
+              v-model.number="ptqConfig.points_per_item"
               type="number" min="1" step="1"
-              placeholder="4"
-              :class="inputClass"
-            />
-          </div>
-          <div class="flex flex-col gap-1">
-            <label for="field-bonus_extra" class="text-sm font-medium text-text-primary">Waros extra</label>
-            <input
-              id="field-bonus_extra"
-              v-model.number="ptqConfig.bonus_extra_points"
-              type="number" min="1" step="1"
-              placeholder="50"
+              placeholder="10"
               :class="inputClass"
             />
           </div>
         </div>
-        <p v-if="ptqConfig.bonus_from_qty" class="text-xs text-text-secondary bg-surface-secondary rounded-lg px-3 py-2">
-          Pedido con {{ ptqConfig.bonus_from_qty }} boletas → {{ (ptqConfig.points_per_item ?? 10) * ptqConfig.bonus_from_qty + (ptqConfig.bonus_extra_points ?? 0) }} Waros
-        </p>
+
+        <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-4">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-primary">Bonus por cantidad <span class="text-xs normal-case tracking-normal font-normal text-text-tertiary ml-1">(opcional)</span></p>
+            <p class="text-xs text-text-tertiary mt-1">Puntos adicionales cuando el pedido supera cierta cantidad de boletas</p>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1.5">
+              <label for="field-bonus_from_qty" class="text-sm font-medium text-text-primary">Desde # boletas</label>
+              <input
+                id="field-bonus_from_qty"
+                v-model.number="ptqConfig.bonus_from_qty"
+                type="number" min="1" step="1"
+                placeholder="4"
+                :class="inputClass"
+              />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="field-bonus_extra" class="text-sm font-medium text-text-primary">Waros extra</label>
+              <input
+                id="field-bonus_extra"
+                v-model.number="ptqConfig.bonus_extra_points"
+                type="number" min="1" step="1"
+                placeholder="50"
+                :class="inputClass"
+              />
+            </div>
+          </div>
+          <p v-if="ptqConfig.bonus_from_qty" class="text-xs text-text-secondary bg-white/60 rounded-lg px-3 py-2 border border-border/50">
+            Pedido con {{ ptqConfig.bonus_from_qty }}+ boletas → <strong class="text-text-primary">{{ (ptqConfig.points_per_item ?? 10) * ptqConfig.bonus_from_qty + (ptqConfig.bonus_extra_points ?? 0) }} Waros</strong>
+          </p>
+          <p v-else class="text-xs text-text-tertiary bg-white/60 rounded-lg px-3 py-2 border border-border/50">
+            Sin bonus por cantidad — se aplica solo la tasa base
+          </p>
+        </div>
       </template>
 
       <!-- Validation errors -->
@@ -308,11 +378,11 @@
         </div>
 
         <!-- Footer -->
-        <div class="flex-shrink-0 flex gap-3 border-t border-border px-6 py-4">
+        <div class="flex-shrink-0 bg-surface-secondary/40 border-t border-border px-6 py-4 flex gap-3">
           <button
             @click="close"
             type="button"
-            class="flex-1 h-11 rounded-lg border-2 border-slate-200 bg-white text-sm font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+            class="h-11 px-5 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             Cancelar
           </button>
@@ -320,9 +390,15 @@
             @click="save"
             type="button"
             :disabled="isSaving || !!tierGapWarning || !!milestoneDupWarning"
-            class="flex-1 h-11 rounded-lg bg-primary text-sm font-medium text-white transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+            class="flex-1 h-11 rounded-lg bg-primary text-sm font-semibold text-white transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-primary/30"
           >
-            <span v-if="isSaving">Guardando...</span>
+            <span v-if="isSaving" class="flex items-center justify-center gap-2">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Guardando...
+            </span>
             <span v-else>Guardar cambios</span>
           </button>
         </div>
