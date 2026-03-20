@@ -398,6 +398,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path.includes('/analitica/puntos')) {
+    return {
+      pageTitle: 'Puntos Waros',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'analytics' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path.includes('/analytics') || path.includes('/analitica')) {
     return {
       pageTitle: 'Mis Ventas',
