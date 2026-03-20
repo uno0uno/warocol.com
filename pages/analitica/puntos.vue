@@ -62,16 +62,11 @@ onUnmounted(() => {
 <template>
   <div class="space-y-4">
 
-    <!-- Global system toggle card -->
-    <div class="bg-surface border border-border rounded-lg p-4 sm:p-6 flex items-center justify-between gap-4">
-      <div class="min-w-0">
-        <h2 class="text-base font-semibold text-text-primary">Sistema de Puntos Waros</h2>
-        <p class="text-sm text-text-secondary leading-relaxed mt-0.5">
-          {{ isEnabled
-            ? 'Activo — los clientes acumulan puntos en cada compra'
-            : 'Inactivo — ninguna regla otorga puntos actualmente' }}
-        </p>
-      </div>
+    <!-- Global toggle card -->
+    <div class="bg-surface border border-border rounded-lg px-4 py-3 flex items-center justify-between gap-4">
+      <span class="text-sm font-medium text-text-primary">
+        {{ isEnabled ? 'Sistema activo' : 'Sistema inactivo' }}
+      </span>
       <button
         role="switch"
         :aria-checked="isEnabled"
