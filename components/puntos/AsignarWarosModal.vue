@@ -10,8 +10,7 @@
         </div>
         <div class="flex-shrink-0 text-right">
           <p class="text-sm text-text-secondary font-medium">Balance actual</p>
-          <p class="text-base font-semibold text-amber-700 flex items-center justify-end gap-1">
-            <span aria-hidden="true">🪙</span>
+          <p class="text-base font-semibold text-amber-700">
             {{ currentBalance.toLocaleString('es-CO') }} Waros
           </p>
         </div>
@@ -80,10 +79,10 @@
         </p>
         <!-- Deduction preview -->
         <p v-if="mode === 'quitar' && amount > 0 && !validationError" class="text-xs text-text-secondary">
-          Balance resultante: 🪙 {{ (currentBalance - amount).toLocaleString('es-CO') }} Waros
+          Balance resultante: {{ (currentBalance - amount).toLocaleString('es-CO') }} Waros
         </p>
         <p v-if="mode === 'dar' && amount > 0" class="text-xs text-text-secondary">
-          Balance resultante: 🪙 {{ (currentBalance + amount).toLocaleString('es-CO') }} Waros
+          Balance resultante: {{ (currentBalance + amount).toLocaleString('es-CO') }} Waros
         </p>
       </div>
 

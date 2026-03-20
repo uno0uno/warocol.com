@@ -270,15 +270,10 @@ onUnmounted(() => {
         <div class="border-t border-border px-5 py-4">
           <!-- Balance row -->
           <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-2">
-              <span aria-hidden="true" class="text-lg">🪙</span>
-              <div>
-                <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Waros</p>
-                <p v-if="isLoadingWaros" class="text-sm font-semibold text-text-secondary">Cargando...</p>
-                <p v-else class="text-sm font-semibold text-amber-700">
-                  {{ warosBalance.toLocaleString('es-CO') }} Waros
-                </p>
-              </div>
+            <div>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Puntos Waros</p>
+              <p v-if="isLoadingWaros" class="text-sm font-semibold text-text-secondary">Cargando...</p>
+              <p v-else class="text-sm font-semibold text-amber-700">{{ warosBalance.toLocaleString('es-CO') }}</p>
             </div>
             <button
               type="button"
