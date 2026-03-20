@@ -1,31 +1,71 @@
 <template>
-  <UiModal v-model="open" title="Editar regla">
-    <div v-if="rule" class="overflow-y-auto max-h-[60vh] px-6 py-5 space-y-5">
+  <Teleport to="body">
+    <!-- Backdrop -->
+    <Transition
+      enter-active-class="transition-opacity duration-200"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="open" class="fixed inset-0 z-40 bg-black/40" @click="close" aria-hidden="true" />
+    </Transition>
 
-      <!-- Rule header + is_active toggle -->
-      <div class="flex items-start justify-between gap-4">
-        <div class="min-w-0">
-          <p class="text-base font-semibold text-text-primary">{{ meta.label }}</p>
-          <p class="text-sm text-text-secondary leading-relaxed mt-0.5">{{ meta.description }}</p>
+    <!-- Panel: bottom sheet on mobile, right slide-over on desktop -->
+    <Transition name="panel">
+      <div
+        v-if="open"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="`Editar regla: ${meta.label}`"
+        class="fixed z-50 flex flex-col bg-surface shadow-2xl
+               inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
+               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+      >
+        <!-- Mobile drag handle -->
+        <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+          <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
         </div>
-        <div class="flex flex-col items-end gap-1 flex-shrink-0">
-          <button
-            role="switch"
-            :aria-checked="localActive"
-            :aria-label="`${localActive ? 'Desactivar' : 'Activar'} regla`"
-            @click="localActive = !localActive"
-            :class="[
-              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-              localActive ? 'bg-primary' : 'bg-slate-300'
-            ]"
-          >
-            <span :class="['inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform', localActive ? 'translate-x-6' : 'translate-x-1']" />
-          </button>
-          <span class="text-xs text-text-secondary">{{ localActive ? 'Activa' : 'Inactiva' }}</span>
-        </div>
-      </div>
 
-      <hr class="border-border" />
+        <!-- Header -->
+        <div class="flex-shrink-0 flex items-start justify-between gap-3 border-b border-border px-6 py-4">
+          <div class="min-w-0 flex-1">
+            <p class="text-base font-semibold text-text-primary leading-tight">{{ meta.label }}</p>
+            <p class="text-sm text-text-secondary leading-snug mt-0.5">{{ meta.description }}</p>
+          </div>
+          <!-- Toggle + close -->
+          <div class="flex items-center gap-3 flex-shrink-0">
+            <div class="flex flex-col items-center gap-0.5">
+              <button
+                role="switch"
+                :aria-checked="localActive"
+                :aria-label="`${localActive ? 'Desactivar' : 'Activar'} regla`"
+                @click="localActive = !localActive"
+                :class="[
+                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                  localActive ? 'bg-primary' : 'bg-slate-300'
+                ]"
+              >
+                <span :class="['inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform', localActive ? 'translate-x-6' : 'translate-x-1']" />
+              </button>
+              <span class="text-xs text-text-secondary">{{ localActive ? 'Activa' : 'Inactiva' }}</span>
+            </div>
+            <button
+              @click="close"
+              type="button"
+              aria-label="Cerrar panel"
+              class="flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Scrollable body -->
+        <div v-if="rule" class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
       <!-- ── ticket_value ── -->
       <template v-if="rule.rule_type === 'ticket_value'">
@@ -265,29 +305,30 @@
         <span class="text-xs">{{ validationError }}</span>
       </div>
 
-    </div>
+        </div>
 
-    <template #footer>
-      <div class="flex gap-3 px-6 py-4">
-        <button
-          @click="close"
-          type="button"
-          class="flex-1 h-11 rounded-lg border-2 border-slate-200 bg-white text-sm font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
-        >
-          Cancelar
-        </button>
-        <button
-          @click="save"
-          type="button"
-          :disabled="isSaving || !!tierGapWarning || !!milestoneDupWarning"
-          class="flex-1 h-11 rounded-lg bg-primary text-sm font-medium text-white transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
-        >
-          <span v-if="isSaving">Guardando...</span>
-          <span v-else>Guardar cambios</span>
-        </button>
+        <!-- Footer -->
+        <div class="flex-shrink-0 flex gap-3 border-t border-border px-6 py-4">
+          <button
+            @click="close"
+            type="button"
+            class="flex-1 h-11 rounded-lg border-2 border-slate-200 bg-white text-sm font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            Cancelar
+          </button>
+          <button
+            @click="save"
+            type="button"
+            :disabled="isSaving || !!tierGapWarning || !!milestoneDupWarning"
+            class="flex-1 h-11 rounded-lg bg-primary text-sm font-medium text-white transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+          >
+            <span v-if="isSaving">Guardando...</span>
+            <span v-else>Guardar cambios</span>
+          </button>
+        </div>
       </div>
-    </template>
-  </UiModal>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -508,3 +549,23 @@ const save = async () => {
   }
 }
 </script>
+
+<style scoped>
+/* Mobile: slide up from bottom */
+.panel-enter-active,
+.panel-leave-active {
+  transition: transform 0.3s ease;
+}
+.panel-enter-from,
+.panel-leave-to {
+  transform: translateY(100%);
+}
+
+/* Desktop: slide in from right */
+@media (min-width: 768px) {
+  .panel-enter-from,
+  .panel-leave-to {
+    transform: translateX(100%);
+  }
+}
+</style>
