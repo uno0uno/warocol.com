@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import type { WaroRule } from '~/composables/useWarosConfig'
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText } = useLayoutActions()
@@ -14,9 +14,6 @@ const {
   toggleRule,
   toggleGlobal,
 } = useWarosConfig()
-
-// ── Stats ─────────────────────────────────────────────────────────────────
-const activeRulesCount = computed(() => rules.value.filter((r: WaroRule) => r.is_active).length)
 
 // ── Edit modal ────────────────────────────────────────────────────────────
 const showModal = ref(false)
@@ -65,35 +62,33 @@ onUnmounted(() => {
 <template>
   <div class="space-y-4">
 
-    <!-- Global toggle bar -->
-    <div class="flex items-center justify-between gap-4 px-1">
-      <p class="text-sm text-text-secondary">
-        <template v-if="!isLoading && rules.length">
-          {{ activeRulesCount }} de {{ rules.length }} reglas activas
-        </template>
-      </p>
-      <div class="flex items-center gap-2.5 flex-shrink-0">
-        <span :class="['text-sm font-medium transition-colors', isEnabled ? 'text-text-primary' : 'text-text-secondary']">
-          {{ isEnabled ? 'Sistema activo' : 'Sistema inactivo' }}
-        </span>
-        <button
-          role="switch"
-          :aria-checked="isEnabled"
-          aria-label="Activar o desactivar el sistema de puntos Waros"
-          @click="toggleGlobal(!isEnabled)"
-          :class="[
-            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-            isEnabled ? 'bg-primary' : 'bg-slate-300'
-          ]"
-        >
-          <span
-            :class="[
-              'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
-              isEnabled ? 'translate-x-6' : 'translate-x-1'
-            ]"
-          />
-        </button>
+    <!-- Global system toggle card -->
+    <div class="bg-surface border border-border rounded-lg p-4 sm:p-6 flex items-center justify-between gap-4">
+      <div class="min-w-0">
+        <h2 class="text-base font-semibold text-text-primary">Sistema de Puntos Waros</h2>
+        <p class="text-sm text-text-secondary leading-relaxed mt-0.5">
+          {{ isEnabled
+            ? 'Activo — los clientes acumulan puntos en cada compra'
+            : 'Inactivo — ninguna regla otorga puntos actualmente' }}
+        </p>
       </div>
+      <button
+        role="switch"
+        :aria-checked="isEnabled"
+        aria-label="Activar o desactivar el sistema de puntos Waros"
+        @click="toggleGlobal(!isEnabled)"
+        :class="[
+          'flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+          isEnabled ? 'bg-primary' : 'bg-slate-300'
+        ]"
+      >
+        <span
+          :class="[
+            'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+            isEnabled ? 'translate-x-6' : 'translate-x-1'
+          ]"
+        />
+      </button>
     </div>
 
     <!-- Loading state -->
