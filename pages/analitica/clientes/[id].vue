@@ -3,6 +3,7 @@ import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue';
 import { es } from 'date-fns/locale';
 import { format as fnsFormat } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
+import type { WaroTransaction } from '~/composables/useWarosCliente';
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -133,14 +134,42 @@ const tableColumns = [
   { key: 'status', title: 'Estado', sortable: false },
 ]
 
+// ── Waros ─────────────────────────────────────────────────────────────────
+const { summary: warosSummary, isLoadingSummary: isLoadingWaros, fetchSummary: fetchWarosSummary } = useWarosCliente()
+const showWarosModal = ref(false)
+const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
+
+const onWarosAssigned = async (payload: { newBalance: number }) => {
+  // Update local balance immediately then refetch for accurate transaction list
+  if (warosSummary.value) warosSummary.value.current_balance = payload.newBalance
+  await fetchWarosSummary(customerId.value)
+}
+
+const formatWarosDate = (isoDate: string) => {
+  if (!isoDate) return '-'
+  try { return fnsFormat(new Date(isoDate), 'dd/MM/yyyy', { locale: es }) }
+  catch { return isoDate }
+}
+
+const txTypeLabel = (type: string) => {
+  if (type === 'earned') return 'Compra'
+  if (type === 'manual') return 'Manual'
+  return type
+}
+
 // ── Layout wiring ─────────────────────────────────────────────────────────
 watch(customer, (c) => {
   if (c) setPageTitle?.(c.name)
 }, { immediate: true })
 
+watch(currentTenant, () => {
+  if (customerId.value) fetchWarosSummary(customerId.value)
+})
+
 onMounted(() => {
   setShowBackButton?.(true)
   setBackHandler?.(goBack)
+  fetchWarosSummary(customerId.value)
 })
 
 onUnmounted(() => {
@@ -234,6 +263,58 @@ onUnmounted(() => {
               <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Última compra</p>
             </div>
             <p class="text-sm font-semibold text-text-primary">{{ formatDate(customer.last_purchase) }}</p>
+          </div>
+        </div>
+
+        <!-- Waros section -->
+        <div class="border-t border-border px-5 py-4">
+          <!-- Balance row -->
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+              <span aria-hidden="true" class="text-lg">🪙</span>
+              <div>
+                <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Waros</p>
+                <p v-if="isLoadingWaros" class="text-sm font-semibold text-text-secondary">Cargando...</p>
+                <p v-else class="text-sm font-semibold text-amber-700">
+                  {{ warosBalance.toLocaleString('es-CO') }} Waros
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              aria-label="Asignar o quitar Waros a este cliente"
+              @click="showWarosModal = true"
+              class="min-h-[44px] px-4 text-sm font-semibold rounded-lg border-2 border-amber-400 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400/50 flex-shrink-0"
+            >
+              + Asignar puntos
+            </button>
+          </div>
+
+          <!-- Last transactions -->
+          <div
+            v-if="!isLoadingWaros && warosSummary && warosSummary.recent_transactions.length > 0"
+            class="mt-3 space-y-1"
+          >
+            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-2">Últimas transacciones</p>
+            <div
+              v-for="tx in warosSummary.recent_transactions"
+              :key="tx.id"
+              class="flex items-center justify-between gap-3 py-1"
+            >
+              <div class="flex items-center gap-2 min-w-0">
+                <span
+                  :class="[
+                    'text-xs font-bold flex-shrink-0 w-14 text-right',
+                    tx.waros_amount > 0 ? 'text-green-600' : 'text-red-600'
+                  ]"
+                >
+                  {{ tx.waros_amount > 0 ? '+' : '' }}{{ tx.waros_amount.toLocaleString('es-CO') }}
+                </span>
+                <span class="text-xs font-medium text-text-secondary flex-shrink-0">{{ txTypeLabel(tx.transaction_type) }}</span>
+                <span class="text-xs text-text-secondary truncate">{{ tx.description }}</span>
+              </div>
+              <span class="text-xs text-text-secondary flex-shrink-0">{{ formatWarosDate(tx.created_at) }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -371,6 +452,16 @@ onUnmounted(() => {
       </div>
 
     </div>
+
+    <!-- Asignar Waros Modal -->
+    <PuntosAsignarWarosModal
+      v-if="customer"
+      v-model="showWarosModal"
+      :profile-id="customerId"
+      :customer-name="customer.name"
+      :current-balance="warosBalance"
+      @assigned="onWarosAssigned"
+    />
   </div>
 </template>
 

@@ -91,6 +91,31 @@ const canGoNext = computed(() => currentPage.value < totalPages.value)
 const startItem = computed(() => totalCustomers.value === 0 ? 0 : (currentPage.value - 1) * itemsPerPage.value + 1)
 const endItem = computed(() => Math.min(currentPage.value * itemsPerPage.value, totalCustomers.value))
 
+// ── Waros balances (batch, non-blocking) ──────────────────────────────────
+const warosBalances = ref<Record<string, number>>({})
+const isLoadingBalances = ref(false)
+
+const fetchWarosBalances = async (ids: string[]) => {
+  if (!ids.length) return
+  isLoadingBalances.value = true
+  try {
+    const res = await $fetch<{ balances: Record<string, number> }>(
+      '/api/admin/waros/customers/balances',
+      { params: { profile_ids: ids.join(',') } }
+    )
+    warosBalances.value = res.balances
+  } catch {
+    // Non-critical — Waros column shows 0 on error
+  } finally {
+    isLoadingBalances.value = false
+  }
+}
+
+watch(customers, (list) => {
+  const ids = (list as any[]).map((c) => c.customer_id).filter(Boolean)
+  if (ids.length) fetchWarosBalances(ids)
+})
+
 // ── Table columns ─────────────────────────────────────────────────────────
 const tableColumns = [
   { key: 'name', title: 'Cliente', sortable: false },
@@ -99,6 +124,7 @@ const tableColumns = [
   { key: 'total_spent', title: 'Total comprado', sortable: false },
   { key: 'avg_ticket', title: 'Ticket prom.', sortable: false },
   { key: 'last_order_date', title: 'Última compra', sortable: false },
+  { key: 'waros_balance', title: 'Waros', sortable: false },
   { key: 'actions', title: '', sortable: false },
 ]
 
@@ -241,6 +267,11 @@ onUnmounted(() => {
               <span class="text-text-secondary">Última: {{ formatDate(item.last_order_date) }}</span>
               <span class="font-bold text-text-primary">{{ formatCurrency(item.total_spent) }}</span>
             </div>
+            <div v-if="!isLoadingBalances && (warosBalances[item.customer_id] ?? 0) > 0" class="mt-1.5">
+              <span class="inline-flex items-center text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                {{ (warosBalances[item.customer_id] ?? 0).toLocaleString('es-CO') }} Waros
+              </span>
+            </div>
           </NuxtLink>
         </template>
 
@@ -272,6 +303,13 @@ onUnmounted(() => {
 
         <template #cell-last_order_date="{ value }">
           <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+        </template>
+
+        <template #cell-waros_balance="{ row }">
+          <span v-if="isLoadingBalances" class="text-sm text-text-secondary">—</span>
+          <span v-else class="text-sm font-medium text-amber-700">
+            {{ (warosBalances[row.customer_id] ?? 0).toLocaleString('es-CO') }}
+          </span>
         </template>
 
         <template #cell-actions="{ row }">
