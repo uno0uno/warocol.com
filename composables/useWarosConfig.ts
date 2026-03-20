@@ -55,7 +55,7 @@ const RULE_META: Record<string, { label: string; description: string; icon: stri
     icon: 'calendar',
   },
   per_ticket_qty: {
-    label: 'Por boletas compradas',
+    label: 'Por productos comprados',
     description: 'Otorga Waros según cantidad de ítems en el pedido',
     icon: 'ticket',
   },
@@ -163,8 +163,8 @@ export const useWarosConfig = () => {
       case 'frequency':
         return `${c.purchases ?? 2} compras en ${c.within_days ?? 60} días → ${c.bonus ?? 75} Waros bonus`
       case 'per_ticket_qty': {
-        const base = `${c.points_per_item ?? 10} Waros por boleta`
-        const bonus = c.bonus_from_qty ? ` · bonus desde ${c.bonus_from_qty} boletas` : ''
+        const base = `${c.points_per_item ?? 10} Waros por producto`
+        const bonus = c.bonus_from_qty ? ` · bonus desde ${c.bonus_from_qty} productos` : ''
         return base + bonus
       }
       default:

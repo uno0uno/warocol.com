@@ -318,9 +318,9 @@
       <!-- ── per_ticket_qty ── -->
       <template v-else-if="rule.rule_type === 'per_ticket_qty'">
         <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-4">
-          <p class="text-xs font-semibold uppercase tracking-wider text-primary">Waros por boleta</p>
+          <p class="text-xs font-semibold uppercase tracking-wider text-primary">Waros por producto</p>
           <div class="flex flex-col gap-1.5">
-            <label for="field-pti" class="text-sm font-medium text-text-primary">Waros por cada boleta</label>
+            <label for="field-pti" class="text-sm font-medium text-text-primary">Waros por cada producto</label>
             <input
               id="field-pti"
               v-model.number="ptqConfig.points_per_item"
@@ -334,11 +334,11 @@
         <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-4">
           <div>
             <p class="text-xs font-semibold uppercase tracking-wider text-primary">Bonus por cantidad <span class="text-xs normal-case tracking-normal font-normal text-text-tertiary ml-1">(opcional)</span></p>
-            <p class="text-xs text-text-tertiary mt-1">Puntos adicionales cuando el pedido supera cierta cantidad de boletas</p>
+            <p class="text-xs text-text-tertiary mt-1">Puntos adicionales cuando el pedido supera cierta cantidad de productos</p>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div class="flex flex-col gap-1.5">
-              <label for="field-bonus_from_qty" class="text-sm font-medium text-text-primary">Desde # boletas</label>
+              <label for="field-bonus_from_qty" class="text-sm font-medium text-text-primary">Desde # productos</label>
               <input
                 id="field-bonus_from_qty"
                 v-model.number="ptqConfig.bonus_from_qty"
@@ -359,7 +359,7 @@
             </div>
           </div>
           <p v-if="ptqConfig.bonus_from_qty" class="text-xs text-text-secondary bg-white/60 rounded-lg px-3 py-2 border border-border/50">
-            Pedido con {{ ptqConfig.bonus_from_qty }}+ boletas → <strong class="text-text-primary">{{ (ptqConfig.points_per_item ?? 10) * ptqConfig.bonus_from_qty + (ptqConfig.bonus_extra_points ?? 0) }} Waros</strong>
+            Pedido con {{ ptqConfig.bonus_from_qty }}+ productos → <strong class="text-text-primary">{{ (ptqConfig.points_per_item ?? 10) * ptqConfig.bonus_from_qty + (ptqConfig.bonus_extra_points ?? 0) }} Waros</strong>
           </p>
           <p v-else class="text-xs text-text-tertiary bg-white/60 rounded-lg px-3 py-2 border border-border/50">
             Sin bonus por cantidad — se aplica solo la tasa base
@@ -569,7 +569,7 @@ const validate = (): boolean => {
       break
     case 'per_ticket_qty':
       if (!ptqConfig.value.points_per_item || ptqConfig.value.points_per_item <= 0) {
-        validationError.value = 'Los Waros por boleta deben ser mayor a 0'
+        validationError.value = 'Los Waros por producto deben ser mayor a 0'
         return false
       }
       if (ptqConfig.value.bonus_from_qty && (!ptqConfig.value.bonus_extra_points || ptqConfig.value.bonus_extra_points <= 0)) {
