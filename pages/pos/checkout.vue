@@ -97,10 +97,10 @@ watch(selectedCustomer, async (customer) => {
     insightsLoading.value = false
   }
   // Fetch Waros data (non-blocking — fires after insights)
+  // Use Math.max(1, ...) so the probe always runs even with empty cart,
+  // allowing warosSystemEnabled to be set from the API response.
   fetchWarosSummary(customer.id)
-  if (cartTotal.value > 0) {
-    fetchEstimate(cartTotal.value, customer.id)
-  }
+  fetchEstimate(Math.max(cartTotal.value, 1), customer.id)
 })
 
 // Methods
