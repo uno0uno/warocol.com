@@ -52,38 +52,38 @@
     </div>
 
     <!-- ── Content ───────────────────────────────────────────────── -->
-    <div class="flex flex-col flex-1 px-4 pt-3 pb-2 gap-1">
-      <!-- Title: minimum text-sm font-bold for card label -->
-      <p class="text-sm font-bold text-text-primary leading-tight">{{ meta.label }}</p>
-      <!-- Config summary: text-xs acceptable for card metadata -->
-      <p class="text-xs text-text-secondary leading-relaxed flex-1">
-        {{ rule.is_active ? summary : 'Sin configurar — activa para empezar' }}
+    <div class="flex flex-col flex-1 px-4 pt-3 pb-3 gap-1.5">
+      <p class="text-base font-semibold text-text-primary leading-tight">{{ meta.label }}</p>
+      <p :class="['text-sm leading-snug flex-1', rule.is_active ? 'text-text-secondary' : 'text-text-tertiary italic']">
+        {{ rule.is_active ? summary : 'Sin configurar' }}
       </p>
     </div>
 
     <!-- ── Footer: toggle + edit ─────────────────────────────────── -->
-    <div class="flex items-center justify-between px-3 pb-3 pt-1">
-      <!-- Toggle: role=switch + aria-checked + aria-label -->
-      <button
-        role="switch"
-        :aria-checked="rule.is_active"
-        :aria-label="`${rule.is_active ? 'Desactivar' : 'Activar'} regla ${meta.label}`"
-        :disabled="toggling"
-        @click="emit('toggle', rule)"
-        :class="[
-          'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
-          'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-          'disabled:opacity-50 disabled:cursor-wait',
-          rule.is_active ? activeSwitchBg : 'bg-slate-300',
-        ]"
-      >
-        <span
+    <div class="flex items-center justify-between px-3 pb-3 pt-0 border-t border-border/40">
+      <!-- Toggle: role=switch + aria-checked + aria-label — min 44px touch target via wrapper -->
+      <div class="flex items-center min-h-[44px]">
+        <button
+          role="switch"
+          :aria-checked="rule.is_active"
+          :aria-label="`${rule.is_active ? 'Desactivar' : 'Activar'} regla ${meta.label}`"
+          :disabled="toggling"
+          @click="emit('toggle', rule)"
           :class="[
-            'inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform',
-            rule.is_active ? 'translate-x-[18px]' : 'translate-x-[2px]',
+            'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
+            'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+            'disabled:opacity-50 disabled:cursor-wait',
+            rule.is_active ? activeSwitchBg : 'bg-slate-300',
           ]"
-        />
-      </button>
+        >
+          <span
+            :class="[
+              'inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform',
+              rule.is_active ? 'translate-x-[18px]' : 'translate-x-[2px]',
+            ]"
+          />
+        </button>
+      </div>
 
       <!-- Edit button: aria-label + min 44×44px touch target -->
       <button

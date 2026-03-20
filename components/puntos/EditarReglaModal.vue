@@ -100,7 +100,7 @@
 
       <!-- ── ticket_value ── -->
       <template v-if="rule.rule_type === 'ticket_value'">
-        <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-3">
+        <div class="bg-surface-secondary/50 border border-primary/15 rounded-xl p-4 space-y-3">
           <p class="text-xs font-semibold uppercase tracking-wider text-primary">Tasa base</p>
           <div class="grid grid-cols-2 gap-3">
             <div class="flex flex-col gap-1.5">
@@ -124,24 +124,32 @@
               />
             </div>
           </div>
-          <p class="text-xs text-text-secondary bg-white/60 rounded-lg px-3 py-2 border border-border/50">
-            Ej. compra de ${{ (tvConfig.base_pesos * 10).toLocaleString('es-CO') }} → <strong class="text-text-primary">{{ tvConfig.base_waros * 10 }} Waros</strong>
-          </p>
+          <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-xs text-amber-800">
+              Ej. compra de ${{ (tvConfig.base_pesos * 10).toLocaleString('es-CO') }} → <strong class="text-amber-900">{{ tvConfig.base_waros * 10 }} Waros</strong>
+            </p>
+          </div>
         </div>
 
         <!-- Tiers -->
         <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-3">
-          <div class="flex items-center justify-between">
-            <p class="text-xs font-semibold uppercase tracking-wider text-primary">Tiers por monto <span class="text-xs normal-case tracking-normal font-normal text-text-tertiary ml-1">(opcional)</span></p>
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">Multiplicadores por monto</p>
+              <p class="text-xs text-text-tertiary mt-0.5">Aumenta los Waros según el total de la compra</p>
+            </div>
             <button
               @click="addTier"
               type="button"
-              class="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 bg-primary/8 hover:bg-primary/15 px-2.5 py-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              class="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 bg-primary/8 hover:bg-primary/15 px-2.5 py-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
               </svg>
-              Agregar tier
+              Agregar
             </button>
           </div>
 
@@ -152,11 +160,11 @@
             <span class="text-xs">{{ tierGapWarning }}</span>
           </div>
 
-          <div v-if="tvConfig.tiers.length === 0" class="flex flex-col items-center gap-1.5 text-center py-4 bg-white/60 rounded-lg border border-border/50">
-            <svg class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div v-if="tvConfig.tiers.length === 0" class="flex items-center gap-3 py-3 px-4 bg-white/50 rounded-lg border-2 border-dashed border-border">
+            <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
-            <p class="text-xs text-text-tertiary">Se aplica la tasa base para todos los montos</p>
+            <p class="text-xs text-text-secondary">Sin multiplicadores — se aplica la tasa base para todos los montos</p>
           </div>
 
           <div v-for="(tier, i) in tvConfig.tiers" :key="i" class="flex items-end gap-2 bg-white/70 rounded-lg p-3 border border-border/40">
@@ -207,17 +215,20 @@
       <!-- ── purchase_count ── -->
       <template v-else-if="rule.rule_type === 'purchase_count'">
         <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-3">
-          <div class="flex items-center justify-between">
-            <p class="text-xs font-semibold uppercase tracking-wider text-primary">Hitos de compra</p>
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">Hitos de compra</p>
+              <p class="text-xs text-text-tertiary mt-0.5">Cada hito premia al cliente al alcanzar ese número de compras</p>
+            </div>
             <button
               @click="addMilestone"
               type="button"
-              class="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 bg-primary/8 hover:bg-primary/15 px-2.5 py-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              class="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 bg-primary/8 hover:bg-primary/15 px-2.5 py-1.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
               </svg>
-              Agregar hito
+              Agregar
             </button>
           </div>
 
@@ -228,12 +239,11 @@
             <span class="text-xs">{{ milestoneDupWarning }}</span>
           </div>
 
-          <div v-if="pcConfig.milestones.length === 0" class="flex flex-col items-center gap-1.5 text-center py-5 bg-white/60 rounded-lg border border-border/50">
-            <svg class="w-7 h-7 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div v-if="pcConfig.milestones.length === 0" class="flex items-center gap-3 py-3 px-4 bg-white/50 rounded-lg border-2 border-dashed border-border">
+            <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            <p class="text-sm font-medium text-text-secondary">Sin hitos configurados</p>
-            <p class="text-xs text-text-tertiary">Agrega al menos uno para activar la regla</p>
+            <p class="text-xs text-text-secondary">Sin hitos — agrega al menos uno para activar la regla</p>
           </div>
 
           <div v-for="(m, i) in pcConfig.milestones" :key="i" class="flex items-end gap-2 bg-white/70 rounded-lg p-3 border border-border/40">
@@ -273,8 +283,8 @@
 
       <!-- ── frequency ── -->
       <template v-else-if="rule.rule_type === 'frequency'">
-        <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-4">
-          <p class="text-xs font-semibold uppercase tracking-wider text-primary">Condición de frecuencia</p>
+        <div class="bg-surface-secondary/50 border border-primary/15 rounded-xl p-4 space-y-4">
+          <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">Condición de frecuencia</p>
           <div class="grid grid-cols-2 gap-3">
             <div class="flex flex-col gap-1.5">
               <label for="field-purchases" class="text-sm font-medium text-text-primary">Compras requeridas</label>
@@ -309,16 +319,21 @@
               :class="inputClass"
             />
           </div>
-          <p class="text-xs text-text-secondary bg-white/60 rounded-lg px-3 py-2 border border-border/50">
-            Ejemplo: {{ freqConfig.purchases ?? 2 }} compras en {{ freqConfig.within_days ?? 60 }} días → <strong class="text-text-primary">{{ freqConfig.bonus ?? 75 }} Waros</strong>
-          </p>
+          <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-xs text-amber-800">
+              Ej. {{ freqConfig.purchases ?? 2 }} compras en {{ freqConfig.within_days ?? 60 }} días → <strong class="text-amber-900">{{ freqConfig.bonus ?? 75 }} Waros bonus</strong>
+            </p>
+          </div>
         </div>
       </template>
 
       <!-- ── per_ticket_qty ── -->
       <template v-else-if="rule.rule_type === 'per_ticket_qty'">
-        <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-4">
-          <p class="text-xs font-semibold uppercase tracking-wider text-primary">Waros por producto</p>
+        <div class="bg-surface-secondary/50 border border-primary/15 rounded-xl p-4 space-y-4">
+          <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">Waros por producto</p>
           <div class="flex flex-col gap-1.5">
             <label for="field-pti" class="text-sm font-medium text-text-primary">Waros por cada producto</label>
             <input
@@ -329,11 +344,19 @@
               :class="inputClass"
             />
           </div>
+          <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-xs text-amber-800">
+              Ej. pedido con 5 productos → <strong class="text-amber-900">{{ (ptqConfig.points_per_item ?? 10) * 5 }} Waros</strong>
+            </p>
+          </div>
         </div>
 
         <div class="bg-surface-secondary/50 rounded-xl p-4 space-y-4">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wider text-primary">Bonus por cantidad <span class="text-xs normal-case tracking-normal font-normal text-text-tertiary ml-1">(opcional)</span></p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">Bonus por cantidad <span class="text-xs normal-case tracking-normal font-normal text-text-tertiary ml-1">(opcional)</span></p>
             <p class="text-xs text-text-tertiary mt-1">Puntos adicionales cuando el pedido supera cierta cantidad de productos</p>
           </div>
           <div class="grid grid-cols-2 gap-3">
@@ -358,12 +381,20 @@
               />
             </div>
           </div>
-          <p v-if="ptqConfig.bonus_from_qty" class="text-xs text-text-secondary bg-white/60 rounded-lg px-3 py-2 border border-border/50">
-            Pedido con {{ ptqConfig.bonus_from_qty }}+ productos → <strong class="text-text-primary">{{ (ptqConfig.points_per_item ?? 10) * ptqConfig.bonus_from_qty + (ptqConfig.bonus_extra_points ?? 0) }} Waros</strong>
-          </p>
-          <p v-else class="text-xs text-text-tertiary bg-white/60 rounded-lg px-3 py-2 border border-border/50">
-            Sin bonus por cantidad — se aplica solo la tasa base
-          </p>
+          <div v-if="ptqConfig.bonus_from_qty" class="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-xs text-amber-800">
+              Ej. pedido con {{ ptqConfig.bonus_from_qty }}+ productos → <strong class="text-amber-900">{{ (ptqConfig.points_per_item ?? 10) * ptqConfig.bonus_from_qty + (ptqConfig.bonus_extra_points ?? 0) }} Waros</strong>
+            </p>
+          </div>
+          <div v-else class="flex items-center gap-3 py-3 px-4 bg-white/50 rounded-lg border-2 border-dashed border-border">
+            <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+            <p class="text-xs text-text-secondary">Sin bonus — se aplica solo Waros por producto</p>
+          </div>
         </div>
       </template>
 
