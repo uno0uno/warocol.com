@@ -57,7 +57,7 @@ const RULE_META: Record<string, { label: string; description: string; icon: stri
   per_ticket_qty: {
     label: 'Por productos comprados',
     description: 'Otorga Waros según cantidad de ítems en el pedido',
-    icon: 'ticket',
+    icon: 'box',
   },
 }
 

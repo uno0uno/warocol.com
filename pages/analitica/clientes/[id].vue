@@ -132,17 +132,21 @@ const tableColumns = [
   { key: 'total', title: 'Total', sortable: false },
   { key: 'payment_method', title: 'Forma de pago', sortable: false },
   { key: 'status', title: 'Estado', sortable: false },
+  { key: 'waros_earned', title: 'Waros', sortable: false },
 ]
 
 // ── Waros ─────────────────────────────────────────────────────────────────
-const { summary: warosSummary, isLoadingSummary: isLoadingWaros, fetchSummary: fetchWarosSummary } = useWarosCliente()
 const showWarosModal = ref(false)
+const showManualPanel = ref(false)
+
+// Waros data comes from the main apiData response (no separate call)
+const warosSummary = computed(() => (apiData.value as any)?.waros_summary ?? null)
+const isLoadingWaros = computed(() => isLoading.value)
 const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
 
 const onWarosAssigned = async (payload: { newBalance: number }) => {
-  // Update local balance immediately then refetch for accurate transaction list
-  if (warosSummary.value) warosSummary.value.current_balance = payload.newBalance
-  await fetchWarosSummary(customerId.value)
+  // Refetch main data to get updated Waros balance + transactions
+  await refresh()
 }
 
 const formatWarosDate = (isoDate: string) => {
@@ -162,14 +166,9 @@ watch(customer, (c) => {
   if (c) setPageTitle?.(c.name)
 }, { immediate: true })
 
-watch(currentTenant, () => {
-  if (customerId.value) fetchWarosSummary(customerId.value)
-})
-
 onMounted(() => {
   setShowBackButton?.(true)
   setBackHandler?.(goBack)
-  fetchWarosSummary(customerId.value)
 })
 
 onUnmounted(() => {
@@ -268,47 +267,30 @@ onUnmounted(() => {
 
         <!-- Waros section -->
         <div class="border-t border-border px-5 py-4">
-          <!-- Balance row -->
           <div class="flex items-center justify-between gap-4">
             <div>
               <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Puntos Waros</p>
               <p v-if="isLoadingWaros" class="text-sm font-semibold text-text-secondary">Cargando...</p>
               <p v-else class="text-sm font-semibold text-amber-700">{{ warosBalance.toLocaleString('es-CO') }}</p>
             </div>
-            <button
-              type="button"
-              aria-label="Asignar o quitar Waros a este cliente"
-              @click="showWarosModal = true"
-              class="min-h-[44px] px-4 text-sm font-semibold rounded-lg border-2 border-amber-400 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400/50 flex-shrink-0"
-            >
-              + Asignar puntos
-            </button>
-          </div>
-
-          <!-- Last transactions -->
-          <div
-            v-if="!isLoadingWaros && warosSummary && warosSummary.recent_transactions.length > 0"
-            class="mt-3 space-y-1"
-          >
-            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-2">Últimas transacciones</p>
-            <div
-              v-for="tx in warosSummary.recent_transactions"
-              :key="tx.id"
-              class="flex items-center justify-between gap-3 py-1"
-            >
-              <div class="flex items-center gap-2 min-w-0">
-                <span
-                  :class="[
-                    'text-xs font-bold flex-shrink-0 w-14 text-right',
-                    tx.waros_amount > 0 ? 'text-green-600' : 'text-red-600'
-                  ]"
-                >
-                  {{ tx.waros_amount > 0 ? '+' : '' }}{{ tx.waros_amount.toLocaleString('es-CO') }}
-                </span>
-                <span class="text-xs font-medium text-text-secondary flex-shrink-0">{{ txTypeLabel(tx.transaction_type) }}</span>
-                <span class="text-xs text-text-secondary truncate">{{ tx.description }}</span>
-              </div>
-              <span class="text-xs text-text-secondary flex-shrink-0">{{ formatWarosDate(tx.created_at) }}</span>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <button
+                v-if="!isLoadingWaros && warosSummary?.manual_transactions?.length > 0"
+                type="button"
+                aria-label="Ver asignaciones manuales de Waros"
+                @click="showManualPanel = true"
+                class="min-h-[44px] px-3 text-sm font-medium rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                Ver manuales
+              </button>
+              <button
+                type="button"
+                aria-label="Asignar o quitar Waros a este cliente"
+                @click="showWarosModal = true"
+                class="min-h-[44px] px-4 text-sm font-semibold rounded-lg border-2 border-amber-400 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400/50"
+              >
+                + Asignar puntos
+              </button>
             </div>
           </div>
         </div>
@@ -411,6 +393,13 @@ onUnmounted(() => {
             {{ statusLabels[value] || value }}
           </span>
         </template>
+
+        <template #cell-waros_earned="{ value }">
+          <span v-if="value > 0" class="text-sm font-semibold text-amber-700">
+            +{{ value.toLocaleString('es-CO') }}
+          </span>
+          <span v-else class="text-sm text-text-secondary">—</span>
+        </template>
       </UiResponsiveDataView>
 
       <!-- Pagination -->
@@ -457,10 +446,117 @@ onUnmounted(() => {
       :current-balance="warosBalance"
       @assigned="onWarosAssigned"
     />
+
+    <!-- Slide-over: asignaciones manuales -->
+    <Teleport to="body">
+      <!-- Overlay -->
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="showManualPanel" class="fixed inset-0 z-40 bg-black/40" @click="showManualPanel = false" aria-hidden="true" />
+      </Transition>
+
+      <!-- Panel -->
+      <Transition name="panel">
+        <div
+          v-if="showManualPanel"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Asignaciones manuales de Waros"
+          class="fixed z-50 flex flex-col bg-surface shadow-2xl
+                 inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
+                 md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+        >
+          <!-- Mobile drag handle -->
+          <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+            <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          </div>
+
+          <!-- Header -->
+          <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0 flex-1">
+                <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700" aria-hidden="true">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <h2 class="text-base font-bold text-text-primary leading-tight">Asignaciones manuales</h2>
+                  <p class="text-xs text-text-secondary leading-snug mt-0.5">{{ customer?.name }}</p>
+                </div>
+              </div>
+              <button
+                @click="showManualPanel = false"
+                type="button"
+                aria-label="Cerrar panel"
+                class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- List -->
+          <div class="flex-1 overflow-y-auto px-6 py-4 space-y-2">
+            <div
+              v-if="!warosSummary?.manual_transactions?.length"
+              class="flex flex-col items-center justify-center h-40 gap-2 text-text-secondary"
+            >
+              <svg class="w-8 h-8 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <p class="text-sm font-medium">Sin asignaciones manuales</p>
+            </div>
+            <div
+              v-for="tx in warosSummary?.manual_transactions"
+              :key="tx.id"
+              class="flex items-center justify-between gap-3 bg-white/70 border border-border/50 rounded-xl px-4 py-3"
+            >
+              <div class="min-w-0">
+                <p class="text-xs text-text-secondary mb-0.5">{{ formatWarosDate(tx.created_at) }}</p>
+                <p class="text-sm text-text-primary truncate">{{ tx.description || 'Asignación manual' }}</p>
+              </div>
+              <span
+                :class="[
+                  'text-sm font-bold flex-shrink-0',
+                  tx.waros_amount > 0 ? 'text-green-600' : 'text-red-600',
+                ]"
+              >
+                {{ tx.waros_amount > 0 ? '+' : '' }}{{ tx.waros_amount.toLocaleString('es-CO') }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <style>
+/* Slide-over animation — same as EditarReglaModal */
+.panel-enter-active,
+.panel-leave-active {
+  transition: transform 0.3s ease;
+}
+.panel-enter-from,
+.panel-leave-to {
+  transform: translateY(100%);
+}
+@media (min-width: 768px) {
+  .panel-enter-from,
+  .panel-leave-to {
+    transform: translateX(100%);
+  }
+}
+
 .dp-custom-input {
   height: 40px !important;
   border: 2px solid hsl(var(--border)) !important;

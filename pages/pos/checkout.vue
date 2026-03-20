@@ -602,7 +602,7 @@ onUnmounted(() => {
                   aria-live="polite"
                   aria-label="Puntos estimados para esta compra"
                 >
-                  <span v-if="isLoadingEstimate" class="text-text-tertiary text-base">...</span>
+                  <span v-if="isLoadingEstimate" class="inline-block h-5 w-16 rounded bg-green-200 animate-pulse"></span>
                   <span v-else-if="estimatedWaros === null">—</span>
                   <span v-else>+ {{ estimatedWaros.toLocaleString('es-CO') }}</span>
                 </p>
@@ -630,7 +630,7 @@ onUnmounted(() => {
         <div class="flex flex-col gap-2">
           <button
             @click="processOrder"
-            :disabled="isProcessing || !selectedCustomer"
+            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate"
             class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UiLoadingDots v-if="isProcessing" size="9px" />
@@ -768,7 +768,7 @@ onUnmounted(() => {
             <div class="bg-green-50 rounded-xl p-3">
               <p class="text-xs text-text-secondary mb-0.5">Ganarías esta compra</p>
               <p class="text-lg font-bold text-green-700 leading-tight" aria-live="polite">
-                <span v-if="isLoadingEstimate" class="text-text-tertiary text-base">...</span>
+                <span v-if="isLoadingEstimate" class="inline-block h-5 w-16 rounded bg-green-200 animate-pulse"></span>
                 <span v-else-if="estimatedWaros === null">—</span>
                 <span v-else>+ {{ estimatedWaros.toLocaleString('es-CO') }}</span>
               </p>
@@ -796,7 +796,7 @@ onUnmounted(() => {
       <div class="flex flex-col gap-2">
         <button
           @click="processOrder"
-          :disabled="isProcessing || !selectedCustomer"
+          :disabled="isProcessing || !selectedCustomer || isLoadingEstimate"
           class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingDots v-if="isProcessing" size="9px" />
