@@ -1,23 +1,5 @@
 <template>
-  <div class="page-layout space-y-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-text-primary">Billing Admin</h1>
-        <p class="text-sm text-text-secondary mt-0.5">Gestión de suscripciones y uso de escaneos</p>
-      </div>
-      <div class="flex gap-2">
-        <NuxtLink to="/gestion/billing/planes" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] flex items-center">
-          Planes
-        </NuxtLink>
-        <NuxtLink to="/gestion/billing/suscripciones" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] flex items-center">
-          Suscripciones
-        </NuxtLink>
-        <NuxtLink to="/gestion/billing/eventos" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] flex items-center">
-          Eventos
-        </NuxtLink>
-      </div>
-    </div>
-
+  <div class="space-y-6 p-6">
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center min-h-[300px]">
       <CommonsTheCustomLoader size="large" />
@@ -25,27 +7,27 @@
 
     <!-- Error -->
     <div v-else-if="error" class="bg-surface border border-border rounded-xl p-6 text-center">
-      <p class="text-sm text-error mb-3">{{ error }}</p>
+      <p class="text-sm text-destructive mb-3">{{ error }}</p>
       <button @click="loadData" class="text-sm text-primary hover:underline">Reintentar</button>
     </div>
 
     <template v-else>
       <!-- Metric cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-surface border border-border rounded-xl p-4 space-y-1">
-          <p class="text-xs text-text-secondary uppercase tracking-wide">Tenants activos</p>
-          <p class="text-3xl font-bold text-green-600">{{ stats.active }}</p>
+        <div class="bg-surface border border-border rounded-xl p-5 space-y-1">
+          <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Tenants activos</p>
+          <p class="text-3xl font-bold text-status-success-text">{{ stats.active }}</p>
         </div>
-        <div class="bg-surface border border-border rounded-xl p-4 space-y-1">
-          <p class="text-xs text-text-secondary uppercase tracking-wide">Grace period</p>
-          <p class="text-3xl font-bold text-yellow-600">{{ stats.pastDue }}</p>
+        <div class="bg-surface border border-border rounded-xl p-5 space-y-1">
+          <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Grace period</p>
+          <p class="text-3xl font-bold text-status-warning-text">{{ stats.pastDue }}</p>
         </div>
-        <div class="bg-surface border border-border rounded-xl p-4 space-y-1">
-          <p class="text-xs text-text-secondary uppercase tracking-wide">Bloqueados</p>
-          <p class="text-3xl font-bold text-red-600">{{ stats.blocked }}</p>
+        <div class="bg-surface border border-border rounded-xl p-5 space-y-1">
+          <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Bloqueados</p>
+          <p class="text-3xl font-bold text-status-critical-text">{{ stats.blocked }}</p>
         </div>
-        <div class="bg-surface border border-border rounded-xl p-4 space-y-1">
-          <p class="text-xs text-text-secondary uppercase tracking-wide">Total tenants</p>
+        <div class="bg-surface border border-border rounded-xl p-5 space-y-1">
+          <p class="text-xs font-medium text-text-secondary uppercase tracking-widest">Total tenants</p>
           <p class="text-3xl font-bold text-text-primary">{{ subscriptions.length }}</p>
         </div>
       </div>
@@ -64,18 +46,21 @@
           <table class="w-full text-sm">
             <thead class="bg-surface-secondary">
               <tr>
-                <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Tenant</th>
-                <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Plan</th>
-                <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide w-48">Uso</th>
-                <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Período</th>
-                <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Último scan</th>
+                <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-widest">Tenant</th>
+                <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-widest">Plan</th>
+                <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-widest w-48">Uso</th>
+                <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-widest">Período</th>
+                <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-widest">Último scan</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border">
               <tr v-for="item in usageSummary" :key="item.tenant_id" class="hover:bg-surface-secondary/50 transition-colors">
                 <td class="px-6 py-4 font-medium text-text-primary">{{ item.tenant_name }}</td>
                 <td class="px-6 py-4">
-                  <span class="px-2 py-0.5 rounded-full text-xs font-medium" :class="item.plan_slug === 'pro' ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'">
+                  <span
+                    class="px-2 py-0.5 rounded-full text-xs font-medium"
+                    :class="item.plan_slug === 'pro' ? 'bg-status-info-bg text-status-info-text' : 'bg-surface-secondary text-text-secondary'"
+                  >
                     {{ item.plan_name }}
                   </span>
                 </td>
@@ -108,7 +93,7 @@
 <script setup lang="ts">
 import { useAdminBilling } from '~/composables/useAdminBilling'
 
-definePageMeta({ layout: 'admin', middleware: 'admin-only' })
+definePageMeta({ middleware: 'admin-only' })
 useHead({ title: 'Billing Admin — WaRo' })
 
 const { subscriptions, usageSummary, loading, error, fetchAdminSubscriptions, fetchUsageSummary } = useAdminBilling()

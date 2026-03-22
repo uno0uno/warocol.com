@@ -1,10 +1,10 @@
 <template>
-  <div class="page-layout space-y-6">
+  <div class="space-y-6 p-6">
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-text-primary">Gestión de Planes</h1>
+      <p class="text-sm text-text-secondary">{{ plans.length }} plan{{ plans.length !== 1 ? 'es' : '' }} configurado{{ plans.length !== 1 ? 's' : '' }}</p>
       <button
         @click="openCreate"
-        class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold min-h-[44px] flex items-center gap-2"
+        class="flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors focus:ring-2 focus:ring-primary/30"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -20,7 +20,7 @@
 
     <!-- Error -->
     <div v-else-if="error" class="bg-surface border border-border rounded-xl p-6 text-center">
-      <p class="text-sm text-error mb-3">{{ error }}</p>
+      <p class="text-sm text-destructive mb-3">{{ error }}</p>
       <button @click="fetchAdminPlans" class="text-sm text-primary hover:underline">Reintentar</button>
     </div>
 
@@ -29,32 +29,32 @@
       <div
         v-for="plan in plans"
         :key="plan.id"
-        class="bg-surface border border-border rounded-xl p-5 space-y-4"
-        :class="{ 'opacity-60': !plan.is_active }"
+        class="bg-surface border border-border rounded-xl p-5 space-y-4 transition-opacity"
+        :class="{ 'opacity-50': !plan.is_active }"
       >
         <div class="flex items-start justify-between gap-2">
           <div>
             <h2 class="text-base font-semibold text-text-primary">{{ plan.name }}</h2>
-            <p class="text-xs text-text-secondary">{{ plan.slug }}</p>
+            <p class="text-xs text-text-secondary mt-0.5">{{ plan.slug }}</p>
           </div>
           <span
-            class="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-            :class="plan.is_active ? 'bg-green-100 text-green-700' : 'bg-surface-secondary text-text-secondary'"
+            class="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full"
+            :class="plan.is_active ? 'bg-status-success-bg text-status-success-text' : 'bg-surface-secondary text-text-secondary'"
           >
             <span aria-hidden="true">●</span>
             {{ plan.is_active ? 'Activo' : 'Inactivo' }}
           </span>
         </div>
 
-        <div class="space-y-1">
+        <div class="space-y-1.5">
           <p class="text-sm text-text-secondary">
-            <span class="font-medium text-text-primary">{{ formatCOP(plan.price_monthly) }}</span> / mes
+            <span class="font-semibold text-text-primary">{{ formatCOP(plan.price_monthly) }}</span> / mes
           </p>
           <p class="text-sm text-text-secondary">
-            <span class="font-medium text-text-primary">{{ formatCOP(plan.price_annual) }}</span> / año
+            <span class="font-semibold text-text-primary">{{ formatCOP(plan.price_annual) }}</span> / año
           </p>
           <p class="text-sm text-text-secondary">
-            <span class="font-medium text-text-primary">{{ plan.scan_limit.toLocaleString('es-CO') }}</span> escaneos / período
+            <span class="font-semibold text-text-primary">{{ plan.scan_limit.toLocaleString('es-CO') }}</span> escaneos / período
           </p>
         </div>
 
@@ -63,15 +63,15 @@
         <div class="flex gap-2 pt-1">
           <button
             @click="openEdit(plan)"
-            class="flex-1 min-h-[40px] px-3 py-2 rounded-lg text-sm font-medium border border-border hover:bg-surface-secondary transition-colors focus:ring-2 focus:ring-primary/30"
+            class="flex-1 min-h-[44px] px-3 rounded-lg text-sm font-medium border border-border hover:bg-surface-secondary transition-colors focus:ring-2 focus:ring-primary/30"
           >
             Editar
           </button>
           <button
             v-if="plan.is_active"
             @click="confirmDeactivate(plan)"
-            class="flex-1 min-h-[40px] px-3 py-2 rounded-lg text-sm font-medium border border-red-200 text-red-600 hover:bg-red-50 transition-colors focus:ring-2 focus:ring-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="loading"
+            class="flex-1 min-h-[44px] px-3 rounded-lg text-sm font-medium border border-status-critical-bg text-status-critical-text hover:bg-status-critical-bg/50 transition-colors focus:ring-2 focus:ring-status-critical-bg disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Desactivar
           </button>
@@ -122,7 +122,9 @@
             </div>
 
             <div class="flex flex-col gap-1">
-              <label for="plan-desc" class="text-sm font-medium text-text-primary">Descripción <span class="text-text-secondary font-normal">(opcional)</span></label>
+              <label for="plan-desc" class="text-sm font-medium text-text-primary">
+                Descripción <span class="text-text-secondary font-normal">(opcional)</span>
+              </label>
               <textarea
                 id="plan-desc"
                 v-model="form.description"
@@ -173,7 +175,7 @@
               />
             </div>
 
-            <div v-if="formError" class="flex items-center gap-2 text-sm text-error">
+            <div v-if="formError" class="flex items-center gap-2 text-sm text-destructive">
               <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -184,14 +186,14 @@
               <button
                 type="button"
                 @click="closeForm"
-                class="flex-1 min-h-[44px] px-4 py-2 rounded-xl border border-border text-sm font-medium hover:bg-surface-secondary transition-colors"
+                class="flex-1 min-h-[44px] px-4 rounded-xl border border-border text-sm font-medium hover:bg-surface-secondary transition-colors"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 :disabled="loading"
-                class="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                class="flex-1 min-h-[44px] px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <span v-if="loading">Guardando...</span>
                 <span v-else>{{ editingPlan ? 'Guardar cambios' : 'Crear plan' }}</span>
@@ -208,12 +210,11 @@
 import { useAdminBilling } from '~/composables/useAdminBilling'
 import type { BillingPlan } from '~/composables/useBilling'
 
-definePageMeta({ layout: 'admin', middleware: 'admin-only' })
-useHead({ title: 'Gestión de Planes — WaRo Admin' })
+definePageMeta({ middleware: 'admin-only' })
+useHead({ title: 'Planes — WaRo Admin' })
 
 const { plans, loading, error, fetchAdminPlans, createPlan, updatePlan, deactivatePlan } = useAdminBilling()
 
-// Form state
 const showForm = ref(false)
 const editingPlan = ref<BillingPlan | null>(null)
 const formError = ref<string | null>(null)

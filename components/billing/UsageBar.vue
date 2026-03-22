@@ -39,16 +39,16 @@ const props = defineProps<{
 }>()
 
 const barColorClass = computed(() => {
-  if (props.percentage >= 100) return 'bg-red-500'
-  if (props.percentage >= 80) return 'bg-orange-500'
-  if (props.percentage >= 50) return 'bg-yellow-500'
-  return 'bg-green-500'
+  if (props.percentage >= 100) return 'bg-status-critical-text'
+  if (props.percentage >= 80) return 'bg-status-warning-text'
+  if (props.percentage >= 50) return 'bg-status-info-text'
+  return 'bg-status-success-text'
 })
 
 const labelColorClass = computed(() => {
-  if (props.percentage >= 100) return 'text-red-600'
-  if (props.percentage >= 80) return 'text-orange-600'
-  if (props.percentage >= 50) return 'text-yellow-600'
+  if (props.percentage >= 100) return 'text-status-critical-text'
+  if (props.percentage >= 80) return 'text-status-warning-text'
+  if (props.percentage >= 50) return 'text-status-info-text'
   return 'text-text-secondary'
 })
 </script>

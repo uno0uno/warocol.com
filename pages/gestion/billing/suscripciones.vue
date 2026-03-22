@@ -1,20 +1,18 @@
 <template>
-  <div class="page-layout space-y-6">
-    <h1 class="text-2xl font-bold text-text-primary">Suscripciones</h1>
-
+  <div class="space-y-6 p-6">
     <!-- Status filter tabs -->
     <div class="flex gap-2 flex-wrap" role="group" aria-label="Filtrar por estado">
       <button
         v-for="tab in statusTabs"
         :key="tab.value"
         @click="activeStatus = tab.value"
+        :aria-pressed="activeStatus === tab.value"
         :class="[
-          'px-4 py-2 rounded-lg text-sm font-medium min-h-[40px] transition-colors border',
+          'min-h-[40px] px-4 py-2 rounded-lg text-sm font-medium transition-colors border',
           activeStatus === tab.value
             ? 'bg-primary text-primary-foreground border-primary'
             : 'bg-surface border-border text-text-secondary hover:bg-surface-secondary',
         ]"
-        :aria-pressed="activeStatus === tab.value"
       >
         {{ tab.label }}
         <span class="ml-1.5 text-xs opacity-70">({{ tab.count }})</span>
@@ -28,7 +26,7 @@
 
     <!-- Error -->
     <div v-else-if="error" class="bg-surface border border-border rounded-xl p-6 text-center">
-      <p class="text-sm text-error mb-3">{{ error }}</p>
+      <p class="text-sm text-destructive mb-3">{{ error }}</p>
       <button @click="fetchAdminSubscriptions" class="text-sm text-primary hover:underline">Reintentar</button>
     </div>
 
@@ -42,12 +40,12 @@
         <table class="w-full text-sm">
           <thead class="bg-surface-secondary">
             <tr>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Tenant</th>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Plan</th>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Ciclo</th>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Estado</th>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Renovación</th>
-              <th class="text-right px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Acción</th>
+              <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-widest">Tenant</th>
+              <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-widest">Plan</th>
+              <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-widest">Ciclo</th>
+              <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-widest">Estado</th>
+              <th class="text-left px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-widest">Renovación</th>
+              <th class="text-right px-6 py-3 text-xs font-semibold text-text-secondary uppercase tracking-widest">Acción</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-border">
@@ -69,7 +67,7 @@
               <td class="px-6 py-4 text-right">
                 <button
                   @click="openEdit(sub)"
-                  class="text-xs text-primary hover:underline font-medium min-h-[32px] px-2"
+                  class="text-xs text-primary hover:underline font-medium min-h-[44px] px-2"
                   :aria-label="`Editar suscripción de ${sub.tenant_name}`"
                 >
                   Editar
@@ -113,7 +111,7 @@
               </select>
             </div>
 
-            <div v-if="editError" class="flex items-center gap-2 text-sm text-error">
+            <div v-if="editError" class="flex items-center gap-2 text-sm text-destructive">
               <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -122,7 +120,7 @@
 
             <div class="flex gap-3">
               <button type="button" @click="editingSub = null" class="flex-1 min-h-[44px] border border-border rounded-xl text-sm hover:bg-surface-secondary transition-colors">Cancelar</button>
-              <button type="submit" :disabled="loading" class="flex-1 min-h-[44px] bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors">
+              <button type="submit" :disabled="loading" class="flex-1 min-h-[44px] bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-40 transition-colors">
                 {{ loading ? 'Guardando...' : 'Guardar' }}
               </button>
             </div>
@@ -137,7 +135,7 @@
 import { useAdminBilling } from '~/composables/useAdminBilling'
 import type { AdminSubscription } from '~/composables/useAdminBilling'
 
-definePageMeta({ layout: 'admin', middleware: 'admin-only' })
+definePageMeta({ middleware: 'admin-only' })
 useHead({ title: 'Suscripciones — WaRo Admin' })
 
 const { subscriptions, plans, loading, error, fetchAdminSubscriptions, fetchAdminPlans, updateSubscriptionStatus } = useAdminBilling()
@@ -163,11 +161,11 @@ const filtered = computed(() =>
 
 const statusStyle = (status: string) => {
   const map: Record<string, { badge: string; label: string; icon: string }> = {
-    active:    { badge: 'bg-green-100 text-green-700',  label: 'Activo',     icon: '●' },
-    pending:   { badge: 'bg-blue-100 text-blue-700',    label: 'Pendiente',  icon: '○' },
-    past_due:  { badge: 'bg-yellow-100 text-yellow-700', label: 'Vencido',   icon: '⚠' },
-    cancelled: { badge: 'bg-red-100 text-red-700',      label: 'Cancelado',  icon: '✗' },
-    expired:   { badge: 'bg-gray-100 text-gray-600',    label: 'Expirado',   icon: '✗' },
+    active:    { badge: 'bg-status-success-bg text-status-success-text', label: 'Activo',    icon: '●' },
+    pending:   { badge: 'bg-status-info-bg text-status-info-text',       label: 'Pendiente', icon: '○' },
+    past_due:  { badge: 'bg-status-warning-bg text-status-warning-text', label: 'Vencido',   icon: '⚠' },
+    cancelled: { badge: 'bg-status-critical-bg text-status-critical-text', label: 'Cancelado', icon: '✗' },
+    expired:   { badge: 'bg-surface-secondary text-text-secondary',      label: 'Expirado',  icon: '✗' },
   }
   return map[status] ?? { badge: 'bg-surface-secondary text-text-secondary', label: status, icon: '○' }
 }
