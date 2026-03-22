@@ -177,10 +177,11 @@
                 />
                 <button
                   type="button"
-                  :disabled="isScanning"
+                  :disabled="isScanning || isQuotaExceeded"
                   @click="scanFileInput?.click()"
-                  class="px-2.5 py-2 sm:px-3 bg-primary/10 text-primary border-2 border-primary/20 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-1.5 flex-shrink-0"
-                  :aria-label="isScanning ? currentPhrase : 'Leer Factura con IA'"
+                  class="px-2.5 py-2 sm:px-3 bg-primary/10 text-primary border-2 border-primary/20 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 flex-shrink-0"
+                  :aria-label="isQuotaExceeded ? 'Escaneo deshabilitado — cuota agotada' : isScanning ? currentPhrase : 'Leer Factura con IA'"
+                  :title="isQuotaExceeded ? 'Cuota de escaneos agotada — actualiza tu plan' : undefined"
                 >
                   <svg v-if="!isScanning" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -190,6 +191,15 @@
                 </button>
               </div>
             </div>
+
+            <!-- Scan usage bar -->
+            <UiScanUsageBar
+              v-if="quota"
+              :quota="quota"
+              :warning-level="warningLevel"
+              :scans-remaining="scansRemaining"
+              class="mb-3 sm:mb-4"
+            />
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <div class="md:col-span-2">
@@ -1407,14 +1417,66 @@
       </div>
     </div>
   </div>
+
+  <!-- Quota exceeded modal -->
+  <div
+    v-if="showQuotaModal"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="quota-modal-title"
+    @click.self="showQuotaModal = false"
+  >
+    <div class="bg-surface rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-destructive" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div>
+          <h3 id="quota-modal-title" class="text-base font-semibold text-text-primary">
+            Cuota de escaneos agotada
+          </h3>
+          <p class="mt-1 text-sm text-text-secondary leading-relaxed">
+            Usaste
+            <strong class="text-text-primary">{{ quotaExceededData?.used?.toLocaleString('es-CO') }}</strong>
+            de
+            <strong class="text-text-primary">{{ quotaExceededData?.limit?.toLocaleString('es-CO') }}</strong>
+            escaneos este período.
+            <span v-if="quotaExceededData?.periodEnd">
+              Tu cuota se renueva el {{ formatQuotaDate(quotaExceededData.periodEnd) }}.
+            </span>
+          </p>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2 pt-1">
+        <NuxtLink
+          to="/billing/planes"
+          class="btn-primary px-4 py-3 rounded-xl text-sm font-semibold text-center min-h-[44px] flex items-center justify-center"
+          @click="showQuotaModal = false"
+        >
+          Actualizar plan
+        </NuxtLink>
+        <button
+          type="button"
+          @click="showQuotaModal = false"
+          class="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors min-h-[44px]"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { TrashIcon, DocumentTextIcon, CreditCardIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useIngredientSearch } from '@/composables/useIngredientSearch'
+import { useScanQuota } from '@/composables/useScanQuota'
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
 
@@ -1890,6 +1952,22 @@ const handlePaymentFileSelect = (event: Event) => {
   input.value = ''
 }
 
+// --- Scan quota ---
+const { quota, isQuotaExceeded, warningLevel, scansRemaining, fetchQuota } = useScanQuota()
+
+// Quota exceeded modal
+const showQuotaModal = ref(false)
+const quotaExceededData = ref<{ used: number; limit: number; periodEnd: string } | null>(null)
+
+function formatQuotaDate(dateStr: string): string {
+  const date = new Date(dateStr)
+  return new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long' }).format(date)
+}
+
+onMounted(() => {
+  fetchQuota()
+})
+
 // --- OCR scan functionality ---
 const scanFileInput = ref<HTMLInputElement | null>(null)
 const isScanning = ref(false)
@@ -2205,6 +2283,17 @@ const handleScanFileSelect = async (event: Event) => {
       form.value.invoice_file = optimizedFile
     }
   } catch (e) {
+    const err = e as { data?: { detail?: { error?: string; scans_used?: number; scans_limit?: number; period_end?: string } }; status?: number }
+    if (err?.data?.detail?.error === 'scan_quota_exceeded') {
+      quotaExceededData.value = {
+        used: err.data.detail.scans_used ?? 0,
+        limit: err.data.detail.scans_limit ?? 0,
+        periodEnd: err.data.detail.period_end ?? '',
+      }
+      showQuotaModal.value = true
+      await fetchQuota()
+      return
+    }
     console.error('OCR scan error:', e)
   } finally {
     const elapsed = Date.now() - startTime
@@ -2213,6 +2302,7 @@ const handleScanFileSelect = async (event: Event) => {
     }
     isScanning.value = false
     stopPhraseRotation()
+    fetchQuota()
   }
 }
 

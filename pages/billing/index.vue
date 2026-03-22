@@ -71,23 +71,15 @@
           </div>
 
           <!-- Scan usage progress -->
-          <div v-if="accessStatus" class="space-y-2">
-            <div class="flex justify-between items-center text-sm">
-              <span class="text-text-secondary">Uso este período</span>
-            </div>
-            <!-- Minimal progress bar — actual numbers come from usage endpoint (future) -->
-            <div class="h-2 bg-surface-alt rounded-full overflow-hidden">
-              <div class="h-full bg-primary rounded-full" style="width: 0%" />
-            </div>
-            <p v-if="accessStatus.level === 'full_with_warning'" class="text-sm text-yellow-600">
-              ⚠️ {{ accessStatus.message }}
-            </p>
-            <p v-else-if="accessStatus.level === 'read_only'" class="text-sm text-orange-600">
-              ⚠️ {{ accessStatus.message }}
-            </p>
-            <p v-else-if="accessStatus.level === 'blocked'" class="text-sm text-error">
-              🚫 {{ accessStatus.message }}
-            </p>
+          <div class="space-y-1">
+            <span class="text-sm text-text-secondary">Uso este período</span>
+            <UiScanUsageBar
+              v-if="scanQuota"
+              :quota="scanQuota"
+              :warning-level="scanWarningLevel"
+              :scans-remaining="scanScansRemaining"
+            />
+            <p v-else class="text-xs text-text-secondary">Cargando uso de escaneos...</p>
           </div>
 
           <!-- Pending checkout link -->
@@ -161,11 +153,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useBilling } from '~/composables/useBilling'
+import { useScanQuota } from '~/composables/useScanQuota'
 
 definePageMeta({ layout: 'dashboard' })
 
 const toast = useToast()
 const { subscription, accessStatus, fetchSubscription, fetchAccessStatus, cancelSubscription } = useBilling()
+const { quota: scanQuota, warningLevel: scanWarningLevel, scansRemaining: scanScansRemaining, fetchQuota: fetchScanQuota } = useScanQuota()
 
 const showCancelModal = ref(false)
 const cancelling = ref(false)
@@ -175,6 +169,7 @@ const { pending: isLoading, error: fetchError, refresh } = useAsyncData(
   async () => {
     await fetchSubscription()
     await fetchAccessStatus()
+    await fetchScanQuota()
   },
   { server: false }
 )

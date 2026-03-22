@@ -96,6 +96,15 @@
               <span class="sm:hidden">+ Nueva</span>
             </NuxtLink>
           </div>
+          <UiScanUsageBar
+            v-if="quota"
+            :quota="quota"
+            :compact="true"
+            :show-period="false"
+            :warning-level="warningLevel"
+            :scans-remaining="scansRemaining"
+            class="mt-2"
+          />
         </template>
 
         <!-- Desktop Table Cell Customizations -->
@@ -210,10 +219,14 @@
 <script setup lang="ts">
 import { ChevronLeftIcon, ChevronRightIcon, EyeIcon } from '@heroicons/vue/24/outline'
 import { inject, onMounted } from 'vue'
+import { useScanQuota } from '@/composables/useScanQuota'
 
 useHead({
   title: 'Compras Directas - Abastecimiento'
 })
+
+// Scan quota
+const { quota, warningLevel, scansRemaining, fetchQuota } = useScanQuota()
 
 // State
 const currentPage = ref(1)
@@ -373,5 +386,6 @@ const nextPage = () => {
 const { setRefreshHandler } = useLayoutActions()
 onMounted(() => {
   setRefreshHandler(refresh)
+  fetchQuota()
 })
 </script>
