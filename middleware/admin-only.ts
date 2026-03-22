@@ -7,8 +7,8 @@ export default defineNuxtRouteMiddleware((to, from) => {
   }
 
   // Only superusers can access admin routes
-  const role = authStore.displayUser?.role
+  const role = authStore.displayUser?.role || authStore.session?.user?.role
   if (role !== 'superuser') {
-    return navigateTo('/dashboard')
+    return navigateTo('/ventas')
   }
 })
