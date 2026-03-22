@@ -1,16 +1,14 @@
 export default defineNuxtRouteMiddleware((to, from) => {
-  // This middleware ensures only admin users can access admin pages
-  
-  // For now, we'll implement a basic check
-  // In a real implementation, this would check against the warolabs backend
-  // to verify the user's role through the session
-  
-  const isAdmin = true // Placeholder - would be fetched from auth state
-  
-  if (!isAdmin) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'Acceso denegado: Solo administradores pueden acceder a esta página'
-    })
+  const authStore = useAuthStore()
+
+  // If not authenticated at all, redirect to login
+  if (!authStore.isSessionValid) {
+    return navigateTo('/auth/login')
+  }
+
+  // Only superusers can access admin routes
+  const role = authStore.displayUser?.role
+  if (role !== 'superuser') {
+    return navigateTo('/dashboard')
   }
 })
