@@ -40,9 +40,31 @@ export interface SubscribeResult {
   status: string
 }
 
+export interface BillingEvent {
+  id: string
+  tenant_id: string
+  tenant_name: string
+  subscription_id: string | null
+  event_type: string
+  amount: string | null
+  currency: string
+  mp_payment_id: string | null
+  metadata: Record<string, unknown>
+  created_at: string
+}
+
+export interface BillingEventsResponse {
+  events: BillingEvent[]
+  total: number
+  limit: number
+  offset: number
+}
+
 const plans = ref<BillingPlan[]>([])
 const subscription = ref<TenantSubscription | null>(null)
 const accessStatus = ref<AccessStatus | null>(null)
+const events = ref<BillingEvent[]>([])
+const eventsTotal = ref(0)
 const loading = ref(false)
 const error = ref<string | null>(null)
 
@@ -126,10 +148,28 @@ export const useBilling = () => {
     }
   }
 
+  const fetchMyEvents = async (limit = 20, offset = 0) => {
+    loading.value = true
+    error.value = null
+    try {
+      const data = await $fetch<BillingEventsResponse>(`/api/billing/events?limit=${limit}&offset=${offset}`)
+      events.value = data.events
+      eventsTotal.value = data.total
+    } catch (err: unknown) {
+      const e = err as { data?: { detail?: string }; message?: string }
+      error.value = e?.data?.detail || e?.message || 'Error al cargar historial'
+      console.error('[useBilling] fetchMyEvents error:', err)
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     plans,
     subscription,
     accessStatus,
+    events,
+    eventsTotal,
     loading,
     error,
     fetchPlans,
@@ -137,5 +177,6 @@ export const useBilling = () => {
     fetchSubscription,
     cancelSubscription,
     fetchAccessStatus,
+    fetchMyEvents,
   }
 }

@@ -13,9 +13,6 @@ definePageMeta({ layout: 'dashboard', middleware: 'admin-only' })
 const route = useRoute()
 
 const navigationItems = [
-  { to: '/gestion/billing', label: 'Resumen' },
-  { to: '/gestion/billing/planes', label: 'Planes' },
-  { to: '/gestion/billing/suscripciones', label: 'Suscripciones' },
-  { to: '/gestion/billing/eventos', label: 'Eventos' },
+  { to: '/gestion/billing', label: 'Historial' },
 ]
 </script>
