@@ -456,8 +456,8 @@ const getPageConfig = () => {
       pageSubtitle: 'Gestión de planes, suscripciones y facturación',
       searchPlaceholder: 'Buscar en billing...',
       activePage: 'admin' as const,
-      showBreadcrumb: true,
-      breadcrumbPage: 'Billing Admin',
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
       backButton: undefined
     }
   } else if (path.includes('/admin')) {
