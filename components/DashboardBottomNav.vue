@@ -243,6 +243,24 @@
             </div>
             <span class="text-[10px] text-titan-600">Mi Negocio</span>
           </NuxtLink>
+
+          <NuxtLink
+            v-if="isSuperuser"
+            to="/gestion/billing"
+            @click="showMenuModal = false"
+            class="flex flex-col items-center gap-1"
+          >
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+              :class="activePage === 'admin' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+            >
+              <CreditCardIcon
+                class="w-6 h-6"
+                :class="activePage === 'admin' ? 'text-crocus-600' : 'text-titan-600'"
+              />
+            </div>
+            <span class="text-[10px] text-titan-600">Billing</span>
+          </NuxtLink>
         </div>
       </div>
     </UiBottomSheetModal>
@@ -340,6 +358,7 @@
 import {
   BuildingStorefrontIcon,
   ComputerDesktopIcon,
+  CreditCardIcon,
   DocumentTextIcon,
   Cog6ToothIcon,
   CheckCircleIcon,
@@ -426,6 +445,7 @@ const userInitials = computed(() => {
   const name = userName.value
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
+const isSuperuser = computed(() => authStore.displayUser?.role === 'superuser')
 
 // Handle tenant selection
 const selectTenant = async (tenant: Tenant) => {

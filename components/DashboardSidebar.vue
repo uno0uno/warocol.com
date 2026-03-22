@@ -192,6 +192,27 @@
         </div>
       </div>
 
+      <!-- Sección Superadmin (solo superuser) -->
+      <div v-if="isSuperuser" class="pt-4">
+        <span v-if="!collapsed" class="px-3 text-[10px] text-titan-500/70 uppercase tracking-widest font-medium">Superadmin</span>
+        <div class="mt-1 space-y-1">
+          <NuxtLink
+            to="/gestion/billing"
+            :class="[
+              'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+              collapsed ? 'justify-center' : '',
+              activePage === 'admin'
+                ? 'bg-crocus-600/20 text-crocus-400 font-medium'
+                : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+            ]"
+            :title="collapsed ? 'Billing Admin' : ''"
+          >
+            <CreditCardIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'admin' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
+            <span v-if="!collapsed" class="whitespace-nowrap">Billing Admin</span>
+          </NuxtLink>
+        </div>
+      </div>
+
       <!-- Cerrar sesión (separado visualmente) -->
       <div class="pt-4 mt-auto">
         <button
@@ -240,6 +261,7 @@ import {
   ChartBarIcon,
   ChevronDownIcon,
   ComputerDesktopIcon,
+  CreditCardIcon,
   CubeIcon,
   KeyIcon,
   MapPinIcon,
@@ -288,6 +310,7 @@ const userInitials = computed(() => {
   const name = userName.value
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
+const isSuperuser = computed(() => authStore.displayUser?.role === 'superuser')
 
 // Gestión menu items
 const gestionItems = [
