@@ -310,7 +310,10 @@ const userInitials = computed(() => {
   const name = userName.value
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
-const isSuperuser = computed(() => authStore.displayUser?.role === 'superuser')
+const isSuperuser = computed(() =>
+  authStore.displayUser?.role === 'superuser' ||
+  authStore.session?.user?.role === 'superuser'
+)
 
 // Gestión menu items
 const gestionItems = [

@@ -59,7 +59,7 @@ export const useAuthStore = defineStore('auth', () => {
       website: profile.value.website,
       city: profile.value.city,
       category: profile.value.category,
-      role: profileData.value?.data?.role,
+      role: profileData.value?.data?.role || session.value?.user?.role,
       policyId: 'b558ea...60eb60',
       hasProfile: hasProfile.value
     }
