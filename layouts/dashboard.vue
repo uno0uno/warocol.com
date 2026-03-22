@@ -97,6 +97,14 @@
         </div>
       </header>
 
+      <!-- Subscription Banner -->
+      <SubscriptionBanner
+        v-if="accessStatus && (accessStatus.level === 'full_with_warning' || accessStatus.level === 'read_only')"
+        :level="accessStatus.level"
+        :message="accessStatus.message || (accessStatus.level === 'read_only' ? 'Tu suscripción está vencida. El acceso es de solo lectura.' : 'Tu suscripción vence pronto.')"
+        :grace-days-remaining="accessStatus.grace_days_remaining"
+      />
+
       <!-- Content Area with Overflow -->
       <div class="flex-1 overflow-y-auto pb-20 md:pb-0">
         <div class="p-4 sm:p-6 md:p-8">
@@ -147,14 +155,18 @@
 </template>
 
 <script setup lang="ts">
-import { provide, inject, ref, computed, onMounted, onUnmounted, type Ref, type ComputedRef } from 'vue'
+import { provide, inject, ref, computed, watch, onMounted, onUnmounted, type Ref, type ComputedRef } from 'vue'
 import {
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
 import { useNotifications } from '~/composables/useNotifications'
+import { useBilling } from '~/composables/useBilling'
 
 // Notifications — init here so SSE starts on all screen sizes (not just when bell mounts)
 const { unreadCount: notificationsUnreadCount, init: initNotifications, disconnect: disconnectNotifications } = useNotifications()
+
+// Billing access status — drives banner and blocked redirect
+const { accessStatus, fetchAccessStatus } = useBilling()
 
 // Get route-based configuration
 const route = useRoute()
@@ -636,10 +648,18 @@ const updateDateTime = () => {
 // Update time immediately and then every minute
 let dateTimeInterval: ReturnType<typeof setInterval> | null = null
 
+// Redirect to blocked page when subscription is expired
+watch(accessStatus, (status) => {
+  if (status?.level === 'blocked' && !route.path.startsWith('/billing/')) {
+    navigateTo('/billing/renovar')
+  }
+}, { immediate: true })
+
 onMounted(() => {
   updateDateTime()
   dateTimeInterval = setInterval(updateDateTime, 60000)
   if (process.client) initNotifications()
+  fetchAccessStatus()
 })
 
 onUnmounted(() => {
