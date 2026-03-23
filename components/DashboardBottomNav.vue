@@ -449,15 +449,25 @@ const isSuperuser = computed(() =>
   authStore.session?.user?.role === 'superuser'
 )
 
+const router = useRouter()
+
 // Handle tenant selection
 const selectTenant = async (tenant: Tenant) => {
+  showTenantModal.value = false  // close immediately, don't wait
   const success = await tenantsStore.selectTenant(tenant)
 
-  if (success) {
-    showTenantModal.value = false
-    console.log(`✅ Tenant switched successfully to: ${tenant.name}`)
-  } else {
-    console.error('Failed to switch tenant')
+  if (!success) return
+
+  // billing-gate middleware only runs on route change, which doesn't happen on tenant switch.
+  // Check billing directly for the new tenant and redirect if no active subscription.
+  const { subscription, subscriptionFetched, fetchSubscription } = useBilling()
+  if (!subscriptionFetched.value) {
+    try { await fetchSubscription() } catch { return }
+  }
+  const status = subscription.value?.status
+  const hasAccess = status === 'active' || status === 'past_due'
+  if (!hasAccess) {
+    await router.replace('/gestion/billing')
   }
 }
 </script>

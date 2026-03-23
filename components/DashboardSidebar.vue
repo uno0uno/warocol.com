@@ -301,7 +301,20 @@ const cuentaItems = [
 
 const selectTenant = async (tenant: Tenant) => {
   closeTenantModal()
-  await tenantsStore.selectTenant(tenant)
+  const success = await tenantsStore.selectTenant(tenant)
+  if (!success) return
+
+  // billing-gate middleware only runs on route change, which doesn't happen on tenant switch.
+  // Check billing directly for the new tenant and redirect if no active subscription.
+  const { subscription, subscriptionFetched, fetchSubscription } = useBilling()
+  if (!subscriptionFetched.value) {
+    try { await fetchSubscription() } catch { return }
+  }
+  const status = subscription.value?.status
+  const hasAccess = status === 'active' || status === 'past_due'
+  if (!hasAccess) {
+    await router.replace('/gestion/billing')
+  }
 }
 
 const handleLogout = async () => {
