@@ -111,10 +111,7 @@
                focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:ring-offset-2
                disabled:opacity-50 disabled:cursor-not-allowed transition-all"
       >
-        <span v-if="isSubmitting" class="flex items-center justify-center gap-2">
-          <Icon name="heroicons:arrow-path" class="w-4 h-4 animate-spin" aria-hidden="true" />
-          Enviando...
-        </span>
+        <UiLoadingDots v-if="isSubmitting" color="currentColor" size="14px" aria-label="Enviando..." />
         <span v-else>Quiero saber más</span>
       </button>
 
