@@ -22,7 +22,8 @@ export interface TenantSubscription {
   current_period_start: string
   current_period_end: string
   checkout_url: string | null
-  mp_preapproval_id: string | null
+  scan_limit: number
+  scans_used: number
   created_at: string
 }
 
@@ -36,7 +37,6 @@ export interface AccessStatus {
 
 export interface SubscribeResult {
   checkout_url: string
-  mp_preapproval_id: string
   status: string
 }
 
@@ -48,7 +48,6 @@ export interface BillingEvent {
   event_type: string
   amount: string | null
   currency: string
-  mp_payment_id: string | null
   metadata: Record<string, unknown>
   created_at: string
 }
@@ -60,11 +59,18 @@ export interface BillingEventsResponse {
   offset: number
 }
 
+export interface ScanMonthlyEntry {
+  year_month: string  // ISO date: "2026-03-01"
+  scans_count: number
+}
+
 const plans = ref<BillingPlan[]>([])
 const subscription = ref<TenantSubscription | null>(null)
+const subscriptionFetched = ref(false)
 const accessStatus = ref<AccessStatus | null>(null)
 const events = ref<BillingEvent[]>([])
 const eventsTotal = ref(0)
+const usageHistory = ref<ScanMonthlyEntry[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
@@ -84,13 +90,13 @@ export const useBilling = () => {
     }
   }
 
-  const subscribe = async (plan_id: string, billing_cycle: 'monthly' | 'annual'): Promise<SubscribeResult | null> => {
+  const subscribe = async (plan_id: string, billing_cycle: 'monthly' | 'annual', payer_email?: string): Promise<SubscribeResult | null> => {
     loading.value = true
     error.value = null
     try {
       const data = await $fetch<SubscribeResult>('/api/billing/subscribe', {
         method: 'POST',
-        body: { plan_id, billing_cycle },
+        body: { plan_id, billing_cycle, payer_email },
       })
       return data
     } catch (err: unknown) {
@@ -119,6 +125,7 @@ export const useBilling = () => {
       }
     } finally {
       loading.value = false
+      subscriptionFetched.value = true
     }
   }
 
@@ -164,12 +171,59 @@ export const useBilling = () => {
     }
   }
 
+  const fetchUsageHistory = async (months = 12) => {
+    try {
+      const data = await $fetch<ScanMonthlyEntry[]>(`/api/billing/usage-history?months=${months}`)
+      usageHistory.value = data
+    } catch (err) {
+      console.error('[useBilling] fetchUsageHistory error:', err)
+    }
+  }
+
+  const fetchBillingOverview = async (limit = 20, offset = 0) => {
+    loading.value = true
+    error.value = null
+    try {
+      await Promise.all([
+        $fetch<TenantSubscription>('/api/billing/subscription').then(
+          data => { subscription.value = data },
+          (err: any) => { if (err?.status !== 404) throw err; subscription.value = null },
+        ),
+        $fetch<BillingEventsResponse>(`/api/billing/events?limit=${limit}&offset=${offset}`).then(
+          data => { events.value = data.events; eventsTotal.value = data.total },
+        ),
+        $fetch<ScanMonthlyEntry[]>('/api/billing/usage-history?months=12').then(
+          data => { usageHistory.value = data },
+          (err) => { console.warn('[useBilling] usage-history error:', err) },
+        ),
+      ])
+      subscriptionFetched.value = true
+    } catch (err: unknown) {
+      const e = err as { data?: { detail?: string }; message?: string }
+      error.value = e?.data?.detail || e?.message || 'Error al cargar facturación'
+      console.error('[useBilling] fetchBillingOverview error:', err)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const resetBilling = () => {
+    subscription.value = null
+    subscriptionFetched.value = false
+    accessStatus.value = null
+    events.value = []
+    eventsTotal.value = 0
+    usageHistory.value = []
+  }
+
   return {
     plans,
     subscription,
+    subscriptionFetched,
     accessStatus,
     events,
     eventsTotal,
+    usageHistory,
     loading,
     error,
     fetchPlans,
@@ -178,5 +232,8 @@ export const useBilling = () => {
     cancelSubscription,
     fetchAccessStatus,
     fetchMyEvents,
+    fetchUsageHistory,
+    fetchBillingOverview,
+    resetBilling,
   }
 }

@@ -12,227 +12,196 @@
     </div>
   </Teleport>
 
-  <UiBaseSidebar v-bind="$attrs">
-    <!-- Tenant Selector -->
-    <template #selector>
-      <div class="tenant-selector-container">
-        <button
-          @click="showTenantDropdown = !showTenantDropdown"
-          :disabled="isLoadingTenants"
-          class="w-full flex items-center justify-between px-3 py-2 border border-ebony-700 rounded-lg text-sm text-white bg-ebony-800 hover:bg-ebony-700 transition-all focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-crocus-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 bg-crocus-500 rounded-full"></div>
-            <span v-if="isLoadingTenants" class="text-titan-400">Loading...</span>
-            <span v-else class="font-medium">{{ selectedTenant?.name || 'Select Tenant' }}</span>
-          </div>
-          <ChevronDownIcon :class="['w-4 h-4 text-titan-400 transition-transform', showTenantDropdown ? 'rotate-180' : '']" />
-        </button>
+  <!-- Tenant Modal -->
+  <Teleport to="body">
+    <Transition name="modal-fade">
+      <div
+        v-if="showTenantModal"
+        class="fixed inset-0 z-[9998] flex items-end sm:items-center justify-center"
+        @click.self="closeTenantModal"
+      >
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeTenantModal" />
 
-        <!-- Expandable List -->
-        <Transition name="tenant-expand">
-          <div
-            v-show="showTenantDropdown"
-            class="mt-2 bg-ebony-800 border border-ebony-700 rounded-lg overflow-hidden"
-          >
-            <div class="py-1">
-              <div v-if="isLoadingTenants" class="px-3 py-2 text-sm text-titan-400">
-                Loading tenants...
-              </div>
-              <div v-else-if="tenants.length === 0" class="px-3 py-2 text-sm text-titan-400">
-                No tenants available
-              </div>
-              <button
-                v-else
-                v-for="tenant in tenants"
-                :key="tenant.id"
-                @click="selectTenant(tenant)"
-                :disabled="isLoadingTenants"
-                class="w-full flex items-center gap-2 px-3 py-2 text-sm text-white hover:bg-ebony-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
-                :class="selectedTenant?.id === tenant.id ? 'bg-crocus-600/20 text-crocus-400 font-medium' : ''"
-              >
-                <div class="w-2 h-2 rounded-full" :class="selectedTenant?.id === tenant.id ? 'bg-crocus-500' : 'bg-titan-500'"></div>
-                <span>{{ tenant.name }}</span>
+        <!-- Panel: bottom sheet en mobile, modal centrado en desktop -->
+        <div class="relative w-full sm:w-[420px] sm:max-w-[90vw] bg-white sm:rounded-xl rounded-t-2xl shadow-2xl flex flex-col max-h-[80vh] sm:max-h-[60vh]">
+
+          <!-- Header -->
+          <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-titan-200 flex-shrink-0">
+            <p class="text-sm font-semibold text-ebony-800">Cambiar negocio</p>
+            <button @click="closeTenantModal" class="p-1.5 rounded-lg text-titan-400 hover:bg-titan-100 hover:text-ebony-700 transition-colors">
+              <XMarkIcon class="w-4 h-4" />
+            </button>
+          </div>
+
+          <!-- Buscador -->
+          <div class="px-4 py-3 flex-shrink-0">
+            <div class="flex items-center gap-2 px-3 py-2 border-b border-titan-200 focus-within:border-crocus-400 transition-colors">
+              <MagnifyingGlassIcon class="w-4 h-4 text-titan-400 flex-shrink-0" />
+              <input
+                ref="searchInputRef"
+                v-model="tenantSearch"
+                type="text"
+                placeholder="Buscar negocio..."
+                class="tenant-search-input flex-1 bg-transparent text-sm text-ebony-800 placeholder-titan-400"
+              />
+              <button v-if="tenantSearch" @click="tenantSearch = ''" class="text-titan-400 hover:text-ebony-700">
+                <XMarkIcon class="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
-        </Transition>
+
+          <!-- Lista -->
+          <div class="overflow-y-auto px-3 pb-4 space-y-0.5">
+            <div v-if="isLoadingTenants" class="px-3 py-3 text-sm text-titan-400 text-center">Cargando...</div>
+            <div v-else-if="filteredTenants.length === 0" class="px-3 py-3 text-sm text-titan-400 text-center">Sin resultados</div>
+            <button
+              v-else
+              v-for="tenant in filteredTenants"
+              :key="tenant.id"
+              @click="selectTenant(tenant)"
+              :disabled="isLoadingTenants"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left disabled:opacity-50"
+              :class="selectedTenant?.id === tenant.id
+                ? 'bg-crocus-50 text-crocus-700 font-medium'
+                : 'text-ebony-700 hover:bg-titan-50'"
+            >
+              <div class="w-2 h-2 rounded-full flex-shrink-0" :class="selectedTenant?.id === tenant.id ? 'bg-crocus-500' : 'bg-titan-300'"></div>
+              <span class="truncate">{{ tenant.name }}</span>
+              <CheckIcon v-if="selectedTenant?.id === tenant.id" class="w-4 h-4 ml-auto text-crocus-500 flex-shrink-0" />
+            </button>
+          </div>
+        </div>
       </div>
+    </Transition>
+  </Teleport>
+
+  <UiBaseSidebar v-bind="$attrs">
+    <!-- Tenant Selector -->
+    <template #selector>
+      <button
+        @click="openTenantModal"
+        :disabled="isLoadingTenants"
+        class="w-full flex items-center justify-between px-3 py-2 border border-ebony-700 rounded-lg text-sm text-white bg-ebony-800 hover:bg-ebony-700 transition-all focus:outline-none focus:ring-2 focus:ring-crocus-500 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="w-2 h-2 bg-crocus-500 rounded-full flex-shrink-0"></div>
+          <span v-if="isLoadingTenants" class="text-titan-400 truncate">Cargando...</span>
+          <span v-else class="font-medium truncate">{{ selectedTenant?.name || 'Seleccionar' }}</span>
+        </div>
+      </button>
     </template>
 
     <!-- Navigation Links -->
     <template #navigation="{ collapsed }">
-      <!-- Sección Ventas -->
-      <div class="space-y-1">
-        <span v-if="!collapsed" class="px-3 text-[10px] text-titan-500/70 uppercase tracking-widest font-medium">Ventas</span>
-        
-        <NuxtLink
-          to="/analitica"
-          :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-            collapsed ? 'justify-center' : '',
-            activePage === 'analytics'
-              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-          ]"
-          :title="collapsed ? 'Analítica' : ''"
-        >
-          <ChartBarIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'analytics' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-          <span v-if="!collapsed" class="whitespace-nowrap">Analítica</span>
-        </NuxtLink>
-        <NuxtLink
-          to="/ventas"
-          :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-            collapsed ? 'justify-center' : '',
-            activePage === 'ventas'
-              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-          ]"
-          :title="collapsed ? 'Ventas' : ''"
-        >
-          <ShoppingCartIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'ventas' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-          <span v-if="!collapsed" class="whitespace-nowrap">Ventas</span>
-        </NuxtLink>
 
+      <!-- ── OPERACIÓN (frecuente) ── -->
+      <div class="space-y-0.5">
+        <p v-if="!collapsed" class="nav-section-label">Operación</p>
         <NuxtLink
-          to="/pos"
+          v-for="item in primaryItems"
+          :key="item.to"
+          :to="item.to"
+          :title="item.label"
           :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
+            'nav-item group',
             collapsed ? 'justify-center' : '',
-            activePage === 'pos'
-              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
+            activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
           ]"
-          :title="collapsed ? 'POS' : ''"
         >
-          <ComputerDesktopIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'pos' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-          <span v-if="!collapsed" class="whitespace-nowrap">POS</span>
-        </NuxtLink>
-
-        <NuxtLink
-          to="/domicilios/pedidos"
-          :class="[
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-            collapsed ? 'justify-center' : '',
-            activePage === 'domicilios'
-              ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-              : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-          ]"
-          :title="collapsed ? 'Domicilios' : ''"
-        >
-          <MapPinIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'domicilios' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-          <span v-if="!collapsed" class="whitespace-nowrap">Domicilios</span>
+          <component :is="item.icon" class="nav-icon" />
+          <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ item.label }}</span>
         </NuxtLink>
       </div>
 
-      <!-- Sección Gestión (colapsable) -->
-      <div class="pt-4">
-        <button
-          v-if="!collapsed"
-          @click="sections.gestion = !sections.gestion"
-          class="w-full flex items-center justify-between px-3 py-1 group"
+      <!-- ── DIVIDER ── -->
+      <div class="my-2 mx-1 border-t nav-divider" />
+
+      <!-- ── HERRAMIENTAS ── -->
+      <div class="space-y-0.5">
+        <p v-if="!collapsed" class="nav-section-label">Herramientas</p>
+        <NuxtLink
+          v-for="item in secondaryItems"
+          :key="item.to"
+          :to="item.to"
+          :title="item.label"
+          :class="[
+            'nav-item',
+            collapsed ? 'justify-center' : '',
+            activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
+          ]"
         >
-          <span class="text-[10px] text-titan-500/70 uppercase tracking-widest font-medium group-hover:text-titan-400 transition-colors">Gestión</span>
-          <ChevronDownIcon :class="['w-3 h-3 text-titan-500/70 transition-transform duration-200', sections.gestion ? '' : '-rotate-90']" />
-        </button>
-        <div :class="['overflow-hidden transition-all duration-200 space-y-1', !collapsed && !sections.gestion ? 'max-h-0 opacity-0' : 'max-h-80 opacity-100']">
-          <NuxtLink
-            v-for="item in gestionItems"
-            :key="item.to"
-            :to="item.to"
-            :class="[
-              'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-              collapsed ? 'justify-center' : '',
-              activePage === item.page
-                ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-                : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-            ]"
-            :title="collapsed ? item.label : ''"
-          >
-            <component
-              :is="item.icon"
-              :class="['w-5 h-5 flex-shrink-0', activePage === item.page ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']"
+          <component :is="item.icon" class="nav-icon" />
+          <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">
+            {{ item.label }}
+            <span
+              v-if="item.page === 'abastecimiento' && hasCriticalAlerts"
+              class="inline-block w-1.5 h-1.5 rounded-full bg-destructive align-middle ml-1.5"
             />
-            <span v-if="!collapsed" class="whitespace-nowrap">
-              {{ item.label }}
-              <span
-                v-if="item.page === 'abastecimiento' && hasCriticalAlerts"
-                class="inline-block w-2 h-2 rounded-full bg-destructive align-middle ml-2"
-                aria-label="Alertas críticas en abastecimiento"
-              />
-            </span>
-          </NuxtLink>
-        </div>
+          </span>
+        </NuxtLink>
       </div>
 
-      <!-- Sección Aplicaciones (colapsable) -->
-      <div class="pt-4">
-        <button
-          v-if="!collapsed"
-          @click="sections.aplicaciones = !sections.aplicaciones"
-          class="w-full flex items-center justify-between px-3 py-1 group"
+      <!-- ── DIVIDER ── -->
+      <div class="my-2 mx-1 border-t nav-divider" />
+
+      <!-- ── APPS ── -->
+      <div class="space-y-0.5">
+        <p v-if="!collapsed" class="nav-section-label">Apps</p>
+        <a
+          href="https://warotickets.com/gestion/eventos"
+          target="_blank"
+          title="Eventos"
+          :class="['nav-item nav-item--idle', collapsed ? 'justify-center' : '']"
         >
-          <span class="text-[10px] text-titan-500/70 uppercase tracking-widest font-medium group-hover:text-titan-400 transition-colors">Aplicaciones</span>
-          <ChevronDownIcon :class="['w-3 h-3 text-titan-500/70 transition-transform duration-200', sections.aplicaciones ? '' : '-rotate-90']" />
-        </button>
-        <div :class="['overflow-hidden transition-all duration-200 space-y-1', !collapsed && !sections.aplicaciones ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100']">
-          <a
-            href="https://warotickets.com/gestion/eventos"
-            :class="[
-              'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-              collapsed ? 'justify-center' : '',
-              'text-titan-300 hover:bg-ebony-800 hover:text-white'
-            ]"
-            :title="collapsed ? 'Eventos' : ''"
-          >
-            <Squares2X2Icon class="w-5 h-5 flex-shrink-0 text-titan-500 group-hover:text-titan-300" />
-            <span v-if="!collapsed" class="whitespace-nowrap">Eventos</span>
-          </a>
-        </div>
+          <Squares2X2Icon class="nav-icon" />
+          <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">Eventos</span>
+        </a>
       </div>
 
-      <!-- Sección Superadmin (solo superuser) -->
-      <div v-if="isSuperuser" class="pt-4">
-        <span v-if="!collapsed" class="px-3 text-[10px] text-titan-500/70 uppercase tracking-widest font-medium">Superadmin</span>
-        <div class="mt-1 space-y-1">
-          <NuxtLink
-            to="/gestion/billing"
-            :class="[
-              'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group',
-              collapsed ? 'justify-center' : '',
-              activePage === 'admin'
-                ? 'bg-crocus-600/20 text-crocus-400 font-medium'
-                : 'text-titan-300 hover:bg-ebony-800 hover:text-white'
-            ]"
-            :title="collapsed ? 'Billing Admin' : ''"
-          >
-            <CreditCardIcon :class="['w-5 h-5 flex-shrink-0', activePage === 'admin' ? 'text-crocus-500' : 'text-titan-500 group-hover:text-titan-300']" />
-            <span v-if="!collapsed" class="whitespace-nowrap">Billing Admin</span>
-          </NuxtLink>
-        </div>
-      </div>
+      <!-- ── SPACER ── -->
+      <div class="flex-1" style="min-height: 1rem;" />
 
-      <!-- Cerrar sesión (separado visualmente) -->
-      <div class="pt-4 mt-auto">
-        <button
-          @click="handleLogout"
-          :disabled="isLoggingOut"
+      <!-- ── CUENTA (fondo) ── -->
+      <div class="space-y-0.5">
+        <p v-if="!collapsed" class="nav-section-label">Cuenta</p>
+        <NuxtLink
+          v-for="item in cuentaItems"
+          :key="item.to"
+          :to="item.to"
+          :title="item.label"
           :class="[
-            'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm group text-titan-400 hover:bg-red-900/20 hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed',
-            collapsed ? 'justify-center' : ''
+            'nav-item',
+            collapsed ? 'justify-center' : '',
+            activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
           ]"
-          :title="collapsed ? 'Cerrar sesión' : ''"
         >
-          <ArrowRightOnRectangleIcon class="w-5 h-5 flex-shrink-0 text-titan-500 group-hover:text-red-400" />
-          <span v-if="!collapsed" class="whitespace-nowrap">Cerrar sesión</span>
-        </button>
+          <component :is="item.icon" class="nav-icon" />
+          <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ item.label }}</span>
+        </NuxtLink>
       </div>
+
     </template>
 
-    <!-- User Profile (display only, no menu) -->
+    <!-- Logout (siempre visible, fijo abajo) -->
+    <template #bottom="{ collapsed }">
+      <button
+        @click="handleLogout"
+        :disabled="isLoggingOut"
+        :class="[
+          'nav-item nav-item--idle group w-full text-titan-500 hover:bg-red-900/20 hover:text-red-400',
+          collapsed ? 'justify-center' : '',
+        ]"
+        title="Cerrar sesión"
+      >
+        <ArrowRightOnRectangleIcon class="nav-icon" />
+        <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">Cerrar sesión</span>
+      </button>
+    </template>
+
+    <!-- User Profile -->
     <template #footer>
-      <div class="flex items-center gap-3 p-3 rounded-lg bg-ebony-800/50">
+      <div class="flex items-center gap-3 rounded-lg bg-ebony-800/50">
         <div class="relative flex-shrink-0">
           <div class="w-8 h-8 bg-crocus-600 rounded-full flex items-center justify-center font-semibold text-white text-xs">
             {{ userInitials }}
@@ -249,60 +218,59 @@
 </template>
 
 <script setup lang="ts">
-// Disable automatic attribute inheritance since this is a multi-root component
-defineOptions({
-  inheritAttrs: false
-})
+defineOptions({ inheritAttrs: false })
 
-import { computed, ref, reactive } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import {
   ArrowRightOnRectangleIcon,
   BuildingStorefrontIcon,
   ChartBarIcon,
-  ChevronDownIcon,
+  CheckIcon,
   ComputerDesktopIcon,
   CreditCardIcon,
   CubeIcon,
   KeyIcon,
+  MagnifyingGlassIcon,
   MapPinIcon,
   ShoppingCartIcon,
   Squares2X2Icon,
   TruckIcon,
   UserGroupIcon,
+  XMarkIcon,
 } from '@heroicons/vue/24/outline'
 
 interface Props {
   activePage?: 'dashboard' | 'ventas' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'gastos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio'
 }
+interface Tenant { id: string; name: string; slug: string }
 
-interface Tenant {
-  id: string
-  name: string
-  slug: string
-}
+const props = withDefaults(defineProps<Props>(), { activePage: 'financiero' })
 
-const props = withDefaults(defineProps<Props>(), {
-  activePage: 'financiero'
-})
-
-// State
-const showTenantDropdown = ref(false)
+const showTenantModal = ref(false)
+const tenantSearch = ref('')
+const searchInputRef = ref<HTMLInputElement | null>(null)
 const isLoggingOut = ref(false)
-const route = useRoute()
 const router = useRouter()
 
-// Data quality dot indicator
+const filteredTenants = computed(() =>
+  tenantSearch.value.trim()
+    ? tenants.value.filter(t => t.name.toLowerCase().includes(tenantSearch.value.toLowerCase()))
+    : tenants.value
+)
+
+const openTenantModal = () => {
+  tenantSearch.value = ''
+  showTenantModal.value = true
+  nextTick(() => searchInputRef.value?.focus())
+}
+const closeTenantModal = () => { showTenantModal.value = false }
+
 const { hasCriticalAlerts } = useDataQualityStatus()
-
-// Use tenants store
 const tenantsStore = useTenantsStore()
-
-// Computed properties from store
 const tenants = computed(() => tenantsStore.tenants)
 const selectedTenant = computed(() => tenantsStore.selectedTenant)
 const isLoadingTenants = computed(() => tenantsStore.isLoading)
 
-// Use auth store for user data
 const authStore = useAuthStore()
 const userName = computed(() => authStore.user?.name || authStore.session?.user?.name || 'Usuario')
 const userEmail = computed(() => authStore.user?.email || authStore.session?.user?.email || 'No email')
@@ -310,67 +278,40 @@ const userInitials = computed(() => {
   const name = userName.value
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
-const isSuperuser = computed(() =>
-  authStore.displayUser?.role === 'superuser' ||
-  authStore.session?.user?.role === 'superuser'
-)
 
-// Gestión menu items
-const gestionItems = [
-  { to: '/menu/productos', page: 'menu', label: 'Menú', icon: CubeIcon },
-  { to: '/abastecimiento/compras-directas', page: 'abastecimiento', label: 'Abastecimiento', icon: TruckIcon },
-  { to: '/equipo/miembros', page: 'equipo', label: 'Equipo', icon: UserGroupIcon },
-  { to: '/integraciones', page: 'integraciones', label: 'Integraciones', icon: KeyIcon },
-  { to: '/negocio', page: 'negocio', label: 'Mi Negocio', icon: BuildingStorefrontIcon },
+// ── Nav items ──────────────────────────────────────────────
+const primaryItems = [
+  { to: '/pos',               page: 'pos',       label: 'POS',        icon: ComputerDesktopIcon },
+  { to: '/ventas',            page: 'ventas',    label: 'Ventas',     icon: ShoppingCartIcon },
+  { to: '/domicilios/pedidos',page: 'domicilios',label: 'Domicilios', icon: MapPinIcon },
 ]
 
-// Collapsible sections state — auto-expand section containing active page
-const gestionPages = ['menu', 'abastecimiento', 'integraciones', 'negocio']
+const secondaryItems = [
+  { to: '/analitica',                        page: 'analytics',     label: 'Analítica',      icon: ChartBarIcon },
+  { to: '/menu/productos',                   page: 'menu',          label: 'Menú',           icon: CubeIcon },
+  { to: '/abastecimiento/compras-directas',  page: 'abastecimiento',label: 'Abastecimiento', icon: TruckIcon },
+  { to: '/equipo/miembros',                  page: 'equipo',        label: 'Equipo',         icon: UserGroupIcon },
+  { to: '/integraciones',                    page: 'integraciones', label: 'Integraciones',  icon: KeyIcon },
+]
 
-const sections = reactive({
-  gestion: true,
-  aplicaciones: false,
-})
+const cuentaItems = [
+  { to: '/negocio',         page: 'negocio', label: 'Mi Negocio', icon: BuildingStorefrontIcon },
+  { to: '/gestion/billing', page: 'admin',   label: 'Mi Plan',    icon: CreditCardIcon },
+]
 
-// Handle tenant selection
 const selectTenant = async (tenant: Tenant) => {
-  showTenantDropdown.value = false
-
-  const success = await tenantsStore.selectTenant(tenant)
-
-  if (success) {
-    // The reactive system will automatically refresh all data in components using useTenantReactive()
-  } else {
-    // Show error message if needed
-  }
+  closeTenantModal()
+  await tenantsStore.selectTenant(tenant)
 }
 
-// Handle logout
 const handleLogout = async () => {
   try {
     isLoggingOut.value = true
-
-    // Call signout endpoint
-    await $fetch('/api/auth/signout', {
-      method: 'POST',
-      credentials: 'include'
-    })
-
-
-
-    // Clear auth store state
+    await $fetch('/api/auth/signout', { method: 'POST', credentials: 'include' })
     authStore.clearAuth()
-
-    // Clear any local storage/session storage
-    if (typeof window !== 'undefined') {
-      localStorage.clear()
-      sessionStorage.clear()
-    }
-
-    // Redirect to homepage
+    if (typeof window !== 'undefined') { localStorage.clear(); sessionStorage.clear() }
     await router.push('/')
-  } catch (error) {
-    // Even if the API call fails, clear auth and redirect for security
+  } catch {
     authStore.clearAuth()
     await router.push('/')
   } finally {
@@ -378,36 +319,106 @@ const handleLogout = async () => {
   }
 }
 
-// Close tenant dropdown when clicking outside
+// Cerrar modal con Escape
 onMounted(() => {
-  const handleClickOutside = (event: Event) => {
-    const target = event.target as Element
-    const tenantSelector = document.querySelector('.tenant-selector-container')
-    if (tenantSelector && !tenantSelector.contains(target)) {
-      showTenantDropdown.value = false
-    }
-  }
-
-  document.addEventListener('click', handleClickOutside)
-
-  onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside)
-  })
+  const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeTenantModal() }
+  document.addEventListener('keydown', onKey)
+  onUnmounted(() => document.removeEventListener('keydown', onKey))
 })
 </script>
 
 <style scoped>
-/* Tenant dropdown expand/collapse transition */
-.tenant-expand-enter-active,
-.tenant-expand-leave-active {
-  transition: all 0.3s ease;
-  max-height: 500px;
-  opacity: 1;
+/*
+  Jerarquía monochromática — misma familia crocus/titan, solo opacidad varía.
+  ─────────────────────────────────────────────────────────────────────────
+  Group label   titan-300/35   ← lo más tenue (espaciador visual)
+  Icon idle     crocus-400/45  ← cohesión con el acento, no gris puro
+  Label idle    titan-300/60   ← legible pero recede
+  Icon hover    crocus-400/75
+  Label hover   titan-300/85
+  Bg hover      crocus-600/8   ← píldora muy sutil
+  Icon active   crocus-400     ← 100%, único elemento a plena saturación
+  Label active  titan-300      ← 100%, font-medium
+  Bg active     crocus-600/15  ← píldora de posición
+  Divider       titan-300/6
+*/
+
+/* ── Nav item base ── */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.15s, color 0.15s;
+  font-size: 0.875rem;
+  width: 100%;
+  text-decoration: none;
+}
+.nav-item--active {
+  background-color: rgba(124, 58, 237, 0.15);
+  font-weight: 500;
+}
+.nav-item--idle:hover {
+  background-color: rgba(124, 58, 237, 0.08);
 }
 
-.tenant-expand-enter-from,
-.tenant-expand-leave-to {
-  max-height: 0;
-  opacity: 0;
+/* ── Nav icon ── */
+.nav-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  transition: color 0.15s;
 }
+.nav-item--active .nav-icon   { color: #A78BFA; }
+.nav-item--idle .nav-icon     { color: rgba(167, 139, 250, 0.65); } /* 3.5:1 — pasa WCAG AA UI */
+.nav-item--idle:hover .nav-icon { color: rgba(167, 139, 250, 0.85); }
+
+/* ── Label text ── */
+.nav-label-text {
+  white-space: nowrap;
+  overflow: hidden;
+  transition: max-width 0.15s, opacity 0.15s;
+  max-width: 200px;
+  opacity: 1;
+}
+.nav-label-text--hidden { max-width: 0; opacity: 0; }
+
+.nav-item--active .nav-label-text { color: #E0E5EB; }
+.nav-item--idle .nav-label-text   { color: rgba(224, 229, 235, 0.60); }
+.nav-item--idle:hover .nav-label-text { color: rgba(224, 229, 235, 0.90); }
+
+/* ── Section label ── */
+.nav-section-label {
+  padding: 0.25rem 0.75rem 0.125rem;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  white-space: nowrap;
+  color: rgba(224, 229, 235, 0.30);
+}
+
+/* ── Dividers ── */
+.nav-divider {
+  border-color: rgba(224, 229, 235, 0.06);
+}
+
+/* ── Quitar focus ring nativo del input de búsqueda ── */
+.tenant-search-input {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+.tenant-search-input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* ── Modal fade ── */
+.modal-fade-enter-active,
+.modal-fade-leave-active { transition: opacity 0.2s ease; }
+.modal-fade-enter-from,
+.modal-fade-leave-to { opacity: 0; }
 </style>

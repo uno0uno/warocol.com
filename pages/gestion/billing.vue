@@ -8,11 +8,12 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'dashboard', middleware: 'admin-only' })
+definePageMeta({ layout: 'dashboard' })
 
 const route = useRoute()
 
 const navigationItems = [
-  { to: '/gestion/billing', label: 'Historial' },
+  { to: '/gestion/billing', label: 'Historial', exact: true },
+  { to: '/gestion/billing/uso', label: 'Uso de IA' },
 ]
 </script>

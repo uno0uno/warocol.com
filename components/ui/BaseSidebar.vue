@@ -2,10 +2,7 @@
   <aside
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
-    :class="[
-      'bg-ebony-900 h-screen border-r border-ebony-700 flex-shrink-0 shadow-xl flex flex-col transition-all duration-300 ease-in-out',
-      isHovered ? 'w-56' : 'w-16'
-    ]"
+    class="group bg-ebony-900 h-screen border-r border-ebony-700 flex-shrink-0 shadow-xl flex flex-col w-16 hover:w-56 transition-all duration-200 ease-in-out overflow-hidden"
   >
     <!-- Header: Logo & Selector -->
     <div class="p-2 pb-3 flex-shrink-0">
@@ -15,17 +12,14 @@
           <img
             src="/logo_waro_colombia.png"
             alt="Waro"
-            :class="[
-              'object-contain transition-all duration-200',
-              isHovered ? 'w-40 h-auto' : 'w-8 h-8'
-            ]"
+            class="object-contain transition-all duration-200 w-8 h-8 group-hover:w-40 group-hover:h-auto"
             style="filter: grayscale(1) invert(1); mix-blend-mode: screen;"
           />
         </div>
       </div>
 
-      <!-- Selector Slot (Tenant or Supplier) - only show when expanded -->
-      <div v-if="isHovered" class="relative transition-opacity duration-200">
+      <!-- Selector Slot — only when expanded -->
+      <div class="max-h-0 opacity-0 overflow-hidden group-hover:max-h-32 group-hover:opacity-100 transition-all duration-200">
         <slot name="selector" />
       </div>
     </div>
@@ -35,9 +29,16 @@
       <slot name="navigation" :collapsed="!isHovered" />
     </nav>
 
-    <!-- Footer Slot (User/Supplier Info) - only show when expanded -->
-    <div v-if="isHovered" class="p-3 border-t border-ebony-700 flex-shrink-0 transition-opacity duration-200">
-      <slot name="footer" />
+    <!-- Bottom actions slot (always visible, not scrollable) -->
+    <div class="px-2 pb-2 flex-shrink-0">
+      <slot name="bottom" :collapsed="!isHovered" />
+    </div>
+
+    <!-- Footer Slot (User info) — only when expanded -->
+    <div class="max-h-0 opacity-0 overflow-hidden group-hover:max-h-20 group-hover:opacity-100 transition-all duration-200 border-t border-ebony-700/0 group-hover:border-ebony-700">
+      <div class="p-3">
+        <slot name="footer" />
+      </div>
     </div>
   </aside>
 </template>
@@ -47,3 +48,8 @@ import { ref } from 'vue'
 
 const isHovered = ref(false)
 </script>
+
+<style scoped>
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+</style>

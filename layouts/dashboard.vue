@@ -452,8 +452,8 @@ const getPageConfig = () => {
     }
   } else if (path.includes('/gestion/billing')) {
     return {
-      pageTitle: 'Billing Admin',
-      pageSubtitle: 'Gestión de planes, suscripciones y facturación',
+      pageTitle: 'Mi Plan',
+      pageSubtitle: 'Gestión de tu suscripción y facturación',
       searchPlaceholder: 'Buscar en billing...',
       activePage: 'admin' as const,
       showBreadcrumb: false,
@@ -612,6 +612,56 @@ const getPageConfig = () => {
       pageSubtitle: undefined,
       searchPlaceholder: 'Buscar pedidos...',
       activePage: 'domicilios' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/negocio') {
+    return {
+      pageTitle: 'Mi Negocio',
+      pageSubtitle: 'Información y configuración de tu negocio',
+      searchPlaceholder: 'Buscar en negocio...',
+      activePage: 'negocio' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path.startsWith('/ventas')) {
+    return {
+      pageTitle: 'Ventas',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar ventas...',
+      activePage: 'ventas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path.startsWith('/menu')) {
+    return {
+      pageTitle: 'Menú',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar en menú...',
+      activePage: 'menu' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path.startsWith('/integraciones')) {
+    return {
+      pageTitle: 'Integraciones',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar integraciones...',
+      activePage: 'integraciones' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path.startsWith('/abastecimiento')) {
+    return {
+      pageTitle: 'Abastecimiento',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar en abastecimiento...',
+      activePage: 'abastecimiento' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: undefined

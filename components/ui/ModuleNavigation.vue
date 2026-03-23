@@ -32,6 +32,7 @@
 interface NavigationItem {
   to: string
   label: string
+  exact?: boolean    // exact match only — no startsWith children
   matchPath?: string // Optional custom path matching
 }
 
@@ -47,7 +48,10 @@ const props = withDefaults(defineProps<Props>(), {
 const route = useRoute()
 
 function getNavLinkClasses(item: NavigationItem): string[] {
-  const isActive = route.path === item.to || route.path.startsWith(item.to + '/')
+  const matchPath = item.matchPath ?? item.to
+  const isActive = item.exact
+    ? route.path === matchPath
+    : route.path === matchPath || route.path.startsWith(matchPath + '/')
 
   return [
     isActive
