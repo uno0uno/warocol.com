@@ -3,15 +3,14 @@
     <!-- Loading overlay during submit -->
     <div v-if="isSubmitting" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div class="bg-background rounded-xl p-6 flex flex-col items-center gap-3 shadow-xl">
-        <UiLoadingDots size="12px" />
+        <CommonsTheCustomLoader size="large" />
         <p class="text-base font-semibold text-text-primary">Registrando compra directa...</p>
       </div>
     </div>
 
     <!-- Loading State -->
-    <div v-if="isLoadingData" class="flex flex-col items-center justify-center min-h-[200px] gap-3">
-      <UiLoadingDots size="10px" />
-      <p class="text-xs text-text-secondary">Cargando...</p>
+    <div v-if="isLoadingData" class="flex items-center justify-center min-h-[300px]">
+      <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- Main Content -->

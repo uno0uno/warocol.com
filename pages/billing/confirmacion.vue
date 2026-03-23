@@ -1,8 +1,20 @@
 <template>
   <div class="page-layout">
     <div class="max-w-md mx-auto flex items-center justify-center min-h-[400px]">
+      <p v-if="debugError" class="text-xs text-red-500 absolute top-4 left-4 right-4 break-all">{{ debugError }}</p>
+      <!-- Loading -->
+      <div v-if="isLoading" class="text-center space-y-4">
+        <div class="flex justify-center">
+          <svg class="w-10 h-10 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+          </svg>
+        </div>
+        <p class="text-sm text-text-secondary">Verificando tu pago...</p>
+      </div>
+
       <!-- Approved -->
-      <div v-if="isApproved" class="text-center space-y-5">
+      <div v-else-if="isApproved" class="text-center space-y-5">
         <div class="flex justify-center">
           <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
             <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,8 +46,8 @@
         <div class="space-y-2">
           <h1 class="text-2xl font-bold text-text-primary">Pago en proceso</h1>
           <p class="text-sm text-text-secondary leading-relaxed">
-            Tu pago está siendo procesado por MercadoPago.
-            Te avisaremos por email cuando se confirme. Esto puede tardar unos minutos.
+            Tu pago está siendo procesado. Te avisaremos por email cuando se confirme.
+            Esto puede tardar unos minutos.
           </p>
         </div>
         <NuxtLink to="/billing" class="border border-border px-6 py-3 rounded-xl text-sm font-semibold inline-block text-text-primary hover:bg-surface-alt transition-colors min-h-[44px] flex items-center justify-center">
@@ -73,15 +85,34 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
 definePageMeta({ layout: 'dashboard' })
 
 const route = useRoute()
+const status = ref<'loading' | 'active' | 'pending' | 'cancelled'>('loading')
+const debugError = ref<string | null>(null)
 
-// MP returns collection_status=approved | pending | failure | null
-const collectionStatus = computed(() => route.query.collection_status as string | undefined)
+const isLoading = computed(() => status.value === 'loading')
+const isApproved = computed(() => status.value === 'active')
+const isPending = computed(() => status.value === 'pending')
 
-const isApproved = computed(() => collectionStatus.value === 'approved')
-const isPending = computed(() => collectionStatus.value === 'pending')
+onMounted(async () => {
+  const transactionId = route.query.id as string | undefined
+  if (!transactionId) {
+    status.value = 'pending'
+    return
+  }
+  try {
+    const result = await $fetch<{ status: string; wompi_status: string }>(
+      `/api/billing/verify-payment?transaction_id=${transactionId}`
+    )
+    status.value = result.status as any
+    if (result.status === 'active') {
+      const { subscriptionFetched } = useBilling()
+      subscriptionFetched.value = false
+    }
+  } catch (err: any) {
+    debugError.value = err?.data?.detail || err?.message || String(err)
+    status.value = 'pending'
+  }
+})
 </script>

@@ -245,7 +245,6 @@
           </NuxtLink>
 
           <NuxtLink
-            v-if="isSuperuser"
             to="/gestion/billing"
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
@@ -259,7 +258,7 @@
                 :class="activePage === 'admin' ? 'text-crocus-600' : 'text-titan-600'"
               />
             </div>
-            <span class="text-[10px] text-titan-600">Billing</span>
+            <span class="text-[10px] text-titan-600">Mi Plan</span>
           </NuxtLink>
         </div>
       </div>

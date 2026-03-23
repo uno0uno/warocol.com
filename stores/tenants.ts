@@ -144,6 +144,7 @@ export const useTenantsStore = defineStore('tenants', () => {
       if (response.success) {
         selectedTenant.value = tenant
         businessProfile.value = null          // clear stale profile immediately
+        useBilling().resetBilling()           // clear stale billing data
         tenantChangeCounter.value++           // trigger reactivity globally
         fetchBusinessProfile()                // fire-and-forget
         return true

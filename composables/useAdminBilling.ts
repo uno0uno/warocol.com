@@ -12,7 +12,6 @@ export interface AdminSubscription {
   status: 'pending' | 'active' | 'past_due' | 'cancelled' | 'expired'
   current_period_start: string
   current_period_end: string
-  mp_subscription_id: string | null
   cancelled_at: string | null
   created_at: string
   updated_at: string
@@ -39,7 +38,6 @@ export interface BillingEvent {
   event_type: string
   amount: number | null
   currency: string
-  mp_payment_id: string | null
   metadata: Record<string, unknown>
   created_at: string
 }
