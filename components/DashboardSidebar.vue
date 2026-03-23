@@ -355,6 +355,12 @@ onMounted(() => {
   width: 100%;
   text-decoration: none;
 }
+/* Cuando colapsado: centrar ícono y eliminar gap del label invisible */
+.nav-item.justify-center {
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
 .nav-item--active {
   background-color: rgba(124, 58, 237, 0.15);
   font-weight: 500;
