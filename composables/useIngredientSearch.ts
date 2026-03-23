@@ -3,13 +3,17 @@ import { useDebounceFn } from '@vueuse/core'
 /**
  * Composable for debounced server-side ingredient search.
  *
- * Replaces the bulk-fetch + in-memory filter pattern used in compra/compras-directas
- * selectors. The backend GET /suppliers/ingredients?search=&limit=50 is already in place.
+ * Returns `groupedResults` — a flat array with interleaved header rows
+ * (_isHeader: true) for base ingredients, and selectable rows for variants
+ * and standalone ingredients. Grouping is done client-side using `parent_id`
+ * and `parent_name` fields already returned by the backend.
+ *
+ * The raw `results` array is also exported for callers that need a flat list.
  *
  * Usage:
- *   const { query, results, loading } = useIngredientSearch()
+ *   const { query, groupedResults, loading } = useIngredientSearch()
  *   // bind query to the search input v-model
- *   // bind results to the dropdown list
+ *   // bind groupedResults to the dropdown — skip rows where _isHeader === true
  */
 export const useIngredientSearch = () => {
   const results = ref<any[]>([])
@@ -48,5 +52,82 @@ export const useIngredientSearch = () => {
     doSearch(val)
   })
 
-  return { query, results, loading, error }
+  /**
+   * Flat results grouped by base ingredient.
+   *
+   * - Header rows (_isHeader: true) represent base ingredients — non-selectable.
+   * - Variant rows are placed immediately after their base header, with parent_id set.
+   * - Standalone bases (parent_id == null, no variants in results) are selectable directly.
+   *
+   * If a variant's base is not in the results, a synthetic header is created from
+   * the variant's parent_name field.
+   */
+  const groupedResults = computed(() => {
+    const flat = results.value
+    if (!flat.length) return []
+
+    // Separate variants from potential bases
+    const variants: any[] = []
+    const potentialBases: any[] = []
+    for (const item of flat) {
+      if (item.parent_id) variants.push(item)
+      else potentialBases.push(item)
+    }
+
+    // Base objects by id — for when a base appears in results alongside its variants
+    const baseMap = new Map<string, any>()
+    for (const b of potentialBases) baseMap.set(b.id, b)
+
+    // All variants grouped by parent_id, preserving result order within each group
+    const variantsByParent = new Map<string, any[]>()
+    for (const v of variants) {
+      const pid = v.parent_id as string
+      if (!variantsByParent.has(pid)) variantsByParent.set(pid, [])
+      variantsByParent.get(pid)!.push(v)
+    }
+
+    const parentIdsWithVariants = new Set(variantsByParent.keys())
+    const processedParentIds = new Set<string>()
+    const output: any[] = []
+
+    for (const item of flat) {
+      if (item.parent_id) {
+        // Variant — on first encounter of this parent, emit header + all siblings
+        const pid = item.parent_id as string
+        if (!processedParentIds.has(pid)) {
+          processedParentIds.add(pid)
+          const base = baseMap.get(pid)
+          output.push({
+            ...(base ?? {}),
+            id: pid,
+            name: base?.name ?? item.parent_name ?? 'Ingrediente base',
+            unit: base?.unit ?? '',
+            _isHeader: true,
+          })
+          for (const v of variantsByParent.get(pid)!) {
+            output.push(v)
+          }
+        }
+        // else: already emitted as part of parent group — skip
+      } else {
+        // Potential base — skip if already emitted as a header
+        if (processedParentIds.has(item.id)) continue
+        if (parentIdsWithVariants.has(item.id)) {
+          // Base appears before its variants in results — emit header + variants now
+          processedParentIds.add(item.id)
+          output.push({ ...item, _isHeader: true })
+          for (const v of variantsByParent.get(item.id)!) {
+            output.push(v)
+          }
+        } else {
+          // True standalone — selectable directly
+          output.push(item)
+        }
+      }
+    }
+
+    return output
+  })
+
+  return { query, results, groupedResults, loading, error }
 }
