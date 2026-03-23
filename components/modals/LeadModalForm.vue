@@ -1,14 +1,33 @@
 <template>
   <div class="px-6 py-6">
 
-    <!-- Success state -->
-    <div v-if="isSuccess" class="flex flex-col items-center gap-4 py-4 text-center">
+    <!-- Success state: new lead -->
+    <div v-if="isSuccess && !isAlreadyRegistered" class="flex flex-col items-center gap-4 py-4 text-center">
       <div class="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center">
         <Icon name="heroicons:check-circle" class="w-8 h-8 text-success" aria-hidden="true" />
       </div>
       <div>
         <p class="text-base font-semibold leading-tight text-ebony-900">¡Gracias por escribirnos!</p>
         <p class="text-base leading-relaxed text-ebony-500 mt-1">Nos pondremos en contacto contigo pronto.</p>
+      </div>
+      <button
+        class="mt-2 text-sm text-crocus-600 hover:text-crocus-700 underline underline-offset-2"
+        @click="emit('close')"
+      >
+        Cerrar
+      </button>
+    </div>
+
+    <!-- Success state: already registered -->
+    <div v-else-if="isSuccess && isAlreadyRegistered" class="flex flex-col items-center gap-4 py-4 text-center">
+      <div class="w-14 h-14 rounded-full bg-warning/10 flex items-center justify-center">
+        <Icon name="heroicons:information-circle" class="w-8 h-8 text-warning" aria-hidden="true" />
+      </div>
+      <div>
+        <p class="text-base font-semibold leading-tight text-ebony-900">Ya tenemos tu solicitud</p>
+        <p class="text-base leading-relaxed text-ebony-500 mt-1">
+          Disculpa si enviaste el formulario más de una vez. Ya estás registrado y nos pondremos en contacto contigo pronto.
+        </p>
       </div>
       <button
         class="mt-2 text-sm text-crocus-600 hover:text-crocus-700 underline underline-offset-2"
@@ -110,6 +129,7 @@ const form = ref({ email: '', phone: '' })
 const errors = ref({ email: '', phone: '' })
 const isSubmitting = ref(false)
 const isSuccess = ref(false)
+const isAlreadyRegistered = ref(false)
 
 function validate(): boolean {
   errors.value = { email: '', phone: '' }
@@ -134,7 +154,7 @@ async function handleSubmit() {
 
   isSubmitting.value = true
   try {
-    await $fetch('/api/leads/capture', {
+    const res = await $fetch<{ success: boolean; already_registered: boolean }>('/api/leads/capture', {
       method: 'POST',
       body: {
         email: form.value.email,
@@ -143,8 +163,8 @@ async function handleSubmit() {
       },
     })
 
+    isAlreadyRegistered.value = res.already_registered
     isSuccess.value = true
-    success('¡Mensaje enviado! Nos contactaremos pronto.')
   } catch {
     error('Ocurrió un error. Por favor intenta de nuevo.')
   } finally {
