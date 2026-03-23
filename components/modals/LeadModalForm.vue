@@ -2,16 +2,20 @@
   <div class="px-6 py-6">
 
     <!-- Success state: new lead -->
-    <div v-if="isSuccess && !isAlreadyRegistered" class="flex flex-col items-center gap-4 py-4 text-center">
-      <div class="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center">
-        <Icon name="heroicons:check-circle" class="w-8 h-8 text-success" aria-hidden="true" />
+    <div v-if="isSuccess && !isAlreadyRegistered" class="flex flex-col items-center gap-6 py-8 text-center">
+      <div class="w-16 h-16 rounded-full bg-status-success-bg flex items-center justify-center ring-8 ring-status-success-bg/40">
+        <Icon name="heroicons:check-circle" class="w-9 h-9 text-status-success-text" aria-hidden="true" />
       </div>
-      <div>
-        <p class="text-base font-semibold leading-tight text-ebony-900">¡Gracias por escribirnos!</p>
-        <p class="text-base leading-relaxed text-ebony-500 mt-1">Nos pondremos en contacto contigo pronto.</p>
+      <div class="flex flex-col gap-2">
+        <p class="text-lg font-bold leading-tight text-ebony-900">¡Gracias por escribirnos!</p>
+        <p class="text-sm leading-relaxed text-ebony-500 max-w-[240px] mx-auto">
+          Recibimos tu mensaje. Nos pondremos en contacto contigo muy pronto.
+        </p>
       </div>
       <button
-        class="mt-2 text-sm text-crocus-600 hover:text-crocus-700 underline underline-offset-2"
+        class="min-h-[44px] px-8 rounded-lg text-sm font-semibold text-crocus-700 bg-crocus-50
+               hover:bg-crocus-100 focus:outline-none focus:ring-2 focus:ring-crocus-500
+               transition-colors"
         @click="emit('close')"
       >
         Cerrar
@@ -19,21 +23,23 @@
     </div>
 
     <!-- Success state: already registered -->
-    <div v-else-if="isSuccess && isAlreadyRegistered" class="flex flex-col items-center gap-4 py-4 text-center">
-      <div class="w-14 h-14 rounded-full bg-warning/10 flex items-center justify-center">
-        <Icon name="heroicons:information-circle" class="w-8 h-8 text-warning" aria-hidden="true" />
+    <div v-else-if="isSuccess && isAlreadyRegistered" class="flex flex-col items-center gap-6 py-8 text-center">
+      <div class="w-16 h-16 rounded-full bg-crocus-100 flex items-center justify-center ring-8 ring-crocus-100/40">
+        <Icon name="heroicons:clock" class="w-9 h-9 text-crocus-600" aria-hidden="true" />
       </div>
-      <div>
-        <p class="text-base font-semibold leading-tight text-ebony-900">Ya tenemos tu solicitud</p>
-        <p class="text-base leading-relaxed text-ebony-500 mt-1">
-          Disculpa si enviaste el formulario más de una vez. Ya estás registrado y nos pondremos en contacto contigo pronto.
+      <div class="flex flex-col gap-2">
+        <p class="text-lg font-bold leading-tight text-ebony-900">Ya tenemos tu solicitud</p>
+        <p class="text-sm leading-relaxed text-ebony-500 max-w-[240px] mx-auto">
+          Disculpa si enviaste el formulario más de una vez. Ya estás en nuestra lista y pronto te contactamos.
         </p>
       </div>
       <button
-        class="mt-2 text-sm text-crocus-600 hover:text-crocus-700 underline underline-offset-2"
+        class="min-h-[44px] px-8 rounded-lg text-sm font-semibold text-crocus-700 bg-crocus-50
+               hover:bg-crocus-100 focus:outline-none focus:ring-2 focus:ring-crocus-500
+               transition-colors"
         @click="emit('close')"
       >
-        Cerrar
+        Entendido
       </button>
     </div>
 
