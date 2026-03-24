@@ -113,9 +113,11 @@
           <!-- Order header -->
           <div class="flex justify-between items-start mb-3">
             <div>
-              <p class="font-bold text-text-primary text-sm">{{ formatDate(order.date) }}</p>
+              <p class="font-bold text-text-primary text-sm">
+                {{ order.purchase_number ?? formatDate(order.date) }}
+              </p>
               <p class="text-xs text-text-secondary mt-0.5">
-                {{ order.alerts.length }} {{ order.alerts.length === 1 ? 'ingrediente' : 'ingredientes' }} con precio anómalo
+                {{ order.supplier_name ? `${order.supplier_name} · ` : '' }}{{ formatDate(order.purchase_date ?? order.date) }}
               </p>
             </div>
             <div class="flex gap-1.5">
@@ -236,6 +238,9 @@ const ordersWithAnomalies = computed(() => {
     if (!map.has(alert.purchase_id)) {
       map.set(alert.purchase_id, {
         purchase_id: alert.purchase_id,
+        purchase_number: alert.purchase_number ?? null,
+        purchase_date: alert.purchase_date ?? null,
+        supplier_name: alert.supplier_name ?? null,
         date: alert.created_at,
         alerts: [],
         critical: 0,
