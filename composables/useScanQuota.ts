@@ -17,7 +17,7 @@ export const useScanQuota = () => {
   const fetchQuota = async () => {
     loading.value = true
     try {
-      const data = await $fetch<ScanQuota>('/api/purchases/scan-usage')
+      const data = await $fetch<ScanQuota>('/api/suppliers/purchases/scan-usage')
       quota.value = data
     } catch (err: unknown) {
       const e = err as { status?: number }

@@ -2252,51 +2252,17 @@ const handleScanFileSelect = async (event: Event) => {
 
       // 2. Pre-fill items from OCR
       if (data.items && data.items.length > 0) {
-        // Resolve ingredient matches in parallel
-        const matchedIngredients = await Promise.all(
-          data.items.map(async (ocrItem: any) => {
-            // Priority 1: backend already resolved the ingredient_id — fetch by ID directly (no name guessing)
-            if (ocrItem.detected_ingredient_id) {
-              try {
-                const res = await $fetch<any>(`/api/suppliers/ingredients/${ocrItem.detected_ingredient_id}`)
-                if (res?.data) return res.data
-              } catch { /* fall through */ }
-              return null
-            }
-
-            // Priority 2: call /ingredients/match for the Gemini-detected name or raw description
-            const nameToMatch = ocrItem.detected_ingredient || ocrItem.descripcion || ''
-            if (!nameToMatch) return null
-
-            try {
-              const res = await useNuxtApp().$fetch<any>('/api/suppliers/ingredients/match', {
-                query: { name: nameToMatch, threshold: 0.35 }
-              })
-              return res?.data ?? null
-            } catch {
-              return null
-            }
-          })
-        )
-
-        // Cache all resolved ingredients
-        matchedIngredients.forEach(ing => { if (ing) cacheIngredient(ing) })
-
-        form.value.items = data.items.map((ocrItem: any, index: number) => {
-          let matchedId = ''
-          let ingredientName = ''
-
-          // Priority 1: backend-resolved id from Gemini (invoice scan service)
-          if (ocrItem.detected_ingredient_id) {
-            matchedId = ocrItem.detected_ingredient_id
-            ingredientName = ocrItem.detected_ingredient || ocrItem.descripcion || ''
-          } else if (matchedIngredients[index]) {
-            // Priority 2: pg_trgm server-side match
-            matchedId = matchedIngredients[index].id
-            ingredientName = matchedIngredients[index].name
-          } else {
-            ingredientName = ocrItem.detected_ingredient || ocrItem.descripcion || ''
+        // Cache all matched ingredients returned by the backend to avoid N+1 fetches
+        data.items.forEach((ocrItem: any) => {
+          if (ocrItem.matched_ingredient) {
+            cacheIngredient(ocrItem.matched_ingredient)
           }
+        })
+
+        form.value.items = data.items.map((ocrItem: any) => {
+          const matched = ocrItem.matched_ingredient
+          const matchedId = matched?.id || ocrItem.detected_ingredient_id || ''
+          const ingredientName = matched?.name || ocrItem.detected_ingredient || ocrItem.descripcion || ''
 
           const item: PurchaseItem = {
             ingredient_id: matchedId,

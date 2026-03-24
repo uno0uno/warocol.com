@@ -22,7 +22,6 @@ definePageMeta({
 // Navigation configuration
 const navigationItems = [
   { to: '/abastecimiento/proveedores', label: 'Proveedores' },
-  { to: '/abastecimiento/ingredientes', label: 'Ingredientes' },
   { to: '/abastecimiento/compras-directas', label: 'Compra Directa', matchPath: '/compras-directas' },
   { to: '/abastecimiento/stock', label: 'Stock' },
   { to: '/abastecimiento/ajustes', label: 'Ajustes', matchPath: '/ajustes' },

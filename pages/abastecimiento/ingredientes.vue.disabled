@@ -38,6 +38,14 @@
         />
       </UiStats>
 
+      <!-- Scan Quota -->
+      <UiScanUsageBar
+        v-if="quota"
+        :quota="quota"
+        :warning-level="warningLevel"
+        :scans-remaining="scansRemaining"
+      />
+
       <!-- Filters -->
       <SharedFiltersBar
         v-model:search="searchQuery"
@@ -342,6 +350,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useScanQuota } from '@/composables/useScanQuota'
+
+const { quota, warningLevel, scansRemaining, fetchQuota } = useScanQuota()
+onMounted(() => { fetchQuota() })
 
 useHead({ title: 'Ingredientes - Abastecimiento' })
 
