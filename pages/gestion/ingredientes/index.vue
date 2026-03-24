@@ -43,11 +43,11 @@
             <option value="supply">Insumos</option>
           </select>
           <!-- Hierarchy filter toggle -->
-          <div class="flex rounded-lg border border-border overflow-hidden text-sm" role="group" aria-label="Filtrar por jerarquía">
+          <div class="flex rounded-lg border border-border overflow-hidden text-sm" role="group" aria-label="Filtrar por jerarquía de ingredientes">
             <button
               @click="hierarchyFilter = ''"
               :class="['px-3 py-2 min-h-[44px] transition-colors', hierarchyFilter === '' ? 'bg-primary text-white' : 'bg-surface text-text-secondary hover:bg-surface-secondary']"
-            >Todos</button>
+            >Ver todas</button>
             <button
               @click="hierarchyFilter = 'bases'"
               :class="['px-3 py-2 min-h-[44px] border-l border-border transition-colors', hierarchyFilter === 'bases' ? 'bg-primary text-white' : 'bg-surface text-text-secondary hover:bg-surface-secondary']"
@@ -468,7 +468,7 @@ const PAGE_SIZE = 50
 // ── Filters & pagination ────────────────────────────────────────────────────
 const searchQuery = ref('')
 const typeFilter = ref('')
-const hierarchyFilter = ref<'' | 'bases' | 'variantes'>('')
+const hierarchyFilter = ref<'' | 'bases' | 'variantes'>('bases')
 const currentPage = ref(1)
 
 // ── Data fetch ──────────────────────────────────────────────────────────────
@@ -478,21 +478,20 @@ const { data: listData, pending: isLoading, error: fetchError, refresh } = useFe
     page: currentPage.value,
     limit: PAGE_SIZE,
     search: searchQuery.value || undefined,
+    bases_only: hierarchyFilter.value === 'bases' ? true : undefined,
   })),
 })
 
 const allBases = computed(() => listData.value?.data ?? [])
 const totalItems = computed(() => listData.value?.pagination?.total ?? 0)
 
-// Client-side hierarchy + type filtering
+// Client-side type + variantes filtering (bases filter is server-side via bases_only param)
 const filteredBases = computed(() => {
   let rows = allBases.value as any[]
   if (typeFilter.value) {
     rows = rows.filter((r) => r.type === typeFilter.value)
   }
-  if (hierarchyFilter.value === 'bases') {
-    rows = rows.filter((r) => !r.hierarchy_base_id)
-  } else if (hierarchyFilter.value === 'variantes') {
+  if (hierarchyFilter.value === 'variantes') {
     rows = rows.filter((r) => !!r.hierarchy_base_id)
   }
   return rows
