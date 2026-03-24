@@ -169,16 +169,17 @@
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
               </button>
-              <button
-                :aria-label="`Corregir precio de ${item.ingredient_name}`"
+              <NuxtLink
+                v-if="item.purchase_id"
+                :to="`/abastecimiento/ordenes/${item.purchase_id}`"
+                :aria-label="`Ver orden de compra de ${item.ingredient_name}`"
                 class="min-h-[44px] min-w-[44px] flex items-center justify-center
                        text-primary/60 hover:text-primary transition-colors"
-                @click="openCorrectModal(item)"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-              </button>
+              </NuxtLink>
             </div>
           </div>
         </template>
@@ -251,28 +252,22 @@
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
               </svg>
             </button>
-            <button
-              :aria-label="`Corregir precio de ${row.ingredient_name}`"
+            <NuxtLink
+              v-if="row.purchase_id"
+              :to="`/abastecimiento/ordenes/${row.purchase_id}`"
+              :aria-label="`Ver orden de compra de ${row.ingredient_name}`"
               class="min-h-[36px] min-w-[36px] flex items-center justify-center
                      text-primary/60 hover:text-primary transition-colors"
-              @click="openCorrectModal(row)"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-            </button>
+            </NuxtLink>
           </div>
         </template>
       </UiResponsiveDataView>
 
     </div>
-
-    <!-- Correct Alert Modal -->
-    <DataQualityCorrectAlertModal
-      v-model="showCorrectModal"
-      :alert="selectedAlertForCorrection"
-      @resolved="onAlertCorrected"
-    />
 
   </div>
 </template>
@@ -393,21 +388,4 @@ const markAsValid = async (alertId: string) => {
   }
 }
 
-// Correct modal
-const selectedAlertForCorrection = ref<any>(null)
-
-const showCorrectModal = computed({
-  get: () => selectedAlertForCorrection.value !== null,
-  set: (value) => { if (!value) selectedAlertForCorrection.value = null }
-})
-
-const openCorrectModal = (alert: any) => {
-  selectedAlertForCorrection.value = alert
-}
-
-const onAlertCorrected = () => {
-  selectedAlertForCorrection.value = null
-  refresh()
-  useDataQualityStatus().refresh()
-}
 </script>
