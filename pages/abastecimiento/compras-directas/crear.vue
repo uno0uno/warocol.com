@@ -2334,6 +2334,9 @@ const handleScanFileSelect = async (event: Event) => {
       await fetchQuota()
       return
     }
+    if (err?.status === 504) {
+      alert('La lectura de factura tomó demasiado tiempo (timeout). Por favor intenta de nuevo con una imagen más clara o ingresa los datos manualmente.')
+    }
     console.error('OCR scan error:', e)
   } finally {
     const elapsed = Date.now() - startTime

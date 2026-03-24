@@ -40,7 +40,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     const { data: sessionResponse, error } = await useFetch('/api/auth/session', {
       key: 'auth-session',
       getCachedData: (key) => {
-        return useNuxtApp().payload.data[key] || useNuxtApp().static.data[key]
+        const nuxtApp = useNuxtApp()
+        const payloadData = nuxtApp.payload?.data?.[key]
+        const staticData = nuxtApp.static?.data?.[key]
+        return payloadData || staticData
       }
     })
 
