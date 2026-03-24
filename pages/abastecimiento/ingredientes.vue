@@ -173,7 +173,7 @@
               <span :class="row._isVariant ? 'text-sm text-text-secondary' : 'text-sm font-semibold text-text-primary'">
                 {{ row.name }}
               </span>
-              <p v-if="row._isVariant" class="text-xs text-text-secondary/60">variante de {{ row._parentName }}</p>
+              <p v-if="row._isVariant" class="text-xs text-text-secondary/60">variante de {{ row.hierarchy_base_name }}</p>
             </div>
           </div>
         </template>
@@ -193,7 +193,12 @@
 
         <!-- Desktop: Base global -->
         <template #cell-base_ref="{ row }">
-          <span v-if="row._isVariant" class="text-sm text-text-secondary">{{ row._parentName }}</span>
+          <button
+            v-if="row._isVariant"
+            @click.stop="filterByBase(row.hierarchy_base_name)"
+            class="text-sm text-primary hover:underline text-left focus:outline-none focus:ring-2 focus:ring-ring rounded"
+            :title="`Filtrar por ${row.hierarchy_base_name}`"
+          >{{ row.hierarchy_base_name }}</button>
           <span v-else class="text-xs text-text-secondary/40">—</span>
         </template>
 
@@ -411,7 +416,7 @@ const flatRows = computed(() => {
     if (expandedIds.value.has(base.id)) {
       const variants = variantsByBase.value[base.id] || []
       for (const v of variants) {
-        rows.push({ ...v, _isVariant: true, _parentName: base.name, _parentId: base.id })
+        rows.push({ ...v, _isVariant: true, _parentName: base.name, _parentId: base.id, hierarchy_base_name: base.name })
       }
     }
   }
@@ -524,6 +529,12 @@ const handleSearch = () => {
 const clearFilters = () => {
   searchQuery.value = ''
   typeFilter.value = ''
+  expandedIds.value = new Set()
+  refresh()
+}
+
+function filterByBase(baseName: string) {
+  searchQuery.value = baseName
   expandedIds.value = new Set()
   refresh()
 }
