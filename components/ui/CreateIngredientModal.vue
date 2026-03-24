@@ -77,9 +77,15 @@
             <UiIngredientSearchInput
               :initial-value="''"
               placeholder="Buscar ingrediente base..."
+              :allow-create="true"
               @select="onBaseSelected"
+              @create="onBaseCreateRequest"
             />
-            <p v-if="form.base" class="mt-1.5 text-xs text-success flex items-center gap-1">
+            <p v-if="isResolvingBase" class="mt-1.5 text-xs text-text-secondary flex items-center gap-1.5">
+              <CommonsTheCustomLoader size="small" />
+              Buscando base...
+            </p>
+            <p v-else-if="form.base" class="mt-1.5 text-xs text-success flex items-center gap-1">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
@@ -171,6 +177,7 @@ const form = ref({
 const similarIngredients = ref<SimilarIngredient[]>([])
 const forceConfirmed = ref(false)
 const isSaving = ref(false)
+const isResolvingBase = ref(false)
 const apiError = ref('')
 
 
@@ -210,6 +217,32 @@ async function checkFuzzy(name: string) {
 function onBaseSelected(base: BaseIngredient) {
   form.value.base = base
   apiError.value = ''
+}
+
+async function onBaseCreateRequest(name: string) {
+  isResolvingBase.value = true
+  apiError.value = ''
+  try {
+    const res = await $fetch<any>('/api/admin/ingredients/validate-base', {
+      method: 'POST',
+      body: { name },
+    })
+    if (res.verdict === 'suggest' && res.suggested) {
+      // Gemini found a semantic duplicate — use it silently
+      form.value.base = res.suggested
+    } else {
+      // No duplicate — create the base
+      const created = await $fetch<any>('/api/admin/ingredients', {
+        method: 'POST',
+        body: { name, force: true },
+      })
+      form.value.base = created.data
+    }
+  } catch (err: any) {
+    apiError.value = err?.data?.detail || 'Error al resolver el ingrediente base.'
+  } finally {
+    isResolvingBase.value = false
+  }
 }
 
 function selectExisting(ingredient: SimilarIngredient) {
