@@ -5,8 +5,8 @@ import { useDebounceFn } from '@vueuse/core'
  *
  * Returns `groupedResults` — a flat array with interleaved header rows
  * (_isHeader: true) for base ingredients, and selectable rows for variants
- * and standalone ingredients. Grouping is done client-side using `parent_id`
- * and `parent_name` fields already returned by the backend.
+ * and standalone ingredients. Grouping is done client-side using `hierarchy_base_id`
+ * and `hierarchy_base_name` fields returned by the backend (ingredient_global_hierarchy).
  *
  * The raw `results` array is also exported for callers that need a flat list.
  *
@@ -56,11 +56,11 @@ export const useIngredientSearch = () => {
    * Flat results grouped by base ingredient.
    *
    * - Header rows (_isHeader: true) represent base ingredients — non-selectable.
-   * - Variant rows are placed immediately after their base header, with parent_id set.
-   * - Standalone bases (parent_id == null, no variants in results) are selectable directly.
+   * - Variant rows are placed immediately after their base header, with hierarchy_base_id set.
+   * - Standalone bases (hierarchy_base_id == null, no variants in results) are selectable directly.
    *
    * If a variant's base is not in the results, a synthetic header is created from
-   * the variant's parent_name field.
+   * the variant's hierarchy_base_name field.
    */
   const groupedResults = computed(() => {
     const flat = results.value
@@ -70,7 +70,7 @@ export const useIngredientSearch = () => {
     const variants: any[] = []
     const potentialBases: any[] = []
     for (const item of flat) {
-      if (item.parent_id) variants.push(item)
+      if (item.hierarchy_base_id) variants.push(item)
       else potentialBases.push(item)
     }
 
@@ -78,10 +78,10 @@ export const useIngredientSearch = () => {
     const baseMap = new Map<string, any>()
     for (const b of potentialBases) baseMap.set(b.id, b)
 
-    // All variants grouped by parent_id, preserving result order within each group
+    // All variants grouped by hierarchy_base_id, preserving result order within each group
     const variantsByParent = new Map<string, any[]>()
     for (const v of variants) {
-      const pid = v.parent_id as string
+      const pid = v.hierarchy_base_id as string
       if (!variantsByParent.has(pid)) variantsByParent.set(pid, [])
       variantsByParent.get(pid)!.push(v)
     }
@@ -91,16 +91,16 @@ export const useIngredientSearch = () => {
     const output: any[] = []
 
     for (const item of flat) {
-      if (item.parent_id) {
+      if (item.hierarchy_base_id) {
         // Variant — on first encounter of this parent, emit header + all siblings
-        const pid = item.parent_id as string
+        const pid = item.hierarchy_base_id as string
         if (!processedParentIds.has(pid)) {
           processedParentIds.add(pid)
           const base = baseMap.get(pid)
           output.push({
             ...(base ?? {}),
             id: pid,
-            name: base?.name ?? item.parent_name ?? 'Ingrediente base',
+            name: base?.name ?? item.hierarchy_base_name ?? 'Ingrediente base',
             unit: base?.unit ?? '',
             _isHeader: true,
           })
