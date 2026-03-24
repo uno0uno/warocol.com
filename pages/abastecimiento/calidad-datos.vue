@@ -95,108 +95,125 @@
         </button>
       </div>
 
-      <!-- Orders with anomalies -->
-      <div v-if="ordersWithAnomalies.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
-        <svg class="w-12 h-12 text-text-secondary/40 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <p class="text-base font-semibold text-text-primary">Sin órdenes con anomalías</p>
-        <p class="text-sm text-text-secondary mt-1">No se detectaron anomalías de precios en los últimos 30 días.</p>
-      </div>
-
-      <div v-else class="flex flex-col gap-3">
-        <div
-          v-for="order in ordersWithAnomalies"
-          :key="order.purchase_id"
-          class="bg-white border border-border rounded-lg p-4"
-        >
-          <!-- Order header -->
-          <div class="flex justify-between items-start mb-3">
-            <div>
-              <p class="font-bold text-text-primary text-sm">
-                {{ order.purchase_number ?? formatDate(order.date) }}
-              </p>
-              <p class="text-xs text-text-secondary mt-0.5">
-                {{ order.supplier_name ? `${order.supplier_name} · ` : '' }}{{ formatDate(order.purchase_date ?? order.date) }}
-              </p>
-            </div>
-            <div class="flex gap-1.5">
-              <UiStatusBadge
-                v-if="order.critical > 0"
-                :value="`${order.critical} crítico${order.critical > 1 ? 's' : ''}`"
-                format="text"
-                variant="destructive"
-                size="sm"
-              />
-              <UiStatusBadge
-                v-if="order.warning > 0"
-                :value="`${order.warning} aviso${order.warning > 1 ? 's' : ''}`"
-                format="text"
-                variant="warning"
-                size="sm"
-              />
-            </div>
-          </div>
-
-          <!-- Ingredient rows -->
-          <div class="flex flex-col divide-y divide-border">
-            <div
-              v-for="alert in order.alerts"
-              :key="alert.id"
-              class="flex items-center justify-between py-2 gap-3"
-            >
-              <div class="flex items-center gap-2 min-w-0">
-                <svg v-if="alert.alert_type === 'price_spike'" class="w-3.5 h-3.5 shrink-0 text-status-error-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
-                <svg v-else class="w-3.5 h-3.5 shrink-0 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
-                <span class="text-sm text-text-primary truncate">{{ alert.ingredient_name }}</span>
+      <!-- Orders Table -->
+      <UiResponsiveDataView
+        :columns="tableColumns"
+        :data="ordersWithAnomalies"
+        :sort-field="sortField"
+        :sort-direction="sortDirection"
+        @sort="handleSort"
+        @row-click="viewOrder"
+        title="Órdenes con Anomalías"
+        empty-message="Sin órdenes con anomalías"
+        empty-sub-message="No se detectaron anomalías de precios en los últimos 30 días."
+        variant="default"
+      >
+        <!-- Mobile Card -->
+        <template #card="{ item }">
+          <div
+            class="bg-white border border-border rounded-lg p-4 cursor-pointer hover:bg-surface-secondary transition-colors"
+            @click="viewOrder(item)"
+          >
+            <div class="flex justify-between items-start mb-2">
+              <div class="min-w-0">
+                <p class="font-bold text-text-primary text-sm truncate">
+                  {{ item.purchase_number ?? formatDate(item.date) }}
+                </p>
+                <p class="text-xs text-text-secondary mt-0.5">
+                  {{ item.supplier_name ?? 'Sin proveedor' }}
+                </p>
               </div>
-              <div class="flex items-center gap-2 shrink-0">
-                <span class="text-xs text-text-secondary">${{ formatValue(alert.actual_value) }}</span>
+              <div class="flex gap-1.5 shrink-0 ml-2">
                 <UiStatusBadge
-                  :value="alert.deviation_pct"
-                  format="percentage"
-                  variant="secondary"
+                  v-if="item.critical > 0"
+                  :value="`${item.critical} crít.`"
+                  format="text"
+                  variant="destructive"
                   size="sm"
                 />
-                <button
-                  :disabled="validatingId === alert.id"
-                  :aria-label="`Marcar ${alert.ingredient_name} como válido`"
-                  class="min-h-[32px] min-w-[32px] flex items-center justify-center rounded
-                         text-text-secondary/40 hover:text-status-success-text transition-colors
-                         disabled:opacity-40 disabled:cursor-not-allowed"
-                  @click="markAsValid(alert.id)"
-                >
-                  <svg v-if="validatingId !== alert.id" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                  </svg>
-                </button>
+                <UiStatusBadge
+                  v-if="item.warning > 0"
+                  :value="`${item.warning} aviso${item.warning > 1 ? 's' : ''}`"
+                  format="text"
+                  variant="warning"
+                  size="sm"
+                />
               </div>
             </div>
+            <div class="flex justify-between items-center text-xs text-text-secondary mt-2">
+              <span>{{ formatDate(item.purchase_date ?? item.date) }}</span>
+              <span>{{ item.alerts.length }} ingrediente{{ item.alerts.length !== 1 ? 's' : '' }} afectado{{ item.alerts.length !== 1 ? 's' : '' }}</span>
+            </div>
           </div>
+        </template>
 
-          <!-- Action -->
-          <div class="pt-3 mt-1 border-t border-border flex justify-end">
+        <!-- Desktop Header -->
+        <template #header>
+          <h3 class="text-base sm:text-lg font-bold text-text-primary">
+            Órdenes con Anomalías
+          </h3>
+        </template>
+
+        <!-- Desktop Cell Customizations -->
+        <template #cell-purchase_number="{ value, row }">
+          <span class="text-sm font-medium text-ebony-800">{{ value ?? formatDate(row.date) }}</span>
+        </template>
+
+        <template #cell-supplier_name="{ value }">
+          <span class="text-sm font-bold text-ebony-800">{{ value ?? 'Sin proveedor' }}</span>
+        </template>
+
+        <template #cell-purchase_date="{ value, row }">
+          <span class="text-sm text-ebony-800">{{ formatDate(value ?? row.date) }}</span>
+        </template>
+
+        <template #cell-critical="{ value }">
+          <UiStatusBadge
+            v-if="value > 0"
+            :value="`${value} crítico${value > 1 ? 's' : ''}`"
+            format="text"
+            variant="destructive"
+            size="sm"
+          />
+          <span v-else class="text-sm text-text-secondary">—</span>
+        </template>
+
+        <template #cell-warning="{ value }">
+          <UiStatusBadge
+            v-if="value > 0"
+            :value="`${value} aviso${value > 1 ? 's' : ''}`"
+            format="text"
+            variant="warning"
+            size="sm"
+          />
+          <span v-else class="text-sm text-text-secondary">—</span>
+        </template>
+
+        <template #cell-alerts="{ value }">
+          <UiStatusBadge
+            :value="`${value.length} ingrediente${value.length !== 1 ? 's' : ''}`"
+            format="text"
+            variant="secondary"
+            size="sm"
+          />
+        </template>
+
+        <template #cell-actions="{ row }">
+          <div class="flex justify-center">
             <NuxtLink
-              :to="`/abastecimiento/compras-directas/${order.purchase_id}/editar`"
-              class="inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-lg bg-primary/8 text-primary text-sm font-medium hover:bg-primary/15 transition-colors"
-              :aria-label="`Editar orden del ${formatDate(order.date)}`"
+              :to="`/abastecimiento/compras-directas/${row.purchase_id}/editar`"
+              :aria-label="`Ver y corregir orden ${row.purchase_number ?? ''}`"
+              class="min-h-[36px] px-3 inline-flex items-center gap-1.5 rounded-lg bg-primary/8 text-primary text-sm font-medium hover:bg-primary/15 transition-colors"
+              @click.stop
             >
-              Ver y corregir orden
+              Corregir
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
             </NuxtLink>
           </div>
-        </div>
-      </div>
+        </template>
+      </UiResponsiveDataView>
 
     </div>
   </div>
@@ -235,7 +252,31 @@ const clearFilters = () => {
   searchIngredient.value = ''
 }
 
-// Group alerts by purchase_id → one card per order
+// Sort state
+const sortField = ref('critical')
+const sortDirection = ref<'asc' | 'desc'>('desc')
+
+const handleSort = (field: string) => {
+  if (sortField.value === field) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortField.value = field
+    sortDirection.value = 'desc'
+  }
+}
+
+// Table columns
+const tableColumns = [
+  { key: 'purchase_number', title: 'Orden', sortable: true },
+  { key: 'supplier_name', title: 'Proveedor', sortable: true },
+  { key: 'purchase_date', title: 'Fecha', sortable: true },
+  { key: 'critical', title: 'Críticos', sortable: true },
+  { key: 'warning', title: 'Avisos', sortable: true },
+  { key: 'alerts', title: 'Ingredientes', sortable: false },
+  { key: 'actions', title: '', sortable: false }
+]
+
+// Group alerts by purchase_id → one row per order
 const ordersWithAnomalies = computed(() => {
   const alerts = qualityData.value?.alerts ?? []
   const search = searchIngredient.value.toLowerCase().trim()
@@ -278,45 +319,34 @@ const ordersWithAnomalies = computed(() => {
     )
   }
 
-  // Critical orders first, then by date desc
+  // Sort by selected field
   return orders.sort((a: any, b: any) => {
+    let aVal: any = a[sortField.value]
+    let bVal: any = b[sortField.value]
+
+    if (sortField.value === 'purchase_date') {
+      aVal = new Date(aVal ?? a.date).getTime()
+      bVal = new Date(bVal ?? b.date).getTime()
+    } else if (sortField.value === 'alerts') {
+      aVal = a.alerts.length
+      bVal = b.alerts.length
+    }
+
+    if (aVal < bVal) return sortDirection.value === 'asc' ? -1 : 1
+    if (aVal > bVal) return sortDirection.value === 'asc' ? 1 : -1
+    // Tiebreak: critical first, then by date desc
     if (a.critical > 0 && b.critical === 0) return -1
     if (b.critical > 0 && a.critical === 0) return 1
     return new Date(b.date).getTime() - new Date(a.date).getTime()
   })
 })
 
-// Mark as valid
-const validatingId = ref<string | null>(null)
-
-const markAsValid = async (alertId: string) => {
-  validatingId.value = alertId
-  try {
-    await $fetch(`/api/analytics/data-quality/${alertId}/resolve`, {
-      method: 'PATCH',
-      body: { resolution_type: 'valid' }
-    })
-    await refresh()
-    useDataQualityStatus().refresh()
-  } catch (e) {
-    console.error('Error marking alert as valid:', e)
-  } finally {
-    validatingId.value = null
-  }
+// Navigation
+const viewOrder = (order: any) => {
+  navigateTo(`/abastecimiento/compras-directas/${order.purchase_id}/editar`)
 }
 
 // Helpers
-const getSeverityVariant = (severity: string) => {
-  if (severity === 'critical') return 'destructive'
-  if (severity === 'warning') return 'warning'
-  return 'success'
-}
-
-const formatValue = (value: number | null) => {
-  if (value == null) return '—'
-  return value.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-}
-
 const formatDate = (dateStr: string) => {
   if (!dateStr) return '—'
   return new Date(dateStr).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
