@@ -77,15 +77,45 @@
             <UiIngredientSearchInput
               :initial-value="''"
               placeholder="Buscar ingrediente base..."
+              :allow-create="true"
               @select="onBaseSelected"
+              @create="onBaseCreateRequest"
             />
-            <p v-if="form.base" class="mt-1.5 text-xs text-success flex items-center gap-1">
+            <!-- Validating state -->
+            <p v-if="isValidatingBase" class="mt-1.5 text-xs text-text-secondary flex items-center gap-1.5">
+              <CommonsTheCustomLoader size="small" />
+              Verificando duplicados con IA...
+            </p>
+            <!-- Gemini suggestion: possible duplicate found -->
+            <div v-else-if="baseSuggestion" class="mt-2 p-3 bg-info/10 border border-info/30 rounded-lg">
+              <p class="text-sm text-text-primary mb-2">
+                ¿Quisiste decir <strong>{{ baseSuggestion.name }}</strong>?
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  @click="acceptBaseSuggestion"
+                  class="px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-medium hover:opacity-90 transition-opacity min-h-[32px]"
+                >
+                  Usar "{{ baseSuggestion.name }}"
+                </button>
+                <button
+                  type="button"
+                  @click="forceCreateBase"
+                  class="px-3 py-1.5 border border-border rounded-lg text-xs font-medium hover:bg-surface-secondary transition-colors min-h-[32px]"
+                >
+                  No, crear "{{ pendingBaseName }}"
+                </button>
+              </div>
+            </div>
+            <!-- Selected base confirmation -->
+            <p v-else-if="form.base" class="mt-1.5 text-xs text-success flex items-center gap-1">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
               Base seleccionada: <strong class="ml-0.5">{{ form.base.name }}</strong>
             </p>
-            <p v-else class="mt-1 text-xs text-text-secondary">Selecciona la base para heredar la unidad</p>
+            <p v-else class="mt-1 text-xs text-text-secondary">Selecciona la base o escríbela para crearla</p>
           </div>
 
           <!-- Unidad (read-only, from base) -->
@@ -173,6 +203,11 @@ const forceConfirmed = ref(false)
 const isSaving = ref(false)
 const apiError = ref('')
 
+// Base auto-creation state
+const pendingBaseName = ref('')
+const isValidatingBase = ref(false)
+const baseSuggestion = ref<{ id: string; name: string; unit: string } | null>(null)
+
 // Reset state when modal opens
 watch(() => props.modelValue, (open) => {
   if (open) {
@@ -180,6 +215,9 @@ watch(() => props.modelValue, (open) => {
     similarIngredients.value = []
     forceConfirmed.value = false
     apiError.value = ''
+    pendingBaseName.value = ''
+    isValidatingBase.value = false
+    baseSuggestion.value = null
     if (props.initialName) {
       checkFuzzy(props.initialName)
     }
@@ -208,7 +246,68 @@ async function checkFuzzy(name: string) {
 
 function onBaseSelected(base: BaseIngredient) {
   form.value.base = base
+  baseSuggestion.value = null
+  pendingBaseName.value = ''
   apiError.value = ''
+}
+
+async function onBaseCreateRequest(name: string) {
+  pendingBaseName.value = name
+  baseSuggestion.value = null
+  apiError.value = ''
+  isValidatingBase.value = true
+
+  try {
+    const res = await $fetch<any>('/api/admin/ingredients/validate-base', {
+      method: 'POST',
+      body: { name },
+    })
+
+    if (res.verdict === 'suggest' && res.suggested) {
+      baseSuggestion.value = res.suggested
+    } else {
+      // verdict === 'create': no duplicate found, auto-create the base
+      await _autoCreateBase(name)
+    }
+  } catch (err: any) {
+    apiError.value = err?.data?.detail || 'Error al validar el nombre base.'
+  } finally {
+    isValidatingBase.value = false
+  }
+}
+
+async function _autoCreateBase(name: string) {
+  try {
+    const res = await $fetch<any>('/api/admin/ingredients', {
+      method: 'POST',
+      body: { name, force: true },
+    })
+    form.value.base = res.data
+    baseSuggestion.value = null
+    pendingBaseName.value = ''
+    apiError.value = ''
+  } catch (err: any) {
+    apiError.value = err?.data?.detail || 'Error al crear el ingrediente base.'
+  }
+}
+
+function acceptBaseSuggestion() {
+  if (!baseSuggestion.value) return
+  form.value.base = baseSuggestion.value
+  baseSuggestion.value = null
+  pendingBaseName.value = ''
+  apiError.value = ''
+}
+
+async function forceCreateBase() {
+  const name = pendingBaseName.value
+  baseSuggestion.value = null
+  isValidatingBase.value = true
+  try {
+    await _autoCreateBase(name)
+  } finally {
+    isValidatingBase.value = false
+  }
 }
 
 function selectExisting(ingredient: SimilarIngredient) {
