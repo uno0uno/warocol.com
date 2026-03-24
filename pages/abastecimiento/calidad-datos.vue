@@ -162,6 +162,22 @@
                   variant="secondary"
                   size="sm"
                 />
+                <button
+                  :disabled="validatingId === alert.id"
+                  :aria-label="`Marcar ${alert.ingredient_name} como válido`"
+                  class="min-h-[32px] min-w-[32px] flex items-center justify-center rounded
+                         text-text-secondary/40 hover:text-status-success-text transition-colors
+                         disabled:opacity-40 disabled:cursor-not-allowed"
+                  @click="markAsValid(alert.id)"
+                >
+                  <svg v-if="validatingId !== alert.id" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -269,6 +285,25 @@ const ordersWithAnomalies = computed(() => {
     return new Date(b.date).getTime() - new Date(a.date).getTime()
   })
 })
+
+// Mark as valid
+const validatingId = ref<string | null>(null)
+
+const markAsValid = async (alertId: string) => {
+  validatingId.value = alertId
+  try {
+    await $fetch(`/api/analytics/data-quality/${alertId}/resolve`, {
+      method: 'PATCH',
+      body: { resolution_type: 'valid' }
+    })
+    await refresh()
+    useDataQualityStatus().refresh()
+  } catch (e) {
+    console.error('Error marking alert as valid:', e)
+  } finally {
+    validatingId.value = null
+  }
+}
 
 // Helpers
 const getSeverityVariant = (severity: string) => {
