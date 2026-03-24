@@ -60,7 +60,6 @@
 
       <!-- Filters Bar -->
       <div class="flex items-center gap-2 w-full overflow-x-auto pb-1">
-        <!-- Search -->
         <div class="relative flex-1 min-w-[160px]">
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -68,25 +67,22 @@
           <input
             v-model="searchIngredient"
             type="search"
-            placeholder="Buscar ingrediente..."
-            aria-label="Buscar ingrediente"
+            placeholder="Buscar por ingrediente..."
+            aria-label="Buscar por ingrediente"
             class="h-10 w-full pl-9 pr-4 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
           />
         </div>
 
-        <!-- Severity select -->
         <select
           v-model="severityFilter"
           aria-label="Filtrar por severidad"
           class="h-10 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer min-w-[130px] transition-colors"
         >
-          <option value="">Todas</option>
-          <option v-for="opt in severityOptions" :key="opt.value" :value="opt.value">
-            {{ opt.label }}
-          </option>
+          <option value="">Activas</option>
+          <option value="critical">Solo críticas</option>
+          <option value="warning">Solo avisos</option>
         </select>
 
-        <!-- Clear button -->
         <button
           v-if="searchIngredient || severityFilter"
           aria-label="Limpiar filtros"
@@ -99,181 +95,127 @@
         </button>
       </div>
 
-      <!-- Alert List -->
+      <!-- Orders Table -->
       <UiResponsiveDataView
-        :columns="alertTableColumns"
-        :data="filteredAlerts"
-        title="Anomalías de Precios"
-        empty-message="Sin anomalías detectadas"
+        :columns="tableColumns"
+        :data="ordersWithAnomalies"
+        :sort-field="sortField"
+        :sort-direction="sortDirection"
+        @sort="handleSort"
+        @row-click="viewOrder"
+        title="Órdenes con Anomalías"
+        empty-message="Sin órdenes con anomalías"
         empty-sub-message="No se detectaron anomalías de precios en los últimos 30 días."
         variant="default"
-        row-size="sm"
       >
-        <!-- Mobile Card Slot -->
+        <!-- Mobile Card -->
         <template #card="{ item }">
-          <div class="bg-white border border-border rounded-lg p-4">
-            <div class="flex justify-between items-start mb-3">
-              <div class="flex-1 min-w-0 pr-3">
-                <p class="font-bold text-text-primary truncate">{{ item.ingredient_name }}</p>
-                <span class="inline-flex items-center gap-1 text-xs text-text-secondary mt-0.5">
-                  <svg v-if="item.alert_type === 'price_spike'" class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                  </svg>
-                  <svg v-else class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                  </svg>
-                  {{ item.alert_type === 'price_spike' ? 'Subida' : 'Bajada' }}
-                </span>
+          <div
+            class="bg-white border border-border rounded-lg p-4 cursor-pointer hover:bg-surface-secondary transition-colors"
+            @click="viewOrder(item)"
+          >
+            <div class="flex justify-between items-start mb-2">
+              <div class="min-w-0">
+                <p class="font-bold text-text-primary text-sm truncate">
+                  {{ item.purchase_number ?? formatDate(item.date) }}
+                </p>
+                <p class="text-xs text-text-secondary mt-0.5">
+                  {{ item.supplier_name ?? 'Sin proveedor' }}
+                </p>
               </div>
-              <UiStatusBadge
-                :value="getSeverityLabel(item.severity)"
-                format="text"
-                :variant="getSeverityVariant(item.severity)"
-                size="sm"
-              />
-            </div>
-            <div class="grid grid-cols-3 gap-2 text-sm mb-3">
-              <div>
-                <p class="text-text-secondary text-xs mb-0.5">Registrado</p>
-                <p class="font-semibold text-text-primary">${{ formatValue(item.actual_value) }}</p>
-              </div>
-              <div>
-                <p class="text-text-secondary text-xs mb-0.5">Promedio</p>
-                <p class="font-semibold text-text-primary">${{ formatValue(item.rolling_avg) }}</p>
-              </div>
-              <div>
-                <p class="text-text-secondary text-xs mb-0.5">Desviación</p>
+              <div class="flex gap-1.5 shrink-0 ml-2">
                 <UiStatusBadge
-                  :value="item.deviation_pct"
-                  format="percentage"
-                  variant="secondary"
+                  v-if="item.critical > 0"
+                  :value="`${item.critical} crít.`"
+                  format="text"
+                  variant="destructive"
                   size="sm"
-                  class="mt-0.5"
+                />
+                <UiStatusBadge
+                  v-if="item.warning > 0"
+                  :value="`${item.warning} aviso${item.warning > 1 ? 's' : ''}`"
+                  format="text"
+                  variant="warning"
+                  size="sm"
                 />
               </div>
             </div>
-            <div class="flex gap-4 pt-2 border-t border-border justify-end">
-              <button
-                :disabled="validatingId === item.id"
-                :aria-label="`Marcar ${item.ingredient_name} como válido`"
-                class="min-h-[44px] min-w-[44px] flex items-center justify-center
-                       text-status-success-text hover:text-success transition-colors
-                       disabled:opacity-40 disabled:cursor-not-allowed"
-                @click="markAsValid(item.id)"
-              >
-                <svg v-if="validatingId !== item.id" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <svg v-else class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-              </button>
-              <button
-                :aria-label="`Corregir precio de ${item.ingredient_name}`"
-                class="min-h-[44px] min-w-[44px] flex items-center justify-center
-                       text-primary/60 hover:text-primary transition-colors"
-                @click="openCorrectModal(item)"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
+            <div class="flex justify-between items-center text-xs text-text-secondary mt-2">
+              <span>{{ formatDate(item.purchase_date ?? item.date) }}</span>
+              <span>{{ item.alerts.length }} ingrediente{{ item.alerts.length !== 1 ? 's' : '' }} afectado{{ item.alerts.length !== 1 ? 's' : '' }}</span>
             </div>
           </div>
         </template>
 
         <!-- Desktop Header -->
         <template #header>
-          <h3 class="text-base sm:text-lg font-bold text-text-primary">Anomalías de Precios</h3>
+          <h3 class="text-base sm:text-lg font-bold text-text-primary">
+            Órdenes con Anomalías
+          </h3>
         </template>
 
-        <!-- Desktop Cell Slots -->
-        <template #cell-ingredient_name="{ value }">
-          <span class="text-sm font-medium text-text-primary">{{ value }}</span>
+        <!-- Desktop Cell Customizations -->
+        <template #cell-purchase_number="{ value, row }">
+          <span class="text-sm font-medium text-ebony-800">{{ value ?? formatDate(row.date) }}</span>
         </template>
 
-        <template #cell-alert_type="{ value }">
-          <span class="inline-flex items-center gap-1 text-xs text-text-secondary">
-            <svg v-if="value === 'price_spike'" class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-            </svg>
-            <svg v-else class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-            {{ value === 'price_spike' ? 'Subida' : 'Bajada' }}
-          </span>
+        <template #cell-supplier_name="{ value }">
+          <span class="text-sm font-bold text-ebony-800">{{ value ?? 'Sin proveedor' }}</span>
         </template>
 
-        <template #cell-severity="{ value }">
+        <template #cell-purchase_date="{ value, row }">
+          <span class="text-sm text-ebony-800">{{ formatDate(value ?? row.date) }}</span>
+        </template>
+
+        <template #cell-critical="{ value }">
           <UiStatusBadge
-            :value="getSeverityLabel(value)"
+            v-if="value > 0"
+            :value="`${value} crítico${value > 1 ? 's' : ''}`"
             format="text"
-            :variant="getSeverityVariant(value)"
+            variant="destructive"
             size="sm"
           />
         </template>
 
-        <template #cell-actual_value="{ value }">
-          <span class="text-sm font-medium text-text-primary">${{ formatValue(value) }}</span>
+        <template #cell-warning="{ value }">
+          <UiStatusBadge
+            v-if="value > 0"
+            :value="`${value} aviso${value > 1 ? 's' : ''}`"
+            format="text"
+            variant="warning"
+            size="sm"
+          />
         </template>
 
-        <template #cell-rolling_avg="{ value }">
-          <span class="text-sm text-text-secondary">${{ formatValue(value) }}</span>
-        </template>
-
-        <template #cell-deviation_pct="{ value }">
-          <div class="flex justify-end">
-            <UiStatusBadge
-              :value="value"
-              format="percentage"
-              variant="secondary"
-              size="sm"
-            />
-          </div>
+        <template #cell-alerts="{ value }">
+          <UiStatusBadge
+            :value="`${value.length} ingrediente${value.length !== 1 ? 's' : ''}`"
+            format="text"
+            variant="secondary"
+            size="sm"
+          />
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex justify-center gap-2">
-            <button
-              :disabled="validatingId === row.id"
-              :aria-label="`Marcar ${row.ingredient_name} como válido`"
-              class="min-h-[36px] min-w-[36px] flex items-center justify-center
-                     text-status-success-text hover:text-success transition-colors
-                     disabled:opacity-40 disabled:cursor-not-allowed"
-              @click="markAsValid(row.id)"
+          <div class="flex justify-center">
+            <NuxtLink
+              :to="`/abastecimiento/compras-directas/${row.purchase_id}/editar`"
+              :aria-label="`Ver y corregir orden ${row.purchase_number ?? ''}`"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="min-h-[36px] px-3 inline-flex items-center gap-1.5 rounded-lg bg-primary/8 text-primary text-sm font-medium hover:bg-primary/15 transition-colors"
+              @click.stop
             >
-              <svg v-if="validatingId !== row.id" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              Corregir
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
-              <svg v-else class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-              </svg>
-            </button>
-            <button
-              :aria-label="`Corregir precio de ${row.ingredient_name}`"
-              class="min-h-[36px] min-w-[36px] flex items-center justify-center
-                     text-primary/60 hover:text-primary transition-colors"
-              @click="openCorrectModal(row)"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
+            </NuxtLink>
           </div>
         </template>
       </UiResponsiveDataView>
 
     </div>
-
-    <!-- Correct Alert Modal -->
-    <DataQualityCorrectAlertModal
-      v-model="showCorrectModal"
-      :alert="selectedAlertForCorrection"
-      @resolved="onAlertCorrected"
-    />
-
   </div>
 </template>
 
@@ -305,109 +247,108 @@ onMounted(() => {
 const severityFilter = ref('')
 const searchIngredient = ref('')
 
-const severityOptions = [
-  { value: 'critical', label: 'Críticos' },
-  { value: 'warning', label: 'Avisos' },
-  { value: 'resolved', label: 'Resueltos' }
-]
-
-const filteredAlerts = computed(() => {
-  const alerts = qualityData.value?.alerts ?? []
-  const search = searchIngredient.value.toLowerCase().trim()
-  const sev = severityFilter.value
-
-  return alerts
-    .filter((alert: any) => {
-      if (sev === 'resolved') return alert.resolved
-      if (!sev) return !alert.resolved
-      return !alert.resolved && alert.severity === sev
-    })
-    .filter((alert: any) => {
-      if (!search) return true
-      return alert.ingredient_name.toLowerCase().includes(search)
-    })
-    .sort((a: any, b: any) => {
-      if (a.severity === 'critical' && b.severity !== 'critical') return -1
-      if (b.severity === 'critical' && a.severity !== 'critical') return 1
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    })
-})
-
 const clearFilters = () => {
   severityFilter.value = ''
   searchIngredient.value = ''
 }
 
-// Table columns
-const alertTableColumns = [
-  { key: 'ingredient_name', title: 'Ingrediente', sortable: true, align: 'left' as const },
-  { key: 'alert_type', title: 'Tipo', sortable: false, align: 'left' as const },
-  { key: 'severity', title: 'Severidad', sortable: true, align: 'center' as const },
-  { key: 'actual_value', title: 'Valor Reg.', sortable: false, align: 'right' as const },
-  { key: 'rolling_avg', title: 'Prom. Histórico', sortable: false, align: 'right' as const },
-  { key: 'deviation_pct', title: 'Desviación', sortable: true, align: 'right' as const },
-  { key: 'actions', title: '', sortable: false, align: 'center' as const }
-]
+// Sort state
+const sortField = ref('critical')
+const sortDirection = ref<'asc' | 'desc'>('desc')
 
-// Helpers
-const getAlertTypeLabel = (type: string) => {
-  if (type === 'price_spike') return 'Subida de precio'
-  if (type === 'price_drop') return 'Bajada de precio'
-  return type
-}
-
-const getSeverityLabel = (severity: string) => {
-  if (severity === 'critical') return 'Crítico'
-  if (severity === 'warning') return 'Aviso'
-  if (severity === 'resolved') return 'Resuelto'
-  return severity
-}
-
-const getSeverityVariant = (severity: string) => {
-  if (severity === 'critical') return 'destructive'
-  if (severity === 'warning') return 'warning'
-  return 'success'
-}
-
-const formatValue = (value: number | null) => {
-  if (value == null) return '—'
-  return value.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-}
-
-// Mark as valid action
-const validatingId = ref<string | null>(null)
-
-const markAsValid = async (alertId: string) => {
-  validatingId.value = alertId
-  try {
-    await $fetch(`/api/analytics/data-quality/${alertId}/resolve`, {
-      method: 'PATCH',
-      body: { resolution_type: 'valid' }
-    })
-    await refresh()
-    useDataQualityStatus().refresh()
-  } catch (e) {
-    console.error('Error marking alert as valid:', e)
-  } finally {
-    validatingId.value = null
+const handleSort = (field: string) => {
+  if (sortField.value === field) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortField.value = field
+    sortDirection.value = 'desc'
   }
 }
 
-// Correct modal
-const selectedAlertForCorrection = ref<any>(null)
+// Table columns
+const tableColumns = [
+  { key: 'purchase_number', title: 'Orden', sortable: true },
+  { key: 'supplier_name', title: 'Proveedor', sortable: true },
+  { key: 'purchase_date', title: 'Fecha', sortable: true },
+  { key: 'critical', title: 'Críticos', sortable: true },
+  { key: 'warning', title: 'Avisos', sortable: true },
+  { key: 'alerts', title: 'Ingredientes', sortable: false },
+  { key: 'actions', title: '', sortable: false }
+]
 
-const showCorrectModal = computed({
-  get: () => selectedAlertForCorrection.value !== null,
-  set: (value) => { if (!value) selectedAlertForCorrection.value = null }
+// Group alerts by purchase_id → one row per order
+const ordersWithAnomalies = computed(() => {
+  const alerts = qualityData.value?.alerts ?? []
+  const search = searchIngredient.value.toLowerCase().trim()
+  const sev = severityFilter.value
+
+  // Only unresolved alerts with a linked purchase
+  let active = alerts.filter((a: any) => !a.resolved && a.purchase_id)
+
+  if (sev) {
+    active = active.filter((a: any) => a.severity === sev)
+  }
+
+  // Group by purchase_id
+  const map = new Map<string, any>()
+  for (const alert of active) {
+    if (!map.has(alert.purchase_id)) {
+      map.set(alert.purchase_id, {
+        purchase_id: alert.purchase_id,
+        purchase_number: alert.purchase_number ?? null,
+        purchase_date: alert.purchase_date ?? null,
+        supplier_name: alert.supplier_name ?? null,
+        date: alert.created_at,
+        alerts: [],
+        critical: 0,
+        warning: 0,
+      })
+    }
+    const group = map.get(alert.purchase_id)
+    group.alerts.push(alert)
+    if (alert.severity === 'critical') group.critical++
+    else group.warning++
+  }
+
+  let orders = Array.from(map.values())
+
+  // Filter by ingredient search
+  if (search) {
+    orders = orders.filter((o: any) =>
+      o.alerts.some((a: any) => a.ingredient_name.toLowerCase().includes(search))
+    )
+  }
+
+  // Sort by selected field
+  return orders.sort((a: any, b: any) => {
+    let aVal: any = a[sortField.value]
+    let bVal: any = b[sortField.value]
+
+    if (sortField.value === 'purchase_date') {
+      aVal = new Date(aVal ?? a.date).getTime()
+      bVal = new Date(bVal ?? b.date).getTime()
+    } else if (sortField.value === 'alerts') {
+      aVal = a.alerts.length
+      bVal = b.alerts.length
+    }
+
+    if (aVal < bVal) return sortDirection.value === 'asc' ? -1 : 1
+    if (aVal > bVal) return sortDirection.value === 'asc' ? 1 : -1
+    // Tiebreak: critical first, then by date desc
+    if (a.critical > 0 && b.critical === 0) return -1
+    if (b.critical > 0 && a.critical === 0) return 1
+    return new Date(b.date).getTime() - new Date(a.date).getTime()
+  })
 })
 
-const openCorrectModal = (alert: any) => {
-  selectedAlertForCorrection.value = alert
+// Navigation
+const viewOrder = (order: any) => {
+  window.open(`/abastecimiento/compras-directas/${order.purchase_id}/editar`, '_blank', 'noopener,noreferrer')
 }
 
-const onAlertCorrected = () => {
-  selectedAlertForCorrection.value = null
-  refresh()
-  useDataQualityStatus().refresh()
+// Helpers
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '—'
+  return new Date(dateStr).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 </script>

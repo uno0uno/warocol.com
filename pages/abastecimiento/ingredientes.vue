@@ -191,6 +191,12 @@
           />
         </template>
 
+        <!-- Desktop: Base global -->
+        <template #cell-base_ref="{ row }">
+          <span v-if="row._isVariant" class="text-sm text-text-secondary">{{ row._parentName }}</span>
+          <span v-else class="text-xs text-text-secondary/40">—</span>
+        </template>
+
         <!-- Desktop: Variantes -->
         <template #cell-variants_info="{ row }">
           <div v-if="!row._isVariant">
@@ -527,6 +533,7 @@ const tableColumns = [
   { key: 'name', title: 'Ingrediente', sortable: false, format: 'text', align: 'left' as const },
   { key: 'unit', title: 'Unidad', sortable: false, format: 'text', align: 'left' as const },
   { key: 'type', title: 'Tipo', sortable: false, format: 'text', align: 'center' as const },
+  { key: 'base_ref', title: 'Base', sortable: false, format: 'text', align: 'left' as const },
   { key: 'variants_info', title: 'Variantes', sortable: false, format: 'text', align: 'center' as const },
   { key: 'actions', title: 'Acciones', sortable: false, format: 'text', align: 'center' as const },
 ]
