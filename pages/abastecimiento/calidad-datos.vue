@@ -175,7 +175,6 @@
             variant="destructive"
             size="sm"
           />
-          <span v-else class="text-sm text-text-secondary">—</span>
         </template>
 
         <template #cell-warning="{ value }">
@@ -186,7 +185,6 @@
             variant="warning"
             size="sm"
           />
-          <span v-else class="text-sm text-text-secondary">—</span>
         </template>
 
         <template #cell-alerts="{ value }">
@@ -203,6 +201,8 @@
             <NuxtLink
               :to="`/abastecimiento/compras-directas/${row.purchase_id}/editar`"
               :aria-label="`Ver y corregir orden ${row.purchase_number ?? ''}`"
+              target="_blank"
+              rel="noopener noreferrer"
               class="min-h-[36px] px-3 inline-flex items-center gap-1.5 rounded-lg bg-primary/8 text-primary text-sm font-medium hover:bg-primary/15 transition-colors"
               @click.stop
             >
@@ -343,7 +343,7 @@ const ordersWithAnomalies = computed(() => {
 
 // Navigation
 const viewOrder = (order: any) => {
-  navigateTo(`/abastecimiento/compras-directas/${order.purchase_id}/editar`)
+  window.open(`/abastecimiento/compras-directas/${order.purchase_id}/editar`, '_blank', 'noopener,noreferrer')
 }
 
 // Helpers
