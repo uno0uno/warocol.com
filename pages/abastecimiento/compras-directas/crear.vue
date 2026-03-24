@@ -418,17 +418,37 @@
                               >
                                 {{ ing.name }}
                               </li>
+                              <li
+                                v-if="item.searchTerm && !ingredientResults[form.items.indexOf(item)]?.length"
+                                @mousedown.prevent="openCreateModal(form.items.indexOf(item), item.searchTerm)"
+                                class="px-3 py-2 text-sm text-primary border-t border-border hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5"
+                              >
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Crear "{{ item.searchTerm }}"
+                              </li>
                             </ul>
                           </div>
                         </div>
                         <!-- OCR hint -->
-                        <p v-if="item.ocr_description" class="mt-1 text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-warning'">
-                          <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span class="truncate">Fac: "{{ item.ocr_description }}"</span>
-                        </p>
+                        <div v-if="item.ocr_description" class="mt-1 flex items-center gap-1 flex-wrap">
+                          <p class="text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-warning'">
+                            <svg class="w-3 h-3 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="truncate">Fac: "{{ item.ocr_description }}"</span>
+                          </p>
+                          <button
+                            v-if="!item.ingredient_id"
+                            type="button"
+                            @click="openCreateModal(form.items.indexOf(item), item.searchTerm || item.ocr_description)"
+                            class="text-xs text-primary hover:underline font-medium whitespace-nowrap flex-shrink-0 min-h-[28px] flex items-center"
+                          >
+                            Crear ingrediente
+                          </button>
+                        </div>
                       </div>
 
                       <!-- Wrapper for Unit and Financials (lg: 8 cols) -->
@@ -669,17 +689,37 @@
                               >
                                 {{ ing.name }}
                               </li>
+                              <li
+                                v-if="item.searchTerm && !ingredientResults[form.items.indexOf(item)]?.length"
+                                @mousedown.prevent="openCreateModal(form.items.indexOf(item), item.searchTerm)"
+                                class="px-3 py-2 text-sm text-primary border-t border-border hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5"
+                              >
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Crear "{{ item.searchTerm }}"
+                              </li>
                             </ul>
                           </div>
                         </div>
                         <!-- OCR hint -->
-                        <p v-if="item.ocr_description" class="mt-1 text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-warning'">
-                          <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span class="truncate">Fac: "{{ item.ocr_description }}"</span>
-                        </p>
+                        <div v-if="item.ocr_description" class="mt-1 flex items-center gap-1 flex-wrap">
+                          <p class="text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-warning'">
+                            <svg class="w-3 h-3 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="truncate">Fac: "{{ item.ocr_description }}"</span>
+                          </p>
+                          <button
+                            v-if="!item.ingredient_id"
+                            type="button"
+                            @click="openCreateModal(form.items.indexOf(item), item.searchTerm || item.ocr_description)"
+                            class="text-xs text-primary hover:underline font-medium whitespace-nowrap flex-shrink-0 min-h-[28px] flex items-center"
+                          >
+                            Crear ingrediente
+                          </button>
+                        </div>
                       </div>
 
                       <!-- Wrapper for Unit and Financials (lg: 8 cols) -->
@@ -914,17 +954,37 @@
                               >
                                 {{ ing.name }}
                               </li>
+                              <li
+                                v-if="item.searchTerm && !ingredientResults[form.items.indexOf(item)]?.length"
+                                @mousedown.prevent="openCreateModal(form.items.indexOf(item), item.searchTerm)"
+                                class="px-3 py-2 text-sm text-primary border-t border-border hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5"
+                              >
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Crear "{{ item.searchTerm }}"
+                              </li>
                             </ul>
                           </div>
                         </div>
                         <!-- OCR hint -->
-                        <p v-if="item.ocr_description" class="mt-1 text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-warning'">
-                          <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span class="truncate">Fac: "{{ item.ocr_description }}"</span>
-                        </p>
+                        <div v-if="item.ocr_description" class="mt-1 flex items-center gap-1 flex-wrap">
+                          <p class="text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-warning'">
+                            <svg class="w-3 h-3 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="truncate">Fac: "{{ item.ocr_description }}"</span>
+                          </p>
+                          <button
+                            v-if="!item.ingredient_id"
+                            type="button"
+                            @click="openCreateModal(form.items.indexOf(item), item.searchTerm || item.ocr_description)"
+                            class="text-xs text-primary hover:underline font-medium whitespace-nowrap flex-shrink-0 min-h-[28px] flex items-center"
+                          >
+                            Crear ingrediente
+                          </button>
+                        </div>
                       </div>
 
                       <!-- Wrapper for Unit and Financials (lg: 8 cols) -->
@@ -1467,6 +1527,14 @@
       </div>
     </div>
   </div>
+
+  <!-- Create Ingredient Modal -->
+  <UiCreateIngredientModal
+    v-model="showCreateModal"
+    :initial-name="createModalName"
+    @created="onIngredientCreated"
+    @select="onIngredientSelected"
+  />
 </template>
 
 <script setup lang="ts">
@@ -2310,6 +2378,42 @@ const handleScanFileSelect = async (event: Event) => {
     stopPhraseRotation()
     fetchQuota()
   }
+}
+
+// --- Create Ingredient Modal ---
+const showCreateModal = ref(false)
+const createModalName = ref('')
+const createModalItemIndex = ref(-1)
+
+function openCreateModal(index: number, name: string) {
+  createModalItemIndex.value = index
+  createModalName.value = name || ''
+  showCreateModal.value = true
+}
+
+function onIngredientCreated(ingredient: any) {
+  const index = createModalItemIndex.value
+  if (index < 0 || index >= form.value.items.length) return
+  const item = form.value.items[index]
+  ingredientCache.value[ingredient.id] = ingredient
+  item.ingredient_id = ingredient.id
+  item.searchTerm = ingredient.name
+  item.showResults = false
+  onIngredientChange(index)
+}
+
+function onIngredientSelected(ingredient: any) {
+  const index = createModalItemIndex.value
+  if (index < 0 || index >= form.value.items.length) return
+  const item = form.value.items[index]
+  // If the selected ingredient is already in cache we use it; otherwise do a quick fetch
+  if (!ingredientCache.value[ingredient.id]) {
+    ingredientCache.value[ingredient.id] = ingredient
+  }
+  item.ingredient_id = ingredient.id
+  item.searchTerm = ingredient.name
+  item.showResults = false
+  onIngredientChange(index)
 }
 
 // Wizard navigation
