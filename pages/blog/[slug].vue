@@ -1,4 +1,6 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'blog' })
+
 const route = useRoute()
 const config = useRuntimeConfig()
 
@@ -139,7 +141,7 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen bg-white">
+  <div class="bg-white">
     <!-- Loading State -->
     <div v-if="pending" class="flex items-center justify-center min-h-screen">
       <CommonsTheCustomLoader size="large" />
