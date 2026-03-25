@@ -14,20 +14,29 @@ export default defineEventHandler(async (event) => {
   let latestBlogDate = today
 
   try {
-    const response = await $fetch<{ success: boolean; data: Array<{ slug: string; updated_at: string | null; created_at: string }> }>(`${apiUrl}/blog`, {
-      query: { limit: 1000 },
-      headers: {
-        'Origin': siteUrl,
-        'Referer': `${siteUrl}/`
+    const fetchHeaders = { 'Origin': siteUrl, 'Referer': `${siteUrl}/` }
+    let page = 1
+    let hasMore = true
+    const allArticles: Array<{ slug: string; updated_at: string | null; created_at: string }> = []
+
+    while (hasMore) {
+      const response = await $fetch<{ success: boolean; total: number; data: Array<{ slug: string; updated_at: string | null; created_at: string }> }>(`${apiUrl}/blog`, {
+        query: { limit: 50, page },
+        headers: fetchHeaders
+      })
+      if (response.success && response.data?.length > 0) {
+        allArticles.push(...response.data)
+        hasMore = allArticles.length < response.total
+        page++
+      } else {
+        hasMore = false
       }
-    })
+    }
 
-    if (response.success && response.data && response.data.length > 0) {
-      // Obtener la fecha más reciente de todos los artículos
-      const dates = response.data.map(a => new Date(a.updated_at || a.created_at))
+    if (allArticles.length > 0) {
+      const dates = allArticles.map(a => new Date(a.updated_at || a.created_at))
       latestBlogDate = new Date(Math.max(...dates.map(d => d.getTime()))).toISOString().split('T')[0]
-
-      blogUrls = response.data.map(article => ({
+      blogUrls = allArticles.map(article => ({
         loc: `/blog/${article.slug}`,
         lastmod: (article.updated_at || article.created_at || today).split('T')[0],
         changefreq: 'weekly',
