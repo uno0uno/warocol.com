@@ -10,87 +10,154 @@ interface Props {
   category?: string
   author: ArticleAuthor
   publishedDate: string | Date
+  readingTime?: number
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  readingTime: 5
+})
 
 const formatDate = (dateString: string | Date) => {
   const date = new Date(dateString)
   const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
-  const month = months[date.getMonth()]
-  const day = date.getDate()
-  const year = date.getFullYear()
-  return `${month} ${day}, ${year}`
+  return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
 }
 
 const formattedDate = computed(() => formatDate(props.publishedDate))
 </script>
 
 <template>
-  <!-- Dark Hero Section with Pattern -->
-  <div class="w-full bg-crocus-900 relative overflow-hidden pt-12 pb-12 lg:pt-20 lg:pb-20">
-    <!-- Background Pattern & Gradient -->
-    <div class="absolute inset-0 z-0">
-      <!-- Radial Gradient for depth -->
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-crocus-800/50 via-transparent to-transparent"></div>
-      
-      <!-- Dot Pattern -->
-      <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 32px 32px;"></div>
+  <!-- Light surface hero — superficie blanca elevada sobre titan-100 -->
+  <div class="w-full bg-white relative overflow-hidden border-b border-titan-200 shadow-sm pt-14 pb-14 lg:pt-20 lg:pb-20">
+
+    <!-- Textura food emoji — misma técnica que blog index y home -->
+    <div class="food-bg" aria-hidden="true">
+      <div class="food-item">🍞</div>
+      <div class="food-item">🥖</div>
+      <div class="food-item">🥐</div>
+      <div class="food-item">🍕</div>
+      <div class="food-item">🍔</div>
+      <div class="food-item">🌮</div>
+      <div class="food-item">🍟</div>
+      <div class="food-item">🥪</div>
+      <div class="food-item">🍖</div>
+      <div class="food-item">🥙</div>
+      <div class="food-item">🍗</div>
+      <div class="food-item">🥓</div>
+      <div class="food-item">🥩</div>
+      <div class="food-item">🍳</div>
+      <div class="food-item">🧀</div>
+      <div class="food-item">🍱</div>
+      <div class="food-item">🥗</div>
+      <div class="food-item">🍝</div>
+      <div class="food-item">🍜</div>
+      <div class="food-item">🍲</div>
     </div>
 
     <div class="article-container relative z-10">
-      <!-- Grid Layout -->
-      <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-        
-        <!-- Left Column - Main Info -->
-        <div class="lg:col-span-8 flex flex-col gap-6">
+      <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
+
+        <!-- Left Column — Title + Meta -->
+        <div class="lg:col-span-7 flex flex-col gap-5">
+
           <!-- Category Badge -->
           <div v-if="category">
-            <span class="inline-block py-1.5 px-4 rounded bg-white/10 backdrop-blur-sm text-crocus-200 text-xs font-bold uppercase tracking-wider border-2 border-crocus-200/20">
+            <span class="inline-block py-1.5 px-4 rounded bg-crocus-50 text-crocus-700 text-xs font-bold uppercase tracking-widest border border-crocus-200">
               {{ category }}
             </span>
           </div>
 
           <!-- Title -->
           <h1
-            class="text-4xl sm:text-5xl md:text-6xl font-black leading-[1.1] tracking-tight text-white"
+            class="text-3xl sm:text-4xl md:text-5xl font-black leading-[1.1] tracking-tight text-ebony-900"
             itemprop="headline"
           >
             {{ title }}
           </h1>
 
-          <!-- Author & Date Metadata (Moved here for better hierarchy) -->
-          <div class="flex items-center gap-3 text-crocus-200 mt-2">
-            <!-- Author Avatar -->
-            <div v-if="author.profilePicture" class="w-10 h-10 rounded-lg overflow-hidden border border-crocus-400/30">
+          <!-- Author + Date + Reading time row -->
+          <div class="flex items-center gap-3 pt-1">
+            <!-- Avatar -->
+            <div
+              v-if="author.profilePicture"
+              class="w-9 h-9 rounded-full overflow-hidden ring-2 ring-titan-200 flex-shrink-0"
+            >
               <img :src="author.profilePicture" :alt="author.name" class="w-full h-full object-cover">
             </div>
-            
-            <div class="flex flex-col">
-              <span class="text-sm font-bold text-white" itemprop="author">{{ author.name }}</span>
-              <time
-                :datetime="new Date(publishedDate).toISOString()"
-                class="text-xs font-medium opacity-80"
-                itemprop="datePublished"
-              >
+            <div
+              v-else
+              class="w-9 h-9 rounded-full bg-crocus-100 flex items-center justify-center flex-shrink-0"
+            >
+              <span class="text-crocus-700 text-sm font-bold">{{ author.name?.charAt(0) || 'W' }}</span>
+            </div>
+
+            <!-- Meta text -->
+            <div class="flex flex-wrap items-center gap-1.5 text-sm text-ebony-500">
+              <span class="font-semibold text-ebony-700" itemprop="author">{{ author.name }}</span>
+              <span class="text-titan-500">·</span>
+              <time :datetime="new Date(publishedDate).toISOString()" itemprop="datePublished">
                 {{ formattedDate }}
               </time>
+              <span class="text-titan-500">·</span>
+              <span>{{ readingTime }} min de lectura</span>
             </div>
           </div>
         </div>
 
-        <!-- Right Column - Description (Desktop) -->
-        <div class="lg:col-span-4 lg:pt-2">
-          <h2
+        <!-- Right Column — Description as pull-quote -->
+        <div class="lg:col-span-5 lg:pt-14">
+          <p
             v-if="description"
-            class="text-xl leading-relaxed font-medium text-crocus-200/90 border-l-2 border-crocus-500/30 pl-6"
+            class="text-base lg:text-lg leading-relaxed text-ebony-600 border-l-2 border-crocus-300 pl-5"
             itemprop="description"
           >
             {{ description }}
-          </h2>
+          </p>
         </div>
 
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.food-bg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.food-item {
+  position: absolute;
+  font-size: 44px;
+  opacity: 0.05;
+  filter: grayscale(100%) brightness(0.7);
+}
+
+/* Fila 1 */
+.food-item:nth-child(1)  { left:  2%; top: 12%; }
+.food-item:nth-child(2)  { left: 14%; top: 12%; }
+.food-item:nth-child(3)  { left: 26%; top: 12%; }
+.food-item:nth-child(4)  { left: 38%; top: 12%; }
+.food-item:nth-child(5)  { left: 50%; top: 12%; }
+.food-item:nth-child(6)  { left: 62%; top: 12%; }
+.food-item:nth-child(7)  { left: 74%; top: 12%; }
+.food-item:nth-child(8)  { left: 86%; top: 12%; }
+.food-item:nth-child(9)  { left: 95%; top: 12%; }
+.food-item:nth-child(10) { left:  8%; top: 12%; }
+
+/* Fila 2 */
+.food-item:nth-child(11) { left:  2%; top: 65%; }
+.food-item:nth-child(12) { left: 14%; top: 65%; }
+.food-item:nth-child(13) { left: 26%; top: 65%; }
+.food-item:nth-child(14) { left: 38%; top: 65%; }
+.food-item:nth-child(15) { left: 50%; top: 65%; }
+.food-item:nth-child(16) { left: 62%; top: 65%; }
+.food-item:nth-child(17) { left: 74%; top: 65%; }
+.food-item:nth-child(18) { left: 86%; top: 65%; }
+.food-item:nth-child(19) { left: 95%; top: 65%; }
+.food-item:nth-child(20) { left:  8%; top: 65%; }
+</style>

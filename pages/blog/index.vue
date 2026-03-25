@@ -1,4 +1,25 @@
 <script setup lang="ts">
+// Efecto de máquina de escribir para el título del hero
+const heroTitle = 'El conocimiento que necesita tu restaurante'
+const displayedTitle = ref('')
+const titleDone = ref(false)
+
+onMounted(() => {
+  let i = 0
+  const speed = 28 // ms por caracter — rápido
+  const type = () => {
+    if (i < heroTitle.length) {
+      displayedTitle.value += heroTitle[i]
+      i++
+      setTimeout(type, speed)
+    } else {
+      titleDone.value = true
+    }
+  }
+  // Pequeño delay inicial para que el hero haya montado
+  setTimeout(type, 120)
+})
+
 // Types
 interface ArticleSummary {
   id: number
@@ -97,13 +118,13 @@ const formatDate = (dateString: string) => {
   })
 }
 
-// Gradient classes for article images
+// Gradient classes for article images (fallback when no cover)
 const gradientClasses = [
-  'bg-gradient-to-br from-gray-200 via-gray-100 to-gray-50',
-  'bg-gradient-to-br from-slate-100 via-gray-50 to-slate-50',
-  'bg-gradient-to-br from-stone-100 via-gray-50 to-stone-50',
-  'bg-gradient-to-br from-gray-300 via-gray-200 to-gray-100',
-  'bg-gradient-to-br from-zinc-100 via-gray-50 to-zinc-50'
+  'bg-gradient-to-br from-crocus-200 via-crocus-100 to-titan-200',
+  'bg-gradient-to-br from-ebony-200 via-titan-200 to-crocus-100',
+  'bg-gradient-to-br from-crocus-100 via-titan-300 to-ebony-100',
+  'bg-gradient-to-br from-titan-300 via-crocus-100 to-titan-200',
+  'bg-gradient-to-br from-ebony-100 via-crocus-50 to-titan-300'
 ]
 
 const getGradientClass = (index: number) => gradientClasses[index % gradientClasses.length]
@@ -156,23 +177,56 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F9FAFB] flex flex-col font-sans">
-    <!-- Hero Section -->
-    <section class="relative bg-crocus-900 overflow-hidden border-b border-crocus-800">
-      <div class="relative z-10 max-w-6xl mx-auto px-6 lg:px-12 pt-24 pb-20 text-center">
-        <span class="inline-block py-2.5 px-6 rounded bg-white/10 backdrop-blur-sm text-crocus-200 text-sm font-semibold mb-6 tracking-wide uppercase border-2 border-crocus-200/20">
-          Blog & Recursos
-        </span>
-        <h1 class="text-5xl lg:text-7xl font-bold mb-6 text-white tracking-tight leading-tight">
-          Explora nuestro Conocimiento
+  <div class="min-h-screen bg-titan-100 flex flex-col font-sans">
+
+    <!-- ════════════════════════════════════════
+         HERO SECTION
+         Fondo blanco con dot-grid sutil + gradiente lateral púrpura
+    ════════════════════════════════════════ -->
+    <section class="relative bg-white overflow-hidden border-b border-titan-200">
+      <!-- Dot grid background -->
+      <div class="dot-grid" aria-hidden="true"></div>
+      <!-- Gradiente de color lateral izquierdo -->
+      <div class="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-crocus-50/60 to-transparent pointer-events-none" aria-hidden="true"></div>
+      <!-- Accent blob superior derecho -->
+      <div class="absolute -top-32 -right-32 w-96 h-96 bg-crocus-100/40 rounded-full blur-3xl pointer-events-none" aria-hidden="true"></div>
+
+      <div class="relative z-10 max-w-5xl mx-auto px-6 lg:px-12 pt-28 pb-24 text-center">
+        <!-- Eyebrow badge -->
+        <div class="inline-flex items-center gap-2 mb-7">
+          <span class="w-5 h-px bg-crocus-400"></span>
+          <span class="text-xs font-bold uppercase tracking-[0.25em] text-crocus-600">Blog & Recursos</span>
+          <span class="w-5 h-px bg-crocus-400"></span>
+        </div>
+
+        <!-- Título con typewriter -->
+        <h1 class="font-quantico text-5xl lg:text-[4.5rem] font-black mb-7 text-ebony-900 tracking-tight leading-[1.05] uppercase">
+          {{ displayedTitle }}
         </h1>
-        <p class="text-lg text-crocus-200 max-w-2xl mx-auto leading-relaxed">
-          Descubre artículos, tutoriales y noticias sobre eventos corporativos, organización y el ecosistema de Waro.
+
+        <!-- Subtítulo -->
+        <p class="text-base text-ebony-500 leading-relaxed font-light">
+          Guías prácticas y estrategias probadas para controlar costos, optimizar inventarios y tomar decisiones con datos.
         </p>
+
+        <!-- Stats pill -->
+        <div class="inline-flex items-center gap-6 mt-10 px-6 py-3 bg-titan-100 rounded-full border border-titan-300 text-sm text-ebony-500">
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-crocus-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Contenido para restaurantes
+          </span>
+          <span class="w-px h-4 bg-titan-400"></span>
+          <span class="flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-crocus-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Lectura rápida
+          </span>
+        </div>
       </div>
     </section>
 
-    <!-- Main Container -->
+    <!-- ════════════════════════════════════════
+         MAIN CONTENT
+    ════════════════════════════════════════ -->
     <main class="max-w-7xl mx-auto px-6 lg:px-8 py-16 w-full flex-1">
 
       <!-- Loading State -->
@@ -185,150 +239,197 @@ useHead({
         <div class="text-center">
           <p class="text-xl font-semibold text-ebony-800 mb-2">Error al cargar los artículos</p>
           <p class="text-sm text-ebony-600 mb-4">{{ fetchError.message }}</p>
-          <button @click="refresh" class="px-4 py-2 bg-crocus-500 text-white rounded-lg hover:bg-crocus-600">
+          <button @click="refresh" class="px-4 py-2 bg-crocus-600 text-white rounded-lg hover:bg-crocus-700 transition-colors">
             Reintentar
           </button>
         </div>
       </div>
 
       <template v-else>
-        <!-- Featured Post Section -->
-        <section class="mb-24" v-if="filteredArticles[0]">
-          <div class="flex items-center justify-start mb-8">
-            <h2 class="inline-flex items-center px-6 py-2.5 rounded border-2 border-crocus-600/30 bg-white/50 backdrop-blur-sm text-crocus-600/90 font-semibold text-lg">
-              Destacado
-            </h2>
+
+        <!-- ─────────────────────────────────────────
+             ARTÍCULO DESTACADO — Magazine style
+        ───────────────────────────────────────── -->
+        <section class="mb-20" v-if="filteredArticles[0]">
+
+          <!-- Section label -->
+          <div class="flex items-center gap-3 mb-8">
+            <div class="w-1 h-5 bg-crocus-600 rounded-full"></div>
+            <span class="text-xs font-bold uppercase tracking-[0.2em] text-ebony-400">Destacado</span>
           </div>
 
-          <article class="group relative bg-white rounded overflow-hidden border-2 border-crocus-600/30 hover:border-crocus-600/80 transition-colors duration-300 grid lg:grid-cols-2">
-            <NuxtLink :to="`/blog/${filteredArticles[0].slug}`" class="relative overflow-hidden h-96 lg:h-auto">
+          <article class="group relative bg-white rounded-2xl overflow-hidden border border-titan-200 hover:border-crocus-400 transition-colors duration-300 grid lg:grid-cols-[1.1fr_1fr]">
+            <!-- Imagen -->
+            <NuxtLink :to="`/blog/${filteredArticles[0].slug}`" class="relative overflow-hidden min-h-[22rem] lg:min-h-[26rem]">
               <img
                 v-if="filteredArticles[0].cover"
                 :src="filteredArticles[0].cover"
                 :alt="filteredArticles[0].title"
-                class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                class="absolute inset-0 w-full h-full object-cover"
               />
-              <div v-else :class="['absolute inset-0 transition-transform duration-700 group-hover:scale-105', getGradientClass(0)]"></div>
-              <div class="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-colors duration-500"></div>
-            </NuxtLink>
-
-            <div class="p-8 lg:p-12 flex flex-col justify-center">
-              <div class="flex items-center gap-3 mb-6">
-                <span class="px-3 py-1 rounded bg-white text-crocus-600 text-xs font-bold uppercase tracking-wider border-2 border-crocus-600/30">
+              <div v-else :class="['absolute inset-0', getGradientClass(0)]"></div>
+              <!-- Overlay degradado para integrar con el contenido -->
+              <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-black/10"></div>
+              <!-- Badge de categoría flotante -->
+              <div class="absolute top-5 left-5">
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full bg-white/95 text-crocus-700 text-[11px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-sm">
                   {{ getCategory(filteredArticles[0].tags) }}
                 </span>
-                <span class="text-gray-300 text-sm">•</span>
-                <span class="text-gray-500 text-sm font-medium">{{ getReadingTime(filteredArticles[0].description) }} min de lectura</span>
+              </div>
+            </NuxtLink>
+
+            <!-- Contenido -->
+            <div class="p-8 lg:p-12 xl:p-14 flex flex-col justify-center">
+              <!-- Meta -->
+              <div class="flex items-center gap-2 mb-5 text-xs text-ebony-400 font-medium">
+                <svg class="w-3.5 h-3.5 text-crocus-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {{ getReadingTime(filteredArticles[0].description) }} min de lectura
               </div>
 
               <NuxtLink :to="`/blog/${filteredArticles[0].slug}`">
-                <h3 class="text-3xl lg:text-4xl font-bold mb-6 text-ebony-900 leading-tight group-hover:text-crocus-600 transition-colors">
+                <h2 class="text-2xl lg:text-3xl xl:text-4xl font-bold mb-5 text-ebony-900 leading-tight group-hover:text-crocus-700 transition-colors duration-300">
                   {{ filteredArticles[0].title }}
-                </h3>
+                </h2>
               </NuxtLink>
 
-              <p class="text-gray-600 text-lg leading-relaxed mb-8 line-clamp-3">
+              <p class="text-ebony-500 text-base lg:text-lg leading-relaxed mb-8 line-clamp-3">
                 {{ filteredArticles[0].description }}
               </p>
 
-              <div class="flex items-center gap-4 mt-auto pt-8 border-t border-gray-100">
+              <!-- CTA -->
+              <NuxtLink
+                :to="`/blog/${filteredArticles[0].slug}`"
+                class="inline-flex items-center gap-2 self-start px-5 py-2.5 bg-crocus-600 hover:bg-crocus-700 text-white text-sm font-semibold rounded-full transition-all duration-200 hover:gap-3 mb-8"
+              >
+                Leer artículo
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+              </NuxtLink>
+
+              <!-- Author -->
+              <div class="flex items-center gap-3 pt-6 border-t border-titan-200">
                 <img
                   v-if="filteredArticles[0].author_avatar"
                   :src="filteredArticles[0].author_avatar"
                   :alt="filteredArticles[0].author_name || 'Autor'"
-                  class="w-10 h-10 rounded-full object-cover border border-gray-200"
+                  class="w-9 h-9 rounded-full object-cover ring-2 ring-titan-200"
                 />
-                <div v-else class="w-10 h-10 rounded-full bg-crocus-100 flex items-center justify-center">
-                  <span class="text-crocus-600 font-bold">{{ filteredArticles[0].author_name?.charAt(0) || 'W' }}</span>
+                <div v-else class="w-9 h-9 rounded-full bg-crocus-100 flex items-center justify-center ring-2 ring-titan-200">
+                  <span class="text-crocus-600 text-sm font-bold">{{ filteredArticles[0].author_name?.charAt(0) || 'W' }}</span>
                 </div>
                 <div>
-                  <p class="text-sm font-bold text-ebony-900">{{ filteredArticles[0].author_name || 'Waro Colombia' }}</p>
-                  <p class="text-xs text-gray-500">{{ formatDate(filteredArticles[0].created_at) }}</p>
+                  <p class="text-sm font-semibold text-ebony-900 leading-none mb-0.5">{{ filteredArticles[0].author_name || 'Waro Colombia' }}</p>
+                  <p class="text-xs text-ebony-400">{{ formatDate(filteredArticles[0].created_at) }}</p>
                 </div>
               </div>
             </div>
           </article>
         </section>
 
-        <!-- Blog Grid Section -->
+        <!-- ─────────────────────────────────────────
+             GRID DE ARTÍCULOS
+        ───────────────────────────────────────── -->
         <section class="mb-20">
-          <div class="flex items-center justify-start mb-10">
-            <h2 class="inline-flex items-center px-6 py-2.5 rounded border-2 border-crocus-600/30 bg-white/50 backdrop-blur-sm text-crocus-600/90 font-semibold text-lg">
-              Más Artículos
-            </h2>
+          <!-- Section label -->
+          <div class="flex items-center gap-3 mb-10">
+            <div class="w-1 h-5 bg-ebony-300 rounded-full"></div>
+            <span class="text-xs font-bold uppercase tracking-[0.2em] text-ebony-400">Más Artículos</span>
           </div>
 
-          <div v-if="filteredArticles.length > 1" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div v-if="filteredArticles.length > 1" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
             <article
               v-for="(article, index) in filteredArticles.slice(1)"
               :key="article.id"
-              class="group bg-white rounded overflow-hidden border-2 border-crocus-600/30 hover:border-crocus-600/80 transition-colors duration-300 flex flex-col h-full"
+              class="group bg-white rounded-2xl overflow-hidden border border-titan-200 hover:border-crocus-400 transition-colors duration-300 flex flex-col h-full"
             >
-              <NuxtLink :to="`/blog/${article.slug}`" class="relative h-56 overflow-hidden">
+              <!-- Imagen con badges flotantes -->
+              <NuxtLink :to="`/blog/${article.slug}`" class="relative h-52 overflow-hidden flex-shrink-0">
                 <img
                   v-if="article.cover"
                   :src="article.cover"
                   :alt="article.title"
-                  class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  class="absolute inset-0 w-full h-full object-cover"
                 />
-                <div v-else :class="['absolute inset-0 transition-transform duration-500 group-hover:scale-105', getGradientClass(index + 1)]"></div>
+                <div v-else :class="['absolute inset-0', getGradientClass(index + 1)]"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+
+                <!-- Categoría — pill flotante -->
+                <span class="absolute top-3.5 left-3.5 inline-flex items-center px-2.5 py-1 rounded-full bg-white/95 text-crocus-700 text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-sm">
+                  {{ getCategory(article.tags) }}
+                </span>
+
+                <!-- Tiempo de lectura — pill flotante -->
+                <span class="absolute bottom-3.5 right-3.5 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/50 text-white text-[10px] font-medium backdrop-blur-sm">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  {{ getReadingTime(article.description) }} min
+                </span>
               </NuxtLink>
 
-              <div class="p-6 flex flex-col flex-1">
-                <div class="flex items-center gap-2 mb-4">
-                  <span class="text-crocus-600 text-xs font-bold uppercase tracking-wide">
-                    {{ getCategory(article.tags) }}
-                  </span>
-                  <span class="text-gray-300">•</span>
-                  <span class="text-gray-400 text-xs">{{ getReadingTime(article.description) }} min</span>
-                </div>
-
-                <NuxtLink :to="`/blog/${article.slug}`" class="block mb-3">
-                  <h3 class="text-xl font-bold text-ebony-900 leading-snug group-hover:text-crocus-600 transition-colors">
+              <!-- Contenido -->
+              <div class="p-5 lg:p-6 flex flex-col flex-1">
+                <NuxtLink :to="`/blog/${article.slug}`" class="block mb-3 flex-1">
+                  <h3 class="text-lg font-bold text-ebony-900 leading-snug group-hover:text-crocus-700 transition-colors duration-200 line-clamp-2">
                     {{ article.title }}
                   </h3>
                 </NuxtLink>
 
-                <p class="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-3 flex-1">
+                <p class="text-ebony-400 text-sm leading-relaxed mb-5 line-clamp-2">
                   {{ article.description }}
                 </p>
 
-                <div class="flex items-center gap-3 pt-5 border-t border-gray-50">
-                  <img
-                    v-if="article.author_avatar"
-                    :src="article.author_avatar"
-                    :alt="article.author_name || 'Autor'"
-                    class="w-8 h-8 rounded-full object-cover border border-gray-100"
-                  />
-                  <div v-else class="w-8 h-8 rounded-full bg-crocus-100 flex items-center justify-center">
-                    <span class="text-crocus-600 text-xs font-bold">{{ article.author_name?.charAt(0) || 'W' }}</span>
+                <!-- Footer de card -->
+                <div class="flex items-center justify-between pt-4 border-t border-titan-200 mt-auto">
+                  <div class="flex items-center gap-2.5">
+                    <img
+                      v-if="article.author_avatar"
+                      :src="article.author_avatar"
+                      :alt="article.author_name || 'Autor'"
+                      class="w-7 h-7 rounded-full object-cover ring-1 ring-titan-200"
+                    />
+                    <div v-else class="w-7 h-7 rounded-full bg-crocus-50 flex items-center justify-center ring-1 ring-crocus-200">
+                      <span class="text-crocus-600 text-[10px] font-bold">{{ article.author_name?.charAt(0) || 'W' }}</span>
+                    </div>
+                    <div>
+                      <p class="text-xs font-semibold text-ebony-800 leading-none">{{ article.author_name || 'Waro Colombia' }}</p>
+                      <p class="text-[10px] text-ebony-400 mt-0.5">{{ formatDate(article.created_at) }}</p>
+                    </div>
                   </div>
-                  <div class="flex flex-col">
-                    <span class="text-xs font-semibold text-ebony-900">{{ article.author_name || 'Waro Colombia' }}</span>
-                    <span class="text-[10px] text-gray-500">{{ formatDate(article.created_at) }}</span>
-                  </div>
+                  <!-- Arrow link -->
+                  <NuxtLink
+                    :to="`/blog/${article.slug}`"
+                    class="w-8 h-8 rounded-full bg-titan-100 hover:bg-crocus-600 flex items-center justify-center transition-colors duration-200 group/btn"
+                    aria-label="Leer artículo"
+                  >
+                    <svg class="w-3.5 h-3.5 text-ebony-500 group-hover/btn:text-white transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                  </NuxtLink>
                 </div>
               </div>
             </article>
           </div>
 
           <!-- Empty State -->
-          <div v-else-if="filteredArticles.length === 0" class="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-300">
-            <div class="text-6xl mb-4">📝</div>
-            <h3 class="text-xl font-bold text-ebony-900 mb-2">No hay artículos disponibles</h3>
-            <p class="text-gray-500">Pronto publicaremos nuevo contenido.</p>
+          <div v-else-if="filteredArticles.length === 0" class="text-center py-24 bg-white rounded-2xl border border-dashed border-titan-400 shadow-sm">
+            <div class="w-16 h-16 rounded-2xl bg-crocus-50 flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-crocus-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <h3 class="text-lg font-bold text-ebony-900 mb-2">No hay artículos disponibles</h3>
+            <p class="text-sm text-ebony-400">Pronto publicaremos nuevo contenido.</p>
           </div>
         </section>
 
-        <!-- Pagination -->
-        <div v-if="totalPages > 1" class="flex justify-center mt-16">
-          <nav class="flex items-center gap-2 bg-white p-2 rounded-xl border border-gray-200">
+        <!-- ─────────────────────────────────────────
+             PAGINACIÓN
+        ───────────────────────────────────────── -->
+        <div v-if="totalPages > 1" class="flex justify-center mt-12 mb-4">
+          <nav class="flex items-center gap-1.5 bg-white p-1.5 rounded-xl shadow-sm border border-titan-200">
             <button
               :disabled="currentPage === 1"
               @click="goToPage(currentPage - 1)"
-              class="p-2 rounded-lg hover:bg-gray-50 text-gray-600 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
+              class="p-2 rounded-lg hover:bg-titan-100 text-ebony-500 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+              aria-label="Página anterior"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
             </button>
 
             <button
@@ -336,10 +437,10 @@ useHead({
               :key="page"
               @click="goToPage(page)"
               :class="[
-                'w-10 h-10 rounded-lg text-sm font-medium transition-all',
+                'w-9 h-9 rounded-lg text-sm font-medium transition-all',
                 currentPage === page
-                  ? 'bg-ebony-900 text-white'
-                  : 'text-gray-600 hover:bg-gray-50'
+                  ? 'bg-crocus-600 text-white shadow-sm'
+                  : 'text-ebony-500 hover:bg-titan-100'
               ]"
             >
               {{ page }}
@@ -348,19 +449,29 @@ useHead({
             <button
               :disabled="currentPage === totalPages"
               @click="goToPage(currentPage + 1)"
-              class="p-2 rounded-lg hover:bg-gray-50 text-gray-600 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
+              class="p-2 rounded-lg hover:bg-titan-100 text-ebony-500 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+              aria-label="Página siguiente"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
             </button>
           </nav>
         </div>
+
       </template>
-
     </main>
-
   </div>
 </template>
 
 <style scoped>
-/* No custom CSS needed, using Tailwind utility classes */
+/* Dot grid background — sutil, no distrae */
+.dot-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, hsl(var(--titan-400)) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.45;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+}
 </style>

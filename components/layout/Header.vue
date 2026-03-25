@@ -86,6 +86,6 @@ const otpAuthStore = useOtpAuthStore()
 const leadModal = useLeadModal()
 
 const isDarkHeader = computed(() => {
-  return route.path.startsWith('/blog')
+  return false
 })
 </script>

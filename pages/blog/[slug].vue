@@ -75,73 +75,65 @@ const category = computed(() => {
   return article.value.tags.split(',')[0]?.trim() || 'General'
 })
 
+// Reading time from full content
+const readingTime = computed(() => {
+  if (!article.value?.content) return 5
+  const words = article.value.content.split(/\s+/).length
+  return Math.max(3, Math.ceil(words / 200))
+})
+
 // SEO Meta tags
 const siteUrl = config.public.siteUrl || 'https://warocol.com'
 
+// Build JSON-LD Article schema
+const articleSchema = computed(() => ({
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: article.value?.meta_title || article.value?.title || '',
+  description: article.value?.meta_descripcion || article.value?.description || '',
+  image: article.value?.cover || article.value?.thumbnail || '',
+  datePublished: article.value?.created_at || '',
+  dateModified: article.value?.updated_at || article.value?.created_at || '',
+  author: {
+    '@type': 'Person',
+    name: article.value?.author_info?.name || article.value?.author_name || 'WARO Colombia'
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'WARO Colombia',
+    url: siteUrl
+  },
+  url: `${siteUrl}/blog/${article.value?.slug || ''}`,
+  keywords: article.value?.tags || '',
+  inLanguage: 'es-CO'
+}))
+
+useSeoMeta({
+  title: () => article.value?.meta_title || article.value?.title || 'Artículo | Waro Colombia',
+  description: () => article.value?.meta_descripcion || article.value?.description || '',
+  ogType: 'article',
+  ogSiteName: 'Waro Colombia',
+  ogLocale: 'es_CO',
+  ogTitle: () => article.value?.meta_title || article.value?.title || '',
+  ogDescription: () => article.value?.meta_descripcion || article.value?.description || '',
+  ogImage: () => article.value?.cover || article.value?.thumbnail || '',
+  ogUrl: () => `${siteUrl}${route.path}`,
+  twitterCard: 'summary_large_image',
+  twitterSite: '@warocolombia',
+  twitterTitle: () => article.value?.meta_title || article.value?.title || '',
+  twitterDescription: () => article.value?.meta_descripcion || article.value?.description || '',
+  twitterImage: () => article.value?.cover || article.value?.thumbnail || '',
+  articlePublishedTime: () => article.value?.created_at || '',
+  articleModifiedTime: () => article.value?.updated_at || article.value?.created_at || '',
+  articleAuthor: () => article.value?.author_name || 'Waro Colombia',
+})
+
 useHead({
-  title: () => article.value?.meta_title || article.value?.title || 'Artículo',
-  meta: [
-    {
-      name: 'description',
-      content: () => article.value?.meta_descripcion || article.value?.description
-    },
-    // Open Graph
-    {
-      property: 'og:type',
-      content: 'article'
-    },
-    {
-      property: 'og:title',
-      content: () => article.value?.meta_title || article.value?.title
-    },
-    {
-      property: 'og:description',
-      content: () => article.value?.meta_descripcion || article.value?.description
-    },
-    {
-      property: 'og:image',
-      content: () => article.value?.cover || article.value?.thumbnail
-    },
-    {
-      property: 'og:url',
-      content: () => `${siteUrl}${route.path}`
-    },
-    // Twitter
-    {
-      name: 'twitter:card',
-      content: 'summary_large_image'
-    },
-    {
-      name: 'twitter:title',
-      content: () => article.value?.meta_title || article.value?.title
-    },
-    {
-      name: 'twitter:description',
-      content: () => article.value?.meta_descripcion || article.value?.description
-    },
-    {
-      name: 'twitter:image',
-      content: () => article.value?.cover || article.value?.thumbnail
-    },
-    // Article specific
-    {
-      property: 'article:published_time',
-      content: () => article.value?.created_at
-    },
-    {
-      property: 'article:modified_time',
-      content: () => article.value?.updated_at || article.value?.created_at
-    },
-    {
-      property: 'article:author',
-      content: () => article.value?.author_name || 'Waro Colombia'
-    }
-  ],
   link: [
-    {
-      rel: 'canonical',
-      href: () => `${siteUrl}${route.path}`
-    }
+    { rel: 'canonical', href: () => `${siteUrl}${route.path}` }
+  ],
+  script: [
+    { type: 'application/ld+json', innerHTML: () => JSON.stringify(articleSchema.value) }
   ]
 })
 </script>
@@ -188,6 +180,7 @@ useHead({
           profilePicture: article.author_info?.avatar || ''
         }"
         :published-date="article.created_at"
+        :reading-time="readingTime"
       />
 
       <!-- Cover Image -->
