@@ -203,7 +203,7 @@ useHead({
         </div>
 
         <!-- Título con typewriter -->
-        <h1 class="font-quantico text-[1.85rem] sm:text-4xl lg:text-[4.5rem] font-black mb-5 lg:mb-7 text-ebony-900 tracking-tight leading-[1.2] uppercase">
+        <h1 class="font-quantico text-[1.85rem] sm:text-4xl lg:text-[4.5rem] font-black mb-5 lg:mb-7 text-ebony-900 tracking-tight leading-tight lg:leading-[1] uppercase">
           {{ displayedTitle }}
         </h1>
 
