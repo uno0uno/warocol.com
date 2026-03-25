@@ -97,6 +97,7 @@ export default defineNuxtConfig({
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { charset: 'utf-8' },
+        { name: 'google-site-verification', content: '72HLw9bf8y_WNtXn8pstDJGYAAQAPZ6bkPNZsbXcCok' },
         { name: 'description', content: process.env.NUXT_PUBLIC_SITE_DESCRIPTION },
         { name: 'author', content: process.env.NUXT_PUBLIC_SITE_AUTHOR },
         { name: 'robots', content: 'index, follow' },
