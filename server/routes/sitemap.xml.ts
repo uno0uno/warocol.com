@@ -15,7 +15,11 @@ export default defineEventHandler(async (event) => {
 
   try {
     const response = await $fetch<{ success: boolean; data: Array<{ slug: string; updated_at: string | null; created_at: string }> }>(`${apiUrl}/blog`, {
-      query: { limit: 1000, published: true }
+      query: { limit: 1000 },
+      headers: {
+        'Origin': siteUrl,
+        'Referer': `${siteUrl}/`
+      }
     })
 
     if (response.success && response.data && response.data.length > 0) {
