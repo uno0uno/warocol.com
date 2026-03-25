@@ -26,7 +26,7 @@ const props = defineProps<Props>()
     <div class="relative z-10 h-full flex items-center justify-center text-center p-12">
       <div>
         <h1
-          class="text-6xl lg:text-8xl font-bold text-white leading-none tracking-tight mb-4 drop-shadow-2xl"
+          class="text-6xl lg:text-8xl font-bold text-white leading-tight tracking-tight mb-4 drop-shadow-2xl"
           style="text-shadow: 0 4px 12px rgba(0,0,0,0.4)"
         >
           {{ title }}
