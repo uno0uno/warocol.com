@@ -3,6 +3,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      secrets:
+        - env_file
+    env_file:
+      - .env
     container_name: warocol-nuxt
     ports:
       - "127.0.0.1:3001:3001"
@@ -15,6 +19,10 @@ services:
     networks:
       - warolabs-network
     restart: unless-stopped
+
+secrets:
+  env_file:
+    file: .env
 
 networks:
   warolabs-network:
