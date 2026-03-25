@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 interface ArticleAuthor {
   name: string
   profilePicture?: string
@@ -28,7 +30,7 @@ const formattedDate = computed(() => formatDate(props.publishedDate))
 
 <template>
   <!-- Light surface hero — superficie blanca elevada sobre titan-100 -->
-  <div class="w-full bg-white relative overflow-hidden border-b border-titan-200 shadow-sm pt-14 pb-14 lg:pt-20 lg:pb-20">
+  <div class="w-full bg-white relative overflow-hidden border-b border-titan-200 shadow-sm pt-8 pb-8 sm:pt-12 sm:pb-12 lg:pt-20 lg:pb-20">
 
     <!-- Textura food emoji — misma técnica que blog index y home -->
     <div class="food-bg" aria-hidden="true">
@@ -59,13 +61,6 @@ const formattedDate = computed(() => formatDate(props.publishedDate))
 
         <!-- Left Column — Title + Meta -->
         <div class="lg:col-span-7 flex flex-col gap-5">
-
-          <!-- Category Badge -->
-          <div v-if="category">
-            <span class="inline-block py-1.5 px-4 rounded bg-crocus-50 text-crocus-700 text-xs font-bold uppercase tracking-widest border border-crocus-200">
-              {{ category }}
-            </span>
-          </div>
 
           <!-- Title -->
           <h1
@@ -104,8 +99,8 @@ const formattedDate = computed(() => formatDate(props.publishedDate))
           </div>
         </div>
 
-        <!-- Right Column — Description as pull-quote -->
-        <div class="lg:col-span-5 lg:pt-14">
+        <!-- Right Column — Description as pull-quote (hidden on mobile) -->
+        <div class="hidden lg:block lg:col-span-5 lg:pt-14">
           <p
             v-if="description"
             class="text-base lg:text-lg leading-relaxed text-ebony-600 border-l-2 border-crocus-300 pl-5"

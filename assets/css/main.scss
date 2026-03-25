@@ -5,7 +5,11 @@
 
 /* Blog Article Styles */
 .article-style {
-  @apply prose prose-lg lg:prose-xl max-w-none text-left;
+  @apply prose sm:prose-lg lg:prose-xl max-w-none text-left;
+}
+
+.article-style {
+  @apply mx-0;
 }
 
 .article-style h1 {
@@ -13,30 +17,30 @@
 }
 
 .article-style h2 {
-  @apply text-2xl lg:text-3xl font-bold mt-8 mb-6 text-ebony-800;
+  @apply text-xl sm:text-2xl lg:text-3xl font-bold mt-5 mb-3 sm:mt-8 sm:mb-6 text-ebony-800;
 }
 
 .article-style h3 {
-  @apply text-xl lg:text-2xl font-semibold my-4 text-ebony-700;
+  @apply text-lg sm:text-xl lg:text-2xl font-semibold my-3 sm:my-4 text-ebony-700;
 }
 
 .article-style p {
-  @apply text-base lg:text-xl font-normal text-ebony-600 leading-relaxed my-6;
+  @apply text-base lg:text-lg font-normal text-ebony-600 leading-relaxed my-2 sm:my-5;
 }
 
 .article-style ul,
 .article-style ol {
-  @apply my-6;
+  @apply my-4 sm:my-6 pl-4 sm:pl-6;
 }
 
 .article-style ul li,
 .article-style ol li {
-  @apply text-base lg:text-xl font-normal text-ebony-600 leading-relaxed my-2;
+  @apply text-base lg:text-lg font-normal text-ebony-600 leading-relaxed my-1.5 sm:my-2;
 }
 
 .article-style ul li p,
 .article-style ol li p {
-  @apply text-base lg:text-xl font-normal text-ebony-600 leading-relaxed my-2;
+  @apply text-base lg:text-lg font-normal text-ebony-600 leading-relaxed my-1.5 sm:my-2;
 }
 
 .article-style a {
@@ -65,7 +69,7 @@
 
 /* Article Layout Container */
 .article-container {
-  @apply px-4 md:px-8 lg:px-16 xl:px-24 2xl:px-48;
+  @apply px-3 sm:px-5 md:px-8 lg:px-16 xl:px-24 2xl:px-48;
 }
 
 .p-cards{

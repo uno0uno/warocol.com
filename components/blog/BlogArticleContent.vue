@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import MarkdownIt from 'markdown-it'
 
 interface Props {
@@ -17,6 +18,8 @@ const renderedContent = computed(() => md.render(props.content))
 // Barra de progreso de lectura
 const readingProgress = ref(0)
 
+const articleRef = ref<HTMLElement | null>(null)
+
 onMounted(() => {
   const update = () => {
     const scrollTop = window.scrollY
@@ -25,6 +28,18 @@ onMounted(() => {
   }
   window.addEventListener('scroll', update, { passive: true })
   onUnmounted(() => window.removeEventListener('scroll', update))
+
+  // Wrap tables in a scrollable container for mobile
+  nextTick(() => {
+    if (!articleRef.value) return
+    articleRef.value.querySelectorAll('table').forEach((table) => {
+      if (table.parentElement?.classList.contains('table-scroll-wrapper')) return
+      const wrapper = document.createElement('div')
+      wrapper.className = 'table-scroll-wrapper'
+      table.parentNode!.insertBefore(wrapper, table)
+      wrapper.appendChild(table)
+    })
+  })
 })
 </script>
 
@@ -37,17 +52,18 @@ onMounted(() => {
     aria-hidden="true"
   />
 
-  <div class="w-full bg-titan-100 py-10 lg:py-14">
+  <div class="w-full bg-titan-100 py-6 sm:py-10 lg:py-14">
     <div class="article-container">
 
       <!-- Breadcrumb -->
-      <div v-if="showBreadcrumb" class="mb-8">
+      <div v-if="showBreadcrumb" class="mb-4 sm:mb-6">
         <slot name="breadcrumb" />
       </div>
 
       <!-- Prose container — max-w-3xl centrado para ~65ch -->
-      <div class="max-w-3xl mx-auto">
+      <div class="w-full sm:max-w-3xl sm:mx-auto">
         <article
+          ref="articleRef"
           class="article-style"
           itemprop="articleBody"
           v-html="renderedContent"

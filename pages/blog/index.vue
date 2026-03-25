@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { $fetch } from 'ofetch'
+
 // Efecto de máquina de escribir para el título del hero
 const heroTitle = 'El conocimiento que necesita tu restaurante'
 const displayedTitle = ref('')
@@ -136,10 +139,10 @@ const getReadingTime = (description: string) => {
   return Math.max(3, Math.ceil(words / wordsPerMinute))
 }
 
-// Get first tag as category
+// Get first tag as category — truncado a 24 chars para badges
 const getCategory = (tags: string) => {
-  const firstTag = tags.split(',')[0]?.trim()
-  return firstTag || 'General'
+  const firstTag = tags.split(',')[0]?.trim() || 'General'
+  return firstTag.length > 24 ? firstTag.slice(0, 24) + '…' : firstTag
 }
 
 const route = useRoute()
@@ -191,26 +194,26 @@ useHead({
       <!-- Accent blob superior derecho -->
       <div class="absolute -top-32 -right-32 w-96 h-96 bg-crocus-100/40 rounded-full blur-3xl pointer-events-none" aria-hidden="true"></div>
 
-      <div class="relative z-10 max-w-5xl mx-auto px-6 lg:px-12 pt-28 pb-24 text-center">
+      <div class="relative z-10 max-w-5xl mx-auto px-5 lg:px-12 pt-16 pb-12 lg:pt-28 lg:pb-24 text-center">
         <!-- Eyebrow badge -->
-        <div class="inline-flex items-center gap-2 mb-7">
+        <div class="inline-flex items-center gap-2 mb-5 lg:mb-7">
           <span class="w-5 h-px bg-crocus-400"></span>
           <span class="text-xs font-bold uppercase tracking-[0.25em] text-crocus-600">Blog & Recursos</span>
           <span class="w-5 h-px bg-crocus-400"></span>
         </div>
 
         <!-- Título con typewriter -->
-        <h1 class="font-quantico text-5xl lg:text-[4.5rem] font-black mb-7 text-ebony-900 tracking-tight leading-[1.05] uppercase">
+        <h1 class="font-quantico text-[1.85rem] sm:text-4xl lg:text-[4.5rem] font-black mb-5 lg:mb-7 text-ebony-900 tracking-tight leading-[1.05] uppercase">
           {{ displayedTitle }}
         </h1>
 
         <!-- Subtítulo -->
-        <p class="text-base text-ebony-500 leading-relaxed font-light">
+        <p class="text-sm sm:text-base text-ebony-500 leading-relaxed font-light">
           Guías prácticas y estrategias probadas para controlar costos, optimizar inventarios y tomar decisiones con datos.
         </p>
 
         <!-- Stats pill -->
-        <div class="inline-flex items-center gap-6 mt-10 px-6 py-3 bg-titan-100 rounded-full border border-titan-300 text-sm text-ebony-500">
+        <div class="inline-flex flex-wrap justify-center items-center gap-3 sm:gap-6 mt-6 lg:mt-10 px-4 sm:px-6 py-2.5 sm:py-3 bg-titan-100 rounded-full border border-titan-300 text-xs sm:text-sm text-ebony-500">
           <span class="flex items-center gap-1.5">
             <svg class="w-4 h-4 text-crocus-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             Contenido para restaurantes
@@ -227,7 +230,7 @@ useHead({
     <!-- ════════════════════════════════════════
          MAIN CONTENT
     ════════════════════════════════════════ -->
-    <main class="max-w-7xl mx-auto px-6 lg:px-8 py-16 w-full flex-1">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 w-full flex-1">
 
       <!-- Loading State -->
       <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
@@ -250,17 +253,17 @@ useHead({
         <!-- ─────────────────────────────────────────
              ARTÍCULO DESTACADO — Magazine style
         ───────────────────────────────────────── -->
-        <section class="mb-20" v-if="filteredArticles[0]">
+        <section class="mb-10 sm:mb-14 lg:mb-20" v-if="filteredArticles[0]">
 
           <!-- Section label -->
-          <div class="flex items-center gap-3 mb-8">
+          <div class="flex items-center gap-3 mb-5 sm:mb-8">
             <div class="w-1 h-5 bg-crocus-600 rounded-full"></div>
             <span class="text-xs font-bold uppercase tracking-[0.2em] text-ebony-400">Destacado</span>
           </div>
 
           <article class="group relative bg-white rounded-2xl overflow-hidden border border-titan-200 hover:border-crocus-400 transition-colors duration-300 grid lg:grid-cols-[1.1fr_1fr]">
             <!-- Imagen -->
-            <NuxtLink :to="`/blog/${filteredArticles[0].slug}`" class="relative overflow-hidden min-h-[22rem] lg:min-h-[26rem]">
+            <NuxtLink :to="`/blog/${filteredArticles[0].slug}`" class="relative overflow-hidden min-h-[13rem] sm:min-h-[18rem] lg:min-h-[26rem]">
               <img
                 v-if="filteredArticles[0].cover"
                 :src="filteredArticles[0].cover"
@@ -270,36 +273,30 @@ useHead({
               <div v-else :class="['absolute inset-0', getGradientClass(0)]"></div>
               <!-- Overlay degradado para integrar con el contenido -->
               <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-black/10"></div>
-              <!-- Badge de categoría flotante -->
-              <div class="absolute top-5 left-5">
-                <span class="inline-flex items-center px-3 py-1.5 rounded-full bg-white/95 text-crocus-700 text-[11px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-sm">
-                  {{ getCategory(filteredArticles[0].tags) }}
-                </span>
-              </div>
             </NuxtLink>
 
             <!-- Contenido -->
-            <div class="p-8 lg:p-12 xl:p-14 flex flex-col justify-center">
+            <div class="p-5 sm:p-8 lg:p-12 xl:p-14 flex flex-col justify-center">
               <!-- Meta -->
-              <div class="flex items-center gap-2 mb-5 text-xs text-ebony-400 font-medium">
+              <div class="flex items-center gap-2 mb-3 sm:mb-5 text-xs text-ebony-400 font-medium">
                 <svg class="w-3.5 h-3.5 text-crocus-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 {{ getReadingTime(filteredArticles[0].description) }} min de lectura
               </div>
 
               <NuxtLink :to="`/blog/${filteredArticles[0].slug}`">
-                <h2 class="text-2xl lg:text-3xl xl:text-4xl font-bold mb-5 text-ebony-900 leading-tight group-hover:text-crocus-700 transition-colors duration-300">
+                <h2 class="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mb-3 sm:mb-5 text-ebony-900 leading-tight group-hover:text-crocus-700 transition-colors duration-300">
                   {{ filteredArticles[0].title }}
                 </h2>
               </NuxtLink>
 
-              <p class="text-ebony-500 text-base lg:text-lg leading-relaxed mb-8 line-clamp-3">
+              <p class="text-ebony-500 text-sm sm:text-base lg:text-lg leading-relaxed mb-5 sm:mb-8 line-clamp-2 sm:line-clamp-3">
                 {{ filteredArticles[0].description }}
               </p>
 
               <!-- CTA -->
               <NuxtLink
                 :to="`/blog/${filteredArticles[0].slug}`"
-                class="inline-flex items-center gap-2 self-start px-5 py-2.5 bg-crocus-600 hover:bg-crocus-700 text-white text-sm font-semibold rounded-full transition-all duration-200 hover:gap-3 mb-8"
+                class="inline-flex items-center gap-2 self-start px-5 py-2.5 bg-crocus-600 hover:bg-crocus-700 text-white text-sm font-semibold rounded-full transition-all duration-200 hover:gap-3 mb-4 sm:mb-8"
               >
                 Leer artículo
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
@@ -328,21 +325,21 @@ useHead({
         <!-- ─────────────────────────────────────────
              GRID DE ARTÍCULOS
         ───────────────────────────────────────── -->
-        <section class="mb-20">
+        <section class="mb-10 lg:mb-20">
           <!-- Section label -->
-          <div class="flex items-center gap-3 mb-10">
+          <div class="flex items-center gap-3 mb-6 sm:mb-10">
             <div class="w-1 h-5 bg-ebony-300 rounded-full"></div>
             <span class="text-xs font-bold uppercase tracking-[0.2em] text-ebony-400">Más Artículos</span>
           </div>
 
-          <div v-if="filteredArticles.length > 1" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+          <div v-if="filteredArticles.length > 1" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-7">
             <article
               v-for="(article, index) in filteredArticles.slice(1)"
               :key="article.id"
               class="group bg-white rounded-2xl overflow-hidden border border-titan-200 hover:border-crocus-400 transition-colors duration-300 flex flex-col h-full"
             >
               <!-- Imagen con badges flotantes -->
-              <NuxtLink :to="`/blog/${article.slug}`" class="relative h-52 overflow-hidden flex-shrink-0">
+              <NuxtLink :to="`/blog/${article.slug}`" class="relative h-40 sm:h-48 lg:h-52 overflow-hidden flex-shrink-0">
                 <img
                   v-if="article.cover"
                   :src="article.cover"
@@ -352,11 +349,6 @@ useHead({
                 <div v-else :class="['absolute inset-0', getGradientClass(index + 1)]"></div>
                 <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
 
-                <!-- Categoría — pill flotante -->
-                <span class="absolute top-3.5 left-3.5 inline-flex items-center px-2.5 py-1 rounded-full bg-white/95 text-crocus-700 text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-sm">
-                  {{ getCategory(article.tags) }}
-                </span>
-
                 <!-- Tiempo de lectura — pill flotante -->
                 <span class="absolute bottom-3.5 right-3.5 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/50 text-white text-[10px] font-medium backdrop-blur-sm">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -365,7 +357,7 @@ useHead({
               </NuxtLink>
 
               <!-- Contenido -->
-              <div class="p-5 lg:p-6 flex flex-col flex-1">
+              <div class="p-4 sm:p-5 lg:p-6 flex flex-col flex-1">
                 <NuxtLink :to="`/blog/${article.slug}`" class="block mb-3 flex-1">
                   <h3 class="text-lg font-bold text-ebony-900 leading-snug group-hover:text-crocus-700 transition-colors duration-200 line-clamp-2">
                     {{ article.title }}
