@@ -1,6 +1,10 @@
 /**
  * Auth Store - OTP Verification
- * Manages authentication via email OTP
+ * Manages authentication via email OTP across the online checkout wizard.
+ *
+ * Migrated to Pinia Colada useMutation — eliminates manual isLoading + try/catch/finally boilerplate.
+ * Shared session state (customerId, email, isVerified, pickupPin) remains as writable refs
+ * so callers can assign directly (checkout/index.vue, StepIdentity.vue).
  */
 import { defineStore } from 'pinia'
 
@@ -13,214 +17,177 @@ export interface CustomerValidation {
   warnings: string[]
 }
 
-export const useOtpAuthStore = defineStore('otpAuth', {
-  state: () => ({
-    customerId: null as string | null,
-    email: null as string | null,
-    phoneNumber: null as string | null,
-    isVerified: false,
-    otpSentAt: null as Date | null,
-    otpExpiresAt: null as Date | null,
-    pickupPin: null as string | null,
-    isLoading: false,
-  }),
+export const useOtpAuthStore = defineStore('otpAuth', () => {
+  // ── Shared session state (writable — callers assign directly) ──────────
+  const customerId = ref<string | null>(null)
+  const email = ref<string | null>(null)
+  const phoneNumber = ref<string | null>(null)
+  const isVerified = ref(false)
+  const otpSentAt = ref<Date | null>(null)
+  const otpExpiresAt = ref<Date | null>(null)
+  const pickupPin = ref<string | null>(null)
 
-  getters: {
-    isAuthenticated: (state) => state.isVerified && !!state.customerId,
+  // ── Mutations ──────────────────────────────────────────────────────────
 
-    isSessionValid: (state) => state.isVerified && !!state.customerId,
-
-    otpCooldownRemaining(state): number {
-      if (!state.otpSentAt) return 0
-
-      const elapsed = Date.now() - state.otpSentAt.getTime()
-      const cooldown = 60000 // 60 seconds
-      const remaining = Math.max(0, cooldown - elapsed)
-
-      return Math.ceil(remaining / 1000)
+  const sendMutation = useMutation({
+    mutation: (vars: { email: string; cartId: string | null }) =>
+      $fetch<{ success: boolean; expires_in: number; message: string }>(
+        '/api/online/otp/send',
+        { method: 'POST', body: { email: vars.email, cart_id: vars.cartId } }
+      ),
+    onSuccess(data) {
+      otpSentAt.value = new Date()
+      otpExpiresAt.value = new Date(Date.now() + data.expires_in * 1000)
     },
+  })
 
-    canResendOtp(): boolean {
-      return this.otpCooldownRemaining === 0
+  const verifyMutation = useMutation({
+    mutation: (vars: { email: string; cartId: string | null; code: string }) =>
+      $fetch<{ success: boolean; customer_id: string; is_verified: boolean; pickup_pin: string | null; message: string }>(
+        '/api/online/otp/verify',
+        { method: 'POST', body: { email: vars.email, cart_id: vars.cartId, otp_code: vars.code } }
+      ),
+    onSuccess(data) {
+      customerId.value = data.customer_id
+      isVerified.value = data.is_verified
+      pickupPin.value = data.pickup_pin
     },
-  },
+  })
 
-  actions: {
-    /**
-     * Send OTP code to email
-     */
-    async sendOTP(email: string, cartId: string) {
-      this.isLoading = true
-
-      try {
-        const data = await $fetch<{ success: boolean; expires_in: number; message: string }>(
-          '/api/online/otp/send',
-          {
-            method: 'POST',
-            body: { email, cart_id: cartId },
-          }
-        )
-
-        this.email = email
-        this.otpSentAt = new Date()
-        this.otpExpiresAt = new Date(Date.now() + data.expires_in * 1000)
-
-        return data
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al enviar el código')
-      } finally {
-        this.isLoading = false
-      }
+  const resendMutation = useMutation({
+    mutation: (vars: { email: string; cartId: string }) =>
+      $fetch<{ success: boolean; expires_in: number; message: string }>(
+        '/api/online/otp/resend',
+        { method: 'POST', body: { email: vars.email, cart_id: vars.cartId } }
+      ),
+    onSuccess(data) {
+      otpSentAt.value = new Date()
+      otpExpiresAt.value = new Date(Date.now() + data.expires_in * 1000)
     },
+  })
 
-    /**
-     * Verify OTP code
-     */
-    async verifyOTP(email: string, cartId: string, code: string) {
-      this.isLoading = true
-
-      try {
-        const data = await $fetch<{
-          success: boolean
-          customer_id: string
-          is_verified: boolean
-          pickup_pin: string | null
-          message: string
-        }>('/api/online/otp/verify', {
-          method: 'POST',
-          body: { email, cart_id: cartId, otp_code: code },
-        })
-
-        this.customerId = data.customer_id
-        this.isVerified = data.is_verified
-        this.pickupPin = data.pickup_pin
-
-        return data
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Código incorrecto')
-      } finally {
-        this.isLoading = false
-      }
+  const validateMutation = useMutation({
+    mutation: (vars: { phoneNumber: string; cartTotal: number }) =>
+      $fetch<CustomerValidation>('/api/online/customer/validate', {
+        method: 'POST',
+        body: { phone_number: vars.phoneNumber, cart_total: vars.cartTotal },
+      }),
+    onSuccess(_, vars) {
+      phoneNumber.value = vars.phoneNumber
     },
+  })
 
-    /**
-     * Resend OTP code
-     */
-    async resendOTP(email: string, cartId: string) {
-      if (!this.canResendOtp) {
-        throw new Error(
-          `Por favor espera ${this.otpCooldownRemaining} segundos antes de reenviar`
-        )
-      }
+  // ── Computed loading (single isLoading for 13 template bindings) ───────
+  const isLoading = computed(() =>
+    sendMutation.isLoading.value ||
+    verifyMutation.isLoading.value ||
+    resendMutation.isLoading.value ||
+    validateMutation.isLoading.value
+  )
 
-      this.isLoading = true
+  // ── Getters (computed) ─────────────────────────────────────────────────
+  const isAuthenticated = computed(() => isVerified.value && !!customerId.value)
+  const isSessionValid = computed(() => isVerified.value && !!customerId.value)
 
-      try {
-        const data = await $fetch<{ success: boolean; expires_in: number; message: string }>(
-          '/api/online/otp/resend',
-          {
-            method: 'POST',
-            body: { email, cart_id: cartId },
-          }
-        )
+  const otpCooldownRemaining = computed(() => {
+    if (!otpSentAt.value) return 0
+    const elapsed = Date.now() - otpSentAt.value.getTime()
+    const cooldown = 60000 // 60 seconds
+    return Math.ceil(Math.max(0, cooldown - elapsed) / 1000)
+  })
 
-        this.otpSentAt = new Date()
-        this.otpExpiresAt = new Date(Date.now() + data.expires_in * 1000)
+  const canResendOtp = computed(() => otpCooldownRemaining.value === 0)
 
-        return data
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al reenviar el código')
-      } finally {
-        this.isLoading = false
-      }
-    },
+  // ── Action wrappers (preserve existing call signatures) ────────────────
 
-    /**
-     * Validate customer eligibility
-     * Checks blacklist, tier, and spending limits
-     */
-    async validateCustomer(
-      phoneNumber: string,
-      cartTotal: number
-    ): Promise<CustomerValidation> {
-      this.isLoading = true
+  /**
+   * Send OTP code to email (checkout flow — requires cart)
+   */
+  const sendOTP = (emailVal: string, cartId: string) => {
+    email.value = emailVal
+    return sendMutation.mutateAsync({ email: emailVal, cartId })
+      .catch((e: any) => { throw new Error(e.data?.detail || 'Error al enviar el código') })
+  }
 
-      try {
-        this.phoneNumber = phoneNumber
+  /**
+   * Verify OTP code (checkout flow)
+   */
+  const verifyOTP = (emailVal: string, cartId: string, code: string) =>
+    verifyMutation.mutateAsync({ email: emailVal, cartId, code })
+      .catch((e: any) => { throw new Error(e.data?.detail || 'Código incorrecto') })
 
-        const result = await $fetch<CustomerValidation>('/api/online/customer/validate', {
-          method: 'POST',
-          body: { phone_number: phoneNumber, cart_total: cartTotal },
-        })
+  /**
+   * Resend OTP code — respects 60s cooldown
+   */
+  const resendOTP = (emailVal: string, cartId: string) => {
+    if (!canResendOtp.value) {
+      return Promise.reject(
+        new Error(`Por favor espera ${otpCooldownRemaining.value} segundos antes de reenviar`)
+      )
+    }
+    return resendMutation.mutateAsync({ email: emailVal, cartId })
+      .catch((e: any) => { throw new Error(e.data?.detail || 'Error al reenviar el código') })
+  }
 
-        return result
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al validar cliente')
-      } finally {
-        this.isLoading = false
-      }
-    },
+  /**
+   * Validate customer eligibility (blacklist, tier, spending limits)
+   */
+  const validateCustomer = (phone: string, cartTotal: number): Promise<CustomerValidation> =>
+    validateMutation.mutateAsync({ phoneNumber: phone, cartTotal })
+      .catch((e: any) => { throw new Error(e.data?.detail || 'Error al validar cliente') })
 
-    /**
-     * Send OTP for customer portal re-auth (no cart required)
-     */
-    async sendOTPPortal(email: string) {
-      this.isLoading = true
-      this.email = email
+  /**
+   * Send OTP for customer portal re-auth (no cart required)
+   */
+  const sendOTPPortal = (emailVal: string) => {
+    email.value = emailVal
+    return sendMutation.mutateAsync({ email: emailVal, cartId: null })
+      .catch((e: any) => { throw new Error(e.data?.detail || 'Error al enviar el código') })
+  }
 
-      try {
-        const data = await $fetch<{ success: boolean; expires_in: number; message: string }>(
-          '/api/online/otp/send',
-          {
-            method: 'POST',
-            body: { email, cart_id: null },
-          }
-        )
+  /**
+   * Verify OTP for customer portal re-auth (no cart required)
+   */
+  const verifyOTPPortal = (emailVal: string, code: string) =>
+    verifyMutation.mutateAsync({ email: emailVal, cartId: null, code })
+      .catch((e: any) => { throw new Error(e.data?.detail || 'Código incorrecto') })
 
-        this.otpSentAt = new Date()
-        this.otpExpiresAt = new Date(Date.now() + data.expires_in * 1000)
+  /**
+   * Logout and clear all session state
+   */
+  const logout = () => {
+    customerId.value = null
+    email.value = null
+    phoneNumber.value = null
+    isVerified.value = false
+    otpSentAt.value = null
+    otpExpiresAt.value = null
+    pickupPin.value = null
+  }
 
-        return data
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al enviar el código')
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    /**
-     * Verify OTP for customer portal re-auth (no cart required)
-     */
-    async verifyOTPPortal(email: string, code: string) {
-      this.isLoading = true
-
-      try {
-        const data = await $fetch<{
-          success: boolean
-          customer_id: string
-          is_verified: boolean
-          message: string
-        }>('/api/online/otp/verify', {
-          method: 'POST',
-          body: { email, cart_id: null, otp_code: code },
-        })
-
-        this.customerId = data.customer_id
-        this.isVerified = data.is_verified
-
-        return data
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Código incorrecto')
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    /**
-     * Logout and clear auth state
-     */
-    logout() {
-      this.$reset()
-    },
-  },
+  return {
+    // State (writable — callers may assign directly)
+    customerId,
+    email,
+    phoneNumber,
+    isVerified,
+    otpSentAt,
+    otpExpiresAt,
+    pickupPin,
+    // Computed loading (replaces manual isLoading ref)
+    isLoading,
+    // Getters
+    isAuthenticated,
+    isSessionValid,
+    otpCooldownRemaining,
+    canResendOtp,
+    // Actions
+    sendOTP,
+    verifyOTP,
+    resendOTP,
+    validateCustomer,
+    sendOTPPortal,
+    verifyOTPPortal,
+    logout,
+  }
 })

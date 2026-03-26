@@ -1,155 +1,117 @@
 /**
  * Public Restaurant Store
- * Handles public restaurant profile and menu data
- * No authentication required
+ * Handles public restaurant profile and menu data.
+ * No authentication required.
+ *
+ * Migrated to Pinia Colada useMutation — eliminates manual isLoading + error refs.
+ * Note: this store currently has no active callers — pages/[tenant]/index.vue uses
+ * useAsyncData directly. This migration is infrastructure for Phase 4 (#279).
  */
 export const usePublicRestaurantStore = defineStore('public-restaurant', () => {
-  // State
-  const restaurant = ref(null)
-  const menu = ref(null)
+  // ── Local state not derived from API ─────────────────────────────────
   const selectedProduct = ref(null)
-  const isLoading = ref(false)
-  const error = ref(null)
 
-  // Computed
-  const isRestaurantOpen = computed(() => {
-    return restaurant.value?.is_currently_open || false
+  // ── Mutations ─────────────────────────────────────────────────────────
+  const profileMutation = useMutation({
+    mutation: (slug) => $fetch(`/api/public/restaurant/${slug}`),
   })
 
-  const categories = computed(() => {
-    if (!menu.value?.categories) return []
-    return menu.value.categories
-  })
-
-  const products = computed(() => {
-    if (!menu.value?.products) return []
-    return menu.value.products
-  })
-
-  const restaurantName = computed(() => {
-    return restaurant.value?.display_name || menu.value?.restaurant_name || ''
-  })
-
-  const businessHours = computed(() => {
-    return restaurant.value?.business_hours || {}
-  })
-
-  const socialMedia = computed(() => {
-    return restaurant.value?.social_media || {}
-  })
-
-  // Actions
-  async function fetchRestaurantProfile(slug) {
-    isLoading.value = true
-    error.value = null
-
-    try {
-      const response = await $fetch(`/api/public/restaurant/${slug}`)
-
-      if (response.success) {
-        restaurant.value = response.data
-        return response.data
-      } else {
-        throw new Error('Restaurant not found')
-      }
-    } catch (err) {
-      error.value = err.message || 'Error loading restaurant profile'
-      console.error('Error fetching restaurant profile:', err)
-      throw err
-    } finally {
-      isLoading.value = false
-    }
-  }
-
-  async function fetchMenu(slug, categoryId = null) {
-    isLoading.value = true
-    error.value = null
-
-    try {
+  const menuMutation = useMutation({
+    mutation: ({ slug, categoryId = null }) => {
       const params = categoryId ? { category_id: categoryId } : {}
-      const response = await $fetch(`/api/public/restaurant/${slug}/menu`, { params })
+      return $fetch(`/api/public/restaurant/${slug}/menu`, { params })
+    },
+  })
 
-      if (response.success) {
-        menu.value = response.data
-        return response.data
-      } else {
-        throw new Error('Menu not found')
-      }
-    } catch (err) {
-      error.value = err.message || 'Error loading menu'
-      console.error('Error fetching menu:', err)
-      throw err
-    } finally {
-      isLoading.value = false
-    }
-  }
+  const productMutation = useMutation({
+    mutation: ({ slug, productId }) =>
+      $fetch(`/api/public/restaurant/${slug}/product/${productId}`),
+    onSuccess(response) {
+      selectedProduct.value = response.success ? response.data : null
+    },
+  })
 
-  async function fetchProductDetail(slug, productId) {
-    isLoading.value = true
-    error.value = null
+  // ── Computed state (preserving existing API shape) ────────────────────
+  const restaurant = computed(() =>
+    profileMutation.data.value?.success ? profileMutation.data.value.data : null
+  )
 
-    try {
-      const response = await $fetch(`/api/public/restaurant/${slug}/product/${productId}`)
+  const menu = computed(() =>
+    menuMutation.data.value?.success ? menuMutation.data.value.data : null
+  )
 
-      if (response.success) {
-        selectedProduct.value = response.data
-        return response.data
-      } else {
-        throw new Error('Product not found')
-      }
-    } catch (err) {
-      error.value = err.message || 'Error loading product'
-      console.error('Error fetching product detail:', err)
-      throw err
-    } finally {
-      isLoading.value = false
-    }
-  }
+  const isLoading = computed(() =>
+    profileMutation.isLoading.value ||
+    menuMutation.isLoading.value ||
+    productMutation.isLoading.value
+  )
 
-  function filterProductsByCategory(categoryId) {
+  const error = computed(() => {
+    const e = profileMutation.error.value || menuMutation.error.value || productMutation.error.value
+    return e ? (e.message || 'Error loading data') : null
+  })
+
+  // ── Derived computeds (unchanged from original) ───────────────────────
+  const isRestaurantOpen = computed(() => restaurant.value?.is_currently_open || false)
+
+  const categories = computed(() => menu.value?.categories ?? [])
+
+  const products = computed(() => menu.value?.products ?? [])
+
+  const restaurantName = computed(() =>
+    restaurant.value?.display_name || menu.value?.restaurant_name || ''
+  )
+
+  const businessHours = computed(() => restaurant.value?.business_hours || {})
+
+  const socialMedia = computed(() => restaurant.value?.social_media || {})
+
+  // ── Action wrappers (preserve existing call signatures) ───────────────
+  const fetchRestaurantProfile = (slug) => profileMutation.mutateAsync(slug)
+
+  const fetchMenu = (slug, categoryId = null) =>
+    menuMutation.mutateAsync({ slug, categoryId })
+
+  const fetchProductDetail = (slug, productId) =>
+    productMutation.mutateAsync({ slug, productId })
+
+  const filterProductsByCategory = (categoryId) => {
     if (!menu.value?.products) return []
-
-    if (!categoryId || categoryId === 'all') {
-      return menu.value.products
-    }
-
-    return menu.value.products.filter(p => p.category_id === categoryId)
+    if (!categoryId || categoryId === 'all') return menu.value.products
+    return menu.value.products.filter((p) => p.category_id === categoryId)
   }
 
-  function clearSelectedProduct() {
+  const clearSelectedProduct = () => {
     selectedProduct.value = null
   }
 
-  function clearAll() {
-    restaurant.value = null
-    menu.value = null
+  const clearAll = () => {
+    profileMutation.reset()
+    menuMutation.reset()
+    productMutation.reset()
     selectedProduct.value = null
-    error.value = null
-    isLoading.value = false
   }
 
   return {
-    // State
-    restaurant: readonly(restaurant),
-    menu: readonly(menu),
+    // Computed state
+    restaurant,
+    menu,
     selectedProduct: readonly(selectedProduct),
-    isLoading: readonly(isLoading),
-    error: readonly(error),
-
-    // Computed
+    isLoading,
+    error,
+    // Derived computeds
     isRestaurantOpen,
     categories,
     products,
     restaurantName,
     businessHours,
     socialMedia,
-
     // Actions
     fetchRestaurantProfile,
     fetchMenu,
     fetchProductDetail,
     filterProductsByCategory,
     clearSelectedProduct,
-    clearAll
+    clearAll,
   }
 })
