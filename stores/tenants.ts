@@ -1,3 +1,14 @@
+/**
+ * Tenants Store — Pinia Colada migration (Phase 2c)
+ *
+ * useQuery for user tenants (parallel fetch) and business profile (reactive on selectedTenant).
+ * useMutation for tenant switch — fires bulk cache invalidation on success.
+ *
+ * tenantChangeCounter is preserved for backward compat:
+ *   - useTenantReactive.ts / onTenantChange() watchers in 30 pages (until Phase 4 #279)
+ *   - useNotifications.ts SSE reconnect watcher
+ * Full removal of tenantChangeCounter + onTenantChange belongs to Phase 4 (#279).
+ */
 import { defineStore } from 'pinia'
 
 export interface BusinessHours {
@@ -28,6 +39,7 @@ export interface TenantBusinessProfile {
   estimated_preparation_time: number
   is_active: boolean
   is_currently_open: boolean | null
+  is_manually_open: boolean | null
 }
 
 export interface Tenant {
@@ -37,143 +49,125 @@ export interface Tenant {
 }
 
 export const useTenantsStore = defineStore('tenants', () => {
-  // State
-  const tenants = ref<Tenant[]>([])
+  const cache = useQueryCache()
+
+  // ── UI state ──────────────────────────────────────────────────────────────────
   const selectedTenant = ref<Tenant | null>(null)
-  const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  // Global tenant change counter - increments when tenant changes
+  // Backward compat: watched by useTenantReactive (onTenantChange) + useNotifications (SSE)
+  // Removal: Phase 4 (#279) when all pages migrate from useAsyncData to useQuery
   const tenantChangeCounter = ref(0)
 
-  // Business profile state
-  const businessProfile = ref<TenantBusinessProfile | null>(null)
-  const isBusinessProfileLoading = ref(false)
-
-  // Getters
-  const hasTenants = computed(() => tenants.value.length > 0)
-  const selectedTenantSlug = computed(() => selectedTenant.value?.slug || null)
-
-  // Actions
-  const fetchUserTenants = async () => {
-    isLoading.value = true
-    error.value = null
-
-
-    try {
-      // Get tenants and current session
-      const [tenantsResponse, sessionResponse] = await Promise.all([
-        $fetch('/api/tenants/user-tenants'),
-        $fetch('/api/auth/session')
+  // ── User tenants query ────────────────────────────────────────────────────────
+  const { data: tenantData, status } = useQuery({
+    key: ['tenants', 'user'],
+    query: async () => {
+      const [tenantsRes, sessionRes] = await Promise.all([
+        $fetch<{ success: boolean; data: Tenant[] }>('/api/tenants/user-tenants'),
+        $fetch<{ success: boolean; currentTenant?: { id: string } }>('/api/auth/session'),
       ])
+      return { tenants: tenantsRes.data ?? [], session: sessionRes }
+    },
+  })
 
-
-      if (tenantsResponse.success) {
-        tenants.value = tenantsResponse.data
-
-        // Set current tenant from session if available
-        if (sessionResponse.success && sessionResponse.currentTenant) {
-          const currentTenant = tenants.value.find(t => t.id === sessionResponse.currentTenant.id)
-          if (currentTenant) {
-            selectedTenant.value = currentTenant
-          }
-        }
-
-        // Fallback to first tenant if none selected
-        if (!selectedTenant.value && tenants.value.length > 0) {
-          selectedTenant.value = tenants.value[0]
-        }
-
-        // Load business profile for the selected tenant
-        await fetchBusinessProfile()
-      } else {
-        error.value = tenantsResponse.message || 'Error loading tenants'
-        console.error('❌ Tenants response not successful:', tenantsResponse)
-      }
-    } catch (err: any) {
-      error.value = err.message || 'Failed to fetch tenants'
-      console.error('❌ Error fetching user tenants:', err)
-    } finally {
-      isLoading.value = false
+  // Auto-select tenant from session (or first) when query loads
+  watch(tenantData, (result) => {
+    if (!result) return
+    if (selectedTenant.value) return  // already selected — don't override on background refetch
+    const { tenants, session } = result
+    if (session?.success && session.currentTenant) {
+      const fromSession = tenants.find(t => t.id === session.currentTenant!.id)
+      if (fromSession) { selectedTenant.value = fromSession; return }
     }
-  }
+    if (tenants.length > 0) selectedTenant.value = tenants[0]
+  })
 
-  const fetchBusinessProfile = async () => {
-    isBusinessProfileLoading.value = true
-    try {
-      const response = await $fetch<{ success: boolean; data: TenantBusinessProfile }>(
-        '/api/api/tenant/public-profile'
-      )
-      businessProfile.value = response?.data ?? null
-    } catch {
-      businessProfile.value = null
-    } finally {
-      isBusinessProfileLoading.value = false
-    }
-  }
+  const tenants = computed<Tenant[]>(() => tenantData.value?.tenants ?? [])
 
-  const selectTenant = async (tenant: Tenant) => {
+  // ── Business profile query (reactive on selectedTenant) ───────────────────────
+  const { data: businessProfile, status: profileStatus } = useQuery({
+    key: () => ['tenant', 'business-profile', selectedTenant.value?.slug],
+    query: () => $fetch<{ success: boolean; data: TenantBusinessProfile }>(
+      '/api/api/tenant/public-profile'
+    ).then(r => r.data ?? null),
+    enabled: () => !!selectedTenant.value,
+  })
 
-    // Check if already on the selected tenant
-    if (selectedTenant.value?.slug === tenant.slug) {
-      return true
-    }
+  // ── Derived state ─────────────────────────────────────────────────────────────
+  const hasTenants = computed(() => tenants.value.length > 0)
+  const selectedTenantSlug = computed(() => selectedTenant.value?.slug ?? null)
+  const isLoading = computed(() => status.value === 'loading' || switchMutation.isPending.value)
+  const isBusinessProfileLoading = computed(() => profileStatus.value === 'loading')
 
-    // Check if already loading to prevent concurrent calls
-    if (isLoading.value) {
-      return false
-    }
-
-    isLoading.value = true
-    error.value = null
-
-    try {
-
-      // Import encryption utility
+  // ── selectTenant mutation ─────────────────────────────────────────────────────
+  const switchMutation = useMutation({
+    mutation: async (tenant: Tenant) => {
       const { getEncryptedOrigin } = await import('~/utils/encryption.js')
       const encryptedOrigin = getEncryptedOrigin()
-
-      const response = await $fetch('/api/auth/switch-tenant', {
+      return $fetch<{ success: boolean; message?: string }>('/api/auth/switch-tenant', {
         method: 'POST',
-        headers: {
-          ...(encryptedOrigin && { 'X-Encrypted-Origin': encryptedOrigin })
-        },
-        body: { tenantSlug: tenant.slug }
+        headers: { ...(encryptedOrigin && { 'X-Encrypted-Origin': encryptedOrigin }) },
+        body: { tenantSlug: tenant.slug },
       })
-
-      if (response.success) {
-        selectedTenant.value = tenant
-        businessProfile.value = null          // clear stale profile immediately
-        useBilling().resetBilling()           // clear stale billing data
-        tenantChangeCounter.value++           // trigger reactivity globally
-        fetchBusinessProfile()                // fire-and-forget
-        return true
-      } else {
-        error.value = response.message || 'Error switching tenant'
-        return false
+    },
+    onSuccess: (response, tenant) => {
+      if (!response.success) {
+        error.value = response.message ?? 'Error switching tenant'
+        return
       }
-    } catch (err: any) {
-      error.value = err.message || 'Failed to switch tenant'
-      console.error('Error switching tenant:', err)
-      return false
-    } finally {
-      isLoading.value = false
-    }
+      selectedTenant.value = tenant
+      useBilling().resetBilling()       // keep until Phase 3a (#277) migrates billing
+      tenantChangeCounter.value++       // backward compat — fires onTenantChange in 30 pages
+      // Bulk invalidation — single source of truth for tenant switch
+      cache.invalidateQueries({ key: ['tenant'] })
+      cache.invalidateQueries({ key: ['billing'] })
+      cache.invalidateQueries({ key: ['orders'] })
+      cache.invalidateQueries({ key: ['expenses'] })
+      cache.invalidateQueries({ key: ['ingredients'] })
+      cache.invalidateQueries({ key: ['analytics'] })
+      cache.invalidateQueries({ key: ['waros'] })
+      cache.invalidateQueries({ key: ['purchases'] })
+      cache.invalidateQueries({ key: ['addresses'] })
+      cache.invalidateQueries({ key: ['notifications'] })
+    },
+    onError: (err: any) => {
+      error.value = err?.message ?? 'Failed to switch tenant'
+    },
+  })
+
+  // ── Public action wrappers ────────────────────────────────────────────────────
+
+  /** Trigger a fresh fetch of user tenants (awaitable — resolves when data is loaded) */
+  const fetchUserTenants = () =>
+    cache.invalidateQueries({ key: ['tenants', 'user'] })
+
+  /** Force-refresh the business profile (e.g. after PATCH to public-profile) */
+  const fetchBusinessProfile = () =>
+    cache.invalidateQueries({ key: ['tenant', 'business-profile', selectedTenant.value?.slug] })
+
+  const selectTenant = async (tenant: Tenant): Promise<boolean> => {
+    if (selectedTenant.value?.slug === tenant.slug) return true
+    if (switchMutation.isPending.value) return false
+    error.value = null
+    const res = await switchMutation.mutateAsync(tenant).catch((err: any) => {
+      error.value = err?.message ?? 'Failed to switch tenant'
+      return null
+    })
+    return !!res?.success
   }
 
-  const selectTenantBySlug = async (slug: string) => {
+  const selectTenantBySlug = async (slug: string): Promise<boolean> => {
     const tenant = tenants.value.find(t => t.slug === slug)
-    if (tenant) {
-      return await selectTenant(tenant)
-    }
+    if (tenant) return selectTenant(tenant)
     return false
   }
 
   const clearTenants = () => {
-    tenants.value = []
     selectedTenant.value = null
-    businessProfile.value = null
     error.value = null
+    cache.invalidateQueries({ key: ['tenants'] })
+    cache.invalidateQueries({ key: ['tenant'] })
   }
 
   return {
@@ -195,6 +189,6 @@ export const useTenantsStore = defineStore('tenants', () => {
     fetchBusinessProfile,
     selectTenant,
     selectTenantBySlug,
-    clearTenants
+    clearTenants,
   }
 })
