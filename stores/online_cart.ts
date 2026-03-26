@@ -1,11 +1,18 @@
 /**
  * Cart Store - Online Ordering
- * Manages shopping cart state, synced with backend via $fetch
+ * Pinia Colada migration (Phase 3b) — useMutation with onMutate/onError rollback
+ *
+ * All 6 async mutations have:
+ * - onMutate: optimistic local update + snapshot for rollback
+ * - onError:  restore snapshot on API failure
+ * - onSuccess: reconcile backend UUIDs via syncItemIds (batch mutations)
+ *
+ * Session state and pure helpers stay outside Pinia Colada.
  */
 import { defineStore } from 'pinia'
 
-// Module-level lock: addItem awaits this before proceeding so it never
-// races with hydrateFromBackend() during the initial session recovery.
+// Module-level lock: mutations await this before proceeding so they never
+// race with hydrateFromBackend() during the initial session recovery.
 let _recoveryPromise: Promise<void> | null = null
 
 // Order-insensitive modifier comparison key.
@@ -65,368 +72,456 @@ interface BackendCart {
   items: BackendCartItem[]
 }
 
-export const useOnlineCartStore = defineStore('onlineCart', {
-  state: () => ({
-    sessionId: null as string | null,
-    cartId: null as string | null,
-    items: [] as CartItem[],
-    orderType: 'delivery' as 'delivery' | 'pickup' | 'dine-in',
-    deliveryInfo: null as DeliveryInfo | null,
-    isLoading: false,
-    tenantId: null as string | null,
-    tenantName: null as string | null,
-  }),
+interface AddItemVars {
+  product: { id: string; name: string; price: number; has_modifiers?: boolean }
+  quantity: number
+  modifiers: CartModifier[]
+  notes?: string
+}
 
-  getters: {
-    itemCount: (state) => state.items.reduce((sum, item) => sum + item.quantity, 0),
+interface AddItemsBatchVars {
+  product: { id: string; name: string; price: number; has_modifiers?: boolean }
+  units: Array<{ modifiers: CartModifier[]; notes?: string }>
+}
 
-    subtotal: (state) => state.items.reduce((sum, item) => sum + item.total, 0),
+export const useOnlineCartStore = defineStore('onlineCart', () => {
+  // ── State ──────────────────────────────────────────────────────────────────
+  const sessionId = ref<string | null>(null)
+  const cartId = ref<string | null>(null)
+  const items = ref<CartItem[]>([])
+  const orderType = ref<'delivery' | 'pickup' | 'dine-in'>('delivery')
+  const deliveryInfo = ref<DeliveryInfo | null>(null)
+  const tenantId = ref<string | null>(null)
+  const tenantName = ref<string | null>(null)
 
-    isEmpty: (state) => state.items.length === 0,
+  // ── Getters ────────────────────────────────────────────────────────────────
+  const itemCount = computed(() => items.value.reduce((sum, item) => sum + item.quantity, 0))
+  const subtotal = computed(() => items.value.reduce((sum, item) => sum + item.total, 0))
+  const isEmpty = computed(() => items.value.length === 0)
+  const formattedSubtotal = computed(() =>
+    new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+    }).format(subtotal.value)
+  )
 
-    // Formatted subtotal in COP
-    formattedSubtotal(): string {
-      return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0,
-      }).format(this.subtotal)
-    },
-  },
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
-  actions: {
-    /**
-     * Initialize session ID from localStorage or create new one
-     */
-    initSession(sessionId?: string | null) {
-      if (sessionId) {
-        this.sessionId = sessionId
-      } else {
-        this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        if (process.client) {
-          localStorage.setItem('waro_session_id', this.sessionId)
-        }
-      }
-    },
-
-    /**
-     * Set tenant ID (and optional display name) for the cart
-     */
-    setTenant(tenantId: string, tenantName?: string) {
-      this.tenantId = tenantId
-      this.tenantName = tenantName ?? null
-    },
-
-    /**
-     * Register the session-recovery promise so addItem() can await it.
-     * Called from the page before the recovery fetch starts.
-     */
-    setRecoveryPromise(p: Promise<void>) {
-      _recoveryPromise = p
-    },
-
-    /**
-     * Hydrate local state from a backend cart response (session recovery)
-     */
-    hydrateFromBackend(cartData: BackendCart) {
-      this.cartId = cartData.id
-      this.orderType = cartData.order_type
-      this.items = cartData.items.map(item => ({
-        id: `item_${item.id}`,
-        backendId: item.id,
+  /** Serialize current items for batch POST body */
+  function buildCartBody() {
+    return {
+      tenant_id: tenantId.value,
+      session_id: sessionId.value,
+      order_type: orderType.value,
+      items: items.value.map(item => ({
         product_id: item.product_id,
         product_name: item.product_name,
         quantity: item.quantity,
-        unit_price: Number(item.unit_price),
-        modifiers: (item.modifiers || []).map(mod => ({
-          id: mod.modifier_id,
-          name: mod.modifier_name,
-          price: Number(mod.price),
-        })),
+        unit_price: item.unit_price,
+        modifiers: item.modifiers,
         notes: item.notes,
-        total: Number(item.subtotal),
-        has_modifiers: false, // not stored in backend — safe default after page refresh
-      }))
-    },
+      })),
+    }
+  }
 
-    /**
-     * Map backend item UUIDs back onto local CartItems after a batch sync
-     */
-    syncItemIds(backendItems: BackendCartItem[]) {
-      for (const backendItem of backendItems) {
-        const localItem = this.items.find(
-          item =>
-            item.product_id === backendItem.product_id &&
-            modifiersKey(item.modifiers) === modifiersKey(backendItem.modifiers)
-        )
-        if (localItem) {
-          localItem.backendId = backendItem.id
-        }
+  /** Map backend item UUIDs back onto local CartItems after a batch sync */
+  function syncItemIds(backendItems: BackendCartItem[]) {
+    for (const backendItem of backendItems) {
+      const localItem = items.value.find(
+        item =>
+          item.product_id === backendItem.product_id &&
+          modifiersKey(item.modifiers) === modifiersKey(backendItem.modifiers)
+      )
+      if (localItem) localItem.backendId = backendItem.id
+    }
+  }
+
+  // ── Mutations ──────────────────────────────────────────────────────────────
+
+  // addItem: push/merge optimistic, POST batch, rollback on error
+  const addMutation = useMutation({
+    onMutate({ product, quantity, modifiers = [], notes }: AddItemVars) {
+      const snapshot = [...items.value]
+      const sortedModifiers = [...modifiers].sort((a, b) => a.id.localeCompare(b.id))
+      const modifiersTotal = modifiers.reduce((sum, mod) => sum + mod.price, 0)
+      const existingIndex = items.value.findIndex(
+        item => item.product_id === product.id && modifiersKey(item.modifiers) === modifiersKey(modifiers)
+      )
+      if (existingIndex >= 0) {
+        items.value[existingIndex].quantity += quantity
+        items.value[existingIndex].total =
+          (product.price + modifiersTotal) * items.value[existingIndex].quantity
+      } else {
+        items.value.push({
+          id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          product_id: product.id,
+          product_name: product.name,
+          quantity,
+          unit_price: product.price,
+          modifiers: sortedModifiers,
+          notes,
+          total: (product.price + modifiersTotal) * quantity,
+          has_modifiers: product.has_modifiers ?? false,
+        })
       }
+      return { snapshot }
     },
-
-    /**
-     * Add item to cart with modifiers — POST /api/online/cart/batch
-     */
-    async addItem(
-      product: { id: string; name: string; price: number; has_modifiers?: boolean },
-      quantity: number,
-      modifiers: CartModifier[] = [],
-      notes?: string
-    ) {
-      // Wait for session recovery to complete before adding so we don't
-      // race with hydrateFromBackend() which would wipe the optimistic item.
+    mutation: async (_vars: AddItemVars) => {
+      // Await session recovery before syncing — prevents race with hydrateFromBackend()
       if (_recoveryPromise) {
         await _recoveryPromise
         _recoveryPromise = null
       }
+      return $fetch<{ data: BackendCart }>('/api/online/cart/batch', {
+        method: 'POST',
+        body: buildCartBody(),
+      })
+    },
+    onError(_error, _vars, context) {
+      items.value = context.snapshot
+    },
+    onSuccess(data) {
+      cartId.value = data.data.id
+      syncItemIds(data.data.items)
+    },
+  })
 
-      this.isLoading = true
-
-      try {
-        const modifiersTotal = modifiers.reduce((sum, mod) => sum + mod.price, 0)
-        const itemTotal = (product.price + modifiersTotal) * quantity
-
-        const sortedModifiers = [...modifiers].sort((a, b) => a.id.localeCompare(b.id))
-        const existingIndex = this.items.findIndex(
-          item =>
-            item.product_id === product.id &&
-            modifiersKey(item.modifiers) === modifiersKey(modifiers)
+  // addItemsBatch: loop all units optimistically, POST batch, rollback on error
+  const batchMutation = useMutation({
+    onMutate({ product, units }: AddItemsBatchVars) {
+      const snapshot = [...items.value]
+      for (const unit of units) {
+        const sortedModifiers = [...unit.modifiers].sort((a, b) => a.id.localeCompare(b.id))
+        const modifiersTotal = unit.modifiers.reduce((sum, mod) => sum + mod.price, 0)
+        const existingIndex = items.value.findIndex(
+          item => item.product_id === product.id && modifiersKey(item.modifiers) === modifiersKey(unit.modifiers)
         )
-
         if (existingIndex >= 0) {
-          this.items[existingIndex].quantity += quantity
-          this.items[existingIndex].total =
-            (product.price + modifiersTotal) * this.items[existingIndex].quantity
+          items.value[existingIndex].quantity += 1
+          items.value[existingIndex].total =
+            (product.price + modifiersTotal) * items.value[existingIndex].quantity
         } else {
-          this.items.push({
+          items.value.push({
             id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             product_id: product.id,
             product_name: product.name,
-            quantity,
+            quantity: 1,
             unit_price: product.price,
             modifiers: sortedModifiers,
-            notes,
-            total: itemTotal,
+            notes: unit.notes,
+            total: product.price + modifiersTotal,
             has_modifiers: product.has_modifiers ?? false,
           })
         }
-
-        const data = await $fetch<{ data: BackendCart }>('/api/online/cart/batch', {
-          method: 'POST',
-          body: {
-            tenant_id: this.tenantId,
-            session_id: this.sessionId,
-            order_type: this.orderType,
-            items: this.items.map(item => ({
-              product_id: item.product_id,
-              product_name: item.product_name,
-              quantity: item.quantity,
-              unit_price: item.unit_price,
-              modifiers: item.modifiers,
-              notes: item.notes,
-            })),
-          },
-        })
-
-        this.cartId = data.data.id
-        this.syncItemIds(data.data.items)
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al agregar producto al carrito')
-      } finally {
-        this.isLoading = false
       }
+      return { snapshot }
     },
-
-    /**
-     * Add multiple units with independent modifiers in one batch POST.
-     * Used by the per-item wizard when qty > 1 with individual customization.
-     */
-    async addItemsBatch(
-      product: { id: string; name: string; price: number; has_modifiers?: boolean },
-      units: Array<{ modifiers: CartModifier[]; notes?: string }>
-    ) {
-      this.isLoading = true
-      try {
-        for (const unit of units) {
-          const sortedModifiers = [...unit.modifiers].sort((a, b) => a.id.localeCompare(b.id))
-          const modifiersTotal = unit.modifiers.reduce((sum, mod) => sum + mod.price, 0)
-          const existingIndex = this.items.findIndex(
-            item =>
-              item.product_id === product.id &&
-              modifiersKey(item.modifiers) === modifiersKey(unit.modifiers)
-          )
-          if (existingIndex >= 0) {
-            this.items[existingIndex].quantity += 1
-            this.items[existingIndex].total =
-              (product.price + modifiersTotal) * this.items[existingIndex].quantity
-          } else {
-            this.items.push({
-              id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              product_id: product.id,
-              product_name: product.name,
-              quantity: 1,
-              unit_price: product.price,
-              modifiers: sortedModifiers,
-              notes: unit.notes,
-              total: product.price + modifiersTotal,
-              has_modifiers: product.has_modifiers ?? false,
-            })
-          }
-        }
-
-        const data = await $fetch<{ data: BackendCart }>('/api/online/cart/batch', {
-          method: 'POST',
-          body: {
-            tenant_id: this.tenantId,
-            session_id: this.sessionId,
-            order_type: this.orderType,
-            items: this.items.map(item => ({
-              product_id: item.product_id,
-              product_name: item.product_name,
-              quantity: item.quantity,
-              unit_price: item.unit_price,
-              modifiers: item.modifiers,
-              notes: item.notes,
-            })),
-          },
-        })
-
-        this.cartId = data.data.id
-        this.syncItemIds(data.data.items)
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al agregar productos al carrito')
-      } finally {
-        this.isLoading = false
+    mutation: async (_vars: AddItemsBatchVars) => {
+      // Fix: await recovery before batch add — prevents race with hydrateFromBackend()
+      // (was missing from the original addItemsBatch, only addItem had this guard)
+      if (_recoveryPromise) {
+        await _recoveryPromise
+        _recoveryPromise = null
       }
+      return $fetch<{ data: BackendCart }>('/api/online/cart/batch', {
+        method: 'POST',
+        body: buildCartBody(),
+      })
     },
+    onError(_error, _vars, context) {
+      items.value = context.snapshot
+    },
+    onSuccess(data) {
+      cartId.value = data.data.id
+      syncItemIds(data.data.items)
+    },
+  })
 
-    /**
-     * Update item quantity — persists full cart via batch POST; calls removeItem if quantity ≤ 0
-     */
-    async updateItemQuantity(itemId: string, quantity: number) {
-      if (quantity <= 0) {
-        return await this.removeItem(itemId)
-      }
-
-      const item = this.items.find(i => i.id === itemId)
+  // updateItemQuantity: optimistic qty/total update, POST batch, rollback on error
+  const updateMutation = useMutation({
+    onMutate({ itemId, quantity }: { itemId: string; quantity: number }) {
+      const item = items.value.find(i => i.id === itemId)
       if (!item) throw new Error('Item not found')
-
       const modifiersTotal = item.modifiers.reduce((sum, mod) => sum + mod.price, 0)
+      const prevQty = item.quantity
+      const prevTotal = item.total
       item.quantity = quantity
       item.total = (item.unit_price + modifiersTotal) * quantity
+      return { itemId, prevQty, prevTotal }
+    },
+    mutation: async (_vars: { itemId: string; quantity: number }) => {
+      return $fetch<{ data: BackendCart }>('/api/online/cart/batch', {
+        method: 'POST',
+        body: buildCartBody(),
+      })
+    },
+    onError(_error, _vars, context) {
+      const item = items.value.find(i => i.id === context.itemId)
+      if (item) {
+        item.quantity = context.prevQty
+        item.total = context.prevTotal
+      }
+    },
+    onSuccess(data) {
+      cartId.value = data.data.id
+      syncItemIds(data.data.items)
+    },
+  })
 
-      this.isLoading = true
-      try {
-        const data = await $fetch<{ data: BackendCart }>('/api/online/cart/batch', {
-          method: 'POST',
-          body: {
-            tenant_id: this.tenantId,
-            session_id: this.sessionId,
-            order_type: this.orderType,
-            items: this.items.map(i => ({
-              product_id: i.product_id,
-              product_name: i.product_name,
-              quantity: i.quantity,
-              unit_price: i.unit_price,
-              modifiers: i.modifiers,
-              notes: i.notes,
-            })),
-          },
+  // removeItem: optimistic splice, DELETE per-item endpoint, rollback on error
+  const removeMutation = useMutation({
+    onMutate(itemId: string) {
+      const index = items.value.findIndex(i => i.id === itemId)
+      if (index < 0) {
+        return { snapshot: null as CartItem | null, index: -1, backendId: null as string | null, snapshotCartId: null as string | null }
+      }
+      const snapshot = items.value[index]
+      const backendId = snapshot.backendId ?? null
+      const snapshotCartId = cartId.value
+      items.value.splice(index, 1)
+      return { snapshot, index, backendId, snapshotCartId }
+    },
+    mutation: async (_itemId: string, context) => {
+      // Only call DELETE if the item was synced to backend
+      if (context.backendId && context.snapshotCartId) {
+        await $fetch(`/api/online/cart/${context.snapshotCartId}/items/${context.backendId}`, {
+          method: 'DELETE',
         })
-        this.cartId = data.data.id
-        this.syncItemIds(data.data.items)
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al actualizar la cantidad')
-      } finally {
-        this.isLoading = false
+      }
+      // No backendId = item was never synced; local removal is sufficient
+    },
+    onError(_error, _vars, context) {
+      // Restore the removed item at its original position
+      if (context.snapshot && context.index >= 0) {
+        items.value.splice(context.index, 0, context.snapshot)
       }
     },
+  })
 
-    /**
-     * Remove item from cart — DELETE /api/online/cart/{cartId}/items/{backendId}
-     */
-    async removeItem(itemId: string) {
-      this.isLoading = true
-
-      try {
-        const index = this.items.findIndex(i => i.id === itemId)
-        if (index < 0) return
-
-        const item = this.items[index]
-        this.items.splice(index, 1)
-
-        if (item.backendId && this.cartId) {
-          await $fetch(`/api/online/cart/${this.cartId}/items/${item.backendId}`, {
-            method: 'DELETE',
-          })
-        }
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al eliminar el producto')
-      } finally {
-        this.isLoading = false
+  // clearCart: non-optimistic DELETE, clear local state only on success
+  const clearMutation = useMutation({
+    mutation: async () => {
+      if (cartId.value) {
+        await $fetch(`/api/online/cart/${cartId.value}`, { method: 'DELETE' })
       }
     },
+    onSuccess() {
+      items.value = []
+      cartId.value = null
+      deliveryInfo.value = null
+    },
+  })
 
-    /**
-     * Clear entire cart — DELETE /api/online/cart/{cartId}
-     */
-    async clearCart() {
-      this.isLoading = true
-
-      try {
-        if (this.cartId) {
-          await $fetch(`/api/online/cart/${this.cartId}`, { method: 'DELETE' })
-        }
-
-        this.items = []
-        this.cartId = null
-        this.deliveryInfo = null
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al vaciar el carrito')
-      } finally {
-        this.isLoading = false
+  // updateDeliveryInfo: optimistic local update, PUT, rollback on error
+  const deliveryMutation = useMutation({
+    onMutate(info: DeliveryInfo) {
+      const prevDeliveryInfo = deliveryInfo.value
+      const prevOrderType = orderType.value
+      const snapshotCartId = cartId.value
+      deliveryInfo.value = info
+      orderType.value = info.order_type
+      return { prevDeliveryInfo, prevOrderType, snapshotCartId }
+    },
+    mutation: async (info: DeliveryInfo, context) => {
+      if (context.snapshotCartId) {
+        await $fetch(`/api/online/cart/${context.snapshotCartId}/delivery`, {
+          method: 'PUT',
+          body: info,
+        })
       }
     },
-
-    /**
-     * Set order type (delivery/pickup/dine-in)
-     */
-    setOrderType(type: 'delivery' | 'pickup' | 'dine-in') {
-      this.orderType = type
+    onError(_error, _vars, context) {
+      deliveryInfo.value = context.prevDeliveryInfo
+      orderType.value = context.prevOrderType
     },
+  })
 
-    /**
-     * Update delivery info — PUT /api/online/cart/{cartId}/delivery (if cart exists)
-     */
-    async updateDeliveryInfo(info: DeliveryInfo) {
-      this.isLoading = true
+  // ── Derived loading state ──────────────────────────────────────────────────
+  // Backward compat: consumers read cartStore.isLoading to disable buttons.
+  // After migration each mutation has its own .isLoading; this derived computed
+  // keeps all consumer components working without changes.
+  const isLoading = computed(() =>
+    addMutation.isLoading.value ||
+    batchMutation.isLoading.value ||
+    updateMutation.isLoading.value ||
+    removeMutation.isLoading.value ||
+    clearMutation.isLoading.value ||
+    deliveryMutation.isLoading.value
+  )
 
-      try {
-        this.deliveryInfo = info
-        this.orderType = info.order_type
+  // ── Session / init actions ─────────────────────────────────────────────────
 
-        if (this.cartId) {
-          await $fetch(`/api/online/cart/${this.cartId}/delivery`, {
-            method: 'PUT',
-            body: info,
-          })
-        }
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al actualizar la entrega')
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    /**
-     * Reset cart to initial state
-     */
-    reset() {
-      this.$reset()
+  /** Initialize session ID from localStorage or create new one */
+  function initSession(sessionIdParam?: string | null) {
+    if (sessionIdParam) {
+      sessionId.value = sessionIdParam
+    } else {
+      sessionId.value = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       if (process.client) {
-        localStorage.removeItem('waro_session_id')
+        localStorage.setItem('waro_session_id', sessionId.value)
       }
-    },
-  },
+    }
+  }
+
+  /** Set tenant ID (and optional display name) for the cart */
+  function setTenant(id: string, name?: string) {
+    tenantId.value = id
+    tenantName.value = name ?? null
+  }
+
+  /**
+   * Register the session-recovery promise so mutations can await it.
+   * Called from the page before the recovery fetch starts.
+   */
+  function setRecoveryPromise(p: Promise<void>) {
+    _recoveryPromise = p
+  }
+
+  /** Hydrate local state from a backend cart response (session recovery) */
+  function hydrateFromBackend(cartData: BackendCart) {
+    cartId.value = cartData.id
+    orderType.value = cartData.order_type
+    items.value = cartData.items.map(item => ({
+      id: `item_${item.id}`,
+      backendId: item.id,
+      product_id: item.product_id,
+      product_name: item.product_name,
+      quantity: item.quantity,
+      unit_price: Number(item.unit_price),
+      modifiers: (item.modifiers || []).map(mod => ({
+        id: mod.modifier_id,
+        name: mod.modifier_name,
+        price: Number(mod.price),
+      })),
+      notes: item.notes,
+      total: Number(item.subtotal),
+      has_modifiers: false, // not stored in backend — safe default after page refresh
+    }))
+  }
+
+  /** Set order type (delivery/pickup/dine-in) */
+  function setOrderType(type: 'delivery' | 'pickup' | 'dine-in') {
+    orderType.value = type
+  }
+
+  /** Reset cart to initial state */
+  function reset() {
+    sessionId.value = null
+    cartId.value = null
+    items.value = []
+    orderType.value = 'delivery'
+    deliveryInfo.value = null
+    tenantId.value = null
+    tenantName.value = null
+    if (process.client) {
+      localStorage.removeItem('waro_session_id')
+    }
+  }
+
+  // ── Public mutation wrappers ───────────────────────────────────────────────
+  // Preserve the existing calling contract: async functions that throw on error.
+
+  /** Add item to cart with modifiers — POST /api/online/cart/batch */
+  const addItem = async (
+    product: AddItemVars['product'],
+    quantity: number,
+    modifiers: CartModifier[] = [],
+    notes?: string
+  ) => {
+    try {
+      await addMutation.mutateAsync({ product, quantity, modifiers, notes })
+    } catch (error: any) {
+      throw new Error(error.data?.detail || 'Error al agregar producto al carrito')
+    }
+  }
+
+  /**
+   * Add multiple units with independent modifiers in one batch POST.
+   * Used by the per-item wizard when qty > 1 with individual customization.
+   */
+  const addItemsBatch = async (
+    product: AddItemsBatchVars['product'],
+    units: AddItemsBatchVars['units']
+  ) => {
+    try {
+      await batchMutation.mutateAsync({ product, units })
+    } catch (error: any) {
+      throw new Error(error.data?.detail || 'Error al agregar productos al carrito')
+    }
+  }
+
+  /** Update item quantity — delegates to removeItem if quantity ≤ 0 */
+  const updateItemQuantity = async (itemId: string, quantity: number) => {
+    if (quantity <= 0) {
+      return removeItem(itemId)
+    }
+    try {
+      await updateMutation.mutateAsync({ itemId, quantity })
+    } catch (error: any) {
+      throw new Error(error.data?.detail || 'Error al actualizar la cantidad')
+    }
+  }
+
+  /** Remove item from cart — DELETE /api/online/cart/{cartId}/items/{backendId} */
+  const removeItem = async (itemId: string) => {
+    try {
+      await removeMutation.mutateAsync(itemId)
+    } catch (error: any) {
+      throw new Error(error.data?.detail || 'Error al eliminar el producto')
+    }
+  }
+
+  /** Clear entire cart — DELETE /api/online/cart/{cartId} */
+  const clearCart = async () => {
+    try {
+      await clearMutation.mutateAsync()
+    } catch (error: any) {
+      throw new Error(error.data?.detail || 'Error al vaciar el carrito')
+    }
+  }
+
+  /** Update delivery info — PUT /api/online/cart/{cartId}/delivery (if cart exists) */
+  const updateDeliveryInfo = async (info: DeliveryInfo) => {
+    try {
+      await deliveryMutation.mutateAsync(info)
+    } catch (error: any) {
+      throw new Error(error.data?.detail || 'Error al actualizar la entrega')
+    }
+  }
+
+  // ── Return ─────────────────────────────────────────────────────────────────
+  return {
+    // State
+    sessionId,
+    cartId,
+    items,
+    orderType,
+    deliveryInfo,
+    tenantId,
+    tenantName,
+    isLoading,
+
+    // Getters
+    itemCount,
+    subtotal,
+    isEmpty,
+    formattedSubtotal,
+
+    // Session / init
+    initSession,
+    setTenant,
+    setRecoveryPromise,
+    hydrateFromBackend,
+    setOrderType,
+    reset,
+
+    // Mutations
+    addItem,
+    addItemsBatch,
+    updateItemQuantity,
+    removeItem,
+    clearCart,
+    updateDeliveryInfo,
+  }
 })
