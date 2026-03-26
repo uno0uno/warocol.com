@@ -2,13 +2,11 @@
  * Data Quality Status Composable
  * Polls the analytics data-quality endpoint every 5 minutes.
  *
- * Uses useQuery (not defineQuery) — @pinia/colada-nuxt requires Nuxt ^3.17.7
- * and the module auto-import for defineQuery is unavailable on older versions.
- * Pinia Colada deduplicates requests by key, so multiple callers of this
- * composable share the same network request automatically.
+ * defineQuery ensures all callers share the same data ref and a single interval timer.
+ * Pinia Colada deduplicates requests by key automatically.
  * Tenant switching handled by reactive key. Polling lifecycle managed by Pinia Colada.
  */
-export const useDataQualityStatus = () => {
+export const useDataQualityStatus = defineQuery(() => {
   const { currentTenant } = useTenantReactive()
 
   const { data, status } = useQuery({
@@ -31,4 +29,4 @@ export const useDataQualityStatus = () => {
     hasCriticalAlerts: readonly(hasCritical),
     refresh,
   }
-}
+})
