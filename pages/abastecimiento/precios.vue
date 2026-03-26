@@ -172,7 +172,7 @@ const { data: ingredientsData, status: queryStatus, asyncStatus: queryAsyncStatu
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => queryStatus.value === 'loading')
+const isLoading = computed(() => !ingredientsData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && ingredientsData.value != null)
 
 // Reset page on tenant change

@@ -103,7 +103,7 @@ const { data: ordersData, status: queryStatus, asyncStatus, error: fetchError, r
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
-const isLoading = computed(() => queryStatus.value === 'loading')
+const isLoading = computed(() => !ordersData.value && !fetchError.value)
 const isRefreshing = computed(() => asyncStatus.value === 'loading' && ordersData.value != null)
 
 // Reset page on tenant change — key change triggers automatic refetch

@@ -269,7 +269,7 @@ const { data: suppliersData, status: queryStatus, asyncStatus: queryAsyncStatus,
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => queryStatus.value === 'loading')
+const isLoading = computed(() => !suppliersData.value && !fetchError.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && suppliersData.value != null)
 
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()

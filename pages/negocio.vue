@@ -520,7 +520,7 @@ const { data: profileData, status: profileStatus, asyncStatus: profileAsyncStatu
   staleTime: 30_000,
 })
 
-const isBusinessProfileLoading = computed(() => profileStatus.value === 'loading')
+const isBusinessProfileLoading = computed(() => !profileData.value)
 const isRefreshing = computed(() => profileAsyncStatus.value === 'loading' && profileData.value != null)
 const businessProfile = computed(() => profileData.value?.data ?? null)
 const toast = useToast()

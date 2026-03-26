@@ -87,7 +87,7 @@ watch(restaurant, (val: any) => {
 
 const categories = computed(() => (menuData.value as any)?.data?.categories || [])
 const products = computed(() => (menuData.value as any)?.data?.products || [])
-const isLoading = computed(() => profileStatus.value === 'loading' || menuStatus.value === 'loading')
+const isLoading = computed(() => !profileData.value && !menuData.value)
 const isRefreshing = computed(() =>
   (profileAsyncStatus.value === 'loading' && profileData.value != null) ||
   (menuAsyncStatus.value === 'loading' && menuData.value != null)

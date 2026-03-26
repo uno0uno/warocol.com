@@ -44,7 +44,7 @@ const { data: expensesData, status: queryStatus, asyncStatus: queryAsyncStatus, 
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => queryStatus.value === 'loading')
+const isLoading = computed(() => !expensesData.value && !fetchError.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && expensesData.value != null)
 
 // Computed

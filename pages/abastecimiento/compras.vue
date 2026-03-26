@@ -343,7 +343,7 @@ const { data: purchasesData, status: queryStatus, asyncStatus: purchasesAsyncSta
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => queryStatus.value === 'loading')
+const isLoading = computed(() => !purchasesData.value)
 const isRefreshing = computed(() => purchasesAsyncStatus.value === 'loading' && purchasesData.value != null)
 
 // Reset page on tenant change — key change triggers automatic refetch

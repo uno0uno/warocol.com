@@ -43,7 +43,7 @@ const { data: itemsData, status: itemsStatus, asyncStatus: itemsAsyncStatus, ref
   staleTime: 60_000,
 })
 
-const isLoading = computed(() => orderStatus.value === 'loading')
+const isLoading = computed(() => !orderData.value && !fetchError.value)
 const itemsLoading = computed(() => itemsStatus.value === 'loading')
 const isRefreshing = computed(() =>
   (orderAsyncStatus.value === 'loading' && orderData.value != null) ||

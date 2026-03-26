@@ -16,7 +16,7 @@ const { data: orderResponse, status: orderStatus, asyncStatus: orderAsyncStatus,
 })
 
 const order = computed(() => (orderResponse.value as any)?.data ?? null)
-const isLoading = computed(() => orderStatus.value === 'loading')
+const isLoading = computed(() => !orderResponse.value && !fetchError.value)
 
 const { data: historyResponse, status: historyStatus, asyncStatus: historyAsyncStatus, error: historyError, refetch: refetchHistory } = useQuery({
   key: () => ['online-orders', orderId.value, 'status-history'],

@@ -60,7 +60,7 @@ const { data: menuAnalysisData, status: menuStatus, asyncStatus: menuAsyncStatus
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => foodCostStatus.value === 'loading' || menuStatus.value === 'loading')
+const isLoading = computed(() => !foodCostData.value || !menuAnalysisData.value)
 const isRefreshing = computed(() =>
   (foodCostAsyncStatus.value === 'loading' && foodCostData.value != null) ||
   (menuAsyncStatus.value === 'loading' && menuAnalysisData.value != null)

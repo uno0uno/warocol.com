@@ -81,7 +81,7 @@ const { data: customersResponse, status: queryStatus, asyncStatus: queryAsyncSta
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => queryStatus.value === 'loading')
+const isLoading = computed(() => !customersResponse.value && !fetchError.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && customersResponse.value != null)
 
 const customers = computed(() => customersResponse.value?.data || [])

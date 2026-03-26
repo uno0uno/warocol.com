@@ -221,7 +221,7 @@ const { data: movementsData, status: queryStatus, asyncStatus: queryAsyncStatus,
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => queryStatus.value === 'loading')
+const isLoading = computed(() => !movementsData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && movementsData.value != null)
 // Key change on filter update triggers automatic refetch — no manual watch needed
 

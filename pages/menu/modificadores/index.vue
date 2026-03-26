@@ -361,7 +361,7 @@ const stats = computed(() => {
   }
 })
 
-const isLoading = computed(() => groupsStatus.value === 'loading')
+const isLoading = computed(() => !groupsData.value)
 const isRefreshing = computed(() => groupsAsyncStatus.value === 'loading' && groupsData.value != null)
 
 // Table columns configuration

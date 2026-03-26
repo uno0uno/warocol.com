@@ -257,7 +257,7 @@ const { data: purchasesData, status: queryStatus, asyncStatus: queryAsyncStatus,
   staleTime: 30_000,
 })
 
-const loading = computed(() => queryStatus.value === 'loading')
+const loading = computed(() => !purchasesData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && purchasesData.value != null)
 
 // Inject refresh handler setter from layout

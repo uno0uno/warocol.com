@@ -33,7 +33,7 @@ const { data: productsData, status: productsStatus, asyncStatus: productsAsyncSt
   staleTime: 30_000,
 })
 
-const loadingProducts = computed(() => productsStatus.value === 'loading')
+const loadingProducts = computed(() => !productsData.value)
 const isRefreshing = computed(() => productsAsyncStatus.value === 'loading' && productsData.value != null)
 
 // Clear POS state when tenant changes

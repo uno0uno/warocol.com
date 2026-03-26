@@ -244,7 +244,7 @@ const { data: adjustmentsData, status: queryStatus, asyncStatus: queryAsyncStatu
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => queryStatus.value === 'loading')
+const isLoading = computed(() => !adjustmentsData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && adjustmentsData.value != null)
 const adjustments = computed(() => adjustmentsData.value?.data || [])
 

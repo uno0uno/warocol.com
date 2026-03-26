@@ -220,7 +220,7 @@ const formatCurrency = (value: number) =>
 <template>
   <div class="space-y-4">
     <!-- Loading State -->
-    <div v-if="dashboardStatus === 'loading' || (hasDateFilter && filteredMetricsStatus === 'loading')" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="!dashboardData && !hasDateFilter || (hasDateFilter && !filteredMetricsData)" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
