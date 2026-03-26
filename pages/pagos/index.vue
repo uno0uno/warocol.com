@@ -8,6 +8,9 @@
 
     <!-- Content -->
     <div v-else class="space-y-6">
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
 
 
       <!-- Filters Bar -->
@@ -232,7 +235,7 @@ const { data: suppliersData } = useQuery({
 const suppliers = computed(() => (suppliersData.value as any)?.data || [])
 
 // Fetch all purchases with reactive filters
-const { data: purchasesData, status: queryStatus, refetch } = useQuery({
+const { data: purchasesData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['suppliers', 'purchases-payments', currentTenant.value?.id, {
     search: apiSearchTerm.value || null,
     searchField: apiSearchField.value,
@@ -255,6 +258,7 @@ const { data: purchasesData, status: queryStatus, refetch } = useQuery({
 })
 
 const loading = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && purchasesData.value != null)
 
 // Inject refresh handler setter from layout
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()

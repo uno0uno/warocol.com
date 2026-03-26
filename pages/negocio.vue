@@ -8,6 +8,9 @@
 
     <!-- ─── Main ─── -->
     <div v-else class="space-y-4 sm:space-y-6">
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
 
       <!-- ══════ PROFILE HERO ══════ -->
       <div class="bg-surface border-2 border-border rounded-xl overflow-hidden">
@@ -510,7 +513,7 @@ definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Mi Negocio' })
 
 const { isOpenNow, currentTenant } = useTenantReactive()
-const { data: profileData, status: profileStatus, refetch: refreshProfile } = useQuery({
+const { data: profileData, status: profileStatus, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
   key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
   enabled: () => !!currentTenant.value,
@@ -518,6 +521,7 @@ const { data: profileData, status: profileStatus, refetch: refreshProfile } = us
 })
 
 const isBusinessProfileLoading = computed(() => profileStatus.value === 'loading')
+const isRefreshing = computed(() => profileAsyncStatus.value === 'loading' && profileData.value != null)
 const businessProfile = computed(() => profileData.value?.data ?? null)
 const toast = useToast()
 

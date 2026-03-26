@@ -35,7 +35,7 @@ const dateRange = computed(() => {
   return { from: fnsFormat(from, 'yyyy-MM-dd'), to: fnsFormat(to, 'yyyy-MM-dd') }
 })
 
-const { data: foodCostData, status: foodCostStatus, refetch: refetchFoodCost } = useQuery({
+const { data: foodCostData, status: foodCostStatus, asyncStatus: foodCostAsyncStatus, refetch: refetchFoodCost } = useQuery({
   key: () => ['analytics', 'food-cost', currentTenant.value?.id, { from: dateRange.value.from, to: dateRange.value.to }],
   query: () => $fetch('/api/analytics/food-cost', {
     params: {
@@ -47,7 +47,7 @@ const { data: foodCostData, status: foodCostStatus, refetch: refetchFoodCost } =
   staleTime: 30_000,
 })
 
-const { data: menuAnalysisData, status: menuStatus, refetch: refetchMenuAnalysis } = useQuery({
+const { data: menuAnalysisData, status: menuStatus, asyncStatus: menuAsyncStatus, refetch: refetchMenuAnalysis } = useQuery({
   key: () => ['analytics', 'menu-analysis', currentTenant.value?.id, { from: dateRange.value.from, to: dateRange.value.to }],
   query: () => $fetch('/api/analytics/menu-analysis', {
     params: {
@@ -61,6 +61,10 @@ const { data: menuAnalysisData, status: menuStatus, refetch: refetchMenuAnalysis
 })
 
 const isLoading = computed(() => foodCostStatus.value === 'loading' || menuStatus.value === 'loading')
+const isRefreshing = computed(() =>
+  (foodCostAsyncStatus.value === 'loading' && foodCostData.value != null) ||
+  (menuAsyncStatus.value === 'loading' && menuAnalysisData.value != null)
+)
 
 const isUnlocked = computed(() => !!(foodCostData.value?.data || menuAnalysisData.value?.data))
 
@@ -99,6 +103,9 @@ onUnmounted(() => {
 
     <!-- Content -->
     <template v-else>
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
       <!-- Date Filter -->
       <ClientOnly>
       <div class="flex items-center gap-2 w-full overflow-x-auto pb-2">

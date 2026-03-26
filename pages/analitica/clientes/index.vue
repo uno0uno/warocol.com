@@ -61,7 +61,7 @@ const offset = computed(() => (currentPage.value - 1) * itemsPerPage.value)
 
 // ── Data fetch ────────────────────────────────────────────────────────────
 const { currentTenant } = useTenantReactive()
-const { data: customersResponse, status: queryStatus, error: fetchError, refetch } = useQuery({
+const { data: customersResponse, status: queryStatus, asyncStatus: queryAsyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['analytics', 'clientes', currentTenant.value?.id, {
     from: dateRange.value.from,
     to: dateRange.value.to,
@@ -82,6 +82,7 @@ const { data: customersResponse, status: queryStatus, error: fetchError, refetch
 })
 
 const isLoading = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && customersResponse.value != null)
 
 const customers = computed(() => customersResponse.value?.data || [])
 const totalCustomers = computed(() => customersResponse.value?.total || 0)
@@ -232,6 +233,9 @@ onUnmounted(() => {
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-4 pb-20">
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
 
       <!-- Summary Cards -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">

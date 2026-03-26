@@ -43,7 +43,7 @@ const hasDateFilter = computed(() =>
 )
 
 // Single dashboard call — no date filter needed.
-const { data: dashboardData, status: dashboardStatus, error: metricsError, refetch: refetchDashboard } = useQuery({
+const { data: dashboardData, status: dashboardStatus, asyncStatus: dashboardAsyncStatus, error: metricsError, refetch: refetchDashboard } = useQuery({
   key: () => ['analytics', 'ventas-dashboard', currentTenant.value?.id, {
     payment_method: paymentMethodFilter.value || null,
     status: statusFilter.value || null,
@@ -59,7 +59,7 @@ const { data: dashboardData, status: dashboardStatus, error: metricsError, refet
 })
 
 // Filtered metrics — only when a date range is selected.
-const { data: filteredMetricsData, status: filteredMetricsStatus, error: filteredMetricsError, refetch: refetchFilteredMetrics } = useQuery({
+const { data: filteredMetricsData, status: filteredMetricsStatus, asyncStatus: filteredMetricsAsyncStatus, error: filteredMetricsError, refetch: refetchFilteredMetrics } = useQuery({
   key: () => ['analytics', 'ventas-filtered-metrics', currentTenant.value?.id, {
     from: dateRange.value.from,
     to: dateRange.value.to,
@@ -78,7 +78,7 @@ const { data: filteredMetricsData, status: filteredMetricsStatus, error: filtere
   staleTime: 30_000,
 })
 
-const { data: salesFlowData, status: salesFlowStatus, refetch: refetchSalesFlow } = useQuery({
+const { data: salesFlowData, status: salesFlowStatus, asyncStatus: salesFlowAsyncStatus, refetch: refetchSalesFlow } = useQuery({
   key: () => ['analytics', 'ventas-sales-flow', currentTenant.value?.id, {
     from: dateRange.value.from,
     to: dateRange.value.to,
@@ -96,6 +96,12 @@ const { data: salesFlowData, status: salesFlowStatus, refetch: refetchSalesFlow 
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
+
+const isRefreshing = computed(() =>
+  (dashboardAsyncStatus.value === 'loading' && dashboardData.value != null) ||
+  (filteredMetricsAsyncStatus.value === 'loading' && filteredMetricsData.value != null) ||
+  (salesFlowAsyncStatus.value === 'loading' && salesFlowData.value != null)
+)
 
 const forecast = computed(() => {
   const today = new Date()
@@ -229,6 +235,9 @@ const formatCurrency = (value: number) =>
 
     <!-- Main Content -->
     <div v-else class="space-y-8 pb-20">
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
       <!-- Filters Bar -->
       <ClientOnly>
       <div class="flex items-center gap-2 w-full overflow-x-auto pb-2">

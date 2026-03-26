@@ -14,7 +14,7 @@ const { currentTenant } = useTenantReactive()
 const localSearchTerm = ref('')
 
 // Fetch employees with salary data
-const { data: employeesData, status: queryStatus, refetch } = useQuery({
+const { data: employeesData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['salaries', 'employees', currentTenant.value?.id],
   query: () => $fetch('/api/salaries/employees'),
   enabled: () => !!currentTenant.value,
@@ -22,6 +22,7 @@ const { data: employeesData, status: queryStatus, refetch } = useQuery({
 })
 
 const isLoading = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && employeesData.value != null)
 
 // Computed
 const employees = computed(() => {
@@ -138,6 +139,9 @@ onUnmounted(() => {
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
       <!-- Metrics Cards -->
       <div v-if="stats" class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
         <SharedMetricCard

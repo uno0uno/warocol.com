@@ -27,7 +27,7 @@ const { data: categoriesData } = useQuery({
 const categories = computed(() => (categoriesData.value as any)?.data || [])
 
 // Load expenses from API
-const { data: expensesData, status: queryStatus, error: fetchError, refetch } = useQuery({
+const { data: expensesData, status: queryStatus, asyncStatus: queryAsyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['finance', 'expenses', currentTenant.value?.id, {
     month: currentMonth.value,
     category: categoryFilter.value || null,
@@ -45,6 +45,7 @@ const { data: expensesData, status: queryStatus, error: fetchError, refetch } = 
 })
 
 const isLoading = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && expensesData.value != null)
 
 // Computed
 const expenses = computed(() => expensesData.value?.data || [])
@@ -139,6 +140,9 @@ onUnmounted(() => {
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
       <!-- Metrics Cards -->
       <div v-if="stats" class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
         <SharedMetricCard

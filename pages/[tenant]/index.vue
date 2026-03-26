@@ -38,12 +38,12 @@ const isProductDrawerOpen = ref(false)
 const selectedProduct = ref<Record<string, any> | null>(null)
 
 // SSR data fetching — Pinia Colada + @pinia/colada-nuxt handles server-side prefetch automatically
-const { data: profileData, status: profileStatus, error: profileError, refetch: refetchProfile } = useQuery({
+const { data: profileData, status: profileStatus, asyncStatus: profileAsyncStatus, error: profileError, refetch: refetchProfile } = useQuery({
   key: () => ['restaurant', 'public', tenantSlug as string],
   query: () => $fetch(`/api/public/restaurant/${tenantSlug}`),
 })
 
-const { data: menuData, status: menuStatus, error: menuError, refetch: refetchMenu } = useQuery({
+const { data: menuData, status: menuStatus, asyncStatus: menuAsyncStatus, error: menuError, refetch: refetchMenu } = useQuery({
   key: () => ['restaurant', 'public', tenantSlug as string, 'menu'],
   query: () => $fetch(`/api/public/restaurant/${tenantSlug}/menu`),
 })
@@ -88,6 +88,10 @@ watch(restaurant, (val: any) => {
 const categories = computed(() => (menuData.value as any)?.data?.categories || [])
 const products = computed(() => (menuData.value as any)?.data?.products || [])
 const isLoading = computed(() => profileStatus.value === 'loading' || menuStatus.value === 'loading')
+const isRefreshing = computed(() =>
+  (profileAsyncStatus.value === 'loading' && profileData.value != null) ||
+  (menuAsyncStatus.value === 'loading' && menuData.value != null)
+)
 const error = computed(() => profileError.value || menuError.value)
 
 // Format business hours for schema.org
@@ -274,6 +278,9 @@ const cancelSwitch = () => {
 
     <!-- Main Content -->
     <div v-else-if="restaurant" class="restaurant-page">
+      <div v-if="isRefreshing" class="flex justify-end px-4 pt-2">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
       <RestaurantHeader :restaurant="restaurant" />
 
       <div class="mt-2">
