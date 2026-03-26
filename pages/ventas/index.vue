@@ -73,7 +73,7 @@ const appliedSearch = ref('')
 
 
 // Load orders from API
-const { data: ordersData, status: queryStatus, error: fetchError, refetch } = useQuery({
+const { data: ordersData, status: queryStatus, asyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['orders', currentTenant.value?.id, {
     limit: PAGE_SIZE,
     offset: (currentPage.value - 1) * PAGE_SIZE,
@@ -104,6 +104,7 @@ const { data: ordersData, status: queryStatus, error: fetchError, refetch } = us
   staleTime: 30_000,
 })
 const isLoading = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => asyncStatus.value === 'loading' && ordersData.value != null)
 
 // Reset page on tenant change — key change triggers automatic refetch
 watch(() => currentTenant.value?.id, () => {
@@ -296,6 +297,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Metrics Removed -->
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
 
       <!-- Filters Bar -->
       <div class="flex items-center gap-2 w-full overflow-x-auto">

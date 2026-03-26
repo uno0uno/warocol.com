@@ -18,7 +18,7 @@ const sortField = ref('order_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 
 // Data fetching
-const { data: ordersData, status, error: fetchError, refetch } = useQuery({
+const { data: ordersData, status, asyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['online-orders', currentTenant.value?.id, {
     sortField: sortField.value,
     sortDirection: sortDirection.value,
@@ -33,6 +33,7 @@ const { data: ordersData, status, error: fetchError, refetch } = useQuery({
   staleTime: 30_000,
 })
 const isLoading = computed(() => status.value === 'loading')
+const isRefreshing = computed(() => asyncStatus.value === 'loading' && ordersData.value != null)
 
 // Computed orders list
 const orders = computed(() => {
@@ -97,6 +98,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
     <!-- Main Content -->
     <div v-else>
+      <div v-if="isRefreshing" class="flex justify-end mb-2">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
       <UiResponsiveDataView
         :columns="columns"
         :data="orders"

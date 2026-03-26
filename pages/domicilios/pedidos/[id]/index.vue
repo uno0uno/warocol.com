@@ -9,7 +9,7 @@ const router = useRouter()
 const orderId = computed(() => route.params.id as string)
 const { formatDate, formatDateTime, formatCurrency } = useFormatters()
 
-const { data: orderResponse, status: orderStatus, error: fetchError, refetch: refetchOrder } = useQuery({
+const { data: orderResponse, status: orderStatus, asyncStatus: orderAsyncStatus, error: fetchError, refetch: refetchOrder } = useQuery({
   key: () => ['online-orders', orderId.value],
   query: () => $fetch(`/api/online/orders/${orderId.value}`),
   enabled: () => !!orderId.value,
@@ -18,12 +18,16 @@ const { data: orderResponse, status: orderStatus, error: fetchError, refetch: re
 const order = computed(() => (orderResponse.value as any)?.data ?? null)
 const isLoading = computed(() => orderStatus.value === 'loading')
 
-const { data: historyResponse, status: historyStatus, error: historyError, refetch: refetchHistory } = useQuery({
+const { data: historyResponse, status: historyStatus, asyncStatus: historyAsyncStatus, error: historyError, refetch: refetchHistory } = useQuery({
   key: () => ['online-orders', orderId.value, 'status-history'],
   query: () => $fetch(`/api/online/orders/${orderId.value}/status-history`),
   enabled: () => !!orderId.value,
 })
 const isHistoryLoading = computed(() => historyStatus.value === 'loading')
+const isRefreshing = computed(() =>
+  (orderAsyncStatus.value === 'loading' && orderResponse.value != null) ||
+  (historyAsyncStatus.value === 'loading' && historyResponse.value != null)
+)
 
 const statusHistory = computed(() => (historyResponse.value as any)?.data ?? [])
 
@@ -109,6 +113,9 @@ onUnmounted(() => {
 
     <!-- Main Content -->
     <div v-else-if="order" class="space-y-6">
+      <div v-if="isRefreshing" class="flex justify-end -mb-4">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
 
       <!-- ── Section 1: Info Cards ── -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

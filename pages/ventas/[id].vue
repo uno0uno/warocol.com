@@ -22,7 +22,7 @@ const itemsToDelete = ref<Set<string>>(new Set())
 const modifiersToDelete = ref<Map<string, Set<string>>>(new Map())
 
 // Load order details
-const { data: orderData, status: orderStatus, error: fetchError, refetch: refetchOrder } = useQuery({
+const { data: orderData, status: orderStatus, asyncStatus: orderAsyncStatus, error: fetchError, refetch: refetchOrder } = useQuery({
   key: () => ['orders', currentTenant.value?.id, orderId.value],
   query: async () => {
     const response = await $fetch(`/api/orders/${orderId.value}`) as any
@@ -33,7 +33,7 @@ const { data: orderData, status: orderStatus, error: fetchError, refetch: refetc
 })
 
 // Load order items
-const { data: itemsData, status: itemsStatus, refetch: refetchItems } = useQuery({
+const { data: itemsData, status: itemsStatus, asyncStatus: itemsAsyncStatus, refetch: refetchItems } = useQuery({
   key: () => ['orders', currentTenant.value?.id, orderId.value, 'items'],
   query: async () => {
     const response = await $fetch(`/api/orders/${orderId.value}/items`) as any
@@ -45,6 +45,10 @@ const { data: itemsData, status: itemsStatus, refetch: refetchItems } = useQuery
 
 const isLoading = computed(() => orderStatus.value === 'loading')
 const itemsLoading = computed(() => itemsStatus.value === 'loading')
+const isRefreshing = computed(() =>
+  (orderAsyncStatus.value === 'loading' && orderData.value != null) ||
+  (itemsAsyncStatus.value === 'loading' && itemsData.value != null)
+)
 
 const order = computed(() => {
   if (!orderData.value) return null
@@ -289,6 +293,9 @@ onUnmounted(() => {
 
     <!-- Order Details -->
     <div v-else class="space-y-6">
+      <div v-if="isRefreshing" class="flex justify-end -mb-4">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
       <!-- Order Info Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Customer Name -->
