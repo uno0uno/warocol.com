@@ -19,6 +19,9 @@
     <!-- Main Content -->
     <div v-else class="page-layout">
       <div class="flex flex-col gap-3 md:gap-4">
+        <div v-if="isRefreshing" class="flex justify-end">
+          <UiLoadingDots size="10px" class="text-text-secondary" />
+        </div>
 
         <!-- Cost Warning Banner -->
         <div
@@ -501,7 +504,7 @@ const { data: categoriesData } = useQuery({
 const categories = computed(() => (categoriesData.value as any)?.data || [])
 
 // Fetch products
-const { data: productsData, status: queryStatus, refetch } = useQuery({
+const { data: productsData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['menu', 'products', currentTenant.value?.id, {
     page: currentPage.value,
     limit: itemsPerPage.value,
@@ -532,6 +535,7 @@ const { data: productsData, status: queryStatus, refetch } = useQuery({
 })
 
 const isLoading = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && productsData.value != null)
 
 // Reset page on tenant change — key change triggers automatic refetch
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })

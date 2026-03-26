@@ -19,6 +19,9 @@
     <!-- Main Content -->
     <div v-else class="page-layout">
       <div class="flex flex-col gap-3 md:gap-4">
+        <div v-if="isRefreshing" class="flex justify-end">
+          <UiLoadingDots size="10px" class="text-text-secondary" />
+        </div>
         <!-- Filters Bar -->
         <SharedFiltersBar
           v-model:search="localSearchTerm"
@@ -360,7 +363,7 @@ const itemsPerPage = ref(20)
 const expandedRows = ref(new Set())
 
 // Fetch recipe bases from backend with ingredients
-const { data: productsData, status: queryStatus, refetch } = useQuery({
+const { data: productsData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['menu', 'recipe-bases', currentTenant.value?.id, {
     page: currentPage.value,
     limit: itemsPerPage.value,
@@ -382,6 +385,7 @@ const { data: productsData, status: queryStatus, refetch } = useQuery({
 })
 
 const isLoading = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && productsData.value != null)
 
 // Reset page on tenant change — key change triggers automatic refetch
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })

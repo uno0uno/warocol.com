@@ -7,6 +7,9 @@
 
     <!-- Main Content -->
     <div v-else>
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
       <!-- Tabla de Grupos de Modificadores -->
       <UiResponsiveDataView
       :columns="gruposTableColumns"
@@ -318,7 +321,7 @@ const searchQuery = ref('')
 const expandedRows = ref(new Set())
 
 // Fetch modifier groups from API
-const { data: groupsData, status: groupsStatus, refetch: refetchGroups } = useQuery({
+const { data: groupsData, status: groupsStatus, asyncStatus: groupsAsyncStatus, refetch: refetchGroups } = useQuery({
   key: () => ['menu', 'modifier-groups', currentTenant.value?.id],
   query: () => $fetch('/api/menu/modifier-groups', {
     params: { limit: 250 }
@@ -359,6 +362,7 @@ const stats = computed(() => {
 })
 
 const isLoading = computed(() => groupsStatus.value === 'loading')
+const isRefreshing = computed(() => groupsAsyncStatus.value === 'loading' && groupsData.value != null)
 
 // Table columns configuration
 const gruposTableColumns = [
