@@ -7,9 +7,6 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-      <div v-if="isRefreshing" class="flex justify-end">
-        <UiLoadingDots size="10px" class="text-text-secondary" />
-      </div>
       <!-- Filters Bar -->
       <SharedFiltersBar
         v-model:search="searchQuery"
@@ -400,10 +397,11 @@ const formatCurrency = (value: number) => {
 }
 
 // Set refresh handler for layout
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 onMounted(() => {
   setRefreshHandler(refetch)
 })
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
   clearRefreshHandler(refetch)
 })

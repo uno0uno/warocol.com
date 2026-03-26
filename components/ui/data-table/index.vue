@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import { type VariantProps, cva } from 'class-variance-authority'
 import { cn } from '../utils'
 import { 
@@ -118,6 +119,9 @@ export interface DataTableProps {
   // Row density: 'sm' uses tighter padding for information-dense tables
   rowSize?: 'sm' | 'default'
 
+  rowKey?: string | ((row: Record<string, any>) => string | number)
+  animateNewRows?: boolean
+
   class?: string
 }
 
@@ -130,7 +134,9 @@ const props = withDefaults(defineProps<Props>(), {
   sortDirection: 'asc',
   showFooter: false,
   centerHeaders: false,
-  rowSize: 'default'
+  rowSize: 'default',
+  rowKey: 'id',
+  animateNewRows: true,
 })
 
 const emit = defineEmits<{
@@ -185,6 +191,55 @@ function getCellColor(value: any, column: TableColumn): string {
   // All numbers must be black - use StatusBadge for colored indicators
   return 'text-text-primary'
 }
+
+function getRowKey(row: Record<string, any>, index: number): string | number {
+  if (typeof props.rowKey === 'function') return props.rowKey(row)
+  const keyField = props.rowKey || 'id'
+  return row?.[keyField] ?? row?.id ?? `${index}-${JSON.stringify(row)}`
+}
+
+const recentRowKeys = ref<Set<string | number>>(new Set())
+let previousRowKeys = new Set<string | number>()
+let hasInitializedRows = false
+
+watch(
+  () => props.data,
+  (rows) => {
+    const nextRowKeys = new Set(rows.map((row, index) => getRowKey(row, index)))
+
+    if (!props.animateNewRows) {
+      previousRowKeys = nextRowKeys
+      hasInitializedRows = true
+      recentRowKeys.value = new Set()
+      return
+    }
+
+    if (!hasInitializedRows) {
+      previousRowKeys = nextRowKeys
+      hasInitializedRows = true
+      return
+    }
+
+    const isProgressiveAppend =
+      nextRowKeys.size > previousRowKeys.size &&
+      Array.from(previousRowKeys).every(key => nextRowKeys.has(key))
+
+    if (!isProgressiveAppend) {
+      previousRowKeys = nextRowKeys
+      recentRowKeys.value = new Set()
+      return
+    }
+
+    const addedKeys = Array.from(nextRowKeys).filter(key => !previousRowKeys.has(key))
+    recentRowKeys.value = new Set(addedKeys)
+    previousRowKeys = nextRowKeys
+
+    globalThis.setTimeout(() => {
+      recentRowKeys.value = new Set()
+    }, 900)
+  },
+  { deep: false, immediate: true }
+)
 </script>
 
 <template>
@@ -272,10 +327,11 @@ function getCellColor(value: any, column: TableColumn): string {
           <tr
             v-else
             v-for="(row, index) in data"
-            :key="index"
+            :key="getRowKey(row, index)"
             :class="[
               tableRowVariants({ variant, rowType: 'normal' }),
               rowClass?.(row) || (index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'),
+              recentRowKeys.has(getRowKey(row, index)) && 'table-row-new',
               'cursor-pointer hover:bg-surface-secondary transition-colors'
             ]"
             @click="emit('rowClick', row)"
@@ -351,5 +407,29 @@ tbody tr td:first-child {
 thead tr th:last-child,
 tbody tr td:last-child {
   padding-right: 1.5rem; /* px-6 */
+}
+
+tbody tr.table-row-new > td {
+  animation: table-row-cell-enter 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes table-row-cell-enter {
+  0% {
+    opacity: 0;
+    transform: translateX(16px);
+    background-color: color-mix(in srgb, hsl(var(--primary)) 12%, transparent);
+  }
+
+  55% {
+    opacity: 1;
+    transform: translateX(0);
+    background-color: color-mix(in srgb, hsl(var(--primary)) 8%, transparent);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+    background-color: transparent;
+  }
 }
 </style>

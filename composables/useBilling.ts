@@ -126,32 +126,6 @@ export const useBilling = () => {
     enabled: () => !!currentTenant.value,
   })
 
-  // ── Derived data ──────────────────────────────────────────────────────────────
-  const usageHistory = computed<ScanMonthlyEntry[]>(() => usageHistoryData.value ?? [])
-  const events = computed<BillingEvent[]>(() => eventsData.value?.events ?? [])
-  const eventsTotal = computed<number>(() => eventsData.value?.total ?? 0)
-
-  const loading = computed(() =>
-    plansStatus.value === 'loading' ||
-    subscriptionStatus.value === 'loading' ||
-    accessStatus_status.value === 'loading' ||
-    usageStatus.value === 'loading' ||
-    eventsStatus.value === 'loading' ||
-    subscribeMutation.isPending.value ||
-    cancelMutation.isPending.value
-  )
-
-  // True when any query is background-refreshing with existing cache data
-  const isRefreshing = computed(() =>
-    (plansAsyncStatus.value === 'loading' && plans.value != null) ||
-    (subscriptionAsyncStatus.value === 'loading' && subscription.value != null) ||
-    (accessStatusAsyncStatus.value === 'loading' && accessStatus.value != null) ||
-    (usageAsyncStatus.value === 'loading' && usageHistoryData.value != null) ||
-    (eventsAsyncStatus.value === 'loading' && eventsData.value != null)
-  )
-
-  const error = computed(() => null as string | null)
-
   // ── Mutations ─────────────────────────────────────────────────────────────────
 
   const subscribeMutation = useMutation({
@@ -164,6 +138,31 @@ export const useBilling = () => {
     mutation: () => $fetch('/api/billing/subscription', { method: 'DELETE' }),
     onSettled: () => cache.invalidateQueries({ key: ['billing'] }),
   })
+
+  // ── Derived data ──────────────────────────────────────────────────────────────
+  const usageHistory = computed<ScanMonthlyEntry[]>(() => usageHistoryData.value ?? [])
+  const events = computed<BillingEvent[]>(() => eventsData.value?.events ?? [])
+  const eventsTotal = computed<number>(() => eventsData.value?.total ?? 0)
+
+  const loading = computed(() =>
+    subscribeMutation.isLoading.value ||
+    cancelMutation.isLoading.value
+  )
+
+  // True when any query is background-refreshing with existing cache data
+  const isRefreshing = computed(() =>
+    (plansAsyncStatus.value === 'loading' && plans.value != null) ||
+    (subscriptionAsyncStatus.value === 'loading' && subscription.value != null) ||
+    (accessStatusAsyncStatus.value === 'loading' && accessStatus.value != null) ||
+    (usageAsyncStatus.value === 'loading' && usageHistoryData.value != null) ||
+    (eventsAsyncStatus.value === 'loading' && eventsData.value != null)
+  )
+
+  const error = computed(() =>
+    (plansStatus.value === 'error' ? 'Error al cargar planes' : null) ||
+    (subscriptionStatus.value === 'error' ? 'Error al cargar suscripción' : null) ||
+    null
+  )
 
   // ── Public action wrappers ────────────────────────────────────────────────────
 

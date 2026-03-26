@@ -10,7 +10,17 @@ const { subscription, usageHistory, loading, fetchUsageHistory } = useBilling()
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 
-const loadAll = async () => { await fetchUsageHistory(24) }
+const usageHistoryReady = ref(false)
+const isInitialLoading = computed(() =>
+  !!currentTenant.value &&
+  (!usageHistoryReady.value || subscription.value === undefined)
+)
+
+const loadAll = async () => {
+  usageHistoryReady.value = false
+  await fetchUsageHistory(24)
+  usageHistoryReady.value = true
+}
 
 onMounted(() => { loadAll(); setRefreshHandler(loadAll) })
 onUnmounted(() => clearRefreshHandler(loadAll))
@@ -40,7 +50,7 @@ const formatMonth = (yearMonth: string) =>
 
 <template>
   <div class="page-layout">
-    <div v-if="loading" class="flex items-center justify-center min-h-[300px]">
+    <div v-if="isInitialLoading" class="flex items-center justify-center min-h-[300px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 

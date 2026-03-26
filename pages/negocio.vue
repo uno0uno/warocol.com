@@ -8,10 +8,6 @@
 
     <!-- ─── Main ─── -->
     <div v-else class="space-y-4 sm:space-y-6">
-      <div v-if="isRefreshing" class="flex justify-end">
-        <UiLoadingDots size="10px" class="text-text-secondary" />
-      </div>
-
       <!-- ══════ PROFILE HERO ══════ -->
       <div class="bg-surface border-2 border-border rounded-xl overflow-hidden">
 
@@ -753,7 +749,8 @@ watch(
 )
 
 // ─── Refresh handler ───
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 onMounted(() => { setRefreshHandler(refreshProfile) })
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => { clearRefreshHandler(refreshProfile) })
 </script>

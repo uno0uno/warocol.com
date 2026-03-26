@@ -1544,6 +1544,7 @@ import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useIngredientSearch } from '@/composables/useIngredientSearch'
 import { useBilling } from '@/composables/useBilling'
+import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
 

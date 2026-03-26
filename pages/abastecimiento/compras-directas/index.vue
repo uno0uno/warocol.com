@@ -219,6 +219,7 @@
 <script setup lang="ts">
 import { ChevronLeftIcon, ChevronRightIcon, EyeIcon } from '@heroicons/vue/24/outline'
 import { inject, onMounted } from 'vue'
+import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
 
 useHead({
   title: 'Compras Directas - Abastecimiento'

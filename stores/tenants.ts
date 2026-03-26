@@ -85,12 +85,6 @@ export const useTenantsStore = defineStore('tenants', () => {
     enabled: () => !!selectedTenant.value,
   })
 
-  // ── Derived state ─────────────────────────────────────────────────────────────
-  const hasTenants = computed(() => tenants.value.length > 0)
-  const selectedTenantSlug = computed(() => selectedTenant.value?.slug ?? null)
-  const isLoading = computed(() => status.value === 'loading' || switchMutation.isLoading.value)
-  const isBusinessProfileLoading = computed(() => profileStatus.value === 'loading')
-
   // ── selectTenant mutation ─────────────────────────────────────────────────────
   const switchMutation = useMutation({
     mutation: async (tenant: Tenant) => {
@@ -125,6 +119,12 @@ export const useTenantsStore = defineStore('tenants', () => {
     },
   })
 
+  // ── Derived state ─────────────────────────────────────────────────────────────
+  const hasTenants = computed(() => tenants.value.length > 0)
+  const selectedTenantSlug = computed(() => selectedTenant.value?.slug ?? null)
+  const isLoading = computed(() => status.value === 'loading' || switchMutation.isLoading.value)
+  const isBusinessProfileLoading = computed(() => profileStatus.value === 'loading')
+
   // ── Public action wrappers ────────────────────────────────────────────────────
 
   /** Trigger a fresh fetch of user tenants (awaitable — resolves when data is loaded) */
@@ -137,7 +137,7 @@ export const useTenantsStore = defineStore('tenants', () => {
 
   const selectTenant = async (tenant: Tenant): Promise<boolean> => {
     if (selectedTenant.value?.slug === tenant.slug) return true
-    if (switchMutation.isPending.value) return false
+    if (switchMutation.isLoading.value) return false
     error.value = null
     const res = await switchMutation.mutateAsync(tenant).catch((err: any) => {
       error.value = err?.message ?? 'Failed to switch tenant'

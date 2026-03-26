@@ -26,12 +26,17 @@
             </div>
           </div>
 
-          <div class="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+          <TransitionGroup
+            name="header-actions"
+            tag="div"
+            class="relative flex items-center gap-1.5 md:gap-2 flex-shrink-0"
+          >
             <!-- Notification Bell — desktop only -->
-            <NotificationsNotificationBell class="hidden lg:flex" />
+            <NotificationsNotificationBell key="notifications-bell" class="hidden lg:flex" />
 
             <!-- Global Header Actions -->
             <NuxtLink
+              key="upload-invoice"
               to="/abastecimiento/compras-directas/crear"
               class="flex items-center gap-1 md:gap-2 h-11 bg-primary text-primary-foreground px-2 md:px-4 rounded-xl font-medium hover:bg-primary/90 transition-all"
               title="Cargar Factura IA"
@@ -41,6 +46,7 @@
             </NuxtLink>
 
             <NuxtLink
+              key="pos-link"
               to="/pos"
               class="flex items-center gap-1 md:gap-2 h-11 bg-card border border-border text-foreground px-2 md:px-4 rounded-xl font-medium hover:bg-accent transition-all"
               title="Venta POS"
@@ -50,11 +56,12 @@
             </NuxtLink>
 
             <!-- Portal Target for Custom Actions (pages can still inject extra actions) -->
-            <div id="dashboard-header-actions" class="flex items-center"></div>
+            <div key="portal-actions" id="dashboard-header-actions" class="flex items-center"></div>
 
             <!-- Header Action Button (e.g., Print) -->
             <button
               v-if="dynamicHeaderAction"
+              key="dynamic-header-action"
               @click="dynamicHeaderAction.handler"
               class="h-11 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
             >
@@ -65,15 +72,32 @@
             </button>
 
             <!-- Status Badge -->
-            <span v-if="dynamicStatus" :class="['h-11 flex items-center px-3 rounded-full text-sm font-medium', dynamicStatus.color]">
+            <span
+              v-if="dynamicStatus"
+              key="dynamic-status"
+              :class="['h-11 flex items-center px-3 rounded-full text-sm font-medium', dynamicStatus.color]"
+            >
               {{ dynamicStatus.label }}
             </span>
 
             <!-- Restaurant open/close toggle -->
-            <DashboardBusinessStatusToggle />
+            <DashboardBusinessStatusToggle key="business-status-toggle" />
+
+            <div
+              v-if="isProgressiveLoading"
+              key="progressive-loading"
+              class="hidden md:flex items-center gap-2 h-11 px-3 rounded-lg bg-surface-secondary text-primary transition-all"
+              aria-live="polite"
+            >
+              <UiLoadingDots size="9px" class="text-primary" />
+              <span class="text-sm font-medium whitespace-nowrap">
+                {{ headerLoadingPhrase }}
+              </span>
+            </div>
 
             <!-- Refresh Button (Desktop only) - always visible -->
             <button
+              key="refresh-button"
               @click="handleRefresh"
               :disabled="isRefreshing"
               aria-label="Refrescar datos"
@@ -90,10 +114,15 @@
             </button>
 
             <!-- Back Button — text label on desktop only (mobile uses the left arrow icon) -->
-            <button v-if="backButton" @click="goBack" class="hidden md:inline-flex btn-secondary px-4 py-2 rounded-lg text-sm font-semibold">
+            <button
+              v-if="backButton"
+              key="back-button"
+              @click="goBack"
+              class="hidden md:inline-flex btn-secondary px-4 py-2 rounded-lg text-sm font-semibold"
+            >
               {{ backButton.label }}
             </button>
-          </div>
+          </TransitionGroup>
         </div>
       </header>
 
@@ -728,8 +757,32 @@ onUnmounted(() => {
 })
 
 // Refresh handler - shared via composable (provide/inject unreliable in Nuxt 3 layout↔page)
-const { refreshHandler, isRefreshing, lastUpdateText: composableLastUpdateText, triggerRefresh } = useLayoutActions()
+const {
+  refreshHandler,
+  isRefreshing,
+  isProgressiveLoading,
+  lastUpdateText: composableLastUpdateText,
+  triggerRefresh
+} = useLayoutActions()
 const handleRefresh = triggerRefresh
+const {
+  currentPhrase: rotatingHeaderLoadingPhrase,
+  start: startHeaderLoadingPhrases,
+  stop: stopHeaderLoadingPhrases
+} = useLoadingPhrases([
+  'Actualizando...',
+  'Sincronizando...',
+  'Cargando cambios...'
+])
+const headerLoadingPhrase = computed(() => rotatingHeaderLoadingPhrase.value)
+
+watch(isProgressiveLoading, (loading) => {
+  if (loading) {
+    startHeaderLoadingPhrases()
+  } else {
+    stopHeaderLoadingPhrases()
+  }
+}, { immediate: true })
 
 // Dynamic title - can be set by child pages
 const dynamicTitle = ref<string | undefined>(undefined)
@@ -800,8 +853,28 @@ useHead({
 
 <style>
 /* Hide empty portal target to prevent extra flex gaps */
+#dashboard-header-actions {
+  position: relative;
+}
+
 #dashboard-header-actions:empty {
   display: none;
+}
+
+#dashboard-header-actions > * {
+  animation: dashboard-header-portal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes dashboard-header-portal-in {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 </style>
 
@@ -851,6 +924,33 @@ useHead({
 
 .content-container {
   animation: contentFadeIn 0.5s ease-out;
+}
+
+/* Header action transitions */
+.header-actions-move,
+.header-actions-enter-active,
+.header-actions-leave-active {
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.24s ease,
+    filter 0.24s ease;
+}
+
+.header-actions-enter-from {
+  opacity: 0;
+  filter: blur(2px);
+  transform: translateX(14px);
+}
+
+.header-actions-leave-to {
+  opacity: 0;
+  filter: blur(2px);
+  transform: translateX(-10px);
+}
+
+.header-actions-leave-active {
+  position: absolute;
+  pointer-events: none;
 }
 </style>
 

@@ -49,6 +49,11 @@ const isRefreshing = computed(() =>
   (orderAsyncStatus.value === 'loading' && orderData.value != null) ||
   (itemsAsyncStatus.value === 'loading' && itemsData.value != null)
 )
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const handleRefresh = async () => {
+  await Promise.all([refetchOrder(), refetchItems()])
+}
+registerProgressiveLoading(isRefreshing)
 
 const order = computed(() => {
   if (!orderData.value) return null
@@ -253,6 +258,7 @@ watch(order, (newOrder) => {
 
 // Set back button and print action
 onMounted(() => {
+  setRefreshHandler(handleRefresh)
   setShowBackButton?.(true)
   setBackHandler?.(goBack)
   setHeaderAction?.({
@@ -264,6 +270,7 @@ onMounted(() => {
 
 // Clean up on unmount
 onUnmounted(() => {
+  clearRefreshHandler(handleRefresh)
   setPageTitle?.(undefined)
   setPageSubtitle?.(undefined)
   setPageStatus?.(undefined)
@@ -293,9 +300,6 @@ onUnmounted(() => {
 
     <!-- Order Details -->
     <div v-else class="space-y-6">
-      <div v-if="isRefreshing" class="flex justify-end -mb-4">
-        <UiLoadingDots size="10px" class="text-text-secondary" />
-      </div>
       <!-- Order Info Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Customer Name -->

@@ -7,7 +7,7 @@ import MetricCard from '~/components/shared/MetricCard.vue';
 
 definePageMeta({ layout: 'dashboard' })
 
-const { setRefreshHandler, clearRefreshHandler, setLastUpdateText } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 
 const lastUpdate = ref<Date>(new Date());
 
@@ -169,6 +169,7 @@ onMounted(() => {
   if (setRefreshHandler) setRefreshHandler(handleRefresh)
   if (setLastUpdateText) setLastUpdateText(lastUpdateText.value)
 })
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
   if (clearRefreshHandler) clearRefreshHandler(handleRefresh)
   if (setLastUpdateText) setLastUpdateText(undefined)
@@ -233,10 +234,6 @@ onUnmounted(() => {
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-4 pb-20">
-      <div v-if="isRefreshing" class="flex justify-end">
-        <UiLoadingDots size="10px" class="text-text-secondary" />
-      </div>
-
       <!-- Summary Cards -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard title="Clientes únicos" :value="totalCustomers" format="number" variant="primary" />

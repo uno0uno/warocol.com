@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, provide, onMounted, watch } from 'vue'
+import { ref, computed, provide, onMounted, onUnmounted, watch } from 'vue'
 import type { CachedProduct } from '~/stores/usePOSStore'
 import { usePOSStore } from '~/stores/usePOSStore'
 
@@ -20,7 +20,7 @@ const searchQuery = ref('')
 const selectedCategory = ref('all')
 
 // Load products from API
-const { data: productsData, status: productsStatus, asyncStatus: productsAsyncStatus } = useQuery({
+const { data: productsData, status: productsStatus, asyncStatus: productsAsyncStatus, refetch } = useQuery({
   key: () => ['pos', 'products', currentTenant.value?.id],
   query: () => $fetch('/api/menu/products', {
     params: {
@@ -35,6 +35,8 @@ const { data: productsData, status: productsStatus, asyncStatus: productsAsyncSt
 
 const loadingProducts = computed(() => !productsData.value)
 const isRefreshing = computed(() => productsAsyncStatus.value === 'loading' && productsData.value != null)
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+registerProgressiveLoading(isRefreshing)
 
 // Clear POS state when tenant changes
 watch(() => currentTenant.value?.id, () => { posStore.clearAll() })
@@ -152,6 +154,7 @@ const processOrder = async () => {
 
 // Provide cart data to layout
 onMounted(() => {
+  setRefreshHandler(refetch)
   provide('posCartItemsCount', cartItemsCount)
 
   // Check if we're returning from a POS sub-page
@@ -179,6 +182,10 @@ onMounted(() => {
     }
   }
 })
+
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
+})
 </script>
 
 <template>
@@ -190,9 +197,6 @@ onMounted(() => {
 
     <!-- POS Content (shown always after loading) -->
     <div v-else>
-      <div v-if="isRefreshing" class="flex justify-end">
-        <UiLoadingDots size="10px" class="text-text-secondary" />
-      </div>
       <!-- Customer Header (when customer is identified) -->
       <div v-if="posStore.currentCustomer" class="bg-crocus-600/5 border border-crocus-500/25 rounded-xl mb-4 p-4">
         <div class="flex items-center gap-3">

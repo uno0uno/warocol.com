@@ -6,12 +6,17 @@ definePageMeta({})
 useHead({ title: 'Historial de pagos — WaRo Admin' })
 
 const {
-  plans, subscription, events, eventsTotal, loading, error,
+  plans, subscription, accessStatus, events, eventsTotal, loading, error,
   fetchPlans, fetchMyEvents, fetchBillingOverview, subscribe,
 } = useBilling()
 
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+
+const isInitialLoading = computed(() =>
+  !!currentTenant.value &&
+  (plans.value === undefined || subscription.value === undefined || accessStatus.value === undefined)
+)
 
 // ── Pagination ───────────────────────────────────────────────────
 const PAGE_SIZE = 20
@@ -223,7 +228,6 @@ const toggleSavingsLabel = computed(() => {
 })
 
 onMounted(() => {
-  loadAll()
   setRefreshHandler(loadAll)
 })
 onUnmounted(() => clearRefreshHandler(loadAll))
@@ -231,9 +235,10 @@ watch(() => currentTenant.value?.id, loadAll)
 </script>
 
 <template>
-  <div class="page-layout">
+  <div class="billing-page-root">
+    <div class="page-layout">
     <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center min-h-[300px]">
+    <div v-if="isInitialLoading" class="flex items-center justify-center min-h-[300px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
@@ -859,7 +864,8 @@ watch(() => currentTenant.value?.id, loadAll)
         </div>
       </div>
     </Transition>
-  </Teleport>
+    </Teleport>
+  </div>
 </template>
 
 <style scoped>

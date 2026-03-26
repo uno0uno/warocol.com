@@ -17,11 +17,15 @@
       </div>
 
       <!-- Cards List -->
-      <div class="grid grid-cols-1 gap-3">
+      <TransitionGroup
+        name="responsive-cards"
+        tag="div"
+        class="grid grid-cols-1 gap-3"
+      >
         <slot name="card" v-for="item in data" :item="item" :key="getItemKey(item)" />
 
         <!-- Empty State -->
-        <div v-if="data.length === 0" class="text-center py-12 col-span-1">
+        <div v-if="data.length === 0" key="empty-state" class="text-center py-12 col-span-1">
           <slot name="empty">
             <div class="inline-flex items-center justify-center w-16 h-16 bg-surface-secondary rounded-full mb-4">
               <svg class="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,7 +37,7 @@
             <p class="text-muted-foreground text-sm mt-1">{{ emptySubMessage }}</p>
           </slot>
         </div>
-      </div>
+      </TransitionGroup>
     </div>
 
     <!-- Desktop: Table View -->
@@ -46,6 +50,7 @@
         :sort-direction="sortDirection"
         :row-class="rowClass"
         :row-size="rowSize"
+        :row-key="itemKey"
         @sort="$emit('sort', $event)"
         @row-click="$emit('row-click', $event)"
       >
@@ -114,3 +119,17 @@ const getItemKey = (item: any) => {
   return item[props.itemKey] || item.id || JSON.stringify(item)
 }
 </script>
+
+<style scoped>
+.responsive-cards-enter-active,
+.responsive-cards-move {
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.24s ease;
+}
+
+.responsive-cards-enter-from {
+  opacity: 0;
+  transform: translateX(16px);
+}
+</style>

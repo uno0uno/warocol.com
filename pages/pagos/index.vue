@@ -8,11 +8,6 @@
 
     <!-- Content -->
     <div v-else class="space-y-6">
-      <div v-if="isRefreshing" class="flex justify-end">
-        <UiLoadingDots size="10px" class="text-text-secondary" />
-      </div>
-
-
       <!-- Filters Bar -->
       <SharedFiltersBar
         v-model:search="localSearchTerm"
@@ -261,11 +256,12 @@ const loading = computed(() => !purchasesData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && purchasesData.value != null)
 
 // Inject refresh handler setter from layout
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 onMounted(() => {
   setRefreshHandler(refetch)
 })
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
   clearRefreshHandler(refetch)
 })

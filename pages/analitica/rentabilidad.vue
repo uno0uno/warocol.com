@@ -4,7 +4,7 @@ import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceToNow } from 'date-fns'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
-const { setRefreshHandler, clearRefreshHandler, setLastUpdateText } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
 
 const lastUpdate = ref<Date>(new Date())
@@ -88,6 +88,7 @@ onMounted(() => {
   if (setRefreshHandler) setRefreshHandler(handleRefresh)
   if (setLastUpdateText) setLastUpdateText(lastUpdateText.value)
 })
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
   if (clearRefreshHandler) clearRefreshHandler(handleRefresh)
   if (setLastUpdateText) setLastUpdateText(undefined)
@@ -103,9 +104,6 @@ onUnmounted(() => {
 
     <!-- Content -->
     <template v-else>
-      <div v-if="isRefreshing" class="flex justify-end">
-        <UiLoadingDots size="10px" class="text-text-secondary" />
-      </div>
       <!-- Date Filter -->
       <ClientOnly>
       <div class="flex items-center gap-2 w-full overflow-x-auto pb-2">

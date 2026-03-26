@@ -70,8 +70,9 @@ const viewOrder = (order: any) => {
   navigateTo(`/domicilios/pedidos/${order.id}`)
 }
 
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 onMounted(() => { setRefreshHandler(refetch) })
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => { clearRefreshHandler(refetch) })
 </script>
 
@@ -98,9 +99,6 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
     <!-- Main Content -->
     <div v-else>
-      <div v-if="isRefreshing" class="flex justify-end mb-2">
-        <UiLoadingDots size="10px" class="text-text-secondary" />
-      </div>
       <UiResponsiveDataView
         :columns="columns"
         :data="orders"
