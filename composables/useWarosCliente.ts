@@ -2,6 +2,8 @@
  * Waros Customer Composable
  * Fetches wallet summary and handles manual Waros assignment for a single customer.
  *
+ * Migrated to Pinia Colada useMutation — eliminates manual loading/error refs.
+ *
  * API endpoints (proxied via Nuxt nitro → api.warolabs.com):
  *   GET  /api/admin/waros/customers/{profileId}/summary
  *   POST /api/admin/waros/assign
@@ -26,57 +28,52 @@ export interface WarosSummary {
 }
 
 export const useWarosCliente = () => {
-  const summary = ref<WarosSummary | null>(null)
-  const isLoadingSummary = ref(false)
-  const isSaving = ref(false)
-  const summaryError = ref<string | null>(null)
+  const summaryMutation = useMutation({
+    mutation: (profileId: string) =>
+      $fetch<WarosSummary>(`/api/admin/waros/customers/${profileId}/summary`),
+  })
 
-  const fetchSummary = async (profileId: string) => {
-    if (!profileId) return
-    isLoadingSummary.value = true
-    summaryError.value = null
-    try {
-      const res = await $fetch<WarosSummary>(`/api/admin/waros/customers/${profileId}/summary`)
-      summary.value = res
-    } catch (e: any) {
-      summaryError.value = e?.data?.detail || e?.message || 'Error al cargar Waros'
-    } finally {
-      isLoadingSummary.value = false
-    }
+  const assignMutation = useMutation({
+    mutation: (vars: { profileId: string; waros_amount: number; reason?: string }) =>
+      $fetch<{ assigned: boolean; waros_amount: number; new_balance: number; transaction_id: number }>(
+        '/api/admin/waros/assign',
+        {
+          method: 'POST',
+          body: {
+            profile_id: vars.profileId,
+            waros_amount: vars.waros_amount,
+            reason: vars.reason || undefined,
+          },
+        }
+      ),
+  })
+
+  const summaryError = computed(() => {
+    const e = summaryMutation.error.value as any
+    return e?.data?.detail || e?.message || null
+  })
+
+  const fetchSummary = (profileId: string) => {
+    if (!profileId) return Promise.resolve()
+    return summaryMutation.mutateAsync(profileId)
   }
 
-  const assignWaros = async (
+  const assignWaros = (
     profileId: string,
     waros_amount: number,
     reason?: string
-  ): Promise<{ new_balance: number; transaction_id: number }> => {
-    isSaving.value = true
-    try {
-      const res = await $fetch<{
-        assigned: boolean
-        waros_amount: number
-        new_balance: number
-        transaction_id: number
-      }>('/api/admin/waros/assign', {
-        method: 'POST',
-        body: {
-          profile_id: profileId,
-          waros_amount,
-          reason: reason || undefined,
-        },
-      })
-      return res
-    } finally {
-      isSaving.value = false
-    }
-  }
+  ): Promise<{ new_balance: number; transaction_id: number }> =>
+    assignMutation.mutateAsync({ profileId, waros_amount, reason })
+
+  const resetSummary = () => summaryMutation.reset()
 
   return {
-    summary,
-    isLoadingSummary,
-    isSaving,
+    summary: summaryMutation.data,
+    isLoadingSummary: summaryMutation.isLoading,
+    isSaving: assignMutation.isLoading,
     summaryError,
     fetchSummary,
     assignWaros,
+    resetSummary,
   }
 }

@@ -53,8 +53,8 @@ const cartItems = computed(() => posStore.cart)
 const cartTotal = computed(() => posStore.cartTotal)
 
 // Waros
-const { summary: warosSummary, isLoadingSummary: isLoadingWaros, fetchSummary: fetchWarosSummary } = useWarosCliente()
-const { estimatedWaros, isLoadingEstimate, systemEnabled: warosSystemEnabled, fetchEstimate } = useWarosEstimate()
+const { summary: warosSummary, isLoadingSummary: isLoadingWaros, fetchSummary: fetchWarosSummary, resetSummary } = useWarosCliente()
+const { estimatedWaros, isLoadingEstimate, systemEnabled: warosSystemEnabled, fetchEstimate, resetEstimate } = useWarosEstimate()
 const showWarosModal = ref(false)
 const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
 const isAnonymousCustomer = computed(() => selectedCustomer.value?.phone_number === '0000000000')
@@ -70,16 +70,14 @@ watch(cartTotal, (total) => {
   }, 400)
 })
 
-const onWarosAssigned = async (payload: { newBalance: number }) => {
-  if (warosSummary.value) warosSummary.value.current_balance = payload.newBalance
+const onWarosAssigned = async (_payload: { newBalance: number }) => {
   await fetchWarosSummary(selectedCustomer.value!.id)
 }
 
 watch(selectedCustomer, async (customer) => {
   // Reset Waros state on customer change
-  warosSummary.value = null
-  estimatedWaros.value = null
-  warosSystemEnabled.value = null
+  resetSummary()
+  resetEstimate()
   customerInsights.value = null
   insightsLoading.value = false
   activeAccordion.value = 'summary'

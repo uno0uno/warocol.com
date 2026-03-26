@@ -2,6 +2,8 @@
  * Waros Estimate Composable
  * Fetches estimated Waros for a cart total + customer (read-only, never writes to DB).
  *
+ * Migrated to Pinia Colada useMutation — eliminates manual loading/error refs.
+ *
  * API endpoint (proxied via Nuxt nitro → api.warolabs.com):
  *   GET /api/admin/waros/estimate?total_amount=X&customer_id=uuid
  */
@@ -19,35 +21,38 @@ export interface WarosEstimateResult {
 }
 
 export const useWarosEstimate = () => {
-  const estimatedWaros = ref<number | null>(null)
-  const isLoadingEstimate = ref(false)
+  const estimateMutation = useMutation({
+    mutation: (vars: { totalAmount: number; customerId?: string }) => {
+      const params: Record<string, string> = {
+        total_amount: String(vars.totalAmount),
+      }
+      if (vars.customerId) params.customer_id = vars.customerId
+      return $fetch<WarosEstimateResult>('/api/admin/waros/estimate', { params })
+    },
+  })
+
+  const estimatedWaros = computed(() => estimateMutation.data.value?.estimated_waros ?? null)
   // null = unknown (card hidden until first API response confirms system_enabled)
-  const systemEnabled = ref<boolean | null>(null)
+  const systemEnabled = computed(() => estimateMutation.data.value?.system_enabled ?? null)
+  const isLoadingEstimate = estimateMutation.isLoading
 
   const fetchEstimate = async (totalAmount: number, customerId?: string) => {
     if (totalAmount <= 0) return
-    isLoadingEstimate.value = true
     try {
-      const params: Record<string, string> = {
-        total_amount: String(totalAmount),
-      }
-      if (customerId) params.customer_id = customerId
-
-      const res = await $fetch<WarosEstimateResult>('/api/admin/waros/estimate', { params })
-      estimatedWaros.value = res.estimated_waros
-      systemEnabled.value = res.system_enabled
+      await estimateMutation.mutateAsync({ totalAmount, customerId })
     } catch {
       // Silently fail — don't break checkout if Waros is unavailable
-      estimatedWaros.value = null
-    } finally {
-      isLoadingEstimate.value = false
+      estimateMutation.reset()
     }
   }
+
+  const resetEstimate = () => estimateMutation.reset()
 
   return {
     estimatedWaros,
     isLoadingEstimate,
     systemEnabled,
     fetchEstimate,
+    resetEstimate,
   }
 }

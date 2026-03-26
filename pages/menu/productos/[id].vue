@@ -490,7 +490,7 @@ const { data: recipeBasesData } = useAsyncData(
 )
 
 // Shared ingredients — kept only for recipe-base cost calculation
-const { availableIngredients: ingredients } = useMenuIngredients()
+const { availableIngredients: ingredients } = useMenuIngredientsQuery()
 
 // Ingredient cache: populated from API response on load or when user selects via UiIngredientSearchInput
 const ingredientCache = ref<Record<string, any>>({})
