@@ -283,8 +283,13 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
 <template>
   <div class="page-layout">
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
+    </div>
+
     <!-- Error State -->
-    <div v-if="fetchError" class="flex items-center justify-center min-h-[400px]">
+    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
         <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar las ventas.</p>
         <p class="text-sm text-text-secondary">{{ fetchError.message }}</p>
@@ -296,7 +301,6 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-      <!-- Metrics Removed -->
       <div v-if="isRefreshing" class="flex justify-end">
         <UiLoadingDots size="10px" class="text-text-secondary" />
       </div>
@@ -415,13 +419,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       </div>
 
       <!-- Responsive Data View -->
-      <!-- Loading State -->
-      <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
-        <CommonsTheCustomLoader size="large" />
-      </div>
-
       <UiResponsiveDataView
-        v-else
         :columns="ordersTableColumns"
         :data="orders"
         :sort-field="sortField"
