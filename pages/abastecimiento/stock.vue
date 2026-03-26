@@ -221,7 +221,7 @@ import { ref, computed, inject, onMounted } from 'vue'
 useHead({ title: 'Stock' })
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 // State
 const searchQuery = ref('')
@@ -234,32 +234,20 @@ const sortField = ref('')
 const sortDirection = ref('asc')
 
 // Load inventory data from API
-const { data: inventoryData, pending: isLoading, refresh } = useAsyncData(
-  `inventory-stock-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/inventory/stock', {
+const { data: inventoryData, status: queryStatus, refetch } = useQuery({
+  key: () => ['inventory', 'stock', currentTenant.value?.id],
+  query: () => $fetch('/api/inventory/stock', {
     params: {
       limit: 250,
-      search: searchQuery.value || undefined,
-      status_filter: statusFilter.value,
       sort_field: 'current_stock',
       sort_direction: 'desc'
     }
   }),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ data: [], stats: null }),
-    transform: (response) => ({
-      data: response?.data || [],
-      stats: response?.stats || null
-    })
-  }
-)
-
-// Refresh on tenant change
-onTenantChange(async () => {
-  await refresh()
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
 })
+
+const isLoading = computed(() => queryStatus.value === 'loading')
 
 const inventory = computed(() => inventoryData.value?.data || [])
 const stats = computed(() => inventoryData.value?.stats || {
@@ -456,8 +444,11 @@ const formatNumber = (value: number) => {
 }
 
 // Set refresh handler for layout
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(refetch)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
 })
 </script>

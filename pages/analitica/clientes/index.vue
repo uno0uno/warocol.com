@@ -8,7 +8,6 @@ import MetricCard from '~/components/shared/MetricCard.vue';
 definePageMeta({ layout: 'dashboard' })
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText } = useLayoutActions()
-const { onTenantChange } = useTenantReactive();
 
 const lastUpdate = ref<Date>(new Date());
 
@@ -62,9 +61,14 @@ const offset = computed(() => (currentPage.value - 1) * itemsPerPage.value)
 
 // ── Data fetch ────────────────────────────────────────────────────────────
 const { currentTenant } = useTenantReactive()
-const { data: customersResponse, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  'clientes-list',
-  () => $fetch('/api/orders/customers', {
+const { data: customersResponse, status: queryStatus, error: fetchError, refetch } = useQuery({
+  key: () => ['analytics', 'clientes', currentTenant.value?.id, {
+    from: dateRange.value.from,
+    to: dateRange.value.to,
+    search: debouncedSearch.value || null,
+    page: currentPage.value,
+  }],
+  query: () => $fetch('/api/orders/customers', {
     params: {
       date_from: dateRange.value.from || undefined,
       date_to: dateRange.value.to || undefined,
@@ -73,13 +77,11 @@ const { data: customersResponse, pending: isLoading, error: fetchError, refresh 
       offset: offset.value,
     }
   }),
-  {
-    server: false,
-    lazy: true,
-    default: () => ({ success: false, data: [], total: 0 }),
-    watch: [currentTenant, dateRangeDates, currentPage, debouncedSearch],
-  }
-)
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+const isLoading = computed(() => queryStatus.value === 'loading')
 
 const customers = computed(() => customersResponse.value?.data || [])
 const totalCustomers = computed(() => customersResponse.value?.total || 0)
@@ -154,21 +156,20 @@ const hasFilters = computed(() => !!dateRangeDates.value || !!searchQuery.value)
 const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
 
 const handleRefresh = async () => {
-  await refresh()
+  await refetch()
   lastUpdate.value = new Date()
 }
 
 watch(lastUpdate, () => { if (setLastUpdateText) setLastUpdateText(lastUpdateText.value) })
 watch(dateRangeDates, () => { currentPage.value = 1 })
-
-onTenantChange(handleRefresh)
+watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
 
 onMounted(() => {
   if (setRefreshHandler) setRefreshHandler(handleRefresh)
   if (setLastUpdateText) setLastUpdateText(lastUpdateText.value)
 })
 onUnmounted(() => {
-  if (setRefreshHandler) clearRefreshHandler(handleRefresh)
+  if (clearRefreshHandler) clearRefreshHandler(handleRefresh)
   if (setLastUpdateText) setLastUpdateText(undefined)
 })
 </script>

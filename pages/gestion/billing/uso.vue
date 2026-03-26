@@ -7,14 +7,14 @@ useHead({ title: 'Uso de IA — WaRo Admin' })
 
 const { subscription, usageHistory, loading, fetchUsageHistory } = useBilling()
 
-const { onTenantChange } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 
 const loadAll = async () => { await fetchUsageHistory(24) }
 
 onMounted(() => { loadAll(); setRefreshHandler(loadAll) })
 onUnmounted(() => clearRefreshHandler(loadAll))
-onTenantChange(loadAll)
+watch(() => currentTenant.value?.id, loadAll)
 
 const scanLimit = computed(() => subscription.value?.scan_limit ?? 1000)
 

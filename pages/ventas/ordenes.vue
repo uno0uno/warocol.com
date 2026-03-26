@@ -8,7 +8,7 @@ definePageMeta({
 
 useHead({ title: 'Ordenes' })
 
-const { onTenantChange } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 const mockOrders = ref([
   {
@@ -123,9 +123,7 @@ onMounted(() => {
   setRefreshHandler(refresh)
 })
 
-onTenantChange(() => {
-  refresh()
-})
+watch(() => currentTenant.value?.id, refresh)
 </script>
 
 <template>

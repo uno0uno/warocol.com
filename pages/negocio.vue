@@ -509,14 +509,15 @@ import {
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Mi Negocio' })
 
-const { isOpenNow, onTenantChange, currentTenant } = useTenantReactive()
-const { data: profileData, pending: isBusinessProfileLoading, refresh: refreshProfile } = useAsyncData(
-  `negocio-business-profile-${currentTenant.value?.id || 'default'}`,
-  () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
-  { server: false, watch: [currentTenant] }
-)
+const { isOpenNow, currentTenant } = useTenantReactive()
+const { data: profileData, status: profileStatus, refetch: refreshProfile } = useQuery({
+  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
-onTenantChange(refreshProfile)
+const isBusinessProfileLoading = computed(() => profileStatus.value === 'loading')
 const businessProfile = computed(() => profileData.value?.data ?? null)
 const toast = useToast()
 

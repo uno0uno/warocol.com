@@ -98,9 +98,9 @@ export const useNotifications = () => {
     tenantWatcherSetup = true
     const tenantsStore = useTenantsStore()
     watch(
-      () => tenantsStore.tenantChangeCounter,
-      async (newVal, oldVal) => {
-        if (newVal !== oldVal && newVal > 0) {
+      () => tenantsStore.selectedTenant?.id,
+      async (newId, oldId) => {
+        if (newId && newId !== oldId) {
           await resetForTenantChange()
         }
       }

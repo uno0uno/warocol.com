@@ -220,27 +220,24 @@
 </template>
 
 <script setup lang="ts">
-const { onTenantChange } = useTenantReactive()
-const { setRefreshHandler } = useLayoutActions()
+const { currentTenant } = useTenantReactive()
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 
 // Data fetching
-const { data: qualityData, pending, error: fetchError, refresh } = useAsyncData(
-  'data-quality',
-  () => $fetch('/api/analytics/data-quality'),
-  {
-    server: false,
-    lazy: true,
-    default: () => null,
-    transform: (r: any) => r?.data ?? r
-  }
-)
+const { data: qualityData, status: queryStatus, refetch } = useQuery({
+  key: () => ['analytics', 'data-quality', currentTenant.value?.id],
+  query: () => $fetch('/api/analytics/data-quality').then((r: any) => r?.data ?? r),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
-// Reload on tenant change
-onTenantChange(() => refresh())
+const pending = computed(() => queryStatus.value === 'loading')
 
-// Register refresh for layout header button
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(refetch)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
 })
 
 // Filters

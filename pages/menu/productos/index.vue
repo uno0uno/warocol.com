@@ -406,7 +406,6 @@ const statusOptions = [
 const performSearch = () => {
   apiSearchTerm.value = localSearchTerm.value
   currentPage.value = 1
-  refresh()
 }
 
 // Sorting state
@@ -420,7 +419,6 @@ const clearFilters = () => {
   statusFilter.value = ''
   categoryFilter.value = ''
   currentPage.value = 1
-  refresh()
 }
 
 // Pagination
@@ -490,25 +488,29 @@ const visiblePages = computed(() => {
 })
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
-// Fetch categories
-const { data: categoriesData } = useAsyncData(
-  `categories-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/menu/categories'),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ data: [] })
-  }
-)
+// Fetch categories (static per tenant)
+const { data: categoriesData } = useQuery({
+  key: () => ['menu', 'categories', currentTenant.value?.id],
+  query: () => $fetch('/api/menu/categories'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
-const categories = computed(() => categoriesData.value?.data || [])
+const categories = computed(() => (categoriesData.value as any)?.data || [])
 
-// Fetch products using useAsyncData
-const { data: productsData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  `products-${currentTenant.value?.id || 'default'}`,
-  () => {
+// Fetch products
+const { data: productsData, status: queryStatus, refetch } = useQuery({
+  key: () => ['menu', 'products', currentTenant.value?.id, {
+    page: currentPage.value,
+    limit: itemsPerPage.value,
+    search: apiSearchTerm.value || null,
+    searchField: apiSearchField.value,
+    status: statusFilter.value || null,
+    category: categoryFilter.value || null,
+  }],
+  query: () => {
     const params: any = {
       page: currentPage.value,
       limit: itemsPerPage.value,
@@ -523,22 +525,16 @@ const { data: productsData, pending: isLoading, error: fetchError, refresh } = u
     if (categoryFilter.value) {
       params.category_id = categoryFilter.value
     }
-
-    return $fetch('/api/menu/products', {
-      query: params
-    })
+    return $fetch('/api/menu/products', { params })
   },
-  {
-    server: false,
-    lazy: true,
-    watch: [currentTenant, currentPage, itemsPerPage, statusFilter, categoryFilter],
-    default: () => ({ data: [], total: 0 }),
-    transform: (response: any) => ({
-      data: response.data || [],
-      total: response.total || 0,
-    }),
-  }
-)
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+const isLoading = computed(() => queryStatus.value === 'loading')
+
+// Reset page on tenant change — key change triggers automatic refetch
+watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
 
 // Computed properties for data
 const products = computed(() => productsData.value?.data || [])
@@ -606,10 +602,10 @@ const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 
 // Register refresh handler for mobile bottom nav and desktop header
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(refetch)
 })
 onUnmounted(() => {
-  clearRefreshHandler(refresh)
+  clearRefreshHandler(refetch)
 })
 
 // Table columns configuration

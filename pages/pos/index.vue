@@ -10,7 +10,7 @@ definePageMeta({
 useHead({ title: 'Punto de Venta' })
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 const router = useRouter()
 const posStore = usePOSStore()
@@ -19,28 +19,24 @@ const posStore = usePOSStore()
 const searchQuery = ref('')
 const selectedCategory = ref('all')
 
-// Load products from API (no await to show both loading indicators)
-const { data: productsData, pending: loadingProducts, refresh: refreshProducts } = useAsyncData(
-  `pos-products-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/menu/products', {
+// Load products from API
+const { data: productsData, status: productsStatus } = useQuery({
+  key: () => ['pos', 'products', currentTenant.value?.id],
+  query: () => $fetch('/api/menu/products', {
     params: {
       is_available: true,
       limit: 250,
       include_modifiers: true  // POS context - includes resale products
     }
   }),
-  {
-    server: false,
-    watch: [currentTenant]
-  }
-)
-
-// Refresh on tenant change
-onTenantChange(async () => {
-  await refreshProducts()
-  // Clear POS state when tenant changes
-  posStore.clearAll()
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
 })
+
+const loadingProducts = computed(() => productsStatus.value === 'loading')
+
+// Clear POS state when tenant changes
+watch(() => currentTenant.value?.id, () => { posStore.clearAll() })
 
 // Cachear productos con modificadores cuando cargan
 watch(() => productsData.value, (data) => {

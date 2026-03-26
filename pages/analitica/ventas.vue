@@ -6,7 +6,7 @@ import MetricCard from '~/components/shared/MetricCard.vue';
 import SalesChart from '~/components/analytics/SalesChart.vue';
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText } = useLayoutActions()
-const { onTenantChange } = useTenantReactive();
+const { currentTenant } = useTenantReactive();
 
 const lastUpdate = ref<Date>(new Date());
 const currentTime = ref<Date>(new Date());
@@ -38,50 +38,64 @@ const dateRange = computed(() => {
   return { from: fnsFormat(from, 'yyyy-MM-dd'), to: fnsFormat(to, 'yyyy-MM-dd') }
 });
 
-// Single dashboard call replaces 3 separate /orders/metrics calls on initial load.
-// When no date filter is active, this is the only metrics endpoint needed.
-const { data: dashboardData, pending: metricsLoading, error: metricsError, refresh: refreshDashboard } = useAsyncData(
-  'ventas-dashboard',
-  () => $fetch('/api/orders/dashboard', {
-    params: {
-      payment_method: paymentMethodFilter.value || undefined,
-      status: statusFilter.value || undefined
-    }
-  }),
-  { server: false, lazy: true, default: () => ({ data: null }), watch: [paymentMethodFilter, statusFilter] }
-)
-
-// Separate filtered metrics call — only used when the user picks an explicit date range.
-// Returns just the main metrics for the selected period (month/year cards stay from dashboardData).
-const { data: filteredMetricsData, pending: filteredMetricsPending, error: filteredMetricsError, refresh: refreshFilteredMetrics } = useAsyncData(
-  'ventas-filtered-metrics',
-  () => $fetch('/api/orders/metrics', {
-    params: {
-      date_from: dateRange.value.from || undefined,
-      date_to: dateRange.value.to || undefined,
-      payment_method: paymentMethodFilter.value || undefined,
-      status: statusFilter.value || undefined
-    }
-  }),
-  { server: false, lazy: true, immediate: false, default: () => ({ data: null }) }
-)
-
-const { data: salesFlowData, pending: salesFlowLoading, refresh: refreshSalesFlow } = useAsyncData(
-  'ventas-sales-flow',
-  () => $fetch('/api/orders/sales-flow', {
-    params: {
-      date_from: dateRange.value.from || undefined,
-      date_to: dateRange.value.to || undefined,
-      payment_method: paymentMethodFilter.value || undefined,
-      status: statusFilter.value || undefined
-    }
-  }),
-  { server: false, lazy: true, default: () => ({ data: [], metadata: {} }), watch: [paymentMethodFilter, statusFilter] }
-)
-
 const hasDateFilter = computed(() =>
   dateRangeDates.value && dateRangeDates.value.length === 2 && dateRangeDates.value[0] && dateRangeDates.value[1]
 )
+
+// Single dashboard call — no date filter needed.
+const { data: dashboardData, status: dashboardStatus, error: metricsError, refetch: refetchDashboard } = useQuery({
+  key: () => ['analytics', 'ventas-dashboard', currentTenant.value?.id, {
+    payment_method: paymentMethodFilter.value || null,
+    status: statusFilter.value || null,
+  }],
+  query: () => $fetch('/api/orders/dashboard', {
+    params: {
+      payment_method: paymentMethodFilter.value || undefined,
+      status: statusFilter.value || undefined
+    }
+  }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+// Filtered metrics — only when a date range is selected.
+const { data: filteredMetricsData, status: filteredMetricsStatus, error: filteredMetricsError, refetch: refetchFilteredMetrics } = useQuery({
+  key: () => ['analytics', 'ventas-filtered-metrics', currentTenant.value?.id, {
+    from: dateRange.value.from,
+    to: dateRange.value.to,
+    payment_method: paymentMethodFilter.value || null,
+    status: statusFilter.value || null,
+  }],
+  query: () => $fetch('/api/orders/metrics', {
+    params: {
+      date_from: dateRange.value.from || undefined,
+      date_to: dateRange.value.to || undefined,
+      payment_method: paymentMethodFilter.value || undefined,
+      status: statusFilter.value || undefined
+    }
+  }),
+  enabled: () => !!currentTenant.value && !!hasDateFilter.value,
+  staleTime: 30_000,
+})
+
+const { data: salesFlowData, status: salesFlowStatus, refetch: refetchSalesFlow } = useQuery({
+  key: () => ['analytics', 'ventas-sales-flow', currentTenant.value?.id, {
+    from: dateRange.value.from,
+    to: dateRange.value.to,
+    payment_method: paymentMethodFilter.value || null,
+    status: statusFilter.value || null,
+  }],
+  query: () => $fetch('/api/orders/sales-flow', {
+    params: {
+      date_from: dateRange.value.from || undefined,
+      date_to: dateRange.value.to || undefined,
+      payment_method: paymentMethodFilter.value || undefined,
+      status: statusFilter.value || undefined
+    }
+  }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
 const forecast = computed(() => {
   const today = new Date()
@@ -136,9 +150,9 @@ const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { ad
 
 const handleRefresh = async () => {
   if (hasDateFilter.value) {
-    await Promise.all([refreshFilteredMetrics(), refreshSalesFlow()])
+    await Promise.all([refetchFilteredMetrics(), refetchSalesFlow()])
   } else {
-    await Promise.all([refreshDashboard(), refreshSalesFlow()])
+    await Promise.all([refetchDashboard(), refetchSalesFlow()])
   }
   lastUpdate.value = new Date()
 }
@@ -147,7 +161,12 @@ watch(lastUpdate, () => {
   if (setLastUpdateText) setLastUpdateText(lastUpdateText.value)
 })
 
-onTenantChange(handleRefresh)
+// Reactive key handles tenant/filter changes — only update lastUpdate on date change
+watch(dateRangeDates, (val) => {
+  if (!val || (val.length === 2 && val[0] && val[1])) {
+    lastUpdate.value = new Date()
+  }
+})
 
 let clockInterval: NodeJS.Timeout | null = null
 onMounted(() => {
@@ -157,34 +176,14 @@ onMounted(() => {
 })
 onUnmounted(() => {
   if (clockInterval) clearInterval(clockInterval)
-  if (setRefreshHandler) clearRefreshHandler(handleRefresh)
+  if (clearRefreshHandler) clearRefreshHandler(handleRefresh)
   if (setLastUpdateText) setLastUpdateText(undefined)
 })
 
-watch(dateRangeDates, async (val) => {
-  if (!val || (val.length === 2 && val[0] && val[1])) {
-    if (val) {
-      await Promise.all([refreshFilteredMetrics(), refreshSalesFlow()])
-    } else {
-      await Promise.all([refreshDashboard(), refreshSalesFlow()])
-    }
-    lastUpdate.value = new Date()
-  }
-})
-
-watch([paymentMethodFilter, statusFilter], async () => {
-  if (hasDateFilter.value) {
-    await refreshFilteredMetrics()
-    lastUpdate.value = new Date()
-  }
-})
-
-const clearFilters = async () => {
+const clearFilters = () => {
   paymentMethodFilter.value = null
   statusFilter.value = null
   dateRangeDates.value = null
-  filteredMetricsData.value = { data: null }
-  await Promise.all([refreshDashboard(), refreshSalesFlow()])
   lastUpdate.value = new Date()
 }
 
@@ -215,7 +214,7 @@ const formatCurrency = (value: number) =>
 <template>
   <div class="space-y-4">
     <!-- Loading State -->
-    <div v-if="metricsLoading || (hasDateFilter && filteredMetricsPending)" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="dashboardStatus === 'loading' || (hasDateFilter && filteredMetricsStatus === 'loading')" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 

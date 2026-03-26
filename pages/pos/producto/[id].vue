@@ -13,7 +13,7 @@ definePageMeta({
 useHead({ title: 'Producto POS' })
 
 // Tenant reactivity
-const { onTenantChange } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 const route = useRoute()
 const router = useRouter()
@@ -39,9 +39,7 @@ onMounted(() => {
 })
 
 // Redirect on tenant change
-onTenantChange(() => {
-  router.push('/pos')
-})
+watch(() => currentTenant.value?.id, () => { router.push('/pos') })
 
 // Product computed from cache
 const product = computed(() => {

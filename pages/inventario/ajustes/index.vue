@@ -180,12 +180,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 useHead({ title: 'Ajustes de Inventario' })
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 // State
 const searchQuery = ref('')
@@ -198,88 +198,64 @@ const sortField = ref('created_at')
 const sortDirection = ref('desc')
 
 // Load ingredients for filter
-const { data: ingredientsData } = useAsyncData(
-  `ingredients-list-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/suppliers/ingredients', {
-    params: {
-      limit: 10000
-    }
-  }),
-  {
-    server: false,
-    watch: [currentTenant]
-  }
-)
-
-const ingredients = computed(() => {
-  if (!ingredientsData.value?.data) return []
-  return ingredientsData.value.data.map(item => ({
-    id: item.id,
-    name: item.name
-  })).sort((a, b) => a.name.localeCompare(b.name))
+const { data: ingredientsData } = useQuery({
+  key: () => ['inventory', 'ingredients-lookup', currentTenant.value?.id],
+  query: () => $fetch('/api/suppliers/ingredients', { params: { limit: 10000 } }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
 })
 
-// Compute filter parameters for API
-const apiParams = computed(() => {
-  const params: any = {
-    limit: 500,
-    movement_type: 'adjustment', // Only show adjustments
-    ingredient_id: ingredientFilter.value || undefined
-  }
+const ingredients = computed(() => {
+  if (!(ingredientsData.value as any)?.data) return []
+  return (ingredientsData.value as any).data.map((item: any) => ({
+    id: item.id,
+    name: item.name
+  })).sort((a: any, b: any) => a.name.localeCompare(b.name))
+})
 
-  // Parse date filter (format: "YYYY-MM-DD to YYYY-MM-DD" or "YYYY-MM-DD")
-  if (dateFilter.value) {
-    if (dateFilter.value.includes(' to ')) {
-      const [start, end] = dateFilter.value.split(' to ')
-      params.start_date = start
-      params.end_date = end
-    } else {
-      params.start_date = dateFilter.value
-      params.end_date = dateFilter.value
-    }
+// Compute date parts from filter string
+const dateParts = computed(() => {
+  if (!dateFilter.value) return {}
+  if (dateFilter.value.includes(' to ')) {
+    const [start, end] = dateFilter.value.split(' to ')
+    return { start_date: start, end_date: end }
   }
-
-  return params
+  return { start_date: dateFilter.value, end_date: dateFilter.value }
 })
 
 // Load adjustments data from API
-const { data: adjustmentsData, pending: isLoading, refresh } = useAsyncData(
-  `inventory-adjustments-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/inventory/movements', {
-    params: apiParams.value
+const { data: adjustmentsData, status: queryStatus, refetch } = useQuery({
+  key: () => ['inventory', 'adjustments', currentTenant.value?.id, {
+    ingredient: ingredientFilter.value || null,
+    date: dateFilter.value || null,
+  }],
+  query: () => $fetch('/api/inventory/movements', {
+    params: {
+      limit: 500,
+      movement_type: 'adjustment',
+      ingredient_id: ingredientFilter.value || undefined,
+      ...dateParts.value,
+    }
   }),
-  {
-    server: false,
-    watch: [currentTenant]
-  }
-)
-
-// Watch filters and refresh data
-watch([ingredientFilter, dateFilter], () => {
-  refresh()
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
 })
 
-// Refresh on tenant change
-onTenantChange(async () => {
-  await refresh()
-})
-
+const isLoading = computed(() => queryStatus.value === 'loading')
 const adjustments = computed(() => adjustmentsData.value?.data || [])
 
 // Load stock data for suggestions
-const { data: stockData } = useAsyncData(
-  `inventory-stock-suggestions-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/inventory/stock', {
+const { data: stockData } = useQuery({
+  key: () => ['inventory', 'stock', currentTenant.value?.id],
+  query: () => $fetch('/api/inventory/stock', {
     params: {
       limit: 250,
       status_filter: 'all'
     }
   }),
-  {
-    server: false,
-    watch: [currentTenant]
-  }
-)
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
 const stockStats = computed(() => stockData.value?.stats || {
   total_ingredients: 0,
@@ -353,10 +329,8 @@ const handleSearch = () => {
   // Search is handled by computed filteredAdjustments
 }
 
-// Apply filters
-const applyFilters = () => {
-  refresh()
-}
+// Apply filters — reactive key triggers refetch automatically
+const applyFilters = () => {}
 
 // Clear filters
 const clearFilters = () => {
@@ -364,7 +338,6 @@ const clearFilters = () => {
   ingredientFilter.value = ''
   adjustmentTypeFilter.value = ''
   dateFilter.value = ''
-  refresh()
 }
 
 // Table columns configuration
@@ -453,8 +426,11 @@ const formatDate = (dateString: string) => {
 }
 
 // Set refresh handler for layout
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(refetch)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
 })
 </script>

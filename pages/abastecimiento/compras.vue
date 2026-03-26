@@ -252,7 +252,6 @@ const purchaseStatusOptions = [
 const performSearch = () => {
   apiSearchTerm.value = localSearchTerm.value
   currentPage.value = 1
-  refresh()
 }
 
 // Sorting state
@@ -301,53 +300,51 @@ const endItem = computed(() => {
 })
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
-// Fetch suppliers
-const { data: suppliersData } = useAsyncData(
-  `suppliers-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/suppliers/providers', {
-    query: { limit: 250 }
-  }),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ data: [] })
-  }
-)
+// Fetch suppliers (static lookup per tenant)
+const { data: suppliersData } = useQuery({
+  key: () => ['suppliers', 'providers', currentTenant.value?.id],
+  query: () => $fetch('/api/suppliers/providers', { params: { limit: 250 } }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
-const suppliers = computed(() => suppliersData.value?.data || [])
+const suppliers = computed(() => (suppliersData.value as any)?.data || [])
 
-// Fetch data using useAsyncData for proper loading states (NO await to show loading)
-const { data: purchasesData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  `purchases-${currentTenant.value?.id || 'default'}`,
-  () => {
-    const params = {
+// Fetch purchases
+const { data: purchasesData, status: queryStatus, refetch } = useQuery({
+  key: () => ['suppliers', 'purchases', currentTenant.value?.id, {
+    page: currentPage.value,
+    limit: itemsPerPage.value,
+    search: apiSearchTerm.value || null,
+    searchField: apiSearchField.value,
+    status: statusFilter.value || null,
+    supplier: proveedorFilter.value || null,
+    date: dateFilter.value || null,
+  }],
+  query: () => {
+    const params: any = {
       page: currentPage.value,
       limit: itemsPerPage.value,
-    };
-    if (apiSearchTerm.value) {
-      params.search = apiSearchTerm.value;
-      params.search_field = apiSearchField.value;
     }
-    if (statusFilter.value) params.status = statusFilter.value;
-    if (proveedorFilter.value) params.supplier_id = proveedorFilter.value;
-    if (dateFilter.value) params.date_filter = dateFilter.value;
-
-    return $fetch('/api/suppliers/purchases', {
-      query: params
-    });
+    if (apiSearchTerm.value) {
+      params.search = apiSearchTerm.value
+      params.search_field = apiSearchField.value
+    }
+    if (statusFilter.value) params.status = statusFilter.value
+    if (proveedorFilter.value) params.supplier_id = proveedorFilter.value
+    if (dateFilter.value) params.date_filter = dateFilter.value
+    return $fetch('/api/suppliers/purchases', { params })
   },
-  {
-    server: false,
-    watch: [currentTenant, currentPage, itemsPerPage, statusFilter, proveedorFilter, dateFilter],
-    default: () => ({ data: [], total: 0 }),
-    transform: (response) => ({
-      data: response.data || [],
-      total: response.total || 0,
-    })
-  }
-);
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+const isLoading = computed(() => queryStatus.value === 'loading')
+
+// Reset page on tenant change — key change triggers automatic refetch
+watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
 
 // Computed properties for data
 const ordenes = computed(() => {
@@ -367,11 +364,13 @@ const ordenes = computed(() => {
 })
 
 // Inject refresh handler setter from layout
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 
-// Register refresh handler for mobile bottom nav and desktop header
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(refetch)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
 })
 
 

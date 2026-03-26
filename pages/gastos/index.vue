@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, inject, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 definePageMeta({
   layout: 'dashboard'
@@ -8,46 +8,43 @@ definePageMeta({
 useHead({ title: 'Gastos' })
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 // State
 const currentMonth = ref(new Date().toISOString().slice(0, 7)) // YYYY-MM
 const localSearchTerm = ref('')
+const apiSearchTerm = ref('')
 const categoryFilter = ref<string | null>(null)
 
 // Load categories from API
-const { data: categoriesData } = useAsyncData(
-  `expense-categories-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/finance/expenses/categories'),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ data: [] })
-  }
-)
+const { data: categoriesData } = useQuery({
+  key: () => ['finance', 'expense-categories', currentTenant.value?.id],
+  query: () => $fetch('/api/finance/expenses/categories'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
-const categories = computed(() => categoriesData.value?.data || [])
+const categories = computed(() => (categoriesData.value as any)?.data || [])
 
 // Load expenses from API
-const { data: expensesData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  `expenses-list-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/finance/expenses', {
+const { data: expensesData, status: queryStatus, error: fetchError, refetch } = useQuery({
+  key: () => ['finance', 'expenses', currentTenant.value?.id, {
+    month: currentMonth.value,
+    category: categoryFilter.value || null,
+    search: apiSearchTerm.value || null,
+  }],
+  query: () => $fetch('/api/finance/expenses', {
     params: {
       month_year: currentMonth.value,
       category_id: categoryFilter.value || undefined,
-      search: localSearchTerm.value || undefined
+      search: apiSearchTerm.value || undefined
     }
   }),
-  {
-    server: false,
-    watch: [currentTenant, currentMonth, categoryFilter]
-  }
-)
-
-// Refresh on tenant change
-onTenantChange(async () => {
-  await refresh()
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
 })
+
+const isLoading = computed(() => queryStatus.value === 'loading')
 
 // Computed
 const expenses = computed(() => expensesData.value?.data || [])
@@ -55,14 +52,14 @@ const stats = computed(() => expensesData.value?.stats || null)
 
 // Methods
 const performSearch = () => {
-  refresh()
+  apiSearchTerm.value = localSearchTerm.value
 }
 
 const clearFilters = () => {
   localSearchTerm.value = ''
+  apiSearchTerm.value = ''
   categoryFilter.value = null
   currentMonth.value = new Date().toISOString().slice(0, 7)
-  refresh()
 }
 
 const formatCurrency = (value: number) => {
@@ -105,7 +102,7 @@ const deleteExpense = async (expenseId: string) => {
     })
 
     // Refresh the list after deletion
-    await refresh()
+    await refetch()
   } catch (error: any) {
     console.error('Error deleting expense:', error)
     alert(error?.data?.detail || 'Error al eliminar el gasto')
@@ -113,9 +110,12 @@ const deleteExpense = async (expenseId: string) => {
 }
 
 // Set refresh handler for layout
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(refetch)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
 })
 </script>
 
@@ -131,7 +131,7 @@ onMounted(() => {
       <div class="text-center">
         <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar los gastos.</p>
         <p class="text-sm text-text-secondary">{{ fetchError.message }}</p>
-        <button @click="refresh" class="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
+        <button @click="refetch" class="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
           Reintentar
         </button>
       </div>

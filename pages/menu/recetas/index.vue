@@ -347,7 +347,7 @@ definePageMeta({
 
 useHead({ title: 'Recetas' })
 
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 // Reactive state
 const localSearchTerm = ref('')
@@ -360,9 +360,13 @@ const itemsPerPage = ref(20)
 const expandedRows = ref(new Set())
 
 // Fetch recipe bases from backend with ingredients
-const { data: productsData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  `recipe-bases-${currentTenant.value?.id || 'default'}`,
-  () => {
+const { data: productsData, status: queryStatus, refetch } = useQuery({
+  key: () => ['menu', 'recipe-bases', currentTenant.value?.id, {
+    page: currentPage.value,
+    limit: itemsPerPage.value,
+    search: apiSearchTerm.value || null,
+  }],
+  query: () => {
     const params: any = {
       page: currentPage.value,
       limit: itemsPerPage.value,
@@ -371,27 +375,20 @@ const { data: productsData, pending: isLoading, error: fetchError, refresh } = u
     if (apiSearchTerm.value) {
       params.search = apiSearchTerm.value
     }
-
-    return $fetch('/api/menu/recipe-bases', {
-      query: params
-    })
+    return $fetch('/api/menu/recipe-bases', { params })
   },
-  {
-    server: false,
-    lazy: true,
-    watch: [currentTenant, currentPage, itemsPerPage],
-    default: () => ({ data: [], total: 0 }),
-    transform: (response: any) => ({
-      data: response.data || [],
-      total: response.total || 0,
-    }),
-  }
-)
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+const isLoading = computed(() => queryStatus.value === 'loading')
+
+// Reset page on tenant change — key change triggers automatic refetch
+watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
 
 const performSearch = () => {
   apiSearchTerm.value = localSearchTerm.value
   currentPage.value = 1
-  refresh()
 }
 
 // Debounce search
@@ -407,7 +404,6 @@ const clearFilters = () => {
   localSearchTerm.value = ''
   apiSearchTerm.value = ''
   currentPage.value = 1
-  refresh()
 }
 
 // Transform recipe bases data to match display format
@@ -568,10 +564,10 @@ const toggleExpanded = (recipeId: number) => {
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(refetch)
 })
 onUnmounted(() => {
-  clearRefreshHandler(refresh)
+  clearRefreshHandler(refetch)
 })
 
 </script>

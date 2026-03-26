@@ -312,39 +312,28 @@ definePageMeta({
 useHead({ title: 'Modificadores' })
 
 const router = useRouter()
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 const searchQuery = ref('')
 const expandedRows = ref(new Set())
 
 // Fetch modifier groups from API
-const { data: groupsData, refresh: refreshGroups, pending: groupsPending } = useAsyncData(
-  `modifier-groups-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/menu/modifier-groups', {
-    query: {
-      limit: 250,
-      search: searchQuery.value || undefined
-    }
+const { data: groupsData, status: groupsStatus, refetch: refetchGroups } = useQuery({
+  key: () => ['menu', 'modifier-groups', currentTenant.value?.id],
+  query: () => $fetch('/api/menu/modifier-groups', {
+    params: { limit: 250 }
   }),
-  {
-    server: false,
-    lazy: true,
-    watch: [currentTenant],
-    default: () => ({ data: [], total: 0 }),
-  }
-)
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
 // Fetch stats from API
-const { data: statsData, refresh: refreshStats, pending: statsPending } = useAsyncData(
-  `modifier-stats-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/menu/modifier-groups/stats/summary'),
-  {
-    server: false,
-    lazy: true,
-    watch: [currentTenant],
-    default: () => ({ total_groups: 0, total_modifiers: 0, products_with_modifiers: 0 }),
-  }
-)
+const { data: statsData, refetch: refetchStats } = useQuery({
+  key: () => ['menu', 'modifier-stats', currentTenant.value?.id],
+  query: () => $fetch('/api/menu/modifier-groups/stats/summary'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
 const filteredGroups = computed(() => {
   const groups = groupsData.value?.data || []
@@ -369,9 +358,7 @@ const stats = computed(() => {
   }
 })
 
-const isLoading = computed(() => {
-  return groupsPending.value || statsPending.value
-})
+const isLoading = computed(() => groupsStatus.value === 'loading')
 
 // Table columns configuration
 const gruposTableColumns = [
@@ -458,15 +445,15 @@ const goToEditGroup = (groupId: string) => {
 }
 
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
-const refresh = async () => {
-  await Promise.all([refreshGroups(), refreshStats()])
+const handleRefresh = async () => {
+  await Promise.all([refetchGroups(), refetchStats()])
 }
 
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(handleRefresh)
 })
 onUnmounted(() => {
-  clearRefreshHandler(refresh)
+  clearRefreshHandler(handleRefresh)
 })
 
 </script>

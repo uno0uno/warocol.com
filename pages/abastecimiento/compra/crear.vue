@@ -680,7 +680,7 @@ useHead({
 })
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 // Wizard state
 const currentStep = ref(1)

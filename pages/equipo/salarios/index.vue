@@ -8,26 +8,20 @@ definePageMeta({
 useHead({ title: 'Salarios' })
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 // State
 const localSearchTerm = ref('')
 
 // Fetch employees with salary data
-const { data: employeesData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  `employees-salaries-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/salaries/employees'),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ success: true, data: [], smmlv: 1423500 })
-  }
-)
-
-// Refresh on tenant change
-onTenantChange(async () => {
-  await refresh()
+const { data: employeesData, status: queryStatus, refetch } = useQuery({
+  key: () => ['salaries', 'employees', currentTenant.value?.id],
+  query: () => $fetch('/api/salaries/employees'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
 })
+
+const isLoading = computed(() => queryStatus.value === 'loading')
 
 // Computed
 const employees = computed(() => {
@@ -107,7 +101,7 @@ const deleteEmployee = async (employeeId: string) => {
     })
 
     // Refresh the list after deletion
-    await refresh()
+    await refetch()
   } catch (error: any) {
     console.error('Error deleting employee:', error)
     alert(error?.data?.detail || 'Error al eliminar empleado')
@@ -115,9 +109,12 @@ const deleteEmployee = async (employeeId: string) => {
 }
 
 // Set refresh handler for layout
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(refetch)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
 })
 </script>
 

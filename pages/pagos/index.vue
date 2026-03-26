@@ -211,7 +211,6 @@ const statusOptions = [
 
 const performSearch = () => {
   apiSearchTerm.value = localSearchTerm.value
-  refresh()
 }
 
 // Set highlight ID from query params
@@ -220,52 +219,51 @@ if (route.query.highlight) {
 }
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
-// Fetch suppliers using useAsyncData
-const { data: suppliersData } = useAsyncData(
-  `suppliers-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/suppliers/providers', {
-    query: { limit: 250 }
+// Fetch suppliers (static lookup per tenant)
+const { data: suppliersData } = useQuery({
+  key: () => ['suppliers', 'providers', currentTenant.value?.id],
+  query: () => $fetch('/api/suppliers/providers', { params: { limit: 250 } }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+const suppliers = computed(() => (suppliersData.value as any)?.data || [])
+
+// Fetch all purchases with reactive filters
+const { data: purchasesData, status: queryStatus, refetch } = useQuery({
+  key: () => ['suppliers', 'purchases-payments', currentTenant.value?.id, {
+    search: apiSearchTerm.value || null,
+    searchField: apiSearchField.value,
+    supplier: selectedSupplierFilter.value || null,
+    status: selectedStatusFilter.value || null,
+    date: selectedDateFilter.value || null,
+  }],
+  query: () => $fetch('/api/suppliers/purchases', {
+    params: {
+      limit: 250,
+      search: apiSearchTerm.value || undefined,
+      search_field: apiSearchField.value || undefined,
+      supplier_id: selectedSupplierFilter.value || undefined,
+      payment_status: selectedStatusFilter.value || undefined,
+      date_filter: selectedDateFilter.value || undefined,
+    }
   }),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ data: [] })
-  }
-)
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
-const suppliers = computed(() => suppliersData.value?.data || [])
-
-// Computed query params for purchases
-const purchasesQuery = computed(() => ({
-  limit: 250,
-  search: apiSearchTerm.value || undefined,
-  search_field: apiSearchField.value || undefined,
-  supplier_id: selectedSupplierFilter.value || undefined,
-  payment_status: selectedStatusFilter.value || undefined,
-  date_filter: selectedDateFilter.value || undefined
-}))
-
-// Fetch all purchases using useAsyncData with reactive filters
-const { data: purchasesData, pending: loading, refresh } = useAsyncData(
-  `purchases-payments-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/suppliers/purchases', {
-    query: purchasesQuery.value
-  }),
-  {
-    server: false,
-    watch: [currentTenant, selectedSupplierFilter, selectedStatusFilter, selectedDateFilter],
-    default: () => ({ data: [] })
-  }
-)
+const loading = computed(() => queryStatus.value === 'loading')
 
 // Inject refresh handler setter from layout
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 
-// Register refresh handler for mobile bottom nav and desktop header
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(refetch)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
 })
 
 // Filter pending purchases based on payment_type and status

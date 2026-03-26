@@ -10,7 +10,7 @@ const {
   fetchPlans, fetchMyEvents, fetchBillingOverview, subscribe,
 } = useBilling()
 
-const { onTenantChange } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 
 // ── Pagination ───────────────────────────────────────────────────
@@ -227,7 +227,7 @@ onMounted(() => {
   setRefreshHandler(loadAll)
 })
 onUnmounted(() => clearRefreshHandler(loadAll))
-onTenantChange(loadAll)
+watch(() => currentTenant.value?.id, loadAll)
 </script>
 
 <template>

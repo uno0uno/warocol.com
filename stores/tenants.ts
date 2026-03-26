@@ -1,13 +1,8 @@
 /**
- * Tenants Store — Pinia Colada migration (Phase 2c)
+ * Tenants Store — Pinia Colada migration (Phase 2c / 4b)
  *
  * useQuery for user tenants (parallel fetch) and business profile (reactive on selectedTenant).
  * useMutation for tenant switch — fires bulk cache invalidation on success.
- *
- * tenantChangeCounter is preserved for backward compat:
- *   - useTenantReactive.ts / onTenantChange() watchers in 30 pages (until Phase 4 #279)
- *   - useNotifications.ts SSE reconnect watcher
- * Full removal of tenantChangeCounter + onTenantChange belongs to Phase 4 (#279).
  */
 import { defineStore } from 'pinia'
 
@@ -54,10 +49,6 @@ export const useTenantsStore = defineStore('tenants', () => {
   // ── UI state ──────────────────────────────────────────────────────────────────
   const selectedTenant = ref<Tenant | null>(null)
   const error = ref<string | null>(null)
-
-  // Backward compat: watched by useTenantReactive (onTenantChange) + useNotifications (SSE)
-  // Removal: Phase 4 (#279) when all pages migrate from useAsyncData to useQuery
-  const tenantChangeCounter = ref(0)
 
   // ── User tenants query ────────────────────────────────────────────────────────
   const { data: tenantData, status } = useQuery({
@@ -117,7 +108,6 @@ export const useTenantsStore = defineStore('tenants', () => {
         return
       }
       selectedTenant.value = tenant
-      tenantChangeCounter.value++       // backward compat — fires onTenantChange in 30 pages
       // Bulk invalidation — single source of truth for tenant switch
       cache.invalidateQueries({ key: ['tenant'] })
       cache.invalidateQueries({ key: ['billing'] })
@@ -175,7 +165,6 @@ export const useTenantsStore = defineStore('tenants', () => {
     selectedTenant,
     isLoading,
     error,
-    tenantChangeCounter,
     businessProfile,
     isBusinessProfileLoading,
 

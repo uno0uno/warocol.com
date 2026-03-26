@@ -197,7 +197,7 @@ import {
 import { ref, computed, watch, inject, onMounted } from 'vue'
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 // Reactive state for API parameters
 
@@ -216,7 +216,6 @@ const apiSearchField = ref('name');
 const performSearch = () => {
   apiSearchTerm.value = localSearchTerm.value;
   currentPage.value = 1; // Reset to first page on search
-  refresh();
 }
 
 const searchFields = [
@@ -230,7 +229,6 @@ const clearFilters = () => {
   localSearchTerm.value = ''
   apiSearchTerm.value = ''
   apiSearchField.value = 'name'
-  refresh()
 }
 
 const apiIsActive = ref(null);
@@ -239,43 +237,46 @@ const apiPaymentTerms = ref(null);
 
 
 
-// Fetch data using useAsyncData (no await to show both loading indicators)
-const { data: suppliersData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  `suppliers-${currentTenant.value?.id || 'default'}`,
-  () => {
-    const params = {
+const { data: suppliersData, status: queryStatus, error: fetchError, refetch } = useQuery({
+  key: () => ['suppliers', 'providers', currentTenant.value?.id, {
+    page: currentPage.value,
+    limit: itemsPerPage.value,
+    search: apiSearchTerm.value || null,
+    search_field: apiSearchField.value || null,
+    is_active: apiIsActive.value,
+    payment_terms: apiPaymentTerms.value || null,
+  }],
+  query: async () => {
+    const params: Record<string, any> = {
       page: currentPage.value,
       limit: itemsPerPage.value,
-    };
-    if (apiSearchTerm.value) {
-      params.search = apiSearchTerm.value;
-      params.search_field = apiSearchField.value;
     }
-    if (apiIsActive.value !== null) params.is_active = apiIsActive.value;
-    if (apiPaymentTerms.value) params.payment_terms = apiPaymentTerms.value;
-
-    return $fetch('/api/suppliers/providers', {
-      query: params
-    });
-  },
-  {
-    server: false,
-    watch: [currentTenant, currentPage, itemsPerPage, apiIsActive, apiPaymentTerms],
-    default: () => ({ data: [], total: 0, stats: null }),
-    transform: (response) => ({
+    if (apiSearchTerm.value) {
+      params.search = apiSearchTerm.value
+      params.search_field = apiSearchField.value
+    }
+    if (apiIsActive.value !== null) params.is_active = apiIsActive.value
+    if (apiPaymentTerms.value) params.payment_terms = apiPaymentTerms.value
+    const response = await $fetch<any>('/api/suppliers/providers', { query: params })
+    return {
       data: response.data || [],
       total: response.total || 0,
-      stats: response.stats || null
-    })
-  }
-);
+      stats: response.stats || null,
+    }
+  },
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
-// Inject refresh handler setter from layout
-const { setRefreshHandler } = useLayoutActions()
+const isLoading = computed(() => queryStatus.value === 'loading')
 
-// Register refresh handler for mobile bottom nav and desktop header
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(refetch)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
 })
 
 // Computed properties for data and pagination
@@ -327,10 +328,6 @@ const handleSort = (field) => {
 
 
 
-// Manual refresh on tenant change to ensure data loading
-onTenantChange(async () => {
-  await refresh()
-})
 
 
 

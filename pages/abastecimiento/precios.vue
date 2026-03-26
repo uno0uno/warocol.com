@@ -137,7 +137,7 @@ import {
 import { ref, computed } from 'vue'
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 // Reactive state for API parameters
 const currentPage = ref(1);
@@ -146,38 +146,46 @@ const apiSearchTerm = ref('');
 const apiCategory = ref(null);
 const apiSupplierId = ref(null);
 
-// useFetch for ingredients
-const { data: ingredientsData, pending: isLoading, error: fetchError, refresh } = useFetch('/api/suppliers/ingredients', {
-  server: false,
-  immediate: true,
-  watch: [currentTenant, currentPage, itemsPerPage, apiSearchTerm, apiCategory, apiSupplierId],
-  query: computed(() => {
-    const params = {
+// useQuery for ingredients
+const { data: ingredientsData, status: queryStatus, refetch } = useQuery({
+  key: () => ['suppliers', 'ingredients-prices', currentTenant.value?.id, {
+    page: currentPage.value,
+    limit: itemsPerPage.value,
+    search: apiSearchTerm.value || null,
+    category: apiCategory.value,
+    supplier: apiSupplierId.value,
+  }],
+  query: () => {
+    const params: any = {
       page: currentPage.value,
       limit: itemsPerPage.value,
-    };
-    if (apiSearchTerm.value) params.search = apiSearchTerm.value;
-    if (apiCategory.value) params.category = apiCategory.value;
-    if (apiSupplierId.value) params.supplier_id = apiSupplierId.value;
-    return params;
-  }),
-  default: () => ({ data: [], total: 0 }),
-  transform: (response) => ({
-    data: response.data || [],
-    total: response.total || 0,
-  }),
-});
+    }
+    if (apiSearchTerm.value) params.search = apiSearchTerm.value
+    if (apiCategory.value) params.category = apiCategory.value
+    if (apiSupplierId.value) params.supplier_id = apiSupplierId.value
+    return $fetch('/api/suppliers/ingredients', { params })
+  },
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+const isLoading = computed(() => queryStatus.value === 'loading')
+
+// Reset page on tenant change
+watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
 
 // Computed properties for data
 const ingredients = computed(() => ingredientsData.value?.data || []);
 const totalIngredients = computed(() => ingredientsData.value?.total || 0);
 
 // Inject refresh handler setter from layout
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 
-// Register refresh handler for mobile bottom nav and desktop header
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(refetch)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
 })
 
 // Summary data (can be computed from fetched data later)

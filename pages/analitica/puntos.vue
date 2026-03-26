@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import type { WaroRule } from '~/composables/useWarosConfig'
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText } = useLayoutActions()
-const { onTenantChange } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 const {
   rules,
@@ -71,7 +71,7 @@ const handleRefresh = async () => {
   await fetchRules()
 }
 
-onTenantChange(handleRefresh)
+watch(() => currentTenant.value?.id, handleRefresh)
 
 onMounted(async () => {
   if (setRefreshHandler) setRefreshHandler(handleRefresh)

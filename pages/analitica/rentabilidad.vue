@@ -5,7 +5,7 @@ import { format as fnsFormat, formatDistanceToNow } from 'date-fns'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText } = useLayoutActions()
-const { onTenantChange } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 const lastUpdate = ref<Date>(new Date())
 const lastUpdateText = computed(() => formatDistanceToNow(lastUpdate.value, { addSuffix: true, locale: es }))
@@ -35,41 +35,43 @@ const dateRange = computed(() => {
   return { from: fnsFormat(from, 'yyyy-MM-dd'), to: fnsFormat(to, 'yyyy-MM-dd') }
 })
 
-const { data: foodCostData, pending: foodCostLoading, refresh: refreshFoodCost } = useAsyncData(
-  'rentabilidad-food-cost',
-  () => $fetch('/api/analytics/food-cost', {
+const { data: foodCostData, status: foodCostStatus, refetch: refetchFoodCost } = useQuery({
+  key: () => ['analytics', 'food-cost', currentTenant.value?.id, { from: dateRange.value.from, to: dateRange.value.to }],
+  query: () => $fetch('/api/analytics/food-cost', {
     params: {
       date_from: dateRange.value.from || undefined,
       date_to: dateRange.value.to || undefined
     }
   }),
-  { server: false, lazy: true, default: () => ({ data: null }) }
-)
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
-const { data: menuAnalysisData, pending: menuLoading, refresh: refreshMenuAnalysis } = useAsyncData(
-  'rentabilidad-menu-analysis',
-  () => $fetch('/api/analytics/menu-analysis', {
+const { data: menuAnalysisData, status: menuStatus, refetch: refetchMenuAnalysis } = useQuery({
+  key: () => ['analytics', 'menu-analysis', currentTenant.value?.id, { from: dateRange.value.from, to: dateRange.value.to }],
+  query: () => $fetch('/api/analytics/menu-analysis', {
     params: {
       date_from: dateRange.value.from || undefined,
       date_to: dateRange.value.to || undefined,
       limit: 200
     }
   }),
-  { server: false, lazy: true, default: () => ({ data: null }) }
-)
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
-const isLoading = computed(() => foodCostLoading.value || menuLoading.value)
+const isLoading = computed(() => foodCostStatus.value === 'loading' || menuStatus.value === 'loading')
 
 const isUnlocked = computed(() => !!(foodCostData.value?.data || menuAnalysisData.value?.data))
 
 const handleRefresh = async () => {
-  await Promise.all([refreshFoodCost(), refreshMenuAnalysis()])
+  await Promise.all([refetchFoodCost(), refetchMenuAnalysis()])
   lastUpdate.value = new Date()
 }
 
-watch(dateRangeDates, async (val) => {
+// Update lastUpdate when date changes (reactive key handles the actual refetch)
+watch(dateRangeDates, (val) => {
   if (!val || (val.length === 2 && val[0] && val[1])) {
-    await Promise.all([refreshFoodCost(), refreshMenuAnalysis()])
     lastUpdate.value = new Date()
   }
 })
@@ -78,14 +80,12 @@ watch(lastUpdate, () => {
   if (setLastUpdateText) setLastUpdateText(lastUpdateText.value)
 })
 
-onTenantChange(handleRefresh)
-
 onMounted(() => {
   if (setRefreshHandler) setRefreshHandler(handleRefresh)
   if (setLastUpdateText) setLastUpdateText(lastUpdateText.value)
 })
 onUnmounted(() => {
-  if (setRefreshHandler) clearRefreshHandler(handleRefresh)
+  if (clearRefreshHandler) clearRefreshHandler(handleRefresh)
   if (setLastUpdateText) setLastUpdateText(undefined)
 })
 </script>

@@ -161,7 +161,7 @@ import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 useHead({ title: 'Movimientos de Inventario' })
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 // State
 const searchQuery = ref('')
@@ -173,72 +173,53 @@ const dateFilter = ref('')
 const sortField = ref('')
 const sortDirection = ref('desc')
 
-// Load ingredients for filter
-const { data: ingredientsData } = useAsyncData(
-  `ingredients-list-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/suppliers/ingredients', {
-    params: {
-      limit: INGREDIENTS_FETCH_LIMIT
-    }
-  }),
-  {
-    server: false,
-    watch: [currentTenant]
-  }
-)
+// Load ingredients for filter (static per tenant)
+const { data: ingredientsData } = useQuery({
+  key: () => ['inventory', 'ingredients-lookup', currentTenant.value?.id],
+  query: () => $fetch('/api/suppliers/ingredients', { params: { limit: INGREDIENTS_FETCH_LIMIT } }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
 const ingredients = computed(() => {
-  if (!ingredientsData.value?.data) return []
-  return ingredientsData.value.data.map(item => ({
+  if (!(ingredientsData.value as any)?.data) return []
+  return (ingredientsData.value as any).data.map((item: any) => ({
     id: item.id,
     name: item.name
-  })).sort((a, b) => a.name.localeCompare(b.name))
+  })).sort((a: any, b: any) => a.name.localeCompare(b.name))
 })
 
-// Compute filter parameters for API
-const apiParams = computed(() => {
-  const params: any = {
-    limit: 500,
-    movement_type: movementTypeFilter.value || undefined,
-    ingredient_id: ingredientFilter.value || undefined
+// Compute date params from filter string
+const dateParts = computed(() => {
+  if (!dateFilter.value) return {}
+  if (dateFilter.value.includes(' to ')) {
+    const [start, end] = dateFilter.value.split(' to ')
+    return { start_date: start, end_date: end }
   }
+  return { start_date: dateFilter.value, end_date: dateFilter.value }
+})
 
-  // Parse date filter (format: "YYYY-MM-DD to YYYY-MM-DD" or "YYYY-MM-DD")
-  if (dateFilter.value) {
-    if (dateFilter.value.includes(' to ')) {
-      const [start, end] = dateFilter.value.split(' to ')
-      params.start_date = start
-      params.end_date = end
-    } else {
-      params.start_date = dateFilter.value
-      params.end_date = dateFilter.value
+// Load movements data from API — reactive to tenant + filters
+const { data: movementsData, status: queryStatus, refetch } = useQuery({
+  key: () => ['inventory', 'movements', currentTenant.value?.id, {
+    type: movementTypeFilter.value || null,
+    ingredient: ingredientFilter.value || null,
+    date: dateFilter.value || null,
+  }],
+  query: () => $fetch('/api/inventory/movements', {
+    params: {
+      limit: 500,
+      movement_type: movementTypeFilter.value || undefined,
+      ingredient_id: ingredientFilter.value || undefined,
+      ...dateParts.value,
     }
-  }
-
-  return params
-})
-
-// Load movements data from API
-const { data: movementsData, pending: isLoading, refresh } = useAsyncData(
-  `inventory-movements-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/inventory/movements', {
-    params: apiParams.value
   }),
-  {
-    server: false,
-    watch: [currentTenant]
-  }
-)
-
-// Watch filters and refresh data
-watch([ingredientFilter, movementTypeFilter, dateFilter], () => {
-  refresh()
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
 })
 
-// Refresh on tenant change
-onTenantChange(async () => {
-  await refresh()
-})
+const isLoading = computed(() => queryStatus.value === 'loading')
+// Key change on filter update triggers automatic refetch — no manual watch needed
 
 const movements = computed(() => movementsData.value?.data || [])
 
@@ -288,10 +269,8 @@ const handleSearch = () => {
   // Search is handled by computed filteredMovements
 }
 
-// Apply filters
-const applyFilters = () => {
-  refresh()
-}
+// Apply filters — reactive key triggers refetch automatically
+const applyFilters = () => {}
 
 // Clear filters
 const clearFilters = () => {
@@ -299,7 +278,6 @@ const clearFilters = () => {
   ingredientFilter.value = ''
   movementTypeFilter.value = ''
   dateFilter.value = ''
-  refresh()
 }
 
 // Table columns configuration
@@ -418,8 +396,11 @@ const formatCurrency = (value: number) => {
 }
 
 // Set refresh handler for layout
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(refetch)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
 })
 </script>
