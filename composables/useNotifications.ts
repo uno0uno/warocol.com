@@ -1,4 +1,5 @@
 import { ref, computed, readonly, watch } from 'vue'
+import { useQuery, useMutation, useQueryCache } from '@pinia/colada'
 import { useTenantsStore } from '~/stores/tenants'
 
 export interface Notification {
@@ -10,8 +11,11 @@ export interface Notification {
   created_at: string
 }
 
+// Module-level cache ref — captured from first setup() call, used by SSE callback
+// (SSE onmessage runs outside Vue reactivity, so useQueryCache() cannot be called there)
+let _queryCache: ReturnType<typeof useQueryCache> | null = null
+
 // Singleton state — shared across all callers, prevents multiple SSE connections
-const notifications = ref<Notification[]>([])
 const initialized = ref(false)
 const isTenantResetting = ref(false)
 let eventSource: EventSource | null = null
@@ -19,38 +23,35 @@ let connectionRefCount = 0
 let tenantWatcherSetup = false
 
 export const useNotifications = () => {
-  const unreadCount = computed(() => notifications.value.filter(n => !n.read_at).length)
+  // Capture query cache for SSE callback — must be called inside setup() context
+  const queryCache = useQueryCache()
+  if (!_queryCache) _queryCache = queryCache
 
-  const fetchNotifications = async () => {
-    try {
+  const { data } = useQuery({
+    key: ['notifications'],
+    query: async () => {
       const response = await $fetch<{ success: boolean; data: Omit<Notification, 'read_at'>[] }>(
         '/api/notifications'
       )
-      if (response.success) {
-        notifications.value = response.data.map(n => ({ ...n, read_at: null }))
-      }
-    } catch (err) {
-      console.error('[useNotifications] Error fetching notifications:', err)
-    }
-  }
+      return response.data.map(n => ({ ...n, read_at: null }))
+    },
+  })
+
+  // Wrap to maintain Notification[] (non-undefined) contract — no consumer changes needed
+  const notifications = computed(() => data.value ?? [])
+  const unreadCount = computed(() => notifications.value.filter(n => !n.read_at).length)
 
   const connect = () => {
     if (!process.client) return
-    if (eventSource) return // Already connected — singleton guard only
+    if (eventSource) return // Already connected — singleton guard
 
     eventSource = new EventSource('/api/notifications/stream', { withCredentials: true })
 
     eventSource.onmessage = async (event) => {
       if (!event.data || event.data.startsWith(':')) return // ignore heartbeat comments
-      const prevCount = notifications.value.length
-      await fetchNotifications()
-      if (notifications.value.length > prevCount) {
-        try {
-          const chime = new Audio('/sounds/order-confirmed.wav')
-          chime.volume = 0.2
-          chime.play().catch(() => { }) // silently ignore autoplay block
-        } catch { }
-      }
+      // Invalidate cache — Pinia Colada refetches automatically
+      // Sound + toast are handled by MobileOrderToast.vue via its length watcher
+      await _queryCache?.invalidateQueries({ key: ['notifications'] })
     }
 
     eventSource.onerror = () => {
@@ -64,21 +65,19 @@ export const useNotifications = () => {
       eventSource.close()
       eventSource = null
       connectionRefCount = 0
-      notifications.value = []
+      _queryCache?.setQueryData(['notifications'], undefined)
       initialized.value = false
     }
   }
 
-  // Hard-resets SSE and state on tenant change — bypasses ref-count guard intentionally
-  const resetForTenantChange = async () => {
+  // Hard-resets SSE on tenant change — data refresh handled by tenants.ts bulk invalidation
+  const resetForTenantChange = () => {
     isTenantResetting.value = true
     if (eventSource) {
       eventSource.close()
       eventSource = null
     }
     initialized.value = false
-    notifications.value = []
-    await fetchNotifications()
     connect()
     isTenantResetting.value = false
   }
@@ -86,7 +85,6 @@ export const useNotifications = () => {
   const init = async () => {
     if (!process.client) return
     connectionRefCount++ // always track this caller (fixes ref-count mismatch on re-navigation)
-    await fetchNotifications() // always fetch fresh data (not guarded by initialized)
     if (!initialized.value) {
       initialized.value = true
       connect() // open SSE only once
@@ -99,37 +97,51 @@ export const useNotifications = () => {
     const tenantsStore = useTenantsStore()
     watch(
       () => tenantsStore.selectedTenant?.id,
-      async (newId, oldId) => {
+      (newId, oldId) => {
         if (newId && newId !== oldId) {
-          await resetForTenantChange()
+          resetForTenantChange()
         }
       }
     )
   }
 
-  const markAsRead = async (id: string) => {
-    try {
-      await $fetch(`/api/notifications/${id}/read`, { method: 'PATCH' })
-      const notification = notifications.value.find(n => n.id === id)
-      if (notification) {
-        notification.read_at = new Date().toISOString()
-      }
-    } catch (err) {
-      console.error('[useNotifications] Error marking notification as read:', err)
-    }
-  }
+  const markAsReadMutation = useMutation({
+    mutation: (id: string) =>
+      $fetch(`/api/notifications/${id}/read`, { method: 'PATCH' }),
+    onMutate: (id) => {
+      const prev = queryCache.getQueryData<Notification[]>(['notifications'])
+      queryCache.setQueryData(
+        ['notifications'],
+        (prev ?? []).map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n)
+      )
+      return { prev }
+    },
+    onError: (_err, _id, ctx) => {
+      queryCache.setQueryData(['notifications'], ctx?.prev)
+    },
+    onSettled: () => queryCache.invalidateQueries({ key: ['notifications'] }),
+  })
 
-  const markAllRead = async () => {
-    try {
-      await $fetch('/api/notifications/read-all', { method: 'POST' })
+  const markAllReadMutation = useMutation({
+    mutation: () =>
+      $fetch('/api/notifications/read-all', { method: 'POST' }),
+    onMutate: () => {
+      const prev = queryCache.getQueryData<Notification[]>(['notifications'])
       const now = new Date().toISOString()
-      notifications.value.forEach(n => {
-        if (!n.read_at) n.read_at = now
-      })
-    } catch (err) {
-      console.error('[useNotifications] Error marking all notifications as read:', err)
-    }
-  }
+      queryCache.setQueryData(
+        ['notifications'],
+        (prev ?? []).map(n => n.read_at ? n : { ...n, read_at: now })
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      queryCache.setQueryData(['notifications'], ctx?.prev)
+    },
+    onSettled: () => queryCache.invalidateQueries({ key: ['notifications'] }),
+  })
+
+  const markAsRead = (id: string) => markAsReadMutation.mutateAsync(id)
+  const markAllRead = () => markAllReadMutation.mutateAsync()
 
   return {
     notifications: readonly(notifications),
