@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
@@ -11,7 +11,7 @@ definePageMeta({
 useHead({ title: 'Ventas' })
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 // Export modal state
 const showExportModal = ref(false)
@@ -64,21 +64,33 @@ const dateRange = computed(() => {
 // Pagination state
 const PAGE_SIZE = 25
 const currentPage = ref(1)
-const ordersOffset = computed(() => (currentPage.value - 1) * PAGE_SIZE)
 
+// Applied search — only updated on button click (prevents live-search key churn)
+const appliedSearch = ref('')
 
 // Metrics removed based on request
 
 
 
 // Load orders from API
-const { data: ordersData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  'ventas-orders-list',
-  () => $fetch('/api/orders', {
+const { data: ordersData, status: queryStatus, error: fetchError, refetch } = useQuery({
+  key: () => ['orders', currentTenant.value?.id, {
+    limit: PAGE_SIZE,
+    offset: (currentPage.value - 1) * PAGE_SIZE,
+    search: appliedSearch.value || null,
+    searchField: apiSearchField.value,
+    paymentMethod: paymentMethodFilter.value,
+    status: statusFilter.value,
+    sortField: sortField.value,
+    sortDirection: sortDirection.value,
+    dateFrom: dateRange.value.from,
+    dateTo: dateRange.value.to,
+  }],
+  query: () => $fetch('/api/orders', {
     params: {
       limit: PAGE_SIZE,
-      offset: ordersOffset.value,
-      search: localSearchTerm.value || undefined,
+      offset: (currentPage.value - 1) * PAGE_SIZE,
+      search: appliedSearch.value || undefined,
       search_field: apiSearchField.value || undefined,
       payment_method: paymentMethodFilter.value || undefined,
       status: statusFilter.value || undefined,
@@ -88,24 +100,20 @@ const { data: ordersData, pending: isLoading, error: fetchError, refresh } = use
       date_to: dateRange.value.to || undefined
     }
   }),
-  {
-    server: false,
-    lazy: true,
-    default: () => ({ data: [], pagination: { total: 0, limit: PAGE_SIZE, offset: 0, has_more: false } })
-  }
-)
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+const isLoading = computed(() => queryStatus.value === 'loading')
 
-// Refresh on tenant change — single source of truth (no watch: [currentTenant] to avoid double fetch)
-onTenantChange(async () => {
+// Reset page on tenant change — key change triggers automatic refetch
+watch(() => currentTenant.value?.id, () => {
   currentPage.value = 1
-  await refresh()
 })
 
-// Refresh when date range changes (only when both dates selected or cleared)
+// Reset page when date range changes (only when both dates selected or cleared)
 watch(dateRangeDates, (val) => {
   if (!val || (val.length === 2 && val[0] && val[1])) {
     currentPage.value = 1
-    refresh()
   }
 })
 
@@ -118,7 +126,6 @@ const ordersTotal = computed(() => ordersData.value?.pagination?.total ?? 0)
 
 const goToPage = (page: number) => {
   currentPage.value = Math.max(1, Math.min(page, ordersTotalPages.value))
-  refresh()
 }
 
 // Metrics computed
@@ -157,11 +164,12 @@ const ordersTableColumns: Column[] = [
 // Methods
 const performSearch = () => {
   currentPage.value = 1
-  refresh()
+  appliedSearch.value = localSearchTerm.value
 }
 
 const clearFilters = () => {
   localSearchTerm.value = ''
+  appliedSearch.value = ''
   apiSearchField.value = 'order_number'
   paymentMethodFilter.value = null
   statusFilter.value = null
@@ -169,7 +177,6 @@ const clearFilters = () => {
   sortField.value = 'order_date'
   sortDirection.value = 'desc'
   currentPage.value = 1
-  refresh()
 }
 
 // Export functionality
@@ -215,7 +222,6 @@ const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'd
   sortField.value = field
   sortDirection.value = direction
   currentPage.value = 1
-  refresh()
 }
 
 const formatCurrency = (value: number) => {
@@ -270,9 +276,8 @@ const viewOrderDetails = (order: any) => {
 
 // Set refresh handler for layout
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
-const _refreshFn = async () => { await refresh() }
-onMounted(() => { setRefreshHandler(_refreshFn) })
-onUnmounted(() => { clearRefreshHandler(_refreshFn) })
+onMounted(() => { setRefreshHandler(refetch) })
+onUnmounted(() => { clearRefreshHandler(refetch) })
 </script>
 
 <template>
@@ -282,7 +287,7 @@ onUnmounted(() => { clearRefreshHandler(_refreshFn) })
       <div class="text-center">
         <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar las ventas.</p>
         <p class="text-sm text-text-secondary">{{ fetchError.message }}</p>
-        <button @click="refresh" class="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
+        <button @click="refetch" class="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
           Reintentar
         </button>
       </div>
@@ -342,7 +347,7 @@ onUnmounted(() => { clearRefreshHandler(_refreshFn) })
         <!-- Payment Method Filter -->
         <select
           v-model="paymentMethodFilter"
-          @change="performSearch"
+          @change="() => { currentPage.value = 1 }"
           class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px]"
         >
           <option :value="null">Método pago</option>
@@ -354,7 +359,7 @@ onUnmounted(() => { clearRefreshHandler(_refreshFn) })
         <!-- Status Filter -->
         <select
           v-model="statusFilter"
-          @change="performSearch"
+          @change="() => { currentPage.value = 1 }"
           class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px]"
         >
           <option :value="null">Estado</option>
@@ -437,7 +442,7 @@ onUnmounted(() => { clearRefreshHandler(_refreshFn) })
             <div class="flex gap-2">
               <select
                 v-model="paymentMethodFilter"
-                @change="performSearch"
+                @change="() => { currentPage.value = 1 }"
                 class="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-text-primary text-sm"
               >
                 <option :value="null">Método de pago</option>
@@ -447,7 +452,7 @@ onUnmounted(() => { clearRefreshHandler(_refreshFn) })
               </select>
               <select
                 v-model="statusFilter"
-                @change="performSearch"
+                @change="() => { currentPage.value = 1 }"
                 class="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-text-primary text-sm"
               >
                 <option :value="null">Estado</option>

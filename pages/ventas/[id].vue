@@ -8,7 +8,7 @@ definePageMeta({
 useHead({ title: 'Detalle de Venta' })
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 const route = useRoute()
 const router = useRouter()
@@ -22,35 +22,29 @@ const itemsToDelete = ref<Set<string>>(new Set())
 const modifiersToDelete = ref<Map<string, Set<string>>>(new Map())
 
 // Load order details
-const { data: orderData, pending: isLoading, error: fetchError, refresh: refreshOrder } = useAsyncData(
-  `order-${orderId.value}-${currentTenant.value?.id || 'default'}`,
-  async () => {
+const { data: orderData, status: orderStatus, error: fetchError, refetch: refetchOrder } = useQuery({
+  key: () => ['orders', currentTenant.value?.id, orderId.value],
+  query: async () => {
     const response = await $fetch(`/api/orders/${orderId.value}`) as any
     return response.data
   },
-  {
-    server: false,
-    watch: [currentTenant]
-  }
-)
+  enabled: () => !!currentTenant.value && !!orderId.value,
+  staleTime: 60_000,
+})
 
 // Load order items
-const { data: itemsData, pending: itemsLoading, refresh: refreshItems } = useAsyncData(
-  `order-items-${orderId.value}-${currentTenant.value?.id || 'default'}`,
-  async () => {
+const { data: itemsData, status: itemsStatus, refetch: refetchItems } = useQuery({
+  key: () => ['orders', currentTenant.value?.id, orderId.value, 'items'],
+  query: async () => {
     const response = await $fetch(`/api/orders/${orderId.value}/items`) as any
     return response.data
   },
-  {
-    server: false,
-    watch: [currentTenant]
-  }
-)
-
-// Refresh on tenant change
-onTenantChange(async () => {
-  await Promise.all([refreshOrder(), refreshItems()])
+  enabled: () => !!currentTenant.value && !!orderId.value,
+  staleTime: 60_000,
 })
+
+const isLoading = computed(() => orderStatus.value === 'loading')
+const itemsLoading = computed(() => itemsStatus.value === 'loading')
 
 const order = computed(() => {
   if (!orderData.value) return null
@@ -218,7 +212,7 @@ const saveChanges = async () => {
     }
 
     // Refresh data
-    await Promise.all([refreshOrder(), refreshItems()])
+    await Promise.all([refetchOrder(), refetchItems()])
 
     isEditMode.value = false
     itemsToDelete.value = new Set()

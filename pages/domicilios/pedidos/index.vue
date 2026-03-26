@@ -11,30 +11,28 @@ useHead({ title: 'Pedidos Online — WARO' })
 const { formatDateTime, formatCurrency } = useFormatters()
 
 // Tenant reactivity
-const { onTenantChange, currentTenant } = useTenantReactive()
+const { currentTenant } = useTenantReactive()
 
 // Sort state
 const sortField = ref('order_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 
 // Data fetching
-const { data: ordersData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  `online-orders-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/online/orders', {
+const { data: ordersData, status, error: fetchError, refetch } = useQuery({
+  key: () => ['online-orders', currentTenant.value?.id, {
+    sortField: sortField.value,
+    sortDirection: sortDirection.value,
+  }],
+  query: () => $fetch('/api/online/orders', {
     params: {
       sort_field: sortField.value,
       sort_direction: sortDirection.value
     }
   }),
-  {
-    server: false,
-    watch: [currentTenant]
-  }
-)
-
-onTenantChange(async () => {
-  await refresh()
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
 })
+const isLoading = computed(() => status.value === 'loading')
 
 // Computed orders list
 const orders = computed(() => {
@@ -65,7 +63,6 @@ const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
 const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'desc' }) => {
   sortField.value = field
   sortDirection.value = direction
-  refresh()
 }
 
 const viewOrder = (order: any) => {
@@ -73,8 +70,8 @@ const viewOrder = (order: any) => {
 }
 
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
-onMounted(() => { setRefreshHandler(refresh) })
-onUnmounted(() => { clearRefreshHandler(refresh) })
+onMounted(() => { setRefreshHandler(refetch) })
+onUnmounted(() => { clearRefreshHandler(refetch) })
 </script>
 
 <template>
@@ -90,7 +87,7 @@ onUnmounted(() => { clearRefreshHandler(refresh) })
         <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar los pedidos.</p>
         <p class="text-sm text-text-secondary">{{ fetchError.message }}</p>
         <button
-          @click="refresh"
+          @click="refetch"
           class="mt-4 min-h-[44px] px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           Reintentar

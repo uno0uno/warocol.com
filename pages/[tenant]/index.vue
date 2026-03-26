@@ -37,20 +37,18 @@ const pendingTenant = ref<{ id: string; name: string } | null>(null)
 const isProductDrawerOpen = ref(false)
 const selectedProduct = ref<Record<string, any> | null>(null)
 
-// SSR data fetching — await ensures data is ready before rendering on server
-const { data: profileData, error: profileError, pending: pendingProfile, refresh: refreshProfile } = await useAsyncData(
-  `restaurant-${tenantSlug}`,
-  () => $fetch(`/api/public/restaurant/${tenantSlug}`),
-  { server: true }
-)
+// SSR data fetching — Pinia Colada + @pinia/colada-nuxt handles server-side prefetch automatically
+const { data: profileData, status: profileStatus, error: profileError, refetch: refetchProfile } = useQuery({
+  key: () => ['restaurant', 'public', tenantSlug as string],
+  query: () => $fetch(`/api/public/restaurant/${tenantSlug}`),
+})
 
-const { data: menuData, error: menuError, pending: pendingMenu, refresh: refreshMenu } = await useAsyncData(
-  `menu-${tenantSlug}`,
-  () => $fetch(`/api/public/restaurant/${tenantSlug}/menu`),
-  { server: true }
-)
+const { data: menuData, status: menuStatus, error: menuError, refetch: refetchMenu } = useQuery({
+  key: () => ['restaurant', 'public', tenantSlug as string, 'menu'],
+  query: () => $fetch(`/api/public/restaurant/${tenantSlug}/menu`),
+})
 
-const restaurant = computed(() => profileData.value?.data || null)
+const restaurant = computed(() => (profileData.value as any)?.data || null)
 
 // Declared at setup scope so $fetch Nuxt auto-import is in context.
 const recoverCartSession = async (tenantId: string) => {
@@ -87,9 +85,9 @@ watch(restaurant, (val: any) => {
   cartStore.setRecoveryPromise(recoverCartSession(val.tenant_id))
 }, { immediate: true })
 
-const categories = computed(() => menuData.value?.data?.categories || [])
-const products = computed(() => menuData.value?.data?.products || [])
-const isLoading = computed(() => pendingProfile.value || pendingMenu.value)
+const categories = computed(() => (menuData.value as any)?.data?.categories || [])
+const products = computed(() => (menuData.value as any)?.data?.products || [])
+const isLoading = computed(() => profileStatus.value === 'loading' || menuStatus.value === 'loading')
 const error = computed(() => profileError.value || menuError.value)
 
 // Format business hours for schema.org
@@ -181,7 +179,7 @@ const handleOpenProductFromCart = (product: { id: string; name: string; price: n
 
 // Handle checkout - refresh profile + menu, purge unavailable items, block if closed or cart empty
 const handleCheckout = async () => {
-  await Promise.all([refreshProfile(), refreshMenu()])
+  await Promise.all([refetchProfile(), refetchMenu()])
   if (!(restaurant.value?.is_currently_open ?? true)) return
 
   // Purge items that are no longer available online (same logic as handleCartOpen)
@@ -205,7 +203,7 @@ const handleCheckout = async () => {
 // Handle cart open - refresh profile + purge products no longer available online
 const handleCartOpen = async () => {
   isCartOpen.value = true
-  refreshProfile()
+  refetchProfile()
 
   // Products list only contains is_available_online=true items (filtered by backend)
   // Any cart item missing from the current list has been taken offline since it was added
@@ -282,7 +280,7 @@ const cancelSwitch = () => {
         <PublicMenu
           :categories="categories"
           :products="products"
-          :is-loading="pendingMenu"
+          :is-loading="menuStatus === 'loading'"
           :restaurant-open="restaurant.is_currently_open ?? true"
           @product-click="handleProductClick"
         />

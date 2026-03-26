@@ -6,16 +6,24 @@ useHead({ title: 'Detalle Pedido — WARO' })
 
 const route = useRoute()
 const router = useRouter()
-const orderId = route.params.id as string
+const orderId = computed(() => route.params.id as string)
 const { formatDate, formatDateTime, formatCurrency } = useFormatters()
 
-const { data: orderResponse, pending: isLoading, error: fetchError, refresh: refreshOrder } =
-  useFetch(() => `/api/online/orders/${orderId}`, { server: false })
+const { data: orderResponse, status: orderStatus, error: fetchError, refetch: refetchOrder } = useQuery({
+  key: () => ['online-orders', orderId.value],
+  query: () => $fetch(`/api/online/orders/${orderId.value}`),
+  enabled: () => !!orderId.value,
+})
 
 const order = computed(() => (orderResponse.value as any)?.data ?? null)
+const isLoading = computed(() => orderStatus.value === 'loading')
 
-const { data: historyResponse, pending: isHistoryLoading, error: historyError, refresh: refreshHistory } =
-  useFetch(() => `/api/online/orders/${orderId}/status-history`, { server: false })
+const { data: historyResponse, status: historyStatus, error: historyError, refetch: refetchHistory } = useQuery({
+  key: () => ['online-orders', orderId.value, 'status-history'],
+  query: () => $fetch(`/api/online/orders/${orderId.value}/status-history`),
+  enabled: () => !!orderId.value,
+})
+const isHistoryLoading = computed(() => historyStatus.value === 'loading')
 
 const statusHistory = computed(() => (historyResponse.value as any)?.data ?? [])
 
@@ -31,8 +39,8 @@ const updateStatus = async (newStatus: string, extra: Record<string, unknown> = 
       method: 'PATCH',
       body: { new_status: newStatus, ...extra },
     })
-    await refreshOrder()
-    await refreshHistory()
+    await refetchOrder()
+    await refetchHistory()
   } catch (err: any) {
     statusUpdateError.value = err?.data?.detail ?? err?.message ?? 'Error al actualizar el estado'
   } finally {
