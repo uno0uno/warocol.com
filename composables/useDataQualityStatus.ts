@@ -1,37 +1,32 @@
-import { ref, readonly } from 'vue'
+/**
+ * Data Quality Status Composable
+ * Polls the analytics data-quality endpoint every 5 minutes.
+ *
+ * Migrated to Pinia Colada defineQuery — eliminates module-level singleton state
+ * (initialized flag, setInterval, module-level hasCritical ref).
+ * Tenant switching handled by reactive key. Polling lifecycle managed by Pinia Colada.
+ */
+export const useDataQualityStatus = defineQuery(() => {
+  const { currentTenant } = useTenantReactive()
 
-// Singleton state — shared across all callers, one fetch for the whole session
-const hasCritical = ref(false)
-let initialized = false
-let pollingInterval: ReturnType<typeof setInterval> | null = null
+  const { data, status } = useQuery({
+    key: () => ['analytics', 'data-quality', currentTenant.value?.id ?? 'default'],
+    query: async () => {
+      const res = await $fetch<any>('/api/analytics/data-quality')
+      // Preserve dual response shape: { data: { critical: N } } or { critical: N }
+      return (res?.data?.critical ?? res?.critical ?? 0) as number
+    },
+    refetchInterval: 5 * 60_000, // 5 minutes — replaces setInterval
+    enabled: () => !!currentTenant.value,
+  })
 
-const fetchStatus = async () => {
-  try {
-    const res = await $fetch<{ data?: { critical: number }; critical?: number }>('/api/analytics/data-quality')
-    const critical = (res as any)?.data?.critical ?? (res as any)?.critical ?? 0
-    hasCritical.value = critical > 0
-  } catch {
-    // Silently fail — do not break nav if the endpoint is unreachable
-  }
-}
+  const hasCritical = computed(() => (data.value ?? 0) > 0)
 
-export const useDataQualityStatus = () => {
-  if (!initialized) {
-    initialized = true
-
-    // Initial fetch
-    fetchStatus()
-
-    // Poll every 5 minutes
-    pollingInterval = setInterval(fetchStatus, 5 * 60 * 1000)
-
-    // Re-fetch when tenant changes
-    const { onTenantChange } = useTenantReactive()
-    onTenantChange(() => fetchStatus())
-  }
+  const refresh = () =>
+    useQueryCache().invalidateQueries({ key: ['analytics', 'data-quality'] })
 
   return {
     hasCriticalAlerts: readonly(hasCritical),
-    refresh: fetchStatus
+    refresh,
   }
-}
+})

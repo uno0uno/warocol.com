@@ -433,8 +433,9 @@
 </template>
 
 <script setup lang="ts">
-import type { WaroRule, TicketValueTier, PurchaseCountMilestone } from '~/composables/useWarosConfig'
-import { DEFAULT_CONFIGS } from '~/composables/useWarosConfig'
+import type { WaroRule, TicketValueTier, PurchaseCountMilestone } from '~/composables/warosConfigHelpers'
+import { DEFAULT_CONFIGS, getRuleMeta } from '~/composables/warosConfigHelpers'
+import { useWarosConfig } from '~/composables/useWarosConfig'
 
 interface Props {
   modelValue: boolean
@@ -449,7 +450,7 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const { updateRule, getRuleMeta, isSaving } = useWarosConfig()
+const { updateRule, isSaving } = useWarosConfig()
 
 const inputClass = 'h-10 w-full rounded-lg border-2 border-slate-200 bg-white px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 

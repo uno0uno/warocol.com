@@ -102,7 +102,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { WaroRule } from '~/composables/useWarosConfig'
+import type { WaroRule } from '~/composables/warosConfigHelpers'
+import { getRuleMeta, configSummary } from '~/composables/warosConfigHelpers'
 
 interface Props {
   rule: WaroRule
@@ -122,7 +123,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const { getRuleMeta, configSummary } = useWarosConfig()
+// getRuleMeta and configSummary imported directly from warosConfigHelpers above
 const meta = computed(() => getRuleMeta(props.rule.rule_type))
 const summary = computed(() => configSummary(props.rule))
 const icon = computed(() => meta.value.icon)
