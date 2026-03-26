@@ -44,7 +44,7 @@ const { data: itemsData, status: itemsStatus, asyncStatus: itemsAsyncStatus, ref
 })
 
 const isLoading = computed(() => !orderData.value && !fetchError.value)
-const itemsLoading = computed(() => itemsStatus.value === 'loading')
+const itemsLoading = computed(() => !itemsData.value)
 const isRefreshing = computed(() =>
   (orderAsyncStatus.value === 'loading' && orderData.value != null) ||
   (itemsAsyncStatus.value === 'loading' && itemsData.value != null)
@@ -387,7 +387,7 @@ onUnmounted(() => {
 
         <!-- Loading Items -->
         <div v-if="itemsLoading" class="flex items-center justify-center py-12">
-          <CommonsTheCustomLoader size="medium" />
+          <CommonsTheCustomLoader size="large" />
         </div>
 
         <!-- Items Table with Expandable Modifiers -->

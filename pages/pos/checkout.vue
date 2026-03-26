@@ -84,21 +84,33 @@ watch(selectedCustomer, async (customer) => {
   if (!customer || customer.phone_number === '0000000000') return
   insightsLoading.value = true
   activeAccordion.value = 'insights'
+
+  // Fetch insights + Waros in parallel so the right column doesn't fill in step by step.
+  const insightsPromise = (async () => {
+    try {
+      const res = await $fetch<{ data: CustomerInsights }>(`/api/customers/${customer.id}/insights`)
+      customerInsights.value = res.data
+      if (res.data.orders_count === 0) activeAccordion.value = 'summary'
+    } catch {
+      customerInsights.value = null
+      activeAccordion.value = 'summary'
+    } finally {
+      insightsLoading.value = false
+    }
+  })()
+
+  const warosPromise = Promise.allSettled([
+    fetchWarosSummary(customer.id),
+    fetchEstimate(Math.max(cartTotal.value, 1), customer.id)
+  ])
+
   try {
-    const res = await $fetch<{ data: CustomerInsights }>(`/api/customers/${customer.id}/insights`)
-    customerInsights.value = res.data
-    if (res.data.orders_count === 0) activeAccordion.value = 'summary'
-  } catch {
-    customerInsights.value = null
-    activeAccordion.value = 'summary'
+    await Promise.allSettled([insightsPromise, warosPromise])
   } finally {
-    insightsLoading.value = false
+    if (insightsLoading.value) {
+      insightsLoading.value = false
+    }
   }
-  // Fetch Waros data (non-blocking — fires after insights)
-  // Use Math.max(1, ...) so the probe always runs even with empty cart,
-  // allowing warosSystemEnabled to be set from the API response.
-  fetchWarosSummary(customer.id)
-  fetchEstimate(Math.max(cartTotal.value, 1), customer.id)
 })
 
 // Methods
@@ -198,12 +210,8 @@ const closeSuccessModal = () => {
 
 // Sincronizar carrito al backend cuando carga la página
 const syncCart = async () => {
-  // Si no hay items o ya está sincronizado, no hacer nada
+  // Si no hay items, no hacer nada
   if (posStore.cart.length === 0) {
-    isSyncingCart.value = false
-    return
-  }
-  if (posStore.cartId) {
     isSyncingCart.value = false
     return
   }
@@ -227,8 +235,8 @@ const syncCart = async () => {
 onMounted(async () => {
   setPageSubtitle('Checkout')
 
-  // Mostrar loader inmediatamente si necesitamos sincronizar
-  if (posStore.cart.length > 0 && !posStore.cartId) {
+  // Siempre regeneramos el carrito backend desde el estado local actual.
+  if (posStore.cart.length > 0) {
     isSyncingCart.value = true
   }
 
