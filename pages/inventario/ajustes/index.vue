@@ -7,6 +7,9 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
       <!-- Stats Cards -->
       <UiStats>
         <UiStatsCard
@@ -224,7 +227,7 @@ const dateParts = computed(() => {
 })
 
 // Load adjustments data from API
-const { data: adjustmentsData, status: queryStatus, refetch } = useQuery({
+const { data: adjustmentsData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['inventory', 'adjustments', currentTenant.value?.id, {
     ingredient: ingredientFilter.value || null,
     date: dateFilter.value || null,
@@ -242,6 +245,7 @@ const { data: adjustmentsData, status: queryStatus, refetch } = useQuery({
 })
 
 const isLoading = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && adjustmentsData.value != null)
 const adjustments = computed(() => adjustmentsData.value?.data || [])
 
 // Load stock data for suggestions

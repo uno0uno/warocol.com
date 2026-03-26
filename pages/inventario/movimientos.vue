@@ -7,6 +7,9 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
       <!-- Filters Bar -->
       <SharedFiltersBar
         v-model:search="searchQuery"
@@ -200,7 +203,7 @@ const dateParts = computed(() => {
 })
 
 // Load movements data from API — reactive to tenant + filters
-const { data: movementsData, status: queryStatus, refetch } = useQuery({
+const { data: movementsData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['inventory', 'movements', currentTenant.value?.id, {
     type: movementTypeFilter.value || null,
     ingredient: ingredientFilter.value || null,
@@ -219,6 +222,7 @@ const { data: movementsData, status: queryStatus, refetch } = useQuery({
 })
 
 const isLoading = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && movementsData.value != null)
 // Key change on filter update triggers automatic refetch — no manual watch needed
 
 const movements = computed(() => movementsData.value?.data || [])
