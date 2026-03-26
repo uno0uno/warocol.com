@@ -97,7 +97,7 @@ export const useTenantsStore = defineStore('tenants', () => {
   // ── Derived state ─────────────────────────────────────────────────────────────
   const hasTenants = computed(() => tenants.value.length > 0)
   const selectedTenantSlug = computed(() => selectedTenant.value?.slug ?? null)
-  const isLoading = computed(() => status.value === 'loading' || switchMutation.isPending.value)
+  const isLoading = computed(() => status.value === 'loading' || switchMutation.isLoading.value)
   const isBusinessProfileLoading = computed(() => profileStatus.value === 'loading')
 
   // ── selectTenant mutation ─────────────────────────────────────────────────────
