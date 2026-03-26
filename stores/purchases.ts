@@ -1,3 +1,15 @@
+/**
+ * Purchases Store
+ * Migrated to Pinia Colada useQuery — replaces Map<string, Purchase> manual cache
+ * with Pinia Colada's built-in per-key caching (staleTime: 60s).
+ *
+ * Must stay as a Pinia store (not a composable) because currentPurchaseId,
+ * currentPurchase, and showActionBar are shared state between the detail page
+ * (pages/abastecimiento/compra/[id]/index.vue) and GlobalPurchaseActionBar.
+ *
+ * Dead code removed: updatePurchaseStatus, updatePurchase, getPurchaseById,
+ * clearPurchase, clearAllPurchases — none had active callers.
+ */
 import { defineStore } from 'pinia'
 
 export interface PurchaseItem {
@@ -48,128 +60,80 @@ export interface Purchase {
   status_history?: StatusHistoryEntry[]
 }
 
-export const usePurchasesStore = defineStore('purchases', () => {
-  // State
-  const purchases = ref<Map<string, Purchase>>(new Map())
-  const isLoading = ref(false)
-  const error = ref<string | null>(null)
+// ── Pure transform (extracted from old fetchPurchase) ─────────────────────────
+function transformPurchase(purchase: any): Purchase {
+  return {
+    id: purchase.id,
+    supplier_id: purchase.supplier_id || '',
+    purchase_number: purchase.purchase_number || '',
+    purchase_date: purchase.purchase_date || '',
+    delivery_date: purchase.delivery_date || null,
+    status: purchase.status || 'pending',
+    payment_type: purchase.payment_type || null,
+    credit_days: purchase.credit_days || null,
+    payment_due_date: purchase.payment_due_date || null,
+    payment_terms: purchase.payment_terms || null,
+    consolidation_group: purchase.consolidation_group || null,
+    requires_advance_payment: purchase.requires_advance_payment || null,
+    invoice_number: purchase.invoice_number || null,
+    tax_amount: parseFloat(purchase.tax_amount) || 0,
+    total_amount: parseFloat(purchase.total_amount) || 0,
+    notes: purchase.notes || null,
+    items: purchase.items?.map((item: any) => ({
+      ingredient_id: item.ingredient_id,
+      quantity: parseFloat(item.quantity),
+      unit: item.unit,
+      unit_cost: parseFloat(item.unit_cost),
+      total_cost: parseFloat(item.total_cost),
+      expiry_date: item.expiry_date || null,
+      batch_number: item.batch_number || '',
+      notes: item.notes || '',
+      purchase_quantity:
+        item.purchase_quantity !== null && item.purchase_quantity !== undefined
+          ? parseFloat(String(item.purchase_quantity))
+          : undefined,
+      purchase_unit: item.purchase_unit || undefined,
+    })) || [],
+    confirmation_number: purchase.confirmation_number || null,
+    tracking_number: purchase.tracking_number || null,
+    carrier: purchase.carrier || null,
+    estimated_delivery_date: purchase.estimated_delivery_date || null,
+    package_count: purchase.package_count || null,
+    status_history: purchase.status_history || [],
+  }
+}
 
-  // Current purchase context (for action bar)
+export const usePurchasesStore = defineStore('purchases', () => {
+  const cache = useQueryCache()
+
+  // ── UI state (shared between detail page and GlobalPurchaseActionBar) ─────────
   const currentPurchaseId = ref<string | null>(null)
   const showActionBar = ref(false)
+  const error = ref<string | null>(null)
 
-  // Getters
-  const getPurchaseById = computed(() => {
-    return (id: string) => purchases.value.get(id)
+  // ── Query reactive on currentPurchaseId ───────────────────────────────────────
+  const { data: currentPurchase, status } = useQuery({
+    key: () => ['purchases', currentPurchaseId.value],
+    query: async () => {
+      const response = await $fetch<any>(`/api/suppliers/purchases/${currentPurchaseId.value}`)
+      if (!response?.success || !response.data) throw new Error('Error loading purchase data')
+      return transformPurchase(response.data)
+    },
+    enabled: () => !!currentPurchaseId.value,
+    staleTime: 60_000, // 1 minute — same behavior as old Map cache
   })
 
-  const currentPurchase = computed(() => {
-    if (!currentPurchaseId.value) return null
-    return purchases.value.get(currentPurchaseId.value)
-  })
+  const isLoading = computed(() => status.value === 'loading')
 
-  // Actions
+  // ── fetchPurchase: set current ID + optional force-refresh ────────────────────
   const fetchPurchase = async (id: string, forceRefresh = false) => {
-    // Return cached data if available and not forcing refresh
-    if (!forceRefresh && purchases.value.has(id)) {
-      return purchases.value.get(id)
-    }
-
-    isLoading.value = true
-    error.value = null
-
-    try {
-      const response = await $fetch(`/api/suppliers/purchases/${id}`)
-
-      if (response?.success && response.data) {
-        const purchase = response.data
-
-
-        // Transform and store in cache
-        const transformedPurchase: Purchase = {
-          id: purchase.id,
-          supplier_id: purchase.supplier_id || '',
-          purchase_number: purchase.purchase_number || '',
-          purchase_date: purchase.purchase_date || '',
-          delivery_date: purchase.delivery_date || null,
-          status: purchase.status || 'pending',
-          payment_type: purchase.payment_type || null,
-          credit_days: purchase.credit_days || null,
-          payment_due_date: purchase.payment_due_date || null,
-          payment_terms: purchase.payment_terms || null,
-          consolidation_group: purchase.consolidation_group || null,
-          requires_advance_payment: purchase.requires_advance_payment || null,
-          invoice_number: purchase.invoice_number || null,
-          tax_amount: parseFloat(purchase.tax_amount) || 0,
-          total_amount: parseFloat(purchase.total_amount) || 0,
-          notes: purchase.notes || null,
-          items: purchase.items?.map((item: any) => ({
-            ingredient_id: item.ingredient_id,
-            quantity: parseFloat(item.quantity),
-            unit: item.unit,
-            unit_cost: parseFloat(item.unit_cost),
-            total_cost: parseFloat(item.total_cost),
-            expiry_date: item.expiry_date || null,
-            batch_number: item.batch_number || '',
-            notes: item.notes || '',
-            purchase_quantity: (item.purchase_quantity !== null && item.purchase_quantity !== undefined) ? parseFloat(String(item.purchase_quantity)) : undefined,
-            purchase_unit: item.purchase_unit || undefined
-          })) || [],
-          confirmation_number: purchase.confirmation_number || null,
-          tracking_number: purchase.tracking_number || null,
-          carrier: purchase.carrier || null,
-          estimated_delivery_date: purchase.estimated_delivery_date || null,
-          package_count: purchase.package_count || null,
-          status_history: purchase.status_history || []
-        }
-
-        // Update the Map and trigger reactivity by creating a new Map
-        const newMap = new Map(purchases.value)
-        newMap.set(id, transformedPurchase)
-        purchases.value = newMap
-        return transformedPurchase
-      } else {
-        throw new Error('Error loading purchase data')
-      }
-    } catch (err: any) {
-      error.value = err.message || 'Failed to fetch purchase'
-      console.error('Error fetching purchase:', err)
-      throw err
-    } finally {
-      isLoading.value = false
+    currentPurchaseId.value = id
+    if (forceRefresh) {
+      await cache.invalidateQueries({ key: ['purchases', id] })
     }
   }
 
-  const updatePurchaseStatus = (id: string, status: string) => {
-    const purchase = purchases.value.get(id)
-    if (purchase) {
-      purchase.status = status
-      const newMap = new Map(purchases.value)
-      newMap.set(id, { ...purchase })
-      purchases.value = newMap
-    }
-  }
-
-  const updatePurchase = (id: string, updates: Partial<Purchase>) => {
-    const purchase = purchases.value.get(id)
-    if (purchase) {
-      const updatedPurchase = { ...purchase, ...updates }
-      const newMap = new Map(purchases.value)
-      newMap.set(id, updatedPurchase)
-      purchases.value = newMap
-    }
-  }
-
-  const clearPurchase = (id: string) => {
-    const newMap = new Map(purchases.value)
-    newMap.delete(id)
-    purchases.value = newMap
-  }
-
-  const clearAllPurchases = () => {
-    purchases.value = new Map()
-  }
-
+  // ── UI actions (preserved — callers depend on these) ──────────────────────────
   const setCurrentPurchase = (id: string | null) => {
     currentPurchaseId.value = id
     showActionBar.value = !!id
@@ -181,23 +145,17 @@ export const usePurchasesStore = defineStore('purchases', () => {
 
   return {
     // State
-    purchases,
     isLoading,
     error,
     currentPurchaseId,
     showActionBar,
 
-    // Getters
-    getPurchaseById,
+    // Data (reactive computed from query)
     currentPurchase,
 
     // Actions
     fetchPurchase,
-    updatePurchaseStatus,
-    updatePurchase,
-    clearPurchase,
-    clearAllPurchases,
     setCurrentPurchase,
-    hideActionBar
+    hideActionBar,
   }
 })

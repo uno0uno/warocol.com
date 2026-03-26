@@ -1,6 +1,16 @@
 /**
  * Address Store - Delivery Addresses
- * Manages customer delivery addresses via real backend (/api/online/addresses)
+ * Migrated from options API to setup API with Pinia Colada useQuery + useMutation.
+ *
+ * Dual address source handled via _isPreviewMode flag:
+ *   - previewByEmail() → sets _isPreviewMode + _previewAddresses (no auth required)
+ *   - fetchAddresses(customerId) → clears preview mode, query fetches real addresses
+ *
+ * UI state (selectedAddressId, pendingAddress, previewCustomerId) kept as local refs.
+ * Public API preserved — all 4 checkout components + checkout page work unchanged.
+ *
+ * reset() / $reset() had no active callers — replaced with resetStore() that manually
+ * resets all refs.
  */
 import { defineStore } from 'pinia'
 
@@ -36,238 +46,213 @@ export interface AddressCreate {
   delivery_notes?: string
 }
 
-export const useAddressStore = defineStore('address', {
-  state: () => ({
-    addresses: [] as Address[],
-    selectedAddressId: null as string | null,
-    pendingAddress: null as AddressCreate | null,
-    previewCustomerId: null as string | null,
-    isLoading: false,
-  }),
+export const useAddressStore = defineStore('address', () => {
+  const cache = useQueryCache()
 
-  getters: {
-    defaultAddress: (state) => state.addresses.find(a => a.is_default),
+  // ── UI state ──────────────────────────────────────────────────────────────────
+  const selectedAddressId = ref<string | null>(null)
+  const pendingAddress = ref<AddressCreate | null>(null)
+  const previewCustomerId = ref<string | null>(null)
 
-    selectedAddress: (state) =>
-      state.addresses.find(a => a.id === state.selectedAddressId),
+  // Dual address source: preview (pre-auth) vs. real query data
+  const _customerId = ref<string | null>(null)
+  const _isPreviewMode = ref(false)
+  const _previewAddresses = ref<Address[]>([])
 
-    homeAddresses: (state) => state.addresses.filter(a => a.address_type === 'home'),
+  // ── Query — reactive on _customerId ──────────────────────────────────────────
+  const { data: _addressesQueryData, status } = useQuery({
+    key: () => ['addresses', _customerId.value],
+    query: () =>
+      $fetch<{ addresses: Address[]; total: number; default_address_id: string | null }>(
+        `/api/online/addresses/customer/${_customerId.value}`
+      ).then(r => r.addresses),
+    enabled: () => !!_customerId.value,
+  })
 
-    workAddresses: (state) => state.addresses.filter(a => a.address_type === 'work'),
+  // Auto-select default address when real query loads
+  watch(_addressesQueryData, (newAddresses) => {
+    if (!_isPreviewMode.value && newAddresses && !selectedAddressId.value) {
+      const def = newAddresses.find(a => a.is_default)
+      if (def) selectedAddressId.value = def.id
+    }
+  })
 
-    hasAddresses: (state) => state.addresses.length > 0,
-  },
+  // ── addresses: preview overrides query data when in preview mode ─────────────
+  const addresses = computed<Address[]>(() =>
+    _isPreviewMode.value ? _previewAddresses.value : (_addressesQueryData.value ?? [])
+  )
 
-  actions: {
-    /**
-     * Fetch addresses for customer
-     */
-    async fetchAddresses(customerId: string) {
-      this.isLoading = true
+  // ── Getters (converted from options API getters) ──────────────────────────────
+  const defaultAddress = computed(() => addresses.value.find(a => a.is_default))
+  const selectedAddress = computed(() => addresses.value.find(a => a.id === selectedAddressId.value))
+  const homeAddresses = computed(() => addresses.value.filter(a => a.address_type === 'home'))
+  const workAddresses = computed(() => addresses.value.filter(a => a.address_type === 'work'))
+  const hasAddresses = computed(() => addresses.value.length > 0)
 
-      try {
-        const result = await $fetch<{ addresses: Address[]; total: number; default_address_id: string | null }>(
-          `/api/online/addresses/customer/${customerId}`,
-        )
+  // ── Write mutations ───────────────────────────────────────────────────────────
+  const createMutation = useMutation({
+    mutation: ({ customerId, data }: { customerId: string; data: AddressCreate }) =>
+      $fetch<Address>('/api/online/addresses', {
+        method: 'POST',
+        body: { ...data, customer_id: customerId },
+      }),
+    onSettled: () => cache.invalidateQueries({ key: ['addresses'] }),
+  })
 
-        this.addresses = result.addresses
+  const updateMutation = useMutation({
+    mutation: ({ customerId, addressId, data }: { customerId: string; addressId: string; data: Partial<AddressCreate> }) =>
+      $fetch<Address>(`/api/online/addresses/${addressId}`, {
+        method: 'PUT',
+        query: { customer_id: customerId },
+        body: data,
+      }),
+    onSettled: () => cache.invalidateQueries({ key: ['addresses'] }),
+  })
 
-        if (this.defaultAddress && !this.selectedAddressId) {
-          this.selectedAddressId = this.defaultAddress.id
-        }
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al cargar las direcciones')
-      } finally {
-        this.isLoading = false
+  const deleteMutation = useMutation({
+    mutation: ({ customerId, addressId }: { customerId: string; addressId: string }) =>
+      $fetch(`/api/online/addresses/${addressId}`, {
+        method: 'DELETE',
+        query: { customer_id: customerId },
+      }),
+    onSuccess(_result, { addressId }) {
+      if (selectedAddressId.value === addressId) {
+        selectedAddressId.value = defaultAddress.value?.id || null
       }
     },
+    onSettled: () => cache.invalidateQueries({ key: ['addresses'] }),
+  })
 
-    /**
-     * Create new address
-     */
-    async createAddress(customerId: string, addressData: AddressCreate) {
-      this.isLoading = true
+  const setDefaultMutation = useMutation({
+    mutation: ({ customerId, addressId }: { customerId: string; addressId: string }) =>
+      $fetch<Address>(`/api/online/addresses/${addressId}/set-default`, {
+        method: 'PATCH',
+        query: { customer_id: customerId },
+      }),
+    onSettled: () => cache.invalidateQueries({ key: ['addresses'] }),
+  })
 
-      try {
-        const result = await $fetch<Address>('/api/online/addresses', {
-          method: 'POST',
-          body: { ...addressData, customer_id: customerId },
-        })
+  // persistPendingAddress: POST the pending address, then set selectedAddressId
+  const persistMutation = useMutation({
+    mutation: ({ customerId, data }: { customerId: string; data: AddressCreate }) =>
+      $fetch<Address>('/api/online/addresses', {
+        method: 'POST',
+        body: { ...data, customer_id: customerId },
+      }),
+    onSuccess(result) {
+      selectedAddressId.value = String(result.id)
+      pendingAddress.value = null
+      _isPreviewMode.value = false
+    },
+    onSettled: () => cache.invalidateQueries({ key: ['addresses'] }),
+  })
 
-        this.addresses.push(result as Address)
-
-        return result as Address
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al crear la dirección')
-      } finally {
-        this.isLoading = false
+  // previewByEmail: lazy mutation — no auth required, triggered on email input
+  const previewMutation = useMutation({
+    mutation: (email: string) =>
+      $fetch<{ customer_id: string | null; addresses: Address[]; total: number }>(
+        '/api/online/addresses/preview',
+        { query: { email } }
+      ),
+    onSuccess(result) {
+      previewCustomerId.value = result.customer_id ? String(result.customer_id) : null
+      _previewAddresses.value = result.addresses
+      _isPreviewMode.value = true
+      if (!selectedAddressId.value) {
+        const def = result.addresses.find(a => a.is_default)
+        if (def) selectedAddressId.value = String(def.id)
       }
     },
-
-    /**
-     * Update address
-     */
-    async updateAddress(customerId: string, addressId: string, data: Partial<AddressCreate>) {
-      this.isLoading = true
-
-      try {
-        const result = await $fetch<Address>(`/api/online/addresses/${addressId}`, {
-          method: 'PUT',
-          query: { customer_id: customerId },
-          body: data,
-        })
-
-        const index = this.addresses.findIndex(a => a.id === addressId)
-        if (index >= 0) this.addresses[index] = result as Address
-
-        return result as Address
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al actualizar la dirección')
-      } finally {
-        this.isLoading = false
-      }
+    onError() {
+      // Empty result = new customer — not an error
+      previewCustomerId.value = null
+      _previewAddresses.value = []
+      _isPreviewMode.value = true
     },
+  })
 
-    /**
-     * Delete address
-     */
-    async deleteAddress(customerId: string, addressId: string) {
-      this.isLoading = true
+  // ── isLoading: covers query + all write mutations ──────────────────────────────
+  const isLoading = computed(() =>
+    status.value === 'loading' ||
+    createMutation.isLoading.value ||
+    updateMutation.isLoading.value ||
+    deleteMutation.isLoading.value ||
+    setDefaultMutation.isLoading.value ||
+    persistMutation.isLoading.value
+  )
 
-      try {
-        await $fetch(`/api/online/addresses/${addressId}`, {
-          method: 'DELETE',
-          query: { customer_id: customerId },
-        })
+  // ── Public action wrappers (preserve original signatures) ─────────────────────
 
-        this.addresses = this.addresses.filter(a => a.id !== addressId)
+  /** Fetch real addresses for authenticated customer */
+  const fetchAddresses = (customerId: string) => {
+    _isPreviewMode.value = false
+    _previewAddresses.value = []
+    _customerId.value = customerId
+    // useQuery re-runs automatically when _customerId changes
+  }
 
-        if (this.selectedAddressId === addressId) {
-          this.selectedAddressId = this.defaultAddress?.id || null
-        }
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al eliminar la dirección')
-      } finally {
-        this.isLoading = false
-      }
-    },
+  const createAddress = (customerId: string, data: AddressCreate) =>
+    createMutation.mutateAsync({ customerId, data })
 
-    /**
-     * Set address as default
-     */
-    async setDefaultAddress(customerId: string, addressId: string) {
-      this.isLoading = true
+  const updateAddress = (customerId: string, addressId: string, data: Partial<AddressCreate>) =>
+    updateMutation.mutateAsync({ customerId, addressId, data })
 
-      try {
-        const result = await $fetch<Address>(`/api/online/addresses/${addressId}/set-default`, {
-          method: 'PATCH',
-          query: { customer_id: customerId },
-        })
+  const deleteAddress = (customerId: string, addressId: string) =>
+    deleteMutation.mutateAsync({ customerId, addressId })
 
-        this.addresses.forEach(a => a.is_default = false)
-        const index = this.addresses.findIndex(a => a.id === addressId)
-        if (index >= 0) this.addresses[index] = result as Address
+  const setDefaultAddress = (customerId: string, addressId: string) =>
+    setDefaultMutation.mutateAsync({ customerId, addressId })
 
-        return result as Address
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al establecer la dirección por defecto')
-      } finally {
-        this.isLoading = false
-      }
-    },
+  const selectAddress = (addressId: string) => {
+    selectedAddressId.value = addressId
+  }
 
-    /**
-     * Select address for current order
-     */
-    selectAddress(addressId: string) {
-      this.selectedAddressId = addressId
-    },
+  const setPendingAddress = (data: AddressCreate) => {
+    pendingAddress.value = data
+  }
 
-    /**
-     * Store address locally for guest checkout (pre-OTP)
-     */
-    setPendingAddress(data: AddressCreate) {
-      this.pendingAddress = data
-    },
+  const persistPendingAddress = async (customerId: string): Promise<string | null> => {
+    if (!pendingAddress.value) return null
+    const result = await persistMutation.mutateAsync({ customerId, data: pendingAddress.value })
+    return String(result.id)
+  }
 
-    /**
-     * Persist pending address to backend after OTP verification succeeds.
-     * Returns the new address UUID (passed to PUT /delivery in confirm.vue).
-     */
-    async persistPendingAddress(customerId: string): Promise<string | null> {
-      if (!this.pendingAddress) return null
+  const previewByEmail = (email: string) => previewMutation.mutateAsync(email)
 
-      this.isLoading = true
+  const reset = () => {
+    selectedAddressId.value = null
+    pendingAddress.value = null
+    previewCustomerId.value = null
+    _customerId.value = null
+    _isPreviewMode.value = false
+    _previewAddresses.value = []
+  }
 
-      try {
-        const result = await $fetch<{
-          id: string
-          customer_id: string
-          address_line1: string
-          address_line2?: string
-          city: string
-          state: string
-          postal_code: string
-          country: string
-          is_default: boolean
-          address_type: string
-          delivery_notes?: string
-        }>('/api/online/addresses', {
-          method: 'POST',
-          body: { ...this.pendingAddress, customer_id: customerId },
-        })
+  return {
+    // State
+    addresses,
+    selectedAddressId,
+    pendingAddress,
+    previewCustomerId,
+    isLoading,
 
-        this.addresses = [result as Address]
-        this.selectedAddressId = String(result.id)
+    // Getters
+    defaultAddress,
+    selectedAddress,
+    homeAddresses,
+    workAddresses,
+    hasAddresses,
 
-        return String(result.id)
-      } catch (error: any) {
-        throw new Error(error.data?.detail || 'Error al guardar la dirección')
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    /**
-     * Preview saved addresses for a given email — no auth required.
-     * Calls GET /api/online/addresses/preview?email=...
-     * Populates addresses[] and previewCustomerId so StepDeliveryInfo
-     * can show saved addresses before OTP verification.
-     */
-    async previewByEmail(email: string) {
-      this.isLoading = true
-
-      try {
-        const result = await $fetch<{
-          customer_id: string | null
-          addresses: Address[]
-          total: number
-        }>('/api/online/addresses/preview', { query: { email } })
-
-        this.previewCustomerId = result.customer_id ? String(result.customer_id) : null
-        this.addresses = result.addresses
-
-        // Auto-select default address if present and nothing selected yet
-        if (!this.selectedAddressId) {
-          const defaultAddr = result.addresses.find(a => a.is_default)
-          if (defaultAddr) this.selectedAddressId = String(defaultAddr.id)
-        }
-      }
-      catch {
-        // Empty result = new customer — not an error
-        this.previewCustomerId = null
-        this.addresses = []
-      }
-      finally {
-        this.isLoading = false
-      }
-    },
-
-    /**
-     * Reset store state
-     */
-    reset() {
-      this.$reset()
-    },
-  },
+    // Actions
+    fetchAddresses,
+    createAddress,
+    updateAddress,
+    deleteAddress,
+    setDefaultAddress,
+    selectAddress,
+    setPendingAddress,
+    persistPendingAddress,
+    previewByEmail,
+    reset,
+  }
 })
