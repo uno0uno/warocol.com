@@ -12,7 +12,7 @@ import { INGREDIENTS_FETCH_LIMIT } from '~/composables/useMenuIngredients'
 export const useMenuIngredientsQuery = defineQuery(() => {
   const { currentTenant } = useTenantReactive()
 
-  const { data, status } = useQuery({
+  const { data, status, asyncStatus } = useQuery({
     key: () => ['menu-ingredients', currentTenant.value?.id ?? 'default'],
     query: () =>
       $fetch('/api/suppliers/ingredients', {
@@ -23,5 +23,5 @@ export const useMenuIngredientsQuery = defineQuery(() => {
 
   const availableIngredients = computed(() => (data.value as any)?.data || [])
 
-  return { data, status, availableIngredients }
+  return { data, status, asyncStatus, availableIngredients }
 })

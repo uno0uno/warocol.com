@@ -64,22 +64,22 @@ export const useAdminBilling = () => {
 
   // ── Queries ───────────────────────────────────────────────────────────────────
 
-  const { data: plans, status: plansStatus } = useQuery({
+  const { data: plans, status: plansStatus, asyncStatus: plansAsyncStatus } = useQuery({
     key: ['admin', 'billing', 'plans'],
     query: () => $fetch<BillingPlan[]>('/api/admin/billing/plans'),
   })
 
-  const { data: subscriptions, status: subscriptionsStatus } = useQuery({
+  const { data: subscriptions, status: subscriptionsStatus, asyncStatus: subscriptionsAsyncStatus } = useQuery({
     key: ['admin', 'billing', 'subscriptions'],
     query: () => $fetch<AdminSubscription[]>('/api/admin/billing/subscriptions'),
   })
 
-  const { data: usageSummary, status: usageStatus } = useQuery({
+  const { data: usageSummary, status: usageStatus, asyncStatus: usageAsyncStatus } = useQuery({
     key: ['admin', 'billing', 'usage'],
     query: () => $fetch<UsageSummaryItem[]>('/api/admin/billing/usage'),
   })
 
-  const { data: eventsData, status: eventsStatus } = useQuery({
+  const { data: eventsData, status: eventsStatus, asyncStatus: eventsAsyncStatus } = useQuery({
     key: () => ['admin', 'billing', 'events', eventsPage.value, eventsLimit.value],
     query: () => $fetch<BillingEventsResponse>(
       `/api/admin/billing/events?limit=${eventsLimit.value}&offset=${eventsPage.value * eventsLimit.value}`
@@ -94,6 +94,14 @@ export const useAdminBilling = () => {
     subscriptionsStatus.value === 'loading' ||
     usageStatus.value === 'loading' ||
     eventsStatus.value === 'loading'
+  )
+
+  // True when any query is background-refreshing with existing cache data
+  const isRefreshing = computed(() =>
+    (plansAsyncStatus.value === 'loading' && plans.value != null) ||
+    (subscriptionsAsyncStatus.value === 'loading' && subscriptions.value != null) ||
+    (usageAsyncStatus.value === 'loading' && usageSummary.value != null) ||
+    (eventsAsyncStatus.value === 'loading' && eventsData.value != null)
   )
 
   const error = computed(() => null as string | null)
@@ -188,6 +196,7 @@ export const useAdminBilling = () => {
     events,
     eventsTotal,
     loading,
+    isRefreshing,
     error,
     fetchAdminPlans,
     fetchAdminSubscriptions,

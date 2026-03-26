@@ -27,7 +27,7 @@ export const useWarosConfig = () => {
   const cache = useQueryCache()
 
   // ── Read ──────────────────────────────────────────────────────────────
-  const { data, status } = useQuery({
+  const { data, status, asyncStatus } = useQuery({
     key: ['waros', 'config'],
     query: () => $fetch<WarosConfigResponse>('/api/admin/waros/rules'),
   })
@@ -35,6 +35,7 @@ export const useWarosConfig = () => {
   const rules = computed(() => data.value?.rules ?? [])
   const isEnabled = computed(() => data.value?.is_enabled ?? false)
   const isLoading = computed(() => status.value === 'loading')
+  const isRefreshing = computed(() => asyncStatus.value === 'loading' && data.value != null)
   const error = computed(() => null as string | null)
 
   // Alias for callers that call fetchRules() imperatively (puntos.vue)
@@ -102,6 +103,7 @@ export const useWarosConfig = () => {
     rules,
     isEnabled,
     isLoading,
+    isRefreshing,
     isSaving,
     error,
     fetchRules,

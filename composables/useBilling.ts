@@ -88,12 +88,12 @@ export const useBilling = () => {
 
   // ── Queries ───────────────────────────────────────────────────────────────────
 
-  const { data: plans, status: plansStatus } = useQuery({
+  const { data: plans, status: plansStatus, asyncStatus: plansAsyncStatus } = useQuery({
     key: ['billing', 'plans'],
     query: () => $fetch<BillingPlan[]>('/api/billing/plans'),
   })
 
-  const { data: subscription, status: subscriptionStatus } = useQuery({
+  const { data: subscription, status: subscriptionStatus, asyncStatus: subscriptionAsyncStatus } = useQuery({
     key: () => ['billing', 'subscription', tenantId.value],
     query: async () => {
       try {
@@ -106,19 +106,19 @@ export const useBilling = () => {
     enabled: () => !!currentTenant.value,
   })
 
-  const { data: accessStatus, status: accessStatus_status } = useQuery({
+  const { data: accessStatus, status: accessStatus_status, asyncStatus: accessStatusAsyncStatus } = useQuery({
     key: () => ['billing', 'access-status', tenantId.value],
     query: () => $fetch<AccessStatus>('/api/billing/access-status'),
     enabled: () => !!currentTenant.value,
   })
 
-  const { data: usageHistoryData, status: usageStatus } = useQuery({
+  const { data: usageHistoryData, status: usageStatus, asyncStatus: usageAsyncStatus } = useQuery({
     key: () => ['billing', 'usage-history', tenantId.value, usageMonths.value],
     query: () => $fetch<ScanMonthlyEntry[]>(`/api/billing/usage-history?months=${usageMonths.value}`),
     enabled: () => !!currentTenant.value,
   })
 
-  const { data: eventsData, status: eventsStatus } = useQuery({
+  const { data: eventsData, status: eventsStatus, asyncStatus: eventsAsyncStatus } = useQuery({
     key: () => ['billing', 'events', tenantId.value, eventsPage.value, eventsLimit.value],
     query: () => $fetch<BillingEventsResponse>(
       `/api/billing/events?limit=${eventsLimit.value}&offset=${eventsPage.value * eventsLimit.value}`
@@ -139,6 +139,15 @@ export const useBilling = () => {
     eventsStatus.value === 'loading' ||
     subscribeMutation.isPending.value ||
     cancelMutation.isPending.value
+  )
+
+  // True when any query is background-refreshing with existing cache data
+  const isRefreshing = computed(() =>
+    (plansAsyncStatus.value === 'loading' && plans.value != null) ||
+    (subscriptionAsyncStatus.value === 'loading' && subscription.value != null) ||
+    (accessStatusAsyncStatus.value === 'loading' && accessStatus.value != null) ||
+    (usageAsyncStatus.value === 'loading' && usageHistoryData.value != null) ||
+    (eventsAsyncStatus.value === 'loading' && eventsData.value != null)
   )
 
   const error = computed(() => null as string | null)
@@ -212,6 +221,7 @@ export const useBilling = () => {
     events,
     eventsTotal,
     loading,
+    isRefreshing,
     error,
     fetchPlans,
     fetchSubscription,

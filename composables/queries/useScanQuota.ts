@@ -10,7 +10,7 @@ import type { ScanQuota, QuotaWarningLevel } from '~/composables/useScanQuota'
  *   const { quota, status, refetch, warningLevel } = useScanQuotaQuery()
  */
 export const useScanQuotaQuery = defineQuery(() => {
-  const { data: quota, status, refetch } = useQuery({
+  const { data: quota, status, asyncStatus, refetch } = useQuery({
     key: ['scan-quota'],
     query: async () => {
       try {
@@ -44,5 +44,5 @@ export const useScanQuotaQuery = defineQuery(() => {
     quota.value ? Math.max(0, quota.value.scans_limit - quota.value.scans_used) : null
   )
 
-  return { quota, status, refetch, isQuotaExceeded, percentageUsed, warningLevel, scansRemaining }
+  return { quota, status, asyncStatus, refetch, isQuotaExceeded, percentageUsed, warningLevel, scansRemaining }
 })
