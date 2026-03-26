@@ -1543,7 +1543,6 @@ import { TrashIcon, DocumentTextIcon, CreditCardIcon, CheckCircleIcon } from '@h
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useIngredientSearch } from '@/composables/useIngredientSearch'
-import { useScanQuota } from '@/composables/useScanQuota'
 import { useBilling } from '@/composables/useBilling'
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
@@ -2021,7 +2020,7 @@ const handlePaymentFileSelect = (event: Event) => {
 }
 
 // --- Scan quota ---
-const { quota, isQuotaExceeded, warningLevel, scansRemaining, fetchQuota } = useScanQuota()
+const { quota, isQuotaExceeded, warningLevel, scansRemaining, refetch: refetchQuota } = useScanQuotaQuery()
 
 // --- Access status — blocks scan when subscription is read_only or blocked ---
 const { accessStatus } = useBilling()
@@ -2038,9 +2037,6 @@ function formatQuotaDate(dateStr: string): string {
   return new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'long' }).format(date)
 }
 
-onMounted(() => {
-  fetchQuota()
-})
 
 // --- OCR scan functionality ---
 const scanFileInput = ref<HTMLInputElement | null>(null)
@@ -2331,7 +2327,7 @@ const handleScanFileSelect = async (event: Event) => {
         periodEnd: err.data.detail.period_end ?? '',
       }
       showQuotaModal.value = true
-      await fetchQuota()
+      await refetchQuota()
       return
     }
     if (err?.status === 504) {
@@ -2345,7 +2341,7 @@ const handleScanFileSelect = async (event: Event) => {
     }
     isScanning.value = false
     stopPhraseRotation()
-    fetchQuota()
+    refetchQuota()
   }
 }
 

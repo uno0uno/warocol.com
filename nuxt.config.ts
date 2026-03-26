@@ -161,6 +161,7 @@ export default defineNuxtConfig({
     }],
     '@nuxtjs/robots',
     '@pinia/nuxt',
+    '@pinia/colada-nuxt',
     'nuxt-icon'
   ],
   site: {

@@ -219,14 +219,13 @@
 <script setup lang="ts">
 import { ChevronLeftIcon, ChevronRightIcon, EyeIcon } from '@heroicons/vue/24/outline'
 import { inject, onMounted } from 'vue'
-import { useScanQuota } from '@/composables/useScanQuota'
 
 useHead({
   title: 'Compras Directas - Abastecimiento'
 })
 
 // Scan quota
-const { quota, warningLevel, scansRemaining, fetchQuota } = useScanQuota()
+const { quota, warningLevel, scansRemaining } = useScanQuotaQuery()
 
 // State
 const currentPage = ref(1)
@@ -386,6 +385,5 @@ const nextPage = () => {
 const { setRefreshHandler } = useLayoutActions()
 onMounted(() => {
   setRefreshHandler(refresh)
-  fetchQuota()
 })
 </script>
