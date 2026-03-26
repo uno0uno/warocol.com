@@ -21,6 +21,9 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
 
       <!-- Score Header — 4 KPI cards -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
@@ -224,7 +227,7 @@ const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 
 // Data fetching
-const { data: qualityData, status: queryStatus, refetch } = useQuery({
+const { data: qualityData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['analytics', 'data-quality', currentTenant.value?.id],
   query: () => $fetch('/api/analytics/data-quality').then((r: any) => r?.data ?? r),
   enabled: () => !!currentTenant.value,
@@ -232,6 +235,7 @@ const { data: qualityData, status: queryStatus, refetch } = useQuery({
 })
 
 const pending = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && qualityData.value != null)
 
 onMounted(() => {
   setRefreshHandler(refetch)

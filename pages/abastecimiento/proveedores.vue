@@ -18,8 +18,9 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-
-
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
 
       <!-- Filters Bar -->
       <SharedFiltersBar
@@ -237,7 +238,7 @@ const apiPaymentTerms = ref(null);
 
 
 
-const { data: suppliersData, status: queryStatus, error: fetchError, refetch } = useQuery({
+const { data: suppliersData, status: queryStatus, asyncStatus: queryAsyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['suppliers', 'providers', currentTenant.value?.id, {
     page: currentPage.value,
     limit: itemsPerPage.value,
@@ -269,6 +270,7 @@ const { data: suppliersData, status: queryStatus, error: fetchError, refetch } =
 })
 
 const isLoading = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && suppliersData.value != null)
 
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
 

@@ -18,7 +18,9 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
 
       <!-- Filters Bar -->
       <SharedFiltersBar
@@ -313,7 +315,7 @@ const { data: suppliersData } = useQuery({
 const suppliers = computed(() => (suppliersData.value as any)?.data || [])
 
 // Fetch purchases
-const { data: purchasesData, status: queryStatus, refetch } = useQuery({
+const { data: purchasesData, status: queryStatus, asyncStatus: purchasesAsyncStatus, refetch } = useQuery({
   key: () => ['suppliers', 'purchases', currentTenant.value?.id, {
     page: currentPage.value,
     limit: itemsPerPage.value,
@@ -342,6 +344,7 @@ const { data: purchasesData, status: queryStatus, refetch } = useQuery({
 })
 
 const isLoading = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => purchasesAsyncStatus.value === 'loading' && purchasesData.value != null)
 
 // Reset page on tenant change — key change triggers automatic refetch
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })

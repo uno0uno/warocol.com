@@ -7,6 +7,9 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
       <!-- Stats Cards -->
       <UiStats>
         <UiStatsCard
@@ -234,7 +237,7 @@ const sortField = ref('')
 const sortDirection = ref('asc')
 
 // Load inventory data from API
-const { data: inventoryData, status: queryStatus, refetch } = useQuery({
+const { data: inventoryData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['inventory', 'stock', currentTenant.value?.id],
   query: () => $fetch('/api/inventory/stock', {
     params: {
@@ -248,6 +251,7 @@ const { data: inventoryData, status: queryStatus, refetch } = useQuery({
 })
 
 const isLoading = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && inventoryData.value != null)
 
 const inventory = computed(() => inventoryData.value?.data || [])
 const stats = computed(() => inventoryData.value?.stats || {

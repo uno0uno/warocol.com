@@ -18,6 +18,9 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
       <!-- Summary Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
         <SharedMetricCard
@@ -147,7 +150,7 @@ const apiCategory = ref(null);
 const apiSupplierId = ref(null);
 
 // useQuery for ingredients
-const { data: ingredientsData, status: queryStatus, refetch } = useQuery({
+const { data: ingredientsData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['suppliers', 'ingredients-prices', currentTenant.value?.id, {
     page: currentPage.value,
     limit: itemsPerPage.value,
@@ -170,6 +173,7 @@ const { data: ingredientsData, status: queryStatus, refetch } = useQuery({
 })
 
 const isLoading = computed(() => queryStatus.value === 'loading')
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && ingredientsData.value != null)
 
 // Reset page on tenant change
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
