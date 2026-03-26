@@ -165,7 +165,7 @@ const eventAmount = (item: any): string | null => {
 
 // ── Helpers ──────────────────────────────────────────────────────
 const loadAll = async () => {
-  await fetchBillingOverview(PAGE_SIZE, 0)
+  await fetchBillingOverview()
 }
 
 const formatDate = (iso: string) =>

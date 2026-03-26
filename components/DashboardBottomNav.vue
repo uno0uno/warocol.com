@@ -387,6 +387,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Data quality dot indicator
 const { hasCriticalAlerts } = useDataQualityStatus()
+const { subscription: billingSubscription, fetchSubscription: fetchBillingSubscription } = useBilling()
 
 const isRefreshing = ref(false)
 const handleRefresh = async () => {
@@ -460,11 +461,11 @@ const selectTenant = async (tenant: Tenant) => {
 
   // billing-gate middleware only runs on route change, which doesn't happen on tenant switch.
   // Check billing directly for the new tenant and redirect if no active subscription.
-  const { subscription, subscriptionFetched, fetchSubscription } = useBilling()
-  if (!subscriptionFetched.value) {
-    try { await fetchSubscription() } catch { return }
+  // stores/tenants.ts already invalidated ['billing'] on tenant switch — query auto-refetches.
+  if (billingSubscription.value === undefined) {
+    try { await fetchBillingSubscription() } catch { return }
   }
-  const status = subscription.value?.status
+  const status = billingSubscription.value?.status
   const hasAccess = status === 'active' || status === 'past_due'
   if (!hasAccess) {
     await router.replace('/gestion/billing')

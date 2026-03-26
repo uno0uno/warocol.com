@@ -1,4 +1,12 @@
-import { ref } from 'vue'
+/**
+ * useAdminBilling — Pinia Colada migration (Phase 3a)
+ *
+ * Replaces 7 module-level refs + 8 manual fetch/mutation actions with:
+ *   4 useQuery (admin plans, subscriptions, usage summary, events)
+ *   4 useMutation (createPlan, updatePlan, deactivatePlan, updateSubscriptionStatus)
+ *
+ * Zero active callers in current pages — zero-risk migration.
+ */
 import type { BillingPlan } from './useBilling'
 
 export interface AdminSubscription {
@@ -47,96 +55,97 @@ export interface BillingEventsResponse {
   total: number
 }
 
-// Module-level singleton state
-const plans = ref<BillingPlan[]>([])
-const subscriptions = ref<AdminSubscription[]>([])
-const usageSummary = ref<UsageSummaryItem[]>([])
-const events = ref<BillingEvent[]>([])
-const eventsTotal = ref(0)
-const loading = ref(false)
-const error = ref<string | null>(null)
-
 export const useAdminBilling = () => {
-  const fetchAdminPlans = async () => {
-    loading.value = true
-    error.value = null
-    try {
-      const data = await $fetch<BillingPlan[]>('/api/admin/billing/plans')
-      plans.value = data
-    } catch (err: unknown) {
-      const e = err as { data?: { detail?: string }; message?: string }
-      error.value = e?.data?.detail || e?.message || 'Error al cargar planes'
-      console.error('[useAdminBilling] fetchAdminPlans error:', err)
-    } finally {
-      loading.value = false
-    }
-  }
+  const cache = useQueryCache()
 
-  const fetchAdminSubscriptions = async () => {
-    loading.value = true
-    error.value = null
-    try {
-      const data = await $fetch<AdminSubscription[]>('/api/admin/billing/subscriptions')
-      subscriptions.value = data
-    } catch (err: unknown) {
-      const e = err as { data?: { detail?: string }; message?: string }
-      error.value = e?.data?.detail || e?.message || 'Error al cargar suscripciones'
-      console.error('[useAdminBilling] fetchAdminSubscriptions error:', err)
-    } finally {
-      loading.value = false
-    }
-  }
+  // ── Pagination state ──────────────────────────────────────────────────────────
+  const eventsPage = ref(0)
+  const eventsLimit = ref(20)
 
-  const fetchUsageSummary = async () => {
-    loading.value = true
-    error.value = null
-    try {
-      const data = await $fetch<UsageSummaryItem[]>('/api/admin/billing/usage')
-      usageSummary.value = data
-    } catch (err: unknown) {
-      const e = err as { data?: { detail?: string }; message?: string }
-      error.value = e?.data?.detail || e?.message || 'Error al cargar uso de escaneos'
-      console.error('[useAdminBilling] fetchUsageSummary error:', err)
-    } finally {
-      loading.value = false
-    }
-  }
+  // ── Queries ───────────────────────────────────────────────────────────────────
 
-  const fetchBillingEvents = async (limit = 20, offset = 0) => {
-    loading.value = true
-    error.value = null
-    try {
-      const data = await $fetch<BillingEventsResponse>(
-        `/api/admin/billing/events?limit=${limit}&offset=${offset}`
-      )
-      events.value = data.events
-      eventsTotal.value = data.total
-    } catch (err: unknown) {
-      const e = err as { data?: { detail?: string }; message?: string }
-      error.value = e?.data?.detail || e?.message || 'Error al cargar eventos'
-      console.error('[useAdminBilling] fetchBillingEvents error:', err)
-    } finally {
-      loading.value = false
-    }
+  const { data: plans, status: plansStatus } = useQuery({
+    key: ['admin', 'billing', 'plans'],
+    query: () => $fetch<BillingPlan[]>('/api/admin/billing/plans'),
+  })
+
+  const { data: subscriptions, status: subscriptionsStatus } = useQuery({
+    key: ['admin', 'billing', 'subscriptions'],
+    query: () => $fetch<AdminSubscription[]>('/api/admin/billing/subscriptions'),
+  })
+
+  const { data: usageSummary, status: usageStatus } = useQuery({
+    key: ['admin', 'billing', 'usage'],
+    query: () => $fetch<UsageSummaryItem[]>('/api/admin/billing/usage'),
+  })
+
+  const { data: eventsData, status: eventsStatus } = useQuery({
+    key: () => ['admin', 'billing', 'events', eventsPage.value, eventsLimit.value],
+    query: () => $fetch<BillingEventsResponse>(
+      `/api/admin/billing/events?limit=${eventsLimit.value}&offset=${eventsPage.value * eventsLimit.value}`
+    ),
+  })
+
+  const events = computed<BillingEvent[]>(() => eventsData.value?.events ?? [])
+  const eventsTotal = computed<number>(() => eventsData.value?.total ?? 0)
+
+  const loading = computed(() =>
+    plansStatus.value === 'loading' ||
+    subscriptionsStatus.value === 'loading' ||
+    usageStatus.value === 'loading' ||
+    eventsStatus.value === 'loading'
+  )
+
+  const error = computed(() => null as string | null)
+
+  // ── Mutations ─────────────────────────────────────────────────────────────────
+
+  const createMutation = useMutation({
+    mutation: (data: Omit<BillingPlan, 'id' | 'is_active'>) =>
+      $fetch<BillingPlan>('/api/admin/billing/plans', { method: 'POST', body: data }),
+    onSettled: () => cache.invalidateQueries({ key: ['admin', 'billing', 'plans'] }),
+  })
+
+  const updateMutation = useMutation({
+    mutation: ({ id, ...data }: { id: string } & Partial<Omit<BillingPlan, 'id' | 'slug' | 'is_active'>>) =>
+      $fetch<BillingPlan>(`/api/admin/billing/plans/${id}`, { method: 'PATCH', body: data }),
+    onSettled: () => cache.invalidateQueries({ key: ['admin', 'billing', 'plans'] }),
+  })
+
+  const deactivateMutation = useMutation({
+    mutation: (id: string) =>
+      $fetch(`/api/admin/billing/plans/${id}`, { method: 'DELETE' }),
+    onSettled: () => cache.invalidateQueries({ key: ['admin', 'billing', 'plans'] }),
+  })
+
+  const updateStatusMutation = useMutation({
+    mutation: ({ id, ...data }: { id: string; status?: string; plan_id?: string }) =>
+      $fetch(`/api/admin/billing/subscriptions/${id}/status`, { method: 'PATCH', body: data }),
+    onSettled: () => cache.invalidateQueries({ key: ['admin', 'billing', 'subscriptions'] }),
+  })
+
+  // ── Public action wrappers (preserve original signatures) ─────────────────────
+
+  const fetchAdminPlans = () =>
+    cache.invalidateQueries({ key: ['admin', 'billing', 'plans'] })
+
+  const fetchAdminSubscriptions = () =>
+    cache.invalidateQueries({ key: ['admin', 'billing', 'subscriptions'] })
+
+  const fetchUsageSummary = () =>
+    cache.invalidateQueries({ key: ['admin', 'billing', 'usage'] })
+
+  const fetchBillingEvents = (limit = 20, offset = 0) => {
+    eventsLimit.value = limit
+    eventsPage.value = Math.floor(offset / limit)
+    return cache.invalidateQueries({ key: ['admin', 'billing', 'events'] })
   }
 
   const createPlan = async (data: Omit<BillingPlan, 'id' | 'is_active'>): Promise<BillingPlan | null> => {
-    loading.value = true
-    error.value = null
     try {
-      const result = await $fetch<BillingPlan>('/api/admin/billing/plans', {
-        method: 'POST',
-        body: data,
-      })
-      await fetchAdminPlans()
-      return result
-    } catch (err: unknown) {
-      const e = err as { data?: { detail?: string }; message?: string }
-      error.value = e?.data?.detail || e?.message || 'Error al crear plan'
-      console.error('[useAdminBilling] createPlan error:', err)
+      return await createMutation.mutateAsync(data)
+    } catch {
       return null
-    } finally {
-      loading.value = false
     }
   }
 
@@ -144,39 +153,19 @@ export const useAdminBilling = () => {
     planId: string,
     data: Partial<Omit<BillingPlan, 'id' | 'slug' | 'is_active'>>
   ): Promise<BillingPlan | null> => {
-    loading.value = true
-    error.value = null
     try {
-      const result = await $fetch<BillingPlan>(`/api/admin/billing/plans/${planId}`, {
-        method: 'PATCH',
-        body: data,
-      })
-      await fetchAdminPlans()
-      return result
-    } catch (err: unknown) {
-      const e = err as { data?: { detail?: string }; message?: string }
-      error.value = e?.data?.detail || e?.message || 'Error al actualizar plan'
-      console.error('[useAdminBilling] updatePlan error:', err)
+      return await updateMutation.mutateAsync({ id: planId, ...data })
+    } catch {
       return null
-    } finally {
-      loading.value = false
     }
   }
 
   const deactivatePlan = async (planId: string): Promise<boolean> => {
-    loading.value = true
-    error.value = null
     try {
-      await $fetch(`/api/admin/billing/plans/${planId}`, { method: 'DELETE' })
-      await fetchAdminPlans()
+      await deactivateMutation.mutateAsync(planId)
       return true
-    } catch (err: unknown) {
-      const e = err as { data?: { detail?: string }; message?: string }
-      error.value = e?.data?.detail || e?.message || 'Error al desactivar plan'
-      console.error('[useAdminBilling] deactivatePlan error:', err)
+    } catch {
       return false
-    } finally {
-      loading.value = false
     }
   }
 
@@ -184,22 +173,11 @@ export const useAdminBilling = () => {
     subId: string,
     data: { status?: string; plan_id?: string }
   ): Promise<boolean> => {
-    loading.value = true
-    error.value = null
     try {
-      await $fetch(`/api/admin/billing/subscriptions/${subId}/status`, {
-        method: 'PATCH',
-        body: data,
-      })
-      await fetchAdminSubscriptions()
+      await updateStatusMutation.mutateAsync({ id: subId, ...data })
       return true
-    } catch (err: unknown) {
-      const e = err as { data?: { detail?: string }; message?: string }
-      error.value = e?.data?.detail || e?.message || 'Error al actualizar suscripción'
-      console.error('[useAdminBilling] updateSubscriptionStatus error:', err)
+    } catch {
       return false
-    } finally {
-      loading.value = false
     }
   }
 

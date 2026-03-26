@@ -107,8 +107,8 @@ onMounted(async () => {
     )
     status.value = result.status as any
     if (result.status === 'active') {
-      const { subscriptionFetched } = useBilling()
-      subscriptionFetched.value = false
+      const { fetchSubscription } = useBilling()
+      await fetchSubscription()
     }
   } catch (err: any) {
     debugError.value = err?.data?.detail || err?.message || String(err)

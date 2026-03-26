@@ -31,15 +31,15 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   // Same check used by tenants.global.js
   if (!authStore.session?.success) return
 
-  const { subscription, subscriptionFetched, fetchSubscription } = useBilling()
+  const { subscription, fetchSubscription } = useBilling()
 
-  // Invalidate cache when returning from a payment flow (/billing/...)
+  // Invalidate subscription cache when returning from a payment flow (/billing/...)
   if (from?.path?.startsWith('/billing')) {
-    subscriptionFetched.value = false
+    await fetchSubscription()
   }
 
-  // Fetch once per session unless invalidated
-  if (!subscriptionFetched.value) {
+  // Fetch subscription if not yet in cache
+  if (subscription.value === undefined) {
     try {
       await fetchSubscription()
     } catch {

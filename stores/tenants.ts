@@ -117,7 +117,6 @@ export const useTenantsStore = defineStore('tenants', () => {
         return
       }
       selectedTenant.value = tenant
-      useBilling().resetBilling()       // keep until Phase 3a (#277) migrates billing
       tenantChangeCounter.value++       // backward compat — fires onTenantChange in 30 pages
       // Bulk invalidation — single source of truth for tenant switch
       cache.invalidateQueries({ key: ['tenant'] })

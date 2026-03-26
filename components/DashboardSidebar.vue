@@ -266,6 +266,7 @@ const openTenantModal = () => {
 const closeTenantModal = () => { showTenantModal.value = false }
 
 const { hasCriticalAlerts } = useDataQualityStatus()
+const { subscription: billingSubscription, fetchSubscription: fetchBillingSubscription } = useBilling()
 const tenantsStore = useTenantsStore()
 const tenants = computed(() => tenantsStore.tenants)
 const selectedTenant = computed(() => tenantsStore.selectedTenant)
@@ -306,11 +307,10 @@ const selectTenant = async (tenant: Tenant) => {
 
   // billing-gate middleware only runs on route change, which doesn't happen on tenant switch.
   // Check billing directly for the new tenant and redirect if no active subscription.
-  const { subscription, subscriptionFetched, fetchSubscription } = useBilling()
-  if (!subscriptionFetched.value) {
-    try { await fetchSubscription() } catch { return }
+  if (billingSubscription.value === undefined) {
+    try { await fetchBillingSubscription() } catch { return }
   }
-  const status = subscription.value?.status
+  const status = billingSubscription.value?.status
   const hasAccess = status === 'active' || status === 'past_due'
   if (!hasAccess) {
     await router.replace('/gestion/billing')
