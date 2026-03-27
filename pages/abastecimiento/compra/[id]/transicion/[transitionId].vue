@@ -6,15 +6,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="flex items-center justify-center min-h-[400px]">
-      <div class="text-center">
-        <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar la transición</p>
-        <p class="text-sm text-text-secondary">{{ error }}</p>
-        <button @click="$router.back()" class="mt-4 btn-primary px-4 py-2 rounded-lg inline-block">
-          Volver a la Orden
-        </button>
-      </div>
-    </div>
+    <CommonsTheErrorState v-else-if="error" />
 
     <!-- Transition Detail -->
     <div v-else-if="transition" class="space-y-6">

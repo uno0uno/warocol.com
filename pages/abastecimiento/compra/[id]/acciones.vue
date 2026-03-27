@@ -16,15 +16,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="flex items-center justify-center min-h-[400px]">
-      <div class="text-center">
-        <div class="text-xl font-semibold text-text-primary mb-2">Error cargando orden</div>
-        <div class="text-sm text-text-secondary">{{ error }}</div>
-        <button @click="loadPurchase(true)" class="mt-4 btn-primary px-4 py-2 rounded-lg">
-          Reintentar
-        </button>
-      </div>
-    </div>
+    <CommonsTheErrorState v-else-if="error" />
 
     <!-- Actions Page with Split Layout -->
     <div v-else class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
