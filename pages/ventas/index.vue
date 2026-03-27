@@ -416,6 +416,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       </div>
 
       <!-- Responsive Data View -->
+      <HealthSemaphore :is-unlocked="true" title="Historial de Ventas">
       <UiResponsiveDataView
         :columns="ordersTableColumns"
         :data="orders"
@@ -426,6 +427,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         empty-message="No hay ventas registradas"
         empty-sub-message="Las ventas completadas aparecerán aquí"
         variant="default"
+        row-size="sm"
       >
         <!-- Mobile Actions -->
         <template #mobileActions>
@@ -500,12 +502,6 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </div>
         </template>
 
-        <!-- Desktop Header -->
-        <template #header>
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-            <!-- Empty header -->
-          </div>
-        </template>
 
         <!-- Desktop Table Cells -->
         <template #cell-order_number="{ value }">
@@ -545,6 +541,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </span>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
 
       <!-- Pagination -->
       <div v-if="ordersTotal > 0" class="flex items-center justify-end px-1 py-2">
