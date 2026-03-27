@@ -199,22 +199,24 @@ onUnmounted(() => {
       </div>
 
       <!-- Responsive Data View -->
+      <HealthSemaphore :is-unlocked="true" title="Gestión de Salarios">
+        <template #header-actions>
+          <NuxtLink
+            to="/equipo/miembros"
+            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
+          >
+            <span class="hidden sm:inline">+ Agregar Empleado</span>
+            <span class="sm:hidden">+ Nuevo</span>
+          </NuxtLink>
+        </template>
       <UiResponsiveDataView
         :columns="employeesTableColumns"
         :data="employees"
         empty-message="No hay empleados registrados"
         empty-sub-message="Los empleados con salario configurado aparecerán aquí"
         variant="default"
+        row-size="sm"
       >
-        <!-- Mobile Actions -->
-        <template #mobileActions>
-          <NuxtLink
-            to="/equipo/miembros"
-            class="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium text-center hover:bg-primary/90"
-          >
-            + Agregar Empleado
-          </NuxtLink>
-        </template>
 
         <!-- Mobile Card -->
         <template #card="{ item }">
@@ -249,21 +251,6 @@ onUnmounted(() => {
           </div>
         </template>
 
-        <!-- Desktop Header -->
-        <template #header>
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-            <h3 class="text-base sm:text-lg font-bold text-text-primary">
-              Gestión de Salarios
-            </h3>
-            <NuxtLink
-              to="/equipo/miembros"
-              class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
-            >
-              <span class="hidden sm:inline">+ Agregar Empleado</span>
-              <span class="sm:hidden">+ Nuevo</span>
-            </NuxtLink>
-          </div>
-        </template>
 
         <!-- Desktop Table Cells -->
         <template #cell-name="{ row }">
@@ -329,6 +316,7 @@ onUnmounted(() => {
           </div>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
     </div>
   </div>
 </template>

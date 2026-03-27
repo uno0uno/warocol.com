@@ -18,6 +18,15 @@
     <!-- Content -->
     <div v-else class="space-y-8">
     <!-- Responsive Data View -->
+    <HealthSemaphore :is-unlocked="true" title="Miembros del equipo">
+      <template #header-actions>
+        <button @click="openInviteModal" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium whitespace-nowrap">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Invitar miembro
+        </button>
+      </template>
     <UiResponsiveDataView
       :columns="teamMembersTableColumns"
       :data="teamMembers"
@@ -25,34 +34,14 @@
       empty-message="No hay miembros en este equipo"
       empty-sub-message="Los miembros apareceran aqui cuando sean agregados"
       variant="default"
+      row-size="sm"
     >
-      <!-- Mobile Actions -->
-      <template #mobileActions>
-        <button @click="openInviteModal" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium w-full justify-center">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Invitar miembro
-        </button>
-      </template>
 
       <!-- Mobile Card -->
       <template #card="{ item }">
         <TeamMemberCard :member="item" />
       </template>
 
-      <!-- Desktop Header -->
-      <template #header>
-        <div class="flex justify-between items-center">
-          <h3 class="text-lg font-bold text-text-primary">Miembros del equipo</h3>
-          <button @click="openInviteModal" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Invitar miembro
-          </button>
-        </div>
-      </template>
 
       <!-- Desktop Table Cells -->
       <template #cell-name="{ value, row }">
@@ -127,6 +116,7 @@
         </div>
       </template>
     </UiResponsiveDataView>
+    </HealthSemaphore>
 
     <!-- Pending Invitations Section -->
     <div v-if="pendingInvitations.length > 0" class="bg-white rounded-xl shadow-sm border border-gray-100">
