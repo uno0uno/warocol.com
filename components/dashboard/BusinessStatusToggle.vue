@@ -7,13 +7,13 @@
       :aria-label="businessProfile.is_manually_open ? 'Restaurante abierto — click para cerrar' : 'Restaurante cerrado — click para abrir'"
       class="flex items-center gap-1.5 min-h-[44px] px-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
       :class="businessProfile.is_manually_open
-        ? 'bg-success/10 border-success/30 text-success hover:bg-success/20'
-        : 'bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive/20'"
+        ? 'bg-status-success-bg border-status-success-bg text-status-success-text hover:opacity-80'
+        : 'bg-status-critical-bg border-status-critical-bg text-status-critical-text hover:opacity-80'"
     >
       <!-- Status dot -->
       <span
         class="w-2 h-2 rounded-full flex-shrink-0"
-        :class="businessProfile.is_manually_open ? 'bg-success animate-pulse' : 'bg-destructive'"
+        :class="businessProfile.is_manually_open ? 'bg-success-foreground animate-pulse' : 'bg-destructive-foreground'"
         aria-hidden="true"
       />
       <span class="text-sm font-medium hidden sm:inline">
