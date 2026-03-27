@@ -6,6 +6,9 @@
       <CommonsTheCustomLoader size="large" />
     </div>
 
+    <!-- Error State -->
+    <CommonsTheErrorState v-else-if="profileError" />
+
     <!-- ─── Main ─── -->
     <div v-else class="space-y-4 sm:space-y-6">
       <!-- ══════ PROFILE HERO ══════ -->
@@ -510,14 +513,14 @@ useHead({ title: 'Mi Negocio' })
 
 const { isOpenNow, currentTenant } = useTenantReactive()
 const tenantsStore = useTenantsStore()
-const { data: profileData, status: profileStatus, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
+const { data: profileData, status: profileStatus, asyncStatus: profileAsyncStatus, error: profileError, refetch: refreshProfile } = useQuery({
   key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
 
-const isBusinessProfileLoading = computed(() => !profileData.value)
+const isBusinessProfileLoading = computed(() => !profileData.value && !profileError.value)
 const isRefreshing = computed(() => profileAsyncStatus.value === 'loading' && profileData.value != null)
 const businessProfile = computed(() => profileData.value?.data ?? null)
 const toast = useToast()

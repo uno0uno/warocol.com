@@ -20,7 +20,7 @@ const searchQuery = ref('')
 const selectedCategory = ref('all')
 
 // Load products from API
-const { data: productsData, status: productsStatus, asyncStatus: productsAsyncStatus, refetch } = useQuery({
+const { data: productsData, status: productsStatus, asyncStatus: productsAsyncStatus, error: productsError, refetch } = useQuery({
   key: () => ['pos', 'products', currentTenant.value?.id],
   query: () => $fetch('/api/menu/products', {
     params: {
@@ -33,7 +33,7 @@ const { data: productsData, status: productsStatus, asyncStatus: productsAsyncSt
   staleTime: 30_000,
 })
 
-const loadingProducts = computed(() => !productsData.value)
+const loadingProducts = computed(() => !productsData.value && !productsError.value)
 const isRefreshing = computed(() => productsAsyncStatus.value === 'loading' && productsData.value != null)
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 registerProgressiveLoading(isRefreshing)
@@ -194,6 +194,9 @@ onUnmounted(() => {
     <div v-if="loadingProducts" class="flex items-center justify-center min-h-[70vh]">
       <CommonsTheCustomLoader size="large" />
     </div>
+
+    <!-- Error State -->
+    <CommonsTheErrorState v-else-if="productsError" />
 
     <!-- POS Content (shown always after loading) -->
     <div v-else>
