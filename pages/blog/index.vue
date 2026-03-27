@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useFetch } from '#imports'
 
 // Efecto de máquina de escribir para el título del hero
 const heroTitle = 'El conocimiento que necesita tu restaurante'
@@ -51,18 +52,15 @@ const currentPage = ref(1)
 const articlesPerPage = 9
 
 // Fetch articles from API
-const { data: articlesData, pending: isLoading, error: fetchError, refresh } = useAsyncData<ArticlesResponse>(
-  'blog-articles',
-  () => $fetch('/api/blog', {
-    query: {
+const { data: articlesData, pending: isLoading, error: fetchError, refresh } = useFetch<ArticlesResponse>(
+  '/api/blog',
+  {
+    query: computed(() => ({
       page: currentPage.value,
       limit: articlesPerPage,
       search: searchQuery.value || undefined
-    }
-  }),
-  {
+    })),
     server: true,
-    watch: [currentPage],
     default: () => ({ success: true, total: 0, data: [] })
   }
 )
