@@ -51,12 +51,14 @@ interface ArticleResponse {
 // Fetch article from API
 const slug = route.params.slug as string
 
+const articleApiUrl = typeof window === 'undefined'
+  ? `${config.public.warolabsApiUrl}/blog/${slug}`
+  : `/api/blog/${slug}`
+
 const { data: articleData, pending, error: fetchError } = useAsyncData<ArticleResponse>(
   `blog-article-${slug}`,
-  () => $fetch(`/api/blog/${slug}`),
-  {
-    server: true
-  }
+  () => $fetch(articleApiUrl),
+  { server: true }
 )
 
 const article = computed(() => articleData.value?.data || null)
