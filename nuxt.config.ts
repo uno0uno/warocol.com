@@ -1,9 +1,10 @@
 export default defineNuxtConfig({
   ssr: false,
-  // Hybrid rendering: SSR habilitado solo para rutas del blog
+  // Hybrid rendering: blog se pre-renderiza en build time como HTML estático
+  // Nuxt crawlea /blog, sigue los links y genera cada artículo — SEO óptimo
   routeRules: {
-    '/blog': { ssr: true },
-    '/blog/**': { ssr: true }
+    '/blog': { prerender: true },
+    '/blog/**': { prerender: true }
   },
   experimental: {
     payloadExtraction: false
