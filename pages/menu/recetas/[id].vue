@@ -6,15 +6,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="fetchError || !recipeData" class="flex items-center justify-center min-h-[400px]">
-      <div class="text-center">
-        <Icon name="heroicons:exclamation-circle" class="h-16 w-16 mx-auto text-text-secondary mb-4" />
-        <p class="text-text-secondary">{{ fetchError || 'Receta base no encontrada' }}</p>
-        <UiButton variant="outline" size="default" class="mt-4" @click="router.push('/menu/recetas')">
-          Volver a Recetas
-        </UiButton>
-      </div>
-    </div>
+    <CommonsTheErrorState v-else-if="fetchError || !recipeData" />
 
     <form v-else @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
       <!-- Left Column: Form Content -->

@@ -6,15 +6,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="fetchError || !productData" class="flex items-center justify-center min-h-[400px]">
-      <div class="text-center">
-        <Icon name="heroicons:exclamation-circle" class="h-16 w-16 mx-auto text-text-secondary mb-4" />
-        <p class="text-text-secondary">{{ fetchError || 'Producto no encontrado' }}</p>
-        <UiButton variant="outline" size="default" class="mt-4" @click="router.push('/menu/productos')">
-          Volver a Productos
-        </UiButton>
-      </div>
-    </div>
+    <CommonsTheErrorState v-else-if="fetchError || !productData" />
 
     <form v-else @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
       <!-- Left Column: Form Content -->
