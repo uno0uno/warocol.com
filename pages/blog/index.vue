@@ -51,24 +51,16 @@ const activeFilter = ref('All')
 const currentPage = ref(1)
 const articlesPerPage = 9
 
-const runtimeConfig = useRuntimeConfig()
-// SSR: llamar directamente a la API externa para evitar problemas de loopback.
-// Client: usar el proxy interno /api/blog.
-const blogApiUrl = computed(() =>
-  typeof window === 'undefined'
-    ? `${runtimeConfig.public.warolabsApiUrl}/blog`
-    : '/api/blog'
-)
-
 // Fetch articles from API
 const { data: articlesData, pending: isLoading, error: fetchError, refresh } = useFetch<ArticlesResponse>(
-  blogApiUrl,
+  '/api/blog',
   {
     query: computed(() => ({
       page: currentPage.value,
       limit: articlesPerPage,
       search: searchQuery.value || undefined
     })),
+    server: true,
     default: () => ({ success: true, total: 0, data: [] })
   }
 )
