@@ -13,7 +13,7 @@
       <!-- Status dot -->
       <span
         class="w-2 h-2 rounded-full flex-shrink-0"
-        :class="businessProfile.is_manually_open ? 'bg-status-success-text animate-pulse' : 'bg-destructive-foreground'"
+        :class="businessProfile.is_manually_open ? 'bg-status-success-text animate-pulse' : 'bg-status-critical-text'"
         aria-hidden="true"
       />
       <span class="text-sm font-medium hidden sm:inline">
