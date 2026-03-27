@@ -6,25 +6,10 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="flex items-center justify-center min-h-[60vh]">
-      <div class="max-w-md p-6 bg-surface border border-border rounded-lg text-center">
-        <svg class="w-16 h-16 mx-auto text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <h2 class="mt-4 text-xl font-bold text-text-primary">Error</h2>
-        <p class="mt-2 text-text-secondary">{{ error }}</p>
-        <button @click="navigateTo('/pagos')"
-          class="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-          Volver a Pagos
-        </button>
-      </div>
-    </div>
+    <CommonsTheErrorState v-else-if="error" />
 
     <!-- Content -->
     <div v-else class="w-full mx-auto">
-
-
       <!-- Form Container -->
       <PaymentsPaymentForm :purchases="purchases" @cancel="navigateTo('/pagos')" @paid="handlePaid" />
     </div>

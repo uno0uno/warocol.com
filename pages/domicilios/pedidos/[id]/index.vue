@@ -98,18 +98,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Error State -->
-    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
-      <div class="text-center">
-        <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar el pedido.</p>
-        <p class="text-sm text-text-secondary mb-4">{{ fetchError.message }}</p>
-        <NuxtLink
-          to="/domicilios/pedidos"
-          class="min-h-[44px] px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors inline-flex items-center"
-        >
-          Volver al Listado
-        </NuxtLink>
-      </div>
-    </div>
+    <CommonsTheErrorState v-else-if="fetchError" />
 
     <!-- Main Content -->
     <div v-else-if="order" class="space-y-6">
