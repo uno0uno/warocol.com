@@ -509,6 +509,7 @@ definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Mi Negocio' })
 
 const { isOpenNow, currentTenant } = useTenantReactive()
+const tenantsStore = useTenantsStore()
 const { data: profileData, status: profileStatus, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
   key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
@@ -689,7 +690,7 @@ const saveChanges = async () => {
     }
 
     await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: payload })
-    await refreshProfile()
+    await Promise.all([refreshProfile(), tenantsStore.fetchBusinessProfile()])
     isEditMode.value = false
     toast.success('Perfil actualizado exitosamente', { title: 'Guardado' })
   } catch (error: any) {
