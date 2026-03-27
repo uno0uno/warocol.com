@@ -244,17 +244,7 @@ watch(() => currentTenant.value?.id, loadAll)
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="flex items-center justify-center min-h-[300px]">
-      <div class="text-center">
-        <p class="text-sm text-destructive mb-3">{{ error }}</p>
-        <button
-          @click="loadAll"
-          class="min-h-[44px] px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-        >
-          Reintentar
-        </button>
-      </div>
-    </div>
+    <CommonsTheErrorState v-else-if="error" />
 
     <div v-else class="flex flex-col gap-3 md:gap-4">
 

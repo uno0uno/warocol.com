@@ -262,20 +262,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Sync Error State -->
-    <div v-else-if="syncError" class="flex flex-col items-center justify-center min-h-[70vh]">
-      <div class="text-center">
-        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-          <svg class="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </div>
-        <h2 class="text-xl font-semibold text-text-primary mb-2">Error de Sincronización</h2>
-        <p class="text-text-secondary mb-6">{{ syncError }}</p>
-        <UiButton variant="default" @click="router.push('/pos')">
-          Volver al POS
-        </UiButton>
-      </div>
-    </div>
+    <CommonsTheErrorState v-else-if="syncError" />
 
     <!-- Empty Cart State -->
     <div v-else-if="cartItems.length === 0" class="text-center py-16">
