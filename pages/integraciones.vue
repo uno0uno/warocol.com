@@ -6,14 +6,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="flex items-center justify-center min-h-[400px]">
-      <div class="text-center">
-        <p class="text-sm text-error mb-3">{{ error }}</p>
-        <button @click="refresh" class="text-sm text-primary hover:underline">
-          Intentar de nuevo
-        </button>
-      </div>
-    </div>
+    <CommonsTheErrorState v-else-if="error" />
 
     <!-- Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">

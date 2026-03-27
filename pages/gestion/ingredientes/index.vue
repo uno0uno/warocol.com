@@ -7,18 +7,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
-      <div class="text-center">
-        <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar el catálogo.</p>
-        <p class="text-sm text-text-secondary">{{ fetchError.message }}</p>
-        <button
-          @click="refresh"
-          class="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 min-h-[44px]"
-        >
-          Reintentar
-        </button>
-      </div>
-    </div>
+    <CommonsTheErrorState v-else-if="fetchError" />
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">

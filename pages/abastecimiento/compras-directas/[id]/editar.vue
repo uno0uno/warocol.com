@@ -14,15 +14,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
-      <div class="text-center">
-        <p class="text-xl font-semibold text-ebony-800 mb-2">Error al cargar la compra.</p>
-        <p class="text-sm text-ebony-600">{{ fetchError.message }}</p>
-        <NuxtLink to="/abastecimiento/compras-directas" class="mt-4 px-4 py-2 bg-crocus-500 text-white rounded-lg hover:bg-crocus-600 inline-block">
-          Volver al Listado
-        </NuxtLink>
-      </div>
-    </div>
+    <CommonsTheErrorState v-else-if="fetchError" />
 
     <!-- Main Content -->
     <div v-else>

@@ -6,15 +6,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
-      <div class="text-center">
-        <Icon name="heroicons:exclamation-circle" class="h-16 w-16 mx-auto text-text-secondary mb-4" />
-        <p class="text-text-secondary">{{ fetchError }}</p>
-        <UiButton variant="outline" size="default" class="mt-4" @click="refresh">
-          Reintentar
-        </UiButton>
-      </div>
-    </div>
+    <CommonsTheErrorState v-else-if="fetchError" />
 
     <!-- Main Content -->
     <div v-else class="page-layout">
