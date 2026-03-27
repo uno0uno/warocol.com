@@ -26,9 +26,8 @@
       </div>
 
       <!-- API Keys Table -->
-      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <div class="flex items-center justify-between mb-6">
-          <h4 class="text-slate-600 font-medium">API Keys</h4>
+      <HealthSemaphore :is-unlocked="true" title="API Keys">
+        <template #header-actions>
           <button @click="openCreateModal" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -36,7 +35,7 @@
             <span class="hidden sm:inline">Crear API Key</span>
             <span class="sm:hidden">+ Nueva</span>
           </button>
-        </div>
+        </template>
         <UiResponsiveDataView
           :columns="tableColumns"
           :data="activeTokens"
@@ -112,7 +111,7 @@
           </div>
         </template>
         </UiResponsiveDataView>
-      </div>
+      </HealthSemaphore>
     </div>
 
     <!-- Create Token Modal -->
@@ -278,6 +277,9 @@
 </template>
 
 <script setup lang="ts">
+// @ts-ignore — path alias resolved by Vite at runtime; TS language server false positive
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Integraciones - API Keys' })
 
