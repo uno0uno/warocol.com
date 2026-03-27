@@ -38,6 +38,11 @@ export default defineNuxtConfig({
       // Assets estáticos — cache 1 día en browser + CDN
       '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=3600' } },
       '/favicon.ico': { headers: { 'cache-control': 'public, max-age=86400' } },
+      // Páginas pre-renderizadas — CDN 1 día, browser 1 hora
+      // Después de rebuild + invalidación CF, usuarios ven contenido nuevo en max 1h
+      '/': { headers: { 'cache-control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=3600' } },
+      '/blog': { headers: { 'cache-control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=3600' } },
+      '/blog/**': { headers: { 'cache-control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=3600' } },
       // Client-only pages (no SSR)
       '/api/auth/**': {
         proxy: {
