@@ -288,18 +288,7 @@ onMounted(() => {
     </div>
 
     <!-- Error State -->
-    <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
-      <div class="text-center">
-        <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar el pago</p>
-        <p class="text-sm text-text-secondary mb-4">{{ fetchError.message }}</p>
-        <button
-          @click="refresh"
-          class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-        >
-          Reintentar
-        </button>
-      </div>
-    </div>
+    <CommonsTheErrorState v-else-if="fetchError" />
 
     <!-- Main Content -->
     <template v-else-if="payment">
