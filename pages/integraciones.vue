@@ -26,8 +26,9 @@
       </div>
 
       <!-- API Keys Table -->
-      <HealthSemaphore :is-unlocked="true" title="API Keys">
-        <template #header-actions>
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-6">
+          <h4 class="text-slate-600 font-medium">API Keys</h4>
           <button @click="openCreateModal" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -35,15 +36,15 @@
             <span class="hidden sm:inline">Crear API Key</span>
             <span class="sm:hidden">+ Nueva</span>
           </button>
-        </template>
-      <UiResponsiveDataView
-        :columns="tableColumns"
-        :data="activeTokens"
-        empty-message="No tienes API keys activas"
-        empty-sub-message="Crea una para comenzar a integrar"
-        variant="default"
-        row-size="sm"
-      >
+        </div>
+        <UiResponsiveDataView
+          :columns="tableColumns"
+          :data="activeTokens"
+          empty-message="No tienes API keys activas"
+          empty-sub-message="Crea una para comenzar a integrar"
+          variant="default"
+          row-size="sm"
+        >
         <!-- Mobile Card -->
         <template #card="{ item }">
           <div class="p-4 bg-surface rounded-lg border border-border">
@@ -110,8 +111,8 @@
             </button>
           </div>
         </template>
-      </UiResponsiveDataView>
-      </HealthSemaphore>
+        </UiResponsiveDataView>
+      </div>
     </div>
 
     <!-- Create Token Modal -->
