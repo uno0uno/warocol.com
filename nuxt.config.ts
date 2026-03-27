@@ -1,10 +1,31 @@
 export default defineNuxtConfig({
-  ssr: false,
-  // Hybrid rendering: blog se pre-renderiza en build time como HTML estático
-  // Nuxt crawlea /blog, sigue los links y genera cada artículo — SEO óptimo
+  ssr: true,
   routeRules: {
+    // Blog — prerender estático en build time para SEO óptimo
     '/blog': { prerender: true },
-    '/blog/**': { prerender: true }
+    '/blog/**': { prerender: true },
+    // Homepage pública
+    '/': { prerender: true },
+    // App privada — SPA (no necesita SSR ni indexación)
+    '/dashboard/**': { ssr: false },
+    '/pos/**': { ssr: false },
+    '/menu/**': { ssr: false },
+    '/inventario/**': { ssr: false },
+    '/abastecimiento/**': { ssr: false },
+    '/ventas/**': { ssr: false },
+    '/equipo/**': { ssr: false },
+    '/pagos/**': { ssr: false },
+    '/financiero/**': { ssr: false },
+    '/auth/**': { ssr: false },
+    '/analitica/**': { ssr: false },
+    '/gestion/**': { ssr: false },
+    '/domicilios/**': { ssr: false },
+    '/gastos/**': { ssr: false },
+    '/negocio': { ssr: false },
+    '/integraciones': { ssr: false },
+    '/billing/**': { ssr: false },
+    '/mis-pedidos/**': { ssr: false },
+    '/proveedor/**': { ssr: false }
   },
   experimental: {
     payloadExtraction: false
