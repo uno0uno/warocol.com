@@ -35,7 +35,7 @@ const dateRange = computed(() => {
   return { from: fnsFormat(from, 'yyyy-MM-dd'), to: fnsFormat(to, 'yyyy-MM-dd') }
 })
 
-const { data: foodCostData, status: foodCostStatus, asyncStatus: foodCostAsyncStatus, refetch: refetchFoodCost } = useQuery({
+const { data: foodCostData, status: foodCostStatus, asyncStatus: foodCostAsyncStatus, error: foodCostError, refetch: refetchFoodCost } = useQuery({
   key: () => ['analytics', 'food-cost', currentTenant.value?.id, { from: dateRange.value.from, to: dateRange.value.to }],
   query: () => $fetch('/api/analytics/food-cost', {
     params: {
@@ -60,7 +60,8 @@ const { data: menuAnalysisData, status: menuStatus, asyncStatus: menuAsyncStatus
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => !foodCostData.value || !menuAnalysisData.value)
+const fetchError = computed(() => foodCostError.value)
+const isLoading = computed(() => !foodCostData.value && !fetchError.value)
 const isRefreshing = computed(() =>
   (foodCostAsyncStatus.value === 'loading' && foodCostData.value != null) ||
   (menuAsyncStatus.value === 'loading' && menuAnalysisData.value != null)
@@ -101,6 +102,9 @@ onUnmounted(() => {
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
+
+    <!-- Error State -->
+    <CommonsTheErrorState v-else-if="fetchError" />
 
     <!-- Content -->
     <template v-else>

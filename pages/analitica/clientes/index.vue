@@ -225,13 +225,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Error -->
-    <div v-else-if="fetchError" class="flex flex-col items-center justify-center min-h-[400px] gap-4">
-      <div class="text-red-600 text-lg font-semibold">Error al cargar clientes</div>
-      <div class="text-slate-600">{{ fetchError.message || 'No se pudo conectar con el servidor' }}</div>
-      <button @click="handleRefresh()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-        Reintentar
-      </button>
-    </div>
+    <CommonsTheErrorState v-else-if="fetchError" />
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-4 pb-20">
