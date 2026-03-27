@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useFetch } from '#imports'
 
 // Efecto de máquina de escribir para el título del hero
 const heroTitle = 'El conocimiento que necesita tu restaurante'
