@@ -16,16 +16,16 @@
     </div>
 
     <!-- Content -->
-    <div v-else class="space-y-6">
+    <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Info Banner -->
-      <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+      <div class="bg-status-info-bg border border-status-info-text/20 rounded-xl p-4">
         <div class="flex gap-3">
-          <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-status-info-text flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <div class="text-sm text-blue-800">
+          <div class="text-sm text-status-info-text">
             <p class="font-medium mb-1">Como usar tu API Key</p>
-            <code class="block mt-2 bg-blue-100 px-3 py-2 rounded text-xs font-mono">
+            <code class="block mt-2 bg-status-info-bg/60 px-3 py-2 rounded text-xs font-mono">
               Authorization: Bearer waro_sk_tu_api_key
             </code>
           </div>
@@ -33,56 +33,43 @@
       </div>
 
       <!-- API Keys Table -->
-      <UiResponsiveDataView
-        :columns="tableColumns"
-        :data="activeTokens"
-        title="API Keys"
-        empty-message="No tienes API keys activas"
-        empty-sub-message="Crea una para comenzar a integrar"
-        variant="default"
-      >
-        <!-- Mobile Actions -->
-        <template #mobileActions>
-          <button @click="openCreateModal" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium w-full justify-center">
+      <HealthSemaphore :is-unlocked="true" title="API Keys">
+        <template #header-actions>
+          <button @click="openCreateModal" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            Crear API Key
+            <span class="hidden sm:inline">Crear API Key</span>
+            <span class="sm:hidden">+ Nueva</span>
           </button>
         </template>
-
+      <UiResponsiveDataView
+        :columns="tableColumns"
+        :data="activeTokens"
+        empty-message="No tienes API keys activas"
+        empty-sub-message="Crea una para comenzar a integrar"
+        variant="default"
+        row-size="sm"
+      >
         <!-- Mobile Card -->
         <template #card="{ item }">
-          <div class="p-4 bg-white rounded-lg border border-gray-100">
+          <div class="p-4 bg-surface rounded-lg border border-border">
             <div class="flex items-center justify-between mb-2">
               <span class="font-medium text-text-primary">{{ item.name }}</span>
-              <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">Activa</span>
+              <UiStatusBadge value="Activa" variant="success" size="sm" />
             </div>
-            <code class="text-sm text-text-secondary font-mono bg-gray-100 px-2 py-0.5 rounded">{{ item.keyPrefix }}...</code>
+            <code class="text-sm text-text-secondary font-mono bg-surface-secondary px-2 py-0.5 rounded">{{ item.keyPrefix }}...</code>
             <p class="text-xs text-text-secondary mt-2">
               {{ item.expiresAt ? `Expira: ${formatDate(item.expiresAt)}` : 'Sin expiracion' }}
             </p>
-            <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-              <button @click="openRevokeModal(item)" class="flex-1 text-amber-600 hover:text-amber-700 py-2 text-sm font-medium">
+            <div class="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+              <button @click="openRevokeModal(item)" class="flex-1 text-status-warning-text hover:opacity-80 py-2 text-sm font-medium">
                 Revocar
               </button>
-              <button @click="openDeleteModal(item)" class="flex-1 text-red-500 hover:text-red-700 py-2 text-sm font-medium">
+              <button @click="openDeleteModal(item)" class="flex-1 text-status-critical-text hover:opacity-80 py-2 text-sm font-medium">
                 Eliminar
               </button>
             </div>
-          </div>
-        </template>
-
-        <!-- Desktop Header -->
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="text-lg font-bold text-text-primary">API Keys</h3>
-            <button @click="openCreateModal" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-              Crear API Key
-            </button>
           </div>
         </template>
 
@@ -101,9 +88,7 @@
         </template>
 
         <template #cell-status="{ row }">
-          <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">
-            Activa
-          </span>
+          <UiStatusBadge value="Activa" variant="success" size="sm" />
         </template>
 
         <template #cell-expiresAt="{ value }">
@@ -133,6 +118,7 @@
           </div>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
     </div>
 
     <!-- Create Token Modal -->
