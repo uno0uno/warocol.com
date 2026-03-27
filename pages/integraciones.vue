@@ -18,18 +18,11 @@
     <!-- Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Info Banner -->
-      <div class="bg-status-info-bg border border-status-info-text/20 rounded-xl p-4">
-        <div class="flex gap-3">
-          <svg class="w-5 h-5 text-status-info-text flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div class="text-sm text-status-info-text">
-            <p class="font-medium mb-1">Como usar tu API Key</p>
-            <code class="block mt-2 bg-status-info-bg/60 px-3 py-2 rounded text-xs font-mono">
-              Authorization: Bearer waro_sk_tu_api_key
-            </code>
-          </div>
-        </div>
+      <div class="bg-status-info-bg border border-status-info-text/20 rounded-xl px-4 py-3 flex items-center gap-3">
+        <svg class="w-4 h-4 text-status-info-text flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p class="text-xs text-status-info-text">Usa tu API Key con el header <code class="font-mono font-medium">Authorization: Bearer waro_sk_...</code></p>
       </div>
 
       <!-- API Keys Table -->
