@@ -262,14 +262,6 @@ const getStatusLabel = (status: string) => {
   return labels[status] || status
 }
 
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    'completed': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-    'cancelled': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
-    'pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-  }
-  return colors[status] || 'bg-gray-100 text-gray-800'
-}
 
 const viewOrderDetails = (order: any) => {
   navigateTo(`/ventas/${order.id}`)
@@ -476,9 +468,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <p class="text-lg font-bold text-text-primary">Orden #{{ item.order_number }}</p>
                 <p class="text-sm text-text-secondary">{{ formatDate(item.order_date) }}</p>
               </div>
-              <span :class="['px-2 py-1 rounded-full text-xs font-medium', getStatusColor(item.status)]">
-                {{ getStatusLabel(item.status) }}
-              </span>
+              <UiStatusBadge
+                :value="getStatusLabel(item.status)"
+                format="text"
+                :variant="item.status === 'completed' ? 'success' : item.status === 'cancelled' ? 'destructive' : 'warning'"
+                size="sm"
+              />
             </div>
 
             <div class="space-y-2">
@@ -536,9 +531,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
         <template #cell-status="{ value }">
-          <span :class="['px-2 py-1 rounded-full text-xs font-medium inline-block', getStatusColor(value)]">
-            {{ getStatusLabel(value) }}
-          </span>
+          <UiStatusBadge
+            :value="getStatusLabel(value)"
+            format="text"
+            :variant="value === 'completed' ? 'success' : value === 'cancelled' ? 'destructive' : 'warning'"
+            size="sm"
+          />
         </template>
       </UiResponsiveDataView>
       </HealthSemaphore>
