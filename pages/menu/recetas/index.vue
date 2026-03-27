@@ -28,6 +28,13 @@
         />
 
         <HealthSemaphore :is-unlocked="true" title="Estructura y costo de recetas base">
+          <template #header-actions>
+            <NuxtLink to="/menu/recetas/crear"
+              class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
+              <span class="hidden sm:inline">+ Nueva Receta Base</span>
+              <span class="sm:hidden">+ Nueva</span>
+            </NuxtLink>
+          </template>
         <!-- Tabla de Recetas -->
         <UiResponsiveDataView
           :columns="recetasTableColumns"
@@ -36,29 +43,8 @@
           empty-message="No hay recetas base registradas"
           empty-sub-message="Crea una nueva receta base para comenzar"
           variant="default"
+          row-size="sm"
         >
-          <!-- Mobile Actions -->
-          <template #mobileActions>
-            <NuxtLink to="/menu/recetas/crear"
-              class="btn-primary w-full px-4 py-2 rounded-lg text-sm font-medium text-center">
-              + Nueva Receta Base
-            </NuxtLink>
-          </template>
-
-          <!-- Desktop Header -->
-          <template #header>
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-              <h3 class="text-base sm:text-lg font-bold text-text-primary">
-                Gestión de Recetas Base
-              </h3>
-              <NuxtLink to="/menu/recetas/crear"
-                class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
-                <span class="hidden sm:inline">+ Nueva Receta Base</span>
-                <span class="sm:hidden">+ Nueva</span>
-              </NuxtLink>
-            </div>
-          </template>
-
           <!-- Desktop Table Cells -->
           <template #cell-producto_name="{ value }">
             <div class="flex items-center">

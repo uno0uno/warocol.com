@@ -8,6 +8,15 @@
     <!-- Main Content -->
     <div v-else>
       <HealthSemaphore :is-unlocked="true" title="Reglas y grupos de modificadores">
+        <template #header-actions>
+          <button
+            @click="goToCreateGroup"
+            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
+          >
+            <span class="hidden sm:inline">+ Nuevo Grupo</span>
+            <span class="sm:hidden">+ Nuevo</span>
+          </button>
+        </template>
       <!-- Tabla de Grupos de Modificadores -->
       <UiResponsiveDataView
       :columns="gruposTableColumns"
@@ -16,52 +25,31 @@
       empty-message="No hay grupos de modificadores registrados"
       empty-sub-message="Crea un nuevo grupo para comenzar"
       variant="default"
+      row-size="sm"
     >
       <!-- Mobile Actions -->
       <template #mobileActions>
-        <div class="flex flex-col gap-2">
-          <div class="relative">
-            <input
-              type="text"
-              v-model="searchQuery"
-              placeholder="Buscar grupo o producto..."
-              class="w-full pl-9 pr-3 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm"
-            />
-            <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
-          </div>
-          <button
-            @click="goToCreateGroup"
-            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center"
-          >
-            + Nuevo Grupo
-          </button>
+        <div class="relative">
+          <input
+            type="text"
+            v-model="searchQuery"
+            placeholder="Buscar grupo o producto..."
+            class="w-full pl-9 pr-3 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm"
+          />
+          <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
         </div>
       </template>
 
       <!-- Desktop Header -->
       <template #header>
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-          <h3 class="text-base sm:text-lg font-bold text-text-primary">
-            Grupos de Modificadores
-          </h3>
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
-            <div class="relative flex-1 sm:flex-initial">
-              <input
-                type="text"
-                v-model="searchQuery"
-                placeholder="Buscar..."
-                class="w-full pl-9 pr-3 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm"
-              />
-              <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
-            </div>
-            <button
-              @click="goToCreateGroup"
-              class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
-            >
-              <span class="hidden sm:inline">+ Nuevo Grupo</span>
-              <span class="sm:hidden">+ Nuevo</span>
-            </button>
-          </div>
+        <div class="relative">
+          <input
+            type="text"
+            v-model="searchQuery"
+            placeholder="Buscar..."
+            class="w-full pl-9 pr-3 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm"
+          />
+          <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
         </div>
       </template>
 

@@ -37,6 +37,23 @@
       />
 
       <!-- Responsive Data View -->
+      <HealthSemaphore :is-unlocked="true" title="Compras Directas">
+        <template #header-actions>
+          <NuxtLink to="/abastecimiento/compras-directas/crear"
+            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
+            <span class="hidden sm:inline">+ Nueva Compra Directa</span>
+            <span class="sm:hidden">+ Nueva</span>
+          </NuxtLink>
+        </template>
+        <UiScanUsageBar
+          v-if="quota"
+          :quota="quota"
+          :compact="true"
+          :show-period="false"
+          :warning-level="warningLevel"
+          :scans-remaining="scansRemaining"
+          class="mb-4"
+        />
       <UiResponsiveDataView
         :columns="tableColumns"
         :data="sortedPurchases"
@@ -48,15 +65,8 @@
         empty-message="No hay compras directas para mostrar"
         empty-sub-message="Crea una nueva compra directa para comenzar"
         variant="default"
+        row-size="sm"
       >
-        <!-- Mobile Actions -->
-        <template #mobileActions>
-          <NuxtLink to="/abastecimiento/compras-directas/crear"
-            class="btn-primary w-full px-4 py-2 rounded-lg text-sm font-medium text-center">
-            + Nueva Compra
-          </NuxtLink>
-        </template>
-
         <!-- Mobile Card Slot -->
         <template #card="{ item }">
           <div
@@ -82,29 +92,6 @@
               </span>
             </div>
           </div>
-        </template>
-
-        <!-- Desktop Header -->
-        <template #header>
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-            <h3 class="text-base sm:text-lg font-bold text-text-primary">
-              Compras Directas
-            </h3>
-            <NuxtLink to="/abastecimiento/compras-directas/crear"
-              class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
-              <span class="hidden sm:inline">+ Nueva Compra Directa</span>
-              <span class="sm:hidden">+ Nueva</span>
-            </NuxtLink>
-          </div>
-          <UiScanUsageBar
-            v-if="quota"
-            :quota="quota"
-            :compact="true"
-            :show-period="false"
-            :warning-level="warningLevel"
-            :scans-remaining="scansRemaining"
-            class="mt-2"
-          />
         </template>
 
         <!-- Desktop Table Cell Customizations -->
@@ -150,6 +137,7 @@
           </div>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
 
       <!-- Pagination -->
       <div v-if="purchasesData.total > itemsPerPage" class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
@@ -218,6 +206,7 @@
 
 <script setup lang="ts">
 import { ChevronLeftIcon, ChevronRightIcon, EyeIcon } from '@heroicons/vue/24/outline'
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { onMounted, onUnmounted } from 'vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'

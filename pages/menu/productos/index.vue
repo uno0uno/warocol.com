@@ -67,6 +67,13 @@
         />
 
         <HealthSemaphore :is-unlocked="true" title="Catálogo y rentabilidad de productos">
+          <template #header-actions>
+            <NuxtLink to="/menu/productos/crear"
+              class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
+              <span class="hidden sm:inline">+ Nuevo Producto</span>
+              <span class="sm:hidden">+ Nuevo</span>
+            </NuxtLink>
+          </template>
         <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
         <UiResponsiveDataView
           :columns="productosTableColumns"
@@ -79,19 +86,13 @@
           empty-message="No hay productos registrados"
           empty-sub-message="Crea un nuevo producto para comenzar"
           variant="default"
+          row-size="sm"
         >
-          <!-- Mobile Actions -->
-          <template #mobileActions>
-            <NuxtLink to="/menu/productos/crear"
-              class="btn-primary w-full px-4 py-2 rounded-lg text-sm font-medium text-center">
-              + Nuevo Producto
-            </NuxtLink>
-          </template>
 
           <!-- Mobile Card Slot -->
           <template #card="{ item }">
             <div
-              class="border border-border rounded-lg p-4"
+              class="border border-border rounded-xl p-4"
               :class="costIssueProductIds?.has(item.id) ? 'bg-status-critical-bg' : 'bg-surface'"
             >
               <div class="flex justify-between items-start mb-3">
@@ -184,19 +185,6 @@
             </div>
           </template>
 
-          <!-- Desktop Header -->
-          <template #header>
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-              <h3 class="text-base sm:text-lg font-bold text-text-primary">
-                Catálogo de Productos
-              </h3>
-              <NuxtLink to="/menu/productos/crear"
-                class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
-                <span class="hidden sm:inline">+ Nuevo Producto</span>
-                <span class="sm:hidden">+ Nuevo</span>
-              </NuxtLink>
-            </div>
-          </template>
 
           <!-- Desktop Table Cell Customizations -->
           <template #cell-name="{ value }">

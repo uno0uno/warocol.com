@@ -95,6 +95,7 @@
       </div>
 
       <!-- Orders Table -->
+      <HealthSemaphore :is-unlocked="true" title="Órdenes con Anomalías">
       <UiResponsiveDataView
         :columns="tableColumns"
         :data="ordersWithAnomalies"
@@ -106,6 +107,7 @@
         empty-message="Sin órdenes con anomalías"
         empty-sub-message="No se detectaron anomalías de precios en los últimos 30 días."
         variant="default"
+        row-size="sm"
       >
         <!-- Mobile Card -->
         <template #card="{ item }">
@@ -144,13 +146,6 @@
               <span>{{ item.alerts.length }} ingrediente{{ item.alerts.length !== 1 ? 's' : '' }} afectado{{ item.alerts.length !== 1 ? 's' : '' }}</span>
             </div>
           </div>
-        </template>
-
-        <!-- Desktop Header -->
-        <template #header>
-          <h3 class="text-base sm:text-lg font-bold text-text-primary">
-            Órdenes con Anomalías
-          </h3>
         </template>
 
         <!-- Desktop Cell Customizations -->
@@ -213,12 +208,14 @@
           </div>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
 
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()

@@ -76,6 +76,7 @@
       </SharedFiltersBar>
 
       <!-- Responsive Data View -->
+      <HealthSemaphore :is-unlocked="true" title="Stock de Inventario">
       <UiResponsiveDataView
         :columns="stockTableColumns"
         :data="filteredInventory"
@@ -86,6 +87,7 @@
         empty-message="No hay ingredientes en inventario"
         empty-sub-message="Comienza recibiendo compras en Abastecimiento"
         variant="default"
+        row-size="sm"
       >
         <!-- Mobile Card -->
         <template #card="{ item }">
@@ -211,12 +213,14 @@
           </div>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, inject, onMounted } from 'vue'
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 
 useHead({ title: 'Stock' })

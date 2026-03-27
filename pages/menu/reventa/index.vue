@@ -37,6 +37,13 @@
         />
 
         <HealthSemaphore :is-unlocked="true" title="Catálogo comercial de productos de reventa">
+          <template #header-actions>
+            <NuxtLink to="/menu/reventa/crear"
+              class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
+              <span class="hidden sm:inline">Gestionar Productos</span>
+              <span class="sm:hidden">Gestionar</span>
+            </NuxtLink>
+          </template>
         <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
         <UiResponsiveDataView
           :columns="productosTableColumns"
@@ -48,15 +55,8 @@
           empty-message="No hay productos de reventa registrados"
           empty-sub-message="Crea un nuevo producto de reventa para comenzar"
           variant="default"
+          row-size="sm"
         >
-          <!-- Mobile Actions -->
-          <template #mobileActions>
-            <NuxtLink to="/menu/reventa/crear"
-              class="btn-primary w-full px-4 py-2 rounded-lg text-sm font-medium text-center">
-              Gestionar Productos
-            </NuxtLink>
-          </template>
-
           <!-- Mobile Card Slot -->
           <template #card="{ item }">
             <div class="bg-surface border border-border rounded-lg p-4">
@@ -92,20 +92,6 @@
                 </div>
               </div>
 
-            </div>
-          </template>
-
-          <!-- Desktop Header -->
-          <template #header>
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-              <h3 class="text-base sm:text-lg font-bold text-text-primary">
-                Productos de Reventa
-              </h3>
-              <NuxtLink to="/menu/reventa/crear"
-                class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
-                <span class="hidden sm:inline">Gestionar Productos</span>
-                <span class="sm:hidden">Gestionar</span>
-              </NuxtLink>
             </div>
           </template>
 

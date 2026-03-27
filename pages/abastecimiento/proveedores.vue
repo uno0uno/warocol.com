@@ -30,6 +30,14 @@
       />
 
       <!-- Responsive Data View -->
+      <HealthSemaphore :is-unlocked="true" title="Directorio de proveedores">
+        <template #header-actions>
+          <NuxtLink to="/abastecimiento/proveedor/crear"
+            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
+            <span class="hidden sm:inline">+ Nuevo Proveedor</span>
+            <span class="sm:hidden">+ Nuevo</span>
+          </NuxtLink>
+        </template>
       <UiResponsiveDataView
         :columns="proveedoresTableColumns"
         :data="suppliers"
@@ -40,44 +48,11 @@
         empty-message="No hay proveedores registrados"
         empty-sub-message="Crea un nuevo proveedor para comenzar"
         variant="default"
+        row-size="sm"
       >
-        <!-- Mobile Actions -->
-        <template #mobileActions>
-          <div class="flex flex-col gap-2">
-            <div class="relative">
-              <UiSearchWithField
-                v-model="localSearchTerm"
-                v-model:fieldValue="apiSearchField"
-                :fields="searchFields"
-                placeholder="Buscar..."
-                class="w-full"
-                @search="performSearch"
-              />
-            </div>
-            <NuxtLink to="/abastecimiento/proveedor/crear"
-              class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center">
-              + Nuevo
-            </NuxtLink>
-          </div>
-        </template>
-
         <!-- Mobile Card -->
         <template #card="{ item }">
           <SuppliersSupplierCard :supplier="item" @edit="editProveedor" @copy-link="copyPortalLink" />
-        </template>
-
-        <!-- Desktop Header -->
-        <template #header>
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-            <h3 class="text-base sm:text-lg font-bold text-text-primary">
-              Proveedores
-            </h3>
-            <NuxtLink to="/abastecimiento/proveedor/crear"
-              class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
-              <span class="hidden sm:inline">+ Nuevo Proveedor</span>
-              <span class="sm:hidden">+ Nuevo</span>
-            </NuxtLink>
-          </div>
         </template>
 
         <!-- Desktop Table Cells -->
@@ -118,6 +93,7 @@
           </div>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
 
       <!-- Pagination -->
       <div class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
@@ -192,6 +168,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 import { ref, computed, watch, inject, onMounted } from 'vue'
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 
 // Tenant reactivity

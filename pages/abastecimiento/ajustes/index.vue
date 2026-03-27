@@ -68,6 +68,7 @@
       </SharedFiltersBar>
 
       <!-- Responsive Data View -->
+      <HealthSemaphore :is-unlocked="true" title="Historial de Ajustes">
       <UiResponsiveDataView
         :columns="adjustmentsTableColumns"
         :data="sortedAdjustments"
@@ -78,6 +79,7 @@
         empty-message="No hay ajustes registrados"
         empty-sub-message="Los ajustes se realizan desde la página de Stock de Inventario"
         variant="default"
+        row-size="sm"
       >
         <!-- Mobile Card -->
         <template #card="{ item }">
@@ -175,12 +177,14 @@
           <span class="text-sm text-text-primary">{{ value || 'Sistema' }}</span>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 

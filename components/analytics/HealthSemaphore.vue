@@ -32,7 +32,10 @@ const emit = defineEmits<{
 
     <div :class="['transition-all duration-700', !isUnlocked ? 'filter blur-sm grayscale pointer-events-none opacity-50' : '']">
       <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <h4 class="text-slate-600 font-medium mb-6">{{ title || 'Análisis de Menú (Rentabilidad)' }}</h4>
+        <div class="flex items-center justify-between mb-6">
+          <h4 class="text-slate-600 font-medium">{{ title || 'Análisis de Menú (Rentabilidad)' }}</h4>
+          <slot name="header-actions" />
+        </div>
         <slot>
           <MenuMatrix :menuData="menuData" />
         </slot>
