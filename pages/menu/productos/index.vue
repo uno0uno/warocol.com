@@ -19,10 +19,6 @@
     <!-- Main Content -->
     <div v-else class="page-layout">
       <div class="flex flex-col gap-3 md:gap-4">
-        <div v-if="isRefreshing" class="flex justify-end">
-          <UiLoadingDots size="10px" class="text-text-secondary" />
-        </div>
-
         <!-- Cost Warning Banner -->
         <div
           v-if="costIssueCount > 0 && !bannerDismissed"
@@ -70,6 +66,7 @@
           @clear-filters="clearFilters"
         />
 
+        <HealthSemaphore :is-unlocked="true" title="Catálogo y rentabilidad de productos">
         <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
         <UiResponsiveDataView
           :columns="productosTableColumns"
@@ -294,7 +291,7 @@
         </UiResponsiveDataView>
 
         <!-- Pagination -->
-        <div v-if="productsData.total > itemsPerPage" class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
+        <div v-if="productsData.total > itemsPerPage" class="mt-4 bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
           <div class="flex-1 flex justify-between sm:hidden">
             <button
               @click="previousPage"
@@ -369,6 +366,7 @@
             </div>
           </div>
         </div>
+        </HealthSemaphore>
       </div>
     </div>
   </div>
@@ -376,6 +374,8 @@
 
 <script setup lang="ts">
 import { onUnmounted } from 'vue'
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useToast } from '@/composables/useToast'
 
@@ -602,12 +602,14 @@ const handleSort = (field: string) => {
 }
 
 // Inject refresh handler setter from layout
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 // Register refresh handler for mobile bottom nav and desktop header
 onMounted(() => {
   setRefreshHandler(refetch)
 })
+useMenuReturnRefresh('/menu/productos', refetch)
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
   clearRefreshHandler(refetch)
 })

@@ -7,9 +7,6 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-      <div v-if="isRefreshing" class="flex justify-end">
-        <UiLoadingDots size="10px" class="text-text-secondary" />
-      </div>
       <!-- Stats Cards -->
       <UiStats>
         <UiStatsCard
@@ -185,6 +182,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
+import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 
 useHead({ title: 'Ajustes de Inventario' })
 
@@ -431,10 +429,17 @@ const formatDate = (dateString: string) => {
 }
 
 // Set refresh handler for layout
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 onMounted(() => {
   setRefreshHandler(refetch)
 })
+useMenuReturnRefresh(
+  '/abastecimiento/ajustes',
+  refetch,
+  'abastecimiento-last-path',
+  ['/abastecimiento/ajustes/']
+)
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
   clearRefreshHandler(refetch)
 })

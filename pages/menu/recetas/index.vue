@@ -19,9 +19,6 @@
     <!-- Main Content -->
     <div v-else class="page-layout">
       <div class="flex flex-col gap-3 md:gap-4">
-        <div v-if="isRefreshing" class="flex justify-end">
-          <UiLoadingDots size="10px" class="text-text-secondary" />
-        </div>
         <!-- Filters Bar -->
         <SharedFiltersBar
           v-model:search="localSearchTerm"
@@ -30,6 +27,7 @@
           @clear-filters="clearFilters"
         />
 
+        <HealthSemaphore :is-unlocked="true" title="Estructura y costo de recetas base">
         <!-- Tabla de Recetas -->
         <UiResponsiveDataView
           :columns="recetasTableColumns"
@@ -180,7 +178,7 @@
         </UiResponsiveDataView>
 
         <!-- Pagination -->
-        <div v-if="productsData.total > itemsPerPage" class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
+        <div v-if="productsData.total > itemsPerPage" class="mt-4 bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
           <div class="flex-1 flex justify-between sm:hidden">
             <button
               @click="previousPage"
@@ -335,6 +333,7 @@
             </table>
           </div>
         </div>
+        </HealthSemaphore>
       </div>
     </div>
   </div>
@@ -342,6 +341,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
@@ -565,11 +566,13 @@ const toggleExpanded = (recipeId: number) => {
   expandedRows.value = new Set(expandedRows.value)
 }
 
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 onMounted(() => {
   setRefreshHandler(refetch)
 })
+useMenuReturnRefresh('/menu/recetas', refetch)
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
   clearRefreshHandler(refetch)
 })

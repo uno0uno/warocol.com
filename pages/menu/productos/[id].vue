@@ -427,6 +427,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({

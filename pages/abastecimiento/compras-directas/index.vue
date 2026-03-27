@@ -10,7 +10,7 @@
       <div class="text-center">
         <p class="text-xl font-semibold text-ebony-800 mb-2">Error al cargar las compras.</p>
         <p class="text-sm text-ebony-600">{{ fetchError.message }}</p>
-        <button @click="refresh" class="mt-4 px-4 py-2 bg-crocus-500 text-white rounded-lg hover:bg-crocus-600">
+        <button @click="handleRefresh" class="mt-4 px-4 py-2 bg-crocus-500 text-white rounded-lg hover:bg-crocus-600">
           Reintentar
         </button>
       </div>
@@ -218,7 +218,8 @@
 
 <script setup lang="ts">
 import { ChevronLeftIcon, ChevronRightIcon, EyeIcon } from '@heroicons/vue/24/outline'
-import { inject, onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
+import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
 
 useHead({
@@ -241,26 +242,51 @@ const sortDirection = ref<'asc' | 'desc'>('desc')
 // Fetch purchases
 const { currentTenant } = useTenantReactive()
 
-const { data: purchasesResponse, pending: isLoading, error: fetchError, refresh } = useFetch('/api/suppliers/purchases/direct', {
-  query: computed(() => ({
+const { data: purchasesResponse, asyncStatus: queryAsyncStatus, error: fetchError, refetch } = useQuery({
+  key: () => ['suppliers', 'direct-purchases', currentTenant.value?.id ?? null, {
     page: currentPage.value,
     limit: itemsPerPage.value,
-    search: localSearchTerm.value || undefined,
-    status: statusFilter.value || undefined,
-    supplier_id: proveedorFilter.value || undefined,
-    date_filter: dateFilter.value || undefined
-  })),
-  server: false,
-  watch: [currentTenant, currentPage, localSearchTerm, proveedorFilter, statusFilter, dateFilter]
+    search: localSearchTerm.value || null,
+    status: statusFilter.value || null,
+    supplier_id: proveedorFilter.value || null,
+    date_filter: dateFilter.value || null,
+  }],
+  query: () => {
+    const params: Record<string, string | number> = {
+      page: currentPage.value,
+      limit: itemsPerPage.value,
+    }
+
+    if (localSearchTerm.value) {
+      params.search = localSearchTerm.value
+    }
+    if (statusFilter.value) {
+      params.status = statusFilter.value
+    }
+    if (proveedorFilter.value) {
+      params.supplier_id = proveedorFilter.value
+    }
+    if (dateFilter.value) {
+      params.date_filter = dateFilter.value
+    }
+
+    return $fetch('/api/suppliers/purchases/direct', { params })
+  },
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
 })
 
 const purchasesData = computed(() => purchasesResponse.value || { data: [], total: 0, page: 1, limit: 20 })
 const purchases = computed(() => purchasesData.value?.data || [])
+const isLoading = computed(() => !purchasesResponse.value && !fetchError.value)
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && purchasesResponse.value != null)
 
 // Fetch suppliers for filter
-const { data: suppliersResponse } = useFetch('/api/suppliers/providers', {
-  query: { limit: 250 },
-  server: false
+const { data: suppliersResponse } = useQuery({
+  key: () => ['suppliers', 'providers-lookup', currentTenant.value?.id ?? null],
+  query: () => $fetch('/api/suppliers/providers', { params: { limit: 250 } }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
 })
 const suppliers = computed(() => (suppliersResponse.value?.data || []).map((s: any) => ({
   value: s.id,
@@ -383,8 +409,22 @@ const nextPage = () => {
 }
 
 // Inject refresh handler
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const handleRefresh = async () => {
+  await refetch()
+}
+
 onMounted(() => {
-  setRefreshHandler(refresh)
+  setRefreshHandler(handleRefresh)
+})
+useMenuReturnRefresh(
+  '/abastecimiento/compras-directas',
+  handleRefresh,
+  'abastecimiento-last-path',
+  ['/abastecimiento/compras-directas/']
+)
+registerProgressiveLoading(isRefreshing)
+onUnmounted(() => {
+  clearRefreshHandler(handleRefresh)
 })
 </script>

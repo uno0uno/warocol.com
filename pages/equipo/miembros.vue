@@ -578,70 +578,70 @@ const getColorFromString = (str) => {
   return colors[hash % colors.length]
 }
 
-// Fetch tenant members using useAsyncData
-const { data: membersData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  `team-members-${currentTenant.value?.id || 'default'}`,
-  () => {
-    console.log('Fetching team members for tenant:', currentTenant.value?.id)
-    return $fetch('/api/tenants/members')
-  },
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ success: true, data: [], pending_invitations: [] }),
-    transform: (response) => {
-      console.log('API Response:', JSON.stringify(response, null, 2))
-      console.log('Pending invitations raw:', response?.pending_invitations)
-      const result = {
-        members: [],
-        pendingInvitations: []
-      }
-
-      if (response?.success && response.data) {
-        // Transform API data to UI format
-        result.members = response.data.map(member => {
-          const displayName = member.profile.name || member.profile.user_name || 'Usuario sin nombre'
-          return {
-            id: member.id,
-            name: displayName,
-            email: member.profile.email,
-            position: member.role === 'superuser' ? 'Super Usuario' :
-                     member.role === 'admin' ? 'Administrador' :
-                     member.role === 'employee' ? 'Empleado' : 'Miembro',
-            role: member.role,
-            active: true,
-            initials: getInitials(member.profile.name, member.profile.user_name),
-            color: getColorFromString(member.profile.email),
-            avatar: member.profile.logo_avatar
-          }
-        })
-      }
-
-      // Transform pending invitations (backend returns snake_case)
-      const invitations = response?.pending_invitations || response?.pendingInvitations || []
-      result.pendingInvitations = invitations.map(inv => ({
-        id: inv.id,
-        email: inv.email,
-        name: inv.name,
-        role: inv.role,
-        status: inv.status,
-        expiresAt: inv.expires_at || inv.expiresAt,
-        invitedByName: inv.invited_by_name || inv.invitedByName
-      }))
-
-      return result
-    }
+const normalizeMembersResponse = (response: any) => {
+  const result = {
+    members: [],
+    pendingInvitations: []
   }
-)
+
+  if (response?.success && response.data) {
+    result.members = response.data.map(member => {
+      const displayName = member.profile.name || member.profile.user_name || 'Usuario sin nombre'
+      return {
+        id: member.id,
+        name: displayName,
+        email: member.profile.email,
+        position: member.role === 'superuser' ? 'Super Usuario' :
+                 member.role === 'admin' ? 'Administrador' :
+                 member.role === 'employee' ? 'Empleado' : 'Miembro',
+        role: member.role,
+        active: true,
+        initials: getInitials(member.profile.name, member.profile.user_name),
+        color: getColorFromString(member.profile.email),
+        avatar: member.profile.logo_avatar
+      }
+    })
+  }
+
+  const invitations = response?.pending_invitations || response?.pendingInvitations || []
+  result.pendingInvitations = invitations.map(inv => ({
+    id: inv.id,
+    email: inv.email,
+    name: inv.name,
+    role: inv.role,
+    status: inv.status,
+    expiresAt: inv.expires_at || inv.expiresAt,
+    invitedByName: inv.invited_by_name || inv.invitedByName
+  }))
+
+  return result
+}
+
+// Fetch tenant members using Pinia Colada
+const {
+  data: membersResponse,
+  asyncStatus: queryAsyncStatus,
+  error: fetchError,
+  refetch: refresh
+} = useQuery({
+  key: () => ['team-members', currentTenant.value?.id],
+  query: () => $fetch('/api/tenants/members'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+const membersData = computed(() => normalizeMembersResponse(membersResponse.value))
+const isLoading = computed(() => !membersResponse.value && !fetchError?.value)
+const isRefreshing = computed(() => queryAsyncStatus?.value === 'loading' && membersResponse.value != null)
 
 // Team members computed from data
-const teamMembers = computed(() => membersData.value?.members || [])
+const teamMembers = computed(() => membersData.value.members || [])
 
 // Pending invitations computed from data
-const pendingInvitations = computed(() => membersData.value?.pendingInvitations || [])
+const pendingInvitations = computed(() => membersData.value.pendingInvitations || [])
 
 // Error message
-const error = computed(() => fetchError.value ? 'Error al cargar los miembros del equipo' : null)
+const error = computed(() => fetchError?.value ? 'Error al cargar los miembros del equipo' : null)
 
 // Session data for current user
 const { data: sessionData } = useAsyncData(
@@ -978,10 +978,14 @@ const formatExpirationDate = (dateString) => {
 }
 
 // Inject refresh handler setter from layout
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 // Register refresh handler for mobile bottom nav and desktop header
 onMounted(() => {
   setRefreshHandler(refresh)
+})
+registerProgressiveLoading(isRefreshing)
+onUnmounted(() => {
+  clearRefreshHandler(refresh)
 })
 </script>

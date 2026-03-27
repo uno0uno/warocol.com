@@ -1,0 +1,7 @@
+services:
+  warocol:
+    container_name: warocol-dev
+    ports:
+      - "127.0.0.1:3005:3001"
+    env_file:
+      - .env

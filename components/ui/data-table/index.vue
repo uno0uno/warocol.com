@@ -416,7 +416,7 @@ tbody tr.table-row-new > td {
 @keyframes table-row-cell-enter {
   0% {
     opacity: 0;
-    transform: translateX(16px);
+    transform: translateX(-16px);
     background-color: color-mix(in srgb, hsl(var(--primary)) 12%, transparent);
   }
 

@@ -4,6 +4,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { es } from 'date-fns/locale';
 import { format as fnsFormat, formatDistanceToNow } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -241,128 +242,120 @@ onUnmounted(() => {
         <MetricCard title="Ticket promedio" :value="totalCustomers > 0 ? totalRevenue / totalCustomers : 0" format="currency" variant="primary" />
       </div>
 
-      <!-- Table -->
-      <UiResponsiveDataView
-        :columns="tableColumns"
-        :data="customers"
-        title="Clientes"
-        empty-message="No hay clientes para mostrar"
-        empty-sub-message="Registra ventas en el POS para ver tus clientes aquí"
-        variant="default"
-      >
-        <!-- Mobile Card -->
-        <template #card="{ item }">
-          <NuxtLink
-            :to="`/analitica/clientes/${item.customer_id}`"
-            class="block bg-white border border-border rounded-lg p-4 hover:bg-surface-secondary transition-colors"
-          >
-            <div class="flex justify-between items-start mb-2">
-              <div>
-                <p class="font-semibold text-text-primary">{{ item.name }}</p>
-                <p class="text-sm text-text-secondary">{{ item.phone || 'Sin teléfono' }}</p>
-              </div>
-              <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full font-medium">
-                {{ item.order_count }} pedidos
-              </span>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-              <span class="text-text-secondary">Última: {{ formatDate(item.last_order_date) }}</span>
-              <span class="font-bold text-text-primary">{{ formatCurrency(item.total_spent) }}</span>
-            </div>
-            <div v-if="!isLoadingBalances && (warosBalances[item.customer_id] ?? 0) > 0" class="mt-1.5">
-              <span class="inline-flex items-center text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
-                {{ (warosBalances[item.customer_id] ?? 0).toLocaleString('es-CO') }} Waros
-              </span>
-            </div>
-          </NuxtLink>
-        </template>
-
-        <!-- Desktop Header -->
-        <template #header>
-          <h3 class="text-base font-bold text-text-primary">Clientes</h3>
-        </template>
-
-        <!-- Desktop Cell Customizations -->
-        <template #cell-name="{ row }">
-          <span class="text-sm font-semibold text-text-primary">{{ row.name }}</span>
-        </template>
-
-        <template #cell-phone="{ value }">
-          <span class="text-sm text-text-secondary">{{ value || '-' }}</span>
-        </template>
-
-        <template #cell-order_count="{ value }">
-          <span class="text-sm font-medium text-text-primary">{{ value }}</span>
-        </template>
-
-        <template #cell-total_spent="{ value }">
-          <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(value) }}</span>
-        </template>
-
-        <template #cell-avg_ticket="{ value }">
-          <span class="text-sm text-text-secondary">{{ formatCurrency(value) }}</span>
-        </template>
-
-        <template #cell-last_order_date="{ value }">
-          <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
-        </template>
-
-        <template #cell-waros_balance="{ row }">
-          <span v-if="isLoadingBalances" class="text-sm text-text-secondary">—</span>
-          <span v-else class="text-sm font-medium text-amber-700">
-            {{ (warosBalances[row.customer_id] ?? 0).toLocaleString('es-CO') }}
-          </span>
-        </template>
-
-        <template #cell-actions="{ row }">
-          <div class="flex justify-center">
+      <HealthSemaphore :is-unlocked="true" title="Comportamiento y valor de clientes">
+        <UiResponsiveDataView
+          :columns="tableColumns"
+          :data="customers"
+          empty-message="No hay clientes para mostrar"
+          empty-sub-message="Registra ventas en el POS para ver tus clientes aquí"
+          variant="default"
+        >
+          <template #card="{ item }">
             <NuxtLink
-              :to="`/analitica/clientes/${row.customer_id}`"
-              class="text-text-secondary hover:text-primary transition-colors"
-              title="Ver detalle"
-              aria-label="Ver detalle del cliente"
+              :to="`/analitica/clientes/${item.customer_id}`"
+              class="block bg-white border border-border rounded-lg p-4 hover:bg-surface-secondary transition-colors"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
+              <div class="flex justify-between items-start mb-2">
+                <div>
+                  <p class="font-semibold text-text-primary">{{ item.name }}</p>
+                  <p class="text-sm text-text-secondary">{{ item.phone || 'Sin teléfono' }}</p>
+                </div>
+                <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full font-medium">
+                  {{ item.order_count }} pedidos
+                </span>
+              </div>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-text-secondary">Última: {{ formatDate(item.last_order_date) }}</span>
+                <span class="font-bold text-text-primary">{{ formatCurrency(item.total_spent) }}</span>
+              </div>
+              <div v-if="!isLoadingBalances && (warosBalances[item.customer_id] ?? 0) > 0" class="mt-1.5">
+                <span class="inline-flex items-center text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                  {{ (warosBalances[item.customer_id] ?? 0).toLocaleString('es-CO') }} Waros
+                </span>
+              </div>
             </NuxtLink>
-          </div>
-        </template>
-      </UiResponsiveDataView>
+          </template>
 
-      <!-- Pagination -->
-      <div v-if="totalCustomers > itemsPerPage" class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
-        <div class="flex-1 flex justify-between sm:hidden">
-          <button @click="previousPage" :disabled="!canGoPrevious"
-            :class="['relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md', canGoPrevious ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed']">
-            Anterior
-          </button>
-          <button @click="nextPage" :disabled="!canGoNext"
-            :class="['relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md', canGoNext ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed']">
-            Siguiente
-          </button>
-        </div>
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-          <p class="text-sm text-titan-700">
-            Mostrando <span class="font-medium">{{ startItem }}</span> a <span class="font-medium">{{ endItem }}</span>
-            de <span class="font-medium">{{ totalCustomers }}</span> clientes
-          </p>
-          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-            <button @click="previousPage" :disabled="!canGoPrevious"
-              :class="['relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 text-sm font-medium', canGoPrevious ? 'text-titan-500 bg-white hover:bg-titan-50' : 'text-titan-300 bg-titan-50 cursor-not-allowed']">
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <span class="relative inline-flex items-center px-4 py-2 border border-titan-300 bg-white text-sm font-medium text-titan-700">
-              {{ currentPage }} / {{ totalPages }}
+          <template #cell-name="{ row }">
+            <span class="text-sm font-semibold text-text-primary">{{ row.name }}</span>
+          </template>
+
+          <template #cell-phone="{ value }">
+            <span class="text-sm text-text-secondary">{{ value || '-' }}</span>
+          </template>
+
+          <template #cell-order_count="{ value }">
+            <span class="text-sm font-medium text-text-primary">{{ value }}</span>
+          </template>
+
+          <template #cell-total_spent="{ value }">
+            <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(value) }}</span>
+          </template>
+
+          <template #cell-avg_ticket="{ value }">
+            <span class="text-sm text-text-secondary">{{ formatCurrency(value) }}</span>
+          </template>
+
+          <template #cell-last_order_date="{ value }">
+            <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+          </template>
+
+          <template #cell-waros_balance="{ row }">
+            <span v-if="isLoadingBalances" class="text-sm text-text-secondary">—</span>
+            <span v-else class="text-sm font-medium text-amber-700">
+              {{ (warosBalances[row.customer_id] ?? 0).toLocaleString('es-CO') }}
             </span>
-            <button @click="nextPage" :disabled="!canGoNext"
-              :class="['relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 text-sm font-medium', canGoNext ? 'text-titan-500 bg-white hover:bg-titan-50' : 'text-titan-300 bg-titan-50 cursor-not-allowed']">
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </template>
+
+          <template #cell-actions="{ row }">
+            <div class="flex justify-center">
+              <NuxtLink
+                :to="`/analitica/clientes/${row.customer_id}`"
+                class="text-text-secondary hover:text-primary transition-colors"
+                title="Ver detalle"
+                aria-label="Ver detalle del cliente"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </NuxtLink>
+            </div>
+          </template>
+        </UiResponsiveDataView>
+
+        <div v-if="totalCustomers > itemsPerPage" class="mt-4 bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
+          <div class="flex-1 flex justify-between sm:hidden">
+            <button @click="previousPage" :disabled="!canGoPrevious"
+              :class="['relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md', canGoPrevious ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed']">
+              Anterior
             </button>
-          </nav>
+            <button @click="nextPage" :disabled="!canGoNext"
+              :class="['relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md', canGoNext ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed']">
+              Siguiente
+            </button>
+          </div>
+          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <p class="text-sm text-titan-700">
+              Mostrando <span class="font-medium">{{ startItem }}</span> a <span class="font-medium">{{ endItem }}</span>
+              de <span class="font-medium">{{ totalCustomers }}</span> clientes
+            </p>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+              <button @click="previousPage" :disabled="!canGoPrevious"
+                :class="['relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 text-sm font-medium', canGoPrevious ? 'text-titan-500 bg-white hover:bg-titan-50' : 'text-titan-300 bg-titan-50 cursor-not-allowed']">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <span class="relative inline-flex items-center px-4 py-2 border border-titan-300 bg-white text-sm font-medium text-titan-700">
+                {{ currentPage }} / {{ totalPages }}
+              </span>
+              <button @click="nextPage" :disabled="!canGoNext"
+                :class="['relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 text-sm font-medium', canGoNext ? 'text-titan-500 bg-white hover:bg-titan-50' : 'text-titan-300 bg-titan-50 cursor-not-allowed']">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </nav>
+          </div>
         </div>
-      </div>
+      </HealthSemaphore>
 
     </div>
   </div>

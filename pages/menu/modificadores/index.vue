@@ -7,9 +7,7 @@
 
     <!-- Main Content -->
     <div v-else>
-      <div v-if="isRefreshing" class="flex justify-end">
-        <UiLoadingDots size="10px" class="text-text-secondary" />
-      </div>
+      <HealthSemaphore :is-unlocked="true" title="Reglas y grupos de modificadores">
       <!-- Tabla de Grupos de Modificadores -->
       <UiResponsiveDataView
       :columns="gruposTableColumns"
@@ -300,12 +298,15 @@
         </table>
       </div>
     </div>
+    </HealthSemaphore>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
@@ -448,7 +449,7 @@ const goToEditGroup = (groupId: string) => {
   router.push(`/menu/modificadores/${groupId}`)
 }
 
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const handleRefresh = async () => {
   await Promise.all([refetchGroups(), refetchStats()])
 }
@@ -456,6 +457,8 @@ const handleRefresh = async () => {
 onMounted(() => {
   setRefreshHandler(handleRefresh)
 })
+useMenuReturnRefresh('/menu/modificadores', handleRefresh)
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
   clearRefreshHandler(handleRefresh)
 })

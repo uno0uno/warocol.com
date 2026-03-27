@@ -5,6 +5,7 @@ import MenuMatrix from './MenuMatrix.vue';
 
 const props = defineProps<{
   isUnlocked: boolean;
+  title?: string;
   menuData?: any;
   foodCostData?: any;
 }>();
@@ -31,8 +32,10 @@ const emit = defineEmits<{
 
     <div :class="['transition-all duration-700', !isUnlocked ? 'filter blur-sm grayscale pointer-events-none opacity-50' : '']">
       <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <h4 class="text-slate-600 font-medium mb-6">Análisis de Menú (Rentabilidad)</h4>
-        <MenuMatrix :menuData="menuData" />
+        <h4 class="text-slate-600 font-medium mb-6">{{ title || 'Análisis de Menú (Rentabilidad)' }}</h4>
+        <slot>
+          <MenuMatrix :menuData="menuData" />
+        </slot>
       </div>
     </div>
 

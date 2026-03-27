@@ -318,17 +318,22 @@ const tableColumns = [
 const allScopes = ['read', 'write', 'orders:read', 'orders:write', 'products:read', 'products:write', 'inventory:read', 'inventory:write', 'customers:read', 'customers:write']
 
 // Fetch tokens
-const { data: tokensData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  `api-tokens-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/api-tokens'),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ success: true, data: [] })
-  }
-)
+const {
+  data: tokensData,
+  status: queryStatus,
+  asyncStatus: queryAsyncStatus,
+  error: fetchError,
+  refetch: refresh
+} = useQuery({
+  key: () => ['api-tokens', currentTenant.value?.id],
+  query: () => $fetch('/api/api-tokens'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
 
 const activeTokens = computed(() => tokensData.value?.data?.filter(t => t.isActive) || [])
+const isLoading = computed(() => !tokensData.value && !fetchError.value)
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && tokensData.value != null)
 const error = computed(() => fetchError.value ? 'Error al cargar los API tokens' : null)
 
 // Create Modal
@@ -442,6 +447,8 @@ const deleteToken = async () => {
   }
 }
 
-const { setRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 onMounted(() => { setRefreshHandler(refresh) })
+registerProgressiveLoading(isRefreshing)
+onUnmounted(() => { clearRefreshHandler(refresh) })
 </script>

@@ -10,7 +10,10 @@
 
     <!-- Loading State -->
     <div v-if="isLoadingData" class="flex items-center justify-center min-h-[400px]">
-      <CommonsTheCustomLoader size="large" />
+      <div class="inline-flex items-center gap-2 text-text-secondary">
+        <UiLoadingDots size="12px" />
+        <span class="text-sm">Cargando datos...</span>
+      </div>
     </div>
 
     <!-- Main Content -->
@@ -162,9 +165,9 @@
                 <div class="border border-border rounded-lg p-3 max-h-60 overflow-y-auto bg-surface">
                   <!-- Loading state -->
                   <div v-if="loadingProducts" class="flex items-center justify-center py-8">
-                    <div class="flex flex-col items-center gap-2">
-                      <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                      <span class="text-sm text-text-secondary">Cargando productos...</span>
+                    <div class="inline-flex items-center gap-2 text-text-secondary">
+                      <UiLoadingDots size="10px" />
+                      <span class="text-sm">Cargando productos...</span>
                     </div>
                   </div>
                   <!-- Empty state -->

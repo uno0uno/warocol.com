@@ -5,10 +5,10 @@ import { useBilling } from '~/composables/useBilling'
 definePageMeta({})
 useHead({ title: 'Uso de IA — WaRo Admin' })
 
-const { subscription, usageHistory, loading, fetchUsageHistory } = useBilling()
+const { subscription, usageHistory, loading, isRefreshing, fetchUsageHistory } = useBilling()
 
 const { currentTenant } = useTenantReactive()
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 const usageHistoryReady = ref(false)
 const isInitialLoading = computed(() =>
@@ -23,6 +23,7 @@ const loadAll = async () => {
 }
 
 onMounted(() => { loadAll(); setRefreshHandler(loadAll) })
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => clearRefreshHandler(loadAll))
 watch(() => currentTenant.value?.id, loadAll)
 

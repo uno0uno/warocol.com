@@ -618,6 +618,7 @@
 </template>
 
 <script setup lang="ts">
+import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({

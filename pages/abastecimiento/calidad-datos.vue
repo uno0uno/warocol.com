@@ -21,10 +21,6 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-      <div v-if="isRefreshing" class="flex justify-end">
-        <UiLoadingDots size="10px" class="text-text-secondary" />
-      </div>
-
       <!-- Score Header — 4 KPI cards -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <SharedMetricCard
@@ -223,8 +219,9 @@
 </template>
 
 <script setup lang="ts">
+import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 const { currentTenant } = useTenantReactive()
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 // Data fetching
 const { data: qualityData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
@@ -240,6 +237,13 @@ const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && qual
 onMounted(() => {
   setRefreshHandler(refetch)
 })
+useMenuReturnRefresh(
+  '/abastecimiento/calidad-datos',
+  refetch,
+  'abastecimiento-last-path',
+  ['/abastecimiento/calidad-datos/']
+)
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
   clearRefreshHandler(refetch)
 })

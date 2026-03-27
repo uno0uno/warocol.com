@@ -6,12 +6,12 @@ definePageMeta({})
 useHead({ title: 'Historial de pagos — WaRo Admin' })
 
 const {
-  plans, subscription, accessStatus, events, eventsTotal, loading, error,
+  plans, subscription, accessStatus, events, eventsTotal, loading, isRefreshing, error,
   fetchPlans, fetchMyEvents, fetchBillingOverview, subscribe,
 } = useBilling()
 
 const { currentTenant } = useTenantReactive()
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 const isInitialLoading = computed(() =>
   !!currentTenant.value &&
@@ -230,6 +230,7 @@ const toggleSavingsLabel = computed(() => {
 onMounted(() => {
   setRefreshHandler(loadAll)
 })
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => clearRefreshHandler(loadAll))
 watch(() => currentTenant.value?.id, loadAll)
 </script>

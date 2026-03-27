@@ -460,7 +460,7 @@ definePageMeta({
 
 useHead({ title: 'Catálogo Global — WaRo Admin' })
 
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 // ── Constants ───────────────────────────────────────────────────────────────
 const PAGE_SIZE = 50
@@ -472,15 +472,26 @@ const hierarchyFilter = ref<'' | 'bases' | 'variantes'>('bases')
 const currentPage = ref(1)
 
 // ── Data fetch ──────────────────────────────────────────────────────────────
-const { data: listData, pending: isLoading, error: fetchError, refresh } = useFetch('/api/admin/ingredients', {
-  server: false,
-  query: computed(() => ({
-    page: currentPage.value,
-    limit: PAGE_SIZE,
-    search: searchQuery.value || undefined,
-    bases_only: hierarchyFilter.value === 'bases' ? true : undefined,
-  })),
+const {
+  data: listData,
+  status: queryStatus,
+  asyncStatus: queryAsyncStatus,
+  error: fetchError,
+  refetch: refresh
+} = useQuery({
+  key: () => ['admin-ingredients', currentPage.value, PAGE_SIZE, searchQuery.value, hierarchyFilter.value],
+  query: () => $fetch('/api/admin/ingredients', {
+    params: {
+      page: currentPage.value,
+      limit: PAGE_SIZE,
+      search: searchQuery.value || undefined,
+      bases_only: hierarchyFilter.value === 'bases' ? true : undefined,
+    }
+  }),
+  staleTime: 30_000,
 })
+const isLoading = computed(() => !listData.value && queryStatus.value === 'loading')
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && !!listData.value)
 
 const allBases = computed(() => listData.value?.data ?? [])
 const totalItems = computed(() => listData.value?.pagination?.total ?? 0)
@@ -690,5 +701,6 @@ function closeVariantsPanel() {
 
 // ── Layout actions ────────────────────────────────────────────────────────────
 onMounted(() => setRefreshHandler(refresh))
+registerProgressiveLoading(isRefreshing)
 onUnmounted(() => clearRefreshHandler(refresh))
 </script>

@@ -1,8 +1,15 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
+  <form @submit.prevent="handleSubmit" novalidate class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
     <!-- Left Column: Form Content -->
     <div class="xl:col-span-2 space-y-6">
       <div class="bg-surface border-2 border-border rounded-xl p-6 md:p-8 shadow-sm">
+        <div
+          v-if="submitError"
+          class="mb-6 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+        >
+          {{ submitError }}
+        </div>
+
         <!-- Información Básica -->
         <div>
           <h3 class="text-lg font-semibold text-text-primary mb-6">Información Básica</h3>
@@ -14,10 +21,16 @@
               <input
                 v-model="form.name"
                 type="text"
-                required
-                class="input-base w-full px-4 py-2"
+                :class="[
+                  'input-base w-full px-4 py-2',
+                  fieldErrors.name ? 'border-destructive focus:ring-destructive/20' : ''
+                ]"
                 placeholder="Ej: Frutas del Valle S.A.S"
+                @input="clearFieldError('name')"
               />
+              <p v-if="fieldErrors.name" class="mt-2 text-sm text-destructive">
+                {{ fieldErrors.name }}
+              </p>
             </div>
             
             <div>
@@ -27,10 +40,16 @@
               <input
                 v-model="form.tax_id"
                 type="text"
-                required
-                class="input-base w-full px-4 py-2"
+                :class="[
+                  'input-base w-full px-4 py-2',
+                  fieldErrors.tax_id ? 'border-destructive focus:ring-destructive/20' : ''
+                ]"
                 placeholder="Ej: 900123456-7"
+                @input="clearFieldError('tax_id')"
               />
+              <p v-if="fieldErrors.tax_id" class="mt-2 text-sm text-destructive">
+                {{ fieldErrors.tax_id }}
+              </p>
             </div>
 
             <div class="sm:col-span-2">
@@ -205,7 +224,12 @@
           <button 
             type="submit" 
             :disabled="isSubmitting"
-            class="w-full py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold shadow-lg shadow-emerald-500/20">
+            :class="[
+              'w-full py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold',
+              isSubmitting
+                ? 'bg-background border border-border text-text-primary shadow-none'
+                : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20'
+            ]">
             <CommonsTheCustomLoader v-if="isSubmitting" size="small" />
             <span>{{ isSubmitting ? 'Creando...' : 'Crear Proveedor' }}</span>
           </button>
@@ -366,6 +390,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { useToast } from '~/composables/useToast'
 
 useHead({
   title: 'Crear Proveedor - Abastecimiento'
@@ -385,6 +410,13 @@ const form = reactive({
 })
 
 const isSubmitting = ref(false)
+const submitError = ref('')
+const toast = useToast()
+
+const fieldErrors = reactive({
+  name: '',
+  tax_id: ''
+})
 
 // Payment Agreements State (temporal, saved after supplier creation)
 const paymentAgreements = ref([])
@@ -484,6 +516,29 @@ const formatAgreementType = (type) => {
   return types[type] || type
 }
 
+const clearFieldError = (field: 'name' | 'tax_id') => {
+  fieldErrors[field] = ''
+  if (submitError.value) {
+    submitError.value = ''
+  }
+}
+
+const validateForm = () => {
+  fieldErrors.name = form.name.trim() ? '' : 'El nombre del proveedor es obligatorio.'
+  fieldErrors.tax_id = form.tax_id.trim() ? '' : 'El NIT o cédula es obligatorio.'
+
+  const hasErrors = Boolean(fieldErrors.name || fieldErrors.tax_id)
+
+  if (hasErrors) {
+    submitError.value = 'Completa los campos obligatorios para poder crear el proveedor.'
+    toast.error('Completa los campos obligatorios para continuar.', { title: 'Formulario incompleto' })
+    return false
+  }
+
+  submitError.value = ''
+  return true
+}
+
 // Setup useAsyncData for the POST request
 const { data: supplierData, execute: createSupplier, error: createError } = useAsyncData(
   'create-supplier-call', // Unique key
@@ -499,7 +554,11 @@ const { data: supplierData, execute: createSupplier, error: createError } = useA
 
 // Handle form submission
 const handleSubmit = async () => {
-  isSubmitting.value = true;
+  if (!validateForm()) {
+    return
+  }
+
+  isSubmitting.value = true
 
   console.log('[CREATE SUPPLIER] Starting supplier creation...')
   console.log('[CREATE SUPPLIER] Form data:', form)
@@ -530,6 +589,7 @@ const handleSubmit = async () => {
     }
 
     console.log('[CREATE SUPPLIER] Supplier created successfully! Redirecting...')
+    toast.success('Proveedor creado correctamente', { title: 'Guardado' })
 
     // Clear cache and redirect to suppliers list
     clearNuxtData('suppliers-*')
@@ -537,9 +597,10 @@ const handleSubmit = async () => {
 
   } catch (err) {
     console.error('[CREATE SUPPLIER] Error creating provider:', err)
-    alert('Error al crear el proveedor. Por favor, intente de nuevo.')
+    submitError.value = err?.data?.detail || err?.message || 'Error al crear el proveedor. Por favor, intente de nuevo.'
+    toast.error(submitError.value, { title: 'Error' })
   } finally {
-    isSubmitting.value = false;
+    isSubmitting.value = false
   }
 }
 </script>

@@ -14,10 +14,18 @@
 
 <script setup lang="ts">
 const route = useRoute()
+const lastAbastecimientoPath = useState<string | null>('abastecimiento-last-path', () => null)
 
 definePageMeta({
   layout: 'dashboard'
 })
+
+watch(
+  () => route.fullPath,
+  (_currentPath, previousPath) => {
+    lastAbastecimientoPath.value = previousPath ?? null
+  }
+)
 
 // Navigation configuration
 const navigationItems = [

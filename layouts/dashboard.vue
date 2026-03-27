@@ -21,7 +21,10 @@
             </button>
 
             <div class="min-w-0">
-              <h1 class="text-lg sm:text-xl md:text-3xl font-bold text-text-primary leading-tight truncate">{{ displayTitle }}</h1>
+              <h1 class="text-lg sm:text-xl md:text-3xl font-bold text-text-primary leading-tight truncate">
+                {{ animatedDisplayTitle }}
+                <span v-if="isTypingTitle" class="title-caret" aria-hidden="true"></span>
+              </h1>
               <p class="text-xs text-muted-foreground mt-0.5 truncate">{{ dynamicLastUpdateText || displaySubtitle || currentDateTime }}</p>
             </div>
           </div>
@@ -838,6 +841,57 @@ const displaySubtitle = computed(() => dynamicSubtitle.value || pageSubtitle.val
 const showBackBtn = computed(() => dynamicBackButton.value || !!backButton.value)
 const backBtnHandler = computed(() => dynamicBackHandler.value || (backButton.value ? goBack : undefined))
 
+const animatedDisplayTitle = ref(displayTitle.value)
+const isTypingTitle = ref(false)
+let titleTypingTimeout: ReturnType<typeof setTimeout> | null = null
+
+const clearTitleTypingTimeout = () => {
+  if (titleTypingTimeout) {
+    clearTimeout(titleTypingTimeout)
+    titleTypingTimeout = null
+  }
+}
+
+const typeTitle = (nextTitle: string) => {
+  clearTitleTypingTimeout()
+
+  if (!nextTitle) {
+    animatedDisplayTitle.value = ''
+    isTypingTitle.value = false
+    return
+  }
+
+  animatedDisplayTitle.value = ''
+  isTypingTitle.value = true
+  let index = 0
+
+  const step = () => {
+    index += 1
+    animatedDisplayTitle.value = nextTitle.slice(0, index)
+
+    if (index >= nextTitle.length) {
+      isTypingTitle.value = false
+      titleTypingTimeout = null
+      return
+    }
+
+    titleTypingTimeout = setTimeout(step, 22)
+  }
+
+  titleTypingTimeout = setTimeout(step, 22)
+}
+
+watch(displayTitle, (nextTitle, previousTitle) => {
+  if (!previousTitle || nextTitle === previousTitle) {
+    animatedDisplayTitle.value = nextTitle
+    isTypingTitle.value = false
+    clearTitleTypingTimeout()
+    return
+  }
+
+  typeTitle(nextTitle)
+}, { immediate: true })
+
 // Inject cart data from POS page
 const posCartItemsCount = inject<ComputedRef<number> | Ref<number>>('posCartItemsCount', ref(0))
 const posOpenCartModal = inject<() => void>('posOpenCartModal', () => {})
@@ -849,9 +903,33 @@ useHead({
     { name: 'robots', content: 'noindex, nofollow' }, // Dashboard pages shouldn't be indexed
   ]
 })
+
+onUnmounted(() => {
+  clearTitleTypingTimeout()
+})
 </script>
 
 <style>
+.title-caret {
+  display: inline-block;
+  width: 0.08em;
+  height: 0.9em;
+  margin-left: 0.08em;
+  vertical-align: -0.08em;
+  background-color: currentColor;
+  animation: title-caret-blink 1s steps(1) infinite;
+}
+
+@keyframes title-caret-blink {
+  0%, 50% {
+    opacity: 1;
+  }
+
+  50.01%, 100% {
+    opacity: 0;
+  }
+}
+
 /* Hide empty portal target to prevent extra flex gaps */
 #dashboard-header-actions {
   position: relative;
