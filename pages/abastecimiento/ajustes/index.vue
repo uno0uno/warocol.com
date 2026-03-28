@@ -131,7 +131,7 @@
 
         <!-- Desktop Table Cells -->
         <template #cell-created_at="{ value }">
-          <span class="text-sm text-text-primary">{{ formatDate(value) }}</span>
+          <span class="text-sm text-text-primary whitespace-nowrap">{{ formatDate(value) }}</span>
         </template>
 
         <template #cell-ingredient_name="{ value }">
