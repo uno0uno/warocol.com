@@ -39,7 +39,7 @@ const updateStatus = async (newStatus: string, extra: Record<string, unknown> = 
   isStatusUpdating.value = true
   statusUpdateError.value = null
   try {
-    await $fetch(`/api/online/orders/${orderId}/status`, {
+    await $fetch(`/api/online/orders/${orderId.value}/status`, {
       method: 'PATCH',
       body: { new_status: newStatus, ...extra },
     })
