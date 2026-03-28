@@ -158,10 +158,8 @@
             </ol>
           </nav>
 
-          <!-- Page Content with Animation -->
-          <Transition name="page-transition" mode="out-in">
-            <slot />
-          </Transition>
+          <!-- Page Content -->
+          <slot />
         </div>
       </div>
     </main>
@@ -957,31 +955,6 @@ onUnmounted(() => {
 </style>
 
 <style scoped>
-/* Page transition animations */
-.page-transition-enter-active {
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-.page-transition-leave-active {
-  transition: all 0.3s cubic-bezier(0.755, 0.05, 0.855, 0.06);
-}
-
-.page-transition-enter-from {
-  opacity: 0;
-  transform: translateY(-20px) scale(0.98);
-}
-
-.page-transition-leave-to {
-  opacity: 0;
-  transform: translateY(10px) scale(1.02);
-}
-
-.page-transition-enter-to,
-.page-transition-leave-from {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
 /* Smooth sidebar navigation animation */
 .sidebar-nav {
   transition: all 0.2s ease-in-out;
