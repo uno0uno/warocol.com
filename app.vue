@@ -28,4 +28,9 @@
 .animate-fade-in {
   animation: fade-in-up 0.4s ease-out both;
 }
+
+/* Page enter animation — fires on mount, no <Transition>+<Suspense> involved */
+.page-layout {
+  animation: fade-in-up 0.25s ease-out both;
+}
 </style>
