@@ -30,9 +30,9 @@ watch(
 // Navigation configuration
 const navigationItems = [
   { to: '/abastecimiento/proveedores', label: 'Proveedores' },
-  { to: '/abastecimiento/compras-directas', label: 'Compra Directa', matchPath: '/compras-directas' },
+  { to: '/abastecimiento/compras-directas', label: 'Compra Directa', matchPath: '/abastecimiento/compras-directas' },
   { to: '/abastecimiento/stock', label: 'Stock' },
-  { to: '/abastecimiento/ajustes', label: 'Ajustes', matchPath: '/ajustes' },
+  { to: '/abastecimiento/ajustes', label: 'Ajustes', matchPath: '/abastecimiento/ajustes' },
   { to: '/abastecimiento/calidad-datos', label: 'Calidad de Datos' }
 ]
 
