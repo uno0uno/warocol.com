@@ -12,6 +12,7 @@ export default defineNuxtConfig({
     '/menu/**': { ssr: false },
     '/inventario/**': { ssr: false },
     '/abastecimiento/**': { ssr: false },
+    '/ventas': { ssr: false },
     '/ventas/**': { ssr: false },
     '/equipo/**': { ssr: false },
     '/pagos/**': { ssr: false },
