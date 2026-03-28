@@ -297,6 +297,56 @@ const getPageConfig = () => {
   //     breadcrumbPage: undefined,
   //     backButton: undefined
   //   }
+  } else if (path === '/abastecimiento/compras-directas' || path === '/abastecimiento/compras-directas/') {
+    return {
+      pageTitle: 'Compras Directas',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar compras...',
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/abastecimiento/compras-directas/crear') {
+    return {
+      pageTitle: 'Nueva Compra Directa',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: { label: 'Volver' }
+    }
+  } else if (path.startsWith('/abastecimiento/compras-directas/')) {
+    return {
+      pageTitle: 'Compra Directa',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: { label: 'Volver' }
+    }
+  } else if (path.startsWith('/abastecimiento/ajustes')) {
+    return {
+      pageTitle: 'Ajustes de Abastecimiento',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: { label: 'Volver' }
+    }
+  } else if (path === '/abastecimiento/stock') {
+    return {
+      pageTitle: 'Stock',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar stock...',
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path === '/abastecimiento/compras') {
     return {
       pageTitle: 'Órdenes de Compra',
