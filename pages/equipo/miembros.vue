@@ -533,6 +533,8 @@
 </template>
 
 <script setup lang="ts">
+// @ts-ignore
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 useHead({ title: 'Miembros - Equipo' })
 
 // Tenant reactivity

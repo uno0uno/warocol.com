@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, inject, onMounted } from 'vue'
+// @ts-ignore
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({
   layout: 'dashboard'

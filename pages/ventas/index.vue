@@ -3,6 +3,8 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
+// @ts-ignore
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({
   layout: 'dashboard'
