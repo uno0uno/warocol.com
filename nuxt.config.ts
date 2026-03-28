@@ -184,7 +184,6 @@ export default defineNuxtConfig({
         }
       ]
     },
-    pageTransition: { name: 'page' }
   },
   modules: [
     ['@nuxtjs/google-fonts', {

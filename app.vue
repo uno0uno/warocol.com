@@ -13,20 +13,6 @@
 </script>
 
 <style lang="scss">
-/* Page transitions between routes */
-.page-enter-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-.page-leave-active {
-  transition: opacity 0.15s ease;
-}
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(8px);
-}
-.page-leave-to {
-  opacity: 0;
-}
 
 /* Subtle fade-in for initial SSR load */
 @keyframes fade-in-up {
