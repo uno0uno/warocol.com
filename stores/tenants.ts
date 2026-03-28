@@ -101,18 +101,28 @@ export const useTenantsStore = defineStore('tenants', () => {
         error.value = response.message ?? 'Error switching tenant'
         return
       }
-      selectedTenant.value = tenant
-      // Bulk invalidation — single source of truth for tenant switch
+      // Invalidate BEFORE updating selectedTenant so Vue's reactive flush hasn't
+      // changed the query keys yet — avoids a race where Pinia Colada re-fetches
+      // the old key with the new session and stores the result under the wrong key.
       cache.invalidateQueries({ key: ['tenant'] })
       cache.invalidateQueries({ key: ['billing'] })
       cache.invalidateQueries({ key: ['orders'] })
-      cache.invalidateQueries({ key: ['expenses'] })
-      cache.invalidateQueries({ key: ['ingredients'] })
+      cache.invalidateQueries({ key: ['online-orders'] })
+      cache.invalidateQueries({ key: ['api-tokens'] })
+      cache.invalidateQueries({ key: ['salaries'] })
+      cache.invalidateQueries({ key: ['team-members'] })
+      cache.invalidateQueries({ key: ['inventory'] })
+      cache.invalidateQueries({ key: ['menu'] })
+      cache.invalidateQueries({ key: ['suppliers'] })
+      cache.invalidateQueries({ key: ['pos'] })
+      cache.invalidateQueries({ key: ['finance'] })
       cache.invalidateQueries({ key: ['analytics'] })
       cache.invalidateQueries({ key: ['waros'] })
-      cache.invalidateQueries({ key: ['purchases'] })
       cache.invalidateQueries({ key: ['addresses'] })
       cache.invalidateQueries({ key: ['notifications'] })
+      // Update AFTER invalidations so the key change triggers a clean fetch
+      // for the new tenant once Vue flushes the reactive update.
+      selectedTenant.value = tenant
     },
     onError: (err: any) => {
       error.value = err?.message ?? 'Failed to switch tenant'
