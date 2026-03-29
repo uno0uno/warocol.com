@@ -264,7 +264,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Products Grid -->
-          <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-5 p-1 pb-4">
+          <div v-else class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2 md:gap-4 p-1 pb-4">
             <PosProductCard
               v-for="product in filteredProducts"
               :key="product.id"

@@ -1,17 +1,17 @@
 <template>
   <button
     :style="cardStyle"
-    class="group flex flex-col items-center p-3 md:p-5 border rounded-xl theme-transition cursor-pointer active:scale-[0.99]"
+    class="group flex flex-col items-center p-2 md:p-5 border rounded-xl theme-transition cursor-pointer active:scale-[0.97]"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @click="$emit('select', product)"
   >
-    <div class="text-3xl md:text-5xl mb-2 md:mb-3 mt-1 select-none">{{ product.image }}</div>
-    <p class="text-xs md:text-sm font-semibold text-text-primary text-center leading-snug line-clamp-2 min-h-[2.5rem] flex items-center justify-center">
+    <div class="text-xl md:text-5xl mb-1 md:mb-3 mt-0.5 select-none">{{ product.image }}</div>
+    <p class="text-[10px] md:text-sm font-semibold text-text-primary text-center leading-tight line-clamp-2 min-h-[2rem] md:min-h-[2.5rem] flex items-center justify-center">
       {{ product.name }}
     </p>
-    <div class="w-full mt-3 pt-3 border-t border-black/20">
-      <p class="text-sm md:text-base font-bold text-primary text-center">
+    <div class="w-full mt-1.5 md:mt-3 pt-1.5 md:pt-3 border-t border-black/20">
+      <p class="text-[10px] md:text-base font-bold text-primary text-center">
         {{ formatCurrency(product.price) }}
       </p>
     </div>
