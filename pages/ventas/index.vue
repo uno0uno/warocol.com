@@ -467,12 +467,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <div
             v-if="item"
             @click="viewOrderDetails(item)"
-            class="flex items-center gap-3 py-3 px-3 mb-2 rounded-lg border border-slate-100 shadow-[0_1px_2px_rgba(0,0,0,0.06)] cursor-pointer transition-all"
+            class="flex items-center gap-3 py-3 px-3 mb-2 rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.07)] cursor-pointer transition-all"
             :class="item.status === 'completed'
-              ? 'bg-emerald-500/[0.035] active:bg-emerald-50'
+              ? 'bg-emerald-50 border border-emerald-200 active:bg-emerald-100'
               : item.status === 'cancelled'
-                ? 'bg-red-500/[0.035] active:bg-red-50'
-                : 'bg-amber-500/[0.035] active:bg-amber-50'"
+                ? 'bg-red-50 border border-red-200 active:bg-red-100'
+                : 'bg-amber-50 border border-amber-200 active:bg-amber-100'"
           >
             <!-- Left: order info — neutro, sin color -->
             <div class="flex-1 min-w-0">
