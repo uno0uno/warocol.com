@@ -808,6 +808,10 @@ const canProceed = computed(() => {
   if (currentStep.value === 1) {
     return form.value.name && form.value.category_id && form.value.price > 0
   }
+  if (currentStep.value === 2) {
+    return form.value.ingredients.length === 0 ||
+           form.value.ingredients.every(i => i.ingredient_id && i.quantity > 0)
+  }
   return true
 })
 
@@ -929,7 +933,12 @@ async function submitProduct() {
     await router.push('/menu/productos')
   } catch (error: any) {
     console.error('Error creating product:', error)
-    submitError.value = error.data?.detail || error.message || 'Error al crear el producto. Por favor intenta de nuevo.'
+    const detail = error.data?.detail
+    if (Array.isArray(detail)) {
+      submitError.value = 'Error de validación: revisa que todos los campos estén completos y con valores válidos.'
+    } else {
+      submitError.value = detail || error.message || 'Error al crear el producto. Por favor intenta de nuevo.'
+    }
   } finally {
     isSubmitting.value = false
   }
