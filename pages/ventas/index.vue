@@ -462,12 +462,17 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </div>
         </template>
 
-        <!-- Mobile Card — flat list row, no individual cards -->
+        <!-- Mobile Card — card-lite + left accent border (Stripe/Revolut pattern) -->
         <template #card="{ item }">
           <div
             v-if="item"
             @click="viewOrderDetails(item)"
-            class="flex items-center gap-3 py-3 px-1 border-b border-border last:border-b-0 cursor-pointer active:bg-violet-50/40 transition-colors"
+            class="flex items-center gap-3 py-3 px-3 mb-2 rounded-lg bg-white border border-violet-100 border-l-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)] cursor-pointer active:bg-violet-50 transition-colors"
+            :class="{
+              'border-l-emerald-500': item.status === 'completed',
+              'border-l-red-400': item.status === 'cancelled',
+              'border-l-amber-400': item.status !== 'completed' && item.status !== 'cancelled',
+            }"
           >
             <!-- Left: order info -->
             <div class="flex-1 min-w-0">
@@ -480,15 +485,17 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               </p>
             </div>
 
-            <!-- Right: amount + status badge -->
-            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
-              <p class="text-sm font-bold text-violet-700 tabular-nums">{{ formatCurrency(item.total_amount) }}</p>
-              <UiStatusBadge
-                :value="getStatusLabel(item.status)"
-                format="text"
-                :variant="item.status === 'completed' ? 'success' : item.status === 'cancelled' ? 'destructive' : 'warning'"
-                size="sm"
-              />
+            <!-- Right: amount + status label -->
+            <div class="flex flex-col items-end gap-1 flex-shrink-0">
+              <p class="text-sm font-bold text-slate-800 tabular-nums">{{ formatCurrency(item.total_amount) }}</p>
+              <span
+                class="text-[10px] font-semibold uppercase tracking-wide"
+                :class="{
+                  'text-emerald-600': item.status === 'completed',
+                  'text-red-500': item.status === 'cancelled',
+                  'text-amber-500': item.status !== 'completed' && item.status !== 'cancelled',
+                }"
+              >{{ getStatusLabel(item.status) }}</span>
             </div>
           </div>
         </template>
