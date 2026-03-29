@@ -1,12 +1,12 @@
 <template>
   <button
     :style="cardStyle"
-    class="group flex flex-col items-center p-4 md:p-5 border rounded-xl theme-transition cursor-pointer active:scale-[0.99]"
+    class="group flex flex-col items-center p-3 md:p-5 border rounded-xl theme-transition cursor-pointer active:scale-[0.99]"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @click="$emit('select', product)"
   >
-    <div class="text-4xl md:text-5xl mb-3 mt-1 select-none">{{ product.image }}</div>
+    <div class="text-3xl md:text-5xl mb-2 md:mb-3 mt-1 select-none">{{ product.image }}</div>
     <p class="text-xs md:text-sm font-semibold text-text-primary text-center leading-snug line-clamp-2 min-h-[2.5rem] flex items-center justify-center">
       {{ product.name }}
     </p>
