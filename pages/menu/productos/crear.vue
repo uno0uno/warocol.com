@@ -599,17 +599,19 @@
               <span class="hidden sm:inline">Siguiente →</span>
               <span class="sm:hidden">→</span>
             </button>
-            <button
-              v-else
-              type="button"
-              @click="submitProduct"
-              :disabled="isSubmitting"
-              class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
-              :class="{ 'opacity-50 cursor-not-allowed': isSubmitting }"
-            >
-              <span class="hidden sm:inline">{{ isSubmitting ? 'Creando...' : 'Crear Producto' }}</span>
-              <span class="sm:hidden">{{ isSubmitting ? '...' : 'Crear' }}</span>
-            </button>
+            <div v-else class="flex flex-col items-end gap-2">
+              <p v-if="submitError" role="alert" class="text-sm text-destructive">{{ submitError }}</p>
+              <button
+                type="button"
+                @click="submitProduct"
+                :disabled="isSubmitting"
+                class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
+                :class="{ 'opacity-50 cursor-not-allowed': isSubmitting }"
+              >
+                <span class="hidden sm:inline">{{ isSubmitting ? 'Creando...' : 'Crear Producto' }}</span>
+                <span class="sm:hidden">{{ isSubmitting ? '...' : 'Crear' }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -618,6 +620,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
@@ -633,6 +636,7 @@ const { currentTenant } = useTenantReactive()
 // State
 const currentStep = ref(1)
 const isSubmitting = ref(false)
+const submitError = ref<string | null>(null)
 
 // Form data
 const form = ref({
@@ -882,6 +886,7 @@ async function submitProduct() {
   if (isSubmitting.value) return
 
   isSubmitting.value = true
+  submitError.value = null
 
   try {
     // Validate no duplicate recipe bases
@@ -889,7 +894,7 @@ async function submitProduct() {
     const uniqueRecipeBaseIds = [...new Set(recipeBaseIds)]
 
     if (recipeBaseIds.length !== uniqueRecipeBaseIds.length) {
-      alert('Error: No puedes agregar la misma receta base más de una vez')
+      submitError.value = 'No puedes agregar la misma receta base más de una vez.'
       isSubmitting.value = false
       return
     }
@@ -911,7 +916,7 @@ async function submitProduct() {
     await router.push('/menu/productos')
   } catch (error: any) {
     console.error('Error creating product:', error)
-    alert(`Error al crear el producto: ${error.message || 'Por favor intenta de nuevo.'}`)
+    submitError.value = error.data?.detail || error.message || 'Error al crear el producto. Por favor intenta de nuevo.'
   } finally {
     isSubmitting.value = false
   }

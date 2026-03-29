@@ -638,17 +638,19 @@
               <span class="hidden sm:inline">Siguiente →</span>
               <span class="sm:hidden">→</span>
             </button>
-            <button
-              v-else
-              type="button"
-              @click="submitGroup"
-              :disabled="isSubmitting"
-              class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
-              :class="{ 'opacity-50 cursor-not-allowed': isSubmitting }"
-            >
-              <span class="hidden sm:inline">{{ isSubmitting ? 'Creando...' : 'Crear Grupo' }}</span>
-              <span class="sm:hidden">{{ isSubmitting ? '...' : 'Crear' }}</span>
-            </button>
+            <div v-else class="flex flex-col items-end gap-2">
+              <p v-if="submitError" role="alert" class="text-sm text-destructive">{{ submitError }}</p>
+              <button
+                type="button"
+                @click="submitGroup"
+                :disabled="isSubmitting"
+                class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
+                :class="{ 'opacity-50 cursor-not-allowed': isSubmitting }"
+              >
+                <span class="hidden sm:inline">{{ isSubmitting ? 'Creando...' : 'Crear Grupo' }}</span>
+                <span class="sm:hidden">{{ isSubmitting ? '...' : 'Crear' }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -672,6 +674,7 @@ const { currentTenant } = useTenantReactive()
 // State
 const currentStep = ref(1)
 const isSubmitting = ref(false)
+const submitError = ref<string | null>(null)
 
 // Form data
 const form = ref({
@@ -829,6 +832,7 @@ async function submitGroup() {
   if (isSubmitting.value) return
 
   isSubmitting.value = true
+  submitError.value = null
 
   try {
     form.value.tenant_id = currentTenant.value?.id || ''
@@ -842,7 +846,7 @@ async function submitGroup() {
     await router.push('/menu/modificadores')
   } catch (error: any) {
     console.error('Error creating modifier group:', error)
-    alert(`Error al crear el grupo: ${error.message || 'Por favor intenta de nuevo.'}`)
+    submitError.value = error.data?.detail || error.message || 'Error al crear el grupo. Por favor intenta de nuevo.'
   } finally {
     isSubmitting.value = false
   }
