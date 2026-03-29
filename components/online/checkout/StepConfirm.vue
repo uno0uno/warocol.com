@@ -106,6 +106,28 @@
       :show-checkout-button="false"
     />
 
+    <!-- WaRos card -->
+    <div
+      v-if="warosSystemEnabled === true"
+      class="flex items-center gap-3 p-4 rounded-xl border border-yellow-300 bg-yellow-50"
+    >
+      <span class="text-2xl flex-shrink-0">🌟</span>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold text-yellow-900">
+          Tus WaRos
+        </p>
+        <p class="text-xs text-yellow-700 mt-0.5">
+          Saldo actual:
+          <strong>{{ warosBalance !== null ? warosBalance.toLocaleString('es-CO') : '—' }}</strong>
+          <template v-if="warosEstimate !== null && warosEstimate > 0">
+            · Ganarás
+            <strong class="text-yellow-800">+{{ warosEstimate.toLocaleString('es-CO') }}</strong>
+            con este pedido
+          </template>
+        </p>
+      </div>
+    </div>
+
     <!-- Payment method -->
     <div class="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
       <svg class="w-5 h-5 text-amber-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,7 +215,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useOtpAuthStore } from '~/stores/otp_auth'
@@ -247,6 +269,35 @@ const formatScheduledTime = (isoString: string) =>
     hour: '2-digit',
     minute: '2-digit',
   })
+
+// ── WaRos ─────────────────────────────────────────────────────────────────
+
+const warosBalance = ref<number | null>(null)
+const warosEstimate = ref<number | null>(null)
+const warosSystemEnabled = ref<boolean | null>(null)
+
+const fetchWarosInfo = async () => {
+  if (!otpAuthStore.isAuthenticated) return
+  try {
+    const [summary, estimate] = await Promise.allSettled([
+      $fetch<{ current_balance: number }>('/api/customer/waros/summary'),
+      $fetch<{ estimated_waros: number; system_enabled: boolean }>(
+        `/api/customer/waros/estimate?total_amount=${cartStore.subtotal}`
+      ),
+    ])
+    if (summary.status === 'fulfilled') {
+      warosBalance.value = summary.value.current_balance
+    }
+    if (estimate.status === 'fulfilled') {
+      warosSystemEnabled.value = estimate.value.system_enabled
+      warosEstimate.value = estimate.value.estimated_waros
+    }
+  } catch {
+    // Silently fail — don't break checkout
+  }
+}
+
+onMounted(fetchWarosInfo)
 
 // ── Submit logic ──────────────────────────────────────────────────────────
 
