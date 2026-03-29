@@ -1,31 +1,31 @@
 <template>
-  <div class="p-3 border border-border rounded-xl bg-card theme-transition hover:border-primary/30">
+  <div class="p-3 border border-violet-200 rounded-xl bg-violet-50 theme-transition hover:border-violet-300">
 
     <!-- Fila 1: badge + nombre + total -->
     <div class="flex items-start gap-2.5">
       <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold mt-0.5">
         {{ orderNumber }}
       </div>
-      <p class="flex-1 text-sm font-semibold text-text-primary leading-snug">{{ item.product.name }}</p>
-      <p class="text-sm font-bold text-primary tabular-nums flex-shrink-0 ml-1">{{ formatCurrency(itemTotal) }}</p>
+      <p class="flex-1 text-sm font-semibold text-slate-800 leading-snug">{{ item.product.name }}</p>
+      <p class="text-sm font-bold text-violet-700 tabular-nums flex-shrink-0 ml-1">{{ formatCurrency(itemTotal) }}</p>
     </div>
 
     <!-- Fila 2: precio c/u + modificadores -->
     <div class="mt-1.5 pl-[2.125rem] space-y-0.5">
-      <p class="text-xs text-text-secondary">{{ formatCurrency(Number(item.product.price)) }} c/u</p>
+      <p class="text-xs text-slate-500">{{ formatCurrency(Number(item.product.price)) }} c/u</p>
       <div v-for="mod in item.modifiers" :key="mod.id" class="flex justify-between text-xs gap-2">
-        <span class="text-text-tertiary">+ {{ mod.name }}</span>
-        <span class="text-text-secondary tabular-nums flex-shrink-0">{{ formatCurrency(Number(mod.price)) }}</span>
+        <span class="text-slate-400">+ {{ mod.name }}</span>
+        <span class="text-slate-500 tabular-nums flex-shrink-0">{{ formatCurrency(Number(mod.price)) }}</span>
       </div>
-      <p v-if="item.notes" class="text-xs text-text-tertiary italic">Nota: {{ item.notes }}</p>
+      <p v-if="item.notes" class="text-xs text-slate-400 italic">Nota: {{ item.notes }}</p>
     </div>
 
     <!-- Fila 3: controles de cantidad + acciones -->
     <div class="mt-2.5 pl-[2.125rem] flex items-center gap-2">
       <!-- Cantidad -->
-      <div class="flex items-center border border-border rounded-lg bg-surface">
+      <div class="flex items-center border border-violet-200 rounded-lg bg-white">
         <button
-          class="w-6 h-6 flex items-center justify-center text-text-secondary hover:bg-surface-secondary rounded-l-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-6 h-6 flex items-center justify-center text-slate-400 hover:bg-violet-50 rounded-l-lg disabled:opacity-40 disabled:cursor-not-allowed"
           :disabled="item.quantity <= 1"
           @click.stop="$emit('decrement')"
         >
@@ -35,7 +35,7 @@
         </button>
         <span class="w-6 text-center text-xs font-medium text-text-primary">{{ item.quantity }}</span>
         <button
-          class="w-6 h-6 flex items-center justify-center text-text-secondary hover:bg-surface-secondary rounded-r-lg"
+          class="w-6 h-6 flex items-center justify-center text-slate-400 hover:bg-violet-50 rounded-r-lg"
           @click.stop="$emit('increment')"
         >
           <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -48,7 +48,7 @@
 
       <!-- Duplicar -->
       <button
-        class="w-7 h-7 flex items-center justify-center rounded bg-primary/10 border border-primary text-primary hover:bg-primary hover:text-primary-foreground theme-transition"
+        class="w-7 h-7 flex items-center justify-center rounded bg-violet-50 border border-violet-300 text-violet-600 hover:bg-violet-100 theme-transition"
         @click.stop="$emit('duplicate')"
         title="Duplicar"
       >
@@ -60,7 +60,7 @@
       <!-- Editar (oculto para reventa) -->
       <button
         v-if="!item.is_resale"
-        class="w-7 h-7 flex items-center justify-center rounded bg-primary/10 border border-primary text-primary hover:bg-primary hover:text-primary-foreground theme-transition"
+        class="w-7 h-7 flex items-center justify-center rounded bg-violet-50 border border-violet-300 text-violet-600 hover:bg-violet-100 theme-transition"
         @click.stop="$emit('edit')"
         title="Editar"
       >
@@ -71,7 +71,7 @@
 
       <!-- Eliminar -->
       <button
-        class="w-7 h-7 flex items-center justify-center rounded bg-destructive/10 border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground theme-transition"
+        class="w-7 h-7 flex items-center justify-center rounded bg-red-50 border border-red-300 text-red-500 hover:bg-red-100 theme-transition"
         @click.stop="$emit('remove')"
         title="Eliminar"
       >

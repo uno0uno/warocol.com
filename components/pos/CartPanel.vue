@@ -1,10 +1,10 @@
 <template>
   <div class="flex flex-col lg:w-96 border border-border rounded-xl bg-surface overflow-hidden">
     <!-- Cart Header -->
-    <div class="p-4 border-b border-crocus-700 bg-primary">
+    <div class="p-4 border-b border-violet-200 bg-violet-100">
       <div class="flex items-center justify-between">
-        <h2 class="text-base font-bold text-primary-foreground tracking-wide">Orden Actual</h2>
-        <span class="px-2.5 py-1 text-xs rounded-full font-bold bg-primary-foreground/15 text-primary-foreground border border-primary-foreground/20">
+        <h2 class="text-base font-bold text-violet-900 tracking-wide">Orden Actual</h2>
+        <span class="px-2.5 py-1 text-xs rounded-full font-bold bg-violet-200 text-violet-800 border border-violet-300">
           {{ items.length }} {{ items.length === 1 ? 'producto' : 'productos' }}
         </span>
       </div>
