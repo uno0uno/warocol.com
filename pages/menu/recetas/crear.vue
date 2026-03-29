@@ -638,11 +638,17 @@ function removeIngredient(index: number) {
   form.value.ingredients.splice(index, 1)
 }
 
-function handleNext() {
-  if (canProceed.value && currentStep.value < 3) {
-    currentStep.value++
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+async function handleNext() {
+  if (!canProceed.value || currentStep.value >= 3) return
+  if (currentStep.value === 1) {
+    const res = await $fetch<{ available: boolean }>(`/api/menu/check-name?entity=recipe-bases&name=${encodeURIComponent(form.value.name.trim())}`)
+    if (!res.available) {
+      nameError.value = 'Ya existe una receta base con ese nombre.'
+      return
+    }
   }
+  currentStep.value++
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function previousStep() {

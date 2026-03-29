@@ -209,9 +209,15 @@
                   type="text"
                   v-model="form.name"
                   placeholder="Ej: Extras, Tamaño, Sin..."
-                  class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary"
+                  class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary"
+                  :class="nameError ? 'border-destructive focus:ring-destructive' : 'border-border'"
                   required
+                  @input="nameError = ''"
                 />
+                <p v-if="nameError" role="alert" class="text-xs text-destructive mt-1 flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                  {{ nameError }}
+                </p>
               </div>
 
               <!-- Min Qty -->
@@ -675,6 +681,7 @@ const { currentTenant } = useTenantReactive()
 const currentStep = ref(1)
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
+const nameError = ref('')
 
 // Form data
 const form = ref({
@@ -816,10 +823,16 @@ function removeModifier(index: number) {
   form.value.modifiers.splice(index, 1)
 }
 
-function handleNext() {
-  if (canProceed.value && currentStep.value < 3) {
-    currentStep.value++
+async function handleNext() {
+  if (!canProceed.value || currentStep.value >= 3) return
+  if (currentStep.value === 1) {
+    const res = await $fetch<{ available: boolean }>(`/api/menu/check-name?entity=modifier-groups&name=${encodeURIComponent(form.value.name.trim())}`)
+    if (!res.available) {
+      nameError.value = 'Ya existe un grupo de modificadores con ese nombre.'
+      return
+    }
   }
+  currentStep.value++
 }
 
 function previousStep() {
