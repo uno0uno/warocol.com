@@ -462,19 +462,19 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </div>
         </template>
 
-        <!-- Mobile Card — card-lite + left accent border (Stripe/Revolut pattern) -->
+        <!-- Mobile Card: color en el monto (no en bordes) + background wash 3% -->
         <template #card="{ item }">
           <div
             v-if="item"
             @click="viewOrderDetails(item)"
-            class="flex items-center gap-3 py-3 px-3 mb-2 rounded-lg bg-white border border-violet-100 border-l-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)] cursor-pointer active:bg-violet-50 transition-colors"
-            :class="{
-              'border-l-emerald-500': item.status === 'completed',
-              'border-l-red-400': item.status === 'cancelled',
-              'border-l-amber-400': item.status !== 'completed' && item.status !== 'cancelled',
-            }"
+            class="flex items-center gap-3 py-3 px-3 mb-2 rounded-lg border border-slate-100 shadow-[0_1px_2px_rgba(0,0,0,0.06)] cursor-pointer transition-all"
+            :class="item.status === 'completed'
+              ? 'bg-emerald-500/[0.035] active:bg-emerald-50'
+              : item.status === 'cancelled'
+                ? 'bg-red-500/[0.035] active:bg-red-50'
+                : 'bg-amber-500/[0.035] active:bg-amber-50'"
           >
-            <!-- Left: order info -->
+            <!-- Left: order info — neutro, sin color -->
             <div class="flex-1 min-w-0">
               <div class="flex items-baseline gap-2">
                 <span class="text-sm font-bold text-slate-800">#{{ item.order_number }}</span>
@@ -485,16 +485,23 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               </p>
             </div>
 
-            <!-- Right: amount + status label -->
-            <div class="flex flex-col items-end gap-1 flex-shrink-0">
-              <p class="text-sm font-bold text-slate-800 tabular-nums">{{ formatCurrency(item.total_amount) }}</p>
+            <!-- Right: el monto ES el indicador de status -->
+            <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
+              <p
+                class="text-sm font-bold tabular-nums"
+                :class="item.status === 'completed'
+                  ? 'text-emerald-600'
+                  : item.status === 'cancelled'
+                    ? 'text-red-500'
+                    : 'text-amber-600'"
+              >{{ formatCurrency(item.total_amount) }}</p>
               <span
-                class="text-[10px] font-semibold uppercase tracking-wide"
-                :class="{
-                  'text-emerald-600': item.status === 'completed',
-                  'text-red-500': item.status === 'cancelled',
-                  'text-amber-500': item.status !== 'completed' && item.status !== 'cancelled',
-                }"
+                class="text-[10px] font-medium tracking-wide"
+                :class="item.status === 'completed'
+                  ? 'text-emerald-500'
+                  : item.status === 'cancelled'
+                    ? 'text-red-400'
+                    : 'text-amber-500'"
               >{{ getStatusLabel(item.status) }}</span>
             </div>
           </div>
