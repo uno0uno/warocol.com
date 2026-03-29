@@ -173,10 +173,16 @@
                   type="text"
                   v-model="form.name"
                   placeholder="Ej: Pizza Italiana Clásica, Hamburguesa Premium, Arepa Tradicional"
-                  class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary"
+                  class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary"
+                  :class="nameError ? 'border-destructive focus:ring-destructive' : 'border-border'"
                   required
+                  @input="nameError = ''"
                 />
-                <p class="text-xs text-text-secondary mt-1">Este será el nombre de la receta base que podrás asignar a múltiples productos</p>
+                <p v-if="nameError" class="text-xs text-destructive mt-1 flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                  {{ nameError }}
+                </p>
+                <p v-else class="text-xs text-text-secondary mt-1">Este será el nombre de la receta base que podrás asignar a múltiples productos</p>
               </div>
 
               <!-- Description -->
@@ -225,6 +231,12 @@
               >
                 + Agregar
               </button>
+            </div>
+
+            <!-- Duplicate ingredient error -->
+            <div v-if="duplicateIngredientError" class="mb-4 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              {{ duplicateIngredientError }}
             </div>
 
             <!-- Empty State -->
@@ -480,15 +492,20 @@
           >
             Siguiente →
           </button>
-          <button
-            v-else
-            type="button"
-            @click="submitRecipe"
-            :disabled="isSubmitting"
-            class="btn-primary px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Crear Receta Base
-          </button>
+          <div class="flex flex-col items-end gap-2">
+            <p v-if="submitError" class="text-sm text-destructive flex items-center gap-1">
+              <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              {{ submitError }}
+            </p>
+            <button
+              type="button"
+              @click="submitRecipe"
+              :disabled="isSubmitting"
+              class="btn-primary px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Crear Receta Base
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -511,6 +528,9 @@ const { currentTenant } = useTenantReactive()
 // State
 const currentStep = ref(1)
 const isSubmitting = ref(false)
+const nameError = ref('')
+const duplicateIngredientError = ref('')
+const submitError = ref('')
 
 // Form data
 const form = ref({
@@ -642,11 +662,14 @@ async function submitRecipe() {
 
   const uniqueIds = new Set(ingredientIds)
   if (ingredientIds.length !== uniqueIds.size) {
-    alert('Error: No puedes agregar el mismo ingrediente más de una vez en la misma receta.')
+    duplicateIngredientError.value = 'No puedes agregar el mismo ingrediente más de una vez en la misma receta.'
+    currentStep.value = 2
     return
   }
+  duplicateIngredientError.value = ''
 
   isSubmitting.value = true
+  submitError.value = ''
 
   try {
     form.value.tenant_id = currentTenant.value?.id || ''
@@ -672,8 +695,14 @@ async function submitRecipe() {
     clearNuxtData()
     await router.push('/menu/recetas')
   } catch (error: any) {
-    console.error('Error creating recipe base:', error)
-    alert(`Error al crear la receta base: ${error.data?.detail || error.message || 'Por favor intenta de nuevo.'}`)
+    const detail = error.data?.detail || error.message || 'Error inesperado. Por favor intenta de nuevo.'
+    if (error.status === 400 && typeof detail === 'string' && detail.toLowerCase().includes('nombre')) {
+      nameError.value = detail
+      currentStep.value = 1
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } else {
+      submitError.value = typeof detail === 'string' ? detail : 'Error inesperado. Por favor intenta de nuevo.'
+    }
   } finally {
     isSubmitting.value = false
   }
