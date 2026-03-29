@@ -1,5 +1,5 @@
 <template>
-  <div class="p-3 border border-border rounded-xl bg-surface-secondary theme-transition hover:border-primary/20 hover:bg-surface">
+  <div class="p-3 border border-border rounded-xl bg-card theme-transition hover:border-primary/30">
 
     <!-- Fila 1: badge + nombre + total -->
     <div class="flex items-start gap-2.5">
