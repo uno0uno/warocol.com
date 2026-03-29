@@ -467,12 +467,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <div
             v-if="item"
             @click="viewOrderDetails(item)"
-            class="flex items-center gap-3 py-3 px-3 mb-2 rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.07)] cursor-pointer transition-all"
-            :class="item.status === 'completed'
-              ? 'bg-emerald-50 border border-emerald-200 active:bg-emerald-100'
-              : item.status === 'cancelled'
-                ? 'bg-red-50 border border-red-200 active:bg-red-100'
-                : 'bg-amber-50 border border-amber-200 active:bg-amber-100'"
+            class="flex items-center gap-3 py-3 px-3 mb-2 rounded-lg bg-white border border-slate-200 shadow-[0_1px_2px_rgba(0,0,0,0.06)] cursor-pointer active:bg-slate-50 transition-colors"
           >
             <!-- Left: order info — neutro, sin color -->
             <div class="flex-1 min-w-0">
@@ -485,24 +480,23 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               </p>
             </div>
 
-            <!-- Right: el monto ES el indicador de status -->
-            <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
-              <p
-                class="text-sm font-bold tabular-nums"
-                :class="item.status === 'completed'
-                  ? 'text-emerald-600'
-                  : item.status === 'cancelled'
-                    ? 'text-red-500'
-                    : 'text-amber-600'"
-              >{{ formatCurrency(item.total_amount) }}</p>
+            <!-- Right: monto neutro + badge contenido con dot -->
+            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+              <p class="text-sm font-bold text-slate-800 tabular-nums">{{ formatCurrency(item.total_amount) }}</p>
               <span
-                class="text-[10px] font-medium tracking-wide"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border"
                 :class="item.status === 'completed'
-                  ? 'text-emerald-500'
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                   : item.status === 'cancelled'
-                    ? 'text-red-400'
-                    : 'text-amber-500'"
-              >{{ getStatusLabel(item.status) }}</span>
+                    ? 'bg-red-50 border-red-200 text-red-600'
+                    : 'bg-amber-50 border-amber-200 text-amber-700'"
+              >
+                <span
+                  class="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  :class="item.status === 'completed' ? 'bg-emerald-500' : item.status === 'cancelled' ? 'bg-red-500' : 'bg-amber-500'"
+                />
+                {{ getStatusLabel(item.status) }}
+              </span>
             </div>
           </div>
         </template>
