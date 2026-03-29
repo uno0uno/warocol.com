@@ -265,6 +265,25 @@ const getStatusLabel = (status: string) => {
 }
 
 
+const statusPills = [
+  { label: 'Todas', value: null },
+  { label: 'Completadas', value: 'completed' },
+  { label: 'Canceladas', value: 'cancelled' },
+  { label: 'Pendientes', value: 'pending' },
+]
+
+const formatDateCompact = (dateString: string) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const isToday = date.toDateString() === now.toDateString()
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1)
+  const isYesterday = date.toDateString() === yesterday.toDateString()
+
+  if (isToday) return new Intl.DateTimeFormat('es-CO', { hour: '2-digit', minute: '2-digit' }).format(date)
+  if (isYesterday) return 'Ayer ' + new Intl.DateTimeFormat('es-CO', { hour: '2-digit', minute: '2-digit' }).format(date)
+  return new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date)
+}
+
 const viewOrderDetails = (order: any) => {
   navigateTo(`/ventas/${order.id}`)
 }
@@ -417,7 +436,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       >
         <!-- Mobile Actions -->
         <template #mobileActions>
-          <div class="flex flex-col gap-2">
+          <div class="flex flex-col gap-3">
             <UiSearchWithField
               v-model="localSearchTerm"
               v-model:fieldValue="apiSearchField"
@@ -426,67 +445,50 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               class="w-full"
               @search="performSearch"
             />
-            <div class="flex gap-2">
-              <select
-                v-model="paymentMethodFilter"
-                @change="() => { currentPage.value = 1 }"
-                class="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-text-primary text-sm"
+            <!-- Quick filter pills -->
+            <div class="flex gap-2 overflow-x-auto pb-0.5 no-scrollbar">
+              <button
+                v-for="pill in statusPills"
+                :key="pill.value ?? 'all'"
+                @click="() => { statusFilter = pill.value; currentPage.value = 1 }"
+                class="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors"
+                :class="statusFilter === pill.value
+                  ? 'bg-violet-600 border-violet-600 text-white'
+                  : 'bg-white border-border text-slate-600 hover:border-violet-300'"
               >
-                <option :value="null">Método de pago</option>
-                <option value="cash">Efectivo</option>
-                <option value="card">Tarjeta</option>
-                <option value="digital">Digital</option>
-              </select>
-              <select
-                v-model="statusFilter"
-                @change="() => { currentPage.value = 1 }"
-                class="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-text-primary text-sm"
-              >
-                <option :value="null">Estado</option>
-                <option value="completed">Completadas</option>
-                <option value="cancelled">Canceladas</option>
-              </select>
+                {{ pill.label }}
+              </button>
             </div>
           </div>
         </template>
 
-        <!-- Mobile Card -->
+        <!-- Mobile Card — flat list row, no individual cards -->
         <template #card="{ item }">
           <div
             v-if="item"
             @click="viewOrderDetails(item)"
-            class="bg-surface border border-border rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
+            class="flex items-center gap-3 py-3 px-1 border-b border-border last:border-b-0 cursor-pointer active:bg-violet-50/40 transition-colors"
           >
-            <div class="flex justify-between items-start mb-3">
-              <div>
-                <p class="text-lg font-bold text-text-primary">Orden #{{ item.order_number }}</p>
-                <p class="text-sm text-text-secondary">{{ formatDate(item.order_date) }}</p>
+            <!-- Left: order info -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-baseline gap-2">
+                <span class="text-sm font-bold text-slate-800">#{{ item.order_number }}</span>
+                <span class="text-xs text-slate-400">{{ formatDateCompact(item.order_date) }}</span>
               </div>
+              <p class="text-xs text-slate-500 mt-0.5 truncate">
+                {{ item.customer_name }} · {{ item.items_count }} items · {{ getPaymentMethodLabel(item.payment_method) }}
+              </p>
+            </div>
+
+            <!-- Right: amount + status badge -->
+            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+              <p class="text-sm font-bold text-violet-700 tabular-nums">{{ formatCurrency(item.total_amount) }}</p>
               <UiStatusBadge
                 :value="getStatusLabel(item.status)"
                 format="text"
                 :variant="item.status === 'completed' ? 'success' : item.status === 'cancelled' ? 'destructive' : 'warning'"
                 size="sm"
               />
-            </div>
-
-            <div class="space-y-2">
-              <div class="flex items-center gap-2">
-                <span class="text-2xl" aria-hidden="true">👤</span>
-                <div class="flex-1">
-                  <p class="text-sm font-medium text-text-primary">{{ item.customer_name }}</p>
-                  <p class="text-xs text-text-secondary">{{ item.customer_phone }}</p>
-                </div>
-              </div>
-
-              <div class="flex justify-between items-center pt-2 border-t border-border">
-                <div class="flex items-center gap-2 text-sm text-text-secondary">
-                  <span>{{ item.items_count }} items</span>
-                  <span>•</span>
-                  <span>{{ getPaymentMethodLabel(item.payment_method) }}</span>
-                </div>
-                <p class="text-lg font-bold text-primary">{{ formatCurrency(item.total_amount) }}</p>
-              </div>
             </div>
           </div>
         </template>
