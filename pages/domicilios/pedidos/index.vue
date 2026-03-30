@@ -106,16 +106,11 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
             @click="viewOrder(item)"
           >
-            <!-- Order number -->
-            <div class="flex flex-col items-center justify-center w-9 h-9 rounded-xl bg-primary/10 flex-shrink-0">
-              <span class="text-xs font-bold text-primary leading-none">#</span>
-              <span class="text-xs font-bold text-primary leading-none">{{ item.order_number }}</span>
-            </div>
-
             <!-- Main info -->
             <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-text-primary leading-tight truncate">
-                {{ item.verified_email ?? '—' }}
+                <span class="text-primary">#{{ item.order_number }}</span>
+                <span class="text-text-secondary font-normal"> · {{ item.verified_email ?? '—' }}</span>
               </p>
               <p class="text-xs text-text-secondary mt-0.5">
                 {{ ORDER_TYPE_LABELS[item.order_type] ?? item.order_type }} · {{ formatDateTime(item.order_date) }}
