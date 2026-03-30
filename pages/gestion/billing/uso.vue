@@ -50,7 +50,7 @@ const formatMonth = (yearMonth: string) =>
 </script>
 
 <template>
-  <div class="page-layout">
+  <div class="flex flex-col gap-3 md:gap-4">
     <div v-if="isInitialLoading" class="flex items-center justify-center min-h-[300px]">
       <CommonsTheCustomLoader size="large" />
     </div>
@@ -63,15 +63,18 @@ const formatMonth = (yearMonth: string) =>
       empty-sub-message="Los datos aparecerán aquí después del primer escaneo"
       variant="default"
     >
-      <template #card="{ item }">
-        <div class="bg-surface border border-border rounded-xl p-4">
-          <div class="flex justify-between items-start">
-            <p class="text-sm font-medium text-text-primary capitalize">{{ formatMonth(item.year_month) }}</p>
-            <span class="text-xs text-text-secondary">{{ item.percentage }}%</span>
+      <template #card="{ item, index }">
+        <div
+          class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
+          :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+        >
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-text-primary leading-tight capitalize">{{ formatMonth(item.year_month) }}</p>
+            <p class="text-xs text-text-secondary mt-0.5">
+              {{ item.scans_count.toLocaleString('es-CO') }} de {{ item.scan_limit.toLocaleString('es-CO') }} escaneos
+            </p>
           </div>
-          <p class="text-xs text-text-secondary mt-1">
-            {{ item.scans_count.toLocaleString('es-CO') }} de {{ item.scan_limit.toLocaleString('es-CO') }}
-          </p>
+          <span class="text-sm font-bold text-primary flex-shrink-0">{{ item.percentage }}%</span>
         </div>
       </template>
 
