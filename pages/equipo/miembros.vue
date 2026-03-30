@@ -642,7 +642,6 @@ const currentUserEmail = computed(() => {
                 authStore.displayUser?.email ||
                 authStore.session?.user?.email ||
                 authStore.user?.email
-  console.log('Current user email:', email, 'Session:', sessionData.value)
   return email || null
 })
 
@@ -652,14 +651,12 @@ const currentUserRole = computed(() => {
   const currentMember = teamMembers.value.find(m =>
     m.email?.toLowerCase() === currentUserEmail.value?.toLowerCase()
   )
-  console.log('Current member:', currentMember)
   return currentMember?.role || null
 })
 
 // Check if current user is superuser
 const isSuperUser = computed(() => {
   const result = currentUserRole.value === 'superuser'
-  console.log('Is superuser:', result, 'Role:', currentUserRole.value)
   return result
 })
 
