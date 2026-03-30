@@ -83,69 +83,42 @@
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
-        title="Stock de Inventario"
         empty-message="No hay ingredientes en inventario"
         empty-sub-message="Comienza recibiendo compras en Abastecimiento"
         variant="default"
         row-size="sm"
       >
         <!-- Mobile Card -->
-        <template #card="{ item }">
-          <UiCard class="hover:shadow-lg transition-shadow">
-            <UiCardHeader>
-              <div class="flex items-start justify-between">
-                <div>
-                  <h3 class="text-base font-semibold text-text-primary">{{ item.ingredient_name }}</h3>
-                  <p class="text-sm text-text-secondary">{{ item.unit }}</p>
-                </div>
+        <template #card="{ item, index }">
+          <div
+            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+          >
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-bold text-text-primary">{{ item.ingredient_name }}</span>
+              <p class="text-xs text-text-secondary mt-0.5">{{ item.unit }}</p>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="flex flex-col items-end gap-1.5">
+                <p class="text-sm font-bold tabular-nums text-text-primary">{{ formatNumber(item.current_stock) }}</p>
                 <UiStatusBadge
-                  :label="getStatusLabel(item.status)"
+                  :value="getStatusLabel(item.status)"
                   :variant="getStockVariant(item.status)"
+                  size="sm"
+                  format="text"
                 />
-              </div>
-            </UiCardHeader>
-            <UiCardContent class="space-y-3">
-              <div class="grid grid-cols-3 gap-2">
-                <div>
-                  <p class="text-xs text-text-secondary">Actual</p>
-                  <p class="text-lg font-bold text-text-primary">{{ formatNumber(item.current_stock) }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-text-secondary">Mín</p>
-                  <p class="text-sm text-text-primary">{{ formatNumber(item.minimum_stock) }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-text-secondary">Máx</p>
-                  <p class="text-sm text-text-primary">{{ item.maximum_stock ? formatNumber(item.maximum_stock) : '-' }}</p>
-                </div>
-              </div>
-              <div v-if="item.maximum_stock" class="w-full bg-surface-secondary rounded-full h-2">
-                <div
-                  class="h-2 rounded-full"
-                  :class="{
-                    'bg-destructive': item.status === 'critical',
-                    'bg-warning': item.status === 'low',
-                    'bg-success': item.status === 'ok'
-                  }"
-                  :style="{ width: `${getStockPercentage(item.current_stock, item.minimum_stock, item.maximum_stock)}%` }"
-                />
-              </div>
-              <div class="flex justify-between pt-2 border-t border-border">
-                <span class="text-sm text-text-secondary">Valor total:</span>
-                <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(item.total_value) }}</span>
               </div>
               <button
-                @click="navigateTo(`/abastecimiento/ajustes/crear?ingredientId=${item.ingredient_id}`)"
+                @click.stop="navigateTo(`/abastecimiento/ajustes/crear?ingredientId=${item.ingredient_id}`)"
                 title="Ajustar stock"
-                class="w-full mt-2 px-3 py-2 border border-border rounded-md hover:bg-surface-secondary transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                class="w-7 h-7 flex items-center justify-center rounded bg-surface-secondary border border-border text-text-secondary hover:text-primary transition-colors"
               >
-                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                 </svg>
-                Ajustar Stock
               </button>
-            </UiCardContent>
-          </UiCard>
+            </div>
+          </div>
         </template>
 
         <!-- Desktop Table Cells -->

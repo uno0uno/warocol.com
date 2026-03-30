@@ -36,7 +36,6 @@
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
-        title="Proveedores"
         empty-message="No hay proveedores registrados"
         empty-sub-message="Crea un nuevo proveedor para comenzar"
         variant="default"

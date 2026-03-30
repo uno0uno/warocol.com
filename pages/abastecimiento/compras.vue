@@ -36,7 +36,6 @@
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
-        title="Órdenes de Compra"
         empty-message="No hay órdenes para mostrar"
         empty-sub-message="Crea una nueva orden para comenzar"
         variant="default"

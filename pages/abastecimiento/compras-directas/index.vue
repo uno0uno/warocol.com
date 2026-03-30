@@ -53,7 +53,6 @@
         :sort-direction="sortDirection"
         @sort="handleSort"
         @row-click="viewPurchase"
-        title="Compras Directas"
         empty-message="No hay compras directas para mostrar"
         empty-sub-message="Crea una nueva compra directa para comenzar"
         variant="default"

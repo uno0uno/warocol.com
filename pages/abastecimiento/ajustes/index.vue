@@ -75,7 +75,6 @@
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
-        title="Historial de Ajustes"
         empty-message="No hay ajustes registrados"
         empty-sub-message="Los ajustes se realizan desde la página de Stock de Inventario"
         variant="default"

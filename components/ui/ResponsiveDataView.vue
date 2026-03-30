@@ -3,7 +3,7 @@
     <!-- Mobile: Cards View -->
     <div class="md:hidden">
       <!-- Mobile Header (optional) -->
-      <div v-if="$slots.mobileHeader || title" class="bg-white border border-border rounded-lg mb-3">
+      <div v-if="$slots.mobileHeader || title || $slots.mobileActions" class="bg-white border border-border rounded-lg mb-3">
         <div class="p-4 border-b border-border">
           <slot name="mobileHeader">
             <div class="flex flex-col gap-3">

@@ -92,7 +92,6 @@
         :sort-direction="sortDirection"
         @sort="handleSort"
         @row-click="viewOrder"
-        title="Órdenes con Anomalías"
         empty-message="Sin órdenes con anomalías"
         empty-sub-message="No se detectaron anomalías de precios en los últimos 30 días."
         variant="default"
