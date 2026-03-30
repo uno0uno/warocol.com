@@ -43,8 +43,42 @@
         row-size="sm"
       >
         <!-- Mobile Card -->
-        <template #card="{ item }">
-          <SuppliersSupplierCard :supplier="item" @edit="editProveedor" @copy-link="copyPortalLink" />
+        <template #card="{ item, index }">
+          <div
+            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+          >
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
+              <p class="text-xs text-text-secondary mt-0.5 truncate">
+                {{ item.tax_id || '—' }}{{ item.email ? ` · ${item.email}` : '' }}
+              </p>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <UiStatusBadge
+                :value="item.is_active ? 'Activo' : 'Inactivo'"
+                format="text"
+                :variant="item.is_active ? 'success' : 'destructive'"
+                size="sm"
+              />
+              <button
+                @click.stop="copyPortalLink(item)"
+                class="w-7 h-7 flex items-center justify-center rounded bg-surface-secondary border border-border text-text-secondary hover:text-primary transition-colors"
+                title="Copiar enlace del portal"
+              >
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+              </button>
+              <button
+                @click.stop="editProveedor(item)"
+                class="w-7 h-7 flex items-center justify-center rounded bg-surface-secondary border border-border text-text-secondary hover:text-primary transition-colors"
+                title="Editar proveedor"
+              >
+                <PencilIcon class="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
         </template>
 
         <!-- Desktop Table Cells -->

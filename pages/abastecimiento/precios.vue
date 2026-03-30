@@ -49,8 +49,20 @@
         variant="default"
       >
         <!-- Mobile Card -->
-        <template #card="{ item }">
-          <PricesPriceCard :ingredient="item" />
+        <template #card="{ item, index }">
+          <div
+            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+          >
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
+              <p class="text-xs text-text-secondary mt-0.5">{{ item.category || 'Sin categoría' }}</p>
+            </div>
+            <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
+              <p class="text-sm font-bold text-primary tabular-nums">${{ (item.price || 0).toLocaleString() }}</p>
+              <p class="text-xs text-text-secondary">{{ item.unit || 'N/A' }}</p>
+            </div>
+          </div>
         </template>
 
         <!-- Desktop Header -->

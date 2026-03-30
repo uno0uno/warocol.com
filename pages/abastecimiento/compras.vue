@@ -50,8 +50,29 @@
         </template>
 
         <!-- Mobile Card Slot -->
-        <template #card="{ item }">
-          <PurchasesPurchaseOrderCard :order="item" @edit="editOrder" />
+        <template #card="{ item, index }">
+          <div
+            @click="editOrder(item)"
+            class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+          >
+            <div class="flex-1 min-w-0">
+              <div class="flex items-baseline gap-2">
+                <span class="text-sm font-bold text-text-primary">{{ item.numero }}</span>
+                <span class="text-xs text-text-secondary">{{ formatDateShort(item.fecha) }}</span>
+              </div>
+              <p class="text-xs text-text-secondary mt-0.5 truncate">{{ item.proveedor }} · {{ item.totalItems }} items</p>
+            </div>
+            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+              <p class="text-sm font-bold text-primary tabular-nums">{{ (item.valorTotal || 0).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}</p>
+              <UiStatusBadge
+                :value="getStatusText(item.estado)"
+                format="text"
+                :variant="getStatusVariant(item.estado)"
+                size="sm"
+              />
+            </div>
+          </div>
         </template>
 
         <!-- Desktop Header -->
@@ -567,6 +588,23 @@ function getStatusClass(status) {
     overdue: '!bg-destructive/10 !text-destructive'
   }
   return classes[status] || 'bg-titan-200 text-titan-700'
+}
+
+const getStatusVariant = (status) => {
+  const variants: Record<string, string> = {
+    quotation: 'secondary',
+    pending: 'warning',
+    confirmed: 'primary',
+    preparing: 'info',
+    shipped: 'info',
+    received: 'success',
+    verified: 'success',
+    invoiced: 'secondary',
+    paid: 'success',
+    cancelled: 'destructive',
+    overdue: 'destructive'
+  }
+  return variants[status] || 'secondary'
 }
 
 const getStatusText = (status) => {
