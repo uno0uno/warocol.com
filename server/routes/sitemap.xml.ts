@@ -47,14 +47,35 @@ export default defineEventHandler(async (event) => {
     console.error('Error fetching blog articles for sitemap:', error)
   }
 
-  // URLs base (home es estática, blog es dinámica basada en el último artículo)
+  // URLs dinámicas de restaurantes activos (is_active = true)
+  let restaurantUrls: Array<{ loc: string; lastmod: string; changefreq: string; priority: string }> = []
+
+  try {
+    const fetchHeaders = { 'Origin': siteUrl, 'Referer': `${siteUrl}/` }
+    const response = await $fetch<{ success: boolean; data: Array<{ slug: string; updated_at: string | null; created_at: string }> }>(
+      `${apiUrl}/public/restaurant/list`,
+      { headers: fetchHeaders }
+    )
+    if (response?.data?.length > 0) {
+      restaurantUrls = response.data.map(r => ({
+        loc: `/${r.slug}`,
+        lastmod: (r.updated_at || r.created_at || today).split('T')[0],
+        changefreq: 'weekly',
+        priority: '0.9'
+      }))
+    }
+  } catch (error) {
+    console.error('Error fetching restaurants for sitemap:', error)
+  }
+
+  // URLs base
   const baseUrls = [
     { loc: '/', lastmod: today, changefreq: 'daily', priority: '1.0' },
     { loc: '/blog', lastmod: latestBlogDate, changefreq: 'daily', priority: '0.9' }
   ]
 
   // Combinar todas las URLs
-  const allUrls = [...baseUrls, ...blogUrls]
+  const allUrls = [...baseUrls, ...restaurantUrls, ...blogUrls]
 
   // Generar XML
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
