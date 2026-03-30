@@ -210,6 +210,7 @@ const { data: qualityData, asyncStatus: queryAsyncStatus, error: fetchError, ref
   query: () => $fetch('/api/analytics/data-quality').then((r: any) => r?.data ?? r),
   enabled: () => !!currentTenant.value,
   staleTime: 0,
+  gcTime: 0,
 })
 
 const isLoading = computed(() => !qualityData.value && !fetchError.value)
