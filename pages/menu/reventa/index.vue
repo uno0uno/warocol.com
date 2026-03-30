@@ -43,7 +43,6 @@
           :sort-field="sortField"
           :sort-direction="sortDirection"
           @sort="handleSort"
-          title="Productos de Reventa"
           empty-message="No hay productos de reventa registrados"
           empty-sub-message="Crea un nuevo producto de reventa para comenzar"
           variant="default"

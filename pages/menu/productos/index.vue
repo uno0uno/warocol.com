@@ -74,7 +74,6 @@
           :sort-direction="sortDirection"
           :row-class="getRowClass"
           @sort="handleSort"
-          title="Catálogo de Productos"
           empty-message="No hay productos registrados"
           empty-sub-message="Crea un nuevo producto para comenzar"
           variant="default"

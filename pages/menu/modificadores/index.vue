@@ -28,7 +28,6 @@
       <UiResponsiveDataView
       :columns="gruposTableColumns"
       :data="filteredGroups"
-      title="Grupos de Modificadores"
       empty-message="No hay grupos de modificadores registrados"
       empty-sub-message="Crea un nuevo grupo para comenzar"
       variant="default"

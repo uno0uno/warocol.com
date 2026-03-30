@@ -31,7 +31,6 @@
         <UiResponsiveDataView
           :columns="recetasTableColumns"
           :data="recetas"
-          title="Gestión de Recetas Base"
           empty-message="No hay recetas base registradas"
           empty-sub-message="Crea una nueva receta base para comenzar"
           variant="default"
