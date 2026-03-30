@@ -105,6 +105,11 @@
 }
 
 /* ── VueDatePicker — design token overrides ───────────────────────────────── */
+.dp__main,
+.dp__input_wrap {
+  width: fit-content !important;
+}
+
 .dp__input {
   background-color: hsl(var(--background)) !important;
   border-color: hsl(var(--border)) !important;
@@ -113,6 +118,7 @@
   border-radius: 0.5rem !important;
   height: 2.5rem !important;
   font-size: 0.875rem !important;
+  width: fit-content !important;
 }
 
 .dp__input:hover {
