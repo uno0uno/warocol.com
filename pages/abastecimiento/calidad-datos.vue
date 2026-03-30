@@ -1,7 +1,7 @@
 <template>
   <div class="page-layout">
     <!-- Loading State -->
-    <div v-if="pending" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
@@ -205,14 +205,14 @@ const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 // Data fetching
-const { data: qualityData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
+const { data: qualityData, asyncStatus: queryAsyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['analytics', 'data-quality', currentTenant.value?.id],
   query: () => $fetch('/api/analytics/data-quality').then((r: any) => r?.data ?? r),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
 
-const pending = computed(() => queryStatus.value === 'loading')
+const isLoading = computed(() => !qualityData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && qualityData.value != null)
 
 onMounted(() => {
