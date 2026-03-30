@@ -1,5 +1,5 @@
 <template>
-  <div class="page-layout">
+  <div class="flex flex-col gap-3 md:gap-4">
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
@@ -38,22 +38,39 @@
           row-size="sm"
         >
         <!-- Mobile Card -->
-        <template #card="{ item }">
-          <div class="p-4 bg-surface rounded-lg border border-border">
-            <div class="flex items-center justify-between mb-2">
-              <span class="font-medium text-text-primary">{{ item.name }}</span>
-              <UiStatusBadge value="Activa" variant="success" size="sm" />
+        <template #card="{ item, index }">
+          <div
+            class="flex items-center gap-3 py-3 px-3 border-b border-border"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+          >
+            <!-- Key icon -->
+            <div class="flex items-center justify-center w-9 h-9 rounded-xl bg-primary/10 flex-shrink-0">
+              <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
             </div>
-            <code class="text-sm text-text-secondary font-mono bg-surface-secondary px-2 py-0.5 rounded">{{ item.keyPrefix }}...</code>
-            <p class="text-xs text-text-secondary mt-2">
-              {{ item.expiresAt ? `Expira: ${formatDate(item.expiresAt)}` : 'Sin expiracion' }}
-            </p>
-            <div class="flex items-center gap-2 mt-3 pt-3 border-t border-border">
-              <button @click="openRevokeModal(item)" class="flex-1 text-status-warning-text hover:opacity-80 py-2 text-sm font-medium">
-                Revocar
+
+            <!-- Name + prefix + expiry -->
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-text-primary leading-tight truncate">{{ item.name }}</p>
+              <p class="text-xs text-text-secondary font-mono truncate">{{ item.keyPrefix }}... · {{ item.expiresAt ? formatDate(item.expiresAt) : 'Sin expiración' }}</p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-0.5 flex-shrink-0">
+              <button @click="openRevokeModal(item)"
+                class="flex items-center justify-center w-8 h-8 rounded-lg text-status-warning-text hover:bg-status-warning-bg transition-colors"
+                title="Revocar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
               </button>
-              <button @click="openDeleteModal(item)" class="flex-1 text-status-critical-text hover:opacity-80 py-2 text-sm font-medium">
-                Eliminar
+              <button @click="openDeleteModal(item)"
+                class="flex items-center justify-center w-8 h-8 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+                title="Eliminar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
               </button>
             </div>
           </div>
