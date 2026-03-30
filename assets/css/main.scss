@@ -108,27 +108,11 @@
 @media (max-width: 767px) {
   .dp__main,
   .dp__input_wrap {
-    width: fit-content !important;
+    width: 100% !important;
   }
 
   .dp__input {
-    width: 2.5rem !important;
-    color: transparent !important;
-    padding-right: 0 !important;
-  }
-
-  .dp__input::placeholder {
-    color: transparent !important;
-  }
-
-  /* Fecha seleccionada — borde primary como indicador activo */
-  .dp__input:not(:placeholder-shown) {
-    border-color: hsl(var(--primary)) !important;
-    background-color: hsl(var(--primary) / 0.08) !important;
-  }
-
-  .dp__input:not(:placeholder-shown) ~ .dp__input_icon {
-    color: hsl(var(--primary)) !important;
+    width: 100% !important;
   }
 }
 
