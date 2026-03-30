@@ -462,41 +462,34 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </div>
         </template>
 
-        <!-- Mobile Card: color en el monto (no en bordes) + background wash 3% -->
-        <template #card="{ item }">
+        <!-- Mobile Card: zebra stripes + UiStatusBadge -->
+        <template #card="{ item, index }">
           <div
             v-if="item"
             @click="viewOrderDetails(item)"
-            class="flex items-center gap-3 py-3 px-3 mb-2 rounded-lg bg-white border border-slate-200 shadow-[0_1px_2px_rgba(0,0,0,0.06)] cursor-pointer active:bg-slate-50 transition-colors"
+            class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
           >
-            <!-- Left: order info — neutro, sin color -->
+            <!-- Left: order info -->
             <div class="flex-1 min-w-0">
               <div class="flex items-baseline gap-2">
-                <span class="text-sm font-bold text-slate-800">#{{ item.order_number }}</span>
-                <span class="text-xs text-slate-400">{{ formatDateCompact(item.order_date) }}</span>
+                <span class="text-sm font-bold text-text-primary">#{{ item.order_number }}</span>
+                <span class="text-xs text-text-secondary">{{ formatDateCompact(item.order_date) }}</span>
               </div>
-              <p class="text-xs text-slate-500 mt-0.5 truncate">
+              <p class="text-xs text-text-secondary mt-0.5 truncate">
                 {{ item.customer_name }} · {{ item.items_count }} items · {{ getPaymentMethodLabel(item.payment_method) }}
               </p>
             </div>
 
-            <!-- Right: monto neutro + badge contenido con dot -->
+            <!-- Right: monto + badge -->
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
-              <p class="text-sm font-bold text-slate-800 tabular-nums">{{ formatCurrency(item.total_amount) }}</p>
-              <span
-                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border"
-                :class="item.status === 'completed'
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                  : item.status === 'cancelled'
-                    ? 'bg-red-50 border-red-200 text-red-600'
-                    : 'bg-amber-50 border-amber-200 text-amber-700'"
-              >
-                <span
-                  class="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                  :class="item.status === 'completed' ? 'bg-emerald-500' : item.status === 'cancelled' ? 'bg-red-500' : 'bg-amber-500'"
-                />
-                {{ getStatusLabel(item.status) }}
-              </span>
+              <p class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.total_amount) }}</p>
+              <UiStatusBadge
+                :value="getStatusLabel(item.status)"
+                format="text"
+                :variant="item.status === 'completed' ? 'success' : item.status === 'cancelled' ? 'destructive' : 'warning'"
+                size="sm"
+              />
             </div>
           </div>
         </template>

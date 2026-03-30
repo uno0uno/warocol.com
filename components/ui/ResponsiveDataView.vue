@@ -22,7 +22,7 @@
         tag="div"
         class="grid grid-cols-1 gap-3"
       >
-        <slot name="card" v-for="item in data" :item="item" :key="getItemKey(item)" />
+        <slot name="card" v-for="(item, index) in data" :item="item" :index="index" :key="getItemKey(item)" />
 
         <!-- Empty State -->
         <div v-if="data.length === 0" key="empty-state" class="text-center py-12 col-span-1">
