@@ -1,7 +1,7 @@
 <template>
   <div :class="cn(metricCardVariants({ variant, size }), props.class)">
     <!-- Desktop Layout (md and above) -->
-    <div class="hidden md:block">
+    <div class="hidden md:flex md:flex-col md:flex-1">
       <!-- Title using semantic tokens -->
       <div class="mb-2">
         <div :class="cn(titleVariants({ size }), 'text-text-primary')">
@@ -38,7 +38,7 @@
     </div>
 
     <!-- Mobile Layout (below md) -->
-    <div class="md:hidden flex flex-col justify-between min-h-[52px]">
+    <div class="md:hidden flex flex-col flex-1 justify-between min-h-[52px]">
       <!-- Title -->
       <div :class="cn(titleVariants({ size }), 'text-text-primary opacity-85')">
         {{ title }}
@@ -64,7 +64,7 @@ import { cn } from '../ui/utils'
 // Define metric card variants using CVA following governance rules
 const metricCardVariants = cva(
   // Base classes using ONLY semantic tokens (NEVER hardcoded colors)
-  'bg-surface rounded-xl shadow-sm border-2 transition-colors',
+  'bg-surface rounded-xl shadow-sm border-2 transition-colors flex flex-col',
   {
     variants: {
       variant: {
