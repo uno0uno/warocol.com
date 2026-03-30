@@ -38,7 +38,7 @@
     </div>
 
     <!-- Mobile Layout (below md) -->
-    <div class="md:hidden flex flex-col gap-2">
+    <div class="md:hidden flex flex-col justify-between min-h-[52px]">
       <!-- Title -->
       <div :class="cn(titleVariants({ size }), 'text-text-primary opacity-85')">
         {{ title }}
