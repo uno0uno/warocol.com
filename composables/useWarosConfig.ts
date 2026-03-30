@@ -34,7 +34,7 @@ export const useWarosConfig = () => {
 
   const rules = computed(() => data.value?.rules ?? [])
   const isEnabled = computed(() => data.value?.is_enabled ?? false)
-  const isLoading = computed(() => status.value === 'loading')
+  const isLoading = computed(() => status.value === 'pending')
   const isRefreshing = computed(() => asyncStatus.value === 'loading' && data.value != null)
   const error = computed(() => null as string | null)
 
