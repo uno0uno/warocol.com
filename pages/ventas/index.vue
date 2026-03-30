@@ -308,7 +308,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Filters Bar -->
-      <div class="flex items-center gap-2 w-full overflow-x-auto">
+      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
         <!-- Search Input -->
         <div class="relative flex-1 min-w-[200px]">
           <button
@@ -446,7 +446,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               @search="performSearch"
             />
             <!-- Quick filter pills -->
-            <div class="flex gap-2 overflow-x-auto pb-0.5 no-scrollbar">
+            <div class="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide">
               <button
                 v-for="pill in statusPills"
                 :key="pill.value ?? 'all'"
