@@ -373,10 +373,10 @@ import {
   ShoppingBagIcon,
 } from '@heroicons/vue/24/outline'
 import { computed, ref } from 'vue'
+import { useLayoutActions } from '../composables/useLayoutActions'
 
 interface Props {
   activePage?: 'dashboard' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'analitica' | 'reportes' | 'configuracion' | 'admin' | 'ventas' | 'inventario' | 'menu' | 'equipo' | 'integraciones'
-  onRefresh?: () => void | Promise<void>
   notificationsCount?: number
 }
 
@@ -389,16 +389,8 @@ const props = withDefaults(defineProps<Props>(), {
 const { hasCriticalAlerts } = useDataQualityStatus()
 const { subscription: billingSubscription, fetchSubscription: fetchBillingSubscription } = useBilling()
 
-const isRefreshing = ref(false)
-const handleRefresh = async () => {
-  if (!props.onRefresh || isRefreshing.value) return
-  isRefreshing.value = true
-  try {
-    await props.onRefresh()
-  } finally {
-    isRefreshing.value = false
-  }
-}
+const { triggerRefresh, isRefreshing } = useLayoutActions()
+const handleRefresh = triggerRefresh
 
 interface Tenant {
   id: string

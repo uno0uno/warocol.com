@@ -167,7 +167,6 @@
     <!-- Bottom Navigation - Mobile Only -->
     <DashboardBottomNav
       :active-page="activePage"
-      :on-refresh="refreshHandler"
       :show-cart-button="route.path === '/pos'"
       :cart-items-count="posCartItemsCount"
       :notifications-count="notificationsUnreadCount"
