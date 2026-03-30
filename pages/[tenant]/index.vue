@@ -118,54 +118,92 @@ function formatOpeningHours(businessHours) {
     }))
 }
 
-// SEO — reactive with arrow functions (same pattern as blog)
+// SEO
 const siteUrl = config.public.siteUrl || 'https://warocol.com'
 
-useHead({
-  title: () => restaurant.value?.seo_title || (restaurant.value ? `${restaurant.value.display_name} - Menú` : 'Cargando...'),
-  meta: [
-    {
-      name: 'description',
-      content: () => restaurant.value?.seo_description || restaurant.value?.description || ''
+// Build sameAs array from social_media object
+const sameAs = computed(() => {
+  const sm = restaurant.value?.social_media
+  if (!sm) return []
+  return Object.values(sm).filter((v): v is string => typeof v === 'string' && v.startsWith('http'))
+})
+
+// Build hasMenuItem from top products (max 10 for schema size)
+const menuItems = computed(() =>
+  products.value.slice(0, 10).map((p: any) => ({
+    '@type': 'MenuItem',
+    name: p.name,
+    description: p.description || undefined,
+    offers: {
+      '@type': 'Offer',
+      price: p.price,
+      priceCurrency: 'COP',
     },
-    // Open Graph
-    { property: 'og:type', content: 'restaurant' },
-    { property: 'og:title', content: () => restaurant.value?.seo_title || restaurant.value?.display_name || '' },
-    { property: 'og:description', content: () => restaurant.value?.seo_description || restaurant.value?.description || '' },
-    { property: 'og:image', content: () => restaurant.value?.banner_url || '' },
-    { property: 'og:url', content: () => `${siteUrl}/${tenantSlug}` },
-    // Twitter
-    { name: 'twitter:card', content: 'summary_large_image' },
-    { name: 'twitter:title', content: () => restaurant.value?.seo_title || restaurant.value?.display_name || '' },
-    { name: 'twitter:description', content: () => restaurant.value?.seo_description || restaurant.value?.description || '' },
-    { name: 'twitter:image', content: () => restaurant.value?.banner_url || '' },
-  ],
-  link: [
-    { rel: 'canonical', href: () => `${siteUrl}/${tenantSlug}` }
-  ],
-  script: [
-    {
-      type: 'application/ld+json',
-      innerHTML: () => restaurant.value ? JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'Restaurant',
-        name: restaurant.value.display_name,
-        description: restaurant.value.description,
-        image: restaurant.value.banner_url || restaurant.value.logo_url,
-        telephone: restaurant.value.phone_number,
-        address: restaurant.value.address ? {
-          '@type': 'PostalAddress',
-          streetAddress: restaurant.value.address,
-          addressLocality: restaurant.value.city,
-          addressCountry: 'CO'
-        } : undefined,
-        openingHoursSpecification: formatOpeningHours(restaurant.value.business_hours),
-        priceRange: '$$',
-        servesCuisine: 'Colombian',
-        url: `${siteUrl}/${tenantSlug}`
-      }) : '{}'
-    }
-  ]
+  }))
+)
+
+const restaurantSchema = computed(() => {
+  const r = restaurant.value
+  if (!r) return null
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Restaurant',
+    name: r.display_name,
+    description: r.seo_description || r.description,
+    image: [r.banner_url, r.logo_url].filter(Boolean),
+    logo: r.logo_url ? { '@type': 'ImageObject', url: r.logo_url } : undefined,
+    telephone: r.phone_number || undefined,
+    email: r.email || undefined,
+    url: `${siteUrl}/${tenantSlug}`,
+    address: r.address ? {
+      '@type': 'PostalAddress',
+      streetAddress: [r.address, r.neighborhood].filter(Boolean).join(', '),
+      addressLocality: r.city,
+      addressCountry: 'CO',
+    } : undefined,
+    ...(r.latitude && r.longitude ? {
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: r.latitude,
+        longitude: r.longitude,
+      }
+    } : {}),
+    openingHoursSpecification: formatOpeningHours(r.business_hours),
+    ...(sameAs.value.length ? { sameAs: sameAs.value } : {}),
+    hasMenu: {
+      '@type': 'Menu',
+      hasMenuItem: menuItems.value,
+    },
+    servesCuisine: 'Colombian',
+    priceRange: '$$',
+    currenciesAccepted: 'COP',
+    paymentAccepted: 'Cash, Credit Card',
+  }
+})
+
+useSeoMeta({
+  title: () => restaurant.value?.seo_title || (restaurant.value ? `${restaurant.value.display_name} - Menú` : 'Cargando...'),
+  description: () => restaurant.value?.seo_description || restaurant.value?.description || '',
+  ogType: 'restaurant',
+  ogSiteName: 'Waro Colombia',
+  ogLocale: 'es_CO',
+  ogTitle: () => restaurant.value?.seo_title || restaurant.value?.display_name || '',
+  ogDescription: () => restaurant.value?.seo_description || restaurant.value?.description || '',
+  ogImage: () => restaurant.value?.banner_url || restaurant.value?.logo_url || '',
+  ogUrl: () => `${siteUrl}/${tenantSlug}`,
+  twitterCard: 'summary_large_image',
+  twitterSite: '@warocolombia',
+  twitterTitle: () => restaurant.value?.seo_title || restaurant.value?.display_name || '',
+  twitterDescription: () => restaurant.value?.seo_description || restaurant.value?.description || '',
+  twitterImage: () => restaurant.value?.banner_url || restaurant.value?.logo_url || '',
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: () => `${siteUrl}/${tenantSlug}` }],
+  script: [{
+    type: 'application/ld+json',
+    innerHTML: () => restaurantSchema.value ? JSON.stringify(restaurantSchema.value) : '{}',
+  }],
 })
 
 
@@ -287,7 +325,7 @@ const cancelSwitch = () => {
         <PublicMenu
           :categories="categories"
           :products="products"
-          :is-loading="menuStatus === 'loading'"
+          :is-loading="menuStatus === 'pending'"
           :restaurant-open="restaurant.is_currently_open ?? true"
           @product-click="handleProductClick"
         />
