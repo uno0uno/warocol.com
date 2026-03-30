@@ -106,32 +106,13 @@
 
 /* ── VueDatePicker — design token overrides ───────────────────────────────── */
 @media (max-width: 767px) {
-  /* Sin fecha seleccionada → solo icono (compacto) */
-  .dp__main:has(.dp__input:placeholder-shown),
-  .dp__input_wrap:has(.dp__input:placeholder-shown) {
-    width: fit-content !important;
-  }
-
-  .dp__input:placeholder-shown {
-    width: 2.5rem !important;
-    color: transparent !important;
-    padding-right: 0 !important;
-  }
-
-  /* Con fecha seleccionada → ancho completo con texto */
-  .dp__main:has(.dp__input:not(:placeholder-shown)),
-  .dp__input_wrap:has(.dp__input:not(:placeholder-shown)) {
+  .dp__main,
+  .dp__input_wrap {
     width: 100% !important;
   }
 
-  .dp__input:not(:placeholder-shown) {
+  .dp__input {
     width: 100% !important;
-    border-color: hsl(var(--primary)) !important;
-    background-color: hsl(var(--primary) / 0.08) !important;
-  }
-
-  .dp__input:not(:placeholder-shown) ~ .dp__input_icon {
-    color: hsl(var(--primary)) !important;
   }
 }
 
