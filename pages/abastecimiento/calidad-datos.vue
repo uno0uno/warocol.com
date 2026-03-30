@@ -205,14 +205,14 @@ const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 // Data fetching
-const { data: qualityData, asyncStatus: queryAsyncStatus, error: fetchError, refetch } = useQuery({
+const { data: qualityData, asyncStatus: queryAsyncStatus, status: queryStatus, error: fetchError, refetch } = useQuery({
   key: () => ['analytics', 'data-quality', currentTenant.value?.id],
   query: () => $fetch('/api/analytics/data-quality').then((r: any) => r?.data ?? r),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => !qualityData.value && !fetchError.value)
+const isLoading = computed(() => queryStatus.value === 'pending')
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && qualityData.value != null)
 
 onMounted(() => {
