@@ -271,7 +271,7 @@ const formatCurrency = (value: number) =>
           <MetricCard title="Pedidos Online" :value="metrics.completed_orders" format="number" variant="primary" />
           <MetricCard title="Ticket Promedio" :value="metrics.avg_ticket" format="currency" variant="primary" />
           <MetricCard title="Ahorro Comisiones" :value="metrics.commission_savings" format="currency" variant="primary" subtitle="Pedidos directos vs App" />
-          <MetricCard :title="forecastLabel" :value="forecast" format="currency" variant="primary" :subtitle="forecastSubtitle" />
+          <MetricCard :title="forecastLabel" :value="forecast" format="currency" variant="primary" :subtitle="forecastSubtitle" class="col-span-2 md:col-span-1" />
         </div>
 
         <!-- Rentabilidad Teaser Banner -->
