@@ -65,7 +65,7 @@ export const useNotifications = () => {
       eventSource.close()
       eventSource = null
       connectionRefCount = 0
-      _queryCache?.setQueryData(['notifications'], undefined)
+      _queryCache?.setQueryData(['notifications'], [])
       initialized.value = false
     }
   }
