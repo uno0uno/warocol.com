@@ -17,18 +17,23 @@ const restaurants = computed(() => responseData.value?.data || [])
 const error = computed(() => fetchError.value?.message || null)
 
 // SEO
-useHead({
+useSeoMeta({
   title: 'Restaurantes en Bogotá - Waro Colombia',
-  meta: [
-    { name: 'description', content: 'Descubre los mejores restaurantes en Bogotá. Explora menús, precios y haz tus pedidos en línea.' },
-    { property: 'og:title', content: 'Restaurantes en Bogotá - Waro Colombia' },
-    { property: 'og:description', content: 'Descubre los mejores restaurantes en Bogotá. Explora menús, precios y haz tus pedidos en línea.' },
-    { property: 'og:type', content: 'website' },
-    { property: 'og:url', content: `${siteUrl}/bogota` },
-  ],
-  link: [
-    { rel: 'canonical', href: `${siteUrl}/bogota` }
-  ]
+  description: 'Descubre los mejores restaurantes en Bogotá. Explora menús, precios y haz tus pedidos en línea.',
+  ogTitle: 'Restaurantes en Bogotá - Waro Colombia',
+  ogDescription: 'Descubre los mejores restaurantes en Bogotá. Explora menús, precios y haz tus pedidos en línea.',
+  ogType: 'website',
+  ogUrl: `${siteUrl}/bogota`,
+  ogSiteName: 'Waro Colombia',
+  ogLocale: 'es_CO',
+  twitterCard: 'summary_large_image',
+  twitterSite: '@warocolombia',
+  twitterTitle: 'Restaurantes en Bogotá - Waro Colombia',
+  twitterDescription: 'Descubre los mejores restaurantes en Bogotá. Explora menús, precios y haz tus pedidos en línea.',
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: `${siteUrl}/bogota` }]
 })
 </script>
 
