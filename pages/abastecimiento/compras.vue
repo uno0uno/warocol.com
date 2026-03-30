@@ -30,6 +30,14 @@
       />
 
       <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
+      <HealthSemaphore :is-unlocked="true" title="Órdenes de Compra">
+        <template #header-actions>
+          <NuxtLink to="/abastecimiento/compra/crear"
+            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
+            <span class="hidden sm:inline">+ Nueva Orden</span>
+            <span class="sm:hidden">+ Nuevo</span>
+          </NuxtLink>
+        </template>
       <UiResponsiveDataView
         :columns="ordenesTableColumns"
         :data="sortedOrdenes"
@@ -40,14 +48,6 @@
         empty-sub-message="Crea una nueva orden para comenzar"
         variant="default"
       >
-        <!-- Mobile Actions -->
-        <template #mobileActions>
-          <NuxtLink to="/abastecimiento/compra/crear"
-            class="btn-primary w-full px-4 py-2 rounded-lg text-sm font-medium text-center">
-            + Nuevo
-          </NuxtLink>
-        </template>
-
         <!-- Mobile Card Slot -->
         <template #card="{ item, index }">
           <div
@@ -71,20 +71,6 @@
                 size="sm"
               />
             </div>
-          </div>
-        </template>
-
-        <!-- Desktop Header -->
-        <template #header>
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-            <h3 class="text-base sm:text-lg font-bold text-text-primary">
-              Órdenes de Compra
-            </h3>
-            <NuxtLink to="/abastecimiento/compra/crear"
-              class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
-              <span class="hidden sm:inline">+ Nueva Orden</span>
-              <span class="sm:hidden">+ Nuevo</span>
-            </NuxtLink>
           </div>
         </template>
 
@@ -146,6 +132,7 @@
           </div>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
 
       <!-- Pagination -->
       <div v-if="purchasesData.total > itemsPerPage" class="bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
@@ -209,6 +196,7 @@
 
 <script setup lang="ts">
 import { inject } from 'vue'
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import {
   PlusIcon,

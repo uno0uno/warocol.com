@@ -434,34 +434,6 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         variant="default"
         row-size="sm"
       >
-        <!-- Mobile Actions -->
-        <template #mobileActions>
-          <div class="flex flex-col gap-3">
-            <UiSearchWithField
-              v-model="localSearchTerm"
-              v-model:fieldValue="apiSearchField"
-              :fields="searchFields"
-              placeholder="Buscar..."
-              class="w-full"
-              @search="performSearch"
-            />
-            <!-- Quick filter pills -->
-            <div class="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide">
-              <button
-                v-for="pill in statusPills"
-                :key="pill.value ?? 'all'"
-                @click="() => { statusFilter = pill.value; currentPage.value = 1 }"
-                class="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors"
-                :class="statusFilter === pill.value
-                  ? 'bg-violet-600 border-violet-600 text-white'
-                  : 'bg-white border-border text-slate-600 hover:border-violet-300'"
-              >
-                {{ pill.label }}
-              </button>
-            </div>
-          </div>
-        </template>
-
         <!-- Mobile Card: zebra stripes + UiStatusBadge -->
         <template #card="{ item, index }">
           <div
