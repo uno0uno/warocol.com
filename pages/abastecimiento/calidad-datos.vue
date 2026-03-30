@@ -217,13 +217,12 @@ const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && qual
 
 onMounted(() => {
   setRefreshHandler(refetch)
-  void refetch()
 })
 useMenuReturnRefresh(
   '/abastecimiento/calidad-datos',
   refetch,
   'abastecimiento-last-path',
-  ['/abastecimiento/calidad-datos/']
+  ['/abastecimiento/']
 )
 registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
