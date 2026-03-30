@@ -120,6 +120,16 @@
   .dp__input::placeholder {
     color: transparent !important;
   }
+
+  /* Fecha seleccionada — borde primary como indicador activo */
+  .dp__input:not(:placeholder-shown) {
+    border-color: hsl(var(--primary)) !important;
+    background-color: hsl(var(--primary) / 0.08) !important;
+  }
+
+  .dp__input:not(:placeholder-shown) ~ .dp__input_icon {
+    color: hsl(var(--primary)) !important;
+  }
 }
 
 .dp__input {
