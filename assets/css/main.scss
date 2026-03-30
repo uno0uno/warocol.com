@@ -107,9 +107,18 @@
 /* ── VueDatePicker — design token overrides ───────────────────────────────── */
 @media (max-width: 767px) {
   .dp__main,
-  .dp__input_wrap,
-  .dp__input {
+  .dp__input_wrap {
     width: fit-content !important;
+  }
+
+  .dp__input {
+    width: 2.5rem !important;
+    color: transparent !important;
+    padding-right: 0 !important;
+  }
+
+  .dp__input::placeholder {
+    color: transparent !important;
   }
 }
 
