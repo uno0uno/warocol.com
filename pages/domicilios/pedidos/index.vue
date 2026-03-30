@@ -77,7 +77,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 </script>
 
 <template>
-  <div class="page-layout">
+  <div class="flex flex-col gap-3 md:gap-4">
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
@@ -100,30 +100,34 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         @row-click="viewOrder"
       >
         <!-- Mobile Card -->
-        <template #card="{ item }">
+        <template #card="{ item, index }">
           <div
-            v-if="item"
-            class="bg-surface border border-border rounded-xl p-4 cursor-pointer hover:bg-surface-secondary transition-colors"
+            class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
             @click="viewOrder(item)"
           >
-            <div class="flex justify-between items-start mb-3">
-              <div>
-                <p class="text-base font-bold text-text-primary"># {{ item.order_number }}</p>
-                <p class="text-sm text-text-secondary">{{ formatDateTime(item.order_date) }}</p>
-              </div>
+            <!-- Order number -->
+            <div class="flex flex-col items-center justify-center w-9 h-9 rounded-xl bg-primary/10 flex-shrink-0">
+              <span class="text-xs font-bold text-primary leading-none">#</span>
+              <span class="text-xs font-bold text-primary leading-none">{{ item.order_number }}</span>
+            </div>
+
+            <!-- Main info -->
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-text-primary leading-tight truncate">
+                {{ item.verified_email ?? '—' }}
+              </p>
+              <p class="text-xs text-text-secondary mt-0.5">
+                {{ ORDER_TYPE_LABELS[item.order_type] ?? item.order_type }} · {{ formatDateTime(item.order_date) }}
+              </p>
+            </div>
+
+            <!-- Status + total -->
+            <div class="flex flex-col items-end gap-1 flex-shrink-0">
               <UiStatusBadge :variant="getStatusVariant(item.status)" size="sm" format="text">
                 {{ getStatusText(item.status, item.order_type) }}
               </UiStatusBadge>
-            </div>
-            <div class="space-y-1">
-              <p class="text-sm text-text-secondary truncate">{{ item.verified_email ?? '—' }}</p>
-              <div class="flex justify-between items-center pt-2 border-t border-border">
-                <span class="text-sm text-text-secondary">{{ ORDER_TYPE_LABELS[item.order_type] ?? item.order_type }}</span>
-                <p class="text-base font-bold text-primary">{{ formatCurrency(item.total_amount) }}</p>
-              </div>
-              <p class="text-xs text-text-secondary">
-                {{ item.scheduled_time ? formatDateTime(item.scheduled_time) : 'Inmediato' }}
-              </p>
+              <span class="text-sm font-bold text-primary">{{ formatCurrency(item.total_amount) }}</span>
             </div>
           </div>
         </template>
