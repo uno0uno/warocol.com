@@ -94,7 +94,7 @@ const totals = computed(() => {
     <UiResponsiveDataView
       :columns="tableColumns"
       :data="menuItems"
-      :title="title"
+
       :empty-message="emptyMessage"
       :empty-sub-message="emptySubMessage"
       variant="default"
