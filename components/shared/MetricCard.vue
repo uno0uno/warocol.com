@@ -38,14 +38,14 @@
     </div>
 
     <!-- Mobile Layout (below md) -->
-    <div class="md:hidden flex items-center justify-between gap-2">
+    <div class="md:hidden flex flex-col gap-2">
       <!-- Title -->
-      <div :class="cn(titleVariants({ size }), 'text-text-primary opacity-85 flex-1 min-w-0')">
+      <div :class="cn(titleVariants({ size }), 'text-text-primary opacity-85')">
         {{ title }}
       </div>
 
-      <!-- Value + Unit -->
-      <div class="flex items-center gap-1 flex-shrink-0">
+      <!-- Value Row -->
+      <div class="flex items-center justify-between">
         <div :class="valueVariants({ variant, size })">
           {{ formattedValue }}
         </div>
