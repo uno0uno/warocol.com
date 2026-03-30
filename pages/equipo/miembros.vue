@@ -9,7 +9,7 @@
     <CommonsTheErrorState v-else-if="error" />
 
     <!-- Content -->
-    <div v-else class="space-y-8">
+    <div v-else class="flex flex-col gap-3 md:gap-4">
     <!-- Responsive Data View -->
     <HealthSemaphore :is-unlocked="true" title="Miembros del equipo">
       <template #header-actions>
@@ -23,7 +23,6 @@
     <UiResponsiveDataView
       :columns="teamMembersTableColumns"
       :data="teamMembers"
-      title="Miembros del equipo"
       empty-message="No hay miembros en este equipo"
       empty-sub-message="Los miembros apareceran aqui cuando sean agregados"
       variant="default"
@@ -31,8 +30,58 @@
     >
 
       <!-- Mobile Card -->
-      <template #card="{ item }">
-        <TeamMemberCard :member="item" />
+      <template #card="{ item, index }">
+        <div
+          class="flex items-center gap-3 py-3 px-3 border-b border-border"
+          :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+        >
+          <!-- Avatar -->
+          <div v-if="item.avatar" class="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
+            <img :src="item.avatar" :alt="item.name" class="w-full h-full object-cover" />
+          </div>
+          <div v-else class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
+            :style="{ backgroundColor: item.color }">
+            {{ item.initials }}
+          </div>
+
+          <!-- Name + email -->
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-text-primary leading-tight truncate">{{ item.name }}</p>
+            <p class="text-xs text-text-secondary truncate">{{ item.email }}</p>
+          </div>
+
+          <!-- Role badge -->
+          <span
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0"
+            :class="{
+              'bg-amber-100 text-amber-800': item.role === 'superuser',
+              'bg-blue-100 text-blue-800': item.role === 'admin',
+              'bg-slate-100 text-slate-700': item.role === 'employee',
+              'bg-green-100 text-green-800': !['superuser','admin','employee'].includes(item.role)
+            }"
+          >
+            {{ item.role === 'superuser' ? 'Super' : item.role === 'admin' ? 'Admin' : item.role === 'employee' ? 'Empleado' : 'Miembro' }}
+          </span>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-0.5 flex-shrink-0">
+            <button v-if="isCurrentUser(item)" @click="openEditProfileModal(item)"
+              class="flex items-center justify-center w-8 h-8 rounded-lg text-primary hover:bg-surface-secondary transition-colors"
+              title="Editar mi perfil">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            </button>
+            <button v-if="isSuperUser && !isCurrentUser(item)" @click="openEditRoleModal(item)"
+              class="flex items-center justify-center w-8 h-8 rounded-lg text-primary hover:bg-surface-secondary transition-colors"
+              title="Cambiar rol">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            </button>
+            <button v-if="!isCurrentUser(item)" @click="openDeleteModal(item)"
+              class="flex items-center justify-center w-8 h-8 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+              title="Eliminar miembro">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </button>
+          </div>
+        </div>
       </template>
 
 
@@ -112,8 +161,8 @@
     </HealthSemaphore>
 
     <!-- Pending Invitations Section -->
-    <div v-if="pendingInvitations.length > 0" class="bg-white rounded-xl shadow-sm border border-gray-100">
-      <div class="p-4 border-b border-gray-100">
+    <div v-if="pendingInvitations.length > 0" class="bg-surface rounded-xl border border-border">
+      <div class="p-4 border-b border-border">
         <h3 class="text-lg font-bold text-text-primary flex items-center gap-2">
           <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -169,7 +218,7 @@
       </div>
 
       <!-- Mobile Cards -->
-      <div class="md:hidden divide-y divide-gray-100">
+      <div class="md:hidden divide-y divide-border">
         <div v-for="invitation in pendingInvitations" :key="invitation.id" class="p-4">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">

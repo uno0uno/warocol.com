@@ -123,7 +123,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="page-layout">
+  <div class="flex flex-col gap-3 md:gap-4">
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
@@ -156,11 +156,12 @@ onUnmounted(() => {
           format="number"
           variant="primary"
           size="sm"
+          class="col-span-2 md:col-span-1"
         />
       </div>
 
       <!-- Filters Bar -->
-      <div class="flex flex-wrap items-center gap-2 w-full">
+      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
         <!-- Search Input -->
         <div class="relative flex-1 min-w-[200px]">
           <button
@@ -213,36 +214,33 @@ onUnmounted(() => {
       >
 
         <!-- Mobile Card -->
-        <template #card="{ item }">
-          <div
-            v-if="item"
-            class="bg-surface border border-border rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
-            @click="navigateTo(`/equipo/salarios/${item.id}`)"
+        <template #card="{ item, index }">
+          <NuxtLink
+            :to="`/equipo/salarios/${item.id}`"
+            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
           >
-            <div class="flex justify-between items-start mb-3">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-white flex-shrink-0"
-                  :style="{ backgroundColor: item.color }">
-                  {{ item.initials }}
-                </div>
-                <div>
-                  <p class="text-sm font-medium text-text-primary">{{ item.name }}</p>
-                  <div class="flex items-center gap-2 mt-1">
-                    <p class="text-xs text-text-secondary">{{ item.role_label }}</p>
-                    <span v-if="!item.salary_type" class="inline-flex items-center px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                      Sin configurar
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div class="text-right">
-                <p class="text-lg font-bold text-primary">{{ formatCurrency(item.calculated_salary || 0) }}</p>
-                <p v-if="item.salary_type" class="text-xs text-text-secondary">
-                  {{ item.salary_type === 'smmlv' ? `${item.multiplier || 0}x SMMLV` : item.salary_type === 'fixed' ? 'Fijo' : 'Por hora' }}
-                </p>
-              </div>
+            <!-- Avatar -->
+            <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
+              :style="{ backgroundColor: item.color }">
+              {{ item.initials }}
             </div>
-          </div>
+
+            <!-- Name + role -->
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-text-primary leading-tight truncate">{{ item.name }}</p>
+              <p class="text-xs text-text-secondary truncate">{{ item.role_label }}</p>
+            </div>
+
+            <!-- Salary + type -->
+            <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
+              <span class="text-sm font-bold text-primary">{{ formatCurrency(item.calculated_salary || 0) }}</span>
+              <span v-if="item.salary_type" class="text-xs text-text-secondary">
+                {{ item.salary_type === 'smmlv' ? `${item.multiplier || 0}x SMMLV` : item.salary_type === 'fixed' ? 'Fijo' : 'Por hora' }}
+              </span>
+              <span v-else class="inline-flex items-center px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">Sin configurar</span>
+            </div>
+          </NuxtLink>
         </template>
 
 
