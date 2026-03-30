@@ -213,13 +213,8 @@ const { data: qualityData, asyncStatus: queryAsyncStatus, error: fetchError, ref
   gcTime: 0,
 })
 
-// Validate that cached data is the actual response object (not a stale primitive or
-// wrong-shaped value). gcTime:0 can't clear the cache synchronously on SPA navigation
-// because track() cancels the GC timer before it fires — so we guard here instead.
-const isLoading = computed(() => {
-  return !Array.isArray((qualityData.value as any)?.alerts) && !fetchError.value
-})
-const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && !isLoading.value)
+const isLoading = computed(() => !qualityData.value && !fetchError.value)
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && qualityData.value != null)
 
 onMounted(() => {
   setRefreshHandler(refetch)

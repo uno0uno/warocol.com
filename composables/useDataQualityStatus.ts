@@ -10,7 +10,7 @@ export const useDataQualityStatus = defineQuery(() => {
   const { currentTenant } = useTenantReactive()
 
   const { data, status } = useQuery({
-    key: () => ['analytics', 'data-quality', currentTenant.value?.id ?? 'default'],
+    key: () => ['analytics', 'data-quality-status', currentTenant.value?.id ?? 'default'],
     query: async () => {
       const res = await $fetch<any>('/api/analytics/data-quality')
       // Preserve dual response shape: { data: { critical: N } } or { critical: N }
