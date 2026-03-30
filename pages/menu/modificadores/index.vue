@@ -1,12 +1,19 @@
 <template>
-  <div class="page-layout">
+  <div class="flex flex-col gap-3 md:gap-4">
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
     <!-- Main Content -->
-    <div v-else>
+    <div v-else class="flex flex-col gap-3 md:gap-4">
+      <SharedFiltersBar
+        :search="searchQuery"
+        @update:search="searchQuery = $event"
+        search-placeholder="Buscar grupo o producto..."
+        @search="() => {}"
+        @clear-filters="searchQuery = ''"
+      />
       <HealthSemaphore :is-unlocked="true" title="Reglas y grupos de modificadores">
         <template #header-actions>
           <button
@@ -27,32 +34,6 @@
       variant="default"
       row-size="sm"
     >
-      <!-- Mobile Actions -->
-      <template #mobileActions>
-        <div class="relative">
-          <input
-            type="text"
-            v-model="searchQuery"
-            placeholder="Buscar grupo o producto..."
-            class="w-full pl-9 pr-3 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm"
-          />
-          <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
-        </div>
-      </template>
-
-      <!-- Desktop Header -->
-      <template #header>
-        <div class="relative">
-          <input
-            type="text"
-            v-model="searchQuery"
-            placeholder="Buscar..."
-            class="w-full pl-9 pr-3 py-2 border border-titan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-crocus-500 focus:border-transparent text-sm"
-          />
-          <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-titan-400" />
-        </div>
-      </template>
-
       <!-- Desktop Table Cells -->
       <template #cell-name="{ value }">
         <div class="flex items-center">
@@ -135,87 +116,22 @@
       </template>
 
       <!-- Mobile Card -->
-      <template #card="{ item }">
-        <div class="bg-surface border border-border rounded-xl p-4">
-          <div class="flex justify-between items-start mb-3">
-            <div class="flex-1">
-              <p class="font-semibold text-text-primary">{{ item.name }}</p>
-              <div class="flex flex-wrap gap-1 mt-1">
-                <span
-                  v-for="product in (item.products || []).slice(0, 2)"
-                  :key="product.id"
-                  class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-primary/10 text-primary"
-                >
-                  {{ product.name }}
-                </span>
-                <span
-                  v-if="(item.products || []).length > 2"
-                  class="text-xs text-text-secondary"
-                >
-                  +{{ item.products.length - 2 }}
-                </span>
-              </div>
-            </div>
-            <UiStatusBadge
-              :value="item.is_required ? 'Obligatorio' : 'Opcional'"
-              format="text"
-              :variant="item.is_required ? 'warning' : 'secondary'"
-              size="sm"
-            />
+      <template #card="{ item, index }">
+        <div
+          class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary cursor-pointer"
+          :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+          @click="goToEditGroup(item.id)"
+        >
+          <div class="flex-1 min-w-0">
+            <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
+            <p class="text-xs text-text-secondary mt-0.5">{{ getModificadoresByGrupo(item.id).length }} opciones · sel. {{ item.min_qty }}–{{ item.max_qty }}</p>
           </div>
-
-          <div class="space-y-2">
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <p class="text-xs text-text-secondary">Opciones</p>
-                <p class="text-sm font-semibold text-text-primary">
-                  {{ getModificadoresByGrupo(item.id).length }}
-                </p>
-              </div>
-              <div>
-                <p class="text-xs text-text-secondary">Selección</p>
-                <p class="text-sm text-text-primary">
-                  {{ item.min_qty }} - {{ item.max_qty }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Modificadores expandibles -->
-            <div v-if="expandedRows.has(item.id)" class="pt-2 border-t border-border">
-              <p class="text-xs font-semibold text-text-primary mb-2">Modificadores:</p>
-              <div class="space-y-1.5">
-                <div
-                  v-for="mod in getModificadoresByGrupo(item.id)"
-                  :key="mod.id"
-                  class="flex justify-between items-center text-xs"
-                >
-                  <div class="flex items-center gap-2 flex-1">
-                    <span class="text-text-primary">{{ mod.name }}</span>
-                  </div>
-                  <div class="text-right">
-                    <div class="text-text-primary font-medium">
-                      {{ formatCurrency(mod.price) }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex gap-2 mt-3">
-            <button
-              @click="toggleExpanded(item.id)"
-              class="flex-1 px-3 py-2 border border-border rounded-lg text-sm font-medium text-text-primary hover:bg-surface-secondary transition-colors"
-            >
-              {{ expandedRows.has(item.id) ? 'Contraer' : 'Ver modificadores' }}
-            </button>
-            <button
-              @click="goToEditGroup(item.id)"
-              class="px-3 py-2 border border-border rounded-lg text-sm font-medium text-text-primary hover:bg-surface-secondary transition-colors"
-            >
-              Editar
-            </button>
-          </div>
+          <UiStatusBadge
+            :value="item.is_required ? 'Obligatorio' : 'Opcional'"
+            format="text"
+            :variant="item.is_required ? 'warning' : 'secondary'"
+            size="sm"
+          />
         </div>
       </template>
     </UiResponsiveDataView>

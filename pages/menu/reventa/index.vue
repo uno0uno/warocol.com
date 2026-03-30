@@ -50,13 +50,17 @@
           row-size="sm"
         >
           <!-- Mobile Card Slot -->
-          <template #card="{ item }">
-            <div class="bg-surface border border-border rounded-lg p-4">
-              <div class="flex justify-between items-start mb-3">
-                <div class="flex-1">
-                  <h4 class="font-semibold text-text-primary mb-1">{{ item.name }}</h4>
-                  <p class="text-xs text-text-secondary">{{ item.category_name || 'Sin categoria' }}</p>
-                </div>
+          <template #card="{ item, index }">
+            <div
+              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
+              :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+            >
+              <div class="flex-1 min-w-0">
+                <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
+                <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}</p>
+              </div>
+              <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+                <span class="text-sm font-semibold text-text-primary">{{ formatMargin(item) }}</span>
                 <UiStatusBadge
                   :value="item.is_available ? 'Disponible' : 'No disponible'"
                   format="text"
@@ -64,26 +68,6 @@
                   size="sm"
                 />
               </div>
-
-              <div class="grid grid-cols-2 gap-3 text-sm mb-3">
-                <div>
-                  <p class="text-text-secondary text-xs">Precio</p>
-                  <p class="font-semibold text-text-primary">{{ formatCurrency(item.price) }}</p>
-                </div>
-                <div>
-                  <p class="text-text-secondary text-xs">Costo</p>
-                  <p class="font-semibold text-text-primary">{{ formatCurrency(item.costo_calculado) }}</p>
-                </div>
-                <div>
-                  <p class="text-text-secondary text-xs">Margen</p>
-                  <p class="font-semibold text-crocus-600">{{ formatMargin(item) }}</p>
-                </div>
-                <div>
-                  <p class="text-text-secondary text-xs">Ingredientes</p>
-                  <p class="font-semibold text-text-primary">{{ item.ingredients?.length || 0 }}</p>
-                </div>
-              </div>
-
             </div>
           </template>
 

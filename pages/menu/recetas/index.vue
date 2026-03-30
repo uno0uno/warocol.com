@@ -82,75 +82,22 @@
           </template>
 
           <!-- Mobile Card -->
-          <template #card="{ item }">
-            <div class="bg-surface border border-border rounded-xl p-4">
-              <div class="flex justify-between items-start mb-3">
-                <div class="flex-1">
-                  <p class="font-semibold text-text-primary">{{ item.producto_name }}</p>
-                  <p v-if="item.descripcion" class="text-xs text-text-secondary mt-1">{{ item.descripcion }}</p>
-                  <div class="flex items-center gap-2 mt-1">
-                    <p class="text-xs text-text-secondary">
-                      {{ item.ingredientes.length }} ingredientes
-                    </p>
-                    <span class="text-xs text-text-tertiary">•</span>
-                    <p class="text-xs text-text-primary">
-                      {{ formatCurrency(item.costo_total) }}
-                    </p>
-                  </div>
-                </div>
-                <UiStatusBadge
-                  :value="item.is_active ? 'Activa' : 'Inactiva'"
-                  format="text"
-                  :variant="item.is_active ? 'success' : 'secondary'"
-                  size="sm"
-                />
+          <template #card="{ item, index }">
+            <div
+              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary cursor-pointer"
+              :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+              @click="$router.push(`/menu/recetas/${item.id}`)"
+            >
+              <div class="flex-1 min-w-0">
+                <span class="text-sm font-bold text-text-primary">{{ item.producto_name }}</span>
+                <p class="text-xs text-text-secondary mt-0.5">{{ item.ingredientes.length }} ingredientes · {{ formatCurrency(item.costo_total) }}</p>
               </div>
-
-              <div class="space-y-2">
-
-                <!-- Ingredientes expandibles -->
-                <div v-if="expandedRows.has(item.id)" class="pt-2 border-t border-border">
-                  <p class="text-xs font-semibold text-text-primary mb-2">Ingredientes:</p>
-                  <div class="space-y-1.5">
-                    <div
-                      v-for="ing in item.ingredientes"
-                      :key="ing.ingrediente_id"
-                      class="flex justify-between items-center text-xs"
-                    >
-                      <div class="flex items-center gap-2 flex-1">
-                        <span class="text-text-primary">{{ ing.ingrediente_name }}</span>
-                        <UiStatusBadge
-                          v-if="ing.is_required"
-                          value="Requerido"
-                          format="text"
-                          variant="success"
-                          size="sm"
-                        />
-                      </div>
-                      <div class="text-right">
-                        <div class="text-text-primary font-medium">
-                          {{ ing.cantidad }} {{ ing.unidad }}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex gap-2 mt-3">
-                <button
-                  @click="toggleExpanded(item.id)"
-                  class="flex-1 px-3 py-2 border border-border rounded-lg text-sm font-medium text-text-primary hover:bg-surface-secondary transition-colors"
-                >
-                  {{ expandedRows.has(item.id) ? 'Contraer' : 'Ver ingredientes' }}
-                </button>
-                <button
-                  class="px-3 py-2 border border-border rounded-lg text-sm font-medium text-text-primary hover:bg-surface-secondary transition-colors"
-                  @click="$router.push(`/menu/recetas/${item.id}`)"
-                >
-                  Editar
-                </button>
-              </div>
+              <UiStatusBadge
+                :value="item.is_active ? 'Activa' : 'Inactiva'"
+                format="text"
+                :variant="item.is_active ? 'success' : 'secondary'"
+                size="sm"
+              />
             </div>
           </template>
         </UiResponsiveDataView>

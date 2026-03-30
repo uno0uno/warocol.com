@@ -82,97 +82,32 @@
         >
 
           <!-- Mobile Card Slot -->
-          <template #card="{ item }">
+          <template #card="{ item, index }">
             <div
-              class="border border-border rounded-xl p-4"
-              :class="costIssueProductIds?.has(item.id) ? 'bg-status-critical-bg' : 'bg-surface'"
+              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary cursor-pointer"
+              :class="[
+                costIssueProductIds?.has(item.id) ? 'bg-status-critical-bg' : (index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30')
+              ]"
+              @click="editProduct(item)"
             >
-              <div class="flex justify-between items-start mb-3">
-                <div class="flex-1">
-                  <h4 class="font-semibold text-text-primary mb-1">{{ toTitleCase(item.name) }}</h4>
-                  <p class="text-xs text-text-secondary">{{ item.category_name || 'Sin categoría' }}</p>
-                </div>
+              <div class="flex-1 min-w-0">
+                <span class="text-sm font-bold text-text-primary">{{ toTitleCase(item.name) }}</span>
+                <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}</p>
+              </div>
+              <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+                <UiStatusBadge
+                  v-if="getMarginValue(item) !== null"
+                  :value="getMarginValue(item)"
+                  format="percentage"
+                  :variant="(getMarginValue(item) ?? 0) >= 0 ? 'success' : 'secondary'"
+                  size="sm"
+                />
                 <UiStatusBadge
                   :value="item.is_available ? 'Disponible' : 'No disponible'"
                   format="text"
                   :variant="item.is_available ? 'success' : 'secondary'"
                   size="sm"
                 />
-              </div>
-
-              <div class="grid grid-cols-2 gap-3 text-sm mb-3">
-                <div>
-                  <p class="text-text-secondary text-xs">Precio</p>
-                  <p class="font-semibold text-text-primary">{{ formatCurrency(item.price) }}</p>
-                </div>
-                <div>
-                  <p class="text-text-secondary text-xs">Costo</p>
-                  <p class="font-semibold text-text-primary">{{ formatCurrency(item.costo_calculado) }}</p>
-                </div>
-                <div>
-                  <p class="text-text-secondary text-xs">Margen</p>
-                  <UiStatusBadge
-                    v-if="getMarginValue(item) !== null"
-                    :value="getMarginValue(item)!"
-                    format="percentage"
-                    :variant="getMarginValue(item)! >= 0 ? 'success' : 'secondary'"
-                    size="sm"
-                    class="mt-0.5"
-                  />
-                  <p v-else class="font-semibold text-text-secondary">—</p>
-                </div>
-                <div>
-                  <p class="text-text-secondary text-xs">Ingredientes</p>
-                  <p class="font-semibold text-text-primary">{{ item.ingredients?.length || 0 }}</p>
-                </div>
-              </div>
-
-              <div class="flex flex-wrap gap-2 pt-2 border-t border-border">
-                <!-- REMOVED: Control Stock badge - ALL products now control inventory automatically -->
-                <UiStatusBadge
-                  v-if="item.is_combo"
-                  value="Combo"
-                  format="text"
-                  variant="info"
-                  size="sm"
-                />
-                <button
-                  @click="toggleOnlineAvailability(item)"
-                  role="switch"
-                  :aria-checked="item.is_available_online"
-                  :disabled="togglingIds.has(item.id)"
-                  :aria-label="item.is_available_online ? `Deshabilitar ${item.name} para domicilios` : `Habilitar ${item.name} para domicilios`"
-                  :title="item.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
-                  class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
-                  :class="[
-                    item.is_available_online ? 'bg-success' : 'bg-titan-300',
-                    togglingIds.has(item.id) ? 'cursor-wait opacity-70' : 'cursor-pointer'
-                  ]"
-                >
-                  <svg
-                    v-if="togglingIds.has(item.id)"
-                    class="animate-spin h-3.5 w-3.5 text-white"
-                    :class="item.is_available_online ? 'translate-x-4' : 'translate-x-0.5'"
-                    fill="none" viewBox="0 0 24 24"
-                  >
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  <span
-                    v-else
-                    class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
-                    :class="item.is_available_online ? 'translate-x-4' : 'translate-x-0.5'"
-                  />
-                </button>
-              </div>
-
-              <div class="flex gap-2 mt-3">
-                <button
-                  @click="editProduct(item)"
-                  class="flex-1 px-3 py-2 border border-border rounded-lg text-sm font-medium text-text-primary hover:bg-surface-secondary transition-colors"
-                >
-                  Editar
-                </button>
               </div>
             </div>
           </template>
