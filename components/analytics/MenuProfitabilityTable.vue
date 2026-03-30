@@ -100,47 +100,42 @@ const totals = computed(() => {
       variant="default"
       row-size="sm"
     >
-      <template #card="{ item }">
-        <div class="bg-surface border border-border rounded-xl p-4">
-          <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <p class="font-semibold text-text-primary truncate">{{ item.name }}</p>
-              <p class="text-xs text-text-secondary mt-1">
-                {{ item.total_units_sold || 0 }} unidades
-              </p>
-            </div>
-            <span
-              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide shrink-0"
-              :class="[getCategoryStyles(item.classification).bg, getCategoryStyles(item.classification).text]"
-            >
-              <component :is="getCategoryStyles(item.classification).icon" :size="12" />
-              {{ getCategoryStyles(item.classification).label }}
-            </span>
+      <template #card="{ item, index }">
+        <div
+          class="flex items-center gap-3 py-3 px-3 border-b border-border"
+          :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+        >
+          <!-- Classification icon -->
+          <div
+            class="flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0"
+            :class="getCategoryStyles(item.classification).bg"
+          >
+            <component
+              :is="getCategoryStyles(item.classification).icon"
+              :size="16"
+              :class="getCategoryStyles(item.classification).text"
+            />
           </div>
 
-          <div class="grid grid-cols-2 gap-3 mt-4 text-sm">
-            <div>
-              <p class="text-text-secondary text-xs">Costo</p>
-              <p class="text-text-primary">{{ item.estimated_cost ? formatCurrency(item.estimated_cost) : '—' }}</p>
-            </div>
-            <div>
-              <p class="text-text-secondary text-xs">Precio</p>
-              <p class="text-text-primary font-semibold">{{ item.price ? formatCurrency(item.price) : '—' }}</p>
-            </div>
-            <div>
-              <p class="text-text-secondary text-xs">Margen</p>
-              <p :class="item.profit_margin_pct >= 40 ? 'text-green-600 font-bold' : 'text-text-primary'">
-                {{ item.profit_margin_pct ? `${item.profit_margin_pct}%` : '—' }}
-              </p>
-            </div>
-            <div>
-              <p class="text-text-secondary text-xs">Ganancia</p>
-              <p class="text-green-600 font-bold">{{ item.total_profit ? formatCurrency(item.total_profit) : '—' }}</p>
-            </div>
-            <div class="col-span-2">
-              <p class="text-text-secondary text-xs">Ingresos</p>
-              <p class="text-text-primary font-semibold">{{ item.total_revenue ? formatCurrency(item.total_revenue) : '—' }}</p>
-            </div>
+          <!-- Name + units -->
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-text-primary leading-tight truncate">{{ item.name }}</p>
+            <p class="text-xs text-text-secondary mt-0.5">
+              {{ item.total_units_sold || 0 }} uds · {{ getCategoryStyles(item.classification).label }}
+            </p>
+          </div>
+
+          <!-- Margen + Ganancia -->
+          <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
+            <span
+              class="text-sm font-bold"
+              :class="item.profit_margin_pct >= 40 ? 'text-green-600' : item.profit_margin_pct >= 20 ? 'text-text-primary' : 'text-destructive'"
+            >
+              {{ item.profit_margin_pct ? `${item.profit_margin_pct}%` : '—' }}
+            </span>
+            <span class="text-xs text-text-secondary">
+              {{ item.total_profit ? formatCurrency(item.total_profit) : '—' }}
+            </span>
           </div>
         </div>
       </template>
