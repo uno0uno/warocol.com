@@ -103,3 +103,33 @@
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* ── VueDatePicker — design token overrides ───────────────────────────────── */
+.dp__input {
+  background-color: hsl(var(--background)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--text-primary)) !important;
+  border-width: 2px !important;
+  border-radius: 0.5rem !important;
+  height: 2.5rem !important;
+  font-size: 0.875rem !important;
+}
+
+.dp__input:hover {
+  border-color: hsl(var(--primary)) !important;
+}
+
+.dp__input_focus,
+.dp__input:focus {
+  border-color: hsl(var(--primary)) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2) !important;
+}
+
+.dp__input::placeholder {
+  color: hsl(var(--text-secondary)) !important;
+}
+
+.dp__input_icon {
+  color: hsl(var(--text-secondary)) !important;
+}
