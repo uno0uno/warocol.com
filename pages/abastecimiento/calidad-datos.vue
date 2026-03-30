@@ -99,40 +99,36 @@
         row-size="sm"
       >
         <!-- Mobile Card -->
-        <template #card="{ item }">
+        <template #card="{ item, index }">
           <div
-            class="bg-white border border-border rounded-lg p-4 cursor-pointer hover:bg-surface-secondary transition-colors"
             @click="viewOrder(item)"
+            class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
           >
-            <div class="flex justify-between items-start mb-2">
-              <div class="min-w-0">
-                <p class="font-bold text-text-primary text-sm truncate">
-                  {{ item.purchase_number ?? formatDate(item.date) }}
-                </p>
-                <p class="text-xs text-text-secondary mt-0.5">
-                  {{ item.supplier_name ?? 'Sin proveedor' }}
-                </p>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-baseline gap-2">
+                <span class="text-sm font-bold text-text-primary">{{ item.purchase_number ?? formatDate(item.date) }}</span>
+                <span class="text-xs text-text-secondary">{{ formatDate(item.purchase_date ?? item.date) }}</span>
               </div>
-              <div class="flex gap-1.5 shrink-0 ml-2">
-                <UiStatusBadge
-                  v-if="item.critical > 0"
-                  :value="`${item.critical} crít.`"
-                  format="text"
-                  variant="destructive"
-                  size="sm"
-                />
-                <UiStatusBadge
-                  v-if="item.warning > 0"
-                  :value="`${item.warning} aviso${item.warning > 1 ? 's' : ''}`"
-                  format="text"
-                  variant="warning"
-                  size="sm"
-                />
-              </div>
+              <p class="text-xs text-text-secondary mt-0.5 truncate">
+                {{ item.supplier_name ?? 'Sin proveedor' }} · {{ item.alerts.length }} ingrediente{{ item.alerts.length !== 1 ? 's' : '' }}
+              </p>
             </div>
-            <div class="flex justify-between items-center text-xs text-text-secondary mt-2">
-              <span>{{ formatDate(item.purchase_date ?? item.date) }}</span>
-              <span>{{ item.alerts.length }} ingrediente{{ item.alerts.length !== 1 ? 's' : '' }} afectado{{ item.alerts.length !== 1 ? 's' : '' }}</span>
+            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+              <UiStatusBadge
+                v-if="item.critical > 0"
+                :value="`${item.critical} crít.`"
+                format="text"
+                variant="destructive"
+                size="sm"
+              />
+              <UiStatusBadge
+                v-if="item.warning > 0"
+                :value="`${item.warning} aviso${item.warning > 1 ? 's' : ''}`"
+                format="text"
+                variant="warning"
+                size="sm"
+              />
             </div>
           </div>
         </template>

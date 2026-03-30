@@ -82,51 +82,30 @@
         row-size="sm"
       >
         <!-- Mobile Card -->
-        <template #card="{ item }">
-          <UiCard class="hover:shadow-lg transition-shadow">
-            <UiCardHeader>
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <h3 class="text-base font-semibold text-text-primary">{{ item.ingredient_name }}</h3>
-                  <p class="text-xs text-text-secondary">{{ formatDate(item.created_at) }}</p>
-                </div>
-                <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  :class="item.quantity_change >= 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'"
-                >
-                  {{ item.quantity_change >= 0 ? 'Incremento' : 'Decremento' }}
-                </span>
-              </div>
-            </UiCardHeader>
-            <UiCardContent class="space-y-3">
-              <div class="grid grid-cols-3 gap-2">
-                <div>
-                  <p class="text-xs text-text-secondary">Cantidad</p>
-                  <p
-                    class="text-lg font-bold"
-                    :class="item.quantity_change >= 0 ? 'text-green-600' : 'text-red-600'"
-                  >
-                    {{ item.quantity_change >= 0 ? '+' : '' }}{{ formatNumber(item.quantity_change) }}
-                  </p>
-                </div>
-                <div>
-                  <p class="text-xs text-text-secondary">Stock Ant.</p>
-                  <p class="text-sm text-text-primary">{{ formatNumber(item.previous_stock) }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-text-secondary">Stock Nuevo</p>
-                  <p class="text-sm font-bold text-text-primary">{{ formatNumber(item.new_stock) }}</p>
-                </div>
-              </div>
-              <div v-if="item.reason" class="pt-2 border-t border-border">
-                <p class="text-xs text-text-secondary">Motivo</p>
-                <p class="text-sm text-text-primary">{{ item.reason }}</p>
-              </div>
-              <div v-if="item.created_by_name" class="text-xs text-text-secondary">
-                Ajustado por: <span class="font-medium text-text-primary">{{ item.created_by_name }}</span>
-              </div>
-            </UiCardContent>
-          </UiCard>
+        <template #card="{ item, index }">
+          <div
+            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+          >
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-bold text-text-primary">{{ item.ingredient_name }}</span>
+              <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.created_at) }}</p>
+            </div>
+            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+              <p
+                class="text-sm font-bold tabular-nums"
+                :class="item.quantity_change >= 0 ? 'text-emerald-600' : 'text-red-600'"
+              >
+                {{ item.quantity_change >= 0 ? '+' : '' }}{{ formatNumber(item.quantity_change) }}
+              </p>
+              <UiStatusBadge
+                :value="item.quantity_change >= 0 ? 'Incremento' : 'Decremento'"
+                format="text"
+                :variant="item.quantity_change >= 0 ? 'success' : 'destructive'"
+                size="sm"
+              />
+            </div>
+          </div>
         </template>
 
         <!-- Desktop Table Cells -->

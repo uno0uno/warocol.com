@@ -60,28 +60,29 @@
         row-size="sm"
       >
         <!-- Mobile Card Slot -->
-        <template #card="{ item }">
+        <template #card="{ item, index }">
           <div
-            class="bg-white border border-border rounded-lg p-4 cursor-pointer hover:bg-surface-secondary transition-colors"
             @click="viewPurchase(item)"
+            class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
           >
-            <div class="flex justify-between items-start mb-3">
-              <div>
-                <p class="font-bold text-text-primary">{{ item.purchase_number }}</p>
-                <p class="text-sm text-text-secondary">{{ item.supplier_name || 'Sin proveedor' }}</p>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-baseline gap-2">
+                <span class="text-sm font-bold text-text-primary">{{ item.purchase_number }}</span>
+                <span class="text-xs text-text-secondary">{{ formatDate(item.purchase_date) }}</span>
               </div>
+              <p class="text-xs text-text-secondary mt-0.5 truncate">
+                {{ item.supplier_name || 'Sin proveedor' }} · {{ item.items_count || 0 }} items
+              </p>
+            </div>
+            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+              <p class="text-sm font-bold text-primary tabular-nums">${{ formatCurrency(item.total_amount) }}</p>
               <UiStatusBadge
                 :value="getStatusText(item.status)"
                 format="text"
-                :class="['border-0', getStatusClass(item.status)]"
+                :variant="item.status === 'paid' ? 'success' : item.status === 'invoiced' ? 'warning' : 'info'"
                 size="sm"
               />
-            </div>
-            <div class="flex justify-between items-center text-sm">
-              <span class="text-text-secondary">{{ formatDate(item.purchase_date) }}</span>
-              <span class="font-bold text-text-primary">
-                ${{ formatCurrency(item.total_amount) }}
-              </span>
             </div>
           </div>
         </template>
