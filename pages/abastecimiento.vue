@@ -1,5 +1,5 @@
 <template>
-  <div class="page-layout flex flex-col h-full">
+  <div class="flex flex-col gap-3 md:gap-4 h-full">
     <!-- Navigation -->
     <UiModuleNavigation
       :navigation-items="navigationItems"
