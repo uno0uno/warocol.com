@@ -146,6 +146,10 @@
             <p class="text-sm text-text-secondary mb-4">
               Selecciona una o más recetas base para usar sus ingredientes predefinidos.
             </p>
+            <p v-if="duplicateRecipeBaseError" class="text-sm text-destructive flex items-center gap-1 mb-3">
+              <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              {{ duplicateRecipeBaseError }}
+            </p>
 
             <!-- Lista de recetas base seleccionadas -->
             <div v-if="form.recipe_base_ids.length > 0" class="space-y-3 mb-6">
@@ -203,6 +207,10 @@
             <h3 class="text-lg font-semibold text-text-primary mb-2">Ingredientes Adicionales</h3>
             <p class="text-sm text-text-secondary mb-4">
               Agrega ingredientes adicionales específicos para este producto
+            </p>
+            <p v-if="quantityError" class="text-sm text-destructive flex items-center gap-1 mb-3">
+              <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              {{ quantityError }}
             </p>
 
             <!-- Lista de ingredientes -->
@@ -349,6 +357,10 @@
           </div>
 
           <div class="mt-6 pt-6 border-t border-border space-y-3">
+            <p v-if="submitError" class="text-sm text-destructive flex items-center gap-1">
+              <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              {{ submitError }}
+            </p>
             <UiButton
               type="submit"
               variant="default"
@@ -568,6 +580,9 @@ const form = ref({
 })
 
 const isSubmitting = ref(false)
+const submitError = ref('')
+const duplicateRecipeBaseError = ref('')
+const quantityError = ref('')
 
 // Watch product data and populate form
 watch(productData, (data) => {
@@ -662,10 +677,14 @@ const getIngredientName = (ingredientId: string) => {
 }
 
 const handleSubmit = async () => {
+  submitError.value = ''
+  duplicateRecipeBaseError.value = ''
+  quantityError.value = ''
+
   // Validate ingredient quantities > 0
   const hasZeroQuantity = form.value.ingredients.some(ing => !ing.quantity || ing.quantity <= 0)
   if (hasZeroQuantity) {
-    alert('Error: Todos los ingredientes deben tener una cantidad mayor a 0.')
+    quantityError.value = 'Todos los ingredientes deben tener una cantidad mayor a 0.'
     return
   }
 
@@ -677,7 +696,7 @@ const handleSubmit = async () => {
     const uniqueRecipeBaseIds = [...new Set(recipeBaseIds)]
 
     if (recipeBaseIds.length !== uniqueRecipeBaseIds.length) {
-      alert('Error: No puedes agregar la misma receta base más de una vez')
+      duplicateRecipeBaseError.value = 'No puedes agregar la misma receta base más de una vez.'
       isSubmitting.value = false
       return
     }
@@ -696,7 +715,7 @@ const handleSubmit = async () => {
     await router.push('/menu/productos')
   } catch (error: any) {
     console.error('❌ Error al actualizar producto:', error)
-    alert(`Error al actualizar el producto: ${error.data?.detail || error.message}`)
+    submitError.value = `Error al actualizar el producto: ${error.data?.detail || error.message}`
   } finally {
     isSubmitting.value = false
   }
