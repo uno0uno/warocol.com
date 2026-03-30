@@ -25,7 +25,7 @@
                 {{ animatedDisplayTitle }}
                 <span v-if="isTypingTitle" class="title-caret" aria-hidden="true"></span>
               </h1>
-              <p class="text-xs text-muted-foreground mt-0.5 truncate">{{ dynamicLastUpdateText || displaySubtitle || currentDateTime }}</p>
+              <p v-if="dynamicLastUpdateText || displaySubtitle" class="text-xs text-muted-foreground mt-0.5 truncate">{{ dynamicLastUpdateText || displaySubtitle }}</p>
             </div>
           </div>
 
