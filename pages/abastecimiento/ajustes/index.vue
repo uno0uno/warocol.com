@@ -146,11 +146,6 @@
           <span class="text-sm font-medium text-text-primary">{{ formatNumber(value) }}</span>
         </template>
 
-        <template #cell-reason="{ value }">
-          <span v-if="value" class="text-sm text-text-primary">{{ value }}</span>
-          <span v-else class="text-sm text-text-secondary">-</span>
-        </template>
-
         <template #cell-created_by_name="{ value }">
           <span class="text-sm text-text-primary">{{ value || 'Sistema' }}</span>
         </template>
@@ -375,13 +370,6 @@ const adjustmentsTableColumns = [
     sortable: true,
     format: 'number',
     align: 'right'
-  },
-  {
-    key: 'reason',
-    title: 'Motivo',
-    sortable: false,
-    format: 'text',
-    align: 'left'
   },
   {
     key: 'created_by_name',
