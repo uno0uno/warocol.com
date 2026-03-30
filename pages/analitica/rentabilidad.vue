@@ -97,7 +97,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="space-y-4 pb-20">
+  <div class="flex flex-col gap-3 md:gap-4 pb-20">
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />

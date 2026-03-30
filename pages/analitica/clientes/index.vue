@@ -178,7 +178,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="flex flex-col gap-3 md:gap-4">
 
     <!-- Filters Bar — always visible -->
     <ClientOnly>
@@ -205,12 +205,12 @@ onUnmounted(() => {
           type="text"
           placeholder="Buscar cliente..."
           aria-label="Buscar cliente por nombre o teléfono"
-          class="flex-1 min-w-0 h-10 px-3 text-sm border-2 border-slate-200 rounded-lg bg-white text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors"
+          class="flex-1 min-w-0 h-10 px-3 text-sm border-2 border-border rounded-lg bg-background text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
         />
         <button
           v-if="hasFilters"
           @click="clearFilters"
-          class="h-10 px-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-500 hover:text-slate-700 hover:border-indigo-500 transition-colors flex-shrink-0"
+          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
           title="Limpiar filtros"
           aria-label="Limpiar filtros"
         >
@@ -228,7 +228,7 @@ onUnmounted(() => {
     <CommonsTheErrorState v-else-if="fetchError" />
 
     <!-- Main Content -->
-    <div v-else class="flex flex-col gap-4 pb-20">
+    <div v-else class="flex flex-col gap-3 md:gap-4 pb-20">
       <!-- Summary Cards -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard title="Clientes únicos" :value="totalCustomers" format="number" variant="primary" />
@@ -244,26 +244,19 @@ onUnmounted(() => {
           empty-sub-message="Registra ventas en el POS para ver tus clientes aquí"
           variant="default"
         >
-          <template #card="{ item }">
+          <template #card="{ item, index }">
             <NuxtLink
               :to="`/analitica/clientes/${item.customer_id}`"
-              class="block bg-white border border-border rounded-lg p-4 hover:bg-surface-secondary transition-colors"
+              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
+              :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
             >
-              <div class="flex justify-between items-start mb-2">
-                <div>
-                  <p class="font-semibold text-text-primary">{{ item.name }}</p>
-                  <p class="text-sm text-text-secondary">{{ item.phone || 'Sin teléfono' }}</p>
-                </div>
-                <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full font-medium">
-                  {{ item.order_count }} pedidos
-                </span>
+              <div class="flex-1 min-w-0">
+                <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
+                <p class="text-xs text-text-secondary mt-0.5">{{ item.phone || 'Sin teléfono' }} · {{ item.order_count }} pedidos · {{ formatDate(item.last_order_date) }}</p>
               </div>
-              <div class="flex justify-between items-center text-sm">
-                <span class="text-text-secondary">Última: {{ formatDate(item.last_order_date) }}</span>
-                <span class="font-bold text-text-primary">{{ formatCurrency(item.total_spent) }}</span>
-              </div>
-              <div v-if="!isLoadingBalances && (warosBalances[item.customer_id] ?? 0) > 0" class="mt-1.5">
-                <span class="inline-flex items-center text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+              <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                <span class="text-sm font-bold text-text-primary">{{ formatCurrency(item.total_spent) }}</span>
+                <span v-if="!isLoadingBalances && (warosBalances[item.customer_id] ?? 0) > 0" class="text-xs font-medium text-amber-700">
                   {{ (warosBalances[item.customer_id] ?? 0).toLocaleString('es-CO') }} Waros
                 </span>
               </div>

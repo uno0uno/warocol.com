@@ -1,5 +1,5 @@
 <template>
-  <div class="page-layout flex flex-col h-full">
+  <div class="flex flex-col gap-3 md:gap-4 h-full">
     <UiModuleNavigation :navigation-items="navigationItems" />
     <div class="flex-1 min-h-0">
       <NuxtPage :key="route.fullPath" />

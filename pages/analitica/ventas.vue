@@ -219,7 +219,7 @@ const formatCurrency = (value: number) =>
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="flex flex-col gap-3 md:gap-4">
     <!-- Loading State -->
     <div v-if="!dashboardData && !hasDateFilter || (hasDateFilter && !filteredMetricsData)" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
