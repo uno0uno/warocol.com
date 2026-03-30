@@ -212,7 +212,7 @@ const { data: qualityData, asyncStatus: queryAsyncStatus, error: fetchError, ref
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => !qualityData.value)
+const isLoading = computed(() => !qualityData.value && !fetchError.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && qualityData.value != null)
 
 onMounted(() => {
