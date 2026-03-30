@@ -232,7 +232,7 @@ const formatCurrency = (value: number) =>
     <div v-else class="space-y-8 pb-20">
       <!-- Filters Bar -->
       <ClientOnly>
-      <div class="flex items-center gap-2 w-full overflow-x-auto pb-2">
+      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
         <VueDatePicker
           v-model="dateRangeDates"
           range
@@ -248,19 +248,19 @@ const formatCurrency = (value: number) =>
           menu-class-name="dp-custom-menu"
           calendar-cell-class-name="dp-custom-cell"
         />
-        <select v-model="paymentMethodFilter" aria-label="Filtrar por método de pago" class="h-10 pl-3 pr-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer min-w-[130px]">
+        <select v-model="paymentMethodFilter" aria-label="Filtrar por método de pago" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px] flex-shrink-0">
           <option :value="null">Método pago</option>
           <option value="cash">Efectivo</option>
           <option value="card">Tarjeta</option>
           <option value="digital">Digital</option>
         </select>
-        <select v-model="statusFilter" aria-label="Filtrar por estado" class="h-10 pl-3 pr-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer min-w-[120px]">
+        <select v-model="statusFilter" aria-label="Filtrar por estado" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px] flex-shrink-0">
           <option :value="null">Estado</option>
           <option value="completed">Completadas</option>
           <option value="cancelled">Canceladas</option>
           <option value="pending">Pendientes</option>
         </select>
-        <button v-if="dateRangeDates || paymentMethodFilter || statusFilter" @click="clearFilters" class="h-10 px-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-500 hover:text-slate-700 hover:border-indigo-500 transition-colors" title="Limpiar filtros" aria-label="Limpiar filtros">
+        <button v-if="dateRangeDates || paymentMethodFilter || statusFilter" @click="clearFilters" class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0" title="Limpiar filtros" aria-label="Limpiar filtros">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>

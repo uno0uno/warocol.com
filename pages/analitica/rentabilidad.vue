@@ -110,7 +110,7 @@ onUnmounted(() => {
     <template v-else>
       <!-- Date Filter -->
       <ClientOnly>
-      <div class="flex items-center gap-2 w-full overflow-x-auto pb-2">
+      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
         <VueDatePicker
           v-model="dateRangeDates"
           range
@@ -129,7 +129,7 @@ onUnmounted(() => {
         <button
           v-if="dateRangeDates"
           @click="dateRangeDates = null"
-          class="h-10 px-3 rounded-lg border-2 border-slate-200 bg-white text-sm text-slate-500 hover:text-slate-700 hover:border-indigo-500 transition-colors"
+          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
           title="Limpiar filtro"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

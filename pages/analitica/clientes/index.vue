@@ -182,7 +182,7 @@ onUnmounted(() => {
 
     <!-- Filters Bar — always visible -->
     <ClientOnly>
-      <div class="flex items-center gap-2 w-full">
+      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
         <div class="flex-1 min-w-0">
           <VueDatePicker
             v-model="dateRangeDates"
