@@ -230,10 +230,10 @@ onUnmounted(() => {
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4 pb-20">
       <!-- Summary Cards -->
-      <div class="grid grid-cols-3 md:grid-cols-3 gap-3 md:gap-4">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
         <MetricCard title="Clientes únicos" :value="totalCustomers" format="number" variant="primary" />
         <MetricCard title="Total comprado" :value="totalRevenue" format="currency" variant="primary" />
-        <MetricCard title="Ticket promedio" :value="totalCustomers > 0 ? totalRevenue / totalCustomers : 0" format="currency" variant="primary" />
+        <MetricCard title="Ticket promedio" :value="totalCustomers > 0 ? totalRevenue / totalCustomers : 0" format="currency" variant="primary" class="col-span-2 md:col-span-1" />
       </div>
 
       <HealthSemaphore :is-unlocked="true" title="Comportamiento y valor de clientes">
