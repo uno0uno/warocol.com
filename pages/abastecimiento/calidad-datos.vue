@@ -205,7 +205,7 @@ const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 // Data fetching
-const { data: qualityData, asyncStatus: queryAsyncStatus, error: fetchError, refetch } = useQuery({
+const { data: qualityData, asyncStatus: queryAsyncStatus, status: queryStatus, error: fetchError, refetch } = useQuery({
   key: () => ['analytics', 'data-quality', currentTenant.value?.id],
   query: () => $fetch('/api/analytics/data-quality').then((r: any) => r?.data ?? r),
   enabled: () => !!currentTenant.value,
@@ -216,8 +216,25 @@ const { data: qualityData, asyncStatus: queryAsyncStatus, error: fetchError, ref
 const isLoading = computed(() => !qualityData.value && !fetchError.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && qualityData.value != null)
 
+// ── DIAGNOSTIC LOGS — remove after fix ───────────────────────────────────────
+console.log('[calidad-datos] SETUP — tenant:', currentTenant.value?.id, '| data:', qualityData.value, '| status:', queryStatus.value, '| asyncStatus:', queryAsyncStatus.value, '| isLoading:', isLoading.value)
+
+watch(qualityData, (v) => {
+  console.log('[calidad-datos] qualityData changed →', v, '| alerts:', (v as any)?.alerts?.length ?? 'n/a', '| isLoading:', isLoading.value)
+}, { immediate: true })
+
+watch(queryAsyncStatus, (v) => {
+  console.log('[calidad-datos] asyncStatus →', v, '| isRefreshing:', isRefreshing.value, '| data:', qualityData.value)
+}, { immediate: true })
+
+watch(queryStatus, (v) => {
+  console.log('[calidad-datos] status →', v)
+}, { immediate: true })
+// ─────────────────────────────────────────────────────────────────────────────
+
 onMounted(() => {
   setRefreshHandler(refetch)
+  console.log('[calidad-datos] onMounted — data:', qualityData.value, '| isLoading:', isLoading.value, '| asyncStatus:', queryAsyncStatus.value)
 })
 useMenuReturnRefresh(
   '/abastecimiento/calidad-datos',
@@ -228,6 +245,7 @@ useMenuReturnRefresh(
 registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
   clearRefreshHandler(refetch)
+  console.log('[calidad-datos] onUnmounted — data at unmount:', qualityData.value)
 })
 
 // Filters
