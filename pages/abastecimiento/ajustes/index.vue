@@ -45,7 +45,7 @@
           <!-- Ingredient Filter -->
           <select
             v-model="ingredientFilter"
-            class="px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer flex-shrink-0"
             @change="applyFilters"
           >
             <option value="">Todos los ingredientes</option>
@@ -57,7 +57,7 @@
           <!-- Adjustment Type Filter -->
           <select
             v-model="adjustmentTypeFilter"
-            class="px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer flex-shrink-0"
             @change="applyFilters"
           >
             <option value="">Todos los ajustes</option>

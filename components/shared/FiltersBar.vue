@@ -1,27 +1,34 @@
 <template>
   <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
-    <!-- Search Field -->
+    <!-- Search Input -->
     <div v-if="showSearch" class="relative flex-1 min-w-[180px]">
-      <UiSearchWithField
-        v-if="searchFields.length > 0"
-        :model-value="search"
-        :field-value="searchField"
-        :fields="searchFields"
-        :placeholder="searchPlaceholder"
-        class="w-full"
-        @update:modelValue="$emit('update:search', $event)"
-        @update:fieldValue="$emit('update:searchField', $event)"
-        @search="$emit('search')"
-      />
-      <UiSearchBar
-        v-else
-        :model-value="search"
-        :placeholder="searchPlaceholder"
-        class="w-full"
-        @update:modelValue="$emit('update:search', $event)"
+      <button
+        @click="$emit('search')"
+        class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
+        aria-label="Buscar"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+      </button>
+      <input
+        :value="search"
+        @input="$emit('update:search', $event.target.value)"
         @keydown.enter="$emit('search')"
+        :placeholder="searchPlaceholder"
+        class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
       />
     </div>
+
+    <!-- Search Field Select (when searchFields provided) -->
+    <select
+      v-if="showSearch && searchFields.length > 0"
+      :value="searchField"
+      @change="$emit('update:searchField', $event.target.value)"
+      class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer min-w-[120px] flex-shrink-0"
+    >
+      <option v-for="field in searchFields" :key="field.value" :value="field.value">{{ field.label }}</option>
+    </select>
 
     <!-- Supplier Filter -->
     <select

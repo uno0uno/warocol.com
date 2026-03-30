@@ -43,7 +43,7 @@
           <!-- Category Filter -->
           <select
             v-model="categoryFilter"
-            class="px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer flex-shrink-0"
           >
             <option value="">Todas las categorías</option>
             <option v-for="category in categories" :key="category" :value="category">
@@ -54,7 +54,7 @@
           <!-- Status Filter -->
           <select
             v-model="statusFilter"
-            class="px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer flex-shrink-0"
           >
             <option value="all">Todos los estados</option>
             <option value="critical">Crítico</option>
@@ -65,7 +65,7 @@
           <!-- Unit Filter -->
           <select
             v-model="unitFilter"
-            class="px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer flex-shrink-0"
           >
             <option value="">Todas las unidades</option>
             <option v-for="unit in units" :key="unit" :value="unit">
