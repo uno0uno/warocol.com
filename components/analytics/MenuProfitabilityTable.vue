@@ -183,30 +183,5 @@ const totals = computed(() => {
       </template>
     </UiResponsiveDataView>
 
-    <div
-      v-if="totals"
-      class="mt-3 border border-border rounded-xl bg-surface-secondary px-4 py-3 grid grid-cols-2 md:grid-cols-5 gap-3 text-sm"
-    >
-      <div>
-        <p class="text-text-secondary text-xs">Total productos</p>
-        <p class="font-semibold text-text-primary">{{ menuItems.length }}</p>
-      </div>
-      <div>
-        <p class="text-text-secondary text-xs">Unidades</p>
-        <p class="font-semibold text-text-primary">{{ totals.units }}</p>
-      </div>
-      <div>
-        <p class="text-text-secondary text-xs">Margen global</p>
-        <p class="font-semibold text-text-primary">{{ totals.margin }}%</p>
-      </div>
-      <div>
-        <p class="text-text-secondary text-xs">Ingresos</p>
-        <p class="font-semibold text-text-primary">{{ formatCurrency(totals.revenue) }}</p>
-      </div>
-      <div>
-        <p class="text-text-secondary text-xs">Ganancia</p>
-        <p class="font-semibold text-green-600">{{ formatCurrency(totals.profit) }}</p>
-      </div>
-    </div>
   </div>
 </template>
