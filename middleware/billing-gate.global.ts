@@ -18,6 +18,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     '/billing',
     '/proveedor/',
     '/blog',
+    '/docs',
     // base URL variants (e.g. /waro-colombia/billing/...)
     '/waro-colombia/billing',
   ]

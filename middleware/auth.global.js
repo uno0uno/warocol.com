@@ -23,6 +23,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       to.path.startsWith('/auth/') ||
       to.path.startsWith('/proveedor/') ||
       to.path.startsWith('/blog') ||
+      to.path.startsWith('/docs') ||
       isPublicRestaurant ||
       isCustomerPortal) {
     return
