@@ -109,17 +109,16 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  /** Serialize current items for batch POST body */
+  /** Serialize current items for batch POST body.
+   * Prices are NOT sent — backend always looks them up from DB. */
   function buildCartBody() {
     return {
       tenant_id: tenantId.value,
       order_type: orderType.value,
       items: items.value.map(item => ({
         product_id: item.product_id,
-        product_name: item.product_name,
         quantity: item.quantity,
-        unit_price: item.unit_price,
-        modifiers: item.modifiers,
+        modifiers: item.modifiers.map(mod => ({ id: mod.id })),
         notes: item.notes,
       })),
     }
