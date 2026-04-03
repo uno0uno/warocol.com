@@ -41,14 +41,15 @@ export default defineNuxtConfig({
       dir: './docs'
     }],
     routeRules: {
-      // Assets estáticos — cache 1 día en browser + CDN
-      '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=3600' } },
+      // Chunks — content-hashed, safe to cache forever (filename changes on every build)
+      '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
       '/favicon.ico': { headers: { 'cache-control': 'public, max-age=86400' } },
-      // Páginas pre-renderizadas — contenido solo cambia en rebuild + invalidación CF
-      // CF: 30 días | Browser: 1 día | La invalidación manual resetea todo al publicar
-      '/': { headers: { 'cache-control': 'public, max-age=86400, s-maxage=2592000, stale-while-revalidate=86400' } },
-      '/blog': { headers: { 'cache-control': 'public, max-age=86400, s-maxage=2592000, stale-while-revalidate=86400' } },
-      '/blog/**': { headers: { 'cache-control': 'public, max-age=86400, s-maxage=2592000, stale-while-revalidate=86400' } },
+      // HTML pages — never cache in CDN: each deploy generates new chunk hashes.
+      // Caching HTML in CloudFront causes "Failed to fetch dynamically imported module"
+      // because users get stale HTML referencing old (deleted) chunk filenames.
+      '/': { headers: { 'cache-control': 'public, max-age=0, must-revalidate' } },
+      '/blog': { headers: { 'cache-control': 'public, max-age=0, must-revalidate' } },
+      '/blog/**': { headers: { 'cache-control': 'public, max-age=0, must-revalidate' } },
       // Client-only pages (no SSR)
       '/api/auth/**': {
         proxy: {
