@@ -61,7 +61,7 @@ const { data: menuAnalysisData, status: menuStatus, asyncStatus: menuAsyncStatus
 })
 
 const fetchError = computed(() => foodCostError.value)
-const isLoading = computed(() => !foodCostData.value && !fetchError.value)
+const isLoading = computed(() => (!foodCostData.value || !menuAnalysisData.value) && !fetchError.value)
 const isRefreshing = computed(() =>
   (foodCostAsyncStatus.value === 'loading' && foodCostData.value != null) ||
   (menuAsyncStatus.value === 'loading' && menuAnalysisData.value != null)
