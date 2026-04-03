@@ -130,138 +130,138 @@
   ───────────────────────────────────────────────────────────────── */
   .article-style {
     @apply text-ebony-800 leading-relaxed;
-    font-size: 1.125rem;
-    /* 18px */
+    font-size: 1rem; /* 16px base en mobile */
+  }
+
+  @media (min-width: 640px) {
+    .article-style {
+      font-size: 1.125rem; /* 18px en sm+ */
+    }
   }
 
   /* ── Párrafos ── */
   .article-style p {
-    @apply mb-6;
-    line-height: 1.85;
+    @apply mb-5;
+    line-height: 1.75;
+  }
+
+  @media (min-width: 640px) {
+    .article-style p {
+      @apply mb-6;
+      line-height: 1.85;
+    }
   }
 
   /* Lead paragraph — el primero del artículo ligeramente más grande */
   .article-style>p:first-of-type {
     @apply text-ebony-700 font-medium;
-    font-size: 1.1875rem;
-    line-height: 1.75;
+    font-size: 1.0625rem;
+    line-height: 1.7;
   }
 
-  /* ── H2 — secciones principales con doble línea inferior ── */
+  @media (min-width: 640px) {
+    .article-style>p:first-of-type {
+      font-size: 1.1875rem;
+      line-height: 1.75;
+    }
+  }
+
+  /* ── H1 — título principal ── */
+  .article-style h1 {
+    @apply font-extrabold text-ebony-900 mb-4 sm:mb-8 leading-tight;
+    font-size: clamp(1.5rem, 6vw, 2.5rem);
+  }
+
+  /* ── H2 — secciones principales en tono de acento ── */
   .article-style h2 {
-    @apply font-extrabold text-ebony-900 mt-6 mb-3 sm:mt-10 sm:mb-4 md:mt-14 md:mb-5 leading-tight;
-    font-size: clamp(1.375rem, 2.5vw, 1.75rem);
-    padding-bottom: 0.875rem;
-    /* Línea crocus corta encima de línea titan completa */
-    background:
-      linear-gradient(hsl(var(--crocus-600)), hsl(var(--crocus-600))) left bottom / 2.75rem 3px no-repeat,
-      linear-gradient(hsl(var(--titan-200)), hsl(var(--titan-200))) left bottom / 100% 1px no-repeat;
+    @apply font-extrabold text-crocus-800 mt-7 mb-3 sm:mt-10 sm:mb-4 md:mt-12 md:mb-5 leading-tight;
+    font-size: clamp(1.2rem, 4vw, 1.75rem);
     scroll-margin-top: 80px;
   }
 
-  /* ── H3 — subsecciones con marcador ▸ ── */
+  /* ── H3 — subsecciones con marcador → ── */
   .article-style h3 {
-    @apply text-xl md:text-2xl font-bold text-ebony-900 mt-4 mb-2 sm:mt-4 sm:mb-2 md:mt-10 md:mb-4 leading-tight;
+    @apply text-lg sm:text-xl md:text-2xl font-bold text-ebony-800 mt-6 mb-2 md:mt-10 md:mb-4 leading-tight;
     scroll-margin-top: 80px;
   }
 
   .article-style h3::before {
-    content: '▸';
-    @apply text-crocus-500 mr-2 font-black;
+    content: '→';
+    @apply text-crocus-500 mr-1.5 sm:mr-2 font-black;
+    font-size: 0.9em;
   }
 
   /* ── H4 ── */
   .article-style h4 {
-    @apply text-lg font-semibold text-ebony-900 mt-8 mb-3;
+    @apply text-base sm:text-lg font-semibold text-ebony-900 mt-6 mb-2 sm:mt-8 sm:mb-3;
     scroll-margin-top: 80px;
   }
 
-  /* ── Blockquote — superficie clara (TL;DR, puntos clave) ── */
+  /* ── Blockquote — callout informativo ── */
   .article-style blockquote {
-    @apply my-10 rounded-r-xl overflow-hidden;
-    background: hsl(var(--titan-50));
-    border-left: 4px solid hsl(var(--crocus-500));
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    @apply my-6 rounded-xl overflow-hidden;
+    background: hsl(var(--crocus-50) / 0.6);
+    border: none;
+    padding: 0.875rem 1rem 0.875rem 1.125rem;
+    box-shadow: none;
   }
 
-  /* Label "⚡ Puntos clave" */
   .article-style blockquote::before {
-    content: 'Puntos clave';
-    display: block;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: hsl(var(--crocus-600));
-    padding: 0.75rem 0.75rem 0.625rem;
-    border-bottom: 1px solid hsl(var(--titan-300));
+    content: none;
   }
 
   .article-style blockquote p {
     color: hsl(var(--ebony-700));
-    font-size: 0.9375rem;
-    line-height: 1.75;
-    margin-bottom: 0.375rem;
-    padding: 0 0.75rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin-bottom: 0.25rem;
+    padding: 0;
   }
 
   .article-style blockquote p:first-of-type {
-    padding-top: 0.875rem;
+    padding-top: 0;
   }
 
   .article-style blockquote p:last-child {
     margin-bottom: 0;
-    padding-bottom: 1rem;
+    padding-bottom: 0;
   }
 
   /* ul/li dentro de blockquote */
   .article-style blockquote ul {
     list-style: none;
-    padding: 0.625rem 0.75rem 1rem;
+    padding: 0.25rem 0 0;
     margin: 0;
   }
 
   @media (min-width: 640px) {
-    .article-style blockquote::before {
-      padding: 0.875rem 1.5rem 0.75rem;
-    }
-
-    .article-style blockquote p {
-      padding: 0 1.5rem;
-    }
-
-    .article-style blockquote p:first-of-type {
-      padding-top: 1rem;
-    }
-
-    .article-style blockquote p:last-child {
-      padding-bottom: 1.25rem;
-    }
-
-    .article-style blockquote ul {
-      padding: 0.875rem 1.5rem 1.25rem;
+    .article-style blockquote {
+      padding: 1rem 1.25rem 1rem 1.375rem;
     }
   }
 
   .article-style blockquote ul li {
     color: hsl(var(--ebony-700));
-    font-size: 0.9375rem;
-    line-height: 1.75;
-    padding-left: 1.25rem;
-    margin-bottom: 0.375rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    padding-left: 1.125rem;
+    margin-bottom: 0.25rem;
     position: relative;
   }
 
   .article-style blockquote ul li::before {
-    content: '•';
+    content: '·';
     color: hsl(var(--crocus-500));
-    font-weight: 700;
+    font-weight: 900;
+    font-size: 1.1rem;
     position: absolute;
     left: 0;
+    top: -1px;
   }
 
   .article-style blockquote strong {
-    @apply font-bold text-ebony-900;
+    @apply font-semibold;
+    color: hsl(var(--ebony-900));
   }
 
   /* ── Listas — marcadores → en crocus ── */
@@ -311,7 +311,6 @@
 
   .article-style table {
     @apply w-full text-sm border-collapse overflow-hidden;
-    border-radius: 0.625rem;
     min-width: 480px;
   }
 
@@ -324,13 +323,7 @@
     @apply px-4 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-ebony-800;
   }
 
-  .article-style thead th:first-child {
-    border-radius: 0.625rem 0 0 0;
-  }
-
-  .article-style thead th:last-child {
-    border-radius: 0 0.625rem 0 0;
-  }
+  /* thead th first/last child radii removed to prevent double-rounding */
 
   .article-style tbody tr {
     @apply border-b border-titan-100 transition-colors duration-100;
@@ -355,9 +348,7 @@
 
   /* ── Separador horizontal ── */
   .article-style hr {
-    @apply my-12 border-0;
-    height: 1px;
-    background: linear-gradient(to right, transparent, hsl(var(--titan-300)), transparent);
+    display: none;
   }
 
   /* ── Código inline ── */

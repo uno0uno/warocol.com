@@ -1,84 +1,42 @@
-# Crear una orden de compra
+# Registrar Compras con IA
 
-## ¿Qué es una orden de compra?
+## ¿Qué es la compra directa inteligente?
 
-Es el pedido formal que le haces a un proveedor: qué insumos necesitas, en qué cantidad y a qué precio. WARO genera el documento y puede enviárselo al proveedor para que lo confirme y lo surta.
-
-**Ejemplo:** Pedirle a tu distribuidor 20 kg de pechuga y 10 kg de carne molida.
+La funcionalidad de "Compra Directa" está diseñada para registrar rápidamente las facturas de proveedores que ya pagaste o que recibiste al momento, usando la cámara de tu celular o escaneando un documento. WARO leerá los ítems con Inteligencia Artificial (IA) y procesará los datos automáticamente para ahorrarte la digitación manual.
 
 ---
 
-## ¿Necesito tener el proveedor creado primero?
+## Cómo usar el escáner de IA
 
-No es obligatorio. Si escribes un proveedor que no existe, WARO lo crea automáticamente. Si ya lo tienes registrado con acuerdos de pago, podrás seleccionarlos directamente.
+Ve a **Abastecimiento → Compras Directas → Nueva compra**.
 
-Ver [cómo registrar proveedores](./gestionar-proveedores.md).
+### 1. Escanear la factura
+Haz clic en **Leer Factura con IA**. Puedes tomar una foto directamente desde tu celular o subir un archivo de imagen. El sistema procesará en segundos el nombre del proveedor y cada uno de los ingredientes detallados en el ticket.
 
----
+### 2. Detección automática del proveedor
+WARO buscará si el proveedor de la factura ya existe en tu catálogo:
+- Si **no existe**, aparecerá la opción de **crearlo al instante** ("+ Crear [Proveedor]") desde esa misma pantalla.
+- Si detecta un nombre muy parecido, **te sugeriremos usarlo** para evitar proveedores repetidos.
 
-## Cómo crear una orden de compra
+### 3. Autocompletado de ingredientes (Ítems)
+La IA llenará la lista de compra con todos los ítems de tu factura. 
+La plataforma automáticamente tratará de conectarlos y hacer "match" entre el texto escaneado ("Fac: xxxx") y los ingredientes que ya tengas en WARO.
 
-Ve a **Abastecimiento → Compras → Nueva compra**.
-
-El formulario tiene 3 pasos:
-
-### Paso 1 — Información general
-
-| Campo | Qué poner | Obligatorio |
-|-------|-----------|:-----------:|
-| Proveedor | Busca por nombre. Si no existe, escríbelo y el sistema lo crea. | Sí |
-| Tipo de pago | Cómo vas a pagar esta compra | Sí |
-| Notas | Instrucciones especiales para el proveedor | No |
-
-**Sobre el tipo de pago:** si el proveedor tiene acuerdos de pago configurados, aparece un interruptor para activar uno. Si no, seleccionas el tipo directamente (contraentrega, crédito, etc.).
-
-### Paso 2 — Alimentos
-
-Aquí agregas lo que vas a pedir. Por cada ítem defines:
-
-- Ingrediente o producto de reventa
-- Cantidad solicitada
-- Unidad (kg, litros, unidades...)
-- Precio unitario acordado
-
-Agrega todos los ítems que necesitas para esa compra.
-
-### Paso 3 — Revisión y confirmación
-
-Revisa el resumen: proveedor, número de ítems y total estimado. Haz clic en **Crear cotización**.
+- **Si un ingrediente es nuevo:** Toca la opción sugerida de "Crear ingrediente". Podrás crearlo rápido asignándole un nombre, categoría y tipo sin abandonar tu proceso de compra.
+- **Configura pesos, precios y unidades:** Cada registro requiere que valides cantidad y valor unitario (WARO puede sugerirte precios anteriores récord). Adicionalmente, si el ingrediente requiere definir gramos exactos o mililitros por unidad (por ejemplo: "Atún Lata" = 200gr), tienes la opción de definirlos instantáneamente.
 
 ---
 
-## Qué pasa después de crear la orden
+## Finalizar la compra e Inventario
 
-La orden queda en estado **Creado**. A partir de ahí puedes:
-
-1. **Enviarla al proveedor** — recibe un enlace por email para verla y confirmarla
-2. **Registrar la recepción** — cuando llega la mercancía, confirmas qué recibiste
-3. **Registrar el pago** — cuando pagas, lo anotas en la orden
-
-Cada paso queda en el historial de la orden con fecha y usuario.
-
-> El inventario solo se actualiza cuando registras la **recepción**. Hasta ese momento el stock no cambia.
-
----
-
-## ¿Cuál es la diferencia con una compra directa?
-
-| | Orden de compra | Compra directa |
-|---|---|---|
-| **Uso** | Pedido formal al proveedor con flujo de confirmación y recepción | Registro rápido de una compra que ya ocurrió |
-| **Proveedor** | Puede recibir y confirmar la orden | No necesariamente |
-| **Inventario** | Se actualiza al registrar recepción | Se actualiza al registrar |
-
-Para compras que ya hiciste (ej: fuiste al mercado y pagaste en efectivo), usa **Abastecimiento → Compras Directas**.
+Una vez guardas una Compra Directa, a diferencia de una orden o cotización formal, **el stock de inventario se actualiza en el mismo instante** en que le das "guardar". No necesitas registrar recepciones adicionales; las unidades y los costos promedio se ajustan de manera inmediata a tu negocio.
 
 ---
 
 ## Preguntas frecuentes
 
-**¿Puedo editar la orden después de crearla?**
-Sí, mientras esté en estado "Creado". Una vez el proveedor la confirma o hay recepción registrada, los cambios son limitados.
+**¿Qué pasa si la IA se equivoca al leer un número o precio?**
+La IA realiza el trabajo pesado por ti digitalizando más del 90% de los datos. Sin embargo, antes de terminar tú tienes total control para cambiar el precio, borrar un ítem irrelevante, o cuadrar la cantidad de manera manual.
 
-**¿Puedo cancelar una orden?**
-Sí, desde las acciones de la orden, siempre que no haya recepción registrada.
+**¿Qué diferencia esta función con crear y gestionar una Orden de Compra clásica?**
+La compra directa se enfoca exclusivamente en velocidad y en actualizar el inventario *al instante* usando IA, ideal para las operaciones diarias de un restaurante que hace compras al paso. Las Órdenes de Compra formales (pedidos programados con flujos de aprobación y correos al proveedor) se mantienen como un módulo para operaciones estructuradas de mayor escala.

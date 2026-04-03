@@ -70,13 +70,13 @@
                 <img src="https://spotty.yurbban.com/wp-content/uploads/2024/02/Logo-SPOTTY-principal-.png" alt="Spotty" class="logo-image">
             </div>
             <div class="logo-item">
-                <img src="/logo_01.png" alt="Armelo Perro" class="logo-image">
+                <img :src="'/logo_01.png'" alt="Armelo Perro" class="logo-image">
             </div>
             <div class="logo-item">
-                <img src="/logo-02.png" alt="Sonidero Bogotano" class="logo-image">
+                <img :src="'/logo-02.png'" alt="Sonidero Bogotano" class="logo-image">
             </div>
             <div class="logo-item">
-                <img src="/logo-03.png" alt="DJ CAS" class="logo-image">
+                <img :src="'/logo-03.png'" alt="DJ CAS" class="logo-image">
             </div>
         </div>
     </section>

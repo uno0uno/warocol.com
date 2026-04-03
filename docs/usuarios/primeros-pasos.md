@@ -1,16 +1,29 @@
 # Primeros pasos
 
-Bienvenido a WARO. Esta guía te explica cómo entrar a la plataforma y qué encontrarás una vez dentro.
+Bienvenido a WARO COLOMBIA. Esta guía te explica cómo entrar a la plataforma y qué encontrarás una vez dentro.
+
+---
+
+## Hola desde bogota colombia
+
+![Saifer](https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/intro-saifer.jpg)  
+Desarrollador independiente (Indie Hacker)
+
+---
+
+WARO COLOMBIA nació de un problema real. Mi amigo Brian tiene un restaurante llamado [Armelo Perro](https://warocol.com/armelo-perro) y en su tiempo pasó problemas con sus sistemas internos. Decidí ayudarle y así nació esta solución.
+
+Soy desarrollador independiente y me apasiona crear tecnología que use mucha gente, cobrando lo justo y generando impacto real. Con [Waro Tickets](https://warotickets.com/) hemos aportado a la cultura nacional trabajando con artistas de talla internacional. Además, trabajo en [Klira IA](https://getklira.com), he pasado por multinacionales y viajado a China, México y Ecuador buscando entender el mundo tecnológico.
 
 ---
 
 ## Cómo ingresar
 
-WARO no usa contraseñas. El acceso es por **enlace mágico**: cada vez que quieras entrar, te enviamos un código de un solo uso a tu correo.
+WARO COLOMBIA no usa contraseñas. El acceso es por **enlace mágico**: cada vez que quieras entrar, te enviamos un código de un solo uso a tu correo.
 
 ### Paso a paso
 
-1. Ve a `warocol.com` y haz clic en **Iniciar sesión**
+1. Ve a [warocol.com](https://warocol.com/auth/login) y haz clic en **Iniciar sesión**
 2. Escribe tu dirección de email y haz clic en **Siguiente**
 3. Revisa tu correo — recibirás un mensaje con dos opciones para entrar:
 
@@ -18,76 +31,44 @@ WARO no usa contraseñas. El acceso es por **enlace mágico**: cada vez que quie
 Haz clic en el botón del email. Se abre el navegador y entras automáticamente.
 
 **Opción B — Código de 6 dígitos:**
-Copia el código que aparece en el email, pégalo en la pantalla de WARO y haz clic en **Verificar Código**.
+Copia el código que aparece en el email, pégalo en la pantalla de WARO COLOMBIA y haz clic en **Verificar Código**.
 
 > El enlace y el código son válidos por **15 minutos**. Si expiran, vuelve a la pantalla de login y solicita uno nuevo con "Reenviar".
 
 ### Si tu email no está registrado
 
-WARO no permite registro libre. Si ingresas un email que no tiene cuenta, aparece un formulario para **solicitar acceso**. El equipo de WARO lo revisa y te habilita.
-
----
-
-## Qué ves al entrar
-
-Después de ingresar llegas a la pantalla de **Ventas**. El menú lateral izquierdo está dividido en cuatro grupos.
-
-### Operación — lo que usas todos los días
-
-| Sección | Para qué sirve |
-|---------|----------------|
-| **POS** | Tomar pedidos presenciales y cobrarlos en caja → [ver guía](./pos/procesar-venta.md) |
-| **Ventas** | Historial de órdenes recibidas |
-| **Domicilios** | Pedidos online y su estado de entrega |
-
-### Herramientas — gestión del negocio
-
-Cada sección tiene su propio submenú horizontal en la parte superior de la pantalla.
-
-| Sección | Submenús |
-|---------|----------|
-| **Analítica** | Ventas · Rentabilidad · Clientes · Puntos → [ver guía](./analitica/leer-dashboard.md) |
-| **Menú** | Recetas · Productos · Reventa · Modificadores → [ver guía](./menu/recetas.md) |
-| **Abastecimiento** | Proveedores · Compra Directa · Stock · Ajustes · Calidad de Datos → [ver guía](./compras/crear-orden-compra.md) |
-| **Equipo** | Miembros · Salarios → [ver guía](./equipo/agregar-empleado.md) |
-| **Integraciones** | Conexiones con servicios externos |
-
-### Apps
-
-| Sección | Para qué sirve |
-|---------|----------------|
-| **Eventos** | Enlace a WaRo Tickets para gestionar boletería (abre en una nueva pestaña) |
-
-### Cuenta
-
-| Sección | Para qué sirve |
-|---------|----------------|
-| **Mi Negocio** | Configuración general del restaurante |
-| **Mi Plan** | Suscripción y facturación de WARO |
+WARO COLOMBIA no permite registro libre. Si ingresas un email que no tiene cuenta, aparece un formulario para **solicitar acceso**. El equipo de WARO COLOMBIA lo revisa y te habilita.
 
 ---
 
 ## Orden recomendado para empezar
 
-Si acabas de crear tu cuenta, sigue este orden para tener todo configurado antes de vender:
+Si acabas de crear tu cuenta, ten en cuenta que las secciones más importantes y que más vas a usar a diario son el **Menú (Productos)** y el **POS**. Sigue este orden:
 
-**1. Configura tu menú**
+**1. Configura tu Menú (Paso Crítico)**
 
-- Crea tus [productos](./menu/crear-producto.md) — lo que ven tus clientes; puedes asignarles ingredientes directamente, recetas reutilizables, o ambos
-- Crea [recetas](./menu/recetas.md) cuando tengas preparaciones que se repiten en varios productos (ej: una salsa base)
-- Agrega [modificadores](./menu/modificadores.md) si tienes opciones (tamaños, extras, salsas)
+Es obligatorio crear tu menú para habilitar el funcionamiento del POS y Domicilios.
+- [Crear Recetas](./menu/recetas.md) — hazlo primero para preparaciones que usarás en varios platos (ej: salsas, bases).
+- [Crear Productos](./menu/crear-producto.md) — lo que le vendes al cliente. Puedes asignarle a estos las recetas que ya creaste.
+- [Agregar Modificadores](./menu/modificadores.md) — variantes o extras (tamaños, acompañamientos).
 
-**2. Registra tus proveedores**
+**2. Empieza a vender**
 
-Para hacer órdenes de compra formales → [ver guía](./compras/gestionar-proveedores.md)
+Una vez tengas tus productos listos, ya puedes empezar a operar:
+- [Usar el POS](./pos/procesar-venta.md) — toma pedidos presenciales y cóbralos en caja.
+- Prepárate para atender órdenes desde **Domicilios**.
 
-**3. Agrega tu equipo**
+**3. Optimiza tu negocio (Abastecimiento)**
 
-Invita a las personas que necesitan acceso → [ver guía](./equipo/agregar-empleado.md)
+Una vez domines tus ventas, si quieres optimizar tu negocio y entender a fondo tus costos, puedes empezar a cargar tus gastos:
+- [Registrar compras con IA](./compras/crear-orden-compra.md) — sube tus facturas en segundos.
+- [Gestionar proveedores](./compras/gestionar-proveedores.md) — controla mejor en qué gastas.
 
-**4. Empieza a vender**
+**4. Agrega a tu equipo**
 
-Usa el POS para tomar pedidos presenciales → [ver guía](./pos/procesar-venta.md)
+Configura los accesos y la gestión de personal de tu operación:
+- [Invitar miembros](./equipo/agregar-empleado.md) — asigna roles y accesos específicos a tus cajeros, meseros, o administradores.
+- [Salarios y Pagos](./equipo/registrar-pago.md) — gestiona la nómina, histórico y liquidación de los pagos de tu equipo.
 
 ---
 
@@ -101,4 +82,4 @@ La sesión se mantiene activa mientras uses la plataforma. Para cerrar sesión m
 
 - **No llegó el email** — revisa la carpeta de spam. Si no está, haz clic en "Reenviar" en la pantalla de login.
 - **El código no funciona** — puede haber expirado. Solicita uno nuevo.
-- **No puedo entrar** — contacta al equipo de WARO para verificar que tu email esté habilitado.
+- **No puedo entrar** — contacta al equipo de WARO COLOMBIA para verificar que tu email esté habilitado.

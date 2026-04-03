@@ -1,55 +1,52 @@
 <script setup lang="ts">
-import { Menu, X, Home } from 'lucide-vue-next'
-
-const sidebarOpen = ref(false)
 const route = useRoute()
 
 const nav = [
   {
     label: 'Empezar',
     items: [
-      { label: 'Primeros pasos', path: '/docs/usuarios/primeros-pasos', icon: '🚀' },
+      { label: 'Primeros pasos', path: '/docs/usuarios/primeros-pasos' },
     ]
   },
   {
     label: 'Menú',
     items: [
-      { label: 'Recetas', path: '/docs/usuarios/menu/recetas', icon: '📋' },
-      { label: 'Productos', path: '/docs/usuarios/menu/crear-producto', icon: '🍽️' },
-      { label: 'Modificadores', path: '/docs/usuarios/menu/modificadores', icon: '🔧' },
+      { label: 'Recetas', path: '/docs/usuarios/menu/recetas' },
+      { label: 'Productos', path: '/docs/usuarios/menu/crear-producto' },
+      { label: 'Modificadores', path: '/docs/usuarios/menu/modificadores' },
     ]
   },
   {
-    label: 'Inventario',
+    label: 'POS',
     items: [
-      { label: 'Registrar ajuste', path: '/docs/usuarios/inventario/registrar-ajuste', icon: '📦' },
-      { label: 'Ver movimientos', path: '/docs/usuarios/inventario/ver-movimientos', icon: '📊' },
+      { label: 'Procesar una venta', path: '/docs/usuarios/pos/procesar-venta' },
     ]
   },
   {
     label: 'Compras',
     items: [
-      { label: 'Gestionar proveedores', path: '/docs/usuarios/compras/gestionar-proveedores', icon: '🤝' },
-      { label: 'Crear orden de compra', path: '/docs/usuarios/compras/crear-orden-compra', icon: '🛒' },
+      { label: 'Gestionar proveedores', path: '/docs/usuarios/compras/gestionar-proveedores' },
+      { label: 'Registrar compra con IA', path: '/docs/usuarios/compras/crear-orden-compra' },
+    ]
+  },
+  {
+    label: 'Inventario',
+    items: [
+      { label: 'Registrar ajuste', path: '/docs/usuarios/inventario/registrar-ajuste' },
+      { label: 'Ver movimientos', path: '/docs/usuarios/inventario/ver-movimientos' },
     ]
   },
   {
     label: 'Equipo',
     items: [
-      { label: 'Agregar empleado', path: '/docs/usuarios/equipo/agregar-empleado', icon: '👤' },
-      { label: 'Registrar pago', path: '/docs/usuarios/equipo/registrar-pago', icon: '💳' },
+      { label: 'Agregar empleado', path: '/docs/usuarios/equipo/agregar-empleado' },
+      { label: 'Registrar pago', path: '/docs/usuarios/equipo/registrar-pago' },
     ]
   },
   {
     label: 'Analítica',
     items: [
-      { label: 'Leer el dashboard', path: '/docs/usuarios/analitica/leer-dashboard', icon: '📈' },
-    ]
-  },
-  {
-    label: 'POS — Punto de venta',
-    items: [
-      { label: 'Procesar una venta', path: '/docs/usuarios/pos/procesar-venta', icon: '🧾' },
+      { label: 'Leer el dashboard', path: '/docs/usuarios/analitica/leer-dashboard' },
     ]
   },
 ]
@@ -58,61 +55,39 @@ function isActive(path: string) {
   return route.path === path
 }
 
+import Header from '~/components/layout/Header.vue'
+import BottomNav from '~/components/layout/BottomNav.vue'
+import { useDocsNav } from '~/composables/useDocsNav'
+
+const { showDocsNav } = useDocsNav()
 function isGroupActive(items: { path: string }[]) {
   return items.some(item => route.path === item.path)
 }
-
-watch(() => route.path, () => {
-  sidebarOpen.value = false
-})
 </script>
 
 <template>
   <div class="docs-shell">
     <NuxtLoadingIndicator />
+
     <Header />
 
     <div class="docs-body">
 
-      <!-- Mobile overlay -->
-      <Transition name="overlay">
-        <div
-          v-if="sidebarOpen"
-          class="docs-overlay"
-          @click="sidebarOpen = false"
-        />
-      </Transition>
-
       <!-- Sidebar -->
-      <aside :class="['docs-sidebar', { 'docs-sidebar--open': sidebarOpen }]">
-
-        <!-- Mobile close + title -->
-        <div class="docs-sidebar-header">
-          <span class="docs-sidebar-title">Documentación</span>
-          <button class="docs-sidebar-close lg:hidden" @click="sidebarOpen = false">
-            <X :size="18" />
-          </button>
-        </div>
-
+      <aside class="docs-sidebar">
         <nav class="docs-nav">
-          <!-- Index -->
-          <NuxtLink
-            to="/docs"
-            class="docs-nav-home"
-            :class="{ active: route.path === '/docs' }"
-          >
-            <Home :size="13" />
-            Índice general
-          </NuxtLink>
 
-          <!-- Sections -->
           <div
             v-for="section in nav"
             :key="section.label"
             class="docs-nav-section"
-            :class="{ 'is-active': isGroupActive(section.items) }"
           >
-            <span class="docs-section-label">{{ section.label }}</span>
+            <span
+              class="docs-section-label"
+              :class="{ 'docs-section-label--active': isGroupActive(section.items) }"
+            >
+              {{ section.label }}
+            </span>
             <ul>
               <li v-for="item in section.items" :key="item.path">
                 <NuxtLink
@@ -120,189 +95,293 @@ watch(() => route.path, () => {
                   class="docs-nav-item"
                   :class="{ active: isActive(item.path) }"
                 >
-                  <span aria-hidden="true">{{ item.icon }}</span>
                   {{ item.label }}
                 </NuxtLink>
               </li>
             </ul>
           </div>
+
         </nav>
+
+        <div class="docs-sidebar-footer">
+        </div>
       </aside>
 
-      <!-- Mobile sidebar toggle (floating) -->
-      <button
-        class="docs-fab lg:hidden"
-        @click="sidebarOpen = true"
-        aria-label="Abrir menú de documentación"
-      >
-        <Menu :size="20" />
-      </button>
-
-      <!-- Main content -->
+      <!-- Main -->
       <main class="docs-main">
         <slot />
       </main>
 
     </div>
 
-    <Footer />
+    <!-- Bottom sheet nav — solo mobile -->
+    <UiBottomSheetModal v-model="showDocsNav" title="Contenido" max-height="lg">
+      <div class="docs-sheet-nav">
+        <div v-for="section in nav" :key="section.label" class="docs-nav-section">
+          <span
+            class="docs-section-label"
+            :class="{ 'docs-section-label--active': isGroupActive(section.items) }"
+          >
+            {{ section.label }}
+          </span>
+          <ul>
+            <li v-for="item in section.items" :key="item.path">
+              <NuxtLink
+                :to="item.path"
+                class="docs-nav-item"
+                :class="{ active: isActive(item.path) }"
+                @click="showDocsNav = false"
+              >
+                <span class="flex items-center justify-between w-full">
+                  {{ item.label }}
+                  <svg class="w-4 h-4 opacity-30 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </NuxtLink>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </UiBottomSheetModal>
+
+    <BottomNav />
   </div>
 </template>
 
 <style scoped>
-/* ─── Shell ──────────────────────────────────────────────── */
+/* ─── Shell ─────────────────────────────────────────── */
 .docs-shell {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: hsl(var(--titan-100));
+  background: #fff;
   font-family: 'Lato', sans-serif;
 }
 
-/* ─── Body ───────────────────────────────────────────────── */
+/* ─── Header ─────────────────────────────────────────── */
+.docs-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #fff;
+  border-bottom: 1px solid hsl(var(--titan-200));
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.docs-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 24px;
+  height: 58px;
+  max-width: 100%;
+}
+
+/* Logo */
+.docs-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+  width: 256px;
+}
+
+.docs-header-img {
+  height: 26px;
+  width: auto;
+  object-fit: contain;
+}
+
+.docs-header-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: hsl(var(--ebony-500));
+  background: hsl(var(--titan-100));
+  border: 1px solid hsl(var(--titan-200));
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Search */
+.docs-search-wrap {
+  margin-left: auto;
+  max-width: 260px;
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.docs-search-icon {
+  position: absolute;
+  left: 14px;
+  width: 16px;
+  height: 16px;
+  color: hsl(var(--ebony-400));
+  pointer-events: none;
+}
+
+.docs-search-input {
+  width: 100%;
+  padding: 8px 48px 8px 40px;
+  border: 1px solid hsl(var(--titan-200));
+  border-radius: 999px;
+  background: hsl(var(--titan-50));
+  font-size: 13.5px;
+  color: hsl(var(--ebony-600));
+  outline: none;
+  cursor: default;
+  font-family: inherit;
+}
+.docs-search-input::placeholder {
+  color: hsl(var(--ebony-400));
+}
+
+.docs-search-kbd {
+  position: absolute;
+  right: 12px;
+  font-size: 11px;
+  color: hsl(var(--ebony-400));
+  background: hsl(var(--titan-100));
+  border: 1px solid hsl(var(--titan-200));
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+/* Nav derecha */
+.docs-header-nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.docs-header-link {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: hsl(var(--ebony-600));
+  text-decoration: none;
+}
+.docs-header-link:hover {
+  color: hsl(var(--crocus-600));
+}
+
+.docs-header-cta {
+  font-size: 13px;
+  font-weight: 700;
+  color: hsl(var(--crocus-600));
+  background: transparent;
+  border: 2px solid hsl(var(--crocus-600));
+  padding: 6px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.docs-header-cta:hover {
+  background: hsl(var(--crocus-600));
+  color: #fff;
+}
+
+/* ─── Body ───────────────────────────────────────────── */
 .docs-body {
   display: flex;
   flex: 1;
-  position: relative;
-  /* Align content with the app's max-width container */
-  max-width: 1280px;
   width: 100%;
-  margin: 0 auto;
-  padding: 0 16px;
-  gap: 0;
 }
 
-/* ─── Overlay (mobile) ───────────────────────────────────── */
-.docs-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  background: rgb(0 0 0 / 0.4);
-  backdrop-filter: blur(3px);
-}
-
-/* ─── Sidebar ────────────────────────────────────────────── */
+/* ─── Sidebar ────────────────────────────────────────── */
 .docs-sidebar {
   width: 256px;
   flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid hsl(var(--titan-300));
-  /* Sticky below the header */
+  background: hsl(var(--titan-100));
+  border-right: 1px solid hsl(var(--titan-200));
+  display: flex;
+  flex-direction: column;
   position: sticky;
-  top: 0;
+  top: 58px;
   align-self: flex-start;
-  height: calc(100vh - 64px); /* approx header height */
+  height: calc(100vh - 58px);
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--titan-400)) transparent;
-  border-radius: 0 0 12px 0;
+  scrollbar-color: hsl(var(--titan-200)) transparent;
 }
-
-/* Mobile: off-screen */
-@media (max-width: 1023px) {
-  .docs-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100dvh;
-    width: 280px;
-    z-index: 35;
-    border-radius: 0;
-    border-right: 1px solid hsl(var(--titan-300));
-    transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 8px 0 32px rgb(0 0 0 / 0.12);
-  }
-  .docs-sidebar--open {
-    transform: translateX(0);
-  }
-}
-
-/* ─── Sidebar header ─────────────────────────────────────── */
-.docs-sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 16px 12px;
-  border-bottom: 1px solid hsl(var(--titan-200));
-  margin-bottom: 8px;
-}
-
-.docs-sidebar-title {
-  font-family: 'Quantico', monospace;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: hsl(var(--ebony-700));
-  text-transform: uppercase;
-}
-
-.docs-sidebar-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  color: hsl(var(--ebony-400));
-  transition: background 0.12s;
-}
-.docs-sidebar-close:hover {
+.docs-sidebar::-webkit-scrollbar { width: 4px; }
+.docs-sidebar::-webkit-scrollbar-track { background: transparent; }
+.docs-sidebar::-webkit-scrollbar-thumb {
   background: hsl(var(--titan-200));
+  border-radius: 10px;
 }
 
-/* ─── Nav ────────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  .docs-sidebar { display: none; }
+  .docs-header-logo { width: auto; }
+}
+
+/* ─── Nav ────────────────────────────────────────────── */
 .docs-nav {
-  padding: 4px 10px 40px;
+  flex: 1;
+  padding: 16px 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .docs-nav-home {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 10px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: hsl(var(--ebony-500));
-  text-decoration: none;
+  padding: 8px 12px;
   margin-bottom: 12px;
-  transition: background 0.12s, color 0.12s;
+  border-radius: 8px;
+  font-size: 15px;
+  border: 1px solid hsl(var(--titan-200));
 }
 .docs-nav-home:hover {
-  background: hsl(var(--titan-100));
-  color: hsl(var(--ebony-800));
+  background: hsl(var(--crocus-50));
+  color: hsl(var(--ebony-900));
+  border-color: hsl(var(--crocus-200));
 }
 .docs-nav-home.active {
   background: hsl(var(--crocus-50));
   color: hsl(var(--crocus-700));
+  font-weight: 700;
+  border-color: hsl(var(--crocus-200));
 }
 
 .docs-nav-section {
-  margin-bottom: 20px;
+  margin-bottom: 8px;
+  background: #fff;
+  border: 1px solid hsl(var(--titan-200));
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .docs-section-label {
   display: block;
-  padding: 2px 10px 5px;
-  font-family: 'Quantico', monospace;
-  font-size: 10px;
+  padding: 9px 14px 7px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: hsl(var(--titan-900));
-  transition: color 0.12s;
+  color: hsl(var(--ebony-400));
+  background: hsl(var(--titan-50));
+  border-bottom: 1px solid hsl(var(--titan-100));
 }
-
-.docs-nav-section.is-active .docs-section-label {
-  color: hsl(var(--crocus-600));
+.docs-section-label--active {
+  color: hsl(var(--crocus-500));
+  background: hsl(var(--crocus-50));
+  border-bottom-color: hsl(var(--crocus-100));
 }
 
 .docs-nav-section ul {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 4px 6px;
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -311,71 +390,158 @@ watch(() => route.path, () => {
 .docs-nav-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-radius: 8px;
-  font-size: 13.5px;
-  font-weight: 500;
-  color: hsl(var(--ebony-500));
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 400;
+  color: hsl(var(--ebony-600));
   text-decoration: none;
-  transition: background 0.12s, color 0.12s;
-  line-height: 1.3;
+  line-height: 1.4;
 }
 .docs-nav-item:hover {
   background: hsl(var(--titan-100));
-  color: hsl(var(--ebony-800));
+  color: hsl(var(--ebony-900));
 }
 .docs-nav-item.active {
   background: hsl(var(--crocus-50));
   color: hsl(var(--crocus-700));
-  font-weight: 700;
+  font-weight: 600;
 }
 
-/* ─── Floating toggle (mobile) ───────────────────────────── */
-.docs-fab {
-  position: fixed;
-  bottom: 24px;
-  left: 20px;
-  z-index: 25;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: hsl(var(--crocus-600));
-  color: #fff;
+/* ─── Sidebar footer ─────────────────────────────────── */
+.docs-sidebar-footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid hsl(var(--titan-100));
+  margin-top: auto;
+}
+
+.docs-back-link {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: hsl(var(--ebony-400));
+  text-decoration: none;
+}
+.docs-back-link:hover {
+  color: hsl(var(--crocus-600));
+}
+
+/* ─── Mobile index button ────────────────────────────── */
+.docs-mobile-index-btn {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .docs-mobile-index-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 20px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: hsl(var(--crocus-600));
+    background: hsl(var(--crocus-50));
+    border: 1px solid hsl(var(--crocus-200));
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .docs-mobile-index-btn:hover {
+    background: hsl(var(--crocus-100));
+  }
+}
+
+/* ─── Sheet nav ──────────────────────────────────────── */
+.docs-sheet-nav {
+  padding: 8px 0 16px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  /* 100dvh - header del sheet (56px) - bottom nav (58px) - margen (16px) */
+  max-height: calc(100dvh - 130px);
+}
+
+/* Dentro del sheet: quitar el card border de cada sección */
+.docs-sheet-nav .docs-nav-section {
+  background: none;
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+.docs-sheet-nav .docs-section-label {
+  background: none;
+  border: none;
+  padding: 16px 20px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: hsl(var(--ebony-300));
+}
+
+.docs-sheet-nav .docs-section-label--active {
+  color: hsl(var(--crocus-500));
+  background: none;
+}
+
+.docs-sheet-nav ul {
+  padding: 0;
+  gap: 0;
+}
+
+.docs-sheet-nav .docs-nav-item {
+  padding: 13px 20px;
+  font-size: 15px;
+  font-weight: 400;
+  color: hsl(var(--ebony-700));
+  border-radius: 0;
+  border-left: 3px solid transparent;
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgb(124 58 237 / 0.4);
-  transition: background 0.15s, transform 0.15s;
-}
-.docs-fab:hover {
-  background: hsl(var(--crocus-700));
-  transform: scale(1.05);
 }
 
-/* ─── Main content ───────────────────────────────────────── */
+.docs-sheet-nav .docs-nav-item:hover {
+  background: hsl(var(--titan-50));
+  color: hsl(var(--ebony-900));
+}
+
+.docs-sheet-nav .docs-nav-item.active {
+  background: hsl(var(--crocus-50));
+  color: hsl(var(--crocus-700));
+  font-weight: 600;
+  border-left-color: hsl(var(--crocus-500));
+}
+
+/* ─── H1 de artículos — fuente Quantico como en el root ── */
+.docs-main :deep(.article-style h1) {
+  font-family: 'Quantico', monospace;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Main ───────────────────────────────────────────── */
 .docs-main {
   flex: 1;
   min-width: 0;
-  padding: 40px 0 80px 40px;
+  padding: 24px 32px 64px;
+  background: hsl(var(--titan-100));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
+/* Tablet */
 @media (max-width: 1023px) {
   .docs-main {
-    padding: 32px 0 64px;
-  }
-  .docs-body {
-    padding: 0;
+    padding: 16px 12px calc(64px + 58px);
   }
 }
 
-/* ─── Transitions ────────────────────────────────────────── */
-.overlay-enter-active,
-.overlay-leave-active {
-  transition: opacity 0.2s;
-}
-.overlay-enter-from,
-.overlay-leave-to {
-  opacity: 0;
+/* Mobile — sin padding lateral, el card maneja su propio espacio */
+@media (max-width: 639px) {
+  .docs-main {
+    padding: 0 0 calc(48px + 58px);
+    background: #fff;
+    align-items: stretch;
+  }
 }
 </style>
