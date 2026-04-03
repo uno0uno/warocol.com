@@ -1,16 +1,10 @@
 /**
  * Address Store - Delivery Addresses
- * Migrated from options API to setup API with Pinia Colada useQuery + useMutation.
+ * Pinia Colada useQuery + useMutation.
  *
- * Dual address source handled via _isPreviewMode flag:
- *   - previewByEmail() → sets _isPreviewMode + _previewAddresses (no auth required)
- *   - fetchAddresses(customerId) → clears preview mode, query fetches real addresses
+ * fetchAddresses(customerId) → loads real addresses after OTP verification
  *
- * UI state (selectedAddressId, pendingAddress, previewCustomerId) kept as local refs.
- * Public API preserved — all 4 checkout components + checkout page work unchanged.
- *
- * reset() / $reset() had no active callers — replaced with resetStore() that manually
- * resets all refs.
+ * UI state (selectedAddressId, pendingAddress) kept as local refs.
  */
 import { defineStore } from 'pinia'
 
@@ -52,12 +46,8 @@ export const useAddressStore = defineStore('address', () => {
   // ── UI state ──────────────────────────────────────────────────────────────────
   const selectedAddressId = ref<string | null>(null)
   const pendingAddress = ref<AddressCreate | null>(null)
-  const previewCustomerId = ref<string | null>(null)
 
-  // Dual address source: preview (pre-auth) vs. real query data
   const _customerId = ref<string | null>(null)
-  const _isPreviewMode = ref(false)
-  const _previewAddresses = ref<Address[]>([])
 
   // ── Query — reactive on _customerId ──────────────────────────────────────────
   const { data: _addressesQueryData, status } = useQuery({
@@ -69,18 +59,15 @@ export const useAddressStore = defineStore('address', () => {
     enabled: () => !!_customerId.value,
   })
 
-  // Auto-select default address when real query loads
+  // Auto-select default address when query loads
   watch(_addressesQueryData, (newAddresses) => {
-    if (!_isPreviewMode.value && newAddresses && !selectedAddressId.value) {
+    if (newAddresses && !selectedAddressId.value) {
       const def = newAddresses.find(a => a.is_default)
       if (def) selectedAddressId.value = def.id
     }
   })
 
-  // ── addresses: preview overrides query data when in preview mode ─────────────
-  const addresses = computed<Address[]>(() =>
-    _isPreviewMode.value ? _previewAddresses.value : (_addressesQueryData.value ?? [])
-  )
+  const addresses = computed<Address[]>(() => _addressesQueryData.value ?? [])
 
   // ── Getters (converted from options API getters) ──────────────────────────────
   const defaultAddress = computed(() => addresses.value.find(a => a.is_default))
@@ -142,36 +129,11 @@ export const useAddressStore = defineStore('address', () => {
     onSuccess(result) {
       selectedAddressId.value = String(result.id)
       pendingAddress.value = null
-      _isPreviewMode.value = false
     },
     onSettled: () => cache.invalidateQueries({ key: ['addresses'] }),
   })
 
-  // previewByEmail: lazy mutation — no auth required, triggered on email input
-  const previewMutation = useMutation({
-    mutation: (email: string) =>
-      $fetch<{ customer_id: string | null; addresses: Address[]; total: number }>(
-        '/api/online/addresses/preview',
-        { query: { email } }
-      ),
-    onSuccess(result) {
-      previewCustomerId.value = result.customer_id ? String(result.customer_id) : null
-      _previewAddresses.value = result.addresses
-      _isPreviewMode.value = true
-      if (!selectedAddressId.value) {
-        const def = result.addresses.find(a => a.is_default)
-        if (def) selectedAddressId.value = String(def.id)
-      }
-    },
-    onError() {
-      // Empty result = new customer — not an error
-      previewCustomerId.value = null
-      _previewAddresses.value = []
-      _isPreviewMode.value = true
-    },
-  })
-
-  // ── isLoading: covers query + all write mutations ──────────────────────────────
+  // ── isLoading ─────────────────────────────────────────────────────────────────
   const isLoading = computed(() =>
     status.value === 'loading' ||
     createMutation.isLoading.value ||
@@ -183,12 +145,9 @@ export const useAddressStore = defineStore('address', () => {
 
   // ── Public action wrappers (preserve original signatures) ─────────────────────
 
-  /** Fetch real addresses for authenticated customer */
+  /** Fetch addresses for authenticated customer (post-OTP) */
   const fetchAddresses = (customerId: string) => {
-    _isPreviewMode.value = false
-    _previewAddresses.value = []
     _customerId.value = customerId
-    // useQuery re-runs automatically when _customerId changes
   }
 
   const createAddress = (customerId: string, data: AddressCreate) =>
@@ -217,15 +176,10 @@ export const useAddressStore = defineStore('address', () => {
     return String(result.id)
   }
 
-  const previewByEmail = (email: string) => previewMutation.mutateAsync(email)
-
   const reset = () => {
     selectedAddressId.value = null
     pendingAddress.value = null
-    previewCustomerId.value = null
     _customerId.value = null
-    _isPreviewMode.value = false
-    _previewAddresses.value = []
   }
 
   return {
@@ -233,7 +187,6 @@ export const useAddressStore = defineStore('address', () => {
     addresses,
     selectedAddressId,
     pendingAddress,
-    previewCustomerId,
     isLoading,
 
     // Getters
@@ -252,7 +205,6 @@ export const useAddressStore = defineStore('address', () => {
     selectAddress,
     setPendingAddress,
     persistPendingAddress,
-    previewByEmail,
     reset,
   }
 })
