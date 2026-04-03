@@ -468,35 +468,51 @@ function isGroupActive(items: { path: string }[]) {
   margin-bottom: 0;
 }
 
+/* Separador entre secciones — hairline superior */
+.docs-sheet-nav .docs-nav-section + .docs-nav-section {
+  border-top: 1px solid hsl(var(--titan-100));
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
 .docs-sheet-nav .docs-section-label {
   background: none;
   border: none;
-  padding: 16px 20px 6px;
+  padding: 10px 20px 4px;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.12em;
-  color: hsl(var(--ebony-300));
+  letter-spacing: 0.14em;
+  /* ebony-500 — legible pero subordinado a los items */
+  color: hsl(var(--ebony-400));
 }
 
 .docs-sheet-nav .docs-section-label--active {
-  color: hsl(var(--crocus-500));
+  color: hsl(var(--crocus-600));
   background: none;
 }
 
 .docs-sheet-nav ul {
-  padding: 0;
+  padding: 2px 0;
   gap: 0;
 }
 
 .docs-sheet-nav .docs-nav-item {
-  padding: 13px 20px;
-  font-size: 15px;
-  font-weight: 400;
+  padding: 10px 16px 10px 20px;
+  font-size: 14.5px;
+  font-weight: 500;               /* 500 — legible sin ser bold */
   color: hsl(var(--ebony-700));
   border-radius: 0;
   border-left: 3px solid transparent;
   display: flex;
   align-items: center;
+  letter-spacing: -0.01em;
+}
+
+/* Chevron — por defecto muy tenue */
+.docs-sheet-nav .docs-nav-item svg {
+  opacity: 0.2;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
 }
 
 .docs-sheet-nav .docs-nav-item:hover {
@@ -504,11 +520,21 @@ function isGroupActive(items: { path: string }[]) {
   color: hsl(var(--ebony-900));
 }
 
+.docs-sheet-nav .docs-nav-item:hover svg {
+  opacity: 0.4;
+}
+
 .docs-sheet-nav .docs-nav-item.active {
   background: hsl(var(--crocus-50));
   color: hsl(var(--crocus-700));
   font-weight: 600;
   border-left-color: hsl(var(--crocus-500));
+}
+
+/* Chevron activo — crocus visible */
+.docs-sheet-nav .docs-nav-item.active svg {
+  opacity: 1;
+  color: hsl(var(--crocus-400));
 }
 
 /* ─── H1 de artículos — fuente Quantico como en el root ── */
