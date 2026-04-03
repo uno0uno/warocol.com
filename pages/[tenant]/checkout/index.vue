@@ -38,11 +38,11 @@
       </template>
 
       <template #step-2>
-        <StepDeliveryInfo ref="stepDeliveryRef" />
+        <StepIdentity ref="stepIdentityRef" @verified="handleVerified" />
       </template>
 
       <template #step-3>
-        <StepIdentity ref="stepIdentityRef" @verified="handleVerified" />
+        <StepDeliveryInfo ref="stepDeliveryRef" />
       </template>
 
       <template #step-4>
@@ -97,7 +97,7 @@ onMounted(async () => {
       otpAuthStore.isVerified = result.is_verified
       if (result.pickup_pin) otpAuthStore.pickupPin = result.pickup_pin
       await addressStore.fetchAddresses(result.customer_id)
-      currentStep.value = 2
+      currentStep.value = 3
     }
     catch {
       // 401 = no valid session → start at StepEmail as normal
@@ -112,8 +112,8 @@ onMounted(async () => {
 const steps = [
   { title: 'Tipo de pedido',      short: 'Tipo' },
   { title: 'Correo',              short: 'Correo' },
-  { title: 'Entrega',             short: 'Entrega' },
   { title: 'Verificar identidad', short: 'Identidad' },
+  { title: 'Entrega',             short: 'Entrega' },
   { title: 'Revisar y confirmar', short: 'Confirmar' },
 ]
 
@@ -132,8 +132,8 @@ const stepConfirmRef  = ref<{ isValid: boolean; isSubmitting: { value: boolean }
 const canContinue = computed(() => {
   if (currentStep.value === 0) return true
   if (currentStep.value === 1) return stepEmailRef.value?.isValid ?? false
-  if (currentStep.value === 2) return stepDeliveryRef.value?.isValid ?? false
-  if (currentStep.value === 3) return stepIdentityRef.value?.isValid ?? false
+  if (currentStep.value === 2) return stepIdentityRef.value?.isValid ?? false
+  if (currentStep.value === 3) return stepDeliveryRef.value?.isValid ?? false
   if (currentStep.value === 4) return stepConfirmRef.value?.isValid ?? false
   return false
 })
@@ -146,13 +146,13 @@ const isOrderSubmitting = ref(false)
 const handleNext = async () => {
   isNavigating.value = true
   try {
-    // Step 1 (Email): fetch address preview before advancing
+    // Step 1 (Email): save email before advancing
     if (currentStep.value === 1 && stepEmailRef.value) {
-      await stepEmailRef.value.onNext()
+      stepEmailRef.value.onNext()
     }
 
-    // Step 2 (Delivery): save time + instructions to cart
-    if (currentStep.value === 2 && stepDeliveryRef.value) {
+    // Step 3 (Delivery): save time + instructions to cart
+    if (currentStep.value === 3 && stepDeliveryRef.value) {
       const info = stepDeliveryRef.value.buildDeliveryInfo() as {
         scheduled_time?: string
         delivery_instructions?: string
@@ -184,8 +184,11 @@ const handleSubmit = async () => {
   }
 }
 
-const handleVerified = () => {
-  // Auto-advance from identity step to confirm step
+const handleVerified = async () => {
+  // Fetch addresses now that customer is authenticated, then advance to delivery step
+  if (otpAuthStore.customerId) {
+    await addressStore.fetchAddresses(otpAuthStore.customerId)
+  }
   currentStep.value++
 }
 
