@@ -17,6 +17,7 @@ FROM oven/bun:1-alpine
 WORKDIR /app
 
 COPY --from=build /app/.output/ ./.output/
+COPY --from=build /app/docs/ ./docs/
 
 ENV PORT=3001
 ENV HOST=0.0.0.0
