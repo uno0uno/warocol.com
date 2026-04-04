@@ -304,7 +304,6 @@ onMounted(() => {
   width: 256px;
   flex-shrink: 0;
   background: hsl(var(--titan-100));
-  border-right: 1px solid hsl(var(--titan-200));
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -330,10 +329,10 @@ onMounted(() => {
 
 /* ─── Nav card ───────────────────────────────────────── */
 .docs-nav-card {
-  margin: 16px 12px 0;
+  margin: 24px 12px 0;
   background: #fff;
   border: 1px solid hsl(var(--titan-200));
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
   overflow: hidden;
 }
