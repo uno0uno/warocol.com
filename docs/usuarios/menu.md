@@ -168,3 +168,41 @@ Sí. Ve a **Menú → Modificadores**, abre el grupo y edítalo.
 
 **¿El cliente puede pedir un producto sin elegir un modificador obligatorio?**
 No. El botón de agregar al carrito no se activa hasta que el cliente elija.
+
+---
+
+## Productos de reventa
+
+Los **productos de reventa** son ítems que vendes tal como los compras, sin preparación: una lata de gaseosa, un paquete de papas, una botella de agua. Se comportan como productos normales en el POS y en domicilios, pero su stock se controla directamente sobre el ingrediente.
+
+### Requisito previo
+
+El ingrediente debe estar marcado como `is_resale = true` en el catálogo. Si un ingrediente no aparece en la lista de reventa, contacta al administrador para activar esa propiedad.
+
+### Cómo gestionar productos de reventa
+
+Ve a **Menú → Reventa → Gestionar**.
+
+1. **Selecciona** los ingredientes que quieres vender — actívalos con la casilla
+2. **Asigna el precio de venta** — escribe el valor en pesos (obligatorio para guardar)
+3. **Disponibilidad** — activa o desactiva cada ítem con el toggle
+4. Presiona **Guardar Cambios**
+
+### Estados de cada ítem
+
+| Badge | Significado |
+|-------|-------------|
+| **Nuevo** | Se creará el producto en este guardado |
+| **Existe** | Ya hay un producto activo para este ingrediente |
+| **A eliminar** | Se eliminará el producto al guardar |
+
+### Preguntas frecuentes — Reventa
+
+**¿El stock se descuenta automáticamente al vender?**
+Sí. Cada vez que se vende una unidad del producto de reventa, se descuenta una unidad del ingrediente correspondiente en inventario.
+
+**¿Puedo cambiar el precio después?**
+Sí. Vuelve a **Menú → Reventa → Gestionar**, edita el precio y guarda.
+
+**¿Qué pasa si desactivo un ítem que ya tiene ventas?**
+Las ventas anteriores no se modifican. Solo deja de aparecer disponible en el POS y domicilios.

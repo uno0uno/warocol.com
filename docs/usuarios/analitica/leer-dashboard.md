@@ -76,3 +76,35 @@ Porque los productos vendidos no tienen recetas con ingredientes y costos asigna
 
 **¿Puedo exportar los reportes?**
 Consulta con el administrador del sistema sobre las opciones disponibles.
+
+---
+
+## Puntos (Waros)
+
+Ve a **Analítica → Puntos** para configurar el programa de puntos de tu restaurante.
+
+Los **Waros** son el sistema de fidelización de WARO: tus clientes acumulan puntos con sus compras y los pueden redimir como descuento en futuras órdenes.
+
+### Activar o desactivar el sistema
+
+En la parte superior hay un toggle que habilita o deshabilita el sistema completo. Si está inactivo, los clientes no acumulan ni pueden redimir puntos aunque las reglas estén configuradas.
+
+### Reglas de puntos
+
+El sistema funciona con **reglas**. Cada regla define un evento que genera o consume puntos. Puedes activar o desactivar cada regla de forma independiente.
+
+| Acción | Descripción |
+|--------|-------------|
+| Activar / desactivar | Toggle en la tarjeta de la regla |
+| Editar | Clic en el ícono de edición — abre un modal con los parámetros configurables |
+
+### Preguntas frecuentes — Puntos
+
+**¿Los puntos afectan el inventario o las ventas?**
+No. Son un sistema de fidelización paralelo. Las ventas se registran normalmente.
+
+**¿El cliente ve sus puntos?**
+Sí, a través del canal de pedidos online (portal de domicilios / checkout). En el POS no se muestra el saldo de puntos actualmente.
+
+**¿Qué pasa si desactivo el sistema globalmente?**
+Las reglas se conservan configuradas, pero no se acumulan ni se redimen puntos hasta que vuelvas a activarlo.

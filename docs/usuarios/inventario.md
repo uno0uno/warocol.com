@@ -87,3 +87,53 @@ No. Son registros permanentes e inmutables para garantizar la trazabilidad.
 
 **¿El consumo de ventas se registra automáticamente?**
 Sí, siempre que el producto vendido tenga una receta con ingredientes. Sin receta, no hay movimiento de consumo.
+
+---
+
+## Ver stock
+
+La vista de **Stock** te da una radiografía completa de todos tus ingredientes: cuánto tienes, cuánto vale y cuáles están en alerta.
+
+Ve a **Inventario → Stock**.
+
+### Métricas del panel
+
+| Métrica | Qué indica |
+|---------|------------|
+| **Total ingredientes** | Número de ingredientes registrados |
+| **Stock bajo** | Ingredientes que bajaron del mínimo configurado |
+| **Stock crítico** | Ingredientes sin unidades o con stock negativo |
+| **Valor total** | Suma del costo unitario × stock actual de todos los ingredientes |
+
+### Filtros disponibles
+
+- **Búsqueda** — por nombre de ingrediente
+- **Categoría** — filtra por la categoría del ingrediente
+- **Estado** — Todos · Crítico · Bajo · Normal
+- **Unidad** — filtra por unidad de medida (kg, L, u, etc.)
+
+### Columnas de la tabla
+
+| Columna | Descripción |
+|---------|-------------|
+| Ingrediente | Nombre |
+| Unidad | Unidad de medida |
+| Stock Actual | Cantidad disponible ahora |
+| Stock Mín | Nivel mínimo configurado — cuando se cruza aparece alerta |
+| Stock Máx | Nivel máximo (referencia para la barra de progreso) |
+| % Stock | Barra visual del nivel de llenado (actual / máximo) |
+| Costo Unit. | Precio por unidad (basado en la última compra) |
+| Valor Total | Costo unitario × stock actual |
+| Estado | Normal · Bajo · Crítico con código de color |
+
+### Estados de stock
+
+| Estado | Color | Significado |
+|--------|-------|-------------|
+| **Normal** | Verde | Stock por encima del mínimo |
+| **Bajo** | Amarillo | Stock entre 0 y el mínimo configurado |
+| **Crítico** | Rojo | Stock en 0 o negativo |
+
+### Ajuste rápido desde stock
+
+Desde cualquier fila puedes hacer clic en el ícono de ajuste para ir directamente a **Inventario → Ajustes → Nuevo ajuste** con el ingrediente preseleccionado.

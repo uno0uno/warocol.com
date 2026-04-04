@@ -86,3 +86,86 @@ Antes de finalizar tienes control total para corregir precios, borrar ítems o a
 
 **¿Qué diferencia hay con una Orden de Compra clásica?**
 La compra directa prioriza velocidad y actualización inmediata del inventario, ideal para compras al paso. Las órdenes de compra son para operaciones estructuradas con flujos de aprobación y notificaciones al proveedor.
+
+---
+
+## Órdenes de compra
+
+Las Órdenes de Compra (OC) son el flujo formal de abastecimiento: le envías una solicitud a tu proveedor, él la cotiza, tú la confirmas y registras la recepción cuando llega la mercancía.
+
+Ve a **Abastecimiento → Compras → Nueva compra**.
+
+### Flujo de una orden
+
+```
+Borrador → Enviada al proveedor → Cotizada → Confirmada → En preparación → Recibida → Pagada
+```
+
+| Estado | Qué significa |
+|--------|---------------|
+| **Borrador** | Creada pero no enviada |
+| **Enviada** | El proveedor recibió la solicitud por email |
+| **Cotizada** | El proveedor respondió con precios |
+| **Confirmada** | Aceptaste la cotización |
+| **En preparación** | El proveedor está alistando el pedido |
+| **Recibida** | La mercancía llegó — el inventario se actualiza |
+| **Pagada** | El pago quedó registrado en el módulo de Pagos |
+
+### Crear una orden
+
+1. Ve a **Abastecimiento → Compras → Nueva compra**
+2. Selecciona el proveedor
+3. Agrega ingredientes con la cantidad requerida
+4. Agrega notas opcionales
+5. Guarda como borrador o envía directamente al proveedor
+
+### Recibir la mercancía
+
+Cuando llegue el pedido, abre la OC y registra la recepción. En ese momento el stock de cada ingrediente se incrementa automáticamente. Si hay diferencias entre lo pedido y lo recibido, puedes ajustar las cantidades antes de confirmar la recepción.
+
+### Preguntas frecuentes — OC
+
+**¿El proveedor recibe algo?**
+Si el proveedor tiene email registrado, WARO le envía la OC por correo. También puede acceder al portal del proveedor con el enlace que recibe.
+
+**¿Puedo editar una OC ya enviada?**
+Solo en estado Borrador. Una vez enviada, los cambios se manejan desde el detalle de la orden.
+
+---
+
+## Precios
+
+Ve a **Abastecimiento → Precios** para ver el historial de precios de cada ingrediente.
+
+Esta vista consolida los precios registrados en compras directas y recepciones de OC, permitiéndote detectar variaciones y negociar mejor con proveedores.
+
+| Columna | Descripción |
+|---------|-------------|
+| Ingrediente | Nombre del insumo |
+| Proveedor | Quién lo vendió |
+| Precio unitario | Costo por unidad en esa compra |
+| Fecha | Cuándo se registró |
+
+Ordena por precio o fecha para identificar el proveedor más económico para cada ingrediente.
+
+---
+
+## Calidad de datos
+
+Ve a **Abastecimiento → Calidad de datos** para detectar anomalías en tus registros de compras e ingredientes.
+
+### Score de calidad
+
+El sistema evalúa tus datos y genera un puntaje de **0 a 100**. Un score alto indica que los datos están completos y consistentes.
+
+### Tipos de anomalías
+
+| Severidad | Qué indica |
+|-----------|------------|
+| **Crítico** | Dato faltante o erróneo que afecta el funcionamiento (ej: ingrediente sin unidad) |
+| **Aviso** | Inconsistencia que puede generar errores (ej: precio muy diferente al histórico) |
+| **Resuelto** | Anomalías que ya fueron corregidas en los últimos 30 días |
+
+### Cómo usar este panel
+
+Filtra por ingrediente o severidad y haz clic en cada anomalía para ver el detalle y el campo que necesita corrección. Resuelve los críticos primero — afectan el cálculo de costos y el control de inventario.
