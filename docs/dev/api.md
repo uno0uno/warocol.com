@@ -12,7 +12,6 @@ WaRo expone dos APIs REST públicas que puedes usar para construir experiencias 
 | API | Base URL | Para qué |
 |-----|----------|---------|
 | **WaRo Colombia** | `https://api.warocol.com` | Restaurantes — menú, carrito, órdenes, clientes, analítica |
-| **WaRo Tickets** | `https://api.warotickets.com` | Eventos — boletas, reservas, pagos, check-in QR |
 
 ---
 
@@ -28,17 +27,6 @@ X-API-Key: waro_sk_TU_API_KEY
 
 Obtén tu API key desde **Integraciones** en el panel de administración de WARO. Cada restaurante (tenant) tiene su propio key — nunca compartas un key entre negocios.
 
-### WaRo Tickets API
-
-Los endpoints **públicos** (`/public/*`) no requieren autenticación.
-
-Los endpoints de gestión usan autenticación por magic link:
-
-```http
-POST /auth/sign-in-magic-link   # solicita enlace al email
-POST /auth/verify-code           # verifica el código → recibe token
-Authorization: Bearer <token>    # usa el token en requests siguientes
-```
 
 ---
 
@@ -152,64 +140,13 @@ Construye tu propia tienda siguiendo este flujo:
 
 ---
 
-## WaRo Tickets API
+## Colección Postman
 
-### Flujo de compra de boletas
+Descarga la colección para explorar todos los endpoints con ejemplos listos para ejecutar:
 
-```
-1. GET  /public/events                        → lista eventos disponibles
-2. GET  /public/events/{slug}                 → detalle del evento
-3. GET  /public/events/{slug}/availability    → disponibilidad por área
-4. GET  /units/event/{id}/area/{id}/map       → mapa de puestos (si aplica)
-5. POST /reservations                         → reserva los puestos (bloqueo temporal)
-6. POST /payments/intent                      → crea intención de pago
-7. GET  /payments/{id}/status                 → verifica el estado del pago
-8. GET  /qr/{reservation_id}/{unit_id}/image  → QR de la boleta
-```
+[WaRo Colombia — Public API](https://github.com/uno0uno/api_warotickets/tree/master/postman)
 
-### Endpoints públicos (sin auth)
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `GET` | `/public/events` | Lista eventos activos (paginado) |
-| `GET` | `/public/events/{slug}` | Detalle de un evento por slug |
-| `GET` | `/public/events/{slug}/availability` | Disponibilidad de áreas y puestos |
-| `POST` | `/public/calculate-price` | Calcula precio con descuentos y etapas de venta |
-| `GET` | `/areas/event/{id}/{area_id}/availability` | Disponibilidad de un área específica |
-| `GET` | `/units/event/{id}/area/{area_id}/available` | Puestos disponibles en un área |
-| `GET` | `/units/event/{id}/area/{area_id}/map` | Mapa de puestos (coordenadas y estado) |
-| `POST` | `/promotions/validate` | Valida un código de descuento |
-| `POST` | `/promotions/calculate-price` | Precio final después de aplicar promoción |
-| `POST` | `/reservations` | Crea reserva (bloqueo temporal de puestos) |
-| `POST` | `/payments/intent` | Crea intención de pago |
-| `GET` | `/payments/{id}/status` | Estado del pago |
-
-### Endpoints autenticados
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `GET` | `/reservations/my-tickets` | Boletas del comprador autenticado |
-| `GET` | `/reservations/{id}` | Detalle de una reserva |
-| `POST` | `/reservations/{id}/cancel` | Cancela una reserva |
-| `GET` | `/qr/{res_id}/{unit_id}` | Datos del QR de una boleta |
-| `GET` | `/qr/{res_id}/{unit_id}/image` | Imagen del QR (PNG) |
-| `POST` | `/qr/{res_id}/validate` | Valida QR en entrada (check-in) |
-| `POST` | `/transfers/initiate` | Inicia transferencia de boleta a otro comprador |
-| `POST` | `/transfers/accept` | Acepta una transferencia recibida |
-| `POST` | `/transfers/cancel/{unit_id}` | Cancela una transferencia pendiente |
-
----
-
-## Colecciones Postman
-
-Descarga las colecciones para explorar todos los endpoints con ejemplos listos para ejecutar:
-
-| Colección | Ambiente |
-|-----------|---------|
-| [WaRo Colombia — Public API](https://github.com/uno0uno/api_warotickets/tree/master/postman) | Producción / Local |
-| [WaRo Tickets API](https://github.com/uno0uno/api_warotickets/tree/master/postman) | Producción / Local |
-
-Las colecciones incluyen variables de ambiente para producción y local. Configura `api_key` y `base_url` y tendrás todos los ejemplos funcionando.
+Incluye variables de ambiente para producción y local. Configura `api_key` y `base_url` y tendrás todos los ejemplos funcionando.
 
 ---
 
