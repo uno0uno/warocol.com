@@ -695,6 +695,7 @@ onMounted(() => {
   flex-shrink: 0;
   display: none;
   padding: 24px 8px 0 0;
+  background: hsl(var(--titan-100));
 }
 
 @media (min-width: 1280px) {
