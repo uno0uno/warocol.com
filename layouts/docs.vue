@@ -1,79 +1,6 @@
 <script setup lang="ts">
 const route = useRoute()
 
-const nav = [
-  {
-    label: 'Empezar',
-    items: [
-      { label: 'Primeros pasos', path: '/docs/usuarios/primeros-pasos' },
-    ]
-  },
-  {
-    label: 'Menú',
-    items: [
-      { label: 'Menú', path: '/docs/usuarios/menu' },
-    ]
-  },
-  {
-    label: 'POS',
-    items: [
-      { label: 'POS', path: '/docs/usuarios/pos/procesar-venta' },
-    ]
-  },
-  {
-    label: 'Ventas',
-    items: [
-      { label: 'Ventas', path: '/docs/usuarios/ventas' },
-    ]
-  },
-  {
-    label: 'Compras',
-    items: [
-      { label: 'Compras', path: '/docs/usuarios/compras' },
-    ]
-  },
-  {
-    label: 'Pagos',
-    items: [
-      { label: 'Pagos', path: '/docs/usuarios/pagos/pagos-proveedores' },
-    ]
-  },
-  {
-    label: 'Gastos',
-    items: [
-      { label: 'Gastos', path: '/docs/usuarios/gastos' },
-    ]
-  },
-  {
-    label: 'Inventario',
-    items: [
-      { label: 'Inventario', path: '/docs/usuarios/inventario' },
-    ]
-  },
-  {
-    label: 'Domicilios',
-    items: [
-      { label: 'Domicilios', path: '/docs/usuarios/domicilios/gestionar-domicilios' },
-    ]
-  },
-  {
-    label: 'Equipo',
-    items: [
-      { label: 'Equipo', path: '/docs/usuarios/equipo' },
-    ]
-  },
-  {
-    label: 'Analítica',
-    items: [
-      { label: 'Analítica', path: '/docs/usuarios/analitica/leer-dashboard' },
-    ]
-  },
-]
-
-function isActive(path: string) {
-  return route.path === path
-}
-
 import Header from '~/components/layout/Header.vue'
 import BottomNav from '~/components/layout/BottomNav.vue'
 import { useDocsNav } from '~/composables/useDocsNav'
@@ -91,33 +18,25 @@ import {
   TruckIcon,
 } from '@heroicons/vue/24/outline'
 
+const nav = [
+  { label: 'Primeros pasos', path: '/docs/usuarios/primeros-pasos', icon: BookOpenIcon },
+  { label: 'Menú',           path: '/docs/usuarios/menu',                      icon: ClipboardDocumentListIcon },
+  { label: 'POS',            path: '/docs/usuarios/pos/procesar-venta',        icon: ComputerDesktopIcon },
+  { label: 'Ventas',         path: '/docs/usuarios/ventas',                    icon: ShoppingCartIcon },
+  { label: 'Compras',        path: '/docs/usuarios/compras',                   icon: ShoppingBagIcon },
+  { label: 'Pagos',          path: '/docs/usuarios/pagos/pagos-proveedores',   icon: BanknotesIcon },
+  { label: 'Gastos',         path: '/docs/usuarios/gastos',                    icon: ReceiptPercentIcon },
+  { label: 'Inventario',     path: '/docs/usuarios/inventario',                icon: CubeIcon },
+  { label: 'Domicilios',     path: '/docs/usuarios/domicilios/gestionar-domicilios', icon: TruckIcon },
+  { label: 'Equipo',         path: '/docs/usuarios/equipo',                    icon: UserGroupIcon },
+  { label: 'Analítica',      path: '/docs/usuarios/analitica/leer-dashboard',  icon: ChartBarIcon },
+]
+
+function isActive(path: string) {
+  return route.path === path
+}
+
 const { showDocsNav } = useDocsNav()
-function isGroupActive(items: { path: string }[]) {
-  return items.some(item => route.path === item.path)
-}
-
-const activeSheetSection = ref(nav[0].label)
-
-const sectionIcon: Record<string, unknown> = {
-  'Empezar': BookOpenIcon,
-  'Menú': ClipboardDocumentListIcon,
-  'POS': ComputerDesktopIcon,
-  'Ventas': ShoppingCartIcon,
-  'Compras': ShoppingBagIcon,
-  'Pagos': BanknotesIcon,
-  'Gastos': ReceiptPercentIcon,
-  'Inventario': CubeIcon,
-  'Domicilios': TruckIcon,
-  'Equipo': UserGroupIcon,
-  'Analítica': ChartBarIcon,
-}
-
-watch(showDocsNav, (open) => {
-  if (open) {
-    const active = nav.find(s => isGroupActive(s.items))
-    activeSheetSection.value = active ? active.label : nav[0].label
-  }
-})
 
 // TOC
 const { headings } = useDocsToc()
@@ -162,29 +81,16 @@ onMounted(() => {
       <aside class="docs-sidebar">
         <nav class="docs-nav">
 
-          <div
-            v-for="section in nav"
-            :key="section.label"
-            class="docs-nav-section"
+          <NuxtLink
+            v-for="item in nav"
+            :key="item.path"
+            :to="item.path"
+            class="docs-nav-item"
+            :class="{ active: isActive(item.path) }"
           >
-            <span
-              class="docs-section-label"
-              :class="{ 'docs-section-label--active': isGroupActive(section.items) }"
-            >
-              {{ section.label }}
-            </span>
-            <ul>
-              <li v-for="item in section.items" :key="item.path">
-                <NuxtLink
-                  :to="item.path"
-                  class="docs-nav-item"
-                  :class="{ active: isActive(item.path) }"
-                >
-                  {{ item.label }}
-                </NuxtLink>
-              </li>
-            </ul>
-          </div>
+            <component :is="item.icon" class="docs-nav-item-icon" />
+            {{ item.label }}
+          </NuxtLink>
 
         </nav>
 
@@ -222,52 +128,21 @@ onMounted(() => {
     <UiBottomSheetModal v-model="showDocsNav" title="Contenido" max-height="lg">
       <div class="sheet-v2">
 
-        <!-- Section grid — mismo estilo que DashboardBottomNav -->
-        <div class="p-4 border-b border-titan-100">
-          <div class="grid grid-cols-4 gap-3">
-            <button
-              v-for="section in nav"
-              :key="section.label"
-              class="flex flex-col items-center gap-1"
-              @click="activeSheetSection = section.label"
-            >
-              <div
-                class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-                :class="activeSheetSection === section.label ? 'bg-crocus-100' : 'bg-titan-100'"
-              >
-                <component
-                  :is="sectionIcon[section.label]"
-                  class="w-6 h-6 transition-colors"
-                  :class="activeSheetSection === section.label ? 'text-crocus-600' : 'text-titan-600'"
-                />
-              </div>
-              <span
-                class="text-[10px] transition-colors"
-                :class="activeSheetSection === section.label ? 'text-crocus-600 font-semibold' : 'text-titan-600'"
-              >{{ section.label }}</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Items for active section -->
-        <div class="sheet-items">
-          <template v-for="section in nav">
-            <div v-if="activeSheetSection === section.label" :key="section.label" class="sheet-items-list">
-              <NuxtLink
-                v-for="item in section.items"
-                :key="item.path"
-                :to="item.path"
-                class="sheet-item"
-                :class="{ 'sheet-item--active': isActive(item.path) }"
-                @click="showDocsNav = false"
-              >
-                <span class="sheet-item-label">{{ item.label }}</span>
-                <svg class="sheet-item-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </NuxtLink>
+        <!-- Nav grid — click navega directamente -->
+        <div class="sheet-grid">
+          <NuxtLink
+            v-for="item in nav"
+            :key="item.path"
+            :to="item.path"
+            class="sheet-grid-item"
+            :class="{ 'sheet-grid-item--active': isActive(item.path) }"
+            @click="showDocsNav = false"
+          >
+            <div class="sheet-grid-icon">
+              <component :is="item.icon" class="w-6 h-6" />
             </div>
-          </template>
+            <span class="sheet-grid-label">{{ item.label }}</span>
+          </NuxtLink>
         </div>
 
       </div>
@@ -454,86 +329,44 @@ onMounted(() => {
 /* ─── Nav ────────────────────────────────────────────── */
 .docs-nav {
   flex: 1;
-  padding: 16px 12px 20px;
+  padding: 12px 10px 20px;
   display: flex;
   flex-direction: column;
-  gap: 0;
-}
-
-.docs-nav-home {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  font-size: 15px;
-  border: 1px solid hsl(var(--titan-200));
-}
-.docs-nav-home:hover {
-  background: hsl(var(--crocus-50));
-  color: hsl(var(--ebony-900));
-  border-color: hsl(var(--crocus-200));
-}
-.docs-nav-home.active {
-  background: hsl(var(--crocus-50));
-  color: hsl(var(--crocus-700));
-  font-weight: 700;
-  border-color: hsl(var(--crocus-200));
-}
-
-.docs-nav-section {
-  margin-bottom: 8px;
-  background: #fff;
-  border: 1px solid hsl(var(--titan-200));
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.docs-section-label {
-  display: block;
-  padding: 9px 14px 7px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: hsl(var(--ebony-400));
-  background: hsl(var(--titan-50));
-  border-bottom: 1px solid hsl(var(--titan-100));
-}
-.docs-section-label--active {
-  color: hsl(var(--crocus-500));
-  background: hsl(var(--crocus-50));
-  border-bottom-color: hsl(var(--crocus-100));
-}
-
-.docs-nav-section ul {
-  list-style: none;
-  margin: 0;
-  padding: 4px 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+  gap: 2px;
 }
 
 .docs-nav-item {
   display: flex;
   align-items: center;
-  padding: 8px 10px;
-  border-radius: 6px;
-  font-size: 15px;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 14.5px;
   font-weight: 400;
   color: hsl(var(--ebony-600));
   text-decoration: none;
   line-height: 1.4;
+  transition: background 0.1s, color 0.1s;
 }
 .docs-nav-item:hover {
-  background: hsl(var(--titan-100));
+  background: hsl(var(--titan-200));
   color: hsl(var(--ebony-900));
 }
 .docs-nav-item.active {
   background: hsl(var(--crocus-50));
   color: hsl(var(--crocus-700));
   font-weight: 600;
+}
+
+.docs-nav-item-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+.docs-nav-item.active .docs-nav-item-icon {
+  opacity: 1;
+  color: hsl(var(--crocus-600));
 }
 
 /* ─── Sidebar footer ─────────────────────────────────── */
@@ -580,71 +413,60 @@ onMounted(() => {
 
 /* ─── Sheet v2 ───────────────────────────────────────── */
 .sheet-v2 {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  max-height: calc(100dvh - 130px);
-  overflow: hidden;
+  padding: 16px;
 }
 
-
-/* Items list */
-.sheet-items {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px 16px 16px;
-  overscroll-behavior: contain;
+.sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
 }
 
-.sheet-items-list {
+.sheet-grid-item {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 6px;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.sheet-item {
+.sheet-grid-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: hsl(var(--titan-100));
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1.5px solid hsl(var(--titan-150, var(--titan-200)));
-  background: #fff;
-  text-decoration: none;
-  font-size: 15px;
+  justify-content: center;
+  color: hsl(var(--ebony-500));
+  border: 1.5px solid transparent;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.sheet-grid-item--active .sheet-grid-icon {
+  background: hsl(var(--crocus-50));
+  color: hsl(var(--crocus-600));
+  border-color: hsl(var(--crocus-300));
+}
+
+.sheet-grid-item:active .sheet-grid-icon {
+  background: hsl(var(--titan-200));
+}
+
+.sheet-grid-label {
+  font-size: 10px;
   font-weight: 500;
-  color: hsl(var(--ebony-700));
-  letter-spacing: -0.01em;
-  transition: background 0.12s, border-color 0.12s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  color: hsl(var(--ebony-500));
+  text-align: center;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  transition: color 0.12s;
 }
 
-.sheet-item:active {
-  background: hsl(var(--titan-100));
-}
-
-.sheet-item-label {
-  flex: 1;
-}
-
-.sheet-item-arrow {
-  width: 16px;
-  height: 16px;
-  color: hsl(var(--ebony-300));
-  flex-shrink: 0;
-  transition: color 0.12s, transform 0.12s;
-}
-
-.sheet-item--active {
-  background: #fff;
-  border-color: hsl(var(--crocus-400));
-  color: hsl(var(--crocus-700));
-  box-shadow: none;
-}
-
-.sheet-item--active .sheet-item-arrow {
-  color: hsl(var(--crocus-400));
-  transform: translateX(2px);
+.sheet-grid-item--active .sheet-grid-label {
+  color: hsl(var(--crocus-600));
+  font-weight: 600;
 }
 
 /* ─── H1 de artículos — fuente Quantico como en el root ── */
