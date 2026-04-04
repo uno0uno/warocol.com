@@ -8,6 +8,7 @@ import {
   BookOpenIcon,
   ClipboardDocumentListIcon,
   CodeBracketIcon,
+  CommandLineIcon,
   ComputerDesktopIcon,
   CreditCardIcon,
   CubeIcon,
@@ -32,6 +33,7 @@ const nav = [
   { label: 'Equipo',         path: '/docs/usuarios/equipo',                       icon: UserGroupIcon },
   { label: 'Analítica',      path: '/docs/usuarios/analitica',                    icon: ChartBarIcon },
   { label: 'Integraciones',  path: '/docs/dev',                                    icon: CodeBracketIcon },
+  { label: 'CLI',            path: '/docs/cli',                                    icon: CommandLineIcon },
 ]
 
 function isActive(path: string) {
