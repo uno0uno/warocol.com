@@ -8,28 +8,28 @@ import {
   BookOpenIcon,
   ClipboardDocumentListIcon,
   ComputerDesktopIcon,
-  ShoppingBagIcon,
+  CreditCardIcon,
   CubeIcon,
   UserGroupIcon,
   ChartBarIcon,
   ShoppingCartIcon,
   BanknotesIcon,
-  ReceiptPercentIcon,
   TruckIcon,
+  MapPinIcon,
 } from '@heroicons/vue/24/outline'
 
 const nav = [
-  { label: 'Primeros pasos', path: '/docs/usuarios/primeros-pasos', icon: BookOpenIcon },
-  { label: 'Menú',           path: '/docs/usuarios/menu',                      icon: ClipboardDocumentListIcon },
-  { label: 'POS',            path: '/docs/usuarios/pos/procesar-venta',        icon: ComputerDesktopIcon },
-  { label: 'Ventas',         path: '/docs/usuarios/ventas',                    icon: ShoppingCartIcon },
-  { label: 'Compras',        path: '/docs/usuarios/compras',                   icon: ShoppingBagIcon },
-  { label: 'Pagos',          path: '/docs/usuarios/pagos/pagos-proveedores',   icon: BanknotesIcon },
-  { label: 'Gastos',         path: '/docs/usuarios/gastos',                    icon: ReceiptPercentIcon },
-  { label: 'Inventario',     path: '/docs/usuarios/inventario',                icon: CubeIcon },
-  { label: 'Domicilios',     path: '/docs/usuarios/domicilios/gestionar-domicilios', icon: TruckIcon },
-  { label: 'Equipo',         path: '/docs/usuarios/equipo',                    icon: UserGroupIcon },
-  { label: 'Analítica',      path: '/docs/usuarios/analitica/leer-dashboard',  icon: ChartBarIcon },
+  { label: 'Primeros pasos', path: '/docs/usuarios/primeros-pasos',               icon: BookOpenIcon },
+  { label: 'Menú',           path: '/docs/usuarios/menu',                         icon: CubeIcon },
+  { label: 'POS',            path: '/docs/usuarios/pos/procesar-venta',           icon: ComputerDesktopIcon },
+  { label: 'Ventas',         path: '/docs/usuarios/ventas',                       icon: ShoppingCartIcon },
+  { label: 'Compras',        path: '/docs/usuarios/compras',                      icon: TruckIcon },
+  { label: 'Pagos',          path: '/docs/usuarios/pagos/pagos-proveedores',      icon: CreditCardIcon },
+  { label: 'Gastos',         path: '/docs/usuarios/gastos',                       icon: BanknotesIcon },
+  { label: 'Inventario',     path: '/docs/usuarios/inventario',                   icon: ClipboardDocumentListIcon },
+  { label: 'Domicilios',     path: '/docs/usuarios/domicilios/gestionar-domicilios', icon: MapPinIcon },
+  { label: 'Equipo',         path: '/docs/usuarios/equipo',                       icon: UserGroupIcon },
+  { label: 'Analítica',      path: '/docs/usuarios/analitica/leer-dashboard',     icon: ChartBarIcon },
 ]
 
 function isActive(path: string) {
@@ -79,20 +79,22 @@ onMounted(() => {
 
       <!-- Sidebar -->
       <aside class="docs-sidebar">
-        <nav class="docs-nav">
+        <div class="docs-nav-card">
+          <nav class="docs-nav">
 
-          <NuxtLink
-            v-for="item in nav"
-            :key="item.path"
-            :to="item.path"
-            class="docs-nav-item"
-            :class="{ active: isActive(item.path) }"
-          >
-            <component :is="item.icon" class="docs-nav-item-icon" />
-            {{ item.label }}
-          </NuxtLink>
+            <NuxtLink
+              v-for="item in nav"
+              :key="item.path"
+              :to="item.path"
+              class="docs-nav-item"
+              :class="{ active: isActive(item.path) }"
+            >
+              <component :is="item.icon" class="docs-nav-item-icon" />
+              {{ item.label }}
+            </NuxtLink>
 
-        </nav>
+          </nav>
+        </div>
 
         <div class="docs-sidebar-footer">
         </div>
@@ -326,13 +328,22 @@ onMounted(() => {
   .docs-header-logo { width: auto; }
 }
 
+/* ─── Nav card ───────────────────────────────────────── */
+.docs-nav-card {
+  margin: 16px 12px 0;
+  background: #fff;
+  border: 1px solid hsl(var(--titan-200));
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  overflow: hidden;
+}
+
 /* ─── Nav ────────────────────────────────────────────── */
 .docs-nav {
-  flex: 1;
-  padding: 12px 10px 20px;
+  padding: 6px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .docs-nav-item {
@@ -341,7 +352,7 @@ onMounted(() => {
   gap: 10px;
   padding: 9px 12px;
   border-radius: 8px;
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 400;
   color: hsl(var(--ebony-600));
   text-decoration: none;
@@ -349,7 +360,7 @@ onMounted(() => {
   transition: background 0.1s, color 0.1s;
 }
 .docs-nav-item:hover {
-  background: hsl(var(--titan-200));
+  background: hsl(var(--titan-100));
   color: hsl(var(--ebony-900));
 }
 .docs-nav-item.active {
@@ -362,7 +373,7 @@ onMounted(() => {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  opacity: 0.7;
+  opacity: 0.65;
 }
 .docs-nav-item.active .docs-nav-item-icon {
   opacity: 1;
