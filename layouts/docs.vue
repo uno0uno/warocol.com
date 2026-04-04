@@ -58,11 +58,39 @@ function isActive(path: string) {
 import Header from '~/components/layout/Header.vue'
 import BottomNav from '~/components/layout/BottomNav.vue'
 import { useDocsNav } from '~/composables/useDocsNav'
+import {
+  BookOpenIcon,
+  ClipboardDocumentListIcon,
+  ComputerDesktopIcon,
+  ShoppingBagIcon,
+  CubeIcon,
+  UserGroupIcon,
+  ChartBarIcon,
+} from '@heroicons/vue/24/outline'
 
 const { showDocsNav } = useDocsNav()
 function isGroupActive(items: { path: string }[]) {
   return items.some(item => route.path === item.path)
 }
+
+const activeSheetSection = ref(nav[0].label)
+
+const sectionIcon: Record<string, unknown> = {
+  'Empezar': BookOpenIcon,
+  'Menú': ClipboardDocumentListIcon,
+  'POS': ComputerDesktopIcon,
+  'Compras': ShoppingBagIcon,
+  'Inventario': CubeIcon,
+  'Equipo': UserGroupIcon,
+  'Analítica': ChartBarIcon,
+}
+
+watch(showDocsNav, (open) => {
+  if (open) {
+    const active = nav.find(s => isGroupActive(s.items))
+    activeSheetSection.value = active ? active.label : nav[0].label
+  }
+})
 </script>
 
 <template>
@@ -116,32 +144,56 @@ function isGroupActive(items: { path: string }[]) {
 
     <!-- Bottom sheet nav — solo mobile -->
     <UiBottomSheetModal v-model="showDocsNav" title="Contenido" max-height="lg">
-      <div class="docs-sheet-nav">
-        <div v-for="section in nav" :key="section.label" class="docs-nav-section">
-          <span
-            class="docs-section-label"
-            :class="{ 'docs-section-label--active': isGroupActive(section.items) }"
-          >
-            {{ section.label }}
-          </span>
-          <ul>
-            <li v-for="item in section.items" :key="item.path">
+      <div class="sheet-v2">
+
+        <!-- Section grid — mismo estilo que DashboardBottomNav -->
+        <div class="p-4 border-b border-titan-100">
+          <div class="grid grid-cols-4 gap-3">
+            <button
+              v-for="section in nav"
+              :key="section.label"
+              class="flex flex-col items-center gap-1"
+              @click="activeSheetSection = section.label"
+            >
+              <div
+                class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+                :class="activeSheetSection === section.label ? 'bg-crocus-100' : 'bg-titan-100'"
+              >
+                <component
+                  :is="sectionIcon[section.label]"
+                  class="w-6 h-6 transition-colors"
+                  :class="activeSheetSection === section.label ? 'text-crocus-600' : 'text-titan-600'"
+                />
+              </div>
+              <span
+                class="text-[10px] transition-colors"
+                :class="activeSheetSection === section.label ? 'text-crocus-600 font-semibold' : 'text-titan-600'"
+              >{{ section.label }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Items for active section -->
+        <div class="sheet-items">
+          <template v-for="section in nav">
+            <div v-if="activeSheetSection === section.label" :key="section.label" class="sheet-items-list">
               <NuxtLink
+                v-for="item in section.items"
+                :key="item.path"
                 :to="item.path"
-                class="docs-nav-item"
-                :class="{ active: isActive(item.path) }"
+                class="sheet-item"
+                :class="{ 'sheet-item--active': isActive(item.path) }"
                 @click="showDocsNav = false"
               >
-                <span class="flex items-center justify-between w-full">
-                  {{ item.label }}
-                  <svg class="w-4 h-4 opacity-30 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </span>
+                <span class="sheet-item-label">{{ item.label }}</span>
+                <svg class="sheet-item-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
               </NuxtLink>
-            </li>
-          </ul>
+            </div>
+          </template>
         </div>
+
       </div>
     </UiBottomSheetModal>
 
@@ -450,91 +502,73 @@ function isGroupActive(items: { path: string }[]) {
   }
 }
 
-/* ─── Sheet nav ──────────────────────────────────────── */
-.docs-sheet-nav {
-  padding: 8px 0 16px;
+/* ─── Sheet v2 ───────────────────────────────────────── */
+.sheet-v2 {
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  /* 100dvh - header del sheet (56px) - bottom nav (58px) - margen (16px) */
-  max-height: calc(100dvh - 130px);
-}
-
-/* Dentro del sheet: quitar el card border de cada sección */
-.docs-sheet-nav .docs-nav-section {
-  background: none;
-  border: none;
-  border-radius: 0;
-  margin-bottom: 0;
-}
-
-/* Separador entre secciones — hairline superior */
-.docs-sheet-nav .docs-nav-section + .docs-nav-section {
-  border-top: 1px solid hsl(var(--titan-100));
-  margin-top: 4px;
-  padding-top: 4px;
-}
-
-.docs-sheet-nav .docs-section-label {
-  background: none;
-  border: none;
-  padding: 10px 20px 4px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  /* ebony-500 — legible pero subordinado a los items */
-  color: hsl(var(--ebony-400));
-}
-
-.docs-sheet-nav .docs-section-label--active {
-  color: hsl(var(--crocus-600));
-  background: none;
-}
-
-.docs-sheet-nav ul {
-  padding: 2px 0;
   gap: 0;
+  max-height: calc(100dvh - 130px);
+  overflow: hidden;
 }
 
-.docs-sheet-nav .docs-nav-item {
-  padding: 10px 16px 10px 20px;
-  font-size: 14.5px;
-  font-weight: 500;               /* 500 — legible sin ser bold */
-  color: hsl(var(--ebony-700));
-  border-radius: 0;
-  border-left: 3px solid transparent;
+
+/* Items list */
+.sheet-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 16px 16px;
+  overscroll-behavior: contain;
+}
+
+.sheet-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sheet-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1.5px solid hsl(var(--titan-150, var(--titan-200)));
+  background: #fff;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  color: hsl(var(--ebony-700));
   letter-spacing: -0.01em;
+  transition: background 0.12s, border-color 0.12s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
-/* Chevron — por defecto muy tenue */
-.docs-sheet-nav .docs-nav-item svg {
-  opacity: 0.2;
-  transition: opacity 0.15s;
+.sheet-item:active {
+  background: hsl(var(--titan-100));
+}
+
+.sheet-item-label {
+  flex: 1;
+}
+
+.sheet-item-arrow {
+  width: 16px;
+  height: 16px;
+  color: hsl(var(--ebony-300));
   flex-shrink: 0;
+  transition: color 0.12s, transform 0.12s;
 }
 
-.docs-sheet-nav .docs-nav-item:hover {
-  background: hsl(var(--titan-50));
-  color: hsl(var(--ebony-900));
-}
-
-.docs-sheet-nav .docs-nav-item:hover svg {
-  opacity: 0.4;
-}
-
-.docs-sheet-nav .docs-nav-item.active {
-  background: hsl(var(--crocus-50));
+.sheet-item--active {
+  background: #fff;
+  border-color: hsl(var(--crocus-400));
   color: hsl(var(--crocus-700));
-  font-weight: 600;
-  border-left-color: hsl(var(--crocus-500));
+  box-shadow: none;
 }
 
-/* Chevron activo — crocus visible */
-.docs-sheet-nav .docs-nav-item.active svg {
-  opacity: 1;
+.sheet-item--active .sheet-item-arrow {
   color: hsl(var(--crocus-400));
+  transform: translateX(2px);
 }
 
 /* ─── H1 de artículos — fuente Quantico como en el root ── */
