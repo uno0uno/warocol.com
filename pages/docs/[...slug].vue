@@ -5,6 +5,7 @@ import MarkdownIt from 'markdown-it'
 definePageMeta({ layout: 'docs' })
 
 const route = useRoute()
+const { headings } = useDocsToc()
 
 const slug = computed(() => {
   const parts = route.params.slug
@@ -15,13 +16,41 @@ const { data, error, status } = await useFetch(() => `/docs-content/${slug.value
 
 const md = new MarkdownIt({ html: false, linkify: true, typographer: true })
 
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[áàâä]/g, 'a').replace(/[éèêë]/g, 'e')
+    .replace(/[íìîï]/g, 'i').replace(/[óòôö]/g, 'o')
+    .replace(/[úùûü]/g, 'u').replace(/ñ/g, 'n')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim().replace(/\s+/g, '-')
+}
+
 const renderedContent = computed(() => {
   if (!data.value?.content) return ''
   const html = md.render(data.value.content as string)
-  // Eliminar el primer H1 (título principal) para renderizarlo con efecto localmente
   const noH1 = html.replace(/<h1>.*?<\/h1>/i, '')
-  return noH1.replace(/<table>/g, '<div class="table-scroll-wrapper"><table>').replace(/<\/table>/g, '</table></div>')
+  // Añadir IDs a h2 y h3 para que funcionen los anchor links del TOC
+  const withIds = noH1.replace(/<h([23])>(.*?)<\/h\1>/gi, (_, level, inner) => {
+    const text = inner.replace(/<[^>]+>/g, '')
+    const id = slugify(text)
+    return `<h${level} id="${id}">${inner}</h${level}>`
+  })
+  return withIds
+    .replace(/<table>/g, '<div class="table-scroll-wrapper"><table>')
+    .replace(/<\/table>/g, '</table></div>')
 })
+
+// Extraer headings del markdown raw para el TOC
+watch(data, () => {
+  const content = (data.value?.content as string) || ''
+  const matches = [...content.matchAll(/^(#{2,3})\s+(.+)/gm)]
+  headings.value = matches.map(m => ({
+    level: m[1].length,
+    text: m[2].trim(),
+    id: slugify(m[2].trim()),
+  }))
+}, { immediate: true })
 
 const pageTitle = computed(() => {
   const match = (data.value?.content as string || '').match(/^#\s+(.+)/m)

@@ -126,6 +126,36 @@ watch(showDocsNav, (open) => {
     activeSheetSection.value = active ? active.label : nav[0].label
   }
 })
+
+// TOC
+const { headings } = useDocsToc()
+const activeHeading = ref('')
+
+onMounted(() => {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          activeHeading.value = entry.target.id
+          break
+        }
+      }
+    },
+    { rootMargin: '0px 0px -60% 0px', threshold: 0 }
+  )
+
+  watch(headings, (list) => {
+    observer.disconnect()
+    nextTick(() => {
+      list.forEach(h => {
+        const el = document.getElementById(h.id)
+        if (el) observer.observe(el)
+      })
+    })
+  }, { immediate: true })
+
+  onUnmounted(() => observer.disconnect())
+})
 </script>
 
 <template>
@@ -174,6 +204,25 @@ watch(showDocsNav, (open) => {
       <main class="docs-main">
         <slot />
       </main>
+
+      <!-- TOC derecho — solo desktop cuando hay headings -->
+      <aside v-if="headings.length > 0" class="docs-toc">
+        <div class="docs-toc-inner">
+          <p class="docs-toc-title">En esta página</p>
+          <nav>
+            <a
+              v-for="h in headings"
+              :key="h.id"
+              :href="`#${h.id}`"
+              class="docs-toc-link"
+              :class="[
+                h.level === 3 ? 'docs-toc-link--h3' : '',
+                activeHeading === h.id ? 'docs-toc-link--active' : '',
+              ]"
+            >{{ h.text }}</a>
+          </nav>
+        </div>
+      </aside>
 
     </div>
 
@@ -617,7 +666,7 @@ watch(showDocsNav, (open) => {
 .docs-main {
   flex: 1;
   min-width: 0;
-  padding: 24px 32px 64px;
+  padding: 24px 24px 64px 32px;
   background: hsl(var(--titan-100));
   display: flex;
   flex-direction: column;
@@ -638,5 +687,66 @@ watch(showDocsNav, (open) => {
     background: #fff;
     align-items: stretch;
   }
+}
+
+/* ─── TOC derecho ────────────────────────────────────── */
+.docs-toc {
+  width: 220px;
+  flex-shrink: 0;
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .docs-toc {
+    display: block;
+  }
+}
+
+.docs-toc-inner {
+  position: sticky;
+  top: calc(58px + 24px);
+  padding: 0 16px 0 0;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.docs-toc-inner::-webkit-scrollbar { display: none; }
+
+.docs-toc-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: hsl(var(--ebony-400));
+  margin-bottom: 10px;
+}
+
+.docs-toc-link {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: hsl(var(--ebony-500));
+  text-decoration: none;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid hsl(var(--titan-200));
+  line-height: 1.4;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.docs-toc-link--h3 {
+  padding-left: 22px;
+  font-size: 12.5px;
+  color: hsl(var(--ebony-400));
+}
+
+.docs-toc-link:hover {
+  color: hsl(var(--crocus-600));
+  border-left-color: hsl(var(--crocus-300));
+}
+
+.docs-toc-link--active {
+  color: hsl(var(--crocus-600));
+  font-weight: 600;
+  border-left-color: hsl(var(--crocus-500));
 }
 </style>
