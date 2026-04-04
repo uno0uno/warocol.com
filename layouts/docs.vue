@@ -11,69 +11,61 @@ const nav = [
   {
     label: 'Menú',
     items: [
-      { label: 'Recetas', path: '/docs/usuarios/menu/recetas' },
-      { label: 'Productos', path: '/docs/usuarios/menu/crear-producto' },
-      { label: 'Modificadores', path: '/docs/usuarios/menu/modificadores' },
+      { label: 'Menú', path: '/docs/usuarios/menu' },
     ]
   },
   {
     label: 'POS',
     items: [
-      { label: 'Procesar una venta', path: '/docs/usuarios/pos/procesar-venta' },
+      { label: 'POS', path: '/docs/usuarios/pos/procesar-venta' },
     ]
   },
   {
     label: 'Ventas',
     items: [
-      { label: 'Ver ventas', path: '/docs/usuarios/ventas/lista-ventas' },
-      { label: 'Registrar venta manual', path: '/docs/usuarios/ventas/registrar-venta' },
+      { label: 'Ventas', path: '/docs/usuarios/ventas' },
     ]
   },
   {
     label: 'Compras',
     items: [
-      { label: 'Gestionar proveedores', path: '/docs/usuarios/compras/gestionar-proveedores' },
-      { label: 'Registrar compra con IA', path: '/docs/usuarios/compras/crear-orden-compra' },
+      { label: 'Compras', path: '/docs/usuarios/compras' },
     ]
   },
   {
     label: 'Pagos',
     items: [
-      { label: 'Pagos a proveedores', path: '/docs/usuarios/pagos/pagos-proveedores' },
+      { label: 'Pagos', path: '/docs/usuarios/pagos/pagos-proveedores' },
     ]
   },
   {
     label: 'Gastos',
     items: [
-      { label: 'Ver gastos', path: '/docs/usuarios/gastos/lista-gastos' },
-      { label: 'Registrar gasto', path: '/docs/usuarios/gastos/registrar-gasto' },
+      { label: 'Gastos', path: '/docs/usuarios/gastos' },
     ]
   },
   {
     label: 'Inventario',
     items: [
-      { label: 'Registrar ajuste', path: '/docs/usuarios/inventario/registrar-ajuste' },
-      { label: 'Ver movimientos', path: '/docs/usuarios/inventario/ver-movimientos' },
+      { label: 'Inventario', path: '/docs/usuarios/inventario' },
     ]
   },
   {
     label: 'Domicilios',
     items: [
-      { label: 'Gestionar pedidos', path: '/docs/usuarios/domicilios/gestionar-domicilios' },
+      { label: 'Domicilios', path: '/docs/usuarios/domicilios/gestionar-domicilios' },
     ]
   },
   {
     label: 'Equipo',
     items: [
-      { label: 'Agregar empleado', path: '/docs/usuarios/equipo/agregar-empleado' },
-      { label: 'Configurar salario', path: '/docs/usuarios/equipo/configurar-salario' },
-      { label: 'Registrar pago', path: '/docs/usuarios/equipo/registrar-pago' },
+      { label: 'Equipo', path: '/docs/usuarios/equipo' },
     ]
   },
   {
     label: 'Analítica',
     items: [
-      { label: 'Leer el dashboard', path: '/docs/usuarios/analitica/leer-dashboard' },
+      { label: 'Analítica', path: '/docs/usuarios/analitica/leer-dashboard' },
     ]
   },
 ]
