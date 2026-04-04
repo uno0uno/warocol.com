@@ -691,10 +691,10 @@ onMounted(() => {
 
 /* ─── TOC derecho ────────────────────────────────────── */
 .docs-toc {
-  width: 200px;
+  width: 248px;
   flex-shrink: 0;
   display: none;
-  padding: 24px 8px 0 0;
+  padding: 24px 0 0 0;
   background: hsl(var(--titan-100));
 }
 
@@ -706,11 +706,11 @@ onMounted(() => {
 
 .docs-toc-inner {
   position: sticky;
-  top: calc(58px + 28px);
+  top: calc(58px + 24px);
   background: #fff;
   border: 1px solid hsl(var(--titan-200));
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 10px;
+  padding: 14px 16px 16px;
   max-height: calc(100vh - 120px);
   overflow-y: auto;
   scrollbar-width: none;
@@ -719,13 +719,13 @@ onMounted(() => {
 .docs-toc-inner::-webkit-scrollbar { display: none; }
 
 .docs-toc-title {
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: hsl(var(--ebony-400));
-  margin-bottom: 12px;
-  padding-bottom: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 9px;
   border-bottom: 1px solid hsl(var(--titan-100));
 }
 
@@ -738,11 +738,11 @@ onMounted(() => {
 
 .docs-toc-link {
   display: block;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 400;
-  color: hsl(var(--ebony-500));
+  color: hsl(var(--ebony-600));
   text-decoration: none;
-  padding: 5px 8px 5px 11px;
+  padding: 6px 8px 6px 12px;
   border-radius: 0 6px 6px 0;
   line-height: 1.4;
   margin-left: -1.5px;
@@ -751,9 +751,9 @@ onMounted(() => {
 }
 
 .docs-toc-link--h3 {
-  padding-left: 20px;
-  font-size: 12px;
-  color: hsl(var(--ebony-400));
+  padding-left: 22px;
+  font-size: 13px;
+  color: hsl(var(--ebony-500));
 }
 
 .docs-toc-link:hover {
