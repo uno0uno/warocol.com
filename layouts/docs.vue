@@ -706,14 +706,10 @@ onMounted(() => {
 .docs-toc-inner {
   position: sticky;
   top: calc(58px + 28px);
-  background: #fff;
-  border: 1px solid hsl(var(--titan-200));
-  border-radius: 12px;
-  padding: 16px;
+  padding: 16px 0;
   max-height: calc(100vh - 120px);
   overflow-y: auto;
   scrollbar-width: none;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 .docs-toc-inner::-webkit-scrollbar { display: none; }
 
