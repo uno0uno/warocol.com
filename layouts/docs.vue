@@ -331,7 +331,7 @@ onMounted(() => {
 
 /* ─── Nav card ───────────────────────────────────────── */
 .docs-nav-card {
-  margin: 24px 12px 0;
+  margin: 20px 12px 0;
   background: #fff;
   border: 1px solid hsl(var(--titan-200));
   border-radius: 10px;
@@ -520,7 +520,7 @@ onMounted(() => {
   width: 248px;
   flex-shrink: 0;
   display: none;
-  padding: 24px 20px 0 0;
+  padding: 20px 12px 0;
   background: hsl(var(--titan-100));
 }
 
@@ -532,7 +532,7 @@ onMounted(() => {
 
 .docs-toc-inner {
   position: sticky;
-  top: calc(58px + 24px);
+  top: calc(58px + 20px);
   background: #fff;
   border: 1px solid hsl(var(--titan-200));
   border-radius: 10px;
