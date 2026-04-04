@@ -706,6 +706,7 @@ onMounted(() => {
 .docs-toc-inner {
   position: sticky;
   top: calc(58px + 28px);
+  padding: 16px 0;
   max-height: calc(100vh - 120px);
   overflow-y: auto;
   scrollbar-width: none;
@@ -718,7 +719,7 @@ onMounted(() => {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: hsl(var(--ebony-400));
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   padding-left: 12px;
 }
 
@@ -736,10 +737,11 @@ onMounted(() => {
   color: hsl(var(--ebony-500));
   text-decoration: none;
   padding: 5px 8px 5px 11px;
+  border-radius: 0 6px 6px 0;
   line-height: 1.4;
   margin-left: -1.5px;
   border-left: 1.5px solid transparent;
-  transition: color 0.12s, border-color 0.12s;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
 }
 
 .docs-toc-link--h3 {
@@ -754,6 +756,7 @@ onMounted(() => {
 }
 
 .docs-toc-link--active {
+  background: hsl(var(--crocus-50));
   color: hsl(var(--crocus-700));
   font-weight: 600;
   border-left-color: hsl(var(--crocus-500));
