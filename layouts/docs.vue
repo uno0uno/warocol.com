@@ -691,10 +691,10 @@ onMounted(() => {
 
 /* ─── TOC derecho ────────────────────────────────────── */
 .docs-toc {
-  width: 216px;
+  width: 200px;
   flex-shrink: 0;
   display: none;
-  padding: 24px 16px 0 0;
+  padding: 24px 8px 0 0;
 }
 
 @media (min-width: 1280px) {
@@ -705,35 +705,28 @@ onMounted(() => {
 
 .docs-toc-inner {
   position: sticky;
-  top: calc(58px + 24px);
-  background: #fff;
-  border: 1px solid hsl(var(--titan-200));
-  border-radius: 12px;
-  padding: 16px;
+  top: calc(58px + 28px);
   max-height: calc(100vh - 120px);
   overflow-y: auto;
   scrollbar-width: none;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 .docs-toc-inner::-webkit-scrollbar { display: none; }
 
 .docs-toc-title {
   font-size: 10.5px;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: hsl(var(--ebony-400));
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid hsl(var(--titan-100));
+  margin-bottom: 10px;
+  padding-left: 12px;
 }
 
 /* Rail izquierdo continuo */
 .docs-toc-rail {
   display: flex;
   flex-direction: column;
-  border-left: 2px solid hsl(var(--titan-100));
-  gap: 1px;
+  border-left: 1.5px solid hsl(var(--titan-200));
 }
 
 .docs-toc-link {
@@ -742,12 +735,11 @@ onMounted(() => {
   font-weight: 400;
   color: hsl(var(--ebony-500));
   text-decoration: none;
-  padding: 5px 8px 5px 12px;
-  border-radius: 6px;
-  line-height: 1.45;
-  margin-left: -2px;
-  border-left: 2px solid transparent;
-  transition: color 0.12s, background 0.12s, border-color 0.12s;
+  padding: 5px 8px 5px 11px;
+  line-height: 1.4;
+  margin-left: -1.5px;
+  border-left: 1.5px solid transparent;
+  transition: color 0.12s, border-color 0.12s;
 }
 
 .docs-toc-link--h3 {
@@ -757,13 +749,11 @@ onMounted(() => {
 }
 
 .docs-toc-link:hover {
-  background: hsl(var(--titan-50));
-  color: hsl(var(--crocus-700));
+  color: hsl(var(--crocus-600));
   border-left-color: hsl(var(--crocus-300));
 }
 
 .docs-toc-link--active {
-  background: hsl(var(--crocus-50));
   color: hsl(var(--crocus-700));
   font-weight: 600;
   border-left-color: hsl(var(--crocus-500));
