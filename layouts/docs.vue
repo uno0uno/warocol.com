@@ -22,15 +22,15 @@ import {
 const nav = [
   { label: 'Primeros pasos', path: '/docs/usuarios/primeros-pasos',               icon: BookOpenIcon },
   { label: 'Menú',           path: '/docs/usuarios/menu',                         icon: CubeIcon },
-  { label: 'POS',            path: '/docs/usuarios/pos/procesar-venta',           icon: ComputerDesktopIcon },
+  { label: 'POS',            path: '/docs/usuarios/pos',                          icon: ComputerDesktopIcon },
   { label: 'Ventas',         path: '/docs/usuarios/ventas',                       icon: ShoppingCartIcon },
   { label: 'Compras',        path: '/docs/usuarios/compras',                      icon: TruckIcon },
-  { label: 'Pagos',          path: '/docs/usuarios/pagos/pagos-proveedores',      icon: CreditCardIcon },
+  { label: 'Pagos',          path: '/docs/usuarios/pagos',                        icon: CreditCardIcon },
   { label: 'Gastos',         path: '/docs/usuarios/gastos',                       icon: BanknotesIcon },
   { label: 'Inventario',     path: '/docs/usuarios/inventario',                   icon: ClipboardDocumentListIcon },
-  { label: 'Domicilios',     path: '/docs/usuarios/domicilios/gestionar-domicilios', icon: MapPinIcon },
+  { label: 'Domicilios',     path: '/docs/usuarios/domicilios',                   icon: MapPinIcon },
   { label: 'Equipo',         path: '/docs/usuarios/equipo',                       icon: UserGroupIcon },
-  { label: 'Analítica',      path: '/docs/usuarios/analitica/leer-dashboard',     icon: ChartBarIcon },
+  { label: 'Analítica',      path: '/docs/usuarios/analitica',                    icon: ChartBarIcon },
   { label: 'Integraciones',  path: '/docs/dev',                                    icon: CodeBracketIcon },
 ]
 
