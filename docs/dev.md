@@ -154,11 +154,7 @@ Incluye variables de ambiente para producción y local. Configura `api_key` y `b
 
 **Precios server-side** — Nunca envíes precios desde el cliente. El servidor resuelve el precio según el `product_id`. Si un cliente manipula el precio en el frontend, el servidor lo ignora.
 
-**Timeouts de reserva** — Las reservas de boletas tienen un tiempo límite de bloqueo. Si el pago no se completa antes del timeout, los puestos se liberan automáticamente.
-
-**Rate limiting** — Las APIs tienen límites de peticiones por API key. Implementa reintentos con backoff exponencial para manejar errores 429.
-
-**Webhooks de pago** — Para Wompi y Bold, WaRo maneja los webhooks internamente. Tu integración solo necesita hacer polling a `/payments/{id}/status` o esperar la confirmación del checkout.
+**Rate limiting** — La API tiene límites de peticiones por API key. Implementa reintentos con backoff exponencial para manejar errores 429.
 
 ---
 
