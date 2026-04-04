@@ -209,7 +209,7 @@ onMounted(() => {
       <aside v-if="headings.length > 0" class="docs-toc">
         <div class="docs-toc-inner">
           <p class="docs-toc-title">En esta página</p>
-          <nav>
+          <nav class="docs-toc-rail">
             <a
               v-for="h in headings"
               :key="h.id"
@@ -691,9 +691,10 @@ onMounted(() => {
 
 /* ─── TOC derecho ────────────────────────────────────── */
 .docs-toc {
-  width: 220px;
+  width: 216px;
   flex-shrink: 0;
   display: none;
+  padding: 24px 16px 0 0;
 }
 
 @media (min-width: 1280px) {
@@ -705,47 +706,65 @@ onMounted(() => {
 .docs-toc-inner {
   position: sticky;
   top: calc(58px + 24px);
-  padding: 0 16px 0 0;
-  max-height: calc(100vh - 100px);
+  background: #fff;
+  border: 1px solid hsl(var(--titan-200));
+  border-radius: 12px;
+  padding: 16px;
+  max-height: calc(100vh - 120px);
   overflow-y: auto;
   scrollbar-width: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 .docs-toc-inner::-webkit-scrollbar { display: none; }
 
 .docs-toc-title {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: hsl(var(--ebony-400));
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid hsl(var(--titan-100));
+}
+
+/* Rail izquierdo continuo */
+.docs-toc-rail {
+  display: flex;
+  flex-direction: column;
+  border-left: 2px solid hsl(var(--titan-100));
+  gap: 1px;
 }
 
 .docs-toc-link {
   display: block;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 400;
   color: hsl(var(--ebony-500));
   text-decoration: none;
-  padding: 4px 0 4px 12px;
-  border-left: 2px solid hsl(var(--titan-200));
-  line-height: 1.4;
-  transition: color 0.12s, border-color 0.12s;
+  padding: 5px 8px 5px 12px;
+  border-radius: 6px;
+  line-height: 1.45;
+  margin-left: -2px;
+  border-left: 2px solid transparent;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
 }
 
 .docs-toc-link--h3 {
-  padding-left: 22px;
-  font-size: 12.5px;
+  padding-left: 20px;
+  font-size: 12px;
   color: hsl(var(--ebony-400));
 }
 
 .docs-toc-link:hover {
-  color: hsl(var(--crocus-600));
+  background: hsl(var(--titan-50));
+  color: hsl(var(--crocus-700));
   border-left-color: hsl(var(--crocus-300));
 }
 
 .docs-toc-link--active {
-  color: hsl(var(--crocus-600));
+  background: hsl(var(--crocus-50));
+  color: hsl(var(--crocus-700));
   font-weight: 600;
   border-left-color: hsl(var(--crocus-500));
 }
