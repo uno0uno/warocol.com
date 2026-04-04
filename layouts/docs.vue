@@ -31,7 +31,7 @@ const nav = [
   { label: 'Domicilios',     path: '/docs/usuarios/domicilios/gestionar-domicilios', icon: MapPinIcon },
   { label: 'Equipo',         path: '/docs/usuarios/equipo',                       icon: UserGroupIcon },
   { label: 'Analítica',      path: '/docs/usuarios/analitica/leer-dashboard',     icon: ChartBarIcon },
-  { label: 'Integraciones',  path: '/docs/dev/api',                               icon: CodeBracketIcon },
+  { label: 'Integraciones',  path: '/docs/dev',                                    icon: CodeBracketIcon },
 ]
 
 function isActive(path: string) {
