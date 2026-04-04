@@ -7,14 +7,6 @@ WaRo expone dos APIs REST públicas que puedes usar para construir experiencias 
 
 ---
 
-## Las dos APIs
-
-| API | Base URL | Para qué |
-|-----|----------|---------|
-| **WaRo Colombia** | `https://api.warocol.com` | Restaurantes — menú, carrito, órdenes, clientes, analítica |
-
----
-
 ## Autenticación
 
 ### WaRo Colombia API
@@ -140,21 +132,13 @@ Construye tu propia tienda siguiendo este flujo:
 
 ---
 
-## Colección Postman
-
-Descarga la colección para explorar todos los endpoints con ejemplos listos para ejecutar:
-
-[WaRo Colombia — Public API](https://github.com/uno0uno/api_warotickets/tree/master/postman)
-
-Incluye variables de ambiente para producción y local. Configura `api_key` y `base_url` y tendrás todos los ejemplos funcionando.
-
----
-
 ## Consideraciones de implementación
 
 **Precios server-side** — Nunca envíes precios desde el cliente. El servidor resuelve el precio según el `product_id`. Si un cliente manipula el precio en el frontend, el servidor lo ignora.
 
 **Rate limiting** — La API tiene límites de peticiones por API key. Implementa reintentos con backoff exponencial para manejar errores 429.
+
+**Colección Postman** — Descarga la colección para explorar todos los endpoints con ejemplos listos para ejecutar: [WaRo Colombia — Public API](https://github.com/uno0uno/api_warotickets/tree/master/postman). Incluye variables de ambiente para producción y local — configura `api_key` y `base_url` y tendrás todo funcionando.
 
 ---
 
