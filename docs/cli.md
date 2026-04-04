@@ -4,6 +4,71 @@ Herramienta de línea de comandos para la API pública de WaRo Colombia. Constru
 
 ---
 
+## Soporte nativo para LLMs y agentes de IA
+
+`waro-cli` fue diseñado desde el inicio para ser consumido por agentes de IA — no solo por humanos. La salida NDJSON es streameable, el schema es introspectable sin API key y cada subcomando es determinístico y sin estado.
+
+### Introspección de schema
+
+Un agente puede descubrir los endpoints disponibles, sus parámetros y tipos **sin necesidad de API key**:
+
+```bash
+# Lista todos los comandos disponibles
+waro schema
+
+# Schema detallado de un subcomando
+waro schema sales list
+waro schema sales detail
+
+# Filtrar solo los parámetros requeridos
+waro schema sales detail | jq '.params[] | select(.required == true)'
+```
+
+Esto permite que un LLM construya llamadas correctas sin documentación adicional.
+
+### Flags diseñados para agentes
+
+| Flag | Por qué importa para un LLM |
+|------|-----------------------------|
+| `--fields id,name,...` | Reduce el contexto enviado al modelo — solo los campos necesarios |
+| `--dry-run` | Valida la llamada sin ejecutarla — útil antes de una mutación |
+| `--all` | Paginación automática en NDJSON — streameable línea a línea |
+| `--output json` | Salida estructurada, parseable sin regex |
+
+### Invariantes para agentes seguros
+
+Al usar `waro-cli` dentro de un agente o flujo automatizado:
+
+- **Nunca exponer PII** — trabaja siempre con IDs (`order_id`, `customer_id`), no con emails ni nombres
+- **`--dry-run` antes de mutaciones** — valida parámetros sin efectos secundarios
+- **`--fields` para reducir ventana de contexto** — solicita solo los campos que necesitas procesar
+- **Zona horaria `America/Bogota`** — todas las fechas y filtros usan esta zona por defecto
+- **Paginación explícita** — usa `--limit` y `--offset` para controlar el volumen de datos; `--all` solo cuando necesitas el dataset completo
+
+### Ejemplo: agente que analiza ventas del día
+
+```bash
+# 1. Descubrir qué filtros acepta el endpoint
+waro schema sales list
+
+# 2. Traer solo los campos necesarios para el análisis
+waro sales list \
+  --date-from 2026-04-03 \
+  --date-to 2026-04-03 \
+  --fields id,status,total,created_at \
+  --all
+
+# 3. Métricas agregadas para el resumen ejecutivo
+waro sales metrics \
+  --group-by date \
+  --date-from 2026-04-01 \
+  --fields date,revenue,order_count
+```
+
+El output NDJSON (un objeto JSON por línea) puede procesarse incrementalmente a medida que llegan los datos, sin esperar la respuesta completa.
+
+---
+
 ## Instalación
 
 ### Binario precompilado — recomendado
