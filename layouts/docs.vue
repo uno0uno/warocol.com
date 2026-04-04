@@ -23,10 +23,30 @@ const nav = [
     ]
   },
   {
+    label: 'Ventas',
+    items: [
+      { label: 'Ver ventas', path: '/docs/usuarios/ventas/lista-ventas' },
+      { label: 'Registrar venta manual', path: '/docs/usuarios/ventas/registrar-venta' },
+    ]
+  },
+  {
     label: 'Compras',
     items: [
       { label: 'Gestionar proveedores', path: '/docs/usuarios/compras/gestionar-proveedores' },
       { label: 'Registrar compra con IA', path: '/docs/usuarios/compras/crear-orden-compra' },
+    ]
+  },
+  {
+    label: 'Pagos',
+    items: [
+      { label: 'Pagos a proveedores', path: '/docs/usuarios/pagos/pagos-proveedores' },
+    ]
+  },
+  {
+    label: 'Gastos',
+    items: [
+      { label: 'Ver gastos', path: '/docs/usuarios/gastos/lista-gastos' },
+      { label: 'Registrar gasto', path: '/docs/usuarios/gastos/registrar-gasto' },
     ]
   },
   {
@@ -37,9 +57,16 @@ const nav = [
     ]
   },
   {
+    label: 'Domicilios',
+    items: [
+      { label: 'Gestionar pedidos', path: '/docs/usuarios/domicilios/gestionar-domicilios' },
+    ]
+  },
+  {
     label: 'Equipo',
     items: [
       { label: 'Agregar empleado', path: '/docs/usuarios/equipo/agregar-empleado' },
+      { label: 'Configurar salario', path: '/docs/usuarios/equipo/configurar-salario' },
       { label: 'Registrar pago', path: '/docs/usuarios/equipo/registrar-pago' },
     ]
   },
@@ -66,6 +93,10 @@ import {
   CubeIcon,
   UserGroupIcon,
   ChartBarIcon,
+  ShoppingCartIcon,
+  BanknotesIcon,
+  ReceiptPercentIcon,
+  TruckIcon,
 } from '@heroicons/vue/24/outline'
 
 const { showDocsNav } = useDocsNav()
@@ -79,8 +110,12 @@ const sectionIcon: Record<string, unknown> = {
   'Empezar': BookOpenIcon,
   'Menú': ClipboardDocumentListIcon,
   'POS': ComputerDesktopIcon,
+  'Ventas': ShoppingCartIcon,
   'Compras': ShoppingBagIcon,
+  'Pagos': BanknotesIcon,
+  'Gastos': ReceiptPercentIcon,
   'Inventario': CubeIcon,
+  'Domicilios': TruckIcon,
   'Equipo': UserGroupIcon,
   'Analítica': ChartBarIcon,
 }
