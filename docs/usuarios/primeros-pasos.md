@@ -11,7 +11,7 @@ Desarrollador independiente (Indie Hacker)
 
 ---
 
-WARO COLOMBIA nació de un problema real. Mi amigo Brian tiene un restaurante llamado [Armelo Perro](https://warocol.com/armelo-perro) y en su tiempo pasó problemas con sus sistemas internos. Decidí ayudarle y así nació esta solución.
+WARO COLOMBIA nació de un problema real. Mi amigo Bryan tiene un restaurante llamado [Armelo Perro](https://warocol.com/armelo-perro) y en su tiempo pasó problemas con sus sistemas internos. Decidí ayudarle y así nació esta solución.
 
 Soy desarrollador independiente y me apasiona crear tecnología que use mucha gente, cobrando lo justo y generando impacto real. Con [Waro Tickets](https://warotickets.com/) hemos aportado a la cultura nacional trabajando con artistas de talla internacional. Además, trabajo en [Klira IA](https://getklira.com), he pasado por multinacionales y viajado a China, México y Ecuador buscando entender el mundo tecnológico.
 
