@@ -420,27 +420,13 @@ async function submit() {
     if (isEdit.value) {
       result = await $fetch(`/api/suppliers/ingredients/${props.ingredient.id}`, { method: 'PATCH', body })
     } else {
+      body.purchase_units = currentSuggestions.value.map((s, i) => ({
+        purchase_unit: s.purchase_unit,
+        purchase_unit_label: s.label,
+        conversion_factor: s.conversion_factor,
+        is_default: i === 0,
+      }))
       result = await $fetch('/api/suppliers/ingredients', { method: 'POST', body })
-
-      // Create purchase units sequentially (DB trigger requires one default at a time)
-      const ingredientId = result.data.id
-      if (ingredientId && currentSuggestions.value.length > 0) {
-        let isFirst = true
-        for (let i = 0; i < currentSuggestions.value.length; i++) {
-          const s = currentSuggestions.value[i]
-          await $fetch('/api/suppliers/ingredient-purchase-units', {
-            method: 'POST',
-            body: {
-              ingredient_id: ingredientId,
-              purchase_unit: s.purchase_unit,
-              purchase_unit_label: s.label,
-              conversion_factor: s.conversion_factor,
-              is_default: isFirst,
-            },
-          }).catch(() => null)  // non-critical — ingredient ya quedó creado
-          isFirst = false
-        }
-      }
     }
 
     emit('saved', result.data)
