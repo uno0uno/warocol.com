@@ -346,6 +346,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path === '/abastecimiento/ingredientes-propios') {
+    return {
+      pageTitle: 'Ingredientes Personalizados',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar ingredientes...',
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path === '/abastecimiento/compras') {
     return {
       pageTitle: 'Órdenes de Compra',
