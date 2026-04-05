@@ -396,12 +396,18 @@
                             @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
                             @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
                             @blur="() => hideResults(item)"
-                            class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
+                            class="input-base w-full pl-8 pr-8 py-1.5 text-sm"
                             placeholder="Buscar ingrediente..."
                           />
                           <span class="absolute left-2.5 top-2 text-text-secondary">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                            </svg>
+                          </span>
+                          <span v-if="isSearching(form.items.indexOf(item))" class="absolute right-2.5 top-2 text-text-secondary" aria-hidden="true">
+                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                             </svg>
                           </span>
                           <!-- Search Results Dropdown -->
@@ -667,12 +673,18 @@
                             @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
                             @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
                             @blur="() => hideResults(item)"
-                            class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
+                            class="input-base w-full pl-8 pr-8 py-1.5 text-sm"
                             placeholder="Buscar ingrediente..."
                           />
                           <span class="absolute left-2.5 top-2 text-text-secondary">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                            </svg>
+                          </span>
+                          <span v-if="isSearching(form.items.indexOf(item))" class="absolute right-2.5 top-2 text-text-secondary" aria-hidden="true">
+                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                             </svg>
                           </span>
                           <!-- Search Results Dropdown -->
@@ -932,12 +944,18 @@
                             @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
                             @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
                             @blur="() => hideResults(item)"
-                            class="input-base w-full pl-8 pr-3 py-1.5 text-sm"
+                            class="input-base w-full pl-8 pr-8 py-1.5 text-sm"
                             placeholder="Buscar ingrediente..."
                           />
                           <span class="absolute left-2.5 top-2 text-text-secondary">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                            </svg>
+                          </span>
+                          <span v-if="isSearching(form.items.indexOf(item))" class="absolute right-2.5 top-2 text-text-secondary" aria-hidden="true">
+                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                             </svg>
                           </span>
                           <!-- Search Results Dropdown -->
@@ -1648,6 +1666,10 @@ const getIngredientSearch = (index: number) => {
     ingredientSearches[index] = useIngredientSearch()
   }
   return ingredientSearches[index]
+}
+
+const isSearching = (index: number): boolean => {
+  return ingredientSearches[index]?.loading.value ?? false
 }
 
 // Cache of ingredient details keyed by ingredient_id (populated on select + OCR match)
