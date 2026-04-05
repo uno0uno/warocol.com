@@ -102,15 +102,44 @@
           <!-- Categoría -->
           <div class="flex flex-col gap-1.5">
             <label for="ing-category" class="text-sm font-medium text-text-primary">
-              Categoría <span class="text-xs font-normal text-text-tertiary ml-1">(opcional)</span>
+              Categoría <span class="text-destructive">*</span>
             </label>
             <input
               id="ing-category"
               v-model="form.category"
               type="text"
+              list="ing-category-list"
               placeholder="Ej: Carnes, Salsas, Lácteos..."
               :class="inputClass"
+              @input="clearError('category')"
             />
+            <datalist id="ing-category-list">
+              <option value="Aceites" />
+              <option value="Azúcares" />
+              <option value="Bebidas" />
+              <option value="Café" />
+              <option value="Carnes" />
+              <option value="Condimentos" />
+              <option value="Embutidos" />
+              <option value="Empaques" />
+              <option value="Endulzantes" />
+              <option value="Especias" />
+              <option value="Frutas" />
+              <option value="Granos" />
+              <option value="Harinas" />
+              <option value="Huevos" />
+              <option value="Lácteos" />
+              <option value="Mariscos" />
+              <option value="Panadería" />
+              <option value="Pastas" />
+              <option value="Proteínas" />
+              <option value="Salsas" />
+              <option value="Snacks" />
+              <option value="Tubérculos" />
+              <option value="Vegetales" />
+              <option value="Otros" />
+            </datalist>
+            <p v-if="errors.category" class="text-xs text-destructive">{{ errors.category }}</p>
           </div>
 
           <!-- Costo unitario -->
@@ -179,7 +208,8 @@ import { ref, computed, watch } from 'vue'
 
 interface Props {
   modelValue: boolean
-  ingredient?: any  // null/undefined = create mode, object = edit mode
+  ingredient?: any    // null/undefined = create mode, object = edit mode
+  initialName?: string  // pre-fill name when creating from search box
 }
 
 interface Emits {
@@ -187,7 +217,7 @@ interface Emits {
   (e: 'saved', ingredient: any): void
 }
 
-const props = withDefaults(defineProps<Props>(), { ingredient: null })
+const props = withDefaults(defineProps<Props>(), { ingredient: null, initialName: '' })
 const emit = defineEmits<Emits>()
 
 const isEdit = computed(() => !!props.ingredient)
@@ -210,15 +240,15 @@ watch(() => props.ingredient, (ing) => {
       parentName: ing.parent_name ?? '',
     }
   } else {
-    form.value = { name: '', unit: '', category: '', costo_unitario: null, parentId: null, parentName: '' }
+    form.value = { name: props.initialName ?? '', unit: '', category: '', costo_unitario: null, parentId: null, parentName: '' }
   }
   errors.value = {}
 }, { immediate: true })
 
-// Also reset when panel opens fresh
+// Reset when panel opens in create mode (pick up initialName changes too)
 watch(() => props.modelValue, (open) => {
   if (open && !props.ingredient) {
-    form.value = { name: '', unit: '', category: '', costo_unitario: null, parentId: null, parentName: '' }
+    form.value = { name: props.initialName ?? '', unit: '', category: '', costo_unitario: null, parentId: null, parentName: '' }
     errors.value = {}
   }
 })
@@ -241,6 +271,7 @@ function validate() {
   const e: Record<string, string> = {}
   if (!form.value.name.trim()) e.name = 'El nombre es obligatorio'
   if (!form.value.unit) e.unit = 'La unidad es obligatoria'
+  if (!form.value.category.trim()) e.category = 'La categoría es obligatoria'
   errors.value = e
   return Object.keys(e).length === 0
 }
@@ -254,7 +285,7 @@ async function submit() {
     const body: Record<string, any> = {
       name: form.value.name.trim(),
       unit: form.value.unit,
-      category: form.value.category || null,
+      category: form.value.category.trim(),
       costo_unitario: form.value.costo_unitario ?? null,
     }
     if (form.value.parentId !== null) body.parent_id = form.value.parentId

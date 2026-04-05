@@ -429,10 +429,10 @@
       </div>
     </UiModal>
 
-    <UiCreateCustomIngredientModal
+    <IngredientesIngredientePropioPanel
       v-model="showCustomIngModal"
       :initial-name="customIngModalName"
-      @created="onCustomIngredientCreated"
+      @saved="onCustomIngredientCreated"
     />
   </div>
 </template>
