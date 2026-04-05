@@ -33,6 +33,7 @@ const navigationItems = [
   { to: '/abastecimiento/compras-directas', label: 'Compra Directa', matchPath: '/abastecimiento/compras-directas' },
   { to: '/abastecimiento/stock', label: 'Stock' },
   { to: '/abastecimiento/ajustes', label: 'Ajustes', matchPath: '/abastecimiento/ajustes' },
+  { to: '/abastecimiento/ingredientes-propios', label: 'Ingredientes Propios' },
   { to: '/abastecimiento/calidad-datos', label: 'Calidad de Datos' }
 ]
 
