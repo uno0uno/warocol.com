@@ -33,11 +33,7 @@
           </select>
         </template>
 
-      </SharedFiltersBar>
-
-      <!-- Responsive Data View -->
-      <HealthSemaphore :is-unlocked="true" title="Ingredientes Personalizados">
-        <template #header-actions>
+        <template #actions>
           <button
             @click="openPanel(null)"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
@@ -45,6 +41,9 @@
             + Nuevo ingrediente
           </button>
         </template>
+      </SharedFiltersBar>
+
+      <!-- Responsive Data View -->
       <UiResponsiveDataView
         :columns="tableColumns"
         :data="filteredIngredients"
@@ -111,7 +110,6 @@
           </div>
         </template>
       </UiResponsiveDataView>
-      </HealthSemaphore>
     </div>
 
     <!-- Create / Edit Panel -->
