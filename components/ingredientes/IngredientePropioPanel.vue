@@ -78,25 +78,74 @@
             <p v-if="errors.name" class="text-xs text-destructive">{{ errors.name }}</p>
           </div>
 
-          <!-- Unidad -->
-          <div class="flex flex-col gap-1.5">
-            <label for="ing-unit" class="text-sm font-medium text-text-primary">
-              Unidad <span class="text-destructive">*</span>
+          <!-- CREACIÓN: selector de tipo de medida -->
+          <div v-if="!isEdit" class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-text-primary">
+              Tipo de medida <span class="text-destructive">*</span>
             </label>
-            <select
-              id="ing-unit"
-              v-model="form.unit"
-              :class="inputClass"
-              @change="clearError('unit')"
-            >
-              <option value="">Seleccionar unidad</option>
-              <option value="gr">gr — gramos</option>
-              <option value="kg">kg — kilogramos</option>
-              <option value="ml">ml — mililitros</option>
-              <option value="lt">lt — litros</option>
-              <option value="und">und — unidades</option>
-            </select>
+            <div class="flex rounded-lg border-2 border-border overflow-hidden" role="group" aria-label="Tipo de medida">
+              <button
+                v-for="t in UNIT_TYPES"
+                :key="t.key"
+                type="button"
+                @click="setUnitType(t.key)"
+                :class="[
+                  'flex-1 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/40',
+                  unitType === t.key
+                    ? 'bg-primary text-white'
+                    : 'bg-background text-text-secondary hover:bg-surface-secondary'
+                ]"
+              >
+                {{ t.label }}
+                <span class="block text-xs opacity-70 mt-0.5">{{ t.unit }}</span>
+              </button>
+            </div>
             <p v-if="errors.unit" class="text-xs text-destructive">{{ errors.unit }}</p>
+          </div>
+
+          <!-- CREACIÓN: unidades de compra sugeridas (Peso / Volumen) -->
+          <div v-if="!isEdit && unitType && currentSuggestions.length > 0" class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-text-primary">Unidades de compra</label>
+            <p class="text-xs text-text-tertiary -mt-1">Se crean automáticamente con el ingrediente</p>
+            <div class="rounded-lg border border-border divide-y divide-border overflow-hidden">
+              <label
+                v-for="(s, i) in currentSuggestions"
+                :key="i"
+                class="flex items-center justify-between px-3 py-2.5 cursor-pointer hover:bg-surface-secondary/50 transition-colors"
+              >
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <input
+                    type="checkbox"
+                    :checked="selectedSuggestions[i]"
+                    @change="toggleSuggestion(i)"
+                    class="w-4 h-4 rounded border-border accent-primary flex-shrink-0"
+                  />
+                  <span class="text-sm text-text-primary">{{ s.label }}</span>
+                  <span
+                    v-if="firstSelected === i"
+                    class="text-xs text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0"
+                  >predeterminado</span>
+                </div>
+                <span class="text-xs text-text-tertiary font-mono flex-shrink-0 ml-2">
+                  {{ s.conversion_factor.toLocaleString('es-CO') }} {{ form.unit }}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <!-- CREACIÓN: nota para Pieza -->
+          <div v-if="!isEdit && unitType === 'pieza'" class="text-xs text-text-tertiary bg-surface-secondary/50 rounded-lg px-3 py-2.5 leading-relaxed">
+            Las unidades de compra (docena, paquete, caja…) se configuran en
+            <strong class="text-text-secondary">Compras Directas</strong>
+            al registrar la primera compra del ingrediente.
+          </div>
+
+          <!-- EDICIÓN: unidad de solo lectura -->
+          <div v-if="isEdit" class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-text-primary">Unidad</label>
+            <div class="h-10 flex items-center px-3 rounded-lg border border-border bg-surface-secondary/60 text-sm text-text-secondary select-none">
+              {{ UNIT_LABELS[form.unit] || form.unit }}
+            </div>
           </div>
 
           <!-- Categoría -->
@@ -208,41 +257,116 @@ const isEdit = computed(() => !!props.ingredient)
 
 const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 
+const UNIT_LABELS: Record<string, string> = {
+  gr: 'gr — gramos',
+  kg: 'kg — kilogramos',
+  ml: 'ml — mililitros',
+  lt: 'lt — litros',
+  und: 'und — unidades',
+}
+
+const UNIT_TYPES = [
+  {
+    key: 'peso' as const,
+    label: 'Peso',
+    unit: 'gr',
+    suggestions: [
+      { purchase_unit: 'kg',        label: 'Kilogramo',     conversion_factor: 1000  },
+      { purchase_unit: 'libra',     label: 'Libra',         conversion_factor: 500   },
+      { purchase_unit: 'arroba',    label: 'Arroba',        conversion_factor: 12500 },
+      { purchase_unit: 'bulto_25kg',label: 'Bulto (25 kg)', conversion_factor: 25000 },
+    ],
+  },
+  {
+    key: 'volumen' as const,
+    label: 'Volumen',
+    unit: 'ml',
+    suggestions: [
+      { purchase_unit: 'lt',      label: 'Litro',   conversion_factor: 1000 },
+      { purchase_unit: 'botella', label: 'Botella', conversion_factor: 750  },
+      { purchase_unit: 'galon',   label: 'Galón',   conversion_factor: 3785 },
+    ],
+  },
+  {
+    key: 'pieza' as const,
+    label: 'Pieza',
+    unit: 'und',
+    suggestions: [],
+  },
+]
+
+type UnitTypeKey = 'peso' | 'volumen' | 'pieza' | ''
+
+// --- State ---
+const unitType = ref<UnitTypeKey>('')
+const selectedSuggestions = ref<boolean[]>([])
 const form = ref({ name: '', unit: '', category: '', parentId: null as string | null, parentName: '' })
 const errors = ref<Record<string, string>>({})
 const saving = ref(false)
 
-// Populate form when ingredient changes (edit mode)
+// --- Computed ---
+const currentSuggestions = computed(() =>
+  UNIT_TYPES.find(t => t.key === unitType.value)?.suggestions ?? []
+)
+
+const firstSelected = computed(() =>
+  selectedSuggestions.value.findIndex(v => v)
+)
+
+// --- Unit type selection ---
+const setUnitType = (key: UnitTypeKey) => {
+  unitType.value = key
+  const t = UNIT_TYPES.find(u => u.key === key)
+  if (t) {
+    form.value.unit = t.unit
+    selectedSuggestions.value = t.suggestions.map(() => true)
+  }
+  clearError('unit')
+}
+
+const toggleSuggestion = (i: number) => {
+  selectedSuggestions.value[i] = !selectedSuggestions.value[i]
+}
+
+// --- Form reset helpers ---
+const resetCreate = () => {
+  form.value = { name: props.initialName ?? '', unit: '', category: '', parentId: null, parentName: '' }
+  unitType.value = ''
+  selectedSuggestions.value = []
+  errors.value = {}
+}
+
+// Populate form when ingredient changes
 watch(() => props.ingredient, (ing) => {
   if (ing) {
     form.value = {
       name: ing.name ?? '',
       unit: ing.unit ?? '',
       category: ing.category ?? '',
-      parentId: null,   // parent_id not returned by list endpoint — only parent_name
+      parentId: null,
       parentName: ing.parent_name ?? '',
     }
+    unitType.value = ''
+    selectedSuggestions.value = []
   } else {
-    form.value = { name: props.initialName ?? '', unit: '', category: '', parentId: null, parentName: '' }
+    resetCreate()
   }
   errors.value = {}
 }, { immediate: true })
 
-// Reset when panel opens in create mode (pick up initialName changes too)
+// Reset when panel opens in create mode
 watch(() => props.modelValue, (open) => {
-  if (open && !props.ingredient) {
-    form.value = { name: props.initialName ?? '', unit: '', category: '', parentId: null, parentName: '' }
-    errors.value = {}
-  }
+  if (open && !props.ingredient) resetCreate()
 })
 
+// --- Parent ingredient ---
 const onParentSelect = (ing: any) => {
   form.value.parentId = ing.id
   form.value.parentName = ing.name
 }
 
 const onParentClear = () => {
-  form.value.parentId = ''   // empty string = clear in backend
+  form.value.parentId = ''
   form.value.parentName = ''
 }
 
@@ -250,15 +374,17 @@ const clearError = (field: string) => {
   delete errors.value[field]
 }
 
+// --- Validation ---
 function validate() {
   const e: Record<string, string> = {}
   if (!form.value.name.trim()) e.name = 'El nombre es obligatorio'
-  if (!form.value.unit) e.unit = 'La unidad es obligatoria'
+  if (!form.value.unit) e.unit = 'Selecciona un tipo de medida'
   if (!form.value.category.trim()) e.category = 'La categoría es obligatoria'
   errors.value = e
   return Object.keys(e).length === 0
 }
 
+// --- Submit ---
 async function submit() {
   if (!validate()) return
   saving.value = true
@@ -277,6 +403,27 @@ async function submit() {
       result = await $fetch(`/api/suppliers/ingredients/${props.ingredient.id}`, { method: 'PATCH', body })
     } else {
       result = await $fetch('/api/suppliers/ingredients', { method: 'POST', body })
+
+      // Create selected purchase units sequentially (DB trigger requires one default at a time)
+      const ingredientId = result.data.id
+      if (ingredientId && currentSuggestions.value.length > 0) {
+        let isFirst = true
+        for (let i = 0; i < currentSuggestions.value.length; i++) {
+          if (!selectedSuggestions.value[i]) continue
+          const s = currentSuggestions.value[i]
+          await $fetch('/api/suppliers/ingredient-purchase-units', {
+            method: 'POST',
+            body: {
+              ingredient_id: ingredientId,
+              purchase_unit: s.purchase_unit,
+              purchase_unit_label: s.label,
+              conversion_factor: s.conversion_factor,
+              is_default: isFirst,
+            },
+          }).catch(() => null)  // non-critical — ingredient ya quedó creado
+          isFirst = false
+        }
+      }
     }
 
     emit('saved', result.data)
