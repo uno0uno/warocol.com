@@ -50,11 +50,12 @@
           role="option"
           @mousedown.prevent="select(row)"
           :class="[
-            'px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary cursor-pointer',
+            'px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5',
             row.parent_id ? 'pl-6' : ''
           ]"
         >
-          {{ row.name }} <span class="text-text-secondary">({{ row.unit }})</span>
+          <span>{{ row.name }} <span class="text-text-secondary">({{ row.unit }})</span></span>
+          <span v-if="row.is_custom" class="text-xs bg-primary/10 text-primary rounded px-1 flex-shrink-0">Personalizado</span>
         </li>
       </template>
       <!-- "No results" message when search ran but found nothing -->
@@ -96,6 +97,7 @@ interface Props {
   placeholder?: string
   initialValue?: string
   allowCreate?: boolean
+  baseOnly?: boolean
 }
 
 interface Emits {
@@ -107,6 +109,7 @@ const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Buscar ingrediente...',
   initialValue: '',
   allowCreate: false,
+  baseOnly: false,
 })
 
 const emit = defineEmits<Emits>()
@@ -114,7 +117,7 @@ const emit = defineEmits<Emits>()
 const searchTerm = ref(props.initialValue)
 const showResults = ref(false)
 
-const { query, groupedResults, loading } = useIngredientSearch()
+const { query, groupedResults, loading } = useIngredientSearch({ baseOnly: props.baseOnly })
 
 function onInput(e: Event) {
   const val = (e.target as HTMLInputElement).value

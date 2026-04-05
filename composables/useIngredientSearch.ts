@@ -15,7 +15,7 @@ import { useDebounceFn } from '@vueuse/core'
  *   // bind query to the search input v-model
  *   // bind groupedResults to the dropdown — skip rows where _isHeader === true
  */
-export const useIngredientSearch = () => {
+export const useIngredientSearch = ({ baseOnly = false } = {}) => {
   const results = ref<any[]>([])
   const loading = ref(false)
   const error = ref<Error | null>(null)
@@ -30,8 +30,10 @@ export const useIngredientSearch = () => {
     loading.value = true
     error.value = null
     try {
+      const fetchQuery: Record<string, any> = { search: q.trim(), limit: 50 }
+      if (baseOnly) fetchQuery.base_only = true
       const data = await $fetch<any>('/api/suppliers/ingredients', {
-        query: { search: q.trim(), limit: 50 }
+        query: fetchQuery
       })
       results.value = data?.data ?? []
     } catch (e: any) {

@@ -260,7 +260,9 @@
                   <div class="md:col-span-4">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente *</label>
                     <UiIngredientSearchInput
+                      :allow-create="true"
                       @select="(ing) => selectIngredient(ing, index)"
+                      @create="(name) => openCustomIngModal(name, index)"
                     />
                   </div>
 
@@ -509,6 +511,12 @@
         </div>
       </form>
     </div>
+
+    <UiCreateCustomIngredientModal
+      v-model="showCustomIngModal"
+      :initial-name="customIngModalName"
+      @created="onCustomIngredientCreated"
+    />
   </div>
 </template>
 
@@ -604,6 +612,23 @@ function selectIngredient(ingredient: any, index: number) {
   form.value.ingredients[index].ingredient_id = ingredient.id
   ingredientCache.value[ingredient.id] = ingredient
   onIngredientChange(index, ingredient.id)
+}
+
+const showCustomIngModal = ref(false)
+const customIngModalName = ref('')
+const customIngModalIndex = ref(-1)
+
+function openCustomIngModal(name: string, index: number) {
+  customIngModalIndex.value = index
+  customIngModalName.value = name
+  showCustomIngModal.value = true
+}
+
+function onCustomIngredientCreated(ingredient: any) {
+  const index = customIngModalIndex.value
+  if (index < 0 || index >= form.value.ingredients.length) return
+  selectIngredient(ingredient, index)
+  customIngModalIndex.value = -1
 }
 
 const isLoadingData = ref(false)

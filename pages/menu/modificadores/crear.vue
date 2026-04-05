@@ -321,7 +321,9 @@
                   <div class="md:col-span-4">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente *</label>
                     <UiIngredientSearchInput
+                      :allow-create="true"
                       @select="(ing) => selectIngredient(modifier, ing)"
+                      @create="(name) => openCustomIngModal(name, index)"
                     />
                     <!-- Show ingredient cost for reference -->
                     <p v-if="modifier.ingredient_id" class="text-xs text-text-secondary mt-1">
@@ -661,6 +663,12 @@
         </div>
       </div>
     </div>
+
+    <UiCreateCustomIngredientModal
+      v-model="showCustomIngModal"
+      :initial-name="customIngModalName"
+      @created="onCustomIngredientCreated"
+    />
   </div>
 </template>
 
@@ -817,6 +825,23 @@ function selectIngredient(modifier: any, ing: any) {
   modifier.ingredient_unit = ing.unit || 'g'
   ingredientCache.value[ing.id] = ing
   loadPurchaseUnits(ing.id)
+}
+
+const showCustomIngModal = ref(false)
+const customIngModalName = ref('')
+const customIngModalModIndex = ref(-1)
+
+function openCustomIngModal(name: string, index: number) {
+  customIngModalModIndex.value = index
+  customIngModalName.value = name
+  showCustomIngModal.value = true
+}
+
+function onCustomIngredientCreated(ingredient: any) {
+  const index = customIngModalModIndex.value
+  if (index < 0 || index >= form.value.modifiers.length) return
+  selectIngredient(form.value.modifiers[index], ingredient)
+  customIngModalModIndex.value = -1
 }
 
 function removeModifier(index: number) {
