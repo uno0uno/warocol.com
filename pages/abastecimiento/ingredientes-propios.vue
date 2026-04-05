@@ -33,20 +33,18 @@
           </select>
         </template>
 
-        <template #actions>
-          <button
-            @click="openPanel(null)"
-            class="min-h-[44px] px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 focus:ring-2 focus:ring-primary focus:outline-none active:scale-95 transition-all flex items-center gap-2 flex-shrink-0"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Crear ingrediente
-          </button>
-        </template>
       </SharedFiltersBar>
 
       <!-- Responsive Data View -->
+      <HealthSemaphore :is-unlocked="true" title="Ingredientes Personalizados">
+        <template #header-actions>
+          <button
+            @click="openPanel(null)"
+            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
+          >
+            + Nuevo ingrediente
+          </button>
+        </template>
       <UiResponsiveDataView
         :columns="tableColumns"
         :data="filteredIngredients"
@@ -113,6 +111,7 @@
           </div>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
     </div>
 
     <!-- Create / Edit Panel -->
