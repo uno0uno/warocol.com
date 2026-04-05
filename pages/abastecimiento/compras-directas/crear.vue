@@ -1546,12 +1546,11 @@
     </div>
   </div>
 
-  <!-- Create Ingredient Modal -->
-  <UiCreateIngredientModal
+  <!-- Create Ingredient Panel -->
+  <IngredientesIngredientePropioPanel
     v-model="showCreateModal"
     :initial-name="createModalName"
-    @created="onIngredientCreated"
-    @select="onIngredientSelected"
+    @saved="onIngredientCreated"
   />
 </template>
 
