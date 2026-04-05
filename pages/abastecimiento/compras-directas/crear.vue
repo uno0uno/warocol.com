@@ -2396,7 +2396,7 @@ function openCreateModal(index: number, name: string) {
   showCreateModal.value = true
 }
 
-function onIngredientCreated(ingredient: any) {
+async function onIngredientCreated(ingredient: any) {
   const index = createModalItemIndex.value
   if (index < 0 || index >= form.value.items.length) return
   const item = form.value.items[index]
@@ -2404,6 +2404,7 @@ function onIngredientCreated(ingredient: any) {
   item.ingredient_id = ingredient.id
   item.searchTerm = ingredient.name
   item.showResults = false
+  await refreshPurchaseUnits()
   onIngredientChange(index)
 }
 
