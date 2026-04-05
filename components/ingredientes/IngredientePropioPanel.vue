@@ -84,20 +84,59 @@
               Tipo de medida <span class="text-destructive">*</span>
             </label>
             <div class="grid grid-cols-3 gap-2" role="group" aria-label="Tipo de medida">
+              <!-- Peso -->
               <button
-                v-for="t in UNIT_TYPES"
-                :key="t.key"
                 type="button"
-                @click="setUnitType(t.key)"
+                @click="setUnitType('peso')"
                 :class="[
-                  'flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl border-2 transition-all focus:outline-none',
-                  unitType === t.key
-                    ? 'border-primary bg-primary/5 text-primary shadow-sm'
-                    : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:bg-surface-secondary'
+                  'flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 transition-all focus:outline-none',
+                  unitType === 'peso'
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
                 ]"
               >
-                <span class="text-sm font-semibold">{{ t.label }}</span>
-                <span class="text-xs font-mono opacity-60">{{ t.unit }}</span>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 6l9 2 9-2M3 6v12l9 2 9-2V6M12 8v10" />
+                </svg>
+                <span class="text-xs font-bold tracking-wide">Peso</span>
+                <span :class="['text-[10px] font-mono px-2 py-0.5 rounded-full', unitType === 'peso' ? 'bg-primary/15 text-primary' : 'bg-surface-secondary text-text-tertiary']">gr / kg</span>
+              </button>
+
+              <!-- Volumen -->
+              <button
+                type="button"
+                @click="setUnitType('volumen')"
+                :class="[
+                  'flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 transition-all focus:outline-none',
+                  unitType === 'volumen'
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2C12 2 5 10 5 14a7 7 0 0014 0c0-4-7-12-7-12z" />
+                </svg>
+                <span class="text-xs font-bold tracking-wide">Volumen</span>
+                <span :class="['text-[10px] font-mono px-2 py-0.5 rounded-full', unitType === 'volumen' ? 'bg-primary/15 text-primary' : 'bg-surface-secondary text-text-tertiary']">ml / lt</span>
+              </button>
+
+              <!-- Pieza -->
+              <button
+                type="button"
+                @click="setUnitType('pieza')"
+                :class="[
+                  'flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 transition-all focus:outline-none',
+                  unitType === 'pieza'
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12" />
+                </svg>
+                <span class="text-xs font-bold tracking-wide">Pieza</span>
+                <span :class="['text-[10px] font-mono px-2 py-0.5 rounded-full', unitType === 'pieza' ? 'bg-primary/15 text-primary' : 'bg-surface-secondary text-text-tertiary']">und</span>
               </button>
             </div>
             <p v-if="errors.unit" class="text-xs text-destructive">{{ errors.unit }}</p>
