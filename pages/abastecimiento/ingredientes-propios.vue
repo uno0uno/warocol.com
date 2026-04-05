@@ -32,8 +32,11 @@
             <option value="without_parent">Sin base</option>
           </select>
         </template>
+      </SharedFiltersBar>
 
-        <template #actions>
+      <!-- Data View -->
+      <HealthSemaphore :is-unlocked="true" title="Ingredientes Personalizados">
+        <template #header-actions>
           <button
             @click="openPanel(null)"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
@@ -41,9 +44,6 @@
             + Nuevo ingrediente
           </button>
         </template>
-      </SharedFiltersBar>
-
-      <!-- Responsive Data View -->
       <UiResponsiveDataView
         :columns="tableColumns"
         :data="filteredIngredients"
@@ -110,6 +110,7 @@
           </div>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
     </div>
 
     <!-- Create / Edit Panel -->
@@ -123,6 +124,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 useHead({ title: 'Ingredientes Personalizados' })
 
