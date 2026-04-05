@@ -481,8 +481,6 @@ async function submit() {
       if (existingPurchaseUnits.value.length === 0 && editSuggestions.value.length > 0) {
         body.purchase_units = editSuggestions.value.map((s, i) => ({
           purchase_unit: s.purchase_unit,
-          purchase_unit_label: s.label,
-          conversion_factor: s.conversion_factor,
           is_default: i === 0,
         }))
       }
@@ -490,8 +488,6 @@ async function submit() {
     } else {
       body.purchase_units = currentSuggestions.value.map((s, i) => ({
         purchase_unit: s.purchase_unit,
-        purchase_unit_label: s.label,
-        conversion_factor: s.conversion_factor,
         is_default: i === 0,
       }))
       result = await $fetch('/api/suppliers/ingredients', { method: 'POST', body })
