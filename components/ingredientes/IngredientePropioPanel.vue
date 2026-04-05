@@ -142,22 +142,6 @@
             <p v-if="errors.category" class="text-xs text-destructive">{{ errors.category }}</p>
           </div>
 
-          <!-- Costo unitario -->
-          <div class="flex flex-col gap-1.5">
-            <label for="ing-cost" class="text-sm font-medium text-text-primary">
-              Costo unitario <span class="text-xs font-normal text-text-tertiary ml-1">(opcional)</span>
-            </label>
-            <input
-              id="ing-cost"
-              v-model.number="form.costo_unitario"
-              type="number"
-              min="0"
-              step="1"
-              placeholder="0"
-              :class="inputClass"
-            />
-          </div>
-
           <!-- Basado en (ingrediente global) -->
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-text-primary">
@@ -224,7 +208,7 @@ const isEdit = computed(() => !!props.ingredient)
 
 const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 
-const form = ref({ name: '', unit: '', category: '', costo_unitario: null as number | null, parentId: null as string | null, parentName: '' })
+const form = ref({ name: '', unit: '', category: '', parentId: null as string | null, parentName: '' })
 const errors = ref<Record<string, string>>({})
 const saving = ref(false)
 
@@ -235,12 +219,11 @@ watch(() => props.ingredient, (ing) => {
       name: ing.name ?? '',
       unit: ing.unit ?? '',
       category: ing.category ?? '',
-      costo_unitario: ing.price ?? null,
       parentId: null,   // parent_id not returned by list endpoint — only parent_name
       parentName: ing.parent_name ?? '',
     }
   } else {
-    form.value = { name: props.initialName ?? '', unit: '', category: '', costo_unitario: null, parentId: null, parentName: '' }
+    form.value = { name: props.initialName ?? '', unit: '', category: '', parentId: null, parentName: '' }
   }
   errors.value = {}
 }, { immediate: true })
@@ -248,7 +231,7 @@ watch(() => props.ingredient, (ing) => {
 // Reset when panel opens in create mode (pick up initialName changes too)
 watch(() => props.modelValue, (open) => {
   if (open && !props.ingredient) {
-    form.value = { name: props.initialName ?? '', unit: '', category: '', costo_unitario: null, parentId: null, parentName: '' }
+    form.value = { name: props.initialName ?? '', unit: '', category: '', parentId: null, parentName: '' }
     errors.value = {}
   }
 })
@@ -286,7 +269,6 @@ async function submit() {
       name: form.value.name.trim(),
       unit: form.value.unit,
       category: form.value.category.trim(),
-      costo_unitario: form.value.costo_unitario ?? null,
     }
     if (form.value.parentId !== null) body.parent_id = form.value.parentId
 
