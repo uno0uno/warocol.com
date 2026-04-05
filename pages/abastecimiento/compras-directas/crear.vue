@@ -1820,15 +1820,35 @@ const getPurchaseUnitOptions = (ingredientId: string) => {
   const pendingUnits = localPurchaseUnits.value.filter(u => u.ingredient_id === ingredientId)
 
   if (units.length === 0 && pendingUnits.length === 0) {
-    if (ingredient) {
-      return [{
-        value: ingredient.unit,
-        label: ingredient.unit,
-        conversion_factor: 1,
-        is_default: true
-      }]
+    if (!ingredient) return []
+
+    // Fallback suggestions based on base unit (for ingredients with no purchase units configured)
+    const fallbackByUnit: Record<string, { value: string; label: string; conversion_factor: number; is_default: boolean }[]> = {
+      gr: [
+        { value: 'Kilogramo', label: 'Kilogramo (1000 gr)', conversion_factor: 1000, is_default: true },
+        { value: 'Libra', label: 'Libra (500 gr)', conversion_factor: 500, is_default: false },
+        { value: 'Arroba', label: 'Arroba (12500 gr)', conversion_factor: 12500, is_default: false },
+        { value: 'Bulto (25 kg)', label: 'Bulto (25000 gr)', conversion_factor: 25000, is_default: false },
+        { value: 'gr', label: 'gr', conversion_factor: 1, is_default: false },
+      ],
+      kg: [
+        { value: 'kg', label: 'kg', conversion_factor: 1, is_default: true },
+      ],
+      ml: [
+        { value: 'Litro', label: 'Litro (1000 ml)', conversion_factor: 1000, is_default: true },
+        { value: 'Botella', label: 'Botella (750 ml)', conversion_factor: 750, is_default: false },
+        { value: 'Galón', label: 'Galón (3785 ml)', conversion_factor: 3785, is_default: false },
+        { value: 'ml', label: 'ml', conversion_factor: 1, is_default: false },
+      ],
+      lt: [
+        { value: 'lt', label: 'lt', conversion_factor: 1, is_default: true },
+      ],
+      und: [
+        { value: 'und', label: 'und', conversion_factor: 1, is_default: true },
+      ],
     }
-    return []
+
+    return fallbackByUnit[ingredient.unit] || [{ value: ingredient.unit, label: ingredient.unit, conversion_factor: 1, is_default: true }]
   }
 
   const serverOptions = units.map((u: any) => {
