@@ -9,21 +9,9 @@
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Stats Cards -->
       <UiStats>
-        <UiStatsCard
-          label="Total Personalizados"
-          :value="stats.total"
-          icon="beaker"
-        />
-        <UiStatsCard
-          label="Con base global"
-          :value="stats.withParent"
-          icon="link"
-        />
-        <UiStatsCard
-          label="Sin base"
-          :value="stats.withoutParent"
-          icon="plus-circle"
-        />
+        <UiStatsCard label="Total Personalizados" :value="stats.total" icon="beaker" />
+        <UiStatsCard label="Con base global" :value="stats.withParent" icon="link" />
+        <UiStatsCard label="Sin base" :value="stats.withoutParent" icon="plus-circle" />
       </UiStats>
 
       <!-- Filters Bar -->
@@ -47,7 +35,7 @@
 
         <template #actions>
           <button
-            @click="showCreateModal = true"
+            @click="openPanel(null)"
             class="min-h-[44px] px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 focus:ring-2 focus:ring-primary focus:outline-none active:scale-95 transition-all flex items-center gap-2 flex-shrink-0"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -73,8 +61,9 @@
         <!-- Mobile Card -->
         <template #card="{ item, index }">
           <div
-            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
+            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary cursor-pointer"
             :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+            @click="openPanel(item)"
           >
             <div class="flex-1 min-w-0">
               <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
@@ -85,38 +74,9 @@
                 </span>
               </div>
             </div>
-            <div class="flex items-center gap-1 flex-shrink-0">
-              <button
-                @click.stop="navigateTo(`/abastecimiento/ajustes/crear?ingredientId=${item.id}`)"
-                aria-label="`Ajuste manual para ${item.name}`"
-                title="Ajuste manual"
-                class="w-8 h-8 flex items-center justify-center rounded bg-surface-secondary border border-border text-text-secondary hover:text-primary transition-colors"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                </svg>
-              </button>
-              <button
-                @click.stop="navigateTo('/abastecimiento/compras-directas/crear')"
-                aria-label="`Registrar compra de ${item.name}`"
-                title="Registrar compra"
-                class="w-8 h-8 flex items-center justify-center rounded bg-surface-secondary border border-border text-text-secondary hover:text-primary transition-colors"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m0 0h9M17 19a1 1 0 100 2 1 1 0 000-2zm-10 0a1 1 0 100 2 1 1 0 000-2z" />
-                </svg>
-              </button>
-              <button
-                @click.stop="navigateTo('/abastecimiento/stock')"
-                aria-label="`Ver stock de ${item.name}`"
-                title="Ver stock"
-                class="w-8 h-8 flex items-center justify-center rounded bg-surface-secondary border border-border text-text-secondary hover:text-primary transition-colors"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </button>
-            </div>
+            <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
           </div>
         </template>
 
@@ -139,35 +99,15 @@
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex justify-center gap-1">
+          <div class="flex justify-center">
             <button
-              @click="navigateTo(`/abastecimiento/ajustes/crear?ingredientId=${row.id}`)"
-              aria-label="`Ajuste manual para ${row.name}`"
-              title="Ajuste manual"
+              @click="openPanel(row)"
+              :aria-label="`Editar ${row.name}`"
+              title="Editar"
               class="p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-text-secondary hover:text-primary"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-              </svg>
-            </button>
-            <button
-              @click="navigateTo('/abastecimiento/compras-directas/crear')"
-              aria-label="`Registrar compra de ${row.name}`"
-              title="Registrar compra"
-              class="p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-text-secondary hover:text-primary"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m0 0h9M17 19a1 1 0 100 2 1 1 0 000-2zm-10 0a1 1 0 100 2 1 1 0 000-2z" />
-              </svg>
-            </button>
-            <button
-              @click="navigateTo('/abastecimiento/stock')"
-              aria-label="`Ver stock de ${row.name}`"
-              title="Ver stock"
-              class="p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-text-secondary hover:text-primary"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
               </svg>
             </button>
           </div>
@@ -175,10 +115,11 @@
       </UiResponsiveDataView>
     </div>
 
-    <!-- Create Modal -->
-    <UiCreateCustomIngredientModal
-      v-model="showCreateModal"
-      @created="onIngredientCreated"
+    <!-- Create / Edit Panel -->
+    <IngredientesIngredientePropioPanel
+      v-model="showPanel"
+      :ingredient="panelIngredient"
+      @saved="onSaved"
     />
   </div>
 </template>
@@ -195,10 +136,11 @@ const searchQuery = ref('')
 const parentFilter = ref('all')
 const sortField = ref('')
 const sortDirection = ref('asc')
-const showCreateModal = ref(false)
+const showPanel = ref(false)
+const panelIngredient = ref<any>(null)
 
 // Data
-const { data: ingredientsData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
+const { data: ingredientsData, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['ingredients', 'custom', currentTenant.value?.id],
   query: () => $fetch('/api/suppliers/ingredients', {
     params: { tenant_only: true, limit: 500 }
@@ -229,6 +171,15 @@ const filteredIngredients = computed(() => {
   })
 })
 
+const openPanel = (ingredient: any) => {
+  panelIngredient.value = ingredient
+  showPanel.value = true
+}
+
+const onSaved = () => {
+  refetch()
+}
+
 const handleSort = (field: string) => {
   if (sortField.value === field) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
@@ -243,25 +194,17 @@ const clearFilters = () => {
   parentFilter.value = 'all'
 }
 
-const onIngredientCreated = () => {
-  refetch()
-}
-
 const tableColumns = [
   { key: 'name', title: 'Nombre', sortable: true, format: 'text', align: 'left' },
   { key: 'unit', title: 'Unidad', sortable: false, format: 'text', align: 'left' },
   { key: 'parent_name', title: 'Basado en', sortable: true, format: 'custom', align: 'left' },
   { key: 'category', title: 'Categoría', sortable: false, format: 'text', align: 'left' },
-  { key: 'actions', title: 'Acciones', sortable: false, format: 'custom', align: 'center' },
+  { key: 'actions', title: '', sortable: false, format: 'custom', align: 'center' },
 ]
 
 // Layout integration
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-onMounted(() => {
-  setRefreshHandler(refetch)
-})
+onMounted(() => setRefreshHandler(refetch))
 registerProgressiveLoading(isRefreshing)
-onUnmounted(() => {
-  clearRefreshHandler(refetch)
-})
+onUnmounted(() => clearRefreshHandler(refetch))
 </script>
