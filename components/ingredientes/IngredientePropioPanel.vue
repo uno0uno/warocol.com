@@ -180,6 +180,44 @@
             </div>
           </div>
 
+          <!-- EDICIÓN: unidades de compra existentes -->
+          <div v-if="isEdit && !loadingExistingUnits && existingPurchaseUnits.length > 0" class="flex flex-col gap-1.5">
+            <p class="text-xs font-medium text-text-secondary">Unidades de compra</p>
+            <div class="rounded-xl border border-border divide-y divide-border overflow-hidden bg-surface-secondary/30">
+              <div v-for="(u, i) in existingPurchaseUnits" :key="i" class="flex items-center justify-between px-3 py-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <svg class="w-3.5 h-3.5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span class="text-sm text-text-primary">{{ u.purchase_unit_label }}</span>
+                  <span v-if="u.is_default" class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
+                </div>
+                <span class="text-xs text-text-tertiary font-mono flex-shrink-0 ml-2">
+                  {{ Number(u.conversion_factor).toLocaleString('es-CO') }} {{ form.unit }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- EDICIÓN: sin unidades → muestra las que se crearán al guardar -->
+          <div v-if="isEdit && !loadingExistingUnits && existingPurchaseUnits.length === 0 && editSuggestions.length > 0" class="flex flex-col gap-1.5">
+            <p class="text-xs font-medium text-text-secondary">Unidades de compra que se crearán al guardar</p>
+            <div class="rounded-xl border border-primary/30 divide-y divide-border overflow-hidden bg-primary/5">
+              <div v-for="(s, i) in editSuggestions" :key="i" class="flex items-center justify-between px-3 py-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <svg class="w-3.5 h-3.5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span class="text-sm text-text-primary">{{ s.label }}</span>
+                  <span v-if="i === 0" class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
+                </div>
+                <span class="text-xs text-text-tertiary font-mono flex-shrink-0 ml-2">
+                  {{ s.conversion_factor.toLocaleString('es-CO') }} {{ form.unit }}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <!-- Categoría -->
           <div class="flex flex-col gap-1.5">
             <label for="ing-category" class="text-sm font-medium text-text-primary">
@@ -334,10 +372,17 @@ const unitType = ref<UnitTypeKey>('')
 const form = ref({ name: '', unit: '', category: '', parentId: null as string | null, parentName: '' })
 const errors = ref<Record<string, string>>({})
 const saving = ref(false)
+const existingPurchaseUnits = ref<any[]>([])
+const loadingExistingUnits = ref(false)
 
 // --- Computed ---
 const currentSuggestions = computed(() =>
   UNIT_TYPES.find(t => t.key === unitType.value)?.suggestions ?? []
+)
+
+// Suggestions inferred from the ingredient's base unit (for edit mode)
+const editSuggestions = computed(() =>
+  UNIT_TYPES.find(t => t.unit === form.value.unit)?.suggestions ?? []
 )
 
 // --- Unit type selection ---
@@ -366,15 +411,30 @@ watch(() => props.ingredient, (ing) => {
       parentName: ing.parent_name ?? '',
     }
     unitType.value = ''
+    existingPurchaseUnits.value = []
   } else {
     resetCreate()
   }
   errors.value = {}
 }, { immediate: true })
 
-// Reset when panel opens in create mode
-watch(() => props.modelValue, (open) => {
-  if (open && !props.ingredient) resetCreate()
+// Reset when panel opens; fetch existing purchase units in edit mode
+watch(() => props.modelValue, async (open) => {
+  if (!open) return
+  if (!props.ingredient) {
+    resetCreate()
+    return
+  }
+  existingPurchaseUnits.value = []
+  loadingExistingUnits.value = true
+  try {
+    const res: any = await $fetch(`/api/suppliers/ingredient-purchase-units/ingredient/${props.ingredient.id}`)
+    existingPurchaseUnits.value = res?.data ?? []
+  } catch {
+    existingPurchaseUnits.value = []
+  } finally {
+    loadingExistingUnits.value = false
+  }
 })
 
 // --- Parent ingredient ---
@@ -418,6 +478,14 @@ async function submit() {
 
     let result: any
     if (isEdit.value) {
+      if (existingPurchaseUnits.value.length === 0 && editSuggestions.value.length > 0) {
+        body.purchase_units = editSuggestions.value.map((s, i) => ({
+          purchase_unit: s.purchase_unit,
+          purchase_unit_label: s.label,
+          conversion_factor: s.conversion_factor,
+          is_default: i === 0,
+        }))
+      }
       result = await $fetch(`/api/suppliers/ingredients/${props.ingredient.id}`, { method: 'PATCH', body })
     } else {
       body.purchase_units = currentSuggestions.value.map((s, i) => ({
