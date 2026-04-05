@@ -83,21 +83,21 @@
             <label class="text-sm font-medium text-text-primary">
               Tipo de medida <span class="text-destructive">*</span>
             </label>
-            <div class="flex rounded-lg border-2 border-border overflow-hidden" role="group" aria-label="Tipo de medida">
+            <div class="grid grid-cols-3 gap-2" role="group" aria-label="Tipo de medida">
               <button
                 v-for="t in UNIT_TYPES"
                 :key="t.key"
                 type="button"
                 @click="setUnitType(t.key)"
                 :class="[
-                  'flex-1 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/40',
+                  'flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-xl border-2 transition-all focus:outline-none',
                   unitType === t.key
-                    ? 'bg-primary text-white'
-                    : 'bg-background text-text-secondary hover:bg-surface-secondary'
+                    ? 'border-primary bg-primary/5 text-primary shadow-sm'
+                    : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:bg-surface-secondary'
                 ]"
               >
-                {{ t.label }}
-                <span class="block text-xs opacity-70 mt-0.5">{{ t.unit }}</span>
+                <span class="text-sm font-semibold">{{ t.label }}</span>
+                <span class="text-xs font-mono opacity-60">{{ t.unit }}</span>
               </button>
             </div>
             <p v-if="errors.unit" class="text-xs text-destructive">{{ errors.unit }}</p>
