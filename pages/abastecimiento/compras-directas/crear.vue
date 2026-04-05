@@ -412,7 +412,7 @@
                           </span>
                           <!-- Search Results Dropdown -->
                           <div
-                            v-if="item.showResults && ingredientResults[form.items.indexOf(item)]?.length"
+                            v-if="item.showResults && item.searchTerm"
                             class="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
                           >
                             <ul class="py-1">
@@ -425,7 +425,13 @@
                                 {{ ing.name }}
                               </li>
                               <li
-                                v-if="item.searchTerm && !ingredientResults[form.items.indexOf(item)]?.length"
+                                v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
+                                class="px-3 py-2 text-sm text-text-tertiary"
+                              >
+                                Sin resultados
+                              </li>
+                              <li
+                                v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
                                 @mousedown.prevent="openCreateModal(form.items.indexOf(item), item.searchTerm)"
                                 class="px-3 py-2 text-sm text-primary border-t border-border hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5"
                               >
@@ -689,7 +695,7 @@
                           </span>
                           <!-- Search Results Dropdown -->
                           <div
-                            v-if="item.showResults && ingredientResults[form.items.indexOf(item)]?.length"
+                            v-if="item.showResults && item.searchTerm"
                             class="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
                           >
                             <ul class="py-1">
@@ -702,7 +708,13 @@
                                 {{ ing.name }}
                               </li>
                               <li
-                                v-if="item.searchTerm && !ingredientResults[form.items.indexOf(item)]?.length"
+                                v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
+                                class="px-3 py-2 text-sm text-text-tertiary"
+                              >
+                                Sin resultados
+                              </li>
+                              <li
+                                v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
                                 @mousedown.prevent="openCreateModal(form.items.indexOf(item), item.searchTerm)"
                                 class="px-3 py-2 text-sm text-primary border-t border-border hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5"
                               >
@@ -960,7 +972,7 @@
                           </span>
                           <!-- Search Results Dropdown -->
                           <div
-                            v-if="item.showResults && ingredientResults[form.items.indexOf(item)]?.length"
+                            v-if="item.showResults && item.searchTerm"
                             class="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
                           >
                             <ul class="py-1">
@@ -973,7 +985,13 @@
                                 {{ ing.name }}
                               </li>
                               <li
-                                v-if="item.searchTerm && !ingredientResults[form.items.indexOf(item)]?.length"
+                                v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
+                                class="px-3 py-2 text-sm text-text-tertiary"
+                              >
+                                Sin resultados
+                              </li>
+                              <li
+                                v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
                                 @mousedown.prevent="openCreateModal(form.items.indexOf(item), item.searchTerm)"
                                 class="px-3 py-2 text-sm text-primary border-t border-border hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5"
                               >
@@ -2202,7 +2220,7 @@ const searchIngredients = async (term: string, index: number) => {
     () => search.results.value,
     (results) => {
       ingredientResults.value[index] = results
-      item.showResults = results.length > 0
+      item.showResults = true
     },
     { immediate: true }
   )
