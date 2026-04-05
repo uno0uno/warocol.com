@@ -142,33 +142,26 @@
             <p v-if="errors.unit" class="text-xs text-destructive">{{ errors.unit }}</p>
           </div>
 
-          <!-- CREACIÓN: unidades de compra sugeridas (Peso / Volumen) -->
+          <!-- CREACIÓN: unidades de compra informativas (Peso / Volumen) -->
           <div v-if="!isEdit && unitType && currentSuggestions.length > 0" class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium text-text-primary">Unidades de compra</label>
-            <p class="text-xs text-text-tertiary -mt-1">Se crean automáticamente con el ingrediente</p>
-            <div class="rounded-lg border border-border divide-y divide-border overflow-hidden">
-              <label
+            <p class="text-xs font-medium text-text-secondary">Unidades de compra que se crearán automáticamente</p>
+            <div class="rounded-xl border border-border divide-y divide-border overflow-hidden bg-surface-secondary/30">
+              <div
                 v-for="(s, i) in currentSuggestions"
                 :key="i"
-                class="flex items-center justify-between px-3 py-2.5 cursor-pointer hover:bg-surface-secondary/50 transition-colors"
+                class="flex items-center justify-between px-3 py-2"
               >
-                <div class="flex items-center gap-2.5 min-w-0">
-                  <input
-                    type="checkbox"
-                    :checked="selectedSuggestions[i]"
-                    @change="toggleSuggestion(i)"
-                    class="w-4 h-4 rounded border-border accent-primary flex-shrink-0"
-                  />
+                <div class="flex items-center gap-2 min-w-0">
+                  <svg class="w-3.5 h-3.5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
                   <span class="text-sm text-text-primary">{{ s.label }}</span>
-                  <span
-                    v-if="firstSelected === i"
-                    class="text-xs text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0"
-                  >predeterminado</span>
+                  <span v-if="i === 0" class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
                 </div>
                 <span class="text-xs text-text-tertiary font-mono flex-shrink-0 ml-2">
                   {{ s.conversion_factor.toLocaleString('es-CO') }} {{ form.unit }}
                 </span>
-              </label>
+              </div>
             </div>
           </div>
 
@@ -338,7 +331,6 @@ type UnitTypeKey = 'peso' | 'volumen' | 'pieza' | ''
 
 // --- State ---
 const unitType = ref<UnitTypeKey>('')
-const selectedSuggestions = ref<boolean[]>([])
 const form = ref({ name: '', unit: '', category: '', parentId: null as string | null, parentName: '' })
 const errors = ref<Record<string, string>>({})
 const saving = ref(false)
@@ -348,30 +340,18 @@ const currentSuggestions = computed(() =>
   UNIT_TYPES.find(t => t.key === unitType.value)?.suggestions ?? []
 )
 
-const firstSelected = computed(() =>
-  selectedSuggestions.value.findIndex(v => v)
-)
-
 // --- Unit type selection ---
 const setUnitType = (key: UnitTypeKey) => {
   unitType.value = key
   const t = UNIT_TYPES.find(u => u.key === key)
-  if (t) {
-    form.value.unit = t.unit
-    selectedSuggestions.value = t.suggestions.map(() => true)
-  }
+  if (t) form.value.unit = t.unit
   clearError('unit')
-}
-
-const toggleSuggestion = (i: number) => {
-  selectedSuggestions.value[i] = !selectedSuggestions.value[i]
 }
 
 // --- Form reset helpers ---
 const resetCreate = () => {
   form.value = { name: props.initialName ?? '', unit: '', category: '', parentId: null, parentName: '' }
   unitType.value = ''
-  selectedSuggestions.value = []
   errors.value = {}
 }
 
@@ -386,7 +366,6 @@ watch(() => props.ingredient, (ing) => {
       parentName: ing.parent_name ?? '',
     }
     unitType.value = ''
-    selectedSuggestions.value = []
   } else {
     resetCreate()
   }
@@ -443,12 +422,11 @@ async function submit() {
     } else {
       result = await $fetch('/api/suppliers/ingredients', { method: 'POST', body })
 
-      // Create selected purchase units sequentially (DB trigger requires one default at a time)
+      // Create purchase units sequentially (DB trigger requires one default at a time)
       const ingredientId = result.data.id
       if (ingredientId && currentSuggestions.value.length > 0) {
         let isFirst = true
         for (let i = 0; i < currentSuggestions.value.length; i++) {
-          if (!selectedSuggestions.value[i]) continue
           const s = currentSuggestions.value[i]
           await $fetch('/api/suppliers/ingredient-purchase-units', {
             method: 'POST',
