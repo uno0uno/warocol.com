@@ -22,7 +22,7 @@
     <form v-else class="flex flex-col gap-5" @submit.prevent="handleSubmit">
 
       <p class="text-base leading-relaxed text-ebony-500">
-        Puedes solicitar acceso dejando tu correo electrónico. Nos pondremos en contacto contigo.
+        Déjanos tu correo y teléfono. Nos pondremos en contacto contigo.
       </p>
 
       <!-- Email -->
@@ -45,6 +45,39 @@
         <p v-if="errors.email" class="flex items-center gap-1 text-sm leading-normal text-destructive" role="alert">
           <Icon name="heroicons:exclamation-circle" class="w-4 h-4 flex-shrink-0" aria-hidden="true" />
           {{ errors.email }}
+        </p>
+      </div>
+
+      <!-- Phone -->
+      <div class="flex flex-col gap-1">
+        <label for="access-request-phone" class="text-sm font-medium text-ebony-700">
+          Teléfono <span class="text-destructive" aria-hidden="true">*</span>
+        </label>
+        <div class="flex">
+          <span
+            class="inline-flex items-center px-3 border border-r-0 border-titan-300 rounded-l-lg bg-titan-50
+                   text-ebony-500 text-sm select-none"
+            aria-label="Código de país Colombia"
+          >
+            🇨🇴 +57
+          </span>
+          <input
+            id="access-request-phone"
+            v-model="form.phone"
+            type="tel"
+            required
+            autocomplete="tel-national"
+            placeholder="300 123 4567"
+            inputmode="numeric"
+            class="flex-1 px-3 py-2.5 text-base border border-titan-300 rounded-r-lg bg-white text-ebony-900
+                   placeholder:text-titan-400 focus:outline-none focus:ring-2 focus:ring-crocus-500
+                   disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="isSubmitting"
+          />
+        </div>
+        <p v-if="errors.phone" class="flex items-center gap-1 text-sm leading-normal text-destructive" role="alert">
+          <Icon name="heroicons:exclamation-circle" class="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+          {{ errors.phone }}
         </p>
       </div>
 
@@ -77,8 +110,8 @@ const emit = defineEmits<{ close: [] }>()
 
 const { error: toastError } = useToast()
 
-const form = ref({ email: props.prefilledEmail || '' })
-const errors = ref({ email: '' })
+const form = ref({ email: props.prefilledEmail || '', phone: '' })
+const errors = ref({ email: '', phone: '' })
 const isSubmitting = ref(false)
 const isSuccess = ref(false)
 
@@ -90,12 +123,21 @@ watch(() => props.prefilledEmail, (val) => {
 })
 
 function validate(): boolean {
-  errors.value = { email: '' }
+  errors.value = { email: '', phone: '' }
+  let valid = true
+
   if (!form.value.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
     errors.value.email = 'Ingresa un correo electrónico válido'
-    return false
+    valid = false
   }
-  return true
+
+  const digits = form.value.phone.replace(/\D/g, '')
+  if (digits.length < 7 || digits.length > 10) {
+    errors.value.phone = 'Ingresa un número de teléfono válido (7-10 dígitos)'
+    valid = false
+  }
+
+  return valid
 }
 
 async function handleSubmit() {
@@ -107,6 +149,7 @@ async function handleSubmit() {
       method: 'POST',
       body: {
         email: form.value.email,
+        phone: form.value.phone.replace(/\D/g, ''),
         button_source: 'access_request',
       },
     })
