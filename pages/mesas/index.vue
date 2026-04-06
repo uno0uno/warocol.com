@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-
 const { currentTenant } = useTenantReactive()
 const router = useRouter()
 
@@ -37,7 +36,6 @@ registerProgressiveLoading(isRefreshing)
 
 const tables = computed(() => tablesData.value?.data ?? [])
 
-// Clear data when tenant changes
 watch(() => currentTenant.value?.id, () => { refetch() })
 
 // ── 30-second polling ──────────────────────────────────────────────────────
@@ -59,7 +57,7 @@ const writeMesaContext = (table: any, sessionId?: string) => {
 
 const handleTableClick = async (table: any) => {
   if (table.status === 'free') {
-    if (openingTableId.value) return // prevent double-tap
+    if (openingTableId.value) return
     openingTableId.value = table.id
     try {
       const result = await $fetch<{ success: boolean; data: { session_id: string } }>(
@@ -70,7 +68,6 @@ const handleTableClick = async (table: any) => {
       sessionStorage.setItem('posNavigation', 'true')
       router.push('/pos')
     } catch (e) {
-      // If session already open (race), still navigate — context from table.session
       await refetch()
       writeMesaContext(table)
       sessionStorage.setItem('posNavigation', 'true')
@@ -99,25 +96,45 @@ const formatDuration = (openedAt: string): string => {
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
-const formatCurrency = (amount: number): string => {
-  return `$${Math.round(amount).toLocaleString('es-CO')}`
-}
-
-const badgeVariant = (status: string) => {
-  if (status === 'open') return 'success'
-  if (status === 'bill_requested') return 'warning'
-  return 'secondary'
-}
-
 const badgeLabel = (status: string) => {
-  if (status === 'open') return 'Ocupada'
-  if (status === 'bill_requested') return 'Pidiendo cuenta'
+  if (status === 'open') return 'En servicio'
+  if (status === 'bill_requested') return 'Cuenta'
   return 'Libre'
 }
 
-const freeCount = computed(() => tables.value.filter(t => t.status === 'free').length)
-const openCount = computed(() => tables.value.filter(t => t.status === 'open').length)
-const billCount = computed(() => tables.value.filter(t => t.status === 'bill_requested').length)
+// Extract number from name ("Mesa 3" → "3"), else first 3 chars
+const tableShortId = (name: string) => {
+  const match = name.match(/\d+/)
+  return match ? match[0] : name.slice(0, 3).toUpperCase()
+}
+
+const tableColorClass = (status: string) => {
+  if (status === 'open') return 'bg-slate-900 border-slate-800 text-white shadow-lg shadow-slate-900/30'
+  if (status === 'bill_requested') return 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-600/30'
+  return 'bg-surface-secondary border-border text-text-tertiary'
+}
+
+const chairColorClass = (status: string) => {
+  if (status === 'open') return 'bg-slate-700'
+  if (status === 'bill_requested') return 'bg-emerald-400'
+  return 'bg-slate-300 dark:bg-slate-600'
+}
+
+const pillClass = (status: string) => {
+  if (status === 'open') return 'text-blue-600 border-blue-100 bg-blue-50'
+  if (status === 'bill_requested') return 'text-white bg-slate-800 border-transparent'
+  return 'text-text-tertiary border-border bg-transparent'
+}
+
+const freeCount = computed(() => tables.value.filter((t: any) => t.status === 'free').length)
+const openCount = computed(() => tables.value.filter((t: any) => t.status === 'open').length)
+const billCount = computed(() => tables.value.filter((t: any) => t.status === 'bill_requested').length)
+
+const totalVentas = computed(() =>
+  tables.value
+    .filter((t: any) => t.status !== 'free' && t.session?.running_total)
+    .reduce((sum: number, t: any) => sum + (t.session.running_total ?? 0), 0)
+)
 
 onMounted(() => {
   setRefreshHandler(refetch)
@@ -142,7 +159,7 @@ onUnmounted(() => {
 
     <!-- Content -->
     <div v-else>
-      <!-- Empty State — no tables configured -->
+      <!-- Empty State -->
       <div v-if="tables.length === 0" class="flex flex-col items-center justify-center min-h-[60vh] text-text-secondary gap-4">
         <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
@@ -151,121 +168,108 @@ onUnmounted(() => {
           <p class="text-lg font-semibold text-text-primary">No tienes mesas configuradas</p>
           <p class="text-sm mt-1">Agrega mesas desde la configuración de tu negocio</p>
         </div>
-        <NuxtLink
-          to="/mesas/gestionar"
-          class="mt-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
-        >
+        <NuxtLink to="/mesas/gestionar" class="mt-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">
           Configurar mesas
         </NuxtLink>
       </div>
 
-      <!-- Floor plan (only when tables exist) -->
+      <!-- Floor plan -->
       <template v-else>
-        <!-- Stats strip -->
-        <div class="flex items-center gap-3 mb-6 flex-wrap">
-          <div class="flex items-center gap-1.5">
-            <div class="w-2 h-2 rounded-full bg-border" />
-            <span class="text-xs text-text-secondary tabular-nums">{{ freeCount }} libre{{ freeCount !== 1 ? 's' : '' }}</span>
+        <!-- Legend -->
+        <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <p class="text-sm text-text-secondary">Vista de planta principal</p>
+          <div class="flex gap-2 flex-wrap">
+            <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
+              <div class="w-3 h-3 rounded-sm bg-slate-900" />
+              <span class="text-xs font-medium text-text-secondary">Ocupada</span>
+            </div>
+            <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
+              <div class="w-3 h-3 rounded-sm bg-emerald-600" />
+              <span class="text-xs font-medium text-text-secondary">Cuenta</span>
+            </div>
+            <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
+              <div class="w-3 h-3 rounded-sm bg-surface-secondary border border-border" />
+              <span class="text-xs font-medium text-text-secondary">Libre</span>
+            </div>
           </div>
-          <template v-if="openCount > 0">
-            <span class="text-text-tertiary/50 text-xs">·</span>
-            <div class="flex items-center gap-1.5">
-              <div class="w-2 h-2 rounded-full bg-text-primary" />
-              <span class="text-xs text-text-primary font-medium tabular-nums">{{ openCount }} ocupada{{ openCount !== 1 ? 's' : '' }}</span>
-            </div>
-          </template>
-          <template v-if="billCount > 0">
-            <span class="text-text-tertiary/50 text-xs">·</span>
-            <div class="flex items-center gap-1.5">
-              <div class="w-2 h-2 rounded-full bg-status-warning-text" />
-              <span class="text-xs text-status-warning-text font-medium tabular-nums">{{ billCount }} pidiendo cuenta</span>
-            </div>
-          </template>
         </div>
 
-        <!-- Floor plan grid — circular table layout (à la Toast / The Great Table) -->
-        <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
+        <!-- Table grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 pb-32">
           <button
             v-for="table in tables"
             :key="table.id"
-            class="flex flex-col items-center gap-2 focus:outline-none group disabled:opacity-60 disabled:cursor-not-allowed"
+            class="flex flex-col items-center py-6 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
             :disabled="openingTableId === table.id"
             :aria-label="`${table.name} — ${badgeLabel(table.status)}`"
             @click="handleTableClick(table)"
           >
-            <!-- Circle + chair marks -->
-            <div class="relative p-[14px]">
-              <!-- Chair marks: 4 cardinal positions -->
-              <div
-                class="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-2 rounded-sm transition-colors duration-200"
-                :class="{
-                  'bg-text-tertiary/20': table.status === 'free',
-                  'bg-text-primary/70': table.status === 'open',
-                  'bg-status-warning-text/70': table.status === 'bill_requested',
-                }"
-              />
-              <div
-                class="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-2 rounded-sm transition-colors duration-200"
-                :class="{
-                  'bg-text-tertiary/20': table.status === 'free',
-                  'bg-text-primary/70': table.status === 'open',
-                  'bg-status-warning-text/70': table.status === 'bill_requested',
-                }"
-              />
-              <div
-                class="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-5 rounded-sm transition-colors duration-200"
-                :class="{
-                  'bg-text-tertiary/20': table.status === 'free',
-                  'bg-text-primary/70': table.status === 'open',
-                  'bg-status-warning-text/70': table.status === 'bill_requested',
-                }"
-              />
-              <div
-                class="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-5 rounded-sm transition-colors duration-200"
-                :class="{
-                  'bg-text-tertiary/20': table.status === 'free',
-                  'bg-text-primary/70': table.status === 'open',
-                  'bg-status-warning-text/70': table.status === 'bill_requested',
-                }"
-              />
+            <!-- Table + chairs -->
+            <div class="relative mb-4">
+              <!-- Chair: top -->
+              <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-3 rounded-t-sm opacity-75 transition-colors duration-200" :class="chairColorClass(table.status)" />
+              <!-- Chair: bottom -->
+              <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-3 rounded-b-sm opacity-75 transition-colors duration-200" :class="chairColorClass(table.status)" />
+              <!-- Chair: left -->
+              <div class="absolute -left-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-l-sm opacity-75 transition-colors duration-200" :class="chairColorClass(table.status)" />
+              <!-- Chair: right -->
+              <div class="absolute -right-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-r-sm opacity-75 transition-colors duration-200" :class="chairColorClass(table.status)" />
 
-              <!-- Circle -->
+              <!-- Table square -->
               <div
-                class="relative w-[68px] h-[68px] rounded-full flex items-center justify-center transition-all duration-200 group-hover:scale-105 group-active:scale-95"
-                :class="{
-                  'bg-surface-secondary border-2 border-border/50': table.status === 'free',
-                  'bg-text-primary shadow-lg shadow-black/20': table.status === 'open',
-                  'bg-status-warning-text shadow-lg shadow-status-warning-text/30': table.status === 'bill_requested',
-                }"
+                class="w-24 h-24 flex flex-col items-center justify-center rounded-xl border-2 transition-colors duration-200"
+                :class="tableColorClass(table.status)"
               >
                 <CommonsTheCustomLoader v-if="openingTableId === table.id" size="small" />
-                <span
-                  v-else
-                  class="text-sm font-bold leading-tight text-center px-2 line-clamp-2"
-                  :class="table.status === 'free' ? 'text-text-secondary' : 'text-white'"
-                >
-                  {{ table.name }}
-                </span>
+                <template v-else>
+                  <span class="text-[9px] uppercase tracking-widest font-bold opacity-50 leading-none mb-1">Mesa</span>
+                  <span class="text-3xl font-black leading-none">{{ tableShortId(table.name) }}</span>
+                </template>
               </div>
             </div>
 
-            <!-- Info below circle -->
-            <div class="flex flex-col items-center gap-0.5 text-center" style="min-height:28px">
+            <!-- Info below table -->
+            <div class="text-center h-[52px] flex flex-col items-center justify-center gap-0.5">
               <template v-if="table.status !== 'free' && table.session">
-                <p class="text-xs font-bold text-text-primary tabular-nums leading-tight">
-                  {{ formatCurrency(table.session.running_total ?? 0) }}
-                </p>
-                <p class="flex items-center gap-0.5 text-[10px] text-text-secondary tabular-nums">
-                  <svg class="w-2.5 h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div class="flex items-baseline justify-center gap-0.5 font-bold text-text-primary">
+                  <span class="text-sm">$</span>
+                  <span class="text-lg tabular-nums leading-tight">{{ Math.round(table.session.running_total ?? 0).toLocaleString('es-CO') }}</span>
+                </div>
+                <div class="flex items-center justify-center gap-1 text-sm text-text-secondary">
+                  <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  {{ formatDuration(table.session.opened_at) }}
-                </p>
+                  <span class="font-medium tabular-nums">{{ formatDuration(table.session.opened_at) }}</span>
+                </div>
               </template>
+            </div>
+
+            <!-- Status pill -->
+            <div
+              class="mt-2 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border"
+              :class="pillClass(table.status)"
+            >
+              {{ badgeLabel(table.status) }}
             </div>
           </button>
         </div>
       </template>
+    </div>
+
+    <!-- Fixed bottom summary bar -->
+    <div
+      v-if="tables.length > 0 && !loadingTables && !tablesError"
+      class="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 bg-surface/90 backdrop-blur-md border border-border px-6 py-3 rounded-2xl shadow-xl flex items-center gap-6 z-30 whitespace-nowrap"
+    >
+      <div class="flex flex-col">
+        <span class="text-[10px] uppercase font-bold text-text-tertiary tracking-wider">Total ventas</span>
+        <span class="text-lg font-bold text-text-primary tabular-nums">${{ Math.round(totalVentas).toLocaleString('es-CO') }}</span>
+      </div>
+      <div class="w-px h-8 bg-border" />
+      <div class="flex flex-col">
+        <span class="text-[10px] uppercase font-bold text-text-tertiary tracking-wider">Ocupación</span>
+        <span class="text-lg font-bold text-text-primary tabular-nums">{{ openCount + billCount }} / {{ tables.length }}</span>
+      </div>
     </div>
   </div>
 </template>
