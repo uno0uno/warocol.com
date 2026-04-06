@@ -10,7 +10,7 @@
       <div class="flex border border-ebony-700 px-2 py-2 rounded-lg mb-4 justify-center">
         <div class="rounded-lg flex items-center justify-center overflow-hidden">
           <img
-            src="/logo_waro_colombia.png"
+            :src="logoSrc"
             alt="Waro"
             class="object-contain transition-all duration-200 w-8 h-8 group-hover:w-40 group-hover:h-auto"
             style="filter: grayscale(1) invert(1); mix-blend-mode: screen;"
@@ -45,6 +45,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import logoSrc from '~/public/logo_waro_colombia.png'
 
 const isHovered = ref(false)
 </script>
