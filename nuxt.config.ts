@@ -9,6 +9,7 @@ export default defineNuxtConfig({
     // App privada — SPA (no necesita SSR ni indexación)
     '/dashboard/**': { ssr: false },
     '/pos/**': { ssr: false },
+    '/mesas/**': { ssr: false },
     '/menu/**': { ssr: false },
     '/inventario/**': { ssr: false },
     '/abastecimiento/**': { ssr: false },
