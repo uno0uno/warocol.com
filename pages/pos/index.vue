@@ -15,6 +15,23 @@ const { currentTenant } = useTenantReactive()
 const router = useRouter()
 const posStore = usePOSStore()
 
+// ── Table management redirect ──────────────────────────────────────────────
+// Reuses the same cached query key as negocio.vue — no extra network request
+const { data: settingsData } = useQuery({
+  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+watch(
+  () => settingsData.value?.data?.tables_enabled,
+  (enabled) => {
+    if (enabled) navigateTo('/mesas')
+  },
+  { immediate: true }
+)
+
 // State
 const searchQuery = ref('')
 const selectedCategory = ref('all')

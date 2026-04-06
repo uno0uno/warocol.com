@@ -435,6 +435,37 @@
         </template>
       </div>
 
+      <!-- ══════ MÓDULOS ══════ -->
+      <div v-if="businessProfile" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+          <TableCellsIcon class="w-5 h-5 text-primary flex-shrink-0" />
+          Módulos
+        </h3>
+        <div class="flex items-center justify-between py-1">
+          <div>
+            <p class="text-sm font-medium text-text-primary">Gestión de mesas</p>
+            <p class="text-xs text-text-secondary mt-0.5">Activa el flujo de mesas en el punto de venta</p>
+            <p v-if="businessProfile.tables_enabled" class="text-xs text-primary mt-1">
+              Ve a <NuxtLink to="/mesas" class="underline">Gestión de Mesas</NuxtLink> para administrar tus mesas.
+            </p>
+          </div>
+          <label
+            class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+            :class="isTogglingTables ? 'opacity-50 pointer-events-none' : ''"
+            :aria-label="businessProfile.tables_enabled ? 'Desactivar gestión de mesas' : 'Activar gestión de mesas'"
+          >
+            <input
+              type="checkbox"
+              class="sr-only peer"
+              :checked="businessProfile.tables_enabled"
+              @change="toggleTablesEnabled"
+              :disabled="isTogglingTables"
+            />
+            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          </label>
+        </div>
+      </div>
+
       <!-- ══════ REDES SOCIALES ══════ -->
       <div v-if="hasSocialMedia || isEditMode" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6 pb-safe">
         <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
@@ -503,6 +534,7 @@ import {
   ClockIcon,
   ShoppingCartIcon,
   GlobeAltIcon,
+  TableCellsIcon,
   PencilSquareIcon,
   CheckIcon,
   ArrowUpTrayIcon,
@@ -658,6 +690,29 @@ const toggleActive = async () => {
     toast.error(error.data?.detail || 'Error al cambiar estado', { title: 'Error' })
   } finally {
     isTogglingActive.value = false
+  }
+}
+
+// ─── Toggle tables module ───
+const isTogglingTables = ref(false)
+const toggleTablesEnabled = async () => {
+  if (!businessProfile.value || isTogglingTables.value) return
+  isTogglingTables.value = true
+  const newState = !businessProfile.value.tables_enabled
+  try {
+    await $fetch('/api/api/tenant/public-profile', {
+      method: 'PATCH',
+      body: { tables_enabled: newState },
+    })
+    await refreshProfile()
+    toast.success(
+      newState ? 'Gestión de mesas activada para el POS' : 'Gestión de mesas desactivada',
+      { title: newState ? '¡Módulo activado!' : 'Módulo desactivado' }
+    )
+  } catch (error: any) {
+    toast.error(error.data?.detail || 'Error al cambiar estado del módulo', { title: 'Error' })
+  } finally {
+    isTogglingTables.value = false
   }
 }
 
