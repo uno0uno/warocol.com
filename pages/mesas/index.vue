@@ -51,27 +51,44 @@ let pollInterval: ReturnType<typeof setInterval> | null = null
 // ── Open session ───────────────────────────────────────────────────────────
 const openingTableId = ref<string | null>(null)
 
+const writeMesaContext = (table: any, sessionId?: string) => {
+  const sid = sessionId ?? table.session?.id
+  if (sid) {
+    sessionStorage.setItem('mesaContext', JSON.stringify({
+      tableId: table.id,
+      sessionId: sid,
+      tableName: table.name,
+    }))
+  }
+}
+
 const handleTableClick = async (table: any) => {
   if (table.status === 'free') {
     if (openingTableId.value) return // prevent double-tap
     openingTableId.value = table.id
     try {
-      await $fetch(`/api/tables/${table.id}/open`, { method: 'POST' })
+      const result = await $fetch<{ success: boolean; data: { session_id: string } }>(
+        `/api/tables/${table.id}/open`, { method: 'POST' }
+      )
       await refetch()
+      writeMesaContext(table, result?.data?.session_id)
       sessionStorage.setItem('posNavigation', 'true')
       router.push('/pos')
     } catch (e) {
-      // If session already open (race), still navigate
+      // If session already open (race), still navigate — context from table.session
       await refetch()
+      writeMesaContext(table)
       sessionStorage.setItem('posNavigation', 'true')
       router.push('/pos')
     } finally {
       openingTableId.value = null
     }
   } else if (table.status === 'open') {
+    writeMesaContext(table)
     sessionStorage.setItem('posNavigation', 'true')
     router.push('/pos')
   } else if (table.status === 'bill_requested') {
+    writeMesaContext(table)
     sessionStorage.setItem('posNavigation', 'true')
     router.push('/pos/checkout')
   }

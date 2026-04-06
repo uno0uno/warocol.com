@@ -29,6 +29,14 @@ export interface Customer {
     email: string | null
 }
 
+export interface ActiveTableSession {
+    tableId: string
+    sessionId: string
+    tableName: string
+    runningTotal: number
+    openedAt: string
+}
+
 // Producto cacheado con modificadores completos
 export interface CachedProduct {
     id: string
@@ -48,6 +56,9 @@ export const usePOSStore = defineStore('pos', () => {
     const cartId = ref<string | null>(null) // ID del carrito en la BD
     const isSyncing = ref(false) // Flag para evitar loops de sincronización
     const isDeleting = ref(false) // Flag para bloquear acciones mientras se elimina
+
+    // Mesa context — set when entering POS from a table session
+    const activeTableSession = ref<ActiveTableSession | null>(null)
 
     // Cache de productos (con modificadores) - persiste entre ventas
     const cachedProducts = ref<CachedProduct[]>([])
@@ -239,10 +250,15 @@ export const usePOSStore = defineStore('pos', () => {
         cartId.value = null
     }
 
+    const setTableSession = (session: ActiveTableSession | null) => {
+        activeTableSession.value = session
+    }
+
     const clearAll = () => {
         cart.value = []
         currentCustomer.value = null
         cartId.value = null
+        activeTableSession.value = null
         // NO limpiar cachedProducts - se mantienen entre ventas
     }
 
@@ -332,6 +348,7 @@ export const usePOSStore = defineStore('pos', () => {
         isSyncing,
         isDeleting,
         cachedProducts,
+        activeTableSession,
 
         // Getters
         cartItemsCount,
@@ -340,6 +357,7 @@ export const usePOSStore = defineStore('pos', () => {
         hasProducts,
 
         // Actions
+        setTableSession,
         addToCart,
         removeFromCart,
         updateQuantity,

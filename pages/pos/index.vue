@@ -32,6 +32,71 @@ watch(
   { immediate: true }
 )
 
+// ── Mesa mode ──────────────────────────────────────────────────────────────
+const isMesaMode = computed(() => !!posStore.activeTableSession)
+const isAddingToTab = ref(false)
+const tabError = ref<string | null>(null)
+
+const addToTab = async () => {
+  if (!posStore.activeTableSession || posStore.cart.length === 0) return
+  isAddingToTab.value = true
+  tabError.value = null
+  try {
+    const items = posStore.cart.map((item) => ({
+      product_id: item.product.id,
+      quantity: item.quantity,
+      unit_price: Number(item.product.price),
+      modifiers: item.modifiers.map((m) => ({ id: m.id, name: m.name, price: m.price })),
+      notes: item.notes ?? null,
+    }))
+    await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/add`, {
+      method: 'POST',
+      body: { items },
+    })
+    // Clear cart — items committed to tab
+    await posStore.clearCart()
+    // Refresh session running total in store
+    try {
+      const session = await $fetch<{ success: boolean; data: any }>(
+        `/api/tables/${posStore.activeTableSession.tableId}/current`
+      )
+      if (session?.data?.session) {
+        posStore.setTableSession({
+          tableId: posStore.activeTableSession.tableId,
+          sessionId: session.data.session.id,
+          tableName: posStore.activeTableSession.tableName,
+          runningTotal: session.data.session.running_total,
+          openedAt: session.data.session.opened_at,
+        })
+      }
+    } catch {
+      // Non-critical — banner will just show stale total
+    }
+  } catch (e: any) {
+    tabError.value = e?.data?.detail ?? 'Error al agregar a la mesa'
+  } finally {
+    isAddingToTab.value = false
+  }
+}
+
+const requestBill = () => {
+  if (!posStore.activeTableSession) return
+  sessionStorage.setItem('posNavigation', 'true')
+  router.push('/pos/checkout')
+}
+
+const formatDuration = (openedAt: string): string => {
+  const diffMs = Date.now() - new Date(openedAt).getTime()
+  const totalMins = Math.floor(diffMs / 60_000)
+  if (totalMins < 60) return `${totalMins}m`
+  const h = Math.floor(totalMins / 60)
+  const m = totalMins % 60
+  return m > 0 ? `${h}h ${m}m` : `${h}h`
+}
+
+const formatCurrencyPOS = (amount: number): string =>
+  `$${Math.round(amount).toLocaleString('es-CO')}`
+
 // State
 const searchQuery = ref('')
 const selectedCategory = ref('all')
@@ -170,12 +235,35 @@ const processOrder = async () => {
 }
 
 // Provide cart data to layout
-onMounted(() => {
+onMounted(async () => {
   setRefreshHandler(refetch)
   provide('posCartItemsCount', cartItemsCount)
 
   // Check if we're returning from a POS sub-page
   const isReturningFromPOSPage = sessionStorage.getItem('posNavigation') === 'true'
+
+  // Load mesa context if arriving from mesas page
+  const mesaContextRaw = sessionStorage.getItem('mesaContext')
+  if (mesaContextRaw) {
+    sessionStorage.removeItem('mesaContext')
+    try {
+      const ctx = JSON.parse(mesaContextRaw)
+      const session = await $fetch<{ success: boolean; data: any }>(
+        `/api/tables/${ctx.tableId}/current`
+      )
+      if (session?.data?.session) {
+        posStore.setTableSession({
+          tableId: ctx.tableId,
+          sessionId: session.data.session.id,
+          tableName: ctx.tableName,
+          runningTotal: session.data.session.running_total,
+          openedAt: session.data.session.opened_at,
+        })
+      }
+    } catch {
+      // Session may have closed — enter normal POS mode silently
+    }
+  }
 
   if (isReturningFromPOSPage) {
     // Clear the flag
@@ -217,8 +305,35 @@ onUnmounted(() => {
 
     <!-- POS Content (shown always after loading) -->
     <div v-else>
-      <!-- Customer Header (when customer is identified) -->
-      <div v-if="posStore.currentCustomer" class="bg-crocus-600/5 border border-crocus-500/25 rounded-xl mb-4 p-4">
+      <!-- Mesa Banner (when arriving from a table session) -->
+      <div v-if="posStore.activeTableSession" class="bg-status-success-bg/60 border border-status-success-text/25 rounded-xl mb-4 p-4">
+        <div class="flex items-center gap-3">
+          <div class="bg-status-success-bg p-3 rounded-xl border border-status-success-text/20 flex-shrink-0">
+            <svg class="w-5 h-5 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] font-bold text-status-success-text uppercase tracking-widest">
+              Mesa Activa
+            </p>
+            <p class="text-base font-bold text-text-primary leading-tight">
+              {{ posStore.activeTableSession.tableName }}
+            </p>
+            <p class="text-xs text-text-secondary mt-0.5">
+              {{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado
+              · {{ formatDuration(posStore.activeTableSession.openedAt) }}
+            </p>
+          </div>
+        </div>
+        <!-- Tab error -->
+        <p v-if="tabError" class="mt-2 text-xs text-destructive bg-destructive/10 rounded-lg px-3 py-1.5">
+          {{ tabError }}
+        </p>
+      </div>
+
+      <!-- Customer Header (when customer is identified and no mesa mode) -->
+      <div v-else-if="posStore.currentCustomer" class="bg-crocus-600/5 border border-crocus-500/25 rounded-xl mb-4 p-4">
         <div class="flex items-center gap-3">
           <div class="bg-crocus-600/10 p-3 rounded-xl border border-crocus-500/20 flex-shrink-0">
             <svg class="w-5 h-5 text-crocus-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,6 +411,8 @@ onUnmounted(() => {
       <PosCartPanel
         :items="posStore.cart"
         :total="cartTotal"
+        :mesa-mode="isMesaMode"
+        :is-adding-to-tab="isAddingToTab"
         @edit-item="editCartItem"
         @remove-item="removeFromCart"
         @increment-item="incrementCartItem"
@@ -303,6 +420,8 @@ onUnmounted(() => {
         @duplicate-item="duplicateCartItem"
         @process-order="processOrder"
         @clear-cart="clearCart"
+        @add-to-tab="addToTab"
+        @request-bill="requestBill"
       />
       </div>
     </div>
