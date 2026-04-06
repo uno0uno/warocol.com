@@ -151,7 +151,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
         >
           <!-- Mobile card -->
           <template #card="{ item }">
-            <div class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary">
+            <div class="flex items-center gap-3 py-2 px-3 border-b border-border transition-colors hover:bg-surface-secondary">
               <div class="flex-1 min-w-0">
                 <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
                 <p class="text-xs text-text-secondary mt-0.5">
