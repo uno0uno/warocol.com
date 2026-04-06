@@ -12,7 +12,7 @@ const { data: tablesData, status: tablesStatus, asyncStatus: tablesAsyncStatus, 
   staleTime: 30_000,
 })
 
-const loadingTables = computed(() => tablesStatus.value === 'loading' && !tablesData.value)
+const loadingTables = computed(() => !tablesData.value)
 const isRefreshing = computed(() => tablesAsyncStatus.value === 'loading' && tablesData.value != null)
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
