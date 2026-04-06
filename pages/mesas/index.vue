@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-definePageMeta({
-  layout: 'dashboard'
-})
-
-useHead({ title: 'Mesas' })
 
 const { currentTenant } = useTenantReactive()
 const router = useRouter()
