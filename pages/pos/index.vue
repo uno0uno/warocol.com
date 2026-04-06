@@ -315,7 +315,9 @@ onUnmounted(() => {
           </div>
           <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
             <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest flex-shrink-0">Mesa Activa</span>
+            <span class="w-px h-3 bg-status-success-text/30 flex-shrink-0" aria-hidden="true" />
             <span class="text-sm font-bold text-text-primary flex-shrink-0">{{ posStore.activeTableSession.tableName }}</span>
+            <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
             <span class="text-xs text-text-secondary tabular-nums truncate">{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado · {{ formatDuration(posStore.activeTableSession.openedAt) }}</span>
           </div>
         </div>
