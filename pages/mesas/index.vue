@@ -120,6 +120,10 @@ const badgeLabel = (status: string) => {
   return 'Libre'
 }
 
+const freeCount = computed(() => tables.value.filter(t => t.status === 'free').length)
+const openCount = computed(() => tables.value.filter(t => t.status === 'open').length)
+const billCount = computed(() => tables.value.filter(t => t.status === 'bill_requested').length)
+
 onMounted(() => {
   setRefreshHandler(refetch)
   pollInterval = setInterval(refetch, 30_000)
@@ -160,45 +164,83 @@ onUnmounted(() => {
         </NuxtLink>
       </div>
 
+      <!-- Stats strip -->
+      <div class="flex items-center gap-4 mb-1 px-0.5 flex-wrap">
+        <div class="flex items-center gap-1.5">
+          <div class="w-2 h-2 rounded-full bg-border" />
+          <span class="text-xs text-text-secondary tabular-nums">{{ freeCount }} libre{{ freeCount !== 1 ? 's' : '' }}</span>
+        </div>
+        <div v-if="openCount > 0" class="flex items-center gap-1.5">
+          <div class="w-2 h-2 rounded-full bg-status-success-text" />
+          <span class="text-xs text-status-success-text font-medium tabular-nums">{{ openCount }} ocupada{{ openCount !== 1 ? 's' : '' }}</span>
+        </div>
+        <div v-if="billCount > 0" class="flex items-center gap-1.5">
+          <div class="w-2 h-2 rounded-full bg-status-warning-text" />
+          <span class="text-xs text-status-warning-text font-medium tabular-nums">{{ billCount }} pidiendo cuenta</span>
+        </div>
+      </div>
+
       <!-- Table Grid -->
-      <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         <button
           v-for="table in tables"
           :key="table.id"
-          class="relative flex flex-col gap-2 p-4 rounded-xl border bg-surface text-left theme-transition focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-60 disabled:cursor-not-allowed"
+          class="relative flex flex-col rounded-xl border bg-surface text-left overflow-hidden shadow-sm theme-transition focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-60 disabled:cursor-not-allowed"
           :class="{
-            'border-border hover:border-primary/40 hover:shadow-sm active:scale-[0.98]': table.status === 'free',
-            'border-status-success-text/30 bg-status-success-bg/40 hover:shadow-sm active:scale-[0.98]': table.status === 'open',
-            'border-status-warning-text/30 bg-status-warning-bg/40 hover:shadow-sm active:scale-[0.98]': table.status === 'bill_requested',
+            'border-border hover:border-text-tertiary/40 hover:shadow-md active:scale-[0.98]': table.status === 'free',
+            'border-status-success-text/25 bg-status-success-bg/50 hover:shadow-md active:scale-[0.98]': table.status === 'open',
+            'border-status-warning-text/25 bg-status-warning-bg/50 hover:shadow-md active:scale-[0.98]': table.status === 'bill_requested',
           }"
           :disabled="openingTableId === table.id"
           :aria-label="`Mesa ${table.name} — ${badgeLabel(table.status)}`"
           @click="handleTableClick(table)"
         >
-          <!-- Loading spinner when opening -->
-          <div v-if="openingTableId === table.id" class="absolute inset-0 flex items-center justify-center rounded-xl bg-surface/80">
+          <!-- Loading overlay -->
+          <div v-if="openingTableId === table.id" class="absolute inset-0 flex items-center justify-center rounded-xl bg-surface/80 z-10">
             <CommonsTheCustomLoader size="small" />
           </div>
 
-          <!-- Table name -->
-          <p class="text-base font-bold text-text-primary leading-tight">{{ table.name }}</p>
+          <!-- Status accent top bar -->
+          <div
+            class="h-1 w-full flex-shrink-0"
+            :class="{
+              'bg-transparent': table.status === 'free',
+              'bg-status-success-text': table.status === 'open',
+              'bg-status-warning-text': table.status === 'bill_requested',
+            }"
+          />
 
-          <!-- Status badge -->
-          <UiStatusBadge :variant="badgeVariant(table.status)" size="sm">
-            {{ badgeLabel(table.status) }}
-          </UiStatusBadge>
+          <!-- Card content -->
+          <div class="flex flex-col gap-1 p-3 flex-1">
+            <!-- Table name -->
+            <p class="text-sm font-bold text-text-primary leading-tight truncate">{{ table.name }}</p>
 
-          <!-- Open session details -->
-          <template v-if="table.session && table.status !== 'free'">
-            <div class="mt-1 flex flex-col gap-0.5">
-              <p v-if="table.session.running_total != null" class="text-sm font-semibold text-text-primary">
-                {{ formatCurrency(table.session.running_total) }}
+            <!-- Free: subtle availability hint -->
+            <template v-if="table.status === 'free'">
+              <p class="text-xs text-text-tertiary mt-auto pt-3">Disponible</p>
+            </template>
+
+            <!-- Open / bill_requested: financial info -->
+            <template v-else-if="table.session">
+              <p class="text-xl font-bold text-text-primary leading-tight tabular-nums mt-1">
+                {{ formatCurrency(table.session.running_total ?? 0) }}
               </p>
-              <p v-if="table.session.opened_at" class="text-xs text-text-secondary">
+              <div class="flex items-center gap-1 text-xs text-text-secondary tabular-nums mt-0.5">
+                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 {{ formatDuration(table.session.opened_at) }}
-              </p>
-            </div>
-          </template>
+              </div>
+            </template>
+          </div>
+
+          <!-- Bill requested footer label -->
+          <div v-if="table.status === 'bill_requested'" class="px-3 pb-2.5 flex items-center gap-1">
+            <svg class="w-3 h-3 text-status-warning-text flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <span class="text-xs font-medium text-status-warning-text">Pide la cuenta</span>
+          </div>
         </button>
       </div>
     </div>
