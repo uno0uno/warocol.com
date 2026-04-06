@@ -459,6 +459,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path.startsWith('/mesas')) {
+    return {
+      pageTitle: path === '/mesas/gestionar' ? 'Gestionar Mesas' : 'Mesas',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'mesas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path.startsWith('/equipo')) {
     return {
       pageTitle: 'Equipo',

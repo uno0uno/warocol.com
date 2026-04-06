@@ -152,6 +152,23 @@
           </NuxtLink>
 
           <NuxtLink
+            to="/mesas/gestionar"
+            @click="showMenuModal = false"
+            class="flex flex-col items-center gap-1"
+          >
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
+              :class="activePage === 'mesas' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+            >
+              <TableCellsIcon
+                class="w-6 h-6"
+                :class="activePage === 'mesas' ? 'text-crocus-600' : 'text-titan-600'"
+              />
+            </div>
+            <span class="text-[10px] text-titan-600">Mesas</span>
+          </NuxtLink>
+
+          <NuxtLink
             to="/analitica"
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
@@ -368,6 +385,7 @@ import {
   ShoppingCartIcon,
   CubeIcon,
   ChartBarIcon,
+  TableCellsIcon,
   UserGroupIcon,
   BellIcon,
   BellAlertIcon,
@@ -377,7 +395,7 @@ import { computed, ref } from 'vue'
 import { useLayoutActions } from '../composables/useLayoutActions'
 
 interface Props {
-  activePage?: 'dashboard' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'analitica' | 'reportes' | 'configuracion' | 'admin' | 'ventas' | 'inventario' | 'menu' | 'equipo' | 'integraciones'
+  activePage?: 'dashboard' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'analitica' | 'reportes' | 'configuracion' | 'admin' | 'ventas' | 'inventario' | 'menu' | 'equipo' | 'integraciones' | 'mesas'
   notificationsCount?: number
 }
 
