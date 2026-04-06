@@ -313,17 +313,10 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
             </svg>
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-[10px] font-bold text-status-success-text uppercase tracking-widest">
-              Mesa Activa
-            </p>
-            <p class="text-base font-bold text-text-primary leading-tight">
-              {{ posStore.activeTableSession.tableName }}
-            </p>
-            <p class="text-xs text-text-secondary mt-0.5">
-              {{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado
-              · {{ formatDuration(posStore.activeTableSession.openedAt) }}
-            </p>
+          <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+            <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest flex-shrink-0">Mesa Activa</span>
+            <span class="text-sm font-bold text-text-primary flex-shrink-0">{{ posStore.activeTableSession.tableName }}</span>
+            <span class="text-xs text-text-secondary tabular-nums truncate">{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado · {{ formatDuration(posStore.activeTableSession.openedAt) }}</span>
           </div>
         </div>
         <!-- Tab error -->
