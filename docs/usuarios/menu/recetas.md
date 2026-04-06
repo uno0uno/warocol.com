@@ -59,7 +59,7 @@ Al crear el ingrediente desde aquí debes completar:
 
 Las unidades de compra se generan automáticamente según el tipo de medida. Cuando guardes el ingrediente, queda disponible de inmediato para seleccionarlo en la receta.
 
-→ [Ver guía completa de Ingredientes Propios](../compras.md#ingredientes-propios)
+→ [Ver más sobre ingredientes propios](https://warocol.com/docs/usuarios/compras#ingredientes-propios)
 
 ### Paso 3 — Revisión y confirmación
 
