@@ -59,6 +59,10 @@ Aquí agregas cada opción disponible. Por cada una defines:
 
 Haz clic en **+ Agregar Modificador** para agregar más opciones.
 
+Cada modificador puede tener ingredientes asociados para control de inventario. Si al buscar un ingrediente no aparece, encontrarás la opción **+ Crear ingrediente** para crearlo en un panel lateral sin salir del formulario. Necesitarás: Nombre, Tipo de medida y Categoría (los tres obligatorios).
+
+→ [Ver guía completa de Ingredientes Propios](../compras.md#ingredientes-propios)
+
 ### Paso 3 — Revisión
 
 Revisa el resumen y haz clic en **Crear grupo**.

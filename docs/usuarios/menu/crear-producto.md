@@ -52,6 +52,10 @@ Aquí defines de qué está hecho el producto. Tienes dos opciones independiente
 
 **Agregar ingredientes directos** — agrega ingredientes uno a uno con su cantidad, sin necesidad de una receta. Útil cuando el plato es único.
 
+**Si el ingrediente no existe:** en el buscador aparece la opción **+ Crear ingrediente**. Haz clic para abrirlo en un panel lateral sin salir del formulario. Necesitarás: Nombre, Tipo de medida (Peso/Volumen/Pieza) y Categoría — los tres obligatorios. La categoría del ingrediente es independiente de la categoría del producto.
+
+→ [Ver guía completa de Ingredientes Propios](../compras.md#ingredientes-propios)
+
 Puedes dejar este paso completamente vacío si no necesitas control de costos ni inventario para este producto.
 
 ### Paso 3 — Revisión y confirmación

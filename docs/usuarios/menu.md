@@ -37,7 +37,7 @@ Ve a **Menú → Recetas → Nueva receta**. El formulario tiene 3 pasos:
 
 **Paso 2 — Ingredientes**
 
-Busca el ingrediente por nombre, escribe la cantidad y la unidad. Repite para cada ingrediente.
+Busca el ingrediente por nombre, escribe la cantidad y la unidad. Repite para cada ingrediente. Si el ingrediente no existe, haz clic en **+ Crear ingrediente** para crearlo ahí mismo sin salir del formulario.
 
 **Paso 3 — Revisión y confirmación**
 
@@ -94,6 +94,8 @@ Ve a **Menú → Productos → Nuevo producto**. El formulario tiene 3 pasos:
 
 - **+ Agregar Receta Base** — busca una receta ya creada
 - **Ingredientes directos** — agrega ingredientes uno a uno con su cantidad
+
+Si el ingrediente no existe, haz clic en **+ Crear ingrediente** para crearlo ahí mismo sin salir del formulario.
 
 Puedes dejar este paso vacío si no necesitas control de costos.
 

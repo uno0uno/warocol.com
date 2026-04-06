@@ -47,7 +47,19 @@ Aquí agregas cada ingrediente con su cantidad.
 - Escribe la cantidad y la unidad (gramos, mililitros, unidades, etc.)
 - Repite para cada ingrediente
 
-Si un ingrediente no aparece en la lista, pídele al administrador que lo cree en **Gestión → Ingredientes**.
+**Si el ingrediente no existe:** en el buscador aparece la opción **+ Crear ingrediente**. Haz clic para abrirlo en un panel lateral sin salir del formulario.
+
+Al crear el ingrediente desde aquí debes completar:
+
+| Campo | Obligatorio | Notas |
+|-------|:-----------:|-------|
+| Nombre | Sí | Ej: `Carne Angus especial` |
+| Tipo de medida | Sí | Peso (gr/kg), Volumen (ml/lt) o Pieza (und). Solo se define al crear — no cambia después. |
+| Categoría | Sí | Ej: `Carnes`, `Salsas`, `Lácteos` |
+
+Las unidades de compra se generan automáticamente según el tipo de medida. Cuando guardes el ingrediente, queda disponible de inmediato para seleccionarlo en la receta.
+
+→ [Ver guía completa de Ingredientes Propios](../compras.md#ingredientes-propios)
 
 ### Paso 3 — Revisión y confirmación
 

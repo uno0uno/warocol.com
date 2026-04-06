@@ -1,6 +1,6 @@
 # Compras
 
-Desde el módulo de Compras gestionas tus proveedores y registras las facturas de lo que compras para tu operación.
+Desde el módulo de Compras gestionas tus proveedores, registras las facturas de lo que compras, administras tus ingredientes propios y controlas la calidad de tus datos de abastecimiento.
 
 ---
 
@@ -72,7 +72,8 @@ Haz clic en **Leer Factura con IA**. Toma una foto o sube una imagen. El sistema
 
 La IA llena la lista con los ítems de la factura e intenta hacer match con tus ingredientes existentes.
 
-- **Ingrediente nuevo:** toca "Crear ingrediente" para crearlo sin salir del proceso
+- **Mientras buscas:** aparece un indicador de carga en el campo — espera a que termine antes de revisar los resultados
+- **Ingrediente no encontrado:** el buscador muestra "Sin resultados" y aparece el botón **+ Crear ingrediente**. Haz clic para abrir el panel de creación sin salir de la compra. Ver [campos del formulario](./abastecimiento/ingredientes-propios.md#crear-un-ingrediente-propio).
 - **Valida cantidades y precios:** WARO puede sugerirte precios anteriores como referencia
 
 ### Finalizar la compra
@@ -147,6 +148,18 @@ Esta vista consolida los precios registrados en compras directas y recepciones d
 | Fecha | Cuándo se registró |
 
 Ordena por precio o fecha para identificar el proveedor más económico para cada ingrediente.
+
+---
+
+## Ingredientes Propios
+
+Los ingredientes propios son los insumos específicos de tu restaurante que no están en el catálogo global de WARO.
+
+Ve a **Abastecimiento → Ingredientes Propios** para crear, editar y organizar tu catálogo de ingredientes personalizados.
+
+También puedes crear ingredientes propios directamente desde Compras Directas, Recetas, Productos y Modificadores — sin necesidad de salir del formulario en el que estás.
+
+→ [Ver guía completa de Ingredientes Propios](./abastecimiento/ingredientes-propios.md)
 
 ---
 
