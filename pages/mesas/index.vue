@@ -109,20 +109,20 @@ const tableShortId = (name: string) => {
 }
 
 const tableColorClass = (status: string) => {
-  if (status === 'open') return 'bg-slate-900 border-slate-800 text-white shadow-lg shadow-slate-900/30'
-  if (status === 'bill_requested') return 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-600/30'
-  return 'bg-surface-secondary border-border text-text-tertiary'
+  if (status === 'open') return 'bg-crocus-100 border-crocus-300 text-crocus-700'
+  if (status === 'bill_requested') return 'bg-status-success-bg border-status-success-text text-status-success-text'
+  return 'bg-surface-secondary border-border text-text-secondary'
 }
 
 const chairColorClass = (status: string) => {
-  if (status === 'open') return 'bg-slate-700'
-  if (status === 'bill_requested') return 'bg-emerald-400'
-  return 'bg-slate-300 dark:bg-slate-600'
+  if (status === 'open') return 'bg-crocus-300'
+  if (status === 'bill_requested') return 'bg-titan-300'
+  return 'bg-titan-300'
 }
 
 const pillClass = (status: string) => {
-  if (status === 'open') return 'text-blue-600 border-blue-100 bg-blue-50'
-  if (status === 'bill_requested') return 'text-white bg-slate-800 border-transparent'
+  if (status === 'open') return 'text-crocus-700 border-crocus-200 bg-crocus-50'
+  if (status === 'bill_requested') return 'text-status-success-text border-status-success-text bg-status-success-bg'
   return 'text-text-tertiary border-border bg-transparent'
 }
 
@@ -180,11 +180,11 @@ onUnmounted(() => {
           <p class="text-sm text-text-secondary">Vista de planta principal</p>
           <div class="flex gap-2 flex-wrap">
             <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-              <div class="w-3 h-3 rounded-sm bg-slate-900" />
+              <div class="w-3 h-3 rounded-sm bg-crocus-300" />
               <span class="text-xs font-medium text-text-secondary">Ocupada</span>
             </div>
             <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-              <div class="w-3 h-3 rounded-sm bg-emerald-600" />
+              <div class="w-3 h-3 rounded-sm bg-status-success-bg border border-status-success-text" />
               <span class="text-xs font-medium text-text-secondary">Cuenta</span>
             </div>
             <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
@@ -199,7 +199,7 @@ onUnmounted(() => {
           <button
             v-for="table in tables"
             :key="table.id"
-            class="flex flex-col items-center py-6 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+            class="group flex flex-col items-center py-6 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
             :disabled="openingTableId === table.id"
             :aria-label="`${table.name} — ${badgeLabel(table.status)}`"
             @click="handleTableClick(table)"
@@ -217,7 +217,7 @@ onUnmounted(() => {
 
               <!-- Table square -->
               <div
-                class="w-24 h-24 flex flex-col items-center justify-center rounded-xl border-2 transition-colors duration-200"
+                class="w-24 h-24 flex flex-col items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95"
                 :class="tableColorClass(table.status)"
               >
                 <CommonsTheCustomLoader v-if="openingTableId === table.id" size="small" />
@@ -236,7 +236,7 @@ onUnmounted(() => {
                   <span class="text-lg tabular-nums leading-tight">{{ Math.round(table.session.running_total ?? 0).toLocaleString('es-CO') }}</span>
                 </div>
                 <div class="flex items-center justify-center gap-1 text-sm text-text-secondary">
-                  <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg class="w-3.5 h-3.5 text-status-warning-text flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span class="font-medium tabular-nums">{{ formatDuration(table.session.opened_at) }}</span>
