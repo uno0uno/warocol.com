@@ -164,85 +164,113 @@ onUnmounted(() => {
         </NuxtLink>
       </div>
 
-      <!-- Stats strip -->
-      <div class="flex items-center gap-4 mb-1 px-0.5 flex-wrap">
-        <div class="flex items-center gap-1.5">
-          <div class="w-2 h-2 rounded-full bg-border" />
-          <span class="text-xs text-text-secondary tabular-nums">{{ freeCount }} libre{{ freeCount !== 1 ? 's' : '' }}</span>
-        </div>
-        <div v-if="openCount > 0" class="flex items-center gap-1.5">
-          <div class="w-2 h-2 rounded-full bg-status-success-text" />
-          <span class="text-xs text-status-success-text font-medium tabular-nums">{{ openCount }} ocupada{{ openCount !== 1 ? 's' : '' }}</span>
-        </div>
-        <div v-if="billCount > 0" class="flex items-center gap-1.5">
-          <div class="w-2 h-2 rounded-full bg-status-warning-text" />
-          <span class="text-xs text-status-warning-text font-medium tabular-nums">{{ billCount }} pidiendo cuenta</span>
-        </div>
-      </div>
-
-      <!-- Table Grid -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        <button
-          v-for="table in tables"
-          :key="table.id"
-          class="relative flex flex-col rounded-xl border bg-surface text-left overflow-hidden shadow-sm theme-transition focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-60 disabled:cursor-not-allowed"
-          :class="{
-            'border-border hover:border-text-tertiary/40 hover:shadow-md active:scale-[0.98]': table.status === 'free',
-            'border-status-success-text/25 bg-status-success-bg/50 hover:shadow-md active:scale-[0.98]': table.status === 'open',
-            'border-status-warning-text/25 bg-status-warning-bg/50 hover:shadow-md active:scale-[0.98]': table.status === 'bill_requested',
-          }"
-          :disabled="openingTableId === table.id"
-          :aria-label="`Mesa ${table.name} — ${badgeLabel(table.status)}`"
-          @click="handleTableClick(table)"
-        >
-          <!-- Loading overlay -->
-          <div v-if="openingTableId === table.id" class="absolute inset-0 flex items-center justify-center rounded-xl bg-surface/80 z-10">
-            <CommonsTheCustomLoader size="small" />
+      <!-- Floor plan (only when tables exist) -->
+      <template v-else>
+        <!-- Stats strip -->
+        <div class="flex items-center gap-3 mb-6 flex-wrap">
+          <div class="flex items-center gap-1.5">
+            <div class="w-2 h-2 rounded-full bg-border" />
+            <span class="text-xs text-text-secondary tabular-nums">{{ freeCount }} libre{{ freeCount !== 1 ? 's' : '' }}</span>
           </div>
+          <template v-if="openCount > 0">
+            <span class="text-text-tertiary/50 text-xs">·</span>
+            <div class="flex items-center gap-1.5">
+              <div class="w-2 h-2 rounded-full bg-text-primary" />
+              <span class="text-xs text-text-primary font-medium tabular-nums">{{ openCount }} ocupada{{ openCount !== 1 ? 's' : '' }}</span>
+            </div>
+          </template>
+          <template v-if="billCount > 0">
+            <span class="text-text-tertiary/50 text-xs">·</span>
+            <div class="flex items-center gap-1.5">
+              <div class="w-2 h-2 rounded-full bg-status-warning-text" />
+              <span class="text-xs text-status-warning-text font-medium tabular-nums">{{ billCount }} pidiendo cuenta</span>
+            </div>
+          </template>
+        </div>
 
-          <!-- Status accent top bar -->
-          <div
-            class="h-1 w-full flex-shrink-0"
-            :class="{
-              'bg-transparent': table.status === 'free',
-              'bg-status-success-text': table.status === 'open',
-              'bg-status-warning-text': table.status === 'bill_requested',
-            }"
-          />
+        <!-- Floor plan grid — circular table layout (à la Toast / The Great Table) -->
+        <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
+          <button
+            v-for="table in tables"
+            :key="table.id"
+            class="flex flex-col items-center gap-2 focus:outline-none group disabled:opacity-60 disabled:cursor-not-allowed"
+            :disabled="openingTableId === table.id"
+            :aria-label="`${table.name} — ${badgeLabel(table.status)}`"
+            @click="handleTableClick(table)"
+          >
+            <!-- Circle + chair marks -->
+            <div class="relative p-[14px]">
+              <!-- Chair marks: 4 cardinal positions -->
+              <div
+                class="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-2 rounded-sm transition-colors duration-200"
+                :class="{
+                  'bg-text-tertiary/20': table.status === 'free',
+                  'bg-text-primary/70': table.status === 'open',
+                  'bg-status-warning-text/70': table.status === 'bill_requested',
+                }"
+              />
+              <div
+                class="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-2 rounded-sm transition-colors duration-200"
+                :class="{
+                  'bg-text-tertiary/20': table.status === 'free',
+                  'bg-text-primary/70': table.status === 'open',
+                  'bg-status-warning-text/70': table.status === 'bill_requested',
+                }"
+              />
+              <div
+                class="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-5 rounded-sm transition-colors duration-200"
+                :class="{
+                  'bg-text-tertiary/20': table.status === 'free',
+                  'bg-text-primary/70': table.status === 'open',
+                  'bg-status-warning-text/70': table.status === 'bill_requested',
+                }"
+              />
+              <div
+                class="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-5 rounded-sm transition-colors duration-200"
+                :class="{
+                  'bg-text-tertiary/20': table.status === 'free',
+                  'bg-text-primary/70': table.status === 'open',
+                  'bg-status-warning-text/70': table.status === 'bill_requested',
+                }"
+              />
 
-          <!-- Card content -->
-          <div class="flex flex-col gap-1 p-3 flex-1">
-            <!-- Table name -->
-            <p class="text-sm font-bold text-text-primary leading-tight truncate">{{ table.name }}</p>
-
-            <!-- Free: subtle availability hint -->
-            <template v-if="table.status === 'free'">
-              <p class="text-xs text-text-tertiary mt-auto pt-3">Disponible</p>
-            </template>
-
-            <!-- Open / bill_requested: financial info -->
-            <template v-else-if="table.session">
-              <p class="text-xl font-bold text-text-primary leading-tight tabular-nums mt-1">
-                {{ formatCurrency(table.session.running_total ?? 0) }}
-              </p>
-              <div class="flex items-center gap-1 text-xs text-text-secondary tabular-nums mt-0.5">
-                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {{ formatDuration(table.session.opened_at) }}
+              <!-- Circle -->
+              <div
+                class="relative w-[68px] h-[68px] rounded-full flex items-center justify-center transition-all duration-200 group-hover:scale-105 group-active:scale-95"
+                :class="{
+                  'bg-surface-secondary border-2 border-border/50': table.status === 'free',
+                  'bg-text-primary shadow-lg shadow-black/20': table.status === 'open',
+                  'bg-status-warning-text shadow-lg shadow-status-warning-text/30': table.status === 'bill_requested',
+                }"
+              >
+                <CommonsTheCustomLoader v-if="openingTableId === table.id" size="small" />
+                <span
+                  v-else
+                  class="text-sm font-bold leading-tight text-center px-2 line-clamp-2"
+                  :class="table.status === 'free' ? 'text-text-secondary' : 'text-white'"
+                >
+                  {{ table.name }}
+                </span>
               </div>
-            </template>
-          </div>
+            </div>
 
-          <!-- Bill requested footer label -->
-          <div v-if="table.status === 'bill_requested'" class="px-3 pb-2.5 flex items-center gap-1">
-            <svg class="w-3 h-3 text-status-warning-text flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <span class="text-xs font-medium text-status-warning-text">Pide la cuenta</span>
-          </div>
-        </button>
-      </div>
+            <!-- Info below circle -->
+            <div class="flex flex-col items-center gap-0.5 text-center" style="min-height:28px">
+              <template v-if="table.status !== 'free' && table.session">
+                <p class="text-xs font-bold text-text-primary tabular-nums leading-tight">
+                  {{ formatCurrency(table.session.running_total ?? 0) }}
+                </p>
+                <p class="flex items-center gap-0.5 text-[10px] text-text-secondary tabular-nums">
+                  <svg class="w-2.5 h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {{ formatDuration(table.session.opened_at) }}
+                </p>
+              </template>
+            </div>
+          </button>
+        </div>
+      </template>
     </div>
   </div>
 </template>
