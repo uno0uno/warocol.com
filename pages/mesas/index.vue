@@ -136,10 +136,10 @@ onUnmounted(() => {
           <p class="text-sm mt-1">Agrega mesas desde la configuración de tu negocio</p>
         </div>
         <NuxtLink
-          to="/negocio"
+          to="/mesas/gestionar"
           class="mt-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
         >
-          Ir a configuración
+          Configurar mesas
         </NuxtLink>
       </div>
 
