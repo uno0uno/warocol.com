@@ -257,20 +257,5 @@ onUnmounted(() => {
       </template>
     </div>
 
-    <!-- Fixed bottom summary bar -->
-    <div
-      v-if="tables.length > 0 && !loadingTables && !tablesError"
-      class="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 bg-surface/90 backdrop-blur-md border border-border px-6 py-3 rounded-2xl shadow-xl flex items-center gap-6 z-30 whitespace-nowrap"
-    >
-      <div class="flex flex-col">
-        <span class="text-[10px] uppercase font-bold text-text-tertiary tracking-wider">Total ventas</span>
-        <span class="text-lg font-bold text-text-primary tabular-nums">${{ Math.round(totalVentas).toLocaleString('es-CO') }}</span>
-      </div>
-      <div class="w-px h-8 bg-border" />
-      <div class="flex flex-col">
-        <span class="text-[10px] uppercase font-bold text-text-tertiary tracking-wider">Ocupación</span>
-        <span class="text-lg font-bold text-text-primary tabular-nums">{{ openCount + billCount }} / {{ tables.length }}</span>
-      </div>
-    </div>
   </div>
 </template>
