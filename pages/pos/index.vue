@@ -38,6 +38,7 @@ watch(
 const isMesaMode = computed(() => !!posStore.activeTableSession)
 const isAddingToTab = ref(false)
 const isLoadingTabItems = ref(false)
+const isClearingTab = ref(false)
 const tabError = ref<string | null>(null)
 
 // Refresh session running total + tab items from the backend
@@ -313,10 +314,13 @@ const duplicateCartItem = async (index: number) => {
 const clearCart = async () => {
   const session = posStore.activeTableSession
   if (session) {
+    isClearingTab.value = true
     try {
       await $fetch(`/api/tables/${session.tableId}/tab`, { method: 'DELETE' })
     } catch {
       // Non-critical
+    } finally {
+      isClearingTab.value = false
     }
     posStore.setTabItems([])
   }
@@ -544,6 +548,7 @@ onUnmounted(() => {
         :mesa-mode="isMesaMode"
         :is-adding-to-tab="isAddingToTab"
         :is-loading-tab-items="isLoadingTabItems"
+        :is-clearing-tab="isClearingTab"
         :tab-items="storeTabItems"
         :tab-total="storeTabTotal"
         :tab-items-loading="tabItemsLoading"
