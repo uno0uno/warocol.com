@@ -502,7 +502,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
         <template #cell-payment_method="{ value }">
-          <span class="text-sm text-text-primary">{{ getPaymentMethodLabel(value) }}</span>
+          <span :class="value ? 'text-sm text-text-primary' : 'text-sm text-text-tertiary italic'">
+            {{ value ? getPaymentMethodLabel(value) : 'Sin registrar' }}
+          </span>
         </template>
 
         <template #cell-total_amount="{ value }">
