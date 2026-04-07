@@ -131,14 +131,26 @@ const addToTab = async () => {
       modifiers: item.modifiers.map((m) => ({ id: m.id, name: m.name, price: m.price })),
       notes: item.notes ?? null,
     }))
-    await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/add`, {
+    console.log('[pos] addToTab payload', {
+      tableId: posStore.activeTableSession.tableId,
+      items: items.map(i => ({
+        product_id: i.product_id,
+        qty: i.quantity,
+        unit_price: i.unit_price,
+        modifiers: i.modifiers,
+        expected_subtotal: i.quantity * (i.unit_price + i.modifiers.reduce((s, m) => s + m.price, 0)),
+      })),
+    })
+    const res = await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/add`, {
       method: 'POST',
       body: { items },
     })
+    console.log('[pos] addToTab response', res)
     // Clear cart — items committed to tab
     await posStore.clearCart()
     // Refresh session + tab items
     await refreshTableSession()
+    console.log('[pos] after refreshTableSession', { runningTotal: posStore.activeTableSession?.runningTotal, tabItems: storeTabItems.value })
   } catch (e: any) {
     tabError.value = e?.data?.detail ?? 'Error al agregar a la mesa'
   } finally {
