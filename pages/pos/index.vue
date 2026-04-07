@@ -388,7 +388,7 @@ onUnmounted(() => {
     <!-- POS Content (shown always after loading) -->
     <div v-else>
       <!-- Mesa Banner skeleton while loading tab items -->
-      <div v-if="isLoadingTabItems" class="bg-surface border border-border rounded-2xl mb-4 p-3.5 shadow-sm animate-pulse">
+      <div v-if="isLoadingTabItems || isAddingToTab" class="bg-surface border border-border rounded-2xl mb-4 p-3.5 shadow-sm animate-pulse">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-surface-secondary flex-shrink-0" />
           <div class="flex-1 flex items-center gap-3">
