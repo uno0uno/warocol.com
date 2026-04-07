@@ -391,7 +391,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <!-- Search Field Select -->
         <select
           v-model="apiSearchField"
-          class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px]"
+          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px]"
         >
           <option value="order_number">Nº Orden</option>
           <option value="customer_name">Cliente</option>
@@ -419,7 +419,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <select
           v-model="paymentMethodFilter"
           @change="() => { currentPage.value = 1 }"
-          class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px]"
+          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px]"
         >
           <option :value="null">Método pago</option>
           <option value="cash">Efectivo</option>
@@ -431,7 +431,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <select
           v-model="statusFilter"
           @change="() => { currentPage.value = 1 }"
-          class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px]"
+          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px]"
         >
           <option :value="null">Estado</option>
           <option value="completed">Completadas</option>
