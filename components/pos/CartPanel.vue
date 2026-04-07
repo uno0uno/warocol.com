@@ -100,7 +100,7 @@
       <!-- Total -->
       <div class="flex items-center justify-between">
         <span class="text-xs font-semibold text-text-tertiary uppercase tracking-widest">Total</span>
-        <span class="text-3xl font-black text-text-primary tabular-nums">{{ formatCurrency(total) }}</span>
+        <span class="text-3xl font-black text-text-primary tabular-nums">{{ formatCurrency(mesaMode ? (tabTotal + total) : total) }}</span>
       </div>
 
       <!-- Actions — Standard POS mode -->
