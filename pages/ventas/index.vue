@@ -495,7 +495,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
           <select
             v-model="bulkStatus"
-            class="h-9 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+            class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
           >
             <option value="">Cambiar estado...</option>
             <option value="completed">Completada</option>
@@ -506,7 +506,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <select
             v-if="bulkStatus === 'completed'"
             v-model="bulkPaymentMethod"
-            class="h-9 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+            class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
           >
             <option value="">Método de pago...</option>
             <option value="cash">Efectivo</option>
