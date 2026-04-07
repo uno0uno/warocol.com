@@ -78,7 +78,7 @@
             <span
               v-if="dynamicStatus"
               key="dynamic-status"
-              :class="['h-11 flex items-center px-3 rounded-full text-sm font-medium', dynamicStatus.color]"
+              :class="['h-11 flex items-center px-3 rounded-lg text-sm font-medium', dynamicStatus.color]"
             >
               {{ dynamicStatus.label }}
             </span>
