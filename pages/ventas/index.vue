@@ -159,6 +159,7 @@ const ordersTableColumns: Column[] = [
   { key: 'customer_name', title: 'Cliente', sortable: true },
   { key: 'customer_phone', title: 'Teléfono', sortable: false },
   { key: 'items_count', title: 'Items', sortable: false },
+  { key: 'source', title: 'Origen', sortable: false },
   { key: 'payment_method', title: 'Método Pago', sortable: true },
   { key: 'total_amount', title: 'Total', sortable: true },
   { key: 'status', title: 'Estado', sortable: false }
@@ -449,7 +450,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <span class="text-xs text-text-secondary">{{ formatDateCompact(item.order_date) }}</span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ item.customer_name }} · {{ item.items_count }} items · {{ getPaymentMethodLabel(item.payment_method) }}
+                {{ item.customer_name }} · {{ item.items_count }} items · {{ getPaymentMethodLabel(item.payment_method) }} · {{ item.source === 'mesa' ? 'Mesa' : 'POS' }}
               </p>
             </div>
 
@@ -489,6 +490,15 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
         <template #cell-items_count="{ value }">
           <span class="text-sm text-text-secondary">{{ value }}</span>
+        </template>
+
+        <template #cell-source="{ value }">
+          <span
+            class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
+            :class="value === 'mesa' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'"
+          >
+            {{ value === 'mesa' ? 'Mesa' : 'POS' }}
+          </span>
         </template>
 
         <template #cell-payment_method="{ value }">
