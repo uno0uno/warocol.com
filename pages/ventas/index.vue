@@ -158,6 +158,10 @@ const bulkStatus = ref('')
 const bulkPaymentMethod = ref('')
 const isBulkUpdating = ref(false)
 
+// Customer identification for completed orders
+const showCustomerModal = ref(false)
+const pendingCustomerId = ref<string | null>(null)
+
 const allPageSelected = computed(() => {
   const ids = orders.value.map((o: any) => o.id)
   return ids.length > 0 && ids.every((id: string) => selectedIds.value.includes(id))
@@ -186,8 +190,23 @@ const clearSelection = () => {
   bulkPaymentMethod.value = ''
 }
 
-const bulkUpdateStatus = async () => {
+const bulkUpdateStatus = () => {
   if (!bulkStatus.value || selectedIds.value.length === 0) return
+  if (bulkStatus.value === 'completed') {
+    // Ask for customer before applying
+    pendingCustomerId.value = null
+    showCustomerModal.value = true
+  } else {
+    executeBulkUpdate(null)
+  }
+}
+
+const onCustomerIdentified = (customer: { id: string; name: string | null; phone_number: string | null }) => {
+  showCustomerModal.value = false
+  executeBulkUpdate(customer.id)
+}
+
+const executeBulkUpdate = async (customerId: string | null) => {
   isBulkUpdating.value = true
   try {
     const res = await $fetch('/api/orders/bulk-status', {
@@ -196,6 +215,7 @@ const bulkUpdateStatus = async () => {
         order_ids: Array.from(selectedIds.value),
         status: bulkStatus.value,
         payment_method: bulkPaymentMethod.value || undefined,
+        customer_id: customerId || undefined,
       },
     }) as any
     clearSelection()
@@ -784,6 +804,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </div>
       </div>
     </Teleport>
+
+    <!-- Customer identification slideover (shown when completing orders) -->
+    <PosCustomerIdentificationModal
+      v-model="showCustomerModal"
+      @customer-identified="onCustomerIdentified"
+    />
   </div>
 </template>
 
