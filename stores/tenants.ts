@@ -5,6 +5,7 @@
  * useMutation for tenant switch — fires bulk cache invalidation on success.
  */
 import { defineStore } from 'pinia'
+import { usePOSStore } from '~/stores/usePOSStore'
 
 export interface BusinessHours {
   open?: string    // "HH:MM" — may be absent when closed: true
@@ -106,6 +107,8 @@ export const useTenantsStore = defineStore('tenants', () => {
       // - Order matters: invalidating first avoids a race where the old query key
       //   re-fetches with the new session and stores the result under the wrong entry.
       cache.invalidateQueries()
+      // Reset POS feature flags — new tenant may have different settings
+      usePOSStore().tablesEnabled = null
       // Update AFTER so the reactive key change triggers a clean fetch on the new tenant.
       selectedTenant.value = tenant
     },
