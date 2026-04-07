@@ -311,6 +311,15 @@ const duplicateCartItem = async (index: number) => {
 }
 
 const clearCart = async () => {
+  const session = posStore.activeTableSession
+  if (session) {
+    try {
+      await $fetch(`/api/tables/${session.tableId}/tab`, { method: 'DELETE' })
+    } catch {
+      // Non-critical
+    }
+    posStore.setTabItems([])
+  }
   await posStore.clearCart()
 }
 
