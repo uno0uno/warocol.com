@@ -48,15 +48,16 @@
               <span class="hidden sm:inline">Cargar Factura IA</span>
             </NuxtLink>
 
-            <NuxtLink
+            <button
               key="pos-link"
-              to="/pos"
+              type="button"
+              @click="navigateToPOS"
               class="flex items-center gap-1 md:gap-2 h-11 bg-card border border-border text-foreground px-2 md:px-4 rounded-xl font-medium hover:bg-accent transition-all"
               title="Venta POS"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
               <span class="hidden sm:inline">Venta POS</span>
-            </NuxtLink>
+            </button>
 
             <!-- Portal Target for Custom Actions (pages can still inject extra actions) -->
             <div key="portal-actions" id="dashboard-header-actions" class="flex items-center"></div>
@@ -962,6 +963,22 @@ watch(displayTitle, (nextTitle, previousTitle) => {
 // Inject cart data from POS page
 const posCartItemsCount = inject<ComputedRef<number> | Ref<number>>('posCartItemsCount', ref(0))
 const posOpenCartModal = inject<() => void>('posOpenCartModal', () => {})
+
+// POS nav — redirect to /mesas if tables are enabled
+const { currentTenant } = useTenantReactive()
+const { data: posSettingsData } = useQuery({
+  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+const navigateToPOS = () => {
+  if (posSettingsData.value?.data?.tables_enabled) {
+    navigateTo('/mesas')
+  } else {
+    navigateTo('/pos')
+  }
+}
 
 // Meta tags for dashboard
 useHead({

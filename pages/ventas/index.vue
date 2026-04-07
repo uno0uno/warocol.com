@@ -805,11 +805,13 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       </div>
     </Teleport>
 
-    <!-- Customer identification slideover (shown when completing orders) -->
-    <PosCustomerIdentificationModal
-      v-model="showCustomerModal"
-      @customer-identified="onCustomerIdentified"
-    />
+    <!-- Customer identification modal (shown when completing orders) -->
+    <Teleport to="body">
+      <PosCustomerIdentificationModal
+        v-model="showCustomerModal"
+        @customer-identified="onCustomerIdentified"
+      />
+    </Teleport>
   </div>
 </template>
 
