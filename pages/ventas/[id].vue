@@ -379,15 +379,15 @@ onUnmounted(() => {
               'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
               selectedNewStatus === 'pending'
                 ? 'bg-status-warning-bg border-status-warning-text/50 shadow-sm'
-                : 'bg-surface border-border hover:bg-status-warning-bg/40 hover:border-status-warning-text/30'
+                : 'bg-surface border-border'
             ]"
           >
-            <div :class="['w-9 h-9 rounded-full flex items-center justify-center transition-colors', selectedNewStatus === 'pending' ? 'bg-status-warning-text/15' : 'bg-surface-secondary group-hover:bg-status-warning-bg']">
-              <svg class="w-4.5 h-4.5" :class="selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-tertiary'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <div :class="['w-9 h-9 rounded-full flex items-center justify-center', selectedNewStatus === 'pending' ? 'bg-status-warning-text/15' : 'bg-surface-secondary']">
+              <svg class="w-4.5 h-4.5 transition-colors duration-150" :class="selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-tertiary group-hover:text-status-warning-text'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
             </div>
-            <span :class="['text-xs font-bold uppercase tracking-wider leading-none', selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-secondary']">Pendiente</span>
+            <span :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-secondary group-hover:text-status-warning-text']">Pendiente</span>
           </button>
 
           <!-- Completada -->
@@ -398,15 +398,15 @@ onUnmounted(() => {
               'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
               selectedNewStatus === 'completed'
                 ? 'bg-status-success-bg border-status-success-text/50 shadow-sm'
-                : 'bg-surface border-border hover:bg-status-success-bg/40 hover:border-status-success-text/30'
+                : 'bg-surface border-border'
             ]"
           >
-            <div :class="['w-9 h-9 rounded-full flex items-center justify-center transition-colors', selectedNewStatus === 'completed' ? 'bg-status-success-text/15' : 'bg-surface-secondary group-hover:bg-status-success-bg']">
-              <svg class="w-4.5 h-4.5" :class="selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-tertiary'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <div :class="['w-9 h-9 rounded-full flex items-center justify-center', selectedNewStatus === 'completed' ? 'bg-status-success-text/15' : 'bg-surface-secondary']">
+              <svg class="w-4.5 h-4.5 transition-colors duration-150" :class="selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-tertiary group-hover:text-status-success-text'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
             </div>
-            <span :class="['text-xs font-bold uppercase tracking-wider leading-none', selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-secondary']">Completada</span>
+            <span :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-secondary group-hover:text-status-success-text']">Completada</span>
           </button>
 
           <!-- Cancelada -->
@@ -417,15 +417,15 @@ onUnmounted(() => {
               'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
               selectedNewStatus === 'cancelled'
                 ? 'bg-status-critical-bg border-status-critical-text/50 shadow-sm'
-                : 'bg-surface border-border hover:bg-status-critical-bg/40 hover:border-status-critical-text/30'
+                : 'bg-surface border-border'
             ]"
           >
-            <div :class="['w-9 h-9 rounded-full flex items-center justify-center transition-colors', selectedNewStatus === 'cancelled' ? 'bg-status-critical-text/15' : 'bg-surface-secondary group-hover:bg-status-critical-bg']">
-              <svg class="w-4.5 h-4.5" :class="selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-tertiary'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <div :class="['w-9 h-9 rounded-full flex items-center justify-center', selectedNewStatus === 'cancelled' ? 'bg-status-critical-text/15' : 'bg-surface-secondary']">
+              <svg class="w-4.5 h-4.5 transition-colors duration-150" :class="selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-tertiary group-hover:text-status-critical-text'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
             </div>
-            <span :class="['text-xs font-bold uppercase tracking-wider leading-none', selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-secondary']">Cancelada</span>
+            <span :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-secondary group-hover:text-status-critical-text']">Cancelada</span>
           </button>
         </div>
 
