@@ -434,20 +434,45 @@ onUnmounted(() => {
           <div v-if="selectedNewStatus === 'completed'" class="space-y-2">
             <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">Método de pago</p>
             <div class="grid grid-cols-3 gap-2">
+              <!-- Efectivo -->
               <button
-                v-for="pm in [{ value: 'cash', label: 'Efectivo', icon: '💵' }, { value: 'card', label: 'Tarjeta', icon: '💳' }, { value: 'digital', label: 'Digital', icon: '📱' }]"
-                :key="pm.value"
                 type="button"
-                @click="selectedPaymentMethod = selectedPaymentMethod === pm.value ? '' : pm.value"
-                :class="[
-                  'flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all duration-150 focus:outline-none',
-                  selectedPaymentMethod === pm.value
-                    ? 'bg-primary/8 border-primary text-primary'
-                    : 'bg-surface border-border text-text-secondary hover:border-primary/40 hover:text-text-primary'
-                ]"
+                @click="selectedPaymentMethod = selectedPaymentMethod === 'cash' ? '' : 'cash'"
+                :class="['flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all duration-150 focus:outline-none', selectedPaymentMethod === 'cash' ? 'bg-primary/8 border-primary text-primary' : 'bg-surface border-border text-text-secondary hover:border-primary/40 hover:text-text-primary']"
               >
-                <span class="text-base leading-none">{{ pm.icon }}</span>
-                <span class="text-xs font-semibold">{{ pm.label }}</span>
+                <div class="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center flex-shrink-0">
+                  <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                  </svg>
+                </div>
+                <span class="text-xs font-semibold">Efectivo</span>
+              </button>
+              <!-- Tarjeta -->
+              <button
+                type="button"
+                @click="selectedPaymentMethod = selectedPaymentMethod === 'card' ? '' : 'card'"
+                :class="['flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all duration-150 focus:outline-none', selectedPaymentMethod === 'card' ? 'bg-primary/8 border-primary text-primary' : 'bg-surface border-border text-text-secondary hover:border-primary/40 hover:text-text-primary']"
+              >
+                <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0">
+                  <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                  </svg>
+                </div>
+                <span class="text-xs font-semibold">Datáfono</span>
+              </button>
+              <!-- Digital / QR -->
+              <button
+                type="button"
+                @click="selectedPaymentMethod = selectedPaymentMethod === 'digital' ? '' : 'digital'"
+                :class="['flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all duration-150 focus:outline-none', selectedPaymentMethod === 'digital' ? 'bg-primary/8 border-primary text-primary' : 'bg-surface border-border text-text-secondary hover:border-primary/40 hover:text-text-primary']"
+              >
+                <div class="w-6 h-6 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center flex-shrink-0">
+                  <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
+                  </svg>
+                </div>
+                <span class="text-xs font-semibold">QR</span>
               </button>
             </div>
           </div>
