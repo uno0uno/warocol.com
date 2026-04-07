@@ -152,8 +152,67 @@ const searchFields = [
   { label: 'Teléfono', value: 'customer_phone' }
 ]
 
+// Bulk selection
+const selectedIds = ref<Set<string>>(new Set())
+const bulkStatus = ref('')
+const bulkPaymentMethod = ref('')
+const isBulkUpdating = ref(false)
+
+const allPageSelected = computed(() => {
+  const ids = orders.value.map((o: any) => o.id)
+  return ids.length > 0 && ids.every((id: string) => selectedIds.value.has(id))
+})
+
+const toggleSelect = (id: string, event: Event) => {
+  event.stopPropagation()
+  const next = new Set(selectedIds.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  selectedIds.value = next
+}
+
+const toggleSelectAll = () => {
+  if (allPageSelected.value) {
+    selectedIds.value = new Set()
+  } else {
+    selectedIds.value = new Set(orders.value.map((o: any) => o.id))
+  }
+}
+
+const clearSelection = () => {
+  selectedIds.value = new Set()
+  bulkStatus.value = ''
+  bulkPaymentMethod.value = ''
+}
+
+const bulkUpdateStatus = async () => {
+  if (!bulkStatus.value || selectedIds.value.size === 0) return
+  isBulkUpdating.value = true
+  try {
+    const res = await $fetch('/api/orders/bulk-status', {
+      method: 'PATCH',
+      body: {
+        order_ids: Array.from(selectedIds.value),
+        status: bulkStatus.value,
+        payment_method: bulkPaymentMethod.value || undefined,
+      },
+    }) as any
+    clearSelection()
+    await refetch()
+    useToast().success(res.message || 'Estado actualizado', { title: 'Listo' })
+  } catch (error: any) {
+    useToast().error(error.data?.message || 'Error al actualizar', { title: 'Error' })
+  } finally {
+    isBulkUpdating.value = false
+  }
+}
+
+// Clear selection when page/filters change
+watch([currentPage, statusFilter, paymentMethodFilter, appliedSearch, dateRange], clearSelection)
+
 // Table columns configuration
 const ordersTableColumns: Column[] = [
+  { key: 'select', title: '', sortable: false, width: '44px' },
   { key: 'order_number', title: 'Nº Orden', sortable: true },
   { key: 'order_date', title: 'Fecha', sortable: true },
   { key: 'customer_name', title: 'Cliente', sortable: true },
@@ -421,6 +480,55 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </NuxtLink>
       </div>
 
+      <!-- Bulk Action Bar -->
+      <Transition name="bulk-bar">
+        <div
+          v-if="selectedIds.size > 0"
+          class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border-2 border-primary/30 bg-primary/5"
+        >
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <input type="checkbox" :checked="allPageSelected" @change="toggleSelectAll" class="w-4 h-4 accent-primary cursor-pointer" />
+            <span class="text-sm font-semibold text-text-primary">{{ selectedIds.size }} seleccionada(s)</span>
+          </div>
+
+          <div class="flex-1" />
+
+          <select
+            v-model="bulkStatus"
+            class="h-9 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+          >
+            <option value="">Cambiar estado...</option>
+            <option value="completed">Completada</option>
+            <option value="pending">Pendiente</option>
+            <option value="cancelled">Cancelada</option>
+          </select>
+
+          <select
+            v-if="bulkStatus === 'completed'"
+            v-model="bulkPaymentMethod"
+            class="h-9 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+          >
+            <option value="">Método de pago...</option>
+            <option value="cash">Efectivo</option>
+            <option value="card">Tarjeta</option>
+            <option value="digital">Digital</option>
+          </select>
+
+          <button
+            @click="bulkUpdateStatus"
+            :disabled="!bulkStatus || isBulkUpdating || (bulkStatus === 'completed' && !bulkPaymentMethod)"
+            class="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          >
+            <UiLoadingDots v-if="isBulkUpdating" size="12px" />
+            <span v-else>Aplicar</span>
+          </button>
+
+          <button @click="clearSelection" class="h-9 px-3 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary transition-colors">
+            Cancelar
+          </button>
+        </div>
+      </Transition>
+
       <!-- Responsive Data View -->
       <HealthSemaphore :is-unlocked="true" title="Historial de Ventas">
       <UiResponsiveDataView
@@ -467,6 +575,18 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </div>
         </template>
 
+
+        <!-- Checkbox column -->
+        <template #cell-select="{ item }">
+          <div @click.stop class="flex items-center justify-center">
+            <input
+              type="checkbox"
+              :checked="item && selectedIds.has(item.id)"
+              @change="(e) => item && toggleSelect(item.id, e)"
+              class="w-4 h-4 accent-primary cursor-pointer"
+            />
+          </div>
+        </template>
 
         <!-- Desktop Table Cells -->
         <template #cell-order_number="{ value }">
@@ -679,5 +799,15 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 .dp-custom-menu {
   border-radius: 0.75rem !important;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+
+.bulk-bar-enter-active,
+.bulk-bar-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.bulk-bar-enter-from,
+.bulk-bar-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 </style>
