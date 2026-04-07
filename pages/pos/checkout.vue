@@ -254,8 +254,19 @@ const getPaymentMethodLabel = (method: string) => {
   return labels[method] || method
 }
 
-const cancelOrder = () => {
-  router.push('/pos')
+const cancelOrder = async () => {
+  if (isMesaMode.value) {
+    const session = posStore.activeTableSession!
+    try {
+      await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
+    } catch {
+      // Non-critical
+    }
+    posStore.clearAll()
+    router.push('/mesas')
+  } else {
+    router.push('/pos')
+  }
 }
 
 const closeSuccessModal = () => {

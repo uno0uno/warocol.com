@@ -135,12 +135,25 @@
 
       <!-- Actions — Mesa (tab) mode -->
       <div v-else class="space-y-2">
-        <!-- 2-col grid: secondary actions -->
-        <div class="grid grid-cols-2 gap-2">
+        <!-- 3-col grid: secondary actions -->
+        <div class="grid grid-cols-3 gap-2">
+          <!-- Cancelar mesa -->
+          <button
+            type="button"
+            class="h-10 rounded-xl border border-status-error-text/30 text-status-error-text text-xs font-medium flex items-center justify-center gap-1 hover:bg-status-error-bg transition-colors focus:outline-none"
+            aria-label="Cancelar y liberar mesa"
+            @click="$emit('cancel-mesa')"
+          >
+            <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+            Cancelar
+          </button>
           <!-- Pedir cuenta -->
           <button
             type="button"
-            class="h-10 rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none"
+            :disabled="tabItems.length === 0 && items.length === 0"
+            class="h-10 rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label="Pedir la cuenta"
             @click="$emit('request-bill')"
           >
@@ -153,7 +166,7 @@
           <button
             type="button"
             :disabled="items.length === 0 || isDeleting"
-            class="h-10 rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+            class="h-10 rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
             @click="$emit('clear-cart')"
           >
             <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -229,6 +242,7 @@ interface Emits {
   (e: 'clear-cart'): void
   (e: 'add-to-tab'): void
   (e: 'request-bill'): void
+  (e: 'cancel-mesa'): void
   (e: 'remove-tab-item', orderItemId: string): void
   (e: 'increment-tab-item', orderItemId: string): void
   (e: 'decrement-tab-item', orderItemId: string): void

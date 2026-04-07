@@ -164,6 +164,18 @@ const requestBill = () => {
   router.push('/pos/checkout')
 }
 
+const cancelMesa = async () => {
+  const session = posStore.activeTableSession
+  if (!session) return
+  try {
+    await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
+  } catch {
+    // Non-critical — clear local state regardless
+  }
+  posStore.clearAll()
+  router.push('/mesas')
+}
+
 const formatDuration = (openedAt: string): string => {
   const diffMs = Date.now() - new Date(openedAt).getTime()
   const totalMins = Math.floor(diffMs / 60_000)
@@ -535,6 +547,7 @@ onUnmounted(() => {
         @clear-cart="clearCart"
         @add-to-tab="addToTab"
         @request-bill="requestBill"
+        @cancel-mesa="cancelMesa"
         @remove-tab-item="removeTabItem"
         @increment-tab-item="incrementTabItem"
         @decrement-tab-item="decrementTabItem"
