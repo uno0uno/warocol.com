@@ -526,6 +526,7 @@
 
 <script setup lang="ts">
 import { watch } from 'vue'
+import { usePOSStore } from '~/stores/usePOSStore'
 import {
   BuildingStorefrontIcon,
   MapPinIcon,
@@ -694,6 +695,7 @@ const toggleActive = async () => {
 }
 
 // ─── Toggle tables module ───
+const posStore = usePOSStore()
 const isTogglingTables = ref(false)
 const toggleTablesEnabled = async () => {
   if (!businessProfile.value || isTogglingTables.value) return
@@ -705,6 +707,7 @@ const toggleTablesEnabled = async () => {
       body: { tables_enabled: newState },
     })
     await refreshProfile()
+    posStore.tablesEnabled = newState  // sync store immediately
     toast.success(
       newState ? 'Gestión de mesas activada para el POS' : 'Gestión de mesas desactivada',
       { title: newState ? '¡Módulo activado!' : 'Módulo desactivado' }
