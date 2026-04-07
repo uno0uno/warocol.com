@@ -974,7 +974,9 @@ const { data: posSettingsData } = useQuery({
 })
 const posNavStore = usePOSStore()
 const navigateToPOS = () => {
-  const tablesOn = posSettingsData.value?.data?.tables_enabled ?? posNavStore.tablesEnabled
+  const fromQuery = posSettingsData.value?.data?.tables_enabled
+  const fromStore = posNavStore.tablesEnabled
+  const tablesOn = fromQuery ?? fromStore
   navigateTo(tablesOn ? '/mesas' : '/pos')
 }
 

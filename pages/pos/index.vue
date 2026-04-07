@@ -26,16 +26,25 @@ const { data: settingsData } = useQuery({
   staleTime: 30_000,
 })
 
-watch(
-  () => settingsData.value?.data?.tables_enabled,
-  (enabled) => {
-    if (enabled !== undefined && enabled !== null) {
+// Redirect to /mesas if tables are enabled — fires at most once per mount
+// (store value used for instant redirect on subsequent navigations)
+if (posStore.tablesEnabled === true && !sessionStorage.getItem('mesaContext')) {
+  navigateTo('/mesas')
+} else if (posStore.tablesEnabled === null) {
+  // First ever visit — wait for query to resolve once, then decide
+  const stopWatch = watch(
+    () => settingsData.value?.data?.tables_enabled,
+    (enabled) => {
+      if (enabled === undefined || enabled === null) return
       posStore.tablesEnabled = enabled
-    }
-    if (enabled && !sessionStorage.getItem('mesaContext') && !posStore.activeTableSession) navigateTo('/mesas')
-  },
-  { immediate: true }
-)
+      if (enabled && !sessionStorage.getItem('mesaContext')) {
+        navigateTo('/mesas')
+      }
+      stopWatch()
+    },
+    { immediate: true }
+  )
+}
 
 // ── Mesa mode ──────────────────────────────────────────────────────────────
 const isMesaMode = computed(() => !!posStore.activeTableSession)
@@ -135,26 +144,14 @@ const addToTab = async () => {
       modifiers: item.modifiers.map((m) => ({ id: m.id, name: m.name, price: m.price })),
       notes: item.notes ?? null,
     }))
-    console.log('[pos] addToTab payload', {
-      tableId: posStore.activeTableSession.tableId,
-      items: items.map(i => ({
-        product_id: i.product_id,
-        qty: i.quantity,
-        unit_price: i.unit_price,
-        modifiers: i.modifiers,
-        expected_subtotal: i.quantity * (i.unit_price + i.modifiers.reduce((s, m) => s + m.price, 0)),
-      })),
-    })
-    const res = await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/add`, {
+    await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/add`, {
       method: 'POST',
       body: { items },
     })
-    console.log('[pos] addToTab response', res)
     // Clear cart — items committed to tab
     await posStore.clearCart()
     // Refresh session + tab items
     await refreshTableSession()
-    console.log('[pos] after refreshTableSession', { runningTotal: posStore.activeTableSession?.runningTotal, tabItems: storeTabItems.value })
   } catch (e: any) {
     tabError.value = e?.data?.detail ?? 'Error al agregar a la mesa'
   } finally {

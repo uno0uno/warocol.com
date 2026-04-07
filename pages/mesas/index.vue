@@ -25,7 +25,7 @@ const { data: tablesData, status: tablesStatus, asyncStatus: tablesAsyncStatus, 
   key: () => ['tables', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/tables'),
   enabled: () => !!currentTenant.value,
-  staleTime: 30_000,
+  staleTime: 0,
 })
 
 const loadingTables = computed(() => tablesStatus.value === 'pending')
