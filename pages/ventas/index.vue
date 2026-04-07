@@ -502,17 +502,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
         <template #cell-payment_method="{ value }">
-          <span
-            class="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full border"
-            :class="{
-              'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800': value === 'cash',
-              'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800': value === 'card',
-              'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800': value === 'digital',
-              'bg-surface-secondary text-text-tertiary border-border': !value,
-            }"
-          >
-            {{ value ? getPaymentMethodLabel(value) : 'Sin registrar' }}
-          </span>
+          <UiStatusBadge
+            :value="value ? getPaymentMethodLabel(value) : 'Sin registrar'"
+            format="text"
+            :variant="value === 'cash' ? 'success' : value === 'card' ? 'info' : value === 'digital' ? 'primary' : 'secondary'"
+            size="sm"
+          />
         </template>
 
         <template #cell-total_amount="{ value }">
