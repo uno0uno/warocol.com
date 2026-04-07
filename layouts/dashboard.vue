@@ -972,12 +972,10 @@ const { data: posSettingsData } = useQuery({
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
+const posNavStore = usePOSStore()
 const navigateToPOS = () => {
-  if (posSettingsData.value?.data?.tables_enabled) {
-    navigateTo('/mesas')
-  } else {
-    navigateTo('/pos')
-  }
+  const tablesOn = posSettingsData.value?.data?.tables_enabled ?? posNavStore.tablesEnabled
+  navigateTo(tablesOn ? '/mesas' : '/pos')
 }
 
 // Meta tags for dashboard

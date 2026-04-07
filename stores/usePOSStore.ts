@@ -68,6 +68,9 @@ export const usePOSStore = defineStore('pos', () => {
     // Mesa context — set when entering POS from a table session
     const activeTableSession = ref<ActiveTableSession | null>(null)
 
+    // Tenant feature flags — persists across navigation
+    const tablesEnabled = ref<boolean | null>(null)
+
     // Items already committed to the tab (sent to the table, cleared from cart)
     const tabItems = ref<TabItem[]>([])
 
@@ -381,6 +384,7 @@ export const usePOSStore = defineStore('pos', () => {
         cachedProducts,
         activeTableSession,
         tabItems,
+        tablesEnabled,
 
         // Getters
         cartItemsCount,
