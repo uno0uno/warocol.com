@@ -26,8 +26,12 @@ const { data: settingsData } = useQuery({
   staleTime: 30_000,
 })
 
+// Hide content while deciding whether to redirect — prevents blink
+const isResolvingRoute = ref(
+  posStore.tablesEnabled !== false
+)
+
 // Redirect to /mesas if tables are enabled — fires at most once per mount
-// (store value used for instant redirect on subsequent navigations)
 if (posStore.tablesEnabled === true && !sessionStorage.getItem('mesaContext')) {
   navigateTo('/mesas')
 } else if (posStore.tablesEnabled === null) {
@@ -39,11 +43,16 @@ if (posStore.tablesEnabled === true && !sessionStorage.getItem('mesaContext')) {
       posStore.tablesEnabled = enabled
       if (enabled && !sessionStorage.getItem('mesaContext')) {
         navigateTo('/mesas')
+      } else {
+        isResolvingRoute.value = false
       }
       stopWatch()
     },
     { immediate: true }
   )
+} else {
+  // tablesEnabled === false — no redirect needed
+  isResolvingRoute.value = false
 }
 
 // ── Mesa mode ──────────────────────────────────────────────────────────────
@@ -419,7 +428,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div>
+  <div v-if="!isResolvingRoute">
     <!-- Loading State (initial page load) -->
     <div v-if="loadingProducts" class="flex items-center justify-center min-h-[70vh]">
       <CommonsTheCustomLoader size="large" />
