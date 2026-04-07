@@ -59,8 +59,8 @@
           <slot name="header" />
         </template>
 
-        <!-- Dynamic header slots -->
-        <template v-for="column in columns" :key="`header-${column.key}`" #[`header-${column.key}`]>
+        <!-- Dynamic header slots (only for columns the parent explicitly provides) -->
+        <template v-for="column in columnsWithHeaderSlots" #[`header-${column.key}`]>
           <slot :name="`header-${column.key}`" />
         </template>
 
@@ -76,6 +76,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed, useSlots } from 'vue'
 interface Column {
   key: string
   title: string
@@ -118,6 +119,14 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Define emits
 defineEmits(['sort', 'row-click'])
+
+const slots = useSlots()
+
+// Only pass through header slots that the parent actually provides
+// (otherwise UiDataTable's fallback sort button/title would be suppressed)
+const columnsWithHeaderSlots = computed(() =>
+  props.columns.filter(c => !!slots[`header-${c.key}`])
+)
 
 // Get unique key for items
 const getItemKey = (item: any) => {
