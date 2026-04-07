@@ -149,6 +149,11 @@ const getItemTotal = (item: any) => {
 
 const processOrder = async () => {
   // Mesa mode: close the table session as payment
+  if (!selectedCustomer.value) {
+    processingError.value = 'Selecciona o identifica al cliente antes de continuar'
+    return
+  }
+
   if (isMesaMode.value) {
     const session = posStore.activeTableSession!
     console.log('[checkout] MESA MODE processOrder', {
@@ -165,7 +170,10 @@ const processOrder = async () => {
       processingError.value = ''
       await $fetch(`/api/tables/${session.tableId}/close`, {
         method: 'POST',
-        body: { payment_method: selectedPaymentMethod.value },
+        body: {
+          payment_method: selectedPaymentMethod.value,
+          customer_id: selectedCustomer.value?.id ?? null,
+        },
       })
       orderResult.value = {
         order_number: 0,
@@ -680,7 +688,7 @@ onUnmounted(() => {
         <div class="flex flex-col gap-2">
           <button
             @click="processOrder"
-            :disabled="isProcessing || (!selectedCustomer && !isMesaMode) || isLoadingEstimate"
+            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate"
             class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UiLoadingDots v-if="isProcessing" size="9px" />
@@ -692,7 +700,7 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
             </svg>
           </button>
-          <p v-if="!selectedCustomer && !isMesaMode && !isProcessing" class="text-center text-xs text-text-tertiary">Identifica al cliente para continuar</p>
+          <p v-if="!selectedCustomer && !isProcessing" class="text-center text-xs text-text-tertiary">Identifica al cliente para continuar</p>
           <button
             @click="cancelOrder"
             class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
@@ -846,7 +854,7 @@ onUnmounted(() => {
       <div class="flex flex-col gap-2">
         <button
           @click="processOrder"
-          :disabled="isProcessing || (!selectedCustomer && !isMesaMode) || isLoadingEstimate"
+          :disabled="isProcessing || !selectedCustomer || isLoadingEstimate"
           class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingDots v-if="isProcessing" size="9px" />
