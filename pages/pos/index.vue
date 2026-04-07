@@ -323,6 +323,9 @@ const clearCart = async () => {
       isClearingTab.value = false
     }
     posStore.setTabItems([])
+    if (posStore.activeTableSession) {
+      posStore.setTableSession({ ...posStore.activeTableSession, runningTotal: 0 })
+    }
   }
   await posStore.clearCart()
 }
