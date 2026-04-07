@@ -163,7 +163,10 @@ const processOrder = async () => {
     try {
       isProcessing.value = true
       processingError.value = ''
-      await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
+      await $fetch(`/api/tables/${session.tableId}/close`, {
+        method: 'POST',
+        body: { payment_method: selectedPaymentMethod.value },
+      })
       orderResult.value = {
         order_number: 0,
         total_amount: session.runningTotal,
