@@ -389,7 +389,7 @@ onUnmounted(() => {
           </div>
           <button
             @click="updateStatus"
-            :disabled="!selectedNewStatus || isUpdatingStatus"
+            :disabled="!selectedNewStatus || isUpdatingStatus || (selectedNewStatus === 'completed' && !selectedPaymentMethod)"
             class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             <svg v-if="isUpdatingStatus" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
