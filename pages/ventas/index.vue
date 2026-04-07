@@ -502,8 +502,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
         <template #cell-payment_method="{ value }">
-          <span :class="value ? 'text-sm text-text-primary' : 'text-sm text-text-tertiary italic'">
-            {{ value ? getPaymentMethodLabel(value) : 'Sin registrar' }}
+          <span v-if="value" class="text-sm text-text-primary">{{ getPaymentMethodLabel(value) }}</span>
+          <span v-else class="inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full bg-surface-secondary text-text-tertiary border border-border">
+            Sin registrar
           </span>
         </template>
 
