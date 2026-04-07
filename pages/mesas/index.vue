@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { usePOSStore } from '~/stores/usePOSStore'
 
 const { currentTenant } = useTenantReactive()
 const router = useRouter()
+const posStore = usePOSStore()
 
 // ── Module guard — redirect to /pos if tables are disabled ─────────────────
 const { data: settingsData } = useQuery({
@@ -15,7 +17,10 @@ const { data: settingsData } = useQuery({
 watch(
   () => settingsData.value?.data?.tables_enabled,
   (enabled) => {
-    if (enabled === false) navigateTo('/pos')
+    if (enabled === false) {
+      posStore.tablesEnabled = false  // sync store — prevents loop in /pos
+      navigateTo('/pos')
+    }
   },
   { immediate: true }
 )
