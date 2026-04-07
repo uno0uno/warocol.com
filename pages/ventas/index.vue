@@ -153,40 +153,41 @@ const searchFields = [
 ]
 
 // Bulk selection
-const selectedIds = ref<Set<string>>(new Set())
+const selectedIds = ref<string[]>([])
 const bulkStatus = ref('')
 const bulkPaymentMethod = ref('')
 const isBulkUpdating = ref(false)
 
 const allPageSelected = computed(() => {
   const ids = orders.value.map((o: any) => o.id)
-  return ids.length > 0 && ids.every((id: string) => selectedIds.value.has(id))
+  return ids.length > 0 && ids.every((id: string) => selectedIds.value.includes(id))
 })
 
-const toggleSelect = (id: string, event: Event) => {
-  event.stopPropagation()
-  const next = new Set(selectedIds.value)
-  if (next.has(id)) next.delete(id)
-  else next.add(id)
-  selectedIds.value = next
+const toggleSelect = (id: string) => {
+  const idx = selectedIds.value.indexOf(id)
+  if (idx >= 0) {
+    selectedIds.value = selectedIds.value.filter((_, i) => i !== idx)
+  } else {
+    selectedIds.value = [...selectedIds.value, id]
+  }
 }
 
 const toggleSelectAll = () => {
   if (allPageSelected.value) {
-    selectedIds.value = new Set()
+    selectedIds.value = []
   } else {
-    selectedIds.value = new Set(orders.value.map((o: any) => o.id))
+    selectedIds.value = orders.value.map((o: any) => o.id)
   }
 }
 
 const clearSelection = () => {
-  selectedIds.value = new Set()
+  selectedIds.value = []
   bulkStatus.value = ''
   bulkPaymentMethod.value = ''
 }
 
 const bulkUpdateStatus = async () => {
-  if (!bulkStatus.value || selectedIds.value.size === 0) return
+  if (!bulkStatus.value || selectedIds.value.length === 0) return
   isBulkUpdating.value = true
   try {
     const res = await $fetch('/api/orders/bulk-status', {
@@ -482,12 +483,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
       <!-- Bulk Action Bar -->
       <div
-        v-if="selectedIds.size > 0"
+        v-if="selectedIds.length > 0"
         class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border-2 border-primary/30 bg-primary/5"
       >
           <div class="flex items-center gap-2 flex-shrink-0">
-            <input type="checkbox" :checked="allPageSelected" @change="toggleSelectAll" class="w-4 h-4 accent-primary cursor-pointer" />
-            <span class="text-sm font-semibold text-text-primary">{{ selectedIds.size }} seleccionada(s)</span>
+            <span class="text-sm font-semibold text-text-primary">{{ selectedIds.length }} seleccionada(s)</span>
+            <button type="button" @click="clearSelection" class="text-xs text-text-secondary hover:text-text-primary underline">deseleccionar</button>
           </div>
 
           <div class="flex-1" />
@@ -574,16 +575,40 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
 
+        <!-- Checkbox header: select all -->
+        <template #header-select>
+          <div class="flex items-center justify-center">
+            <label class="cursor-pointer">
+              <input
+                type="checkbox"
+                class="sr-only peer"
+                :checked="allPageSelected"
+                @change="toggleSelectAll"
+              />
+              <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
+                <svg v-if="allPageSelected" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
+                  <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </label>
+          </div>
+        </template>
+
         <!-- Checkbox column -->
-        <template #cell-select="{ item }">
-          <div @click.stop class="flex items-center justify-center">
+        <template #cell-select="{ row }">
+          <label @click.stop class="flex items-center justify-center cursor-pointer">
             <input
               type="checkbox"
-              :checked="item && selectedIds.has(item.id)"
-              @change="(e) => item && toggleSelect(item.id, e)"
-              class="w-4 h-4 accent-primary cursor-pointer"
+              class="sr-only peer"
+              :checked="row && selectedIds.includes(row.id)"
+              @change.stop="() => row && toggleSelect(row.id)"
             />
-          </div>
+            <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
+              <svg v-if="row && selectedIds.includes(row.id)" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
+                <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </label>
         </template>
 
         <!-- Desktop Table Cells -->

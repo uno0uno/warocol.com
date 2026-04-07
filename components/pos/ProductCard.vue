@@ -1,17 +1,31 @@
 <template>
   <button
     :style="cardStyle"
-    class="group flex flex-col items-center p-2 md:p-5 border rounded-xl theme-transition cursor-pointer active:scale-[0.97]"
+    class="group relative flex flex-col items-center p-2 md:p-4 border-2 rounded-2xl theme-transition cursor-pointer active:scale-[0.97]"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @click="$emit('select', product)"
   >
-    <div class="text-xl md:text-5xl mb-1 md:mb-3 mt-0.5 select-none">{{ product.image }}</div>
-    <p class="text-[10px] md:text-sm font-semibold text-text-primary text-center leading-tight line-clamp-2 min-h-[2rem] md:min-h-[2.5rem] flex items-center justify-center">
+    <!-- Add to cart (+) button overlay — top right -->
+    <div class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-white/80 shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none" aria-hidden="true">
+      <svg class="w-3.5 h-3.5 text-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+    </div>
+
+    <!-- Product icon in white bubble -->
+    <div class="w-12 h-12 md:w-16 md:h-16 bg-white/70 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0">
+      <span class="text-xl md:text-3xl">{{ product.image }}</span>
+    </div>
+
+    <!-- Name -->
+    <p class="text-[10px] md:text-xs font-semibold text-text-primary text-center leading-tight line-clamp-2 min-h-[2rem] flex items-center justify-center px-0.5">
       {{ product.name }}
     </p>
-    <div class="w-full mt-1.5 md:mt-3 pt-1.5 md:pt-3 border-t border-black/20">
-      <p class="text-[10px] md:text-base font-bold text-primary text-center">
+
+    <!-- Price -->
+    <div class="w-full mt-1.5 md:mt-2.5 pt-1.5 md:pt-2.5 border-t border-black/15">
+      <p class="text-[10px] md:text-sm font-bold text-primary text-center">
         {{ formatCurrency(product.price) }}
       </p>
     </div>

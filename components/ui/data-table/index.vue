@@ -279,37 +279,39 @@ watch(
               )"
               :style="column.width ? { width: column.width } : undefined"
             >
-              <!-- Sortable header button -->
-              <button
-                v-if="column.sortable"
-                @click="handleSort(column)"
-                :class="cn(
-                  'text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1 transition-colors hover:text-primary w-full',
-                  column.align === 'left' && 'justify-start',
-                  column.align === 'center' && 'justify-center',
-                  column.align === 'right' && 'justify-end'
-                )"
-              >
-                {{ column.title }}
-                <component
-                  :is="getSortIcon(column)"
-                  class="w-3 h-3"
-                  v-if="getSortIcon(column)"
-                />
-              </button>
+              <slot :name="`header-${column.key}`">
+                <!-- Sortable header button -->
+                <button
+                  v-if="column.sortable"
+                  @click="handleSort(column)"
+                  :class="cn(
+                    'text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1 transition-colors hover:text-primary w-full',
+                    column.align === 'left' && 'justify-start',
+                    column.align === 'center' && 'justify-center',
+                    column.align === 'right' && 'justify-end'
+                  )"
+                >
+                  {{ column.title }}
+                  <component
+                    :is="getSortIcon(column)"
+                    class="w-3 h-3"
+                    v-if="getSortIcon(column)"
+                  />
+                </button>
 
-              <!-- Non-sortable header -->
-              <span
-                v-else
-                :class="cn(
-                  'text-xs font-semibold text-text-secondary uppercase tracking-wider block',
-                  column.align === 'left' && 'text-left',
-                  column.align === 'center' && 'text-center',
-                  column.align === 'right' && 'text-right'
-                )"
-              >
-                {{ column.title }}
-              </span>
+                <!-- Non-sortable header -->
+                <span
+                  v-else
+                  :class="cn(
+                    'text-xs font-semibold text-text-secondary uppercase tracking-wider block',
+                    column.align === 'left' && 'text-left',
+                    column.align === 'center' && 'text-center',
+                    column.align === 'right' && 'text-right'
+                  )"
+                >
+                  {{ column.title }}
+                </span>
+              </slot>
             </th>
           </tr>
         </thead>

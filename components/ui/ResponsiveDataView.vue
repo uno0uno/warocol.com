@@ -59,6 +59,11 @@
           <slot name="header" />
         </template>
 
+        <!-- Dynamic header slots -->
+        <template v-for="column in columns" :key="`header-${column.key}`" #[`header-${column.key}`]>
+          <slot :name="`header-${column.key}`" />
+        </template>
+
         <!-- Dynamic cell slots -->
         <template v-for="column in columns" :key="`cell-${column.key}`" #[`cell-${column.key}`]="slotProps">
           <slot :name="`cell-${column.key}`" v-bind="slotProps">
