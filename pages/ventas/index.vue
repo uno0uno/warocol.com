@@ -25,7 +25,7 @@ const apiSearchField = ref('order_number')
 const sortField = ref('order_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 const paymentMethodFilter = ref<string | null>(null)
-const statusFilter = ref<string | null>(null)
+const statusFilter = ref<string | null>('completed')
 const dateRangeDates = ref<Date[] | null>(null)
 
 // Preset ranges for the date picker shortcuts
@@ -175,7 +175,7 @@ const clearFilters = () => {
   appliedSearch.value = ''
   apiSearchField.value = 'order_number'
   paymentMethodFilter.value = null
-  statusFilter.value = null
+  statusFilter.value = 'completed'
   dateRangeDates.value = null
   sortField.value = 'order_date'
   sortDirection.value = 'desc'
@@ -380,7 +380,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
         <!-- Clear Filters Button -->
         <button
-          v-if="localSearchTerm || dateRangeDates || paymentMethodFilter || statusFilter"
+          v-if="localSearchTerm || dateRangeDates || paymentMethodFilter || (statusFilter && statusFilter !== 'completed')"
           @click="clearFilters"
           class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
           aria-label="Limpiar filtros"
