@@ -368,8 +368,8 @@ const selectGenericCustomer = async () => {
     if (response.success) {
       emit('customer-identified', {
         id: response.data.id,
-        name: 'Cliente sin datos',
-        phone_number: null
+        name: response.data.name,
+        phone_number: response.data.phone_number
       })
       emit('update:modelValue', false)
     }
