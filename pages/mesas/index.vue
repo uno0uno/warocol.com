@@ -221,10 +221,8 @@ onUnmounted(() => {
                 class="w-24 h-24 flex flex-col items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95"
                 :class="tableColorClass(table.status)"
               >
-                <template>
-                  <span class="text-[9px] uppercase tracking-widest font-bold opacity-50 leading-none mb-1">Mesa</span>
-                  <span class="text-3xl font-black leading-none">{{ tableShortId(table.name) }}</span>
-                </template>
+                <span class="text-[9px] uppercase tracking-widest font-bold opacity-50 leading-none mb-1">Mesa</span>
+                <span class="text-3xl font-black leading-none">{{ tableShortId(table.name) }}</span>
               </div>
             </div>
 
