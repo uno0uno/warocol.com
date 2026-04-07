@@ -29,7 +29,7 @@ const { data: settingsData } = useQuery({
 watch(
   () => settingsData.value?.data?.tables_enabled,
   (enabled) => {
-    if (enabled && !sessionStorage.getItem('mesaContext')) navigateTo('/mesas')
+    if (enabled && !sessionStorage.getItem('mesaContext') && !posStore.activeTableSession) navigateTo('/mesas')
   },
   { immediate: true }
 )
