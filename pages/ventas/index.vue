@@ -481,11 +481,10 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       </div>
 
       <!-- Bulk Action Bar -->
-      <Transition name="bulk-bar">
-        <div
-          v-if="selectedIds.size > 0"
-          class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border-2 border-primary/30 bg-primary/5"
-        >
+      <div
+        v-if="selectedIds.size > 0"
+        class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border-2 border-primary/30 bg-primary/5"
+      >
           <div class="flex items-center gap-2 flex-shrink-0">
             <input type="checkbox" :checked="allPageSelected" @change="toggleSelectAll" class="w-4 h-4 accent-primary cursor-pointer" />
             <span class="text-sm font-semibold text-text-primary">{{ selectedIds.size }} seleccionada(s)</span>
@@ -527,7 +526,6 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             Cancelar
           </button>
         </div>
-      </Transition>
 
       <!-- Responsive Data View -->
       <HealthSemaphore :is-unlocked="true" title="Historial de Ventas">
