@@ -21,6 +21,11 @@ const isSaving = ref(false)
 const itemsToDelete = ref<Set<string>>(new Set())
 const modifiersToDelete = ref<Map<string, Set<string>>>(new Map())
 
+// Status update (mesa orders)
+const isUpdatingStatus = ref(false)
+const selectedNewStatus = ref('')
+const selectedPaymentMethod = ref('')
+
 // Load order details
 const { data: orderData, status: orderStatus, asyncStatus: orderAsyncStatus, error: fetchError, refetch: refetchOrder } = useQuery({
   key: () => ['orders', currentTenant.value?.id, orderId.value],
@@ -195,6 +200,28 @@ const isModifierDeleted = (itemId: string, modifierId: string) => {
   return modifiersToDelete.value.get(itemId)?.has(modifierId) || false
 }
 
+const updateStatus = async () => {
+  if (!selectedNewStatus.value) return
+  isUpdatingStatus.value = true
+  try {
+    await $fetch(`/api/orders/${orderId.value}/status`, {
+      method: 'PATCH',
+      body: {
+        status: selectedNewStatus.value,
+        payment_method: selectedPaymentMethod.value || undefined,
+      },
+    })
+    await refetchOrder()
+    selectedNewStatus.value = ''
+    selectedPaymentMethod.value = ''
+    useToast().success('Estado actualizado correctamente', { title: 'Listo' })
+  } catch (error: any) {
+    useToast().error(error.data?.message || 'Error al actualizar el estado', { title: 'Error' })
+  } finally {
+    isUpdatingStatus.value = false
+  }
+}
+
 // Save changes - backend handles inventory restock automatically
 const saveChanges = async () => {
   if (!hasChanges.value) return
@@ -329,6 +356,48 @@ onUnmounted(() => {
           <p v-if="isEditMode && hasChanges" class="text-xs text-text-tertiary line-through">
             {{ formatCurrency(order.total_amount) }}
           </p>
+        </div>
+      </div>
+
+      <!-- Status Update Panel (mesa orders only) -->
+      <div v-if="order.source === 'mesa'" class="bg-surface border border-border rounded-xl p-5">
+        <h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-4">Cambiar estado de la orden</h2>
+        <div class="flex flex-wrap gap-3 items-end">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs text-text-secondary">Nuevo estado</label>
+            <select
+              v-model="selectedNewStatus"
+              class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[140px]"
+            >
+              <option value="">Seleccionar...</option>
+              <option value="completed">Completada</option>
+              <option value="pending">Pendiente</option>
+              <option value="cancelled">Cancelada</option>
+            </select>
+          </div>
+          <div v-if="selectedNewStatus === 'completed'" class="flex flex-col gap-1">
+            <label class="text-xs text-text-secondary">Método de pago</label>
+            <select
+              v-model="selectedPaymentMethod"
+              class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[140px]"
+            >
+              <option value="">Sin especificar</option>
+              <option value="cash">Efectivo</option>
+              <option value="card">Tarjeta</option>
+              <option value="digital">Digital</option>
+            </select>
+          </div>
+          <button
+            @click="updateStatus"
+            :disabled="!selectedNewStatus || isUpdatingStatus"
+            class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          >
+            <svg v-if="isUpdatingStatus" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            </svg>
+            {{ isUpdatingStatus ? 'Guardando...' : 'Actualizar estado' }}
+          </button>
         </div>
       </div>
 
