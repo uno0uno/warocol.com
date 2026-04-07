@@ -28,7 +28,7 @@ const { data: tablesData, status: tablesStatus, asyncStatus: tablesAsyncStatus, 
   staleTime: 30_000,
 })
 
-const loadingTables = computed(() => tablesStatus.value === 'loading' && !tablesData.value)
+const loadingTables = computed(() => tablesStatus.value === 'pending')
 const isRefreshing = computed(() => tablesAsyncStatus.value === 'loading' && tablesData.value != null)
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -65,23 +65,19 @@ const handleTableClick = async (table: any) => {
       )
       await refetch()
       writeMesaContext(table, result?.data?.session_id)
-      sessionStorage.setItem('posNavigation', 'true')
       router.push('/pos')
     } catch (e) {
       await refetch()
       writeMesaContext(table)
-      sessionStorage.setItem('posNavigation', 'true')
       router.push('/pos')
     } finally {
       openingTableId.value = null
     }
   } else if (table.status === 'open') {
     writeMesaContext(table)
-    sessionStorage.setItem('posNavigation', 'true')
     router.push('/pos')
   } else if (table.status === 'bill_requested') {
     writeMesaContext(table)
-    sessionStorage.setItem('posNavigation', 'true')
     router.push('/pos/checkout')
   }
 }

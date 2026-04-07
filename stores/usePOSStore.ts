@@ -37,6 +37,14 @@ export interface ActiveTableSession {
     openedAt: string
 }
 
+export interface TabItem {
+    orderItemId: string
+    productName: string
+    quantity: number
+    unitPrice: number
+    subtotal: number
+}
+
 // Producto cacheado con modificadores completos
 export interface CachedProduct {
     id: string
@@ -59,6 +67,9 @@ export const usePOSStore = defineStore('pos', () => {
 
     // Mesa context — set when entering POS from a table session
     const activeTableSession = ref<ActiveTableSession | null>(null)
+
+    // Items already committed to the tab (sent to the table, cleared from cart)
+    const tabItems = ref<TabItem[]>([])
 
     // Cache de productos (con modificadores) - persiste entre ventas
     const cachedProducts = ref<CachedProduct[]>([])
@@ -90,7 +101,18 @@ export const usePOSStore = defineStore('pos', () => {
 
     const addToCart = async (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
         const quantity = item.quantity || 1
-        cart.value.push({ ...item, quantity })
+        // Merge with existing item if same product + same modifiers + same notes
+        const existingIndex = cart.value.findIndex(c =>
+            c.product.id === item.product.id &&
+            c.notes === (item.notes ?? undefined) &&
+            c.modifiers.length === (item.modifiers?.length ?? 0) &&
+            c.modifiers.every((m, i) => m.id === item.modifiers?.[i]?.id)
+        )
+        if (existingIndex !== -1) {
+            cart.value[existingIndex].quantity += quantity
+        } else {
+            cart.value.push({ ...item, quantity })
+        }
         invalidateSyncedCart()
     }
 
@@ -254,11 +276,20 @@ export const usePOSStore = defineStore('pos', () => {
         activeTableSession.value = session
     }
 
+    const setTabItems = (items: TabItem[]) => {
+        tabItems.value = items
+    }
+
+    const tabTotal = computed(() =>
+        tabItems.value.reduce((sum, item) => sum + item.subtotal, 0)
+    )
+
     const clearAll = () => {
         cart.value = []
         currentCustomer.value = null
         cartId.value = null
         activeTableSession.value = null
+        tabItems.value = []
         // NO limpiar cachedProducts - se mantienen entre ventas
     }
 
@@ -349,15 +380,18 @@ export const usePOSStore = defineStore('pos', () => {
         isDeleting,
         cachedProducts,
         activeTableSession,
+        tabItems,
 
         // Getters
         cartItemsCount,
         cartTotal,
+        tabTotal,
         isEmpty,
         hasProducts,
 
         // Actions
         setTableSession,
+        setTabItems,
         addToCart,
         removeFromCart,
         updateQuantity,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, inject, watch, onMounted, onUnmounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { $fetch } from 'ofetch'
 import { usePOSStore } from '~/stores/usePOSStore'
 
@@ -38,6 +39,7 @@ const syncError = ref('')
 // Success modal state
 const showSuccessModal = ref(false)
 const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string } | null>(null)
+const wasMesaMode = ref(false)
 
 // Customer identification via modal
 const showCustomerModal = ref(false)
@@ -48,9 +50,26 @@ const customerInsights = ref<CustomerInsights | null>(null)
 const insightsLoading = ref(false)
 const activeAccordion = ref<'insights' | 'summary' | null>('summary')
 
+// Mesa mode detection
+const isMesaMode = computed(() => !!posStore.activeTableSession)
+const { tabItems: storeTabItems } = storeToRefs(posStore)
+
 // Computed (must be before any watchers that reference cartTotal)
-const cartItems = computed(() => posStore.cart)
-const cartTotal = computed(() => posStore.cartTotal)
+const cartItems = computed(() => {
+  if (isMesaMode.value) {
+    return storeTabItems.value.map(item => ({
+      product: { id: '', name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
+      modifiers: [] as Array<{ id: string; name: string; price: number }>,
+      quantity: item.quantity,
+      notes: undefined as string | undefined
+    }))
+  }
+  return posStore.cart
+})
+const cartTotal = computed(() => {
+  if (isMesaMode.value) return posStore.activeTableSession?.runningTotal ?? 0
+  return posStore.cartTotal
+})
 
 // Waros
 const { summary: warosSummary, isLoadingSummary: isLoadingWaros, fetchSummary: fetchWarosSummary, resetSummary } = useWarosCliente()
@@ -129,13 +148,35 @@ const getItemTotal = (item: any) => {
 }
 
 const processOrder = async () => {
-  // Validar que hay cliente seleccionado
+  // Mesa mode: close the table session as payment
+  if (isMesaMode.value) {
+    const session = posStore.activeTableSession!
+    try {
+      isProcessing.value = true
+      processingError.value = ''
+      await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
+      orderResult.value = {
+        order_number: 0,
+        total_amount: session.runningTotal,
+        payment_method: selectedPaymentMethod.value
+      }
+      wasMesaMode.value = true
+      posStore.clearAll()
+      showSuccessModal.value = true
+    } catch (error: any) {
+      processingError.value = error.data?.message || error.message || 'Error al cerrar la mesa'
+    } finally {
+      isProcessing.value = false
+    }
+    return
+  }
+
+  // Standard POS mode
   if (!selectedCustomer.value) {
     processingError.value = 'Selecciona o identifica al cliente antes de continuar'
     return
   }
 
-  // Verificar que el carrito ya está sincronizado
   if (!posStore.cartId) {
     processingError.value = 'Error: El carrito no está sincronizado'
     return
@@ -145,7 +186,6 @@ const processOrder = async () => {
     isProcessing.value = true
     processingError.value = ''
 
-    // Completar orden con el customer_id ya resuelto por el modal
     const response = await $fetch(`/api/pos/cart/${posStore.cartId}/complete`, {
       method: 'POST',
       body: {
@@ -165,17 +205,12 @@ const processOrder = async () => {
     }
 
     if (response.success) {
-      // Store order result for modal
       orderResult.value = {
         order_number: response.data.order_number,
         total_amount: response.data.total_amount,
         payment_method: response.data.payment_method
       }
-
-      // Clear local cart
       posStore.clearAll()
-
-      // Show success modal
       showSuccessModal.value = true
     }
   } catch (error: any) {
@@ -205,7 +240,7 @@ const cancelOrder = () => {
 
 const closeSuccessModal = () => {
   showSuccessModal.value = false
-  router.push('/pos')
+  router.push(wasMesaMode.value ? '/mesas' : '/pos')
 }
 
 // Sincronizar carrito al backend cuando carga la página
@@ -265,7 +300,7 @@ onUnmounted(() => {
     <CommonsTheErrorState v-else-if="syncError" />
 
     <!-- Empty Cart State -->
-    <div v-else-if="cartItems.length === 0" class="text-center py-16">
+    <div v-else-if="cartItems.length === 0 && !isMesaMode" class="text-center py-16">
       <svg class="h-24 w-24 mx-auto text-text-secondary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
       </svg>
@@ -623,7 +658,7 @@ onUnmounted(() => {
         <div class="flex flex-col gap-2">
           <button
             @click="processOrder"
-            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate"
+            :disabled="isProcessing || (!selectedCustomer && !isMesaMode) || isLoadingEstimate"
             class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UiLoadingDots v-if="isProcessing" size="9px" />
@@ -635,7 +670,7 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
             </svg>
           </button>
-          <p v-if="!selectedCustomer && !isProcessing" class="text-center text-xs text-text-tertiary">Identifica al cliente para continuar</p>
+          <p v-if="!selectedCustomer && !isMesaMode && !isProcessing" class="text-center text-xs text-text-tertiary">Identifica al cliente para continuar</p>
           <button
             @click="cancelOrder"
             class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
@@ -789,7 +824,7 @@ onUnmounted(() => {
       <div class="flex flex-col gap-2">
         <button
           @click="processOrder"
-          :disabled="isProcessing || !selectedCustomer || isLoadingEstimate"
+          :disabled="isProcessing || (!selectedCustomer && !isMesaMode) || isLoadingEstimate"
           class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingDots v-if="isProcessing" size="9px" />
@@ -851,7 +886,7 @@ onUnmounted(() => {
 
           <!-- Order Details -->
           <div v-if="orderResult" class="bg-surface-secondary rounded-lg p-4 mb-6 space-y-3">
-            <div class="flex items-center justify-between">
+            <div v-if="orderResult.order_number > 0" class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">Nº Orden</span>
               <span class="text-lg font-bold text-primary">#{{ orderResult.order_number }}</span>
             </div>
@@ -870,7 +905,7 @@ onUnmounted(() => {
             @click="closeSuccessModal"
             class="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
           >
-            Nueva Venta
+            {{ wasMesaMode ? 'Ver mesas' : 'Nueva Venta' }}
           </button>
         </div>
       </div>

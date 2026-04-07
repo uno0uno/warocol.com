@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, provide, onMounted, onUnmounted, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import type { CachedProduct } from '~/stores/usePOSStore'
 import { usePOSStore } from '~/stores/usePOSStore'
 
@@ -14,6 +15,7 @@ const { currentTenant } = useTenantReactive()
 
 const router = useRouter()
 const posStore = usePOSStore()
+const { tabItems: storeTabItems, tabTotal: storeTabTotal } = storeToRefs(posStore)
 
 // ── Table management redirect ──────────────────────────────────────────────
 // Reuses the same cached query key as negocio.vue — no extra network request
@@ -35,7 +37,87 @@ watch(
 // ── Mesa mode ──────────────────────────────────────────────────────────────
 const isMesaMode = computed(() => !!posStore.activeTableSession)
 const isAddingToTab = ref(false)
+const isLoadingTabItems = ref(false)
 const tabError = ref<string | null>(null)
+
+// Refresh session running total + tab items from the backend
+const refreshTableSession = async () => {
+  if (!posStore.activeTableSession) return
+  try {
+    const session = await $fetch<{ success: boolean; data: any }>(
+      `/api/tables/${posStore.activeTableSession.tableId}/current`
+    )
+    if (session?.data?.session) {
+      posStore.setTableSession({
+        tableId: posStore.activeTableSession.tableId,
+        sessionId: session.data.session.id,
+        tableName: posStore.activeTableSession.tableName,
+        runningTotal: session.data.session.running_total,
+        openedAt: session.data.session.opened_at,
+      })
+    }
+    if (session?.data?.tab_items) {
+      posStore.setTabItems(
+        session.data.tab_items.map((i: any) => ({
+          orderItemId: i.order_item_id,
+          productName: i.product_name,
+          quantity: i.quantity,
+          unitPrice: i.unit_price,
+          subtotal: i.subtotal,
+        }))
+      )
+    }
+  } catch {
+    // Non-critical — banner will just show stale data
+  }
+}
+
+const tabItemsLoading = ref<Set<string>>(new Set())
+
+const removeTabItem = async (orderItemId: string) => {
+  if (!posStore.activeTableSession) return
+  tabItemsLoading.value = new Set([...tabItemsLoading.value, orderItemId])
+  try {
+    await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/items/${orderItemId}`, {
+      method: 'DELETE',
+    })
+    await refreshTableSession()
+  } catch (e: any) {
+    tabError.value = e?.data?.detail ?? 'Error al eliminar el producto'
+  } finally {
+    const next = new Set(tabItemsLoading.value)
+    next.delete(orderItemId)
+    tabItemsLoading.value = next
+  }
+}
+
+const updateTabItemQuantity = async (orderItemId: string, quantity: number) => {
+  if (!posStore.activeTableSession) return
+  tabItemsLoading.value = new Set([...tabItemsLoading.value, orderItemId])
+  try {
+    await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/items/${orderItemId}`, {
+      method: 'PATCH',
+      body: { quantity },
+    })
+    await refreshTableSession()
+  } catch (e: any) {
+    tabError.value = e?.data?.detail ?? 'Error al actualizar la cantidad'
+  } finally {
+    const next = new Set(tabItemsLoading.value)
+    next.delete(orderItemId)
+    tabItemsLoading.value = next
+  }
+}
+
+const incrementTabItem = (orderItemId: string) => {
+  const item = storeTabItems.value.find(t => t.orderItemId === orderItemId)
+  if (item) updateTabItemQuantity(orderItemId, item.quantity + 1)
+}
+
+const decrementTabItem = (orderItemId: string) => {
+  const item = storeTabItems.value.find(t => t.orderItemId === orderItemId)
+  if (item && item.quantity > 1) updateTabItemQuantity(orderItemId, item.quantity - 1)
+}
 
 const addToTab = async () => {
   if (!posStore.activeTableSession || posStore.cart.length === 0) return
@@ -55,23 +137,8 @@ const addToTab = async () => {
     })
     // Clear cart — items committed to tab
     await posStore.clearCart()
-    // Refresh session running total in store
-    try {
-      const session = await $fetch<{ success: boolean; data: any }>(
-        `/api/tables/${posStore.activeTableSession.tableId}/current`
-      )
-      if (session?.data?.session) {
-        posStore.setTableSession({
-          tableId: posStore.activeTableSession.tableId,
-          sessionId: session.data.session.id,
-          tableName: posStore.activeTableSession.tableName,
-          runningTotal: session.data.session.running_total,
-          openedAt: session.data.session.opened_at,
-        })
-      }
-    } catch {
-      // Non-critical — banner will just show stale total
-    }
+    // Refresh session + tab items
+    await refreshTableSession()
   } catch (e: any) {
     tabError.value = e?.data?.detail ?? 'Error al agregar a la mesa'
   } finally {
@@ -115,7 +182,7 @@ const { data: productsData, status: productsStatus, asyncStatus: productsAsyncSt
   staleTime: 30_000,
 })
 
-const loadingProducts = computed(() => !productsData.value && !productsError.value)
+const loadingProducts = computed(() => productsStatus.value === 'pending')
 const isRefreshing = computed(() => productsAsyncStatus.value === 'loading' && productsData.value != null)
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 registerProgressiveLoading(isRefreshing)
@@ -244,8 +311,15 @@ onMounted(async () => {
 
   // Load mesa context if arriving from mesas page
   const mesaContextRaw = sessionStorage.getItem('mesaContext')
-  if (mesaContextRaw) {
+
+  if (isReturningFromPOSPage) {
+    // Returning from product/checkout sub-page — keep cart + table session intact
+    sessionStorage.removeItem('posNavigation')
+  } else if (mesaContextRaw) {
+    // Arriving from /mesas — clear previous sale state, then load table session
+    posStore.clearAll()
     sessionStorage.removeItem('mesaContext')
+    isLoadingTabItems.value = true
     try {
       const ctx = JSON.parse(mesaContextRaw)
       const session = await $fetch<{ success: boolean; data: any }>(
@@ -259,17 +333,25 @@ onMounted(async () => {
           runningTotal: session.data.session.running_total,
           openedAt: session.data.session.opened_at,
         })
+        if (session.data.tab_items) {
+          posStore.setTabItems(
+            session.data.tab_items.map((i: any) => ({
+              orderItemId: i.order_item_id,
+              productName: i.product_name,
+              quantity: i.quantity,
+              unitPrice: i.unit_price,
+              subtotal: i.subtotal,
+            }))
+          )
+        }
       }
     } catch {
       // Session may have closed — enter normal POS mode silently
+    } finally {
+      isLoadingTabItems.value = false
     }
-  }
-
-  if (isReturningFromPOSPage) {
-    // Clear the flag
-    sessionStorage.removeItem('posNavigation')
   } else {
-    // Clear store for new sale (only when entering POS from outside)
+    // Fresh entry to POS (not from sub-page, not from mesas)
     posStore.clearAll()
 
     // Check for pending customer from /ventas page
@@ -305,21 +387,41 @@ onUnmounted(() => {
 
     <!-- POS Content (shown always after loading) -->
     <div v-else>
-      <!-- Mesa Banner (when arriving from a table session) -->
-      <div v-if="posStore.activeTableSession" class="bg-status-success-bg/60 border border-status-success-text/25 rounded-xl mb-4 p-4">
+      <!-- Mesa Banner skeleton while loading tab items -->
+      <div v-if="isLoadingTabItems" class="bg-surface border border-border rounded-2xl mb-4 p-3.5 shadow-sm animate-pulse">
         <div class="flex items-center gap-3">
-          <div class="bg-status-success-bg p-3 rounded-xl border border-status-success-text/20 flex-shrink-0">
-            <svg class="w-5 h-5 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div class="w-9 h-9 rounded-xl bg-surface-secondary flex-shrink-0" />
+          <div class="flex-1 flex items-center gap-3">
+            <div class="h-2.5 w-20 bg-surface-secondary rounded" />
+            <div class="h-2.5 w-16 bg-surface-secondary rounded" />
+            <div class="h-2.5 w-32 bg-surface-secondary rounded" />
+          </div>
+          <div class="h-7 w-16 bg-surface-secondary rounded-lg flex-shrink-0" />
+        </div>
+      </div>
+
+      <!-- Mesa Banner (when arriving from a table session) -->
+      <div v-else-if="posStore.activeTableSession" class="bg-surface border border-border rounded-2xl mb-4 p-3.5 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="bg-status-success-bg p-2.5 rounded-xl flex-shrink-0">
+            <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
             </svg>
           </div>
           <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
             <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest flex-shrink-0">Mesa Activa</span>
-            <span class="w-px h-3 bg-status-success-text/30 flex-shrink-0" aria-hidden="true" />
+            <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
             <span class="text-sm font-bold text-text-primary flex-shrink-0">{{ posStore.activeTableSession.tableName }}</span>
             <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
             <span class="text-xs text-text-secondary tabular-nums truncate">{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado · {{ formatDuration(posStore.activeTableSession.openedAt) }}</span>
           </div>
+          <!-- Change table button -->
+          <NuxtLink
+            to="/mesas"
+            class="flex-shrink-0 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors"
+          >
+            Cambiar
+          </NuxtLink>
         </div>
         <!-- Tab error -->
         <p v-if="tabError" class="mt-2 text-xs text-destructive bg-destructive/10 rounded-lg px-3 py-1.5">
@@ -369,10 +471,10 @@ onUnmounted(() => {
           <button
             v-for="cat in categories"
             :key="cat"
-            class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap theme-transition"
+            class="px-3.5 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap theme-transition"
             :class="selectedCategory === cat
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'bg-surface border border-border text-text-secondary hover:border-primary/30 hover:text-text-primary'"
+              ? 'bg-text-primary text-white shadow-md'
+              : 'bg-surface border border-border text-text-secondary hover:border-border hover:text-text-primary hover:bg-surface-secondary'"
             @click="selectedCategory = cat"
           >
             {{ cat === 'all' ? 'Todos' : cat }}
@@ -408,6 +510,10 @@ onUnmounted(() => {
         :total="cartTotal"
         :mesa-mode="isMesaMode"
         :is-adding-to-tab="isAddingToTab"
+        :is-loading-tab-items="isLoadingTabItems"
+        :tab-items="storeTabItems"
+        :tab-total="storeTabTotal"
+        :tab-items-loading="tabItemsLoading"
         @edit-item="editCartItem"
         @remove-item="removeFromCart"
         @increment-item="incrementCartItem"
@@ -417,6 +523,9 @@ onUnmounted(() => {
         @clear-cart="clearCart"
         @add-to-tab="addToTab"
         @request-bill="requestBill"
+        @remove-tab-item="removeTabItem"
+        @increment-tab-item="incrementTabItem"
+        @decrement-tab-item="decrementTabItem"
       />
       </div>
     </div>
