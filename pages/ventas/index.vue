@@ -213,7 +213,7 @@ watch([currentPage, statusFilter, paymentMethodFilter, appliedSearch, dateRange]
 
 // Table columns configuration
 const ordersTableColumns: Column[] = [
-  { key: 'select', title: '', sortable: false, width: '44px' },
+  { key: 'select', title: '', sortable: false, width: '44px', class: '!px-0', align: 'center' as const },
   { key: 'order_number', title: 'Nº Orden', sortable: true },
   { key: 'order_date', title: 'Fecha', sortable: true },
   { key: 'customer_name', title: 'Cliente', sortable: true },
