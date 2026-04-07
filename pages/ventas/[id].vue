@@ -360,42 +360,118 @@ onUnmounted(() => {
       </div>
 
       <!-- Status Update Panel (mesa orders only) -->
-      <div v-if="order.source === 'mesa'" class="bg-surface border border-border rounded-xl p-5">
-        <h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-4">Cambiar estado de la orden</h2>
-        <div class="flex flex-wrap gap-3 items-end">
-          <div class="flex flex-col gap-1">
-            <label class="text-xs text-text-secondary">Nuevo estado</label>
-            <select
-              v-model="selectedNewStatus"
-              class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[140px]"
-            >
-              <option value="">Seleccionar...</option>
-              <option value="completed">Completada</option>
-              <option value="pending">Pendiente</option>
-              <option value="cancelled">Cancelada</option>
-            </select>
-          </div>
-          <div v-if="selectedNewStatus === 'completed'" class="flex flex-col gap-1">
-            <label class="text-xs text-text-secondary">Método de pago</label>
-            <select
-              v-model="selectedPaymentMethod"
-              class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[140px]"
-            >
-              <option value="">Sin especificar</option>
-              <option value="cash">Efectivo</option>
-              <option value="card">Tarjeta</option>
-              <option value="digital">Digital</option>
-            </select>
-          </div>
+      <div v-if="order.source === 'mesa'" class="bg-surface border border-border rounded-xl p-5 space-y-4">
+        <!-- Header -->
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+          <h2 class="text-xs font-bold text-text-tertiary uppercase tracking-widest">Actualizar estado</h2>
+        </div>
+
+        <!-- Status cards -->
+        <div class="grid grid-cols-3 gap-2.5">
+          <!-- Pendiente -->
           <button
-            @click="updateStatus"
-            :disabled="!selectedNewStatus || isUpdatingStatus || (selectedNewStatus === 'completed' && !selectedPaymentMethod)"
-            class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            type="button"
+            @click="selectedNewStatus = selectedNewStatus === 'pending' ? '' : 'pending'"
+            :class="[
+              'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
+              selectedNewStatus === 'pending'
+                ? 'bg-status-warning-bg border-status-warning-text/50 shadow-sm'
+                : 'bg-surface border-border hover:bg-status-warning-bg/40 hover:border-status-warning-text/30'
+            ]"
           >
-            <UiLoadingDots v-if="isUpdatingStatus" size="12px" />
-            <span v-else>Actualizar estado</span>
+            <div :class="['w-9 h-9 rounded-full flex items-center justify-center transition-colors', selectedNewStatus === 'pending' ? 'bg-status-warning-text/15' : 'bg-surface-secondary group-hover:bg-status-warning-bg']">
+              <svg class="w-4.5 h-4.5" :class="selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-tertiary'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+            </div>
+            <span :class="['text-xs font-bold uppercase tracking-wider leading-none', selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-secondary']">Pendiente</span>
+          </button>
+
+          <!-- Completada -->
+          <button
+            type="button"
+            @click="() => { selectedNewStatus = selectedNewStatus === 'completed' ? '' : 'completed'; selectedPaymentMethod = '' }"
+            :class="[
+              'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
+              selectedNewStatus === 'completed'
+                ? 'bg-status-success-bg border-status-success-text/50 shadow-sm'
+                : 'bg-surface border-border hover:bg-status-success-bg/40 hover:border-status-success-text/30'
+            ]"
+          >
+            <div :class="['w-9 h-9 rounded-full flex items-center justify-center transition-colors', selectedNewStatus === 'completed' ? 'bg-status-success-text/15' : 'bg-surface-secondary group-hover:bg-status-success-bg']">
+              <svg class="w-4.5 h-4.5" :class="selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-tertiary'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+            </div>
+            <span :class="['text-xs font-bold uppercase tracking-wider leading-none', selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-secondary']">Completada</span>
+          </button>
+
+          <!-- Cancelada -->
+          <button
+            type="button"
+            @click="selectedNewStatus = selectedNewStatus === 'cancelled' ? '' : 'cancelled'"
+            :class="[
+              'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
+              selectedNewStatus === 'cancelled'
+                ? 'bg-status-critical-bg border-status-critical-text/50 shadow-sm'
+                : 'bg-surface border-border hover:bg-status-critical-bg/40 hover:border-status-critical-text/30'
+            ]"
+          >
+            <div :class="['w-9 h-9 rounded-full flex items-center justify-center transition-colors', selectedNewStatus === 'cancelled' ? 'bg-status-critical-text/15' : 'bg-surface-secondary group-hover:bg-status-critical-bg']">
+              <svg class="w-4.5 h-4.5" :class="selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-tertiary'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+            </div>
+            <span :class="['text-xs font-bold uppercase tracking-wider leading-none', selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-secondary']">Cancelada</span>
           </button>
         </div>
+
+        <!-- Payment method (only when completing) -->
+        <Transition name="slide-down">
+          <div v-if="selectedNewStatus === 'completed'" class="space-y-2">
+            <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">Método de pago</p>
+            <div class="grid grid-cols-3 gap-2">
+              <button
+                v-for="pm in [{ value: 'cash', label: 'Efectivo', icon: '💵' }, { value: 'card', label: 'Tarjeta', icon: '💳' }, { value: 'digital', label: 'Digital', icon: '📱' }]"
+                :key="pm.value"
+                type="button"
+                @click="selectedPaymentMethod = selectedPaymentMethod === pm.value ? '' : pm.value"
+                :class="[
+                  'flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all duration-150 focus:outline-none',
+                  selectedPaymentMethod === pm.value
+                    ? 'bg-primary/8 border-primary text-primary'
+                    : 'bg-surface border-border text-text-secondary hover:border-primary/40 hover:text-text-primary'
+                ]"
+              >
+                <span class="text-base leading-none">{{ pm.icon }}</span>
+                <span class="text-xs font-semibold">{{ pm.label }}</span>
+              </button>
+            </div>
+          </div>
+        </Transition>
+
+        <!-- Confirm button -->
+        <button
+          @click="updateStatus"
+          :disabled="!selectedNewStatus || isUpdatingStatus || (selectedNewStatus === 'completed' && !selectedPaymentMethod)"
+          :class="[
+            'w-full h-11 rounded-xl text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed',
+            selectedNewStatus === 'cancelled'
+              ? 'bg-status-critical-bg text-status-critical-text border-2 border-status-critical-text/30 hover:bg-status-critical-text hover:text-white'
+              : 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm'
+          ]"
+        >
+          <UiLoadingDots v-if="isUpdatingStatus" size="10px" />
+          <template v-else>
+            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+            Confirmar cambio
+          </template>
+        </button>
       </div>
 
       <!-- Order Items -->
@@ -568,3 +644,15 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+</style>
