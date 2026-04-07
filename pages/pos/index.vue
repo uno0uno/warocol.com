@@ -428,7 +428,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="!isResolvingRoute">
+  <div v-if="isResolvingRoute" class="flex items-center justify-center min-h-[70vh]">
+    <CommonsTheCustomLoader size="large" />
+  </div>
+  <div v-else>
     <!-- Loading State (initial page load) -->
     <div v-if="loadingProducts" class="flex items-center justify-center min-h-[70vh]">
       <CommonsTheCustomLoader size="large" />
