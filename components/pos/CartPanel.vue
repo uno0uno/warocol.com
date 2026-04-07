@@ -165,7 +165,7 @@
           <!-- Limpiar -->
           <button
             type="button"
-            :disabled="items.length === 0 || isDeleting"
+            :disabled="(items.length === 0 && tabItems.length === 0) || isDeleting"
             class="h-10 rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
             @click="$emit('clear-cart')"
           >
