@@ -25,6 +25,8 @@ useHead({ title: 'Checkout' })
 
 const router = useRouter()
 const posStore = usePOSStore()
+const cache = useQueryCache()
+const { currentTenant } = useTenantReactive()
 
 // Inject subtitle setter from layout
 const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle', () => {})
@@ -263,6 +265,7 @@ const cancelOrder = async () => {
       // Non-critical
     }
     posStore.clearAll()
+    cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
     router.push('/mesas')
   } else {
     router.push('/pos')
@@ -271,7 +274,12 @@ const cancelOrder = async () => {
 
 const closeSuccessModal = () => {
   showSuccessModal.value = false
-  router.push(wasMesaMode.value ? '/mesas' : '/pos')
+  if (wasMesaMode.value) {
+    cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
+    router.push('/mesas')
+  } else {
+    router.push('/pos')
+  }
 }
 
 // Sincronizar carrito al backend cuando carga la página

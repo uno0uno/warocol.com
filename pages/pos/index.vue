@@ -165,6 +165,8 @@ const requestBill = () => {
   router.push('/pos/checkout')
 }
 
+const cache = useQueryCache()
+
 const cancelMesa = async () => {
   const session = posStore.activeTableSession
   if (!session) return
@@ -174,6 +176,7 @@ const cancelMesa = async () => {
     // Non-critical — clear local state regardless
   }
   posStore.clearAll()
+  cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
   router.push('/mesas')
 }
 
