@@ -141,11 +141,11 @@ const getStatusLabel = (status: string) => {
 
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
-    'completed': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-    'cancelled': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
-    'pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+    'completed': 'bg-primary/10 text-primary',
+    'cancelled': 'bg-status-critical-bg text-status-critical-text',
+    'pending': 'bg-status-warning-bg text-status-warning-text'
   }
-  return colors[status] || 'bg-gray-100 text-gray-800'
+  return colors[status] || 'bg-secondary text-secondary-foreground'
 }
 
 const goBack = () => {
