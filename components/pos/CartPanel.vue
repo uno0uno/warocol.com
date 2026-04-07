@@ -13,8 +13,8 @@
     <!-- Items list: tab items (committed) + current cart items -->
     <div class="flex-1 overflow-y-auto p-4 space-y-2.5">
 
-      <!-- Skeleton while loading tab items -->
-      <template v-if="isLoadingTabItems">
+      <!-- Skeleton while loading tab items or adding to tab -->
+      <template v-if="isLoadingTabItems || isAddingToTab">
         <div v-for="n in 3" :key="n" class="p-3 border border-border rounded-xl animate-pulse">
           <div class="flex items-start gap-2.5">
             <div class="w-6 h-6 rounded-full bg-surface-secondary flex-shrink-0" />
@@ -33,8 +33,8 @@
         </div>
       </template>
 
-      <!-- Tab items already on the mesa (only when not loading) -->
-      <template v-else-if="!isLoadingTabItems">
+      <!-- Tab items already on the mesa (only when not loading/adding) -->
+      <template v-else-if="!isLoadingTabItems && !isAddingToTab">
       <div
         v-for="(item, idx) in tabItems"
         :key="item.orderItemId"
