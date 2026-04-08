@@ -31,20 +31,28 @@ const tablesStorageKey = (tenantId: string) => `waro_pos_tables_${tenantId}`
 
 // On tenant change: read stored value immediately so tablesEnabled is never null for known tenants
 watch(() => currentTenant.value?.id, (tenantId) => {
+  const stored = tenantId ? localStorage.getItem(tablesStorageKey(tenantId)) : null
+  console.log(`[POS:tenant-watch] tenantId=${tenantId} tablesEnabled(store)=${posStore.tablesEnabled} stored=${stored}`)
   if (!tenantId || posStore.tablesEnabled !== null) return
-  const stored = localStorage.getItem(tablesStorageKey(tenantId))
   if (stored !== null) posStore.tablesEnabled = stored === '1'
+  console.log(`[POS:tenant-watch] → tablesEnabled set to ${posStore.tablesEnabled}`)
 }, { immediate: true })
 
 // Sync from fresh query data — also saves to localStorage for next visit
 watch(settingsAsyncStatus, (status) => {
-  if (status !== 'idle') return
   const enabled = settingsData.value?.data?.tables_enabled
+  console.log(`[POS:async-watch] asyncStatus=${status} enabled=${enabled} tablesEnabled(store)=${posStore.tablesEnabled}`)
+  if (status !== 'idle') return
   if (enabled === undefined || enabled === null) return
   posStore.tablesEnabled = enabled
   if (currentTenant.value?.id) {
     localStorage.setItem(tablesStorageKey(currentTenant.value.id), enabled ? '1' : '0')
   }
+  console.log(`[POS:async-watch] → tablesEnabled saved as ${enabled}`)
+})
+
+watch(() => posStore.tablesEnabled, (val, prev) => {
+  console.log(`[POS:store] tablesEnabled: ${prev} → ${val} | showFloorPlan=${showFloorPlan.value} | isResolving=${isResolvingSettings.value}`)
 })
 
 // isEnteringTable blocks showFloorPlan while the session fetch is in flight

@@ -109,8 +109,10 @@ export const useTenantsStore = defineStore('tenants', () => {
       cache.invalidateQueries()
       // Reset POS feature flags — new tenant may have different settings
       usePOSStore().tablesEnabled = null
+      console.log('[TENANTS] tablesEnabled → null, switching to tenant:', tenant.slug)
       // Update AFTER so the reactive key change triggers a clean fetch on the new tenant.
       selectedTenant.value = tenant
+      console.log('[TENANTS] selectedTenant set to:', tenant.slug)
     },
     onError: (err: any) => {
       error.value = err?.message ?? 'Failed to switch tenant'
