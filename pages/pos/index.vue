@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, provide, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, provide, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
 import type { CachedProduct } from '~/stores/usePOSStore'
 import { usePOSStore } from '~/stores/usePOSStore'
@@ -61,6 +61,8 @@ const { status: tablesStatus } = useQuery({
   staleTime: 0,
 })
 
+watch(tablesStatus, (s) => console.log(`[POS:tables-status] ${s}`), { immediate: true })
+
 // isEnteringTable blocks showFloorPlan while the session fetch is in flight
 // (prevents the floor plan from remounting between clearAll() and setTableSession())
 const isEnteringTable = ref(false)
@@ -68,6 +70,7 @@ const isEnteringTable = ref(false)
 // Reset on tenant change so a fresh check runs for the new tenant.
 const noTablesConfigured = ref(false)
 watch(() => currentTenant.value?.id, () => { noTablesConfigured.value = false })
+watch(noTablesConfigured, (v) => console.log(`[POS:noTablesConfigured] ${v}`))
 
 const showFloorPlan = computed(() =>
   posStore.tablesEnabled === true &&
@@ -81,6 +84,11 @@ const isResolvingSettings = computed(() => {
   if (posStore.tablesEnabled === null) return true
   if (posStore.tablesEnabled === true && tablesStatus.value === 'pending' && !posStore.activeTableSession) return true
   return false
+})
+
+// ── Master state log — fires whenever any key computed changes ──
+watchEffect(() => {
+  console.log(`[POS:state] tablesEnabled=${posStore.tablesEnabled} tablesStatus=${tablesStatus.value} noTables=${noTablesConfigured.value} activeSession=${!!posStore.activeTableSession} isEntering=${isEnteringTable.value} → showFloorPlan=${showFloorPlan.value} isResolving=${isResolvingSettings.value}`)
 })
 
 // ── Mesa mode ──────────────────────────────────────────────────────────────
