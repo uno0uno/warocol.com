@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { TableCellsIcon } from '@heroicons/vue/24/outline'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({
@@ -160,31 +159,41 @@ const toggleTablesEnabled = async () => {
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
       <!-- ══════ MÓDULOS ══════ -->
-      <div v-if="businessProfile" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-          <TableCellsIcon class="w-5 h-5 text-primary flex-shrink-0" />
-          Módulos
-        </h3>
-        <div class="flex items-center justify-between py-1">
-          <div>
-            <p class="text-sm font-medium text-text-primary">Gestión de mesas</p>
-            <p class="text-xs text-text-secondary mt-0.5">Activa el flujo de mesas en el punto de venta</p>
-          </div>
-          <label
-            class="relative inline-flex items-center cursor-pointer flex-shrink-0"
-            :class="isTogglingTables ? 'opacity-50 pointer-events-none' : ''"
-            :aria-label="businessProfile.tables_enabled ? 'Desactivar gestión de mesas' : 'Activar gestión de mesas'"
+      <div
+        v-if="businessProfile"
+        class="flex items-center justify-between gap-4 rounded-xl border-2 px-4 py-3 transition-colors"
+        :class="businessProfile.tables_enabled
+          ? 'border-border bg-surface'
+          : 'border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20'"
+      >
+        <div class="min-w-0">
+          <p
+            class="text-sm font-semibold leading-snug"
+            :class="businessProfile.tables_enabled ? 'text-text-primary' : 'text-amber-800 dark:text-amber-300'"
           >
-            <input
-              type="checkbox"
-              class="sr-only peer"
-              :checked="businessProfile.tables_enabled"
-              @change="toggleTablesEnabled"
-              :disabled="isTogglingTables"
-            />
-            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-          </label>
+            {{ businessProfile.tables_enabled ? 'Gestión de mesas activa' : 'Gestión de mesas desactivada' }}
+          </p>
+          <p
+            class="text-xs mt-0.5 leading-snug"
+            :class="businessProfile.tables_enabled ? 'text-text-secondary' : 'text-amber-700 dark:text-amber-400'"
+          >
+            {{ businessProfile.tables_enabled ? 'El flujo de mesas está disponible en el punto de venta' : 'Actívala para usar el flujo de mesas en el punto de venta' }}
+          </p>
         </div>
+        <label
+          class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+          :class="isTogglingTables ? 'opacity-50 pointer-events-none' : ''"
+          :aria-label="businessProfile.tables_enabled ? 'Desactivar gestión de mesas' : 'Activar gestión de mesas'"
+        >
+          <input
+            type="checkbox"
+            class="sr-only peer"
+            :checked="businessProfile.tables_enabled"
+            @change="toggleTablesEnabled"
+            :disabled="isTogglingTables"
+          />
+          <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+        </label>
       </div>
 
       <!-- Filters -->
