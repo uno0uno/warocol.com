@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const emit = defineEmits<{
   (e: 'enter-table', ctx: { tableId: string; sessionId: string; tableName: string; gotoCheckout?: boolean }): void
+  (e: 'no-tables'): void
 }>()
 
 const { currentTenant } = useTenantReactive()
@@ -22,6 +23,11 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 registerProgressiveLoading(isRefreshing)
 
 const tables = computed(() => tablesData.value?.data ?? [])
+
+// When data loads and there are 0 tables, tell the parent to fall back to POS view
+watch(tablesStatus, (status) => {
+  if (status === 'success' && tables.value.length === 0) emit('no-tables')
+}, { immediate: true })
 
 watch(() => currentTenant.value?.id, () => { refetch() })
 

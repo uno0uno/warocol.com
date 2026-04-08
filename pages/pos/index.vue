@@ -54,24 +54,24 @@ watch(settingsAsyncStatus, (status) => {
 // ── Tables prefetch — same key as MesasFloorPlan so they share the cache entry ──
 // Fetching here (parent) ensures data is ready before MesasFloorPlan mounts,
 // eliminating the empty-grid flash caused by the child's query starting cold.
-const { data: tablesData, status: tablesStatus } = useQuery({
+const { status: tablesStatus } = useQuery({
   key: () => ['tables', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/tables'),
   enabled: () => posStore.tablesEnabled === true && !!currentTenant.value,
   staleTime: 0,
 })
-const hasTables = computed(() => (tablesData.value?.data?.length ?? 0) > 0)
-
-watch(() => [posStore.tablesEnabled, tablesStatus.value, posStore.activeTableSession?.sessionId], (vals) => {
-  console.log(`[POS:show] tablesEnabled=${vals[0]} tablesStatus=${vals[1]} activeSession=${vals[2]} | showFloorPlan=${showFloorPlan.value} | isResolving=${isResolvingSettings.value}`)
-})
 
 // isEnteringTable blocks showFloorPlan while the session fetch is in flight
 // (prevents the floor plan from remounting between clearAll() and setTableSession())
 const isEnteringTable = ref(false)
+// noTablesConfigured: set when MesasFloorPlan emits 'no-tables' (feature enabled but 0 tables).
+// Reset on tenant change so a fresh check runs for the new tenant.
+const noTablesConfigured = ref(false)
+watch(() => currentTenant.value?.id, () => { noTablesConfigured.value = false })
+
 const showFloorPlan = computed(() =>
   posStore.tablesEnabled === true &&
-  hasTables.value &&
+  !noTablesConfigured.value &&
   !posStore.activeTableSession &&
   !isEnteringTable.value &&
   tablesStatus.value !== 'pending'
@@ -79,7 +79,6 @@ const showFloorPlan = computed(() =>
 const isResolvingSettings = computed(() => {
   if (!currentTenant.value) return false
   if (posStore.tablesEnabled === null) return true
-  // Also show loader while tables are loading (prevents MesasFloorPlan from mounting with no data)
   if (posStore.tablesEnabled === true && tablesStatus.value === 'pending' && !posStore.activeTableSession) return true
   return false
 })
@@ -468,7 +467,7 @@ onUnmounted(() => {
   </div>
 
   <!-- Floor plan view -->
-  <PosMesasFloorPlan v-else-if="showFloorPlan" @enter-table="handleEnterTable" />
+  <PosMesasFloorPlan v-else-if="showFloorPlan" @enter-table="handleEnterTable" @no-tables="noTablesConfigured = true" />
 
   <!-- POS sales view -->
   <div v-else>
