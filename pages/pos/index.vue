@@ -36,8 +36,11 @@ watch(
   { immediate: true }
 )
 
+// isEnteringTable blocks showFloorPlan while the session fetch is in flight
+// (prevents the floor plan from remounting between clearAll() and setTableSession())
+const isEnteringTable = ref(false)
 const showFloorPlan = computed(() =>
-  posStore.tablesEnabled === true && !posStore.activeTableSession
+  posStore.tablesEnabled === true && !posStore.activeTableSession && !isEnteringTable.value
 )
 const isResolvingSettings = computed(() => posStore.tablesEnabled === null && !!currentTenant.value)
 
@@ -50,6 +53,7 @@ const tabError = ref<string | null>(null)
 
 // Handle enter-table event from floor plan component
 const handleEnterTable = async (ctx: { tableId: string; sessionId: string; tableName: string; gotoCheckout?: boolean }) => {
+  isEnteringTable.value = true
   posStore.clearAll()
   isLoadingTabItems.value = true
   try {
@@ -79,6 +83,7 @@ const handleEnterTable = async (ctx: { tableId: string; sessionId: string; table
   } catch {
     // Session may have closed — enter normal POS mode
   } finally {
+    isEnteringTable.value = false
     isLoadingTabItems.value = false
     if (ctx.gotoCheckout && posStore.activeTableSession) {
       sessionStorage.setItem('posNavigation', 'true')
