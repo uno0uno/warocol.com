@@ -266,7 +266,7 @@ const cancelOrder = async () => {
     }
     posStore.clearAll()
     cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
-    router.push('/mesas')
+    router.push('/pos')
   } else {
     router.push('/pos')
   }
@@ -276,7 +276,7 @@ const closeSuccessModal = () => {
   showSuccessModal.value = false
   if (wasMesaMode.value) {
     cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
-    router.push('/mesas')
+    router.push('/pos')
   } else {
     router.push('/pos')
   }

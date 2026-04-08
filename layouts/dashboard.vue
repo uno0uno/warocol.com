@@ -462,7 +462,7 @@ const getPageConfig = () => {
     }
   } else if (path.startsWith('/mesas')) {
     return {
-      pageTitle: path === '/mesas/gestionar' ? 'Gestionar Mesas' : 'Mesas',
+      pageTitle: 'Mesas',
       pageSubtitle: undefined,
       searchPlaceholder: undefined,
       activePage: 'mesas' as const,
@@ -964,21 +964,7 @@ watch(displayTitle, (nextTitle, previousTitle) => {
 const posCartItemsCount = inject<ComputedRef<number> | Ref<number>>('posCartItemsCount', ref(0))
 const posOpenCartModal = inject<() => void>('posOpenCartModal', () => {})
 
-// POS nav — redirect to /mesas if tables are enabled
-const { currentTenant } = useTenantReactive()
-const { data: posSettingsData } = useQuery({
-  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
-  enabled: () => !!currentTenant.value,
-  staleTime: 30_000,
-})
-const posNavStore = usePOSStore()
-const navigateToPOS = () => {
-  const fromQuery = posSettingsData.value?.data?.tables_enabled
-  const fromStore = posNavStore.tablesEnabled
-  const tablesOn = fromQuery ?? fromStore
-  navigateTo(tablesOn ? '/mesas' : '/pos')
-}
+const navigateToPOS = () => navigateTo('/pos')
 
 // Meta tags for dashboard
 useHead({

@@ -152,7 +152,7 @@
           </NuxtLink>
 
           <NuxtLink
-            to="/mesas/gestionar"
+            to="/mesas"
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
           >

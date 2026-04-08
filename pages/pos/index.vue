@@ -17,7 +17,7 @@ const router = useRouter()
 const posStore = usePOSStore()
 const { tabItems: storeTabItems, tabTotal: storeTabTotal } = storeToRefs(posStore)
 
-// ── Table management redirect ──────────────────────────────────────────────
+// ── Table management settings ──────────────────────────────────────────────
 // Reuses the same cached query key as negocio.vue — no extra network request
 const { data: settingsData } = useQuery({
   key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
@@ -26,34 +26,20 @@ const { data: settingsData } = useQuery({
   staleTime: 30_000,
 })
 
-// Hide content while deciding whether to redirect — prevents blink
-const isResolvingRoute = ref(
-  posStore.tablesEnabled !== false
+// Sync tablesEnabled from query — no redirect, v-if in template handles the view switch
+watch(
+  () => settingsData.value?.data?.tables_enabled,
+  (enabled) => {
+    if (enabled === undefined || enabled === null) return
+    posStore.tablesEnabled = enabled
+  },
+  { immediate: true }
 )
 
-// Redirect to /mesas if tables are enabled — fires at most once per mount
-if (posStore.tablesEnabled === true && !sessionStorage.getItem('mesaContext')) {
-  navigateTo('/mesas')
-} else if (posStore.tablesEnabled === null) {
-  // First ever visit — wait for query to resolve once, then decide
-  const stopWatch = watch(
-    () => settingsData.value?.data?.tables_enabled,
-    (enabled) => {
-      if (enabled === undefined || enabled === null) return
-      posStore.tablesEnabled = enabled
-      if (enabled && !sessionStorage.getItem('mesaContext')) {
-        navigateTo('/mesas')
-      } else {
-        isResolvingRoute.value = false
-      }
-      stopWatch()
-    },
-    { immediate: true }
-  )
-} else {
-  // tablesEnabled === false — no redirect needed
-  isResolvingRoute.value = false
-}
+const showFloorPlan = computed(() =>
+  posStore.tablesEnabled === true && !posStore.activeTableSession
+)
+const isResolvingSettings = computed(() => posStore.tablesEnabled === null && !!currentTenant.value)
 
 // ── Mesa mode ──────────────────────────────────────────────────────────────
 const isMesaMode = computed(() => !!posStore.activeTableSession)
@@ -61,6 +47,45 @@ const isAddingToTab = ref(false)
 const isLoadingTabItems = ref(false)
 const isClearingTab = ref(false)
 const tabError = ref<string | null>(null)
+
+// Handle enter-table event from floor plan component
+const handleEnterTable = async (ctx: { tableId: string; sessionId: string; tableName: string; gotoCheckout?: boolean }) => {
+  posStore.clearAll()
+  isLoadingTabItems.value = true
+  try {
+    const session = await $fetch<{ success: boolean; data: any }>(
+      `/api/tables/${ctx.tableId}/current`
+    )
+    if (session?.data?.session) {
+      posStore.setTableSession({
+        tableId: ctx.tableId,
+        sessionId: session.data.session.id,
+        tableName: ctx.tableName,
+        runningTotal: session.data.session.running_total,
+        openedAt: session.data.session.opened_at,
+      })
+      if (session.data.tab_items) {
+        posStore.setTabItems(
+          session.data.tab_items.map((i: any) => ({
+            orderItemId: i.order_item_id,
+            productName: i.product_name,
+            quantity: i.quantity,
+            unitPrice: i.unit_price,
+            subtotal: i.subtotal,
+          }))
+        )
+      }
+    }
+  } catch {
+    // Session may have closed — enter normal POS mode
+  } finally {
+    isLoadingTabItems.value = false
+    if (ctx.gotoCheckout && posStore.activeTableSession) {
+      sessionStorage.setItem('posNavigation', 'true')
+      router.push('/pos/checkout')
+    }
+  }
+}
 
 // Refresh session running total + tab items from the backend
 const refreshTableSession = async () => {
@@ -186,7 +211,6 @@ const cancelMesa = async () => {
   }
   posStore.clearAll()
   cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
-  router.push('/mesas')
 }
 
 const formatDuration = (openedAt: string): string => {
@@ -361,49 +385,11 @@ onMounted(async () => {
   // Check if we're returning from a POS sub-page
   const isReturningFromPOSPage = sessionStorage.getItem('posNavigation') === 'true'
 
-  // Load mesa context if arriving from mesas page
-  const mesaContextRaw = sessionStorage.getItem('mesaContext')
-
   if (isReturningFromPOSPage) {
     // Returning from product/checkout sub-page — keep cart + table session intact
     sessionStorage.removeItem('posNavigation')
-  } else if (mesaContextRaw) {
-    // Arriving from /mesas — clear previous sale state, then load table session
-    posStore.clearAll()
-    sessionStorage.removeItem('mesaContext')
-    isLoadingTabItems.value = true
-    try {
-      const ctx = JSON.parse(mesaContextRaw)
-      const session = await $fetch<{ success: boolean; data: any }>(
-        `/api/tables/${ctx.tableId}/current`
-      )
-      if (session?.data?.session) {
-        posStore.setTableSession({
-          tableId: ctx.tableId,
-          sessionId: session.data.session.id,
-          tableName: ctx.tableName,
-          runningTotal: session.data.session.running_total,
-          openedAt: session.data.session.opened_at,
-        })
-        if (session.data.tab_items) {
-          posStore.setTabItems(
-            session.data.tab_items.map((i: any) => ({
-              orderItemId: i.order_item_id,
-              productName: i.product_name,
-              quantity: i.quantity,
-              unitPrice: i.unit_price,
-              subtotal: i.subtotal,
-            }))
-          )
-        }
-      }
-    } catch {
-      // Session may have closed — enter normal POS mode silently
-    } finally {
-      isLoadingTabItems.value = false
-    }
   } else {
-    // Fresh entry to POS (not from sub-page, not from mesas)
+    // Fresh entry to POS (not from sub-page)
     posStore.clearAll()
 
     // Check for pending customer from /ventas page
@@ -428,7 +414,16 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="!isResolvingRoute">
+  <!-- Settings resolving — show loader while we don't know if tables are enabled -->
+  <div v-if="isResolvingSettings" class="flex items-center justify-center min-h-[70vh]">
+    <CommonsTheCustomLoader size="large" />
+  </div>
+
+  <!-- Floor plan view -->
+  <PosMesasFloorPlan v-else-if="showFloorPlan" @enter-table="handleEnterTable" />
+
+  <!-- POS sales view -->
+  <div v-else>
     <!-- Loading State (initial page load) -->
     <div v-if="loadingProducts" class="flex items-center justify-center min-h-[70vh]">
       <CommonsTheCustomLoader size="large" />
@@ -467,13 +462,14 @@ onUnmounted(() => {
             <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
             <span class="text-xs text-text-secondary tabular-nums truncate">{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado · {{ formatDuration(posStore.activeTableSession.openedAt) }}</span>
           </div>
-          <!-- Change table button -->
-          <NuxtLink
-            to="/mesas"
+          <!-- Change table button — clears activeTableSession, showFloorPlan computed switches view -->
+          <button
+            type="button"
             class="flex-shrink-0 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors"
+            @click="posStore.clearAll()"
           >
             Cambiar
-          </NuxtLink>
+          </button>
         </div>
         <!-- Tab error -->
         <p v-if="tabError" class="mt-2 text-xs text-destructive bg-destructive/10 rounded-lg px-3 py-1.5">

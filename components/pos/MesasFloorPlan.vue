@@ -1,29 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { usePOSStore } from '~/stores/usePOSStore'
+
+const emit = defineEmits<{
+  (e: 'enter-table', ctx: { tableId: string; sessionId: string; tableName: string; gotoCheckout?: boolean }): void
+}>()
 
 const { currentTenant } = useTenantReactive()
-const router = useRouter()
-const posStore = usePOSStore()
-
-// ── Module guard — redirect to /pos if tables are disabled ─────────────────
-const { data: settingsData } = useQuery({
-  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
-  enabled: () => !!currentTenant.value,
-  staleTime: 30_000,
-})
-
-watch(
-  () => settingsData.value?.data?.tables_enabled,
-  (enabled) => {
-    if (enabled === false) {
-      posStore.tablesEnabled = false  // sync store — prevents loop in /pos
-      navigateTo('/pos')
-    }
-  },
-  { immediate: true }
-)
 
 // ── Tables data ────────────────────────────────────────────────────────────
 const { data: tablesData, status: tablesStatus, asyncStatus: tablesAsyncStatus, error: tablesError, refetch } = useQuery({
@@ -49,17 +31,6 @@ let pollInterval: ReturnType<typeof setInterval> | null = null
 // ── Open session ───────────────────────────────────────────────────────────
 const openingTableId = ref<string | null>(null)
 
-const writeMesaContext = (table: any, sessionId?: string) => {
-  const sid = sessionId ?? table.session?.id
-  if (sid) {
-    sessionStorage.setItem('mesaContext', JSON.stringify({
-      tableId: table.id,
-      sessionId: sid,
-      tableName: table.name,
-    }))
-  }
-}
-
 const handleTableClick = async (table: any) => {
   if (table.status === 'free') {
     if (openingTableId.value) return
@@ -69,21 +40,34 @@ const handleTableClick = async (table: any) => {
         `/api/tables/${table.id}/open`, { method: 'POST' }
       )
       await refetch()
-      writeMesaContext(table, result?.data?.session_id)
-      router.push('/pos')
-    } catch (e) {
+      emit('enter-table', {
+        tableId: table.id,
+        sessionId: result?.data?.session_id,
+        tableName: table.name,
+      })
+    } catch {
       await refetch()
-      writeMesaContext(table)
-      router.push('/pos')
+      emit('enter-table', {
+        tableId: table.id,
+        sessionId: table.session?.id,
+        tableName: table.name,
+      })
     } finally {
       openingTableId.value = null
     }
   } else if (table.status === 'open') {
-    writeMesaContext(table)
-    router.push('/pos')
+    emit('enter-table', {
+      tableId: table.id,
+      sessionId: table.session?.id,
+      tableName: table.name,
+    })
   } else if (table.status === 'bill_requested') {
-    writeMesaContext(table)
-    router.push('/pos/checkout')
+    emit('enter-table', {
+      tableId: table.id,
+      sessionId: table.session?.id,
+      tableName: table.name,
+      gotoCheckout: true,
+    })
   }
 }
 
@@ -169,7 +153,7 @@ onUnmounted(() => {
           <p class="text-lg font-semibold text-text-primary">No tienes mesas configuradas</p>
           <p class="text-sm mt-1">Agrega mesas desde la configuración de tu negocio</p>
         </div>
-        <NuxtLink to="/mesas/gestionar" class="mt-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">
+        <NuxtLink to="/mesas" class="mt-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">
           Configurar mesas
         </NuxtLink>
       </div>

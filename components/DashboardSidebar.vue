@@ -291,7 +291,7 @@ const primaryItems = [
 const secondaryItems = [
   { to: '/analitica',                        page: 'analytics',     label: 'Analítica',      icon: ChartBarIcon },
   { to: '/menu/productos',                   page: 'menu',          label: 'Menú',           icon: CubeIcon },
-  { to: '/mesas/gestionar',                  page: 'mesas',         label: 'Mesas',          icon: TableCellsIcon },
+  { to: '/mesas',                            page: 'mesas',         label: 'Mesas',          icon: TableCellsIcon },
   { to: '/abastecimiento/compras-directas',  page: 'abastecimiento',label: 'Abastecimiento', icon: TruckIcon },
   { to: '/equipo/miembros',                  page: 'equipo',        label: 'Equipo',         icon: UserGroupIcon },
   { to: '/integraciones',                    page: 'integraciones', label: 'Integraciones',  icon: KeyIcon },
