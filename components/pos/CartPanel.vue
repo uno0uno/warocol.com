@@ -140,13 +140,22 @@
           <!-- Cancelar mesa -->
           <button
             type="button"
-            class="h-10 rounded-xl border border-status-error-text/30 text-status-error-text text-xs font-medium flex items-center justify-center gap-1 hover:bg-status-error-bg transition-colors focus:outline-none"
+            :disabled="isCancellingMesa"
+            class="h-10 rounded-xl border border-status-error-text/30 text-status-error-text text-xs font-medium flex items-center justify-center gap-1 hover:bg-status-error-bg transition-colors focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
             aria-label="Cancelar y liberar mesa"
             @click="$emit('cancel-mesa')"
           >
-            <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
+            <template v-if="isCancellingMesa">
+              <svg class="h-3.5 w-3.5 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            </template>
+            <template v-else>
+              <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </template>
             Cancelar
           </button>
           <!-- Pedir cuenta -->
@@ -228,6 +237,7 @@ interface Props {
   isAddingToTab?: boolean
   isLoadingTabItems?: boolean
   isClearingTab?: boolean
+  isCancellingMesa?: boolean
   tabItems?: TabItem[]
   tabTotal?: number
   tabItemsLoading?: Set<string>
