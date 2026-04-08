@@ -155,8 +155,6 @@ onUnmounted(() => {
 
     <!-- Content -->
     <div v-else>
-      <!-- Floor plan -->
-      <template>
         <!-- Legend -->
         <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
           <p class="text-sm text-text-secondary">Vista de planta principal</p>
@@ -232,7 +230,6 @@ onUnmounted(() => {
             </div>
           </button>
         </div>
-      </template>
     </div>
 
   </div>
