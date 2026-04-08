@@ -64,6 +64,7 @@ export const usePOSStore = defineStore('pos', () => {
     const cartId = ref<string | null>(null) // ID del carrito en la BD
     const isSyncing = ref(false) // Flag para evitar loops de sincronización
     const isDeleting = ref(false) // Flag para bloquear acciones mientras se elimina
+    const isCancellingMesa = ref(false) // Flag while close-table API call is in flight
 
     // Mesa context — set when entering POS from a table session
     const activeTableSession = ref<ActiveTableSession | null>(null)
@@ -381,6 +382,7 @@ export const usePOSStore = defineStore('pos', () => {
         cartId,
         isSyncing,
         isDeleting,
+        isCancellingMesa,
         cachedProducts,
         activeTableSession,
         tabItems,

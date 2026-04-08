@@ -140,12 +140,12 @@
           <!-- Cancelar mesa -->
           <button
             type="button"
-            :disabled="isCancellingMesa"
+            :disabled="posStore.isCancellingMesa"
             class="h-10 rounded-xl border border-status-error-text/30 text-status-error-text text-xs font-medium flex items-center justify-center gap-1 hover:bg-status-error-bg transition-colors focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
             aria-label="Cancelar y liberar mesa"
             @click="$emit('cancel-mesa')"
           >
-            <template v-if="isCancellingMesa">
+            <template v-if="posStore.isCancellingMesa">
               <svg class="h-3.5 w-3.5 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -237,7 +237,6 @@ interface Props {
   isAddingToTab?: boolean
   isLoadingTabItems?: boolean
   isClearingTab?: boolean
-  isCancellingMesa?: boolean
   tabItems?: TabItem[]
   tabTotal?: number
   tabItemsLoading?: Set<string>

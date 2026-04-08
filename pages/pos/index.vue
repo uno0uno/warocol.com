@@ -49,7 +49,6 @@ const isMesaMode = computed(() => !!posStore.activeTableSession)
 const isAddingToTab = ref(false)
 const isLoadingTabItems = ref(false)
 const isClearingTab = ref(false)
-const isCancellingMesa = ref(false)
 const tabError = ref<string | null>(null)
 
 // Handle enter-table event from floor plan component
@@ -209,14 +208,14 @@ const cache = useQueryCache()
 
 const cancelMesa = async () => {
   const session = posStore.activeTableSession
-  if (!session || isCancellingMesa.value) return
-  isCancellingMesa.value = true
+  if (!session || posStore.isCancellingMesa) return
+  posStore.isCancellingMesa = true
   try {
     await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
   } catch {
     // Non-critical — clear local state regardless
   } finally {
-    isCancellingMesa.value = false
+    posStore.isCancellingMesa = false
   }
   posStore.clearAll()
   cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
@@ -569,7 +568,6 @@ onUnmounted(() => {
         :is-adding-to-tab="isAddingToTab"
         :is-loading-tab-items="isLoadingTabItems"
         :is-clearing-tab="isClearingTab"
-        :is-cancelling-mesa="isCancellingMesa"
         :tab-items="storeTabItems"
         :tab-total="storeTabTotal"
         :tab-items-loading="tabItemsLoading"
