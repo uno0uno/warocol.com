@@ -107,9 +107,14 @@ export const useTenantsStore = defineStore('tenants', () => {
       // - Order matters: invalidating first avoids a race where the old query key
       //   re-fetches with the new session and stores the result under the wrong entry.
       cache.invalidateQueries()
-      // Reset POS feature flags — new tenant may have different settings
-      usePOSStore().tablesEnabled = null
-      console.log('[TENANTS] tablesEnabled → null, switching to tenant:', tenant.slug)
+      // Read localStorage for the INCOMING tenant before any reactive update.
+      // This avoids a flash: if we set null first and then selectedTenant, there is one rendered
+      // frame where tablesEnabled=null (loader visible) before the pos/index watcher reads
+      // localStorage. By resolving the value here (we already have tenant.id), tablesEnabled
+      // skips null entirely for known tenants.
+      const stored = localStorage.getItem(`waro_pos_tables_${tenant.id}`)
+      usePOSStore().tablesEnabled = stored !== null ? stored === '1' : null
+      console.log('[TENANTS] tablesEnabled →', usePOSStore().tablesEnabled, '(stored:', stored, ') switching to:', tenant.slug)
       // Update AFTER so the reactive key change triggers a clean fetch on the new tenant.
       selectedTenant.value = tenant
       console.log('[TENANTS] selectedTenant set to:', tenant.slug)
