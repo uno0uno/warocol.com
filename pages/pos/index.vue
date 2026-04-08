@@ -31,24 +31,20 @@ const tablesStorageKey = (tenantId: string) => `waro_pos_tables_${tenantId}`
 
 // On tenant change: read stored value immediately so tablesEnabled is never null for known tenants
 watch(() => currentTenant.value?.id, (tenantId) => {
-  const stored = tenantId ? localStorage.getItem(tablesStorageKey(tenantId)) : null
-  console.log(`[POS:tenant-watch] tenantId=${tenantId} tablesEnabled(store)=${posStore.tablesEnabled} stored=${stored}`)
   if (!tenantId || posStore.tablesEnabled !== null) return
+  const stored = localStorage.getItem(tablesStorageKey(tenantId))
   if (stored !== null) posStore.tablesEnabled = stored === '1'
-  console.log(`[POS:tenant-watch] → tablesEnabled set to ${posStore.tablesEnabled}`)
 }, { immediate: true })
 
 // Sync from fresh query data — also saves to localStorage for next visit
 watch(settingsAsyncStatus, (status) => {
-  const enabled = settingsData.value?.data?.tables_enabled
-  console.log(`[POS:async-watch] asyncStatus=${status} enabled=${enabled} tablesEnabled(store)=${posStore.tablesEnabled}`)
   if (status !== 'idle') return
+  const enabled = settingsData.value?.data?.tables_enabled
   if (enabled === undefined || enabled === null) return
   posStore.tablesEnabled = enabled
   if (currentTenant.value?.id) {
     localStorage.setItem(tablesStorageKey(currentTenant.value.id), enabled ? '1' : '0')
   }
-  console.log(`[POS:async-watch] → tablesEnabled saved as ${enabled}`)
 })
 
 // ── Tables prefetch — same key as MesasFloorPlan so they share the cache entry ──
@@ -61,8 +57,6 @@ const { status: tablesStatus } = useQuery({
   staleTime: 0,
 })
 
-watch(tablesStatus, (s) => console.log(`[POS:tables-status] ${s}`), { immediate: true })
-
 // isEnteringTable blocks showFloorPlan while the session fetch is in flight
 // (prevents the floor plan from remounting between clearAll() and setTableSession())
 const isEnteringTable = ref(false)
@@ -70,7 +64,6 @@ const isEnteringTable = ref(false)
 // Reset on tenant change so a fresh check runs for the new tenant.
 const noTablesConfigured = ref(false)
 watch(() => currentTenant.value?.id, () => { noTablesConfigured.value = false })
-watch(noTablesConfigured, (v) => console.log(`[POS:noTablesConfigured] ${v}`))
 
 const showFloorPlan = computed(() =>
   posStore.tablesEnabled === true &&
@@ -84,11 +77,6 @@ const isResolvingSettings = computed(() => {
   if (posStore.tablesEnabled === null) return true
   if (posStore.tablesEnabled === true && tablesStatus.value === 'pending' && !posStore.activeTableSession) return true
   return false
-})
-
-// ── Master state log — fires whenever any key computed changes ──
-watchEffect(() => {
-  console.log(`[POS:state] tablesEnabled=${posStore.tablesEnabled} tablesStatus=${tablesStatus.value} noTables=${noTablesConfigured.value} activeSession=${!!posStore.activeTableSession} isEntering=${isEnteringTable.value} → showFloorPlan=${showFloorPlan.value} isResolving=${isResolvingSettings.value}`)
 })
 
 // ── Mesa mode ──────────────────────────────────────────────────────────────

@@ -26,13 +26,8 @@ const tables = computed(() => tablesData.value?.data ?? [])
 
 // When data loads and there are 0 tables, tell the parent to fall back to POS view
 watch(tablesStatus, (status) => {
-  console.log(`[MESAS:status] ${status} | tables=${tables.value.length} | loading=${loadingTables.value}`)
-  if (status === 'success' && tables.value.length === 0) {
-    console.log('[MESAS:no-tables] emitting no-tables')
-    emit('no-tables')
-  }
+  if (status === 'success' && tables.value.length === 0) emit('no-tables')
 }, { immediate: true })
-watch(tables, (t) => console.log(`[MESAS:tables] count=${t.length} | status=${tablesStatus.value}`), { immediate: true })
 
 watch(() => currentTenant.value?.id, () => { refetch() })
 

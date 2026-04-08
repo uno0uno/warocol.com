@@ -114,10 +114,8 @@ export const useTenantsStore = defineStore('tenants', () => {
       // skips null entirely for known tenants.
       const stored = localStorage.getItem(`waro_pos_tables_${tenant.id}`)
       usePOSStore().tablesEnabled = stored !== null ? stored === '1' : null
-      console.log('[TENANTS] tablesEnabled →', usePOSStore().tablesEnabled, '(stored:', stored, ') switching to:', tenant.slug)
       // Update AFTER so the reactive key change triggers a clean fetch on the new tenant.
       selectedTenant.value = tenant
-      console.log('[TENANTS] selectedTenant set to:', tenant.slug)
     },
     onError: (err: any) => {
       error.value = err?.message ?? 'Failed to switch tenant'
