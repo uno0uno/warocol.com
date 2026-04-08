@@ -19,22 +19,34 @@ const { tabItems: storeTabItems, tabTotal: storeTabTotal } = storeToRefs(posStor
 
 // ── Table management settings ──────────────────────────────────────────────
 // Reuses the same cached query key as negocio.vue — no extra network request
-const { data: settingsData } = useQuery({
+const { data: settingsData, asyncStatus: settingsAsyncStatus } = useQuery({
   key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
 
-// Sync tablesEnabled from query — no redirect, v-if in template handles the view switch
+// Sync tablesEnabled from query.
+// Guard: when tablesEnabled is null (tenant just switched / first load), skip stale-while-revalidate
+// responses (asyncStatus='loading') — wait for the fresh fetch to complete.
+// This prevents the old tenant's cached value from briefly overriding the null state.
 watch(
   () => settingsData.value?.data?.tables_enabled,
   (enabled) => {
     if (enabled === undefined || enabled === null) return
+    if (posStore.tablesEnabled === null && settingsAsyncStatus.value === 'loading') return
     posStore.tablesEnabled = enabled
   },
   { immediate: true }
 )
+
+// When the background fetch completes, apply the fresh value (catches the stale-while-revalidate case)
+watch(settingsAsyncStatus, (status) => {
+  if (status !== 'idle') return
+  const enabled = settingsData.value?.data?.tables_enabled
+  if (enabled === undefined || enabled === null) return
+  posStore.tablesEnabled = enabled
+})
 
 // isEnteringTable blocks showFloorPlan while the session fetch is in flight
 // (prevents the floor plan from remounting between clearAll() and setTableSession())
