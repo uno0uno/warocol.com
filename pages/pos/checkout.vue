@@ -32,7 +32,8 @@ const { currentTenant } = useTenantReactive()
 const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle', () => {})
 
 // State
-const selectedPaymentMethod = ref<'cash' | 'card' | 'digital'>('cash')
+const selectedPaymentMethod = ref<'cash' | 'card' | 'digital' | 'credit'>('cash')
+const creditDueDate = ref<string>('')
 const isProcessing = ref(false)
 const processingError = ref('')
 const isSyncingCart = ref(false)
@@ -175,6 +176,9 @@ const processOrder = async () => {
         body: {
           payment_method: selectedPaymentMethod.value,
           customer_id: selectedCustomer.value?.id ?? null,
+          ...(selectedPaymentMethod.value === 'credit' && creditDueDate.value
+            ? { credit_due_date: creditDueDate.value }
+            : {}),
         },
       })
       orderResult.value = {
@@ -212,7 +216,10 @@ const processOrder = async () => {
       method: 'POST',
       body: {
         payment_method: selectedPaymentMethod.value,
-        customer_id: selectedCustomer.value.id
+        customer_id: selectedCustomer.value.id,
+        ...(selectedPaymentMethod.value === 'credit' && creditDueDate.value
+          ? { credit_due_date: creditDueDate.value }
+          : {}),
       }
     }) as {
       success: boolean
@@ -251,7 +258,8 @@ const getPaymentMethodLabel = (method: string) => {
   const labels: Record<string, string> = {
     'cash': 'Efectivo',
     'card': 'Tarjeta',
-    'digital': 'Pago Digital'
+    'digital': 'Pago Digital',
+    'credit': 'Crédito'
   }
   return labels[method] || method
 }
@@ -432,7 +440,7 @@ onUnmounted(() => {
             Método de Pago
           </h2>
 
-          <div class="grid grid-cols-3 gap-2 md:gap-4">
+          <div class="grid gap-2 md:gap-4" :class="(!isAnonymousCustomer && selectedCustomer) ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-3'">
             <!-- Efectivo -->
             <label class="cursor-pointer relative">
               <input type="radio" name="payment" value="cash" v-model="selectedPaymentMethod" class="sr-only">
@@ -509,6 +517,43 @@ onUnmounted(() => {
                 <div v-if="selectedPaymentMethod === 'digital'" class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary md:hidden"></div>
               </div>
             </label>
+
+            <!-- Crédito — only for identified (non-anonymous) customers -->
+            <label v-if="selectedCustomer && !isAnonymousCustomer" class="cursor-pointer relative">
+              <input type="radio" name="payment" value="credit" v-model="selectedPaymentMethod" class="sr-only">
+              <div
+                class="border rounded-xl p-2.5 md:p-4 theme-transition h-full flex flex-col items-center gap-1.5 md:gap-3 md:items-start"
+                :class="selectedPaymentMethod === 'credit' ? 'border-amber-500 bg-amber-50 shadow-sm dark:bg-amber-950/20' : 'border-border hover:border-amber-400/40'"
+              >
+                <div class="flex items-center justify-between w-full">
+                  <div class="bg-amber-100 text-amber-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                  </div>
+                  <svg class="h-4 w-4 text-amber-600 transition-all hidden md:block" :class="selectedPaymentMethod === 'credit' ? 'opacity-100' : 'opacity-0'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                </div>
+                <div class="text-center md:text-left w-full">
+                  <div class="font-semibold text-xs md:text-sm leading-tight" :class="selectedPaymentMethod === 'credit' ? 'text-amber-700' : 'text-text-primary'">Crédito</div>
+                  <div class="text-xs text-text-secondary hidden md:block">Pago diferido</div>
+                </div>
+                <div v-if="selectedPaymentMethod === 'credit'" class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 md:hidden"></div>
+              </div>
+            </label>
+          </div>
+
+          <!-- Credit due date (optional) — shown only when credit is selected -->
+          <div v-if="selectedPaymentMethod === 'credit' && selectedCustomer && !isAnonymousCustomer" class="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+            <label class="block text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1.5">
+              Fecha límite de pago <span class="font-normal text-amber-600">(opcional)</span>
+            </label>
+            <input
+              v-model="creditDueDate"
+              type="date"
+              class="w-full h-9 px-3 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-surface text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-amber-400"
+            />
           </div>
         </div>
 
@@ -714,7 +759,7 @@ onUnmounted(() => {
             <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
-            <span v-if="!isProcessing">Confirmar Orden</span>
+            <span v-if="!isProcessing">{{ selectedPaymentMethod === 'credit' ? 'Registrar como crédito' : 'Confirmar Orden' }}</span>
             <svg v-if="!isProcessing" class="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
             </svg>
@@ -880,7 +925,7 @@ onUnmounted(() => {
           <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
           </svg>
-          <span v-if="!isProcessing">Confirmar Orden</span>
+          <span v-if="!isProcessing">{{ selectedPaymentMethod === 'credit' ? 'Registrar como crédito' : 'Confirmar Orden' }}</span>
         </button>
         <p v-if="!selectedCustomer && !isProcessing" class="text-center text-xs text-text-tertiary">Identifica al cliente para continuar</p>
         <button
@@ -927,11 +972,19 @@ onUnmounted(() => {
 
           <!-- Title -->
           <h3 class="text-xl font-bold text-text-primary text-center mb-2">
-            Venta Completada
+            {{ orderResult?.payment_method === 'credit' ? 'Orden registrada como crédito' : 'Venta Completada' }}
           </h3>
-          <p class="text-text-secondary text-center mb-6">
-            La orden ha sido procesada exitosamente
+          <p class="text-text-secondary text-center mb-4">
+            {{ orderResult?.payment_method === 'credit' ? 'El pago queda pendiente para el cliente' : 'La orden ha sido procesada exitosamente' }}
           </p>
+
+          <!-- Credit notice banner -->
+          <div v-if="orderResult?.payment_method === 'credit'" class="mb-4 px-4 py-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-2">
+            <svg class="h-5 w-5 text-amber-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+            <p class="text-xs text-amber-800 dark:text-amber-300">Registra el cobro desde el detalle de la venta cuando el cliente venga a pagar.</p>
+          </div>
 
           <!-- Order Details -->
           <div v-if="orderResult" class="bg-surface-secondary rounded-lg p-4 mb-6 space-y-3">

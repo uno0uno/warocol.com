@@ -241,6 +241,7 @@ const ordersTableColumns: Column[] = [
   { key: 'items_count', title: 'Items', sortable: false },
   { key: 'source', title: 'Origen', sortable: false },
   { key: 'payment_method', title: 'Método Pago', sortable: true },
+  { key: 'payment_status', title: 'Estado Pago', sortable: false },
   { key: 'total_amount', title: 'Total', sortable: true },
   { key: 'status', title: 'Estado', sortable: false }
 ]
@@ -331,9 +332,19 @@ const getPaymentMethodLabel = (method: string) => {
   const labels: Record<string, string> = {
     'cash': 'Efectivo',
     'card': 'Tarjeta',
-    'digital': 'Digital'
+    'digital': 'Digital',
+    'credit': 'Crédito'
   }
   return labels[method] || method
+}
+
+const getPaymentStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    'paid': 'Pagado',
+    'credit': 'Crédito',
+    'partial': 'Parcial'
+  }
+  return labels[status] ?? status
 }
 
 const getStatusLabel = (status: string) => {
@@ -445,6 +456,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <option value="cash">Efectivo</option>
           <option value="card">Tarjeta</option>
           <option value="digital">Digital</option>
+          <option value="credit">Crédito</option>
         </select>
 
         <!-- Status Filter -->
@@ -668,9 +680,20 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <UiStatusBadge
             :value="value ? getPaymentMethodLabel(value) : 'Sin registrar'"
             format="text"
-            :variant="value === 'cash' ? 'success' : value === 'card' ? 'info' : value === 'digital' ? 'primary' : 'secondary'"
+            :variant="value === 'cash' ? 'success' : value === 'card' ? 'info' : value === 'digital' ? 'primary' : value === 'credit' ? 'warning' : 'secondary'"
             size="sm"
           />
+        </template>
+
+        <template #cell-payment_status="{ value }">
+          <UiStatusBadge
+            v-if="value"
+            :value="getPaymentStatusLabel(value)"
+            format="text"
+            :variant="value === 'paid' ? 'success' : value === 'partial' ? 'warning' : value === 'credit' ? 'secondary' : 'secondary'"
+            size="sm"
+          />
+          <span v-else class="text-xs text-text-tertiary">—</span>
         </template>
 
         <template #cell-total_amount="{ value }">
