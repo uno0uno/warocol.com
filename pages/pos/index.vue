@@ -26,26 +26,25 @@ const { data: settingsData, asyncStatus: settingsAsyncStatus } = useQuery({
   staleTime: 30_000,
 })
 
-// Sync tablesEnabled from query.
-// Guard: when tablesEnabled is null (tenant just switched / first load), skip stale-while-revalidate
-// responses (asyncStatus='loading') — wait for the fresh fetch to complete.
-// This prevents the old tenant's cached value from briefly overriding the null state.
-watch(
-  () => settingsData.value?.data?.tables_enabled,
-  (enabled) => {
-    if (enabled === undefined || enabled === null) return
-    if (posStore.tablesEnabled === null && settingsAsyncStatus.value === 'loading') return
-    posStore.tablesEnabled = enabled
-  },
-  { immediate: true }
-)
+// localStorage persistence — instant view decision on tenant switch, no loader flash
+const tablesStorageKey = (tenantId: string) => `waro_pos_tables_${tenantId}`
 
-// When the background fetch completes, apply the fresh value (catches the stale-while-revalidate case)
+// On tenant change: read stored value immediately so tablesEnabled is never null for known tenants
+watch(() => currentTenant.value?.id, (tenantId) => {
+  if (!tenantId || posStore.tablesEnabled !== null) return
+  const stored = localStorage.getItem(tablesStorageKey(tenantId))
+  if (stored !== null) posStore.tablesEnabled = stored === '1'
+}, { immediate: true })
+
+// Sync from fresh query data — also saves to localStorage for next visit
 watch(settingsAsyncStatus, (status) => {
   if (status !== 'idle') return
   const enabled = settingsData.value?.data?.tables_enabled
   if (enabled === undefined || enabled === null) return
   posStore.tablesEnabled = enabled
+  if (currentTenant.value?.id) {
+    localStorage.setItem(tablesStorageKey(currentTenant.value.id), enabled ? '1' : '0')
+  }
 })
 
 // isEnteringTable blocks showFloorPlan while the session fetch is in flight
