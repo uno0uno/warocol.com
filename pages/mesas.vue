@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { TableCellsIcon } from '@heroicons/vue/24/outline'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({
@@ -108,6 +109,41 @@ const badgeVariant = (status: string) => {
 
 onMounted(() => setRefreshHandler(refetch))
 onUnmounted(() => clearRefreshHandler(refetch))
+
+// ── Business profile (shared cache key with negocio.vue) ───────────────────
+const { data: profileData, refetch: refreshProfile } = useQuery({
+  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+const businessProfile = computed(() => profileData.value?.data ?? null)
+
+// ── Toggle tables module ───────────────────────────────────────────────────
+const posStore = usePOSStore()
+const toast = useToast()
+const isTogglingTables = ref(false)
+const toggleTablesEnabled = async () => {
+  if (!businessProfile.value || isTogglingTables.value) return
+  isTogglingTables.value = true
+  const newState = !businessProfile.value.tables_enabled
+  try {
+    await $fetch('/api/api/tenant/public-profile', {
+      method: 'PATCH',
+      body: { tables_enabled: newState },
+    })
+    await refreshProfile()
+    posStore.tablesEnabled = newState
+    toast.success(
+      newState ? 'Gestión de mesas activada para el POS' : 'Gestión de mesas desactivada',
+      { title: newState ? '¡Módulo activado!' : 'Módulo desactivado' }
+    )
+  } catch (error: any) {
+    toast.error(error.data?.detail || 'Error al cambiar estado del módulo', { title: 'Error' })
+  } finally {
+    isTogglingTables.value = false
+  }
+}
 </script>
 
 <template>
@@ -122,6 +158,34 @@ onUnmounted(() => clearRefreshHandler(refetch))
 
     <!-- Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
+
+      <!-- ══════ MÓDULOS ══════ -->
+      <div v-if="businessProfile" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+          <TableCellsIcon class="w-5 h-5 text-primary flex-shrink-0" />
+          Módulos
+        </h3>
+        <div class="flex items-center justify-between py-1">
+          <div>
+            <p class="text-sm font-medium text-text-primary">Gestión de mesas</p>
+            <p class="text-xs text-text-secondary mt-0.5">Activa el flujo de mesas en el punto de venta</p>
+          </div>
+          <label
+            class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+            :class="isTogglingTables ? 'opacity-50 pointer-events-none' : ''"
+            :aria-label="businessProfile.tables_enabled ? 'Desactivar gestión de mesas' : 'Activar gestión de mesas'"
+          >
+            <input
+              type="checkbox"
+              class="sr-only peer"
+              :checked="businessProfile.tables_enabled"
+              @change="toggleTablesEnabled"
+              :disabled="isTogglingTables"
+            />
+            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          </label>
+        </div>
+      </div>
 
       <!-- Filters -->
       <SharedFiltersBar
