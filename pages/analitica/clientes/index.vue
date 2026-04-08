@@ -115,9 +115,35 @@ const fetchWarosBalances = async (ids: string[]) => {
   }
 }
 
+// ── Credit balances (batch, non-blocking) ─────────────────────────────────
+const creditBalances = ref<Record<string, { amount: number; status: string }>>({})
+const isLoadingCreditBalances = ref(false)
+
+const fetchCreditBalances = async () => {
+  isLoadingCreditBalances.value = true
+  try {
+    const res = await $fetch<{ success: boolean; data: Array<{ customer_id: string; total_outstanding: number; status: string }> }>(
+      '/api/cartera/customers',
+      { params: { status: 'all', limit: 200, offset: 0 } }
+    )
+    const map: Record<string, { amount: number; status: string }> = {}
+    if (res.data) {
+      for (const row of res.data) {
+        if (row.customer_id) map[row.customer_id] = { amount: row.total_outstanding, status: row.status }
+      }
+    }
+    creditBalances.value = map
+  } catch {
+    // Non-critical — Deuda column shows — on error
+  } finally {
+    isLoadingCreditBalances.value = false
+  }
+}
+
 watch(customers, (list) => {
   const ids = (list as any[]).map((c) => c.customer_id).filter(Boolean)
   if (ids.length) fetchWarosBalances(ids)
+  fetchCreditBalances()
 })
 
 // ── Table columns ─────────────────────────────────────────────────────────
@@ -129,6 +155,7 @@ const tableColumns = [
   { key: 'avg_ticket', title: 'Ticket prom.', sortable: false },
   { key: 'last_order_date', title: 'Última compra', sortable: false },
   { key: 'waros_balance', title: 'Waros', sortable: false },
+  { key: 'credit_balance', title: 'Deuda', sortable: false },
   { key: 'actions', title: '', sortable: false },
 ]
 
@@ -259,6 +286,15 @@ onUnmounted(() => {
                 <span v-if="!isLoadingBalances && (warosBalances[item.customer_id] ?? 0) > 0" class="text-xs font-medium text-amber-700">
                   {{ (warosBalances[item.customer_id] ?? 0).toLocaleString('es-CO') }} Waros
                 </span>
+                <span
+                  v-if="!isLoadingCreditBalances && (creditBalances[item.customer_id]?.amount ?? 0) > 0"
+                  :class="[
+                    'text-xs font-semibold',
+                    creditBalances[item.customer_id].status === 'overdue' ? 'text-red-700' : 'text-amber-700'
+                  ]"
+                >
+                  {{ formatCurrency(creditBalances[item.customer_id].amount) }} deuda
+                </span>
               </div>
             </NuxtLink>
           </template>
@@ -292,6 +328,23 @@ onUnmounted(() => {
             <span v-else class="text-sm font-medium text-amber-700">
               {{ (warosBalances[row.customer_id] ?? 0).toLocaleString('es-CO') }}
             </span>
+          </template>
+
+          <template #cell-credit_balance="{ row }">
+            <span v-if="isLoadingCreditBalances" class="text-sm text-text-secondary">—</span>
+            <template v-else-if="creditBalances[row.customer_id]?.amount > 0">
+              <span
+                :class="[
+                  'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold',
+                  creditBalances[row.customer_id].status === 'overdue'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-amber-100 text-amber-800'
+                ]"
+              >
+                {{ formatCurrency(creditBalances[row.customer_id].amount) }}
+              </span>
+            </template>
+            <span v-else class="text-sm text-text-secondary">—</span>
           </template>
 
           <template #cell-actions="{ row }">
