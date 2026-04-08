@@ -54,12 +54,13 @@ watch(settingsAsyncStatus, (status) => {
 // ── Tables prefetch — same key as MesasFloorPlan so they share the cache entry ──
 // Fetching here (parent) ensures data is ready before MesasFloorPlan mounts,
 // eliminating the empty-grid flash caused by the child's query starting cold.
-const { status: tablesStatus } = useQuery({
+const { data: tablesData, status: tablesStatus } = useQuery({
   key: () => ['tables', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/tables'),
   enabled: () => posStore.tablesEnabled === true && !!currentTenant.value,
   staleTime: 0,
 })
+const hasTables = computed(() => (tablesData.value?.data?.length ?? 0) > 0)
 
 watch(() => [posStore.tablesEnabled, tablesStatus.value, posStore.activeTableSession?.sessionId], (vals) => {
   console.log(`[POS:show] tablesEnabled=${vals[0]} tablesStatus=${vals[1]} activeSession=${vals[2]} | showFloorPlan=${showFloorPlan.value} | isResolving=${isResolvingSettings.value}`)
@@ -70,6 +71,7 @@ watch(() => [posStore.tablesEnabled, tablesStatus.value, posStore.activeTableSes
 const isEnteringTable = ref(false)
 const showFloorPlan = computed(() =>
   posStore.tablesEnabled === true &&
+  hasTables.value &&
   !posStore.activeTableSession &&
   !isEnteringTable.value &&
   tablesStatus.value !== 'pending'
