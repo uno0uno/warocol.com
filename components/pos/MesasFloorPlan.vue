@@ -144,22 +144,8 @@ onUnmounted(() => {
 
     <!-- Content -->
     <div v-else>
-      <!-- Empty State -->
-      <div v-if="tables.length === 0" class="flex flex-col items-center justify-center min-h-[60vh] text-text-secondary gap-4">
-        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
-        </svg>
-        <div class="text-center">
-          <p class="text-lg font-semibold text-text-primary">No tienes mesas configuradas</p>
-          <p class="text-sm mt-1">Agrega mesas desde la configuración de tu negocio</p>
-        </div>
-        <NuxtLink to="/mesas" class="mt-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity">
-          Configurar mesas
-        </NuxtLink>
-      </div>
-
       <!-- Floor plan -->
-      <template v-else>
+      <template>
         <!-- Legend -->
         <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
           <p class="text-sm text-text-secondary">Vista de planta principal</p>
