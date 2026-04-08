@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, reactive, inject, onMounted, onUnmounted, watch } from 'vue';
 import { es } from 'date-fns/locale';
 import { format as fnsFormat } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
@@ -103,6 +103,9 @@ const paymentLabels: Record<string, string> = {
   cash: 'Efectivo',
   card: 'Tarjeta',
   digital: 'Digital',
+  credit: 'Crédito',
+  partial: 'Parcial',
+  paid: 'Pagado',
 }
 const formatPayment = (method: string) => paymentLabels[method] || method || '-'
 
@@ -131,6 +134,7 @@ const tableColumns = [
   { key: 'items_count', title: '# Productos', sortable: false },
   { key: 'total', title: 'Total', sortable: false },
   { key: 'payment_method', title: 'Forma de pago', sortable: false },
+  { key: 'payment_status', title: 'Crédito', sortable: false },
   { key: 'status', title: 'Estado', sortable: false },
   { key: 'waros_earned', title: 'Waros', sortable: false },
 ]
@@ -161,6 +165,60 @@ const txTypeLabel = (type: string) => {
   return type
 }
 
+// ── Cartera ───────────────────────────────────────────────────────────────
+const carteraData = ref<any>(null)
+const isLoadingCartera = ref(false)
+
+const fetchCartera = async () => {
+  if (!customerId.value) return
+  isLoadingCartera.value = true
+  try {
+    const res = await $fetch<any>(`/api/cartera/customers/${customerId.value}`)
+    carteraData.value = res.data ?? res
+  } catch {
+    // Non-critical — cartera section hidden on error
+  } finally {
+    isLoadingCartera.value = false
+  }
+}
+
+const showPaymentPanel = ref(false)
+const selectedOrder = ref<any>(null)
+const paymentForm = reactive({ amount: 0, payment_method: 'cash', notes: '' })
+const isSubmittingPayment = ref(false)
+const paymentError = ref<string | null>(null)
+
+const openPaymentPanel = (order: any) => {
+  selectedOrder.value = order
+  paymentForm.amount = order.remaining ?? order.total_amount
+  paymentForm.payment_method = 'cash'
+  paymentForm.notes = ''
+  paymentError.value = null
+  showPaymentPanel.value = true
+}
+
+const submitPayment = async () => {
+  if (!selectedOrder.value || isSubmittingPayment.value) return
+  isSubmittingPayment.value = true
+  paymentError.value = null
+  try {
+    await $fetch(`/api/credit/orders/${selectedOrder.value.id}/payments`, {
+      method: 'POST',
+      body: {
+        amount: paymentForm.amount,
+        payment_method: paymentForm.payment_method,
+        notes: paymentForm.notes || undefined,
+      }
+    })
+    showPaymentPanel.value = false
+    await fetchCartera()
+  } catch (err: any) {
+    paymentError.value = err?.data?.detail || 'Error al registrar el pago'
+  } finally {
+    isSubmittingPayment.value = false
+  }
+}
+
 // ── Layout wiring ─────────────────────────────────────────────────────────
 watch(customer, (c) => {
   if (c) setPageTitle?.(c.name)
@@ -169,6 +227,7 @@ watch(customer, (c) => {
 onMounted(() => {
   setShowBackButton?.(true)
   setBackHandler?.(goBack)
+  fetchCartera()
 })
 
 onUnmounted(() => {
@@ -302,6 +361,105 @@ onUnmounted(() => {
         <MetricCard title="Ticket promedio" :value="avgTicket" format="currency" variant="primary" />
       </div>
 
+      <!-- Cartera Section -->
+      <div v-if="carteraData && carteraData.summary?.total_outstanding > 0" class="bg-white border border-border rounded-xl overflow-hidden">
+        <!-- Header -->
+        <div class="px-5 py-4 border-b border-border flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">Cartera</h3>
+          </div>
+          <span class="text-lg font-bold text-red-600">{{ formatCurrency(carteraData.summary.total_outstanding) }}</span>
+        </div>
+        <!-- Summary strip -->
+        <div class="grid grid-cols-3 divide-x divide-border border-b border-border">
+          <div class="px-4 py-3">
+            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Órdenes</p>
+            <p class="text-sm font-semibold text-text-primary">{{ carteraData.summary.order_count }}</p>
+          </div>
+          <div class="px-4 py-3">
+            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Vencidas</p>
+            <p class="text-sm font-semibold" :class="carteraData.summary.overdue_count > 0 ? 'text-red-600' : 'text-text-secondary'">
+              {{ carteraData.summary.overdue_count }}
+            </p>
+          </div>
+          <div class="px-4 py-3">
+            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Monto vencido</p>
+            <p class="text-sm font-semibold" :class="carteraData.summary.overdue_amount > 0 ? 'text-red-600' : 'text-text-secondary'">
+              {{ formatCurrency(carteraData.summary.overdue_amount) }}
+            </p>
+          </div>
+        </div>
+        <!-- Credit orders list -->
+        <UiResponsiveDataView
+          :columns="[
+            { key: 'order_number', title: '# Orden', sortable: false },
+            { key: 'date', title: 'Fecha', sortable: false },
+            { key: 'total_amount', title: 'Total', sortable: false },
+            { key: 'credit_paid_amount', title: 'Pagado', sortable: false },
+            { key: 'remaining', title: 'Resta', sortable: false },
+            { key: 'due_date', title: 'Vence', sortable: false },
+            { key: 'status_badge', title: 'Estado', sortable: false },
+            { key: 'cartera_actions', title: '', sortable: false },
+          ]"
+          :data="carteraData.orders || []"
+          empty-message="Sin órdenes en crédito"
+          variant="default"
+        >
+          <!-- Mobile card -->
+          <template #card="{ item }">
+            <div class="p-4 border-b border-border">
+              <div class="flex justify-between items-start mb-2">
+                <div>
+                  <p class="text-sm font-semibold text-text-primary"># {{ item.order_number }}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.date) }}</p>
+                </div>
+                <span :class="[
+                  'text-xs px-2 py-1 rounded-full font-medium',
+                  item.is_overdue ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
+                ]">{{ item.is_overdue ? 'Vencida' : 'Al día' }}</span>
+              </div>
+              <div class="text-sm text-text-secondary mb-3">
+                Resta <span class="font-bold text-text-primary">{{ formatCurrency(item.remaining) }}</span>
+                de {{ formatCurrency(item.total_amount) }}
+                <span v-if="item.due_date"> · Vence {{ formatDate(item.due_date) }}</span>
+              </div>
+              <button
+                @click="openPaymentPanel(item)"
+                class="w-full min-h-[44px] px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+                :aria-label="`Registrar pago para orden #${item.order_number}`"
+              >
+                Registrar pago
+              </button>
+            </div>
+          </template>
+          <!-- Desktop cells -->
+          <template #cell-order_number="{ value }"><span class="text-sm font-medium">#{{ value }}</span></template>
+          <template #cell-date="{ value }"><span class="text-sm text-text-secondary">{{ formatDate(value) }}</span></template>
+          <template #cell-total_amount="{ value }"><span class="text-sm">{{ formatCurrency(value) }}</span></template>
+          <template #cell-credit_paid_amount="{ value }"><span class="text-sm text-green-700">{{ formatCurrency(value) }}</span></template>
+          <template #cell-remaining="{ value }"><span class="text-sm font-semibold text-text-primary">{{ formatCurrency(value) }}</span></template>
+          <template #cell-due_date="{ value }"><span class="text-sm text-text-secondary">{{ value ? formatDate(value) : '—' }}</span></template>
+          <template #cell-status_badge="{ row }">
+            <span :class="[
+              'text-xs px-2 py-1 rounded-full font-medium',
+              row.is_overdue ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
+            ]">{{ row.is_overdue ? 'Vencida' : 'Al día' }}</span>
+          </template>
+          <template #cell-cartera_actions="{ row }">
+            <button
+              @click="openPaymentPanel(row)"
+              class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              :aria-label="`Registrar pago para orden #${row.order_number}`"
+            >
+              Pagar
+            </button>
+          </template>
+        </UiResponsiveDataView>
+      </div>
+
       <!-- Date Filter -->
       <ClientOnly>
         <div class="flex items-center gap-2 overflow-x-auto pb-1">
@@ -386,6 +544,19 @@ onUnmounted(() => {
 
         <template #cell-payment_method="{ value }">
           <span class="text-sm text-text-secondary">{{ formatPayment(value) }}</span>
+        </template>
+
+        <template #cell-payment_status="{ row }">
+          <template v-if="row.payment_status === 'credit' || row.payment_status === 'partial'">
+            <span :class="[
+              'text-xs px-2 py-1 rounded-full font-medium',
+              row.payment_status === 'partial' ? 'bg-amber-100 text-amber-800' :
+              row.is_overdue ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+            ]">
+              {{ row.payment_status === 'partial' ? 'Parcial' : 'Crédito' }}
+            </span>
+          </template>
+          <span v-else class="text-sm text-text-secondary">—</span>
         </template>
 
         <template #cell-status="{ value }">
@@ -533,6 +704,136 @@ onUnmounted(() => {
                 {{ tx.waros_amount > 0 ? '+' : '' }}{{ tx.waros_amount.toLocaleString('es-CO') }}
               </span>
             </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Payment Registration Panel -->
+    <Teleport to="body">
+      <!-- Overlay -->
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="showPaymentPanel" class="fixed inset-0 z-40 bg-black/40" @click="showPaymentPanel = false" aria-hidden="true" />
+      </Transition>
+
+      <!-- Panel -->
+      <Transition name="panel">
+        <div
+          v-if="showPaymentPanel"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Registrar pago"
+          class="fixed z-50 flex flex-col bg-surface shadow-2xl
+                 inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
+                 md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+        >
+          <!-- Mobile drag handle -->
+          <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+            <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          </div>
+
+          <!-- Header -->
+          <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0 flex-1">
+                <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600" aria-hidden="true">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <h2 class="text-base font-bold text-text-primary leading-tight">Registrar pago</h2>
+                  <p class="text-xs text-text-secondary leading-snug mt-0.5">
+                    Orden #{{ selectedOrder?.order_number }} · Resta {{ formatCurrency(selectedOrder?.remaining) }}
+                  </p>
+                </div>
+              </div>
+              <button
+                @click="showPaymentPanel = false"
+                type="button"
+                aria-label="Cerrar panel"
+                class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Form -->
+          <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+            <!-- Amount -->
+            <div class="flex flex-col gap-1.5">
+              <label for="payment-amount" class="text-sm font-medium text-text-primary">Monto a pagar</label>
+              <input
+                id="payment-amount"
+                v-model.number="paymentForm.amount"
+                type="number"
+                min="1"
+                :max="selectedOrder?.remaining"
+                step="100"
+                class="h-11 px-3 text-sm border-2 border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                placeholder="0"
+              />
+            </div>
+
+            <!-- Payment method -->
+            <div class="flex flex-col gap-1.5">
+              <label for="payment-method" class="text-sm font-medium text-text-primary">Forma de pago</label>
+              <select
+                id="payment-method"
+                v-model="paymentForm.payment_method"
+                class="h-11 px-3 text-sm border-2 border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+              >
+                <option value="cash">Efectivo</option>
+                <option value="card">Tarjeta</option>
+                <option value="digital">Digital</option>
+              </select>
+            </div>
+
+            <!-- Notes -->
+            <div class="flex flex-col gap-1.5">
+              <label for="payment-notes" class="text-sm font-medium text-text-primary">
+                Notas <span class="text-text-secondary font-normal">(opcional)</span>
+              </label>
+              <textarea
+                id="payment-notes"
+                v-model="paymentForm.notes"
+                rows="3"
+                class="px-3 py-2 text-sm border-2 border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-none"
+                placeholder="Ej: Pago parcial acordado..."
+              />
+            </div>
+
+            <!-- Error -->
+            <p v-if="paymentError" class="text-sm text-red-600 flex items-center gap-1.5">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {{ paymentError }}
+            </p>
+          </div>
+
+          <!-- Footer -->
+          <div class="flex-shrink-0 border-t border-border px-6 py-4">
+            <button
+              @click="submitPayment"
+              :disabled="isSubmittingPayment || !paymentForm.amount || paymentForm.amount <= 0"
+              class="w-full min-h-[44px] px-4 py-3 text-sm font-semibold rounded-lg bg-primary text-primary-foreground
+                     hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30
+                     disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span v-if="isSubmittingPayment">Registrando...</span>
+              <span v-else>Confirmar pago</span>
+            </button>
           </div>
         </div>
       </Transition>
