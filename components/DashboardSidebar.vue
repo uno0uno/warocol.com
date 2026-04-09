@@ -223,6 +223,7 @@ defineOptions({ inheritAttrs: false })
 import { computed, nextTick, ref } from 'vue'
 import {
   ArrowRightOnRectangleIcon,
+  BanknotesIcon,
   BuildingStorefrontIcon,
   ChartBarIcon,
   CheckIcon,
@@ -241,7 +242,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'gastos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'mesas'
+  activePage?: 'dashboard' | 'ventas' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'gastos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'mesas' | 'cartera'
 }
 interface Tenant { id: string; name: string; slug: string }
 
@@ -290,6 +291,7 @@ const primaryItems = [
 
 const secondaryItems = [
   { to: '/analitica',                        page: 'analytics',     label: 'Analítica',      icon: ChartBarIcon },
+  { to: '/cartera',                          page: 'cartera',       label: 'Cartera',        icon: BanknotesIcon },
   { to: '/menu/productos',                   page: 'menu',          label: 'Menú',           icon: CubeIcon },
   { to: '/mesas',                            page: 'mesas',         label: 'Mesas',          icon: TableCellsIcon },
   { to: '/abastecimiento/compras-directas',  page: 'abastecimiento',label: 'Abastecimiento', icon: TruckIcon },

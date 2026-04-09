@@ -30,7 +30,9 @@ export default defineNuxtConfig({
     '/billing/**': { ssr: false },
     '/mis-pedidos/**': { ssr: false },
     '/proveedor/**': { ssr: false },
-    '/docs/**': { ssr: false }
+    '/docs/**': { ssr: false },
+    '/cartera': { ssr: false },
+    '/cartera/**': { ssr: false }
   },
   experimental: {
     payloadExtraction: false

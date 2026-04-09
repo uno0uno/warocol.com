@@ -530,6 +530,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path.startsWith('/cartera')) {
+    return {
+      pageTitle: 'Cartera',
+      pageSubtitle: 'Gestión de cuentas por cobrar',
+      searchPlaceholder: 'Buscar en cartera...',
+      activePage: 'cartera' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path.includes('/reportes')) {
     return {
       pageTitle: 'Dashboard - Reportes',
