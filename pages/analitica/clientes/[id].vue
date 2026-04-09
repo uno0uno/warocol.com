@@ -184,11 +184,13 @@ const fetchCartera = async () => {
 
 const showPaymentPanel = ref(false)
 const selectedOrder = ref<any>(null)
+const isGlobalPayment = ref(false)
 const paymentForm = reactive({ amount: 0, payment_method: 'cash', notes: '' })
 const isSubmittingPayment = ref(false)
 const paymentError = ref<string | null>(null)
 
 const openPaymentPanel = (order: any) => {
+  isGlobalPayment.value = false
   selectedOrder.value = order
   paymentForm.amount = order.remaining ?? order.total_amount
   paymentForm.payment_method = 'cash'
@@ -197,19 +199,46 @@ const openPaymentPanel = (order: any) => {
   showPaymentPanel.value = true
 }
 
+const openGlobalPaymentPanel = () => {
+  isGlobalPayment.value = true
+  selectedOrder.value = null
+  paymentForm.amount = carteraData.value?.summary?.total_outstanding ?? 0
+  paymentForm.payment_method = 'cash'
+  paymentForm.notes = ''
+  paymentError.value = null
+  showPaymentPanel.value = true
+}
+
 const submitPayment = async () => {
-  if (!selectedOrder.value || isSubmittingPayment.value) return
+  if (isSubmittingPayment.value) return
   isSubmittingPayment.value = true
   paymentError.value = null
   try {
-    await $fetch(`/api/credit/orders/${selectedOrder.value.id}/payments`, {
-      method: 'POST',
-      body: {
-        amount: paymentForm.amount,
-        payment_method: paymentForm.payment_method,
-        notes: paymentForm.notes || undefined,
+    if (isGlobalPayment.value) {
+      // FIFO: distribute across orders sorted oldest-first
+      const orders = [...(carteraData.value?.orders ?? [])]
+        .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      let remaining = paymentForm.amount
+      for (const order of orders) {
+        if (remaining <= 0) break
+        const toPay = Math.min(remaining, order.remaining)
+        await $fetch(`/api/credit/orders/${order.id}/payments`, {
+          method: 'POST',
+          body: { amount: toPay, payment_method: paymentForm.payment_method, notes: paymentForm.notes || undefined }
+        })
+        remaining -= toPay
       }
-    })
+    } else {
+      if (!selectedOrder.value) return
+      await $fetch(`/api/credit/orders/${selectedOrder.value.id}/payments`, {
+        method: 'POST',
+        body: {
+          amount: paymentForm.amount,
+          payment_method: paymentForm.payment_method,
+          notes: paymentForm.notes || undefined,
+        }
+      })
+    }
     showPaymentPanel.value = false
     await fetchCartera()
   } catch (err: any) {
@@ -371,7 +400,16 @@ onUnmounted(() => {
             </svg>
             <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">Cartera</h3>
           </div>
-          <span class="text-lg font-bold text-red-600">{{ formatCurrency(carteraData.summary.total_outstanding) }}</span>
+          <div class="flex items-center gap-3">
+            <span class="text-lg font-bold text-red-600">{{ formatCurrency(carteraData.summary.total_outstanding) }}</span>
+            <button
+              @click="openGlobalPaymentPanel"
+              class="min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              aria-label="Abonar a la cartera total del cliente"
+            >
+              Abonar a cartera
+            </button>
+          </div>
         </div>
         <!-- Summary strip -->
         <div class="grid grid-cols-3 divide-x divide-border border-b border-border">
@@ -749,9 +787,16 @@ onUnmounted(() => {
                   </svg>
                 </div>
                 <div class="min-w-0">
-                  <h2 class="text-base font-bold text-text-primary leading-tight">Registrar pago</h2>
+                  <h2 class="text-base font-bold text-text-primary leading-tight">
+                    {{ isGlobalPayment ? 'Abonar a cartera' : 'Registrar pago' }}
+                  </h2>
                   <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                    Orden #{{ selectedOrder?.order_number }} · Resta {{ formatCurrency(selectedOrder?.remaining) }}
+                    <template v-if="isGlobalPayment">
+                      Total pendiente · {{ formatCurrency(carteraData?.summary?.total_outstanding) }}
+                    </template>
+                    <template v-else>
+                      Orden #{{ selectedOrder?.order_number }} · Resta {{ formatCurrency(selectedOrder?.remaining) }}
+                    </template>
                   </p>
                 </div>
               </div>
@@ -770,15 +815,23 @@ onUnmounted(() => {
 
           <!-- Form -->
           <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+            <!-- FIFO note -->
+            <div v-if="isGlobalPayment" class="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5">
+              <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-xs text-blue-700">El monto se distribuye automáticamente a las órdenes más antiguas primero.</p>
+            </div>
+
             <!-- Amount -->
             <div class="flex flex-col gap-1.5">
-              <label for="payment-amount" class="text-sm font-medium text-text-primary">Monto a pagar</label>
+              <label for="payment-amount" class="text-sm font-medium text-text-primary">Monto a abonar</label>
               <input
                 id="payment-amount"
                 v-model.number="paymentForm.amount"
                 type="number"
                 min="1"
-                :max="selectedOrder?.remaining"
+                :max="isGlobalPayment ? undefined : selectedOrder?.remaining"
                 step="100"
                 class="h-11 px-3 text-sm border-2 border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                 placeholder="0"
