@@ -132,26 +132,6 @@ const getPaymentMethodLabel = (method: string) => {
 }
 
 // ── Credit panel state ──────────────────────────────────────────────────────
-const showCreditPanel = computed(() =>
-  order.value &&
-  (order.value.payment_status === 'credit' || order.value.payment_status === 'partial')
-)
-
-const formatCreditDate = (dateStr: string | null | undefined) => {
-  if (!dateStr) return null
-  const d = new Date(dateStr + 'T00:00:00')
-  return new Intl.DateTimeFormat('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }).format(d)
-}
-
-const { data: creditPaymentsData } = useQuery({
-  key: () => ['credit-payments', currentTenant.value?.id, orderId.value],
-  query: async () => {
-    const res = await $fetch(`/api/credit/orders/${orderId.value}/payments`) as any
-    return res.data
-  },
-  enabled: () => !!currentTenant.value && !!orderId.value && !!showCreditPanel.value,
-  staleTime: 30_000,
-})
 
 const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
@@ -382,73 +362,6 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Credit Panel — shown for credit/partial orders -->
-      <div v-if="showCreditPanel" class="bg-surface border-2 border-amber-300 dark:border-amber-700 rounded-xl p-5 space-y-5">
-        <!-- Header -->
-        <div class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-amber-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-          </svg>
-          <h2 class="text-sm font-bold text-amber-800 dark:text-amber-300 uppercase tracking-widest">Cartera — Venta a Crédito</h2>
-          <UiStatusBadge
-            :value="order.payment_status === 'partial' ? 'Parcial' : 'Pendiente'"
-            format="text"
-            :variant="order.payment_status === 'partial' ? 'warning' : 'secondary'"
-            size="sm"
-          />
-        </div>
-
-        <!-- Credit summary grid -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div class="bg-surface-secondary rounded-xl p-3">
-            <p class="text-xs text-text-secondary mb-1">Total venta</p>
-            <p class="text-base font-bold text-text-primary">{{ formatCurrency(order.total_amount) }}</p>
-          </div>
-          <div class="bg-green-50 dark:bg-green-950/20 rounded-xl p-3">
-            <p class="text-xs text-text-secondary mb-1">Pagado</p>
-            <p class="text-base font-bold text-green-700 dark:text-green-400">{{ formatCurrency(order.credit_paid_amount ?? 0) }}</p>
-          </div>
-          <div class="bg-amber-50 dark:bg-amber-950/20 rounded-xl p-3">
-            <p class="text-xs text-text-secondary mb-1">Saldo pendiente</p>
-            <p class="text-base font-bold text-amber-700 dark:text-amber-400">{{ formatCurrency((order.total_amount ?? 0) - (order.credit_paid_amount ?? 0)) }}</p>
-          </div>
-          <div class="bg-surface-secondary rounded-xl p-3">
-            <p class="text-xs text-text-secondary mb-1">Fecha límite</p>
-            <p class="text-sm font-semibold text-text-primary">{{ formatCreditDate(order.credit_due_date) ?? '—' }}</p>
-          </div>
-        </div>
-
-        <!-- Link to customer profile for payment registration -->
-        <NuxtLink
-          v-if="orderData?.customer?.id"
-          :to="`/analitica/clientes/${orderData.customer.id}`"
-          class="flex items-center justify-between w-full px-4 py-3 rounded-xl border-2 border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/20 hover:border-amber-400 transition-colors group"
-        >
-          <span class="text-sm font-medium text-amber-800 dark:text-amber-300">Registrar pago en perfil del cliente</span>
-          <svg class="w-4 h-4 text-amber-600 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </NuxtLink>
-
-        <!-- Payment history -->
-        <div v-if="creditPaymentsData?.payments?.length" class="space-y-2">
-          <h3 class="text-xs font-bold text-text-tertiary uppercase tracking-wider">Historial de Pagos</h3>
-          <div class="divide-y divide-border border border-border rounded-xl overflow-hidden">
-            <div
-              v-for="payment in creditPaymentsData.payments"
-              :key="payment.id"
-              class="flex items-center justify-between px-4 py-3 bg-surface"
-            >
-              <div>
-                <p class="text-sm font-medium text-text-primary">{{ formatCurrency(payment.amount) }}</p>
-                <p class="text-xs text-text-secondary">{{ getPaymentMethodLabel(payment.payment_method) }} · {{ formatDate(payment.payment_date) }}</p>
-                <p v-if="payment.notes" class="text-xs text-text-tertiary italic">{{ payment.notes }}</p>
-              </div>
-              <UiStatusBadge value="Pagado" format="text" variant="success" size="sm" />
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Status Update Panel (mesa orders only) -->
       <div v-if="order.source === 'mesa'" class="bg-surface border border-border rounded-xl p-5 space-y-4">
