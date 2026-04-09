@@ -137,18 +137,13 @@ const showCreditPanel = computed(() =>
   (order.value.payment_status === 'credit' || order.value.payment_status === 'partial')
 )
 
-const creditPaymentAmount = ref<string>('')
-const creditPaymentMethod = ref<string>('cash')
-const creditPaymentNotes = ref<string>('')
-const isRegisteringPayment = ref(false)
-
 const formatCreditDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return null
   const d = new Date(dateStr + 'T00:00:00')
   return new Intl.DateTimeFormat('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }).format(d)
 }
 
-const { data: creditPaymentsData, refetch: refetchCreditPayments } = useQuery({
+const { data: creditPaymentsData } = useQuery({
   key: () => ['credit-payments', currentTenant.value?.id, orderId.value],
   query: async () => {
     const res = await $fetch(`/api/credit/orders/${orderId.value}/payments`) as any
@@ -157,33 +152,6 @@ const { data: creditPaymentsData, refetch: refetchCreditPayments } = useQuery({
   enabled: () => !!currentTenant.value && !!orderId.value && !!showCreditPanel.value,
   staleTime: 30_000,
 })
-
-const registerCreditPayment = async () => {
-  const amount = parseFloat(creditPaymentAmount.value)
-  if (!amount || amount <= 0) {
-    useToast().error('Ingresa un monto válido', { title: 'Error' })
-    return
-  }
-  isRegisteringPayment.value = true
-  try {
-    await $fetch(`/api/credit/orders/${orderId.value}/payments`, {
-      method: 'POST',
-      body: {
-        amount,
-        payment_method: creditPaymentMethod.value,
-        notes: creditPaymentNotes.value || undefined,
-      },
-    })
-    creditPaymentAmount.value = ''
-    creditPaymentNotes.value = ''
-    await Promise.all([refetchOrder(), refetchCreditPayments()])
-    useToast().success('Pago registrado exitosamente', { title: 'Listo' })
-  } catch (error: any) {
-    useToast().error(error.data?.message || 'Error al registrar el pago', { title: 'Error' })
-  } finally {
-    isRegisteringPayment.value = false
-  }
-}
 
 const getStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
@@ -450,56 +418,17 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Register payment form -->
-        <div class="border border-border rounded-xl p-4 space-y-3">
-          <h3 class="text-xs font-bold text-text-tertiary uppercase tracking-wider">Registrar Pago</h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-              <label class="block text-xs text-text-secondary mb-1">Monto</label>
-              <input
-                v-model="creditPaymentAmount"
-                type="number"
-                min="1"
-                step="1000"
-                placeholder="0"
-                class="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-amber-400"
-              />
-            </div>
-            <div>
-              <label class="block text-xs text-text-secondary mb-1">Método</label>
-              <select
-                v-model="creditPaymentMethod"
-                class="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-amber-400"
-              >
-                <option value="cash">Efectivo</option>
-                <option value="card">Tarjeta</option>
-                <option value="digital">Digital / QR</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs text-text-secondary mb-1">Notas (opcional)</label>
-              <input
-                v-model="creditPaymentNotes"
-                type="text"
-                placeholder="Observaciones..."
-                class="w-full h-9 px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-amber-400"
-              />
-            </div>
-          </div>
-          <button
-            @click="registerCreditPayment"
-            :disabled="isRegisteringPayment || !creditPaymentAmount"
-            class="w-full h-10 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <UiLoadingDots v-if="isRegisteringPayment" size="10px" />
-            <template v-else>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-              Registrar Pago
-            </template>
-          </button>
-        </div>
+        <!-- Link to customer profile for payment registration -->
+        <NuxtLink
+          v-if="orderData?.customer?.id"
+          :to="`/analitica/clientes/${orderData.customer.id}`"
+          class="flex items-center justify-between w-full px-4 py-3 rounded-xl border-2 border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/20 hover:border-amber-400 transition-colors group"
+        >
+          <span class="text-sm font-medium text-amber-800 dark:text-amber-300">Registrar pago en perfil del cliente</span>
+          <svg class="w-4 h-4 text-amber-600 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </NuxtLink>
 
         <!-- Payment history -->
         <div v-if="creditPaymentsData?.payments?.length" class="space-y-2">
