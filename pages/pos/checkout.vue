@@ -41,7 +41,7 @@ const syncError = ref('')
 
 // Success modal state
 const showSuccessModal = ref(false)
-const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string } | null>(null)
+const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; customer_id?: string } | null>(null)
 const wasMesaMode = ref(false)
 
 // Customer identification via modal
@@ -237,7 +237,8 @@ const processOrder = async () => {
       orderResult.value = {
         order_number: response.data.order_number,
         total_amount: response.data.total_amount,
-        payment_method: response.data.payment_method
+        payment_method: response.data.payment_method,
+        customer_id: selectedCustomer.value?.id,
       }
       posStore.clearAll()
       showSuccessModal.value = true
@@ -979,11 +980,24 @@ onUnmounted(() => {
           </p>
 
           <!-- Credit notice banner -->
-          <div v-if="orderResult?.payment_method === 'credit'" class="mb-4 px-4 py-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-2">
-            <svg class="h-5 w-5 text-amber-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-            </svg>
-            <p class="text-xs text-amber-800 dark:text-amber-300">Registra el cobro desde el detalle de la venta cuando el cliente venga a pagar.</p>
+          <div v-if="orderResult?.payment_method === 'credit'" class="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
+            <div class="flex items-start gap-2">
+              <svg class="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+              <p class="text-xs text-amber-800">Cuando el cliente venga a pagar, registra el abono desde su perfil de cliente — ahí verás el estado de su cartera, abonos y saldo pendiente.</p>
+            </div>
+            <NuxtLink
+              v-if="orderResult?.customer_id"
+              :to="`/analitica/clientes/${orderResult.customer_id}`"
+              class="flex items-center justify-center gap-1.5 w-full min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
+              @click="closeSuccessModal"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Ver cartera del cliente
+            </NuxtLink>
           </div>
 
           <!-- Order Details -->
