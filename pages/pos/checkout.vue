@@ -987,17 +987,6 @@ onUnmounted(() => {
               </svg>
               <p class="text-xs text-amber-800">Para registrar abonos, accede al perfil del cliente donde encontrarás el estado de su cartera, historial de pagos y saldo pendiente.</p>
             </div>
-            <NuxtLink
-              v-if="orderResult?.customer_id"
-              :to="`/analitica/clientes/${orderResult.customer_id}`"
-              class="flex items-center justify-center gap-1.5 w-full min-h-[36px] px-3 text-xs font-semibold rounded-lg bg-surface-secondary border-0 text-primary hover:bg-surface-secondary/80 transition-all focus:outline-none focus:ring-2 focus:ring-ring"
-              @click="closeSuccessModal"
-            >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              Ver cartera del cliente
-            </NuxtLink>
           </div>
 
           <!-- Order Details -->
