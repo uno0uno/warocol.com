@@ -687,13 +687,11 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
         <template #cell-payment_status="{ value }">
           <UiStatusBadge
-            v-if="value"
-            :value="getPaymentStatusLabel(value)"
+            :value="getPaymentStatusLabel(value || 'paid')"
             format="text"
-            :variant="value === 'paid' ? 'success' : value === 'partial' ? 'warning' : value === 'credit' ? 'secondary' : 'secondary'"
+            :variant="value === 'partial' ? 'warning' : value === 'credit' ? 'warning' : 'success'"
             size="sm"
           />
-          <span v-else class="text-xs text-text-tertiary">—</span>
         </template>
 
         <template #cell-total_amount="{ value }">
