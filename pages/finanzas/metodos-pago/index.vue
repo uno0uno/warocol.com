@@ -21,15 +21,18 @@
       empty-message="No hay grupos de pago configurados"
       empty-sub-message="Contacta a soporte para configurar grupos"
       row-size="sm"
-      @row-click="navigateToGroup"
+      @row-click="(row) => row.slug !== 'cash' && navigateToGroup(row)"
     >
       <!-- Mobile card -->
       <template #card="{ item, index }">
         <div
           v-if="item"
-          class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
-          :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
-          @click="navigateToGroup(item)"
+          class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors"
+          :class="[
+            index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30',
+            item.slug !== 'cash' ? 'cursor-pointer hover:bg-surface-secondary' : 'cursor-default opacity-60',
+          ]"
+          @click="item.slug !== 'cash' && navigateToGroup(item)"
         >
           <div class="flex-1 min-w-0">
             <span class="text-sm font-semibold text-text-primary">{{ item.name }}</span>
@@ -77,8 +80,8 @@
       </template>
 
       <!-- arrow -->
-      <template #cell-actions>
-        <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <template #cell-actions="{ row }">
+        <svg v-if="row.slug !== 'cash'" class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
       </template>
