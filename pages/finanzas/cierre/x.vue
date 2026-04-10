@@ -104,11 +104,10 @@
         <div class="p-3 sm:p-4 border-b border-border">
           <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Métodos de pago</h3>
         </div>
-        <template v-if="groupedMethods.length > 0">
+        <div v-if="groupedMethods.length > 0" class="divide-y divide-border">
           <div
             v-for="grp in groupedMethods"
             :key="grp.slug"
-            class="border-b border-border last:border-b-0"
           >
             <!-- Group header -->
             <div class="flex items-center justify-between px-4 py-2.5 bg-background">
@@ -141,7 +140,7 @@
               </div>
             </div>
           </div>
-        </template>
+        </div>
         <div v-else class="px-4 py-4 text-sm text-text-secondary">Sin datos de métodos de pago.</div>
       </div>
 
