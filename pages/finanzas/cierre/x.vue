@@ -18,25 +18,23 @@
             </div>
           </div>
 
-          <!-- Period pickers (editable) -->
+          <!-- Period picker (editable) -->
           <div class="sm:col-span-2 flex flex-wrap items-center gap-2">
-            <input
-              v-model="periodStart"
-              type="date"
-              class="h-9 px-3 rounded-lg border-2 border-border bg-background text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            <VueDatePicker
+              v-model="dateRangeDates"
+              range
+              :preset-dates="presetDates"
+              :enable-time-picker="false"
+              :locale="es"
+              placeholder="Rango de fechas"
+              auto-apply
+              :teleport="true"
+              :max-date="new Date()"
+              :format="formatDateRange"
+              input-class-name="dp-custom-input"
+              menu-class-name="dp-custom-menu"
+              calendar-cell-class-name="dp-custom-cell"
             />
-            <span class="text-text-tertiary text-sm">–</span>
-            <input
-              v-model="periodEnd"
-              type="date"
-              class="h-9 px-3 rounded-lg border-2 border-border bg-background text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <button
-              @click="refetch"
-              class="h-9 px-4 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-            >
-              Actualizar
-            </button>
           </div>
         </div>
       </div>
@@ -132,19 +130,49 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { es } from 'date-fns/locale'
+import { format as fnsFormat } from 'date-fns'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Cierre X - Warocol' })
 
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
 const route = useRoute()
 
-const today       = new Date().toISOString().split('T')[0]
-const periodStart = ref((route.query.start as string) || today)
-const periodEnd   = ref((route.query.end   as string) || today)
+const today = new Date().toISOString().split('T')[0]
 
-const { data: rawPreview, status: previewStatus, error: previewErr, refetch } = useQuery({
+// Initialise from query params if present
+const initStart = (route.query.start as string) || today
+const initEnd   = (route.query.end   as string) || today
+const dateRangeDates = ref<Date[] | null>([
+  new Date(initStart + 'T12:00:00'),
+  new Date(initEnd   + 'T12:00:00'),
+])
+
+const presetDates = ref([
+  { label: 'Hoy',           value: [new Date(), new Date()] },
+  { label: 'Ayer',          value: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return [d, d] })() },
+  { label: 'Última semana', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
+  { label: 'Último mes',    value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
+])
+
+const formatDateRange = (dates: Date[]) => {
+  if (!dates || !dates[0]) return ''
+  const from = fnsFormat(dates[0], 'dd/MM/yyyy', { locale: es })
+  if (!dates[1]) return from
+  return `${from} - ${fnsFormat(dates[1], 'dd/MM/yyyy', { locale: es })}`
+}
+
+const periodStart = computed(() =>
+  dateRangeDates.value?.[0] ? fnsFormat(dateRangeDates.value[0], 'yyyy-MM-dd') : today
+)
+const periodEnd = computed(() =>
+  dateRangeDates.value?.[1] ? fnsFormat(dateRangeDates.value[1], 'yyyy-MM-dd') : today
+)
+
+const { data: rawPreview, status: previewStatus, asyncStatus: previewAsyncStatus, error: previewErr, refetch } = useQuery({
   key: () => ['cierre', 'preview', currentTenant.value?.id, periodStart.value, periodEnd.value],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
     params: { period_start: periodStart.value, period_end: periodEnd.value },
@@ -156,6 +184,15 @@ const { data: rawPreview, status: previewStatus, error: previewErr, refetch } = 
 const previewData    = computed(() => rawPreview.value?.data ?? null)
 const previewLoading = computed(() => previewStatus.value === 'pending' && !previewData.value)
 const previewError   = computed(() => previewErr.value)
+const isRefreshing   = computed(() => previewAsyncStatus.value === 'loading' && previewData.value != null)
+
+onMounted(() => {
+  setRefreshHandler(refetch)
+  registerProgressiveLoading(isRefreshing)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
+})
 
 const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)

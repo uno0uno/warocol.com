@@ -140,23 +140,33 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 
 definePageMeta({ layout: 'dashboard' })
 
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
 const route = useRoute()
 const cierreId = route.params.id as string
 
-const { data: rawCierre, status, error: fetchError } = useQuery({
+const { data: rawCierre, status, asyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['cierre', 'detail', currentTenant.value?.id, cierreId],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>(`/api/cierre/${cierreId}`),
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,
 })
 
-const cierre    = computed(() => rawCierre.value?.data ?? null)
-const isLoading = computed(() => status.value === 'pending' && !cierre.value)
+const cierre       = computed(() => rawCierre.value?.data ?? null)
+const isLoading    = computed(() => status.value === 'pending' && !cierre.value)
+const isRefreshing = computed(() => asyncStatus.value === 'loading' && cierre.value != null)
+
+onMounted(() => {
+  setRefreshHandler(refetch)
+  registerProgressiveLoading(isRefreshing)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
+})
 
 useHead(() => ({
   title: cierre.value ? `Cierre ${formatPeriod(cierre.value.periodStart, cierre.value.periodEnd)} - Warocol` : 'Cierre - Warocol',

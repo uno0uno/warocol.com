@@ -1,49 +1,63 @@
 <template>
   <div class="page-layout">
 
-    <!-- ── Filter bar ──────────────────────────────────────────────────────── -->
-    <div class="flex flex-wrap items-center gap-2 w-full">
-      <input
-        type="month"
-        v-model="filterMonth"
-        class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[140px]"
-      />
-
-      <div class="flex items-center gap-1.5">
-        <input
-          v-model="periodStart"
-          type="date"
-          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-        />
-        <span class="text-text-tertiary text-sm">–</span>
-        <input
-          v-model="periodEnd"
-          type="date"
-          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-        />
-      </div>
-
-      <div class="flex-1" />
-
-      <button
-        @click="navigateTo({ path: '/finanzas/cierre/x', query: { start: periodStart, end: periodEnd } })"
-        class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-      >
-        Cierre X
-      </button>
-      <button
-        @click="navigateTo({ path: '/finanzas/cierre/z', query: { start: periodStart, end: periodEnd } })"
-        class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-      >
-        Cierre Z
-      </button>
-    </div>
-
-    <!-- ── Historial ───────────────────────────────────────────────────────── -->
-    <div v-if="isLoadingHistorial" class="flex justify-center py-12">
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
-    <template v-else>
+
+    <CommonsTheErrorState v-else-if="fetchError" />
+
+    <div v-else class="flex flex-col gap-3 md:gap-4">
+      <div v-if="isRefreshing" class="flex justify-end">
+        <UiLoadingDots size="10px" class="text-text-secondary" />
+      </div>
+
+      <!-- ── Filter bar ────────────────────────────────────────────────────── -->
+      <div class="flex flex-wrap items-center gap-2 w-full">
+        <VueDatePicker
+          v-model="dateRangeDates"
+          range
+          :preset-dates="presetDates"
+          :enable-time-picker="false"
+          :locale="es"
+          placeholder="Rango de fechas"
+          auto-apply
+          :teleport="true"
+          :max-date="new Date()"
+          :format="formatDateRange"
+          input-class-name="dp-custom-input"
+          menu-class-name="dp-custom-menu"
+          calendar-cell-class-name="dp-custom-cell"
+        />
+
+        <button
+          v-if="dateRangeDates"
+          @click="dateRangeDates = null"
+          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+          aria-label="Limpiar fechas"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div class="flex-1" />
+
+        <button
+          @click="navigateTo({ path: '/finanzas/cierre/x', query: { start: periodStart, end: periodEnd } })"
+          class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+        >
+          Cierre X
+        </button>
+        <button
+          @click="navigateTo({ path: '/finanzas/cierre/z', query: { start: periodStart, end: periodEnd } })"
+          class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+        >
+          Cierre Z
+        </button>
+      </div>
+
+      <!-- ── Historial ─────────────────────────────────────────────────────── -->
       <UiResponsiveDataView
         :data="filteredHistorial"
         :columns="historialColumns"
@@ -81,37 +95,64 @@
           {{ monthlyDiff >= 0 ? '+' : '' }}{{ formatCurrency(monthlyDiff) }}
         </span>
       </div>
-    </template>
+    </div>
 
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { es } from 'date-fns/locale'
+import { format as fnsFormat } from 'date-fns'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Cierre - Warocol' })
 
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
 
-const today       = new Date().toISOString().split('T')[0]
-const periodStart = ref(today)
-const periodEnd   = ref(today)
-const filterMonth = ref(today.slice(0, 7))
+const today = new Date().toISOString().split('T')[0]
 
-const { data: rawHistorial, status: historialStatus } = useQuery({
+const dateRangeDates = ref<Date[] | null>(null)
+
+const presetDates = ref([
+  { label: 'Hoy',           value: [new Date(), new Date()] },
+  { label: 'Ayer',          value: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return [d, d] })() },
+  { label: 'Última semana', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
+  { label: 'Último mes',    value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
+])
+
+const formatDateRange = (dates: Date[]) => {
+  if (!dates || !dates[0]) return ''
+  const from = fnsFormat(dates[0], 'dd/MM/yyyy', { locale: es })
+  if (!dates[1]) return from
+  return `${from} - ${fnsFormat(dates[1], 'dd/MM/yyyy', { locale: es })}`
+}
+
+const periodStart = computed(() =>
+  dateRangeDates.value?.[0] ? fnsFormat(dateRangeDates.value[0], 'yyyy-MM-dd') : today
+)
+const periodEnd = computed(() =>
+  dateRangeDates.value?.[1] ? fnsFormat(dateRangeDates.value[1], 'yyyy-MM-dd') : today
+)
+
+const { data: rawHistorial, status, asyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['cierre', 'list', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/cierre'),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
 })
 
-const historialList      = computed(() => rawHistorial.value?.data ?? [])
-const isLoadingHistorial = computed(() => historialStatus.value === 'pending' && !rawHistorial.value)
+const isLoading    = computed(() => !rawHistorial.value && !fetchError.value)
+const isRefreshing = computed(() => asyncStatus.value === 'loading' && rawHistorial.value != null)
+
+const historialList = computed(() => rawHistorial.value?.data ?? [])
 
 const filteredHistorial = computed(() => {
-  if (!filterMonth.value) return historialList.value
-  return historialList.value.filter((r: any) => r.periodStart?.slice(0, 7) === filterMonth.value)
+  if (!dateRangeDates.value?.[0] || !dateRangeDates.value?.[1]) return historialList.value
+  const from = fnsFormat(dateRangeDates.value[0], 'yyyy-MM-dd')
+  const to   = fnsFormat(dateRangeDates.value[1], 'yyyy-MM-dd')
+  return historialList.value.filter((r: any) => r.periodStart >= from && r.periodStart <= to)
 })
 
 const monthlyDiff = computed(() =>
@@ -144,4 +185,12 @@ const formatPeriod = (start: string, end: string) => {
   }).format(new Date(d + 'T12:00:00'))
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
+
+onMounted(() => {
+  setRefreshHandler(refetch)
+  registerProgressiveLoading(isRefreshing)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetch)
+})
 </script>

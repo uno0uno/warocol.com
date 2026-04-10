@@ -111,9 +111,10 @@ const deleteExpense = async (expenseId: string) => {
 }
 
 // Set refresh handler for layout
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 onMounted(() => {
   setRefreshHandler(refetch)
+  registerProgressiveLoading(isRefreshing)
 })
 onUnmounted(() => {
   clearRefreshHandler(refetch)
