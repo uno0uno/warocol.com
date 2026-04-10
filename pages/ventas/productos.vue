@@ -215,8 +215,14 @@ onUnmounted(() => {
         </div>
       </ClientOnly>
 
+      <!-- Table loading (filter change, no cached data yet) -->
+      <div v-if="isRefreshing && products.length === 0" class="flex items-center justify-center min-h-[200px]">
+        <CommonsTheCustomLoader size="medium" />
+      </div>
+
       <!-- Table -->
       <UiResponsiveDataView
+        v-else
         :columns="tableColumns"
         :data="products"
         empty-message="No hay ventas en este período"
@@ -260,7 +266,7 @@ onUnmounted(() => {
 
       <!-- Totals row -->
       <div
-        v-if="products.length > 0"
+        v-if="products.length > 0 && !isRefreshing"
         class="flex items-center justify-between px-4 py-3 bg-surface border border-border rounded-xl text-sm font-semibold"
       >
         <span class="text-text-secondary">Total ({{ products.length }} producto{{ products.length !== 1 ? 's' : '' }})</span>
