@@ -127,9 +127,10 @@
             <!-- Methods -->
             <div class="divide-y divide-border">
               <div
-                v-for="m in grp.methods"
+                v-for="(m, mi) in grp.methods"
                 :key="m.key"
                 class="flex items-center justify-between pl-8 pr-4 py-2.5"
+                :class="mi % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
               >
                 <span class="text-sm text-text-primary">{{ m.label }}</span>
                 <div class="flex items-center gap-3">
