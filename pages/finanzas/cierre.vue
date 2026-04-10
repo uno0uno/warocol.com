@@ -1,35 +1,429 @@
 <template>
   <div class="page-layout">
 
-    <!-- ── View toggle ─────────────────────────────────────────────────────── -->
-    <div class="flex gap-2 mb-1">
+    <!-- ── Filter bar ──────────────────────────────────────────────────────── -->
+    <div class="flex flex-wrap items-center gap-2 w-full">
+      <!-- Month picker (filters historial) -->
+      <input
+        type="month"
+        v-model="filterMonth"
+        class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[140px]"
+      />
+
+      <!-- Period pickers -->
+      <div class="flex items-center gap-1.5">
+        <input
+          v-model="periodStart"
+          type="date"
+          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+        <span class="text-text-tertiary text-sm">–</span>
+        <input
+          v-model="periodEnd"
+          type="date"
+          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </div>
+
+      <div class="flex-1" />
+
+      <!-- Cierre X -->
       <button
-        v-for="v in views"
-        :key="v.key"
-        @click="activeView = v.key"
-        class="min-h-[36px] px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
-        :class="activeView === v.key
-          ? 'bg-primary text-primary-foreground'
-          : 'border border-border text-text-secondary hover:text-text-primary hover:border-primary'"
+        @click="togglePreview"
+        class="h-10 px-4 rounded-lg border-2 text-sm font-medium transition-colors"
+        :class="cierreMode === 'preview'
+          ? 'border-primary bg-primary/5 text-primary'
+          : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary'"
       >
-        {{ v.label }}
+        Cierre X
+      </button>
+
+      <!-- Cierre Z -->
+      <button
+        @click="toggleWizard"
+        class="h-10 px-4 rounded-lg border-2 text-sm font-medium transition-colors"
+        :class="cierreMode === 'wizard' || cierreMode === 'success'
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary'"
+      >
+        Cierre Z
       </button>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!-- HISTORIAL                                                              -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <template v-if="activeView === 'historial'">
-      <div v-if="isLoadingHistorial" class="flex justify-center py-16">
+    <!-- ── SUCCESS screen ─────────────────────────────────────────────────── -->
+    <div v-if="cierreMode === 'success'" class="flex flex-col items-center justify-center py-16 gap-6 text-center">
+      <div class="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
+        <CheckCircleIcon class="w-9 h-9 text-emerald-600" />
+      </div>
+      <div>
+        <p class="text-xl font-semibold text-text-primary">Cierre registrado</p>
+        <p class="text-sm text-text-secondary mt-1">{{ formatPeriod(periodStart, periodEnd) }}</p>
+      </div>
+      <div class="w-full max-w-sm bg-surface border border-border rounded-lg divide-y divide-border">
+        <div class="flex justify-between px-4 py-2.5 text-sm">
+          <span class="text-text-secondary">Total ventas</span>
+          <span class="font-medium">{{ formatCurrency(successData?.totalSales) }}</span>
+        </div>
+        <div class="flex justify-between px-4 py-2.5 text-sm">
+          <span class="text-text-secondary">Efectivo esperado</span>
+          <span class="font-medium">{{ formatCurrency(successData?.cashExpected) }}</span>
+        </div>
+        <div class="flex justify-between px-4 py-2.5 text-sm">
+          <span class="text-text-secondary">Efectivo contado</span>
+          <span class="font-medium">{{ formatCurrency(successData?.cashCounted) }}</span>
+        </div>
+        <div class="flex justify-between px-4 py-2.5 text-sm">
+          <span class="text-text-secondary">Diferencia</span>
+          <span class="font-semibold" :class="diffClass(successData?.cashDifference ?? 0)">
+            {{ (successData?.cashDifference ?? 0) >= 0 ? '+' : '' }}{{ formatCurrency(successData?.cashDifference) }}
+          </span>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button
+          @click="resetAll"
+          class="min-h-[44px] px-5 py-2 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary transition-colors"
+        >
+          Volver
+        </button>
+        <button
+          @click="resetAll"
+          class="min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          Ver historial
+        </button>
+      </div>
+    </div>
+
+    <!-- ── CIERRE X — PREVIEW ──────────────────────────────────────────────── -->
+    <div v-else-if="cierreMode === 'preview'" class="bg-surface border-2 border-border rounded-xl p-6">
+      <h2 class="text-base font-semibold text-text-primary mb-4">Cierre X — {{ formatPeriod(periodStart, periodEnd) }}</h2>
+      <div v-if="previewLoading" class="flex justify-center py-12">
         <CommonsTheCustomLoader size="large" />
       </div>
+      <div v-else-if="previewError" class="text-center py-8 text-text-secondary text-sm">
+        No se pudo cargar el resumen. Intenta de nuevo.
+      </div>
+      <div v-else-if="previewData" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-background rounded-lg border border-border divide-y divide-border">
+          <div class="flex justify-between px-4 py-2.5 text-sm">
+            <span class="text-text-secondary">Total ventas</span>
+            <span class="font-semibold text-text-primary">{{ formatCurrency(previewData.totalSales) }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-2.5 text-sm">
+            <span class="text-text-secondary">Efectivo</span>
+            <span class="font-medium">{{ formatCurrency(previewData.totalCash) }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-2.5 text-sm">
+            <span class="text-text-secondary">Tarjeta</span>
+            <span class="font-medium">{{ formatCurrency(previewData.totalCard) }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-2.5 text-sm">
+            <span class="text-text-secondary">Digital</span>
+            <span class="font-medium">{{ formatCurrency(previewData.totalDigital) }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-2.5 text-sm">
+            <span class="text-text-secondary">Crédito</span>
+            <span class="font-medium">{{ formatCurrency(previewData.totalCredit) }}</span>
+          </div>
+        </div>
+        <div class="bg-background rounded-lg border border-border divide-y divide-border">
+          <div class="flex justify-between px-4 py-2.5 text-sm">
+            <span class="text-text-secondary">Gastos en efectivo</span>
+            <span class="font-medium">{{ formatCurrency(previewData.gastosEfectivo) }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-2.5 text-sm">
+            <span class="text-text-secondary">Esperado en caja</span>
+            <span class="font-semibold text-text-primary">{{ formatCurrency(previewData.cashExpected) }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-2.5 text-sm">
+            <span class="text-text-secondary">Mesas abiertas</span>
+            <span :class="previewData.openTablesCount > 0 ? 'text-amber-600 font-semibold' : 'font-medium'">
+              {{ previewData.openTablesCount }}
+            </span>
+          </div>
+          <div class="flex justify-between px-4 py-2.5 text-sm">
+            <span class="text-text-secondary">Órdenes</span>
+            <span class="font-medium">{{ previewData.itemsSold }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CIERRE Z — WIZARD ───────────────────────────────────────────────── -->
+    <div v-else-if="cierreMode === 'wizard'" class="bg-surface border-2 border-border rounded-xl p-6">
+
+      <!-- Progress -->
+      <div class="flex items-center gap-2 mb-5">
+        <span
+          v-for="s in 4"
+          :key="s"
+          class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold transition-colors"
+          :class="s < currentStep
+            ? 'bg-primary text-primary-foreground'
+            : s === currentStep
+              ? 'bg-primary text-primary-foreground ring-2 ring-primary/30'
+              : 'bg-border text-text-tertiary'"
+        >
+          {{ s < currentStep ? '✓' : s }}
+        </span>
+        <span class="text-xs text-text-secondary ml-1">Paso {{ currentStep }} de 4</span>
+        <button
+          @click="goBackFromWizard"
+          class="ml-auto text-text-secondary hover:text-text-primary transition-colors text-sm"
+        >
+          ← Volver
+        </button>
+      </div>
+
+      <!-- Step 1: Cuentas abiertas -->
+      <div v-if="currentStep === 1">
+        <h3 class="font-semibold text-text-primary mb-4">Paso 1 — Cuentas abiertas</h3>
+        <div v-if="previewLoading" class="flex justify-center py-8">
+          <CommonsTheCustomLoader size="large" />
+        </div>
+        <template v-else-if="previewData">
+          <div v-if="previewData.openTablesCount === 0" class="flex items-center gap-3 p-4 rounded-lg bg-emerald-50 border border-emerald-200 mb-6">
+            <CheckCircleIcon class="w-5 h-5 text-emerald-600 flex-shrink-0" aria-hidden="true" />
+            <span class="text-sm text-emerald-700">No hay cuentas abiertas</span>
+          </div>
+          <div v-else class="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 mb-6">
+            <ExclamationTriangleIcon class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <div>
+              <p class="text-sm font-medium text-amber-800">
+                Hay {{ previewData.openTablesCount }} mesa(s) con cuenta abierta
+              </p>
+              <p class="text-xs text-amber-600 mt-0.5">Cierra las mesas antes de continuar, o usa la autorización de gerente.</p>
+              <NuxtLink to="/mesas" class="inline-block mt-2 text-xs font-medium text-amber-700 underline hover:no-underline">
+                Ir a mesas →
+              </NuxtLink>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            <button
+              v-if="previewData.openTablesCount === 0"
+              @click="currentStep = 2"
+              class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              Continuar →
+            </button>
+            <button
+              v-else
+              @click="managerOverride = true; currentStep = 2"
+              class="min-h-[44px] px-6 py-2 rounded-lg border-2 border-amber-400 text-amber-700 text-sm font-medium hover:bg-amber-50 transition-colors"
+            >
+              Continuar con autorización de gerente
+            </button>
+          </div>
+        </template>
+        <div v-else class="text-sm text-text-secondary py-4">No se pudo cargar el estado de las mesas.</div>
+      </div>
+
+      <!-- Step 2: Contar efectivo -->
+      <div v-else-if="currentStep === 2">
+        <h3 class="font-semibold text-text-primary mb-1">Paso 2 — Contar efectivo</h3>
+        <p class="text-xs text-text-secondary mb-5">Cuenta los billetes que tienes en caja:</p>
+
+        <div class="space-y-2 mb-4">
+          <div
+            v-for="(denom, idx) in denominations"
+            :key="denom"
+            class="flex items-center gap-3"
+          >
+            <span class="text-sm text-text-secondary w-24 text-right flex-shrink-0">{{ formatCurrency(denom) }}</span>
+            <span class="text-text-tertiary">×</span>
+            <input
+              :ref="el => setDenomRef(el, idx)"
+              v-model="counts[denom]"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              @input="counts[denom] = sanitizeInt($event)"
+              @keydown.enter.prevent="focusNext(idx)"
+              class="w-20 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
+              :aria-label="`Cantidad de billetes de ${formatCurrency(denom)}`"
+            />
+            <span class="text-text-tertiary">=</span>
+            <span class="text-sm font-medium text-text-primary w-28">{{ formatCurrency(denom * (parseInt(counts[denom]) || 0)) }}</span>
+          </div>
+
+          <!-- Monedas -->
+          <div class="flex items-center gap-3">
+            <span class="text-sm text-text-secondary w-24 text-right flex-shrink-0">Monedas</span>
+            <span class="text-transparent">×</span>
+            <input
+              v-model="monedasAmount"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              @input="monedasAmount = sanitizeIntStr($event)"
+              placeholder="0"
+              class="w-20 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label="Monto total en monedas"
+            />
+            <span class="text-text-tertiary">=</span>
+            <span class="text-sm font-medium text-text-primary w-28">{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
+          </div>
+        </div>
+
+        <!-- Total + reveal -->
+        <div class="border-t border-border pt-4 mb-4 space-y-2">
+          <div class="flex justify-between text-sm">
+            <span class="font-semibold text-text-primary">Total contado</span>
+            <span class="font-bold text-lg text-text-primary">{{ formatCurrency(totalCounted) }}</span>
+          </div>
+          <div v-if="!revealed" class="flex items-center gap-2">
+            <button
+              @click="revealed = true"
+              class="text-xs text-primary hover:underline"
+            >
+              Ver efectivo esperado →
+            </button>
+          </div>
+          <div v-if="revealed" class="p-3 rounded-lg border" :class="diffResultClass">
+            <div class="flex justify-between text-sm mb-1">
+              <span>Esperado en caja</span>
+              <span class="font-medium">{{ formatCurrency(previewData?.cashExpected) }}</span>
+            </div>
+            <div class="flex justify-between text-sm font-semibold">
+              <span>Diferencia</span>
+              <span>{{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <button
+            @click="currentStep = 3"
+            class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            Continuar →
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Resumen -->
+      <div v-else-if="currentStep === 3">
+        <h3 class="font-semibold text-text-primary mb-4">Paso 3 — Resumen del día</h3>
+
+        <div class="bg-background rounded-lg border border-border divide-y divide-border mb-4">
+          <div class="flex justify-between px-4 py-2 text-sm">
+            <span class="text-text-secondary">Período</span>
+            <span class="font-medium">{{ formatPeriod(periodStart, periodEnd) }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-2 text-sm">
+            <span class="text-text-secondary">Total ventas</span>
+            <span class="font-semibold text-text-primary">{{ formatCurrency(previewData?.totalSales) }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-2 text-sm">
+            <span class="text-text-secondary">Efectivo recibido</span>
+            <span class="font-medium">{{ formatCurrency(previewData?.totalCash) }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-2 text-sm">
+            <span class="text-text-secondary">Gastos efectivo</span>
+            <span class="font-medium">{{ formatCurrency(previewData?.gastosEfectivo) }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-2 text-sm">
+            <span class="text-text-secondary">Esperado en caja</span>
+            <span class="font-medium">{{ formatCurrency(previewData?.cashExpected) }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-2 text-sm">
+            <span class="text-text-secondary">Contado</span>
+            <span class="font-medium">{{ formatCurrency(totalCounted) }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-2 text-sm font-semibold">
+            <span>Diferencia</span>
+            <span :class="diffClass(cashDiff)">{{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}</span>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <textarea
+          v-model="notes"
+          placeholder="Notas (opcional)"
+          rows="2"
+          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary resize-none mb-4"
+        />
+
+        <div class="flex flex-wrap gap-2 mb-5">
+          <NuxtLink to="/ventas/ordenes" class="text-xs text-primary hover:underline">→ Lista de ventas</NuxtLink>
+          <NuxtLink to="/finanzas/gastos" class="text-xs text-primary hover:underline">→ Gastos del día</NuxtLink>
+          <NuxtLink to="/analitica" class="text-xs text-primary hover:underline">→ Analítica</NuxtLink>
+        </div>
+
+        <button
+          @click="currentStep = 4"
+          class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          Continuar →
+        </button>
+      </div>
+
+      <!-- Step 4: Cerrar el día -->
+      <div v-else-if="currentStep === 4">
+        <h3 class="font-semibold text-text-primary mb-2">Paso 4 — Cerrar el día</h3>
+        <p class="text-sm text-text-secondary mb-5">
+          ¿Cerrar el día <strong>{{ formatPeriod(periodStart, periodEnd) }}</strong>?<br />
+          <span class="text-xs text-text-tertiary">Esta acción no se puede deshacer.</span>
+        </p>
+
+        <div class="bg-background rounded-lg border border-border divide-y divide-border mb-6">
+          <div class="flex justify-between px-4 py-2 text-sm">
+            <span class="text-text-secondary">Total ventas</span>
+            <span class="font-medium">{{ formatCurrency(previewData?.totalSales ?? 0) }}</span>
+          </div>
+          <div class="flex justify-between px-4 py-2 text-sm">
+            <span class="text-text-secondary">Diferencia caja</span>
+            <span class="font-semibold" :class="diffClass(cashDiff)">
+              {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
+            </span>
+          </div>
+        </div>
+
+        <div v-if="submitError" class="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 mb-4">
+          <ExclamationTriangleIcon class="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <p class="text-sm text-destructive">{{ submitError }}</p>
+        </div>
+
+        <div class="flex gap-3">
+          <button
+            @click="currentStep = 3"
+            class="min-h-[44px] px-4 py-2 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            @click="handleConfirmButton"
+            :disabled="isSubmitting"
+            class="min-h-[44px] px-6 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="confirmArmed
+              ? 'bg-destructive text-white hover:bg-destructive/90 ring-2 ring-destructive/30'
+              : 'bg-primary text-primary-foreground hover:bg-primary/90'"
+          >
+            <span v-if="isSubmitting">Cerrando...</span>
+            <span v-else-if="confirmArmed">¿Confirmar cierre?</span>
+            <span v-else>Cerrar el día</span>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- end wizard -->
+
+    <!-- ── HISTORIAL ────────────────────────────────────────────────────────── -->
+    <div v-if="isLoadingHistorial" class="flex justify-center py-12">
+      <CommonsTheCustomLoader size="large" />
+    </div>
+    <template v-else>
       <UiResponsiveDataView
-        v-else
-        :data="historialList"
+        :data="filteredHistorial"
         :columns="historialColumns"
         row-size="sm"
-        empty-message="No hay cierres registrados aún."
+        empty-message="No hay cierres registrados."
       >
+        <template #header>
+          <h3 class="text-base font-bold text-text-primary">Historial de cierres</h3>
+        </template>
+
         <template #cell-period="{ item }">
           <span class="text-sm text-text-primary">{{ formatPeriod(item.periodStart, item.periodEnd) }}</span>
         </template>
@@ -37,10 +431,7 @@
           <span class="text-sm font-medium text-text-primary">{{ formatCurrency(value) }}</span>
         </template>
         <template #cell-cashDifference="{ value }">
-          <span
-            class="text-sm font-semibold"
-            :class="diffClass(value)"
-          >
+          <span class="text-sm font-semibold" :class="diffClass(value)">
             {{ value >= 0 ? '+' : '' }}{{ formatCurrency(value) }}
           </span>
         </template>
@@ -49,438 +440,13 @@
         </template>
       </UiResponsiveDataView>
 
-      <!-- Monthly discrepancy summary -->
-      <div v-if="historialList.length > 0" class="mt-3 px-4 py-3 bg-surface border border-border rounded-lg flex items-center justify-between">
-        <span class="text-sm text-text-secondary">Diferencia acumulada del mes</span>
+      <div v-if="filteredHistorial.length > 0" class="px-4 py-3 bg-surface border border-border rounded-lg flex items-center justify-between">
+        <span class="text-sm text-text-secondary">Diferencia acumulada</span>
         <span class="text-sm font-semibold" :class="diffClass(monthlyDiff)">
           {{ monthlyDiff >= 0 ? '+' : '' }}{{ formatCurrency(monthlyDiff) }}
         </span>
       </div>
     </template>
-
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <!-- CIERRE                                                                 -->
-    <!-- ══════════════════════════════════════════════════════════════════════ -->
-    <template v-else>
-
-      <!-- ── SUCCESS screen ─────────────────────────────────────────────────── -->
-      <div v-if="cierreMode === 'success'" class="flex flex-col items-center justify-center py-16 gap-6 text-center">
-        <div class="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
-          <CheckCircleIcon class="w-9 h-9 text-emerald-600" />
-        </div>
-        <div>
-          <p class="text-xl font-semibold text-text-primary">Cierre registrado</p>
-          <p class="text-sm text-text-secondary mt-1">{{ formatPeriod(periodStart, periodEnd) }}</p>
-        </div>
-        <div class="w-full max-w-sm bg-surface border border-border rounded-lg divide-y divide-border">
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Total ventas</span>
-            <span class="font-medium">{{ formatCurrency(successData?.totalSales) }}</span>
-          </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Efectivo esperado</span>
-            <span class="font-medium">{{ formatCurrency(successData?.cashExpected) }}</span>
-          </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Efectivo contado</span>
-            <span class="font-medium">{{ formatCurrency(successData?.cashCounted) }}</span>
-          </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Diferencia</span>
-            <span class="font-semibold" :class="diffClass(successData?.cashDifference ?? 0)">
-              {{ (successData?.cashDifference ?? 0) >= 0 ? '+' : '' }}{{ formatCurrency(successData?.cashDifference) }}
-            </span>
-          </div>
-        </div>
-        <div class="flex gap-3">
-          <button
-            @click="resetAll"
-            class="min-h-[44px] px-5 py-2 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary transition-colors"
-          >
-            Volver al inicio
-          </button>
-          <button
-            @click="activeView = 'historial'"
-            class="min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
-            Ver historial
-          </button>
-        </div>
-      </div>
-
-      <!-- ── LANDING ─────────────────────────────────────────────────────────── -->
-      <div v-else-if="!cierreMode" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-        <!-- Cierre X -->
-        <button
-          @click="startPreview"
-          class="text-left p-6 bg-surface border-2 border-border rounded-xl hover:border-primary/40 transition-colors group"
-        >
-          <div class="flex items-start gap-4">
-            <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <ChartBarIcon class="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p class="font-semibold text-text-primary group-hover:text-primary transition-colors">📊 Cierre X</p>
-              <p class="text-sm text-text-secondary mt-1">Ver estado del día</p>
-              <p class="text-xs text-text-tertiary mt-2 leading-relaxed">
-                Reporte sin bloquear. Consúltalo en cualquier momento del turno.
-              </p>
-            </div>
-          </div>
-        </button>
-
-        <!-- Cierre Z -->
-        <button
-          @click="startWizard"
-          class="text-left p-6 bg-surface border-2 border-border rounded-xl hover:border-primary/40 transition-colors group"
-        >
-          <div class="flex items-start gap-4">
-            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <LockClosedIcon class="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p class="font-semibold text-text-primary group-hover:text-primary transition-colors">🔒 Cierre Z</p>
-              <p class="text-sm text-text-secondary mt-1">Cerrar el día</p>
-              <p class="text-xs text-text-tertiary mt-2 leading-relaxed">
-                Definitivo. Requiere confirmar dos veces.
-              </p>
-            </div>
-          </div>
-        </button>
-
-        <!-- Period selector -->
-        <div class="sm:col-span-2 flex flex-wrap items-center gap-3 text-sm">
-          <span class="text-text-secondary">Período:</span>
-          <input
-            v-model="periodStart"
-            type="date"
-            class="px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <span class="text-text-secondary">–</span>
-          <input
-            v-model="periodEnd"
-            type="date"
-            class="px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-      </div>
-
-      <!-- ── CIERRE X — PREVIEW ──────────────────────────────────────────────── -->
-      <div v-else-if="cierreMode === 'preview'">
-        <div class="flex items-center gap-3 mb-4">
-          <button @click="resetAll" class="text-text-secondary hover:text-text-primary transition-colors" aria-label="Volver">
-            <ArrowLeftIcon class="w-5 h-5" />
-          </button>
-          <h2 class="text-base font-semibold text-text-primary">📊 Cierre X — {{ formatPeriod(periodStart, periodEnd) }}</h2>
-        </div>
-
-        <div v-if="previewLoading" class="flex justify-center py-12">
-          <CommonsTheCustomLoader size="large" />
-        </div>
-        <div v-else-if="previewError" class="text-center py-12 text-text-secondary text-sm">
-          No se pudo cargar el resumen. Intenta de nuevo.
-        </div>
-        <div v-else-if="previewData" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <PreviewSummaryCard :preview="previewData" />
-        </div>
-      </div>
-
-      <!-- ── CIERRE Z — WIZARD ───────────────────────────────────────────────── -->
-      <div v-else-if="cierreMode === 'wizard'">
-
-        <!-- Back + progress -->
-        <div class="flex items-center gap-4 mb-5">
-          <button @click="goBackFromWizard" class="text-text-secondary hover:text-text-primary transition-colors" aria-label="Volver">
-            <ArrowLeftIcon class="w-5 h-5" />
-          </button>
-          <div class="flex items-center gap-2">
-            <span
-              v-for="s in 4"
-              :key="s"
-              class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold transition-colors"
-              :class="s < currentStep
-                ? 'bg-primary text-primary-foreground'
-                : s === currentStep
-                  ? 'bg-primary text-primary-foreground ring-2 ring-primary/30'
-                  : 'bg-border text-text-tertiary'"
-            >
-              {{ s < currentStep ? '✓' : s }}
-            </span>
-            <span class="text-xs text-text-secondary ml-1">Paso {{ currentStep }} de 4</span>
-          </div>
-        </div>
-
-        <!-- ── Step 1: Cuentas abiertas ── -->
-        <div v-if="currentStep === 1" class="bg-surface border-2 border-border rounded-xl p-6">
-          <h3 class="font-semibold text-text-primary mb-4">Paso 1 — Cuentas abiertas</h3>
-          <div v-if="previewLoading" class="flex justify-center py-8">
-            <CommonsTheCustomLoader size="large" />
-          </div>
-          <template v-else-if="previewData">
-            <div v-if="previewData.openTablesCount === 0" class="flex items-center gap-3 p-4 rounded-lg bg-emerald-50 border border-emerald-200 mb-6">
-              <CheckCircleIcon class="w-5 h-5 text-emerald-600 flex-shrink-0" aria-hidden="true" />
-              <span class="text-sm text-emerald-700">No hay cuentas abiertas</span>
-            </div>
-            <div v-else class="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 mb-6">
-              <ExclamationTriangleIcon class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
-              <div>
-                <p class="text-sm font-medium text-amber-800">
-                  Hay {{ previewData.openTablesCount }} mesa(s) con cuenta abierta
-                </p>
-                <p class="text-xs text-amber-600 mt-0.5">Cierra las mesas antes de continuar, o usa la autorización de gerente.</p>
-                <NuxtLink to="/mesas" class="inline-block mt-2 text-xs font-medium text-amber-700 underline hover:no-underline">
-                  Ir a mesas →
-                </NuxtLink>
-              </div>
-            </div>
-            <div class="flex flex-wrap gap-3">
-              <button
-                v-if="previewData.openTablesCount === 0"
-                @click="currentStep = 2"
-                class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-              >
-                Continuar →
-              </button>
-              <button
-                v-else
-                @click="managerOverride = true; currentStep = 2"
-                class="min-h-[44px] px-6 py-2 rounded-lg border-2 border-amber-400 text-amber-700 text-sm font-medium hover:bg-amber-50 transition-colors"
-              >
-                Continuar con autorización de gerente
-              </button>
-            </div>
-          </template>
-          <div v-else class="text-sm text-text-secondary py-4">No se pudo cargar el estado de las mesas.</div>
-        </div>
-
-        <!-- ── Step 2: Contar efectivo ── -->
-        <div v-else-if="currentStep === 2" class="bg-surface border-2 border-border rounded-xl p-6">
-          <h3 class="font-semibold text-text-primary mb-1">Paso 2 — Contar efectivo</h3>
-          <p class="text-xs text-text-secondary mb-5">Cuenta los billetes que tienes en caja:</p>
-
-          <!-- Denomination table -->
-          <div class="space-y-2 mb-4">
-            <div
-              v-for="(denom, idx) in denominations"
-              :key="denom"
-              class="flex items-center gap-3"
-            >
-              <span class="text-sm text-text-secondary w-24 text-right flex-shrink-0">{{ formatCurrency(denom) }}</span>
-              <span class="text-text-tertiary">×</span>
-              <input
-                :ref="el => { if (el) denomRefs[idx] = el as HTMLInputElement }"
-                v-model="counts[denom]"
-                type="text"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                @input="counts[denom] = sanitizeInt($event)"
-                @keydown.enter.prevent="focusNext(idx)"
-                class="w-20 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
-                :aria-label="`Cantidad de billetes de ${formatCurrency(denom)}`"
-              />
-              <span class="text-text-tertiary">=</span>
-              <span class="text-sm font-medium text-text-primary w-28">{{ formatCurrency(denom * (parseInt(counts[denom]) || 0)) }}</span>
-            </div>
-
-            <!-- Monedas -->
-            <div class="flex items-center gap-3">
-              <span class="text-sm text-text-secondary w-24 text-right flex-shrink-0">Monedas</span>
-              <span class="text-transparent">×</span>
-              <input
-                v-model="monedasAmount"
-                type="text"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                @input="monedasAmount = sanitizeIntStr($event)"
-                placeholder="0"
-                class="w-20 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label="Monto total en monedas"
-              />
-              <span class="text-text-tertiary">=</span>
-              <span class="text-sm font-medium text-text-primary w-28">{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
-            </div>
-          </div>
-
-          <!-- Running total -->
-          <div class="border-t border-border pt-3 mb-5 flex justify-between items-center">
-            <span class="text-sm font-medium text-text-secondary">Total contado:</span>
-            <span class="text-lg font-bold text-text-primary">{{ formatCurrency(totalCounted) }}</span>
-          </div>
-
-          <!-- Ver resultado -->
-          <div v-if="!revealed">
-            <button
-              @click="revealed = true"
-              class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              Ver resultado →
-            </button>
-          </div>
-
-          <!-- Result revealed -->
-          <template v-else>
-            <div class="p-4 rounded-xl border-2 mb-5" :class="diffResultClass">
-              <div class="flex justify-between text-sm mb-1.5">
-                <span class="text-text-secondary">Efectivo esperado:</span>
-                <span class="font-medium">{{ formatCurrency(previewData?.cashExpected ?? 0) }}</span>
-              </div>
-              <div class="flex justify-between text-sm mb-1.5">
-                <span class="text-text-secondary">Tú contaste:</span>
-                <span class="font-medium">{{ formatCurrency(totalCounted) }}</span>
-              </div>
-              <div class="flex justify-between text-sm font-semibold border-t border-current/20 pt-1.5 mt-1.5">
-                <span>Diferencia:</span>
-                <span>{{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }} {{ cashDiff >= 0 ? '✅ Sobrante' : cashDiff >= -(previewData?.cashExpected ?? 0) * 0.02 ? '⚠ Faltante menor' : '❌ Faltante' }}</span>
-              </div>
-            </div>
-
-            <!-- Notes -->
-            <div class="mb-5">
-              <label class="block text-sm font-medium text-text-secondary mb-1">Observaciones (opcional)</label>
-              <textarea
-                v-model="notes"
-                rows="2"
-                placeholder="Ej: Sobrante de cambio de ayer..."
-                class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-              />
-            </div>
-
-            <button
-              @click="currentStep = 3"
-              class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              Continuar →
-            </button>
-          </template>
-        </div>
-
-        <!-- ── Step 3: Resumen del día ── -->
-        <div v-else-if="currentStep === 3" class="bg-surface border-2 border-border rounded-xl p-6">
-          <h3 class="font-semibold text-text-primary mb-5">Paso 3 — Resumen del día</h3>
-
-          <div v-if="previewData" class="space-y-4">
-            <!-- Ventas -->
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wide text-text-tertiary mb-2">Ventas del día</p>
-              <div class="bg-background rounded-lg border border-border divide-y divide-border">
-                <div class="flex justify-between px-4 py-2 text-sm">
-                  <span class="text-text-secondary">Efectivo</span>
-                  <span class="font-medium">{{ formatCurrency(previewData.totalCash) }}</span>
-                </div>
-                <div class="flex justify-between px-4 py-2 text-sm">
-                  <span class="text-text-secondary">Tarjeta</span>
-                  <span class="font-medium">{{ formatCurrency(previewData.totalCard) }}</span>
-                </div>
-                <div class="flex justify-between px-4 py-2 text-sm">
-                  <span class="text-text-secondary">Digital</span>
-                  <span class="font-medium">{{ formatCurrency(previewData.totalDigital) }}</span>
-                </div>
-                <div class="flex justify-between px-4 py-2 text-sm">
-                  <span class="text-text-secondary">Crédito</span>
-                  <span class="font-medium">{{ formatCurrency(previewData.totalCredit) }}</span>
-                </div>
-                <div class="flex justify-between px-4 py-2 text-sm font-semibold">
-                  <span>Total</span>
-                  <span class="text-primary">{{ formatCurrency(previewData.totalSales) }}</span>
-                </div>
-                <div class="flex justify-between px-4 py-2 text-xs text-text-secondary">
-                  <span>Ítems vendidos</span>
-                  <span>{{ previewData.itemsSold }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Gastos + Arqueo -->
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wide text-text-tertiary mb-2">Arqueo de caja</p>
-              <div class="bg-background rounded-lg border border-border divide-y divide-border">
-                <div class="flex justify-between px-4 py-2 text-sm">
-                  <span class="text-text-secondary">Gastos en efectivo</span>
-                  <span class="font-medium">{{ formatCurrency(previewData.gastosEfectivo) }}</span>
-                </div>
-                <div class="flex justify-between px-4 py-2 text-sm">
-                  <span class="text-text-secondary">Esperado en caja</span>
-                  <span class="font-medium">{{ formatCurrency(previewData.cashExpected) }}</span>
-                </div>
-                <div class="flex justify-between px-4 py-2 text-sm">
-                  <span class="text-text-secondary">Contado</span>
-                  <span class="font-medium">{{ formatCurrency(totalCounted) }}</span>
-                </div>
-                <div class="flex justify-between px-4 py-2 text-sm font-semibold">
-                  <span>Diferencia</span>
-                  <span :class="diffClass(cashDiff)">{{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Links -->
-            <div class="flex flex-wrap gap-2">
-              <NuxtLink :to="`/ventas/ordenes`" class="text-xs text-primary hover:underline">→ Lista de ventas</NuxtLink>
-              <NuxtLink :to="`/finanzas/gastos`" class="text-xs text-primary hover:underline">→ Gastos del día</NuxtLink>
-              <NuxtLink :to="`/analitica`" class="text-xs text-primary hover:underline">→ Analítica</NuxtLink>
-            </div>
-          </div>
-
-          <button
-            @click="currentStep = 4"
-            class="mt-6 min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
-            Continuar →
-          </button>
-        </div>
-
-        <!-- ── Step 4: Cerrar el día ── -->
-        <div v-else-if="currentStep === 4" class="bg-surface border-2 border-border rounded-xl p-6">
-          <h3 class="font-semibold text-text-primary mb-2">Paso 4 — Cerrar el día</h3>
-          <p class="text-sm text-text-secondary mb-5">
-            ¿Cerrar el día <strong>{{ formatPeriod(periodStart, periodEnd) }}</strong>?<br />
-            <span class="text-xs text-text-tertiary">Esta acción no se puede deshacer.</span>
-          </p>
-
-          <div class="bg-background rounded-lg border border-border divide-y divide-border mb-6">
-            <div class="flex justify-between px-4 py-2 text-sm">
-              <span class="text-text-secondary">Total ventas</span>
-              <span class="font-medium">{{ formatCurrency(previewData?.totalSales ?? 0) }}</span>
-            </div>
-            <div class="flex justify-between px-4 py-2 text-sm">
-              <span class="text-text-secondary">Diferencia caja</span>
-              <span class="font-semibold" :class="diffClass(cashDiff)">
-                {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Error -->
-          <div v-if="submitError" class="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 mb-4">
-            <ExclamationTriangleIcon class="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <p class="text-sm text-destructive">{{ submitError }}</p>
-          </div>
-
-          <div class="flex gap-3">
-            <button
-              @click="currentStep = 3"
-              class="min-h-[44px] px-4 py-2 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              @click="handleConfirmButton"
-              :disabled="isSubmitting"
-              class="min-h-[44px] px-6 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              :class="confirmArmed
-                ? 'bg-destructive text-white hover:bg-destructive/90 ring-2 ring-destructive/30'
-                : 'bg-primary text-primary-foreground hover:bg-primary/90'"
-            >
-              <span v-if="isSubmitting">Cerrando...</span>
-              <span v-else-if="confirmArmed">¿Confirmar cierre?</span>
-              <span v-else>Cerrar el día</span>
-            </button>
-          </div>
-        </div>
-
-      </div><!-- end wizard -->
-    </template><!-- end cierre view -->
 
   </div>
 </template>
@@ -490,9 +456,6 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  ChartBarIcon,
-  LockClosedIcon,
-  ArrowLeftIcon,
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({ layout: 'dashboard' })
@@ -500,18 +463,13 @@ useHead({ title: 'Cierre - Warocol' })
 
 const { currentTenant } = useTenantReactive()
 
-// ── Views ─────────────────────────────────────────────────────────────────
-const views = [
-  { key: 'cierre',    label: 'Cierre' },
-  { key: 'historial', label: 'Historial' },
-] as const
-type View = typeof views[number]['key']
-const activeView = ref<View>('cierre')
-
 // ── Period ─────────────────────────────────────────────────────────────────
 const today = new Date().toISOString().split('T')[0]
 const periodStart = ref(today)
 const periodEnd   = ref(today)
+
+// ── Filter (historial month) ───────────────────────────────────────────────
+const filterMonth = ref(today.slice(0, 7))
 
 // ── Wizard state ──────────────────────────────────────────────────────────
 type CierreMode = null | 'preview' | 'wizard' | 'success'
@@ -572,26 +530,43 @@ const diffResultClass = computed(() => {
 const { data: rawHistorial, status: historialStatus } = useQuery({
   key: () => ['cierre', 'list', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/cierre'),
-  enabled: () => !!currentTenant.value && activeView.value === 'historial',
+  enabled: () => !!currentTenant.value,
   staleTime: 60_000,
 })
 
-const historialList    = computed(() => rawHistorial.value?.data ?? [])
+const historialList      = computed(() => rawHistorial.value?.data ?? [])
 const isLoadingHistorial = computed(() => historialStatus.value === 'pending' && !rawHistorial.value)
-const monthlyDiff      = computed(() =>
-  historialList.value.reduce((sum: number, r: any) => sum + (r.cashDifference ?? 0), 0)
+
+const filteredHistorial = computed(() => {
+  if (!filterMonth.value) return historialList.value
+  return historialList.value.filter((r: any) => r.periodStart?.slice(0, 7) === filterMonth.value)
+})
+
+const monthlyDiff = computed(() =>
+  filteredHistorial.value.reduce((sum: number, r: any) => sum + (r.cashDifference ?? 0), 0)
 )
 
 const historialColumns = [
-  { key: 'period',       label: 'Período',       sortable: false },
-  { key: 'totalSales',   label: 'Ventas',         sortable: false },
-  { key: 'cashDifference', label: 'Diferencia',   sortable: false },
-  { key: 'closedAt',     label: 'Registrado',     sortable: false },
+  { key: 'period',         title: 'Período',    sortable: false },
+  { key: 'totalSales',     title: 'Ventas',      sortable: false },
+  { key: 'cashDifference', title: 'Diferencia',  sortable: false },
+  { key: 'closedAt',       title: 'Registrado',  sortable: false },
 ]
 
-// ── Wizard actions ────────────────────────────────────────────────────────
-const startPreview = () => { cierreMode.value = 'preview' }
-const startWizard  = () => { cierreMode.value = 'wizard'; currentStep.value = 1; loadFromStorage() }
+// ── Toggle actions ────────────────────────────────────────────────────────
+const togglePreview = () => {
+  cierreMode.value = cierreMode.value === 'preview' ? null : 'preview'
+}
+
+const toggleWizard = () => {
+  if (cierreMode.value === 'wizard') {
+    cierreMode.value = null
+  } else {
+    cierreMode.value = 'wizard'
+    currentStep.value = 1
+    loadFromStorage()
+  }
+}
 
 const goBackFromWizard = () => {
   if (currentStep.value > 1) {
@@ -615,7 +590,7 @@ const resetAll = () => {
   clearStorage()
 }
 
-// ── Double confirm (500ms arm delay to prevent accidental tap) ────────────
+// ── Double confirm (500ms arm delay) ──────────────────────────────────────
 let armTimeout: ReturnType<typeof setTimeout> | null = null
 
 const handleConfirmButton = async () => {
@@ -656,6 +631,11 @@ const submitCierre = async () => {
   } finally {
     isSubmitting.value = false
   }
+}
+
+// ── Ref helper (avoids `as` cast in template — causes vue/no-parsing-error) ──
+const setDenomRef = (el: any, idx: number) => {
+  if (el) denomRefs.value[idx] = el
 }
 
 // ── Input helpers ─────────────────────────────────────────────────────────
@@ -710,15 +690,12 @@ const clearStorage = () => {
   localStorage.removeItem(STORAGE_KEY)
 }
 
-// Save on wizard state changes
 watch([currentStep, counts, monedasAmount, notes, revealed], saveToStorage, { deep: true })
 
-// Check for saved state on mount
 onMounted(() => {
   if (typeof window === 'undefined') return
   const raw = localStorage.getItem(STORAGE_KEY)
   if (raw) {
-    // Resume saved wizard
     cierreMode.value = 'wizard'
     loadFromStorage()
   }
