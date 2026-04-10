@@ -71,7 +71,7 @@
       <!-- genera cartera -->
       <template #cell-triggersCartera="{ row }">
         <span v-if="row.triggersCartera" class="text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded px-1.5 py-0.5">Sí</span>
-        <span v-else class="text-xs text-text-secondary">—</span>
+        <span v-else class="text-xs bg-background border border-border text-text-secondary rounded px-1.5 py-0.5">No</span>
       </template>
 
       <!-- method count -->
