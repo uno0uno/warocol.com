@@ -238,13 +238,7 @@
             >
               Continuar con autorización de gerente
             </button>
-            <NuxtLink
-              to="/finanzas/cierre"
-              class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex items-center"
-            >
-              Cancelar
-            </NuxtLink>
-          </div>
+              </div>
         </template>
         <div v-else class="text-sm text-text-secondary py-4">No se pudo cargar el estado de las mesas.</div>
       </div>
