@@ -9,8 +9,7 @@
 
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- ── Filter bar ────────────────────────────────────────────────────── -->
-      <div class="flex flex-wrap items-center gap-2 w-full">
-        <div class="w-full sm:w-64">
+      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
         <VueDatePicker
           v-model="dateRangeDates"
           range
@@ -26,7 +25,6 @@
           menu-class-name="dp-custom-menu"
           calendar-cell-class-name="dp-custom-cell"
         />
-        </div>
 
         <button
           v-if="dateRangeDates"
