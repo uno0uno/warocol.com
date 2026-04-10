@@ -104,28 +104,26 @@
         <div class="p-3 sm:p-4 border-b border-border">
           <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Métodos de pago</h3>
         </div>
-        <div class="divide-y divide-border">
-          <template v-if="displayGroups.length > 0">
-            <div
-              v-for="group in displayGroups"
-              :key="group.slug"
-              class="flex items-center gap-4 px-4 py-3"
-            >
-              <span class="text-sm text-text-secondary w-28 flex-shrink-0">{{ group.label }}</span>
-              <div class="flex-1 h-2 bg-border rounded-full overflow-hidden">
-                <div
-                  class="h-full rounded-full bg-primary transition-all"
-                  :style="{ width: `${groupPct(group)}%` }"
-                />
-              </div>
-              <div class="text-right flex-shrink-0 w-32">
-                <span class="text-sm font-medium text-text-primary">{{ formatCurrency(group.total) }}</span>
-                <span class="text-xs text-text-secondary ml-1.5">{{ groupPct(group).toFixed(0) }}%</span>
-              </div>
+        <div v-if="displayGroups.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border">
+          <div
+            v-for="group in displayGroups"
+            :key="group.slug"
+            class="flex flex-col gap-1.5 px-4 py-4 bg-surface"
+          >
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :class="GROUP_COLORS[group.slug]?.dot ?? 'bg-primary'" />
+              <span class="text-xs font-medium text-text-secondary uppercase tracking-wide">{{ group.label }}</span>
             </div>
-          </template>
-          <div v-else class="px-4 py-4 text-sm text-text-secondary">Sin datos de métodos de pago.</div>
+            <p class="text-lg font-bold text-text-primary leading-tight">{{ formatCurrency(group.total) }}</p>
+            <span
+              class="self-start text-xs font-semibold px-1.5 py-0.5 rounded"
+              :class="GROUP_COLORS[group.slug]?.badge ?? 'bg-primary/10 text-primary'"
+            >
+              {{ groupPct(group).toFixed(0) }}%
+            </span>
+          </div>
         </div>
+        <div v-else class="px-4 py-4 text-sm text-text-secondary">Sin datos de métodos de pago.</div>
       </div>
 
       <!-- CTA -->
@@ -201,6 +199,13 @@ const isRefreshing   = computed(() => previewAsyncStatus.value === 'loading' && 
 
 const GROUP_LABELS: Record<string, string> = {
   cash: 'Efectivo', card: 'Tarjeta', digital: 'Digital', credit: 'Crédito',
+}
+
+const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
+  cash:    { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700' },
+  card:    { dot: 'bg-blue-500',    badge: 'bg-blue-50 text-blue-700'       },
+  digital: { dot: 'bg-violet-500',  badge: 'bg-violet-50 text-violet-700'   },
+  credit:  { dot: 'bg-amber-500',   badge: 'bg-amber-50 text-amber-700'     },
 }
 
 interface BreakdownRowRaw { group_slug: string; method_name: string; total: number }
