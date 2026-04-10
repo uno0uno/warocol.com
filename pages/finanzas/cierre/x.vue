@@ -28,7 +28,6 @@
               :locale="es"
               placeholder="Rango de fechas"
               auto-apply
-              :teleport="true"
               :max-date="new Date()"
               :format="formatDateRange"
               input-class-name="dp-custom-input"
@@ -104,7 +103,7 @@
         <div class="p-3 sm:p-4 border-b border-border">
           <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Métodos de pago</h3>
         </div>
-        <div v-if="groupedMethods.length > 0" class="divide-y divide-border">
+        <div v-if="groupedMethods?.length" class="divide-y divide-border">
           <div
             v-for="grp in groupedMethods"
             :key="grp.slug"
