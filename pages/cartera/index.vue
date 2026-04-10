@@ -10,14 +10,14 @@ const lastUpdate = ref<Date>(new Date())
 // ── Status filter ─────────────────────────────────────────────────────────
 const statusFilter = ref<'all' | 'overdue' | 'current'>('all')
 
-// ── Aging bucket filter (client-side) ─────────────────────────────────────
+// ── Aging bucket filter (server-side) ─────────────────────────────────────
 const agingFilter = ref<string | null>(null)
 
-const agingRanges: Record<string, (days: number) => boolean> = {
-  '0–30 días':  d => d <= 30,
-  '31–60 días': d => d > 30 && d <= 60,
-  '61–90 días': d => d > 60 && d <= 90,
-  '90+ días':   d => d > 90,
+const agingRanges: Record<string, { days_min?: number; days_max?: number }> = {
+  '0–30 días':  { days_min: 0,  days_max: 30 },
+  '31–60 días': { days_min: 31, days_max: 60 },
+  '61–90 días': { days_min: 61, days_max: 90 },
+  '90+ días':   { days_min: 91 },
 }
 
 const selectAgingBucket = (label: string) => {
@@ -43,22 +43,18 @@ const summary = computed(() => summaryData.value?.data ?? { total_outstanding: 0
 
 // ── Customers list ────────────────────────────────────────────────────────
 const { data: customersData, asyncStatus: customersAsyncStatus, error: customersError, refetch: refetchCustomers } = useQuery({
-  key: () => ['cartera', 'customers', currentTenant.value?.id, statusFilter.value],
-  query: () => $fetch<{ success: boolean; data: Array<{ customer_id: string; name: string; phone: string | null; total_outstanding: number; oldest_order_days: number; order_count: number; status: 'overdue' | 'current' }> }>('/api/cartera/customers', {
-    params: { status: statusFilter.value, limit: 200, offset: 0 },
-  }),
+  key: () => ['cartera', 'customers', currentTenant.value?.id, statusFilter.value, agingFilter.value],
+  query: () => {
+    const range = agingFilter.value ? agingRanges[agingFilter.value] : {}
+    return $fetch<{ success: boolean; data: Array<{ customer_id: string; name: string; phone: string | null; total_outstanding: number; oldest_order_days: number; order_count: number; status: 'overdue' | 'current' }> }>('/api/cartera/customers', {
+      params: { status: statusFilter.value, limit: 200, offset: 0, ...range },
+    })
+  },
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
 })
 
 const customers = computed(() => customersData.value?.data ?? [])
-
-const filteredCustomers = computed(() => {
-  if (!agingFilter.value) return customers.value
-  const rangeFn = agingRanges[agingFilter.value]
-  if (!rangeFn) return customers.value
-  return customers.value.filter(c => rangeFn(c.oldest_order_days))
-})
 
 const isLoadingCustomers = computed(() => !customersData.value && !customersError.value)
 const isRefreshingCustomers = computed(() => customersAsyncStatus.value === 'loading' && customersData.value != null)
@@ -265,7 +261,7 @@ onUnmounted(() => {
       <!-- Debtors Table -->
       <UiResponsiveDataView
         :columns="tableColumns"
-        :data="filteredCustomers"
+        :data="customers"
         empty-message="Sin deudas pendientes"
         empty-sub-message="No hay clientes con saldo pendiente en este momento"
         variant="default"
