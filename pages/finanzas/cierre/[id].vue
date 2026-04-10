@@ -124,6 +124,22 @@
           <p class="text-sm text-text-primary">{{ cierre.notes }}</p>
         </div>
 
+        <!-- Desglose por método de pago (solo cierres nuevos con breakdown) -->
+        <div v-if="cierre.breakdown?.length > 0" class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
+          <div class="p-3 sm:p-4 border-b border-border">
+            <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Desglose por método de pago</h3>
+          </div>
+          <div v-for="group in breakdownByGroup" :key="group.slug" class="border-b border-border last:border-b-0">
+            <div class="px-4 py-2 bg-background">
+              <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ group.label }}</span>
+            </div>
+            <div v-for="method in group.methods" :key="method.methodName" class="flex justify-between px-4 py-2 text-sm">
+              <span class="text-text-secondary pl-2">{{ method.methodName }}</span>
+              <span class="font-medium">{{ formatCurrency(method.total) }}</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Back -->
         <div class="sm:col-span-2">
           <NuxtLink
@@ -142,6 +158,13 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
 
+const GROUP_LABELS: Record<string, string> = {
+  cash:    'Efectivo',
+  card:    'Tarjeta',
+  digital: 'Digital',
+  credit:  'Crédito',
+}
+
 definePageMeta({ layout: 'dashboard' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -157,16 +180,31 @@ const { data: rawCierre, status, asyncStatus, error: fetchError, refetch } = use
 })
 
 const cierre       = computed(() => rawCierre.value?.data ?? null)
+
+interface BreakdownRow { groupSlug: string; methodName: string; total: number }
+interface BreakdownGroup { slug: string; label: string; methods: BreakdownRow[] }
+
+const breakdownByGroup = computed<BreakdownGroup[]>(() => {
+  const rows: BreakdownRow[] = cierre.value?.breakdown ?? []
+  const map = new Map<string, BreakdownGroup>()
+  for (const row of rows) {
+    if (!map.has(row.groupSlug)) {
+      map.set(row.groupSlug, {
+        slug:    row.groupSlug,
+        label:   GROUP_LABELS[row.groupSlug] ?? row.groupSlug,
+        methods: [],
+      })
+    }
+    map.get(row.groupSlug)!.methods.push(row)
+  }
+  return Array.from(map.values())
+})
 const isLoading    = computed(() => status.value === 'pending' && !cierre.value)
 const isRefreshing = computed(() => asyncStatus.value === 'loading' && cierre.value != null)
 
-onMounted(() => {
-  setRefreshHandler(refetch)
-  registerProgressiveLoading(isRefreshing)
-})
-onUnmounted(() => {
-  clearRefreshHandler(refetch)
-})
+registerProgressiveLoading(isRefreshing)
+onMounted(() => { setRefreshHandler(refetch) })
+onUnmounted(() => { clearRefreshHandler(refetch) })
 
 useHead(() => ({
   title: cierre.value ? `Cierre ${formatPeriod(cierre.value.periodStart, cierre.value.periodEnd)} - Warocol` : 'Cierre - Warocol',
