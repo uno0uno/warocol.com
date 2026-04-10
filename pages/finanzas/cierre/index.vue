@@ -10,23 +10,21 @@
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- ── Filter bar ────────────────────────────────────────────────────── -->
       <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
-        <div class="w-56 flex-shrink-0">
-          <VueDatePicker
-            v-model="dateRangeDates"
-            range
-            :preset-dates="presetDates"
-            :enable-time-picker="false"
-            :locale="es"
-            placeholder="Rango de fechas"
-            auto-apply
-            :teleport="true"
-            :max-date="new Date()"
-            :format="formatDateRange"
-            input-class-name="dp-custom-input"
-            menu-class-name="dp-custom-menu"
-            calendar-cell-class-name="dp-custom-cell"
-          />
-        </div>
+        <VueDatePicker
+          v-model="dateRangeDates"
+          range
+          :preset-dates="presetDates"
+          :enable-time-picker="false"
+          :locale="es"
+          placeholder="Rango de fechas"
+          auto-apply
+          :teleport="true"
+          :max-date="new Date()"
+          :format="formatDateRange"
+          input-class-name="dp-custom-input"
+          menu-class-name="dp-custom-menu"
+          calendar-cell-class-name="dp-custom-cell"
+        />
 
         <button
           v-if="dateRangeDates"
@@ -39,7 +37,9 @@
           </svg>
         </button>
 
-        <div class="flex items-center gap-2 ml-auto flex-shrink-0">
+        <div class="flex-1" />
+
+        <div class="flex items-center gap-2 flex-shrink-0">
           <button
             @click="navigateTo({ path: '/finanzas/cierre/x', query: { start: periodStart, end: periodEnd } })"
             class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
