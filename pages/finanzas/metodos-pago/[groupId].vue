@@ -37,6 +37,7 @@
 
       <div class="ml-auto">
         <button
+          v-if="group?.slug !== 'cash'"
           class="flex items-center gap-1.5 min-h-[36px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 active:scale-[0.98] transition-all"
           @click="openCreate"
         >
