@@ -15,6 +15,7 @@ definePageMeta({
 const navigationItems = [
   { to: '/finanzas/cartera', label: 'Cartera' },
   { to: '/finanzas/gastos',  label: 'Gastos' },
+  { to: '/finanzas/cierre',  label: 'Cierre' },
 ]
 
 useHead({ title: 'Finanzas - Warocol' })

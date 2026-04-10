@@ -115,7 +115,7 @@
       </div>
 
       <!-- ── DIVIDER ── -->
-      <div class="my-2 mx-1 border-t nav-divider" />
+      <div class="my-1.5 mx-1 border-t nav-divider" />
 
       <!-- ── HERRAMIENTAS ── -->
       <div class="space-y-0.5">
@@ -143,7 +143,7 @@
       </div>
 
       <!-- ── DIVIDER ── -->
-      <div class="my-2 mx-1 border-t nav-divider" />
+      <div class="my-1.5 mx-1 border-t nav-divider" />
 
       <!-- ── APPS ── -->
       <div class="space-y-0.5">
@@ -365,10 +365,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.375rem 0.75rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 0.5rem;
   transition: background-color 0.15s, color 0.15s;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   width: 100%;
   text-decoration: none;
 }
@@ -388,8 +388,8 @@ onMounted(() => {
 
 /* ── Nav icon ── */
 .nav-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   transition: color 0.15s;
 }
@@ -413,8 +413,8 @@ onMounted(() => {
 
 /* ── Section label ── */
 .nav-section-label {
-  padding: 0.25rem 0.75rem 0.125rem;
-  font-size: 10px;
+  padding: 0.125rem 0.75rem 0.0625rem;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 600;
