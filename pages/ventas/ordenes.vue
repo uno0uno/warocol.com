@@ -11,6 +11,17 @@ useHead({ title: 'Órdenes - Ventas' })
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
 
+// Payment groups for filter and bulk-update dropdowns
+const { data: paymentGroupsData } = useQuery({
+  key: () => ['payments', 'groups', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: { id: string; slug: string; name: string; sortOrder: number; isActive: boolean }[] }>('/api/finanzas/metodos-pago/grupos'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 300_000,
+})
+const paymentGroups = computed(() =>
+  (paymentGroupsData.value?.data ?? []).filter(g => g.isActive).sort((a, b) => a.sortOrder - b.sortOrder)
+)
+
 // Export modal state
 const showExportModal = ref(false)
 const exportResult = ref<{ success: boolean; message: string; email?: string; count?: number } | null>(null)
@@ -449,10 +460,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
         >
           <option :value="null">Método pago</option>
-          <option value="cash">Efectivo</option>
-          <option value="card">Tarjeta</option>
-          <option value="digital">Digital</option>
-          <option value="credit">Crédito</option>
+          <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
         </select>
 
         <!-- Status Filter -->
@@ -537,9 +545,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           >
             <option value="">Método de pago...</option>
-            <option value="cash">Efectivo</option>
-            <option value="card">Tarjeta</option>
-            <option value="digital">Digital</option>
+            <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
           </select>
 
           <button

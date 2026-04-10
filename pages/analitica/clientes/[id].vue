@@ -13,6 +13,17 @@ const { currentTenant } = useTenantReactive()
 
 const customerId = computed(() => route.params.id as string)
 
+// Payment groups for the payment form select
+const { data: paymentGroupsData } = useQuery({
+  key: () => ['payments', 'groups', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: { id: string; slug: string; name: string; sortOrder: number; isActive: boolean }[] }>('/api/finanzas/metodos-pago/grupos'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 300_000,
+})
+const paymentGroups = computed(() =>
+  (paymentGroupsData.value?.data ?? []).filter(g => g.isActive).sort((a, b) => a.sortOrder - b.sortOrder)
+)
+
 // ── Layout actions ────────────────────────────────────────────────────────
 const setPageTitle = inject<(title: string | undefined) => void>('setPageTitle')
 const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle')
@@ -846,9 +857,7 @@ onUnmounted(() => {
                 v-model="paymentForm.payment_method"
                 class="h-11 px-3 text-sm border-2 border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
               >
-                <option value="cash">Efectivo</option>
-                <option value="card">Tarjeta</option>
-                <option value="digital">Digital</option>
+                <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
               </select>
             </div>
 
