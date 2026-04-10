@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
@@ -10,8 +10,29 @@ const lastUpdate = ref<Date>(new Date())
 // ── Status filter ─────────────────────────────────────────────────────────
 const statusFilter = ref<'all' | 'overdue' | 'current'>('all')
 
+// ── Aging bucket filter (client-side) ─────────────────────────────────────
+const agingFilter = ref<string | null>(null)
+
+const agingRanges: Record<string, (days: number) => boolean> = {
+  '0–30 días':  d => d <= 30,
+  '31–60 días': d => d > 30 && d <= 60,
+  '61–90 días': d => d > 60 && d <= 90,
+  '90+ días':   d => d > 90,
+}
+
+const selectAgingBucket = (label: string) => {
+  if (agingFilter.value === label) {
+    agingFilter.value = null
+  } else {
+    agingFilter.value = label
+    statusFilter.value = 'all'
+  }
+}
+
+watch(statusFilter, () => { agingFilter.value = null })
+
 // ── Summary ───────────────────────────────────────────────────────────────
-const { data: summaryData, status: summaryStatus, error: summaryError, refetch: refetchSummary } = useQuery({
+const { data: summaryData, error: summaryError, refetch: refetchSummary } = useQuery({
   key: () => ['cartera', 'summary', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: { total_outstanding: number; customer_count: number; overdue_count: number; overdue_amount: number } }>('/api/cartera/summary'),
   enabled: () => !!currentTenant.value,
@@ -21,7 +42,7 @@ const { data: summaryData, status: summaryStatus, error: summaryError, refetch: 
 const summary = computed(() => summaryData.value?.data ?? { total_outstanding: 0, customer_count: 0, overdue_count: 0, overdue_amount: 0 })
 
 // ── Customers list ────────────────────────────────────────────────────────
-const { data: customersData, status: customersStatus, asyncStatus: customersAsyncStatus, error: customersError, refetch: refetchCustomers } = useQuery({
+const { data: customersData, asyncStatus: customersAsyncStatus, error: customersError, refetch: refetchCustomers } = useQuery({
   key: () => ['cartera', 'customers', currentTenant.value?.id, statusFilter.value],
   query: () => $fetch<{ success: boolean; data: Array<{ customer_id: string; name: string; phone: string | null; total_outstanding: number; oldest_order_days: number; order_count: number; status: 'overdue' | 'current' }> }>('/api/cartera/customers', {
     params: { status: statusFilter.value, limit: 200, offset: 0 },
@@ -31,11 +52,19 @@ const { data: customersData, status: customersStatus, asyncStatus: customersAsyn
 })
 
 const customers = computed(() => customersData.value?.data ?? [])
+
+const filteredCustomers = computed(() => {
+  if (!agingFilter.value) return customers.value
+  const rangeFn = agingRanges[agingFilter.value]
+  if (!rangeFn) return customers.value
+  return customers.value.filter(c => rangeFn(c.oldest_order_days))
+})
+
 const isLoadingCustomers = computed(() => !customersData.value && !customersError.value)
 const isRefreshingCustomers = computed(() => customersAsyncStatus.value === 'loading' && customersData.value != null)
 
 // ── Aging ─────────────────────────────────────────────────────────────────
-const { data: agingData, status: agingStatus, error: agingError, refetch: refetchAging } = useQuery({
+const { data: agingData, refetch: refetchAging } = useQuery({
   key: () => ['cartera', 'aging', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: Array<{ label: string; customer_count: number; total_amount: number }> }>('/api/cartera/aging'),
   enabled: () => !!currentTenant.value,
@@ -45,10 +74,34 @@ const { data: agingData, status: agingStatus, error: agingError, refetch: refetc
 const agingBuckets = computed(() => agingData.value?.data ?? [])
 
 const agingColors = [
-  { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', amount: 'text-emerald-800' },
-  { bg: 'bg-amber-50',   border: 'border-amber-200',   text: 'text-amber-700',   amount: 'text-amber-800' },
-  { bg: 'bg-orange-50',  border: 'border-orange-200',  text: 'text-orange-700',  amount: 'text-orange-800' },
-  { bg: 'bg-red-50',     border: 'border-red-200',     text: 'text-red-700',     amount: 'text-red-800' },
+  {
+    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+    border: 'border-emerald-200 dark:border-emerald-800',
+    text: 'text-emerald-700 dark:text-emerald-400',
+    amount: 'text-emerald-800 dark:text-emerald-300',
+    active: 'ring-2 ring-emerald-400 dark:ring-emerald-500',
+  },
+  {
+    bg: 'bg-amber-50 dark:bg-amber-950/30',
+    border: 'border-amber-200 dark:border-amber-800',
+    text: 'text-amber-700 dark:text-amber-400',
+    amount: 'text-amber-800 dark:text-amber-300',
+    active: 'ring-2 ring-amber-400 dark:ring-amber-500',
+  },
+  {
+    bg: 'bg-orange-50 dark:bg-orange-950/30',
+    border: 'border-orange-200 dark:border-orange-800',
+    text: 'text-orange-700 dark:text-orange-400',
+    amount: 'text-orange-800 dark:text-orange-300',
+    active: 'ring-2 ring-orange-400 dark:ring-orange-500',
+  },
+  {
+    bg: 'bg-red-50 dark:bg-red-950/30',
+    border: 'border-red-200 dark:border-red-800',
+    text: 'text-red-700 dark:text-red-400',
+    amount: 'text-red-800 dark:text-red-300',
+    active: 'ring-2 ring-red-400 dark:ring-red-500',
+  },
 ]
 
 // ── Table columns ─────────────────────────────────────────────────────────
@@ -125,6 +178,50 @@ onUnmounted(() => {
         />
       </div>
 
+      <!-- Aging Section — antigüedad de cartera (encima de la tabla) -->
+      <div v-if="agingBuckets.length > 0">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-text-primary">Antigüedad de cartera</h3>
+          <button
+            v-if="agingFilter"
+            @click="agingFilter = null"
+            class="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary transition-colors"
+            aria-label="Limpiar filtro de antigüedad"
+          >
+            <span>{{ agingFilter }}</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <button
+            v-for="(bucket, idx) in agingBuckets"
+            :key="bucket.label"
+            type="button"
+            class="rounded-xl border-2 px-4 py-4 flex flex-col gap-1 text-left min-h-[80px] cursor-pointer transition-all duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 ring-offset-background"
+            :class="[
+              agingColors[idx]?.bg ?? 'bg-surface',
+              agingColors[idx]?.border ?? 'border-border',
+              agingFilter === bucket.label ? (agingColors[idx]?.active ?? 'ring-2 ring-primary') : '',
+            ]"
+            :aria-pressed="agingFilter === bucket.label"
+            :aria-label="`Filtrar por ${bucket.label}: ${bucket.customer_count} clientes`"
+            @click="selectAgingBucket(bucket.label)"
+          >
+            <span class="text-sm font-semibold leading-snug" :class="agingColors[idx]?.text ?? 'text-text-secondary'">
+              {{ bucket.label }}
+            </span>
+            <span class="text-lg font-bold leading-tight" :class="agingColors[idx]?.amount ?? 'text-text-primary'">
+              {{ formatCurrency(bucket.total_amount) }}
+            </span>
+            <span class="text-sm leading-snug" :class="agingColors[idx]?.text ?? 'text-text-secondary'">
+              {{ bucket.customer_count }} cliente{{ bucket.customer_count !== 1 ? 's' : '' }}
+            </span>
+          </button>
+        </div>
+      </div>
+
       <!-- Filters Bar -->
       <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
         <select
@@ -151,7 +248,7 @@ onUnmounted(() => {
       <!-- Debtors Table -->
       <UiResponsiveDataView
         :columns="tableColumns"
-        :data="customers"
+        :data="filteredCustomers"
         empty-message="Sin deudas pendientes"
         empty-sub-message="No hay clientes con saldo pendiente en este momento"
         variant="default"
@@ -176,12 +273,12 @@ onUnmounted(() => {
               </p>
             </div>
             <div class="flex flex-col items-end gap-1 flex-shrink-0">
-              <span class="text-sm font-bold" :class="item.status === 'overdue' ? 'text-red-700' : 'text-amber-700'">
+              <span class="text-sm font-bold" :class="item.status === 'overdue' ? 'text-red-700 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'">
                 {{ formatCurrency(item.total_outstanding) }}
               </span>
               <span
                 class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                :class="item.status === 'overdue' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'"
+                :class="item.status === 'overdue' ? 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400'"
               >
                 {{ item.status === 'overdue' ? 'VENCIDA' : 'Al día' }}
               </span>
@@ -208,7 +305,7 @@ onUnmounted(() => {
         </template>
 
         <template #cell-oldest_order_days="{ value }">
-          <span class="text-sm" :class="value > 30 ? 'text-red-700 font-medium' : 'text-text-secondary'">
+          <span class="text-sm" :class="value > 30 ? 'text-red-700 dark:text-red-400 font-medium' : 'text-text-secondary'">
             {{ value }}d
           </span>
         </template>
@@ -217,7 +314,7 @@ onUnmounted(() => {
           <div class="flex items-center gap-2">
             <span
               class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
-              :class="row.status === 'overdue' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'"
+              :class="row.status === 'overdue' ? 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400'"
             >
               {{ row.status === 'overdue' ? 'VENCIDA' : 'Al día' }}
             </span>
@@ -235,29 +332,6 @@ onUnmounted(() => {
           </div>
         </template>
       </UiResponsiveDataView>
-
-      <!-- Aging Section -->
-      <div v-if="agingBuckets.length > 0" class="mt-2">
-        <h3 class="text-sm font-semibold text-text-primary mb-3">Antigüedad de cartera</h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div
-            v-for="(bucket, idx) in agingBuckets"
-            :key="bucket.label"
-            class="rounded-xl border-2 px-4 py-3 flex flex-col gap-1"
-            :class="[agingColors[idx]?.bg ?? 'bg-surface', agingColors[idx]?.border ?? 'border-border']"
-          >
-            <span class="text-xs font-semibold" :class="agingColors[idx]?.text ?? 'text-text-secondary'">
-              {{ bucket.label }}
-            </span>
-            <span class="text-lg font-bold" :class="agingColors[idx]?.amount ?? 'text-text-primary'">
-              {{ formatCurrency(bucket.total_amount) }}
-            </span>
-            <span class="text-xs" :class="agingColors[idx]?.text ?? 'text-text-secondary'">
-              {{ bucket.customer_count }} cliente{{ bucket.customer_count !== 1 ? 's' : '' }}
-            </span>
-          </div>
-        </div>
-      </div>
 
     </div>
   </div>
