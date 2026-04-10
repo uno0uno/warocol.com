@@ -290,12 +290,7 @@
             <span class="font-semibold text-text-primary">Total contado</span>
             <span class="font-bold text-lg text-text-primary">{{ formatCurrency(totalCounted) }}</span>
           </div>
-          <div v-if="!revealed">
-            <button @click="revealed = true" class="text-xs text-primary hover:underline">
-              Ver efectivo esperado →
-            </button>
-          </div>
-          <div v-if="revealed" class="p-3 rounded-lg border" :class="diffResultClass">
+          <div class="p-3 rounded-lg border" :class="diffResultClass">
             <div class="flex justify-between text-sm mb-1">
               <span>Esperado en caja</span>
               <span class="font-medium">{{ formatCurrency(previewData?.cashExpected) }}</span>
@@ -446,7 +441,6 @@ const periodEnd   = ref((route.query.end   as string) || today)
 
 // ── Wizard state ──────────────────────────────────────────────────────────
 const currentStep     = ref(1)
-const revealed        = ref(false)
 const confirmArmed    = ref(false)
 const managerOverride = ref(false)
 const isSubmitting    = ref(false)
@@ -558,7 +552,6 @@ const saveToStorage = () => {
     step: currentStep.value, counts: counts.value,
     monedasAmount: monedasAmount.value, notes: notes.value,
     periodStart: periodStart.value, periodEnd: periodEnd.value,
-    revealed: revealed.value,
   }))
 }
 
@@ -574,7 +567,6 @@ const loadFromStorage = () => {
     if (s.notes)         notes.value         = s.notes
     if (s.periodStart)   periodStart.value   = s.periodStart
     if (s.periodEnd)     periodEnd.value     = s.periodEnd
-    if (s.revealed)      revealed.value      = s.revealed
   } catch { /* ignore */ }
 }
 
@@ -583,7 +575,7 @@ const clearStorage = () => {
   localStorage.removeItem(STORAGE_KEY)
 }
 
-watch([currentStep, counts, monedasAmount, notes, revealed], saveToStorage, { deep: true })
+watch([currentStep, counts, monedasAmount, notes], saveToStorage, { deep: true })
 
 onMounted(() => {
   if (typeof window === 'undefined') return
