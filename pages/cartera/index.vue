@@ -73,6 +73,13 @@ const { data: agingData, refetch: refetchAging } = useQuery({
 
 const agingBuckets = computed(() => agingData.value?.data ?? [])
 
+const agingDots = [
+  'bg-emerald-500',
+  'bg-amber-500',
+  'bg-orange-500',
+  'bg-red-500',
+]
+
 const agingColors = [
   {
     bg: 'bg-emerald-50 dark:bg-emerald-950/30',
@@ -179,45 +186,55 @@ onUnmounted(() => {
       </div>
 
       <!-- Aging Section — antigüedad de cartera (encima de la tabla) -->
-      <div v-if="agingBuckets.length > 0">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-sm font-semibold text-text-primary">Antigüedad de cartera</h3>
+      <div v-if="agingBuckets.length > 0" class="bg-white border border-border rounded-xl overflow-hidden">
+        <!-- Header -->
+        <div class="px-5 py-4 flex items-center justify-between border-b border-border">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="text-sm font-semibold text-text-primary">Antigüedad de cartera</h3>
+          </div>
           <button
             v-if="agingFilter"
             @click="agingFilter = null"
             class="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary transition-colors"
             aria-label="Limpiar filtro de antigüedad"
           >
-            <span>{{ agingFilter }}</span>
+            <span class="font-medium">{{ agingFilter }}</span>
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+        <!-- Buckets grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
           <button
             v-for="(bucket, idx) in agingBuckets"
             :key="bucket.label"
             type="button"
-            class="rounded-xl border-2 px-4 py-4 flex flex-col gap-1 text-left min-h-[80px] cursor-pointer transition-all duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 ring-offset-background"
+            class="p-4 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-inset"
             :class="[
-              agingColors[idx]?.bg ?? 'bg-surface',
-              agingColors[idx]?.border ?? 'border-border',
-              agingFilter === bucket.label ? (agingColors[idx]?.active ?? 'ring-2 ring-primary') : '',
+              agingFilter === bucket.label
+                ? (agingColors[idx]?.bg ?? 'bg-surface-secondary') + ' ' + (agingColors[idx]?.focusRing ?? 'focus:ring-primary')
+                : 'hover:bg-surface-secondary/50',
+              idx < 2 ? 'border-b sm:border-b-0' : '',
             ]"
             :aria-pressed="agingFilter === bucket.label"
             :aria-label="`Filtrar por ${bucket.label}: ${bucket.customer_count} clientes`"
             @click="selectAgingBucket(bucket.label)"
           >
-            <span class="text-sm font-semibold leading-snug" :class="agingColors[idx]?.text ?? 'text-text-secondary'">
-              {{ bucket.label }}
-            </span>
-            <span class="text-lg font-bold leading-tight" :class="agingColors[idx]?.amount ?? 'text-text-primary'">
+            <div class="flex items-center gap-1.5 mb-1.5">
+              <div class="w-2 h-2 rounded-full flex-shrink-0" :class="agingDots[idx]" />
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">{{ bucket.label }}</p>
+            </div>
+            <p class="text-base font-bold leading-tight" :class="agingColors[idx]?.amount ?? 'text-text-primary'">
               {{ formatCurrency(bucket.total_amount) }}
-            </span>
-            <span class="text-sm leading-snug" :class="agingColors[idx]?.text ?? 'text-text-secondary'">
+            </p>
+            <p class="text-xs text-text-secondary mt-0.5">
               {{ bucket.customer_count }} cliente{{ bucket.customer_count !== 1 ? 's' : '' }}
-            </span>
+            </p>
           </button>
         </div>
       </div>
