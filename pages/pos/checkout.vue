@@ -31,8 +31,30 @@ const { currentTenant } = useTenantReactive()
 // Inject subtitle setter from layout
 const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle', () => {})
 
+// Payment method types
+interface PosPaymentMethod {
+  id: string
+  name: string
+}
+interface PosPaymentGroup {
+  id: string
+  slug: string
+  name: string
+  triggersCartera: boolean
+  methods: PosPaymentMethod[]
+}
+
+const PAYMENT_DEFAULTS: PosPaymentGroup[] = [
+  { id: 'cash',    slug: 'cash',    name: 'Efectivo', triggersCartera: false, methods: [] },
+  { id: 'card',    slug: 'card',    name: 'Datáfono', triggersCartera: false, methods: [] },
+  { id: 'digital', slug: 'digital', name: 'QR',       triggersCartera: false, methods: [] },
+  { id: 'credit',  slug: 'credit',  name: 'Crédito',  triggersCartera: true,  methods: [] },
+]
+
 // State
-const selectedPaymentMethod = ref<'cash' | 'card' | 'digital' | 'credit'>('cash')
+const selectedPaymentMethod = ref<string>('cash')
+const selectedPaymentMethodId = ref<string | null>(null)
+const posPaymentGroups = ref<PosPaymentGroup[]>(PAYMENT_DEFAULTS)
 const creditDueDate = ref<string>('')
 const isProcessing = ref(false)
 const processingError = ref('')
@@ -176,7 +198,8 @@ const processOrder = async () => {
         body: {
           payment_method: selectedPaymentMethod.value,
           customer_id: selectedCustomer.value?.id ?? null,
-          ...(selectedPaymentMethod.value === 'credit' && creditDueDate.value
+          payment_method_id: selectedPaymentMethodId.value ?? null,
+          ...(selectedGroup.value?.triggersCartera && creditDueDate.value
             ? { credit_due_date: creditDueDate.value }
             : {}),
         },
@@ -217,7 +240,8 @@ const processOrder = async () => {
       body: {
         payment_method: selectedPaymentMethod.value,
         customer_id: selectedCustomer.value.id,
-        ...(selectedPaymentMethod.value === 'credit' && creditDueDate.value
+        payment_method_id: selectedPaymentMethodId.value ?? null,
+        ...(selectedGroup.value?.triggersCartera && creditDueDate.value
           ? { credit_due_date: creditDueDate.value }
           : {}),
       }
@@ -255,15 +279,29 @@ const onCustomerIdentified = (customer: { id: string; name: string | null; phone
   processingError.value = ''
 }
 
+// Derived from dynamic groups
+const selectedGroup = computed(() =>
+  posPaymentGroups.value.find(g => g.slug === selectedPaymentMethod.value) ?? null
+)
+
+// Reset sub-method when group changes
+watch(selectedPaymentMethod, () => {
+  selectedPaymentMethodId.value = null
+})
+
 const getPaymentMethodLabel = (method: string) => {
-  const labels: Record<string, string> = {
-    'cash': 'Efectivo',
-    'card': 'Tarjeta',
-    'digital': 'Pago Digital',
-    'credit': 'Crédito'
-  }
-  return labels[method] || method
+  return posPaymentGroups.value.find(g => g.slug === method)?.name ?? method
 }
+
+// Dynamic grid class based on group count (excluding hidden cartera groups)
+const paymentGridClass = computed(() => {
+  const visibleCount = posPaymentGroups.value.filter(
+    g => !g.triggersCartera || (selectedCustomer.value && !isAnonymousCustomer.value)
+  ).length
+  if (visibleCount <= 2) return 'grid-cols-2'
+  if (visibleCount === 3) return 'grid-cols-3'
+  return 'grid-cols-2 md:grid-cols-4'
+})
 
 const cancelOrder = async () => {
   if (isMesaMode.value) {
@@ -288,6 +326,18 @@ const closeSuccessModal = () => {
     router.push('/pos')
   } else {
     router.push('/pos')
+  }
+}
+
+// Fetch dynamic payment methods from API — falls back to hardcoded defaults on error
+const fetchPaymentMethods = async () => {
+  try {
+    const response = await $fetch<{ success: boolean; data: PosPaymentGroup[] }>('/api/pos/payment-methods')
+    if (response.success && response.data?.length) {
+      posPaymentGroups.value = response.data
+    }
+  } catch {
+    // Keep PAYMENT_DEFAULTS — POS must never break
   }
 }
 
@@ -332,6 +382,9 @@ onMounted(async () => {
   if (posStore.cart.length > 0) {
     isSyncingCart.value = true
   }
+
+  // Fetch dynamic payment methods (fallback to defaults on error)
+  await fetchPaymentMethods()
 
   // Sincronizar carrito al backend (batch, sin cliente)
   await syncCart()
@@ -441,112 +494,120 @@ onUnmounted(() => {
             Método de Pago
           </h2>
 
-          <div class="grid gap-2 md:gap-4" :class="(!isAnonymousCustomer && selectedCustomer) ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-3'">
-            <!-- Efectivo -->
-            <label class="cursor-pointer relative">
-              <input type="radio" name="payment" value="cash" v-model="selectedPaymentMethod" class="sr-only">
+          <!-- Dynamic payment method groups — loaded from API, falls back to 4 defaults -->
+          <div class="grid gap-2 md:gap-4" :class="paymentGridClass">
+            <label
+              v-for="group in posPaymentGroups"
+              :key="group.slug"
+              v-show="!group.triggersCartera || (selectedCustomer && !isAnonymousCustomer)"
+              class="cursor-pointer relative"
+            >
+              <input type="radio" name="payment" :value="group.slug" v-model="selectedPaymentMethod" class="sr-only">
               <div
                 class="border rounded-xl p-2.5 md:p-4 theme-transition h-full flex flex-col items-center gap-1.5 md:gap-3 md:items-start"
-                :class="selectedPaymentMethod === 'cash' ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:border-primary/30'"
+                :class="selectedPaymentMethod === group.slug
+                  ? (group.triggersCartera ? 'border-amber-500 bg-amber-50 shadow-sm dark:bg-amber-950/20' : 'border-primary bg-primary/5 shadow-sm')
+                  : (group.triggersCartera ? 'border-border hover:border-amber-400/40' : 'border-border hover:border-primary/30')"
               >
                 <div class="flex items-center justify-between w-full">
-                  <div class="bg-green-100 text-green-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <!-- Icon — cash -->
+                  <div
+                    v-if="group.slug === 'cash'"
+                    class="bg-green-100 text-green-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                  >
                     <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
                     </svg>
                   </div>
-                  <svg class="h-4 w-4 text-primary transition-all hidden md:block" :class="selectedPaymentMethod === 'cash' ? 'opacity-100' : 'opacity-0'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                  </svg>
-                </div>
-                <div class="text-center md:text-left w-full">
-                  <div class="font-semibold text-text-primary text-xs md:text-sm leading-tight">Efectivo</div>
-                  <div class="text-xs text-text-secondary hidden md:block">Pago en caja</div>
-                </div>
-                <!-- Mobile selected indicator -->
-                <div v-if="selectedPaymentMethod === 'cash'" class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary md:hidden"></div>
-              </div>
-            </label>
-
-            <!-- Tarjeta -->
-            <label class="cursor-pointer relative">
-              <input type="radio" name="payment" value="card" v-model="selectedPaymentMethod" class="sr-only">
-              <div
-                class="border rounded-xl p-2.5 md:p-4 theme-transition h-full flex flex-col items-center gap-1.5 md:gap-3 md:items-start"
-                :class="selectedPaymentMethod === 'card' ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:border-primary/30'"
-              >
-                <div class="flex items-center justify-between w-full">
-                  <div class="bg-blue-100 text-blue-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <!-- Icon — card -->
+                  <div
+                    v-else-if="group.slug === 'card'"
+                    class="bg-blue-100 text-blue-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                  >
                     <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
                     </svg>
                   </div>
-                  <svg class="h-4 w-4 text-primary transition-all hidden md:block" :class="selectedPaymentMethod === 'card' ? 'opacity-100' : 'opacity-0'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                  </svg>
-                </div>
-                <div class="text-center md:text-left w-full">
-                  <div class="font-semibold text-text-primary text-xs md:text-sm leading-tight">Datáfono</div>
-                  <div class="text-xs text-text-secondary hidden md:block">Crédito / Débito</div>
-                </div>
-                <div v-if="selectedPaymentMethod === 'card'" class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary md:hidden"></div>
-              </div>
-            </label>
-
-            <!-- QR / Digital -->
-            <label class="cursor-pointer relative">
-              <input type="radio" name="payment" value="digital" v-model="selectedPaymentMethod" class="sr-only">
-              <div
-                class="border rounded-xl p-2.5 md:p-4 theme-transition h-full flex flex-col items-center gap-1.5 md:gap-3 md:items-start"
-                :class="selectedPaymentMethod === 'digital' ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:border-primary/30'"
-              >
-                <div class="flex items-center justify-between w-full">
-                  <div class="bg-purple-100 text-purple-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <!-- Icon — digital -->
+                  <div
+                    v-else-if="group.slug === 'digital'"
+                    class="bg-purple-100 text-purple-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                  >
                     <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
                     </svg>
                   </div>
-                  <svg class="h-4 w-4 text-primary transition-all hidden md:block" :class="selectedPaymentMethod === 'digital' ? 'opacity-100' : 'opacity-0'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                  </svg>
-                </div>
-                <div class="text-center md:text-left w-full">
-                  <div class="font-semibold text-text-primary text-xs md:text-sm leading-tight">QR</div>
-                  <div class="text-xs text-text-secondary hidden md:block">Nequi / Daviplata</div>
-                </div>
-                <div v-if="selectedPaymentMethod === 'digital'" class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary md:hidden"></div>
-              </div>
-            </label>
-
-            <!-- Crédito — only for identified (non-anonymous) customers -->
-            <label v-if="selectedCustomer && !isAnonymousCustomer" class="cursor-pointer relative">
-              <input type="radio" name="payment" value="credit" v-model="selectedPaymentMethod" class="sr-only">
-              <div
-                class="border rounded-xl p-2.5 md:p-4 theme-transition h-full flex flex-col items-center gap-1.5 md:gap-3 md:items-start"
-                :class="selectedPaymentMethod === 'credit' ? 'border-amber-500 bg-amber-50 shadow-sm dark:bg-amber-950/20' : 'border-border hover:border-amber-400/40'"
-              >
-                <div class="flex items-center justify-between w-full">
-                  <div class="bg-amber-100 text-amber-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <!-- Icon — credit / triggersCartera -->
+                  <div
+                    v-else-if="group.triggersCartera"
+                    class="bg-amber-100 text-amber-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                  >
                     <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
                   </div>
-                  <svg class="h-4 w-4 text-amber-600 transition-all hidden md:block" :class="selectedPaymentMethod === 'credit' ? 'opacity-100' : 'opacity-0'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <!-- Icon — custom group fallback -->
+                  <div
+                    v-else
+                    class="bg-primary/10 text-primary w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                  >
+                    <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                    </svg>
+                  </div>
+
+                  <!-- Checkmark -->
+                  <svg
+                    class="h-4 w-4 transition-all hidden md:block"
+                    :class="[
+                      selectedPaymentMethod === group.slug ? 'opacity-100' : 'opacity-0',
+                      group.triggersCartera ? 'text-amber-600' : 'text-primary'
+                    ]"
+                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                  >
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                   </svg>
                 </div>
+
+                <!-- Group name -->
                 <div class="text-center md:text-left w-full">
-                  <div class="font-semibold text-xs md:text-sm leading-tight" :class="selectedPaymentMethod === 'credit' ? 'text-amber-700' : 'text-text-primary'">Crédito</div>
-                  <div class="text-xs text-text-secondary hidden md:block">Pago diferido</div>
+                  <div
+                    class="font-semibold text-xs md:text-sm leading-tight"
+                    :class="selectedPaymentMethod === group.slug && group.triggersCartera ? 'text-amber-700' : 'text-text-primary'"
+                  >
+                    {{ group.name }}
+                  </div>
                 </div>
-                <div v-if="selectedPaymentMethod === 'credit'" class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 md:hidden"></div>
+
+                <!-- Mobile selected dot -->
+                <div
+                  v-if="selectedPaymentMethod === group.slug"
+                  class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full md:hidden"
+                  :class="group.triggersCartera ? 'bg-amber-500' : 'bg-primary'"
+                ></div>
               </div>
             </label>
           </div>
 
-          <!-- Credit due date (optional) — shown only when credit is selected -->
-          <div v-if="selectedPaymentMethod === 'credit' && selectedCustomer && !isAnonymousCustomer" class="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+          <!-- Sub-option pill row — shown when selected group has method subtypes -->
+          <div v-if="selectedGroup?.methods?.length" class="mt-3 flex flex-wrap gap-2">
+            <button
+              v-for="method in selectedGroup.methods"
+              :key="method.id"
+              type="button"
+              @click="selectedPaymentMethodId = selectedPaymentMethodId === method.id ? null : method.id"
+              class="h-9 px-3 rounded-lg border text-sm font-medium transition-colors"
+              :class="selectedPaymentMethodId === method.id
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:text-text-primary'"
+            >
+              {{ method.name }}
+            </button>
+          </div>
+
+          <!-- Credit due date (optional) — shown only when a triggersCartera group is selected -->
+          <div v-if="selectedGroup?.triggersCartera && selectedCustomer && !isAnonymousCustomer" class="mt-3 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl">
             <label class="block text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1.5">
               Fecha límite de pago <span class="font-normal text-amber-600">(opcional)</span>
             </label>
