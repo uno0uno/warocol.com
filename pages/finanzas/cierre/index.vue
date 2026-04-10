@@ -10,26 +10,28 @@
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- ── Filter bar ────────────────────────────────────────────────────── -->
       <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
-        <VueDatePicker
-          v-model="dateRangeDates"
-          range
-          :preset-dates="presetDates"
-          :enable-time-picker="false"
-          :locale="es"
-          placeholder="Rango de fechas"
-          auto-apply
-          :teleport="true"
-          :max-date="new Date()"
-          :format="formatDateRange"
-          input-class-name="dp-custom-input"
-          menu-class-name="dp-custom-menu"
-          calendar-cell-class-name="dp-custom-cell"
-        />
+        <div class="w-56 flex-shrink-0">
+          <VueDatePicker
+            v-model="dateRangeDates"
+            range
+            :preset-dates="presetDates"
+            :enable-time-picker="false"
+            :locale="es"
+            placeholder="Rango de fechas"
+            auto-apply
+            :teleport="true"
+            :max-date="new Date()"
+            :format="formatDateRange"
+            input-class-name="dp-custom-input"
+            menu-class-name="dp-custom-menu"
+            calendar-cell-class-name="dp-custom-cell"
+          />
+        </div>
 
         <button
           v-if="dateRangeDates"
           @click="dateRangeDates = null"
-          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
           aria-label="Limpiar fechas"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -37,7 +39,7 @@
           </svg>
         </button>
 
-        <div class="flex items-center gap-2 ml-auto">
+        <div class="flex items-center gap-2 ml-auto flex-shrink-0">
           <button
             @click="navigateTo({ path: '/finanzas/cierre/x', query: { start: periodStart, end: periodEnd } })"
             class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
