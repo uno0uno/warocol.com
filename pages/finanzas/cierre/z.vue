@@ -427,11 +427,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Cierre Z - Warocol' })
 
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
 const route = useRoute()
 
@@ -466,7 +467,7 @@ const totalCounted = computed(() =>
 )
 
 // ── Preview API (completed orders only — cash already in drawer) ───────────
-const { data: rawPreview, status: previewStatus } = useQuery({
+const { data: rawPreview, status: previewStatus, asyncStatus: previewAsyncStatus, refetch: refetchPreview } = useQuery({
   key: () => ['cierre', 'preview-z', currentTenant.value?.id, periodStart.value, periodEnd.value],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
     params: { period_start: periodStart.value, period_end: periodEnd.value, completed_only: true },
@@ -477,6 +478,15 @@ const { data: rawPreview, status: previewStatus } = useQuery({
 
 const previewData    = computed(() => rawPreview.value?.data ?? null)
 const previewLoading = computed(() => previewStatus.value === 'pending' && !previewData.value)
+const isRefreshing   = computed(() => previewAsyncStatus.value === 'loading' && previewData.value != null)
+
+onMounted(() => {
+  setRefreshHandler(refetchPreview)
+  registerProgressiveLoading(isRefreshing)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refetchPreview)
+})
 
 const cashDiff = computed(() => totalCounted.value - (previewData.value?.cashExpected ?? 0))
 
