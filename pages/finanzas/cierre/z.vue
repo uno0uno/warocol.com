@@ -357,9 +357,9 @@
         />
 
         <div class="flex flex-wrap gap-2 mb-5 text-xs">
-          <NuxtLink to="/ventas/ordenes" class="text-primary hover:underline">→ Lista de ventas</NuxtLink>
-          <NuxtLink to="/finanzas/gastos" class="text-primary hover:underline">→ Gastos del día</NuxtLink>
-          <NuxtLink to="/analitica" class="text-primary hover:underline">→ Analítica</NuxtLink>
+          <NuxtLink to="/ventas/ordenes" target="_blank" class="text-primary hover:underline">→ Lista de ventas</NuxtLink>
+          <NuxtLink to="/finanzas/gastos" target="_blank" class="text-primary hover:underline">→ Gastos del día</NuxtLink>
+          <NuxtLink to="/analitica" target="_blank" class="text-primary hover:underline">→ Analítica</NuxtLink>
         </div>
 
         <div class="flex gap-3">
