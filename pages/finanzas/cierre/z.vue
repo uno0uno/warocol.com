@@ -442,7 +442,6 @@ const periodEnd   = ref((route.query.end   as string) || today)
 // ── Wizard state ──────────────────────────────────────────────────────────
 const currentStep     = ref(1)
 const confirmArmed    = ref(false)
-const managerOverride = ref(false)
 const isSubmitting    = ref(false)
 const submitError     = ref<string | null>(null)
 const cierreSuccess   = ref(false)
@@ -511,7 +510,6 @@ const submitCierre = async () => {
         periodEnd:       periodEnd.value,
         cashCounted:     totalCounted.value,
         notes:           notes.value || null,
-        managerOverride: managerOverride.value,
       },
     })
     successData.value = result.data
@@ -519,7 +517,7 @@ const submitCierre = async () => {
     clearStorage()
   } catch (err: any) {
     const msg = err?.data?.detail ?? err?.message ?? 'Error al registrar el cierre.'
-    submitError.value = msg.includes('superpone') || err?.status === 409
+    submitError.value = msg.includes('superpone')
       ? 'Ya existe un cierre para este período.'
       : msg
     confirmArmed.value = false
