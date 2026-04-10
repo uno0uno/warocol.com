@@ -42,6 +42,17 @@ const hasDateFilter = computed(() =>
   dateRangeDates.value && dateRangeDates.value.length === 2 && dateRangeDates.value[0] && dateRangeDates.value[1]
 )
 
+// Payment groups for filter dropdown
+const { data: paymentGroupsData } = useQuery({
+  key: () => ['payments', 'groups', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: { id: string; slug: string; name: string; sortOrder: number; isActive: boolean }[] }>('/api/finanzas/metodos-pago/grupos'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 300_000,
+})
+const paymentGroups = computed(() =>
+  (paymentGroupsData.value?.data ?? []).filter(g => g.isActive).sort((a, b) => a.sortOrder - b.sortOrder)
+)
+
 // Single dashboard call — no date filter needed.
 const { data: dashboardData, status: dashboardStatus, asyncStatus: dashboardAsyncStatus, error: metricsError, refetch: refetchDashboard } = useQuery({
   key: () => ['analytics', 'ventas-dashboard', currentTenant.value?.id, {
@@ -250,9 +261,7 @@ const formatCurrency = (value: number) =>
         />
         <select v-model="paymentMethodFilter" aria-label="Filtrar por método de pago" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[130px] flex-shrink-0">
           <option :value="null">Método pago</option>
-          <option value="cash">Efectivo</option>
-          <option value="card">Tarjeta</option>
-          <option value="digital">Digital</option>
+          <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
         </select>
         <select v-model="statusFilter" aria-label="Filtrar por estado" class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[120px] flex-shrink-0">
           <option :value="null">Estado</option>

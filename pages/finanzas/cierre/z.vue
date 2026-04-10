@@ -217,9 +217,9 @@
               <p class="text-sm font-medium text-amber-800">
                 Hay {{ previewData.openTablesCount }} mesa(s) con cuenta abierta
               </p>
-              <p class="text-xs text-amber-600 mt-0.5">Cierra las mesas antes de continuar, o usa la autorización de gerente.</p>
-              <NuxtLink to="/mesas" class="inline-block mt-2 text-xs font-medium text-amber-700 underline hover:no-underline">
-                Ir a mesas →
+              <p class="text-xs text-amber-600 mt-0.5">Debes cerrar todas las mesas antes de continuar con el cierre.</p>
+              <NuxtLink to="/pos" target="_blank" class="inline-block mt-2 text-xs font-medium text-amber-700 underline hover:no-underline">
+                Ir al POS →
               </NuxtLink>
             </div>
           </div>
@@ -233,12 +233,12 @@
             </button>
             <button
               v-else
-              @click="managerOverride = true; currentStep = 2"
-              class="min-h-[44px] px-6 py-2 rounded-lg border-2 border-amber-400 text-amber-700 text-sm font-medium hover:bg-amber-50 transition-colors"
+              disabled
+              class="min-h-[44px] px-6 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium cursor-not-allowed opacity-50"
             >
-              Continuar con autorización de gerente
+              Cierra las mesas para continuar
             </button>
-              </div>
+          </div>
         </template>
         <div v-else class="text-sm text-text-secondary py-4">No se pudo cargar el estado de las mesas.</div>
       </div>
@@ -480,13 +480,9 @@ const previewData    = computed(() => rawPreview.value?.data ?? null)
 const previewLoading = computed(() => previewStatus.value === 'pending' && !previewData.value)
 const isRefreshing   = computed(() => previewAsyncStatus.value === 'loading' && previewData.value != null)
 
-onMounted(() => {
-  setRefreshHandler(refetchPreview)
-  registerProgressiveLoading(isRefreshing)
-})
-onUnmounted(() => {
-  clearRefreshHandler(refetchPreview)
-})
+registerProgressiveLoading(isRefreshing)
+onMounted(() => { setRefreshHandler(refetchPreview) })
+onUnmounted(() => { clearRefreshHandler(refetchPreview) })
 
 const cashDiff = computed(() => totalCounted.value - (previewData.value?.cashExpected ?? 0))
 

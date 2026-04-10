@@ -62,10 +62,13 @@
             Cierre Z
           </button>
           <button
-            @click="navigateTo({ path: '/finanzas/cierre/mensual', query: { year: new Date().getFullYear(), month: new Date().getMonth() + 1 } })"
-            class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+            @click="filterCurrentMonth"
+            class="h-10 px-4 rounded-lg border-2 text-sm font-medium transition-colors"
+            :class="isCurrentMonthActive
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary'"
           >
-            Cierre Mes
+            Mes actual
           </button>
         </div>
       </div>
@@ -150,9 +153,17 @@ const periodEnd = computed(() =>
   dateRangeDates.value?.[1] ? fnsFormat(dateRangeDates.value[1], 'yyyy-MM-dd') : today
 )
 
+const activeStart = computed(() => dateRangeDates.value ? periodStart.value : null)
+const activeEnd   = computed(() => dateRangeDates.value ? periodEnd.value   : null)
+
 const { data: rawHistorial, status, asyncStatus, error: fetchError, refetch } = useQuery({
-  key: () => ['cierre', 'list', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any[] }>('/api/cierre'),
+  key: () => ['cierre', 'list', currentTenant.value?.id, activeStart.value, activeEnd.value],
+  query: () => $fetch<{ success: boolean; data: any[] }>('/api/cierre', {
+    params: {
+      period_start: activeStart.value ?? undefined,
+      period_end:   activeEnd.value   ?? undefined,
+    },
+  }),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
 })
@@ -160,14 +171,7 @@ const { data: rawHistorial, status, asyncStatus, error: fetchError, refetch } = 
 const isLoading    = computed(() => !rawHistorial.value && !fetchError.value)
 const isRefreshing = computed(() => asyncStatus.value === 'loading' && rawHistorial.value != null)
 
-const historialList = computed(() => rawHistorial.value?.data ?? [])
-
-const filteredHistorial = computed(() => {
-  if (!dateRangeDates.value?.[0] || !dateRangeDates.value?.[1]) return historialList.value
-  const from = fnsFormat(dateRangeDates.value[0], 'yyyy-MM-dd')
-  const to   = fnsFormat(dateRangeDates.value[1], 'yyyy-MM-dd')
-  return historialList.value.filter((r: any) => r.periodStart >= from && r.periodStart <= to)
-})
+const filteredHistorial = computed(() => rawHistorial.value?.data ?? [])
 
 const summaryStats = computed(() => {
   const list = filteredHistorial.value
@@ -193,6 +197,21 @@ const historialColumns = [
 const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
 
+const filterCurrentMonth = () => {
+  const now = new Date()
+  const first = new Date(now.getFullYear(), now.getMonth(), 1)
+  const last  = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  dateRangeDates.value = [first, last]
+}
+
+const isCurrentMonthActive = computed(() => {
+  if (!dateRangeDates.value?.[0] || !dateRangeDates.value?.[1]) return false
+  const now   = new Date()
+  const first = fnsFormat(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd')
+  const last  = fnsFormat(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd')
+  return activeStart.value === first && activeEnd.value === last
+})
+
 const formatDay = (d: string) => {
   if (!d) return ''
   return new Intl.DateTimeFormat('es-CO', {
@@ -217,11 +236,7 @@ const formatPeriod = (start: string, end: string) => {
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 
-onMounted(() => {
-  setRefreshHandler(refetch)
-  registerProgressiveLoading(isRefreshing)
-})
-onUnmounted(() => {
-  clearRefreshHandler(refetch)
-})
+registerProgressiveLoading(isRefreshing)
+onMounted(() => { setRefreshHandler(refetch) })
+onUnmounted(() => { clearRefreshHandler(refetch) })
 </script>

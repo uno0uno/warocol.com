@@ -66,22 +66,34 @@
             <span class="text-text-secondary">Órdenes</span>
             <span class="font-medium">{{ previewData.itemsSold }}</span>
           </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Efectivo</span>
-            <span class="font-medium">{{ formatCurrency(previewData.totalCash) }}</span>
-          </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Tarjeta</span>
-            <span class="font-medium">{{ formatCurrency(previewData.totalCard) }}</span>
-          </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Digital</span>
-            <span class="font-medium">{{ formatCurrency(previewData.totalDigital) }}</span>
-          </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Crédito</span>
-            <span class="font-medium">{{ formatCurrency(previewData.totalCredit) }}</span>
-          </div>
+          <template v-if="breakdownGroups.length > 0">
+            <div
+              v-for="group in breakdownGroups"
+              :key="group.slug"
+              class="flex justify-between px-4 py-2.5 text-sm"
+            >
+              <span class="text-text-secondary">{{ group.label }}</span>
+              <span class="font-medium">{{ formatCurrency(group.total) }}</span>
+            </div>
+          </template>
+          <template v-else>
+            <div class="flex justify-between px-4 py-2.5 text-sm">
+              <span class="text-text-secondary">Efectivo</span>
+              <span class="font-medium">{{ formatCurrency(previewData.totalCash) }}</span>
+            </div>
+            <div class="flex justify-between px-4 py-2.5 text-sm">
+              <span class="text-text-secondary">Tarjeta</span>
+              <span class="font-medium">{{ formatCurrency(previewData.totalCard) }}</span>
+            </div>
+            <div class="flex justify-between px-4 py-2.5 text-sm">
+              <span class="text-text-secondary">Digital</span>
+              <span class="font-medium">{{ formatCurrency(previewData.totalDigital) }}</span>
+            </div>
+            <div class="flex justify-between px-4 py-2.5 text-sm">
+              <span class="text-text-secondary">Crédito</span>
+              <span class="font-medium">{{ formatCurrency(previewData.totalCredit) }}</span>
+            </div>
+          </template>
         </div>
       </div>
 
@@ -186,13 +198,32 @@ const previewLoading = computed(() => previewStatus.value === 'pending' && !prev
 const previewError   = computed(() => previewErr.value)
 const isRefreshing   = computed(() => previewAsyncStatus.value === 'loading' && previewData.value != null)
 
-onMounted(() => {
-  setRefreshHandler(refetch)
-  registerProgressiveLoading(isRefreshing)
+const GROUP_LABELS: Record<string, string> = {
+  cash: 'Efectivo', card: 'Tarjeta', digital: 'Digital', credit: 'Crédito',
+}
+
+interface BreakdownRowRaw { group_slug: string; method_name: string; total: number }
+interface BreakdownGroup  { slug: string; label: string; total: number }
+
+const breakdownGroups = computed<BreakdownGroup[]>(() => {
+  const rows: BreakdownRowRaw[] = previewData.value?.breakdown ?? []
+  const map = new Map<string, BreakdownGroup>()
+  for (const row of rows) {
+    if (!map.has(row.group_slug)) {
+      map.set(row.group_slug, {
+        slug:  row.group_slug,
+        label: GROUP_LABELS[row.group_slug] ?? row.group_slug,
+        total: 0,
+      })
+    }
+    map.get(row.group_slug)!.total += row.total
+  }
+  return Array.from(map.values()).sort((a, b) => b.total - a.total)
 })
-onUnmounted(() => {
-  clearRefreshHandler(refetch)
-})
+
+registerProgressiveLoading(isRefreshing)
+onMounted(() => { setRefreshHandler(refetch) })
+onUnmounted(() => { clearRefreshHandler(refetch) })
 
 const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
