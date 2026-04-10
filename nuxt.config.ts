@@ -24,15 +24,13 @@ export default defineNuxtConfig({
     '/analitica/**': { ssr: false },
     '/gestion/**': { ssr: false },
     '/domicilios/**': { ssr: false },
-    '/gastos/**': { ssr: false },
+    '/finanzas/**': { ssr: false },
     '/negocio': { ssr: false },
     '/integraciones': { ssr: false },
     '/billing/**': { ssr: false },
     '/mis-pedidos/**': { ssr: false },
     '/proveedor/**': { ssr: false },
     '/docs/**': { ssr: false },
-    '/cartera': { ssr: false },
-    '/cartera/**': { ssr: false }
   },
   experimental: {
     payloadExtraction: false

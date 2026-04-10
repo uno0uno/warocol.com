@@ -64,7 +64,7 @@ const isFormValid = computed(() => {
 
 // Actions
 const goBack = () => {
-  router.push(`/gastos/${expenseId}`)
+  router.push(`/finanzas/gastos/${expenseId}`)
 }
 
 const createInstance = async () => {
@@ -111,7 +111,7 @@ const createInstance = async () => {
     }
 
     // Navigate back to expense detail
-    router.push(`/gastos/${expenseId}`)
+    router.push(`/finanzas/gastos/${expenseId}`)
   } catch (err: any) {
     console.error('Error creating instance:', err)
     error.value = err?.data?.detail || 'Error al crear la instancia'

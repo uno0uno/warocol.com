@@ -116,7 +116,7 @@
           <div class="px-4 sm:px-6 md:px-8 py-3 sm:py-4">
             <div class="flex justify-between items-center gap-3">
               <NuxtLink
-                :to="`/gastos/${expenseId}`"
+                :to="`/finanzas/gastos/${expenseId}`"
                 class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
               >
                 Cancelar
@@ -230,7 +230,7 @@ const handleSubmit = async () => {
     })
 
     // Success - redirect to detail
-    navigateTo(`/gastos/${expenseId}`)
+    navigateTo(`/finanzas/gastos/${expenseId}`)
   } catch (error: any) {
     console.error('Error updating expense:', error)
 

@@ -1,11 +1,10 @@
 <script setup lang="ts">
-// Redirect /financiero to /gastos
+// Redirect /financiero to /finanzas/gastos
 definePageMeta({
   layout: 'dashboard'
 })
 
-// Redirect to gastos
-navigateTo('/gastos')
+navigateTo('/finanzas/gastos')
 </script>
 
 <template>

@@ -14,4 +14,14 @@ export default defineNuxtRouteMiddleware((to) => {
   if (to.path === '/pagos' || to.path.startsWith('/pagos/')) {
     return navigateTo('/menu/productos', { redirectCode: 301 })
   }
+
+  // /cartera/* → /finanzas/cartera (legacy)
+  if (to.path === '/cartera' || to.path.startsWith('/cartera/')) {
+    return navigateTo(to.path.replace('/cartera', '/finanzas/cartera'), { redirectCode: 301 })
+  }
+
+  // /gastos/* → /finanzas/gastos (legacy)
+  if (to.path === '/gastos' || to.path.startsWith('/gastos/')) {
+    return navigateTo(to.path.replace('/gastos', '/finanzas/gastos'), { redirectCode: 301 })
+  }
 })

@@ -222,7 +222,7 @@ onUnmounted(() => {
         <!-- Mobile Actions -->
         <template #mobileActions>
           <NuxtLink
-            to="/gastos/crear"
+            to="/finanzas/gastos/crear"
             class="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium text-center hover:bg-primary/90"
           >
             + Registrar Gasto
@@ -234,7 +234,7 @@ onUnmounted(() => {
           <div
             v-if="item"
             class="bg-surface border border-border rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
-            @click="navigateTo(`/gastos/${item.id}`)"
+            @click="navigateTo(`/finanzas/gastos/${item.id}`)"
           >
             <div class="flex justify-between items-start mb-3">
               <div>
@@ -262,7 +262,7 @@ onUnmounted(() => {
               Control de Gastos
             </h3>
             <NuxtLink
-              to="/gastos/crear"
+              to="/finanzas/gastos/crear"
               class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
             >
               <span class="hidden sm:inline">+ Registrar Gasto</span>
@@ -298,7 +298,7 @@ onUnmounted(() => {
         <template #cell-actions="{ row }">
           <div class="flex justify-center space-x-2">
             <NuxtLink
-              :to="`/gastos/${row.id}`"
+              :to="`/finanzas/gastos/${row.id}`"
               class="text-text-secondary hover:text-primary transition-colors"
               title="Ver y editar"
             >

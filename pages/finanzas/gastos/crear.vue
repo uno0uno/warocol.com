@@ -440,7 +440,7 @@
           </button>
           <NuxtLink
             v-else
-            to="/gastos"
+            to='/finanzas/gastos'
             class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
           >
             Cancelar
@@ -660,7 +660,7 @@ const handleSubmit = async () => {
     }
     
     // Success - redirect to list
-    navigateTo('/gastos')
+    navigateTo('/finanzas/gastos')
   } catch (error: any) {
     console.error('Error creating expense:', error)
     

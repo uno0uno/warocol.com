@@ -344,9 +344,9 @@ useHead({
 // Navigation
 const goBack = () => {
   if (expense.value) {
-    router.push(`/gastos/${expense.value.id}`)
+    router.push(`/finanzas/gastos/${expense.value.id}`)
   } else {
-    router.push('/gastos')
+    router.push('/finanzas/gastos')
   }
 }
 

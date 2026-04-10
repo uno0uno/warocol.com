@@ -22,7 +22,7 @@
       <!-- Navigation Header -->
       <div class="flex items-center gap-3 mb-4">
         <NuxtLink
-          to="/gastos"
+          to='/finanzas/gastos'
           class="flex items-center gap-2 px-4 py-2 bg-surface border-2 border-border text-text-primary rounded-lg hover:border-primary transition-colors text-sm font-medium"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -540,7 +540,7 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-bold text-text-primary">Instancias de Pago</h3>
           <NuxtLink
-            :to="`/gastos/${expenseId}/instancia`"
+            :to="`/finanzas/gastos/${expenseId}/instancia`"
             class="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90"
           >
             + Nueva Instancia
@@ -603,7 +603,7 @@
                 <td class="py-3 px-4">
                   <div class="flex justify-center gap-2">
                     <NuxtLink
-                      :to="`/gastos/instancias/${instance.id}`"
+                      :to="`/finanzas/gastos/instancias/${instance.id}`"
                       class="text-text-secondary hover:text-primary transition-colors"
                       title="Ver detalles y archivos"
                     >
@@ -952,7 +952,7 @@ const deleteExpense = async () => {
       method: 'DELETE'
     })
 
-    navigateTo('/gastos')
+    navigateTo('/finanzas/gastos')
   } catch (error: any) {
     console.error('Error deleting expense:', error)
     alert(error?.data?.detail || 'Error al eliminar el gasto')

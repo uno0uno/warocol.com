@@ -233,7 +233,6 @@ import {
   KeyIcon,
   MagnifyingGlassIcon,
   MapPinIcon,
-  ReceiptPercentIcon,
   ShoppingCartIcon,
   Squares2X2Icon,
   TableCellsIcon,
@@ -243,7 +242,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'gastos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'mesas' | 'cartera'
+  activePage?: 'dashboard' | 'ventas' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'mesas' | 'finanzas'
 }
 interface Tenant { id: string; name: string; slug: string }
 
@@ -292,8 +291,7 @@ const primaryItems = [
 
 const secondaryItems = [
   { to: '/analitica',                        page: 'analytics',     label: 'Analítica',      icon: ChartBarIcon },
-  { to: '/cartera',                          page: 'cartera',       label: 'Cartera',        icon: BanknotesIcon },
-  { to: '/gastos',                           page: 'gastos',        label: 'Gastos',         icon: ReceiptPercentIcon },
+  { to: '/finanzas/cartera',                 page: 'finanzas',      label: 'Finanzas',       icon: BanknotesIcon },
   { to: '/menu/productos',                   page: 'menu',          label: 'Menú',           icon: CubeIcon },
   { to: '/mesas',                            page: 'mesas',         label: 'Mesas',          icon: TableCellsIcon },
   { to: '/abastecimiento/compras-directas',  page: 'abastecimiento',label: 'Abastecimiento', icon: TruckIcon },

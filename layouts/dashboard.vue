@@ -530,22 +530,12 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
-  } else if (path.startsWith('/cartera')) {
+  } else if (path.startsWith('/finanzas')) {
     return {
-      pageTitle: 'Cartera',
-      pageSubtitle: 'Gestión de cuentas por cobrar',
-      searchPlaceholder: 'Buscar en cartera...',
-      activePage: 'cartera' as const,
-      showBreadcrumb: false,
-      breadcrumbPage: undefined,
-      backButton: undefined
-    }
-  } else if (path.startsWith('/gastos')) {
-    return {
-      pageTitle: 'Gastos',
-      pageSubtitle: 'Control de egresos del negocio',
-      searchPlaceholder: 'Buscar gastos...',
-      activePage: 'gastos' as const,
+      pageTitle: 'Finanzas',
+      pageSubtitle: 'Gestión financiera del negocio',
+      searchPlaceholder: 'Buscar en finanzas...',
+      activePage: 'finanzas' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: undefined
