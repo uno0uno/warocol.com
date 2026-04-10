@@ -8,10 +8,6 @@
     <CommonsTheErrorState v-else-if="fetchError" />
 
     <div v-else class="flex flex-col gap-3 md:gap-4">
-      <div v-if="isRefreshing" class="flex justify-end">
-        <UiLoadingDots size="10px" class="text-text-secondary" />
-      </div>
-
       <!-- ── Filter bar ────────────────────────────────────────────────────── -->
       <div class="flex flex-wrap items-center gap-2 w-full">
         <VueDatePicker
