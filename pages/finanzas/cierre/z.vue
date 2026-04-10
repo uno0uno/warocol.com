@@ -516,7 +516,7 @@ const submitCierre = async () => {
     cierreSuccess.value = true
     clearStorage()
   } catch (err: any) {
-    const msg = err?.data?.detail ?? err?.message ?? 'Error al registrar el cierre.'
+    const msg = err?.data?.message ?? err?.data?.detail ?? err?.message ?? 'Error al registrar el cierre.'
     submitError.value = msg.includes('superpone')
       ? 'Ya existe un cierre para este período.'
       : msg
