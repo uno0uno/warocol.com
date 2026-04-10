@@ -51,6 +51,7 @@
         :row-class="rowClass"
         :row-size="rowSize"
         :row-key="itemKey"
+        :empty-message="emptyMessage"
         @sort="$emit('sort', $event)"
         @row-click="$emit('row-click', $event)"
       >
