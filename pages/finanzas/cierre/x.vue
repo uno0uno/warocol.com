@@ -104,22 +104,23 @@
         <div class="p-3 sm:p-4 border-b border-border">
           <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Métodos de pago</h3>
         </div>
-        <div v-if="displayGroups.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border">
+        <div v-if="displayMethods.length > 0" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-border">
           <div
-            v-for="group in displayGroups"
-            :key="group.slug"
+            v-for="m in displayMethods"
+            :key="m.key"
             class="flex flex-col gap-1.5 px-4 py-4 bg-surface"
           >
             <div class="flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :class="GROUP_COLORS[group.slug]?.dot ?? 'bg-primary'" />
-              <span class="text-xs font-medium text-text-secondary uppercase tracking-wide">{{ group.label }}</span>
+              <span class="w-2 h-2 rounded-full flex-shrink-0" :class="GROUP_COLORS[m.groupSlug]?.dot ?? 'bg-primary'" />
+              <span class="text-xs text-text-secondary">{{ m.groupLabel }}</span>
             </div>
-            <p class="text-lg font-bold text-text-primary leading-tight">{{ formatCurrency(group.total) }}</p>
+            <p class="text-sm font-bold text-text-primary leading-snug">{{ m.label }}</p>
+            <p class="text-base font-semibold text-text-primary">{{ formatCurrency(m.total) }}</p>
             <span
               class="self-start text-xs font-semibold px-1.5 py-0.5 rounded"
-              :class="GROUP_COLORS[group.slug]?.badge ?? 'bg-primary/10 text-primary'"
+              :class="GROUP_COLORS[m.groupSlug]?.badge ?? 'bg-primary/10 text-primary'"
             >
-              {{ groupPct(group).toFixed(0) }}%
+              {{ methodPct(m).toFixed(0) }}%
             </span>
           </div>
         </div>
@@ -210,26 +211,23 @@ const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
 
 interface BreakdownRowRaw { group_slug: string; method_name: string; total: number }
 interface BreakdownGroup  { slug: string; label: string; total: number }
+interface DisplayMethod   { key: string; groupSlug: string; label: string; groupLabel: string; total: number }
 
-const breakdownGroups = computed<BreakdownGroup[]>(() => {
+// Individual methods sorted by total desc; fallback to group-level totals
+const displayMethods = computed<DisplayMethod[]>(() => {
   const rows: BreakdownRowRaw[] = previewData.value?.breakdown ?? []
-  const map = new Map<string, BreakdownGroup>()
-  for (const row of rows) {
-    if (!map.has(row.group_slug)) {
-      map.set(row.group_slug, {
-        slug:  row.group_slug,
-        label: GROUP_LABELS[row.group_slug] ?? row.group_slug,
-        total: 0,
-      })
-    }
-    map.get(row.group_slug)!.total += row.total
+  if (rows.length > 0) {
+    return [...rows]
+      .sort((a, b) => b.total - a.total)
+      .map(r => ({
+        key:        `${r.group_slug}__${r.method_name}`,
+        groupSlug:  r.group_slug,
+        label:      r.method_name,
+        groupLabel: GROUP_LABELS[r.group_slug] ?? r.group_slug,
+        total:      r.total,
+      }))
   }
-  return Array.from(map.values()).sort((a, b) => b.total - a.total)
-})
-
-// displayGroups: breakdown if available, fallback to non-zero totals
-const displayGroups = computed<BreakdownGroup[]>(() => {
-  if (breakdownGroups.value.length > 0) return breakdownGroups.value
+  // fallback: group-level non-zero totals
   const p = previewData.value
   if (!p) return []
   return ([
@@ -237,13 +235,15 @@ const displayGroups = computed<BreakdownGroup[]>(() => {
     { slug: 'card',    label: 'Tarjeta',  total: p.totalCard    ?? 0 },
     { slug: 'digital', label: 'Digital',  total: p.totalDigital ?? 0 },
     { slug: 'credit',  label: 'Crédito',  total: p.totalCredit  ?? 0 },
-  ] as BreakdownGroup[]).filter(g => g.total > 0)
+  ] as BreakdownGroup[])
+    .filter(g => g.total > 0)
+    .map(g => ({ key: g.slug, groupSlug: g.slug, label: g.label, groupLabel: g.label, total: g.total }))
 })
 
-const groupPct = (group: BreakdownGroup) => {
+const methodPct = (m: DisplayMethod) => {
   const total = previewData.value?.totalSales ?? 0
   if (total === 0) return 0
-  return Math.min(100, (group.total / total) * 100)
+  return Math.min(100, (m.total / total) * 100)
 }
 
 registerProgressiveLoading(isRefreshing)
