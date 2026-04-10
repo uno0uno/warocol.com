@@ -7,10 +7,9 @@ import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({
-  layout: 'dashboard'
+  layout: false,
+  middleware: () => navigateTo('/ventas/ordenes', { replace: true })
 })
-
-useHead({ title: 'Ventas' })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
