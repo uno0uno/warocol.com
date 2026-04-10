@@ -146,8 +146,8 @@
                 <span v-else class="font-semibold text-sm sm:text-base">2</span>
               </div>
               <div class="hidden sm:block ml-3 flex-1 min-w-0">
-                <p class="text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">Efectivo</p>
-                <p class="text-xs text-text-secondary">Contar billetes</p>
+                <p class="text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">Caja</p>
+                <p class="text-xs text-text-secondary">Contar métodos</p>
               </div>
               <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'" />
             </div>
@@ -203,11 +203,18 @@
           <CommonsTheCustomLoader size="large" />
         </div>
         <template v-else-if="previewData">
-          <div v-if="previewData.openTablesCount === 0" class="flex items-center gap-3 p-4 rounded-lg bg-emerald-50 border border-emerald-200 mb-6">
+          <div v-if="previewData.openTablesCount === 0 || isPastPeriod" class="flex items-center gap-3 p-4 rounded-lg bg-emerald-50 border border-emerald-200 mb-6">
             <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span class="text-sm text-emerald-700">No hay cuentas abiertas. Todo listo para continuar.</span>
+            <span class="text-sm text-emerald-700">
+              <template v-if="isPastPeriod && previewData.openTablesCount > 0">
+                Período pasado — las {{ previewData.openTablesCount }} mesa(s) abiertas no corresponden a este período.
+              </template>
+              <template v-else>
+                No hay cuentas abiertas. Todo listo para continuar.
+              </template>
+            </span>
           </div>
           <div v-else class="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 mb-6">
             <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,7 +232,7 @@
           </div>
           <div class="flex flex-wrap gap-3">
             <button
-              v-if="previewData.openTablesCount === 0"
+              v-if="previewData.openTablesCount === 0 || isPastPeriod"
               @click="currentStep = 2"
               class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
             >
@@ -243,11 +250,13 @@
         <div v-else class="text-sm text-text-secondary py-4">No se pudo cargar el estado de las mesas.</div>
       </div>
 
-      <!-- Step 2: Contar efectivo -->
+      <!-- Step 2: Conteo de caja -->
       <div v-else-if="currentStep === 2" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">Paso 2 — Contar efectivo</h3>
-        <p class="text-xs text-text-secondary mb-5">Cuenta los billetes que tienes en caja:</p>
+        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">Paso 2 — Conteo de caja</h3>
+        <p class="text-xs text-text-secondary mb-5">Ingresa los montos contados para cada método de pago:</p>
 
+        <!-- Efectivo -->
+        <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-3">Efectivo — Contar billetes</p>
         <div class="space-y-2 mb-4">
           <div v-for="(denom, idx) in denominations" :key="denom" class="flex items-center gap-3">
             <span class="text-sm text-text-secondary w-24 text-right flex-shrink-0">{{ formatCurrency(denom) }}</span>
@@ -287,7 +296,7 @@
 
         <div class="border-t border-border pt-4 mb-5 space-y-2">
           <div class="flex justify-between text-sm">
-            <span class="font-semibold text-text-primary">Total contado</span>
+            <span class="font-semibold text-text-primary">Total efectivo contado</span>
             <span class="font-bold text-lg text-text-primary">{{ formatCurrency(totalCounted) }}</span>
           </div>
           <div class="p-3 rounded-lg border" :class="diffResultClass">
@@ -296,11 +305,46 @@
               <span class="font-medium">{{ formatCurrency(previewData?.cashExpected) }}</span>
             </div>
             <div class="flex justify-between text-sm font-semibold">
-              <span>Diferencia</span>
+              <span>Diferencia efectivo</span>
               <span>{{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}</span>
             </div>
           </div>
         </div>
+
+        <!-- Otros métodos de pago -->
+        <template v-if="nonCashGroups.length > 0">
+          <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-3">Otros métodos</p>
+          <div class="bg-background rounded-lg border border-border divide-y divide-border mb-5">
+            <div
+              v-for="group in nonCashGroups"
+              :key="group.slug"
+              class="flex items-center justify-between px-4 py-3 gap-4"
+            >
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-text-primary">{{ group.label }}</p>
+                <p class="text-xs text-text-secondary">Esperado: {{ formatCurrency(group.total) }}</p>
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <input
+                  v-model="methodAmounts[group.slug]"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  @input="methodAmounts[group.slug] = sanitizeIntStr($event)"
+                  placeholder="0"
+                  class="w-28 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
+                  :aria-label="`Monto contado para ${group.label}`"
+                />
+                <span
+                  class="text-xs font-medium w-20 text-right"
+                  :class="methodDiff(group) >= 0 ? 'text-emerald-600' : 'text-destructive'"
+                >
+                  {{ methodDiff(group) >= 0 ? '+' : '' }}{{ formatCurrency(methodDiff(group)) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </template>
 
         <div class="flex gap-3">
           <button @click="currentStep = 1" class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors">
@@ -338,15 +382,21 @@
             <span class="font-medium">{{ formatCurrency(previewData?.cashExpected) }}</span>
           </div>
           <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Contado</span>
+            <span class="text-text-secondary">Efectivo contado</span>
             <span class="font-medium">{{ formatCurrency(totalCounted) }}</span>
           </div>
           <div class="flex justify-between px-4 py-2.5 text-sm font-semibold">
-            <span>Diferencia</span>
+            <span>Diferencia efectivo</span>
             <span :class="cashDiff >= 0 ? 'text-emerald-600' : 'text-destructive'">
               {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
             </span>
           </div>
+          <template v-if="nonCashGroups.length > 0">
+            <div v-for="group in nonCashGroups" :key="group.slug" class="flex justify-between px-4 py-2.5 text-sm">
+              <span class="text-text-secondary">{{ group.label }} contado</span>
+              <span class="font-medium">{{ formatCurrency(parseInt(methodAmounts[group.slug]) || 0) }}</span>
+            </div>
+          </template>
         </div>
 
         <textarea
@@ -439,6 +489,7 @@ const route = useRoute()
 const today       = new Date().toISOString().split('T')[0]
 const periodStart = ref((route.query.start as string) || today)
 const periodEnd   = ref((route.query.end   as string) || today)
+const isPastPeriod = computed(() => periodEnd.value < today)
 
 // ── Wizard state ──────────────────────────────────────────────────────────
 const currentStep     = ref(1)
@@ -453,8 +504,9 @@ const denominations = [100000, 50000, 20000, 10000, 5000, 2000, 1000]
 const counts = ref<Record<number, string>>(
   Object.fromEntries(denominations.map(d => [d, '0']))
 )
-const monedasAmount = ref('0')
-const notes         = ref('')
+const monedasAmount  = ref('0')
+const methodAmounts  = ref<Record<string, string>>({})
+const notes          = ref('')
 const denomRefs     = ref<HTMLInputElement[]>([])
 
 const setDenomRef = (el: any, idx: number) => {
@@ -485,6 +537,35 @@ onMounted(() => { setRefreshHandler(refetchPreview) })
 onUnmounted(() => { clearRefreshHandler(refetchPreview) })
 
 const cashDiff = computed(() => totalCounted.value - (previewData.value?.cashExpected ?? 0))
+
+// ── Breakdown groups (non-cash payment methods) ────────────────────────────
+const GROUP_LABELS: Record<string, string> = {
+  cash: 'Efectivo', card: 'Tarjeta', digital: 'Digital', credit: 'Crédito',
+}
+
+interface BreakdownRowRaw { group_slug: string; method_name: string; total: number }
+interface BreakdownGroup  { slug: string; label: string; total: number }
+
+const breakdownGroups = computed<BreakdownGroup[]>(() => {
+  const rows: BreakdownRowRaw[] = previewData.value?.breakdown ?? []
+  const map = new Map<string, BreakdownGroup>()
+  for (const row of rows) {
+    if (!map.has(row.group_slug)) {
+      map.set(row.group_slug, {
+        slug:  row.group_slug,
+        label: GROUP_LABELS[row.group_slug] ?? row.group_slug,
+        total: 0,
+      })
+    }
+    map.get(row.group_slug)!.total += row.total
+  }
+  return Array.from(map.values()).sort((a, b) => b.total - a.total)
+})
+
+const nonCashGroups = computed(() => breakdownGroups.value.filter(g => g.slug !== 'cash'))
+
+const methodDiff = (group: BreakdownGroup) =>
+  (parseInt(methodAmounts.value[group.slug]) || 0) - group.total
 
 const diffResultClass = computed(() => {
   if (cashDiff.value >= 0) return 'border-emerald-200 bg-emerald-50 text-emerald-800'
@@ -554,7 +635,8 @@ const saveToStorage = () => {
   if (typeof window === 'undefined') return
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     step: currentStep.value, counts: counts.value,
-    monedasAmount: monedasAmount.value, notes: notes.value,
+    monedasAmount: monedasAmount.value, methodAmounts: methodAmounts.value,
+    notes: notes.value,
     periodStart: periodStart.value, periodEnd: periodEnd.value,
   }))
 }
@@ -565,12 +647,17 @@ const loadFromStorage = () => {
   if (!raw) return
   try {
     const s = JSON.parse(raw)
-    if (s.step)          currentStep.value   = s.step
-    if (s.counts)        counts.value        = s.counts
-    if (s.monedasAmount) monedasAmount.value = s.monedasAmount
-    if (s.notes)         notes.value         = s.notes
-    if (s.periodStart)   periodStart.value   = s.periodStart
-    if (s.periodEnd)     periodEnd.value     = s.periodEnd
+    // Query params always win over localStorage — only restore period if not in URL
+    const hasQueryParams = !!route.query.start || !!route.query.end
+    if (!hasQueryParams) {
+      if (s.periodStart) periodStart.value = s.periodStart
+      if (s.periodEnd)   periodEnd.value   = s.periodEnd
+      if (s.step)        currentStep.value = s.step
+    }
+    if (s.counts)         counts.value         = s.counts
+    if (s.monedasAmount)  monedasAmount.value  = s.monedasAmount
+    if (s.methodAmounts)  methodAmounts.value  = s.methodAmounts
+    if (s.notes)          notes.value          = s.notes
   } catch { /* ignore */ }
 }
 
@@ -579,7 +666,7 @@ const clearStorage = () => {
   localStorage.removeItem(STORAGE_KEY)
 }
 
-watch([currentStep, counts, monedasAmount, notes], saveToStorage, { deep: true })
+watch([currentStep, counts, monedasAmount, methodAmounts, notes], saveToStorage, { deep: true })
 
 onMounted(() => {
   if (typeof window === 'undefined') return
