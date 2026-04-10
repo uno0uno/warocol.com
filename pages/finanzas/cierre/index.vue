@@ -37,20 +37,20 @@
           </svg>
         </button>
 
-        <div class="flex-1" />
-
-        <button
-          @click="navigateTo({ path: '/finanzas/cierre/x', query: { start: periodStart, end: periodEnd } })"
-          class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-        >
-          Cierre X
-        </button>
-        <button
-          @click="navigateTo({ path: '/finanzas/cierre/z', query: { start: periodStart, end: periodEnd } })"
-          class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-        >
-          Cierre Z
-        </button>
+        <div class="flex items-center gap-2 ml-auto">
+          <button
+            @click="navigateTo({ path: '/finanzas/cierre/x', query: { start: periodStart, end: periodEnd } })"
+            class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+          >
+            Cierre X
+          </button>
+          <button
+            @click="navigateTo({ path: '/finanzas/cierre/z', query: { start: periodStart, end: periodEnd } })"
+            class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+          >
+            Cierre Z
+          </button>
+        </div>
       </div>
 
       <!-- ── Historial ─────────────────────────────────────────────────────── -->
