@@ -56,14 +56,8 @@ const { data: customersData, asyncStatus: customersAsyncStatus, error: customers
 
 const customers = computed(() => customersData.value?.data ?? [])
 
-// Track whether we've ever received data — after first load, always use progressive bar
-const hasEverLoaded = ref(false)
-watch(customersData, (v) => { if (v) hasEverLoaded.value = true })
-
-// Full-screen spinner only on the very first load
-const isLoadingCustomers = computed(() => !hasEverLoaded.value && customersAsyncStatus.value === 'loading')
-// Progressive bar on all subsequent fetches (filter changes, refresh)
-const isRefreshingCustomers = computed(() => hasEverLoaded.value && customersAsyncStatus.value === 'loading')
+const isLoadingCustomers    = computed(() => customersData.value == null && !customersError.value)
+const isRefreshingCustomers = computed(() => customersAsyncStatus.value === 'loading' && customersData.value != null)
 
 // ── Aging ─────────────────────────────────────────────────────────────────
 const { data: agingData, refetch: refetchAging } = useQuery({
