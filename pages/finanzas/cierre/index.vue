@@ -49,18 +49,18 @@
         <div class="flex-1" />
 
         <div class="flex items-center gap-2 flex-shrink-0">
-          <button
-            @click="navigateTo({ path: '/finanzas/cierre/x', query: { start: periodStart, end: periodEnd } })"
-            class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+          <!-- Mesas abiertas indicator -->
+          <NuxtLink
+            v-if="openTablesCount > 0"
+            to="/mesas"
+            class="h-10 px-3 rounded-lg border-2 border-amber-300 bg-amber-50 text-xs font-medium text-amber-700 hover:bg-amber-100 transition-colors flex items-center gap-1.5"
           >
-            Cierre X
-          </button>
-          <button
-            @click="navigateTo({ path: '/finanzas/cierre/z', query: { start: periodStart, end: periodEnd } })"
-            class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-          >
-            Cierre Z
-          </button>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            {{ openTablesCount }} mesa{{ openTablesCount !== 1 ? 's' : '' }} abierta{{ openTablesCount !== 1 ? 's' : '' }}
+          </NuxtLink>
+
           <button
             @click="filterCurrentMonth"
             class="h-10 px-4 rounded-lg border-2 text-sm font-medium transition-colors"
@@ -70,6 +70,16 @@
           >
             Mes actual
           </button>
+
+          <NuxtLink
+            to="/finanzas/cierre/nuevo"
+            class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Nuevo cierre
+          </NuxtLink>
         </div>
       </div>
 
@@ -155,6 +165,17 @@ const periodEnd = computed(() =>
 
 const activeStart = computed(() => dateRangeDates.value ? periodStart.value : null)
 const activeEnd   = computed(() => dateRangeDates.value ? periodEnd.value   : null)
+
+// ── Open tables (informativo) ─────────────────────────────────────────────
+const { data: todayPreview } = useQuery({
+  key: () => ['cierre', 'open-tables', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
+    params: { period_start: today, period_end: today, completed_only: false },
+  }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 60_000,
+})
+const openTablesCount = computed(() => todayPreview.value?.data?.openTablesCount ?? 0)
 
 const { data: rawHistorial, status, asyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['cierre', 'list', currentTenant.value?.id, activeStart.value, activeEnd.value],

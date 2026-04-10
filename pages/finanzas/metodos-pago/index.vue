@@ -7,8 +7,15 @@
 
     <CommonsTheErrorState v-else-if="fetchError" />
 
+    <!-- Summary stats -->
+    <div v-else-if="groups.length" class="grid grid-cols-3 gap-4 mb-4">
+      <MetricCard title="Efectivo"        :value="cashGroup?.methodCount ?? 0" format="number" variant="primary" size="sm" />
+      <MetricCard title="Predeterminados" :value="defaultGroups.length"         format="number" variant="primary" size="sm" />
+      <MetricCard title="Personalizables" :value="customGroups.length"          format="number" variant="primary" size="sm" />
+    </div>
+
     <UiResponsiveDataView
-      v-else
+      v-if="!isLoading && !fetchError"
       :columns="columns"
       :data="groups"
       empty-message="No hay grupos de pago configurados"
@@ -25,12 +32,13 @@
           @click="navigateToGroup(item)"
         >
           <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-sm font-semibold text-text-primary">{{ item.name }}</span>
+            <span class="text-sm font-semibold text-text-primary">{{ item.name }}</span>
+            <p class="text-xs text-text-secondary mt-0.5 font-mono">{{ item.slug }}</p>
+            <div class="flex items-center gap-1.5 mt-1 flex-wrap">
               <span v-if="item.tenantId === null" class="text-xs bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary">predeterminado</span>
+              <span v-else class="text-xs text-text-secondary">personalizable</span>
               <span v-if="item.triggersCartera" class="text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded px-1.5 py-0.5">genera cartera</span>
             </div>
-            <p class="text-xs text-text-secondary mt-0.5 font-mono">{{ item.slug }}</p>
           </div>
           <div class="flex items-center gap-3 flex-shrink-0">
             <span class="text-sm text-text-secondary">{{ item.methodCount }} método{{ item.methodCount !== 1 ? 's' : '' }}</span>
@@ -41,18 +49,26 @@
         </div>
       </template>
 
-      <!-- name + badges -->
+      <!-- name -->
       <template #cell-name="{ row }">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="font-medium text-text-primary">{{ row.name }}</span>
-          <span v-if="row.tenantId === null" class="text-xs bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary">predeterminado</span>
-          <span v-if="row.triggersCartera" class="text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded px-1.5 py-0.5">genera cartera</span>
-        </div>
+        <span class="font-medium text-text-primary">{{ row.name }}</span>
       </template>
 
       <!-- slug -->
       <template #cell-slug="{ row }">
         <span class="text-xs font-mono bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary">{{ row.slug }}</span>
+      </template>
+
+      <!-- tipo -->
+      <template #cell-tenantId="{ row }">
+        <span v-if="row.tenantId === null" class="text-xs bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary">predeterminado</span>
+        <span v-else class="text-xs text-text-secondary">personalizable</span>
+      </template>
+
+      <!-- genera cartera -->
+      <template #cell-triggersCartera="{ row }">
+        <span v-if="row.triggersCartera" class="text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded px-1.5 py-0.5">Sí</span>
+        <span v-else class="text-xs text-text-secondary">—</span>
       </template>
 
       <!-- method count -->
@@ -72,6 +88,7 @@
 </template>
 
 <script setup lang="ts">
+import MetricCard from '~/components/shared/MetricCard.vue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({ layout: 'dashboard' })
@@ -92,15 +109,18 @@ interface PaymentGroup {
 }
 
 const columns: Column[] = [
-  { key: 'name',        title: 'Grupo',    sortable: false },
-  { key: 'slug',        title: 'Slug',     sortable: false },
-  { key: 'methodCount', title: 'Métodos',  sortable: false, align: 'center' },
-  { key: 'actions',     title: '',         sortable: false, align: 'right' },
+  { key: 'name',            title: 'Grupo',          sortable: false },
+  { key: 'slug',            title: 'Slug',           sortable: false },
+  { key: 'tenantId',        title: 'Tipo',           sortable: false },
+  { key: 'triggersCartera', title: 'Genera cartera', sortable: false, align: 'center' },
+  { key: 'methodCount',     title: 'Métodos',        sortable: false, align: 'center' },
+  { key: 'actions',         title: 'Acciones',       sortable: false, align: 'right' },
 ]
 
 const {
   data: groupsData,
   status: groupsStatus,
+  asyncStatus: groupsAsyncStatus,
   error: fetchError,
   refetch,
 } = useQuery({
@@ -113,8 +133,11 @@ const {
 const groups = computed<PaymentGroup[]>(() =>
   (groupsData.value?.data ?? []).filter(g => g.isActive).sort((a, b) => a.sortOrder - b.sortOrder)
 )
+const cashGroup     = computed(() => groups.value.find(g => g.slug === 'efectivo'))
+const defaultGroups = computed(() => groups.value.filter(g => g.tenantId === null && g.slug !== 'efectivo'))
+const customGroups  = computed(() => groups.value.filter(g => g.tenantId !== null))
 const isLoading    = computed(() => groupsStatus.value === 'pending' && !groupsData.value)
-const isRefreshing = computed(() => groupsStatus.value === 'success' && false) // groups don't refresh often
+const isRefreshing = computed(() => groupsAsyncStatus.value === 'loading' && groupsData.value != null)
 
 registerProgressiveLoading(isRefreshing)
 onMounted(() => setRefreshHandler(refetch))

@@ -303,7 +303,7 @@ interface PaymentMethod {
 const columns: Column[] = [
   { key: 'name',     title: 'Nombre', sortable: false },
   { key: 'isActive', title: 'Estado', sortable: false, align: 'center' },
-  { key: 'actions',  title: '',       sortable: false, align: 'right' },
+  { key: 'actions',  title: 'Acciones', sortable: false, align: 'right' },
 ]
 
 // ── Data fetching ────────────────────────────────────────────────────────
