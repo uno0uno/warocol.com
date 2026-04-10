@@ -104,26 +104,44 @@
         <div class="p-3 sm:p-4 border-b border-border">
           <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Métodos de pago</h3>
         </div>
-        <div v-if="displayMethods.length > 0" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px bg-border">
+        <template v-if="groupedMethods.length > 0">
           <div
-            v-for="m in displayMethods"
-            :key="m.key"
-            class="flex flex-col gap-1.5 px-4 py-4 bg-surface"
+            v-for="grp in groupedMethods"
+            :key="grp.slug"
+            class="border-b border-border last:border-b-0"
           >
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full flex-shrink-0" :class="GROUP_COLORS[m.groupSlug]?.dot ?? 'bg-primary'" />
-              <span class="text-xs text-text-secondary">{{ m.groupLabel }}</span>
+            <!-- Group header -->
+            <div class="flex items-center justify-between px-4 py-2.5 bg-background">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :class="GROUP_COLORS[grp.slug]?.dot ?? 'bg-primary'" />
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">{{ grp.label }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs font-semibold px-1.5 py-0.5 rounded"
+                  :class="GROUP_COLORS[grp.slug]?.badge ?? 'bg-primary/10 text-primary'"
+                >
+                  {{ groupTotalPct(grp).toFixed(0) }}%
+                </span>
+                <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(grp.groupTotal) }}</span>
+              </div>
             </div>
-            <p class="text-sm font-bold text-text-primary leading-snug">{{ m.label }}</p>
-            <p class="text-base font-semibold text-text-primary">{{ formatCurrency(m.total) }}</p>
-            <span
-              class="self-start text-xs font-semibold px-1.5 py-0.5 rounded"
-              :class="GROUP_COLORS[m.groupSlug]?.badge ?? 'bg-primary/10 text-primary'"
-            >
-              {{ methodPct(m).toFixed(0) }}%
-            </span>
+            <!-- Methods -->
+            <div class="divide-y divide-border">
+              <div
+                v-for="m in grp.methods"
+                :key="m.key"
+                class="flex items-center justify-between pl-8 pr-4 py-2.5"
+              >
+                <span class="text-sm text-text-primary">{{ m.label }}</span>
+                <div class="flex items-center gap-3">
+                  <span class="text-xs text-text-secondary">{{ methodPct(m).toFixed(0) }}%</span>
+                  <span class="text-sm font-medium text-text-primary w-28 text-right">{{ formatCurrency(m.total) }}</span>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </template>
         <div v-else class="px-4 py-4 text-sm text-text-secondary">Sin datos de métodos de pago.</div>
       </div>
 
@@ -244,6 +262,37 @@ const methodPct = (m: DisplayMethod) => {
   const total = previewData.value?.totalSales ?? 0
   if (total === 0) return 0
   return Math.min(100, (m.total / total) * 100)
+}
+
+interface GroupedSection {
+  slug: string
+  label: string
+  groupTotal: number
+  methods: DisplayMethod[]
+}
+
+const groupedMethods = computed<GroupedSection[]>(() => {
+  const map = new Map<string, GroupedSection>()
+  for (const m of displayMethods.value) {
+    if (!map.has(m.groupSlug)) {
+      map.set(m.groupSlug, {
+        slug: m.groupSlug,
+        label: m.groupLabel,
+        groupTotal: 0,
+        methods: [],
+      })
+    }
+    const grp = map.get(m.groupSlug)!
+    grp.groupTotal += m.total
+    grp.methods.push(m)
+  }
+  return Array.from(map.values()).sort((a, b) => b.groupTotal - a.groupTotal)
+})
+
+const groupTotalPct = (grp: GroupedSection) => {
+  const total = previewData.value?.totalSales ?? 0
+  if (total === 0) return 0
+  return Math.min(100, (grp.groupTotal / total) * 100)
 }
 
 registerProgressiveLoading(isRefreshing)
