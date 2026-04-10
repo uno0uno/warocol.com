@@ -120,7 +120,7 @@ const tableColumns = [
   { key: 'order_count',       title: 'Órdenes',     sortable: false },
   { key: 'oldest_order_days', title: 'Días mora',   sortable: false },
   { key: 'status',            title: 'Estado',      sortable: false },
-  { key: 'actions',           title: '',            sortable: false },
+  { key: 'actions',           title: 'Acciones',    sortable: false },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────
