@@ -120,6 +120,7 @@ const tableColumns = [
   { key: 'order_count',       title: 'Órdenes',     sortable: false },
   { key: 'oldest_order_days', title: 'Días mora',   sortable: false },
   { key: 'status',            title: 'Estado',      sortable: false },
+  { key: 'actions',           title: '',            sortable: false },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -288,7 +289,7 @@ onUnmounted(() => {
               <p class="text-xs text-text-secondary mt-0.5">
                 {{ item.phone || 'Sin teléfono' }}
                 · {{ item.order_count }} orden{{ item.order_count !== 1 ? 'es' : '' }}
-                · {{ item.oldest_order_days }}d mora
+                · {{ item.oldest_order_days }} días mora
               </p>
             </div>
             <div class="flex flex-col items-end gap-1 flex-shrink-0">
@@ -325,30 +326,31 @@ onUnmounted(() => {
 
         <template #cell-oldest_order_days="{ value }">
           <span class="text-sm" :class="value > 30 ? 'text-red-700 dark:text-red-400 font-medium' : 'text-text-secondary'">
-            {{ value }}d
+            {{ value }} días
           </span>
         </template>
 
         <template #cell-status="{ row }">
-          <div class="flex items-center gap-2">
-            <span
-              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
-              :class="row.status === 'overdue' ? 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400'"
-            >
-              {{ row.status === 'overdue' ? 'VENCIDA' : 'Al día' }}
-            </span>
-            <NuxtLink
-              :to="`/analitica/clientes/${row.customer_id}`"
-              class="text-text-secondary hover:text-primary transition-colors"
-              title="Ver detalle del cliente"
-              aria-label="Ver detalle del cliente"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-            </NuxtLink>
-          </div>
+          <span
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+            :class="row.status === 'overdue' ? 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400'"
+          >
+            {{ row.status === 'overdue' ? 'VENCIDA' : 'Al día' }}
+          </span>
+        </template>
+
+        <template #cell-actions="{ row }">
+          <NuxtLink
+            :to="`/analitica/clientes/${row.customer_id}`"
+            class="text-text-secondary hover:text-primary transition-colors"
+            title="Ver detalle del cliente"
+            :aria-label="`Ver detalle de ${row.name}`"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </NuxtLink>
         </template>
       </UiResponsiveDataView>
 
