@@ -203,6 +203,22 @@
                 </div>
               </div>
 
+              <!-- Payment Method -->
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Método de pago *
+                </label>
+                <select
+                  v-model="form.paymentMethod"
+                  required
+                  class="input-base w-full px-4 py-2"
+                >
+                  <option value="cash">Efectivo</option>
+                  <option value="transfer">Transferencia</option>
+                  <option value="card">Tarjeta</option>
+                </select>
+              </div>
+
               <!-- Recurring Expense Checkbox -->
               <div class="md:col-span-2">
                 <label class="flex items-center space-x-3 cursor-pointer group">
@@ -504,6 +520,7 @@ const form = reactive({
   expenseCategoryId: '',
   description: '',
   amount: null as number | null,
+  paymentMethod: 'cash',
   isRecurring: false,
   frequency: '',
   recurringEndDate: ''
@@ -612,7 +629,8 @@ const handleSubmit = async () => {
       amount: form.amount,
       isRecurring: form.isRecurring,
       frequency: form.isRecurring ? form.frequency : null,
-      recurringEndDate: form.isRecurring && form.recurringEndDate ? form.recurringEndDate : null
+      recurringEndDate: form.isRecurring && form.recurringEndDate ? form.recurringEndDate : null,
+      paymentMethod: form.paymentMethod
     }
 
     const response = await $fetch('/api/finance/expenses', {

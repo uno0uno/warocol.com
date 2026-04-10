@@ -78,7 +78,7 @@
               </div>
 
               <!-- Amount -->
-              <div class="md:col-span-2">
+              <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
                   Monto *
                 </label>
@@ -94,6 +94,18 @@
                     placeholder="0"
                   />
                 </div>
+              </div>
+
+              <!-- Payment Method -->
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Método de pago *
+                </label>
+                <select v-model="form.paymentMethod" required class="input-base w-full px-4 py-2">
+                  <option value="cash">Efectivo</option>
+                  <option value="transfer">Transferencia</option>
+                  <option value="card">Tarjeta</option>
+                </select>
               </div>
             </div>
           </div>
@@ -170,7 +182,8 @@ const form = reactive({
   transactionDate: '',
   expenseCategoryId: '',
   description: '',
-  amount: null as number | null
+  amount: null as number | null,
+  paymentMethod: 'cash'
 })
 
 // Initialize form with expense data
@@ -180,6 +193,7 @@ watch(expense, (newExpense) => {
     form.expenseCategoryId = newExpense.expenseCategoryId || ''
     form.description = newExpense.description || ''
     form.amount = newExpense.amount || null
+    form.paymentMethod = newExpense.paymentMethod || 'cash'
   }
 }, { immediate: true })
 
@@ -206,7 +220,8 @@ const handleSubmit = async () => {
       transactionDate: form.transactionDate,
       expenseCategoryId: form.expenseCategoryId,
       description: form.description,
-      amount: form.amount
+      amount: form.amount,
+      paymentMethod: form.paymentMethod
     }
 
     await $fetch(`/api/finance/expenses/${expenseId}`, {

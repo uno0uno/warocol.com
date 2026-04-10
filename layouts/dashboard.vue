@@ -540,6 +540,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path.startsWith('/gastos')) {
+    return {
+      pageTitle: 'Gastos',
+      pageSubtitle: 'Control de egresos del negocio',
+      searchPlaceholder: 'Buscar gastos...',
+      activePage: 'gastos' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path.includes('/reportes')) {
     return {
       pageTitle: 'Dashboard - Reportes',
