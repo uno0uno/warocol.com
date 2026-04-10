@@ -472,7 +472,7 @@ const { data: rawPreview, status: previewStatus } = useQuery({
     params: { period_start: periodStart.value, period_end: periodEnd.value, completed_only: true },
   }),
   enabled: () => !!currentTenant.value,
-  staleTime: 60_000,
+  staleTime: 0,
 })
 
 const previewData    = computed(() => rawPreview.value?.data ?? null)
