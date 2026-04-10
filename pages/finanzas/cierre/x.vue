@@ -130,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 
@@ -181,13 +181,10 @@ const { data: rawPreview, status: previewStatus, asyncStatus: previewAsyncStatus
   staleTime: 60_000,
 })
 
-const sharedPreview  = useState<Record<string, any> | null>('cierrePreview', () => null)
 const previewData    = computed(() => rawPreview.value?.data ?? null)
 const previewLoading = computed(() => previewStatus.value === 'pending' && !previewData.value)
 const previewError   = computed(() => previewErr.value)
 const isRefreshing   = computed(() => previewAsyncStatus.value === 'loading' && previewData.value != null)
-
-watch(previewData, (v) => { if (v) sharedPreview.value = v }, { immediate: true })
 
 onMounted(() => {
   setRefreshHandler(refetch)

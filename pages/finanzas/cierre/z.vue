@@ -472,10 +472,18 @@ const totalCounted = computed(() =>
   + (parseInt(monedasAmount.value) || 0)
 )
 
-// ── Preview data — shared from Cierre X page via useState (no API call here)
-const sharedPreview  = useState<Record<string, any> | null>('cierrePreview', () => null)
-const previewData    = computed(() => sharedPreview.value)
-const previewLoading = computed(() => sharedPreview.value == null)
+// ── Preview API (completed orders only — cash already in drawer) ───────────
+const { data: rawPreview, status: previewStatus } = useQuery({
+  key: () => ['cierre', 'preview-z', currentTenant.value?.id, periodStart.value, periodEnd.value],
+  query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
+    params: { period_start: periodStart.value, period_end: periodEnd.value, completed_only: true },
+  }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 60_000,
+})
+
+const previewData    = computed(() => rawPreview.value?.data ?? null)
+const previewLoading = computed(() => previewStatus.value === 'pending' && !previewData.value)
 
 const cashDiff = computed(() => totalCounted.value - (previewData.value?.cashExpected ?? 0))
 
