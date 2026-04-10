@@ -66,34 +66,6 @@
             <span class="text-text-secondary">Órdenes</span>
             <span class="font-medium">{{ previewData.itemsSold }}</span>
           </div>
-          <template v-if="breakdownGroups.length > 0">
-            <div
-              v-for="group in breakdownGroups"
-              :key="group.slug"
-              class="flex justify-between px-4 py-2.5 text-sm"
-            >
-              <span class="text-text-secondary">{{ group.label }}</span>
-              <span class="font-medium">{{ formatCurrency(group.total) }}</span>
-            </div>
-          </template>
-          <template v-else>
-            <div class="flex justify-between px-4 py-2.5 text-sm">
-              <span class="text-text-secondary">Efectivo</span>
-              <span class="font-medium">{{ formatCurrency(previewData.totalCash) }}</span>
-            </div>
-            <div class="flex justify-between px-4 py-2.5 text-sm">
-              <span class="text-text-secondary">Tarjeta</span>
-              <span class="font-medium">{{ formatCurrency(previewData.totalCard) }}</span>
-            </div>
-            <div class="flex justify-between px-4 py-2.5 text-sm">
-              <span class="text-text-secondary">Digital</span>
-              <span class="font-medium">{{ formatCurrency(previewData.totalDigital) }}</span>
-            </div>
-            <div class="flex justify-between px-4 py-2.5 text-sm">
-              <span class="text-text-secondary">Crédito</span>
-              <span class="font-medium">{{ formatCurrency(previewData.totalCredit) }}</span>
-            </div>
-          </template>
         </div>
       </div>
 
@@ -124,6 +96,35 @@
               {{ previewData.openTablesCount }}
             </span>
           </div>
+        </div>
+      </div>
+
+      <!-- Métodos de pago -->
+      <div class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
+        <div class="p-3 sm:p-4 border-b border-border">
+          <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Métodos de pago</h3>
+        </div>
+        <div class="divide-y divide-border">
+          <template v-if="displayGroups.length > 0">
+            <div
+              v-for="group in displayGroups"
+              :key="group.slug"
+              class="flex items-center gap-4 px-4 py-3"
+            >
+              <span class="text-sm text-text-secondary w-28 flex-shrink-0">{{ group.label }}</span>
+              <div class="flex-1 h-2 bg-border rounded-full overflow-hidden">
+                <div
+                  class="h-full rounded-full bg-primary transition-all"
+                  :style="{ width: `${groupPct(group)}%` }"
+                />
+              </div>
+              <div class="text-right flex-shrink-0 w-32">
+                <span class="text-sm font-medium text-text-primary">{{ formatCurrency(group.total) }}</span>
+                <span class="text-xs text-text-secondary ml-1.5">{{ groupPct(group).toFixed(0) }}%</span>
+              </div>
+            </div>
+          </template>
+          <div v-else class="px-4 py-4 text-sm text-text-secondary">Sin datos de métodos de pago.</div>
         </div>
       </div>
 
@@ -220,6 +221,25 @@ const breakdownGroups = computed<BreakdownGroup[]>(() => {
   }
   return Array.from(map.values()).sort((a, b) => b.total - a.total)
 })
+
+// displayGroups: breakdown if available, fallback to non-zero totals
+const displayGroups = computed<BreakdownGroup[]>(() => {
+  if (breakdownGroups.value.length > 0) return breakdownGroups.value
+  const p = previewData.value
+  if (!p) return []
+  return ([
+    { slug: 'cash',    label: 'Efectivo', total: p.totalCash    ?? 0 },
+    { slug: 'card',    label: 'Tarjeta',  total: p.totalCard    ?? 0 },
+    { slug: 'digital', label: 'Digital',  total: p.totalDigital ?? 0 },
+    { slug: 'credit',  label: 'Crédito',  total: p.totalCredit  ?? 0 },
+  ] as BreakdownGroup[]).filter(g => g.total > 0)
+})
+
+const groupPct = (group: BreakdownGroup) => {
+  const total = previewData.value?.totalSales ?? 0
+  if (total === 0) return 0
+  return Math.min(100, (group.total / total) * 100)
+}
 
 registerProgressiveLoading(isRefreshing)
 onMounted(() => { setRefreshHandler(refetch) })
