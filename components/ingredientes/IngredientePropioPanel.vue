@@ -19,7 +19,7 @@
         role="dialog"
         aria-modal="true"
         :aria-label="isEdit ? `Editar ingrediente: ${ingredient?.name}` : 'Crear ingrediente personalizado'"
-        class="fixed z-50 flex flex-col bg-surface shadow-2xl
+        class="fixed z-50 flex flex-col bg-surface shadow-2xl relative
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
@@ -61,6 +61,22 @@
 
         <!-- Scrollable body -->
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
+          <!-- Archived banner -->
+          <div
+            v-if="isEdit && ingredient?.is_active === false"
+            class="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200"
+          >
+            <svg class="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M10 12v4m4-4v4" />
+            </svg>
+            <div>
+              <p class="text-sm font-semibold text-amber-800">Ingrediente archivado</p>
+              <p class="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                No aparece en recetas ni pedidos nuevos. El historial de compras y ventas queda intacto.
+              </p>
+            </div>
+          </div>
 
           <!-- Nombre -->
           <div class="flex flex-col gap-1.5">
@@ -308,24 +324,72 @@
         </div>
 
         <!-- Footer -->
-        <div class="flex-shrink-0 bg-surface-secondary/40 border-t border-border px-6 py-4 flex gap-3">
+        <div class="flex-shrink-0 bg-surface-secondary/40 border-t border-border px-6 py-4 flex flex-col gap-2">
+          <div class="flex gap-3">
+            <button
+              type="button"
+              @click="close"
+              class="h-11 px-5 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              Cancelar
+            </button>
+            <button
+              v-if="ingredient?.is_active !== false"
+              type="button"
+              @click="submit"
+              :disabled="saving"
+              class="flex-1 h-11 rounded-lg bg-primary text-sm font-semibold text-white transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-primary/30"
+            >
+              <span v-if="saving">Guardando...</span>
+              <span v-else>{{ isEdit ? 'Guardar cambios' : 'Crear ingrediente' }}</span>
+            </button>
+          </div>
+
+          <!-- Archive / Restore actions (edit mode only) -->
           <button
+            v-if="isEdit && ingredient?.is_active !== false"
             type="button"
-            @click="close"
-            class="h-11 px-5 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+            @click="showArchiveConfirm = true"
+            class="h-10 w-full rounded-lg border border-amber-300 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-300/40"
           >
-            Cancelar
+            Archivar ingrediente
           </button>
           <button
+            v-if="isEdit && ingredient?.is_active === false"
             type="button"
-            @click="submit"
-            :disabled="saving"
-            class="flex-1 h-11 rounded-lg bg-primary text-sm font-semibold text-white transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-primary/30"
+            @click="restoreIngredient"
+            :disabled="restoring"
+            class="h-10 w-full rounded-lg border border-primary/40 text-sm font-medium text-primary hover:bg-primary/5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
           >
-            <span v-if="saving">Guardando...</span>
-            <span v-else>{{ isEdit ? 'Guardar cambios' : 'Crear ingrediente' }}</span>
+            <span v-if="restoring">Restaurando...</span>
+            <span v-else>Restaurar ingrediente</span>
           </button>
         </div>
+
+        <!-- Archive confirmation (inside panel) -->
+        <Transition enter-active-class="transition-opacity duration-150" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-opacity duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
+          <div v-if="showArchiveConfirm" class="absolute inset-0 z-10 flex items-end md:items-center justify-center bg-black/30 rounded-t-2xl md:rounded-none">
+            <div class="bg-surface w-full md:mx-6 md:rounded-2xl shadow-2xl p-6 flex flex-col gap-4 rounded-t-2xl">
+              <h3 class="text-base font-bold text-text-primary">Archivar "{{ ingredient?.name }}"</h3>
+              <p class="text-sm text-text-secondary leading-relaxed">
+                Se eliminará de todas las recetas, modificadores y reventa activos.
+                <strong class="text-text-primary">El historial queda intacto.</strong>
+              </p>
+              <p class="text-xs text-text-tertiary bg-surface-secondary/60 rounded-lg px-3 py-2">
+                Puedes restaurarlo desde la vista de archivados.
+              </p>
+              <div class="flex gap-3">
+                <button type="button" @click="showArchiveConfirm = false" class="flex-1 h-10 rounded-lg border border-border text-sm font-medium text-text-secondary hover:bg-surface-secondary transition-colors">
+                  Cancelar
+                </button>
+                <button type="button" @click="archiveIngredient" :disabled="archiving" class="flex-1 h-10 rounded-lg bg-amber-500 text-sm font-semibold text-white hover:bg-amber-600 transition-colors disabled:opacity-50">
+                  <span v-if="archiving">Archivando...</span>
+                  <span v-else>Archivar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
       </div>
     </Transition>
   </Teleport>
@@ -343,10 +407,46 @@ interface Props {
 interface Emits {
   (e: 'update:modelValue', v: boolean): void
   (e: 'saved', ingredient: any): void
+  (e: 'archived', ingredient: any): void
+  (e: 'restored', ingredient: any): void
 }
 
 const props = withDefaults(defineProps<Props>(), { ingredient: null, initialName: '' })
 const emit = defineEmits<Emits>()
+
+// Archive / restore state
+const showArchiveConfirm = ref(false)
+const archiving = ref(false)
+const restoring = ref(false)
+
+async function archiveIngredient() {
+  if (!props.ingredient?.id) return
+  archiving.value = true
+  try {
+    await $fetch(`/api/suppliers/ingredients/${props.ingredient.id}/archive`, { method: 'PATCH' })
+    emit('archived', props.ingredient)
+    close()
+  } catch (err: any) {
+    console.error('Archive failed', err)
+  } finally {
+    archiving.value = false
+    showArchiveConfirm.value = false
+  }
+}
+
+async function restoreIngredient() {
+  if (!props.ingredient?.id) return
+  restoring.value = true
+  try {
+    await $fetch(`/api/suppliers/ingredients/${props.ingredient.id}/restore`, { method: 'PATCH' })
+    emit('restored', props.ingredient)
+    close()
+  } catch (err: any) {
+    console.error('Restore failed', err)
+  } finally {
+    restoring.value = false
+  }
+}
 
 const isEdit = computed(() => !!props.ingredient)
 
