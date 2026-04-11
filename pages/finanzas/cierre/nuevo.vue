@@ -1,7 +1,56 @@
 <template>
   <div class="page-layout">
 
-    <!-- ── Filter bar (mismo patrón que ventas/ordenes) ───────────────── -->
+    <!-- ── Hint card: último cierre ────────────────────────────────────────── -->
+    <div v-if="ultimoCierre" class="bg-surface border border-border rounded-lg mb-3 overflow-hidden">
+      <div class="px-3 py-2 bg-background border-b border-border flex items-center justify-between">
+        <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Último cierre registrado</span>
+        <span class="text-xs text-text-tertiary">{{ formatClosedAt(ultimoCierre.closedAt) }}</span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
+        <div class="px-3 py-2.5">
+          <p class="text-xs text-text-secondary mb-0.5">Período</p>
+          <p class="text-xs font-semibold text-text-primary">{{ formatPeriod(ultimoCierre.periodStart, ultimoCierre.periodEnd) }}</p>
+        </div>
+        <div class="px-3 py-2.5">
+          <p class="text-xs text-text-secondary mb-0.5">Total ventas</p>
+          <p class="text-sm font-bold text-text-primary">{{ formatCurrency(ultimoCierre.totalSales) }}</p>
+        </div>
+        <div class="px-3 py-2.5">
+          <p class="text-xs text-text-secondary mb-0.5">Efectivo contado</p>
+          <p class="text-sm font-semibold text-text-primary">{{ formatCurrency(ultimoCierre.cashCounted) }}</p>
+        </div>
+        <div class="px-3 py-2.5">
+          <p class="text-xs text-text-secondary mb-0.5">Diferencia caja</p>
+          <p
+            class="text-sm font-bold"
+            :class="ultimoCierre.cashDifference >= 0 ? 'text-emerald-600' : 'text-destructive'"
+          >
+            {{ ultimoCierre.cashDifference >= 0 ? '+' : '' }}{{ formatCurrency(ultimoCierre.cashDifference) }}
+          </p>
+        </div>
+      </div>
+      <!-- Sugerencia de período -->
+      <div v-if="suggestedRange" class="px-3 py-2 bg-primary/5 border-t border-primary/15 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2 min-w-0">
+          <svg class="w-3.5 h-3.5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-xs text-primary">
+            Período sugerido: <strong>{{ formatPeriod(suggestedRange.start, suggestedRange.end) }}</strong>
+            <span class="text-primary/70"> (desde el último cierre hasta hoy)</span>
+          </span>
+        </div>
+        <button
+          @click="applySuggested"
+          class="flex-shrink-0 text-xs font-semibold text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
+        >
+          Aplicar
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Filter bar ───────────────────────────────────────────────────── -->
     <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-4">
       <button
         v-for="p in presets"
@@ -23,7 +72,6 @@
         :locale="es"
         placeholder="Rango personalizado…"
         auto-apply
-        :teleport="true"
         :max-date="new Date()"
         :format="formatDateRange"
         input-class-name="dp-custom-input"
@@ -49,12 +97,10 @@
           </div>
           <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-600">Sin registro</span>
         </div>
-
         <h4 class="text-base font-bold text-text-primary mb-1">Cierre X</h4>
         <p class="text-sm text-text-secondary leading-relaxed mb-4">
           Consulta el estado de caja del período sin registrar el cierre. Útil para revisar antes de cerrar.
         </p>
-
         <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 group-hover:gap-2.5 transition-all">
           Ver resumen
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -68,9 +114,7 @@
         class="text-left bg-surface border-2 border-primary/40 hover:border-primary rounded-xl p-5 transition-all group active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-primary/30 relative overflow-hidden"
         @click="goTo('z')"
       >
-        <!-- Accent strip -->
         <div class="absolute top-0 left-0 right-0 h-0.5 bg-primary rounded-t-xl" />
-
         <div class="flex items-start justify-between gap-3 mb-3">
           <div class="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
             <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -79,12 +123,10 @@
           </div>
           <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary">Definitivo</span>
         </div>
-
         <h4 class="text-base font-bold text-text-primary mb-1">Cierre Z</h4>
         <p class="text-sm text-text-secondary leading-relaxed mb-4">
           Registra y cierra el período contable de forma definitiva. Incluye conteo de efectivo y notas.
         </p>
-
         <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary group-hover:gap-2.5 transition-all">
           Registrar cierre
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -105,7 +147,51 @@ import { format as fnsFormat } from 'date-fns'
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Nuevo cierre - Warocol' })
 
+const { currentTenant } = useTenantReactive()
 const today = new Date().toISOString().split('T')[0]
+
+// ── Último cierre ─────────────────────────────────────────────────────────
+
+interface UltimoCierre {
+  id: string
+  periodStart: string
+  periodEnd: string
+  closedAt: string
+  totalSales: number
+  cashCounted: number
+  cashDifference: number
+}
+
+const { data: ultimoData } = useQuery({
+  key: () => ['cierre', 'ultimo', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: UltimoCierre | null }>('/api/cierre/ultimo'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 60_000,
+})
+
+const ultimoCierre = computed(() => ultimoData.value?.data ?? null)
+
+// Período sugerido: día siguiente al periodEnd del último cierre → hoy
+const suggestedRange = computed(() => {
+  if (!ultimoCierre.value) return null
+  const after = new Date(ultimoCierre.value.periodEnd + 'T12:00:00')
+  after.setDate(after.getDate() + 1)
+  const todayDate = new Date()
+  todayDate.setHours(12, 0, 0, 0)
+  if (after > todayDate) return null // ya estamos dentro del mismo día
+  return {
+    start: fnsFormat(after, 'yyyy-MM-dd'),
+    end: today,
+    startDate: after,
+    endDate: todayDate,
+  }
+})
+
+const applySuggested = () => {
+  if (!suggestedRange.value) return
+  activePreset.value = null
+  dateRangeDates.value = [suggestedRange.value.startDate, suggestedRange.value.endDate]
+}
 
 // ── Presets ───────────────────────────────────────────────────────────────
 
@@ -117,10 +203,10 @@ const buildPresets = (): Preset[] => {
   const weekStart = new Date(now); weekStart.setDate(now.getDate() - 6)
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
   return [
-    { key: 'today',     label: 'Hoy',          start: new Date(), end: new Date() },
-    { key: 'yesterday', label: 'Ayer',          start: yesterday,  end: yesterday },
+    { key: 'today',     label: 'Hoy',           start: new Date(), end: new Date() },
+    { key: 'yesterday', label: 'Ayer',           start: yesterday,  end: yesterday },
     { key: 'week',      label: 'Últimos 7 días', start: weekStart,  end: new Date() },
-    { key: 'month',     label: 'Este mes',       start: monthStart, end: new Date() },
+    { key: 'month',     label: 'Este mes',        start: monthStart, end: new Date() },
   ]
 }
 
@@ -157,6 +243,15 @@ const formatPeriod = (start: string, end: string) => {
   }).format(new Date(d + 'T12:00:00'))
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
+
+const formatClosedAt = (iso: string) =>
+  new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota',
+  }).format(new Date(iso))
+
+const formatCurrency = (v?: number) =>
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v ?? 0)
 
 // ── Navigate ──────────────────────────────────────────────────────────────
 
