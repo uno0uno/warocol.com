@@ -47,13 +47,6 @@
         >
           Ver historial
         </NuxtLink>
-        <NuxtLink
-          v-if="successData?.id"
-          :to="`/finanzas/cierre/${successData.id}`"
-          class="min-h-[44px] px-5 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex items-center"
-        >
-          Ver detalle
-        </NuxtLink>
       </div>
     </div>
 
