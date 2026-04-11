@@ -182,15 +182,6 @@ const processOrder = async () => {
 
   if (isMesaMode.value) {
     const session = posStore.activeTableSession!
-    console.log('[checkout] MESA MODE processOrder', {
-      tableId: session.tableId,
-      sessionId: session.sessionId,
-      runningTotal: session.runningTotal,
-      tabItemsCount: storeTabItems.value.length,
-      tabItems: storeTabItems.value.map(i => ({ name: i.productName, qty: i.quantity, unitPrice: i.unitPrice, subtotal: i.subtotal })),
-      cartLength: posStore.cart.length,
-      cartItems: posStore.cart.map(i => ({ name: i.product.name, qty: i.quantity, price: i.product.price, modifiers: i.modifiers })),
-    })
     try {
       isProcessing.value = true
       processingError.value = ''
@@ -366,7 +357,6 @@ const fetchPaymentMethods = async () => {
 
 // Sincronizar carrito al backend cuando carga la página
 const syncCart = async () => {
-  console.log('[checkout] syncCart called', { cartLength: posStore.cart.length, isMesaMode: isMesaMode.value, cartId: posStore.cartId })
   // Si no hay items, no hacer nada
   if (posStore.cart.length === 0) {
     isSyncingCart.value = false
@@ -378,7 +368,6 @@ const syncCart = async () => {
     syncError.value = ''
 
     const success = await posStore.syncCartBatch()
-    console.log('[checkout] syncCartBatch result', { success, cartId: posStore.cartId })
     if (!success) {
       syncError.value = 'Error al sincronizar el carrito'
     }
@@ -393,13 +382,6 @@ const syncCart = async () => {
 onMounted(async () => {
   setPageSubtitle('Checkout')
 
-  console.log('[checkout] onMounted', {
-    isMesaMode: isMesaMode.value,
-    activeTableSession: posStore.activeTableSession,
-    cartLength: posStore.cart.length,
-    tabItemsLength: storeTabItems.value.length,
-    cartId: posStore.cartId,
-  })
 
   // Siempre regeneramos el carrito backend desde el estado local actual.
   if (posStore.cart.length > 0) {

@@ -707,12 +707,14 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
+import { useQueryCache } from '@pinia/colada'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Nuevo Cierre - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
+const cache = useQueryCache()
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -958,6 +960,7 @@ const submitCierre = async () => {
     successData.value = result.data
     cierreSuccess.value = true
     clearStorage()
+    cache.invalidateQueries({ key: ['cierre', 'list'] })
   } catch (err: any) {
     const msg = err?.data?.message ?? err?.data?.detail ?? err?.message ?? 'Error al registrar el cierre.'
     submitError.value = msg.includes('superpone')
