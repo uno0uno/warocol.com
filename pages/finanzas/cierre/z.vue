@@ -166,58 +166,46 @@
 
       <!-- ── Step content ─────────────────────────────────────────────────── -->
 
-      <!-- Step 1: Cuentas abiertas -->
-      <div v-if="currentStep === 1" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
-        <h3 class="text-sm font-semibold text-text-primary mb-3">Cuentas abiertas</h3>
+      <!-- Step 1: Cuentas abiertas (bloqueador — solo visible si hay mesas abiertas) -->
+      <div v-if="currentStep === 1" class="bg-surface border-2 border-amber-300 rounded-lg p-3 sm:p-4">
         <div v-if="previewLoading" class="flex justify-center py-6">
           <CommonsTheCustomLoader size="large" />
         </div>
-        <template v-else-if="previewData">
-          <div v-if="previewData.openTablesCount === 0 || isPastPeriod" class="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 border border-emerald-200 mb-3">
-            <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span class="text-sm text-emerald-700">
-              <template v-if="isPastPeriod && previewData.openTablesCount > 0">
-                Período pasado — las {{ previewData.openTablesCount }} mesa(s) abiertas no corresponden a este período.
-              </template>
-              <template v-else>
-                No hay cuentas abiertas. Todo listo para continuar.
-              </template>
-            </span>
-          </div>
-          <div v-else class="flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200 mb-3">
-            <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-else-if="previewData" class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <div>
-              <p class="text-sm font-medium text-amber-800">
-                Hay {{ previewData.openTablesCount }} mesa(s) con cuenta abierta
-              </p>
-              <p class="text-xs text-amber-600 mt-0.5">Debes cerrar todas las mesas antes de continuar con el cierre.</p>
-              <NuxtLink to="/pos" target="_blank" class="inline-block mt-2 text-xs font-medium text-amber-700 underline hover:no-underline">
-                Ir al POS →
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-amber-800">
+              {{ previewData.openTablesCount }} mesa{{ previewData.openTablesCount !== 1 ? 's' : '' }} con cuenta abierta
+            </p>
+            <p class="text-xs text-amber-700 mt-0.5">Cierra todas las mesas en el POS antes de registrar el cierre.</p>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <NuxtLink
+                to="/pos"
+                target="_blank"
+                class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                Ir al POS
               </NuxtLink>
+              <button
+                @click="refetchPreview()"
+                class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Verificar de nuevo
+              </button>
             </div>
           </div>
-          <div class="flex flex-wrap gap-3">
-            <button
-              v-if="previewData.openTablesCount === 0 || isPastPeriod"
-              @click="currentStep = 2"
-              class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              Continuar →
-            </button>
-            <button
-              v-else
-              disabled
-              class="min-h-[44px] px-6 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium cursor-not-allowed opacity-50"
-            >
-              Cierra las mesas para continuar
-            </button>
-          </div>
-        </template>
-        <div v-else class="text-sm text-text-secondary py-4">No se pudo cargar el estado de las mesas.</div>
+        </div>
+        <div v-else class="text-sm text-text-secondary py-2">No se pudo cargar el estado de las mesas.</div>
       </div>
 
       <!-- Step 2: Conteo de caja -->
@@ -910,6 +898,13 @@ const clearStorage = () => {
 }
 
 watch([currentStep, counts, monedasAmount, methodAmounts, notes], saveToStorage, { deep: true })
+
+// Auto-advance past step 1 when there are no open tables
+watch(previewData, (data) => {
+  if (currentStep.value === 1 && data && (data.openTablesCount === 0 || isPastPeriod.value)) {
+    currentStep.value = 2
+  }
+}, { immediate: true })
 
 onMounted(() => {
   if (typeof window === 'undefined') return
