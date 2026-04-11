@@ -447,58 +447,126 @@
 
       <!-- Step 4: Resumen -->
       <div v-else-if="currentStep === 4" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
-        <h3 class="text-sm font-semibold text-text-primary mb-2">Resumen del día</h3>
+        <h3 class="text-sm font-semibold text-text-primary mb-3">Resumen del día</h3>
 
-        <div class="bg-background rounded-lg border border-border divide-y divide-border mb-3">
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Período</span>
-            <span class="font-medium">{{ formatPeriod(periodStart, periodEnd) }}</span>
-          </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Total ventas</span>
-            <span class="font-semibold text-text-primary">{{ formatCurrency(previewData?.totalSales) }}</span>
-          </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Efectivo recibido</span>
-            <span class="font-medium">{{ formatCurrency(previewData?.totalCash) }}</span>
-          </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Gastos efectivo</span>
-            <span class="font-medium">{{ formatCurrency(previewData?.gastosEfectivo) }}</span>
-          </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Esperado en caja</span>
-            <span class="font-medium">{{ formatCurrency(previewData?.cashExpected) }}</span>
-          </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Efectivo contado</span>
-            <span class="font-medium">{{ formatCurrency(totalCounted) }}</span>
-          </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm font-semibold">
-            <span>Diferencia efectivo</span>
-            <span :class="cashDiff >= 0 ? 'text-emerald-600' : 'text-destructive'">
-              {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
-            </span>
-          </div>
-          <template v-if="nonCashMethods.length > 0">
-            <div v-for="method in nonCashMethods" :key="method.key" class="flex justify-between px-4 py-2.5 text-sm">
-              <span class="text-text-secondary">{{ method.label }} contado</span>
-              <span class="font-medium">{{ formatCurrency(parseInt(methodAmounts[method.key]) || 0) }}</span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+
+          <!-- Ventas -->
+          <div class="bg-background rounded-lg border border-border overflow-hidden">
+            <div class="px-3 py-2 bg-surface border-b border-border">
+              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Ventas</span>
             </div>
-          </template>
+            <div class="divide-y divide-border">
+              <div class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Período</span>
+                <span class="font-medium text-text-primary">{{ formatPeriod(periodStart, periodEnd) }}</span>
+              </div>
+              <div class="flex justify-between items-center px-3 py-2.5">
+                <span class="text-xs text-text-secondary">Total ventas</span>
+                <span class="text-base font-bold text-text-primary">{{ formatCurrency(previewData?.totalSales) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Caja -->
+          <div class="bg-background rounded-lg border border-border overflow-hidden">
+            <div class="px-3 py-2 bg-surface border-b border-border">
+              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Efectivo</span>
+            </div>
+            <div class="divide-y divide-border">
+              <div class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Recibido</span>
+                <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.totalCash) }}</span>
+              </div>
+              <div class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Gastos</span>
+                <span class="font-medium text-destructive">− {{ formatCurrency(previewData?.gastosEfectivo) }}</span>
+              </div>
+              <div class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Esperado</span>
+                <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.cashExpected) }}</span>
+              </div>
+              <div class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Contado</span>
+                <span class="font-semibold text-text-primary">{{ formatCurrency(totalCounted) }}</span>
+              </div>
+            </div>
+            <!-- Diferencia — accent row -->
+            <div
+              class="px-3 py-2.5 border-t-2 flex items-center justify-between"
+              :class="cashDiff >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-destructive/5 border-destructive/20'"
+            >
+              <div class="flex items-center gap-1.5">
+                <svg v-if="cashDiff >= 0" class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+                <svg v-else class="w-3.5 h-3.5 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span class="text-xs font-semibold" :class="cashDiff >= 0 ? 'text-emerald-700' : 'text-destructive'">Diferencia</span>
+              </div>
+              <span class="text-sm font-bold" :class="cashDiff >= 0 ? 'text-emerald-700' : 'text-destructive'">
+                {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Otros métodos (span full si hay) -->
+          <div v-if="nonCashMethods.length > 0" class="sm:col-span-2 bg-background rounded-lg border border-border overflow-hidden">
+            <div class="px-3 py-2 bg-surface border-b border-border">
+              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Otros métodos</span>
+            </div>
+            <div class="divide-y divide-border">
+              <div v-for="method in nonCashMethods" :key="method.key" class="flex items-center justify-between px-3 py-2">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full flex-shrink-0" :class="GROUP_COLORS[method.groupSlug]?.dot ?? 'bg-primary'" />
+                  <span class="text-sm capitalize text-text-primary">{{ method.label }}</span>
+                  <span class="text-xs px-1.5 py-0.5 rounded" :class="GROUP_COLORS[method.groupSlug]?.badge ?? 'bg-primary/10 text-primary'">{{ method.groupLabel }}</span>
+                </div>
+                <span
+                  class="text-sm font-semibold"
+                  :class="(parseInt(methodAmounts[method.key]) || 0) === 0 ? 'text-text-tertiary' : 'text-text-primary'"
+                >{{ formatCurrency(parseInt(methodAmounts[method.key]) || 0) }}</span>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        <textarea
-          v-model="notes"
-          placeholder="Notas (opcional)"
-          rows="2"
-          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary resize-none mb-2"
-        />
+        <!-- Notas -->
+        <div class="mb-3">
+          <label class="text-xs font-medium text-text-secondary block mb-1">Notas <span class="font-normal">(opcional)</span></label>
+          <textarea
+            v-model="notes"
+            placeholder="Ej: Se cerró tarde por evento especial…"
+            rows="2"
+            class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+          />
+        </div>
 
-        <div class="flex flex-wrap gap-2 mb-3 text-xs">
-          <NuxtLink to="/ventas/ordenes" target="_blank" class="text-primary hover:underline">→ Lista de ventas</NuxtLink>
-          <NuxtLink to="/finanzas/gastos" target="_blank" class="text-primary hover:underline">→ Gastos del día</NuxtLink>
-          <NuxtLink to="/analitica" target="_blank" class="text-primary hover:underline">→ Analítica</NuxtLink>
+        <!-- Quick links -->
+        <div class="flex flex-wrap gap-2 mb-3">
+          <NuxtLink
+            to="/ventas/ordenes" target="_blank"
+            class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-md bg-background border border-border text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            Lista de ventas
+          </NuxtLink>
+          <NuxtLink
+            to="/finanzas/gastos" target="_blank"
+            class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-md bg-background border border-border text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            Gastos del día
+          </NuxtLink>
+          <NuxtLink
+            to="/analitica" target="_blank"
+            class="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-md bg-background border border-border text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+            Analítica
+          </NuxtLink>
         </div>
 
         <div class="flex gap-3">
