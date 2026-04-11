@@ -26,7 +26,7 @@ useHead({ title: 'Checkout' })
 const router = useRouter()
 const posStore = usePOSStore()
 const cache = useQueryCache()
-const { currentTenant } = useTenantReactive()
+const { currentTenant, businessProfile } = useTenantReactive()
 
 // Inject subtitle setter from layout
 const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle', () => {})
@@ -361,6 +361,11 @@ const sendReceiptEmail = async () => {
   if (!receiptEmail.value || !orderResult.value || isSendingEmail.value) return
   isSendingEmail.value = true
   try {
+    // Map frontend cart items to include computed subtotal for the email template
+    const itemsForEmail = cartItemsSnapshot.value.map((item: any) => ({
+      ...item,
+      subtotal: getItemTotal(item),
+    }))
     await $fetch(`/api/pos/cart/receipt-email`, {
       method: 'POST',
       body: {
@@ -368,7 +373,11 @@ const sendReceiptEmail = async () => {
         order_number: orderResult.value.order_number,
         total_amount: orderResult.value.total_amount,
         payment_method: orderResult.value.payment_method,
-        items: cartItemsSnapshot.value,
+        items: itemsForEmail,
+        business_name: businessProfile.value?.display_name ?? null,
+        business_address: businessProfile.value?.address ?? null,
+        business_city: businessProfile.value?.city ?? null,
+        business_phone: businessProfile.value?.phone_number ?? null,
       }
     })
     emailSent.value = true
@@ -1265,14 +1274,15 @@ onUnmounted(() => {
 
   <!-- Hidden receipt for printing — only visible via @media print -->
   <div id="pos-receipt" aria-hidden="true">
-    <div class="receipt-header">WARO Colombia</div>
-    <div v-if="orderResult?.order_number > 0" class="receipt-row">
-      <span>Orden #{{ orderResult?.order_number }}</span>
-    </div>
+    <div class="receipt-header">{{ businessProfile?.display_name || 'WARO' }}</div>
+    <div v-if="businessProfile?.address" class="receipt-row receipt-small">{{ businessProfile.address }}<span v-if="businessProfile.city">, {{ businessProfile.city }}</span></div>
+    <div v-if="businessProfile?.phone_number" class="receipt-row receipt-small">Tel: {{ businessProfile.phone_number }}</div>
+    <div class="receipt-divider">================================</div>
+    <div v-if="orderResult?.order_number > 0" class="receipt-row">Orden #{{ orderResult?.order_number }}</div>
     <div class="receipt-divider">--------------------------------</div>
     <div v-for="item in cartItemsSnapshot" :key="item.id" class="receipt-item">
       <span>{{ item.quantity }}x {{ item.product?.name }}</span>
-      <span>{{ formatCurrency(item.subtotal) }}</span>
+      <span>{{ formatCurrency(getItemTotal(item)) }}</span>
     </div>
     <div class="receipt-divider">--------------------------------</div>
     <div class="receipt-total">
@@ -1280,6 +1290,7 @@ onUnmounted(() => {
       <span>{{ formatCurrency(orderResult?.total_amount ?? 0) }}</span>
     </div>
     <div class="receipt-row">{{ getPaymentMethodLabel(orderResult?.payment_method ?? '') }}</div>
+    <div class="receipt-divider">================================</div>
     <div class="receipt-footer">¡Gracias por tu compra!</div>
   </div>
   </div>
@@ -1303,6 +1314,7 @@ onUnmounted(() => {
 .receipt-item { display: flex; justify-content: space-between; margin: 2px 0; }
 .receipt-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; margin: 4px 0; }
 .receipt-footer { text-align: center; margin-top: 8px; }
+.receipt-small { font-size: 0.85em; }
 </style>
 
 <style>
