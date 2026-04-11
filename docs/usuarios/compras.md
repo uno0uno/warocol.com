@@ -173,7 +173,7 @@ El panel muestra tres contadores:
 | Con base global | Los que están vinculados a un ingrediente del catálogo global |
 | Sin base | Los que no tienen vínculo con el catálogo global |
 
-Puedes filtrar por nombre o usar el desplegable para ver solo los que tienen base global o solo los que no la tienen.
+Puedes filtrar por nombre o usar el desplegable para ver solo los que tienen base global o solo los que no la tienen. El botón **Archivados** muestra los ingredientes que han sido desactivados.
 
 ### Crear un ingrediente propio
 
@@ -192,6 +192,24 @@ Al elegir el tipo de medida, WARO genera automáticamente las **unidades de comp
 
 No tienes que ir a esta sección cada vez. También puedes crear ingredientes propios directamente desde Recetas, Productos, Modificadores y Compras Directas — si buscas un ingrediente y no aparece, encontrarás la opción **+ Crear ingrediente** para abrirlo en un panel lateral sin salir de la página.
 
+### Archivar un ingrediente propio
+
+Si un ingrediente ya no lo usas, puedes archivarlo en lugar de eliminarlo. Archivar es la opción recomendada porque protege el historial.
+
+Haz clic en el ícono de archivo (caja) en la fila del ingrediente. El sistema te pide confirmación y te muestra exactamente qué se verá afectado.
+
+Al archivar un ingrediente:
+
+- Desaparece de todas las recetas, modificadores y productos activos donde estaba incluido.
+- El historial de compras, ventas y movimientos de inventario queda intacto — no se pierde ningún dato.
+- El ingrediente ya no aparece en el buscador al crear recetas o compras nuevas.
+
+### Restaurar un ingrediente archivado
+
+Ve a **Abastecimiento → Ingredientes Propios** y activa el filtro **Archivados**. Haz clic en el ícono de restaurar en la fila correspondiente.
+
+Al restaurar, el ingrediente vuelve a estar disponible en el buscador. Sin embargo, **no recupera automáticamente sus vínculos anteriores**: debes agregarlo de nuevo a las recetas, modificadores y productos donde lo necesites.
+
 ### Preguntas frecuentes — Ingredientes Propios
 
 **¿Por qué el tipo de medida no se puede cambiar después de crear?**
@@ -202,6 +220,12 @@ La categoría es obligatoria. El formulario no deja guardar si está vacía.
 
 **¿Los ingredientes propios los ven mis empleados?**
 Sí, están disponibles para todos los usuarios del restaurante en el buscador de ingredientes.
+
+**¿Qué pasa con las ventas y compras si archivo un ingrediente?**
+Nada. El historial queda intacto. Solo se desvincula de las recetas y modificadores activos para que no aparezca en nuevos pedidos.
+
+**Si restauro un ingrediente, ¿vuelve a mis recetas?**
+No. Al restaurar el ingrediente queda activo de nuevo, pero debes re-vincularlo manualmente a cada receta, modificador o producto donde lo quieras usar.
 
 ---
 
