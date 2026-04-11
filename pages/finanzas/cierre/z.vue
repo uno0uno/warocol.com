@@ -121,8 +121,11 @@
 
       <!-- X Preview -->
       <div v-if="xPreviewLoading" class="flex justify-center py-10"><CommonsTheCustomLoader size="large" /></div>
-      <template v-else-if="xPreviewData">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <template v-else>
+        <div v-if="xPreviewError" class="text-sm text-text-secondary py-4 px-2">
+          No se pudo cargar el resumen del período. Verifica tu conexión e intenta de nuevo.
+        </div>
+        <div v-else-if="xPreviewData" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <!-- Ventas -->
           <div class="bg-surface border-2 border-border rounded-lg">
             <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Ventas del período</h3></div>
@@ -156,7 +159,7 @@
           </div>
         </div>
 
-        <!-- CTA -->
+        <!-- CTA — always visible once not loading -->
         <div class="flex gap-3">
           <button
             @click="goToStep1"
@@ -887,7 +890,7 @@ const shiftLabel = computed(() => {
 })
 
 // X preview (paso 0 — all orders, not completed_only)
-const { data: rawXPreview, status: xPreviewStatus } = useQuery({
+const { data: rawXPreview, status: xPreviewStatus, error: xPreviewError } = useQuery({
   key: () => ['cierre', 'preview-x0', currentTenant.value?.id, periodStart.value, periodEnd.value, periodStartTime.value, periodEndTime.value],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
     params: {
@@ -924,7 +927,7 @@ const wizardSteps = [
   { n: 5, label: 'Cerrar' },
 ]
 
-const currentStep     = ref(route.query.start ? 1 : 0)
+const currentStep     = ref(0)
 const confirmArmed    = ref(false)
 const isSubmitting    = ref(false)
 const submitError     = ref<string | null>(null)
@@ -1137,7 +1140,7 @@ const loadFromStorage = () => {
       }
       if (s.periodStartTime) { startTimeInput.value = s.periodStartTime; enableTimePicker.value = true }
       if (s.periodEndTime)   { endTimeInput.value   = s.periodEndTime;   enableTimePicker.value = true }
-      if (s.step)            currentStep.value     = s.step
+      // Never restore step from storage — always start at step 0 (X preview)
     }
     if (s.counts)         counts.value         = s.counts
     if (s.monedasAmount)  monedasAmount.value  = s.monedasAmount
