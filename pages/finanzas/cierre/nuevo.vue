@@ -1114,12 +1114,18 @@ const clearStorage = () => {
 
 watch([currentStep, counts, monedasAmount, methodAmounts, notes], saveToStorage, { deep: true })
 
-// Auto-advance past step 1 when there are no open tables
-watch(previewData, (data) => {
+// Auto-advance past step 1:
+// - fires when previewData loads OR when currentStep changes to 1
+// - for past periods: always skip (can't close past tables from POS)
+// - for today: skip only when openTablesCount === 0
+const checkAutoAdvance = () => {
+  const data = previewData.value
   if (currentStep.value === 1 && data && (data.openTablesCount === 0 || isPastPeriod.value)) {
     currentStep.value = 2
   }
-}, { immediate: true })
+}
+watch(previewData, checkAutoAdvance, { immediate: true })
+watch(currentStep, checkAutoAdvance)
 
 onMounted(() => {
   if (typeof window === 'undefined') return
