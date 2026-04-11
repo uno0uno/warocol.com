@@ -1568,6 +1568,7 @@
   <IngredientesIngredientePropioPanel
     v-model="showCreateModal"
     :initial-name="createModalName"
+    :initial-type="selectedIngredientType"
     @saved="onIngredientCreated"
   />
 </template>

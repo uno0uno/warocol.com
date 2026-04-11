@@ -94,6 +94,99 @@
             <p v-if="errors.name" class="text-xs text-destructive">{{ errors.name }}</p>
           </div>
 
+          <!-- CREACIÓN: selector de tipo de ingrediente -->
+          <div v-if="!isEdit" class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-text-primary">
+              Tipo <span class="text-destructive">*</span>
+            </label>
+            <div class="grid grid-cols-3 gap-2" role="group" aria-label="Tipo de ingrediente">
+              <!-- Alimento -->
+              <button
+                type="button"
+                @click="form.type = 'food'"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                  form.type === 'food'
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a9 9 0 019 9c0 4.97-4.03 9-9 9S3 15.97 3 11a9 9 0 019-9z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 11c0-2.21 1.79-4 4-4s4 1.79 4 4" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">Alimento</span>
+                <span :class="['text-[10px] leading-snug', form.type === 'food' ? 'text-primary/80' : 'text-text-tertiary']">Recetas y costos de platos. Ej: carne, leche</span>
+              </button>
+
+              <!-- Insumo -->
+              <button
+                type="button"
+                @click="form.type = 'supply'"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                  form.type === 'supply'
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">Insumo</span>
+                <span :class="['text-[10px] leading-snug', form.type === 'supply' ? 'text-primary/80' : 'text-text-tertiary']">Empaques o materiales. Ej: bolsas, cajas</span>
+              </button>
+
+              <!-- Servicio -->
+              <button
+                type="button"
+                @click="form.type = 'service'"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                  form.type === 'service'
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">Servicio</span>
+                <span :class="['text-[10px] leading-snug', form.type === 'service' ? 'text-primary/80' : 'text-text-tertiary']">Costo sin producto físico. Ej: gas, mano de obra</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- EDICIÓN: tipo de solo lectura -->
+          <div v-if="isEdit" class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-text-primary">Tipo</label>
+            <div class="h-10 flex items-center px-3 rounded-lg border border-border bg-surface-secondary/60 text-sm text-text-secondary select-none gap-2">
+              <template v-if="form.type === 'food'">
+                <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a9 9 0 019 9c0 4.97-4.03 9-9 9S3 15.97 3 11a9 9 0 019-9z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 11c0-2.21 1.79-4 4-4s4 1.79 4 4" />
+                </svg>
+                Alimento
+              </template>
+              <template v-else-if="form.type === 'supply'">
+                <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+                </svg>
+                Insumo
+              </template>
+              <template v-else-if="form.type === 'service'">
+                <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Servicio
+              </template>
+              <template v-else>{{ form.type }}</template>
+              <span class="text-[10px] text-text-tertiary ml-auto">No se puede cambiar</span>
+            </div>
+          </div>
+
           <!-- CREACIÓN: selector de tipo de medida -->
           <div v-if="!isEdit" class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-text-primary">
@@ -402,6 +495,7 @@ interface Props {
   modelValue: boolean
   ingredient?: any    // null/undefined = create mode, object = edit mode
   initialName?: string  // pre-fill name when creating from search box
+  initialType?: string  // pre-select ingredient type when context is known (e.g. active tab in Compras Directas)
 }
 
 interface Emits {
@@ -411,7 +505,7 @@ interface Emits {
   (e: 'restored', ingredient: any): void
 }
 
-const props = withDefaults(defineProps<Props>(), { ingredient: null, initialName: '' })
+const props = withDefaults(defineProps<Props>(), { ingredient: null, initialName: '', initialType: 'food' })
 const emit = defineEmits<Emits>()
 
 // Archive / restore state
@@ -494,7 +588,7 @@ type UnitTypeKey = 'peso' | 'volumen' | 'pieza' | ''
 
 // --- State ---
 const unitType = ref<UnitTypeKey>('')
-const form = ref({ name: '', unit: '', category: '', parentId: null as string | null, parentName: '', isResale: false })
+const form = ref({ name: '', unit: '', category: '', parentId: null as string | null, parentName: '', isResale: false, type: 'food' })
 const errors = ref<Record<string, string>>({})
 const saving = ref(false)
 const existingPurchaseUnits = ref<any[]>([])
@@ -520,7 +614,7 @@ const setUnitType = (key: UnitTypeKey) => {
 
 // --- Form reset helpers ---
 const resetCreate = () => {
-  form.value = { name: props.initialName ?? '', unit: '', category: '', parentId: null, parentName: '', isResale: false }
+  form.value = { name: props.initialName ?? '', unit: '', category: '', parentId: null, parentName: '', isResale: false, type: props.initialType ?? 'food' }
   unitType.value = ''
   errors.value = {}
 }
@@ -535,6 +629,7 @@ watch(() => props.ingredient, (ing) => {
       parentId: null,
       parentName: ing.parent_name ?? '',
       isResale: ing.is_resale ?? false,
+      type: ing.type ?? 'food',
     }
     unitType.value = ''
     existingPurchaseUnits.value = []
@@ -605,6 +700,7 @@ async function submit() {
 
     let result: any
     if (isEdit.value) {
+      // type is immutable — never include it in PATCH
       if (existingPurchaseUnits.value.length === 0 && editSuggestions.value.length > 0) {
         body.purchase_units = editSuggestions.value.map((s, i) => ({
           purchase_unit: s.purchase_unit,
@@ -613,6 +709,7 @@ async function submit() {
       }
       result = await $fetch(`/api/suppliers/ingredients/${props.ingredient.id}`, { method: 'PATCH', body })
     } else {
+      body.type = form.value.type
       body.purchase_units = currentSuggestions.value.map((s, i) => ({
         purchase_unit: s.purchase_unit,
         is_default: i === 0,
