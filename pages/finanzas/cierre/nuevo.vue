@@ -85,15 +85,24 @@
         :preset-dates="dpPresets"
         :enable-time-picker="false"
         :locale="es"
-        placeholder="Rango personalizado…"
         auto-apply
         :max-date="new Date()"
-        :format="formatInputDisplay"
-        input-class-name="dp-custom-input"
         menu-class-name="dp-custom-menu"
         calendar-cell-class-name="dp-custom-cell"
         @update:model-value="activePreset = null"
-      />
+      >
+        <template #trigger>
+          <button
+            type="button"
+            class="dp-custom-input flex items-center gap-2 h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary hover:border-primary/50 transition-colors"
+          >
+            <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span class="text-text-primary">{{ dpDisplayText }}</span>
+          </button>
+        </template>
+      </VueDatePicker>
     </div>
 
     <!-- ── Horario exacto ─────────────────────────────────────────────────── -->
@@ -360,14 +369,14 @@ const fmtDT = new Intl.DateTimeFormat('es-CO', {
   hour: '2-digit', minute: '2-digit', hour12: false,
   timeZone: 'America/Bogota',
 })
-const formatInputDisplay = (val: Date | Date[] | null): string => {
-  if (!val) return ''
-  const dates = Array.isArray(val) ? val : [val]
-  if (!dates[0]) return ''
-  const from = fmtDT.format(dates[0])
+
+const dpDisplayText = computed(() => {
+  const dates = dateRangeDates.value
+  if (!dates?.[0]) return 'Rango personalizado…'
+  const from = fnsFormat(dates[0], 'dd/MM/yyyy', { locale: es })
   if (!dates[1]) return from
-  return `${from} – ${fmtDT.format(dates[1])}`
-}
+  return `${from} – ${fnsFormat(dates[1], 'dd/MM/yyyy', { locale: es })}`
+})
 
 const formatPeriod = (start: string, end: string) => {
   const fmt = (d: string) => new Intl.DateTimeFormat('es-CO', {
