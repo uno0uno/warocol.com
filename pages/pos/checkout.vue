@@ -339,7 +339,10 @@ const closeSuccessModal = () => {
 }
 
 // Fetch dynamic payment methods from API — falls back to hardcoded defaults on error
+const isLoadingPaymentMethods = ref(true)
+
 const fetchPaymentMethods = async () => {
+  isLoadingPaymentMethods.value = true
   try {
     const response = await $fetch<{ success: boolean; data: PosPaymentGroup[] }>('/api/pos/payment-methods')
     if (response.success && response.data?.length) {
@@ -347,6 +350,8 @@ const fetchPaymentMethods = async () => {
     }
   } catch {
     // Keep PAYMENT_DEFAULTS — POS must never break
+  } finally {
+    isLoadingPaymentMethods.value = false
   }
 }
 
@@ -503,8 +508,20 @@ onUnmounted(() => {
             Método de Pago
           </h2>
 
+          <!-- Skeleton while loading payment methods -->
+          <div v-if="isLoadingPaymentMethods" class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+            <div
+              v-for="i in 4"
+              :key="i"
+              class="rounded-xl border border-border p-2.5 md:p-4 h-[72px] md:h-[88px] flex flex-col items-center md:items-start gap-2 animate-pulse"
+            >
+              <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-border flex-shrink-0" />
+              <div class="h-3 w-14 rounded bg-border" />
+            </div>
+          </div>
+
           <!-- Dynamic payment method groups — loaded from API, falls back to 4 defaults -->
-          <div class="grid gap-2 md:gap-4" :class="paymentGridClass">
+          <div v-else class="grid gap-2 md:gap-4" :class="paymentGridClass">
             <label
               v-for="group in posPaymentGroups"
               :key="group.slug"
