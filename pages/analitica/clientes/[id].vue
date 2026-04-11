@@ -23,6 +23,7 @@ const { data: paymentGroupsData } = useQuery({
 const paymentGroups = computed(() =>
   (paymentGroupsData.value?.data ?? []).filter(g => g.isActive).sort((a, b) => a.sortOrder - b.sortOrder)
 )
+const { resolveLabel } = usePaymentLabel(paymentGroups)
 
 // ── Layout actions ────────────────────────────────────────────────────────
 const setPageTitle = inject<(title: string | undefined) => void>('setPageTitle')
@@ -110,15 +111,6 @@ const formatDate = (isoDate: string) => {
   catch { return isoDate }
 }
 
-const paymentLabels: Record<string, string> = {
-  cash: 'Efectivo',
-  card: 'Tarjeta',
-  digital: 'Digital',
-  credit: 'Crédito',
-  partial: 'Parcial',
-  paid: 'Pagado',
-}
-const formatPayment = (method: string) => paymentLabels[method] || method || '-'
 
 const statusLabels: Record<string, string> = {
   completed: 'Completado',
@@ -568,7 +560,7 @@ onUnmounted(() => {
               </span>
             </div>
             <div class="flex justify-between items-center text-sm">
-              <span class="text-text-secondary">{{ item.items_count }} productos · {{ formatPayment(item.payment_method) }}</span>
+              <span class="text-text-secondary">{{ item.items_count }} productos · {{ resolveLabel(item.payment_method) }}</span>
               <span class="font-bold text-text-primary">{{ formatCurrency(item.total) }}</span>
             </div>
           </div>
@@ -592,7 +584,7 @@ onUnmounted(() => {
         </template>
 
         <template #cell-payment_method="{ value }">
-          <span class="text-sm text-text-secondary">{{ formatPayment(value) }}</span>
+          <span class="text-sm text-text-secondary">{{ resolveLabel(value) }}</span>
         </template>
 
         <template #cell-payment_status="{ row }">

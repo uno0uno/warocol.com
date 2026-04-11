@@ -21,6 +21,7 @@ const { data: paymentGroupsData } = useQuery({
 const paymentGroups = computed(() =>
   (paymentGroupsData.value?.data ?? []).filter(g => g.isActive).sort((a, b) => a.sortOrder - b.sortOrder)
 )
+const { resolveLabel } = usePaymentLabel(paymentGroups)
 
 // Export modal state
 const showExportModal = ref(false)
@@ -335,15 +336,6 @@ const formatDate = (dateString: string) => {
   }).format(date)
 }
 
-const getPaymentMethodLabel = (method: string) => {
-  const labels: Record<string, string> = {
-    'cash': 'Efectivo',
-    'card': 'Tarjeta',
-    'digital': 'Digital',
-    'credit': 'Crédito'
-  }
-  return labels[method] || method
-}
 
 const getPaymentStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
@@ -591,7 +583,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <span class="text-xs text-text-secondary">{{ formatDateCompact(item.order_date) }}</span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ item.customer_name }} · {{ item.items_count }} items · {{ getPaymentMethodLabel(item.payment_method) }} · {{ item.source === 'mesa' ? 'Mesa' : 'POS' }}
+                {{ item.customer_name }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method) }} · {{ item.source === 'mesa' ? 'Mesa' : 'POS' }}
               </p>
             </div>
 
@@ -680,7 +672,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
         <template #cell-payment_method="{ value }">
           <UiStatusBadge
-            :value="value ? getPaymentMethodLabel(value) : 'Sin registrar'"
+            :value="value ? resolveLabel(value) : 'Sin registrar'"
             format="text"
             :variant="value === 'cash' ? 'success' : value === 'card' ? 'info' : value === 'digital' ? 'primary' : value === 'credit' ? 'warning' : 'secondary'"
             size="sm"
