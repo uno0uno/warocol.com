@@ -1,43 +1,27 @@
 <template>
   <div class="page-layout">
 
-    <!-- ── Paso 1: Período ──────────────────────────────────────────────── -->
-    <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6 mb-4">
-      <div class="flex items-center gap-2 mb-4">
-        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-          <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        </div>
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Paso 1</p>
-          <h3 class="text-sm font-semibold text-text-primary leading-tight">Selecciona el período</h3>
-        </div>
-      </div>
+    <!-- ── Filter bar (mismo patrón que ventas/ordenes) ───────────────── -->
+    <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-4">
+      <button
+        v-for="p in presets"
+        :key="p.key"
+        class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
+        :class="activePreset === p.key
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
+        @click="applyPreset(p)"
+      >
+        {{ p.label }}
+      </button>
 
-      <!-- Presets -->
-      <div class="flex flex-wrap gap-2 mb-3">
-        <button
-          v-for="p in presets"
-          :key="p.key"
-          class="min-h-[40px] px-4 rounded-lg border text-sm font-medium transition-colors"
-          :class="activePreset === p.key
-            ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-            : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
-          @click="applyPreset(p)"
-        >
-          {{ p.label }}
-        </button>
-      </div>
-
-      <!-- Custom date picker -->
       <VueDatePicker
         v-model="dateRangeDates"
         range
         :preset-dates="dpPresets"
         :enable-time-picker="false"
         :locale="es"
-        placeholder="O elige un rango personalizado…"
+        placeholder="Rango personalizado…"
         auto-apply
         :teleport="true"
         :max-date="new Date()"
@@ -47,27 +31,6 @@
         calendar-cell-class-name="dp-custom-cell"
         @update:model-value="activePreset = null"
       />
-
-      <!-- Selected period badge -->
-      <div v-if="periodStart" class="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20">
-        <svg class="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span class="text-sm font-medium text-primary">{{ formatPeriod(periodStart, periodEnd) }}</span>
-      </div>
-    </div>
-
-    <!-- ── Paso 2: Acción ────────────────────────────────────────────────── -->
-    <div class="flex items-center gap-2 mb-3">
-      <div class="w-8 h-8 rounded-lg bg-border flex items-center justify-center flex-shrink-0">
-        <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      </div>
-      <div>
-        <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Paso 2</p>
-        <h3 class="text-sm font-semibold text-text-primary leading-tight">¿Qué quieres hacer?</h3>
-      </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
