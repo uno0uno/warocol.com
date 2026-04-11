@@ -105,115 +105,65 @@
       </div>
 
       <!-- ── Stepper ──────────────────────────────────────────────────────── -->
-      <div class="bg-surface border border-border rounded-lg mb-3 sm:mb-4">
-        <div class="p-3 sm:p-4">
-          <div class="flex items-center justify-between">
-            <!-- Step 1 -->
-            <div class="flex items-center flex-1">
-              <div
-                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-                :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 1,
-                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 1,
-                  'border-border text-text-secondary bg-transparent': currentStep < 1,
-                }"
-              >
-                <svg v-if="currentStep > 1" class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="font-semibold text-sm sm:text-base">1</span>
-              </div>
-              <div class="hidden sm:block ml-3 flex-1 min-w-0">
-                <p class="text-sm font-medium truncate" :class="currentStep >= 1 ? 'text-text-primary' : 'text-text-secondary'">Cuentas</p>
-                <p class="text-xs text-text-secondary">Mesas abiertas</p>
-              </div>
-              <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 1 ? 'bg-secondary' : 'bg-border'" />
-            </div>
+      <div class="bg-surface border border-border rounded-lg mb-3 sm:mb-4 px-3 py-2.5 sm:px-4 sm:py-3">
 
-            <!-- Step 2 -->
-            <div class="flex items-center flex-1">
-              <div
-                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-                :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 2,
-                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 2,
-                  'border-border text-text-secondary bg-transparent': currentStep < 2,
-                }"
-              >
-                <svg v-if="currentStep > 2" class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="font-semibold text-sm sm:text-base">2</span>
-              </div>
-              <div class="hidden sm:block ml-3 flex-1 min-w-0">
-                <p class="text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">Efectivo</p>
-                <p class="text-xs text-text-secondary">Contar billetes</p>
-              </div>
-              <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'" />
-            </div>
-
-            <!-- Step 3 -->
-            <div class="flex items-center flex-1">
-              <div
-                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-                :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 3,
-                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 3,
-                  'border-border text-text-secondary bg-transparent': currentStep < 3,
-                }"
-              >
-                <svg v-if="currentStep > 3" class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="font-semibold text-sm sm:text-base">3</span>
-              </div>
-              <div class="hidden sm:block ml-3 flex-1 min-w-0">
-                <p class="text-sm font-medium truncate" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">Otros métodos</p>
-                <p class="text-xs text-text-secondary">Contar medios</p>
-              </div>
-              <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 3 ? 'bg-secondary' : 'bg-border'" />
-            </div>
-
-            <!-- Step 4 -->
-            <div class="flex items-center flex-1">
-              <div
-                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-                :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 4,
-                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 4,
-                  'border-border text-text-secondary bg-transparent': currentStep < 4,
-                }"
-              >
-                <svg v-if="currentStep > 4" class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="font-semibold text-sm sm:text-base">4</span>
-              </div>
-              <div class="hidden sm:block ml-3 flex-1 min-w-0">
-                <p class="text-sm font-medium truncate" :class="currentStep >= 4 ? 'text-text-primary' : 'text-text-secondary'">Resumen</p>
-                <p class="text-xs text-text-secondary">Revisar totales</p>
-              </div>
-              <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 4 ? 'bg-secondary' : 'bg-border'" />
-            </div>
-
-            <!-- Step 5 -->
-            <div class="flex items-center">
-              <div
-                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-                :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 5,
-                  'border-border text-text-secondary bg-transparent': currentStep < 5,
-                }"
-              >
-                <span class="font-semibold text-sm sm:text-base">5</span>
-              </div>
-              <div class="hidden sm:block ml-3 min-w-0">
-                <p class="text-sm font-medium truncate" :class="currentStep >= 5 ? 'text-text-primary' : 'text-text-secondary'">Cerrar</p>
-                <p class="text-xs text-text-secondary">Confirmar cierre</p>
-              </div>
-            </div>
+        <!-- Mobile: barra de progreso + etiqueta del paso actual -->
+        <div class="flex items-center gap-3 sm:hidden">
+          <span class="text-xs font-semibold text-text-secondary tabular-nums flex-shrink-0">{{ currentStep }}/5</span>
+          <div class="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
+            <div
+              class="h-full bg-primary rounded-full transition-all duration-300"
+              :style="`width: ${(currentStep / 5) * 100}%`"
+            />
           </div>
+          <span class="text-xs font-semibold text-text-primary flex-shrink-0">
+            {{ ['Cuentas','Efectivo','Otros métodos','Resumen','Cerrar'][currentStep - 1] }}
+          </span>
         </div>
+
+        <!-- Desktop: dots compactos -->
+        <div class="hidden sm:flex items-center">
+          <template v-for="(step, idx) in [
+            { n: 1, label: 'Cuentas' },
+            { n: 2, label: 'Efectivo' },
+            { n: 3, label: 'Otros métodos' },
+            { n: 4, label: 'Resumen' },
+            { n: 5, label: 'Cerrar' },
+          ]">
+            <!-- Dot + label -->
+            <div :key="step.n" class="flex flex-col items-center flex-shrink-0">
+              <div
+                class="w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-200"
+                :class="{
+                  'bg-primary border-primary text-primary-foreground shadow-sm': currentStep === step.n,
+                  'bg-primary/15 border-primary/40 text-primary': currentStep > step.n,
+                  'bg-background border-border text-text-secondary': currentStep < step.n,
+                }"
+              >
+                <svg v-if="currentStep > step.n" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                <span v-else class="text-xs font-bold">{{ step.n }}</span>
+              </div>
+              <span
+                class="mt-1 text-xs whitespace-nowrap transition-colors"
+                :class="currentStep === step.n
+                  ? 'font-semibold text-text-primary'
+                  : currentStep > step.n
+                    ? 'font-medium text-primary/70'
+                    : 'text-text-secondary'"
+              >{{ step.label }}</span>
+            </div>
+            <!-- Conector -->
+            <div
+              v-if="idx < 4"
+              :key="`line-${step.n}`"
+              class="flex-1 h-px mx-2 mb-4 transition-colors duration-200"
+              :class="currentStep > step.n ? 'bg-primary/30' : 'bg-border'"
+            />
+          </template>
+        </div>
+
       </div>
 
       <!-- ── Step content ─────────────────────────────────────────────────── -->
