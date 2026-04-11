@@ -289,13 +289,6 @@ const startTimeInput   = ref('')
 const endTimeInput     = ref('')
 const timeError        = ref<string | null>(null)
 
-const isMultiDay = computed(() => periodStart.value !== periodEnd.value)
-
-// Auto-enable time inputs when multi-day range is selected
-watch(isMultiDay, (multi) => {
-  if (multi) enableTimePicker.value = true
-})
-
 const dpPresets = presets.map(p => ({ label: p.label, value: [p.start, p.end] }))
 
 const applyPreset = (p: Preset) => {
@@ -336,6 +329,12 @@ const periodStart = computed(() =>
 const periodEnd = computed(() =>
   dateRangeDates.value?.[1] ? fnsFormat(dateRangeDates.value[1], 'yyyy-MM-dd') : today
 )
+
+const isMultiDay = computed(() => periodStart.value !== periodEnd.value)
+
+watch(isMultiDay, (multi) => {
+  if (multi) enableTimePicker.value = true
+})
 
 // ISO datetime strings — only set when time picker is active AND both inputs filled
 const periodStartTime = computed(() => {
