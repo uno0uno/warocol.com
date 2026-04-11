@@ -128,39 +128,56 @@
         {{ enableTimePicker ? 'Quitar horario exacto' : 'Especificar horario exacto' }}
       </button>
 
-      <!-- Datalist: opciones de hora cada 30 min en 24h -->
-      <datalist id="time-options">
-        <option v-for="t in timeOptions" :key="t" :value="t" />
-      </datalist>
-
       <div v-if="isMultiDay || enableTimePicker" class="mt-2 flex items-center gap-3 flex-wrap">
         <div class="flex items-center gap-1.5">
           <label class="text-xs text-text-secondary whitespace-nowrap">Desde</label>
-          <input
-            type="text"
-            v-model="startTimeInput"
-            placeholder="HH:MM"
-            maxlength="5"
-            inputmode="numeric"
-            list="time-options"
-            @input="onTimeInput($event, 'start')"
-            class="h-8 w-20 px-2 text-sm font-mono rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
-            :class="isMultiDay && !startTimeInput ? 'border-amber-400' : 'border-border'"
-          />
+          <div class="relative">
+            <input
+              type="text"
+              v-model="startTimeInput"
+              placeholder="HH:MM"
+              maxlength="5"
+              inputmode="numeric"
+              @input="onTimeInput($event, 'start')"
+              @focus="showDrop.start = true"
+              @blur="hideDrop('start')"
+              class="h-8 w-20 px-2 text-sm font-mono rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
+              :class="isMultiDay && !startTimeInput ? 'border-amber-400' : 'border-border'"
+            />
+            <ul v-if="showDrop.start && filteredTimes(startTimeInput).length"
+                class="absolute z-50 top-full left-0 mt-1 w-24 max-h-44 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg py-1">
+              <li v-for="t in filteredTimes(startTimeInput)" :key="t"
+                  @mousedown.prevent="pickTime('start', t)"
+                  class="px-3 py-1 text-sm font-mono text-text-primary hover:bg-background cursor-pointer">
+                {{ t }}
+              </li>
+            </ul>
+          </div>
         </div>
         <div class="flex items-center gap-1.5">
           <label class="text-xs text-text-secondary whitespace-nowrap">Hasta</label>
-          <input
-            type="text"
-            v-model="endTimeInput"
-            placeholder="HH:MM"
-            maxlength="5"
-            inputmode="numeric"
-            list="time-options"
-            @input="onTimeInput($event, 'end')"
-            class="h-8 w-20 px-2 text-sm font-mono rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
-            :class="isMultiDay && !endTimeInput ? 'border-amber-400' : 'border-border'"
-          />
+          <div class="relative">
+            <input
+              type="text"
+              v-model="endTimeInput"
+              placeholder="HH:MM"
+              maxlength="5"
+              inputmode="numeric"
+              @input="onTimeInput($event, 'end')"
+              @focus="showDrop.end = true"
+              @blur="hideDrop('end')"
+              class="h-8 w-20 px-2 text-sm font-mono rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
+              :class="isMultiDay && !endTimeInput ? 'border-amber-400' : 'border-border'"
+            />
+            <ul v-if="showDrop.end && filteredTimes(endTimeInput).length"
+                class="absolute z-50 top-full left-0 mt-1 w-24 max-h-44 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg py-1">
+              <li v-for="t in filteredTimes(endTimeInput)" :key="t"
+                  @mousedown.prevent="pickTime('end', t)"
+                  class="px-3 py-1 text-sm font-mono text-text-primary hover:bg-background cursor-pointer">
+                {{ t }}
+              </li>
+            </ul>
+          </div>
         </div>
         <span v-if="shiftLabel" class="text-xs text-text-secondary">{{ shiftLabel }}</span>
       </div>
@@ -228,7 +245,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, reactive, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
 
@@ -320,6 +337,23 @@ const timeOptions = Array.from({ length: 48 }, (_, i) => {
   const m = i % 2 === 0 ? '00' : '30'
   return `${h}:${m}`
 })
+
+const showDrop = reactive({ start: false, end: false })
+
+const filteredTimes = (val: string) => {
+  if (!val) return timeOptions
+  return timeOptions.filter(t => t.startsWith(val))
+}
+
+const hideDrop = (field: 'start' | 'end') => {
+  setTimeout(() => { showDrop[field] = false }, 150)
+}
+
+const pickTime = (field: 'start' | 'end', t: string) => {
+  if (field === 'start') startTimeInput.value = t
+  else endTimeInput.value = t
+  showDrop[field] = false
+}
 
 const dpPresets = presets.map(p => ({ label: p.label, value: [p.start, p.end] }))
 
