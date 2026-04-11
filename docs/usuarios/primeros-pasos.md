@@ -6,7 +6,7 @@ Bienvenido a WARO COLOMBIA. Esta guía te explica cómo entrar a la plataforma y
 
 ## Hola desde bogota colombia
 
-![Saifer](https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/intro-saifer.jpg)  
+![Saifer](https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/intro-saifer.jpg)
 Desarrollador independiente (Indie Hacker)
 
 ---
@@ -43,38 +43,47 @@ WARO COLOMBIA no permite registro libre. Si ingresas un email que no tiene cuent
 
 ## Orden recomendado para empezar
 
-Si acabas de crear tu cuenta, ten en cuenta que las secciones más importantes y que más vas a usar a diario son el **Menú (Productos)** y el **POS**. Sigue este orden:
+Si acabas de crear tu cuenta, sigue este orden para poner tu operación en marcha:
 
-**1. Configura tu Menú (Paso Crítico)**
+**1. Configura tu Menú (paso crítico)**
 
-Es obligatorio crear tu menú para habilitar el funcionamiento del POS y Domicilios.
-- [Crear Recetas](./menu/recetas.md) — hazlo primero para preparaciones que usarás en varios platos (ej: salsas, bases).
-- [Crear Productos](./menu/crear-producto.md) — lo que le vendes al cliente. Puedes asignarle a estos las recetas que ya creaste.
-- [Agregar Modificadores](./menu/modificadores.md) — variantes o extras (tamaños, acompañamientos).
+Es obligatorio crear tu menú para habilitar el POS y los Domicilios.
+
+- [Menú](/docs/usuarios/menu) — crea tus recetas, productos y modificadores antes de vender cualquier cosa.
 
 **2. Empieza a vender**
 
-Una vez tengas tus productos listos, ya puedes empezar a operar:
-- [Usar el POS](./pos/procesar-venta.md) — toma pedidos presenciales y cóbralos en caja.
-- Prepárate para atender órdenes desde **Domicilios**.
+Con los productos listos ya puedes operar:
 
-**3. Optimiza tu negocio (Abastecimiento)**
+- [POS](/docs/usuarios/pos) — toma pedidos presenciales y cóbralos en caja.
+- [Domicilios](/docs/usuarios/domicilios) — gestiona pedidos a domicilio desde el mismo sistema.
+- [Mesas](/docs/usuarios/mesas) — si tienes salón, controla las mesas y sesiones activas.
 
-Una vez domines tus ventas, si quieres optimizar tu negocio y entender a fondo tus costos, puedes empezar a cargar tus gastos:
-- [Registrar compras con IA](./compras/crear-orden-compra.md) — sube tus facturas en segundos.
-- [Gestionar proveedores](./compras/gestionar-proveedores.md) — controla mejor en qué gastas.
+**3. Controla tus finanzas**
 
-**4. Agrega a tu equipo**
+Una vez vendas, lleva el control del dinero:
 
-Configura los accesos y la gestión de personal de tu operación:
-- [Invitar miembros](./equipo/agregar-empleado.md) — asigna roles y accesos específicos a tus cajeros, meseros, o administradores.
-- [Salarios y Pagos](./equipo/registrar-pago.md) — gestiona la nómina, histórico y liquidación de los pagos de tu equipo.
+- [Finanzas](/docs/usuarios/finanzas) — cartera de clientes a crédito, gastos, cierre contable diario y métodos de pago.
+- [Ventas](/docs/usuarios/ventas) — historial completo de órdenes y reportes.
+- [Analítica](/docs/usuarios/analitica) — métricas de ventas, productos más vendidos y tendencias.
+
+**4. Optimiza tu abastecimiento**
+
+Cuando quieras entender a fondo tus costos:
+
+- [Abastecimiento](/docs/usuarios/compras) — registra facturas con IA, gestiona proveedores y órdenes de compra.
+
+**5. Gestiona tu equipo**
+
+Configura accesos y nómina:
+
+- [Equipo](/docs/usuarios/equipo) — invita miembros, asigna roles, configura salarios y registra pagos.
 
 ---
 
 ## Cerrar sesión
 
-La sesión se mantiene activa mientras uses la plataforma. Para cerrar sesión manualmente, haz clic en tu nombre o avatar en la esquina superior derecha y selecciona **Cerrar sesión**.
+La sesión se mantiene activa mientras uses la plataforma. Para cerrar sesión manualmente, haz clic en tu nombre o avatar en la esquina inferior del menú lateral y selecciona **Cerrar sesión**.
 
 ---
 
