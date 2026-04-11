@@ -4,9 +4,13 @@ Desde el módulo de Gastos llevas el control de todos los costos del negocio que
 
 ---
 
-## Ver gastos
+## Cómo acceder
 
-Ve a **Gastos** en el menú lateral.
+Finanzas → pestaña **Gastos**
+
+---
+
+## Ver gastos
 
 ### Métricas del período
 
@@ -38,7 +42,7 @@ La eliminación es permanente e incluye los documentos adjuntos.
 
 ## Registrar un gasto
 
-Ve a **Gastos → Nuevo gasto**.
+Ve a Finanzas → Gastos → **Nuevo gasto**.
 
 ### Paso 1 — Datos básicos
 
