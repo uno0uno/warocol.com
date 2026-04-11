@@ -395,21 +395,6 @@
             <p v-if="errors.category" class="text-xs text-destructive">{{ errors.category }}</p>
           </div>
 
-          <!-- Basado en (ingrediente global) -->
-          <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium text-text-primary">
-              Basado en <span class="text-xs font-normal text-text-tertiary ml-1">(opcional)</span>
-            </label>
-            <p class="text-xs text-text-tertiary -mt-1">Ingrediente del catálogo global en que se basa este ingrediente</p>
-            <UiIngredientSearchInput
-              :base-only="true"
-              :initial-value="form.parentName"
-              placeholder="Buscar ingrediente base..."
-              @select="onParentSelect"
-              @clear="onParentClear"
-            />
-          </div>
-
           <!-- Error general -->
           <p v-if="errors.general" class="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
             {{ errors.general }}
