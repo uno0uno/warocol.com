@@ -57,142 +57,6 @@
       </div>
     </div>
 
-    <!-- ── PASO 0: Seleccionar período ─────────────────────────────────── -->
-    <template v-else-if="currentStep === 0">
-
-      <!-- ── Hint card: skeleton ──────────────────────────────────────────── -->
-      <div v-if="ultimoLoading" class="bg-surface border border-border rounded-lg overflow-hidden animate-pulse mb-3">
-        <div class="px-3 py-2 bg-background border-b border-border flex items-center justify-between">
-          <div class="h-3 w-36 rounded bg-border" />
-          <div class="h-3 w-24 rounded bg-border" />
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
-          <div v-for="i in 4" :key="i" class="px-3 py-2.5 flex flex-col gap-1.5">
-            <div class="h-2.5 w-16 rounded bg-border" />
-            <div class="h-4 w-24 rounded bg-border" />
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Hint card: último cierre ────────────────────────────────────── -->
-      <div v-else-if="ultimoCierre" class="bg-surface border border-border rounded-lg overflow-hidden mb-3">
-        <div class="px-3 py-2 bg-background border-b border-border flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Último cierre registrado</span>
-          <span class="text-xs text-text-tertiary">{{ formatClosedAt(ultimoCierre.closedAt) }}</span>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
-          <div class="px-3 py-2.5">
-            <p class="text-xs text-text-secondary mb-0.5">Período</p>
-            <p class="text-xs font-semibold text-text-primary">{{ formatPeriod(ultimoCierre.periodStart, ultimoCierre.periodEnd) }}</p>
-          </div>
-          <div class="px-3 py-2.5">
-            <p class="text-xs text-text-secondary mb-0.5">Total ventas</p>
-            <p class="text-sm font-bold text-text-primary">{{ formatCurrency(ultimoCierre.totalSales) }}</p>
-          </div>
-          <div class="px-3 py-2.5">
-            <p class="text-xs text-text-secondary mb-0.5">Efectivo contado</p>
-            <p class="text-sm font-semibold text-text-primary">{{ formatCurrency(ultimoCierre.cashCounted) }}</p>
-          </div>
-          <div class="px-3 py-2.5">
-            <p class="text-xs text-text-secondary mb-0.5">Diferencia caja</p>
-            <p
-              class="text-sm font-bold"
-              :class="ultimoCierre.cashDifference >= 0 ? 'text-emerald-600' : 'text-destructive'"
-            >
-              {{ ultimoCierre.cashDifference >= 0 ? '+' : '' }}{{ formatCurrency(ultimoCierre.cashDifference) }}
-            </p>
-          </div>
-        </div>
-        <!-- Sugerencia de período -->
-        <div v-if="suggestedRange" class="px-3 py-2 bg-primary/5 border-t border-primary/15 flex items-center justify-between gap-3">
-          <div class="flex items-center gap-2 min-w-0">
-            <svg class="w-3.5 h-3.5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span class="text-xs text-primary">
-              Día sugerido: <strong>{{ formatPeriod(suggestedRange.start, suggestedRange.start) }}</strong>
-              <span class="text-primary/70"> (día siguiente al último cierre)</span>
-            </span>
-          </div>
-          <button
-            @click="applySuggested"
-            class="flex-shrink-0 text-xs font-semibold text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
-          >
-            Aplicar
-          </button>
-        </div>
-      </div>
-
-      <!-- Selector de día -->
-      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
-        <button
-          v-for="p in presets" :key="p.key"
-          class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
-          :class="activePreset === p.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
-          @click="applyPreset(p)"
-        >{{ p.label }}</button>
-
-        <VueDatePicker
-          v-model="selectedDate"
-          :enable-time-picker="false" :locale="es"
-          auto-apply :max-date="new Date()" :format="formatSingleDate"
-          input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
-          @update:model-value="activePreset = null"
-        />
-      </div>
-
-      <!-- X Preview -->
-      <div v-if="xPreviewLoading" class="flex justify-center py-10"><CommonsTheCustomLoader size="large" /></div>
-      <template v-else>
-        <div v-if="xPreviewError" class="text-sm text-text-secondary py-4 px-2">
-          No se pudo cargar el resumen del período. Verifica tu conexión e intenta de nuevo.
-        </div>
-        <div v-else-if="xPreviewData" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <!-- Ventas -->
-          <div class="bg-surface border-2 border-border rounded-lg">
-            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Ventas del período</h3></div>
-            <div class="divide-y divide-border">
-              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Total ventas</span><span class="font-bold text-text-primary">{{ formatCurrency(xPreviewData.totalSales) }}</span></div>
-              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Órdenes</span><span class="font-medium">{{ xPreviewData.itemsSold }}</span></div>
-            </div>
-          </div>
-          <!-- Caja -->
-          <div class="bg-surface border-2 border-border rounded-lg">
-            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Estado de caja</h3></div>
-            <div class="divide-y divide-border">
-              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Efectivo recibido</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
-              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Gastos en efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
-              <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Esperado en caja</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
-              <div class="flex justify-between px-4 py-2.5 text-sm">
-                <span class="text-text-secondary">Mesas abiertas</span>
-                <span class="font-medium" :class="xPreviewData.openTablesCount > 0 ? 'text-amber-600 font-semibold' : 'text-text-primary'">{{ xPreviewData.openTablesCount }}</span>
-              </div>
-            </div>
-          </div>
-          <!-- Métodos de pago -->
-          <div v-if="xPreviewData.totalSales > 0" class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
-            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Métodos de pago</h3></div>
-            <div class="divide-y divide-border">
-              <div v-for="row in (xPreviewData.breakdown ?? [])" :key="row.group_slug + row.method_name" class="flex justify-between px-4 py-2.5 text-sm">
-                <span class="text-text-secondary">{{ row.method_name }}</span>
-                <span class="font-medium">{{ formatCurrency(row.total) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- CTA — always visible once not loading -->
-        <div class="flex gap-3">
-          <button
-            @click="goToStep1"
-            class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
-            Continuar al cierre →
-          </button>
-        </div>
-      </template>
-    </template>
-
     <template v-else>
       <!-- ── Header info card ─────────────────────────────────────────────── -->
       <div class="bg-surface border-2 border-border rounded-lg mb-3 sm:mb-4">
@@ -253,7 +117,7 @@
             />
           </div>
           <span class="text-xs font-semibold text-text-primary flex-shrink-0">
-            {{ ['Cuentas','Efectivo','Otros métodos','Resumen','Cerrar'][currentStep - 1] }}
+            {{ ['Período','Efectivo','Otros métodos','Resumen','Cerrar'][currentStep - 1] }}
           </span>
         </div>
 
@@ -302,47 +166,125 @@
 
       <!-- ── Step content ─────────────────────────────────────────────────── -->
 
-      <!-- Step 1: Cuentas abiertas (bloqueador — solo visible si hay mesas abiertas) -->
-      <div v-if="currentStep === 1" class="bg-surface border-2 border-amber-300 rounded-lg p-3 sm:p-4">
-        <div v-if="previewLoading" class="flex justify-center py-6">
-          <CommonsTheCustomLoader size="large" />
-        </div>
-        <div v-else-if="previewData" class="flex items-start gap-3">
-          <div class="w-10 h-10 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0">
-            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+      <!-- Step 1: Período + X + validación mesas -->
+      <template v-if="currentStep === 1">
+
+        <!-- Hint card último cierre -->
+        <div v-if="ultimoLoading" class="bg-surface border border-border rounded-lg overflow-hidden animate-pulse mb-3">
+          <div class="px-3 py-2 bg-background border-b border-border flex items-center justify-between">
+            <div class="h-3 w-36 rounded bg-border" /><div class="h-3 w-24 rounded bg-border" />
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-amber-800">
-              {{ previewData.openTablesCount }} mesa{{ previewData.openTablesCount !== 1 ? 's' : '' }} con cuenta abierta
-            </p>
-            <p class="text-xs text-amber-700 mt-0.5">Cierra todas las mesas en el POS antes de registrar el cierre.</p>
-            <div class="flex flex-wrap gap-2 mt-3">
-              <NuxtLink
-                to="/pos"
-                target="_blank"
-                class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-                Ir al POS
-              </NuxtLink>
-              <button
-                @click="refetchPreview()"
-                class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Verificar de nuevo
-              </button>
+          <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
+            <div v-for="i in 4" :key="i" class="px-3 py-2.5 flex flex-col gap-1.5">
+              <div class="h-2.5 w-16 rounded bg-border" /><div class="h-4 w-24 rounded bg-border" />
             </div>
           </div>
         </div>
-        <div v-else class="text-sm text-text-secondary py-2">No se pudo cargar el estado de las mesas.</div>
-      </div>
+        <div v-else-if="ultimoCierre" class="bg-surface border border-border rounded-lg overflow-hidden mb-3">
+          <div class="px-3 py-2 bg-background border-b border-border flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Último cierre registrado</span>
+            <span class="text-xs text-text-tertiary">{{ formatClosedAt(ultimoCierre.closedAt) }}</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
+            <div class="px-3 py-2.5"><p class="text-xs text-text-secondary mb-0.5">Período</p><p class="text-xs font-semibold text-text-primary">{{ formatPeriod(ultimoCierre.periodStart, ultimoCierre.periodEnd) }}</p></div>
+            <div class="px-3 py-2.5"><p class="text-xs text-text-secondary mb-0.5">Total ventas</p><p class="text-sm font-bold text-text-primary">{{ formatCurrency(ultimoCierre.totalSales) }}</p></div>
+            <div class="px-3 py-2.5"><p class="text-xs text-text-secondary mb-0.5">Efectivo contado</p><p class="text-sm font-semibold text-text-primary">{{ formatCurrency(ultimoCierre.cashCounted) }}</p></div>
+            <div class="px-3 py-2.5">
+              <p class="text-xs text-text-secondary mb-0.5">Diferencia caja</p>
+              <p class="text-sm font-bold" :class="ultimoCierre.cashDifference >= 0 ? 'text-emerald-600' : 'text-destructive'">{{ ultimoCierre.cashDifference >= 0 ? '+' : '' }}{{ formatCurrency(ultimoCierre.cashDifference) }}</p>
+            </div>
+          </div>
+          <div v-if="suggestedRange" class="px-3 py-2 bg-primary/5 border-t border-primary/15 flex items-center justify-between gap-3">
+            <span class="text-xs text-primary">
+              Día sugerido: <strong>{{ formatPeriod(suggestedRange.start, suggestedRange.start) }}</strong>
+              <span class="text-primary/70"> (día siguiente al último cierre)</span>
+            </span>
+            <button @click="applySuggested" class="flex-shrink-0 text-xs font-semibold text-primary hover:text-primary/80 underline underline-offset-2 transition-colors">Aplicar</button>
+          </div>
+        </div>
+
+        <!-- Selector de día -->
+        <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-3">
+          <button
+            v-for="p in presets" :key="p.key"
+            class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
+            :class="activePreset === p.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
+            @click="applyPreset(p)"
+          >{{ p.label }}</button>
+          <VueDatePicker
+            v-model="selectedDate"
+            :enable-time-picker="false" :locale="es"
+            auto-apply :max-date="new Date()" :format="formatSingleDate"
+            input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
+            @update:model-value="activePreset = null"
+          />
+        </div>
+
+        <!-- X preview -->
+        <div v-if="xPreviewLoading" class="flex justify-center py-10"><CommonsTheCustomLoader size="large" /></div>
+        <template v-else-if="xPreviewData">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <!-- Ventas -->
+            <div class="bg-surface border-2 border-border rounded-lg">
+              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Ventas del día</h3></div>
+              <div class="divide-y divide-border">
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Total ventas</span><span class="font-bold text-text-primary">{{ formatCurrency(xPreviewData.totalSales) }}</span></div>
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Órdenes</span><span class="font-medium">{{ xPreviewData.itemsSold }}</span></div>
+              </div>
+            </div>
+            <!-- Caja -->
+            <div class="bg-surface border-2 border-border rounded-lg">
+              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Estado de caja</h3></div>
+              <div class="divide-y divide-border">
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Efectivo recibido</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Gastos en efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
+                <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Esperado en caja</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
+              </div>
+            </div>
+            <!-- Métodos de pago -->
+            <div v-if="xPreviewData.totalSales > 0" class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
+              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Métodos de pago</h3></div>
+              <div class="divide-y divide-border">
+                <div v-for="row in (xPreviewData.breakdown ?? [])" :key="row.group_slug + row.method_name" class="flex justify-between px-4 py-2.5 text-sm">
+                  <span class="text-text-secondary">{{ row.method_name }}</span>
+                  <span class="font-medium">{{ formatCurrency(row.total) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mesas abiertas: bloquear o continuar -->
+          <div v-if="xPreviewData.openTablesCount > 0" class="bg-surface border-2 border-amber-300 rounded-lg p-4 flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-amber-800">{{ xPreviewData.openTablesCount }} mesa{{ xPreviewData.openTablesCount !== 1 ? 's' : '' }} con cuenta abierta</p>
+              <p class="text-xs text-amber-700 mt-0.5">Cierra todas las mesas en el POS antes de registrar el cierre.</p>
+              <div class="flex flex-wrap gap-2 mt-3">
+                <NuxtLink to="/pos" target="_blank" class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                  Ir al POS
+                </NuxtLink>
+                <button @click="refetchXPreview()" class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  Verificar de nuevo
+                </button>
+              </div>
+            </div>
+          </div>
+          <div v-else class="flex gap-3">
+            <button @click="currentStep = 2" class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+              Siguiente →
+            </button>
+          </div>
+        </template>
+        <div v-else-if="xPreviewError" class="text-sm text-text-secondary py-4">No se pudo cargar el resumen del período.</div>
+        <div v-else class="flex justify-center py-10"><CommonsTheCustomLoader size="large" /></div>
+
+      </template>
 
       <!-- Step 2: Conteo de caja -->
       <div v-else-if="currentStep === 2" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
@@ -881,7 +823,7 @@ const periodStart = computed(() => fnsFormat(selectedDate.value, 'yyyy-MM-dd'))
 const periodEnd   = computed(() => periodStart.value)
 
 // X preview (paso 0 — all orders, not completed_only)
-const { data: rawXPreview, status: xPreviewStatus, error: xPreviewError } = useQuery({
+const { data: rawXPreview, status: xPreviewStatus, error: xPreviewError, refetch: refetchXPreview } = useQuery({
   key: () => ['cierre', 'preview-x0', currentTenant.value?.id, periodStart.value],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
     params: { period_start: periodStart.value, period_end: periodEnd.value },
@@ -893,20 +835,18 @@ const xPreviewData    = computed(() => rawXPreview.value?.data ?? null)
 const xPreviewLoading = computed(() => xPreviewStatus.value === 'pending' && !xPreviewData.value)
 
 // Navigate to step 1
-const goToStep1 = () => { currentStep.value = 1 }
-
 const isPastPeriod = computed(() => periodEnd.value < today)
 
 // ── Wizard state ──────────────────────────────────────────────────────────
 const wizardSteps = [
-  { n: 1, label: 'Cuentas' },
+  { n: 1, label: 'Período' },
   { n: 2, label: 'Efectivo' },
   { n: 3, label: 'Otros métodos' },
   { n: 4, label: 'Resumen' },
   { n: 5, label: 'Cerrar' },
 ]
 
-const currentStep     = ref(0)
+const currentStep     = ref(1)
 const confirmArmed    = ref(false)
 const isSubmitting    = ref(false)
 const submitError     = ref<string | null>(null)
