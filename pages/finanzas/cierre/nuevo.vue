@@ -881,7 +881,7 @@ const { data: rawPreview, status: previewStatus, asyncStatus: previewAsyncStatus
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
     params: { period_start: periodStart.value, period_end: periodEnd.value, completed_only: true },
   }),
-  enabled: () => !!currentTenant.value,
+  enabled: () => !!currentTenant.value && currentStep.value > 1,
   staleTime: 0,
 })
 
