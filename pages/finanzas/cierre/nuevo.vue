@@ -83,10 +83,10 @@
         range
         :teleport="true"
         :preset-dates="dpPresets"
-        :enable-time-picker="enableTimePicker"
+        :enable-time-picker="false"
         :locale="es"
         placeholder="Rango personalizado…"
-        :auto-apply="!enableTimePicker"
+        auto-apply
         :max-date="new Date()"
         :format="formatDateRange"
         input-class-name="dp-custom-input"
@@ -96,22 +96,38 @@
       />
     </div>
 
-    <!-- ── Time picker toggle ─────────────────────────────────────────────── -->
-    <div class="flex items-center gap-2 mb-4">
+    <!-- ── Horario exacto ─────────────────────────────────────────────────── -->
+    <div class="mb-4">
       <button
         @click="toggleTimePicker"
-        class="flex items-center gap-1.5 text-xs text-text-secondary hover:text-primary transition-colors"
-        :class="enableTimePicker ? 'text-primary font-medium' : ''"
-        aria-label="Especificar horario exacto"
+        class="flex items-center gap-1.5 text-xs transition-colors"
+        :class="enableTimePicker ? 'text-primary font-medium' : 'text-text-secondary hover:text-primary'"
       >
         <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        {{ enableTimePicker ? 'Horario exacto activado' : 'Especificar horario exacto' }}
-        <span v-if="enableTimePicker && shiftLabel" class="text-primary/70 font-normal">
-          — {{ shiftLabel }}
-        </span>
+        {{ enableTimePicker ? 'Quitar horario exacto' : 'Especificar horario exacto' }}
       </button>
+
+      <div v-if="enableTimePicker" class="mt-2 flex items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-1.5">
+          <label class="text-xs text-text-secondary whitespace-nowrap">Desde</label>
+          <input
+            type="time"
+            v-model="startTimeInput"
+            class="h-8 px-2 text-sm rounded-lg border border-border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+        </div>
+        <div class="flex items-center gap-1.5">
+          <label class="text-xs text-text-secondary whitespace-nowrap">Hasta</label>
+          <input
+            type="time"
+            v-model="endTimeInput"
+            class="h-8 px-2 text-sm rounded-lg border border-border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+        </div>
+        <span v-if="shiftLabel" class="text-xs text-text-secondary">{{ shiftLabel }}</span>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -254,6 +270,8 @@ const presets = buildPresets()
 const activePreset = ref<string | null>('today')
 const dateRangeDates = ref<Date[]>([new Date(), new Date()])
 const enableTimePicker = ref(false)
+const startTimeInput   = ref('')   // "HH:MM"
+const endTimeInput     = ref('')   // "HH:MM"
 
 const dpPresets = presets.map(p => ({ label: p.label, value: [p.start, p.end] }))
 
@@ -264,18 +282,27 @@ const applyPreset = (p: Preset) => {
 
 const toggleTimePicker = () => {
   enableTimePicker.value = !enableTimePicker.value
+  if (!enableTimePicker.value) {
+    startTimeInput.value = ''
+    endTimeInput.value   = ''
+  }
 }
 
-// Friendly shift duration label when time picker is on
+// Combine date + time input into a full Date for ISO output
+const buildDateTime = (datePart: Date | null, timeStr: string): Date | null => {
+  if (!datePart || !timeStr) return null
+  const [h, m] = timeStr.split(':').map(Number)
+  const d = new Date(datePart)
+  d.setHours(h, m, 0, 0)
+  return d
+}
+
 const shiftLabel = computed(() => {
   if (!enableTimePicker.value) return null
-  const [s, e] = dateRangeDates.value ?? []
-  if (!s || !e) return null
-  try {
-    return formatDistanceStrict(s, e, { locale: es })
-  } catch {
-    return null
-  }
+  const s = buildDateTime(dateRangeDates.value?.[0] ?? null, startTimeInput.value)
+  const e = buildDateTime(dateRangeDates.value?.[1] ?? null, endTimeInput.value)
+  if (!s || !e || s >= e) return null
+  try { return formatDistanceStrict(s, e, { locale: es }) } catch { return null }
 })
 
 // ── Period ────────────────────────────────────────────────────────────────
@@ -287,17 +314,15 @@ const periodEnd = computed(() =>
   dateRangeDates.value?.[1] ? fnsFormat(dateRangeDates.value[1], 'yyyy-MM-dd') : today
 )
 
-// ISO datetime strings — only set when time picker is active
-const periodStartTime = computed(() =>
-  enableTimePicker.value && dateRangeDates.value?.[0]
-    ? dateRangeDates.value[0].toISOString()
-    : null
-)
-const periodEndTime = computed(() =>
-  enableTimePicker.value && dateRangeDates.value?.[1]
-    ? dateRangeDates.value[1].toISOString()
-    : null
-)
+// ISO datetime strings — only set when time picker is active AND both inputs filled
+const periodStartTime = computed(() => {
+  if (!enableTimePicker.value) return null
+  return buildDateTime(dateRangeDates.value?.[0] ?? null, startTimeInput.value)?.toISOString() ?? null
+})
+const periodEndTime = computed(() => {
+  if (!enableTimePicker.value) return null
+  return buildDateTime(dateRangeDates.value?.[1] ?? null, endTimeInput.value)?.toISOString() ?? null
+})
 
 const formatDateRange = (dates: Date[]) => {
   if (!dates?.[0]) return ''
