@@ -88,7 +88,7 @@
         placeholder="Rango personalizado…"
         auto-apply
         :max-date="new Date()"
-        :format="'dd/MM/yyyy'"
+        :format="formatInputDisplay"
         input-class-name="dp-custom-input"
         menu-class-name="dp-custom-menu"
         calendar-cell-class-name="dp-custom-cell"
@@ -353,6 +353,20 @@ const formatDateRange = (dates: Date[]) => {
   const from = fnsFormat(dates[0], 'dd/MM/yyyy', { locale: es })
   if (!dates[1]) return from
   return `${from} - ${fnsFormat(dates[1], 'dd/MM/yyyy', { locale: es })}`
+}
+
+const fmtDT = new Intl.DateTimeFormat('es-CO', {
+  day: '2-digit', month: '2-digit', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', hour12: true,
+  timeZone: 'America/Bogota',
+})
+const formatInputDisplay = (val: Date | Date[] | null): string => {
+  if (!val) return ''
+  const dates = Array.isArray(val) ? val : [val]
+  if (!dates[0]) return ''
+  const from = fmtDT.format(dates[0])
+  if (!dates[1]) return from
+  return `${from} – ${fmtDT.format(dates[1])}`
 }
 
 const formatPeriod = (start: string, end: string) => {
