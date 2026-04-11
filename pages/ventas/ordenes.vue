@@ -603,7 +603,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <span class="text-xs text-text-secondary">{{ formatDateCompact(item.order_date) }}</span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ item.customer_name }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method) }} · {{ item.source === 'mesa' ? 'Mesa' : 'POS' }}
+                {{ item.customer_name }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ item.source === 'mesa' ? 'Mesa' : 'POS' }}
               </p>
             </div>
 
@@ -690,11 +690,11 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </span>
         </template>
 
-        <template #cell-payment_method="{ value }">
+        <template #cell-payment_method="{ item }">
           <UiStatusBadge
-            :value="value ? resolveLabel(value) : 'Sin registrar'"
+            :value="item?.payment_method ? resolveLabel(item.payment_method, item.payment_method_id) : 'Sin registrar'"
             format="text"
-            :variant="value === 'cash' ? 'success' : value === 'card' ? 'info' : value === 'digital' ? 'primary' : value === 'credit' ? 'warning' : 'secondary'"
+            :variant="item?.payment_method === 'cash' ? 'success' : item?.payment_method === 'card' ? 'info' : item?.payment_method === 'digital' ? 'primary' : item?.payment_method === 'credit' ? 'warning' : 'secondary'"
             size="sm"
           />
         </template>

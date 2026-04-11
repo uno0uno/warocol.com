@@ -348,7 +348,7 @@ onUnmounted(() => {
         <!-- Payment Method -->
         <div class="bg-surface border-2 border-info rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Método de Pago</p>
-          <p class="text-lg font-bold text-info">{{ resolveLabel(order.payment_method) }}</p>
+          <p class="text-lg font-bold text-info">{{ resolveLabel(order.payment_method, order.payment_method_id) }}</p>
         </div>
 
         <!-- Total Amount -->
