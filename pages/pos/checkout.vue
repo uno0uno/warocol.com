@@ -56,6 +56,7 @@ const selectedPaymentMethod = ref<string>('cash')
 const selectedPaymentMethodId = ref<string | null>(null)
 const posPaymentGroups = ref<PosPaymentGroup[]>(PAYMENT_DEFAULTS)
 const creditDueDate = ref<string>('')
+const methodSearch = ref<string>('')
 const isProcessing = ref(false)
 const processingError = ref('')
 const isSyncingCart = ref(false)
@@ -284,9 +285,17 @@ const selectedGroup = computed(() =>
   posPaymentGroups.value.find(g => g.slug === selectedPaymentMethod.value) ?? null
 )
 
-// Reset sub-method when group changes
+// Reset sub-method and search when group changes
 watch(selectedPaymentMethod, () => {
   selectedPaymentMethodId.value = null
+  methodSearch.value = ''
+})
+
+const filteredMethods = computed(() => {
+  const methods = selectedGroup.value?.methods ?? []
+  const q = methodSearch.value.trim().toLowerCase()
+  if (!q) return methods
+  return methods.filter(m => m.name.toLowerCase().includes(q))
 })
 
 const getPaymentMethodLabel = (method: string) => {
@@ -598,13 +607,29 @@ onUnmounted(() => {
               </svg>
               ¿Con cuál método de {{ selectedGroup.name }}?
             </p>
+
+            <!-- Search — only when > 10 methods -->
+            <div v-if="selectedGroup.methods.length > 10" class="relative mb-2">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                v-model="methodSearch"
+                type="text"
+                placeholder="Buscar método..."
+                class="w-full h-9 pl-9 pr-3 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            <!-- Grid mode — up to 6 methods -->
             <div
+              v-if="selectedGroup.methods.length <= 6"
               class="grid gap-2"
               :class="selectedGroup.methods.length <= 2
                 ? 'grid-cols-2'
                 : selectedGroup.methods.length === 3
                   ? 'grid-cols-3'
-                  : 'grid-cols-2 sm:grid-cols-4'"
+                  : 'grid-cols-2 sm:grid-cols-3'"
             >
               <button
                 v-for="method in selectedGroup.methods"
@@ -625,6 +650,40 @@ onUnmounted(() => {
                   :class="selectedGroup.triggersCartera ? 'bg-amber-500' : 'bg-primary'"
                 />
               </button>
+            </div>
+
+            <!-- List mode — more than 6 methods (scrollable) -->
+            <div
+              v-else
+              class="rounded-xl border border-border bg-background overflow-hidden"
+            >
+              <div class="max-h-[220px] overflow-y-auto divide-y divide-border">
+                <button
+                  v-for="method in filteredMethods"
+                  :key="method.id"
+                  type="button"
+                  @click="selectedPaymentMethodId = selectedPaymentMethodId === method.id ? null : method.id"
+                  class="w-full flex items-center justify-between px-4 py-3 text-sm transition-colors active:scale-[0.99]"
+                  :class="selectedPaymentMethodId === method.id
+                    ? (selectedGroup.triggersCartera
+                        ? 'bg-amber-50 text-amber-700 font-semibold'
+                        : 'bg-primary/8 text-primary font-semibold')
+                    : 'text-text-primary hover:bg-surface-secondary/50'"
+                >
+                  <span>{{ method.name }}</span>
+                  <svg
+                    v-if="selectedPaymentMethodId === method.id"
+                    class="w-4 h-4 flex-shrink-0"
+                    :class="selectedGroup.triggersCartera ? 'text-amber-600' : 'text-primary'"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
+                </button>
+                <div v-if="filteredMethods.length === 0" class="px-4 py-3 text-sm text-text-secondary text-center">
+                  Sin resultados para "{{ methodSearch }}"
+                </div>
+              </div>
             </div>
           </div>
 
