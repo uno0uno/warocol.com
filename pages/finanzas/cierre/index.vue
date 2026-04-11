@@ -355,14 +355,19 @@ const closeDeleteModal = () => {
 const handleDelete = async () => {
   if (!cierreToDelete.value) return
   deleting.value = true
+  let succeeded = false
   try {
     await $fetch(`/api/cierre/${cierreToDelete.value.id}`, { method: 'DELETE' })
     cache.invalidateQueries({ key: ['cierre', 'list'] })
-    closeDeleteModal()
+    succeeded = true
   } catch {
     // keep modal open on error
   } finally {
     deleting.value = false
+    if (succeeded) {
+      showDeleteModal.value = false
+      cierreToDelete.value = null
+    }
   }
 }
 
