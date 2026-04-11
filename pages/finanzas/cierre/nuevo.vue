@@ -1,26 +1,36 @@
 <template>
   <div class="page-layout">
 
-    <!-- Period picker card -->
-    <div class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6 mb-4">
-      <h3 class="text-base font-semibold text-text-primary mb-4">Selecciona el período</h3>
+    <!-- ── Paso 1: Período ──────────────────────────────────────────────── -->
+    <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6 mb-4">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Paso 1</p>
+          <h3 class="text-sm font-semibold text-text-primary leading-tight">Selecciona el período</h3>
+        </div>
+      </div>
 
-      <!-- Quick presets -->
-      <div class="flex flex-wrap gap-2 mb-4">
+      <!-- Presets -->
+      <div class="flex flex-wrap gap-2 mb-3">
         <button
           v-for="p in presets"
           :key="p.key"
-          class="h-8 px-3 rounded-lg border text-xs font-medium transition-colors"
+          class="min-h-[40px] px-4 rounded-lg border text-sm font-medium transition-colors"
           :class="activePreset === p.key
-            ? 'border-primary bg-primary text-primary-foreground'
-            : 'border-border bg-background text-text-secondary hover:border-primary hover:text-text-primary'"
+            ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+            : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
           @click="applyPreset(p)"
         >
           {{ p.label }}
         </button>
       </div>
 
-      <!-- Date picker -->
+      <!-- Custom date picker -->
       <VueDatePicker
         v-model="dateRangeDates"
         range
@@ -38,58 +48,86 @@
         @update:model-value="activePreset = null"
       />
 
-      <p v-if="periodStart" class="text-sm text-text-secondary mt-3">
-        Período:
-        <span class="font-medium text-text-primary">{{ formatPeriod(periodStart, periodEnd) }}</span>
-      </p>
+      <!-- Selected period badge -->
+      <div v-if="periodStart" class="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20">
+        <svg class="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-sm font-medium text-primary">{{ formatPeriod(periodStart, periodEnd) }}</span>
+      </div>
     </div>
 
-    <!-- Action cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <!-- ── Paso 2: Acción ────────────────────────────────────────────────── -->
+    <div class="flex items-center gap-2 mb-3">
+      <div class="w-8 h-8 rounded-lg bg-border flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Paso 2</p>
+        <h3 class="text-sm font-semibold text-text-primary leading-tight">¿Qué quieres hacer?</h3>
+      </div>
+    </div>
 
-      <!-- Cierre X -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+
+      <!-- Cierre X — vista previa -->
       <button
-        class="text-left bg-surface border-2 border-border hover:border-primary rounded-xl p-5 transition-all group active:scale-[0.99]"
+        class="text-left bg-surface border-2 border-border hover:border-blue-400 rounded-xl p-5 transition-all group active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-blue-400/40"
         @click="goTo('x')"
       >
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center flex-shrink-0">
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <div class="w-11 h-11 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center flex-shrink-0">
             <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
           </div>
-          <div>
-            <h4 class="text-base font-semibold text-text-primary">Cierre X</h4>
-            <span class="text-xs text-blue-600 font-medium">Vista previa</span>
-          </div>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-600">Sin registro</span>
         </div>
-        <p class="text-sm text-text-secondary leading-relaxed">
+
+        <h4 class="text-base font-bold text-text-primary mb-1">Cierre X</h4>
+        <p class="text-sm text-text-secondary leading-relaxed mb-4">
           Consulta el estado de caja del período sin registrar el cierre. Útil para revisar antes de cerrar.
         </p>
-        <span class="inline-block mt-4 text-xs font-medium text-blue-600 group-hover:underline">Ver preview →</span>
+
+        <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 group-hover:gap-2.5 transition-all">
+          Ver resumen
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
       </button>
 
-      <!-- Cierre Z -->
+      <!-- Cierre Z — registrar -->
       <button
-        class="text-left bg-surface border-2 border-primary rounded-xl p-5 transition-all group active:scale-[0.99]"
+        class="text-left bg-surface border-2 border-primary/40 hover:border-primary rounded-xl p-5 transition-all group active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-primary/30 relative overflow-hidden"
         @click="goTo('z')"
       >
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <!-- Accent strip -->
+        <div class="absolute top-0 left-0 right-0 h-0.5 bg-primary rounded-t-xl" />
+
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <div class="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
             <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
-          <div>
-            <h4 class="text-base font-semibold text-text-primary">Cierre Z</h4>
-            <span class="text-xs text-primary font-medium">Registrar cierre</span>
-          </div>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary">Definitivo</span>
         </div>
-        <p class="text-sm text-text-secondary leading-relaxed">
+
+        <h4 class="text-base font-bold text-text-primary mb-1">Cierre Z</h4>
+        <p class="text-sm text-text-secondary leading-relaxed mb-4">
           Registra y cierra el período contable de forma definitiva. Incluye conteo de efectivo y notas.
         </p>
-        <span class="inline-block mt-4 text-xs font-medium text-primary group-hover:underline">Registrar cierre →</span>
+
+        <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary group-hover:gap-2.5 transition-all">
+          Registrar cierre
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
       </button>
 
     </div>
