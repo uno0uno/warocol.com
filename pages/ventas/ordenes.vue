@@ -30,7 +30,14 @@ const localSearchTerm = ref('')
 const apiSearchField = ref('order_number')
 const sortField = ref('order_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
-const paymentMethodFilter = ref<string | null>(null)
+// Encoded value: null | "g:${slug}" for group | "m:${id}" for specific method
+const paymentFilter = ref<string | null>(null)
+const paymentGroupFilter = computed(() =>
+  paymentFilter.value?.startsWith('g:') ? paymentFilter.value.slice(2) : null
+)
+const paymentMethodIdFilter = computed(() =>
+  paymentFilter.value?.startsWith('m:') ? paymentFilter.value.slice(2) : null
+)
 const statusFilter = ref<string | null>('completed')
 const dateRangeDates = ref<Date[] | null>(null)
 
@@ -87,7 +94,8 @@ const { data: ordersData, status: queryStatus, asyncStatus, error: fetchError, r
     offset: (currentPage.value - 1) * PAGE_SIZE,
     search: appliedSearch.value || null,
     searchField: apiSearchField.value,
-    paymentMethod: paymentMethodFilter.value,
+    paymentMethod: paymentGroupFilter.value,
+    paymentMethodId: paymentMethodIdFilter.value,
     status: statusFilter.value,
     sortField: sortField.value,
     sortDirection: sortDirection.value,
@@ -100,7 +108,8 @@ const { data: ordersData, status: queryStatus, asyncStatus, error: fetchError, r
       offset: (currentPage.value - 1) * PAGE_SIZE,
       search: appliedSearch.value || undefined,
       search_field: apiSearchField.value || undefined,
-      payment_method: paymentMethodFilter.value || undefined,
+      payment_method: paymentGroupFilter.value || undefined,
+      payment_method_id: paymentMethodIdFilter.value || undefined,
       status: statusFilter.value || undefined,
       sort_field: sortField.value,
       sort_direction: sortDirection.value,
@@ -235,7 +244,7 @@ const executeBulkUpdate = async (customerId: string | null) => {
 }
 
 // Clear selection when page/filters change
-watch([currentPage, statusFilter, paymentMethodFilter, appliedSearch, dateRange], clearSelection)
+watch([currentPage, statusFilter, paymentFilter, appliedSearch, dateRange], clearSelection)
 
 // Table columns configuration
 const ordersTableColumns: Column[] = [
@@ -262,7 +271,7 @@ const clearFilters = () => {
   localSearchTerm.value = ''
   appliedSearch.value = ''
   apiSearchField.value = 'order_number'
-  paymentMethodFilter.value = null
+  paymentFilter.value = null
   statusFilter.value = 'completed'
   dateRangeDates.value = null
   sortField.value = 'order_date'
@@ -282,7 +291,8 @@ const exportOrders = async () => {
       params: {
         search: localSearchTerm.value || undefined,
         search_field: apiSearchField.value || undefined,
-        payment_method: paymentMethodFilter.value || undefined,
+        payment_method: paymentGroupFilter.value || undefined,
+        payment_method_id: paymentMethodIdFilter.value || undefined,
         status: statusFilter.value || undefined,
         sort_field: sortField.value,
         sort_direction: sortDirection.value,
@@ -445,12 +455,18 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
         <!-- Payment Method Filter -->
         <select
-          v-model="paymentMethodFilter"
+          v-model="paymentFilter"
           @change="() => { currentPage.value = 1 }"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
         >
           <option :value="null">Método pago</option>
-          <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
+          <template v-for="group in paymentGroups">
+            <optgroup v-if="group.methods?.length" :key="`g-${group.slug}`" :label="group.name">
+              <option :value="`g:${group.slug}`">{{ group.name }} (todos)</option>
+              <option v-for="m in group.methods" :key="m.id" :value="`m:${m.id}`">{{ m.name }}</option>
+            </optgroup>
+            <option v-else :key="group.slug" :value="`g:${group.slug}`">{{ group.name }}</option>
+          </template>
         </select>
 
         <!-- Status Filter -->
@@ -467,7 +483,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
         <!-- Clear Filters Button -->
         <button
-          v-if="localSearchTerm || dateRangeDates || paymentMethodFilter || (statusFilter && statusFilter !== 'completed')"
+          v-if="localSearchTerm || dateRangeDates || paymentFilter || (statusFilter && statusFilter !== 'completed')"
           @click="clearFilters"
           class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
           aria-label="Limpiar filtros"
@@ -535,7 +551,13 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           >
             <option value="">Método de pago...</option>
-            <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
+            <template v-for="group in paymentGroups">
+              <optgroup v-if="group.methods?.length" :key="`g-${group.slug}`" :label="group.name">
+                <option :value="group.slug">{{ group.name }} (todos)</option>
+                <option v-for="m in group.methods" :key="m.id" :value="group.slug">{{ m.name }}</option>
+              </optgroup>
+              <option v-else :key="group.slug" :value="group.slug">{{ group.name }}</option>
+            </template>
           </select>
 
           <button
