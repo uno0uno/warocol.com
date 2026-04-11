@@ -1080,3 +1080,39 @@ const formatClosedAt = (iso: string) =>
     hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota',
   }).format(new Date(iso))
 </script>
+
+<style>
+.dp-custom-input {
+  height: 40px !important;
+  border: 2px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem !important;
+  background: hsl(var(--background)) !important;
+  font-size: 0.875rem !important;
+  color: hsl(var(--foreground)) !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  min-width: 160px;
+}
+.dp-custom-input:focus {
+  outline: none !important;
+  border-color: hsl(var(--primary)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2) !important;
+}
+.dp-custom-input::placeholder { color: hsl(var(--muted-foreground)) !important; }
+.dp__theme_light {
+  --dp-primary-color: hsl(var(--primary));
+  --dp-primary-text-color: hsl(var(--primary-foreground));
+  --dp-background-color: hsl(var(--card));
+  --dp-text-color: hsl(var(--foreground));
+  --dp-border-color: hsl(var(--border));
+  --dp-menu-border-color: hsl(var(--border));
+  --dp-hover-color: hsl(var(--accent));
+  --dp-hover-text-color: hsl(var(--foreground));
+  --dp-secondary-color: hsl(var(--muted));
+  --dp-border-color-hover: hsl(var(--primary));
+}
+.dp-custom-menu {
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+</style>
