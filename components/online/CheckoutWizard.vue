@@ -97,9 +97,9 @@
           </button>
           <slot v-else name="back-action" />
 
-          <!-- Step 3: identity auto-advances — show hint instead of disabled button -->
+          <!-- Step 2: identity auto-advances — show hint instead of disabled button -->
           <p
-            v-if="currentStep === 3"
+            v-if="currentStep === 2"
             class="text-sm text-muted-foreground text-center flex-1"
           >
             Verifica tu identidad para continuar
