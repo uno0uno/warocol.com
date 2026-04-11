@@ -16,13 +16,11 @@ const customerId = computed(() => route.params.id as string)
 // Payment groups for the payment form select
 const { data: paymentGroupsData } = useQuery({
   key: () => ['payments', 'groups', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: { id: string; slug: string; name: string; sortOrder: number; isActive: boolean }[] }>('/api/finanzas/metodos-pago/grupos'),
+  query: () => $fetch<{ success: boolean; data: { id: string; slug: string; name: string; methods: { id: string; name: string }[] }[] }>('/api/pos/payment-methods'),
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,
 })
-const paymentGroups = computed(() =>
-  (paymentGroupsData.value?.data ?? []).filter(g => g.isActive).sort((a, b) => a.sortOrder - b.sortOrder)
-)
+const paymentGroups = computed(() => paymentGroupsData.value?.data ?? [])
 const { resolveLabel } = usePaymentLabel(paymentGroups)
 
 // ── Layout actions ────────────────────────────────────────────────────────
