@@ -590,20 +590,42 @@ onUnmounted(() => {
             </label>
           </div>
 
-          <!-- Sub-option pill row — shown when selected group has method subtypes -->
-          <div v-if="selectedGroup?.methods?.length" class="mt-3 flex flex-wrap gap-2">
-            <button
-              v-for="method in selectedGroup.methods"
-              :key="method.id"
-              type="button"
-              @click="selectedPaymentMethodId = selectedPaymentMethodId === method.id ? null : method.id"
-              class="h-9 px-3 rounded-lg border text-sm font-medium transition-colors"
-              :class="selectedPaymentMethodId === method.id
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:text-text-primary'"
+          <!-- Sub-method selector — shown when selected group has subtypes (e.g. Nequi, Daviplata) -->
+          <div v-if="selectedGroup?.methods?.length" class="mt-3">
+            <p class="text-xs font-medium text-text-secondary mb-2 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+              ¿Con cuál método de {{ selectedGroup.name }}?
+            </p>
+            <div
+              class="grid gap-2"
+              :class="selectedGroup.methods.length <= 2
+                ? 'grid-cols-2'
+                : selectedGroup.methods.length === 3
+                  ? 'grid-cols-3'
+                  : 'grid-cols-2 sm:grid-cols-4'"
             >
-              {{ method.name }}
-            </button>
+              <button
+                v-for="method in selectedGroup.methods"
+                :key="method.id"
+                type="button"
+                @click="selectedPaymentMethodId = selectedPaymentMethodId === method.id ? null : method.id"
+                class="relative min-h-[48px] px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all text-center active:scale-95"
+                :class="selectedPaymentMethodId === method.id
+                  ? (selectedGroup.triggersCartera
+                      ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-sm'
+                      : 'border-primary bg-primary/10 text-primary shadow-sm')
+                  : 'border-border bg-background text-text-secondary hover:border-primary/30 hover:text-text-primary'"
+              >
+                {{ method.name }}
+                <span
+                  v-if="selectedPaymentMethodId === method.id"
+                  class="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full"
+                  :class="selectedGroup.triggersCartera ? 'bg-amber-500' : 'bg-primary'"
+                />
+              </button>
+            </div>
           </div>
 
           <!-- Credit due date (optional) — shown only when a triggersCartera group is selected -->
