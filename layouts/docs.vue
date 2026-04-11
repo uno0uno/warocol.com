@@ -6,34 +6,42 @@ import BottomNav from '~/components/layout/BottomNav.vue'
 import { useDocsNav } from '~/composables/useDocsNav'
 import {
   BookOpenIcon,
-  ClipboardDocumentListIcon,
   CodeBracketIcon,
   CommandLineIcon,
   ComputerDesktopIcon,
-  CreditCardIcon,
   CubeIcon,
   UserGroupIcon,
   ChartBarIcon,
   ShoppingCartIcon,
+  TableCellsIcon,
   TruckIcon,
   MapPinIcon,
   BuildingLibraryIcon,
 } from '@heroicons/vue/24/outline'
 
-const nav = [
-  { label: 'Primeros pasos', path: '/docs/usuarios/primeros-pasos',               icon: BookOpenIcon },
-  { label: 'Menú',           path: '/docs/usuarios/menu',                         icon: CubeIcon },
-  { label: 'POS',            path: '/docs/usuarios/pos',                          icon: ComputerDesktopIcon },
-  { label: 'Ventas',         path: '/docs/usuarios/ventas',                       icon: ShoppingCartIcon },
-  { label: 'Compras',        path: '/docs/usuarios/compras',                      icon: TruckIcon },
-  { label: 'Pagos',          path: '/docs/usuarios/pagos',                        icon: CreditCardIcon },
-  { label: 'Finanzas',       path: '/docs/usuarios/finanzas',                     icon: BuildingLibraryIcon },
-{ label: 'Inventario',     path: '/docs/usuarios/inventario',                   icon: ClipboardDocumentListIcon },
-  { label: 'Domicilios',     path: '/docs/usuarios/domicilios',                   icon: MapPinIcon },
-  { label: 'Equipo',         path: '/docs/usuarios/equipo',                       icon: UserGroupIcon },
-  { label: 'Analítica',      path: '/docs/usuarios/analitica',                    icon: ChartBarIcon },
-  { label: 'Integraciones',  path: '/docs/dev',                                    icon: CodeBracketIcon },
-  { label: 'CLI',            path: '/docs/cli',                                    icon: CommandLineIcon },
+type NavSection = { section: string; path?: undefined; icon?: undefined; label?: undefined }
+type NavItem    = { label: string; path: string; icon: unknown; section?: undefined }
+type NavEntry   = NavSection | NavItem
+
+const nav: NavEntry[] = [
+  { label: 'Primeros pasos', path: '/docs/usuarios/primeros-pasos', icon: BookOpenIcon },
+
+  { section: 'Operación' },
+  { label: 'POS',            path: '/docs/usuarios/pos',            icon: ComputerDesktopIcon },
+  { label: 'Ventas',         path: '/docs/usuarios/ventas',         icon: ShoppingCartIcon },
+  { label: 'Domicilios',     path: '/docs/usuarios/domicilios',     icon: MapPinIcon },
+
+  { section: 'Herramientas' },
+  { label: 'Analítica',      path: '/docs/usuarios/analitica',      icon: ChartBarIcon },
+  { label: 'Finanzas',       path: '/docs/usuarios/finanzas',       icon: BuildingLibraryIcon },
+  { label: 'Menú',           path: '/docs/usuarios/menu',           icon: CubeIcon },
+  { label: 'Mesas',          path: '/docs/usuarios/mesas',          icon: TableCellsIcon },
+  { label: 'Abastecimiento', path: '/docs/usuarios/compras',        icon: TruckIcon },
+  { label: 'Equipo',         path: '/docs/usuarios/equipo',         icon: UserGroupIcon },
+  { label: 'Integraciones',  path: '/docs/dev',                     icon: CodeBracketIcon },
+
+  { section: 'Dev' },
+  { label: 'CLI',            path: '/docs/cli',                     icon: CommandLineIcon },
 ]
 
 function isActive(path: string) {
@@ -86,16 +94,19 @@ onMounted(() => {
         <div class="docs-nav-card">
           <nav class="docs-nav">
 
-            <NuxtLink
-              v-for="item in nav"
-              :key="item.path"
-              :to="item.path"
-              class="docs-nav-item"
-              :class="{ active: isActive(item.path) }"
-            >
-              <component :is="item.icon" class="docs-nav-item-icon" />
-              {{ item.label }}
-            </NuxtLink>
+            <template v-for="item in nav">
+              <div v-if="item.section" :key="item.section" class="docs-nav-section">{{ item.section }}</div>
+              <NuxtLink
+                v-else
+                :key="item.path"
+                :to="item.path"
+                class="docs-nav-item"
+                :class="{ active: isActive(item.path) }"
+              >
+                <component :is="item.icon" class="docs-nav-item-icon" />
+                {{ item.label }}
+              </NuxtLink>
+            </template>
 
           </nav>
         </div>
@@ -137,7 +148,7 @@ onMounted(() => {
         <!-- Nav grid — click navega directamente -->
         <div class="sheet-grid">
           <NuxtLink
-            v-for="item in nav"
+            v-for="item in nav.filter(i => !i.section)"
             :key="item.path"
             :to="item.path"
             class="sheet-grid-item"
@@ -347,6 +358,19 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1px;
+}
+
+.docs-nav-section {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: hsl(var(--ebony-400));
+  padding: 10px 12px 4px;
+  margin-top: 4px;
+}
+.docs-nav-section:first-child {
+  margin-top: 0;
 }
 
 .docs-nav-item {
