@@ -116,50 +116,28 @@
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="relative flex items-center justify-end">
+          <div class="flex items-center gap-1">
             <button
-              @click.stop="openMenuId = openMenuId === row.id ? null : row.id"
-              class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors"
-              aria-label="Acciones"
+              @click="openPanel(row.id)"
+              class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
+              title="Ver detalle"
+              aria-label="Ver detalle"
             >
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
             </button>
-            <Transition
-              enter-active-class="transition-all duration-150"
-              enter-from-class="opacity-0 scale-95"
-              enter-to-class="opacity-100 scale-100"
-              leave-active-class="transition-all duration-100"
-              leave-from-class="opacity-100 scale-100"
-              leave-to-class="opacity-0 scale-95"
+            <button
+              @click="openDeleteModal(row)"
+              class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
+              title="Eliminar"
+              aria-label="Eliminar cierre"
             >
-              <div
-                v-if="openMenuId === row.id"
-                ref="menuRef"
-                class="absolute right-0 top-9 z-20 bg-surface border border-border rounded-xl shadow-lg py-1 min-w-[140px]"
-              >
-                <button
-                  @click="openPanel(row.id, false); openMenuId = null"
-                  class="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-surface-secondary transition-colors"
-                >
-                  <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  Ver detalle
-                </button>
-                <button
-                  @click="openPanel(row.id, true); openMenuId = null"
-                  class="flex items-center gap-2 w-full px-3 py-2 text-sm text-destructive hover:bg-destructive/5 transition-colors"
-                >
-                  <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Eliminar
-                </button>
-              </div>
-            </Transition>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
           </div>
         </template>
       </UiResponsiveDataView>
@@ -169,9 +147,44 @@
   <FinanzasCierrePanel
     v-model="showPanel"
     :cierre-id="selectedCierreId"
-    :delete-mode="panelDeleteMode"
     @deleted="onDeleted"
   />
+
+  <!-- Delete confirmation modal -->
+  <Teleport to="body">
+    <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/50" @click="closeDeleteModal" />
+      <div class="relative bg-surface rounded-xl shadow-xl w-full max-w-sm p-6">
+        <div class="text-center">
+          <div class="mx-auto mb-4 w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+            <svg class="w-6 h-6 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-text-primary mb-1">Eliminar cierre</h3>
+          <p class="text-sm text-text-secondary mb-6">
+            ¿Eliminar el cierre del período <strong>{{ formatPeriod(cierreToDelete?.periodStart, cierreToDelete?.periodEnd) }}</strong>? Esta acción no se puede deshacer.
+          </p>
+          <div class="flex gap-3">
+            <button
+              @click="closeDeleteModal"
+              :disabled="deleting"
+              class="flex-1 min-h-[44px] px-4 py-2 border-2 border-border rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              @click="handleDelete"
+              :disabled="deleting"
+              class="flex-1 min-h-[44px] px-4 py-2 bg-destructive text-white rounded-lg text-sm font-semibold hover:bg-destructive/90 transition-colors disabled:opacity-50"
+            >
+              {{ deleting ? 'Eliminando...' : 'Eliminar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 
   </div>
 </template>
@@ -179,7 +192,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
-import { onClickOutside } from '@vueuse/core'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import MetricCard from '~/components/shared/MetricCard.vue'
@@ -310,25 +322,48 @@ const formatPeriod = (start: string, end: string) => {
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 
-// ── Actions menu ──────────────────────────────────────────────────────────
-const openMenuId  = ref<string | null>(null)
-const menuRef     = ref<HTMLElement | null>(null)
-onClickOutside(menuRef, () => { openMenuId.value = null })
-
 // ── Panel ─────────────────────────────────────────────────────────────────
 const cache = useQueryCache()
 const showPanel        = ref(false)
 const selectedCierreId = ref<string | null>(null)
-const panelDeleteMode  = ref(false)
 
-const openPanel = (id: string, deleteMode = false) => {
+const openPanel = (id: string) => {
   selectedCierreId.value = id
-  panelDeleteMode.value  = deleteMode
   showPanel.value = true
 }
 
 const onDeleted = () => {
   cache.invalidateQueries({ key: ['cierre', 'list'] })
+}
+
+// ── Delete modal ───────────────────────────────────────────────────────────
+const showDeleteModal  = ref(false)
+const cierreToDelete   = ref<any>(null)
+const deleting         = ref(false)
+
+const openDeleteModal = (row: any) => {
+  cierreToDelete.value = row
+  showDeleteModal.value = true
+}
+
+const closeDeleteModal = () => {
+  if (deleting.value) return
+  showDeleteModal.value = false
+  cierreToDelete.value  = null
+}
+
+const handleDelete = async () => {
+  if (!cierreToDelete.value) return
+  deleting.value = true
+  try {
+    await $fetch(`/api/cierre/${cierreToDelete.value.id}`, { method: 'DELETE' })
+    cache.invalidateQueries({ key: ['cierre', 'list'] })
+    closeDeleteModal()
+  } catch {
+    // keep modal open on error
+  } finally {
+    deleting.value = false
+  }
 }
 
 registerProgressiveLoading(isRefreshing)
