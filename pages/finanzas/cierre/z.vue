@@ -581,26 +581,54 @@
 
       <!-- Step 5: Confirmar -->
       <div v-else-if="currentStep === 5" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
-        <h3 class="text-sm font-semibold text-text-primary mb-1">Cerrar el día</h3>
-        <p class="text-xs text-text-secondary mb-3">
-          ¿Cerrar el día <strong>{{ formatPeriod(periodStart, periodEnd) }}</strong>?<br />
-          <span class="text-xs text-text-tertiary">Esta acción no se puede deshacer.</span>
-        </p>
 
-        <div class="bg-background rounded-lg border border-border divide-y divide-border mb-3">
-          <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Total ventas</span>
-            <span class="font-medium">{{ formatCurrency(previewData?.totalSales ?? 0) }}</span>
+        <!-- Resumen compacto de lo que se va a cerrar -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+          <!-- Período -->
+          <div class="bg-background rounded-lg border border-border px-3 py-2.5">
+            <p class="text-xs text-text-secondary mb-0.5">Período</p>
+            <p class="text-sm font-semibold text-text-primary">{{ formatPeriod(periodStart, periodEnd) }}</p>
           </div>
-          <div class="flex justify-between px-4 py-2.5 text-sm font-semibold">
-            <span>Diferencia caja</span>
-            <span :class="cashDiff >= 0 ? 'text-emerald-600' : 'text-destructive'">
+          <!-- Total ventas -->
+          <div class="bg-background rounded-lg border border-border px-3 py-2.5">
+            <p class="text-xs text-text-secondary mb-0.5">Total ventas</p>
+            <p class="text-base font-bold text-text-primary">{{ formatCurrency(previewData?.totalSales ?? 0) }}</p>
+          </div>
+          <!-- Diferencia caja -->
+          <div
+            class="rounded-lg border-2 px-3 py-2.5"
+            :class="cashDiff >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-destructive/5 border-destructive/20'"
+          >
+            <p class="text-xs mb-0.5" :class="cashDiff >= 0 ? 'text-emerald-700' : 'text-destructive'">Diferencia caja</p>
+            <p class="text-base font-bold" :class="cashDiff >= 0 ? 'text-emerald-700' : 'text-destructive'">
               {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
-            </span>
+            </p>
           </div>
         </div>
 
-        <div v-if="submitError" class="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 mb-4">
+        <!-- Banner de advertencia irreversible -->
+        <div class="flex items-start gap-3 p-3 rounded-lg border mb-3 transition-colors"
+          :class="confirmArmed
+            ? 'bg-destructive/10 border-destructive/30'
+            : 'bg-amber-50 border-amber-200'"
+        >
+          <svg class="w-4 h-4 flex-shrink-0 mt-0.5 transition-colors"
+            :class="confirmArmed ? 'text-destructive' : 'text-amber-600'"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <div>
+            <p class="text-sm font-semibold transition-colors" :class="confirmArmed ? 'text-destructive' : 'text-amber-800'">
+              {{ confirmArmed ? 'Confirma para cerrar definitivamente' : 'Esta acción no se puede deshacer' }}
+            </p>
+            <p class="text-xs mt-0.5 transition-colors" :class="confirmArmed ? 'text-destructive/80' : 'text-amber-700'">
+              El cierre Z quedará registrado y el período se bloqueará.
+            </p>
+          </div>
+        </div>
+
+        <!-- Error de submit -->
+        <div v-if="submitError" class="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 mb-3">
           <svg class="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
@@ -610,18 +638,29 @@
         <div class="flex gap-3">
           <button
             @click="currentStep = 4"
-            class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+            :disabled="isSubmitting"
+            class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             ← Atrás
           </button>
           <button
             @click="handleConfirmButton"
             :disabled="isSubmitting"
-            class="min-h-[44px] px-6 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            class="min-h-[44px] px-6 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             :class="confirmArmed
               ? 'bg-destructive text-white hover:bg-destructive/90 ring-2 ring-destructive/30'
               : 'bg-primary text-primary-foreground hover:bg-primary/90'"
           >
+            <svg v-if="isSubmitting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            <svg v-else-if="confirmArmed" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
             <span v-if="isSubmitting">Cerrando...</span>
             <span v-else-if="confirmArmed">¿Confirmar cierre?</span>
             <span v-else>Cerrar el día</span>
