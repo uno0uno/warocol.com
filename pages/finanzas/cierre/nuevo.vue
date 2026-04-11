@@ -2,12 +2,14 @@
   <div class="page-layout">
 
     <!-- Loading overlay durante submit -->
-    <div v-if="isSubmitting" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-background rounded-xl p-6 flex flex-col items-center gap-3 shadow-xl">
-        <CommonsTheCustomLoader size="large" />
-        <p class="text-base font-semibold text-text-primary">Registrando cierre...</p>
+    <Transition enter-active-class="transition-opacity duration-150" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-opacity duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="isSubmitting" class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+        <div class="flex flex-col items-center gap-4">
+          <CommonsTheCustomLoader size="large" />
+          <p class="text-sm font-medium text-text-secondary">Registrando cierre...</p>
+        </div>
       </div>
-    </div>
+    </Transition>
 
     <!-- ── SUCCESS ────────────────────────────────────────────────────────── -->
     <div v-if="cierreSuccess" class="flex flex-col items-center justify-center py-16 gap-6 text-center">
