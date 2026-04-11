@@ -258,20 +258,11 @@ const dpPresets = presets.map(p => ({ label: p.label, value: [p.start, p.end] })
 
 const applyPreset = (p: Preset) => {
   activePreset.value = p.key
-  // Reset to midnight so time picker doesn't carry stale times
-  const s = new Date(p.start); s.setHours(0, 0, 0, 0)
-  const e = new Date(p.end);   e.setHours(23, 59, 59, 0)
-  dateRangeDates.value = [s, e]
+  dateRangeDates.value = [new Date(p.start), new Date(p.end)]
 }
 
 const toggleTimePicker = () => {
   enableTimePicker.value = !enableTimePicker.value
-  if (!enableTimePicker.value) {
-    // Snap back to full days
-    const [s, e] = dateRangeDates.value
-    if (s) { const d = new Date(s); d.setHours(0, 0, 0, 0); dateRangeDates.value[0] = d }
-    if (e) { const d = new Date(e); d.setHours(23, 59, 59, 0); dateRangeDates.value[1] = d }
-  }
 }
 
 // Friendly shift duration label when time picker is on
