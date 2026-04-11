@@ -162,39 +162,6 @@
       <!-- Step 1: Período + X + validación mesas -->
       <template v-if="currentStep === 1">
 
-        <!-- Hint card último cierre -->
-        <div v-if="ultimoLoading" class="bg-surface border border-border rounded-lg overflow-hidden animate-pulse mb-3">
-          <div class="px-3 py-2 bg-background border-b border-border flex items-center justify-between">
-            <div class="h-3 w-36 rounded bg-border" /><div class="h-3 w-24 rounded bg-border" />
-          </div>
-          <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
-            <div v-for="i in 4" :key="i" class="px-3 py-2.5 flex flex-col gap-1.5">
-              <div class="h-2.5 w-16 rounded bg-border" /><div class="h-4 w-24 rounded bg-border" />
-            </div>
-          </div>
-        </div>
-        <div v-else-if="ultimoCierre" class="bg-surface border border-border rounded-lg overflow-hidden mb-3">
-          <div class="px-3 py-2 bg-background border-b border-border flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Último cierre registrado</span>
-            <span class="text-xs text-text-tertiary">{{ formatClosedAt(ultimoCierre.closedAt) }}</span>
-          </div>
-          <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
-            <div class="px-3 py-2.5"><p class="text-xs text-text-secondary mb-0.5">Período</p><p class="text-xs font-semibold text-text-primary">{{ formatPeriod(ultimoCierre.periodStart, ultimoCierre.periodEnd) }}</p></div>
-            <div class="px-3 py-2.5"><p class="text-xs text-text-secondary mb-0.5">Total ventas</p><p class="text-sm font-bold text-text-primary">{{ formatCurrency(ultimoCierre.totalSales) }}</p></div>
-            <div class="px-3 py-2.5"><p class="text-xs text-text-secondary mb-0.5">Efectivo contado</p><p class="text-sm font-semibold text-text-primary">{{ formatCurrency(ultimoCierre.cashCounted) }}</p></div>
-            <div class="px-3 py-2.5">
-              <p class="text-xs text-text-secondary mb-0.5">Diferencia caja</p>
-              <p class="text-sm font-bold" :class="ultimoCierre.cashDifference >= 0 ? 'text-emerald-600' : 'text-destructive'">{{ ultimoCierre.cashDifference >= 0 ? '+' : '' }}{{ formatCurrency(ultimoCierre.cashDifference) }}</p>
-            </div>
-          </div>
-          <div v-if="suggestedRange" class="px-3 py-2 bg-primary/5 border-t border-primary/15 flex items-center justify-between gap-3">
-            <span class="text-xs text-primary">
-              Día sugerido: <strong>{{ formatPeriod(suggestedRange.start, suggestedRange.start) }}</strong>
-              <span class="text-primary/70"> (día siguiente al último cierre)</span>
-            </span>
-            <button @click="applySuggested" class="flex-shrink-0 text-xs font-semibold text-primary hover:text-primary/80 underline underline-offset-2 transition-colors">Aplicar</button>
-          </div>
-        </div>
 
         <!-- Selector de día -->
         <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-3">
