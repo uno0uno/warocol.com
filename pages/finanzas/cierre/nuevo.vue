@@ -82,7 +82,6 @@
       <!-- Date picker -->
       <div class="flex-1 min-w-0">
         <VueDatePicker
-          ref="dpRef"
           v-model="dateRangeDates"
           range
           :teleport="true"
@@ -95,10 +94,10 @@
           calendar-cell-class-name="dp-custom-cell"
           @update:model-value="activePreset = null"
         >
-          <template #trigger>
+          <template #dp-input="{ openMenu }">
             <button
               type="button"
-              @click="dpRef?.openMenu()"
+              @click="openMenu"
               class="w-full flex items-center gap-2 h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary hover:border-primary/50 transition-colors"
             >
               <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -329,7 +328,6 @@ const presets = buildPresets()
 const activePreset = ref<string | null>('today')
 const todayNoon = () => { const d = new Date(); d.setHours(12, 0, 0, 0); return d }
 const dateRangeDates = ref<Date[]>([todayNoon(), todayNoon()])
-const dpRef = ref<any>(null)
 const enableTimePicker = ref(false)
 const startTimeInput   = ref('')
 const endTimeInput     = ref('')
