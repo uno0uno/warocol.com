@@ -140,6 +140,42 @@ const tableColumns = [
   { key: 'waros_earned', title: 'Waros', sortable: false },
 ]
 
+// ── Edit customer ─────────────────────────────────────────────────────────
+const showEditForm = ref(false)
+const editForm = reactive({ name: '', phone_number: '', email: '' })
+const isSavingEdit = ref(false)
+const editError = ref<string | null>(null)
+
+const openEditForm = () => {
+  editForm.name = customer.value?.name || ''
+  editForm.phone_number = customer.value?.phone || ''
+  editForm.email = realEmail.value || ''
+  editError.value = null
+  showEditForm.value = true
+}
+
+const saveEdit = async () => {
+  if (isSavingEdit.value) return
+  isSavingEdit.value = true
+  editError.value = null
+  try {
+    await $fetch(`/api/customers/${customerId.value}`, {
+      method: 'PATCH',
+      body: {
+        name: editForm.name.trim() || undefined,
+        phone_number: editForm.phone_number.trim() || undefined,
+        email: editForm.email.trim() || undefined,
+      }
+    })
+    showEditForm.value = false
+    await refresh()
+  } catch (err: any) {
+    editError.value = err?.data?.detail || 'Error al guardar los cambios'
+  } finally {
+    isSavingEdit.value = false
+  }
+}
+
 // ── Waros ─────────────────────────────────────────────────────────────────
 const showWarosModal = ref(false)
 const showManualPanel = ref(false)
@@ -302,11 +338,82 @@ onUnmounted(() => {
                 <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">Cliente POS</p>
               </div>
             </div>
-            <!-- Total comprado (prominent, right) -->
-            <div class="text-left sm:text-right flex-shrink-0">
-              <p class="text-2xl sm:text-3xl font-bold text-text-primary">{{ formatCurrency(customer.total_spent) }}</p>
-              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">Total comprado</p>
+            <!-- Total comprado + edit button -->
+            <div class="flex items-center gap-3 flex-shrink-0">
+              <div class="text-left sm:text-right">
+                <p class="text-2xl sm:text-3xl font-bold text-text-primary">{{ formatCurrency(customer.total_spent) }}</p>
+                <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">Total comprado</p>
+              </div>
+              <button
+                type="button"
+                aria-label="Editar datos del cliente"
+                @click="openEditForm"
+                class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
             </div>
+          </div>
+        </div>
+
+        <!-- Edit form (inline, shows on edit button click) -->
+        <div v-if="showEditForm" class="border-t border-border bg-surface px-5 py-4">
+          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-3">Editar datos del cliente</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="flex flex-col gap-1">
+              <label for="edit-name" class="text-xs font-medium text-text-secondary">Nombre</label>
+              <input
+                id="edit-name"
+                v-model="editForm.name"
+                type="text"
+                placeholder="Nombre completo"
+                :disabled="isSavingEdit"
+                class="w-full px-3 py-2.5 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50"
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="edit-phone" class="text-xs font-medium text-text-secondary">Teléfono</label>
+              <input
+                id="edit-phone"
+                v-model="editForm.phone_number"
+                type="tel"
+                placeholder="3001234567"
+                :disabled="isSavingEdit"
+                class="w-full px-3 py-2.5 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50"
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="edit-email" class="text-xs font-medium text-text-secondary">Correo electrónico</label>
+              <input
+                id="edit-email"
+                v-model="editForm.email"
+                type="email"
+                placeholder="cliente@email.com"
+                :disabled="isSavingEdit"
+                class="w-full px-3 py-2.5 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50"
+              />
+            </div>
+          </div>
+          <p v-if="editError" class="mt-2 text-sm text-red-600">{{ editError }}</p>
+          <div class="flex gap-2 mt-3">
+            <button
+              type="button"
+              @click="saveEdit"
+              :disabled="isSavingEdit"
+              class="min-h-[44px] px-5 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ isSavingEdit ? 'Guardando...' : 'Guardar' }}
+            </button>
+            <button
+              type="button"
+              @click="showEditForm = false"
+              :disabled="isSavingEdit"
+              class="min-h-[44px] px-5 py-2 bg-surface border border-border text-sm font-medium text-text-secondary rounded-lg hover:bg-surface-secondary active:scale-95 transition-all disabled:opacity-50"
+            >
+              Cancelar
+            </button>
           </div>
         </div>
 
