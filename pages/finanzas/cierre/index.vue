@@ -95,12 +95,12 @@
         </template>
 
         <template #cell-periodStart="{ row }">
-          <NuxtLink
-            :to="`/finanzas/cierre/${row.id}`"
-            class="text-sm text-text-primary hover:text-primary transition-colors"
+          <button
+            @click="openPanel(row.id)"
+            class="text-sm text-text-primary hover:text-primary transition-colors text-left"
           >
             {{ formatDay(row.periodStart) }}
-          </NuxtLink>
+          </button>
         </template>
         <template #cell-periodEnd="{ row }">
           <span class="text-sm text-text-secondary">{{ formatDay(row.periodEnd) }}</span>
@@ -123,11 +123,18 @@
 
     </div>
 
+  <FinanzasCierrePanel
+    v-model="showPanel"
+    :cierre-id="selectedCierreId"
+    @deleted="onDeleted"
+  />
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useQueryCache } from '@pinia/colada'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import MetricCard from '~/components/shared/MetricCard.vue'
@@ -255,6 +262,20 @@ const formatPeriod = (start: string, end: string) => {
     day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Bogota',
   }).format(new Date(d + 'T12:00:00'))
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
+}
+
+// ── Panel ─────────────────────────────────────────────────────────────────
+const cache = useQueryCache()
+const showPanel       = ref(false)
+const selectedCierreId = ref<string | null>(null)
+
+const openPanel = (id: string) => {
+  selectedCierreId.value = id
+  showPanel.value = true
+}
+
+const onDeleted = () => {
+  cache.invalidateQueries({ key: ['cierre', 'list'] })
 }
 
 registerProgressiveLoading(isRefreshing)
