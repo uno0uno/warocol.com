@@ -51,7 +51,7 @@
     </div>
 
     <!-- ── Filter bar ───────────────────────────────────────────────────── -->
-    <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-4">
+    <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-2">
       <button
         v-for="p in presets"
         :key="p.key"
@@ -68,10 +68,10 @@
         v-model="dateRangeDates"
         range
         :preset-dates="dpPresets"
-        :enable-time-picker="false"
+        :enable-time-picker="enableTimePicker"
         :locale="es"
         placeholder="Rango personalizado…"
-        auto-apply
+        :auto-apply="!enableTimePicker"
         :max-date="new Date()"
         :format="formatDateRange"
         input-class-name="dp-custom-input"
@@ -79,6 +79,24 @@
         calendar-cell-class-name="dp-custom-cell"
         @update:model-value="activePreset = null"
       />
+    </div>
+
+    <!-- ── Time picker toggle ─────────────────────────────────────────────── -->
+    <div class="flex items-center gap-2 mb-4">
+      <button
+        @click="toggleTimePicker"
+        class="flex items-center gap-1.5 text-xs text-text-secondary hover:text-primary transition-colors"
+        :class="enableTimePicker ? 'text-primary font-medium' : ''"
+        aria-label="Especificar horario exacto"
+      >
+        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        {{ enableTimePicker ? 'Horario exacto activado' : 'Especificar horario exacto' }}
+        <span v-if="enableTimePicker && shiftLabel" class="text-primary/70 font-normal">
+          — {{ shiftLabel }}
+        </span>
+      </button>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -142,7 +160,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat } from 'date-fns'
+import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Nuevo cierre - Warocol' })
@@ -213,13 +231,39 @@ const buildPresets = (): Preset[] => {
 const presets = buildPresets()
 const activePreset = ref<string | null>('today')
 const dateRangeDates = ref<Date[]>([new Date(), new Date()])
+const enableTimePicker = ref(false)
 
 const dpPresets = presets.map(p => ({ label: p.label, value: [p.start, p.end] }))
 
 const applyPreset = (p: Preset) => {
   activePreset.value = p.key
-  dateRangeDates.value = [p.start, p.end]
+  // Reset to midnight so time picker doesn't carry stale times
+  const s = new Date(p.start); s.setHours(0, 0, 0, 0)
+  const e = new Date(p.end);   e.setHours(23, 59, 59, 0)
+  dateRangeDates.value = [s, e]
 }
+
+const toggleTimePicker = () => {
+  enableTimePicker.value = !enableTimePicker.value
+  if (!enableTimePicker.value) {
+    // Snap back to full days
+    const [s, e] = dateRangeDates.value
+    if (s) { const d = new Date(s); d.setHours(0, 0, 0, 0); dateRangeDates.value[0] = d }
+    if (e) { const d = new Date(e); d.setHours(23, 59, 59, 0); dateRangeDates.value[1] = d }
+  }
+}
+
+// Friendly shift duration label when time picker is on
+const shiftLabel = computed(() => {
+  if (!enableTimePicker.value) return null
+  const [s, e] = dateRangeDates.value ?? []
+  if (!s || !e) return null
+  try {
+    return formatDistanceStrict(s, e, { locale: es })
+  } catch {
+    return null
+  }
+})
 
 // ── Period ────────────────────────────────────────────────────────────────
 
@@ -228,6 +272,18 @@ const periodStart = computed(() =>
 )
 const periodEnd = computed(() =>
   dateRangeDates.value?.[1] ? fnsFormat(dateRangeDates.value[1], 'yyyy-MM-dd') : today
+)
+
+// ISO datetime strings — only set when time picker is active
+const periodStartTime = computed(() =>
+  enableTimePicker.value && dateRangeDates.value?.[0]
+    ? dateRangeDates.value[0].toISOString()
+    : null
+)
+const periodEndTime = computed(() =>
+  enableTimePicker.value && dateRangeDates.value?.[1]
+    ? dateRangeDates.value[1].toISOString()
+    : null
 )
 
 const formatDateRange = (dates: Date[]) => {
@@ -256,9 +312,12 @@ const formatCurrency = (v?: number) =>
 // ── Navigate ──────────────────────────────────────────────────────────────
 
 const goTo = (type: 'x' | 'z') => {
-  navigateTo({
-    path: `/finanzas/cierre/${type}`,
-    query: { start: periodStart.value, end: periodEnd.value },
-  })
+  const query: Record<string, string> = {
+    start: periodStart.value,
+    end:   periodEnd.value,
+  }
+  if (periodStartTime.value) query.startTime = periodStartTime.value
+  if (periodEndTime.value)   query.endTime   = periodEndTime.value
+  navigateTo({ path: `/finanzas/cierre/${type}`, query })
 }
 </script>

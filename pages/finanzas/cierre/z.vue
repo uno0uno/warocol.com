@@ -670,9 +670,11 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 const { currentTenant } = useTenantReactive()
 const route = useRoute()
 
-const today       = new Date().toISOString().split('T')[0]
-const periodStart = ref((route.query.start as string) || today)
-const periodEnd   = ref((route.query.end   as string) || today)
+const today           = new Date().toISOString().split('T')[0]
+const periodStart     = ref((route.query.start     as string) || today)
+const periodEnd       = ref((route.query.end       as string) || today)
+const periodStartTime = ref<string | null>((route.query.startTime as string) || null)
+const periodEndTime   = ref<string | null>((route.query.endTime   as string) || null)
 const isPastPeriod = computed(() => periodEnd.value < today)
 
 // ── Wizard state ──────────────────────────────────────────────────────────
@@ -712,9 +714,15 @@ const totalCounted = computed(() =>
 
 // ── Preview API (completed orders only — cash already in drawer) ───────────
 const { data: rawPreview, status: previewStatus, asyncStatus: previewAsyncStatus, refetch: refetchPreview } = useQuery({
-  key: () => ['cierre', 'preview-z', currentTenant.value?.id, periodStart.value, periodEnd.value],
+  key: () => ['cierre', 'preview-z', currentTenant.value?.id, periodStart.value, periodEnd.value, periodStartTime.value, periodEndTime.value],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
-    params: { period_start: periodStart.value, period_end: periodEnd.value, completed_only: true },
+    params: {
+      period_start:  periodStart.value,
+      period_end:    periodEnd.value,
+      completed_only: true,
+      ...(periodStartTime.value && { period_start_time: periodStartTime.value }),
+      ...(periodEndTime.value   && { period_end_time:   periodEndTime.value   }),
+    },
   }),
   enabled: () => !!currentTenant.value,
   staleTime: 0,
@@ -824,10 +832,12 @@ const submitCierre = async () => {
     const result = await $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre', {
       method: 'POST',
       body: {
-        periodStart:     periodStart.value,
-        periodEnd:       periodEnd.value,
-        cashCounted:     totalCounted.value,
-        notes:           notes.value || null,
+        periodStart:      periodStart.value,
+        periodEnd:        periodEnd.value,
+        ...(periodStartTime.value && { periodStartTime: periodStartTime.value }),
+        ...(periodEndTime.value   && { periodEndTime:   periodEndTime.value   }),
+        cashCounted:      totalCounted.value,
+        notes:            notes.value || null,
       },
     })
     successData.value = result.data
@@ -869,6 +879,7 @@ const saveToStorage = () => {
     monedasAmount: monedasAmount.value, methodAmounts: methodAmounts.value,
     notes: notes.value,
     periodStart: periodStart.value, periodEnd: periodEnd.value,
+    periodStartTime: periodStartTime.value, periodEndTime: periodEndTime.value,
   }))
 }
 
@@ -881,9 +892,11 @@ const loadFromStorage = () => {
     // Query params always win over localStorage — only restore period if not in URL
     const hasQueryParams = !!route.query.start || !!route.query.end
     if (!hasQueryParams) {
-      if (s.periodStart) periodStart.value = s.periodStart
-      if (s.periodEnd)   periodEnd.value   = s.periodEnd
-      if (s.step)        currentStep.value = s.step
+      if (s.periodStart)     periodStart.value     = s.periodStart
+      if (s.periodEnd)       periodEnd.value       = s.periodEnd
+      if (s.periodStartTime) periodStartTime.value = s.periodStartTime
+      if (s.periodEndTime)   periodEndTime.value   = s.periodEndTime
+      if (s.step)            currentStep.value     = s.step
     }
     if (s.counts)         counts.value         = s.counts
     if (s.monedasAmount)  monedasAmount.value  = s.monedasAmount

@@ -147,7 +147,12 @@
       <!-- CTA -->
       <div class="sm:col-span-2 flex flex-wrap gap-3">
         <button
-          @click="navigateTo({ path: '/finanzas/cierre/z', query: { start: periodStart, end: periodEnd } })"
+          @click="navigateTo({ path: '/finanzas/cierre/z', query: {
+            start: periodStart,
+            end:   periodEnd,
+            ...(periodStartTime && { startTime: periodStartTime }),
+            ...(periodEndTime   && { endTime:   periodEndTime   }),
+          } })"
           class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
         >
           Hacer cierre Z con este período →
@@ -173,12 +178,16 @@ const route = useRoute()
 const today = new Date().toISOString().split('T')[0]
 
 // Initialise from query params if present
-const initStart = (route.query.start as string) || today
-const initEnd   = (route.query.end   as string) || today
+const initStart     = (route.query.start     as string) || today
+const initEnd       = (route.query.end       as string) || today
+const initStartTime = (route.query.startTime as string) || null
+const initEndTime   = (route.query.endTime   as string) || null
 const dateRangeDates = ref<Date[] | null>([
   new Date(initStart + 'T12:00:00'),
   new Date(initEnd   + 'T12:00:00'),
 ])
+const periodStartTime = ref<string | null>(initStartTime)
+const periodEndTime   = ref<string | null>(initEndTime)
 
 const presetDates = ref([
   { label: 'Hoy',           value: [new Date(), new Date()] },
@@ -202,9 +211,14 @@ const periodEnd = computed(() =>
 )
 
 const { data: rawPreview, status: previewStatus, asyncStatus: previewAsyncStatus, error: previewErr, refetch } = useQuery({
-  key: () => ['cierre', 'preview', currentTenant.value?.id, periodStart.value, periodEnd.value],
+  key: () => ['cierre', 'preview', currentTenant.value?.id, periodStart.value, periodEnd.value, periodStartTime.value, periodEndTime.value],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
-    params: { period_start: periodStart.value, period_end: periodEnd.value },
+    params: {
+      period_start: periodStart.value,
+      period_end:   periodEnd.value,
+      ...(periodStartTime.value && { period_start_time: periodStartTime.value }),
+      ...(periodEndTime.value   && { period_end_time:   periodEndTime.value   }),
+    },
   }),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
