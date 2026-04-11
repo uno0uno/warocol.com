@@ -98,7 +98,17 @@
 
     <!-- ── Horario exacto ─────────────────────────────────────────────────── -->
     <div class="mb-4">
+      <!-- Multi-day: obligatorio, no se puede ocultar -->
+      <div v-if="isMultiDay" class="flex items-center gap-1.5 text-xs text-amber-600 font-medium mb-2">
+        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Período de varios días — debes especificar hora de inicio y fin
+      </div>
+
+      <!-- Single-day: opcional, toggle para activar -->
       <button
+        v-else
         @click="toggleTimePicker"
         class="flex items-center gap-1.5 text-xs transition-colors"
         :class="enableTimePicker ? 'text-primary font-medium' : 'text-text-secondary hover:text-primary'"
@@ -109,13 +119,14 @@
         {{ enableTimePicker ? 'Quitar horario exacto' : 'Especificar horario exacto' }}
       </button>
 
-      <div v-if="enableTimePicker" class="mt-2 flex items-center gap-3 flex-wrap">
+      <div v-if="isMultiDay || enableTimePicker" class="mt-2 flex items-center gap-3 flex-wrap">
         <div class="flex items-center gap-1.5">
           <label class="text-xs text-text-secondary whitespace-nowrap">Desde</label>
           <input
             type="time"
             v-model="startTimeInput"
-            class="h-8 px-2 text-sm rounded-lg border border-border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+            class="h-8 px-2 text-sm rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+            :class="isMultiDay && !startTimeInput ? 'border-amber-400' : 'border-border'"
           />
         </div>
         <div class="flex items-center gap-1.5">
@@ -123,11 +134,15 @@
           <input
             type="time"
             v-model="endTimeInput"
-            class="h-8 px-2 text-sm rounded-lg border border-border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+            class="h-8 px-2 text-sm rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+            :class="isMultiDay && !endTimeInput ? 'border-amber-400' : 'border-border'"
           />
         </div>
         <span v-if="shiftLabel" class="text-xs text-text-secondary">{{ shiftLabel }}</span>
       </div>
+
+      <!-- Error de validación -->
+      <p v-if="timeError" class="mt-1.5 text-xs text-destructive">{{ timeError }}</p>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -189,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
 
@@ -270,8 +285,16 @@ const presets = buildPresets()
 const activePreset = ref<string | null>('today')
 const dateRangeDates = ref<Date[]>([new Date(), new Date()])
 const enableTimePicker = ref(false)
-const startTimeInput   = ref('')   // "HH:MM"
-const endTimeInput     = ref('')   // "HH:MM"
+const startTimeInput   = ref('')
+const endTimeInput     = ref('')
+const timeError        = ref<string | null>(null)
+
+const isMultiDay = computed(() => periodStart.value !== periodEnd.value)
+
+// Auto-enable time inputs when multi-day range is selected
+watch(isMultiDay, (multi) => {
+  if (multi) enableTimePicker.value = true
+})
 
 const dpPresets = presets.map(p => ({ label: p.label, value: [p.start, p.end] }))
 
@@ -350,6 +373,11 @@ const formatCurrency = (v?: number) =>
 // ── Navigate ──────────────────────────────────────────────────────────────
 
 const goTo = (type: 'x' | 'z') => {
+  timeError.value = null
+  if (isMultiDay.value && (!startTimeInput.value || !endTimeInput.value)) {
+    timeError.value = 'Para períodos de varios días debes especificar hora de inicio y fin'
+    return
+  }
   const query: Record<string, string> = {
     start: periodStart.value,
     end:   periodEnd.value,
