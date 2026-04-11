@@ -57,6 +57,117 @@
       </div>
     </div>
 
+    <!-- ── PASO 0: Seleccionar período ─────────────────────────────────── -->
+    <template v-else-if="currentStep === 0">
+      <!-- Filter bar -->
+      <div class="flex items-end gap-2 w-full overflow-x-auto scrollbar-hide">
+        <button
+          v-for="p in presets" :key="p.key"
+          class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
+          :class="activePreset === p.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
+          @click="applyPreset(p)"
+        >{{ p.label }}</button>
+
+        <VueDatePicker
+          v-model="dateRangeDates"
+          range :teleport="true" :preset-dates="dpPresets" :enable-time-picker="false" :locale="es"
+          auto-apply :max-date="new Date()" :format="formatDateRange"
+          input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
+          @update:model-value="activePreset = null"
+        />
+
+        <div class="h-10 w-px bg-border flex-shrink-0 self-end" />
+
+        <button
+          v-if="!isMultiDay"
+          @click="toggleTimePicker"
+          class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0 flex items-center gap-1.5"
+          :class="enableTimePicker ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          Horario
+        </button>
+
+        <template v-if="isMultiDay || enableTimePicker">
+          <div class="flex flex-col gap-0.5 flex-shrink-0">
+            <label class="text-xs text-text-secondary">Desde</label>
+            <div class="relative">
+              <input type="text" v-model="startTimeInput" placeholder="HH:MM" maxlength="5" inputmode="numeric"
+                @input="onTimeInput($event, 'start')" @focus="showDrop.start = true" @blur="hideDrop('start')"
+                class="h-10 w-20 px-2 text-sm font-mono rounded-lg border-2 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
+                :class="isMultiDay && !startTimeInput ? 'border-amber-400' : 'border-border'" />
+              <ul v-if="showDrop.start && filteredTimes(startTimeInput).length" class="absolute z-50 top-full left-0 mt-1 w-24 max-h-44 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg py-1">
+                <li v-for="t in filteredTimes(startTimeInput)" :key="t" @mousedown.prevent="pickTime('start', t)" class="px-3 py-1 text-sm font-mono text-text-primary hover:bg-background cursor-pointer">{{ t }}</li>
+              </ul>
+            </div>
+          </div>
+          <div class="flex flex-col gap-0.5 flex-shrink-0">
+            <label class="text-xs text-text-secondary">Hasta</label>
+            <div class="relative">
+              <input type="text" v-model="endTimeInput" placeholder="HH:MM" maxlength="5" inputmode="numeric"
+                @input="onTimeInput($event, 'end')" @focus="showDrop.end = true" @blur="hideDrop('end')"
+                class="h-10 w-20 px-2 text-sm font-mono rounded-lg border-2 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
+                :class="isMultiDay && !endTimeInput ? 'border-amber-400' : 'border-border'" />
+              <ul v-if="showDrop.end && filteredTimes(endTimeInput).length" class="absolute z-50 top-full left-0 mt-1 w-24 max-h-44 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg py-1">
+                <li v-for="t in filteredTimes(endTimeInput)" :key="t" @mousedown.prevent="pickTime('end', t)" class="px-3 py-1 text-sm font-mono text-text-primary hover:bg-background cursor-pointer">{{ t }}</li>
+              </ul>
+            </div>
+          </div>
+          <span v-if="shiftLabel" class="text-xs text-text-secondary whitespace-nowrap flex-shrink-0 self-end pb-2">{{ shiftLabel }}</span>
+        </template>
+      </div>
+
+      <p v-if="timeError" class="text-xs text-destructive">{{ timeError }}</p>
+
+      <!-- X Preview -->
+      <div v-if="xPreviewLoading" class="flex justify-center py-10"><CommonsTheCustomLoader size="large" /></div>
+      <template v-else-if="xPreviewData">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Ventas -->
+          <div class="bg-surface border-2 border-border rounded-lg">
+            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Ventas del período</h3></div>
+            <div class="divide-y divide-border">
+              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Total ventas</span><span class="font-bold text-text-primary">{{ formatCurrency(xPreviewData.totalSales) }}</span></div>
+              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Órdenes</span><span class="font-medium">{{ xPreviewData.itemsSold }}</span></div>
+            </div>
+          </div>
+          <!-- Caja -->
+          <div class="bg-surface border-2 border-border rounded-lg">
+            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Estado de caja</h3></div>
+            <div class="divide-y divide-border">
+              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Efectivo recibido</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
+              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Gastos en efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
+              <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Esperado en caja</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
+              <div class="flex justify-between px-4 py-2.5 text-sm">
+                <span class="text-text-secondary">Mesas abiertas</span>
+                <span class="font-medium" :class="xPreviewData.openTablesCount > 0 ? 'text-amber-600 font-semibold' : 'text-text-primary'">{{ xPreviewData.openTablesCount }}</span>
+              </div>
+            </div>
+          </div>
+          <!-- Métodos de pago -->
+          <div v-if="xPreviewData.totalSales > 0" class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
+            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Métodos de pago</h3></div>
+            <div class="divide-y divide-border">
+              <div v-for="row in (xPreviewData.breakdown ?? [])" :key="row.group_slug + row.method_name" class="flex justify-between px-4 py-2.5 text-sm">
+                <span class="text-text-secondary">{{ row.method_name }}</span>
+                <span class="font-medium">{{ formatCurrency(row.total) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="flex gap-3">
+          <button
+            @click="goToStep1"
+            class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            Continuar al cierre →
+          </button>
+        </div>
+      </template>
+    </template>
+
     <template v-else>
       <!-- ── Header info card ─────────────────────────────────────────────── -->
       <div class="bg-surface border-2 border-border rounded-lg mb-3 sm:mb-4">
@@ -661,7 +772,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { es } from 'date-fns/locale'
+import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Cierre Z - Warocol' })
@@ -670,11 +783,136 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 const { currentTenant } = useTenantReactive()
 const route = useRoute()
 
-const today           = new Date().toISOString().split('T')[0]
-const periodStart     = ref((route.query.start     as string) || today)
-const periodEnd       = ref((route.query.end       as string) || today)
-const periodStartTime = ref<string | null>((route.query.startTime as string) || null)
-const periodEndTime   = ref<string | null>((route.query.endTime   as string) || null)
+const today = new Date().toISOString().split('T')[0]
+
+// ── Date picker state (paso 0) ─────────────────────────────────────────────
+const initStart = (route.query.start as string) || today
+const initEnd   = (route.query.end   as string) || today
+
+const dateRangeDates = ref<Date[]>([
+  new Date(initStart + 'T12:00:00'),
+  new Date(initEnd   + 'T12:00:00'),
+])
+
+interface Preset { key: string; label: string; start: Date; end: Date }
+const buildPresets = (): Preset[] => {
+  const noon = (d: Date) => { d.setHours(12, 0, 0, 0); return d }
+  const now = noon(new Date())
+  const yesterday  = noon(new Date(now)); yesterday.setDate(now.getDate() - 1)
+  const weekStart  = noon(new Date(now)); weekStart.setDate(now.getDate() - 6)
+  const monthStart = noon(new Date(now.getFullYear(), now.getMonth(), 1))
+  return [
+    { key: 'today',     label: 'Hoy',           start: new Date(now), end: new Date(now) },
+    { key: 'yesterday', label: 'Ayer',           start: yesterday,     end: yesterday },
+    { key: 'week',      label: 'Últimos 7 días', start: weekStart,     end: new Date(now) },
+    { key: 'month',     label: 'Este mes',        start: monthStart,    end: new Date(now) },
+  ]
+}
+const presets      = buildPresets()
+const activePreset = ref<string | null>(initStart === today && initEnd === today ? 'today' : null)
+const dpPresets    = presets.map(p => ({ label: p.label, value: [p.start, p.end] }))
+
+const applyPreset = (p: Preset) => {
+  activePreset.value = p.key
+  dateRangeDates.value = [new Date(p.start), new Date(p.end)]
+}
+
+const formatDateRange = (dates: Date[]) => {
+  if (!dates?.[0]) return ''
+  const from = fnsFormat(dates[0], 'dd/MM/yyyy', { locale: es })
+  if (!dates[1]) return from
+  return `${from} – ${fnsFormat(dates[1], 'dd/MM/yyyy', { locale: es })}`
+}
+
+// Time inputs
+const enableTimePicker = ref(!!(route.query.startTime))
+const startTimeInput   = ref<string>('')
+const endTimeInput     = ref<string>('')
+const timeError        = ref<string | null>(null)
+
+const timeOptions = Array.from({ length: 48 }, (_, i) => {
+  const h = Math.floor(i / 2).toString().padStart(2, '0')
+  const m = i % 2 === 0 ? '00' : '30'
+  return `${h}:${m}`
+})
+const showDrop = reactive({ start: false, end: false })
+const filteredTimes = (val: string) => val ? timeOptions.filter(t => t.startsWith(val)) : timeOptions
+const hideDrop = (f: 'start' | 'end') => setTimeout(() => { showDrop[f] = false }, 150)
+const pickTime = (f: 'start' | 'end', t: string) => {
+  if (f === 'start') startTimeInput.value = t; else endTimeInput.value = t
+  showDrop[f] = false
+}
+const toggleTimePicker = () => {
+  enableTimePicker.value = !enableTimePicker.value
+  if (!enableTimePicker.value) { startTimeInput.value = ''; endTimeInput.value = '' }
+}
+const onTimeInput = (e: Event, field: 'start' | 'end') => {
+  const el = e.target as HTMLInputElement
+  let v = el.value.replace(/\D/g, '').slice(0, 4)
+  if (v.length >= 3) v = v.slice(0, 2) + ':' + v.slice(2)
+  if (v.length >= 2) { const h = Math.min(23, parseInt(v.slice(0, 2), 10)); v = String(h).padStart(2, '0') + v.slice(2) }
+  if (v.length === 5) { const m = Math.min(59, parseInt(v.slice(3, 5), 10)); v = v.slice(0, 3) + String(m).padStart(2, '0') }
+  if (field === 'start') startTimeInput.value = v; else endTimeInput.value = v
+  el.value = v
+}
+
+const buildDateTime = (datePart: Date, timeStr: string): Date | null => {
+  if (!timeStr || timeStr.length < 5) return null
+  const [h, m] = timeStr.split(':').map(Number)
+  const d = new Date(datePart); d.setHours(h, m, 0, 0); return d
+}
+
+// Period computed from date picker
+const periodStart = computed(() => fnsFormat(dateRangeDates.value[0], 'yyyy-MM-dd'))
+const periodEnd   = computed(() => fnsFormat(dateRangeDates.value[1] ?? dateRangeDates.value[0], 'yyyy-MM-dd'))
+const isMultiDay  = computed(() => periodStart.value !== periodEnd.value)
+
+watch(isMultiDay, (multi) => { if (multi) enableTimePicker.value = true })
+
+const periodStartTime = computed((): string | null => {
+  if (!enableTimePicker.value) return null
+  return buildDateTime(dateRangeDates.value[0], startTimeInput.value)?.toISOString() ?? null
+})
+const periodEndTime = computed((): string | null => {
+  if (!enableTimePicker.value) return null
+  return buildDateTime(dateRangeDates.value[1] ?? dateRangeDates.value[0], endTimeInput.value)?.toISOString() ?? null
+})
+
+const shiftLabel = computed(() => {
+  if (!enableTimePicker.value) return null
+  const s = buildDateTime(dateRangeDates.value[0], startTimeInput.value)
+  const e = buildDateTime(dateRangeDates.value[1] ?? dateRangeDates.value[0], endTimeInput.value)
+  if (!s || !e || s >= e) return null
+  try { return formatDistanceStrict(s, e, { locale: es }) } catch { return null }
+})
+
+// X preview (paso 0 — all orders, not completed_only)
+const { data: rawXPreview, status: xPreviewStatus } = useQuery({
+  key: () => ['cierre', 'preview-x0', currentTenant.value?.id, periodStart.value, periodEnd.value, periodStartTime.value, periodEndTime.value],
+  query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
+    params: {
+      period_start: periodStart.value,
+      period_end:   periodEnd.value,
+      ...(periodStartTime.value && { period_start_time: periodStartTime.value }),
+      ...(periodEndTime.value   && { period_end_time:   periodEndTime.value   }),
+    },
+  }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 60_000,
+})
+const xPreviewData    = computed(() => rawXPreview.value?.data ?? null)
+const xPreviewLoading = computed(() => xPreviewStatus.value === 'pending' && !xPreviewData.value)
+
+// Navigate to step 1
+const goToStep1 = () => {
+  timeError.value = null
+  if (isMultiDay.value && (!startTimeInput.value || !endTimeInput.value)) {
+    timeError.value = 'Para períodos de varios días debes especificar hora de inicio y fin'
+    return
+  }
+  currentStep.value = 1
+}
+
 const isPastPeriod = computed(() => periodEnd.value < today)
 
 // ── Wizard state ──────────────────────────────────────────────────────────
@@ -686,7 +924,7 @@ const wizardSteps = [
   { n: 5, label: 'Cerrar' },
 ]
 
-const currentStep     = ref(1)
+const currentStep     = ref(route.query.start ? 1 : 0)
 const confirmArmed    = ref(false)
 const isSubmitting    = ref(false)
 const submitError     = ref<string | null>(null)
@@ -892,10 +1130,13 @@ const loadFromStorage = () => {
     // Query params always win over localStorage — only restore period if not in URL
     const hasQueryParams = !!route.query.start || !!route.query.end
     if (!hasQueryParams) {
-      if (s.periodStart)     periodStart.value     = s.periodStart
-      if (s.periodEnd)       periodEnd.value       = s.periodEnd
-      if (s.periodStartTime) periodStartTime.value = s.periodStartTime
-      if (s.periodEndTime)   periodEndTime.value   = s.periodEndTime
+      if (s.periodStart) {
+        const d0 = new Date(s.periodStart + 'T12:00:00')
+        const d1 = s.periodEnd ? new Date(s.periodEnd + 'T12:00:00') : d0
+        dateRangeDates.value = [d0, d1]
+      }
+      if (s.periodStartTime) { startTimeInput.value = s.periodStartTime; enableTimePicker.value = true }
+      if (s.periodEndTime)   { endTimeInput.value   = s.periodEndTime;   enableTimePicker.value = true }
       if (s.step)            currentStep.value     = s.step
     }
     if (s.counts)         counts.value         = s.counts
