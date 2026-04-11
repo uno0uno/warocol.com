@@ -212,3 +212,65 @@ Las ventas anteriores no se modifican. El método simplemente deja de aparecer e
 
 **¿Por qué no puedo editar el grupo Efectivo?**
 El efectivo es el método base del sistema y está ligado directamente al cuadre de caja en el cierre contable. Por eso no se puede modificar.
+
+---
+
+## Gastos
+
+Desde la pestaña Gastos llevas el control de todos los costos del negocio que no son compras de inventario: arriendo, servicios públicos, mantenimiento, publicidad, etc.
+
+### Ver gastos
+
+En la parte superior aparecen tres tarjetas del mes seleccionado:
+
+- **Total gastos** — suma de todos los montos
+- **Transacciones** — número de registros
+- **Promedio** — gasto promedio por transacción
+
+**Filtros disponibles:**
+
+| Filtro | Descripción |
+|--------|-------------|
+| Mes | Selector de mes/año — por defecto el mes actual |
+| Categoría | Filtra por tipo de gasto |
+| Búsqueda | Texto libre sobre la descripción |
+
+La tabla muestra columnas: fecha · categoría · recurrente · descripción · monto · acciones.
+
+- El badge **Recurrente** indica gastos que se repiten periódicamente
+- El ícono de ojo abre el detalle
+- El ícono de papelera elimina el registro (pide confirmación)
+
+La eliminación es permanente e incluye los documentos adjuntos.
+
+### Registrar un gasto
+
+Haz clic en **Nuevo gasto**. El formulario tiene tres pasos.
+
+**Paso 1 — Datos básicos**
+
+| Campo | Descripción |
+|-------|-------------|
+| Fecha | Fecha en que ocurrió el gasto |
+| Categoría | Clasifica el gasto (arriendo, servicios, marketing, etc.) |
+| Descripción | Detalle opcional |
+| Monto | Valor en pesos colombianos |
+| ¿Es recurrente? | Activa si el gasto se repite |
+
+Si marcas recurrente, aparecen **Frecuencia** (mensual, quincenal, semanal) y **Fecha de fin** (opcional).
+
+**Paso 2 — Documentos**
+
+Adjunta el soporte: factura, comprobante o foto del recibo.
+
+- Formatos aceptados: JPG, PNG, PDF
+- Puedes arrastrar archivos o seleccionarlos desde el dispositivo
+- Quedan vinculados al registro para auditoría
+
+**Paso 3 — Confirmar**
+
+Revisa el resumen y presiona **Registrar gasto**.
+
+### Editar un gasto
+
+Desde la lista, usa el ícono de editar. Puedes modificar fecha, categoría, descripción y monto. Para actualizar documentos adjuntos, elimina el gasto y vuélvelo a crear.
