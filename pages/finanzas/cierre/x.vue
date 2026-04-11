@@ -29,7 +29,7 @@
               placeholder="Rango de fechas"
               auto-apply
               :max-date="new Date()"
-              :format="formatDateRange"
+              :format="'dd/MM/yyyy'"
               input-class-name="dp-custom-input"
               menu-class-name="dp-custom-menu"
               calendar-cell-class-name="dp-custom-cell"

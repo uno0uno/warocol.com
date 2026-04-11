@@ -88,7 +88,7 @@
         placeholder="Rango personalizado…"
         auto-apply
         :max-date="new Date()"
-        :format="formatDateRange"
+        :format="'dd/MM/yyyy'"
         input-class-name="dp-custom-input"
         menu-class-name="dp-custom-menu"
         calendar-cell-class-name="dp-custom-cell"
@@ -269,21 +269,23 @@ const applySuggested = () => {
 interface Preset { key: string; label: string; start: Date; end: Date }
 
 const buildPresets = (): Preset[] => {
-  const now = new Date()
-  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1)
-  const weekStart = new Date(now); weekStart.setDate(now.getDate() - 6)
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const noon = (d: Date) => { d.setHours(12, 0, 0, 0); return d }
+  const now = noon(new Date())
+  const yesterday = noon(new Date(now)); yesterday.setDate(now.getDate() - 1)
+  const weekStart = noon(new Date(now)); weekStart.setDate(now.getDate() - 6)
+  const monthStart = noon(new Date(now.getFullYear(), now.getMonth(), 1))
   return [
-    { key: 'today',     label: 'Hoy',           start: new Date(), end: new Date() },
-    { key: 'yesterday', label: 'Ayer',           start: yesterday,  end: yesterday },
-    { key: 'week',      label: 'Últimos 7 días', start: weekStart,  end: new Date() },
-    { key: 'month',     label: 'Este mes',        start: monthStart, end: new Date() },
+    { key: 'today',     label: 'Hoy',           start: new Date(now), end: new Date(now) },
+    { key: 'yesterday', label: 'Ayer',           start: yesterday,     end: yesterday },
+    { key: 'week',      label: 'Últimos 7 días', start: weekStart,     end: new Date(now) },
+    { key: 'month',     label: 'Este mes',        start: monthStart,    end: new Date(now) },
   ]
 }
 
 const presets = buildPresets()
 const activePreset = ref<string | null>('today')
-const dateRangeDates = ref<Date[]>([new Date(), new Date()])
+const todayNoon = () => { const d = new Date(); d.setHours(12, 0, 0, 0); return d }
+const dateRangeDates = ref<Date[]>([todayNoon(), todayNoon()])
 const enableTimePicker = ref(false)
 const startTimeInput   = ref('')
 const endTimeInput     = ref('')
