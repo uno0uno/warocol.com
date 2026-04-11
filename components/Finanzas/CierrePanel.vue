@@ -180,6 +180,7 @@ import { ref, watch } from 'vue'
 const props = defineProps<{
   modelValue: boolean
   cierreId: string | null
+  deleteMode?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -199,7 +200,7 @@ const close = () => {
 
 watch(() => props.cierreId, async (id) => {
   detail.value = null
-  confirmDelete.value = false
+  confirmDelete.value = props.deleteMode ?? false
   if (!id) return
   detailLoading.value = true
   try {
