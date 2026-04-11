@@ -64,7 +64,7 @@ const syncError = ref('')
 
 // Success modal state
 const showSuccessModal = ref(false)
-const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; customer_id?: string } | null>(null)
+const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string } | null>(null)
 const wasMesaMode = ref(false)
 
 // Customer identification via modal
@@ -259,10 +259,14 @@ const processOrder = async () => {
     }
 
     if (response.success) {
+      const subMethodName = selectedPaymentMethodId.value
+        ? selectedGroup.value?.methods.find(m => m.id === selectedPaymentMethodId.value)?.name
+        : undefined
       orderResult.value = {
         order_number: response.data.order_number,
         total_amount: response.data.total_amount,
         payment_method: response.data.payment_method,
+        payment_method_name: subMethodName,
         customer_id: selectedCustomer.value?.id,
       }
       posStore.clearAll()
@@ -1165,7 +1169,11 @@ onUnmounted(() => {
             </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">Método de Pago</span>
-              <span class="text-sm font-medium text-text-primary">{{ getPaymentMethodLabel(orderResult.payment_method) }}</span>
+              <span class="text-sm font-medium text-text-primary">
+                {{ orderResult.payment_method_name
+                    ? `${getPaymentMethodLabel(orderResult.payment_method)} · ${orderResult.payment_method_name}`
+                    : getPaymentMethodLabel(orderResult.payment_method) }}
+              </span>
             </div>
           </div>
 
