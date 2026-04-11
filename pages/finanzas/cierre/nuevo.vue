@@ -128,6 +128,11 @@
         {{ enableTimePicker ? 'Quitar horario exacto' : 'Especificar horario exacto' }}
       </button>
 
+      <!-- Datalist: opciones de hora cada 30 min en 24h -->
+      <datalist id="time-options">
+        <option v-for="t in timeOptions" :key="t" :value="t" />
+      </datalist>
+
       <div v-if="isMultiDay || enableTimePicker" class="mt-2 flex items-center gap-3 flex-wrap">
         <div class="flex items-center gap-1.5">
           <label class="text-xs text-text-secondary whitespace-nowrap">Desde</label>
@@ -137,6 +142,7 @@
             placeholder="HH:MM"
             maxlength="5"
             inputmode="numeric"
+            list="time-options"
             @input="onTimeInput($event, 'start')"
             class="h-8 w-20 px-2 text-sm font-mono rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
             :class="isMultiDay && !startTimeInput ? 'border-amber-400' : 'border-border'"
@@ -150,6 +156,7 @@
             placeholder="HH:MM"
             maxlength="5"
             inputmode="numeric"
+            list="time-options"
             @input="onTimeInput($event, 'end')"
             class="h-8 w-20 px-2 text-sm font-mono rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
             :class="isMultiDay && !endTimeInput ? 'border-amber-400' : 'border-border'"
@@ -307,6 +314,12 @@ const enableTimePicker = ref(false)
 const startTimeInput   = ref('')
 const endTimeInput     = ref('')
 const timeError        = ref<string | null>(null)
+
+const timeOptions = Array.from({ length: 48 }, (_, i) => {
+  const h = Math.floor(i / 2).toString().padStart(2, '0')
+  const m = i % 2 === 0 ? '00' : '30'
+  return `${h}:${m}`
+})
 
 const dpPresets = presets.map(p => ({ label: p.label, value: [p.start, p.end] }))
 
