@@ -97,7 +97,7 @@
               </div>
               <div>
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Estado</p>
-                <p class="text-base font-semibold text-text-primary">Paso {{ currentStep }} de 4</p>
+                <p class="text-base font-semibold text-text-primary">Paso {{ currentStep }} de 5</p>
               </div>
             </div>
           </div>
@@ -146,8 +146,8 @@
                 <span v-else class="font-semibold text-sm sm:text-base">2</span>
               </div>
               <div class="hidden sm:block ml-3 flex-1 min-w-0">
-                <p class="text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">Caja</p>
-                <p class="text-xs text-text-secondary">Contar métodos</p>
+                <p class="text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">Efectivo</p>
+                <p class="text-xs text-text-secondary">Contar billetes</p>
               </div>
               <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'" />
             </div>
@@ -168,25 +168,47 @@
                 <span v-else class="font-semibold text-sm sm:text-base">3</span>
               </div>
               <div class="hidden sm:block ml-3 flex-1 min-w-0">
-                <p class="text-sm font-medium truncate" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">Resumen</p>
-                <p class="text-xs text-text-secondary">Revisar totales</p>
+                <p class="text-sm font-medium truncate" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">Otros métodos</p>
+                <p class="text-xs text-text-secondary">Contar medios</p>
               </div>
               <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 3 ? 'bg-secondary' : 'bg-border'" />
             </div>
 
             <!-- Step 4 -->
-            <div class="flex items-center">
+            <div class="flex items-center flex-1">
               <div
                 class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
                 :class="{
                   'bg-primary text-primary-foreground border-primary': currentStep === 4,
+                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 4,
                   'border-border text-text-secondary bg-transparent': currentStep < 4,
                 }"
               >
-                <span class="font-semibold text-sm sm:text-base">4</span>
+                <svg v-if="currentStep > 4" class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                <span v-else class="font-semibold text-sm sm:text-base">4</span>
+              </div>
+              <div class="hidden sm:block ml-3 flex-1 min-w-0">
+                <p class="text-sm font-medium truncate" :class="currentStep >= 4 ? 'text-text-primary' : 'text-text-secondary'">Resumen</p>
+                <p class="text-xs text-text-secondary">Revisar totales</p>
+              </div>
+              <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 4 ? 'bg-secondary' : 'bg-border'" />
+            </div>
+
+            <!-- Step 5 -->
+            <div class="flex items-center">
+              <div
+                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
+                :class="{
+                  'bg-primary text-primary-foreground border-primary': currentStep === 5,
+                  'border-border text-text-secondary bg-transparent': currentStep < 5,
+                }"
+              >
+                <span class="font-semibold text-sm sm:text-base">5</span>
               </div>
               <div class="hidden sm:block ml-3 min-w-0">
-                <p class="text-sm font-medium truncate" :class="currentStep >= 4 ? 'text-text-primary' : 'text-text-secondary'">Cerrar</p>
+                <p class="text-sm font-medium truncate" :class="currentStep >= 5 ? 'text-text-primary' : 'text-text-secondary'">Cerrar</p>
                 <p class="text-xs text-text-secondary">Confirmar cierre</p>
               </div>
             </div>
@@ -311,41 +333,6 @@
           </div>
         </div>
 
-        <!-- Otros métodos de pago -->
-        <template v-if="nonCashGroups.length > 0">
-          <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-3">Otros métodos</p>
-          <div class="bg-background rounded-lg border border-border divide-y divide-border mb-5">
-            <div
-              v-for="group in nonCashGroups"
-              :key="group.slug"
-              class="flex items-center justify-between px-4 py-3 gap-4"
-            >
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-text-primary">{{ group.label }}</p>
-                <p class="text-xs text-text-secondary">Esperado: {{ formatCurrency(group.total) }}</p>
-              </div>
-              <div class="flex items-center gap-2 flex-shrink-0">
-                <input
-                  v-model="methodAmounts[group.slug]"
-                  type="text"
-                  inputmode="numeric"
-                  pattern="[0-9]*"
-                  @input="methodAmounts[group.slug] = sanitizeIntStr($event)"
-                  placeholder="0"
-                  class="w-28 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
-                  :aria-label="`Monto contado para ${group.label}`"
-                />
-                <span
-                  class="text-xs font-medium w-20 text-right"
-                  :class="methodDiff(group) >= 0 ? 'text-emerald-600' : 'text-destructive'"
-                >
-                  {{ methodDiff(group) >= 0 ? '+' : '' }}{{ formatCurrency(methodDiff(group)) }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </template>
-
         <div class="flex gap-3">
           <button @click="currentStep = 1" class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors">
             ← Atrás
@@ -356,9 +343,58 @@
         </div>
       </div>
 
-      <!-- Step 3: Resumen -->
+      <!-- Step 3: Otros métodos -->
       <div v-else-if="currentStep === 3" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Paso 3 — Resumen del día</h3>
+        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">Paso 3 — Otros métodos de pago</h3>
+        <p class="text-xs text-text-secondary mb-5">Ingresa el monto contado para cada método:</p>
+
+        <div v-if="nonCashMethods.length > 0" class="bg-background rounded-lg border border-border divide-y divide-border mb-5">
+          <div
+            v-for="method in nonCashMethods"
+            :key="method.key"
+            class="flex items-center justify-between px-4 py-3 gap-4"
+          >
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-text-primary">{{ method.label }}</p>
+              <p class="text-xs text-text-secondary">{{ method.groupLabel }} · Esperado: {{ formatCurrency(method.total) }}</p>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <input
+                v-model="methodAmounts[method.key]"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                @input="methodAmounts[method.key] = sanitizeIntStr($event)"
+                placeholder="0"
+                class="w-28 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
+                :aria-label="`Monto contado para ${method.label}`"
+              />
+              <span
+                class="text-xs font-medium w-20 text-right"
+                :class="methodDiff(method) >= 0 ? 'text-emerald-600' : 'text-destructive'"
+              >
+                {{ methodDiff(method) >= 0 ? '+' : '' }}{{ formatCurrency(methodDiff(method)) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div v-else class="text-sm text-text-secondary mb-5 py-4 text-center bg-background rounded-lg border border-border">
+          No hay otros métodos de pago registrados para este período.
+        </div>
+
+        <div class="flex gap-3">
+          <button @click="currentStep = 2" class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors">
+            ← Atrás
+          </button>
+          <button @click="currentStep = 4" class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+            Continuar →
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 4: Resumen -->
+      <div v-else-if="currentStep === 4" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
+        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Paso 4 — Resumen del día</h3>
 
         <div class="bg-background rounded-lg border border-border divide-y divide-border mb-4">
           <div class="flex justify-between px-4 py-2.5 text-sm">
@@ -391,10 +427,10 @@
               {{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}
             </span>
           </div>
-          <template v-if="nonCashGroups.length > 0">
-            <div v-for="group in nonCashGroups" :key="group.slug" class="flex justify-between px-4 py-2.5 text-sm">
-              <span class="text-text-secondary">{{ group.label }} contado</span>
-              <span class="font-medium">{{ formatCurrency(parseInt(methodAmounts[group.slug]) || 0) }}</span>
+          <template v-if="nonCashMethods.length > 0">
+            <div v-for="method in nonCashMethods" :key="method.key" class="flex justify-between px-4 py-2.5 text-sm">
+              <span class="text-text-secondary">{{ method.label }} contado</span>
+              <span class="font-medium">{{ formatCurrency(parseInt(methodAmounts[method.key]) || 0) }}</span>
             </div>
           </template>
         </div>
@@ -413,18 +449,18 @@
         </div>
 
         <div class="flex gap-3">
-          <button @click="currentStep = 2" class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors">
+          <button @click="currentStep = 3" class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors">
             ← Atrás
           </button>
-          <button @click="currentStep = 4" class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+          <button @click="currentStep = 5" class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
             Continuar →
           </button>
         </div>
       </div>
 
-      <!-- Step 4: Confirmar -->
-      <div v-else-if="currentStep === 4" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-2">Paso 4 — Cerrar el día</h3>
+      <!-- Step 5: Confirmar -->
+      <div v-else-if="currentStep === 5" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
+        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-2">Paso 5 — Cerrar el día</h3>
         <p class="text-sm text-text-secondary mb-5">
           ¿Cerrar el día <strong>{{ formatPeriod(periodStart, periodEnd) }}</strong>?<br />
           <span class="text-xs text-text-tertiary">Esta acción no se puede deshacer.</span>
@@ -452,7 +488,7 @@
 
         <div class="flex gap-3">
           <button
-            @click="currentStep = 3"
+            @click="currentStep = 4"
             class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
           >
             ← Atrás
@@ -564,8 +600,40 @@ const breakdownGroups = computed<BreakdownGroup[]>(() => {
 
 const nonCashGroups = computed(() => breakdownGroups.value.filter(g => g.slug !== 'cash'))
 
-const methodDiff = (group: BreakdownGroup) =>
-  (parseInt(methodAmounts.value[group.slug]) || 0) - group.total
+interface BreakdownMethod {
+  key: string
+  groupSlug: string
+  label: string
+  groupLabel: string
+  total: number
+}
+
+const nonCashMethods = computed<BreakdownMethod[]>(() => {
+  const rows: BreakdownRowRaw[] = previewData.value?.breakdown ?? []
+  const nonCashRows = rows.filter(r => r.group_slug !== 'cash')
+  if (nonCashRows.length > 0) {
+    return [...nonCashRows]
+      .sort((a, b) => b.total - a.total)
+      .map(r => ({
+        key:        `${r.group_slug}__${r.method_name}`,
+        groupSlug:  r.group_slug,
+        label:      r.method_name,
+        groupLabel: GROUP_LABELS[r.group_slug] ?? r.group_slug,
+        total:      r.total,
+      }))
+  }
+  // fallback: group-level totals when no individual methods are configured
+  return nonCashGroups.value.map(g => ({
+    key:        g.slug,
+    groupSlug:  g.slug,
+    label:      g.label,
+    groupLabel: g.label,
+    total:      g.total,
+  }))
+})
+
+const methodDiff = (method: BreakdownMethod) =>
+  (parseInt(methodAmounts.value[method.key]) || 0) - method.total
 
 const diffResultClass = computed(() => {
   if (cashDiff.value >= 0) return 'border-emerald-200 bg-emerald-50 text-emerald-800'
