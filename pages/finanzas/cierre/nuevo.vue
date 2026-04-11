@@ -1,8 +1,8 @@
 <template>
-  <div class="page-layout">
+  <div class="page-layout flex flex-col gap-3">
 
     <!-- ── Hint card: skeleton ──────────────────────────────────────────────── -->
-    <div v-if="ultimoLoading" class="bg-surface border border-border rounded-lg mb-3 overflow-hidden animate-pulse">
+    <div v-if="ultimoLoading" class="bg-surface border border-border rounded-lg overflow-hidden animate-pulse">
       <div class="px-3 py-2 bg-background border-b border-border flex items-center justify-between">
         <div class="h-3 w-36 rounded bg-border" />
         <div class="h-3 w-24 rounded bg-border" />
@@ -16,7 +16,7 @@
     </div>
 
     <!-- ── Hint card: último cierre ────────────────────────────────────────── -->
-    <div v-else-if="ultimoCierre" class="bg-surface border border-border rounded-lg mb-3 overflow-hidden">
+    <div v-else-if="ultimoCierre" class="bg-surface border border-border rounded-lg overflow-hidden">
       <div class="px-3 py-2 bg-background border-b border-border flex items-center justify-between">
         <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Último cierre registrado</span>
         <span class="text-xs text-text-tertiary">{{ formatClosedAt(ultimoCierre.closedAt) }}</span>
@@ -65,7 +65,7 @@
     </div>
 
     <!-- ── Filter bar (una sola línea) ──────────────────────────────────── -->
-    <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-4">
+    <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
       <!-- Presets -->
       <button
         v-for="p in presets"
@@ -182,7 +182,7 @@
     </div>
 
     <!-- Error de validación -->
-    <p v-if="timeError" class="-mt-2 mb-3 text-xs text-destructive">{{ timeError }}</p>
+    <p v-if="timeError" class="text-xs text-destructive">{{ timeError }}</p>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 
