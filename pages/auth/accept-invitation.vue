@@ -197,7 +197,7 @@ const acceptInvitation = async () => {
 
         // Redirigir al dashboard después de completar la animación
         setTimeout(() => {
-          navigateTo('/financiero/tir')
+          navigateTo('/ventas')
         }, 500)
       }
     }, 200)
