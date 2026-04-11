@@ -19,7 +19,7 @@
         role="dialog"
         aria-modal="true"
         :aria-label="isEdit ? `Editar ingrediente: ${ingredient?.name}` : 'Crear ingrediente personalizado'"
-        class="fixed z-50 flex flex-col bg-surface shadow-2xl relative
+        class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
       >
@@ -368,7 +368,7 @@
 
         <!-- Archive confirmation (inside panel) -->
         <Transition enter-active-class="transition-opacity duration-150" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-opacity duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
-          <div v-if="showArchiveConfirm" class="absolute inset-0 z-10 flex items-end md:items-center justify-center bg-black/30 rounded-t-2xl md:rounded-none">
+          <div v-if="showArchiveConfirm" class="fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-black/40">
             <div class="bg-surface w-full md:mx-6 md:rounded-2xl shadow-2xl p-6 flex flex-col gap-4 rounded-t-2xl">
               <h3 class="text-base font-bold text-text-primary">Archivar "{{ ingredient?.name }}"</h3>
               <p class="text-sm text-text-secondary leading-relaxed">
