@@ -40,10 +40,12 @@ watch(() => currentTenant.value?.id, (tenantId) => {
 watch(settingsAsyncStatus, (status) => {
   if (status !== 'idle') return
   const enabled = settingsData.value?.data?.tables_enabled
-  if (enabled === undefined || enabled === null) return
-  posStore.tablesEnabled = enabled
+  // When profile is missing (null response) or tables_enabled is unset, default to false.
+  // Without this, posStore.tablesEnabled stays null → isResolvingSettings = true forever.
+  const resolved = (enabled === undefined || enabled === null) ? false : enabled
+  posStore.tablesEnabled = resolved
   if (currentTenant.value?.id) {
-    localStorage.setItem(tablesStorageKey(currentTenant.value.id), enabled ? '1' : '0')
+    localStorage.setItem(tablesStorageKey(currentTenant.value.id), resolved ? '1' : '0')
   }
 })
 
