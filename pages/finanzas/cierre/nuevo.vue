@@ -80,33 +80,22 @@
       </button>
 
       <!-- Date picker -->
-      <div class="flex-1 min-w-0">
-        <VueDatePicker
-          v-model="dateRangeDates"
-          range
-          :teleport="true"
-          :preset-dates="dpPresets"
-          :enable-time-picker="false"
-          :locale="es"
-          auto-apply
-          :max-date="new Date()"
-          menu-class-name="dp-custom-menu"
-          calendar-cell-class-name="dp-custom-cell"
-          @update:model-value="activePreset = null"
-        >
-          <template #trigger>
-            <button
-              type="button"
-              class="dp-custom-input flex items-center gap-2 h-10 px-3 w-full rounded-lg border-2 border-border bg-background text-sm text-text-primary hover:border-primary/50 transition-colors"
-            >
-              <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span class="truncate">{{ dpDisplayText }}</span>
-            </button>
-          </template>
-        </VueDatePicker>
-      </div>
+      <VueDatePicker
+        v-model="dateRangeDates"
+        range
+        :teleport="true"
+        :preset-dates="dpPresets"
+        :enable-time-picker="false"
+        :locale="es"
+        auto-apply
+        :max-date="new Date()"
+        :format="formatInputDisplay"
+        input-class-name="dp-custom-input !w-full"
+        menu-class-name="dp-custom-menu"
+        calendar-cell-class-name="dp-custom-cell"
+        class="flex-1 min-w-0"
+        @update:model-value="activePreset = null"
+      />
 
       <!-- Separador -->
       <div class="h-10 w-px bg-border flex-shrink-0 self-end" />
