@@ -132,20 +132,26 @@
         <div class="flex items-center gap-1.5">
           <label class="text-xs text-text-secondary whitespace-nowrap">Desde</label>
           <input
-            type="time"
-            lang="en-GB"
+            type="text"
             v-model="startTimeInput"
-            class="h-8 px-2 text-sm rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+            placeholder="HH:MM"
+            maxlength="5"
+            inputmode="numeric"
+            @input="onTimeInput($event, 'start')"
+            class="h-8 w-20 px-2 text-sm font-mono rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
             :class="isMultiDay && !startTimeInput ? 'border-amber-400' : 'border-border'"
           />
         </div>
         <div class="flex items-center gap-1.5">
           <label class="text-xs text-text-secondary whitespace-nowrap">Hasta</label>
           <input
-            type="time"
-            lang="en-GB"
+            type="text"
             v-model="endTimeInput"
-            class="h-8 px-2 text-sm rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+            placeholder="HH:MM"
+            maxlength="5"
+            inputmode="numeric"
+            @input="onTimeInput($event, 'end')"
+            class="h-8 w-20 px-2 text-sm font-mono rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
             :class="isMultiDay && !endTimeInput ? 'border-amber-400' : 'border-border'"
           />
         </div>
@@ -315,6 +321,25 @@ const toggleTimePicker = () => {
     startTimeInput.value = ''
     endTimeInput.value   = ''
   }
+}
+
+// Auto-format text time input as HH:MM (24h)
+const onTimeInput = (e: Event, field: 'start' | 'end') => {
+  const el = e.target as HTMLInputElement
+  let v = el.value.replace(/\D/g, '').slice(0, 4)
+  if (v.length >= 3) v = v.slice(0, 2) + ':' + v.slice(2)
+  // clamp hours 0-23 and minutes 0-59
+  if (v.length >= 2) {
+    const h = Math.min(23, parseInt(v.slice(0, 2), 10))
+    v = String(h).padStart(2, '0') + v.slice(2)
+  }
+  if (v.length === 5) {
+    const m = Math.min(59, parseInt(v.slice(3, 5), 10))
+    v = v.slice(0, 3) + String(m).padStart(2, '0')
+  }
+  if (field === 'start') startTimeInput.value = v
+  else endTimeInput.value = v
+  el.value = v
 }
 
 // Combine date + time input into a full Date for ISO output
