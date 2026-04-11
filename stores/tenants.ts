@@ -82,7 +82,7 @@ export const useTenantsStore = defineStore('tenants', () => {
     key: () => ['tenant', 'business-profile', selectedTenant.value?.slug],
     query: () => $fetch<{ success: boolean; data: TenantBusinessProfile }>(
       '/api/api/tenant/public-profile'
-    ).then(r => r.data ?? null),
+    ).then(r => r?.data ?? null),
     enabled: () => !!selectedTenant.value,
   })
 
