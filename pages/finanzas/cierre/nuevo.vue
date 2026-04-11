@@ -214,7 +214,7 @@
           <ClientOnly>
             <VueDatePicker
               v-model="selectedDate"
-              :enable-time-picker="false" :locale="es"
+              :time-config="{ enableTimePicker: false }" :locale="es"
               auto-apply :teleport="true" :max-date="new Date()" :format="formatSingleDate"
               placeholder="Seleccionar fecha..."
               input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
