@@ -66,10 +66,14 @@ const syncError = ref('')
 const showSuccessModal = ref(false)
 const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string } | null>(null)
 const wasMesaMode = ref(false)
+const receiptEmail = ref('')
+const emailSent = ref(false)
+const isSendingEmail = ref(false)
+const cartItemsSnapshot = ref<any[]>([])
 
 // Customer identification via modal
 const showCustomerModal = ref(false)
-const selectedCustomer = ref<{ id: string; name: string | null; phone_number: string | null } | null>(null)
+const selectedCustomer = ref<{ id: string; name: string | null; phone_number: string | null; email: string | null } | null>(null)
 
 // Customer insights
 const customerInsights = ref<CustomerInsights | null>(null)
@@ -202,6 +206,10 @@ const processOrder = async () => {
         payment_method: selectedPaymentMethod.value
       }
       wasMesaMode.value = true
+      cartItemsSnapshot.value = [...cartItems.value]
+      const customerEmail = selectedCustomer.value?.email ?? ''
+      receiptEmail.value = customerEmail && !customerEmail.endsWith('@customer.temp') ? customerEmail : ''
+      emailSent.value = false
       posStore.clearAll()
       showSuccessModal.value = true
     } catch (error: any) {
@@ -227,6 +235,9 @@ const processOrder = async () => {
     isProcessing.value = true
     processingError.value = ''
 
+    const preEmail = selectedCustomer.value?.email ?? ''
+    const emailForReceipt = preEmail && !preEmail.endsWith('@customer.temp') ? preEmail : undefined
+
     const response = await $fetch(`/api/pos/cart/${posStore.cartId}/complete`, {
       method: 'POST',
       body: {
@@ -236,6 +247,7 @@ const processOrder = async () => {
         ...(selectedGroup.value?.triggersCartera && creditDueDate.value
           ? { credit_due_date: creditDueDate.value }
           : {}),
+        ...(emailForReceipt ? { receipt_email: emailForReceipt } : {}),
       }
     }) as {
       success: boolean
@@ -260,6 +272,9 @@ const processOrder = async () => {
         payment_method_name: subMethodName,
         customer_id: selectedCustomer.value?.id,
       }
+      cartItemsSnapshot.value = [...cartItems.value]
+      receiptEmail.value = emailForReceipt ?? ''
+      emailSent.value = !!emailForReceipt
       posStore.clearAll()
       showSuccessModal.value = true
     }
@@ -270,7 +285,7 @@ const processOrder = async () => {
   }
 }
 
-const onCustomerIdentified = (customer: { id: string; name: string | null; phone_number: string | null }) => {
+const onCustomerIdentified = (customer: { id: string; name: string | null; phone_number: string | null; email: string | null }) => {
   selectedCustomer.value = customer
   processingError.value = ''
 }
@@ -335,6 +350,32 @@ const closeSuccessModal = () => {
     router.push('/pos')
   } else {
     router.push('/pos')
+  }
+}
+
+const printReceipt = () => {
+  window.print()
+}
+
+const sendReceiptEmail = async () => {
+  if (!receiptEmail.value || !orderResult.value || isSendingEmail.value) return
+  isSendingEmail.value = true
+  try {
+    await $fetch(`/api/pos/cart/receipt-email`, {
+      method: 'POST',
+      body: {
+        email: receiptEmail.value,
+        order_number: orderResult.value.order_number,
+        total_amount: orderResult.value.total_amount,
+        payment_method: orderResult.value.payment_method,
+        items: cartItemsSnapshot.value,
+      }
+    })
+    emailSent.value = true
+  } catch {
+    // Silent failure — cashier can try again or skip
+  } finally {
+    isSendingEmail.value = false
   }
 }
 
@@ -1159,6 +1200,48 @@ onUnmounted(() => {
             </div>
           </div>
 
+          <!-- Receipt actions -->
+          <div class="mb-4 space-y-3">
+            <!-- Email receipt -->
+            <div class="flex flex-col gap-1.5">
+              <label for="receipt-email" class="text-sm font-medium text-text-primary">
+                Correo para el recibo <span class="text-text-tertiary text-xs">(opcional)</span>
+              </label>
+              <div class="flex gap-2">
+                <input
+                  id="receipt-email"
+                  v-model="receiptEmail"
+                  type="email"
+                  placeholder="cliente@email.com"
+                  :disabled="emailSent"
+                  class="flex-1 px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50"
+                />
+                <button
+                  @click="sendReceiptEmail"
+                  :disabled="!receiptEmail || emailSent || isSendingEmail"
+                  class="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         bg-surface border border-border text-text-primary hover:bg-surface-secondary"
+                >
+                  <span v-if="isSendingEmail">Enviando...</span>
+                  <span v-else-if="emailSent" class="text-green-600">✓ Enviado</span>
+                  <span v-else>Enviar</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Print -->
+            <button
+              @click="printReceipt"
+              class="w-full min-h-[44px] py-2 px-4 bg-surface border border-border text-text-primary text-sm font-medium rounded-lg hover:bg-surface-secondary active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.056 48.056 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z" />
+              </svg>
+              Imprimir comprobante
+            </button>
+          </div>
+
           <!-- Accept Button -->
           <button
             @click="closeSuccessModal"
@@ -1179,6 +1262,26 @@ onUnmounted(() => {
       :current-balance="warosBalance"
       @assigned="onWarosAssigned"
     />
+
+  <!-- Hidden receipt for printing — only visible via @media print -->
+  <div id="pos-receipt" aria-hidden="true">
+    <div class="receipt-header">WARO Colombia</div>
+    <div v-if="orderResult?.order_number > 0" class="receipt-row">
+      <span>Orden #{{ orderResult?.order_number }}</span>
+    </div>
+    <div class="receipt-divider">--------------------------------</div>
+    <div v-for="item in cartItemsSnapshot" :key="item.id" class="receipt-item">
+      <span>{{ item.quantity }}x {{ item.product?.name }}</span>
+      <span>{{ formatCurrency(item.subtotal) }}</span>
+    </div>
+    <div class="receipt-divider">--------------------------------</div>
+    <div class="receipt-total">
+      <span>TOTAL</span>
+      <span>{{ formatCurrency(orderResult?.total_amount ?? 0) }}</span>
+    </div>
+    <div class="receipt-row">{{ getPaymentMethodLabel(orderResult?.payment_method ?? '') }}</div>
+    <div class="receipt-footer">¡Gracias por tu compra!</div>
+  </div>
   </div>
 </template>
 
@@ -1186,5 +1289,45 @@ onUnmounted(() => {
 /* Ensure content doesn't get hidden behind fixed bottom bar */
 .pb-32 {
   padding-bottom: 8rem;
+}
+
+/* Receipt — hidden on screen, visible only when printing */
+#pos-receipt {
+  display: none;
+}
+
+/* Modifier/utility classes used by the receipt div */
+.receipt-header { font-size: 1.1em; font-weight: bold; text-align: center; margin-bottom: 4px; }
+.receipt-row { text-align: center; margin: 2px 0; }
+.receipt-divider { letter-spacing: 0; margin: 4px 0; }
+.receipt-item { display: flex; justify-content: space-between; margin: 2px 0; }
+.receipt-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; margin: 4px 0; }
+.receipt-footer { text-align: center; margin-top: 8px; }
+</style>
+
+<style>
+@media print {
+  /* Hide everything, then reveal only the receipt */
+  body * { visibility: hidden; }
+  #pos-receipt,
+  #pos-receipt * { visibility: visible; }
+
+  #pos-receipt {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 9pt;
+    width: 54mm;
+    color: #000;
+    background: #fff;
+    padding: 2mm;
+  }
+
+  @page {
+    size: 58mm auto;
+    margin: 2mm;
+  }
 }
 </style>

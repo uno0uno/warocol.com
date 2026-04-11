@@ -206,6 +206,21 @@
                 />
               </div>
 
+              <!-- Email -->
+              <div class="flex flex-col gap-1">
+                <label for="new-email" class="text-sm font-medium text-text-primary">
+                  Correo electrónico <span class="text-text-tertiary text-xs">(opcional)</span>
+                </label>
+                <input
+                  id="new-email"
+                  v-model="createForm.email"
+                  type="email"
+                  placeholder="juan@email.com"
+                  :disabled="isCreating"
+                  class="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
+                />
+              </div>
+
               <!-- Error -->
               <div v-if="createError" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3">
                 <svg class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -251,12 +266,14 @@ interface CustomerSummary {
   id: string
   name: string | null
   phone_number: string | null
+  email: string | null
 }
 
 interface SelectedCustomer {
   id: string
   name: string | null
   phone_number: string | null
+  email: string | null
 }
 
 interface Props {
@@ -283,7 +300,7 @@ const searchResults = ref<CustomerSummary[]>([])
 const isCreatingGeneric = ref(false)
 
 // Create form state
-const createForm = ref({ phone_number: '', name: '' })
+const createForm = ref({ phone_number: '', name: '', email: '' })
 const isCreating = ref(false)
 const createError = ref('')
 
@@ -328,7 +345,7 @@ watch(() => props.modelValue, (open) => {
     debouncedQuery.value = ''
     searchResults.value = []
     isSearching.value = false
-    createForm.value = { phone_number: '', name: '' }
+    createForm.value = { phone_number: '', name: '', email: '' }
     createError.value = ''
     isCreatingGeneric.value = false
     nextTick(() => searchInputRef.value?.focus())
@@ -349,7 +366,8 @@ const selectCustomer = (customer: CustomerSummary) => {
   emit('customer-identified', {
     id: String(customer.id),
     name: customer.name,
-    phone_number: customer.phone_number
+    phone_number: customer.phone_number,
+    email: customer.email
   })
   emit('update:modelValue', false)
 }
@@ -360,7 +378,7 @@ const selectGenericCustomer = async () => {
   try {
     const response = await $fetch<{
       success: boolean
-      data: { id: string; name: string | null; phone_number: string | null }
+      data: { id: string; name: string | null; phone_number: string | null; email: string | null }
     }>('/api/customers/search-or-create', {
       method: 'POST',
       body: { phone_number: '0000000000', name: 'Cliente sin datos' }
@@ -369,7 +387,8 @@ const selectGenericCustomer = async () => {
       emit('customer-identified', {
         id: response.data.id,
         name: response.data.name,
-        phone_number: response.data.phone_number
+        phone_number: response.data.phone_number,
+        email: response.data.email
       })
       emit('update:modelValue', false)
     }
@@ -389,19 +408,21 @@ const handleCreate = async () => {
   try {
     const response = await $fetch<{
       success: boolean
-      data: { id: string; name: string | null; phone_number: string | null }
+      data: { id: string; name: string | null; phone_number: string | null; email: string | null }
     }>('/api/customers/search-or-create', {
       method: 'POST',
       body: {
         phone_number: createForm.value.phone_number,
-        name: createForm.value.name || null
+        name: createForm.value.name || null,
+        email: createForm.value.email || null
       }
     })
     if (response.success) {
       emit('customer-identified', {
         id: response.data.id,
         name: response.data.name,
-        phone_number: response.data.phone_number
+        phone_number: response.data.phone_number,
+        email: response.data.email
       })
       emit('update:modelValue', false)
     }
