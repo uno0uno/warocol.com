@@ -371,17 +371,37 @@
         <h3 class="text-sm font-semibold text-text-primary mb-1">Otros métodos de pago</h3>
         <p class="text-xs text-text-secondary mb-3">Ingresa el monto contado para cada método:</p>
 
-        <div v-if="nonCashMethods.length > 0" class="bg-background rounded-lg border border-border divide-y divide-border mb-3">
+        <div v-if="nonCashMethods.length > 0" class="flex flex-col gap-2 mb-3">
           <div
             v-for="method in nonCashMethods"
             :key="method.key"
-            class="flex items-center justify-between px-4 py-3 gap-4"
+            class="bg-background rounded-lg border border-border overflow-hidden transition-colors"
+            :class="(parseInt(methodAmounts[method.key]) || 0) > 0 ? 'border-border' : ''"
           >
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-text-primary">{{ method.label }}</p>
-              <p class="text-xs text-text-secondary">{{ method.groupLabel }} · Esperado: {{ formatCurrency(method.total) }}</p>
+            <!-- Row header: dot + name + badge + expected -->
+            <div
+              class="flex items-center gap-3 px-3 py-2.5 transition-colors"
+              :class="(parseInt(methodAmounts[method.key]) || 0) > 0 ? 'bg-surface' : 'bg-background'"
+            >
+              <span
+                class="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                :class="GROUP_COLORS[method.groupSlug]?.dot ?? 'bg-primary'"
+              />
+              <div class="flex-1 min-w-0">
+                <span class="text-sm font-semibold text-text-primary capitalize">{{ method.label }}</span>
+                <span
+                  class="ml-2 text-xs font-medium px-1.5 py-0.5 rounded"
+                  :class="GROUP_COLORS[method.groupSlug]?.badge ?? 'bg-primary/10 text-primary'"
+                >{{ method.groupLabel }}</span>
+              </div>
+              <span class="text-xs text-text-secondary flex-shrink-0">
+                Esp. <span class="font-medium text-text-primary">{{ formatCurrency(method.total) }}</span>
+              </span>
             </div>
-            <div class="flex items-center gap-2 flex-shrink-0">
+
+            <!-- Input row -->
+            <div class="flex items-center gap-3 px-3 py-2 border-t border-border bg-surface/50">
+              <span class="text-xs text-text-secondary flex-shrink-0">Contado</span>
               <input
                 v-model="methodAmounts[method.key]"
                 type="text"
@@ -389,19 +409,29 @@
                 pattern="[0-9]*"
                 @input="methodAmounts[method.key] = sanitizeIntStr($event)"
                 placeholder="0"
-                class="w-28 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
+                class="w-32 px-3 py-1.5 rounded-md border text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                :class="(parseInt(methodAmounts[method.key]) || 0) > 0
+                  ? 'border-primary/50 bg-primary/5 font-semibold'
+                  : 'border-border bg-background'"
                 :aria-label="`Monto contado para ${method.label}`"
               />
-              <span
-                class="text-xs font-medium w-20 text-right"
-                :class="methodDiff(method) >= 0 ? 'text-emerald-600' : 'text-destructive'"
-              >
-                {{ methodDiff(method) >= 0 ? '+' : '' }}{{ formatCurrency(methodDiff(method)) }}
-              </span>
+              <!-- Diff — solo cuando se ingresó un valor -->
+              <div v-if="(parseInt(methodAmounts[method.key]) || 0) > 0" class="flex items-center gap-1.5 flex-shrink-0">
+                <span class="text-text-tertiary text-xs">=</span>
+                <span
+                  class="text-xs font-semibold px-2 py-0.5 rounded-full"
+                  :class="methodDiff(method) >= 0
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-destructive/10 text-destructive border border-destructive/20'"
+                >
+                  {{ methodDiff(method) >= 0 ? '+' : '' }}{{ formatCurrency(methodDiff(method)) }}
+                </span>
+              </div>
+              <span v-else class="text-xs text-text-tertiary italic flex-shrink-0">Sin ingresar</span>
             </div>
           </div>
         </div>
-        <div v-else class="text-sm text-text-secondary mb-3 py-4 text-center bg-background rounded-lg border border-border">
+        <div v-else class="text-sm text-text-secondary mb-3 py-6 text-center bg-background rounded-lg border border-border">
           No hay otros métodos de pago registrados para este período.
         </div>
 
@@ -608,6 +638,13 @@ const cashDiff = computed(() => totalCounted.value - (previewData.value?.cashExp
 // ── Breakdown groups (non-cash payment methods) ────────────────────────────
 const GROUP_LABELS: Record<string, string> = {
   cash: 'Efectivo', card: 'Tarjeta', digital: 'Digital', credit: 'Crédito',
+}
+
+const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
+  cash:    { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+  card:    { dot: 'bg-blue-500',    badge: 'bg-blue-50 text-blue-700 border border-blue-200'         },
+  digital: { dot: 'bg-violet-500',  badge: 'bg-violet-50 text-violet-700 border border-violet-200'   },
+  credit:  { dot: 'bg-amber-500',   badge: 'bg-amber-50 text-amber-700 border border-amber-200'      },
 }
 
 interface BreakdownRowRaw { group_slug: string; method_name: string; total: number }
