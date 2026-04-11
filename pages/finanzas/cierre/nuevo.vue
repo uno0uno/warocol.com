@@ -81,6 +81,7 @@
       <VueDatePicker
         v-model="dateRangeDates"
         range
+        :teleport="true"
         :preset-dates="dpPresets"
         :enable-time-picker="enableTimePicker"
         :locale="es"
