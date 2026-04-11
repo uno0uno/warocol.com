@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, inject, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, inject, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { $fetch } from 'ofetch'
 import { usePOSStore } from '~/stores/usePOSStore'
@@ -353,7 +353,8 @@ const closeSuccessModal = () => {
   }
 }
 
-const printReceipt = () => {
+const printReceipt = async () => {
+  await nextTick()
   window.print()
 }
 
@@ -1311,7 +1312,9 @@ onUnmounted(() => {
 .receipt-header { font-size: 1.1em; font-weight: bold; text-align: center; margin-bottom: 4px; }
 .receipt-row { text-align: center; margin: 2px 0; }
 .receipt-divider { letter-spacing: 0; margin: 4px 0; }
-.receipt-item { display: flex; justify-content: space-between; margin: 2px 0; }
+.receipt-item { display: flex; justify-content: space-between; margin: 2px 0; gap: 4px; }
+.receipt-item span:first-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.receipt-item span:last-child { white-space: nowrap; flex-shrink: 0; }
 .receipt-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; margin: 4px 0; }
 .receipt-footer { text-align: center; margin-top: 8px; }
 .receipt-small { font-size: 0.85em; }
@@ -1319,6 +1322,12 @@ onUnmounted(() => {
 
 <style>
 @media print {
+  /* Reset browser default margins */
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
   /* Hide everything, then reveal only the receipt */
   body * { visibility: hidden; }
   #pos-receipt,
@@ -1326,15 +1335,19 @@ onUnmounted(() => {
 
   #pos-receipt {
     display: block !important;
-    position: absolute;
-    top: 0;
-    left: 0;
     font-family: 'Courier New', Courier, monospace;
     font-size: 9pt;
+    line-height: 1.2;
+    letter-spacing: 0;
     width: 54mm;
     color: #000;
     background: #fff;
     padding: 2mm;
+  }
+
+  /* Prevent item rows from splitting across pages */
+  .receipt-item {
+    page-break-inside: avoid;
   }
 
   @page {
