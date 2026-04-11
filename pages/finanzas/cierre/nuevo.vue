@@ -127,7 +127,7 @@
 
       <!-- Inputs de hora -->
       <template v-if="isMultiDay || enableTimePicker">
-        <div class="flex items-center gap-1.5 flex-shrink-0">
+        <div class="flex flex-col gap-0.5 flex-shrink-0">
           <label class="text-xs text-text-secondary whitespace-nowrap">Desde</label>
           <div class="relative">
             <input
@@ -152,7 +152,7 @@
             </ul>
           </div>
         </div>
-        <div class="flex items-center gap-1.5 flex-shrink-0">
+        <div class="flex flex-col gap-0.5 flex-shrink-0">
           <label class="text-xs text-text-secondary whitespace-nowrap">Hasta</label>
           <div class="relative">
             <input
