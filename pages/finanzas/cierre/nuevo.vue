@@ -65,7 +65,7 @@
     </div>
 
     <!-- ── Filter bar (una sola línea) ──────────────────────────────────── -->
-    <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
+    <div class="flex items-end gap-2 w-full overflow-x-auto scrollbar-hide">
       <!-- Presets -->
       <button
         v-for="p in presets"
@@ -109,7 +109,7 @@
       </div>
 
       <!-- Separador -->
-      <div class="h-6 w-px bg-border flex-shrink-0" />
+      <div class="h-10 w-px bg-border flex-shrink-0 self-end" />
 
       <!-- Toggle horario (solo día único) -->
       <button
