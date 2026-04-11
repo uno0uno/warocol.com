@@ -225,63 +225,81 @@
         <h3 class="text-sm font-semibold text-text-primary mb-1">Conteo de caja</h3>
         <p class="text-xs text-text-secondary mb-3">Ingresa los billetes y monedas en caja:</p>
 
-        <!-- Efectivo -->
-        <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-2">Efectivo</p>
-        <div class="space-y-1.5 mb-3">
-          <div v-for="(denom, idx) in denominations" :key="denom" class="flex items-center gap-3">
-            <span class="text-sm text-text-secondary w-24 text-right flex-shrink-0">{{ formatCurrency(denom) }}</span>
-            <span class="text-text-tertiary">×</span>
-            <input
-              :ref="el => setDenomRef(el, idx)"
-              v-model="counts[denom]"
-              type="text"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              @input="counts[denom] = sanitizeInt($event)"
-              @keydown.enter.prevent="focusNext(idx)"
-              class="w-20 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
-              :aria-label="`Cantidad de billetes de ${formatCurrency(denom)}`"
-            />
-            <span class="text-text-tertiary">=</span>
-            <span class="text-sm font-medium text-text-primary w-28">{{ formatCurrency(denom * (parseInt(counts[denom]) || 0)) }}</span>
-          </div>
-          <!-- Monedas -->
-          <div class="flex items-center gap-3">
-            <span class="text-sm text-text-secondary w-24 text-right flex-shrink-0">Monedas</span>
-            <span class="text-transparent">×</span>
-            <input
-              v-model="monedasAmount"
-              type="text"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              @input="monedasAmount = sanitizeIntStr($event)"
-              placeholder="0"
-              class="w-20 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
-              aria-label="Monto total en monedas"
-            />
-            <span class="text-text-tertiary">=</span>
-            <span class="text-sm font-medium text-text-primary w-28">{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
-          </div>
-        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
 
-        <div class="border-t border-border pt-3 mb-3 space-y-2">
-          <div class="flex justify-between text-sm">
-            <span class="font-semibold text-text-primary">Total efectivo contado</span>
-            <span class="font-bold text-lg text-text-primary">{{ formatCurrency(totalCounted) }}</span>
-          </div>
-          <div class="p-3 rounded-lg border" :class="diffResultClass">
-            <div class="flex justify-between text-sm mb-1">
-              <span>Esperado en caja</span>
-              <span class="font-medium">{{ formatCurrency(previewData?.cashExpected) }}</span>
-            </div>
-            <div class="flex justify-between text-sm font-semibold">
-              <span>Diferencia efectivo</span>
-              <span>{{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}</span>
+          <!-- Izquierda: denominaciones -->
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-2">Efectivo</p>
+            <div class="space-y-1.5">
+              <div v-for="(denom, idx) in denominations" :key="denom" class="flex items-center gap-3">
+                <span class="text-sm text-text-secondary w-24 text-right flex-shrink-0">{{ formatCurrency(denom) }}</span>
+                <span class="text-text-tertiary">×</span>
+                <input
+                  :ref="el => setDenomRef(el, idx)"
+                  v-model="counts[denom]"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  @input="counts[denom] = sanitizeInt($event)"
+                  @keydown.enter.prevent="focusNext(idx)"
+                  class="w-20 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
+                  :aria-label="`Cantidad de billetes de ${formatCurrency(denom)}`"
+                />
+                <span class="text-text-tertiary">=</span>
+                <span class="text-sm font-medium text-text-primary w-28">{{ formatCurrency(denom * (parseInt(counts[denom]) || 0)) }}</span>
+              </div>
+              <!-- Monedas -->
+              <div class="flex items-center gap-3">
+                <span class="text-sm text-text-secondary w-24 text-right flex-shrink-0">Monedas</span>
+                <span class="text-transparent">×</span>
+                <input
+                  v-model="monedasAmount"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  @input="monedasAmount = sanitizeIntStr($event)"
+                  placeholder="0"
+                  class="w-20 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
+                  aria-label="Monto total en monedas"
+                />
+                <span class="text-text-tertiary">=</span>
+                <span class="text-sm font-medium text-text-primary w-28">{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
+              </div>
             </div>
           </div>
+
+          <!-- Derecha: resumen -->
+          <div class="flex flex-col gap-3">
+            <div class="bg-background rounded-lg border border-border divide-y divide-border">
+              <div v-for="denom in denominations" :key="denom" class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">{{ formatCurrency(denom) }} × {{ parseInt(counts[denom]) || 0 }}</span>
+                <span class="font-medium text-text-primary">{{ formatCurrency(denom * (parseInt(counts[denom]) || 0)) }}</span>
+              </div>
+              <div class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Monedas</span>
+                <span class="font-medium text-text-primary">{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
+              </div>
+              <div class="flex justify-between px-3 py-2.5 text-sm font-bold bg-background rounded-b-lg">
+                <span class="text-text-primary">Total contado</span>
+                <span class="text-text-primary">{{ formatCurrency(totalCounted) }}</span>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-lg border" :class="diffResultClass">
+              <div class="flex justify-between text-sm mb-1">
+                <span>Esperado en caja</span>
+                <span class="font-medium">{{ formatCurrency(previewData?.cashExpected) }}</span>
+              </div>
+              <div class="flex justify-between text-sm font-semibold">
+                <span>Diferencia</span>
+                <span>{{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}</span>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex gap-3 mt-4">
           <button @click="currentStep = 1" class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors">
             ← Atrás
           </button>
