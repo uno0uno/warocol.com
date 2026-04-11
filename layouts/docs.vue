@@ -18,6 +18,7 @@ import {
   BanknotesIcon,
   TruckIcon,
   MapPinIcon,
+  BuildingLibraryIcon,
 } from '@heroicons/vue/24/outline'
 
 const nav = [
@@ -27,6 +28,7 @@ const nav = [
   { label: 'Ventas',         path: '/docs/usuarios/ventas',                       icon: ShoppingCartIcon },
   { label: 'Compras',        path: '/docs/usuarios/compras',                      icon: TruckIcon },
   { label: 'Pagos',          path: '/docs/usuarios/pagos',                        icon: CreditCardIcon },
+  { label: 'Finanzas',       path: '/docs/usuarios/finanzas',                     icon: BuildingLibraryIcon },
   { label: 'Gastos',         path: '/docs/usuarios/gastos',                       icon: BanknotesIcon },
   { label: 'Inventario',     path: '/docs/usuarios/inventario',                   icon: ClipboardDocumentListIcon },
   { label: 'Domicilios',     path: '/docs/usuarios/domicilios',                   icon: MapPinIcon },
