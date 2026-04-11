@@ -1,8 +1,22 @@
 <template>
   <div class="page-layout">
 
+    <!-- ── Hint card: skeleton ──────────────────────────────────────────────── -->
+    <div v-if="ultimoLoading" class="bg-surface border border-border rounded-lg mb-3 overflow-hidden animate-pulse">
+      <div class="px-3 py-2 bg-background border-b border-border flex items-center justify-between">
+        <div class="h-3 w-36 rounded bg-border" />
+        <div class="h-3 w-24 rounded bg-border" />
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
+        <div v-for="i in 4" :key="i" class="px-3 py-2.5 flex flex-col gap-1.5">
+          <div class="h-2.5 w-16 rounded bg-border" />
+          <div class="h-4 w-24 rounded bg-border" />
+        </div>
+      </div>
+    </div>
+
     <!-- ── Hint card: último cierre ────────────────────────────────────────── -->
-    <div v-if="ultimoCierre" class="bg-surface border border-border rounded-lg mb-3 overflow-hidden">
+    <div v-else-if="ultimoCierre" class="bg-surface border border-border rounded-lg mb-3 overflow-hidden">
       <div class="px-3 py-2 bg-background border-b border-border flex items-center justify-between">
         <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Último cierre registrado</span>
         <span class="text-xs text-text-tertiary">{{ formatClosedAt(ultimoCierre.closedAt) }}</span>
@@ -158,13 +172,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Nuevo cierre - Warocol' })
 
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
 const today = new Date().toISOString().split('T')[0]
 
@@ -180,14 +195,20 @@ interface UltimoCierre {
   cashDifference: number
 }
 
-const { data: ultimoData } = useQuery({
+const { data: ultimoData, status: ultimoStatus, asyncStatus: ultimoAsyncStatus, refetch: refetchUltimo } = useQuery({
   key: () => ['cierre', 'ultimo', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: UltimoCierre | null }>('/api/cierre/ultimo'),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
 })
 
-const ultimoCierre = computed(() => ultimoData.value?.data ?? null)
+const ultimoCierre  = computed(() => ultimoData.value?.data ?? null)
+const ultimoLoading = computed(() => ultimoStatus.value === 'pending' && !ultimoData.value)
+const isRefreshing  = computed(() => ultimoAsyncStatus.value === 'loading' && !!ultimoData.value)
+
+registerProgressiveLoading(isRefreshing)
+onMounted(() => { setRefreshHandler(refetchUltimo) })
+onUnmounted(() => { clearRefreshHandler(refetchUltimo) })
 
 // Período sugerido: día siguiente al periodEnd del último cierre → hoy
 const suggestedRange = computed(() => {
