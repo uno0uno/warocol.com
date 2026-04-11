@@ -357,7 +357,7 @@ const formatDateRange = (dates: Date[]) => {
 
 const fmtDT = new Intl.DateTimeFormat('es-CO', {
   day: '2-digit', month: '2-digit', year: 'numeric',
-  hour: '2-digit', minute: '2-digit', hour12: true,
+  hour: '2-digit', minute: '2-digit', hour12: false,
   timeZone: 'America/Bogota',
 })
 const formatInputDisplay = (val: Date | Date[] | null): string => {
