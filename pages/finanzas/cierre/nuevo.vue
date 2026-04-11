@@ -133,6 +133,7 @@
           <label class="text-xs text-text-secondary whitespace-nowrap">Desde</label>
           <input
             type="time"
+            lang="en-GB"
             v-model="startTimeInput"
             class="h-8 px-2 text-sm rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
             :class="isMultiDay && !startTimeInput ? 'border-amber-400' : 'border-border'"
@@ -142,6 +143,7 @@
           <label class="text-xs text-text-secondary whitespace-nowrap">Hasta</label>
           <input
             type="time"
+            lang="en-GB"
             v-model="endTimeInput"
             class="h-8 px-2 text-sm rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
             :class="isMultiDay && !endTimeInput ? 'border-amber-400' : 'border-border'"
