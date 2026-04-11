@@ -123,15 +123,14 @@
 
         <!-- Desktop: dots compactos -->
         <div class="hidden sm:flex items-center">
-          <template v-for="(step, idx) in [
-            { n: 1, label: 'Cuentas' },
-            { n: 2, label: 'Efectivo' },
-            { n: 3, label: 'Otros métodos' },
-            { n: 4, label: 'Resumen' },
-            { n: 5, label: 'Cerrar' },
-          ]">
+          <div
+            v-for="(step, idx) in wizardSteps"
+            :key="step.n"
+            class="flex items-center"
+            :class="idx < wizardSteps.length - 1 ? 'flex-1' : ''"
+          >
             <!-- Dot + label -->
-            <div :key="step.n" class="flex flex-col items-center flex-shrink-0">
+            <div class="flex flex-col items-center flex-shrink-0">
               <div
                 class="w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-200"
                 :class="{
@@ -154,14 +153,13 @@
                     : 'text-text-secondary'"
               >{{ step.label }}</span>
             </div>
-            <!-- Conector -->
+            <!-- Conector (todos menos el último) -->
             <div
-              v-if="idx < 4"
-              :key="`line-${step.n}`"
+              v-if="idx < wizardSteps.length - 1"
               class="flex-1 h-px mx-2 mb-4 transition-colors duration-200"
               :class="currentStep > step.n ? 'bg-primary/30' : 'bg-border'"
             />
-          </template>
+          </div>
         </div>
 
       </div>
@@ -478,6 +476,14 @@ const periodEnd   = ref((route.query.end   as string) || today)
 const isPastPeriod = computed(() => periodEnd.value < today)
 
 // ── Wizard state ──────────────────────────────────────────────────────────
+const wizardSteps = [
+  { n: 1, label: 'Cuentas' },
+  { n: 2, label: 'Efectivo' },
+  { n: 3, label: 'Otros métodos' },
+  { n: 4, label: 'Resumen' },
+  { n: 5, label: 'Cerrar' },
+]
+
 const currentStep     = ref(1)
 const confirmArmed    = ref(false)
 const isSubmitting    = ref(false)
