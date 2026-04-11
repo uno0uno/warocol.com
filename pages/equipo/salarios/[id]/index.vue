@@ -63,6 +63,7 @@ const editForm = reactive({
   salaryType: 'smmlv',
   minimumWageMultiplier: 1,
   fixedAmount: 0,
+  hourlyRate: 0,
   notes: ''
 })
 
@@ -103,6 +104,7 @@ const toggleEditMode = () => {
     editForm.salaryType = employee.value.salary_type || 'smmlv'
     editForm.minimumWageMultiplier = employee.value.multiplier || 1
     editForm.fixedAmount = employee.value.fixed_amount || 0
+    editForm.hourlyRate = employee.value.hourly_rate || 0
     editForm.notes = employee.value.salary_notes || ''
   }
   isEditMode.value = !isEditMode.value
@@ -123,11 +125,16 @@ const saveChanges = async () => {
 
   try {
     // Build config object
-    const config = {
+    const config: Record<string, any> = {
       salary_type: editForm.salaryType,
-      minimum_wage_multiplier: editForm.salaryType === 'smmlv' ? editForm.minimumWageMultiplier : null,
-      fixed_amount: editForm.salaryType === 'fixed' ? editForm.fixedAmount : null,
       notes: editForm.notes
+    }
+    if (editForm.salaryType === 'smmlv') {
+      config.minimum_wage_multiplier = editForm.minimumWageMultiplier
+    } else if (editForm.salaryType === 'fixed') {
+      config.fixed_amount = editForm.fixedAmount
+    } else if (editForm.salaryType === 'hourly') {
+      config.hourly_rate = editForm.hourlyRate
     }
 
     // Send as JSON
@@ -502,7 +509,25 @@ watch(employeeData, (data) => {
                     v-model.number="editForm.fixedAmount"
                     required
                     step="1000"
-                    min="0"
+                    min="1"
+                    class="input-base w-full pl-8 pr-4 py-2"
+                  />
+                </div>
+              </div>
+
+              <!-- Hourly Rate (if hourly) -->
+              <div v-if="editForm.salaryType === 'hourly'">
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Valor por Hora *
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <input
+                    type="number"
+                    v-model.number="editForm.hourlyRate"
+                    required
+                    step="100"
+                    min="1"
                     class="input-base w-full pl-8 pr-4 py-2"
                   />
                 </div>
