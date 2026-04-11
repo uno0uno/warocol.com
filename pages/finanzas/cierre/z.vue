@@ -167,13 +167,13 @@
       <!-- ── Step content ─────────────────────────────────────────────────── -->
 
       <!-- Step 1: Cuentas abiertas -->
-      <div v-if="currentStep === 1" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Paso 1 — Cuentas abiertas</h3>
-        <div v-if="previewLoading" class="flex justify-center py-10">
+      <div v-if="currentStep === 1" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
+        <h3 class="text-sm font-semibold text-text-primary mb-3">Cuentas abiertas</h3>
+        <div v-if="previewLoading" class="flex justify-center py-6">
           <CommonsTheCustomLoader size="large" />
         </div>
         <template v-else-if="previewData">
-          <div v-if="previewData.openTablesCount === 0 || isPastPeriod" class="flex items-center gap-3 p-4 rounded-lg bg-emerald-50 border border-emerald-200 mb-6">
+          <div v-if="previewData.openTablesCount === 0 || isPastPeriod" class="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 border border-emerald-200 mb-3">
             <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -186,7 +186,7 @@
               </template>
             </span>
           </div>
-          <div v-else class="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 mb-6">
+          <div v-else class="flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200 mb-3">
             <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
@@ -221,13 +221,13 @@
       </div>
 
       <!-- Step 2: Conteo de caja -->
-      <div v-else-if="currentStep === 2" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">Paso 2 — Conteo de caja</h3>
-        <p class="text-xs text-text-secondary mb-5">Ingresa los montos contados para cada método de pago:</p>
+      <div v-else-if="currentStep === 2" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
+        <h3 class="text-sm font-semibold text-text-primary mb-1">Conteo de caja</h3>
+        <p class="text-xs text-text-secondary mb-3">Ingresa los billetes y monedas en caja:</p>
 
         <!-- Efectivo -->
-        <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-3">Efectivo — Contar billetes</p>
-        <div class="space-y-2 mb-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-2">Efectivo</p>
+        <div class="space-y-1.5 mb-3">
           <div v-for="(denom, idx) in denominations" :key="denom" class="flex items-center gap-3">
             <span class="text-sm text-text-secondary w-24 text-right flex-shrink-0">{{ formatCurrency(denom) }}</span>
             <span class="text-text-tertiary">×</span>
@@ -264,7 +264,7 @@
           </div>
         </div>
 
-        <div class="border-t border-border pt-4 mb-5 space-y-2">
+        <div class="border-t border-border pt-3 mb-3 space-y-2">
           <div class="flex justify-between text-sm">
             <span class="font-semibold text-text-primary">Total efectivo contado</span>
             <span class="font-bold text-lg text-text-primary">{{ formatCurrency(totalCounted) }}</span>
@@ -292,11 +292,11 @@
       </div>
 
       <!-- Step 3: Otros métodos -->
-      <div v-else-if="currentStep === 3" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">Paso 3 — Otros métodos de pago</h3>
-        <p class="text-xs text-text-secondary mb-5">Ingresa el monto contado para cada método:</p>
+      <div v-else-if="currentStep === 3" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
+        <h3 class="text-sm font-semibold text-text-primary mb-1">Otros métodos de pago</h3>
+        <p class="text-xs text-text-secondary mb-3">Ingresa el monto contado para cada método:</p>
 
-        <div v-if="nonCashMethods.length > 0" class="bg-background rounded-lg border border-border divide-y divide-border mb-5">
+        <div v-if="nonCashMethods.length > 0" class="bg-background rounded-lg border border-border divide-y divide-border mb-3">
           <div
             v-for="method in nonCashMethods"
             :key="method.key"
@@ -326,7 +326,7 @@
             </div>
           </div>
         </div>
-        <div v-else class="text-sm text-text-secondary mb-5 py-4 text-center bg-background rounded-lg border border-border">
+        <div v-else class="text-sm text-text-secondary mb-3 py-4 text-center bg-background rounded-lg border border-border">
           No hay otros métodos de pago registrados para este período.
         </div>
 
@@ -341,10 +341,10 @@
       </div>
 
       <!-- Step 4: Resumen -->
-      <div v-else-if="currentStep === 4" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Paso 4 — Resumen del día</h3>
+      <div v-else-if="currentStep === 4" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
+        <h3 class="text-sm font-semibold text-text-primary mb-2">Resumen del día</h3>
 
-        <div class="bg-background rounded-lg border border-border divide-y divide-border mb-4">
+        <div class="bg-background rounded-lg border border-border divide-y divide-border mb-3">
           <div class="flex justify-between px-4 py-2.5 text-sm">
             <span class="text-text-secondary">Período</span>
             <span class="font-medium">{{ formatPeriod(periodStart, periodEnd) }}</span>
@@ -387,10 +387,10 @@
           v-model="notes"
           placeholder="Notas (opcional)"
           rows="2"
-          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary resize-none mb-4"
+          class="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary resize-none mb-2"
         />
 
-        <div class="flex flex-wrap gap-2 mb-5 text-xs">
+        <div class="flex flex-wrap gap-2 mb-3 text-xs">
           <NuxtLink to="/ventas/ordenes" target="_blank" class="text-primary hover:underline">→ Lista de ventas</NuxtLink>
           <NuxtLink to="/finanzas/gastos" target="_blank" class="text-primary hover:underline">→ Gastos del día</NuxtLink>
           <NuxtLink to="/analitica" target="_blank" class="text-primary hover:underline">→ Analítica</NuxtLink>
@@ -407,14 +407,14 @@
       </div>
 
       <!-- Step 5: Confirmar -->
-      <div v-else-if="currentStep === 5" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6">
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-2">Paso 5 — Cerrar el día</h3>
-        <p class="text-sm text-text-secondary mb-5">
+      <div v-else-if="currentStep === 5" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
+        <h3 class="text-sm font-semibold text-text-primary mb-1">Cerrar el día</h3>
+        <p class="text-xs text-text-secondary mb-3">
           ¿Cerrar el día <strong>{{ formatPeriod(periodStart, periodEnd) }}</strong>?<br />
           <span class="text-xs text-text-tertiary">Esta acción no se puede deshacer.</span>
         </p>
 
-        <div class="bg-background rounded-lg border border-border divide-y divide-border mb-6">
+        <div class="bg-background rounded-lg border border-border divide-y divide-border mb-3">
           <div class="flex justify-between px-4 py-2.5 text-sm">
             <span class="text-text-secondary">Total ventas</span>
             <span class="font-medium">{{ formatCurrency(previewData?.totalSales ?? 0) }}</span>
