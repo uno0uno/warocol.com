@@ -211,13 +211,16 @@
             :class="activePreset === p.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
             @click="applyPreset(p)"
           >{{ p.label }}</button>
-          <VueDatePicker
-            v-model="selectedDate"
-            :enable-time-picker="false" :locale="es"
-            auto-apply :max-date="new Date()" :format="formatSingleDate"
-            input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
-            @update:model-value="activePreset = null"
-          />
+          <ClientOnly>
+            <VueDatePicker
+              v-model="selectedDate"
+              :enable-time-picker="false" :locale="es"
+              auto-apply :teleport="true" :max-date="new Date()" :format="formatSingleDate"
+              placeholder="Seleccionar fecha..."
+              input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
+              @update:model-value="activePreset = null"
+            />
+          </ClientOnly>
         </div>
 
         <!-- X preview -->
