@@ -64,8 +64,9 @@
       </div>
     </div>
 
-    <!-- ── Filter bar ───────────────────────────────────────────────────── -->
-    <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-2">
+    <!-- ── Filter bar (una sola línea) ──────────────────────────────────── -->
+    <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-4">
+      <!-- Presets -->
       <button
         v-for="p in presets"
         :key="p.key"
@@ -78,6 +79,7 @@
         {{ p.label }}
       </button>
 
+      <!-- Date picker -->
       <VueDatePicker
         v-model="dateRangeDates"
         range
@@ -94,42 +96,38 @@
         <template #trigger>
           <button
             type="button"
-            class="dp-custom-input flex items-center gap-2 h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary hover:border-primary/50 transition-colors"
+            class="dp-custom-input flex items-center gap-2 h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary hover:border-primary/50 transition-colors flex-shrink-0"
           >
             <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span class="text-text-primary">{{ dpDisplayText }}</span>
+            <span>{{ dpDisplayText }}</span>
           </button>
         </template>
       </VueDatePicker>
-    </div>
 
-    <!-- ── Horario exacto ─────────────────────────────────────────────────── -->
-    <div class="mb-4">
-      <!-- Multi-day: obligatorio, no se puede ocultar -->
-      <div v-if="isMultiDay" class="flex items-center gap-1.5 text-xs text-amber-600 font-medium mb-2">
-        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Período de varios días — debes especificar hora de inicio y fin
-      </div>
+      <!-- Separador -->
+      <div class="h-6 w-px bg-border flex-shrink-0" />
 
-      <!-- Single-day: opcional, toggle para activar -->
+      <!-- Toggle horario (solo día único) -->
       <button
-        v-else
+        v-if="!isMultiDay"
         @click="toggleTimePicker"
-        class="flex items-center gap-1.5 text-xs transition-colors"
-        :class="enableTimePicker ? 'text-primary font-medium' : 'text-text-secondary hover:text-primary'"
+        class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0 flex items-center gap-1.5"
+        :class="enableTimePicker
+          ? 'border-primary bg-primary/10 text-primary'
+          : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
+        :title="enableTimePicker ? 'Quitar horario exacto' : 'Especificar horario exacto'"
       >
-        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        {{ enableTimePicker ? 'Quitar horario exacto' : 'Especificar horario exacto' }}
+        Horario
       </button>
 
-      <div v-if="isMultiDay || enableTimePicker" class="mt-2 flex items-center gap-3 flex-wrap">
-        <div class="flex items-center gap-1.5">
+      <!-- Inputs de hora -->
+      <template v-if="isMultiDay || enableTimePicker">
+        <div class="flex items-center gap-1.5 flex-shrink-0">
           <label class="text-xs text-text-secondary whitespace-nowrap">Desde</label>
           <div class="relative">
             <input
@@ -141,7 +139,7 @@
               @input="onTimeInput($event, 'start')"
               @focus="showDrop.start = true"
               @blur="hideDrop('start')"
-              class="h-8 w-20 px-2 text-sm font-mono rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
+              class="h-10 w-20 px-2 text-sm font-mono rounded-lg border-2 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
               :class="isMultiDay && !startTimeInput ? 'border-amber-400' : 'border-border'"
             />
             <ul v-if="showDrop.start && filteredTimes(startTimeInput).length"
@@ -154,7 +152,7 @@
             </ul>
           </div>
         </div>
-        <div class="flex items-center gap-1.5">
+        <div class="flex items-center gap-1.5 flex-shrink-0">
           <label class="text-xs text-text-secondary whitespace-nowrap">Hasta</label>
           <div class="relative">
             <input
@@ -166,7 +164,7 @@
               @input="onTimeInput($event, 'end')"
               @focus="showDrop.end = true"
               @blur="hideDrop('end')"
-              class="h-8 w-20 px-2 text-sm font-mono rounded-lg border bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
+              class="h-10 w-20 px-2 text-sm font-mono rounded-lg border-2 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
               :class="isMultiDay && !endTimeInput ? 'border-amber-400' : 'border-border'"
             />
             <ul v-if="showDrop.end && filteredTimes(endTimeInput).length"
@@ -179,12 +177,12 @@
             </ul>
           </div>
         </div>
-        <span v-if="shiftLabel" class="text-xs text-text-secondary">{{ shiftLabel }}</span>
-      </div>
-
-      <!-- Error de validación -->
-      <p v-if="timeError" class="mt-1.5 text-xs text-destructive">{{ timeError }}</p>
+        <span v-if="shiftLabel" class="text-xs text-text-secondary whitespace-nowrap flex-shrink-0">{{ shiftLabel }}</span>
+      </template>
     </div>
+
+    <!-- Error de validación -->
+    <p v-if="timeError" class="-mt-2 mb-3 text-xs text-destructive">{{ timeError }}</p>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 
