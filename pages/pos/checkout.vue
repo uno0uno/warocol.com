@@ -302,6 +302,11 @@ const getPaymentMethodLabel = (method: string) => {
   return posPaymentGroups.value.find(g => g.slug === method)?.name ?? method
 }
 
+// True when the selected group has sub-methods but none is chosen yet
+const requiresMethodSelection = computed(() =>
+  (selectedGroup.value?.methods?.length ?? 0) > 0 && !selectedPaymentMethodId.value
+)
+
 // Dynamic grid class based on group count (excluding hidden cartera groups)
 const paymentGridClass = computed(() => {
   const visibleCount = posPaymentGroups.value.filter(
@@ -618,7 +623,7 @@ onUnmounted(() => {
 
           <!-- Sub-method selector — shown when selected group has subtypes (e.g. Nequi, Daviplata) -->
           <div v-if="selectedGroup?.methods?.length" class="mt-3">
-            <p class="text-xs font-medium text-text-secondary mb-2 flex items-center gap-1.5">
+            <p class="text-xs font-semibold mb-2 flex items-center gap-1.5" :class="requiresMethodSelection ? 'text-destructive' : 'text-text-secondary'">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
@@ -912,7 +917,7 @@ onUnmounted(() => {
         <div class="flex flex-col gap-2">
           <button
             @click="processOrder"
-            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate"
+            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection"
             class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UiLoadingDots v-if="isProcessing" size="9px" />
@@ -1078,7 +1083,7 @@ onUnmounted(() => {
       <div class="flex flex-col gap-2">
         <button
           @click="processOrder"
-          :disabled="isProcessing || !selectedCustomer || isLoadingEstimate"
+          :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection"
           class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingDots v-if="isProcessing" size="9px" />
