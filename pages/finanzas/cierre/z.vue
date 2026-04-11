@@ -225,15 +225,25 @@
         <h3 class="text-sm font-semibold text-text-primary mb-1">Conteo de caja</h3>
         <p class="text-xs text-text-secondary mb-3">Ingresa los billetes y monedas en caja:</p>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
 
           <!-- Izquierda: denominaciones -->
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-2">Efectivo</p>
-            <div class="space-y-1.5">
-              <div v-for="(denom, idx) in denominations" :key="denom" class="flex items-center gap-3">
-                <span class="text-sm text-text-secondary w-24 text-right flex-shrink-0">{{ formatCurrency(denom) }}</span>
-                <span class="text-text-tertiary">×</span>
+          <div class="bg-background rounded-lg border border-border overflow-hidden">
+            <div class="px-3 py-2 bg-surface border-b border-border">
+              <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Billetes y monedas</span>
+            </div>
+            <div class="divide-y divide-border">
+              <div
+                v-for="(denom, idx) in denominations"
+                :key="denom"
+                class="flex items-center gap-2 px-3 py-2 transition-colors"
+                :class="(parseInt(counts[denom]) || 0) > 0 ? 'bg-primary/5' : ''"
+              >
+                <span
+                  class="text-sm w-24 text-right flex-shrink-0 transition-colors"
+                  :class="(parseInt(counts[denom]) || 0) > 0 ? 'font-semibold text-text-primary' : 'text-text-secondary'"
+                >{{ formatCurrency(denom) }}</span>
+                <span class="text-text-tertiary text-xs flex-shrink-0">×</span>
                 <input
                   :ref="el => setDenomRef(el, idx)"
                   v-model="counts[denom]"
@@ -242,16 +252,28 @@
                   pattern="[0-9]*"
                   @input="counts[denom] = sanitizeInt($event)"
                   @keydown.enter.prevent="focusNext(idx)"
-                  class="w-20 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
+                  class="w-14 px-2 py-1 rounded-md border text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                  :class="(parseInt(counts[denom]) || 0) > 0
+                    ? 'border-primary/50 bg-primary/5 font-semibold'
+                    : 'border-border bg-surface'"
                   :aria-label="`Cantidad de billetes de ${formatCurrency(denom)}`"
                 />
-                <span class="text-text-tertiary">=</span>
-                <span class="text-sm font-medium text-text-primary w-28">{{ formatCurrency(denom * (parseInt(counts[denom]) || 0)) }}</span>
+                <span class="text-text-tertiary text-xs flex-shrink-0">=</span>
+                <span
+                  class="text-sm flex-1 text-right transition-colors"
+                  :class="(parseInt(counts[denom]) || 0) > 0 ? 'font-semibold text-text-primary' : 'text-text-tertiary'"
+                >{{ formatCurrency(denom * (parseInt(counts[denom]) || 0)) }}</span>
               </div>
               <!-- Monedas -->
-              <div class="flex items-center gap-3">
-                <span class="text-sm text-text-secondary w-24 text-right flex-shrink-0">Monedas</span>
-                <span class="text-transparent">×</span>
+              <div
+                class="flex items-center gap-2 px-3 py-2 transition-colors"
+                :class="(parseInt(monedasAmount) || 0) > 0 ? 'bg-primary/5' : ''"
+              >
+                <span
+                  class="text-sm w-24 text-right flex-shrink-0 transition-colors"
+                  :class="(parseInt(monedasAmount) || 0) > 0 ? 'font-semibold text-text-primary' : 'text-text-secondary'"
+                >Monedas</span>
+                <span class="text-transparent text-xs flex-shrink-0">×</span>
                 <input
                   v-model="monedasAmount"
                   type="text"
@@ -259,44 +281,79 @@
                   pattern="[0-9]*"
                   @input="monedasAmount = sanitizeIntStr($event)"
                   placeholder="0"
-                  class="w-20 px-3 py-1.5 rounded-lg border border-border bg-background text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
+                  class="w-14 px-2 py-1 rounded-md border text-text-primary text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                  :class="(parseInt(monedasAmount) || 0) > 0
+                    ? 'border-primary/50 bg-primary/5 font-semibold'
+                    : 'border-border bg-surface'"
                   aria-label="Monto total en monedas"
                 />
-                <span class="text-text-tertiary">=</span>
-                <span class="text-sm font-medium text-text-primary w-28">{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
+                <span class="text-text-tertiary text-xs flex-shrink-0">=</span>
+                <span
+                  class="text-sm flex-1 text-right transition-colors"
+                  :class="(parseInt(monedasAmount) || 0) > 0 ? 'font-semibold text-text-primary' : 'text-text-tertiary'"
+                >{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
               </div>
             </div>
           </div>
 
           <!-- Derecha: resumen -->
           <div class="flex flex-col gap-3">
-            <div class="bg-background rounded-lg border border-border divide-y divide-border">
-              <div v-for="denom in denominations" :key="denom" class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">{{ formatCurrency(denom) }} × {{ parseInt(counts[denom]) || 0 }}</span>
-                <span class="font-medium text-text-primary">{{ formatCurrency(denom * (parseInt(counts[denom]) || 0)) }}</span>
+
+            <!-- Desglose + total elevado -->
+            <div class="bg-background rounded-lg border border-border overflow-hidden">
+              <div class="px-3 py-2 bg-surface border-b border-border">
+                <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Desglose</span>
               </div>
-              <div class="flex justify-between px-3 py-2 text-xs">
-                <span class="text-text-secondary">Monedas</span>
-                <span class="font-medium text-text-primary">{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
+              <div class="divide-y divide-border">
+                <div v-for="denom in denominations" :key="denom" class="flex justify-between px-3 py-1.5">
+                  <span
+                    class="text-xs"
+                    :class="(parseInt(counts[denom]) || 0) > 0 ? 'font-medium text-text-primary' : 'text-text-tertiary'"
+                  >{{ formatCurrency(denom) }} × {{ parseInt(counts[denom]) || 0 }}</span>
+                  <span
+                    class="text-xs"
+                    :class="(parseInt(counts[denom]) || 0) > 0 ? 'font-semibold text-text-primary' : 'text-text-tertiary'"
+                  >{{ formatCurrency(denom * (parseInt(counts[denom]) || 0)) }}</span>
+                </div>
+                <div class="flex justify-between px-3 py-1.5">
+                  <span
+                    class="text-xs"
+                    :class="(parseInt(monedasAmount) || 0) > 0 ? 'font-medium text-text-primary' : 'text-text-tertiary'"
+                  >Monedas</span>
+                  <span
+                    class="text-xs"
+                    :class="(parseInt(monedasAmount) || 0) > 0 ? 'font-semibold text-text-primary' : 'text-text-tertiary'"
+                  >{{ formatCurrency(parseInt(monedasAmount) || 0) }}</span>
+                </div>
               </div>
-              <div class="flex justify-between px-3 py-2.5 text-sm font-bold bg-background rounded-b-lg">
-                <span class="text-text-primary">Total contado</span>
-                <span class="text-text-primary">{{ formatCurrency(totalCounted) }}</span>
+              <!-- Total row — accent strip -->
+              <div class="px-3 py-2.5 bg-primary/10 border-t-2 border-primary/20 flex items-center justify-between">
+                <span class="text-sm font-semibold text-primary">Total contado</span>
+                <span class="text-base font-bold text-primary">{{ formatCurrency(totalCounted) }}</span>
               </div>
             </div>
 
-            <div class="p-3 rounded-lg border" :class="diffResultClass">
-              <div class="flex justify-between text-sm mb-1">
+            <!-- Diferencia — card con icono y monto grande -->
+            <div class="rounded-lg border-2 overflow-hidden" :class="diffResultClass">
+              <div class="px-3 py-2.5 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <svg v-if="cashDiff >= 0" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <svg v-else class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span class="text-sm font-semibold">Diferencia</span>
+                </div>
+                <span class="text-lg font-bold">{{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}</span>
+              </div>
+              <div class="px-3 py-2 border-t border-black/10 flex justify-between text-xs opacity-80">
                 <span>Esperado en caja</span>
                 <span class="font-medium">{{ formatCurrency(previewData?.cashExpected) }}</span>
               </div>
-              <div class="flex justify-between text-sm font-semibold">
-                <span>Diferencia</span>
-                <span>{{ cashDiff >= 0 ? '+' : '' }}{{ formatCurrency(cashDiff) }}</span>
-              </div>
             </div>
-          </div>
 
+          </div>
         </div>
 
         <div class="flex gap-3 mt-4">
