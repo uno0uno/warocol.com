@@ -22,11 +22,10 @@
     <!-- Main Content -->
     <div v-else-if="purchase" class="space-y-4 sm:space-y-6">
       <!-- Header Cards -->
-      <PurchasesPurchaseOrderHeader>
+      <PurchasesPurchaseOrderHeader :columns="4">
         <!-- Purchase Number with Date -->
         <PurchasesPurchaseInfoCard
           :label="formatDate(purchase.purchase_date)"
-          :subtitle="purchase.payment_method ? `Pago: ${resolvePaymentLabel(purchase.payment_method, purchase.payment_method_id)}` : undefined"
           icon-path="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
         >
           <div class="flex items-center gap-2">
@@ -61,6 +60,16 @@
             format="text"
             :class="isEditMode ? 'bg-yellow-100 text-yellow-800 border-0' : ['border-0', getStatusClass(purchase.status)]"
           />
+        </PurchasesPurchaseInfoCard>
+
+        <!-- Payment Method -->
+        <PurchasesPurchaseInfoCard
+          label="Método de Pago"
+          icon-path="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+        >
+          <p class="text-lg font-semibold text-text-primary">
+            {{ purchase.payment_method ? resolvePaymentLabel(purchase.payment_method, purchase.payment_method_id) : '—' }}
+          </p>
         </PurchasesPurchaseInfoCard>
       </PurchasesPurchaseOrderHeader>
 
