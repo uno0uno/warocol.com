@@ -213,9 +213,7 @@
                   required
                   class="input-base w-full px-4 py-2"
                 >
-                  <option value="cash">Efectivo</option>
-                  <option value="transfer">Transferencia</option>
-                  <option value="card">Tarjeta</option>
+                  <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
                 </select>
               </div>
 
@@ -475,6 +473,9 @@
 </template>
 
 <script setup lang="ts">
+import { usePaymentMethods } from '~/composables/usePaymentMethods'
+import { computed } from 'vue'
+
 definePageMeta({
   layout: 'dashboard'
 })
@@ -482,6 +483,10 @@ definePageMeta({
 useHead({ title: 'Registrar Gasto' })
 
 const { currentTenant } = useTenantReactive()
+
+// Payment methods
+const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
+fetchPaymentMethods()
 
 // Wizard state
 const currentStep = ref(1)

@@ -441,10 +441,7 @@
                       class="input-base w-full px-4 py-2"
                     >
                       <option value="">Sin pago aun</option>
-                      <option value="transfer">Transferencia</option>
-                      <option value="cash">Efectivo</option>
-                      <option value="check">Cheque</option>
-                      <option value="credit_card">Tarjeta de Credito</option>
+                      <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
                     </select>
                   </div>
 
@@ -677,7 +674,7 @@
               </div>
               <div v-if="form.payment_method || form.payment_files.length">
                 <p class="text-sm text-text-secondary">Pago:</p>
-                <p v-if="form.payment_method" class="font-medium text-text-primary">{{ getPaymentMethodText(form.payment_method) }}</p>
+                <p v-if="form.payment_method" class="font-medium text-text-primary">{{ resolvePaymentLabel(form.payment_method) }}</p>
                 <p v-if="form.payment_reference" class="text-xs text-text-secondary">Ref: {{ form.payment_reference }}</p>
                 <p v-if="existingPaymentAttachments.length" class="text-xs text-success mt-1">{{ existingPaymentAttachments.length }} comprobante(s) existente(s)</p>
                 <p v-if="form.payment_files.length" class="text-xs text-primary mt-1">+ {{ form.payment_files.length }} comprobante(s) nuevo(s)</p>
@@ -755,10 +752,13 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { TrashIcon, DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
+import { usePaymentMethods } from '~/composables/usePaymentMethods'
+import { usePaymentLabel } from '~/composables/usePaymentLabel'
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
 
@@ -798,6 +798,11 @@ const form = ref({
 })
 
 // Fetch existing purchase
+// Payment methods
+const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
+const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(computed(() => [...paymentGroups.value]))
+fetchPaymentMethods()
+
 const { data: purchaseResponse, pending: loadingPurchase, error: fetchError } = useFetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
   server: false
 })
@@ -920,15 +925,7 @@ const getStatusText = (status: string) => {
   return statusMap[status] || status
 }
 
-const getPaymentMethodText = (method: string) => {
-  const methods: Record<string, string> = {
-    'transfer': 'Transferencia',
-    'cash': 'Efectivo',
-    'check': 'Cheque',
-    'credit_card': 'Tarjeta de Credito'
-  }
-  return methods[method] || method
-}
+
 
 const getPurchaseUnitOptions = (ingredientId: string) => {
   if (!ingredientId) return []

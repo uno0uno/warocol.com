@@ -3,6 +3,7 @@ import { ref, computed, inject, watch, onMounted, onUnmounted, nextTick } from '
 import { storeToRefs } from 'pinia'
 import { $fetch } from 'ofetch'
 import { usePOSStore } from '~/stores/usePOSStore'
+import { PAYMENT_DEFAULTS, type PosPaymentGroup, type PosPaymentMethod } from '~/utils/paymentDefaults'
 
 interface TopProduct {
   name: string
@@ -30,26 +31,6 @@ const { currentTenant, businessProfile } = useTenantReactive()
 
 // Inject subtitle setter from layout
 const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle', () => {})
-
-// Payment method types
-interface PosPaymentMethod {
-  id: string
-  name: string
-}
-interface PosPaymentGroup {
-  id: string
-  slug: string
-  name: string
-  triggersCartera: boolean
-  methods: PosPaymentMethod[]
-}
-
-const PAYMENT_DEFAULTS: PosPaymentGroup[] = [
-  { id: 'cash',    slug: 'cash',    name: 'Efectivo', triggersCartera: false, methods: [] },
-  { id: 'card',    slug: 'card',    name: 'Datáfono', triggersCartera: false, methods: [] },
-  { id: 'digital', slug: 'digital', name: 'QR',       triggersCartera: false, methods: [] },
-  { id: 'credit',  slug: 'credit',  name: 'Crédito',  triggersCartera: true,  methods: [] },
-]
 
 // State
 const selectedPaymentMethod = ref<string>('cash')

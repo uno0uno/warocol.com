@@ -212,6 +212,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed, reactive, ref } from 'vue'
 const route = useRoute()
 const toast = useToast()
 const employeeId = route.params.id
@@ -219,40 +220,24 @@ const employeeId = route.params.id
 useHead({ title: 'Registrar Pago - Equipo' })
 
 // Payment methods
-import { 
-  CreditCardIcon, 
-  BanknotesIcon, 
-  TicketIcon, 
-  CurrencyDollarIcon 
-} from '@heroicons/vue/24/outline'
+import { usePaymentMethods } from '~/composables/usePaymentMethods'
+import { SLUG_ICON_MAP, SLUG_ICON_FALLBACK } from '~/utils/paymentDefaults'
 
-const paymentMethods = [
-  {
-    value: 'transfer',
-    label: 'Transferencia',
-    icon: CreditCardIcon
-  },
-  {
-    value: 'cash',
-    label: 'Efectivo',
-    icon: BanknotesIcon
-  },
-  {
-    value: 'check',
-    label: 'Cheque',
-    icon: TicketIcon
-  },
-  {
-    value: 'other',
-    label: 'Otro',
-    icon: CurrencyDollarIcon
-  }
-]
+const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
+fetchPaymentMethods()
+
+const paymentMethods = computed(() =>
+  paymentGroups.value.map(g => ({
+    value: g.slug,
+    label: g.name,
+    icon: SLUG_ICON_MAP[g.slug] ?? SLUG_ICON_FALLBACK,
+  }))
+)
 
 // Form state
 const form = reactive({
   payment_amount: null,
-  payment_method: 'transfer',
+  payment_method: 'cash',
   payment_reference: '',
   payment_date: new Date().toISOString().split('T')[0],
   period_month: new Date().toISOString().slice(0, 7),
@@ -291,7 +276,7 @@ const employee = computed(() => employeeData.value || {
 
 // Selected method label
 const selectedMethodLabel = computed(() => {
-  const method = paymentMethods.find(m => m.value === form.payment_method)
+  const method = paymentMethods.value.find(m => m.value === form.payment_method)
   return method?.label || ''
 })
 

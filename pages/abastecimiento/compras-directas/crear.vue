@@ -1274,10 +1274,7 @@
                   <label class="block text-sm font-medium text-text-primary mb-1.5">Metodo de Pago</label>
                   <select v-model="form.payment_method" class="input-base w-full px-4 py-2">
                     <option value="">Sin pago aun</option>
-                    <option value="transfer">Transferencia</option>
-                    <option value="cash">Efectivo</option>
-                    <option value="check">Cheque</option>
-                    <option value="credit_card">Tarjeta de Credito</option>
+                    <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
                   </select>
                 </div>
 
@@ -1364,7 +1361,7 @@
                   </div>
                   <div v-if="form.payment_method" class="flex justify-between items-center">
                     <p class="text-xs font-medium text-text-secondary">Método</p>
-                    <p class="text-xs font-semibold text-text-primary">{{ getPaymentMethodText(form.payment_method) }}</p>
+                    <p class="text-xs font-semibold text-text-primary">{{ resolvePaymentLabel(form.payment_method) }}</p>
                   </div>
                 </div>
 
@@ -1581,6 +1578,8 @@ import { format as fnsFormat } from 'date-fns'
 import { useIngredientSearch } from '@/composables/useIngredientSearch'
 import { useBilling } from '@/composables/useBilling'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
+import { usePaymentMethods } from '~/composables/usePaymentMethods'
+import { usePaymentLabel } from '~/composables/usePaymentLabel'
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
 
@@ -1656,6 +1655,11 @@ function createEmptyItem(itemType: string = 'food'): PurchaseItem {
     showResults: false
   }
 }
+
+// Payment methods
+const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
+const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(computed(() => [...paymentGroups.value]))
+fetchPaymentMethods()
 
 // Fetch next purchase number
 const { data: nextNumberData } = useFetch('/api/suppliers/purchases/direct/next-number', {
@@ -1801,15 +1805,7 @@ const getPaymentTypeText = (type: string) => {
   return types[type] || type
 }
 
-const getPaymentMethodText = (method: string) => {
-  const methods: Record<string, string> = {
-    'transfer': 'Transferencia',
-    'cash': 'Efectivo',
-    'check': 'Cheque',
-    'credit_card': 'Tarjeta de Credito'
-  }
-  return methods[method] || method
-}
+
 
 const getPurchaseUnitOptions = (ingredientId: string) => {
   if (!ingredientId) return []

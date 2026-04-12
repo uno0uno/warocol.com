@@ -102,9 +102,7 @@
                   Método de pago *
                 </label>
                 <select v-model="form.paymentMethod" required class="input-base w-full px-4 py-2">
-                  <option value="cash">Efectivo</option>
-                  <option value="transfer">Transferencia</option>
-                  <option value="card">Tarjeta</option>
+                  <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
                 </select>
               </div>
             </div>
@@ -138,6 +136,8 @@
 </template>
 
 <script setup lang="ts">
+import { usePaymentMethods } from '~/composables/usePaymentMethods'
+
 definePageMeta({
   layout: 'dashboard'
 })
@@ -146,6 +146,10 @@ const route = useRoute()
 const expenseId = route.params.id as string
 
 const { currentTenant } = useTenantReactive()
+
+// Payment methods
+const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
+fetchPaymentMethods()
 
 // State
 const isSubmitting = ref(false)
