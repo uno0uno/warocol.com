@@ -72,8 +72,7 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-const { formatDate: _fmtDate } = useFormatters()
-const formatDate = (dateString: string) => _fmtDate(dateString)
+const { formatDateTime: formatDate } = useFormatters()
 
 // Table columns
 const expensesTableColumns = [
