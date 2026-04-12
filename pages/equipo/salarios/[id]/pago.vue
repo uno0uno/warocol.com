@@ -226,13 +226,20 @@ import { SLUG_ICON_MAP, SLUG_ICON_FALLBACK } from '~/utils/paymentDefaults'
 const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
 fetchPaymentMethods()
 
-const paymentMethods = computed(() =>
-  paymentGroups.value.map(g => ({
-    value: g.slug,
-    label: g.name,
-    icon: SLUG_ICON_MAP[g.slug] ?? SLUG_ICON_FALLBACK,
-  }))
-)
+const paymentMethods = computed(() => {
+  const items: { value: string; label: string; icon: any }[] = []
+  for (const g of paymentGroups.value) {
+    const icon = SLUG_ICON_MAP[g.slug] ?? SLUG_ICON_FALLBACK
+    if (g.methods.length) {
+      for (const m of g.methods) {
+        items.push({ value: m.id, label: m.name, icon })
+      }
+    } else {
+      items.push({ value: g.slug, label: g.name, icon })
+    }
+  }
+  return items
+})
 
 // Form state
 const form = reactive({
