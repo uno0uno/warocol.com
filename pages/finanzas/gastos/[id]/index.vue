@@ -667,9 +667,13 @@ const expenseId = route.params.id as string
 const { currentTenant } = useTenantReactive()
 
 // Payment methods
-const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
+const { paymentGroups, isLoading: pmGroupsLoading, fetchPaymentMethods } = usePaymentMethods()
 fetchPaymentMethods()
-const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(computed(() => [...paymentGroups.value]))
+const { resolveLabel: _resolvePaymentLabel } = usePaymentLabel(computed(() => [...paymentGroups.value]))
+function resolvePaymentLabel(slug: string | null | undefined, methodId?: string | null): string {
+  if (pmGroupsLoading.value) return '—'
+  return _resolvePaymentLabel(slug, methodId)
+}
 
 // State
 const isEditing = ref(false)
