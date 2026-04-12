@@ -303,7 +303,7 @@ const { formatDate: _fmtDate, formatDateTime: _fmtDateTime } = useFormatters()
 
 const formatDay = (d: string) => {
   if (!d) return ''
-  return _fmtDate(d + 'T12:00:00')
+  return _fmtDateTime(d + 'T00:00:00')
 }
 
 const formatDate = (iso: string) => {
