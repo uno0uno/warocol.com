@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
+// @ts-ignore
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({
   layout: 'dashboard'
@@ -88,6 +90,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
     <!-- Main Content -->
     <div v-else>
+      <HealthSemaphore :is-unlocked="true" title="Pedidos Online">
       <UiResponsiveDataView
         row-size="sm"
         :columns="columns"
@@ -161,6 +164,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <span class="text-sm text-text-secondary">{{ value ?? '—' }}</span>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
     </div>
   </div>
 </template>

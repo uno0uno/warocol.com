@@ -284,14 +284,14 @@ onUnmounted(() => {
               </div>
               <div class="flex flex-col items-end gap-1 flex-shrink-0">
                 <span class="text-sm font-bold text-text-primary">{{ formatCurrency(item.total_spent) }}</span>
-                <span v-if="!isLoadingBalances && (warosBalances[item.customer_id] ?? 0) > 0" class="text-xs font-medium text-amber-700">
+                <span v-if="!isLoadingBalances && (warosBalances[item.customer_id] ?? 0) > 0" class="text-xs font-medium text-primary">
                   {{ (warosBalances[item.customer_id] ?? 0).toLocaleString('es-CO') }} Waros
                 </span>
                 <span
                   v-if="!isLoadingCreditBalances && (creditBalances[item.customer_id]?.amount ?? 0) > 0"
                   :class="[
                     'text-xs font-semibold',
-                    creditBalances[item.customer_id].status === 'overdue' ? 'text-red-700' : 'text-amber-700'
+                    creditBalances[item.customer_id].status === 'overdue' ? 'text-destructive' : 'text-warning'
                   ]"
                 >
                   {{ formatCurrency(creditBalances[item.customer_id].amount) }} deuda
@@ -326,7 +326,7 @@ onUnmounted(() => {
 
           <template #cell-waros_balance="{ row }">
             <span v-if="isLoadingBalances" class="text-sm text-text-secondary">—</span>
-            <span v-else class="text-sm font-medium text-amber-700">
+            <span v-else class="text-sm font-medium text-primary">
               {{ (warosBalances[row.customer_id] ?? 0).toLocaleString('es-CO') }}
             </span>
           </template>

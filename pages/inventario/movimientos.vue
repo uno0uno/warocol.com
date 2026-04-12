@@ -46,6 +46,7 @@
       </SharedFiltersBar>
 
       <!-- Responsive Data View -->
+      <HealthSemaphore :is-unlocked="true" title="Movimientos de Inventario">
       <UiResponsiveDataView
         row-size="sm"
         :columns="movementsTableColumns"
@@ -53,54 +54,35 @@
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
-        title="Movimientos de Inventario"
         empty-message="No hay movimientos registrados"
         empty-sub-message="Los movimientos aparecerán cuando se registren compras o ventas"
         variant="default"
       >
         <!-- Mobile Card -->
-        <template #card="{ item }">
-          <UiCard class="hover:shadow-lg transition-shadow">
-            <UiCardHeader>
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <h3 class="text-base font-semibold text-text-primary">{{ item.ingredient_name }}</h3>
-                  <p class="text-xs text-text-secondary">{{ formatDate(item.created_at) }}</p>
-                </div>
-                <UiStatusBadge
-                  :value="getMovementTypeLabel(item.movement_type)"
-                  format="text"
-                  :variant="getMovementTypeVariant(item.movement_type)"
-                  size="sm"
-                />
-              </div>
-            </UiCardHeader>
-            <UiCardContent class="space-y-3">
-              <div class="grid grid-cols-3 gap-2">
-                <div>
-                  <p class="text-xs text-text-secondary">Cantidad</p>
-                  <p
-                    class="text-lg font-bold"
-                    :class="item.quantity_change >= 0 ? 'text-success' : 'text-destructive'"
-                  >
-                    {{ item.quantity_change >= 0 ? '+' : '' }}{{ formatNumber(item.quantity_change) }}
-                  </p>
-                </div>
-                <div>
-                  <p class="text-xs text-text-secondary">Stock Ant.</p>
-                  <p class="text-sm text-text-primary">{{ formatNumber(item.previous_stock) }}</p>
-                </div>
-                <div>
-                  <p class="text-xs text-text-secondary">Stock Nuevo</p>
-                  <p class="text-sm font-bold text-text-primary">{{ formatNumber(item.new_stock) }}</p>
-                </div>
-              </div>
-              <div v-if="item.reference_number" class="pt-2 border-t border-border">
-                <p class="text-xs text-text-secondary">Referencia</p>
-                <p class="text-sm font-medium text-primary">{{ item.reference_number }}</p>
-              </div>
-            </UiCardContent>
-          </UiCard>
+        <template #card="{ item, index }">
+          <div
+            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+          >
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-bold text-text-primary">{{ item.ingredient_name }}</span>
+              <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.created_at) }}{{ item.reference_number ? ` · ${item.reference_number}` : '' }}</p>
+            </div>
+            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+              <span
+                class="text-sm font-bold tabular-nums"
+                :class="item.quantity_change >= 0 ? 'text-success' : 'text-destructive'"
+              >
+                {{ item.quantity_change >= 0 ? '+' : '' }}{{ formatNumber(item.quantity_change) }}
+              </span>
+              <UiStatusBadge
+                :value="getMovementTypeLabel(item.movement_type)"
+                format="text"
+                :variant="getMovementTypeVariant(item.movement_type)"
+                size="sm"
+              />
+            </div>
+          </div>
         </template>
 
         <!-- Desktop Table Cells -->
@@ -151,6 +133,7 @@
           <span class="text-sm text-text-primary">{{ value || 'Sistema' }}</span>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
     </div>
   </div>
 </template>
@@ -159,6 +142,8 @@
 import { ref, computed, inject, onMounted, watch } from 'vue'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { useFormatters } from '~/composables/useFormatters'
+// @ts-ignore
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 useHead({ title: 'Movimientos de Inventario' })
 

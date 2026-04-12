@@ -71,31 +71,50 @@
             Mes actual
           </button>
 
-          <NuxtLink
-            to="/finanzas/cierre/nuevo"
-            class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1.5"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Nuevo cierre
-          </NuxtLink>
         </div>
       </div>
 
       <!-- ── Historial ─────────────────────────────────────────────────────── -->
+      <HealthSemaphore :is-unlocked="true" title="Historial de cierres">
+        <template #header-actions>
+          <NuxtLink
+            to="/finanzas/cierre/nuevo"
+            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap flex items-center gap-1.5"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span class="hidden sm:inline">Nuevo cierre</span>
+            <span class="sm:hidden">Nuevo</span>
+          </NuxtLink>
+        </template>
       <UiResponsiveDataView
         :data="filteredHistorial"
         :columns="historialColumns"
         row-size="sm"
         empty-message="No hay cierres registrados."
       >
-        <template #header>
-          <h3 class="text-base font-bold text-text-primary">Historial de cierres</h3>
+        <template #card="{ item, index }">
+          <div
+            class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+            @click="openPanel(item.id)"
+          >
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-bold text-text-primary">{{ formatDay(item.periodStart) }}</span>
+              <p class="text-xs text-text-secondary mt-0.5">{{ formatDay(item.periodEnd) }} · {{ formatDate(item.closedAt) }}</p>
+            </div>
+            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+              <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.totalSales) }}</span>
+              <span class="text-xs font-semibold" :class="item.cashDifference >= 0 ? 'text-success' : 'text-destructive'">
+                {{ item.cashDifference >= 0 ? '+' : '' }}{{ formatCurrency(item.cashDifference) }}
+              </span>
+            </div>
+          </div>
         </template>
 
         <template #cell-periodStart="{ row }">
-          <span class="text-sm text-text-primary">{{ formatDay(row.periodStart) }}</span>
+          <span class="text-sm font-bold text-text-primary">{{ formatDay(row.periodStart) }}</span>
         </template>
         <template #cell-periodEnd="{ row }">
           <span class="text-sm text-text-secondary">{{ formatDay(row.periodEnd) }}</span>
@@ -141,6 +160,7 @@
           </div>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
 
     </div>
 
@@ -196,6 +216,8 @@ import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import MetricCard from '~/components/shared/MetricCard.vue'
+// @ts-ignore
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Cierre - Warocol' })
