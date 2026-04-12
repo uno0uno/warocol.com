@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+// @ts-ignore
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({
   layout: 'dashboard'
@@ -201,6 +203,16 @@ onUnmounted(() => { clearRefreshHandler(refetch)
       </div>
 
       <!-- Responsive Data View -->
+      <HealthSemaphore :is-unlocked="true" title="Control de Gastos">
+        <template #header-actions>
+          <NuxtLink
+            to="/finanzas/gastos/crear"
+            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
+          >
+            <span class="hidden sm:inline">+ Registrar Gasto</span>
+            <span class="sm:hidden">+ Nuevo</span>
+          </NuxtLink>
+        </template>
       <UiResponsiveDataView
         row-size="sm"
         :columns="expensesTableColumns"
@@ -209,62 +221,33 @@ onUnmounted(() => { clearRefreshHandler(refetch)
         empty-sub-message="Los gastos del mes aparecerán aquí"
         variant="default"
       >
-        <!-- Mobile Actions -->
-        <template #mobileActions>
-          <NuxtLink
-            to="/finanzas/gastos/crear"
-            class="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium text-center hover:bg-primary/90"
-          >
-            + Registrar Gasto
-          </NuxtLink>
-        </template>
-
         <!-- Mobile Card -->
-        <template #card="{ item }">
+        <template #card="{ item, index }">
           <div
             v-if="item"
-            class="bg-surface border border-border rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
+            class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
+            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
             @click="navigateTo(`/finanzas/gastos/${item.id}`)"
           >
-            <div class="flex justify-between items-start mb-3">
-              <div>
-                <p class="text-xs font-mono text-text-secondary">{{ item.expenseNumber || '—' }}</p>
-                <p class="text-sm text-text-secondary">{{ formatDate(item.transactionDate) }}</p>
-                <div class="flex items-center gap-2 mt-1">
-                  <p class="text-sm font-medium text-text-primary">{{ item.category?.categoryName || 'Sin categoría' }}</p>
-                  <span v-if="item.isRecurring" class="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full" title="Gasto recurrente">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  </span>
-                </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-baseline gap-2">
+                <span class="text-sm font-bold text-text-primary">{{ item.expenseNumber || '—' }}</span>
+                <span class="text-xs text-text-secondary">{{ formatDate(item.transactionDate) }}</span>
               </div>
-              <p class="text-lg font-bold text-primary">{{ formatCurrency(item.amount) }}</p>
+              <p class="text-xs text-text-secondary mt-0.5 truncate">
+                {{ item.category?.categoryName || 'Sin categoría' }}{{ item.description ? ` · ${item.description}` : '' }}
+              </p>
             </div>
-
-            <p class="text-sm text-text-secondary">{{ item.description || 'Sin descripción' }}</p>
-          </div>
-        </template>
-
-        <!-- Desktop Header -->
-        <template #header>
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-            <h3 class="text-base sm:text-lg font-bold text-text-primary">
-              Control de Gastos
-            </h3>
-            <NuxtLink
-              to="/finanzas/gastos/crear"
-              class="btn-primary px-4 sm:px-6 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
-            >
-              <span class="hidden sm:inline">+ Registrar Gasto</span>
-              <span class="sm:hidden">+ Nuevo</span>
-            </NuxtLink>
+            <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+              <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.amount) }}</span>
+              <UiStatusBadge v-if="item.isRecurring" value="Recurrente" format="text" variant="info" size="sm" />
+            </div>
           </div>
         </template>
 
         <!-- Desktop Table Cells -->
         <template #cell-expenseNumber="{ value }">
-          <span class="text-xs font-mono text-text-secondary">{{ value || '—' }}</span>
+          <span class="text-sm font-bold text-text-primary">{{ value || '—' }}</span>
         </template>
 
         <template #cell-transactionDate="{ value }">
@@ -272,18 +255,18 @@ onUnmounted(() => { clearRefreshHandler(refetch)
         </template>
 
         <template #cell-category="{ value }">
-          <span class="text-sm text-text-primary">{{ value?.categoryName || 'Sin categoría' }}</span>
+          <UiStatusBadge :value="value?.categoryName || 'Sin categoría'" format="text" variant="secondary" size="sm" />
         </template>
 
         <template #cell-isRecurring="{ value }">
           <div class="flex justify-center">
-            <span v-if="value" class="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full">Sí</span>
-            <span v-else class="text-sm text-text-tertiary">No</span>
+            <UiStatusBadge v-if="value" value="Sí" format="text" variant="info" size="sm" />
+            <span v-else class="text-sm text-text-secondary">No</span>
           </div>
         </template>
 
         <template #cell-description="{ value }">
-          <span class="text-sm text-text-secondary">{{ value || 'Sin descripción' }}</span>
+          <span class="text-sm font-medium text-text-primary">{{ value || 'Sin descripción' }}</span>
         </template>
 
         <template #cell-amount="{ value }">
@@ -314,6 +297,7 @@ onUnmounted(() => { clearRefreshHandler(refetch)
           </div>
         </template>
       </UiResponsiveDataView>
+      </HealthSemaphore>
     </div>
   </div>
 </template>
