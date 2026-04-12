@@ -26,7 +26,7 @@
         <!-- Purchase Number with Date -->
         <PurchasesPurchaseInfoCard
           :label="formatDate(purchase.purchase_date)"
-          :subtitle="purchase.payment_method ? `Pago: ${getPaymentMethodLabel(purchase.payment_method)}` : undefined"
+          :subtitle="purchase.payment_method ? `Pago: ${resolvePaymentLabel(purchase.payment_method)}` : undefined"
           icon-path="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
         >
           <div class="flex items-center gap-2">
@@ -563,11 +563,18 @@
 <script setup lang="ts">
 import { format as fnsFormat } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { computed } from 'vue'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
+import { usePaymentMethods } from '~/composables/usePaymentMethods'
+import { usePaymentLabel } from '~/composables/usePaymentLabel'
 
 const route = useRoute()
 const purchaseId = route.params.id as string
 const toast = useToast()
+
+const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
+fetchPaymentMethods()
+const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(computed(() => [...paymentGroups.value]))
 
 const formatPurchaseDateFn = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
 
@@ -934,17 +941,6 @@ const getStatusClass = (status: string) => {
   return classMap[status] || 'bg-gray-100 text-gray-800'
 }
 
-const getPaymentMethodLabel = (method: string) => {
-  const methodMap: Record<string, string> = {
-    'transfer': 'Transferencia',
-    'cash': 'Efectivo',
-    'check': 'Cheque',
-    'credit_card': 'Tarjeta de Credito',
-    'debit_card': 'Tarjeta Debito',
-    'other': 'Otro'
-  }
-  return methodMap[method] || method
-}
 
 const getAttachmentTypeLabel = (type: string) => {
   const typeMap: Record<string, string> = {
