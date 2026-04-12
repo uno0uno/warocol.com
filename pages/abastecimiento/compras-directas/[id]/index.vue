@@ -590,7 +590,7 @@ function resolvePaymentLabel(slug: string | null | undefined, methodId?: string 
   return _resolvePaymentLabel(slug, methodId)
 }
 
-const formatPurchaseDateFn = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
+const formatPurchaseDateFn = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
 
 useHead({
   title: 'Detalle Compra Directa - Abastecimiento'

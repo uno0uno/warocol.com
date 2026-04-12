@@ -199,6 +199,7 @@
 import { inject } from 'vue'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
+import { useFormatters } from '~/composables/useFormatters'
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -541,22 +542,7 @@ const handleSort = (field) => {
 }
 
 // Helper functions
-const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('es-CO', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  })
-}
-
-const formatDateShort = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('es-CO', {
-    month: 'short',
-    day: 'numeric'
-  })
-}
+const { formatDate, formatDateShort } = useFormatters()
 
 // Helper function for status variants
 // Helper function for status classes (matching acciones.vue)

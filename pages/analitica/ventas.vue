@@ -26,9 +26,9 @@ const presetDates = ref([
 
 const formatDateRange = (dates: Date[]) => {
   if (!dates || !dates[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yyyy', { locale: es })
+  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
   if (!dates[1]) return from
-  return `${from} - ${fnsFormat(dates[1], 'dd/MM/yyyy', { locale: es })}`
+  return `${from} - ${fnsFormat(dates[1], 'dd/MM/yy', { locale: es })}`
 };
 
 const dateRange = computed(() => {

@@ -59,9 +59,9 @@ const presetDates = ref([
 // Format function for the date picker display
 const formatDateRange = (dates: Date[]) => {
   if (!dates || !dates[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yyyy', { locale: es })
+  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
   if (!dates[1]) return from
-  const to = fnsFormat(dates[1], 'dd/MM/yyyy', { locale: es })
+  const to = fnsFormat(dates[1], 'dd/MM/yy', { locale: es })
   return `${from} - ${to}`
 }
 

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
+const { formatDate, formatDateTime } = useFormatters()
 
 const props = defineProps<{
   paymentId: string
@@ -103,7 +105,7 @@ function formatFieldValue(field: string, value: any): string {
     if (!dateStr) return '-'
     const date = new Date(dateStr)
     if (isNaN(date.getTime())) return '-'
-    return date.toLocaleDateString('es-CO')
+    return formatDate(dateStr)
   }
 
   if (field === 'status') {
@@ -123,23 +125,7 @@ function formatFieldValue(field: string, value: any): string {
   return String(parsedValue)
 }
 
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('es-CO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
-}
 
-function formatDateTime(dateString: string): string {
-  return new Date(dateString).toLocaleString('es-CO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
 </script>
 
 <template>

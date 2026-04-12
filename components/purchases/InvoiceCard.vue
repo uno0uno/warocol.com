@@ -77,6 +77,8 @@
 </template>
 
 <script setup lang="ts">
+import { useFormatters } from '~/composables/useFormatters'
+
 interface Invoice {
   id: string
   numero: string
@@ -122,11 +124,5 @@ const formatTax = (value: number): string => {
   return `+$${thousands.toFixed(1)}K IVA`
 }
 
-const formatDateShort = (dateString: string): string => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('es-CO', {
-    month: 'short',
-    day: 'numeric'
-  })
-}
+const { formatDate: formatDateShort } = useFormatters()
 </script>

@@ -765,7 +765,7 @@ import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 
-const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
+const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
 
 const route = useRoute()
 const purchaseId = route.params.id as string

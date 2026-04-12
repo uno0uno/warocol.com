@@ -180,6 +180,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
 
 const props = defineProps<{
   purchaseId: string
@@ -335,16 +336,7 @@ function getStatusIcon(status: string, entry?: any): string {
   return icons[status] || icons.pending
 }
 
-function formatDateTime(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleString('es-CO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+const { formatDateTime } = useFormatters()
 
 function formatMetadataKey(key: string): string {
   const keyMap: Record<string, string> = {
@@ -374,15 +366,7 @@ function formatMetadataValue(key: string, value: any): string {
 
   // Date fields
   if (key.includes('date') || key.includes('_at')) {
-    try {
-      return new Date(value).toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-    } catch {
-      return value
-    }
+    try { return formatDateTime(value) } catch { return value }
   }
 
   // Money fields

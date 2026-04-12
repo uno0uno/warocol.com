@@ -42,7 +42,7 @@
               <div>
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Fecha de Compra</p>
                 <p class="text-base font-semibold text-text-primary">
-                  {{ form.purchase_date ? fnsFormat(form.purchase_date, 'dd/MM/yyyy', { locale: es }) : 'Seleccionar fecha' }}
+                  {{ form.purchase_date ? fnsFormat(form.purchase_date, 'dd/MM/yy', { locale: es }) : 'Seleccionar fecha' }}
                 </p>
               </div>
             </div>
@@ -1357,7 +1357,7 @@
                   <div class="flex justify-between items-center">
                     <p class="text-xs font-medium text-text-secondary">Fecha</p>
                     <p class="text-xs font-semibold text-text-primary">
-                      {{ form.purchase_date ? fnsFormat(form.purchase_date, 'dd/MM/yyyy', { locale: es }) : '-' }}
+                      {{ form.purchase_date ? fnsFormat(form.purchase_date, 'dd/MM/yy', { locale: es }) : '-' }}
                     </p>
                   </div>
                   <div class="flex justify-between items-center">
@@ -1586,7 +1586,7 @@ import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 
-const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yyyy', { locale: es })
+const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
 
 useHead({
   title: 'Nueva Compra Directa - Abastecimiento'

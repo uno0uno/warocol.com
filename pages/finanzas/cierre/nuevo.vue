@@ -783,7 +783,7 @@ const applyPreset = (p: Preset) => {
 }
 
 const formatSingleDate = (date: Date) =>
-  date ? fnsFormat(date, 'dd/MM/yyyy', { locale: es }) : ''
+  date ? fnsFormat(date, 'dd/MM/yy', { locale: es }) : ''
 
 // Period — siempre un solo día
 const periodStart = computed(() => fnsFormat(selectedDate.value, 'yyyy-MM-dd'))

@@ -48,7 +48,7 @@
                 Fecha
               </p>
               <p class="text-sm sm:text-lg font-semibold text-text-primary">
-                {{ new Date().toLocaleDateString('es-CO') }}
+                {{ formatDate(new Date().toISOString()) }}
               </p>
             </div>
           </div>
@@ -479,6 +479,7 @@
 
 <script setup lang="ts">
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
+import { useFormatters } from '~/composables/useFormatters'
 import { computed } from 'vue'
 
 definePageMeta({
@@ -594,14 +595,7 @@ const getCategoryName = (categoryId: string) => {
   return category?.categoryName || category?.name || 'Sin categoría'
 }
 
-const formatDate = (dateString: string) => {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleDateString('es-CO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
+const { formatDate } = useFormatters()
 
 const formatCurrency = (value: number | null) => {
   if (!value) return '$0'

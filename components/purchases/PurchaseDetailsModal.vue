@@ -329,6 +329,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
 
 const props = defineProps<{
   isOpen: boolean
@@ -423,11 +424,7 @@ function getStatusBadgeClass(status: string): string {
   return `${baseClasses} ${statusClasses[status] || 'border-border text-text-secondary'}`
 }
 
-function formatDate(dateString: string | null): string {
-  if (!dateString) return 'No especificada'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
-}
+const { formatDate } = useFormatters()
 
 function formatCurrency(value: number | null): string {
   if (value === null || value === undefined) return '$0'

@@ -112,6 +112,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
+const { formatDate, formatDateTime } = useFormatters()
 
 const props = defineProps<{
   expenseId: string
@@ -213,7 +215,7 @@ function formatFieldValue(field: string, value: any): string {
 
   if (field === 'transaction_date' || field === 'recurring_end_date') {
     const dateStr = value[field] || value
-    return new Date(dateStr).toLocaleDateString('es-CO')
+    return formatDate(dateStr)
   }
 
   if (field === 'is_recurring') {
@@ -238,21 +240,4 @@ function formatFieldValue(field: string, value: any): string {
   return String(value)
 }
 
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('es-CO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
-}
-
-function formatDateTime(dateString: string): string {
-  return new Date(dateString).toLocaleString('es-CO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
 </script>

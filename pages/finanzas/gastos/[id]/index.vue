@@ -656,6 +656,7 @@ import { computed } from 'vue'
 import { useQuery } from '@pinia/colada'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
+import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({
   layout: 'dashboard'
@@ -882,14 +883,7 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-const formatDate = (dateString: string) => {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleDateString('es-CO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
+const { formatDate } = useFormatters()
 
 const formatFileSize = (bytes: number) => {
   if (!bytes) return '0 Bytes'

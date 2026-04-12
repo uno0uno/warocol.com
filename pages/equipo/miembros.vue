@@ -584,6 +584,8 @@
 <script setup lang="ts">
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import { useFormatters } from '~/composables/useFormatters'
+const { formatDate: _fmtDate } = useFormatters()
 useHead({ title: 'Miembros - Equipo' })
 
 // Tenant reactivity
@@ -1005,7 +1007,7 @@ const formatExpirationDate = (dateString) => {
   if (diffDays === 1) return 'Manana'
   if (diffDays <= 7) return `${diffDays} dias`
 
-  return date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+  return _fmtDate(date.toISOString())
 }
 
 // Inject refresh handler setter from layout

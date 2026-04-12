@@ -1,21 +1,23 @@
+const _dateFormatter = new Intl.DateTimeFormat('es-CO', {
+  day: '2-digit', month: '2-digit', year: '2-digit',
+  timeZone: 'America/Bogota',
+})
+
+const _dateTimeFormatter = new Intl.DateTimeFormat('es-CO', {
+  day: '2-digit', month: '2-digit', year: '2-digit',
+  hour: '2-digit', minute: '2-digit', hour12: false,
+  timeZone: 'America/Bogota',
+})
+
 export const useFormatters = () => {
-  const formatDate = (dateString: string | null): string => {
+  const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'No especificada'
-    const date = new Date(dateString)
-    return date.toLocaleDateString('es-CO', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
+    return _dateFormatter.format(new Date(dateString))
   }
 
-  const formatDateShort = (dateString: string | null): string => {
+  const formatDateShort = (dateString: string | null | undefined): string => {
     if (!dateString) return 'N/A'
-    const date = new Date(dateString)
-    return date.toLocaleDateString('es-CO', {
-      month: 'short',
-      day: 'numeric'
-    })
+    return _dateFormatter.format(new Date(dateString))
   }
 
   const formatCurrency = (value: number | null): string => {
@@ -27,15 +29,9 @@ export const useFormatters = () => {
     }).format(value)
   }
 
-  const formatDateTime = (dateString: string): string => {
-    const date = new Date(dateString)
-    return date.toLocaleString('es-CO', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+  const formatDateTime = (dateString: string | null | undefined): string => {
+    if (!dateString) return 'No especificada'
+    return _dateTimeFormatter.format(new Date(dateString))
   }
 
   const formatRelativeDate = (dateString: string): string => {

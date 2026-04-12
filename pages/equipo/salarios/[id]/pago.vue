@@ -221,6 +221,7 @@ useHead({ title: 'Registrar Pago - Equipo' })
 
 // Payment methods
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
+import { useFormatters } from '~/composables/useFormatters'
 import { SLUG_ICON_MAP, SLUG_ICON_FALLBACK } from '~/utils/paymentDefaults'
 
 const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
@@ -306,15 +307,7 @@ const formatCurrency = (value) => {
   }).format(value || 0)
 }
 
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  return new Date(dateString + 'T00:00:00').toLocaleDateString('es-CO', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
-}
+const { formatDate } = useFormatters()
 
 const formatPeriod = (periodString) => {
   if (!periodString) return ''
