@@ -289,6 +289,7 @@
 <script setup lang="ts">
 // @ts-ignore — path alias resolved by Vite at runtime; TS language server false positive
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Integraciones - API Keys' })
@@ -349,10 +350,8 @@ const showDeleteModal = ref(false)
 const tokenToDelete = ref(null)
 const deleting = ref(false)
 
-const formatDate = (dateString) => {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })
-}
+const { formatDate: _fmtDate } = useFormatters()
+const formatDate = (dateString) => _fmtDate(dateString)
 
 const openCreateModal = () => {
   createForm.name = ''

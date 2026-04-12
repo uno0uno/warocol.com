@@ -157,6 +157,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
 
 const GROUP_LABELS: Record<string, string> = {
   cash:    'Efectivo',
@@ -213,20 +214,16 @@ useHead(() => ({
 const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
 
+const { formatDate: _fmtDate, formatDateTime: _fmtDateTime } = useFormatters()
+
 const formatDate = (iso: string) => {
   if (!iso) return ''
-  return new Intl.DateTimeFormat('es-CO', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: true,
-    timeZone: 'America/Bogota',
-  }).format(new Date(iso))
+  return _fmtDateTime(iso)
 }
 
 const formatPeriod = (start: string, end: string) => {
   if (!start) return ''
-  const fmt = (d: string) => new Intl.DateTimeFormat('es-CO', {
-    day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Bogota',
-  }).format(new Date(d + 'T12:00:00'))
+  const fmt = (d: string) => _fmtDate(d + 'T12:00:00')
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 </script>

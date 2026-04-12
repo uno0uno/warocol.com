@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({
   layout: 'dashboard'
@@ -120,16 +121,7 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('es-CO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
-}
+const { formatDateTime: formatDate } = useFormatters()
 
 
 // ── Credit panel state ──────────────────────────────────────────────────────

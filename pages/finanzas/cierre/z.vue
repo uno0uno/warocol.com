@@ -776,6 +776,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
 
@@ -1172,11 +1173,10 @@ onMounted(() => {
 const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
 
+const { formatDate: _fmtDate } = useFormatters()
 const formatPeriod = (start: string, end: string) => {
   if (!start) return ''
-  const fmt = (d: string) => new Intl.DateTimeFormat('es-CO', {
-    day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Bogota',
-  }).format(new Date(d + 'T12:00:00'))
+  const fmt = (d: string) => _fmtDate(d + 'T12:00:00')
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 </script>

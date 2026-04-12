@@ -573,6 +573,7 @@
 import { format as fnsFormat } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { computed } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
 import { useQuery } from '@pinia/colada'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
@@ -928,14 +929,8 @@ const copyPurchaseLink = async () => {
 }
 
 // Formatting methods
-const formatDate = (date: string) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString('es-CO', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  })
-}
+const { formatDate: _fmtDate } = useFormatters()
+const formatDate = (date: string) => _fmtDate(date)
 
 const formatCurrency = (value: number) => {
   if (!value) return '0'

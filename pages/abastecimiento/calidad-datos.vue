@@ -200,6 +200,7 @@
 
 <script setup lang="ts">
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -334,8 +335,6 @@ const viewOrder = (order: any) => {
 }
 
 // Helpers
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return '—'
-  return new Date(dateStr).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
-}
+const { formatDate: _fmtDate } = useFormatters()
+const formatDate = (dateStr: string) => _fmtDate(dateStr)
 </script>

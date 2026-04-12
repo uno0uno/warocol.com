@@ -163,6 +163,7 @@
 <script setup lang="ts">
 import { ref, computed, inject, onMounted } from 'vue'
 import { CurrencyDollarIcon, ClockIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
+import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({
   layout: 'dashboard',
@@ -441,10 +442,9 @@ function getSupplierName(purchase: any): string {
   return supplier?.name || 'N/A'
 }
 
+const { formatDate: _fmtDate } = useFormatters()
 function formatDate(dateString: string | null | undefined): string {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })
+  return _fmtDate(dateString)
 }
 
 function formatCurrency(value: number): string {

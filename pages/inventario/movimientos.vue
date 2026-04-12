@@ -158,6 +158,7 @@
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, watch } from 'vue'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
+import { useFormatters } from '~/composables/useFormatters'
 
 useHead({ title: 'Movimientos de Inventario' })
 
@@ -380,14 +381,7 @@ const formatNumber = (value: number) => {
   }).format(value)
 }
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('es-CO', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }).format(date)
-}
+const { formatDate } = useFormatters()
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('es-CO', {

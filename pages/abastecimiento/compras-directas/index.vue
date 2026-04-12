@@ -200,6 +200,7 @@
 import { ChevronLeftIcon, ChevronRightIcon, EyeIcon } from '@heroicons/vue/24/outline'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { onMounted, onUnmounted } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
 
@@ -320,14 +321,8 @@ const startItem = computed(() => (currentPage.value - 1) * itemsPerPage.value + 
 const endItem = computed(() => Math.min(currentPage.value * itemsPerPage.value, purchasesData.value.total))
 
 // Methods
-const formatDate = (date: string) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString('es-CO', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  })
-}
+const { formatDate: _fmtDate } = useFormatters()
+const formatDate = (date: string) => _fmtDate(date)
 
 const formatCurrency = (value: number) => {
   if (!value) return '0'

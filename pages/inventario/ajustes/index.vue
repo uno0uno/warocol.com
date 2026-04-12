@@ -185,6 +185,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
 
 useHead({ title: 'Ajustes de Inventario' })
 
@@ -419,16 +420,7 @@ const formatNumber = (value: number) => {
   }).format(value)
 }
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('es-CO', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
-}
+const { formatDateTime: formatDate } = useFormatters()
 
 // Set refresh handler for layout
 const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()

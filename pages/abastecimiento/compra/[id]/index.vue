@@ -675,6 +675,7 @@
 
 <script setup lang="ts">
 import { inject } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
 import { usePurchasesStore } from '~/stores/purchases'
 import { storeToRefs } from 'pinia'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
@@ -1136,14 +1137,9 @@ function getIngredientName(ingredientId) {
   return ingredient?.name || 'Ingrediente desconocido'
 }
 
+const { formatDate: _fmtDate } = useFormatters()
 function formatDate(dateString) {
-  if (!dateString) return 'No especificada'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('es-CO', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
+  return _fmtDate(dateString)
 }
 
 function getPaymentTypeText(paymentType) {

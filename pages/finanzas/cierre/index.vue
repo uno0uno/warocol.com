@@ -192,6 +192,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
+import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import MetricCard from '~/components/shared/MetricCard.vue'
@@ -298,27 +299,21 @@ const isCurrentMonthActive = computed(() => {
   return activeStart.value === first && activeEnd.value === last
 })
 
+const { formatDate: _fmtDate, formatDateTime: _fmtDateTime } = useFormatters()
+
 const formatDay = (d: string) => {
   if (!d) return ''
-  return new Intl.DateTimeFormat('es-CO', {
-    day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Bogota',
-  }).format(new Date(d + 'T12:00:00'))
+  return _fmtDate(d + 'T12:00:00')
 }
 
 const formatDate = (iso: string) => {
   if (!iso) return ''
-  return new Intl.DateTimeFormat('es-CO', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: true,
-    timeZone: 'America/Bogota',
-  }).format(new Date(iso))
+  return _fmtDateTime(iso)
 }
 
 const formatPeriod = (start: string, end: string) => {
   if (!start) return ''
-  const fmt = (d: string) => new Intl.DateTimeFormat('es-CO', {
-    day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Bogota',
-  }).format(new Date(d + 'T12:00:00'))
+  const fmt = (d: string) => _fmtDate(d + 'T12:00:00')
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 

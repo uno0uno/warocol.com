@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
@@ -333,17 +334,7 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('es-CO', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
-}
-
+const { formatDateTime: formatDate } = useFormatters()
 
 const getPaymentStatusLabel = (status: string) => {
   const labels: Record<string, string> = {
@@ -371,17 +362,7 @@ const statusPills = [
   { label: 'Pendientes', value: 'pending' },
 ]
 
-const formatDateCompact = (dateString: string) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const isToday = date.toDateString() === now.toDateString()
-  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1)
-  const isYesterday = date.toDateString() === yesterday.toDateString()
-
-  if (isToday) return new Intl.DateTimeFormat('es-CO', { hour: '2-digit', minute: '2-digit' }).format(date)
-  if (isYesterday) return 'Ayer ' + new Intl.DateTimeFormat('es-CO', { hour: '2-digit', minute: '2-digit' }).format(date)
-  return new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date)
-}
+const { formatDateTime: formatDateCompact } = useFormatters()
 
 const viewOrderDetails = (order: any) => {
   navigateTo(`/ventas/${order.id}`)

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import { useBilling, type BillingPlan } from '~/composables/useBilling'
+import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({})
 useHead({ title: 'Historial de pagos — WaRo Admin' })
@@ -173,11 +174,7 @@ const loadAll = async () => {
   await fetchBillingOverview()
 }
 
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
-
-const formatDateTime = (iso: string) =>
-  new Date(iso).toLocaleString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+const { formatDate, formatDateTime } = useFormatters()
 
 const formatCOP = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value)

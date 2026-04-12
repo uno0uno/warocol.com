@@ -758,6 +758,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
 import { TrashIcon, DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
@@ -899,14 +900,8 @@ const formatPrice = (price: number) => {
   return price.toLocaleString('es-CO', { minimumFractionDigits: 0 })
 }
 
-const formatDate = (date: string) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString('es-CO', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  })
-}
+const { formatDate: _fmtDate } = useFormatters()
+const formatDate = (date: string) => _fmtDate(date)
 
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes'

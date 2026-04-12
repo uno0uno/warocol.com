@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useFormatters } from '~/composables/useFormatters'
 
 definePageMeta({
   layout: 'dashboard'
@@ -71,15 +72,8 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-const formatDate = (dateString: string) => {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('es-CO', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }).format(date)
-}
+const { formatDate: _fmtDate } = useFormatters()
+const formatDate = (dateString: string) => _fmtDate(dateString)
 
 // Table columns
 const expensesTableColumns = [
