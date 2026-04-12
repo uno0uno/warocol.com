@@ -8,9 +8,10 @@ export function usePaymentMethods() {
   async function fetchPaymentMethods() {
     isLoading.value = true
     try {
-      const data = await $fetch<PosPaymentGroup[]>('/api/pos/payment-methods')
-      if (Array.isArray(data) && data.length > 0) {
-        paymentGroups.value = data
+      const res = await $fetch<{ success: boolean; data: PosPaymentGroup[] }>('/api/pos/payment-methods')
+      const groups = res?.data
+      if (Array.isArray(groups) && groups.length > 0) {
+        paymentGroups.value = groups
       }
     } catch {
       // Keep defaults on error — user can still operate
