@@ -1274,7 +1274,12 @@
                   <label class="block text-sm font-medium text-text-primary mb-1.5">Metodo de Pago</label>
                   <select v-model="form.payment_method" class="input-base w-full px-4 py-2">
                     <option value="">Sin pago aun</option>
-                    <option v-for="group in paymentGroups" :key="group.slug" :value="group.slug">{{ group.name }}</option>
+                    <template v-for="group in paymentGroups">
+                      <option v-if="!group.methods.length" :key="group.slug" :value="group.slug">{{ group.name }}</option>
+                      <optgroup v-else :key="group.slug" :label="group.name">
+                        <option v-for="m in group.methods" :key="m.id" :value="m.id">{{ m.name }}</option>
+                      </optgroup>
+                    </template>
                   </select>
                 </div>
 

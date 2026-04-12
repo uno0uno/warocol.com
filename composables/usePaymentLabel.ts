@@ -23,6 +23,11 @@ export function usePaymentLabel(paymentGroups: ComputedRef<PaymentGroup[]>) {
     if (slug) {
       const group = paymentGroups.value.find(g => g.slug === slug)
       if (group) return group.name
+      // slug might actually be a method ID (UUID) stored directly
+      for (const g of paymentGroups.value) {
+        const method = g.methods?.find(m => m.id === slug)
+        if (method) return `${g.name} · ${method.name}`
+      }
     }
     if (!slug) return '—'
     return slug.charAt(0).toUpperCase() + slug.slice(1)
