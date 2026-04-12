@@ -160,6 +160,15 @@
                             <span class="text-text-primary font-semibold text-xs">{{ expense.category?.categoryName || 'Sin categoría' }}</span>
                           </div>
                         </div>
+                        <!-- Payment Method -->
+                        <div v-if="expense.paymentMethod" class="flex flex-col gap-0.5">
+                          <div class="flex items-center gap-1">
+                            <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                            <span class="text-text-primary font-semibold text-xs">{{ resolvePaymentLabel(expense.paymentMethod, expense.paymentMethodId) }}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -234,6 +243,16 @@
                       </td>
                       <td class="px-4 py-3 text-sm text-text-primary">
                         <span class="font-bold text-primary text-lg">{{ formatCurrency(expense.amount) }}</span>
+                      </td>
+                    </tr>
+
+                    <!-- Payment Method Row -->
+                    <tr v-if="expense.paymentMethod" class="hover:bg-surface-secondary/50 transition-colors">
+                      <td class="px-4 py-3 text-sm font-medium text-text-secondary">
+                        Método de Pago
+                      </td>
+                      <td class="px-4 py-3 text-sm text-text-primary">
+                        <span class="font-medium">{{ resolvePaymentLabel(expense.paymentMethod, expense.paymentMethodId) }}</span>
                       </td>
                     </tr>
 
@@ -635,6 +654,10 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { usePaymentMethods } from '~/composables/usePaymentMethods'
+import { usePaymentLabel } from '~/composables/usePaymentLabel'
+
 definePageMeta({
   layout: 'dashboard'
 })
@@ -643,6 +666,11 @@ const route = useRoute()
 const expenseId = route.params.id as string
 
 const { currentTenant } = useTenantReactive()
+
+// Payment methods
+const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
+fetchPaymentMethods()
+const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(computed(() => [...paymentGroups.value]))
 
 // State
 const isEditing = ref(false)
