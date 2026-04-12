@@ -131,7 +131,7 @@
         </template>
 
         <template #cell-current_stock="{ value }">
-          <span class="text-sm font-semibold text-text-primary">{{ formatNumber(value) }}</span>
+          <span class="text-sm font-bold text-text-primary">{{ formatNumber(value) }}</span>
         </template>
 
         <template #cell-minimum_stock="{ value }">
@@ -158,11 +158,11 @@
         </template>
 
         <template #cell-unit_cost="{ value }">
-          <span class="text-sm text-text-primary">{{ value ? formatCurrency(value) : '-' }}</span>
+          <span class="text-sm font-bold text-primary">{{ value ? formatCurrency(value) : '-' }}</span>
         </template>
 
         <template #cell-total_value="{ value }">
-          <span class="text-sm font-medium text-text-primary">{{ formatCurrency(value) }}</span>
+          <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
         </template>
 
         <template #cell-status="{ value, row }">

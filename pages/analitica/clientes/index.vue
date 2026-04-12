@@ -301,7 +301,7 @@ onUnmounted(() => {
           </template>
 
           <template #cell-name="{ row }">
-            <span class="text-sm font-semibold text-text-primary">{{ row.name }}</span>
+            <span class="text-sm font-bold text-text-primary">{{ row.name }}</span>
           </template>
 
           <template #cell-phone="{ value }">
@@ -313,7 +313,7 @@ onUnmounted(() => {
           </template>
 
           <template #cell-total_spent="{ value }">
-            <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(value) }}</span>
+            <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
           </template>
 
           <template #cell-avg_ticket="{ value }">
@@ -334,16 +334,12 @@ onUnmounted(() => {
           <template #cell-credit_balance="{ row }">
             <span v-if="isLoadingCreditBalances" class="text-sm text-text-secondary">—</span>
             <template v-else-if="creditBalances[row.customer_id]?.amount > 0">
-              <span
-                :class="[
-                  'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold',
-                  creditBalances[row.customer_id].status === 'overdue'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-amber-100 text-amber-800'
-                ]"
-              >
-                {{ formatCurrency(creditBalances[row.customer_id].amount) }}
-              </span>
+              <UiStatusBadge
+                :value="formatCurrency(creditBalances[row.customer_id].amount)"
+                format="text"
+                :variant="creditBalances[row.customer_id].status === 'overdue' ? 'destructive' : 'warning'"
+                size="sm"
+              />
             </template>
             <span v-else class="text-sm text-text-secondary">—</span>
           </template>

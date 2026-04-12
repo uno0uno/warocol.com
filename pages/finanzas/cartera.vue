@@ -305,14 +305,14 @@ onUnmounted(() => {
         <template #cell-name="{ row }">
           <NuxtLink
             :to="`/analitica/clientes/${row.customer_id}`"
-            class="text-sm font-semibold text-text-primary hover:text-primary transition-colors cursor-pointer"
+            class="text-sm font-bold text-text-primary hover:text-primary transition-colors cursor-pointer"
           >
             {{ row.name }}
           </NuxtLink>
         </template>
 
         <template #cell-total_outstanding="{ value }">
-          <span class="text-sm font-bold text-text-primary">{{ formatCurrency(value) }}</span>
+          <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
         </template>
 
         <template #cell-order_count="{ value }">
@@ -320,18 +320,18 @@ onUnmounted(() => {
         </template>
 
         <template #cell-oldest_order_days="{ value }">
-          <span class="text-sm" :class="value > 30 ? 'text-red-700 dark:text-red-400 font-medium' : 'text-text-secondary'">
+          <span class="text-sm" :class="value > 30 ? 'text-destructive font-medium' : 'text-text-secondary'">
             {{ value }} días
           </span>
         </template>
 
         <template #cell-status="{ row }">
-          <span
-            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
-            :class="row.status === 'overdue' ? 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400'"
-          >
-            {{ row.status === 'overdue' ? 'VENCIDA' : 'Al día' }}
-          </span>
+          <UiStatusBadge
+            :value="row.status === 'overdue' ? 'VENCIDA' : 'Al día'"
+            format="text"
+            :variant="row.status === 'overdue' ? 'destructive' : 'warning'"
+            size="sm"
+          />
         </template>
 
         <template #cell-actions="{ row }">

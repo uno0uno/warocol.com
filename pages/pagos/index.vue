@@ -70,11 +70,11 @@
             </template>
 
             <template #cell-orden="{ row }">
-              {{ row.orden }}
+              <span class="text-sm font-bold text-text-primary">{{ row.orden }}</span>
             </template>
 
             <template #cell-factura="{ row }">
-              {{ row.factura }}
+              <span class="text-sm text-text-secondary">{{ row.factura }}</span>
             </template>
 
             <template #cell-vencimiento="{ row }">
@@ -123,23 +123,23 @@
             :sort-direction="sortDirection"
             @sort="handleSort">
             <template #cell-orden="{ row }">
-              <span :class="{ 'animate-pulse': row.isHighlighted }">{{ row.orden }}</span>
+              <span :class="['text-sm font-bold text-text-primary', { 'animate-pulse': row.isHighlighted }]">{{ row.orden }}</span>
             </template>
 
             <template #cell-fechaOrden="{ row }">
-              <span :class="{ 'animate-pulse': row.isHighlighted }">{{ row.fechaOrden }}</span>
+              <span :class="['text-sm text-text-secondary', { 'animate-pulse': row.isHighlighted }]">{{ row.fechaOrden }}</span>
             </template>
 
             <template #cell-factura="{ row }">
-              {{ row.factura }}
+              <span class="text-sm text-text-secondary">{{ row.factura }}</span>
             </template>
 
             <template #cell-montoPagado="{ row }">
-              {{ formatCurrency(row.montoPagado) }}
+              <span class="text-sm font-bold text-primary">{{ formatCurrency(row.montoPagado) }}</span>
             </template>
 
             <template #cell-metodo="{ row }">
-              <span class="capitalize">{{ row.metodo || '-' }}</span>
+              <span class="text-sm text-text-secondary capitalize">{{ row.metodo || '-' }}</span>
             </template>
 
             <template #cell-estado="{ row }">

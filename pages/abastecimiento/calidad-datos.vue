@@ -134,15 +134,15 @@
 
         <!-- Desktop Cell Customizations -->
         <template #cell-purchase_number="{ value, row }">
-          <span class="text-sm font-medium text-ebony-800">{{ value ?? formatDate(row.date) }}</span>
+          <span class="text-sm font-bold text-text-primary">{{ value ?? formatDate(row.date) }}</span>
         </template>
 
         <template #cell-supplier_name="{ value }">
-          <span class="text-sm font-bold text-ebony-800">{{ value ?? 'Sin proveedor' }}</span>
+          <span class="text-sm font-medium text-text-primary">{{ value ?? 'Sin proveedor' }}</span>
         </template>
 
         <template #cell-purchase_date="{ value, row }">
-          <span class="text-sm text-ebony-800">{{ formatDate(value ?? row.date) }}</span>
+          <span class="text-sm text-text-secondary">{{ formatDate(value ?? row.date) }}</span>
         </template>
 
         <template #cell-critical="{ value }">

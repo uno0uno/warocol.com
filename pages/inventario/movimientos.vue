@@ -67,12 +67,12 @@
                   <h3 class="text-base font-semibold text-text-primary">{{ item.ingredient_name }}</h3>
                   <p class="text-xs text-text-secondary">{{ formatDate(item.created_at) }}</p>
                 </div>
-                <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  :class="getMovementTypeColor(item.movement_type)"
-                >
-                  {{ getMovementTypeLabel(item.movement_type) }}
-                </span>
+                <UiStatusBadge
+                  :value="getMovementTypeLabel(item.movement_type)"
+                  format="text"
+                  :variant="getMovementTypeVariant(item.movement_type)"
+                  size="sm"
+                />
               </div>
             </UiCardHeader>
             <UiCardContent class="space-y-3">
@@ -81,7 +81,7 @@
                   <p class="text-xs text-text-secondary">Cantidad</p>
                   <p
                     class="text-lg font-bold"
-                    :class="item.quantity_change >= 0 ? 'text-green-600' : 'text-red-600'"
+                    :class="item.quantity_change >= 0 ? 'text-success' : 'text-destructive'"
                   >
                     {{ item.quantity_change >= 0 ? '+' : '' }}{{ formatNumber(item.quantity_change) }}
                   </p>
@@ -105,7 +105,7 @@
 
         <!-- Desktop Table Cells -->
         <template #cell-created_at="{ value }">
-          <span class="text-sm text-text-primary">{{ formatDate(value) }}</span>
+          <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
         </template>
 
         <template #cell-ingredient_name="{ value }">
@@ -117,18 +117,18 @@
         </template>
 
         <template #cell-movement_type="{ value }">
-          <span
-            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-            :class="getMovementTypeColor(value)"
-          >
-            {{ getMovementTypeLabel(value) }}
-          </span>
+          <UiStatusBadge
+            :value="getMovementTypeLabel(value)"
+            format="text"
+            :variant="getMovementTypeVariant(value)"
+            size="sm"
+          />
         </template>
 
         <template #cell-quantity_change="{ value }">
           <span
-            class="text-sm font-semibold"
-            :class="value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
+            class="text-sm font-bold"
+            :class="value >= 0 ? 'text-success' : 'text-destructive'"
           >
             {{ value >= 0 ? '+' : '' }}{{ formatNumber(value) }}
           </span>
@@ -362,16 +362,16 @@ const getMovementTypeLabel = (type: string) => {
   return labels[type] || type
 }
 
-const getMovementTypeColor = (type: string) => {
-  const colors = {
-    'purchase': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-    'consumption': 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
-    'adjustment': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
-    'loss': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400',
-    'transfer': 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400',
-    'return': 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400'
+const getMovementTypeVariant = (type: string) => {
+  const variants: Record<string, string> = {
+    purchase: 'success',
+    consumption: 'info',
+    adjustment: 'warning',
+    loss: 'destructive',
+    transfer: 'secondary',
+    return: 'secondary',
   }
-  return colors[type] || 'bg-gray-100 text-gray-800'
+  return variants[type] || 'default'
 }
 
 const formatNumber = (value: number) => {

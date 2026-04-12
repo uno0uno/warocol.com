@@ -77,18 +77,18 @@
         <template #cell-name="{ value, row }">
           <div class="flex items-center">
             <div class="ml-3">
-              <div class="text-sm font-medium text-ebony-800">{{ value }}</div>
-              <div class="text-sm text-titan-600">{{ row.category || 'Sin categoría' }}</div>
+              <div class="text-sm font-medium text-text-primary">{{ value }}</div>
+              <div class="text-xs text-text-secondary">{{ row.category || 'Sin categoría' }}</div>
             </div>
           </div>
         </template>
 
         <template #cell-price="{ value }">
-          <span class="text-sm font-medium text-ebony-800">${{ (value || 0).toLocaleString() }}</span>
+          <span class="text-sm font-bold text-primary">${{ (value || 0).toLocaleString() }}</span>
         </template>
 
         <template #cell-unit="{ value }">
-          <span class="text-sm text-ebony-800">{{ value }}</span>
+          <span class="text-sm text-text-secondary">{{ value }}</span>
         </template>
       </UiResponsiveDataView>
 

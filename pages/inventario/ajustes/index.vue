@@ -92,12 +92,12 @@
                   <h3 class="text-base font-semibold text-text-primary">{{ item.ingredient_name }}</h3>
                   <p class="text-xs text-text-secondary">{{ formatDate(item.created_at) }}</p>
                 </div>
-                <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  :class="item.quantity_change >= 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'"
-                >
-                  {{ item.quantity_change >= 0 ? 'Incremento' : 'Decremento' }}
-                </span>
+                <UiStatusBadge
+                  :value="item.quantity_change >= 0 ? 'Incremento' : 'Decremento'"
+                  format="text"
+                  :variant="item.quantity_change >= 0 ? 'success' : 'destructive'"
+                  size="sm"
+                />
               </div>
             </UiCardHeader>
             <UiCardContent class="space-y-3">
@@ -106,7 +106,7 @@
                   <p class="text-xs text-text-secondary">Cantidad</p>
                   <p
                     class="text-lg font-bold"
-                    :class="item.quantity_change >= 0 ? 'text-green-600' : 'text-red-600'"
+                    :class="item.quantity_change >= 0 ? 'text-success' : 'text-destructive'"
                   >
                     {{ item.quantity_change >= 0 ? '+' : '' }}{{ formatNumber(item.quantity_change) }}
                   </p>
@@ -133,7 +133,7 @@
 
         <!-- Desktop Table Cells -->
         <template #cell-created_at="{ value }">
-          <span class="text-sm text-text-primary">{{ formatDate(value) }}</span>
+          <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
         </template>
 
         <template #cell-ingredient_name="{ value }">
@@ -145,18 +145,18 @@
         </template>
 
         <template #cell-adjustment_type="{ row }">
-          <span
-            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-            :class="row.quantity_change >= 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'"
-          >
-            {{ row.quantity_change >= 0 ? 'Incremento' : 'Decremento' }}
-          </span>
+          <UiStatusBadge
+            :value="row.quantity_change >= 0 ? 'Incremento' : 'Decremento'"
+            format="text"
+            :variant="row.quantity_change >= 0 ? 'success' : 'destructive'"
+            size="sm"
+          />
         </template>
 
         <template #cell-quantity_change="{ value }">
           <span
-            class="text-sm font-semibold"
-            :class="value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
+            class="text-sm font-bold"
+            :class="value >= 0 ? 'text-success' : 'text-destructive'"
           >
             {{ value >= 0 ? '+' : '' }}{{ formatNumber(value) }}
           </span>

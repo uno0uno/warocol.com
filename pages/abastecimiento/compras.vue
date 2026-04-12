@@ -77,7 +77,7 @@
 
         <!-- Desktop Table Cell Customizations -->
         <template #cell-numero="{ value }">
-          <span class="text-sm font-medium text-ebony-800">{{ value }}</span>
+          <span class="text-sm font-bold text-text-primary">{{ value }}</span>
         </template>
 
         <template #cell-invoice_number="{ value }">
@@ -87,21 +87,21 @@
         <template #cell-proveedor="{ value }">
           <div class="flex items-center">
             <div class="ml-3">
-              <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
+              <div class="text-sm font-medium text-text-primary">{{ value }}</div>
             </div>
           </div>
         </template>
 
         <template #cell-fecha="{ value }">
-          <span class="text-sm text-ebony-800">{{ formatDate(value) }}</span>
+          <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
         </template>
 
         <template #cell-valorTotal="{ value }">
-          <span class="text-sm font-medium text-ebony-800">{{ (value || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+          <span class="text-sm font-bold text-primary">{{ (value || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
         </template>
 
         <template #cell-impuestos="{ value }">
-          <span class="text-sm font-medium text-ebony-800">{{ (value || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
+          <span class="text-sm font-bold text-primary">{{ (value || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
         </template>
 
         <template #cell-totalItems="{ value }">
@@ -118,15 +118,15 @@
         </template>
 
         <template #cell-fechaEntrega="{ value }">
-          <div class="text-sm text-ebony-800">
+          <div class="text-sm text-text-secondary">
             <div v-if="value">{{ formatDate(value) }}</div>
-            <div v-else class="text-ebony-800">Sin programar</div>
+            <div v-else>Sin programar</div>
           </div>
         </template>
 
         <template #cell-actions="{ row }">
           <div class="flex justify-center space-x-2">
-            <button @click="editOrder(row)" class="text-crocus-600 hover:text-crocus-900 transition-colors"
+            <button @click="editOrder(row)" class="text-text-secondary hover:text-primary transition-colors"
               title="Editar orden">
               <PencilIcon class="h-4 w-4" />
             </button>

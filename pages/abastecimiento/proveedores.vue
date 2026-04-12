@@ -82,7 +82,7 @@
 
         <!-- Desktop Table Cells -->
         <template #cell-name="{ value }">
-          <span class="text-sm font-bold text-ebony-800">{{ value }}</span>
+          <span class="text-sm font-bold text-text-primary">{{ value }}</span>
         </template>
 
         <template #cell-tax_id="{ value }">
@@ -104,14 +104,14 @@
 
         <template #cell-actions="{ row }">
           <div class="flex justify-center space-x-2">
-            <button @click="copyPortalLink(row)" class="text-blue-600 hover:text-blue-900 transition-colors"
+            <button @click="copyPortalLink(row)" class="text-text-secondary hover:text-primary transition-colors"
               title="Copiar enlace del portal">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
             </button>
-            <button @click="editProveedor(row)" class="text-crocus-600 hover:text-crocus-900 transition-colors"
+            <button @click="editProveedor(row)" class="text-text-secondary hover:text-primary transition-colors"
               title="Editar proveedor">
               <PencilIcon class="h-4 w-4" />
             </button>

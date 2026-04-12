@@ -72,7 +72,7 @@
 
           <!-- Desktop Table Cell Customizations -->
           <template #cell-name="{ value }">
-            <span class="text-sm font-medium text-ebony-800">{{ value }}</span>
+            <span class="text-sm font-medium text-text-primary">{{ value }}</span>
           </template>
 
           <template #cell-category_name="{ value }">
@@ -80,7 +80,7 @@
           </template>
 
           <template #cell-price="{ value }">
-            <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(value) }}</span>
+            <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
           </template>
 
           <template #cell-costo_calculado="{ value }">
@@ -88,7 +88,7 @@
           </template>
 
           <template #cell-margen="{ row }">
-            <span class="text-sm font-semibold text-crocus-600">{{ formatMargin(row) }}</span>
+            <span class="text-sm text-text-secondary">{{ formatMargin(row) }}</span>
           </template>
 
           <template #cell-is_available="{ value }">

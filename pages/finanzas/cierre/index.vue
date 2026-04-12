@@ -101,13 +101,13 @@
           <span class="text-sm text-text-secondary">{{ formatDay(row.periodEnd) }}</span>
         </template>
         <template #cell-totalSales="{ value }">
-          <span class="text-sm font-medium text-text-primary">{{ formatCurrency(value) }}</span>
+          <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
         </template>
         <template #cell-gastosEfectivo="{ value }">
           <span class="text-sm text-destructive">{{ formatCurrency(value) }}</span>
         </template>
         <template #cell-cashDifference="{ value }">
-          <span class="text-sm font-semibold" :class="value >= 0 ? 'text-emerald-600' : 'text-destructive'">
+          <span class="text-sm font-semibold" :class="value >= 0 ? 'text-success' : 'text-destructive'">
             {{ value >= 0 ? '+' : '' }}{{ formatCurrency(value) }}
           </span>
         </template>

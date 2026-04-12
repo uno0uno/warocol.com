@@ -88,19 +88,19 @@
 
         <!-- Desktop Table Cell Customizations -->
         <template #cell-purchase_number="{ value }">
-          <span class="text-sm font-medium text-ebony-800">{{ value }}</span>
+          <span class="text-sm font-bold text-text-primary">{{ value }}</span>
         </template>
 
         <template #cell-supplier_name="{ value }">
-          <span class="text-sm font-bold text-ebony-800">{{ value || 'Sin proveedor' }}</span>
+          <span class="text-sm font-medium text-text-primary">{{ value || 'Sin proveedor' }}</span>
         </template>
 
         <template #cell-purchase_date="{ value }">
-          <span class="text-sm text-ebony-800">{{ formatDate(value) }}</span>
+          <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
         </template>
 
         <template #cell-total_amount="{ value }">
-          <span class="text-sm font-medium text-ebony-800">${{ formatCurrency(value) }}</span>
+          <span class="text-sm font-bold text-primary">${{ formatCurrency(value) }}</span>
         </template>
 
         <template #cell-items_count="{ value }">
@@ -111,7 +111,7 @@
           <UiStatusBadge
             :value="getStatusText(value)"
             format="text"
-            :class="['border-0', getStatusClass(value)]"
+            :variant="value === 'paid' ? 'success' : value === 'invoiced' ? 'warning' : 'info'"
             size="sm"
           />
         </template>
@@ -122,7 +122,7 @@
 
         <template #cell-actions="{ row }">
           <div class="flex justify-center space-x-2">
-            <button @click="viewPurchase(row)" class="text-crocus-600 hover:text-crocus-900 transition-colors"
+            <button @click="viewPurchase(row)" class="text-text-secondary hover:text-primary transition-colors"
               title="Ver detalle">
               <EyeIcon class="h-4 w-4" />
             </button>

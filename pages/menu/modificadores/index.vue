@@ -37,7 +37,7 @@
       <template #cell-name="{ value }">
         <div class="flex items-center">
           <div class="ml-2">
-            <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
+            <div class="text-sm font-bold text-text-primary">{{ value }}</div>
           </div>
         </div>
       </template>
@@ -106,7 +106,7 @@
         <div class="flex justify-center">
           <button
             @click="goToEditGroup(row.id)"
-            class="text-crocus-600 hover:text-crocus-900 transition-colors"
+            class="text-text-secondary hover:text-primary transition-colors"
             title="Editar grupo"
           >
             <Icon name="heroicons:pencil-square" class="h-4 w-4" />

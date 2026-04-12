@@ -93,7 +93,7 @@
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
               <p
                 class="text-sm font-bold tabular-nums"
-                :class="item.quantity_change >= 0 ? 'text-emerald-600' : 'text-red-600'"
+                :class="item.quantity_change >= 0 ? 'text-success' : 'text-destructive'"
               >
                 {{ item.quantity_change >= 0 ? '+' : '' }}{{ formatNumber(item.quantity_change) }}
               </p>
@@ -121,18 +121,18 @@
         </template>
 
         <template #cell-adjustment_type="{ row }">
-          <span
-            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-            :class="row.quantity_change >= 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'"
-          >
-            {{ row.quantity_change >= 0 ? 'Incremento' : 'Decremento' }}
-          </span>
+          <UiStatusBadge
+            :value="row.quantity_change >= 0 ? 'Incremento' : 'Decremento'"
+            format="text"
+            :variant="row.quantity_change >= 0 ? 'success' : 'destructive'"
+            size="sm"
+          />
         </template>
 
         <template #cell-quantity_change="{ value }">
           <span
-            class="text-sm font-semibold"
-            :class="value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
+            class="text-sm font-bold"
+            :class="value >= 0 ? 'text-success' : 'text-destructive'"
           >
             {{ value >= 0 ? '+' : '' }}{{ formatNumber(value) }}
           </span>

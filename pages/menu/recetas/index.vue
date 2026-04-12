@@ -40,20 +40,20 @@
           <template #cell-producto_name="{ value }">
             <div class="flex items-center">
               <div class="ml-2">
-                <div class="text-sm font-bold text-ebony-800">{{ value }}</div>
+                <div class="text-sm font-bold text-text-primary">{{ value }}</div>
               </div>
             </div>
           </template>
 
           <template #cell-ingredientes_count="{ row }">
             <div class="flex justify-center">
-              <span class="text-sm font-semibold text-text-primary">{{ row.ingredientes.length }}</span>
+              <span class="text-sm font-bold text-text-primary">{{ row.ingredientes.length }}</span>
             </div>
           </template>
 
           <template #cell-costo_total="{ row }">
             <div class="flex justify-end">
-              <span class="text-sm text-text-primary">{{ formatCurrency(row.costo_total) }}</span>
+              <span class="text-sm font-bold text-primary">{{ formatCurrency(row.costo_total) }}</span>
             </div>
           </template>
 
@@ -71,7 +71,7 @@
           <template #cell-actions="{ row }">
             <div class="flex justify-center">
               <button
-                class="text-crocus-600 hover:text-crocus-900 transition-colors"
+                class="text-text-secondary hover:text-primary transition-colors"
                 title="Editar receta"
                 @click="$router.push(`/menu/recetas/${row.id}`)"
               >
