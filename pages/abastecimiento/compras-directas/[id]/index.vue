@@ -564,6 +564,7 @@
 import { format as fnsFormat } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { computed } from 'vue'
+import { useQuery } from '@pinia/colada'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
@@ -605,11 +606,16 @@ const newItem = ref({
 })
 
 // Fetch purchase
-const { data: purchaseResponse, pending: isLoading, error: fetchError, refresh } = useFetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
-  server: false
+const { data: purchaseResponse, asyncStatus, error: fetchError, refetch } = useQuery({
+  key: () => ['purchase-direct', purchaseId],
+  query: () => $fetch(`/api/suppliers/purchases/direct/${purchaseId}`),
+  staleTime: 30_000,
 })
 
 const purchase = computed(() => (purchaseResponse.value as any)?.data || null)
+const isLoading = computed(() => !purchaseResponse.value && !fetchError.value)
+const isRefreshing = computed(() => asyncStatus.value === 'loading' && purchaseResponse.value != null)
+const refresh = refetch
 
 // Fetch ingredients for add item modal
 const { data: ingredientsData } = useFetch('/api/suppliers/ingredients', {
@@ -953,7 +959,8 @@ const getAttachmentTypeLabel = (type: string) => {
   return typeMap[type] || type
 }
 
-const { setRefreshHandler, clearRefreshHandler } = useLayoutActions()
-onMounted(() => { setRefreshHandler(refresh) })
-onUnmounted(() => { clearRefreshHandler(refresh) })
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+onMounted(() => { setRefreshHandler(refetch) })
+registerProgressiveLoading(isRefreshing)
+onUnmounted(() => { clearRefreshHandler(refetch) })
 </script>

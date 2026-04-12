@@ -653,6 +653,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useQuery } from '@pinia/colada'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 
@@ -697,25 +698,25 @@ const categories = computed(() => {
 })
 
 // Fetch expense data
-const { data: expenseData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
-  `expense-${expenseId}`,
-  () => $fetch(`/api/finance/expenses/${expenseId}`),
-  {
-    server: false
-  }
-)
+const { data: expenseData, asyncStatus, error: fetchError, refetch } = useQuery({
+  key: () => ['expense', expenseId],
+  query: () => $fetch(`/api/finance/expenses/${expenseId}`),
+  staleTime: 30_000,
+})
 
-const expense = computed(() => expenseData.value?.data)
+const expense = computed(() => (expenseData.value as any)?.data)
+const isLoading = computed(() => !expenseData.value && !fetchError.value)
+const isRefreshing = computed(() => asyncStatus.value === 'loading' && expenseData.value != null)
 
 useHead({
   title: expense.value ? `Gasto - ${expense.value.description}` : 'Detalle del Gasto'
 })
 
-// Set refresh handler for layout
-const { setRefreshHandler } = useLayoutActions()
-onMounted(() => {
-  setRefreshHandler(refresh)
-})
+// Layout actions
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+onMounted(() => { setRefreshHandler(refetch) })
+registerProgressiveLoading(isRefreshing)
+onUnmounted(() => { clearRefreshHandler(refetch) })
 
 // Form state
 const form = reactive({
@@ -841,7 +842,7 @@ const handleSubmit = async () => {
     }
 
     // Success - refresh data and exit edit mode
-    await refresh()
+    await refetch()
     isEditing.value = false
     attachmentsToRemove.value = []
     selectedFiles.value = []
