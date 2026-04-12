@@ -41,6 +41,7 @@
 
       <!-- Responsive Data View -->
       <UiResponsiveDataView
+        row-size="sm"
         :columns="preciosTableColumns"
         :data="ingredients"
         title="Lista de Precios"

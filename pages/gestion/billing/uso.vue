@@ -56,6 +56,7 @@ const formatMonth = (yearMonth: string) =>
     </div>
 
     <UiResponsiveDataView
+      row-size="sm"
       v-else
       :columns="columns"
       :data="tableData"

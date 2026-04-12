@@ -39,6 +39,7 @@
           </NuxtLink>
         </template>
       <UiResponsiveDataView
+        row-size="sm"
         :columns="ordenesTableColumns"
         :data="sortedOrdenes"
         :sort-field="sortField"

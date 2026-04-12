@@ -376,6 +376,7 @@ watch(() => currentTenant.value?.id, loadAll)
       <!-- Historial de pagos agrupado por mes -->
       <!-- Historial de pagos -->
       <UiResponsiveDataView
+        row-size="sm"
         v-if="eventsTotal > 0"
         :columns="columns"
         :data="events"

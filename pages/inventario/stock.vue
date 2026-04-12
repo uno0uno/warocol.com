@@ -77,6 +77,7 @@
 
       <!-- Responsive Data View -->
       <UiResponsiveDataView
+        row-size="sm"
         :columns="stockTableColumns"
         :data="filteredInventory"
         :sort-field="sortField"

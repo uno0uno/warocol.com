@@ -89,6 +89,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
     <!-- Main Content -->
     <div v-else>
       <UiResponsiveDataView
+        row-size="sm"
         :columns="columns"
         :data="orders"
         :sort-field="sortField"

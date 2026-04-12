@@ -103,6 +103,7 @@
 
       <!-- Invoices Table/Cards -->
       <UiResponsiveDataView
+        row-size="sm"
         :columns="invoicesTableColumns"
         :data="filteredInvoices"
         title="Mis Facturas y Remisiones"

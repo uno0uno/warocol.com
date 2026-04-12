@@ -51,6 +51,7 @@
 
       <!-- Table -->
       <UiResponsiveDataView
+        row-size="sm"
         :columns="tableColumns"
         :data="filteredBases"
         title="Catálogo Global de Ingredientes"

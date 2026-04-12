@@ -265,6 +265,7 @@ onUnmounted(() => {
 
       <HealthSemaphore :is-unlocked="true" title="Comportamiento y valor de clientes">
         <UiResponsiveDataView
+          row-size="sm"
           :columns="tableColumns"
           :data="customers"
           empty-message="No hay clientes para mostrar"

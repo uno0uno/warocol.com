@@ -41,6 +41,7 @@
 
       <!-- Table -->
       <UiResponsiveDataView
+        row-size="sm"
         :columns="columns"
         :data="filteredOrders"
         :item-key="'order_id'"

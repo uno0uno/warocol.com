@@ -72,6 +72,7 @@
 
       <!-- Responsive Data View -->
       <UiResponsiveDataView
+        row-size="sm"
         :columns="adjustmentsTableColumns"
         :data="sortedAdjustments"
         :sort-field="sortField"

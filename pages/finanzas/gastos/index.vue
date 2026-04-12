@@ -208,6 +208,7 @@ onUnmounted(() => { clearRefreshHandler(refetch)
 
       <!-- Responsive Data View -->
       <UiResponsiveDataView
+        row-size="sm"
         :columns="expensesTableColumns"
         :data="expenses"
         empty-message="No hay gastos registrados"

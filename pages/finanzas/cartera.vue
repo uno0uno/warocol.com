@@ -261,6 +261,7 @@ onUnmounted(() => {
 
       <!-- Debtors Table -->
       <UiResponsiveDataView
+        row-size="sm"
         :columns="tableColumns"
         :data="customers"
         empty-message="Sin deudas pendientes"

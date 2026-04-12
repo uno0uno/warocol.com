@@ -47,6 +47,7 @@
 
       <!-- Responsive Data View -->
       <UiResponsiveDataView
+        row-size="sm"
         :columns="movementsTableColumns"
         :data="sortedMovements"
         :sort-field="sortField"

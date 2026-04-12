@@ -20,6 +20,7 @@
     <!-- Portal Content -->
     <div v-else class="w-full">
       <UiResponsiveDataView
+        row-size="sm"
         :columns="purchasesTableColumns"
         :data="formattedPurchases"
         title="Mis Órdenes de Compra"

@@ -222,6 +222,7 @@ onUnmounted(() => {
 
       <!-- Table -->
       <UiResponsiveDataView
+        row-size="sm"
         v-else
         :columns="tableColumns"
         :data="products"

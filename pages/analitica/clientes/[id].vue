@@ -540,6 +540,7 @@ onUnmounted(() => {
         </div>
         <!-- Credit orders list -->
         <UiResponsiveDataView
+          row-size="sm"
           :columns="[
             { key: 'order_number', title: '# Orden', sortable: false },
             { key: 'date', title: 'Fecha', sortable: false },
@@ -638,6 +639,7 @@ onUnmounted(() => {
 
       <!-- Order History Table -->
       <UiResponsiveDataView
+        row-size="sm"
         :columns="tableColumns"
         :data="orders"
         title="Historial de pedidos"
