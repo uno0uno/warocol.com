@@ -182,6 +182,7 @@ Haz clic en **+ Nuevo ingrediente**. Se abre un panel lateral con el formulario:
 | Campo | Obligatorio | Notas |
 |-------|:-----------:|-------|
 | Nombre | Sí | Ej: `Carne Angus especial`. Nombre interno, no lo ven tus clientes. |
+| Tipo de ingrediente | Sí | **Solo se define al crear**. Elige: Alimento, Suministro o Servicio. Cuando creas el ingrediente desde otra sección (ej: Compras Directas), este campo se pre-llena según el contexto. |
 | Tipo de medida | Sí | **Solo se define al crear** — no se puede cambiar después. Elige: Peso (gr/kg), Volumen (ml/lt) o Pieza (und). |
 | Categoría | Sí | Agrupa el ingrediente. Ej: `Carnes`, `Salsas`, `Lácteos`. |
 | Es reventa | No | Actívalo si este ingrediente se vende directamente sin preparación (ej: una botella). |

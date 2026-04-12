@@ -87,6 +87,29 @@ Dentro de una sesión de mesa, usa el botón **Cambiar mesa** en el carrito para
 
 ---
 
+## Recibos y comprobantes
+
+Cuando confirmas el pago aparece una pantalla de éxito con dos opciones para entregar el comprobante al cliente.
+
+### Enviar recibo por correo
+
+Si el cliente tiene correo electrónico registrado, el campo se pre-llena automáticamente. Si no, el cajero puede escribirlo en el momento.
+
+Haz clic en **Enviar** para que el sistema despache el recibo al instante. El recibo incluye:
+
+- Nombre del restaurante y datos de contacto
+- Número de orden
+- Productos comprados con cantidades y precios
+- Total y método de pago
+
+El botón cambia a **Enviado** cuando el correo fue despachado correctamente.
+
+### Imprimir comprobante
+
+Haz clic en **Imprimir comprobante** para abrir el diálogo de impresión del navegador. El formato está optimizado para impresoras térmicas de 58 mm.
+
+---
+
 ## Preguntas frecuentes
 
 **¿Puedo hacer una venta si un producto no tiene receta?**

@@ -62,7 +62,27 @@ Ve a **Analítica → Clientes** para ver:
 - Cuánto gastan en promedio
 - Qué productos prefieren
 
-Puedes hacer clic en un cliente para ver su historial individual.
+### Ver el perfil de un cliente
+
+Haz clic en cualquier cliente de la lista para abrir su perfil. Verás:
+
+- Nombre, teléfono y correo electrónico registrados
+- Total comprado (monto acumulado)
+- Fecha de primera y última compra
+- Saldo de puntos Waros
+- Historial completo de órdenes con fecha, productos, total y método de pago
+
+Puedes filtrar el historial de órdenes por rango de fechas.
+
+### Editar datos del cliente
+
+En la parte superior del perfil hay un botón de editar (ícono de lápiz) junto al total comprado. Al hacer clic se abre un formulario inline donde puedes actualizar:
+
+- Nombre
+- Teléfono
+- Correo electrónico
+
+Haz clic en **Guardar** para aplicar los cambios o en **Cancelar** para cerrar sin modificar nada.
 
 ---
 

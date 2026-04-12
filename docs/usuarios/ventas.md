@@ -14,7 +14,7 @@ Ve a **Ventas** en el menú lateral.
 |--------|----------|
 | Búsqueda | Número de orden, nombre o teléfono del cliente |
 | Rango de fechas | Hoy · Ayer · Última semana · 15 días · 30 días · 90 días |
-| Método de pago | Efectivo · Tarjeta · Digital |
+| Método de pago | Selecciona un grupo (ej: Tarjeta) o un método específico dentro del grupo (ej: Visa) |
 | Estado | Completada · Cancelada · Pendiente |
 
 ### Estados de una orden
