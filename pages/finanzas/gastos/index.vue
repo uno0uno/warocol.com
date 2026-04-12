@@ -76,6 +76,7 @@ const { formatDateTime: formatDate } = useFormatters()
 
 // Table columns
 const expensesTableColumns = [
+  { key: 'expenseNumber', title: 'Número', sortable: false },
   { key: 'transactionDate', title: 'Fecha', sortable: true },
   { key: 'category', title: 'Categoría', sortable: false },
   { key: 'isRecurring', title: 'Recurrente', sortable: false },
@@ -227,6 +228,7 @@ onUnmounted(() => { clearRefreshHandler(refetch)
           >
             <div class="flex justify-between items-start mb-3">
               <div>
+                <p class="text-xs font-mono text-text-secondary">{{ item.expenseNumber || '—' }}</p>
                 <p class="text-sm text-text-secondary">{{ formatDate(item.transactionDate) }}</p>
                 <div class="flex items-center gap-2 mt-1">
                   <p class="text-sm font-medium text-text-primary">{{ item.category?.categoryName || 'Sin categoría' }}</p>
@@ -261,6 +263,10 @@ onUnmounted(() => { clearRefreshHandler(refetch)
         </template>
 
         <!-- Desktop Table Cells -->
+        <template #cell-expenseNumber="{ value }">
+          <span class="text-xs font-mono text-text-secondary">{{ value || '—' }}</span>
+        </template>
+
         <template #cell-transactionDate="{ value }">
           <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
         </template>

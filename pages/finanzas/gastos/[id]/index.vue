@@ -46,6 +46,23 @@
       <div class="bg-surface border-2 border-border rounded-lg mb-6">
         <div class="p-6">
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-8 gap-x-6">
+            <!-- Expense Number -->
+            <div v-if="expense.expenseNumber" class="flex items-start space-x-3">
+              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                </svg>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                  Número
+                </p>
+                <p class="text-lg font-mono font-semibold text-text-primary">
+                  {{ expense.expenseNumber }}
+                </p>
+              </div>
+            </div>
+
             <!-- Expense Category -->
             <div class="flex items-start space-x-3">
               <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
