@@ -45,7 +45,7 @@
       <!-- Header Card -->
       <div class="bg-surface border-2 border-border rounded-lg mb-6">
         <div class="p-6">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-y-12 gap-x-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-8 gap-x-6">
             <!-- Expense Category -->
             <div class="flex items-start space-x-3">
               <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
@@ -93,6 +93,23 @@
                 </p>
                 <p class="text-lg font-semibold text-primary">
                   {{ formatCurrency(expense.amount) }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="flex items-start space-x-3">
+              <div class="bg-background p-3 rounded-lg border border-border flex-shrink-0">
+                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+                  Método de Pago
+                </p>
+                <p class="text-lg font-semibold text-text-primary">
+                  {{ resolvePaymentLabel(expense.paymentMethod, expense.paymentMethodId) }}
                 </p>
               </div>
             </div>
@@ -158,15 +175,6 @@
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                             </svg>
                             <span class="text-text-primary font-semibold text-xs">{{ expense.category?.categoryName || 'Sin categoría' }}</span>
-                          </div>
-                        </div>
-                        <!-- Payment Method -->
-                        <div v-if="expense.paymentMethod" class="flex flex-col gap-0.5">
-                          <div class="flex items-center gap-1">
-                            <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                            <span class="text-text-primary font-semibold text-xs">{{ resolvePaymentLabel(expense.paymentMethod, expense.paymentMethodId) }}</span>
                           </div>
                         </div>
                       </div>
@@ -243,16 +251,6 @@
                       </td>
                       <td class="px-4 py-3 text-sm text-text-primary">
                         <span class="font-bold text-primary text-lg">{{ formatCurrency(expense.amount) }}</span>
-                      </td>
-                    </tr>
-
-                    <!-- Payment Method Row -->
-                    <tr v-if="expense.paymentMethod" class="hover:bg-surface-secondary/50 transition-colors">
-                      <td class="px-4 py-3 text-sm font-medium text-text-secondary">
-                        Método de Pago
-                      </td>
-                      <td class="px-4 py-3 text-sm text-text-primary">
-                        <span class="font-medium">{{ resolvePaymentLabel(expense.paymentMethod, expense.paymentMethodId) }}</span>
                       </td>
                     </tr>
 
