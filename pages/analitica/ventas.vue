@@ -212,7 +212,8 @@ const metrics = computed(() => {
       total_sales: data.total_sales ?? 0,
       avg_ticket: data.avg_ticket ?? 0,
       completed_orders: data.completed_orders ?? 0,
-      commission_savings: dashboardData.value?.data?.commission_savings ?? 0,
+      discount_count: data.discount_count ?? 0,
+      total_discount_amount: data.total_discount_amount ?? 0,
     }
   }
   const main = dashboardData.value?.data?.main || {}
@@ -220,7 +221,8 @@ const metrics = computed(() => {
     total_sales: main.total_sales ?? 0,
     avg_ticket: main.avg_ticket ?? 0,
     completed_orders: main.completed_orders ?? 0,
-    commission_savings: dashboardData.value?.data?.commission_savings ?? 0,
+    discount_count: main.discount_count ?? 0,
+    total_discount_amount: main.total_discount_amount ?? 0,
   }
 })
 
@@ -279,7 +281,7 @@ const formatCurrency = (value: number) =>
           <MetricCard title="Ventas Brutas" :value="metrics.total_sales" format="currency" variant="primary" />
           <MetricCard title="Pedidos Online" :value="metrics.completed_orders" format="number" variant="primary" />
           <MetricCard title="Ticket Promedio" :value="metrics.avg_ticket" format="currency" variant="primary" />
-          <MetricCard title="Ahorro Comisiones" :value="metrics.commission_savings" format="currency" variant="primary" subtitle="Pedidos directos vs App" />
+          <MetricCard title="Órdenes con Descuento" :value="metrics.discount_count" format="number" variant="primary" :subtitle="metrics.total_discount_amount > 0 ? formatCurrency(metrics.total_discount_amount) + ' descontado' : 'Sin descuentos'" />
           <MetricCard :title="forecastLabel" :value="forecast" format="currency" variant="primary" :subtitle="forecastSubtitle" class="col-span-2 md:col-span-1" />
         </div>
 
