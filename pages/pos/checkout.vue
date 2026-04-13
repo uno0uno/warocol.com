@@ -585,7 +585,7 @@ onUnmounted(() => {
                 type="button"
                 @click="discountType = 'percent'; discountInput = ''"
                 class="flex-1 min-h-[44px] text-sm font-semibold transition-colors"
-                :class="discountType === 'percent' ? 'bg-primary text-primary-foreground' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
+                :class="discountType === 'percent' ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
               >
                 %
               </button>
@@ -593,7 +593,7 @@ onUnmounted(() => {
                 type="button"
                 @click="discountType = 'fixed'; discountInput = ''"
                 class="flex-1 min-h-[44px] text-sm font-semibold transition-colors border-l border-border"
-                :class="discountType === 'fixed' ? 'bg-primary text-primary-foreground' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
+                :class="discountType === 'fixed' ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
               >
                 $ Fijo
               </button>
