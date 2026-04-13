@@ -174,6 +174,21 @@ const totals = computed(() => {
         </div>
       </template>
 
+      <template #header-total_revenue>
+        <div class="flex items-center justify-end gap-1">
+          <span>Ingresos</span>
+          <span
+            class="text-text-secondary cursor-default"
+            title="Los ingresos reflejan el precio neto después de descuentos aplicados"
+            aria-label="Los ingresos reflejan el precio neto después de descuentos aplicados"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+          </span>
+        </div>
+      </template>
+
       <template #cell-total_revenue="{ value }">
         <div class="text-right font-semibold text-text-primary">{{ value ? formatCurrency(value) : '—' }}</div>
       </template>
