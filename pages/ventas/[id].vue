@@ -352,11 +352,6 @@ onUnmounted(() => {
           <p class="text-2xl font-bold text-primary">
             {{ isEditMode && hasChanges ? formatCurrency(adjustedTotal) : formatCurrency(order.total_amount) }}
           </p>
-          <p v-if="order.discount_amount > 0 && !isEditMode" class="text-xs text-destructive mt-1">
-            Descuento
-            <span v-if="order.discount_type === 'percent' && order.discount_value">{{ order.discount_value }}%</span>:
-            -{{ formatCurrency(order.discount_amount) }}
-          </p>
           <p v-if="isEditMode && hasChanges" class="text-xs text-text-tertiary line-through">
             {{ formatCurrency(order.total_amount) }}
           </p>
@@ -620,35 +615,12 @@ onUnmounted(() => {
               </template>
             </tbody>
             <tfoot class="bg-surface-secondary border-t-2 border-border">
-              <!-- Subtotal row — only when there's a discount -->
-              <tr v-if="order.discount_amount > 0">
-                <td v-if="isEditMode"></td>
-                <td colspan="3" class="px-6 py-2 text-right text-sm text-text-secondary">
-                  Subtotal:
-                </td>
-                <td class="px-6 py-2 text-right">
-                  <span class="text-sm text-text-secondary">{{ formatCurrency(grossSubtotal) }}</span>
-                </td>
-              </tr>
-              <!-- Discount row -->
-              <tr v-if="order.discount_amount > 0">
-                <td v-if="isEditMode"></td>
-                <td colspan="3" class="px-6 py-2 text-right text-sm text-destructive">
-                  Descuento
-                  <span v-if="order.discount_type === 'percent' && order.discount_value" class="font-semibold">({{ order.discount_value }}%)</span>
-                  <span v-else-if="order.discount_type === 'fixed'" class="font-semibold">(fijo)</span>:
-                </td>
-                <td class="px-6 py-2 text-right">
-                  <span class="text-sm font-semibold text-destructive">-{{ formatCurrency(order.discount_amount) }}</span>
-                </td>
-              </tr>
-              <!-- Total row -->
               <tr>
                 <td v-if="isEditMode"></td>
-                <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary" :class="order.discount_amount > 0 ? 'border-t border-border' : ''">
+                <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary">
                   Total de la Orden:
                 </td>
-                <td class="px-6 py-4 text-right" :class="order.discount_amount > 0 ? 'border-t border-border' : ''">
+                <td class="px-6 py-4 text-right">
                   <span class="text-xl font-bold text-primary">
                     {{ isEditMode && hasChanges ? formatCurrency(adjustedTotal) : formatCurrency(order.total_amount) }}
                   </span>
@@ -656,6 +628,29 @@ onUnmounted(() => {
               </tr>
             </tfoot>
           </table>
+
+          <!-- Discount summary — only shown when a discount was applied -->
+          <div v-if="order.discount_amount > 0" class="flex justify-end px-6 py-4 border-t border-border">
+            <div class="flex flex-col gap-2 min-w-[220px]">
+              <div class="flex items-center justify-between gap-10">
+                <span class="text-sm text-text-secondary">Subtotal</span>
+                <span class="text-sm text-text-secondary tabular-nums">{{ formatCurrency(grossSubtotal) }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-10">
+                <span class="flex items-center gap-1.5 text-sm text-destructive">
+                  Descuento
+                  <span class="text-xs font-bold bg-destructive/10 text-destructive rounded-full px-1.5 py-0.5 leading-tight">
+                    {{ order.discount_type === 'percent' ? `${order.discount_value}%` : 'Fijo' }}
+                  </span>
+                </span>
+                <span class="text-sm font-semibold text-destructive tabular-nums">-{{ formatCurrency(order.discount_amount) }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-10 pt-2 border-t border-border">
+                <span class="text-sm font-bold text-text-primary">Total</span>
+                <span class="text-base font-bold text-primary tabular-nums">{{ formatCurrency(order.total_amount) }}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Empty State -->

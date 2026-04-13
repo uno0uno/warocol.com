@@ -700,8 +700,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
         <template #cell-discount_amount="{ value }">
-          <span v-if="value > 0" class="text-sm font-medium text-destructive">-{{ formatCurrency(value) }}</span>
-          <span v-else class="text-sm text-text-secondary">—</span>
+          <span v-if="value > 0" class="text-sm font-medium text-destructive tabular-nums">-{{ formatCurrency(value) }}</span>
         </template>
 
         <template #cell-total_amount="{ value }">
