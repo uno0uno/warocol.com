@@ -43,9 +43,14 @@ const processingError = ref('')
 const isSyncingCart = ref(false)
 const syncError = ref('')
 
+// Discount state
+const discountEnabled = ref(false)
+const discountType = ref<'percent' | 'fixed'>('percent')
+const discountInput = ref('')
+
 // Success modal state
 const showSuccessModal = ref(false)
-const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string } | null>(null)
+const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string; discount_amount?: number; subtotal?: number } | null>(null)
 const wasMesaMode = ref(false)
 const receiptEmail = ref('')
 const emailSent = ref(false)
@@ -81,6 +86,14 @@ const cartTotal = computed(() => {
   if (isMesaMode.value) return posStore.activeTableSession?.runningTotal ?? 0
   return posStore.cartTotal
 })
+const discountAmount = computed(() => {
+  if (!discountEnabled.value || !discountInput.value) return 0
+  const val = Number(discountInput.value)
+  if (isNaN(val) || val <= 0) return 0
+  if (discountType.value === 'percent') return Math.min(Math.round(cartTotal.value * val / 100), Math.round(cartTotal.value))
+  return Math.min(Math.round(val), Math.round(cartTotal.value))
+})
+const discountedTotal = computed(() => cartTotal.value - discountAmount.value)
 
 // Waros
 const { summary: warosSummary, isLoadingSummary: isLoadingWaros, fetchSummary: fetchWarosSummary, resetSummary } = useWarosCliente()
@@ -91,7 +104,7 @@ const isAnonymousCustomer = computed(() => selectedCustomer.value?.phone_number 
 
 let estimateTimer: ReturnType<typeof setTimeout> | null = null
 
-watch(cartTotal, (total) => {
+watch(discountedTotal, (total) => {
   if (!selectedCustomer.value || isAnonymousCustomer.value) return
   if (total <= 0) return
   if (estimateTimer) clearTimeout(estimateTimer)
@@ -170,6 +183,9 @@ const processOrder = async () => {
     try {
       isProcessing.value = true
       processingError.value = ''
+      const _discountAmt = discountAmount.value
+      const _subtotal = cartTotal.value
+      const _discountedTotal = discountedTotal.value
       await $fetch(`/api/tables/${session.tableId}/close`, {
         method: 'POST',
         body: {
@@ -179,12 +195,18 @@ const processOrder = async () => {
           ...(selectedGroup.value?.triggersCartera && creditDueDate.value
             ? { credit_due_date: creditDueDate.value }
             : {}),
+          ...(discountEnabled.value && _discountAmt > 0
+            ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
+            : {}),
         },
       })
       orderResult.value = {
         order_number: 0,
-        total_amount: session.runningTotal,
-        payment_method: selectedPaymentMethod.value
+        total_amount: _discountedTotal,
+        payment_method: selectedPaymentMethod.value,
+        ...(discountEnabled.value && _discountAmt > 0
+          ? { discount_amount: _discountAmt, subtotal: _subtotal }
+          : {})
       }
       wasMesaMode.value = true
       cartItemsSnapshot.value = [...cartItems.value]
@@ -219,6 +241,8 @@ const processOrder = async () => {
     const preEmail = selectedCustomer.value?.email ?? ''
     const emailForReceipt = preEmail && !preEmail.endsWith('@customer.temp') ? preEmail : undefined
 
+    const _discountAmtPos = discountAmount.value
+    const _subtotalPos = cartTotal.value
     const response = await $fetch(`/api/pos/cart/${posStore.cartId}/complete`, {
       method: 'POST',
       body: {
@@ -229,6 +253,9 @@ const processOrder = async () => {
           ? { credit_due_date: creditDueDate.value }
           : {}),
         ...(emailForReceipt ? { receipt_email: emailForReceipt } : {}),
+        ...(discountEnabled.value && _discountAmtPos > 0
+          ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
+          : {}),
       }
     }) as {
       success: boolean
@@ -252,6 +279,9 @@ const processOrder = async () => {
         payment_method: response.data.payment_method,
         payment_method_name: subMethodName,
         customer_id: selectedCustomer.value?.id,
+        ...(discountEnabled.value && _discountAmtPos > 0
+          ? { discount_amount: _discountAmtPos, subtotal: _subtotalPos }
+          : {})
       }
       cartItemsSnapshot.value = [...cartItems.value]
       receiptEmail.value = emailForReceipt ?? ''
@@ -518,6 +548,73 @@ onUnmounted(() => {
                 <!-- Notes -->
                 <p v-if="item.notes" class="text-xs text-text-tertiary italic mt-0.5">{{ item.notes }}</p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Descuento -->
+        <div class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
+          <!-- Header with toggle -->
+          <div class="flex items-center justify-between">
+            <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
+              <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185ZM9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008h-.008V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+              </svg>
+              Descuento
+            </h2>
+            <button
+              type="button"
+              role="switch"
+              :aria-checked="discountEnabled"
+              @click="discountEnabled = !discountEnabled"
+              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              :class="discountEnabled ? 'bg-primary' : 'bg-border'"
+            >
+              <span
+                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition duration-200"
+                :class="discountEnabled ? 'translate-x-5' : 'translate-x-0'"
+              />
+            </button>
+          </div>
+
+          <!-- Discount inputs — revealed when enabled -->
+          <div v-if="discountEnabled" class="mt-4 space-y-3">
+            <!-- Type pill toggle -->
+            <div class="flex rounded-xl border border-border overflow-hidden">
+              <button
+                type="button"
+                @click="discountType = 'percent'; discountInput = ''"
+                class="flex-1 min-h-[44px] text-sm font-semibold transition-colors"
+                :class="discountType === 'percent' ? 'bg-primary text-primary-foreground' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
+              >
+                %
+              </button>
+              <button
+                type="button"
+                @click="discountType = 'fixed'; discountInput = ''"
+                class="flex-1 min-h-[44px] text-sm font-semibold transition-colors border-l border-border"
+                :class="discountType === 'fixed' ? 'bg-primary text-primary-foreground' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
+              >
+                $ Fijo
+              </button>
+            </div>
+
+            <!-- Value input -->
+            <div class="relative">
+              <input
+                v-model="discountInput"
+                type="number"
+                :min="0"
+                :max="discountType === 'percent' ? 100 : cartTotal"
+                :placeholder="discountType === 'percent' ? 'Ej: 10 (10%)' : 'Ej: 5000'"
+                class="w-full min-h-[44px] px-4 py-2.5 rounded-xl border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            <!-- Live preview -->
+            <div v-if="discountAmount > 0" class="flex items-center justify-between px-4 py-2.5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+              <span class="text-sm font-medium text-green-700 dark:text-green-400">Descuento aplicado</span>
+              <span class="text-sm font-bold text-green-700 dark:text-green-400">-{{ formatCurrency(discountAmount) }}</span>
             </div>
           </div>
         </div>
@@ -864,16 +961,16 @@ onUnmounted(() => {
                 <span>Impuestos (0%)</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(0) }}</span>
               </div>
-              <div class="flex justify-between text-sm text-green-600">
+              <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-green-600 dark:text-green-400">
                 <span>Descuento</span>
-                <span class="font-medium">- {{ formatCurrency(0) }}</span>
+                <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
               </div>
             </div>
 
             <div class="border-t border-dashed border-border pt-4">
               <div class="flex justify-between items-end mb-1">
                 <span class="text-text-secondary font-medium">Total a Pagar</span>
-                <span class="text-3xl font-bold text-primary">{{ formatCurrency(cartTotal) }}</span>
+                <span class="text-3xl font-bold text-primary">{{ formatCurrency(discountedTotal) }}</span>
               </div>
               <p class="text-right text-xs text-text-tertiary">COP</p>
             </div>
@@ -1037,15 +1134,15 @@ onUnmounted(() => {
               <span>Impuestos (0%)</span>
               <span class="font-medium text-text-primary">{{ formatCurrency(0) }}</span>
             </div>
-            <div class="flex justify-between text-sm text-green-600">
+            <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-green-600 dark:text-green-400">
               <span>Descuento</span>
-              <span class="font-medium">- {{ formatCurrency(0) }}</span>
+              <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
             </div>
           </div>
           <div class="border-t border-dashed border-border pt-4">
             <div class="flex justify-between items-end mb-1">
               <span class="text-text-secondary font-medium">Total a Pagar</span>
-              <span class="text-3xl font-bold text-primary">{{ formatCurrency(cartTotal) }}</span>
+              <span class="text-3xl font-bold text-primary">{{ formatCurrency(discountedTotal) }}</span>
             </div>
             <p class="text-right text-xs text-text-tertiary">COP</p>
           </div>
@@ -1177,7 +1274,15 @@ onUnmounted(() => {
               <span class="text-sm text-text-secondary">Nº Orden</span>
               <span class="text-lg font-bold text-primary">#{{ orderResult.order_number }}</span>
             </div>
-            <div class="flex items-center justify-between">
+            <div v-if="orderResult.discount_amount && orderResult.subtotal" class="flex items-center justify-between">
+              <span class="text-sm text-text-secondary">Subtotal</span>
+              <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.subtotal) }}</span>
+            </div>
+            <div v-if="orderResult.discount_amount" class="flex items-center justify-between">
+              <span class="text-sm text-green-600 dark:text-green-400">Descuento</span>
+              <span class="text-sm font-medium text-green-600 dark:text-green-400">-{{ formatCurrency(orderResult.discount_amount) }}</span>
+            </div>
+            <div class="flex items-center justify-between" :class="orderResult.discount_amount ? 'border-t border-border pt-3' : ''">
               <span class="text-sm text-text-secondary">Total</span>
               <span class="text-lg font-bold text-text-primary">{{ formatCurrency(orderResult.total_amount) }}</span>
             </div>
@@ -1267,6 +1372,14 @@ onUnmounted(() => {
       <span>{{ formatCurrency(getItemTotal(item)) }}</span>
     </div>
     <div class="receipt-divider">--------------------------------</div>
+    <div v-if="orderResult?.discount_amount && orderResult?.subtotal" class="receipt-item">
+      <span>Subtotal</span>
+      <span>{{ formatCurrency(orderResult.subtotal) }}</span>
+    </div>
+    <div v-if="orderResult?.discount_amount" class="receipt-item">
+      <span>Descuento</span>
+      <span>-{{ formatCurrency(orderResult.discount_amount) }}</span>
+    </div>
     <div class="receipt-total">
       <span>TOTAL</span>
       <span>{{ formatCurrency(orderResult?.total_amount ?? 0) }}</span>
