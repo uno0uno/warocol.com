@@ -107,6 +107,9 @@ const adjustedTotal = computed(() => {
   return total
 })
 
+// Gross subtotal (before discount) — sum of all item subtotals
+const grossSubtotal = computed(() => items.value.reduce((sum: number, item: any) => sum + Number(item.subtotal), 0))
+
 // Check if there are changes
 const hasChanges = computed(() => {
   return itemsToDelete.value.size > 0 ||
@@ -348,6 +351,11 @@ onUnmounted(() => {
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Total</p>
           <p class="text-2xl font-bold text-primary">
             {{ isEditMode && hasChanges ? formatCurrency(adjustedTotal) : formatCurrency(order.total_amount) }}
+          </p>
+          <p v-if="order.discount_amount > 0 && !isEditMode" class="text-xs text-destructive mt-1">
+            Descuento
+            <span v-if="order.discount_type === 'percent' && order.discount_value">{{ order.discount_value }}%</span>:
+            -{{ formatCurrency(order.discount_amount) }}
           </p>
           <p v-if="isEditMode && hasChanges" class="text-xs text-text-tertiary line-through">
             {{ formatCurrency(order.total_amount) }}
@@ -612,12 +620,35 @@ onUnmounted(() => {
               </template>
             </tbody>
             <tfoot class="bg-surface-secondary border-t-2 border-border">
+              <!-- Subtotal row — only when there's a discount -->
+              <tr v-if="order.discount_amount > 0">
+                <td v-if="isEditMode"></td>
+                <td colspan="3" class="px-6 py-2 text-right text-sm text-text-secondary">
+                  Subtotal:
+                </td>
+                <td class="px-6 py-2 text-right">
+                  <span class="text-sm text-text-secondary">{{ formatCurrency(grossSubtotal) }}</span>
+                </td>
+              </tr>
+              <!-- Discount row -->
+              <tr v-if="order.discount_amount > 0">
+                <td v-if="isEditMode"></td>
+                <td colspan="3" class="px-6 py-2 text-right text-sm text-destructive">
+                  Descuento
+                  <span v-if="order.discount_type === 'percent' && order.discount_value" class="font-semibold">({{ order.discount_value }}%)</span>
+                  <span v-else-if="order.discount_type === 'fixed'" class="font-semibold">(fijo)</span>:
+                </td>
+                <td class="px-6 py-2 text-right">
+                  <span class="text-sm font-semibold text-destructive">-{{ formatCurrency(order.discount_amount) }}</span>
+                </td>
+              </tr>
+              <!-- Total row -->
               <tr>
                 <td v-if="isEditMode"></td>
-                <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary">
+                <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-text-primary" :class="order.discount_amount > 0 ? 'border-t border-border' : ''">
                   Total de la Orden:
                 </td>
-                <td class="px-6 py-4 text-right">
+                <td class="px-6 py-4 text-right" :class="order.discount_amount > 0 ? 'border-t border-border' : ''">
                   <span class="text-xl font-bold text-primary">
                     {{ isEditMode && hasChanges ? formatCurrency(adjustedTotal) : formatCurrency(order.total_amount) }}
                   </span>
