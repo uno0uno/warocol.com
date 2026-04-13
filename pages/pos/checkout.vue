@@ -102,16 +102,33 @@ const splitPaidTotal = ref(0)
 const splitRemaining = computed(() => Math.max(0, discountedTotal.value - splitPaidTotal.value))
 const splitIsComplete = computed(() => splitRemaining.value <= 0.01)
 const isAddingPayment = ref(false)
+const splitPartialAmount = ref<number | null>(null)
+
+// When splitMode activates or remaining changes, reset the partial input to the full remaining
+watch(splitRemaining, (val) => {
+  if (!splitIsComplete.value) splitPartialAmount.value = val
+}, { immediate: false })
+watch(splitMode, (val) => {
+  if (val) splitPartialAmount.value = splitRemaining.value
+})
+
+const splitAmountToCharge = computed(() =>
+  splitPartialAmount.value !== null && splitPartialAmount.value > 0
+    ? Math.min(splitPartialAmount.value, splitRemaining.value)
+    : splitRemaining.value
+)
 
 const addSplitPayment = async () => {
   if (!posStore.cartId || !selectedPaymentMethod.value) return
+  const amountToCharge = splitAmountToCharge.value
+  if (amountToCharge <= 0) return
   isAddingPayment.value = true
   processingError.value = ''
   try {
     const response = await $fetch(`/api/pos/cart/${posStore.cartId}/payments`, {
       method: 'POST',
       body: {
-        amount: splitRemaining.value,
+        amount: amountToCharge,
         payment_method: selectedPaymentMethod.value,
         payment_method_id: selectedPaymentMethodId.value ?? undefined,
       }
@@ -119,7 +136,7 @@ const addSplitPayment = async () => {
 
     splitPayments.value.push({
       id: response.data.payment_id,
-      amount: splitRemaining.value,
+      amount: amountToCharge,
       payment_method: selectedPaymentMethod.value,
       payment_method_name: getPaymentMethodLabel(selectedPaymentMethod.value),
     })
@@ -948,16 +965,33 @@ onUnmounted(() => {
               </span>
             </div>
 
+            <!-- Partial amount input -->
+            <div v-if="!splitIsComplete" class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-text-secondary">Monto a cobrar ahora</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-secondary pointer-events-none">$</span>
+                <input
+                  type="number"
+                  min="1"
+                  :max="splitRemaining"
+                  :value="splitPartialAmount"
+                  @input="splitPartialAmount = Number(($event.target as HTMLInputElement).value) || null"
+                  class="w-full pl-7 pr-4 py-3 min-h-[44px] bg-surface-secondary border border-border rounded-xl text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary tabular-nums"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
             <!-- Add payment button -->
             <button
               v-if="!splitIsComplete"
               type="button"
-              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection"
+              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0"
               @click="addSplitPayment"
               class="w-full min-h-[44px] px-4 py-3 bg-primary text-primary-foreground text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
               <span v-if="isAddingPayment">Registrando...</span>
-              <span v-else>Cobrar {{ formatCurrency(splitRemaining) }} · {{ getPaymentMethodLabel(selectedPaymentMethod) }}</span>
+              <span v-else>Cobrar {{ formatCurrency(splitAmountToCharge) }} · {{ getPaymentMethodLabel(selectedPaymentMethod) }}</span>
             </button>
           </div>
         </div>
