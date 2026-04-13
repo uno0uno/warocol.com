@@ -553,7 +553,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Section: Descuento -->
-        <div class="bg-surface-secondary border-0 rounded-lg p-4 md:p-6">
+        <div class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
           <!-- Header with toggle -->
           <div class="flex items-center justify-between">
             <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
@@ -585,7 +585,7 @@ onUnmounted(() => {
                 type="button"
                 @click="discountType = 'percent'; discountInput = ''"
                 class="flex-1 min-h-[44px] text-sm font-semibold transition-colors"
-                :class="discountType === 'percent' ? 'bg-primary text-primary-foreground' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
+                :class="discountType === 'percent' ? 'bg-primary text-primary-foreground' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
               >
                 %
               </button>
@@ -593,7 +593,7 @@ onUnmounted(() => {
                 type="button"
                 @click="discountType = 'fixed'; discountInput = ''"
                 class="flex-1 min-h-[44px] text-sm font-semibold transition-colors border-l border-border"
-                :class="discountType === 'fixed' ? 'bg-primary text-primary-foreground' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
+                :class="discountType === 'fixed' ? 'bg-primary text-primary-foreground' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
               >
                 $ Fijo
               </button>
