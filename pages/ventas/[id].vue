@@ -346,6 +346,28 @@ onUnmounted(() => {
           <p class="text-lg font-bold text-info">{{ resolveLabel(order.payment_method, order.payment_method_id) }}</p>
         </div>
 
+        <!-- Split Payments breakdown -->
+        <div v-if="order.split_payments && order.split_payments.length > 0" class="bg-surface border border-border rounded-xl p-4">
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">
+            Cobro dividido · {{ order.split_payments.length }} pagos
+          </p>
+          <div class="space-y-2">
+            <div
+              v-for="(p, idx) in order.split_payments"
+              :key="p.id"
+              class="flex items-center gap-2.5"
+            >
+              <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                <svg class="h-3 w-3 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <span class="text-sm text-text-secondary flex-1">#{{ idx + 1 }} · {{ resolveLabel(p.payment_method, p.payment_method_id) }}</span>
+              <span class="text-sm font-semibold text-text-primary tabular-nums">{{ formatCurrency(p.amount) }}</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Total Amount -->
         <div class="bg-surface border-2 border-primary rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Total</p>
