@@ -553,7 +553,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Section: Descuento -->
-        <div class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
+        <div class="bg-surface-secondary border-0 rounded-lg p-4 md:p-6">
           <!-- Header with toggle -->
           <div class="flex items-center justify-between">
             <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
@@ -612,9 +612,9 @@ onUnmounted(() => {
             </div>
 
             <!-- Live preview -->
-            <div v-if="discountAmount > 0" class="flex items-center justify-between px-4 py-2.5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
-              <span class="text-sm font-medium text-green-700 dark:text-green-400">Descuento aplicado</span>
-              <span class="text-sm font-bold text-green-700 dark:text-green-400">-{{ formatCurrency(discountAmount) }}</span>
+            <div v-if="discountAmount > 0" class="flex items-center justify-between px-4 py-2.5 bg-primary/10 rounded-lg">
+              <span class="text-sm font-medium text-primary">Descuento aplicado</span>
+              <span class="text-sm font-bold text-primary">-{{ formatCurrency(discountAmount) }}</span>
             </div>
           </div>
         </div>
@@ -961,7 +961,7 @@ onUnmounted(() => {
                 <span>Impuestos (0%)</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(0) }}</span>
               </div>
-              <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-green-600 dark:text-green-400">
+              <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-primary">
                 <span>Descuento</span>
                 <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
               </div>
@@ -1279,8 +1279,8 @@ onUnmounted(() => {
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.subtotal) }}</span>
             </div>
             <div v-if="orderResult.discount_amount" class="flex items-center justify-between">
-              <span class="text-sm text-green-600 dark:text-green-400">Descuento</span>
-              <span class="text-sm font-medium text-green-600 dark:text-green-400">-{{ formatCurrency(orderResult.discount_amount) }}</span>
+              <span class="text-sm text-primary">Descuento</span>
+              <span class="text-sm font-medium text-primary">-{{ formatCurrency(orderResult.discount_amount) }}</span>
             </div>
             <div class="flex items-center justify-between" :class="orderResult.discount_amount ? 'border-t border-border pt-3' : ''">
               <span class="text-sm text-text-secondary">Total</span>
