@@ -26,6 +26,9 @@ const router = useRouter()
 
 const orderId = computed(() => route.params.id as string)
 
+// Split payments slide-over
+const showSplitPaymentsPanel = ref(false)
+
 // Edit mode state
 const isEditMode = ref(false)
 const isSaving = ref(false)
@@ -341,32 +344,28 @@ onUnmounted(() => {
         </div>
 
         <!-- Payment Method -->
-        <div class="bg-surface border-2 border-info rounded-xl p-4">
+        <component
+          :is="order.split_payments && order.split_payments.length > 0 ? 'button' : 'div'"
+          class="bg-surface border-2 border-info rounded-xl p-4 text-left w-full"
+          :class="order.split_payments && order.split_payments.length > 0 ? 'hover:bg-surface-secondary/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-info/30' : ''"
+          @click="order.split_payments && order.split_payments.length > 0 ? showSplitPaymentsPanel = true : null"
+          :aria-label="order.split_payments && order.split_payments.length > 0 ? 'Ver detalle de cobro dividido' : undefined"
+        >
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Método de Pago</p>
-          <p class="text-lg font-bold text-info">{{ resolveLabel(order.payment_method, order.payment_method_id) }}</p>
-        </div>
-
-        <!-- Split Payments breakdown -->
-        <div v-if="order.split_payments && order.split_payments.length > 0" class="bg-surface border border-border rounded-xl p-4">
-          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">
-            Cobro dividido · {{ order.split_payments.length }} pagos
-          </p>
-          <div class="space-y-2">
-            <div
-              v-for="(p, idx) in order.split_payments"
-              :key="p.id"
-              class="flex items-center gap-2.5"
-            >
-              <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                <svg class="h-3 w-3 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
-                </svg>
-              </div>
-              <span class="text-sm text-text-secondary flex-1">#{{ idx + 1 }} · {{ resolveLabel(p.payment_method, p.payment_method_id) }}</span>
-              <span class="text-sm font-semibold text-text-primary tabular-nums">{{ formatCurrency(p.amount) }}</span>
-            </div>
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-lg font-bold text-info leading-tight">
+              <template v-if="order.split_payments && order.split_payments.length > 0">
+                Cobro dividido · {{ order.split_payments.length }} pagos
+              </template>
+              <template v-else>
+                {{ resolveLabel(order.payment_method, order.payment_method_id) }}
+              </template>
+            </p>
+            <svg v-if="order.split_payments && order.split_payments.length > 0" class="w-4 h-4 text-info flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
           </div>
-        </div>
+        </component>
 
         <!-- Total Amount -->
         <div class="bg-surface border-2 border-primary rounded-xl p-4">
@@ -689,6 +688,89 @@ onUnmounted(() => {
       </div>
 
     </div>
+
+    <!-- Split Payments Slide-over -->
+    <template v-if="order && order.split_payments && order.split_payments.length > 0">
+      <!-- Backdrop -->
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="showSplitPaymentsPanel" class="fixed inset-0 z-40 bg-black/40" @click="showSplitPaymentsPanel = false" aria-hidden="true" />
+      </Transition>
+
+      <!-- Panel -->
+      <Transition name="panel">
+        <div
+          v-if="showSplitPaymentsPanel"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Detalle de cobro dividido"
+          class="fixed z-50 flex flex-col bg-surface shadow-2xl
+                 inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
+                 md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+        >
+          <!-- Mobile drag handle -->
+          <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+            <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+          </div>
+
+          <!-- Header -->
+          <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0 flex-1">
+                <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center text-info" aria-hidden="true">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <h2 class="text-base font-bold text-text-primary leading-tight">Cobro dividido</h2>
+                  <p class="text-xs text-text-secondary leading-snug mt-0.5">
+                    {{ order.split_payments.length }} pagos · {{ formatCurrency(order.total_amount) }}
+                  </p>
+                </div>
+              </div>
+              <button
+                @click="showSplitPaymentsPanel = false"
+                type="button"
+                aria-label="Cerrar panel"
+                class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Payment list -->
+          <div class="flex-1 overflow-y-auto px-6 py-4 space-y-2">
+            <div
+              v-for="(p, idx) in order.split_payments"
+              :key="p.id"
+              class="flex items-center gap-3 bg-surface border border-border rounded-xl px-4 py-3"
+            >
+              <div class="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                <svg class="h-3.5 w-3.5 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-xs text-text-secondary">Pago #{{ idx + 1 }}</p>
+                <p class="text-sm font-medium text-text-primary">{{ resolveLabel(p.payment_method, p.payment_method_id) }}</p>
+              </div>
+              <span class="text-base font-bold text-text-primary tabular-nums flex-shrink-0">{{ formatCurrency(p.amount) }}</span>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </template>
+
   </div>
 </template>
 
@@ -701,5 +783,20 @@ onUnmounted(() => {
 .slide-down-leave-to {
   opacity: 0;
   transform: translateY(-6px);
+}
+
+.panel-enter-active,
+.panel-leave-active {
+  transition: transform 0.3s ease;
+}
+.panel-enter-from,
+.panel-leave-to {
+  transform: translateY(100%);
+}
+@media (min-width: 768px) {
+  .panel-enter-from,
+  .panel-leave-to {
+    transform: translateX(100%);
+  }
 }
 </style>
