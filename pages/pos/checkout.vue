@@ -119,7 +119,10 @@ const splitAmountToCharge = computed(() =>
 )
 
 const addSplitPayment = async () => {
-  if (!posStore.cartId || !selectedPaymentMethod.value || !selectedCustomer.value) return
+  if (!posStore.cartId || !selectedPaymentMethod.value || !selectedCustomer.value) {
+    processingError.value = 'Selecciona método de pago y cliente antes de continuar'
+    return
+  }
   const amountToCharge = splitAmountToCharge.value
   if (amountToCharge <= 0) return
   isAddingPayment.value = true
@@ -1019,7 +1022,7 @@ onUnmounted(() => {
             <button
               v-if="!splitIsComplete"
               type="button"
-              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0"
+              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || !posStore.cartId"
               @click="addSplitPayment"
               class="w-full min-h-[44px] px-4 py-3 bg-primary text-primary-foreground text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
