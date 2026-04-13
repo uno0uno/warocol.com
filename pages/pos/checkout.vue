@@ -1088,14 +1088,30 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- WAROS CARD (desktop) -->
+        <!-- WAROS CARD (desktop) — accordion -->
         <div
           v-if="selectedCustomer && !isAnonymousCustomer && warosSystemEnabled"
           class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
         >
-          <div class="px-5 py-4">
-            <h3 class="font-bold text-text-primary text-sm mb-3">Puntos Waros</h3>
-            <!-- Skeleton while loading balance -->
+          <button
+            @click="activeAccordion = activeAccordion === 'waros' ? null : 'waros'"
+            class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-secondary/40 transition-colors"
+          >
+            <div class="flex items-center gap-2">
+              <span class="text-base">⭐</span>
+              <span class="font-bold text-text-primary text-sm">Puntos Waros</span>
+              <span v-if="!isLoadingWaros" class="text-xs text-amber-600 font-semibold tabular-nums">{{ warosBalance.toLocaleString('es-CO') }} pts</span>
+            </div>
+            <svg
+              class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
+              :class="activeAccordion === 'waros' ? 'rotate-0' : 'rotate-180'"
+              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+            </svg>
+          </button>
+          <div v-show="activeAccordion === 'waros'" class="border-t border-border px-5 py-4">
+            <!-- Skeleton -->
             <div v-if="isLoadingWaros" class="grid grid-cols-2 gap-3 mb-3">
               <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14"></div>
               <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14"></div>
@@ -1104,17 +1120,11 @@ onUnmounted(() => {
             <div v-else class="grid grid-cols-2 gap-3 mb-3">
               <div class="bg-amber-50 rounded-xl p-3">
                 <p class="text-xs text-text-secondary mb-0.5">Balance actual</p>
-                <p class="text-lg font-bold text-amber-700 leading-tight">
-                  {{ warosBalance.toLocaleString('es-CO') }}
-                </p>
+                <p class="text-lg font-bold text-amber-700 leading-tight">{{ warosBalance.toLocaleString('es-CO') }}</p>
               </div>
               <div class="bg-green-50 rounded-xl p-3">
                 <p class="text-xs text-text-secondary mb-0.5">Ganarías esta compra</p>
-                <p
-                  class="text-lg font-bold text-green-700 leading-tight"
-                  aria-live="polite"
-                  aria-label="Puntos estimados para esta compra"
-                >
+                <p class="text-lg font-bold text-green-700 leading-tight" aria-live="polite">
                   <span v-if="isLoadingEstimate" class="inline-block h-5 w-16 rounded bg-green-200 animate-pulse"></span>
                   <span v-else-if="estimatedWaros === null">—</span>
                   <span v-else>+ {{ estimatedWaros.toLocaleString('es-CO') }}</span>
@@ -1158,24 +1168,46 @@ onUnmounted(() => {
 
           <!-- Split panel -->
           <div v-if="splitMode" class="mt-3 space-y-3">
-            <!-- Accumulated payments list -->
-            <div v-if="splitPayments.length > 0" class="space-y-2">
-              <div
-                v-for="(p, idx) in splitPayments"
-                :key="p.id"
-                class="flex items-center justify-between px-3 py-2 bg-surface-secondary rounded-lg text-sm"
-              >
-                <span class="text-text-secondary">Pago {{ idx + 1 }} · {{ p.payment_method_name }}</span>
-                <span class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(p.amount) }}</span>
+
+            <!-- Payment history -->
+            <div v-if="splitPayments.length > 0">
+              <!-- Header: count + paid so far -->
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                  Pagos registrados
+                </span>
+                <span class="text-xs font-bold text-primary tabular-nums">
+                  {{ splitPayments.length }} · {{ formatCurrency(splitPaidTotal) }}
+                </span>
+              </div>
+              <!-- Payment rows -->
+              <div class="space-y-1.5">
+                <div
+                  v-for="(p, idx) in splitPayments"
+                  :key="p.id"
+                  class="flex items-center gap-2.5 px-3 py-2 bg-surface-secondary rounded-lg text-sm"
+                >
+                  <!-- Check icon -->
+                  <svg class="h-4 w-4 text-green-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+                  </svg>
+                  <span class="text-text-secondary flex-1">#{{ idx + 1 }} · {{ p.payment_method_name }}</span>
+                  <span class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(p.amount) }}</span>
+                </div>
               </div>
             </div>
 
             <!-- Remaining counter -->
-            <div class="flex items-center justify-between px-3 py-2.5 bg-primary/10 rounded-lg">
-              <span class="text-sm font-medium text-primary">{{ splitIsComplete ? 'Cubierto' : 'Saldo pendiente' }}</span>
+            <div
+              class="flex items-center justify-between px-3 py-2.5 rounded-lg"
+              :class="splitIsComplete ? 'bg-green-50 dark:bg-green-900/20' : 'bg-primary/10'"
+            >
+              <span class="text-sm font-medium" :class="splitIsComplete ? 'text-green-700 dark:text-green-400' : 'text-primary'">
+                {{ splitIsComplete ? '✓ Cobro completo' : 'Saldo pendiente' }}
+              </span>
               <span
                 class="text-sm font-bold tabular-nums"
-                :class="splitIsComplete ? 'text-primary' : 'text-text-primary'"
+                :class="splitIsComplete ? 'text-green-700 dark:text-green-400' : 'text-text-primary'"
                 aria-live="polite"
               >{{ formatCurrency(splitRemaining) }}</span>
             </div>
