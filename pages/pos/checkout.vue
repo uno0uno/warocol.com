@@ -948,90 +948,6 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Section: Split Payment (Cobro Parcial) -->
-        <div v-if="!isMesaMode" class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
-          <div class="flex items-center justify-between">
-            <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
-              <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75" />
-              </svg>
-              Cobro Parcial
-            </h2>
-            <button
-              type="button"
-              role="switch"
-              :aria-checked="splitMode"
-              :aria-label="splitMode ? 'Desactivar cobro parcial' : 'Activar cobro parcial'"
-              @click="splitMode = !splitMode; splitPayments = []; splitPaidTotal = 0"
-              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              :class="splitMode ? 'bg-primary' : 'bg-border'"
-            >
-              <span
-                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition duration-200"
-                :class="splitMode ? 'translate-x-5' : 'translate-x-0'"
-              />
-            </button>
-          </div>
-
-          <!-- Split panel -->
-          <div v-if="splitMode" class="mt-4 space-y-3">
-            <!-- Accumulated payments list -->
-            <div v-if="splitPayments.length > 0" class="space-y-2">
-              <div
-                v-for="(p, idx) in splitPayments"
-                :key="p.id"
-                class="flex items-center justify-between px-3 py-2 bg-surface-secondary rounded-lg text-sm"
-              >
-                <span class="text-text-secondary">Pago {{ idx + 1 }} · {{ p.payment_method_name }}</span>
-                <span class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(p.amount) }}</span>
-              </div>
-            </div>
-
-            <!-- Remaining counter -->
-            <div class="flex items-center justify-between px-4 py-3 bg-primary/10 rounded-lg">
-              <span class="text-sm font-medium text-primary">
-                {{ splitIsComplete ? 'Cubierto' : 'Saldo pendiente' }}
-              </span>
-              <span
-                class="text-base font-bold tabular-nums"
-                :class="splitIsComplete ? 'text-primary' : 'text-text-primary'"
-                aria-live="polite"
-              >
-                {{ formatCurrency(splitRemaining) }}
-              </span>
-            </div>
-
-            <!-- Partial amount input -->
-            <div v-if="!splitIsComplete" class="flex flex-col gap-1">
-              <label class="text-xs font-medium text-text-secondary">Monto a cobrar ahora</label>
-              <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-secondary pointer-events-none">$</span>
-                <input
-                  type="number"
-                  min="1"
-                  :max="splitRemaining"
-                  :value="splitPartialAmount"
-                  @input="splitPartialAmount = Number(($event.target as HTMLInputElement).value) || null"
-                  class="w-full pl-7 pr-4 py-3 min-h-[44px] bg-surface-secondary border border-border rounded-xl text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary tabular-nums"
-                  placeholder="0"
-                />
-              </div>
-            </div>
-
-            <!-- Add payment button -->
-            <button
-              v-if="!splitIsComplete"
-              type="button"
-              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || !posStore.cartId"
-              @click="addSplitPayment"
-              class="w-full min-h-[44px] px-4 py-3 bg-primary text-primary-foreground text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            >
-              <span v-if="isAddingPayment">Registrando...</span>
-              <span v-else>Cobrar {{ formatCurrency(splitAmountToCharge) }} · {{ getPaymentMethodLabel(selectedPaymentMethod) }}</span>
-            </button>
-          </div>
-        </div>
-
         <!-- Section: Customer Identification -->
         <div class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
           <h2 class="font-bold text-text-primary flex items-center gap-2 mb-3 text-sm md:text-base">
@@ -1211,6 +1127,86 @@ onUnmounted(() => {
               class="w-full min-h-[44px] px-4 py-2.5 text-sm font-medium border border-border rounded-lg hover:bg-surface-secondary transition-colors text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               Asignar manualmente
+            </button>
+          </div>
+        </div>
+
+        <!-- Section: Split Payment (Cobro Parcial) — only after customer is set -->
+        <div v-if="selectedCustomer && !isMesaMode" class="bg-surface rounded-2xl border border-border p-4 shadow-sm">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-text-primary flex items-center gap-2 text-sm">
+              <svg class="h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75" />
+              </svg>
+              Cobro Parcial
+            </h3>
+            <button
+              type="button"
+              role="switch"
+              :aria-checked="splitMode"
+              :aria-label="splitMode ? 'Desactivar cobro parcial' : 'Activar cobro parcial'"
+              @click="splitMode = !splitMode; splitPayments = []; splitPaidTotal = 0"
+              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              :class="splitMode ? 'bg-primary' : 'bg-border'"
+            >
+              <span
+                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition duration-200"
+                :class="splitMode ? 'translate-x-5' : 'translate-x-0'"
+              />
+            </button>
+          </div>
+
+          <!-- Split panel -->
+          <div v-if="splitMode" class="mt-3 space-y-3">
+            <!-- Accumulated payments list -->
+            <div v-if="splitPayments.length > 0" class="space-y-2">
+              <div
+                v-for="(p, idx) in splitPayments"
+                :key="p.id"
+                class="flex items-center justify-between px-3 py-2 bg-surface-secondary rounded-lg text-sm"
+              >
+                <span class="text-text-secondary">Pago {{ idx + 1 }} · {{ p.payment_method_name }}</span>
+                <span class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(p.amount) }}</span>
+              </div>
+            </div>
+
+            <!-- Remaining counter -->
+            <div class="flex items-center justify-between px-3 py-2.5 bg-primary/10 rounded-lg">
+              <span class="text-sm font-medium text-primary">{{ splitIsComplete ? 'Cubierto' : 'Saldo pendiente' }}</span>
+              <span
+                class="text-sm font-bold tabular-nums"
+                :class="splitIsComplete ? 'text-primary' : 'text-text-primary'"
+                aria-live="polite"
+              >{{ formatCurrency(splitRemaining) }}</span>
+            </div>
+
+            <!-- Partial amount input -->
+            <div v-if="!splitIsComplete" class="flex flex-col gap-1">
+              <label class="text-xs font-medium text-text-secondary">Monto a cobrar ahora</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-secondary pointer-events-none">$</span>
+                <input
+                  type="number"
+                  min="1"
+                  :max="splitRemaining"
+                  :value="splitPartialAmount"
+                  @input="splitPartialAmount = Number(($event.target as HTMLInputElement).value) || null"
+                  class="w-full pl-7 pr-4 py-3 min-h-[44px] bg-surface-secondary border border-border rounded-xl text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary tabular-nums"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <!-- Add payment button -->
+            <button
+              v-if="!splitIsComplete"
+              type="button"
+              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || !posStore.cartId"
+              @click="addSplitPayment"
+              class="w-full min-h-[44px] px-4 py-3 bg-primary text-primary-foreground text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            >
+              <span v-if="isAddingPayment">Registrando...</span>
+              <span v-else>Cobrar {{ formatCurrency(splitAmountToCharge) }} · {{ getPaymentMethodLabel(selectedPaymentMethod) }}</span>
             </button>
           </div>
         </div>
