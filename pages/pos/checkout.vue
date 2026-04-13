@@ -390,6 +390,8 @@ const sendReceiptEmail = async () => {
         business_address: businessProfile.value?.address ?? null,
         business_city: businessProfile.value?.city ?? null,
         business_phone: businessProfile.value?.phone_number ?? null,
+        discount_amount: orderResult.value.discount_amount ?? 0,
+        subtotal: orderResult.value.subtotal ?? 0,
       }
     })
     emailSent.value = true
