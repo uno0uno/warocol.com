@@ -247,8 +247,11 @@ const executeBulkUpdate = async (customerId: string | null) => {
 // Clear selection when page/filters change
 watch([currentPage, statusFilter, paymentFilter, appliedSearch, dateRange], clearSelection)
 
+// Show discount column only when at least one order in the current page has a discount
+const hasAnyDiscount = computed(() => orders.value.some((o: any) => o.discount_amount > 0))
+
 // Table columns configuration
-const ordersTableColumns: Column[] = [
+const ordersTableColumns = computed<Column[]>(() => [
   { key: 'select', title: '', sortable: false, width: '44px', class: '!px-0', align: 'center' as const },
   { key: 'order_number', title: 'Nº Orden', sortable: true },
   { key: 'order_date', title: 'Fecha', sortable: true },
@@ -258,9 +261,10 @@ const ordersTableColumns: Column[] = [
   { key: 'source', title: 'Origen', sortable: false },
   { key: 'payment_method', title: 'Método Pago', sortable: true },
   { key: 'payment_status', title: 'Estado Pago', sortable: false },
+  ...(hasAnyDiscount.value ? [{ key: 'discount_amount', title: 'Descuento', sortable: true }] : []),
   { key: 'total_amount', title: 'Total', sortable: true },
   { key: 'status', title: 'Estado', sortable: false }
-]
+])
 
 // Methods
 const performSearch = () => {
@@ -591,6 +595,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               <p class="text-xs text-text-secondary mt-0.5 truncate">
                 {{ item.customer_name }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ item.source === 'mesa' ? 'Mesa' : 'POS' }}
               </p>
+              <p v-if="item.discount_amount > 0" class="text-xs text-destructive mt-0.5">Descuento: -{{ formatCurrency(item.discount_amount) }}</p>
             </div>
 
             <!-- Right: monto + badge -->
@@ -692,6 +697,11 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             :variant="value === 'partial' ? 'warning' : value === 'credit' ? 'warning' : 'success'"
             size="sm"
           />
+        </template>
+
+        <template #cell-discount_amount="{ value }">
+          <span v-if="value > 0" class="text-sm font-medium text-destructive">-{{ formatCurrency(value) }}</span>
+          <span v-else class="text-sm text-text-secondary">—</span>
         </template>
 
         <template #cell-total_amount="{ value }">
