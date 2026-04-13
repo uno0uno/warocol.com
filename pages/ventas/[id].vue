@@ -349,7 +349,14 @@ onUnmounted(() => {
         <!-- Total Amount -->
         <div class="bg-surface border-2 border-primary rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Total</p>
-          <p class="text-2xl font-bold text-primary">
+          <!-- Discount indicator: crossed-out gross + badge -->
+          <div v-if="order.discount_amount > 0 && !isEditMode" class="flex items-center gap-2 mb-1">
+            <span class="text-sm text-text-tertiary line-through tabular-nums">{{ formatCurrency(grossSubtotal) }}</span>
+            <span class="text-xs font-bold bg-destructive/10 text-destructive rounded-full px-2 py-0.5 leading-tight">
+              {{ order.discount_type === 'percent' ? `-${order.discount_value}%` : 'Descuento' }}
+            </span>
+          </div>
+          <p class="text-2xl font-bold text-primary tabular-nums">
             {{ isEditMode && hasChanges ? formatCurrency(adjustedTotal) : formatCurrency(order.total_amount) }}
           </p>
           <p v-if="isEditMode && hasChanges" class="text-xs text-text-tertiary line-through">
