@@ -119,30 +119,63 @@ const splitAmountToCharge = computed(() =>
 )
 
 const addSplitPayment = async () => {
-  if (!posStore.cartId || !selectedPaymentMethod.value) return
+  if (!posStore.cartId || !selectedPaymentMethod.value || !selectedCustomer.value) return
   const amountToCharge = splitAmountToCharge.value
   if (amountToCharge <= 0) return
   isAddingPayment.value = true
   processingError.value = ''
+
   try {
-    const response = await $fetch(`/api/pos/cart/${posStore.cartId}/payments`, {
-      method: 'POST',
-      body: {
-        amount: amountToCharge,
-        payment_method: selectedPaymentMethod.value,
-        payment_method_id: selectedPaymentMethodId.value ?? undefined,
-      }
-    }) as any
+    let paidTotal = 0
+    let remaining = 0
+    let isComplete = false
+    let paymentId = ''
+
+    if (splitPayments.value.length === 0) {
+      // First payment: create the order in partial state via /complete
+      const _discountAmtPos = discountAmount.value
+      const response = await $fetch(`/api/pos/cart/${posStore.cartId}/complete`, {
+        method: 'POST',
+        body: {
+          payment_method: selectedPaymentMethod.value,
+          customer_id: selectedCustomer.value.id,
+          payment_method_id: selectedPaymentMethodId.value ?? null,
+          ...(discountEnabled.value && _discountAmtPos > 0
+            ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
+            : {}),
+          split_mode: true,
+          split_first_amount: amountToCharge,
+        }
+      }) as any
+      paidTotal = response.data.paid_total ?? amountToCharge
+      remaining = response.data.remaining ?? (discountedTotal.value - amountToCharge)
+      isComplete = response.data.is_complete ?? false
+      paymentId = response.data.payment_id ?? 'split-1'
+    } else {
+      // Subsequent payments: add to existing order
+      const response = await $fetch(`/api/pos/cart/${posStore.cartId}/payments`, {
+        method: 'POST',
+        body: {
+          amount: amountToCharge,
+          payment_method: selectedPaymentMethod.value,
+          payment_method_id: selectedPaymentMethodId.value ?? undefined,
+        }
+      }) as any
+      paidTotal = response.data.paid_total
+      remaining = response.data.remaining
+      isComplete = response.data.is_complete
+      paymentId = response.data.payment_id
+    }
 
     splitPayments.value.push({
-      id: response.data.payment_id,
+      id: paymentId,
       amount: amountToCharge,
       payment_method: selectedPaymentMethod.value,
       payment_method_name: getPaymentMethodLabel(selectedPaymentMethod.value),
     })
-    splitPaidTotal.value = response.data.paid_total
+    splitPaidTotal.value = paidTotal
 
-    if (response.data.is_complete) {
+    if (isComplete) {
       orderResult.value = {
         order_number: 0,
         total_amount: discountedTotal.value,
@@ -1191,7 +1224,8 @@ onUnmounted(() => {
         <div class="flex flex-col gap-2">
           <button
             @click="processOrder"
-            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || (splitMode && !splitIsComplete)"
+            v-if="!splitMode"
+            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection"
             class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UiLoadingDots v-if="isProcessing" size="9px" />
@@ -1357,7 +1391,8 @@ onUnmounted(() => {
       <div class="flex flex-col gap-2">
         <button
           @click="processOrder"
-          :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || (splitMode && !splitIsComplete)"
+          v-if="!splitMode"
+            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection"
           class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingDots v-if="isProcessing" size="9px" />
