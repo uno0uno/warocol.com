@@ -263,7 +263,12 @@ onUnmounted(() => {
         <MetricCard title="Ticket promedio" :value="totalCustomers > 0 ? totalRevenue / totalCustomers : 0" format="currency" variant="primary" class="col-span-2 md:col-span-1" />
       </div>
 
-      <HealthSemaphore :is-unlocked="true" title="Comportamiento y valor de clientes">
+      <!-- Table loading (filter change, no cached data yet) -->
+      <div v-if="isRefreshing && customers.length === 0" class="flex items-center justify-center min-h-[200px]">
+        <CommonsTheCustomLoader size="medium" />
+      </div>
+
+      <HealthSemaphore v-else :is-unlocked="true" title="Comportamiento y valor de clientes">
         <UiResponsiveDataView
           row-size="sm"
           :columns="tableColumns"

@@ -555,8 +555,13 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </button>
         </div>
 
+      <!-- Table loading (filter change, no cached data yet) -->
+      <div v-if="isRefreshing && orders.length === 0" class="flex items-center justify-center min-h-[200px]">
+        <CommonsTheCustomLoader size="medium" />
+      </div>
+
       <!-- Responsive Data View -->
-      <HealthSemaphore :is-unlocked="true" title="Historial de Ventas">
+      <HealthSemaphore v-else :is-unlocked="true" title="Historial de Ventas">
       <UiResponsiveDataView
         :columns="ordersTableColumns"
         :data="orders"
