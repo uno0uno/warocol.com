@@ -170,11 +170,14 @@ const addSplitPayment = async () => {
       paymentId = response.data.payment_id
     }
 
+    const subMethodName = selectedPaymentMethodId.value
+      ? selectedGroup.value?.methods.find(m => m.id === selectedPaymentMethodId.value)?.name
+      : undefined
     splitPayments.value.push({
       id: paymentId,
       amount: amountToCharge,
       payment_method: selectedPaymentMethod.value,
-      payment_method_name: getPaymentMethodLabel(selectedPaymentMethod.value),
+      payment_method_name: subMethodName ?? getPaymentMethodLabel(selectedPaymentMethod.value),
     })
     splitPaidTotal.value = paidTotal
 
