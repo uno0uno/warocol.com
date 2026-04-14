@@ -304,7 +304,7 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Bottom strip: occupied → time + amount / reabrir → single action -->
+            <!-- Bottom strip: occupied → time + amount / reabrir → single action / libre → label -->
             <template v-if="table.status !== 'free'">
               <div class="flex items-center justify-around px-2 py-2.5 border-t" :class="stripClass(table.status)">
                 <div class="flex items-center gap-1.5">
@@ -334,6 +334,12 @@ onUnmounted(() => {
                 <span class="text-xs font-semibold text-slate-600">
                   {{ isReopeningTableId === table.id ? 'Reabriendo…' : 'Reabrir' }}
                 </span>
+              </div>
+            </template>
+            <template v-else>
+              <!-- Free table with no prior session — "Libre" label for equal card height -->
+              <div class="flex items-center justify-center px-2 py-2.5 border-t border-slate-200 bg-slate-50">
+                <span class="text-xs font-semibold text-slate-400">Libre</span>
               </div>
             </template>
           </button>
