@@ -83,6 +83,9 @@ const showFloorPlan = computed(() =>
 const isResolvingSettings = computed(() => {
   if (!currentTenant.value) return false
   if (posStore.tablesEnabled === null) return true
+  // While settings are still fetching we don't know the final value of tablesEnabled —
+  // show loader instead of the products grid to avoid a flash of the wrong view
+  if (settingsAsyncStatus.value === 'loading') return true
   if (posStore.tablesEnabled === true && tablesStatus.value === 'pending' && !posStore.activeTableSession) return true
   return false
 })
