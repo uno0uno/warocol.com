@@ -123,21 +123,22 @@ const tableShortId = (name: string) => {
 }
 
 const tableColorClass = (status: string) => {
-  if (status === 'open') return 'bg-crocus-100 border-crocus-300 text-crocus-700'
-  if (status === 'bill_requested') return 'bg-status-success-bg border-status-success-text text-status-success-text'
-  return 'bg-surface-secondary border-border text-text-secondary'
+  if (status === 'open') return 'bg-green-100 border-green-500 text-green-900'
+  if (status === 'bill_requested') return 'bg-amber-100 border-amber-500 text-amber-900'
+  // Free: white bg + slate-500 border = 4.48:1 on white (passes WCAG 1.4.11)
+  return 'bg-surface border-slate-400 text-text-primary'
 }
 
 const chairColorClass = (status: string) => {
-  if (status === 'open') return 'bg-crocus-300'
-  if (status === 'bill_requested') return 'bg-titan-300'
-  return 'bg-titan-300'
+  if (status === 'open') return 'bg-green-400'
+  if (status === 'bill_requested') return 'bg-amber-400'
+  return 'bg-slate-300'
 }
 
 const pillClass = (status: string) => {
-  if (status === 'open') return 'text-crocus-700 border-crocus-200 bg-crocus-50'
-  if (status === 'bill_requested') return 'text-status-success-text border-status-success-text bg-status-success-bg'
-  return 'text-text-tertiary border-border bg-transparent'
+  if (status === 'open') return 'text-green-700 border-green-300 bg-green-50'
+  if (status === 'bill_requested') return 'text-amber-700 border-amber-300 bg-amber-50'
+  return 'text-slate-600 border-slate-400 bg-transparent'
 }
 
 const freeCount = computed(() => regularTables.value.filter((t: any) => t.status === 'free').length)
@@ -182,15 +183,15 @@ onUnmounted(() => {
               <span class="text-xs font-medium text-text-secondary">Barra</span>
             </div>
             <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-              <div class="w-3 h-3 rounded-sm bg-crocus-300" />
+              <div class="w-3 h-3 rounded-sm bg-green-400" />
               <span class="text-xs font-medium text-text-secondary">Ocupada</span>
             </div>
             <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-              <div class="w-3 h-3 rounded-sm bg-status-success-bg border border-status-success-text" />
+              <div class="w-3 h-3 rounded-sm bg-amber-400" />
               <span class="text-xs font-medium text-text-secondary">Cuenta</span>
             </div>
             <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-              <div class="w-3 h-3 rounded-sm bg-surface-secondary border border-border" />
+              <div class="w-3 h-3 rounded-sm bg-surface border-2 border-slate-400" />
               <span class="text-xs font-medium text-text-secondary">Libre</span>
             </div>
           </div>
@@ -216,7 +217,7 @@ onUnmounted(() => {
                 <span class="text-base font-black text-amber-900 uppercase tracking-wide">Barra</span>
                 <span class="text-[10px] font-bold bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full uppercase tracking-widest">Siempre abierta</span>
               </div>
-              <p class="text-xs text-amber-600 mt-0.5 tabular-nums">
+              <p class="text-xs text-amber-700 mt-0.5 tabular-nums">
                 <template v-if="barTable.session?.running_total > 0">
                   ${{ Math.round(barTable.session.running_total).toLocaleString('es-CO') }} acumulado ·
                   {{ formatDuration(barTable.session.opened_at) }}
@@ -256,11 +257,10 @@ onUnmounted(() => {
 
               <!-- Table square -->
               <div
-                class="w-24 h-24 flex flex-col items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95"
+                class="w-24 h-24 flex items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95"
                 :class="tableColorClass(table.status)"
               >
-                <span class="text-[9px] uppercase tracking-widest font-bold opacity-50 leading-none mb-1">Mesa</span>
-                <span class="text-3xl font-black leading-none">{{ tableShortId(table.name) }}</span>
+                <span class="text-4xl font-black leading-none tabular-nums">{{ tableShortId(table.name) }}</span>
               </div>
             </div>
 
