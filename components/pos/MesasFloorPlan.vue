@@ -290,29 +290,26 @@ onUnmounted(() => {
 
               <!-- Table square -->
               <div
-                class="w-20 h-20 flex items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95"
+                class="w-28 h-28 flex flex-col items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95 px-1"
                 :class="tableColorClass(table.status)"
               >
                 <!-- Loading indicator when opening this table -->
                 <CommonsTheCustomLoader v-if="openingTableId === table.id" size="small" />
+                <template v-else-if="table.status !== 'free' && table.session">
+                  <!-- Occupied: number + divider + info inside square -->
+                  <span class="text-3xl font-black leading-none tabular-nums">{{ tableShortId(table.name) }}</span>
+                  <div class="w-10 border-t border-current opacity-30 my-1.5" />
+                  <span class="text-[10px] font-semibold tabular-nums leading-tight text-center">
+                    {{ formatDuration(table.session.opened_at) }}
+                  </span>
+                  <span class="text-[11px] font-black tabular-nums leading-tight">
+                    ${{ Math.round(table.session.running_total ?? 0).toLocaleString('es-CO') }}
+                  </span>
+                </template>
+                <!-- Free: just the number centered -->
                 <span v-else class="text-5xl font-black leading-none tabular-nums">{{ tableShortId(table.name) }}</span>
               </div>
             </div>
-
-            <!-- Timer + amount row (only when occupied) -->
-            <div
-              v-if="table.status !== 'free' && table.session"
-              class="flex items-center gap-2 text-sm text-text-secondary tabular-nums mt-2"
-            >
-              <svg class="w-3.5 h-3.5 flex-shrink-0 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{{ formatDuration(table.session.opened_at) }}</span>
-              <span class="text-text-tertiary" aria-hidden="true">·</span>
-              <span class="font-semibold text-text-primary">${{ Math.round(table.session.running_total ?? 0).toLocaleString('es-CO') }}</span>
-            </div>
-            <!-- Spacer when free so justify-between still works -->
-            <div v-else class="mt-2" aria-hidden="true" />
 
             <!-- Status dot -->
             <div class="flex flex-col items-center gap-1 mt-1">
