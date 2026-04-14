@@ -205,7 +205,7 @@ onUnmounted(() => {
 <template>
   <div>
     <!-- Loading State -->
-    <div v-if="loadingTables" class="flex items-center justify-center min-h-[70vh]">
+    <div v-if="loadingTables || openingTableId" class="flex items-center justify-center min-h-[70vh]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
@@ -299,8 +299,7 @@ onUnmounted(() => {
                   class="w-20 h-20 flex items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95"
                   :class="squareClass(table.status)"
                 >
-                  <CommonsTheCustomLoader v-if="openingTableId === table.id" size="small" />
-                  <span v-else class="text-4xl font-black leading-none tabular-nums">{{ tableShortId(table.name) }}</span>
+                  <span class="text-4xl font-black leading-none tabular-nums">{{ tableShortId(table.name) }}</span>
                 </div>
               </div>
             </div>
