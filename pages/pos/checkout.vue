@@ -66,8 +66,8 @@ const customerInsights = ref<CustomerInsights | null>(null)
 const insightsLoading = ref(false)
 const activeAccordion = ref<'insights' | 'summary' | null>('summary')
 
-// Mesa mode detection
-const isMesaMode = computed(() => !!posStore.activeTableSession)
+// Mesa mode detection — bar sessions behave as normal POS (cart-based, not tab-based)
+const isMesaMode = computed(() => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar)
 const { tabItems: storeTabItems } = storeToRefs(posStore)
 
 // Computed (must be before any watchers that reference cartTotal)
@@ -462,19 +462,19 @@ const cancelOrder = async () => {
     if (!window.confirm('Ya hay pagos parciales registrados. ¿Seguro que quieres cancelar?')) return
   }
   if (isMesaMode.value) {
+    // Real mesa session — close it
     const session = posStore.activeTableSession!
     try {
-      if (session.isBar) {
-        // Bar session is permanent — clear pending tab items only, never close it
-        await $fetch(`/api/tables/${session.tableId}/tab`, { method: 'DELETE' })
-      } else {
-        await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
-      }
+      await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
     } catch {
       // Non-critical
     }
     posStore.clearAll()
     cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
+    router.push('/pos')
+  } else if (posStore.activeTableSession?.isBar) {
+    // Bar session — clear local cart but keep session alive (it's permanent)
+    posStore.clearCart()
     router.push('/pos')
   } else {
     router.push('/pos')

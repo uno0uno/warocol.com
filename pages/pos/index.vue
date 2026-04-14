@@ -82,7 +82,8 @@ const isResolvingSettings = computed(() => {
 })
 
 // ── Mesa mode ──────────────────────────────────────────────────────────────
-const isMesaMode = computed(() => !!posStore.activeTableSession)
+// Bar sessions behave as normal POS — not tab/mesa mode
+const isMesaMode = computed(() => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar)
 const isAddingToTab = ref(false)
 const isLoadingTabItems = ref(false)
 const isClearingTab = ref(false)
@@ -496,6 +497,29 @@ onUnmounted(() => {
             <div class="h-2.5 w-32 bg-surface-secondary rounded" />
           </div>
           <div class="h-7 w-16 bg-surface-secondary rounded-lg flex-shrink-0" />
+        </div>
+      </div>
+
+      <!-- Barra Banner (bar session — behaves as normal POS) -->
+      <div v-else-if="posStore.activeTableSession?.isBar" class="bg-surface border border-amber-300/40 rounded-2xl mb-4 p-3.5 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="bg-amber-50 p-2.5 rounded-xl flex-shrink-0">
+            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+            <span class="text-[10px] font-bold text-amber-600 uppercase tracking-widest flex-shrink-0">Barra</span>
+            <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
+            <span class="text-xs text-text-secondary">Venta directa en barra</span>
+          </div>
+          <button
+            type="button"
+            class="flex-shrink-0 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors"
+            @click="posStore.clearAll()"
+          >
+            Salir
+          </button>
         </div>
       </div>
 
