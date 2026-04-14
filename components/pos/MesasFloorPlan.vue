@@ -157,6 +157,12 @@ const cardBorderClass = (status: string) => {
   return 'border-slate-200 bg-surface'
 }
 
+const stripBorderClass = (status: string) => {
+  if (status === 'open') return 'border-green-200 divide-green-200'
+  if (status === 'bill_requested') return 'border-amber-200 divide-amber-200'
+  return 'border-slate-100 divide-slate-100'
+}
+
 const dotClass = (status: string) => {
   if (status === 'open') return 'bg-green-500'
   if (status === 'bill_requested') return 'bg-amber-500'
@@ -264,21 +270,18 @@ onUnmounted(() => {
 
       <!-- Table grid -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pb-32">
-        <div
+        <button
           v-for="table in regularTables"
           :key="table.id"
-          class="flex flex-col items-center"
+          class="group flex flex-col w-full rounded-2xl border overflow-hidden bg-surface hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+          :class="cardBorderClass(table.status)"
+          :disabled="openingTableId === table.id"
+          :aria-label="`${table.name} — ${badgeLabel(table.status)}`"
+          @click="handleTableClick(table)"
         >
-          <!-- Primary table button -->
-          <button
-            class="group flex flex-col items-center justify-between py-5 px-2 min-h-[200px] w-full rounded-2xl border bg-surface hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
-            :class="cardBorderClass(table.status)"
-            :disabled="openingTableId === table.id"
-            :aria-label="`${table.name} — ${badgeLabel(table.status)}`"
-            @click="handleTableClick(table)"
-          >
-            <!-- Table + chairs -->
-            <div class="relative mt-1">
+          <!-- Top area: table graphic -->
+          <div class="flex-1 flex items-center justify-center py-6">
+            <div class="relative">
               <!-- Chair: top -->
               <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-3 rounded-t-sm opacity-75 transition-colors duration-200" :class="chairColorClass(table.status)" />
               <!-- Chair: bottom -->
@@ -287,53 +290,55 @@ onUnmounted(() => {
               <div class="absolute -left-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-l-sm opacity-75 transition-colors duration-200" :class="chairColorClass(table.status)" />
               <!-- Chair: right -->
               <div class="absolute -right-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-r-sm opacity-75 transition-colors duration-200" :class="chairColorClass(table.status)" />
-
               <!-- Table square -->
               <div
-                class="w-28 h-28 flex flex-col items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95 px-1"
+                class="w-20 h-20 flex items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95"
                 :class="tableColorClass(table.status)"
               >
-                <!-- Loading indicator when opening this table -->
                 <CommonsTheCustomLoader v-if="openingTableId === table.id" size="small" />
-                <template v-else-if="table.status !== 'free' && table.session">
-                  <!-- Occupied: number + divider + info inside square -->
-                  <span class="text-3xl font-black leading-none tabular-nums">{{ tableShortId(table.name) }}</span>
-                  <div class="w-10 border-t border-current opacity-30 my-1.5" />
-                  <span class="text-[10px] font-semibold tabular-nums leading-tight text-center">
-                    {{ formatDuration(table.session.opened_at) }}
-                  </span>
-                  <span class="text-[11px] font-black tabular-nums leading-tight">
-                    ${{ Math.round(table.session.running_total ?? 0).toLocaleString('es-CO') }}
-                  </span>
-                </template>
-                <!-- Free: just the number centered -->
-                <span v-else class="text-5xl font-black leading-none tabular-nums">{{ tableShortId(table.name) }}</span>
+                <span v-else class="text-4xl font-black leading-none tabular-nums">{{ tableShortId(table.name) }}</span>
               </div>
             </div>
+          </div>
 
-            <!-- Status dot -->
-            <div class="flex flex-col items-center gap-1 mt-1">
-              <div class="flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
-              </div>
-
-              <!-- Reabrir link — free tables that have last_closed_at -->
+          <!-- Bottom strip: 3 cells -->
+          <div class="grid grid-cols-3 border-t divide-x text-center" :class="stripBorderClass(table.status)">
+            <!-- Cell 1: name + dot -->
+            <div class="flex flex-col items-center justify-center py-2 gap-0.5">
+              <span class="w-2 h-2 rounded-full" :class="dotClass(table.status)" />
+              <span class="text-[10px] font-bold text-text-secondary uppercase tracking-wide leading-none">{{ table.name }}</span>
+            </div>
+            <!-- Cell 2: time -->
+            <div class="flex flex-col items-center justify-center py-2 gap-0.5">
+              <template v-if="table.status !== 'free' && table.session">
+                <svg class="w-3 h-3 text-status-warning-text flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-[10px] font-semibold tabular-nums text-text-secondary leading-none">{{ formatDuration(table.session.opened_at) }}</span>
+              </template>
+              <!-- Reabrir — free tables with last_closed_at -->
               <span
-                v-if="table.status === 'free' && table.last_closed_at"
+                v-else-if="table.status === 'free' && table.last_closed_at"
                 role="button"
                 tabindex="0"
-                class="text-xs text-blue-600 underline cursor-pointer select-none"
+                class="text-[10px] text-blue-600 underline cursor-pointer select-none leading-tight"
                 :class="{ 'opacity-50 pointer-events-none': isReopeningTableId === table.id }"
-                :aria-label="`Reabrir mesa ${table.name}`"
+                :aria-label="`Reabrir ${table.name}`"
                 @click.stop="handleReopenTable(table.id, $event)"
                 @keydown.enter.stop="handleReopenTable(table.id, $event)"
-              >
-                <template v-if="isReopeningTableId === table.id">Reabriendo…</template>
-                <template v-else>↩ Reabrir</template>
-              </span>
+              >{{ isReopeningTableId === table.id ? '…' : '↩ Reabrir' }}</span>
+              <span v-else class="text-[10px] text-text-tertiary leading-none">—</span>
             </div>
-          </button>
-        </div>
+            <!-- Cell 3: amount -->
+            <div class="flex flex-col items-center justify-center py-2 gap-0.5">
+              <template v-if="table.status !== 'free' && table.session">
+                <span class="text-[10px] text-text-secondary leading-none">$</span>
+                <span class="text-[11px] font-black tabular-nums text-text-primary leading-none">{{ Math.round(table.session.running_total ?? 0).toLocaleString('es-CO') }}</span>
+              </template>
+              <span v-else class="text-[10px] text-text-tertiary leading-none">—</span>
+            </div>
+          </div>
+        </button>
       </div>
     </div>
   </div>
