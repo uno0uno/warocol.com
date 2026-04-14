@@ -305,32 +305,39 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Bottom strip: time + amount (only when occupied) -->
-            <div v-if="table.status !== 'free'" class="flex items-center justify-around px-2 py-2.5 border-t" :class="stripClass(table.status)">
-              <div class="flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
-                <span class="text-xs font-semibold tabular-nums" :class="stripTextClass(table.status)">
-                  {{ formatDuration(table.session.opened_at) }}
+            <!-- Bottom strip: occupied → time + amount / reabrir → single action -->
+            <template v-if="table.status !== 'free'">
+              <div class="flex items-center justify-around px-2 py-2.5 border-t" :class="stripClass(table.status)">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
+                  <span class="text-xs font-semibold tabular-nums" :class="stripTextClass(table.status)">
+                    {{ formatDuration(table.session.opened_at) }}
+                  </span>
+                </div>
+                <span class="w-px h-4" :class="stripDividerClass(table.status)" />
+                <span class="text-xs font-black tabular-nums" :class="stripTextClass(table.status)">
+                  ${{ Math.round(table.session?.running_total ?? 0).toLocaleString('es-CO') }}
                 </span>
               </div>
-              <span class="w-px h-4" :class="stripDividerClass(table.status)" />
-              <span class="text-xs font-black tabular-nums" :class="stripTextClass(table.status)">
-                ${{ Math.round(table.session?.running_total ?? 0).toLocaleString('es-CO') }}
-              </span>
-            </div>
+            </template>
+            <template v-else-if="table.last_closed_at">
+              <!-- Not role="button" — outer <button> handles keyboard; @click.stop handles mouse/touch -->
+              <div
+                class="flex items-center justify-center gap-1.5 px-2 py-2.5 border-t border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
+                :class="{ 'opacity-50 pointer-events-none': isReopeningTableId === table.id }"
+                @click.stop="handleReopenTable(table.id, $event)"
+              >
+                <!-- arrow-uturn-left: "go back to previous session" -->
+                <svg v-if="isReopeningTableId !== table.id" class="w-3.5 h-3.5 text-slate-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                </svg>
+                <CommonsTheCustomLoader v-else size="small" />
+                <span class="text-xs font-semibold text-slate-600">
+                  {{ isReopeningTableId === table.id ? 'Reabriendo…' : 'Reabrir' }}
+                </span>
+              </div>
+            </template>
           </button>
-
-          <!-- Reabrir — below card, only for free tables with a recent session -->
-          <span
-            v-if="table.status === 'free' && table.last_closed_at"
-            role="button"
-            tabindex="0"
-            class="text-center text-[11px] text-blue-600 underline cursor-pointer select-none"
-            :class="{ 'opacity-50 pointer-events-none': isReopeningTableId === table.id }"
-            :aria-label="`Reabrir ${table.name}`"
-            @click.stop="handleReopenTable(table.id, $event)"
-            @keydown.enter.stop="handleReopenTable(table.id, $event)"
-          >{{ isReopeningTableId === table.id ? 'Reabriendo…' : '↩ Reabrir' }}</span>
 
         </div>
       </div>
