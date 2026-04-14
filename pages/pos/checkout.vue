@@ -375,6 +375,9 @@ const processOrder = async () => {
         ...(discountEnabled.value && _discountAmtPos > 0
           ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
           : {}),
+        ...(posStore.activeTableSession?.isBar
+          ? { table_session_id: posStore.activeTableSession.sessionId }
+          : {}),
       }
     }) as {
       success: boolean
