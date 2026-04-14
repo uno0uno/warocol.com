@@ -1058,7 +1058,7 @@ onUnmounted(() => {
         </div>
 
         <!-- ACCORDION 2: Resumen de la Orden -->
-        <div class="bg-surface rounded-2xl border border-border overflow-hidden shadow-lg">
+        <div class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
           <!-- Trigger -->
           <button
             @click="activeAccordion = activeAccordion === 'summary' ? null : 'summary'"
