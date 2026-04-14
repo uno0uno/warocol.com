@@ -17,6 +17,12 @@ const router = useRouter()
 const posStore = usePOSStore()
 const { tabItems: storeTabItems, tabTotal: storeTabTotal } = storeToRefs(posStore)
 
+// Clear session at setup time (before first render) so showFloorPlan is correct immediately.
+// If navigating from a POS sub-page (checkout, producto), posNavigation flag preserves the session.
+if (typeof window !== 'undefined' && sessionStorage.getItem('posNavigation') !== 'true') {
+  posStore.exitSession()
+}
+
 // ── Table management settings ──────────────────────────────────────────────
 // Reuses the same cached query key as negocio.vue — no extra network request
 const { data: settingsData, asyncStatus: settingsAsyncStatus } = useQuery({
@@ -435,27 +441,19 @@ onMounted(async () => {
   setRefreshHandler(refetch)
   provide('posCartItemsCount', cartItemsCount)
 
-  // Check if we're returning from a POS sub-page
-  const isReturningFromPOSPage = sessionStorage.getItem('posNavigation') === 'true'
-
-  if (isReturningFromPOSPage) {
-    // Returning from product/checkout sub-page — keep cart + table session intact
+  // posNavigation flag: set when navigating to POS sub-pages (checkout, producto)
+  // exitSession() was already called at setup time for fresh entries
+  if (sessionStorage.getItem('posNavigation') === 'true') {
     sessionStorage.removeItem('posNavigation')
   } else {
-    // Fresh entry to POS (not from sub-page) — always show floor plan
-    posStore.exitSession()
-
-    // Check for pending customer from /ventas page
+    // Check for pending customer from /ventas page (only on fresh entry)
     const pendingCustomer = sessionStorage.getItem('pendingSaleCustomer')
     if (pendingCustomer) {
       try {
-        const customer = JSON.parse(pendingCustomer)
-        posStore.setCustomer(customer)
-
-        // Clear from session
+        posStore.setCustomer(JSON.parse(pendingCustomer))
         sessionStorage.removeItem('pendingSaleCustomer')
-      } catch (error) {
-        // Error parsing customer
+      } catch {
+        // ignore
       }
     }
   }
