@@ -158,9 +158,9 @@ const cardBorderClass = (status: string) => {
 }
 
 const stripBorderClass = (status: string) => {
-  if (status === 'open') return 'border-green-200 divide-green-200'
-  if (status === 'bill_requested') return 'border-amber-200 divide-amber-200'
-  return 'border-slate-100 divide-slate-100'
+  if (status === 'open') return 'border-green-300 divide-green-300 bg-green-50'
+  if (status === 'bill_requested') return 'border-amber-300 divide-amber-300 bg-amber-50'
+  return 'border-slate-200 divide-slate-200 bg-surface-secondary'
 }
 
 const dotClass = (status: string) => {
@@ -315,13 +315,12 @@ onUnmounted(() => {
               <svg class="w-3 h-3 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span class="text-[10px] font-semibold tabular-nums text-text-secondary leading-none">{{ formatDuration(table.session.opened_at) }}</span>
+              <span class="text-xs font-bold tabular-nums text-text-primary leading-none">{{ formatDuration(table.session.opened_at) }}</span>
             </div>
             <!-- Amount -->
             <div class="flex-1 flex flex-col items-center justify-center py-2 border-l gap-0.5" :class="stripBorderClass(table.status).split(' ')[1]">
               <template v-if="table.status !== 'free' && table.session">
-                <span class="text-[10px] text-text-secondary leading-none">$</span>
-                <span class="text-[11px] font-black tabular-nums text-text-primary leading-none">{{ Math.round(table.session.running_total ?? 0).toLocaleString('es-CO') }}</span>
+                <span class="text-xs font-black tabular-nums text-text-primary leading-none">${{ Math.round(table.session.running_total ?? 0).toLocaleString('es-CO') }}</span>
               </template>
               <span v-else class="text-[10px] text-text-tertiary leading-none">—</span>
             </div>
@@ -341,5 +340,6 @@ onUnmounted(() => {
         >{{ isReopeningTableId === table.id ? 'Reabriendo…' : '↩ Reabrir' }}</span>
       </div>
     </div>
+  </div>
   </div>
 </template>
