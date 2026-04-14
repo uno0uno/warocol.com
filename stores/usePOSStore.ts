@@ -293,8 +293,11 @@ export const usePOSStore = defineStore('pos', () => {
         cart.value = []
         currentCustomer.value = null
         cartId.value = null
-        activeTableSession.value = null
         tabItems.value = []
+        // Keep bar session alive — bar is a permanent fixture, not a per-order session
+        if (!activeTableSession.value?.isBar) {
+            activeTableSession.value = null
+        }
         // NO limpiar cachedProducts - se mantienen entre ventas
     }
 
