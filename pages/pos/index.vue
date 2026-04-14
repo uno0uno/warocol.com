@@ -442,8 +442,8 @@ onMounted(async () => {
     // Returning from product/checkout sub-page — keep cart + table session intact
     sessionStorage.removeItem('posNavigation')
   } else {
-    // Fresh entry to POS (not from sub-page)
-    posStore.clearAll()
+    // Fresh entry to POS (not from sub-page) — always show floor plan
+    posStore.exitSession()
 
     // Check for pending customer from /ventas page
     const pendingCustomer = sessionStorage.getItem('pendingSaleCustomer')
@@ -516,7 +516,7 @@ onUnmounted(() => {
           <button
             type="button"
             class="flex-shrink-0 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors"
-            @click="posStore.clearAll()"
+            @click="posStore.exitSession()"
           >
             Salir
           </button>

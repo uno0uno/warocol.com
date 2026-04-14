@@ -301,6 +301,15 @@ export const usePOSStore = defineStore('pos', () => {
         // NO limpiar cachedProducts - se mantienen entre ventas
     }
 
+    // Explicit exit — always clears session including bar
+    const exitSession = () => {
+        cart.value = []
+        currentCustomer.value = null
+        cartId.value = null
+        tabItems.value = []
+        activeTableSession.value = null
+    }
+
     // Funciones para cache de productos
     const setProducts = (products: CachedProduct[]) => {
         cachedProducts.value = products
@@ -411,6 +420,7 @@ export const usePOSStore = defineStore('pos', () => {
         setCustomer,
         clearCustomer,
         clearAll,
+        exitSession,
         duplicateCartItem,
         waitForPendingOperations,
         setProducts,
