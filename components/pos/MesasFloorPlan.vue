@@ -301,27 +301,25 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Bottom strip: 3 cells -->
-          <div class="grid grid-cols-3 border-t divide-x text-center" :class="stripBorderClass(table.status)">
-            <!-- Cell 1: name + dot -->
-            <div class="flex flex-col items-center justify-center py-2 gap-0.5">
-              <span class="w-2 h-2 rounded-full" :class="dotClass(table.status)" />
-              <span class="text-[10px] font-bold text-text-secondary uppercase tracking-wide leading-none">{{ table.name }}</span>
+          <!-- Bottom strip: dot + 2 cells (time | amount) -->
+          <div class="flex items-stretch border-t" :class="stripBorderClass(table.status)">
+            <!-- Status dot -->
+            <div class="flex items-center justify-center px-2">
+              <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
             </div>
-            <!-- Cell 2: time -->
-            <div class="flex flex-col items-center justify-center py-2 gap-0.5">
+            <!-- Time -->
+            <div class="flex-1 flex flex-col items-center justify-center py-2 border-l gap-0.5" :class="stripBorderClass(table.status).split(' ')[1]">
               <template v-if="table.status !== 'free' && table.session">
-                <svg class="w-3 h-3 text-status-warning-text flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-3 h-3 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span class="text-[10px] font-semibold tabular-nums text-text-secondary leading-none">{{ formatDuration(table.session.opened_at) }}</span>
               </template>
-              <!-- Reabrir — free tables with last_closed_at -->
               <span
                 v-else-if="table.status === 'free' && table.last_closed_at"
                 role="button"
                 tabindex="0"
-                class="text-[10px] text-blue-600 underline cursor-pointer select-none leading-tight"
+                class="text-[10px] text-blue-600 underline cursor-pointer select-none"
                 :class="{ 'opacity-50 pointer-events-none': isReopeningTableId === table.id }"
                 :aria-label="`Reabrir ${table.name}`"
                 @click.stop="handleReopenTable(table.id, $event)"
@@ -329,8 +327,8 @@ onUnmounted(() => {
               >{{ isReopeningTableId === table.id ? '…' : '↩ Reabrir' }}</span>
               <span v-else class="text-[10px] text-text-tertiary leading-none">—</span>
             </div>
-            <!-- Cell 3: amount -->
-            <div class="flex flex-col items-center justify-center py-2 gap-0.5">
+            <!-- Amount -->
+            <div class="flex-1 flex flex-col items-center justify-center py-2 border-l gap-0.5" :class="stripBorderClass(table.status).split(' ')[1]">
               <template v-if="table.status !== 'free' && table.session">
                 <span class="text-[10px] text-text-secondary leading-none">$</span>
                 <span class="text-[11px] font-black tabular-nums text-text-primary leading-none">{{ Math.round(table.session.running_total ?? 0).toLocaleString('es-CO') }}</span>
