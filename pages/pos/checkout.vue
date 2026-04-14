@@ -101,6 +101,13 @@ const splitPayments = ref<Array<{ id: string; amount: number; payment_method: st
 const splitPaidTotal = ref(0)
 const splitRemaining = computed(() => Math.max(0, discountedTotal.value - splitPaidTotal.value))
 const splitIsComplete = computed(() => splitRemaining.value <= 0.01)
+
+const onSplitAmountInput = (e: Event) => {
+  const input = e.target as HTMLInputElement
+  const raw = Number(input.value.replace(/\./g, '').replace(/\D/g, ''))
+  splitPartialAmount.value = raw || null
+  input.value = raw ? raw.toLocaleString('es-CO') : ''
+}
 const isAddingPayment = ref(false)
 const splitPartialAmount = ref<number | null>(null)
 
@@ -109,7 +116,10 @@ watch(splitRemaining, (val) => {
   if (!splitIsComplete.value) splitPartialAmount.value = val
 }, { immediate: false })
 watch(splitMode, (val) => {
-  if (val) splitPartialAmount.value = splitRemaining.value
+  if (val) {
+    splitPartialAmount.value = splitRemaining.value
+    activeAccordion.value = null
+  }
 })
 
 const splitAmountToCharge = computed(() =>
@@ -1226,11 +1236,10 @@ onUnmounted(() => {
               <div class="relative">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-secondary pointer-events-none">$</span>
                 <input
-                  type="number"
-                  min="1"
-                  :max="splitRemaining"
-                  :value="splitPartialAmount"
-                  @input="splitPartialAmount = Number(($event.target as HTMLInputElement).value) || null"
+                  type="text"
+                  inputmode="numeric"
+                  :value="splitPartialAmount ? splitPartialAmount.toLocaleString('es-CO') : ''"
+                  @input="onSplitAmountInput"
                   class="w-full pl-7 pr-4 py-3 min-h-[44px] bg-surface-secondary border border-border rounded-xl text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary tabular-nums"
                   placeholder="0"
                 />
