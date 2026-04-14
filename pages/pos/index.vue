@@ -89,7 +89,7 @@ const isClearingTab = ref(false)
 const tabError = ref<string | null>(null)
 
 // Handle enter-table event from floor plan component
-const handleEnterTable = async (ctx: { tableId: string; sessionId: string; tableName: string; gotoCheckout?: boolean }) => {
+const handleEnterTable = async (ctx: { tableId: string; sessionId: string; tableName: string; isBar?: boolean; gotoCheckout?: boolean }) => {
   isEnteringTable.value = true
   posStore.clearAll()
   isLoadingTabItems.value = true
@@ -104,6 +104,7 @@ const handleEnterTable = async (ctx: { tableId: string; sessionId: string; table
         tableName: ctx.tableName,
         runningTotal: session.data.session.running_total,
         openedAt: session.data.session.opened_at,
+        isBar: ctx.isBar ?? false,
       })
       if (session.data.tab_items) {
         posStore.setTabItems(
@@ -143,6 +144,7 @@ const refreshTableSession = async () => {
         tableName: posStore.activeTableSession.tableName,
         runningTotal: session.data.session.running_total,
         openedAt: session.data.session.opened_at,
+        isBar: posStore.activeTableSession.isBar,
       })
     }
     if (session?.data?.tab_items) {
@@ -248,7 +250,12 @@ const cancelMesa = async () => {
   if (!session || posStore.isCancellingMesa) return
   posStore.isCancellingMesa = true
   try {
-    await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
+    if (session.isBar) {
+      // Bar session is permanent — just clear pending tab items, never close it
+      await $fetch(`/api/tables/${session.tableId}/tab`, { method: 'DELETE' })
+    } else {
+      await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
+    }
   } catch {
     // Non-critical — clear local state regardless
   } finally {
@@ -405,7 +412,7 @@ const clearCart = async () => {
     }
     posStore.setTabItems([])
     if (posStore.activeTableSession) {
-      posStore.setTableSession({ ...posStore.activeTableSession, runningTotal: 0 })
+      posStore.setTableSession({ ...posStore.activeTableSession, runningTotal: 0, isBar: posStore.activeTableSession.isBar })
     }
   }
   await posStore.clearCart()

@@ -37,7 +37,8 @@ const statusOptions = [
 ]
 
 const filteredTables = computed(() => {
-  let result = tables.value
+  // Exclude the permanent bar table from admin management — it is a system entity
+  let result = tables.value.filter((t: any) => !t.is_bar)
   const q = searchTerm.value.trim().toLowerCase()
   if (q) result = result.filter((t: any) => t.name.toLowerCase().includes(q))
   if (statusFilter.value) result = result.filter((t: any) => t.status === statusFilter.value)

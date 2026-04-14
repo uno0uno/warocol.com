@@ -35,6 +35,7 @@ export interface ActiveTableSession {
     tableName: string
     runningTotal: number
     openedAt: string
+    isBar: boolean
 }
 
 export interface TabItem {

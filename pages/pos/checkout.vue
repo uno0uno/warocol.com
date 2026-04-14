@@ -464,7 +464,12 @@ const cancelOrder = async () => {
   if (isMesaMode.value) {
     const session = posStore.activeTableSession!
     try {
-      await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
+      if (session.isBar) {
+        // Bar session is permanent — clear pending tab items only, never close it
+        await $fetch(`/api/tables/${session.tableId}/tab`, { method: 'DELETE' })
+      } else {
+        await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
+      }
     } catch {
       // Non-critical
     }

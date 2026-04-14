@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const emit = defineEmits<{
-  (e: 'enter-table', ctx: { tableId: string; sessionId: string; tableName: string; gotoCheckout?: boolean }): void
+  (e: 'enter-table', ctx: { tableId: string; sessionId: string; tableName: string; isBar?: boolean; gotoCheckout?: boolean }): void
   (e: 'no-tables'): void
 }>()
 
@@ -24,9 +24,14 @@ registerProgressiveLoading(isRefreshing)
 
 const tables = computed(() => tablesData.value?.data ?? [])
 
-// When data loads and there are 0 tables, tell the parent to fall back to POS view
+// Bar tile is always-on — separate from regular tables
+const barTable = computed(() => tables.value.find((t: any) => t.is_bar))
+const regularTables = computed(() => tables.value.filter((t: any) => !t.is_bar))
+
+// When data loads and there are 0 *regular* tables, tell the parent to fall back to POS view.
+// The bar alone does not count as a configured table for this purpose.
 watch(tablesStatus, (status) => {
-  if (status === 'success' && tables.value.length === 0) emit('no-tables')
+  if (status === 'success' && regularTables.value.length === 0) emit('no-tables')
 }, { immediate: true })
 
 watch(() => currentTenant.value?.id, () => { refetch() })
@@ -77,6 +82,24 @@ const handleTableClick = async (table: any) => {
   }
 }
 
+// ── Bar click — session is always open, fetch current and enter ─────────────
+const isEnteringBar = ref(false)
+
+const handleBarClick = async () => {
+  if (!barTable.value || isEnteringBar.value) return
+  isEnteringBar.value = true
+  try {
+    emit('enter-table', {
+      tableId: barTable.value.id,
+      sessionId: barTable.value.session?.id ?? '',
+      tableName: barTable.value.name,
+      isBar: true,
+    })
+  } finally {
+    isEnteringBar.value = false
+  }
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 const formatDuration = (openedAt: string): string => {
   const diffMs = Date.now() - new Date(openedAt).getTime()
@@ -117,12 +140,12 @@ const pillClass = (status: string) => {
   return 'text-text-tertiary border-border bg-transparent'
 }
 
-const freeCount = computed(() => tables.value.filter((t: any) => t.status === 'free').length)
-const openCount = computed(() => tables.value.filter((t: any) => t.status === 'open').length)
-const billCount = computed(() => tables.value.filter((t: any) => t.status === 'bill_requested').length)
+const freeCount = computed(() => regularTables.value.filter((t: any) => t.status === 'free').length)
+const openCount = computed(() => regularTables.value.filter((t: any) => t.status === 'open').length)
+const billCount = computed(() => regularTables.value.filter((t: any) => t.status === 'bill_requested').length)
 
 const totalVentas = computed(() =>
-  tables.value
+  regularTables.value
     .filter((t: any) => t.status !== 'free' && t.session?.running_total)
     .reduce((sum: number, t: any) => sum + (t.session.running_total ?? 0), 0)
 )
@@ -155,6 +178,10 @@ onUnmounted(() => {
           <p class="text-sm text-text-secondary">Vista de planta principal</p>
           <div class="flex gap-2 flex-wrap">
             <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
+              <div class="w-3 h-3 rounded-sm bg-amber-300" />
+              <span class="text-xs font-medium text-text-secondary">Barra</span>
+            </div>
+            <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
               <div class="w-3 h-3 rounded-sm bg-crocus-300" />
               <span class="text-xs font-medium text-text-secondary">Ocupada</span>
             </div>
@@ -169,10 +196,47 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- Barra tile — always visible, pinned before regular tables -->
+        <div v-if="barTable" class="mb-4">
+          <button
+            class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 border-amber-300 bg-amber-50 text-amber-800 focus:outline-none hover:brightness-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            :disabled="isEnteringBar"
+            aria-label="Barra — siempre abierta"
+            @click="handleBarClick"
+          >
+            <!-- Bar icon -->
+            <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-amber-100 border border-amber-200">
+              <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3h18v2l-7 9v7l-4-2v-5L3 5V3z" />
+              </svg>
+            </div>
+            <!-- Info -->
+            <div class="flex-1 min-w-0 text-left">
+              <div class="flex items-center gap-2">
+                <span class="text-base font-black text-amber-900 uppercase tracking-wide">Barra</span>
+                <span class="text-[10px] font-bold bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full uppercase tracking-widest">Siempre abierta</span>
+              </div>
+              <p class="text-xs text-amber-600 mt-0.5 tabular-nums">
+                <template v-if="barTable.session?.running_total > 0">
+                  ${{ Math.round(barTable.session.running_total).toLocaleString('es-CO') }} acumulado ·
+                  {{ formatDuration(barTable.session.opened_at) }}
+                </template>
+                <template v-else>
+                  Sin consumo activo
+                </template>
+              </p>
+            </div>
+            <!-- Arrow -->
+            <svg class="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
         <!-- Table grid -->
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 pb-32">
           <button
-            v-for="table in tables"
+            v-for="table in regularTables"
             :key="table.id"
             class="group flex flex-col items-center py-6 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
             :disabled="openingTableId === table.id"

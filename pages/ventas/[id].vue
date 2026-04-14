@@ -387,8 +387,8 @@ onUnmounted(() => {
       </div>
 
 
-      <!-- Status Update Panel (mesa orders only) -->
-      <div v-if="order.source === 'mesa'" class="bg-surface border border-border rounded-xl p-5 space-y-4">
+      <!-- Status Update Panel (mesa and barra orders) -->
+      <div v-if="order.source === 'mesa' || order.source === 'barra'" class="bg-surface border border-border rounded-xl p-5 space-y-4">
         <!-- Header -->
         <div class="flex items-center gap-2">
           <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

@@ -593,7 +593,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <span class="text-xs text-text-secondary">{{ formatDateCompact(item.order_date) }}</span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ item.customer_name }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ item.source === 'mesa' ? 'Mesa' : 'POS' }}
+                {{ item.customer_name }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ item.source === 'barra' ? 'Barra' : item.source === 'mesa' ? 'Mesa' : 'POS' }}
               </p>
               <p v-if="item.discount_amount > 0" class="text-xs text-destructive mt-0.5">Descuento: -{{ formatCurrency(item.discount_amount) }}</p>
             </div>
@@ -675,9 +675,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <template #cell-source="{ value }">
           <span
             class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-            :class="value === 'mesa' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'"
+            :class="value === 'barra' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : value === 'mesa' ? 'bg-crocus-100 text-crocus-700 dark:bg-crocus-900/30 dark:text-crocus-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'"
           >
-            {{ value === 'mesa' ? 'Mesa' : 'POS' }}
+            {{ value === 'barra' ? 'Barra' : value === 'mesa' ? 'Mesa' : 'POS' }}
           </span>
         </template>
 
