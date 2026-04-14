@@ -681,11 +681,11 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </span>
         </template>
 
-        <template #cell-payment_method="{ item }">
+        <template #cell-payment_method="{ row }">
           <UiStatusBadge
-            :value="item?.payment_method ? resolveLabel(item.payment_method, item.payment_method_id) : 'Sin registrar'"
+            :value="row?.payment_method ? resolveLabel(row.payment_method, row.payment_method_id) : 'Sin registrar'"
             format="text"
-            :variant="item?.payment_method === 'cash' ? 'success' : item?.payment_method === 'card' ? 'info' : item?.payment_method === 'digital' ? 'primary' : item?.payment_method === 'credit' ? 'warning' : 'secondary'"
+            :variant="row?.payment_method === 'cash' ? 'success' : row?.payment_method === 'card' ? 'info' : row?.payment_method === 'digital' ? 'primary' : row?.payment_method === 'credit' ? 'warning' : 'secondary'"
             size="sm"
           />
         </template>
