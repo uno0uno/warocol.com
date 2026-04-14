@@ -314,13 +314,10 @@ onUnmounted(() => {
             <!-- Spacer when free so justify-between still works -->
             <div v-else class="mt-2" aria-hidden="true" />
 
-            <!-- Status pill -->
+            <!-- Status dot -->
             <div class="flex flex-col items-center gap-1 mt-1">
               <div class="flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
-                <span class="text-xs font-bold uppercase tracking-wider" :class="pillTextClass(table.status)">
-                  {{ badgeLabel(table.status) }}
-                </span>
+                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
               </div>
 
               <!-- Reabrir link — free tables that have last_closed_at -->
