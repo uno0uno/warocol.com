@@ -270,9 +270,12 @@ onUnmounted(() => {
 
       <!-- Table grid -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pb-32">
-        <button
+        <div
           v-for="table in regularTables"
           :key="table.id"
+          class="flex flex-col items-center"
+        >
+        <button
           class="group flex flex-col w-full rounded-2xl border overflow-hidden bg-surface hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
           :class="cardBorderClass(table.status)"
           :disabled="openingTableId === table.id"
@@ -301,31 +304,18 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Bottom strip: dot + 2 cells (time | amount) -->
-          <div class="flex items-stretch border-t" :class="stripBorderClass(table.status)">
+          <!-- Bottom strip: only when occupied -->
+          <div v-if="table.status !== 'free'" class="flex items-stretch border-t" :class="stripBorderClass(table.status)">
             <!-- Status dot -->
             <div class="flex items-center justify-center px-2">
               <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
             </div>
             <!-- Time -->
             <div class="flex-1 flex flex-col items-center justify-center py-2 border-l gap-0.5" :class="stripBorderClass(table.status).split(' ')[1]">
-              <template v-if="table.status !== 'free' && table.session">
-                <svg class="w-3 h-3 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="text-[10px] font-semibold tabular-nums text-text-secondary leading-none">{{ formatDuration(table.session.opened_at) }}</span>
-              </template>
-              <span
-                v-else-if="table.status === 'free' && table.last_closed_at"
-                role="button"
-                tabindex="0"
-                class="text-[10px] text-blue-600 underline cursor-pointer select-none"
-                :class="{ 'opacity-50 pointer-events-none': isReopeningTableId === table.id }"
-                :aria-label="`Reabrir ${table.name}`"
-                @click.stop="handleReopenTable(table.id, $event)"
-                @keydown.enter.stop="handleReopenTable(table.id, $event)"
-              >{{ isReopeningTableId === table.id ? '…' : '↩ Reabrir' }}</span>
-              <span v-else class="text-[10px] text-text-tertiary leading-none">—</span>
+              <svg class="w-3 h-3 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-[10px] font-semibold tabular-nums text-text-secondary leading-none">{{ formatDuration(table.session.opened_at) }}</span>
             </div>
             <!-- Amount -->
             <div class="flex-1 flex flex-col items-center justify-center py-2 border-l gap-0.5" :class="stripBorderClass(table.status).split(' ')[1]">
@@ -337,6 +327,18 @@ onUnmounted(() => {
             </div>
           </div>
         </button>
+
+        <!-- Reabrir link — below card, only free tables with last_closed_at -->
+        <span
+          v-if="table.status === 'free' && table.last_closed_at"
+          role="button"
+          tabindex="0"
+          class="mt-1 text-[10px] text-blue-600 underline cursor-pointer select-none"
+          :class="{ 'opacity-50 pointer-events-none': isReopeningTableId === table.id }"
+          :aria-label="`Reabrir ${table.name}`"
+          @click.stop="handleReopenTable(table.id, $event)"
+          @keydown.enter.stop="handleReopenTable(table.id, $event)"
+        >{{ isReopeningTableId === table.id ? 'Reabriendo…' : '↩ Reabrir' }}</span>
       </div>
     </div>
   </div>
