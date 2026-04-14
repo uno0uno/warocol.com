@@ -683,6 +683,14 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
         <template #cell-payment_method="{ row }">
           <UiStatusBadge
+            v-if="row?.split_payments_count > 1"
+            :value="`Dividido · ${row.split_payments_count}`"
+            format="text"
+            variant="secondary"
+            size="sm"
+          />
+          <UiStatusBadge
+            v-else
             :value="row?.payment_method ? resolveLabel(row.payment_method, row.payment_method_id) : 'Sin registrar'"
             format="text"
             :variant="row?.payment_method === 'cash' ? 'success' : row?.payment_method === 'card' ? 'info' : row?.payment_method === 'digital' ? 'primary' : row?.payment_method === 'credit' ? 'warning' : 'secondary'"
