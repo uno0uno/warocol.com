@@ -330,7 +330,7 @@ onUnmounted(() => {
     <!-- Order Details -->
     <div v-else class="space-y-6">
       <!-- Order Info Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <!-- Customer Name -->
         <div class="bg-surface border border-border rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Cliente</p>
@@ -366,6 +366,30 @@ onUnmounted(() => {
             </svg>
           </div>
         </component>
+
+        <!-- Source / Origin -->
+        <div class="bg-surface border border-border rounded-xl p-4">
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Origen</p>
+          <span
+            class="inline-flex items-center gap-1.5 text-sm font-bold px-2.5 py-1 rounded-full"
+            :class="{
+              'bg-amber-100 text-amber-700': order.source === 'barra',
+              'bg-crocus-100 text-crocus-700': order.source === 'mesa',
+              'bg-blue-100 text-blue-700': order.source === 'pos' || !order.source,
+            }"
+          >
+            <svg v-if="order.source === 'barra'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+            </svg>
+            <svg v-else-if="order.source === 'mesa'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+            </svg>
+            <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            {{ order.source === 'barra' ? 'Barra' : order.source === 'mesa' ? 'Mesa' : 'POS' }}
+          </span>
+        </div>
 
         <!-- Total Amount -->
         <div class="bg-surface border-2 border-primary rounded-xl p-4">
