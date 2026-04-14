@@ -139,40 +139,46 @@ const tableShortId = (name: string) => {
   return match ? match[0] : name.slice(0, 3).toUpperCase()
 }
 
-const tableColorClass = (status: string) => {
-  if (status === 'open') return 'bg-green-100 border-green-500 text-green-900'
-  if (status === 'bill_requested') return 'bg-amber-100 border-amber-500 text-amber-900'
-  return 'bg-surface border-slate-400 text-text-primary'
+const cardClass = (status: string) => {
+  if (status === 'open') return 'border-green-500 bg-green-50 hover:shadow-md'
+  if (status === 'bill_requested') return 'border-amber-500 bg-amber-50 hover:shadow-md'
+  return 'border-slate-300 bg-white hover:shadow-md hover:border-slate-400'
 }
 
-const chairColorClass = (status: string) => {
+const squareClass = (status: string) => {
+  if (status === 'open') return 'bg-green-100 border-green-500 text-green-900'
+  if (status === 'bill_requested') return 'bg-amber-100 border-amber-500 text-amber-900'
+  return 'bg-white border-slate-400 text-slate-700'
+}
+
+const chairClass = (status: string) => {
   if (status === 'open') return 'bg-green-400'
   if (status === 'bill_requested') return 'bg-amber-400'
   return 'bg-slate-300'
 }
 
-const cardBorderClass = (status: string) => {
-  if (status === 'open') return 'border-green-200 bg-green-50/30'
-  if (status === 'bill_requested') return 'border-amber-200 bg-amber-50/30'
-  return 'border-slate-200 bg-surface'
+const stripClass = (status: string) => {
+  if (status === 'open') return 'bg-green-100 border-green-300'
+  if (status === 'bill_requested') return 'bg-amber-100 border-amber-300'
+  return 'bg-slate-50 border-slate-200'
 }
 
-const stripBorderClass = (status: string) => {
-  if (status === 'open') return 'border-green-300 divide-green-300 bg-green-50'
-  if (status === 'bill_requested') return 'border-amber-300 divide-amber-300 bg-amber-50'
-  return 'border-slate-200 divide-slate-200 bg-surface-secondary'
+const stripTextClass = (status: string) => {
+  if (status === 'open') return 'text-green-800'
+  if (status === 'bill_requested') return 'text-amber-800'
+  return 'text-slate-600'
+}
+
+const stripDividerClass = (status: string) => {
+  if (status === 'open') return 'bg-green-300'
+  if (status === 'bill_requested') return 'bg-amber-300'
+  return 'bg-slate-300'
 }
 
 const dotClass = (status: string) => {
   if (status === 'open') return 'bg-green-500'
   if (status === 'bill_requested') return 'bg-amber-500'
-  return 'bg-slate-300'
-}
-
-const pillTextClass = (status: string) => {
-  if (status === 'open') return 'text-green-700'
-  if (status === 'bill_requested') return 'text-amber-600'
-  return 'text-slate-500'
+  return 'bg-slate-400'
 }
 
 const freeCount = computed(() => regularTables.value.filter((t: any) => t.status === 'free').length)
@@ -269,77 +275,65 @@ onUnmounted(() => {
       </div>
 
       <!-- Table grid -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pb-32">
-        <div
-          v-for="table in regularTables"
-          :key="table.id"
-          class="flex flex-col items-center"
-        >
-        <button
-          class="group flex flex-col w-full rounded-2xl border overflow-hidden bg-surface hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
-          :class="cardBorderClass(table.status)"
-          :disabled="openingTableId === table.id"
-          :aria-label="`${table.name} — ${badgeLabel(table.status)}`"
-          @click="handleTableClick(table)"
-        >
-          <!-- Top area: table graphic -->
-          <div class="flex-1 flex items-center justify-center py-6">
-            <div class="relative">
-              <!-- Chair: top -->
-              <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-3 rounded-t-sm opacity-75 transition-colors duration-200" :class="chairColorClass(table.status)" />
-              <!-- Chair: bottom -->
-              <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-3 rounded-b-sm opacity-75 transition-colors duration-200" :class="chairColorClass(table.status)" />
-              <!-- Chair: left -->
-              <div class="absolute -left-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-l-sm opacity-75 transition-colors duration-200" :class="chairColorClass(table.status)" />
-              <!-- Chair: right -->
-              <div class="absolute -right-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-r-sm opacity-75 transition-colors duration-200" :class="chairColorClass(table.status)" />
-              <!-- Table square -->
-              <div
-                class="w-20 h-20 flex items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95"
-                :class="tableColorClass(table.status)"
-              >
-                <CommonsTheCustomLoader v-if="openingTableId === table.id" size="small" />
-                <span v-else class="text-4xl font-black leading-none tabular-nums">{{ tableShortId(table.name) }}</span>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pb-32">
+        <div v-for="table in regularTables" :key="table.id" class="flex flex-col gap-1">
+
+          <!-- Card -->
+          <button
+            class="group w-full flex flex-col rounded-2xl border-2 overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+            :class="cardClass(table.status)"
+            :disabled="openingTableId === table.id"
+            :aria-label="`${table.name} — ${badgeLabel(table.status)}`"
+            @click="handleTableClick(table)"
+          >
+            <!-- Top: table graphic -->
+            <div class="flex items-center justify-center py-7">
+              <div class="relative">
+                <!-- Chairs -->
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-3 rounded-t-sm transition-colors duration-200" :class="chairClass(table.status)" />
+                <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-3 rounded-b-sm transition-colors duration-200" :class="chairClass(table.status)" />
+                <div class="absolute -left-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-l-sm transition-colors duration-200" :class="chairClass(table.status)" />
+                <div class="absolute -right-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-r-sm transition-colors duration-200" :class="chairClass(table.status)" />
+                <!-- Table square with number -->
+                <div
+                  class="w-20 h-20 flex items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95"
+                  :class="squareClass(table.status)"
+                >
+                  <CommonsTheCustomLoader v-if="openingTableId === table.id" size="small" />
+                  <span v-else class="text-4xl font-black leading-none tabular-nums">{{ tableShortId(table.name) }}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Bottom strip: only when occupied -->
-          <div v-if="table.status !== 'free'" class="flex items-stretch border-t" :class="stripBorderClass(table.status)">
-            <!-- Status dot -->
-            <div class="flex items-center justify-center px-2">
-              <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
+            <!-- Bottom strip: time + amount (only when occupied) -->
+            <div v-if="table.status !== 'free'" class="flex items-center justify-around px-2 py-2.5 border-t" :class="stripClass(table.status)">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
+                <span class="text-xs font-semibold tabular-nums" :class="stripTextClass(table.status)">
+                  {{ formatDuration(table.session.opened_at) }}
+                </span>
+              </div>
+              <span class="w-px h-4" :class="stripDividerClass(table.status)" />
+              <span class="text-xs font-black tabular-nums" :class="stripTextClass(table.status)">
+                ${{ Math.round(table.session?.running_total ?? 0).toLocaleString('es-CO') }}
+              </span>
             </div>
-            <!-- Time -->
-            <div class="flex-1 flex flex-col items-center justify-center py-2 border-l gap-0.5" :class="stripBorderClass(table.status).split(' ')[1]">
-              <svg class="w-3 h-3 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span class="text-xs font-bold tabular-nums text-text-primary leading-none">{{ formatDuration(table.session.opened_at) }}</span>
-            </div>
-            <!-- Amount -->
-            <div class="flex-1 flex flex-col items-center justify-center py-2 border-l gap-0.5" :class="stripBorderClass(table.status).split(' ')[1]">
-              <template v-if="table.status !== 'free' && table.session">
-                <span class="text-xs font-black tabular-nums text-text-primary leading-none">${{ Math.round(table.session.running_total ?? 0).toLocaleString('es-CO') }}</span>
-              </template>
-              <span v-else class="text-[10px] text-text-tertiary leading-none">—</span>
-            </div>
-          </div>
-        </button>
+          </button>
 
-        <!-- Reabrir link — below card, only free tables with last_closed_at -->
-        <span
-          v-if="table.status === 'free' && table.last_closed_at"
-          role="button"
-          tabindex="0"
-          class="mt-1 text-[10px] text-blue-600 underline cursor-pointer select-none"
-          :class="{ 'opacity-50 pointer-events-none': isReopeningTableId === table.id }"
-          :aria-label="`Reabrir ${table.name}`"
-          @click.stop="handleReopenTable(table.id, $event)"
-          @keydown.enter.stop="handleReopenTable(table.id, $event)"
-        >{{ isReopeningTableId === table.id ? 'Reabriendo…' : '↩ Reabrir' }}</span>
+          <!-- Reabrir — below card, only for free tables with a recent session -->
+          <span
+            v-if="table.status === 'free' && table.last_closed_at"
+            role="button"
+            tabindex="0"
+            class="text-center text-[11px] text-blue-600 underline cursor-pointer select-none"
+            :class="{ 'opacity-50 pointer-events-none': isReopeningTableId === table.id }"
+            :aria-label="`Reabrir ${table.name}`"
+            @click.stop="handleReopenTable(table.id, $event)"
+            @keydown.enter.stop="handleReopenTable(table.id, $event)"
+          >{{ isReopeningTableId === table.id ? 'Reabriendo…' : '↩ Reabrir' }}</span>
+
+        </div>
       </div>
     </div>
-  </div>
   </div>
 </template>
