@@ -690,7 +690,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Split Payments Slide-over -->
-    <template v-if="order && order.split_payments && order.split_payments.length > 0">
+    <Teleport to="body">
       <!-- Backdrop -->
       <Transition
         enter-active-class="transition-opacity duration-200"
@@ -769,12 +769,12 @@ onUnmounted(() => {
           </div>
         </div>
       </Transition>
-    </template>
+    </Teleport>
 
   </div>
 </template>
 
-<style scoped>
+<style>
 .slide-down-enter-active,
 .slide-down-leave-active {
   transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
