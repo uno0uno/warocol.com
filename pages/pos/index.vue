@@ -35,9 +35,11 @@ const { data: settingsData, asyncStatus: settingsAsyncStatus } = useQuery({
 // localStorage persistence — instant view decision on tenant switch, no loader flash
 const tablesStorageKey = (tenantId: string) => `waro_pos_tables_${tenantId}`
 
-// On tenant change: read stored value immediately so tablesEnabled is never null for known tenants
+// On tenant change: reset tablesEnabled and re-read from localStorage for the new tenant.
+// Without the reset, a stale value from the previous tenant blocks the floor plan from showing.
 watch(() => currentTenant.value?.id, (tenantId) => {
-  if (!tenantId || posStore.tablesEnabled !== null) return
+  if (!tenantId) return
+  posStore.tablesEnabled = null // reset so isResolvingSettings shows loader while re-resolving
   const stored = localStorage.getItem(tablesStorageKey(tenantId))
   if (stored !== null) posStore.tablesEnabled = stored === '1'
 }, { immediate: true })
