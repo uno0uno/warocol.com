@@ -200,7 +200,7 @@ onUnmounted(() => {
         <!-- Barra tile — always visible, pinned before regular tables -->
         <div v-if="barTable" class="mb-4">
           <button
-            class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 border-amber-300 bg-amber-50 text-amber-800 focus:outline-none hover:brightness-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 border-amber-500 bg-amber-50 text-amber-800 focus:outline-none hover:brightness-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             :disabled="isEnteringBar"
             aria-label="Barra — siempre abierta"
             @click="handleBarClick"
