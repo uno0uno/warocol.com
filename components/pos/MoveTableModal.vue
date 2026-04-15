@@ -116,13 +116,13 @@ const tableShortId = (name: string) => {
               v-for="table in destinationTables"
               :key="table.id"
               type="button"
-              class="flex flex-col items-center rounded-xl border-2 p-3 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              class="flex flex-col items-center rounded-xl border p-3 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               :class="[
                 table.status !== 'free'
                   ? 'opacity-50 cursor-not-allowed border-border bg-surface-secondary'
                   : selectedTableId === table.id
-                    ? 'border-primary bg-primary/5 shadow-sm'
-                    : 'border-border bg-surface hover:border-primary/50 hover:shadow-sm cursor-pointer',
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-surface hover:border-primary/40 cursor-pointer',
               ]"
               :disabled="table.status !== 'free' || isMoving"
               :title="table.status !== 'free' ? 'Ocupada' : `Seleccionar ${table.name}`"
@@ -132,13 +132,13 @@ const tableShortId = (name: string) => {
             >
               <!-- Table square -->
               <div
-                class="w-10 h-10 flex items-center justify-center rounded-lg border font-black text-xl tabular-nums mb-1.5"
+                class="w-10 h-10 flex items-center justify-center rounded-lg font-black text-xl tabular-nums mb-1.5"
                 :class="
                   table.status !== 'free'
-                    ? 'bg-surface-secondary border-border text-text-secondary'
+                    ? 'bg-surface-secondary text-text-secondary'
                     : selectedTableId === table.id
-                      ? 'bg-primary/10 border-primary text-primary'
-                      : 'bg-surface border-border text-text-primary'
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-surface-secondary text-text-primary'
                 "
               >
                 {{ tableShortId(table.name) }}
