@@ -317,7 +317,7 @@ onUnmounted(() => {
 
             <!-- Bottom strip: occupied → time + amount / reabrir → single action / libre → label -->
             <template v-if="table.status !== 'free'">
-              <div class="flex items-center justify-around px-2 py-2.5 border-t min-h-[44px]" :class="stripClass(table.status)">
+              <div class="flex items-center justify-around px-2 h-11 border-t" :class="stripClass(table.status)">
                 <!-- Cell 1: dot + time -->
                 <div class="flex items-center gap-1.5">
                   <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
@@ -348,7 +348,7 @@ onUnmounted(() => {
             <template v-else-if="table.last_closed_at">
               <!-- Not role="button" — outer <button> handles keyboard; @click.stop handles mouse/touch -->
               <div
-                class="flex items-center justify-center gap-1.5 px-2 py-2.5 border-t border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors min-h-[44px]"
+                class="flex items-center justify-center gap-1.5 px-2 h-11 border-t border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
                 :class="{ 'opacity-50 pointer-events-none': isReopeningTableId === table.id }"
                 @click.stop="handleReopenTable(table.id, $event)"
               >
@@ -364,7 +364,7 @@ onUnmounted(() => {
             </template>
             <template v-else>
               <!-- Free table with no prior session — "Libre" label for equal card height -->
-              <div class="flex items-center justify-center px-2 py-2.5 border-t border-slate-200 bg-slate-50 min-h-[44px]">
+              <div class="flex items-center justify-center px-2 h-11 border-t border-slate-200 bg-slate-50">
                 <span class="text-xs font-semibold text-slate-400">Libre</span>
               </div>
             </template>
