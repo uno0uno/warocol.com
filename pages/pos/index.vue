@@ -564,21 +564,22 @@ onUnmounted(() => {
   </div>
 
   <!-- Floor plan view -->
-  <PosMesasFloorPlan
-    v-else-if="showFloorPlan"
-    @enter-table="handleEnterTable"
-    @no-tables="noTablesConfigured = true"
-    @move-table="handleMoveTable"
-  />
-
-  <!-- Move table modal — rendered outside the v-else-if so it survives view transitions -->
-  <PosMoveTableModal
-    :show="showMoveModal"
-    :source-table="moveTableSource"
-    :tables="tablesForModal"
-    @close="showMoveModal = false; moveTableSource = null"
-    @moved="handleMoveDone"
-  />
+  <div v-else-if="showFloorPlan">
+    <PosMesasFloorPlan
+      @enter-table="handleEnterTable"
+      @no-tables="noTablesConfigured = true"
+      @move-table="handleMoveTable"
+    />
+    <!-- Modal uses Teleport to="body" internally — safe to nest here -->
+    <PosMoveTableModal
+      v-if="showMoveModal && moveTableSource"
+      :show="showMoveModal"
+      :source-table="moveTableSource"
+      :tables="tablesForModal"
+      @close="showMoveModal = false; moveTableSource = null"
+      @moved="handleMoveDone"
+    />
+  </div>
 
   <!-- POS sales view -->
   <div v-else>
@@ -833,4 +834,5 @@ onUnmounted(() => {
       </div>
     </div>
   </div>
+
 </template>
