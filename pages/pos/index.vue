@@ -45,6 +45,9 @@ watch(() => currentTenant.value?.id, (tenantId) => {
 }, { immediate: true })
 
 // Sync from fresh query data — also saves to localStorage for next visit
+// immediate: true so that if the cache is already 'idle' when POS mounts (e.g. after
+// toggling tables in mesas.vue which calls refreshProfile()), we still overwrite any
+// stale localStorage value instead of leaving tablesEnabled at the old cached state.
 watch(settingsAsyncStatus, (status) => {
   if (status !== 'idle') return
   const enabled = settingsData.value?.data?.tables_enabled
@@ -55,7 +58,7 @@ watch(settingsAsyncStatus, (status) => {
   if (currentTenant.value?.id) {
     localStorage.setItem(tablesStorageKey(currentTenant.value.id), resolved ? '1' : '0')
   }
-})
+}, { immediate: true })
 
 // ── Tables prefetch — same key as MesasFloorPlan so they share the cache entry ──
 // Fetching here (parent) ensures data is ready before MesasFloorPlan mounts,
