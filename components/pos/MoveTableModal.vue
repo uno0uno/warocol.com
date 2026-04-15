@@ -184,7 +184,11 @@ const tableShortId = (name: string) => {
             :disabled="!selectedTableId || isMoving"
             @click="handleConfirm"
           >
-            <CommonsTheCustomLoader v-if="isMoving" size="small" />
+            <span v-if="isMoving" class="flex items-center gap-0.5" aria-hidden="true">
+              <span class="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style="animation-delay:0ms" />
+              <span class="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style="animation-delay:150ms" />
+              <span class="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style="animation-delay:300ms" />
+            </span>
             <span>{{ isMoving ? 'Moviendo…' : 'Confirmar traslado' }}</span>
           </button>
         </div>
