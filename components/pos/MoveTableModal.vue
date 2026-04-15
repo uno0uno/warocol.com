@@ -184,11 +184,7 @@ const tableShortId = (name: string) => {
             :disabled="!selectedTableId || isMoving"
             @click="handleConfirm"
           >
-            <span v-if="isMoving" class="flex items-center gap-0.5" aria-hidden="true">
-              <span class="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style="animation-delay:0ms" />
-              <span class="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style="animation-delay:150ms" />
-              <span class="w-1.5 h-1.5 rounded-full bg-white animate-bounce" style="animation-delay:300ms" />
-            </span>
+            <UiLoadingDots v-if="isMoving" size="11px" color="white" aria-hidden="true" />
             <span>{{ isMoving ? 'Moviendo…' : 'Confirmar traslado' }}</span>
           </button>
         </div>
