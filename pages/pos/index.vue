@@ -277,6 +277,42 @@ const cancelMesa = async () => {
   cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
 }
 
+// ── Move table ─────────────────────────────────────────────────────────────
+const moveTableSource = ref<{ tableId: string; sessionId: string; tableName: string } | null>(null)
+const showMoveModal = ref(false)
+
+const { data: tablesQueryData } = useQuery({
+  key: () => ['tables', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any[] }>('/api/tables'),
+  enabled: () => posStore.tablesEnabled === true && !!currentTenant.value,
+  staleTime: 0,
+})
+
+const tablesForModal = computed(() =>
+  (tablesQueryData.value?.data ?? []).filter((t: any) => !t.is_bar),
+)
+
+const handleMoveTable = (ctx: { tableId: string; sessionId: string; tableName: string }) => {
+  moveTableSource.value = ctx
+  showMoveModal.value = true
+}
+
+const handleMoveDone = async (result: { targetTableId: string; targetSessionId: string; targetTableName: string }) => {
+  showMoveModal.value = false
+  // If the user is inside the moved table's session, update posStore so the banner reflects the new table
+  if (posStore.activeTableSession?.tableId === moveTableSource.value?.tableId) {
+    posStore.setTableSession({
+      ...posStore.activeTableSession,
+      tableId: result.targetTableId,
+      sessionId: result.targetSessionId,
+      tableName: result.targetTableName,
+    })
+  }
+  moveTableSource.value = null
+  // Invalidate tables cache so floor plan reflects source → free, target → open
+  cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
+}
+
 // ── Cerrar / Descartar from Mesa Activa banner ─────────────────────────────
 const confirmBannerClose = ref(false)
 const confirmBannerDiscard = ref(false)
@@ -528,7 +564,21 @@ onUnmounted(() => {
   </div>
 
   <!-- Floor plan view -->
-  <PosMesasFloorPlan v-else-if="showFloorPlan" @enter-table="handleEnterTable" @no-tables="noTablesConfigured = true" />
+  <PosMesasFloorPlan
+    v-else-if="showFloorPlan"
+    @enter-table="handleEnterTable"
+    @no-tables="noTablesConfigured = true"
+    @move-table="handleMoveTable"
+  />
+
+  <!-- Move table modal — rendered outside the v-else-if so it survives view transitions -->
+  <PosMoveTableModal
+    :show="showMoveModal"
+    :source-table="moveTableSource"
+    :tables="tablesForModal"
+    @close="showMoveModal = false; moveTableSource = null"
+    @moved="handleMoveDone"
+  />
 
   <!-- POS sales view -->
   <div v-else>

@@ -5,6 +5,7 @@ import { $fetch } from 'ofetch'
 const emit = defineEmits<{
   (e: 'enter-table', ctx: { tableId: string; sessionId: string; tableName: string; isBar?: boolean; gotoCheckout?: boolean }): void
   (e: 'no-tables'): void
+  (e: 'move-table', ctx: { tableId: string; sessionId: string; tableName: string }): void
 }>()
 
 const { currentTenant } = useTenantReactive()
@@ -115,6 +116,16 @@ const handleReopenTable = async (tableId: string, event: Event) => {
   } finally {
     isReopeningTableId.value = null
   }
+}
+
+// ── Move table ────────────────────────────────────────────────────────────
+const handleMoveTable = (table: any, event: Event) => {
+  event.stopPropagation()
+  emit('move-table', {
+    tableId: table.id,
+    sessionId: table.session?.id ?? '',
+    tableName: table.name,
+  })
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -307,6 +318,7 @@ onUnmounted(() => {
             <!-- Bottom strip: occupied → time + amount / reabrir → single action / libre → label -->
             <template v-if="table.status !== 'free'">
               <div class="flex items-center justify-around px-2 py-2.5 border-t" :class="stripClass(table.status)">
+                <!-- Cell 1: dot + time -->
                 <div class="flex items-center gap-1.5">
                   <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
                   <span class="text-xs font-semibold tabular-nums" :class="stripTextClass(table.status)">
@@ -314,9 +326,23 @@ onUnmounted(() => {
                   </span>
                 </div>
                 <span class="w-px h-4" :class="stripDividerClass(table.status)" />
+                <!-- Cell 2: running total -->
                 <span class="text-xs font-black tabular-nums" :class="stripTextClass(table.status)">
                   ${{ Math.round(table.session?.running_total ?? 0).toLocaleString('es-CO') }}
                 </span>
+                <span class="w-px h-4" :class="stripDividerClass(table.status)" />
+                <!-- Cell 3: move/transfer button -->
+                <button
+                  type="button"
+                  class="w-7 h-7 flex items-center justify-center rounded hover:bg-black/10 transition-colors focus:outline-none"
+                  :class="stripTextClass(table.status)"
+                  :aria-label="`Mover ${table.name} a otra mesa`"
+                  @click.stop="handleMoveTable(table, $event)"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
+                </button>
               </div>
             </template>
             <template v-else-if="table.last_closed_at">
