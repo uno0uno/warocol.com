@@ -116,7 +116,7 @@ const tableShortId = (name: string) => {
               v-for="table in destinationTables"
               :key="table.id"
               type="button"
-              class="flex flex-col items-center rounded-xl border p-3 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              class="flex flex-col items-center rounded-xl border p-3 transition-all focus:outline-none"
               :class="[
                 table.status !== 'free'
                   ? 'opacity-50 cursor-not-allowed border-border bg-surface-secondary'
