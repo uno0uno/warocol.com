@@ -154,13 +154,13 @@ const tableShortId = (name: string) => {
               </span>
               <span
                 v-else-if="selectedTableId === table.id"
-                class="text-[9px] font-bold text-primary uppercase tracking-wide mt-0.5"
+                class="text-[9px] font-bold text-primary uppercase tracking-wide mt-0.5 reveal-ltr"
               >
                 Seleccionada
               </span>
               <span
                 v-else
-                class="text-[9px] font-semibold text-status-success-text uppercase tracking-wide mt-0.5"
+                class="text-[9px] font-semibold text-status-success-text uppercase tracking-wide mt-0.5 reveal-rtl"
               >
                 Libre
               </span>
@@ -192,3 +192,16 @@ const tableShortId = (name: string) => {
     </div>
   </Teleport>
 </template>
+
+<style scoped>
+@keyframes reveal-ltr {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+@keyframes reveal-rtl {
+  from { clip-path: inset(0 0 0 100%); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+.reveal-ltr { animation: reveal-ltr 0.22s ease-out forwards; }
+.reveal-rtl { animation: reveal-rtl 0.22s ease-out forwards; }
+</style>
