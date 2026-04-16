@@ -372,6 +372,24 @@ const viewOrderDetails = (order: any) => {
   navigateTo(`/ventas/${order.id}`)
 }
 
+// ── Monthly accounting period lock (#362) ─────────────────────────────────
+const { isOrderLocked, fetchPeriodStatus, closedPeriods } = useClosedPeriods()
+
+// When orders load, pre-fetch period status for each distinct year-month present
+watch(orders, async (list) => {
+  const seen = new Set<string>()
+  for (const o of list) {
+    const d = o.order_date
+    if (!d) continue
+    const dt = new Date(d)
+    const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`
+    if (!seen.has(key)) {
+      seen.add(key)
+      fetchPeriodStatus(dt.getFullYear(), dt.getMonth() + 1)
+    }
+  }
+}, { immediate: true })
+
 // Set refresh handler for layout
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 onMounted(() => { setRefreshHandler(refetch) })
@@ -591,6 +609,17 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               <div class="flex items-baseline gap-2">
                 <span class="text-sm font-bold text-text-primary">#{{ item.order_number }}</span>
                 <span class="text-xs text-text-secondary">{{ formatDateCompact(item.order_date) }}</span>
+                <!-- Lock icon for closed accounting period -->
+                <span
+                  v-if="isOrderLocked(item)"
+                  title="Período contable cerrado — no modificable"
+                  class="inline-flex items-center text-text-secondary"
+                  aria-label="Período contable cerrado"
+                >
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
                 {{ item.customer_name }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ item.source === 'barra' ? 'Barra' : item.source === 'mesa' ? 'Mesa' : 'POS' }}
@@ -649,8 +678,21 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
         <!-- Desktop Table Cells -->
-        <template #cell-order_number="{ value }">
-          <span class="text-sm font-bold text-text-primary">#{{ value }}</span>
+        <template #cell-order_number="{ value, row }">
+          <span class="inline-flex items-center gap-1.5">
+            <span class="text-sm font-bold text-text-primary">#{{ value }}</span>
+            <!-- Lock icon for closed accounting period -->
+            <span
+              v-if="row && isOrderLocked(row)"
+              title="Período contable cerrado — no modificable"
+              class="inline-flex items-center text-text-secondary"
+              aria-label="Período contable cerrado"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </span>
+          </span>
         </template>
 
         <template #cell-order_date="{ value }">
