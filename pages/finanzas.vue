@@ -13,7 +13,7 @@ definePageMeta({
 })
 
 const navigationItems = [
-  { to: '/finanzas/cierre',        label: 'Cierre' },
+  { to: '/finanzas/cierre',        label: 'Arqueo de caja' },
   { to: '/finanzas/cartera',       label: 'Cartera' },
   { to: '/finanzas/gastos',        label: 'Gastos' },
   { to: '/finanzas/metodos-pago',  label: 'Métodos de pago' },
