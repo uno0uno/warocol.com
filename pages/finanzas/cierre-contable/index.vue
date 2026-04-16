@@ -1,12 +1,5 @@
 <template>
   <div class="page-layout">
-    <!-- Header -->
-    <div class="bg-surface border-2 border-border rounded-lg mb-4 sm:mb-6">
-      <div class="p-4 sm:p-6">
-        <h1 class="text-xl sm:text-2xl font-bold text-text-primary mb-1">Cierre contable</h1>
-        <p class="text-sm text-text-secondary">Gestión de períodos contables mensuales. Al cerrar un período, las órdenes de ese mes quedan bloqueadas.</p>
-      </div>
-    </div>
 
     <!-- Year selector -->
     <div class="flex items-center gap-3 mb-4">
@@ -32,58 +25,89 @@
       </button>
     </div>
 
-    <!-- Months grid -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-      <div
-        v-for="m in months"
-        :key="m.number"
-        class="bg-surface border-2 rounded-xl p-4 flex flex-col gap-3"
-        :class="m.isFuture ? 'border-border opacity-50' : 'border-border'"
+    <!-- Months table -->
+    <HealthSemaphore :is-unlocked="true" title="Períodos contables">
+      <UiResponsiveDataView
+        row-size="sm"
+        :columns="columns"
+        :data="months"
+        empty-message="No hay períodos disponibles"
       >
-        <div class="flex items-start justify-between">
-          <div>
-            <p class="text-sm font-semibold text-text-primary">{{ m.name }}</p>
-            <p class="text-xs text-text-secondary mt-0.5">{{ selectedYear }}</p>
-          </div>
-          <span
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
-            :class="m.status === 'closed'
-              ? 'bg-destructive/10 text-destructive'
-              : 'bg-success/10 text-success'"
+        <!-- Mobile card -->
+        <template #card="{ item, index }">
+          <div
+            class="flex items-center gap-3 py-3 px-3 border-b border-border"
+            :class="[
+              index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30',
+              item.isFuture ? 'opacity-50' : ''
+            ]"
           >
-            <svg v-if="m.status === 'closed'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <svg v-else class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-            </svg>
-            {{ m.status === 'closed' ? 'Cerrado' : 'Abierto' }}
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-bold text-text-primary">{{ item.name }} {{ selectedYear }}</span>
+              <p v-if="item.closedAt" class="text-xs text-text-secondary mt-0.5">
+                Cerrado el {{ formatDate(item.closedAt) }}
+              </p>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <UiStatusBadge
+                :value="item.status === 'closed' ? 'Cerrado' : 'Abierto'"
+                format="text"
+                :variant="item.status === 'closed' ? 'destructive' : 'success'"
+                size="sm"
+              />
+              <button
+                v-if="!item.isFuture && item.status === 'open'"
+                @click="openModal(item)"
+                class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
+                title="Cerrar período"
+                aria-label="Cerrar período"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <!-- Desktop cells -->
+        <template #cell-name="{ row }">
+          <span class="text-sm font-semibold text-text-primary">{{ row.name }}</span>
+        </template>
+
+        <template #cell-status="{ row }">
+          <UiStatusBadge
+            :value="row.status === 'closed' ? 'Cerrado' : (row.isFuture ? 'Futuro' : 'Abierto')"
+            format="text"
+            :variant="row.status === 'closed' ? 'destructive' : (row.isFuture ? 'secondary' : 'success')"
+            size="sm"
+          />
+        </template>
+
+        <template #cell-closedAt="{ row }">
+          <span class="text-xs text-text-secondary">
+            {{ row.closedAt ? formatDate(row.closedAt) : '—' }}
           </span>
-        </div>
+        </template>
 
-        <div v-if="m.closedAt" class="text-xs text-text-secondary">
-          Cerrado el {{ formatDate(m.closedAt) }}
-        </div>
-
-        <button
-          v-if="!m.isFuture && m.status === 'open'"
-          @click="openModal(m)"
-          class="mt-auto min-h-[36px] w-full px-3 py-1.5 rounded-lg bg-destructive text-white text-xs font-semibold hover:bg-destructive/90 transition-colors flex items-center justify-center gap-1.5"
-        >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          Cerrar período
-        </button>
-
-        <div
-          v-else-if="m.status === 'closed'"
-          class="mt-auto text-xs text-text-secondary text-center py-1"
-        >
-          Período bloqueado
-        </div>
-      </div>
-    </div>
+        <template #cell-actions="{ row }">
+          <div class="flex justify-center">
+            <button
+              v-if="!row.isFuture && row.status === 'open'"
+              @click="openModal(row)"
+              class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
+              title="Cerrar período"
+              aria-label="Cerrar período"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </button>
+            <span v-else-if="row.status === 'closed'" class="text-xs text-text-secondary">Bloqueado</span>
+          </div>
+        </template>
+      </UiResponsiveDataView>
+    </HealthSemaphore>
 
     <!-- Confirmation modal -->
     <Teleport to="body">
@@ -127,12 +151,15 @@
         </div>
       </div>
     </Teleport>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+// @ts-ignore
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Cierre contable - Warocol' })
@@ -147,19 +174,23 @@ const MONTH_NAMES = [
 
 const now = new Date()
 const currentYear = now.getFullYear()
-const currentMonth = now.getMonth() + 1 // 1-12
+const currentMonth = now.getMonth() + 1
 
 const selectedYear = ref(currentYear)
-
 const prevYear = () => { selectedYear.value-- }
 const nextYear = () => { if (selectedYear.value < currentYear) selectedYear.value++ }
 
+const columns = [
+  { key: 'name',     title: 'Mes',            sortable: false },
+  { key: 'status',   title: 'Estado',         sortable: false },
+  { key: 'closedAt', title: 'Fecha de cierre', sortable: false },
+  { key: 'actions',  title: '',               sortable: false },
+]
+
 // Per-month status cache: key = 'YYYY-M'
 const statusCache = ref<Record<string, { status: string; closedAt?: string }>>({})
-const loading = ref(false)
 
 const loadYear = async (year: number) => {
-  loading.value = true
   const promises = Array.from({ length: 12 }, (_, i) => i + 1).map(async (m) => {
     const key = `${year}-${m}`
     if (statusCache.value[key]) return
@@ -174,7 +205,6 @@ const loadYear = async (year: number) => {
     }
   })
   await Promise.all(promises)
-  loading.value = false
 }
 
 watch(selectedYear, (y) => loadYear(y), { immediate: true })
@@ -195,7 +225,7 @@ const months = computed(() =>
   })
 )
 
-const formatDate = (iso: string) => iso ? formatDateTime(iso) : ''
+const formatDate = (iso: string) => iso ? formatDateTime(iso) : '—'
 
 // Modal
 const showModal = ref(false)
