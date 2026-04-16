@@ -13,10 +13,11 @@ definePageMeta({
 })
 
 const navigationItems = [
-  { to: '/finanzas/arqueo',        label: 'Arqueo de caja' },
-  { to: '/finanzas/cartera',       label: 'Cartera' },
-  { to: '/finanzas/gastos',        label: 'Gastos' },
-  { to: '/finanzas/metodos-pago',  label: 'Métodos de pago' },
+  { to: '/finanzas/arqueo',           label: 'Arqueo de caja' },
+  { to: '/finanzas/cierre-contable',  label: 'Cierre contable' },
+  { to: '/finanzas/cartera',          label: 'Cartera' },
+  { to: '/finanzas/gastos',           label: 'Gastos' },
+  { to: '/finanzas/metodos-pago',     label: 'Métodos de pago' },
 ]
 
 useHead({ title: 'Finanzas - Warocol' })

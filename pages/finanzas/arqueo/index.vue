@@ -74,47 +74,6 @@
         </div>
       </div>
 
-      <!-- ── Cierre de período contable ───────────────────────────────────── -->
-      <div v-if="isCurrentMonthActive || periodYear" class="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-border bg-surface">
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-semibold text-text-primary">
-            Período contable · {{ monthName }} {{ displayYear }}
-          </p>
-          <p class="text-xs text-text-secondary mt-0.5">
-            {{ periodStatus === 'closed'
-              ? 'Las órdenes de este mes son inmutables.'
-              : 'Abierto — las órdenes de este mes pueden modificarse.' }}
-          </p>
-        </div>
-        <!-- Status badge -->
-        <span
-          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold flex-shrink-0"
-          :class="periodStatus === 'closed'
-            ? 'bg-destructive/10 text-destructive'
-            : 'bg-success/10 text-success'"
-        >
-          <svg v-if="periodStatus === 'closed'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-          </svg>
-          {{ periodStatus === 'closed' ? 'Cerrado' : 'Abierto' }}
-        </span>
-        <!-- Close button — only when open -->
-        <button
-          v-if="periodStatus === 'open'"
-          @click="openClosePeriodModal"
-          :disabled="fetchingPeriodStatus || closingPeriod"
-          class="h-9 px-4 rounded-lg bg-destructive text-white text-sm font-medium hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0 flex items-center gap-1.5"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          Cerrar período
-        </button>
-      </div>
-
       <!-- ── Historial ─────────────────────────────────────────────────────── -->
       <HealthSemaphore :is-unlocked="true" title="Historial de arqueos">
         <template #header-actions>
@@ -240,49 +199,6 @@
               class="flex-1 min-h-[44px] px-4 py-2 bg-destructive text-white rounded-lg text-sm font-semibold hover:bg-destructive/90 transition-colors disabled:opacity-50"
             >
               {{ deleting ? 'Eliminando...' : 'Eliminar' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </Teleport>
-
-  <!-- Close period confirmation modal -->
-  <Teleport to="body">
-    <div v-if="showClosePeriodModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-black/50" @click="closeClosePeriodModal" />
-      <div class="relative bg-surface rounded-xl shadow-xl w-full max-w-sm p-6">
-        <div class="text-center">
-          <div class="mx-auto mb-4 w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-            <svg class="w-6 h-6 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-          </div>
-          <h3 class="text-lg font-bold text-text-primary mb-1">Cerrar período contable</h3>
-          <p class="text-sm text-text-secondary mb-4">
-            ¿Cerrar el período contable de <strong>{{ monthName }} {{ displayYear }}</strong>?
-            Todas las órdenes de este mes quedarán bloqueadas y no podrán modificarse.
-          </p>
-          <textarea
-            v-model="closePeriodNotes"
-            placeholder="Notas opcionales para el contador..."
-            rows="2"
-            class="w-full mb-4 px-3 py-2 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-          />
-          <div class="flex gap-3">
-            <button
-              @click="closeClosePeriodModal"
-              :disabled="closingPeriod"
-              class="flex-1 min-h-[44px] px-4 py-2 border-2 border-border rounded-lg text-sm text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-            <button
-              @click="handleClosePeriod"
-              :disabled="closingPeriod"
-              class="flex-1 min-h-[44px] px-4 py-2 bg-destructive text-white rounded-lg text-sm font-semibold hover:bg-destructive/90 transition-colors disabled:opacity-50"
-            >
-              {{ closingPeriod ? 'Cerrando...' : 'Cerrar período' }}
             </button>
           </div>
         </div>
@@ -476,89 +392,4 @@ registerProgressiveLoading(isRefreshing)
 onMounted(() => { setRefreshHandler(refetch) })
 onUnmounted(() => { clearRefreshHandler(refetch) })
 
-// ── Monthly accounting period close ───────────────────────────────────────
-const { fetchPeriodStatus, closePeriod } = useClosedPeriods()
-
-// Derive the year/month being viewed from the active date range
-const periodYear = computed(() => {
-  if (dateRangeDates.value?.[0]) return dateRangeDates.value[0].getFullYear()
-  return null
-})
-const periodMonth = computed(() => {
-  if (dateRangeDates.value?.[0]) return dateRangeDates.value[0].getMonth() + 1
-  return null
-})
-
-// Human-readable labels for the UI
-const MONTH_NAMES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
-]
-const monthName = computed(() => {
-  const m = periodMonth.value ?? (new Date().getMonth() + 1)
-  return MONTH_NAMES[m - 1] ?? ''
-})
-const displayYear = computed(() => periodYear.value ?? new Date().getFullYear())
-
-// Period status fetching
-const periodStatus = ref<string>('open')
-const fetchingPeriodStatus = ref(false)
-
-const loadPeriodStatus = async () => {
-  const y = isCurrentMonthActive.value
-    ? new Date().getFullYear()
-    : (periodYear.value ?? null)
-  const m = isCurrentMonthActive.value
-    ? (new Date().getMonth() + 1)
-    : (periodMonth.value ?? null)
-  if (!y || !m) return
-  fetchingPeriodStatus.value = true
-  try {
-    periodStatus.value = await fetchPeriodStatus(y, m)
-  } finally {
-    fetchingPeriodStatus.value = false
-  }
-}
-
-// Load when current-month filter activates or date range changes
-watch(isCurrentMonthActive, (val) => { if (val) loadPeriodStatus() }, { immediate: true })
-watch([periodYear, periodMonth], () => {
-  if (periodYear.value && periodMonth.value) loadPeriodStatus()
-})
-
-// Close period modal
-const showClosePeriodModal = ref(false)
-const closePeriodNotes = ref('')
-const closingPeriod = ref(false)
-
-const openClosePeriodModal = () => {
-  closePeriodNotes.value = ''
-  showClosePeriodModal.value = true
-}
-
-const closeClosePeriodModal = () => {
-  if (closingPeriod.value) return
-  showClosePeriodModal.value = false
-}
-
-const handleClosePeriod = async () => {
-  const y = isCurrentMonthActive.value
-    ? new Date().getFullYear()
-    : (periodYear.value ?? null)
-  const m = isCurrentMonthActive.value
-    ? (new Date().getMonth() + 1)
-    : (periodMonth.value ?? null)
-  if (!y || !m) return
-  closingPeriod.value = true
-  try {
-    await closePeriod(y, m, closePeriodNotes.value || undefined)
-    periodStatus.value = 'closed'
-    showClosePeriodModal.value = false
-  } catch (err: any) {
-    // Error handled — modal stays open; user can retry
-    alert(err?.data?.detail ?? err?.data?.message ?? 'Error al cerrar el período')
-  } finally {
-    closingPeriod.value = false
-  }
-}
 </script>
