@@ -18,6 +18,9 @@ const navigationItems = [
   { to: '/finanzas/cartera',          label: 'Cartera' },
   { to: '/finanzas/gastos',           label: 'Gastos' },
   { to: '/finanzas/metodos-pago',     label: 'Métodos de pago' },
+  { to: '/finanzas/contabilidad/cuentas',             label: 'Cuentas',  matchPath: '/finanzas/contabilidad/cuentas' },
+  { to: '/finanzas/contabilidad/asientos',            label: 'Asientos', matchPath: '/finanzas/contabilidad/asientos' },
+  { to: '/finanzas/contabilidad/balance-comprobacion', label: 'Balance', matchPath: '/finanzas/contabilidad/balance-comprobacion' },
 ]
 
 useHead({ title: 'Finanzas - Warocol' })
