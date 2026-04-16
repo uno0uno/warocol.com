@@ -21,9 +21,11 @@ const categoryFilter = ref<string | null>(null)
 const expenseTypeFilter = ref<string | null>(null)
 
 const EXPENSE_TYPE_LABELS: Record<string, string> = {
-  cost: 'Costo directo',
+  cogs: 'Costo de ventas',
   admin_expense: 'Gasto administrativo',
   sales_expense: 'Gasto de ventas',
+  financial_expense: 'Gasto financiero',
+  other_expense: 'Otro gasto',
 }
 
 // Load categories from API
@@ -206,9 +208,11 @@ onUnmounted(() => { clearRefreshHandler(refetch)
           class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[170px]"
         >
           <option :value="null">Todos los tipos</option>
-          <option value="cost">Costo directo</option>
+          <option value="cogs">Costo de ventas</option>
           <option value="admin_expense">Gasto administrativo</option>
           <option value="sales_expense">Gasto de ventas</option>
+          <option value="financial_expense">Gasto financiero</option>
+          <option value="other_expense">Otro gasto</option>
         </select>
 
         <!-- Clear Filters Button -->
@@ -285,7 +289,7 @@ onUnmounted(() => { clearRefreshHandler(refetch)
             v-if="value"
             :value="EXPENSE_TYPE_LABELS[value] || value"
             format="text"
-            :variant="value === 'cost' ? 'warning' : value === 'admin_expense' ? 'info' : 'primary'"
+            :variant="value === 'cogs' ? 'warning' : value === 'financial_expense' ? 'destructive' : value === 'admin_expense' ? 'info' : value === 'other_expense' ? 'secondary' : 'primary'"
             size="sm"
           />
           <span v-else class="text-xs text-text-secondary">Sin clasificar</span>

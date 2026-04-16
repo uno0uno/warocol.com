@@ -118,9 +118,11 @@
                 </label>
                 <select v-model="form.expenseType" class="input-base w-full px-4 py-2">
                   <option value="">Sin clasificar</option>
-                  <option value="cost">Costo directo</option>
+                  <option value="cogs">Costo de ventas</option>
                   <option value="admin_expense">Gasto administrativo</option>
                   <option value="sales_expense">Gasto de ventas</option>
+                  <option value="financial_expense">Gasto financiero</option>
+                  <option value="other_expense">Otro gasto</option>
                 </select>
               </div>
             </div>
