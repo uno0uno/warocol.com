@@ -18,7 +18,7 @@
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        aria-label="Detalle del cierre"
+        aria-label="Detalle del arqueo"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -38,7 +38,7 @@
                 </svg>
               </div>
               <div class="min-w-0">
-                <h2 class="text-base font-bold text-text-primary leading-tight">Cierre contable</h2>
+                <h2 class="text-base font-bold text-text-primary leading-tight">Arqueo de caja</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">{{ formatPeriod(cierre?.periodStart, cierre?.periodEnd) }}</p>
               </div>
             </div>
@@ -146,11 +146,11 @@
               @click="confirmDelete = true"
               class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-destructive/30 text-destructive text-sm font-medium hover:bg-destructive/5 transition-colors"
             >
-              Eliminar cierre
+              Eliminar arqueo
             </button>
           </div>
           <div v-else class="flex flex-col gap-2">
-            <p class="text-sm text-text-primary font-medium">¿Eliminar este cierre? Esta acción no se puede deshacer.</p>
+            <p class="text-sm text-text-primary font-medium">¿Eliminar este arqueo? Esta acción no se puede deshacer.</p>
             <div class="flex gap-2">
               <button
                 @click="handleDelete"

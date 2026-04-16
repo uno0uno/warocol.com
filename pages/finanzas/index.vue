@@ -1,4 +1,4 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
-navigateTo('/finanzas/cierre', { replace: true })
+navigateTo('/finanzas/arqueo', { replace: true })
 </script>

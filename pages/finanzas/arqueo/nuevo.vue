@@ -2,12 +2,14 @@
   <div class="page-layout">
 
     <!-- Loading overlay durante submit -->
-    <div v-if="isSubmitting" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-background rounded-xl p-6 flex flex-col items-center gap-3 shadow-xl">
-        <CommonsTheCustomLoader size="large" />
-        <p class="text-base font-semibold text-text-primary">Registrando cierre...</p>
+    <Transition enter-active-class="transition-opacity duration-150" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-opacity duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div v-if="isSubmitting" class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+        <div class="flex flex-col items-center gap-4">
+          <CommonsTheCustomLoader size="large" />
+          <p class="text-sm font-medium text-text-secondary">Registrando arqueo...</p>
+        </div>
       </div>
-    </div>
+    </Transition>
 
     <!-- ── SUCCESS ────────────────────────────────────────────────────────── -->
     <div v-if="cierreSuccess" class="flex flex-col items-center justify-center py-16 gap-6 text-center">
@@ -17,7 +19,7 @@
         </svg>
       </div>
       <div>
-        <p class="text-xl font-semibold text-text-primary">Cierre registrado</p>
+        <p class="text-xl font-semibold text-text-primary">Arqueo registrado</p>
         <p class="text-sm text-text-secondary mt-1">{{ formatPeriod(periodStart, periodEnd) }}</p>
       </div>
       <div class="w-full max-w-sm bg-surface border border-border rounded-lg divide-y divide-border">
@@ -42,134 +44,13 @@
       </div>
       <div class="flex gap-3">
         <NuxtLink
-          to="/finanzas/cierre"
+          to="/finanzas/arqueo"
           class="min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center"
         >
           Ver historial
         </NuxtLink>
-        <NuxtLink
-          v-if="successData?.id"
-          :to="`/finanzas/cierre/${successData.id}`"
-          class="min-h-[44px] px-5 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex items-center"
-        >
-          Ver detalle
-        </NuxtLink>
       </div>
     </div>
-
-    <!-- ── PASO 0: Seleccionar período ─────────────────────────────────── -->
-    <template v-else-if="currentStep === 0">
-      <!-- Filter bar -->
-      <div class="flex items-end gap-2 w-full overflow-x-auto scrollbar-hide">
-        <button
-          v-for="p in presets" :key="p.key"
-          class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
-          :class="activePreset === p.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
-          @click="applyPreset(p)"
-        >{{ p.label }}</button>
-
-        <VueDatePicker
-          v-model="dateRangeDates"
-          range :teleport="true" :preset-dates="dpPresets" :enable-time-picker="false" :locale="es"
-          auto-apply :max-date="new Date()" :format="formatDateRange"
-          input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
-          @update:model-value="activePreset = null"
-        />
-
-        <div class="h-10 w-px bg-border flex-shrink-0 self-end" />
-
-        <button
-          v-if="!isMultiDay"
-          @click="toggleTimePicker"
-          class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0 flex items-center gap-1.5"
-          :class="enableTimePicker ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          Horario
-        </button>
-
-        <template v-if="isMultiDay || enableTimePicker">
-          <div class="flex flex-col gap-0.5 flex-shrink-0">
-            <label class="text-xs text-text-secondary">Desde</label>
-            <div class="relative">
-              <input type="text" v-model="startTimeInput" placeholder="HH:MM" maxlength="5" inputmode="numeric"
-                @input="onTimeInput($event, 'start')" @focus="showDrop.start = true" @blur="hideDrop('start')"
-                class="h-10 w-20 px-2 text-sm font-mono rounded-lg border-2 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
-                :class="isMultiDay && !startTimeInput ? 'border-amber-400' : 'border-border'" />
-              <ul v-if="showDrop.start && filteredTimes(startTimeInput).length" class="absolute z-50 top-full left-0 mt-1 w-24 max-h-44 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg py-1">
-                <li v-for="t in filteredTimes(startTimeInput)" :key="t" @mousedown.prevent="pickTime('start', t)" class="px-3 py-1 text-sm font-mono text-text-primary hover:bg-background cursor-pointer">{{ t }}</li>
-              </ul>
-            </div>
-          </div>
-          <div class="flex flex-col gap-0.5 flex-shrink-0">
-            <label class="text-xs text-text-secondary">Hasta</label>
-            <div class="relative">
-              <input type="text" v-model="endTimeInput" placeholder="HH:MM" maxlength="5" inputmode="numeric"
-                @input="onTimeInput($event, 'end')" @focus="showDrop.end = true" @blur="hideDrop('end')"
-                class="h-10 w-20 px-2 text-sm font-mono rounded-lg border-2 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 text-center"
-                :class="isMultiDay && !endTimeInput ? 'border-amber-400' : 'border-border'" />
-              <ul v-if="showDrop.end && filteredTimes(endTimeInput).length" class="absolute z-50 top-full left-0 mt-1 w-24 max-h-44 overflow-y-auto bg-surface border border-border rounded-lg shadow-lg py-1">
-                <li v-for="t in filteredTimes(endTimeInput)" :key="t" @mousedown.prevent="pickTime('end', t)" class="px-3 py-1 text-sm font-mono text-text-primary hover:bg-background cursor-pointer">{{ t }}</li>
-              </ul>
-            </div>
-          </div>
-          <span v-if="shiftLabel" class="text-xs text-text-secondary whitespace-nowrap flex-shrink-0 self-end pb-2">{{ shiftLabel }}</span>
-        </template>
-      </div>
-
-      <p v-if="timeError" class="text-xs text-destructive">{{ timeError }}</p>
-
-      <!-- X Preview -->
-      <div v-if="xPreviewLoading" class="flex justify-center py-10"><CommonsTheCustomLoader size="large" /></div>
-      <template v-else>
-        <div v-if="xPreviewError" class="text-sm text-text-secondary py-4 px-2">
-          No se pudo cargar el resumen del período. Verifica tu conexión e intenta de nuevo.
-        </div>
-        <div v-else-if="xPreviewData" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <!-- Ventas -->
-          <div class="bg-surface border-2 border-border rounded-lg">
-            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Ventas del período</h3></div>
-            <div class="divide-y divide-border">
-              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Total ventas</span><span class="font-bold text-text-primary">{{ formatCurrency(xPreviewData.totalSales) }}</span></div>
-              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Órdenes</span><span class="font-medium">{{ xPreviewData.itemsSold }}</span></div>
-            </div>
-          </div>
-          <!-- Caja -->
-          <div class="bg-surface border-2 border-border rounded-lg">
-            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Estado de caja</h3></div>
-            <div class="divide-y divide-border">
-              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Efectivo recibido</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
-              <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Gastos en efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
-              <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Esperado en caja</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
-              <div class="flex justify-between px-4 py-2.5 text-sm">
-                <span class="text-text-secondary">Mesas abiertas</span>
-                <span class="font-medium" :class="xPreviewData.openTablesCount > 0 ? 'text-amber-600 font-semibold' : 'text-text-primary'">{{ xPreviewData.openTablesCount }}</span>
-              </div>
-            </div>
-          </div>
-          <!-- Métodos de pago -->
-          <div v-if="xPreviewData.totalSales > 0" class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
-            <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Métodos de pago</h3></div>
-            <div class="divide-y divide-border">
-              <div v-for="row in (xPreviewData.breakdown ?? [])" :key="row.group_slug + row.method_name" class="flex justify-between px-4 py-2.5 text-sm">
-                <span class="text-text-secondary">{{ row.method_name }}</span>
-                <span class="font-medium">{{ formatCurrency(row.total) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- CTA — always visible once not loading -->
-        <div class="flex gap-3">
-          <button
-            @click="goToStep1"
-            class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
-            Continuar al cierre →
-          </button>
-        </div>
-      </template>
-    </template>
 
     <template v-else>
       <!-- ── Header info card ─────────────────────────────────────────────── -->
@@ -231,7 +112,7 @@
             />
           </div>
           <span class="text-xs font-semibold text-text-primary flex-shrink-0">
-            {{ ['Cuentas','Efectivo','Otros métodos','Resumen','Cerrar'][currentStep - 1] }}
+            {{ ['Período','Efectivo','Otros métodos','Resumen','Cerrar'][currentStep - 1] }}
           </span>
         </div>
 
@@ -280,47 +161,95 @@
 
       <!-- ── Step content ─────────────────────────────────────────────────── -->
 
-      <!-- Step 1: Cuentas abiertas (bloqueador — solo visible si hay mesas abiertas) -->
-      <div v-if="currentStep === 1" class="bg-surface border-2 border-amber-300 rounded-lg p-3 sm:p-4">
-        <div v-if="previewLoading" class="flex justify-center py-6">
-          <CommonsTheCustomLoader size="large" />
+      <!-- Step 1: Período + X + validación mesas -->
+      <template v-if="currentStep === 1">
+
+
+        <!-- Selector de día -->
+        <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-3">
+          <button
+            v-for="p in presets" :key="p.key"
+            class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
+            :class="activePreset === p.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
+            @click="applyPreset(p)"
+          >{{ p.label }}</button>
+          <ClientOnly>
+            <VueDatePicker
+              v-model="selectedDate"
+              :time-config="{ enableTimePicker: false }" :locale="es"
+              auto-apply :teleport="true" :max-date="new Date()" :format="formatSingleDate"
+              placeholder="Seleccionar fecha..."
+              input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
+              @update:model-value="activePreset = null"
+            />
+          </ClientOnly>
         </div>
-        <div v-else-if="previewData" class="flex items-start gap-3">
-          <div class="w-10 h-10 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0">
-            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-amber-800">
-              {{ previewData.openTablesCount }} mesa{{ previewData.openTablesCount !== 1 ? 's' : '' }} con cuenta abierta
-            </p>
-            <p class="text-xs text-amber-700 mt-0.5">Cierra todas las mesas en el POS antes de registrar el cierre.</p>
-            <div class="flex flex-wrap gap-2 mt-3">
-              <NuxtLink
-                to="/pos"
-                target="_blank"
-                class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-                Ir al POS
-              </NuxtLink>
-              <button
-                @click="refetchPreview()"
-                class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Verificar de nuevo
-              </button>
+
+        <!-- X preview -->
+        <div v-if="xPreviewLoading" class="flex justify-center py-10"><CommonsTheCustomLoader size="large" /></div>
+        <template v-else-if="xPreviewData">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <!-- Ventas -->
+            <div class="bg-surface border-2 border-border rounded-lg">
+              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Ventas del día</h3></div>
+              <div class="divide-y divide-border">
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Total ventas</span><span class="font-bold text-text-primary">{{ formatCurrency(xPreviewData.totalSales) }}</span></div>
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Órdenes</span><span class="font-medium">{{ xPreviewData.itemsSold }}</span></div>
+              </div>
+            </div>
+            <!-- Caja -->
+            <div class="bg-surface border-2 border-border rounded-lg">
+              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Estado de caja</h3></div>
+              <div class="divide-y divide-border">
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Efectivo recibido</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Gastos en efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
+                <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Esperado en caja</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
+              </div>
+            </div>
+            <!-- Métodos de pago -->
+            <div v-if="xPreviewData.totalSales > 0" class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
+              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Métodos de pago</h3></div>
+              <div class="divide-y divide-border">
+                <div v-for="row in (xPreviewData.breakdown ?? [])" :key="row.group_slug + row.method_name" class="flex justify-between px-4 py-2.5 text-sm">
+                  <span class="text-text-secondary">{{ row.method_name }}</span>
+                  <span class="font-medium">{{ formatCurrency(row.total) }}</span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        <div v-else class="text-sm text-text-secondary py-2">No se pudo cargar el estado de las mesas.</div>
-      </div>
+
+          <!-- Mesas abiertas: bloquear o continuar -->
+          <div v-if="xPreviewData.openTablesCount > 0" class="bg-surface border-2 border-amber-300 rounded-lg p-4 flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-amber-800">{{ xPreviewData.openTablesCount }} mesa{{ xPreviewData.openTablesCount !== 1 ? 's' : '' }} con cuenta abierta</p>
+              <p class="text-xs text-amber-700 mt-0.5">Cierra todas las mesas en el POS antes de registrar el arqueo.</p>
+              <div class="flex flex-wrap gap-2 mt-3">
+                <NuxtLink to="/pos" target="_blank" class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                  Ir al POS
+                </NuxtLink>
+                <button @click="refetchXPreview()" class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 text-xs font-medium hover:bg-amber-100 transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  Verificar de nuevo
+                </button>
+              </div>
+            </div>
+          </div>
+          <div v-else class="flex gap-3">
+            <button @click="currentStep = 2" class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+              Siguiente →
+            </button>
+          </div>
+        </template>
+        <div v-else-if="xPreviewError" class="text-sm text-text-secondary py-4">No se pudo cargar el resumen del período.</div>
+        <div v-else class="flex justify-center py-10"><CommonsTheCustomLoader size="large" /></div>
+
+      </template>
 
       <!-- Step 2: Conteo de caja -->
       <div v-else-if="currentStep === 2" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4">
@@ -764,7 +693,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
             <span v-if="isSubmitting">Cerrando...</span>
-            <span v-else-if="confirmArmed">¿Confirmar cierre?</span>
+            <span v-else-if="confirmArmed">¿Confirmar arqueo?</span>
             <span v-else>Cerrar el día</span>
           </button>
         </div>
@@ -775,131 +704,97 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
-import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
+import { format as fnsFormat } from 'date-fns'
+import { useQueryCache } from '@pinia/colada'
 
 definePageMeta({ layout: 'dashboard' })
-useHead({ title: 'Cierre Z - Warocol' })
+useHead({ title: 'Nuevo arqueo de caja - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
-const route = useRoute()
+const cache = useQueryCache()
 
 const today = new Date().toISOString().split('T')[0]
 
-// ── Date picker state (paso 0) ─────────────────────────────────────────────
-const initStart = (route.query.start as string) || today
-const initEnd   = (route.query.end   as string) || today
+// ── Último cierre ──────────────────────────────────────────────────────────
 
-const dateRangeDates = ref<Date[]>([
-  new Date(initStart + 'T12:00:00'),
-  new Date(initEnd   + 'T12:00:00'),
-])
+interface UltimoCierre {
+  id: string
+  periodStart: string
+  periodEnd: string
+  closedAt: string
+  totalSales: number
+  cashCounted: number
+  cashDifference: number
+}
 
-interface Preset { key: string; label: string; start: Date; end: Date }
+const { data: ultimoData, status: ultimoStatus, asyncStatus: ultimoAsyncStatus, refetch: refetchUltimo } = useQuery({
+  key: () => ['cierre', 'ultimo', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: UltimoCierre | null }>('/api/cierre/ultimo'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 60_000,
+})
+
+const ultimoCierre  = computed(() => ultimoData.value?.data ?? null)
+const ultimoLoading = computed(() => ultimoStatus.value === 'pending' && !ultimoData.value)
+const isUltimoRefreshing = computed(() => ultimoAsyncStatus.value === 'loading' && !!ultimoData.value)
+
+registerProgressiveLoading(isUltimoRefreshing)
+onMounted(() => { setRefreshHandler(refetchUltimo) })
+onUnmounted(() => { clearRefreshHandler(refetchUltimo) })
+
+// Día sugerido: el día siguiente al último cierre (si es ≤ hoy)
+const suggestedRange = computed(() => {
+  if (!ultimoCierre.value) return null
+  const after = new Date(ultimoCierre.value.periodEnd + 'T12:00:00')
+  after.setDate(after.getDate() + 1)
+  const todayDate = new Date(); todayDate.setHours(12, 0, 0, 0)
+  if (after > todayDate) return null
+  return { start: fnsFormat(after, 'yyyy-MM-dd'), startDate: after }
+})
+
+const applySuggested = () => {
+  if (!suggestedRange.value) return
+  activePreset.value = null
+  selectedDate.value = suggestedRange.value.startDate
+}
+
+// ── Date picker state (paso 0) — solo un día ──────────────────────────────
+
+interface Preset { key: string; label: string; date: Date }
 const buildPresets = (): Preset[] => {
   const noon = (d: Date) => { d.setHours(12, 0, 0, 0); return d }
   const now = noon(new Date())
-  const yesterday  = noon(new Date(now)); yesterday.setDate(now.getDate() - 1)
-  const weekStart  = noon(new Date(now)); weekStart.setDate(now.getDate() - 6)
-  const monthStart = noon(new Date(now.getFullYear(), now.getMonth(), 1))
+  const yesterday = noon(new Date()); yesterday.setDate(yesterday.getDate() - 1)
   return [
-    { key: 'today',     label: 'Hoy',           start: new Date(now), end: new Date(now) },
-    { key: 'yesterday', label: 'Ayer',           start: yesterday,     end: yesterday },
-    { key: 'week',      label: 'Últimos 7 días', start: weekStart,     end: new Date(now) },
-    { key: 'month',     label: 'Este mes',        start: monthStart,    end: new Date(now) },
+    { key: 'today',     label: 'Hoy',  date: new Date(now) },
+    { key: 'yesterday', label: 'Ayer', date: yesterday },
   ]
 }
 const presets      = buildPresets()
-const activePreset = ref<string | null>(initStart === today && initEnd === today ? 'today' : null)
-const dpPresets    = presets.map(p => ({ label: p.label, value: [p.start, p.end] }))
+const activePreset = ref<string | null>('today')
+const selectedDate = ref<Date>(new Date(today + 'T12:00:00'))
 
 const applyPreset = (p: Preset) => {
   activePreset.value = p.key
-  dateRangeDates.value = [new Date(p.start), new Date(p.end)]
+  selectedDate.value = new Date(p.date)
 }
 
-const formatDateRange = (dates: Date[]) => {
-  if (!dates?.[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
-  if (!dates[1]) return from
-  return `${from} – ${fnsFormat(dates[1], 'dd/MM/yy', { locale: es })}`
-}
+const formatSingleDate = (date: Date) =>
+  date ? fnsFormat(date, 'dd/MM/yy', { locale: es }) : ''
 
-// Time inputs
-const enableTimePicker = ref(!!(route.query.startTime))
-const startTimeInput   = ref<string>('')
-const endTimeInput     = ref<string>('')
-const timeError        = ref<string | null>(null)
-
-const timeOptions = Array.from({ length: 48 }, (_, i) => {
-  const h = Math.floor(i / 2).toString().padStart(2, '0')
-  const m = i % 2 === 0 ? '00' : '30'
-  return `${h}:${m}`
-})
-const showDrop = reactive({ start: false, end: false })
-const filteredTimes = (val: string) => val ? timeOptions.filter(t => t.startsWith(val)) : timeOptions
-const hideDrop = (f: 'start' | 'end') => setTimeout(() => { showDrop[f] = false }, 150)
-const pickTime = (f: 'start' | 'end', t: string) => {
-  if (f === 'start') startTimeInput.value = t; else endTimeInput.value = t
-  showDrop[f] = false
-}
-const toggleTimePicker = () => {
-  enableTimePicker.value = !enableTimePicker.value
-  if (!enableTimePicker.value) { startTimeInput.value = ''; endTimeInput.value = '' }
-}
-const onTimeInput = (e: Event, field: 'start' | 'end') => {
-  const el = e.target as HTMLInputElement
-  let v = el.value.replace(/\D/g, '').slice(0, 4)
-  if (v.length >= 3) v = v.slice(0, 2) + ':' + v.slice(2)
-  if (v.length >= 2) { const h = Math.min(23, parseInt(v.slice(0, 2), 10)); v = String(h).padStart(2, '0') + v.slice(2) }
-  if (v.length === 5) { const m = Math.min(59, parseInt(v.slice(3, 5), 10)); v = v.slice(0, 3) + String(m).padStart(2, '0') }
-  if (field === 'start') startTimeInput.value = v; else endTimeInput.value = v
-  el.value = v
-}
-
-const buildDateTime = (datePart: Date, timeStr: string): Date | null => {
-  if (!timeStr || timeStr.length < 5) return null
-  const [h, m] = timeStr.split(':').map(Number)
-  const d = new Date(datePart); d.setHours(h, m, 0, 0); return d
-}
-
-// Period computed from date picker
-const periodStart = computed(() => fnsFormat(dateRangeDates.value[0], 'yyyy-MM-dd'))
-const periodEnd   = computed(() => fnsFormat(dateRangeDates.value[1] ?? dateRangeDates.value[0], 'yyyy-MM-dd'))
-const isMultiDay  = computed(() => periodStart.value !== periodEnd.value)
-
-watch(isMultiDay, (multi) => { if (multi) enableTimePicker.value = true })
-
-const periodStartTime = computed((): string | null => {
-  if (!enableTimePicker.value) return null
-  return buildDateTime(dateRangeDates.value[0], startTimeInput.value)?.toISOString() ?? null
-})
-const periodEndTime = computed((): string | null => {
-  if (!enableTimePicker.value) return null
-  return buildDateTime(dateRangeDates.value[1] ?? dateRangeDates.value[0], endTimeInput.value)?.toISOString() ?? null
-})
-
-const shiftLabel = computed(() => {
-  if (!enableTimePicker.value) return null
-  const s = buildDateTime(dateRangeDates.value[0], startTimeInput.value)
-  const e = buildDateTime(dateRangeDates.value[1] ?? dateRangeDates.value[0], endTimeInput.value)
-  if (!s || !e || s >= e) return null
-  try { return formatDistanceStrict(s, e, { locale: es }) } catch { return null }
-})
+// Period — siempre un solo día
+const periodStart = computed(() => fnsFormat(selectedDate.value, 'yyyy-MM-dd'))
+const periodEnd   = computed(() => periodStart.value)
 
 // X preview (paso 0 — all orders, not completed_only)
-const { data: rawXPreview, status: xPreviewStatus, error: xPreviewError } = useQuery({
-  key: () => ['cierre', 'preview-x0', currentTenant.value?.id, periodStart.value, periodEnd.value, periodStartTime.value, periodEndTime.value],
+const { data: rawXPreview, status: xPreviewStatus, error: xPreviewError, refetch: refetchXPreview } = useQuery({
+  key: () => ['cierre', 'preview-x0', currentTenant.value?.id, periodStart.value],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
-    params: {
-      period_start: periodStart.value,
-      period_end:   periodEnd.value,
-      ...(periodStartTime.value && { period_start_time: periodStartTime.value }),
-      ...(periodEndTime.value   && { period_end_time:   periodEndTime.value   }),
-    },
+    params: { period_start: periodStart.value, period_end: periodEnd.value },
   }),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
@@ -908,27 +803,18 @@ const xPreviewData    = computed(() => rawXPreview.value?.data ?? null)
 const xPreviewLoading = computed(() => xPreviewStatus.value === 'pending' && !xPreviewData.value)
 
 // Navigate to step 1
-const goToStep1 = () => {
-  timeError.value = null
-  if (isMultiDay.value && (!startTimeInput.value || !endTimeInput.value)) {
-    timeError.value = 'Para períodos de varios días debes especificar hora de inicio y fin'
-    return
-  }
-  currentStep.value = 1
-}
-
 const isPastPeriod = computed(() => periodEnd.value < today)
 
 // ── Wizard state ──────────────────────────────────────────────────────────
 const wizardSteps = [
-  { n: 1, label: 'Cuentas' },
+  { n: 1, label: 'Período' },
   { n: 2, label: 'Efectivo' },
   { n: 3, label: 'Otros métodos' },
   { n: 4, label: 'Resumen' },
   { n: 5, label: 'Cerrar' },
 ]
 
-const currentStep     = ref(0)
+const currentStep     = ref(1)
 const confirmArmed    = ref(false)
 const isSubmitting    = ref(false)
 const submitError     = ref<string | null>(null)
@@ -956,17 +842,11 @@ const totalCounted = computed(() =>
 
 // ── Preview API (completed orders only — cash already in drawer) ───────────
 const { data: rawPreview, status: previewStatus, asyncStatus: previewAsyncStatus, refetch: refetchPreview } = useQuery({
-  key: () => ['cierre', 'preview-z', currentTenant.value?.id, periodStart.value, periodEnd.value, periodStartTime.value, periodEndTime.value],
+  key: () => ['cierre', 'preview', currentTenant.value?.id, periodStart.value],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
-    params: {
-      period_start:  periodStart.value,
-      period_end:    periodEnd.value,
-      completed_only: true,
-      ...(periodStartTime.value && { period_start_time: periodStartTime.value }),
-      ...(periodEndTime.value   && { period_end_time:   periodEndTime.value   }),
-    },
+    params: { period_start: periodStart.value, period_end: periodEnd.value, completed_only: true },
   }),
-  enabled: () => !!currentTenant.value,
+  enabled: () => !!currentTenant.value && currentStep.value > 1,
   staleTime: 0,
 })
 
@@ -975,8 +855,6 @@ const previewLoading = computed(() => previewStatus.value === 'pending' && !prev
 const isRefreshing   = computed(() => previewAsyncStatus.value === 'loading' && previewData.value != null)
 
 registerProgressiveLoading(isRefreshing)
-onMounted(() => { setRefreshHandler(refetchPreview) })
-onUnmounted(() => { clearRefreshHandler(refetchPreview) })
 
 const cashDiff = computed(() => totalCounted.value - (previewData.value?.cashExpected ?? 0))
 
@@ -1074,21 +952,20 @@ const submitCierre = async () => {
     const result = await $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre', {
       method: 'POST',
       body: {
-        periodStart:      periodStart.value,
-        periodEnd:        periodEnd.value,
-        ...(periodStartTime.value && { periodStartTime: periodStartTime.value }),
-        ...(periodEndTime.value   && { periodEndTime:   periodEndTime.value   }),
-        cashCounted:      totalCounted.value,
-        notes:            notes.value || null,
+        periodStart:  periodStart.value,
+        periodEnd:    periodEnd.value,
+        cashCounted:  totalCounted.value,
+        notes:        notes.value || null,
       },
     })
     successData.value = result.data
     cierreSuccess.value = true
     clearStorage()
+    cache.invalidateQueries({ key: ['cierre', 'list'] })
   } catch (err: any) {
-    const msg = err?.data?.message ?? err?.data?.detail ?? err?.message ?? 'Error al registrar el cierre.'
+    const msg = err?.data?.message ?? err?.data?.detail ?? err?.message ?? 'Error al registrar el arqueo.'
     submitError.value = msg.includes('superpone')
-      ? 'Ya existe un cierre para este período.'
+      ? 'Ya existe un arqueo para este período.'
       : msg
     confirmArmed.value = false
   } finally {
@@ -1120,8 +997,7 @@ const saveToStorage = () => {
     step: currentStep.value, counts: counts.value,
     monedasAmount: monedasAmount.value, methodAmounts: methodAmounts.value,
     notes: notes.value,
-    periodStart: periodStart.value, periodEnd: periodEnd.value,
-    periodStartTime: periodStartTime.value, periodEndTime: periodEndTime.value,
+    periodStart: periodStart.value,
   }))
 }
 
@@ -1131,18 +1007,8 @@ const loadFromStorage = () => {
   if (!raw) return
   try {
     const s = JSON.parse(raw)
-    // Query params always win over localStorage — only restore period if not in URL
-    const hasQueryParams = !!route.query.start || !!route.query.end
-    if (!hasQueryParams) {
-      if (s.periodStart) {
-        const d0 = new Date(s.periodStart + 'T12:00:00')
-        const d1 = s.periodEnd ? new Date(s.periodEnd + 'T12:00:00') : d0
-        dateRangeDates.value = [d0, d1]
-      }
-      if (s.periodStartTime) { startTimeInput.value = s.periodStartTime; enableTimePicker.value = true }
-      if (s.periodEndTime)   { endTimeInput.value   = s.periodEndTime;   enableTimePicker.value = true }
-      // Never restore step from storage — always start at step 0 (X preview)
-    }
+    if (s.periodStart) selectedDate.value = new Date(s.periodStart + 'T12:00:00')
+    // Never restore step from storage — always start at step 0 (X preview)
     if (s.counts)         counts.value         = s.counts
     if (s.monedasAmount)  monedasAmount.value  = s.monedasAmount
     if (s.methodAmounts)  methodAmounts.value  = s.methodAmounts
@@ -1157,12 +1023,8 @@ const clearStorage = () => {
 
 watch([currentStep, counts, monedasAmount, methodAmounts, notes], saveToStorage, { deep: true })
 
-// Auto-advance past step 1 when there are no open tables
-watch(previewData, (data) => {
-  if (currentStep.value === 1 && data && (data.openTablesCount === 0 || isPastPeriod.value)) {
-    currentStep.value = 2
-  }
-}, { immediate: true })
+// Auto-advance past step 1:
+// - fires when previewData loads OR when currentStep changes to 1
 
 onMounted(() => {
   if (typeof window === 'undefined') return
@@ -1173,10 +1035,48 @@ onMounted(() => {
 const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
 
-const { formatDate: _fmtDate } = useFormatters()
+const { formatDate: _fmtDate, formatDateTime: _fmtDateTime } = useFormatters()
 const formatPeriod = (start: string, end: string) => {
   if (!start) return ''
   const fmt = (d: string) => _fmtDate(d + 'T12:00:00')
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
+
+const formatClosedAt = (iso: string) => _fmtDateTime(iso)
 </script>
+
+<style>
+.dp-custom-input {
+  height: 40px !important;
+  border: 2px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem !important;
+  background: hsl(var(--background)) !important;
+  font-size: 0.875rem !important;
+  color: hsl(var(--foreground)) !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  min-width: 160px;
+}
+.dp-custom-input:focus {
+  outline: none !important;
+  border-color: hsl(var(--primary)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2) !important;
+}
+.dp-custom-input::placeholder { color: hsl(var(--muted-foreground)) !important; }
+.dp__theme_light {
+  --dp-primary-color: hsl(var(--primary));
+  --dp-primary-text-color: hsl(var(--primary-foreground));
+  --dp-background-color: hsl(var(--card));
+  --dp-text-color: hsl(var(--foreground));
+  --dp-border-color: hsl(var(--border));
+  --dp-menu-border-color: hsl(var(--border));
+  --dp-hover-color: hsl(var(--accent));
+  --dp-hover-text-color: hsl(var(--foreground));
+  --dp-secondary-color: hsl(var(--muted));
+  --dp-border-color-hover: hsl(var(--primary));
+}
+.dp-custom-menu {
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+</style>

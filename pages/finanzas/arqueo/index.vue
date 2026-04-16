@@ -75,16 +75,16 @@
       </div>
 
       <!-- ── Historial ─────────────────────────────────────────────────────── -->
-      <HealthSemaphore :is-unlocked="true" title="Historial de cierres">
+      <HealthSemaphore :is-unlocked="true" title="Historial de arqueos">
         <template #header-actions>
           <NuxtLink
-            to="/finanzas/cierre/nuevo"
+            to="/finanzas/arqueo/nuevo"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap flex items-center gap-1.5"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            <span class="hidden sm:inline">Nuevo cierre</span>
+            <span class="hidden sm:inline">Nuevo arqueo</span>
             <span class="sm:hidden">Nuevo</span>
           </NuxtLink>
         </template>
@@ -92,7 +92,7 @@
         :data="filteredHistorial"
         :columns="historialColumns"
         row-size="sm"
-        empty-message="No hay cierres registrados."
+        empty-message="No hay arqueos registrados."
       >
         <template #card="{ item, index }">
           <div
@@ -151,7 +151,7 @@
               @click="openDeleteModal(row)"
               class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
               title="Eliminar"
-              aria-label="Eliminar cierre"
+              aria-label="Eliminar arqueo"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -181,9 +181,9 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h3 class="text-lg font-bold text-text-primary mb-1">Eliminar cierre</h3>
+          <h3 class="text-lg font-bold text-text-primary mb-1">Eliminar arqueo</h3>
           <p class="text-sm text-text-secondary mb-6">
-            ¿Eliminar el cierre del período <strong>{{ formatPeriod(cierreToDelete?.periodStart, cierreToDelete?.periodEnd) }}</strong>? Esta acción no se puede deshacer.
+            ¿Eliminar el arqueo del período <strong>{{ formatPeriod(cierreToDelete?.periodStart, cierreToDelete?.periodEnd) }}</strong>? Esta acción no se puede deshacer.
           </p>
           <div class="flex gap-3">
             <button
@@ -220,7 +220,7 @@ import MetricCard from '~/components/shared/MetricCard.vue'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({ layout: 'dashboard' })
-useHead({ title: 'Cierre - Warocol' })
+useHead({ title: 'Arqueo de caja - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()

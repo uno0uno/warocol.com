@@ -147,7 +147,7 @@
       <!-- CTA -->
       <div class="sm:col-span-2 flex flex-wrap gap-3">
         <button
-          @click="navigateTo({ path: '/finanzas/cierre/z', query: {
+          @click="navigateTo({ path: '/finanzas/arqueo/z', query: {
             start: periodStart,
             end:   periodEnd,
             ...(periodStartTime && { startTime: periodStartTime }),
@@ -155,7 +155,7 @@
           } })"
           class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
         >
-          Hacer cierre Z con este período →
+          Registrar arqueo con este período →
         </button>
       </div>
     </div>
@@ -170,7 +170,7 @@ import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 
 definePageMeta({ layout: 'dashboard' })
-useHead({ title: 'Cierre X - Warocol' })
+useHead({ title: 'Previsualización arqueo - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()

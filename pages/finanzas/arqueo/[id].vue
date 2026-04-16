@@ -143,7 +143,7 @@
         <!-- Back -->
         <div class="sm:col-span-2">
           <NuxtLink
-            to="/finanzas/cierre"
+            to="/finanzas/arqueo"
             class="inline-flex min-h-[44px] px-5 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors items-center"
           >
             ← Volver al historial
@@ -208,7 +208,7 @@ onMounted(() => { setRefreshHandler(refetch) })
 onUnmounted(() => { clearRefreshHandler(refetch) })
 
 useHead(() => ({
-  title: cierre.value ? `Cierre ${formatPeriod(cierre.value.periodStart, cierre.value.periodEnd)} - Warocol` : 'Cierre - Warocol',
+  title: cierre.value ? `Arqueo ${formatPeriod(cierre.value.periodStart, cierre.value.periodEnd)} - Warocol` : 'Arqueo de caja - Warocol',
 }))
 
 const formatCurrency = (value?: number) =>
