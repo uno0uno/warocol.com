@@ -18,6 +18,13 @@ const currentMonth = ref(new Date().toISOString().slice(0, 7)) // YYYY-MM
 const localSearchTerm = ref('')
 const apiSearchTerm = ref('')
 const categoryFilter = ref<string | null>(null)
+const expenseTypeFilter = ref<string | null>(null)
+
+const EXPENSE_TYPE_LABELS: Record<string, string> = {
+  cost: 'Costo directo',
+  admin_expense: 'Gasto administrativo',
+  sales_expense: 'Gasto de ventas',
+}
 
 // Load categories from API
 const { data: categoriesData } = useQuery({
@@ -35,12 +42,14 @@ const { data: expensesData, status: queryStatus, asyncStatus: queryAsyncStatus, 
     month: currentMonth.value,
     category: categoryFilter.value || null,
     search: apiSearchTerm.value || null,
+    expenseType: expenseTypeFilter.value || null,
   }],
   query: () => $fetch('/api/finance/expenses', {
     params: {
       month_year: currentMonth.value,
       category_id: categoryFilter.value || undefined,
-      search: apiSearchTerm.value || undefined
+      search: apiSearchTerm.value || undefined,
+      expense_type: expenseTypeFilter.value || undefined,
     }
   }),
   enabled: () => !!currentTenant.value,
@@ -63,6 +72,7 @@ const clearFilters = () => {
   localSearchTerm.value = ''
   apiSearchTerm.value = ''
   categoryFilter.value = null
+  expenseTypeFilter.value = null
   currentMonth.value = new Date().toISOString().slice(0, 7)
 }
 
@@ -81,6 +91,7 @@ const expensesTableColumns = [
   { key: 'expenseNumber', title: 'Número', sortable: false },
   { key: 'transactionDate', title: 'Fecha', sortable: true },
   { key: 'category', title: 'Categoría', sortable: false },
+  { key: 'expenseType', title: 'Tipo', sortable: false },
   { key: 'isRecurring', title: 'Recurrente', sortable: false },
   { key: 'description', title: 'Descripción', sortable: true },
   { key: 'amount', title: 'Monto', sortable: true },
@@ -189,9 +200,20 @@ onUnmounted(() => { clearRefreshHandler(refetch)
           </option>
         </select>
 
+        <!-- Expense Type Filter -->
+        <select
+          v-model="expenseTypeFilter"
+          class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[170px]"
+        >
+          <option :value="null">Todos los tipos</option>
+          <option value="cost">Costo directo</option>
+          <option value="admin_expense">Gasto administrativo</option>
+          <option value="sales_expense">Gasto de ventas</option>
+        </select>
+
         <!-- Clear Filters Button -->
         <button
-          v-if="localSearchTerm || categoryFilter || currentMonth !== new Date().toISOString().slice(0, 7)"
+          v-if="localSearchTerm || categoryFilter || expenseTypeFilter || currentMonth !== new Date().toISOString().slice(0, 7)"
           @click="clearFilters"
           class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
           title="Limpiar filtros"
@@ -256,6 +278,17 @@ onUnmounted(() => { clearRefreshHandler(refetch)
 
         <template #cell-category="{ value }">
           <UiStatusBadge :value="value?.categoryName || 'Sin categoría'" format="text" variant="secondary" size="sm" />
+        </template>
+
+        <template #cell-expenseType="{ value }">
+          <UiStatusBadge
+            v-if="value"
+            :value="EXPENSE_TYPE_LABELS[value] || value"
+            format="text"
+            :variant="value === 'cost' ? 'warning' : value === 'admin_expense' ? 'info' : 'primary'"
+            size="sm"
+          />
+          <span v-else class="text-xs text-text-secondary">Sin clasificar</span>
         </template>
 
         <template #cell-isRecurring="{ value }">

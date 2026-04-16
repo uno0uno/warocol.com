@@ -203,6 +203,22 @@
                 </div>
               </div>
 
+              <!-- Expense Type -->
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Tipo de gasto
+                </label>
+                <select
+                  v-model="form.expenseType"
+                  class="input-base w-full px-4 py-2"
+                >
+                  <option value="">Sin clasificar</option>
+                  <option value="cost">Costo directo</option>
+                  <option value="admin_expense">Gasto administrativo</option>
+                  <option value="sales_expense">Gasto de ventas</option>
+                </select>
+              </div>
+
               <!-- Payment Method -->
               <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-text-primary mb-2">
@@ -532,6 +548,7 @@ const form = reactive({
   description: '',
   amount: null as number | null,
   paymentMethod: 'cash',
+  expenseType: '' as string,
   isRecurring: false,
   frequency: '',
   recurringEndDate: ''
@@ -634,7 +651,8 @@ const handleSubmit = async () => {
       isRecurring: form.isRecurring,
       frequency: form.isRecurring ? form.frequency : null,
       recurringEndDate: form.isRecurring && form.recurringEndDate ? form.recurringEndDate : null,
-      paymentMethod: form.paymentMethod
+      paymentMethod: form.paymentMethod,
+      expenseType: form.expenseType || null,
     }
 
     const response = await $fetch('/api/finance/expenses', {
