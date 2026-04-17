@@ -46,16 +46,16 @@ const valueColor = (variant: MetricItem['variant']) => {
     <div
       v-for="item in items"
       :key="item.label"
-      class="bg-surface px-4 py-3 flex flex-col gap-1"
+      class="bg-surface px-5 py-4 flex flex-col gap-1.5"
     >
-      <!-- Label: pequeño, sin mayúsculas, color muted → peso visual bajo -->
-      <span class="text-[11px] font-medium text-text-secondary leading-none">
+      <!-- Label: pequeño, color muted → peso visual bajo -->
+      <span class="text-[11px] font-medium text-text-secondary leading-none tracking-wide">
         {{ item.label }}
       </span>
 
-      <!-- Valor: grande, bold, color semántico → domina la jerarquía -->
+      <!-- Valor: text-sm bold → misma escala que filas de tabla, domina por peso -->
       <span
-        class="text-base font-bold leading-tight flex items-center gap-1.5"
+        class="text-sm font-bold leading-snug flex items-center gap-1.5"
         :class="[
           item.mono ? 'tabular-nums' : '',
           valueColor(item.variant),
