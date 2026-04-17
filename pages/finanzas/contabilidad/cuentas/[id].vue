@@ -96,14 +96,35 @@ const toggleActive = async () => {
   }
 }
 
+// ── Payment methods (for GL association) ───────────────────────────────────
+interface PaymentMethod {
+  id: string
+  name: string
+  groupId: string
+  isActive: boolean
+  glAccountCode: string | null
+}
+
+const { data: methodsData } = useQuery({
+  key: () => ['payments', 'methods', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: PaymentMethod[] }>('/api/finanzas/metodos-pago'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+const availableMethods = computed<PaymentMethod[]>(() =>
+  (methodsData.value?.data ?? []).filter(m => m.isActive)
+)
+
 // ── Create sub-account slide-over ──────────────────────────────────────────
-const showCreatePanel = ref(false)
-const createCode      = ref('')
-const createName      = ref('')
-const createIsDetail  = ref(true)
-const creating        = ref(false)
-const createError     = ref('')
-const codeInput       = ref<HTMLInputElement | null>(null)
+const showCreatePanel  = ref(false)
+const createCode       = ref('')
+const createName       = ref('')
+const createIsDetail   = ref(true)
+const createMethodId   = ref('')   // optional: associate to payment method
+const creating         = ref(false)
+const createError      = ref('')
+const codeInput        = ref<HTMLInputElement | null>(null)
 
 const suggestCode = (parentCode: string) => {
   // Suggest next available suffix: parent + '05', '10', '15'…
@@ -117,10 +138,11 @@ const suggestCode = (parentCode: string) => {
 }
 
 const openCreatePanel = async () => {
-  createCode.value  = account.value ? suggestCode(account.value.code) : ''
-  createName.value  = ''
+  createCode.value     = account.value ? suggestCode(account.value.code) : ''
+  createName.value     = ''
   createIsDetail.value = true
-  createError.value = ''
+  createMethodId.value = ''
+  createError.value    = ''
   showCreatePanel.value = true
   await nextTick()
   codeInput.value?.focus()
@@ -136,6 +158,7 @@ const saveSubAccount = async () => {
   creating.value = true
   createError.value = ''
   try {
+    // 1. Create the sub-account
     await $fetch('/api/accounting/accounts', {
       method: 'POST',
       body: {
@@ -145,6 +168,13 @@ const saveSubAccount = async () => {
         isDetail: createIsDetail.value,
       },
     })
+    // 2. If a payment method was selected, assign this account code to it
+    if (createMethodId.value) {
+      await $fetch(`/api/finanzas/metodos-pago/${createMethodId.value}`, {
+        method: 'PATCH',
+        body: { glAccountCode: createCode.value.trim() },
+      })
+    }
     closeCreatePanel()
     await refetchAccounts()
   } catch (err: any) {
@@ -699,6 +729,26 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               @keydown.enter="saveSubAccount"
               @keydown.escape="closeCreatePanel"
             />
+          </div>
+
+          <!-- Asociar a método de pago (opcional) -->
+          <div v-if="availableMethods.length" class="flex flex-col gap-1.5">
+            <label for="create-method" class="text-sm font-medium text-text-primary">
+              Asociar a método de pago
+              <span class="text-text-secondary font-normal">(opcional)</span>
+            </label>
+            <select
+              id="create-method"
+              v-model="createMethodId"
+              class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">— Sin asociar —</option>
+              <option v-for="m in availableMethods" :key="m.id" :value="m.id">
+                {{ m.name }}
+                <template v-if="m.glAccountCode"> · {{ m.glAccountCode }}</template>
+              </option>
+            </select>
+            <p class="text-xs text-text-secondary">Las ventas con ese método debitarán esta subcuenta</p>
           </div>
 
           <!-- Tipo de cuenta -->
