@@ -37,7 +37,7 @@ const valueColor = (variant: MetricItem['variant']) => {
 
 <template>
   <div
-    class="grid grid-cols-2 gap-0.5 bg-primary rounded-xl overflow-hidden border-2 border-primary"
+    class="grid grid-cols-2 gap-0.5 bg-primary/20 rounded-xl overflow-hidden border-2 border-primary/40"
     :class="gridCols"
   >
     <div
