@@ -161,18 +161,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
     <!-- Back + Account Header -->
     <div class="flex flex-col gap-3">
-      <div class="flex items-center gap-2">
-        <NuxtLink
-          to="/finanzas/contabilidad/cuentas"
-          class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
-          aria-label="Volver al plan de cuentas"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-          </svg>
-        </NuxtLink>
-        <span class="text-xs text-text-secondary">Plan de cuentas PUC</span>
-      </div>
+      <NuxtLink
+        to="/finanzas/contabilidad/cuentas"
+        class="text-xs text-text-secondary hover:text-primary transition-colors"
+      >
+        ← Plan de cuentas PUC
+      </NuxtLink>
 
       <!-- Account info card -->
       <div v-if="account" class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border border-border bg-surface">
