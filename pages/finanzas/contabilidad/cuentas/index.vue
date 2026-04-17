@@ -117,6 +117,10 @@ const tableColumns = [
   { key: 'actions',      title: '',        sortable: false },
 ]
 
+const openAccount = (account: TenantAccount) => {
+  navigateTo(`/finanzas/contabilidad/cuentas/${account.id}`)
+}
+
 // ── Toggle active ──────────────────────────────────────────────────────────
 const togglingId = ref<string | null>(null)
 
@@ -206,12 +210,14 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           :data="accounts"
           empty-message="No hay cuentas para este filtro"
           variant="default"
+          @row-click="openAccount"
         >
           <!-- Mobile card -->
           <template #card="{ item, index }">
             <div
-              class="flex items-center gap-3 py-2 px-3 border-b border-border"
+              class="flex items-center gap-3 py-2 px-3 border-b border-border cursor-pointer hover:bg-surface-secondary transition-colors"
               :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+              @click="openAccount(item)"
             >
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-1.5">
@@ -311,14 +317,14 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
           <!-- Desktop: actions -->
           <template #cell-actions="{ row }">
-            <div class="flex justify-center">
+            <div class="flex items-center justify-center gap-1">
               <button
                 type="button"
                 class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 :disabled="togglingId === row.id"
                 :aria-label="row.isActive ? `Desactivar cuenta ${row.code}` : `Activar cuenta ${row.code}`"
-                :title="row.isActive ? 'Desactivar cuenta' : 'Activar cuenta'"
-                @click="toggleActive(row)"
+                :title="row.isActive ? 'Desactivar' : 'Activar'"
+                @click.stop="toggleActive(row)"
               >
                 <svg v-if="togglingId === row.id" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -330,6 +336,17 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
+                aria-label="Ver detalle de cuenta"
+                title="Ver libro mayor"
+                @click.stop="openAccount(row)"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
