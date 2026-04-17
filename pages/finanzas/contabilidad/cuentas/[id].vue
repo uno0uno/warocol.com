@@ -161,12 +161,6 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
     <!-- Back + Account Header -->
     <div class="flex flex-col gap-3">
-      <NuxtLink
-        to="/finanzas/contabilidad/cuentas"
-        class="text-xs text-text-secondary hover:text-primary transition-colors"
-      >
-        ← Plan de cuentas PUC
-      </NuxtLink>
 
       <!-- Account info card -->
       <div v-if="account" class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border border-border bg-surface">
