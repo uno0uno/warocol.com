@@ -118,12 +118,16 @@
           class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
           :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
         >
-          <span
-            class="flex-1 text-sm"
-            :class="item.isActive ? 'text-text-primary' : 'text-text-secondary line-through'"
-          >
-            {{ item.name }}
-          </span>
+          <div class="flex-1 min-w-0">
+            <span
+              class="text-sm block"
+              :class="item.isActive ? 'text-text-primary' : 'text-text-secondary line-through'"
+            >
+              {{ item.name }}
+            </span>
+            <span v-if="item.glAccountCode" class="text-xs font-mono text-text-secondary">{{ item.glAccountCode }}</span>
+            <span v-else class="text-xs text-text-secondary italic">Sin asociar</span>
+          </div>
           <div class="flex items-center gap-2 flex-shrink-0">
             <button
               :disabled="savingId === item.id"
@@ -161,6 +165,14 @@
         <span :class="row.isActive ? 'text-text-primary' : 'text-text-secondary line-through'">
           {{ row.name }}
         </span>
+      </template>
+
+      <!-- cuenta contable -->
+      <template #cell-glAccountCode="{ row }">
+        <span v-if="row.glAccountCode" class="text-xs font-mono bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary">
+          {{ row.glAccountCode }}
+        </span>
+        <span v-else class="text-xs text-text-secondary italic">Sin asociar</span>
       </template>
 
       <!-- status toggle -->
@@ -355,12 +367,14 @@ interface PaymentMethod {
   name: string
   isActive: boolean
   sortOrder: number
+  glAccountCode: string | null
 }
 
 const columns: Column[] = [
-  { key: 'name',     title: 'Nombre', sortable: false },
-  { key: 'isActive', title: 'Estado', sortable: false, align: 'center' },
-  { key: 'actions',  title: 'Acciones', sortable: false, align: 'right' },
+  { key: 'name',           title: 'Nombre',          sortable: false },
+  { key: 'glAccountCode',  title: 'Cuenta contable',  sortable: false },
+  { key: 'isActive',       title: 'Estado',           sortable: false, align: 'center' },
+  { key: 'actions',        title: 'Acciones',         sortable: false, align: 'right' },
 ]
 
 // ── Data fetching ────────────────────────────────────────────────────────
