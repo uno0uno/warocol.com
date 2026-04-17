@@ -137,9 +137,13 @@ interface JournalEntry {
   postedAt: string | null; createdAt: string
 }
 
+interface JournalEntriesResponse {
+  success: boolean; data: JournalEntry[]; total: number; openingBalance: number | null
+}
+
 const { data: entriesData, asyncStatus: entriesAsyncStatus, error: entriesError, refetch: refetchEntries } = useQuery({
   key: () => ['accounting', 'journal-entries', currentTenant.value?.id, accountId.value, page.value, statusFilter.value, sourceFilter.value, dateRange.value.from, dateRange.value.to],
-  query: () => $fetch<{ success: boolean; data: JournalEntry[]; total: number }>('/api/accounting/journal-entries', {
+  query: () => $fetch<JournalEntriesResponse>('/api/accounting/journal-entries', {
     params: {
       accountId: accountId.value,
       page: page.value,
@@ -154,21 +158,44 @@ const { data: entriesData, asyncStatus: entriesAsyncStatus, error: entriesError,
   staleTime: 30_000,
 })
 
-const isLoading   = computed(() => entriesData.value == null && !entriesError.value)
+const isLoading    = computed(() => entriesData.value == null && !entriesError.value)
 const isRefreshing = computed(() => entriesAsyncStatus.value === 'loading' && entriesData.value != null)
-const entries     = computed<JournalEntry[]>(() => entriesData.value?.data ?? [])
+const entries      = computed<JournalEntry[]>(() => entriesData.value?.data ?? [])
 const totalEntries = computed(() => entriesData.value?.total ?? 0)
-const totalPages  = computed(() => Math.max(1, Math.ceil(totalEntries.value / PAGE_SIZE)))
+const totalPages   = computed(() => Math.max(1, Math.ceil(totalEntries.value / PAGE_SIZE)))
+const openingBalance = computed(() => entriesData.value?.openingBalance ?? 0)
+
+// ── Running balance per row ────────────────────────────────────────────────
+// Entries arrive sorted ASC from backend when accountId is set.
+// running = openingBalance + Σ(debit - credit) for each entry in order.
+interface EntryWithBalance extends JournalEntry { runningBalance: number }
+
+const entriesWithBalance = computed<EntryWithBalance[]>(() => {
+  let running = openingBalance.value
+  return entries.value.map(e => {
+    running = running + (e.totalDebit ?? 0) - (e.totalCredit ?? 0)
+    return { ...e, runningBalance: running }
+  })
+})
+
+// Period totals (all entries in range, not just current page — approximated from page)
+const periodDebits  = computed(() => entries.value.reduce((s, e) => s + (e.totalDebit ?? 0), 0))
+const periodCredits = computed(() => entries.value.reduce((s, e) => s + (e.totalCredit ?? 0), 0))
+const closingBalance = computed(() => {
+  const last = entriesWithBalance.value[entriesWithBalance.value.length - 1]
+  return last ? last.runningBalance : openingBalance.value
+})
 
 // ── Table columns ──────────────────────────────────────────────────────────
 const tableColumns = [
-  { key: 'entryDate',    title: 'Fecha',      sortable: false },
-  { key: 'description', title: 'Descripción', sortable: false },
-  { key: 'sourceModule', title: 'Módulo',     sortable: false },
-  { key: 'reference',   title: 'Referencia',  sortable: false },
-  { key: 'totalDebit',  title: 'Débito',      sortable: false },
-  { key: 'totalCredit', title: 'Crédito',     sortable: false },
-  { key: 'status',      title: 'Estado',      sortable: false },
+  { key: 'entryDate',      title: 'Fecha',      sortable: false },
+  { key: 'description',    title: 'Descripción', sortable: false },
+  { key: 'sourceModule',   title: 'Módulo',      sortable: false },
+  { key: 'reference',      title: 'Referencia',  sortable: false },
+  { key: 'totalDebit',     title: 'Débito',      sortable: false },
+  { key: 'totalCredit',    title: 'Crédito',     sortable: false },
+  { key: 'runningBalance', title: 'Saldo',       sortable: false },
+  { key: 'status',         title: 'Estado',      sortable: false },
 ]
 
 const formatDate = (iso: string) => {
@@ -396,15 +423,39 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </NuxtLink>
       </div>
 
+      <!-- ── Period summary strip ───────────────────────────────────────── -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">
+        <div class="bg-surface px-4 py-3">
+          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Saldo inicial</p>
+          <p class="text-sm font-semibold font-mono tabular-nums" :class="openingBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
+            {{ formatCOP(openingBalance) }}
+          </p>
+        </div>
+        <div class="bg-surface px-4 py-3">
+          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Débitos período</p>
+          <p class="text-sm font-semibold font-mono tabular-nums text-primary">{{ formatCOP(periodDebits) }}</p>
+        </div>
+        <div class="bg-surface px-4 py-3">
+          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Créditos período</p>
+          <p class="text-sm font-semibold font-mono tabular-nums text-text-secondary">{{ formatCOP(periodCredits) }}</p>
+        </div>
+        <div class="bg-surface px-4 py-3">
+          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Saldo cierre</p>
+          <p class="text-sm font-bold font-mono tabular-nums" :class="closingBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
+            {{ formatCOP(closingBalance) }}
+          </p>
+        </div>
+      </div>
+
       <!-- ── Ledger table ────────────────────────────────────────────────── -->
       <HealthSemaphore :is-unlocked="true" title="Libro mayor de la cuenta">
         <div class="[&_td]:!py-1 [&_th]:!py-1.5">
           <UiResponsiveDataView
             row-size="sm"
             :columns="tableColumns"
-            :data="entries"
-            empty-message="Sin asientos para esta cuenta"
-            empty-sub-message="Los asientos que afecten esta cuenta aparecerán aquí"
+            :data="entriesWithBalance"
+            empty-message="Sin asientos para esta cuenta en el período"
+            empty-sub-message="Selecciona otro rango de fechas o crea un nuevo asiento"
             variant="default"
           >
             <!-- Mobile card -->
@@ -423,7 +474,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
                   <span v-if="item.totalDebit" class="text-xs font-mono text-primary tabular-nums">+{{ formatCOP(item.totalDebit) }}</span>
                   <span v-if="item.totalCredit" class="text-xs font-mono text-text-secondary tabular-nums">-{{ formatCOP(item.totalCredit) }}</span>
-                  <UiStatusBadge :value="STATUS_LABELS[item.status] || item.status" format="text" :variant="STATUS_VARIANTS[item.status] || 'secondary'" size="sm" />
+                  <span class="text-xs font-mono font-semibold tabular-nums" :class="item.runningBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
+                    {{ formatCOP(item.runningBalance) }}
+                  </span>
                 </div>
               </div>
             </template>
@@ -453,6 +506,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <template #cell-totalCredit="{ value }">
               <span v-if="value" class="text-sm font-mono text-text-secondary tabular-nums">{{ formatCOP(value) }}</span>
               <span v-else class="text-xs text-text-secondary">—</span>
+            </template>
+
+            <template #cell-runningBalance="{ value }">
+              <span class="text-sm font-mono font-semibold tabular-nums" :class="value >= 0 ? 'text-text-primary' : 'text-destructive'">
+                {{ formatCOP(value) }}
+              </span>
             </template>
 
             <template #cell-status="{ value }">
