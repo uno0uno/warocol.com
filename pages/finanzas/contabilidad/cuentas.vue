@@ -64,6 +64,14 @@ const CLASS_VARIANTS: Record<string, string> = {
   '6': 'warning',
 }
 
+const pucLevel = (code: string): { label: string; variant: string } => {
+  const len = code.length
+  if (len === 1) return { label: 'Clase',     variant: 'primary' }
+  if (len === 2) return { label: 'Grupo',     variant: 'secondary' }
+  if (len === 4) return { label: 'Cuenta',    variant: 'warning' }
+  return              { label: 'Subcuenta',  variant: 'success' }
+}
+
 // ── Data ───────────────────────────────────────────────────────────────────
 interface TenantAccount {
   id: string
@@ -116,6 +124,7 @@ const tableColumns = [
   { key: 'name',         title: 'Nombre',  sortable: false },
   { key: 'isSystem',     title: 'Sistema', sortable: false },
   { key: 'accountClass', title: 'Clase',   sortable: false },
+  { key: 'level',        title: 'Nivel',   sortable: false },
   { key: 'isActive',     title: 'Estado',  sortable: false },
   { key: 'actions',      title: '',        sortable: false },
 ]
@@ -262,11 +271,17 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <p class="text-sm font-medium text-text-primary mt-0.5 truncate">
                   {{ item.name }}
                 </p>
-                <div class="flex items-center gap-1.5 mt-1">
+                <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                   <UiStatusBadge
                     :value="CLASS_SHORT[item.accountClass] || item.accountClass"
                     format="text"
                     :variant="CLASS_VARIANTS[item.accountClass] || 'secondary'"
+                    size="sm"
+                  />
+                  <UiStatusBadge
+                    :value="pucLevel(item.code).label"
+                    format="text"
+                    :variant="pucLevel(item.code).variant"
                     size="sm"
                   />
                 </div>
@@ -338,6 +353,16 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               :value="CLASS_SHORT[value] || value"
               format="text"
               :variant="CLASS_VARIANTS[value] || 'secondary'"
+              size="sm"
+            />
+          </template>
+
+          <!-- Desktop: level -->
+          <template #cell-level="{ row }">
+            <UiStatusBadge
+              :value="pucLevel(row.code).label"
+              format="text"
+              :variant="pucLevel(row.code).variant"
               size="sm"
             />
           </template>
