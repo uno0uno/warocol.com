@@ -383,8 +383,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">Código PUC</p>
             </div>
 
-            <!-- + Subcuenta -->
+            <!-- + Subcuenta (only for Clase/Grupo/Cuenta — not for Subcuenta 6+ digits) -->
             <button
+              v-if="account.code.length < 6"
               type="button"
               class="min-h-[44px] px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center gap-1.5"
               aria-label="Crear subcuenta"
