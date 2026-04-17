@@ -42,9 +42,19 @@
             <span class="text-sm font-semibold text-text-primary">{{ item.name }}</span>
             <p class="text-xs text-text-secondary mt-0.5 font-mono">{{ item.slug }}</p>
             <div class="flex items-center gap-1.5 mt-1 flex-wrap">
-              <span v-if="item.tenantId === null" class="text-xs bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary">predeterminado</span>
-              <span v-else class="text-xs text-text-secondary">personalizable</span>
-              <span v-if="item.triggersCartera" class="text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded px-1.5 py-0.5">genera cartera</span>
+              <UiStatusBadge
+                :value="item.tenantId === null ? 'Predeterminado' : 'Personalizable'"
+                format="text"
+                :variant="item.tenantId === null ? 'secondary' : 'primary'"
+                size="sm"
+              />
+              <UiStatusBadge
+                v-if="item.triggersCartera"
+                value="Genera cartera"
+                format="text"
+                variant="warning"
+                size="sm"
+              />
             </div>
           </div>
           <div class="flex items-center gap-3 flex-shrink-0">
@@ -68,14 +78,22 @@
 
       <!-- tipo -->
       <template #cell-tenantId="{ row }">
-        <span v-if="row.tenantId === null" class="text-xs bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary">predeterminado</span>
-        <span v-else class="text-xs text-text-secondary">personalizable</span>
+        <UiStatusBadge
+          :value="row.tenantId === null ? 'Predeterminado' : 'Personalizable'"
+          format="text"
+          :variant="row.tenantId === null ? 'secondary' : 'primary'"
+          size="sm"
+        />
       </template>
 
       <!-- genera cartera -->
       <template #cell-triggersCartera="{ row }">
-        <span v-if="row.triggersCartera" class="text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded px-1.5 py-0.5">Sí</span>
-        <span v-else class="text-xs bg-background border border-border text-text-secondary rounded px-1.5 py-0.5">No</span>
+        <UiStatusBadge
+          :value="row.triggersCartera ? 'Genera cartera' : 'No'"
+          format="text"
+          :variant="row.triggersCartera ? 'warning' : 'secondary'"
+          size="sm"
+        />
       </template>
 
       <!-- method count -->
