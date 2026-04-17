@@ -150,14 +150,28 @@ const groupedAccounts = computed(() => {
 
 const totalDetail = computed(() => allAccounts.value.filter(a => a.isDetail).length)
 
+// ── Trial balance lookup by accountId ──────────────────────────────────────
+const trialByAccountId = computed<Record<string, TrialBalanceRow>>(() => {
+  const map: Record<string, TrialBalanceRow> = {}
+  for (const row of trialData.value?.rows ?? []) map[row.accountId] = row
+  return map
+})
+
+const accountTrial = (id: string) =>
+  trialByAccountId.value[id] ?? { openingBalance: 0, periodDebits: 0, periodCredits: 0, closingBalance: 0 }
+
 // ── Table columns ──────────────────────────────────────────────────────────
 const tableColumns = computed(() => [
-  { key: 'code',     title: 'Código',  sortable: false },
-  { key: 'name',     title: 'Nombre',  sortable: false },
-  { key: 'isSystem', title: '',        sortable: false },
+  { key: 'code',           title: 'Código',     sortable: false },
+  { key: 'name',           title: 'Nombre',     sortable: false },
+  { key: 'isSystem',       title: '',           sortable: false },
   ...(showAll.value ? [{ key: 'level', title: 'Nivel', sortable: false }] : []),
-  { key: 'isActive', title: 'Estado',  sortable: false },
-  { key: 'actions',  title: '',        sortable: false },
+  { key: 'openingBalance', title: 'Saldo ini.', sortable: false },
+  { key: 'periodDebits',   title: 'Débitos',    sortable: false },
+  { key: 'periodCredits',  title: 'Créditos',   sortable: false },
+  { key: 'closingBalance', title: 'Saldo',      sortable: false },
+  { key: 'isActive',       title: 'Estado',     sortable: false },
+  { key: 'actions',        title: '',           sortable: false },
 ])
 
 // ── Navigation ─────────────────────────────────────────────────────────────
@@ -351,11 +365,22 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                         <span class="text-xs font-mono text-text-secondary flex-shrink-0">{{ item.code }}</span>
                         <span class="text-sm font-medium text-text-primary truncate">{{ item.name }}</span>
                       </div>
-                      <div v-if="showAll" class="mt-0.5">
-                        <UiStatusBadge :value="pucLevel(item.code).label" format="text" :variant="pucLevel(item.code).variant" size="sm" />
+                      <div class="flex items-center gap-1.5 mt-0.5">
+                        <UiStatusBadge v-if="showAll" :value="pucLevel(item.code).label" format="text" :variant="pucLevel(item.code).variant" size="sm" />
+                        <span v-if="item.isDetail" class="text-xs font-mono tabular-nums"
+                          :class="accountTrial(item.id).periodDebits ? 'text-primary' : 'text-text-secondary'">
+                          D: {{ formatCOP(accountTrial(item.id).periodDebits) }}
+                        </span>
+                        <span v-if="item.isDetail" class="text-xs font-mono tabular-nums text-text-secondary">
+                          C: {{ formatCOP(accountTrial(item.id).periodCredits) }}
+                        </span>
                       </div>
                     </div>
-                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
+                      <span v-if="item.isDetail" class="text-sm font-semibold font-mono tabular-nums"
+                        :class="accountTrial(item.id).closingBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
+                        {{ formatCOP(accountTrial(item.id).closingBalance) }}
+                      </span>
                       <UiStatusBadge :value="item.isActive ? 'Activa' : 'Inactiva'" format="text" :variant="item.isActive ? 'success' : 'secondary'" size="sm" />
                       <button
                         v-if="item.isDetail"
@@ -408,6 +433,36 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                 <!-- level (showAll mode only) -->
                 <template #cell-level="{ row }">
                   <UiStatusBadge :value="pucLevel(row.code).label" format="text" :variant="pucLevel(row.code).variant" size="sm" />
+                </template>
+
+                <!-- period columns (only for detail accounts) -->
+                <template #cell-openingBalance="{ row }">
+                  <span v-if="row.isDetail" class="text-xs font-mono tabular-nums text-text-secondary">
+                    {{ formatCOP(accountTrial(row.id).openingBalance) }}
+                  </span>
+                  <span v-else class="text-xs text-text-secondary">—</span>
+                </template>
+
+                <template #cell-periodDebits="{ row }">
+                  <span v-if="row.isDetail && accountTrial(row.id).periodDebits" class="text-xs font-mono tabular-nums text-primary">
+                    {{ formatCOP(accountTrial(row.id).periodDebits) }}
+                  </span>
+                  <span v-else class="text-xs text-text-secondary">—</span>
+                </template>
+
+                <template #cell-periodCredits="{ row }">
+                  <span v-if="row.isDetail && accountTrial(row.id).periodCredits" class="text-xs font-mono tabular-nums text-text-secondary">
+                    {{ formatCOP(accountTrial(row.id).periodCredits) }}
+                  </span>
+                  <span v-else class="text-xs text-text-secondary">—</span>
+                </template>
+
+                <template #cell-closingBalance="{ row }">
+                  <span v-if="row.isDetail" class="text-xs font-mono font-semibold tabular-nums"
+                    :class="accountTrial(row.id).closingBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
+                    {{ formatCOP(accountTrial(row.id).closingBalance) }}
+                  </span>
+                  <span v-else class="text-xs text-text-secondary">—</span>
                 </template>
 
                 <!-- isActive -->
