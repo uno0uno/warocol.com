@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import MetricCard from '~/components/shared/MetricCard.vue'
+import { es } from 'date-fns/locale'
+import { format as fnsFormat, startOfMonth } from 'date-fns'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
@@ -95,6 +96,33 @@ const toggleActive = async () => {
   }
 }
 
+// ── Date range filter (default: current month) ─────────────────────────────
+const now = new Date()
+const dateRangeDates = ref<Date[] | null>([startOfMonth(now), now])
+
+const presetDates = [
+  { label: 'Hoy',           value: [new Date(), new Date()] },
+  { label: 'Ayer',          value: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return [d, d] })() },
+  { label: 'Esta semana',   value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
+  { label: 'Este mes',      value: [startOfMonth(new Date()), new Date()] },
+  { label: 'Último mes',    value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
+  { label: 'Últimos 90 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d })(), new Date()] },
+]
+
+const formatDateRange = (dates: Date[]) => {
+  if (!dates || !dates[0]) return ''
+  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
+  if (!dates[1]) return from
+  return `${from} - ${fnsFormat(dates[1], 'dd/MM/yy', { locale: es })}`
+}
+
+const dateRange = computed(() => {
+  if (!dateRangeDates.value || dateRangeDates.value.length < 2) return { from: null, to: null }
+  const [from, to] = dateRangeDates.value
+  if (!from || !to) return { from: null, to: null }
+  return { from: fnsFormat(from, 'yyyy-MM-dd'), to: fnsFormat(to, 'yyyy-MM-dd') }
+})
+
 // ── Journal entries filters ────────────────────────────────────────────────
 const statusFilter = ref<string | null>(null)
 const sourceFilter = ref<string | null>(null)
@@ -110,7 +138,7 @@ interface JournalEntry {
 }
 
 const { data: entriesData, asyncStatus: entriesAsyncStatus, error: entriesError, refetch: refetchEntries } = useQuery({
-  key: () => ['accounting', 'journal-entries', currentTenant.value?.id, accountId.value, page.value, statusFilter.value, sourceFilter.value],
+  key: () => ['accounting', 'journal-entries', currentTenant.value?.id, accountId.value, page.value, statusFilter.value, sourceFilter.value, dateRange.value.from, dateRange.value.to],
   query: () => $fetch<{ success: boolean; data: JournalEntry[]; total: number }>('/api/accounting/journal-entries', {
     params: {
       accountId: accountId.value,
@@ -118,35 +146,29 @@ const { data: entriesData, asyncStatus: entriesAsyncStatus, error: entriesError,
       limit: PAGE_SIZE,
       status: statusFilter.value || undefined,
       sourceModule: sourceFilter.value || undefined,
+      dateFrom: dateRange.value.from || undefined,
+      dateTo: dateRange.value.to || undefined,
     },
   }),
   enabled: () => !!currentTenant.value && !!accountId.value,
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => entriesData.value == null && !entriesError.value)
+const isLoading   = computed(() => entriesData.value == null && !entriesError.value)
 const isRefreshing = computed(() => entriesAsyncStatus.value === 'loading' && entriesData.value != null)
-const entries = computed<JournalEntry[]>(() => entriesData.value?.data ?? [])
+const entries     = computed<JournalEntry[]>(() => entriesData.value?.data ?? [])
 const totalEntries = computed(() => entriesData.value?.total ?? 0)
-const totalPages = computed(() => Math.max(1, Math.ceil(totalEntries.value / PAGE_SIZE)))
-
-// ── Summary stats ──────────────────────────────────────────────────────────
-const stats = computed(() => {
-  const list = entries.value
-  const debits  = list.reduce((s, e) => s + (e.totalDebit ?? 0), 0)
-  const credits = list.reduce((s, e) => s + (e.totalCredit ?? 0), 0)
-  return { count: totalEntries.value, debits, credits, net: debits - credits }
-})
+const totalPages  = computed(() => Math.max(1, Math.ceil(totalEntries.value / PAGE_SIZE)))
 
 // ── Table columns ──────────────────────────────────────────────────────────
 const tableColumns = [
-  { key: 'entryDate',    title: 'Fecha',       sortable: false },
-  { key: 'description', title: 'Descripción',  sortable: false },
-  { key: 'sourceModule', title: 'Módulo',      sortable: false },
-  { key: 'reference',   title: 'Referencia',   sortable: false },
-  { key: 'totalDebit',  title: 'Débito',       sortable: false },
-  { key: 'totalCredit', title: 'Crédito',      sortable: false },
-  { key: 'status',      title: 'Estado',       sortable: false },
+  { key: 'entryDate',    title: 'Fecha',      sortable: false },
+  { key: 'description', title: 'Descripción', sortable: false },
+  { key: 'sourceModule', title: 'Módulo',     sortable: false },
+  { key: 'reference',   title: 'Referencia',  sortable: false },
+  { key: 'totalDebit',  title: 'Débito',      sortable: false },
+  { key: 'totalCredit', title: 'Crédito',     sortable: false },
+  { key: 'status',      title: 'Estado',      sortable: false },
 ]
 
 const formatDate = (iso: string) => {
@@ -154,8 +176,15 @@ const formatDate = (iso: string) => {
   return new Date(iso + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-const hasActiveFilters = computed(() => statusFilter.value !== null || sourceFilter.value !== null)
-const clearFilters = () => { statusFilter.value = null; sourceFilter.value = null; page.value = 1 }
+const hasActiveFilters = computed(() =>
+  statusFilter.value !== null || sourceFilter.value !== null || dateRangeDates.value !== null
+)
+const clearFilters = () => {
+  statusFilter.value = null
+  sourceFilter.value = null
+  dateRangeDates.value = null
+  page.value = 1
+}
 
 // ── Layout integration ─────────────────────────────────────────────────────
 const refetch = () => { refetchEntries(); refetchAccounts() }
@@ -296,22 +325,33 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
-      <!-- ── Summary cards ─────────────────────────────────────────────── -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <MetricCard title="Asientos"      :value="stats.count"   format="number"   variant="primary" />
-        <MetricCard title="Total débitos"  :value="stats.debits"  format="currency" variant="primary" />
-        <MetricCard title="Total créditos" :value="stats.credits" format="currency" variant="primary" />
-        <MetricCard title="Neto"           :value="stats.net"     format="currency" variant="primary" />
-      </div>
-
       <!-- ── Filter bar ──────────────────────────────────────────────────── -->
       <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
+
+        <!-- Date range picker (same pattern as ordenes) -->
+        <VueDatePicker
+          v-model="dateRangeDates"
+          range
+          :preset-dates="presetDates"
+          :enable-time-picker="false"
+          :locale="es"
+          placeholder="Rango de fechas"
+          auto-apply
+          :teleport="true"
+          :max-date="new Date()"
+          :format="formatDateRange"
+          input-class-name="dp-custom-input"
+          menu-class-name="dp-custom-menu"
+          calendar-cell-class-name="dp-custom-cell"
+          @update:model-value="page = 1"
+        />
+
         <select
           v-model="statusFilter"
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           @change="page = 1"
         >
-          <option :value="null">Todos los estados</option>
+          <option :value="null">Estado</option>
           <option value="draft">Borrador</option>
           <option value="posted">Publicado</option>
           <option value="void">Anulado</option>
@@ -322,7 +362,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           @change="page = 1"
         >
-          <option :value="null">Todos los módulos</option>
+          <option :value="null">Módulo</option>
           <option value="ventas">Ventas</option>
           <option value="gastos">Gastos</option>
           <option value="nomina">Nómina</option>
