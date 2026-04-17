@@ -54,6 +54,7 @@ const orderResult = ref<{ order_number: number; total_amount: number; payment_me
 const wasMesaMode = ref(false)
 const receiptEmail = ref('')
 const emailSent = ref(false)
+const emailFromProfile = ref(false)
 const isSendingEmail = ref(false)
 const cartItemsSnapshot = ref<any[]>([])
 
@@ -242,6 +243,7 @@ const addSplitPayment = async () => {
       cartItemsSnapshot.value = [...cartItems.value]
       receiptEmail.value = ''
       emailSent.value = false
+      emailFromProfile.value = false
       splitMode.value = false
       posStore.clearAll()
       showSuccessModal.value = true
@@ -410,7 +412,6 @@ const processOrder = async () => {
         ...(selectedGroup.value?.triggersCartera && creditDueDate.value
           ? { credit_due_date: creditDueDate.value }
           : {}),
-        ...(emailForReceipt ? { receipt_email: emailForReceipt } : {}),
         ...(discountEnabled.value && _discountAmtPos > 0
           ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
           : {}),
@@ -446,7 +447,8 @@ const processOrder = async () => {
       }
       cartItemsSnapshot.value = [...cartItems.value]
       receiptEmail.value = emailForReceipt ?? ''
-      emailSent.value = !!emailForReceipt
+      emailSent.value = false
+      emailFromProfile.value = !!emailForReceipt
       posStore.clearAll()
       showSuccessModal.value = true
     }
@@ -525,6 +527,7 @@ const cancelOrder = async () => {
 
 const closeSuccessModal = () => {
   showSuccessModal.value = false
+  emailFromProfile.value = false
   if (wasMesaMode.value) {
     cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
     router.push('/pos')
@@ -1589,30 +1592,54 @@ onUnmounted(() => {
           <div class="mb-4 space-y-3">
             <!-- Email receipt -->
             <div class="flex flex-col gap-1.5">
-              <label for="receipt-email" class="text-sm font-medium text-text-primary">
-                Correo para el recibo <span class="text-text-tertiary text-xs">(opcional)</span>
-              </label>
-              <div class="flex gap-2">
-                <input
-                  id="receipt-email"
-                  v-model="receiptEmail"
-                  type="email"
-                  placeholder="cliente@email.com"
-                  :disabled="emailSent"
-                  class="flex-1 px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50"
-                />
-                <button
-                  @click="sendReceiptEmail"
-                  :disabled="!receiptEmail || emailSent || isSendingEmail"
-                  class="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95
-                         disabled:opacity-50 disabled:cursor-not-allowed
-                         bg-surface border border-border text-text-primary hover:bg-surface-secondary"
-                >
-                  <span v-if="isSendingEmail">Enviando...</span>
-                  <span v-else-if="emailSent" class="text-green-600">✓ Enviado</span>
-                  <span v-else>Enviar</span>
-                </button>
-              </div>
+              <!-- When email comes from profile: confirmation mode -->
+              <template v-if="emailFromProfile && !emailSent">
+                <p class="text-sm font-medium text-text-primary">¿Enviar recibo al cliente?</p>
+                <div class="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2">
+                  <svg class="h-4 w-4 shrink-0 text-text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>
+                  <span class="flex-1 truncate text-sm text-text-primary">{{ receiptEmail }}</span>
+                  <button
+                    @click="sendReceiptEmail"
+                    :disabled="isSendingEmail"
+                    class="shrink-0 min-h-[36px] px-4 py-1.5 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    <span v-if="isSendingEmail">Enviando...</span>
+                    <span v-else>Confirmar envío</span>
+                  </button>
+                </div>
+              </template>
+
+              <!-- When email was sent (from profile or manual) -->
+              <template v-else-if="emailSent">
+                <div class="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-green-700">
+                  <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                  <span class="text-sm font-medium">Recibo enviado a {{ receiptEmail }}</span>
+                </div>
+              </template>
+
+              <!-- When no profile email: manual input -->
+              <template v-else>
+                <label for="receipt-email" class="text-sm font-medium text-text-primary">
+                  Enviar recibo por correo <span class="text-text-tertiary text-xs">(opcional)</span>
+                </label>
+                <div class="flex gap-2">
+                  <input
+                    id="receipt-email"
+                    v-model="receiptEmail"
+                    type="email"
+                    placeholder="cliente@email.com"
+                    class="flex-1 px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                  />
+                  <button
+                    @click="sendReceiptEmail"
+                    :disabled="!receiptEmail || isSendingEmail"
+                    class="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-surface border border-border text-text-primary hover:bg-surface-secondary"
+                  >
+                    <span v-if="isSendingEmail">Enviando...</span>
+                    <span v-else>Enviar</span>
+                  </button>
+                </div>
+              </template>
             </div>
 
             <!-- Print -->
