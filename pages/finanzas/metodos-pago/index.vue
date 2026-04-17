@@ -142,7 +142,7 @@ const groups = computed<PaymentGroup[]>(() =>
 const cashGroup     = computed(() => groups.value.find(g => g.slug === 'efectivo'))
 const defaultGroups = computed(() => groups.value.filter(g => g.tenantId === null && g.slug !== 'efectivo'))
 const customGroups  = computed(() => groups.value.filter(g => g.tenantId !== null))
-const isLoading    = computed(() => groupsStatus.value === 'pending' && !groupsData.value)
+const isLoading    = computed(() => !groupsData.value && !fetchError.value)
 const isRefreshing = computed(() => groupsAsyncStatus.value === 'loading' && groupsData.value != null)
 
 registerProgressiveLoading(isRefreshing)
