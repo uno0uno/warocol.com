@@ -21,6 +21,7 @@ const navigationItems = [
   { to: '/finanzas/contabilidad/cuentas',             label: 'Cuentas',  matchPath: '/finanzas/contabilidad/cuentas' },
   { to: '/finanzas/contabilidad/asientos',            label: 'Asientos', matchPath: '/finanzas/contabilidad/asientos' },
   { to: '/finanzas/contabilidad/balance-comprobacion', label: 'Balance', matchPath: '/finanzas/contabilidad/balance-comprobacion' },
+  { to: '/finanzas/reportes/pl-mensual', label: 'P&L Mensual', matchPath: '/finanzas/reportes/pl-mensual' },
 ]
 
 useHead({ title: 'Finanzas - Warocol' })
