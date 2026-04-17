@@ -738,7 +738,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 type="text"
                 placeholder="05"
                 maxlength="6"
-                class="flex-1 min-w-0 py-2.5 pr-3 bg-transparent text-sm font-mono text-text-primary focus:outline-none placeholder:text-text-secondary"
+                class="flex-1 min-w-0 py-2.5 pr-3 bg-transparent text-sm font-mono text-text-primary border-0 outline-none focus:outline-none focus:ring-0 placeholder:text-text-secondary"
                 @keydown.escape="closeCreatePanel"
               />
             </div>
