@@ -334,35 +334,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
       <!-- Period summary strip -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">
-        <div class="bg-surface px-4 py-3 flex flex-col gap-0.5">
-          <span class="text-xs text-text-secondary">Total asientos</span>
-          <span class="text-lg font-bold text-text-primary tabular-nums">{{ totalEntries.toLocaleString('es-CO') }}</span>
-        </div>
-        <div class="bg-surface px-4 py-3 flex flex-col gap-0.5">
-          <span class="text-xs text-text-secondary">Débitos</span>
-          <span class="text-lg font-bold text-text-primary tabular-nums">{{ formatCurrency(pageDebits) }}</span>
-        </div>
-        <div class="bg-surface px-4 py-3 flex flex-col gap-0.5">
-          <span class="text-xs text-text-secondary">Créditos</span>
-          <span class="text-lg font-bold text-text-primary tabular-nums">{{ formatCurrency(pageCredits) }}</span>
-        </div>
-        <div class="bg-surface px-4 py-3 flex flex-col gap-0.5">
-          <span class="text-xs text-text-secondary">Estado</span>
-          <span
-            class="text-sm font-semibold flex items-center gap-1"
-            :class="pageIsBalanced ? 'text-green-600' : 'text-amber-600'"
-          >
-            <svg v-if="pageIsBalanced" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <svg v-else class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-            </svg>
-            {{ pageIsBalanced ? 'Cuadrado' : 'Descuadrado' }}
-          </span>
-        </div>
-      </div>
+      <FinanzasMetricStrip :items="[
+        { label: 'Total asientos', value: totalEntries.toLocaleString('es-CO') },
+        { label: 'Débitos',        value: formatCurrency(pageDebits),   mono: true },
+        { label: 'Créditos',       value: formatCurrency(pageCredits),  mono: true },
+        { label: 'Estado',         value: pageIsBalanced ? 'Cuadrado' : 'Descuadrado', variant: pageIsBalanced ? 'success' : 'warning', icon: pageIsBalanced ? 'check' : 'warning' },
+      ]" />
 
       <!-- Filter Bar -->
       <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">

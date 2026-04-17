@@ -172,35 +172,12 @@ const onCreditInput = (line: EntryLine) => {
     <div class="flex flex-col gap-4">
 
       <!-- Summary cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">
-        <div class="bg-surface px-4 py-3 flex flex-col gap-0.5">
-          <span class="text-xs text-text-secondary">Líneas</span>
-          <span class="text-lg font-bold text-text-primary tabular-nums">{{ lines.filter(l => l.accountId).length }}</span>
-        </div>
-        <div class="bg-surface px-4 py-3 flex flex-col gap-0.5">
-          <span class="text-xs text-text-secondary">Total débito</span>
-          <span class="text-lg font-bold text-text-primary tabular-nums">{{ formatCurrency(totalDebits) }}</span>
-        </div>
-        <div class="bg-surface px-4 py-3 flex flex-col gap-0.5">
-          <span class="text-xs text-text-secondary">Total crédito</span>
-          <span class="text-lg font-bold text-text-primary tabular-nums">{{ formatCurrency(totalCredits) }}</span>
-        </div>
-        <div class="bg-surface px-4 py-3 flex flex-col gap-0.5">
-          <span class="text-xs text-text-secondary">Estado</span>
-          <span
-            class="text-sm font-semibold flex items-center gap-1"
-            :class="isBalanced ? 'text-green-600' : 'text-amber-600'"
-          >
-            <svg v-if="isBalanced" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <svg v-else class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-            </svg>
-            {{ isBalanced ? 'Cuadrado' : formatCurrency(difference) }}
-          </span>
-        </div>
-      </div>
+      <FinanzasMetricStrip :items="[
+        { label: 'Líneas',       value: String(lines.filter(l => l.accountId).length) },
+        { label: 'Total débito', value: formatCurrency(totalDebits),  mono: true },
+        { label: 'Total crédito',value: formatCurrency(totalCredits), mono: true },
+        { label: 'Estado',       value: isBalanced ? 'Cuadrado' : formatCurrency(difference), variant: isBalanced ? 'success' : 'warning', icon: isBalanced ? 'check' : 'warning' },
+      ]" />
 
       <!-- Header fields -->
       <div class="bg-surface border border-border rounded-xl p-4 flex flex-col gap-3">

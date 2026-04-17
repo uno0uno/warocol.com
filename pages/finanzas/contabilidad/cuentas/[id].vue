@@ -424,28 +424,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       </div>
 
       <!-- ── Period summary strip ───────────────────────────────────────── -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">
-        <div class="bg-surface px-4 py-3">
-          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Saldo inicial</p>
-          <p class="text-sm font-semibold font-mono tabular-nums" :class="openingBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
-            {{ formatCOP(openingBalance) }}
-          </p>
-        </div>
-        <div class="bg-surface px-4 py-3">
-          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Débitos período</p>
-          <p class="text-sm font-semibold font-mono tabular-nums text-primary">{{ formatCOP(periodDebits) }}</p>
-        </div>
-        <div class="bg-surface px-4 py-3">
-          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Créditos período</p>
-          <p class="text-sm font-semibold font-mono tabular-nums text-text-secondary">{{ formatCOP(periodCredits) }}</p>
-        </div>
-        <div class="bg-surface px-4 py-3">
-          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Saldo cierre</p>
-          <p class="text-sm font-bold font-mono tabular-nums" :class="closingBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
-            {{ formatCOP(closingBalance) }}
-          </p>
-        </div>
-      </div>
+      <FinanzasMetricStrip :items="[
+        { label: 'Saldo inicial',    value: formatCOP(openingBalance), mono: true, variant: openingBalance >= 0 ? 'default' : 'destructive' },
+        { label: 'Débitos período',  value: formatCOP(periodDebits),   mono: true, variant: 'primary' },
+        { label: 'Créditos período', value: formatCOP(periodCredits),  mono: true, variant: 'muted' },
+        { label: 'Saldo cierre',     value: formatCOP(closingBalance), mono: true, variant: closingBalance >= 0 ? 'default' : 'destructive' },
+      ]" />
 
       <!-- ── Ledger table ────────────────────────────────────────────────── -->
       <HealthSemaphore :is-unlocked="true" title="Libro mayor de la cuenta">

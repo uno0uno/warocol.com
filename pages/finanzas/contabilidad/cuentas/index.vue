@@ -224,26 +224,12 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
       <!-- ── Period summary strip ───────────────────────────────────────── -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">
-        <div class="bg-surface px-4 py-3">
-          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Saldo inicial</p>
-          <p class="text-sm font-semibold font-mono tabular-nums text-text-primary">{{ formatCOP(periodSummary.openingBalance) }}</p>
-        </div>
-        <div class="bg-surface px-4 py-3">
-          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Débitos período</p>
-          <p class="text-sm font-semibold font-mono tabular-nums text-primary">{{ formatCOP(periodSummary.periodDebits) }}</p>
-        </div>
-        <div class="bg-surface px-4 py-3">
-          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Créditos período</p>
-          <p class="text-sm font-semibold font-mono tabular-nums text-text-secondary">{{ formatCOP(periodSummary.periodCredits) }}</p>
-        </div>
-        <div class="bg-surface px-4 py-3">
-          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Saldo cierre</p>
-          <p class="text-sm font-bold font-mono tabular-nums" :class="periodSummary.closingBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
-            {{ formatCOP(periodSummary.closingBalance) }}
-          </p>
-        </div>
-      </div>
+      <FinanzasMetricStrip :items="[
+        { label: 'Saldo inicial',    value: formatCOP(periodSummary.openingBalance), mono: true },
+        { label: 'Débitos período',  value: formatCOP(periodSummary.periodDebits),   mono: true, variant: 'primary' },
+        { label: 'Créditos período', value: formatCOP(periodSummary.periodCredits),  mono: true, variant: 'muted' },
+        { label: 'Saldo cierre',     value: formatCOP(periodSummary.closingBalance), mono: true, variant: periodSummary.closingBalance >= 0 ? 'default' : 'destructive' },
+      ]" />
 
       <!-- ── Filter bar ──────────────────────────────────────────────────── -->
       <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
