@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { es } from 'date-fns/locale'
+import { format as fnsFormat, startOfMonth } from 'date-fns'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
@@ -8,9 +10,70 @@ useHead({ title: 'Cuentas contables' })
 
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const formatCOP = (v: number) =>
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v ?? 0)
 
 // ── View toggle ────────────────────────────────────────────────────────────
 const showAll = ref(false)
+
+// ── Date range filter (default: current month) ─────────────────────────────
+const now = new Date()
+const dateRangeDates = ref<Date[] | null>([startOfMonth(now), now])
+
+const presetDates = [
+  { label: 'Hoy',             value: [new Date(), new Date()] },
+  { label: 'Esta semana',     value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
+  { label: 'Este mes',        value: [startOfMonth(new Date()), new Date()] },
+  { label: 'Último mes',      value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
+  { label: 'Últimos 90 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d })(), new Date()] },
+]
+
+const formatDateRange = (dates: Date[]) => {
+  if (!dates || !dates[0]) return ''
+  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
+  if (!dates[1]) return from
+  return `${from} - ${fnsFormat(dates[1], 'dd/MM/yy', { locale: es })}`
+}
+
+const dateRange = computed(() => {
+  if (!dateRangeDates.value || dateRangeDates.value.length < 2) return { from: null, to: null }
+  const [from, to] = dateRangeDates.value
+  if (!from || !to) return { from: null, to: null }
+  return { from: fnsFormat(from, 'yyyy-MM-dd'), to: fnsFormat(to, 'yyyy-MM-dd') }
+})
+
+// ── Trial balance (period summary) ─────────────────────────────────────────
+interface TrialBalanceRow {
+  accountId: string; openingBalance: number
+  periodDebits: number; periodCredits: number; closingBalance: number
+}
+interface TrialBalanceResp {
+  success: boolean; totalDebits: number; totalCredits: number
+  isBalanced: boolean; rows: TrialBalanceRow[]
+}
+
+const { data: trialData, refetch: refetchTrial } = useQuery({
+  key: () => ['accounting', 'trial-balance', currentTenant.value?.id, dateRange.value.from, dateRange.value.to],
+  query: () => $fetch<TrialBalanceResp>('/api/accounting/trial-balance', {
+    params: {
+      periodStart: dateRange.value.from,
+      periodEnd:   dateRange.value.to,
+      includeZeroBalances: false,
+    },
+  }),
+  enabled: () => !!currentTenant.value && !!dateRange.value.from && !!dateRange.value.to,
+  staleTime: 30_000,
+})
+
+const periodSummary = computed(() => {
+  const rows = trialData.value?.rows ?? []
+  return {
+    openingBalance:  rows.reduce((s, r) => s + (r.openingBalance ?? 0), 0),
+    periodDebits:    trialData.value?.totalDebits ?? 0,
+    periodCredits:   trialData.value?.totalCredits ?? 0,
+    closingBalance:  rows.reduce((s, r) => s + (r.closingBalance ?? 0), 0),
+  }
+})
 
 // ── Filters ────────────────────────────────────────────────────────────────
 const classFilter  = ref<string | null>(null)
@@ -126,9 +189,10 @@ const hasActiveFilters = computed(() => classFilter.value !== null || activeFilt
 const clearFilters = () => { classFilter.value = null; activeFilter.value = null }
 
 // ── Layout integration ─────────────────────────────────────────────────────
+const refetchAll = () => { refetch(); refetchTrial() }
 registerProgressiveLoading(isRefreshing)
-onMounted(() => { setRefreshHandler(refetch) })
-onUnmounted(() => { clearRefreshHandler(refetch) })
+onMounted(() => { setRefreshHandler(refetchAll) })
+onUnmounted(() => { clearRefreshHandler(refetchAll) })
 </script>
 
 <template>
@@ -145,8 +209,47 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
     <!-- Main content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
+      <!-- ── Period summary strip ───────────────────────────────────────── -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">
+        <div class="bg-surface px-4 py-3">
+          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Saldo inicial</p>
+          <p class="text-sm font-semibold font-mono tabular-nums text-text-primary">{{ formatCOP(periodSummary.openingBalance) }}</p>
+        </div>
+        <div class="bg-surface px-4 py-3">
+          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Débitos período</p>
+          <p class="text-sm font-semibold font-mono tabular-nums text-primary">{{ formatCOP(periodSummary.periodDebits) }}</p>
+        </div>
+        <div class="bg-surface px-4 py-3">
+          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Créditos período</p>
+          <p class="text-sm font-semibold font-mono tabular-nums text-text-secondary">{{ formatCOP(periodSummary.periodCredits) }}</p>
+        </div>
+        <div class="bg-surface px-4 py-3">
+          <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Saldo cierre</p>
+          <p class="text-sm font-bold font-mono tabular-nums" :class="periodSummary.closingBalance >= 0 ? 'text-text-primary' : 'text-destructive'">
+            {{ formatCOP(periodSummary.closingBalance) }}
+          </p>
+        </div>
+      </div>
+
       <!-- ── Filter bar ──────────────────────────────────────────────────── -->
       <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
+
+        <!-- Date range picker -->
+        <VueDatePicker
+          v-model="dateRangeDates"
+          range
+          :preset-dates="presetDates"
+          :enable-time-picker="false"
+          :locale="es"
+          placeholder="Rango de fechas"
+          auto-apply
+          :teleport="true"
+          :max-date="new Date()"
+          :format="formatDateRange"
+          input-class-name="dp-custom-input"
+          menu-class-name="dp-custom-menu"
+          calendar-cell-class-name="dp-custom-cell"
+        />
 
         <!-- Clase filter -->
         <select
