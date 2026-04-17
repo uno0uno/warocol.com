@@ -401,10 +401,10 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <tbody>
 
               <!-- Per-class sections -->
-              <template v-for="group in groupedRows">
+              <template v-for="group in groupedRows" :key="group.classCode">
 
                 <!-- Class header row -->
-                <tr :key="`header-${group.classCode}`" class="bg-surface-secondary/60 border-t border-border">
+                <tr class="bg-surface-secondary/60 border-t border-border">
                   <td colspan="6" class="py-2 px-3">
                     <span class="text-xs font-bold text-text-secondary uppercase tracking-wider">
                       {{ group.classCode }} · {{ group.label }}
@@ -445,7 +445,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 </tr>
 
                 <!-- Class subtotal row -->
-                <tr :key="`subtotal-${group.classCode}`" class="border-t border-border bg-surface-secondary/40">
+                <tr class="border-t border-border bg-surface-secondary/40">
                   <td class="py-2 px-3" />
                   <td class="py-2 px-3">
                     <span class="text-xs font-bold text-text-secondary">Subtotal {{ group.label }}</span>
