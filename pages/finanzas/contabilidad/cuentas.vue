@@ -36,6 +36,16 @@ const ACCOUNT_TYPE_LABELS: Record<string, string> = {
   other:     'Otro',
 }
 
+const ACCOUNT_TYPE_VARIANTS: Record<string, string> = {
+  asset:     'primary',
+  liability: 'warning',
+  equity:    'secondary',
+  income:    'success',
+  expense:   'destructive',
+  cogs:      'warning',
+  other:     'secondary',
+}
+
 const CLASS_SHORT: Record<string, string> = {
   '1': 'Activos',
   '2': 'Pasivos',
@@ -93,8 +103,9 @@ const summaryStats = computed(() => {
 
 // ── Table columns ──────────────────────────────────────────────────────────
 const tableColumns = [
-  { key: 'code',         title: 'Código',       sortable: false },
+  { key: 'code',         title: 'Código',        sortable: false },
   { key: 'name',         title: 'Nombre',        sortable: false },
+  { key: 'isSystem',     title: 'Sistema',       sortable: false },
   { key: 'accountClass', title: 'Clase',         sortable: false },
   { key: 'accountType',  title: 'Tipo de cuenta', sortable: false },
   { key: 'isActive',     title: 'Estado',        sortable: false },
@@ -243,9 +254,15 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <p class="text-sm font-medium text-text-primary mt-0.5 truncate">
                   {{ item.name }}
                 </p>
-                <p class="text-xs text-text-secondary mt-0.5">
-                  {{ CLASS_SHORT[item.accountClass] || item.accountClass }} · {{ ACCOUNT_TYPE_LABELS[item.accountType] || item.accountType }}
-                </p>
+                <div class="flex items-center gap-1.5 mt-1">
+                  <span class="text-xs text-text-secondary">{{ CLASS_SHORT[item.accountClass] || item.accountClass }}</span>
+                  <UiStatusBadge
+                    :value="ACCOUNT_TYPE_LABELS[item.accountType] || item.accountType"
+                    format="text"
+                    :variant="ACCOUNT_TYPE_VARIANTS[item.accountType] || 'secondary'"
+                    size="sm"
+                  />
+                </div>
               </div>
               <div class="flex flex-col items-end gap-2 flex-shrink-0">
                 <UiStatusBadge
@@ -279,11 +296,15 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
           <!-- Desktop: code -->
           <template #cell-code="{ row }">
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-mono text-text-secondary tabular-nums">{{ row.code }}</span>
+            <span class="text-xs font-mono text-text-secondary tabular-nums">{{ row.code }}</span>
+          </template>
+
+          <!-- Desktop: isSystem (lock icon) -->
+          <template #cell-isSystem="{ value }">
+            <div class="flex justify-center">
               <svg
-                v-if="row.isSystem"
-                class="w-3 h-3 text-text-secondary flex-shrink-0"
+                v-if="value"
+                class="w-3.5 h-3.5 text-text-secondary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -311,7 +332,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
           <!-- Desktop: accountType -->
           <template #cell-accountType="{ value }">
-            <span class="text-sm text-text-secondary">{{ ACCOUNT_TYPE_LABELS[value] || value }}</span>
+            <UiStatusBadge
+              :value="ACCOUNT_TYPE_LABELS[value] || value"
+              format="text"
+              :variant="ACCOUNT_TYPE_VARIANTS[value] || 'secondary'"
+              size="sm"
+            />
           </template>
 
           <!-- Desktop: isActive badge -->
