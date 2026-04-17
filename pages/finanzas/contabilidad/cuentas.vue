@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import MetricCard from '~/components/shared/MetricCard.vue'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
@@ -107,17 +106,6 @@ const isRefreshing = computed(() => accountsAsyncStatus.value === 'loading' && a
 
 const accounts = computed<TenantAccount[]>(() => accountsData.value?.data ?? [])
 
-// ── Summary stats ──────────────────────────────────────────────────────────
-const summaryStats = computed(() => {
-  const list = accounts.value
-  return {
-    total:    list.length,
-    activas:  list.filter(a => a.isActive).length,
-    inactivas: list.filter(a => !a.isActive).length,
-    detalle:  list.filter(a => a.isDetail).length,
-  }
-})
-
 // ── Table columns ──────────────────────────────────────────────────────────
 const tableColumns = [
   { key: 'code',         title: 'Código',  sortable: false },
@@ -175,49 +163,20 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
-      <!-- ── Summary cards ─────────────────────────────────────────────── -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <MetricCard title="Total cuentas"   :value="summaryStats.total"     format="number" variant="primary" />
-        <MetricCard title="Activas"         :value="summaryStats.activas"   format="number" variant="primary" />
-        <MetricCard title="Inactivas"       :value="summaryStats.inactivas" format="number" variant="primary" />
-        <MetricCard title="De detalle"      :value="summaryStats.detalle"   format="number" variant="primary" />
-      </div>
-
       <!-- ── Filter bar ──────────────────────────────────────────────────── -->
-      <div class="flex flex-wrap items-center gap-2 w-full">
-        <!-- Class filter tabs -->
-        <div class="flex flex-wrap items-center gap-1.5">
-          <button
-            type="button"
-            class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-            :class="classFilter === null
-              ? 'border-primary bg-primary text-white'
-              : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary'"
-            @click="classFilter = null"
-          >
-            Todas
-          </button>
-          <button
-            v-for="cls in PUC_CLASSES"
-            :key="cls.value"
-            type="button"
-            class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-            :class="classFilter === cls.value
-              ? 'border-primary bg-primary text-white'
-              : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary'"
-            @click="classFilter = cls.value"
-          >
-            {{ cls.label }}
-          </button>
-        </div>
+      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
+        <select
+          v-model="classFilter"
+          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          aria-label="Filtrar por clase"
+        >
+          <option :value="null">Todas las clases</option>
+          <option v-for="cls in PUC_CLASSES" :key="cls.value" :value="cls.value">{{ cls.label }}</option>
+        </select>
 
-        <!-- Divider -->
-        <div class="h-6 w-px bg-border hidden sm:block" aria-hidden="true" />
-
-        <!-- Active filter -->
         <select
           v-model="activeFilter"
-          class="h-10 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           aria-label="Filtrar por estado"
         >
           <option :value="null">Todas las cuentas</option>
@@ -225,11 +184,10 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <option value="false">Inactivas</option>
         </select>
 
-        <!-- Clear filters -->
         <button
           v-if="hasActiveFilters"
           type="button"
-          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
           aria-label="Limpiar filtros"
           @click="clearFilters"
         >
