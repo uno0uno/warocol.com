@@ -530,11 +530,201 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
-  } else if (path.startsWith('/finanzas')) {
+  } else if (path === '/finanzas' || path === '/finanzas/') {
     return {
       pageTitle: 'Finanzas',
       pageSubtitle: 'Gestión financiera del negocio',
-      searchPlaceholder: 'Buscar en finanzas...',
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/finanzas/arqueo') {
+    return {
+      pageTitle: 'Arqueo de Caja',
+      pageSubtitle: 'Cierre diario de efectivo',
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/finanzas/arqueo/nuevo') {
+    return {
+      pageTitle: 'Nuevo Arqueo',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: { label: 'Volver' }
+    }
+  } else if (path === '/finanzas/arqueo/x') {
+    return {
+      pageTitle: 'Corte X',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: { label: 'Volver' }
+    }
+  } else if (path === '/finanzas/arqueo/z') {
+    return {
+      pageTitle: 'Corte Z',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: { label: 'Volver' }
+    }
+  } else if (path.startsWith('/finanzas/arqueo/')) {
+    return {
+      pageTitle: 'Detalle Arqueo',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: { label: 'Volver' }
+    }
+  } else if (path === '/finanzas/gastos') {
+    return {
+      pageTitle: 'Gastos',
+      pageSubtitle: 'Control de egresos',
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/finanzas/gastos/crear') {
+    return {
+      pageTitle: 'Registrar Gasto',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: { label: 'Volver' }
+    }
+  } else if (path.startsWith('/finanzas/gastos/')) {
+    return {
+      pageTitle: 'Detalle Gasto',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: { label: 'Volver' }
+    }
+  } else if (path === '/finanzas/cartera') {
+    return {
+      pageTitle: 'Cartera',
+      pageSubtitle: 'Cuentas por cobrar',
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/finanzas/metodos-pago') {
+    return {
+      pageTitle: 'Métodos de Pago',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path.startsWith('/finanzas/metodos-pago/')) {
+    return {
+      pageTitle: 'Grupo de Pago',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: { label: 'Volver' }
+    }
+  } else if (path === '/finanzas/contabilidad/cuentas') {
+    return {
+      pageTitle: 'Plan de Cuentas',
+      pageSubtitle: 'Contabilidad general',
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path.startsWith('/finanzas/contabilidad/cuentas/')) {
+    return {
+      pageTitle: 'Detalle Cuenta',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: { label: 'Volver' }
+    }
+  } else if (path === '/finanzas/contabilidad/asientos') {
+    return {
+      pageTitle: 'Asientos Contables',
+      pageSubtitle: 'Libro diario',
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/finanzas/contabilidad/asientos/crear') {
+    return {
+      pageTitle: 'Nuevo Asiento',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: { label: 'Volver' }
+    }
+  } else if (path === '/finanzas/contabilidad/balance-comprobacion') {
+    return {
+      pageTitle: 'Balance de Comprobación',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/finanzas/cierre-contable') {
+    return {
+      pageTitle: 'Cierre Contable',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/finanzas/reportes/pl-mensual') {
+    return {
+      pageTitle: 'P&L Mensual',
+      pageSubtitle: 'Estado de resultados',
+      searchPlaceholder: undefined,
+      activePage: 'finanzas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path.startsWith('/finanzas')) {
+    return {
+      pageTitle: 'Finanzas',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
       activePage: 'finanzas' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,
