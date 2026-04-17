@@ -105,6 +105,12 @@ interface PaymentMethod {
   glAccountCode: string | null
 }
 
+interface PaymentGroup {
+  id: string
+  slug: string
+  glAccountCode: string | null
+}
+
 const { data: methodsData } = useQuery({
   key: () => ['payments', 'methods', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: PaymentMethod[] }>('/api/finanzas/metodos-pago'),
@@ -112,9 +118,25 @@ const { data: methodsData } = useQuery({
   staleTime: 30_000,
 })
 
-const availableMethods = computed<PaymentMethod[]>(() =>
-  (methodsData.value?.data ?? []).filter(m => m.isActive)
-)
+const { data: groupsData } = useQuery({
+  key: () => ['payments', 'groups', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: PaymentGroup[] }>('/api/finanzas/metodos-pago/grupos'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+// Only show methods whose group maps to the current account code
+const availableMethods = computed<PaymentMethod[]>(() => {
+  const groups = groupsData.value?.data ?? []
+  const methods = (methodsData.value?.data ?? []).filter(m => m.isActive)
+  if (!account.value) return methods
+  // Groups that point to this exact account code
+  const matchingGroupIds = new Set(
+    groups.filter(g => g.glAccountCode === account.value!.code).map(g => g.id)
+  )
+  if (!matchingGroupIds.size) return methods  // fallback: show all if no group matches
+  return methods.filter(m => matchingGroupIds.has(m.groupId))
+})
 
 // ── Create sub-account slide-over ──────────────────────────────────────────
 const showCreatePanel  = ref(false)
