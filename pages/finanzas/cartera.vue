@@ -160,27 +160,11 @@ onUnmounted(() => {
     <div v-else class="flex flex-col gap-3 md:gap-4 pb-20">
 
       <!-- Summary Cards -->
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        <MetricCard
-          title="Total por cobrar"
-          :value="summary.total_outstanding"
-          format="currency"
-          variant="primary"
-        />
-        <MetricCard
-          title="Clientes con deuda"
-          :value="summary.customer_count"
-          format="number"
-          variant="primary"
-        />
-        <MetricCard
-          title="Monto vencido"
-          :value="summary.overdue_amount"
-          format="currency"
-          variant="primary"
-          class="col-span-2 md:col-span-1"
-        />
-      </div>
+      <FinanzasMetricStrip :items="[
+        { label: 'Total por cobrar',  value: formatCurrency(summary.total_outstanding), mono: true },
+        { label: 'Clientes con deuda',value: summary.customer_count.toLocaleString('es-CO') },
+        { label: 'Monto vencido',     value: formatCurrency(summary.overdue_amount),    mono: true, variant: summary.overdue_amount > 0 ? 'destructive' : 'default' },
+      ]" />
 
       <!-- Aging Section — antigüedad de cartera (encima de la tabla) -->
       <div v-if="agingBuckets.length > 0" class="bg-white border border-border rounded-xl overflow-hidden">

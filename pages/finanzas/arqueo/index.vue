@@ -9,13 +9,16 @@
 
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- ── Summary cards ────────────────────────────────────────────────── -->
-      <div v-if="filteredHistorial.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
-        <MetricCard title="Total ventas"      :value="summaryStats.totalSales"     format="currency" variant="primary" />
-        <MetricCard title="Diferencia de caja" :value="summaryStats.cashDifference" format="currency" variant="primary" />
-        <MetricCard title="Efectivo"           :value="summaryStats.totalCash"      format="currency" variant="primary" />
-        <MetricCard title="Tarjeta"            :value="summaryStats.totalCard"      format="currency" variant="primary" />
-        <MetricCard title="Gastos efectivo"    :value="summaryStats.gastosEfectivo" format="currency" variant="primary" class="col-span-2 md:col-span-1" />
-      </div>
+      <FinanzasMetricStrip
+        v-if="filteredHistorial.length > 0"
+        :items="[
+          { label: 'Total ventas',      value: formatCurrency(summaryStats.totalSales),     mono: true },
+          { label: 'Diferencia de caja',value: formatCurrency(summaryStats.cashDifference), mono: true, variant: summaryStats.cashDifference >= 0 ? 'default' : 'destructive' },
+          { label: 'Efectivo',          value: formatCurrency(summaryStats.totalCash),      mono: true },
+          { label: 'Tarjeta',           value: formatCurrency(summaryStats.totalCard),      mono: true },
+          { label: 'Gastos efectivo',   value: formatCurrency(summaryStats.gastosEfectivo), mono: true },
+        ]"
+      />
 
       <!-- ── Filter bar ────────────────────────────────────────────────────── -->
       <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">

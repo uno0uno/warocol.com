@@ -140,29 +140,14 @@ onUnmounted(() => { clearRefreshHandler(refetch)
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Metrics Cards -->
-      <div v-if="stats" class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        <SharedMetricCard
-          title="Total Gastos"
-          :value="stats.totalAmount"
-          format="currency"
-          variant="primary"
-          size="sm"
-        />
-        <SharedMetricCard
-          title="Transacciones"
-          :value="stats.count"
-          format="number"
-          variant="primary"
-          size="sm"
-        />
-        <SharedMetricCard
-          title="Promedio"
-          :value="stats.count > 0 ? stats.totalAmount / stats.count : 0"
-          format="currency"
-          variant="primary"
-          size="sm"
-        />
-      </div>
+      <FinanzasMetricStrip
+        v-if="stats"
+        :items="[
+          { label: 'Total gastos',   value: formatCurrency(stats.totalAmount), mono: true },
+          { label: 'Transacciones',  value: stats.count.toLocaleString('es-CO') },
+          { label: 'Promedio',       value: formatCurrency(stats.count > 0 ? stats.totalAmount / stats.count : 0), mono: true },
+        ]"
+      />
 
       <!-- Filters Bar -->
       <div class="flex flex-wrap items-center gap-2 w-full">

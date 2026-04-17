@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 export interface MetricItem {
   label: string
   value: string
@@ -10,15 +11,21 @@ export interface MetricItem {
   icon?: 'check' | 'warning'
 }
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   items: MetricItem[]
 }>(), {})
+
+const gridCols = computed(() => {
+  const n = props.items.length
+  if (n <= 2) return 'sm:grid-cols-2'
+  if (n === 3) return 'sm:grid-cols-3'
+  if (n === 5) return 'sm:grid-cols-3 xl:grid-cols-5'
+  return 'sm:grid-cols-4'
+})
 </script>
 
 <template>
-  <div class="grid grid-cols-2 gap-px bg-border rounded-xl overflow-hidden border border-border"
-    :class="items.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-4'"
-  >
+  <div class="grid grid-cols-2 gap-px bg-border rounded-xl overflow-hidden border border-border" :class="gridCols">
     <div
       v-for="item in items"
       :key="item.label"
