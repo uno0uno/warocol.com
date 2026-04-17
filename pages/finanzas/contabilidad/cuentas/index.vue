@@ -323,24 +323,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
           v-for="group in groupedAccounts"
           :key="group.cls"
         >
-          <!-- Section header -->
-          <div class="flex items-center gap-2 px-1 pb-2">
-            <div
-              class="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 text-xs font-bold font-mono"
-              :class="[CLASS_BG[group.cls], CLASS_TEXT[group.cls]]"
-            >
-              {{ group.cls }}
-            </div>
-            <span class="text-sm font-semibold" :class="CLASS_TEXT[group.cls]">
-              {{ CLASS_SHORT[group.cls] }}
-            </span>
-            <span class="text-xs text-text-secondary">
-              {{ group.items.length }} {{ group.items.length === 1 ? 'cuenta' : 'cuentas' }}
-            </span>
-          </div>
-
-          <!-- Table for this class -->
-          <HealthSemaphore :is-unlocked="true" :title="group.label">
+          <HealthSemaphore :is-unlocked="true" :title="`${group.label} · ${group.items.length} ${group.items.length === 1 ? 'cuenta' : 'cuentas'}`">
             <div class="[&_td]:!py-1 [&_th]:!py-1.5">
               <UiResponsiveDataView
                 row-size="sm"
