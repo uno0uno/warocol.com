@@ -374,6 +374,7 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                         <span v-if="item.isDetail" class="text-xs font-mono tabular-nums text-text-secondary">
                           C: {{ formatCOP(accountTrial(item.id).periodCredits) }}
                         </span>
+
                       </div>
                     </div>
                     <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
@@ -444,17 +445,15 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
                 </template>
 
                 <template #cell-periodDebits="{ row }">
-                  <span v-if="row.isDetail && accountTrial(row.id).periodDebits" class="text-xs font-mono tabular-nums text-primary">
+                  <span class="text-xs font-mono tabular-nums" :class="accountTrial(row.id).periodDebits ? 'text-primary' : 'text-text-secondary'">
                     {{ formatCOP(accountTrial(row.id).periodDebits) }}
                   </span>
-                  <span v-else class="text-xs text-text-secondary">—</span>
                 </template>
 
                 <template #cell-periodCredits="{ row }">
-                  <span v-if="row.isDetail && accountTrial(row.id).periodCredits" class="text-xs font-mono tabular-nums text-text-secondary">
+                  <span class="text-xs font-mono tabular-nums text-text-secondary">
                     {{ formatCOP(accountTrial(row.id).periodCredits) }}
                   </span>
-                  <span v-else class="text-xs text-text-secondary">—</span>
                 </template>
 
                 <template #cell-closingBalance="{ row }">
