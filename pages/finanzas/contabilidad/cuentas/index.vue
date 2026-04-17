@@ -78,6 +78,7 @@ const periodSummary = computed(() => {
 // ── Filters ────────────────────────────────────────────────────────────────
 const classFilter  = ref<string | null>(null)
 const activeFilter = ref<string | null>(null)
+const levelFilter  = ref<string | null>(null)  // 'cuenta' | 'subcuenta' | null
 
 const CLASS_ORDER = ['1', '2', '3', '4', '5', '6']
 
@@ -134,6 +135,11 @@ const displayAccounts = computed<TenantAccount[]>(() => {
   if (activeFilter.value !== null)
     list = list.filter(a => a.isActive === (activeFilter.value === 'true'))
 
+  if (levelFilter.value === 'cuenta')
+    list = list.filter(a => a.code.length === 4)
+  else if (levelFilter.value === 'subcuenta')
+    list = list.filter(a => a.code.length > 4)
+
   return list
 })
 
@@ -165,7 +171,7 @@ const tableColumns = computed(() => [
   { key: 'code',           title: 'Código',     sortable: false },
   { key: 'name',           title: 'Nombre',     sortable: false },
   { key: 'isSystem',       title: '',           sortable: false },
-  ...(showAll.value ? [{ key: 'level', title: 'Nivel', sortable: false }] : []),
+  { key: 'level',          title: 'Nivel',      sortable: false },
   { key: 'openingBalance', title: 'Saldo ini.', sortable: false },
   { key: 'periodDebits',   title: 'Débitos',    sortable: false },
   { key: 'periodCredits',  title: 'Créditos',   sortable: false },
@@ -199,8 +205,8 @@ const toggleActive = async (account: TenantAccount) => {
   }
 }
 
-const hasActiveFilters = computed(() => classFilter.value !== null || activeFilter.value !== null)
-const clearFilters = () => { classFilter.value = null; activeFilter.value = null }
+const hasActiveFilters = computed(() => classFilter.value !== null || activeFilter.value !== null || levelFilter.value !== null)
+const clearFilters = () => { classFilter.value = null; activeFilter.value = null; levelFilter.value = null }
 
 // ── Layout integration ─────────────────────────────────────────────────────
 const refetchAll = () => { refetch(); refetchTrial() }
@@ -270,6 +276,17 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
           <option :value="null">Todas</option>
           <option value="true">Activas</option>
           <option value="false">Inactivas</option>
+        </select>
+
+        <!-- Nivel filter -->
+        <select
+          v-model="levelFilter"
+          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          aria-label="Filtrar por nivel"
+        >
+          <option :value="null">Nivel</option>
+          <option value="cuenta">Cuenta (4 dígitos)</option>
+          <option value="subcuenta">Subcuenta (6+ dígitos)</option>
         </select>
 
         <!-- Clear filters -->
