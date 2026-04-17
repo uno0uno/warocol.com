@@ -129,7 +129,7 @@ const splitAmountToCharge = computed(() =>
 )
 
 const addSplitPayment = async () => {
-  if (!posStore.cartId || !selectedPaymentMethod.value || !selectedCustomer.value) {
+  if ((!isMesaMode.value && !posStore.cartId) || !selectedPaymentMethod.value || !selectedCustomer.value) {
     processingError.value = 'Selecciona método de pago y cliente antes de continuar'
     return
   }
@@ -144,40 +144,79 @@ const addSplitPayment = async () => {
     let isComplete = false
     let paymentId = ''
 
-    if (splitPayments.value.length === 0) {
-      // First payment: create the order in partial state via /complete
-      const _discountAmtPos = discountAmount.value
-      const response = await $fetch(`/api/pos/cart/${posStore.cartId}/complete`, {
-        method: 'POST',
-        body: {
-          payment_method: selectedPaymentMethod.value,
-          customer_id: selectedCustomer.value.id,
-          payment_method_id: selectedPaymentMethodId.value ?? null,
-          ...(discountEnabled.value && _discountAmtPos > 0
-            ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
-            : {}),
-          split_mode: true,
-          split_first_amount: amountToCharge,
-        }
-      }) as any
-      paidTotal = response.data.paid_total ?? amountToCharge
-      remaining = response.data.remaining ?? (discountedTotal.value - amountToCharge)
-      isComplete = response.data.is_complete ?? false
-      paymentId = response.data.payment_id ?? 'split-1'
+    if (isMesaMode.value) {
+      const session = posStore.activeTableSession!
+      if (splitPayments.value.length === 0) {
+        // First payment: close mesa with split_mode=true (marks orders partial, keeps session open)
+        const _discountAmtMesa = discountAmount.value
+        const response = await $fetch(`/api/tables/${session.tableId}/close`, {
+          method: 'POST',
+          body: {
+            payment_method: selectedPaymentMethod.value,
+            customer_id: selectedCustomer.value.id,
+            payment_method_id: selectedPaymentMethodId.value ?? null,
+            ...(discountEnabled.value && _discountAmtMesa > 0
+              ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
+              : {}),
+            split_mode: true,
+            split_first_amount: amountToCharge,
+          }
+        }) as any
+        paidTotal = response.data.paid_total ?? amountToCharge
+        remaining = response.data.remaining ?? (discountedTotal.value - amountToCharge)
+        isComplete = response.data.is_complete ?? false
+        paymentId = 'mesa-split-1'
+      } else {
+        // Subsequent payments
+        const response = await $fetch(`/api/tables/${session.tableId}/payments`, {
+          method: 'POST',
+          body: {
+            amount: amountToCharge,
+            payment_method: selectedPaymentMethod.value,
+            payment_method_id: selectedPaymentMethodId.value ?? null,
+          }
+        }) as any
+        paidTotal = response.data.paid_total
+        remaining = response.data.remaining
+        isComplete = response.data.is_complete
+        paymentId = response.data.payment_id ?? `mesa-split-${splitPayments.value.length + 1}`
+      }
     } else {
-      // Subsequent payments: add to existing order
-      const response = await $fetch(`/api/pos/cart/${posStore.cartId}/payments`, {
-        method: 'POST',
-        body: {
-          amount: amountToCharge,
-          payment_method: selectedPaymentMethod.value,
-          payment_method_id: selectedPaymentMethodId.value ?? undefined,
-        }
-      }) as any
-      paidTotal = response.data.paid_total
-      remaining = response.data.remaining
-      isComplete = response.data.is_complete
-      paymentId = response.data.payment_id
+      if (splitPayments.value.length === 0) {
+        // First payment: create the order in partial state via /complete
+        const _discountAmtPos = discountAmount.value
+        const response = await $fetch(`/api/pos/cart/${posStore.cartId}/complete`, {
+          method: 'POST',
+          body: {
+            payment_method: selectedPaymentMethod.value,
+            customer_id: selectedCustomer.value.id,
+            payment_method_id: selectedPaymentMethodId.value ?? null,
+            ...(discountEnabled.value && _discountAmtPos > 0
+              ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
+              : {}),
+            split_mode: true,
+            split_first_amount: amountToCharge,
+          }
+        }) as any
+        paidTotal = response.data.paid_total ?? amountToCharge
+        remaining = response.data.remaining ?? (discountedTotal.value - amountToCharge)
+        isComplete = response.data.is_complete ?? false
+        paymentId = response.data.payment_id ?? 'split-1'
+      } else {
+        // Subsequent payments: add to existing order
+        const response = await $fetch(`/api/pos/cart/${posStore.cartId}/payments`, {
+          method: 'POST',
+          body: {
+            amount: amountToCharge,
+            payment_method: selectedPaymentMethod.value,
+            payment_method_id: selectedPaymentMethodId.value ?? undefined,
+          }
+        }) as any
+        paidTotal = response.data.paid_total
+        remaining = response.data.remaining
+        isComplete = response.data.is_complete
+        paymentId = response.data.payment_id
+      }
     }
 
     const subMethodName = selectedPaymentMethodId.value
@@ -1165,7 +1204,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Section: Split Payment (Cobro Parcial) — only after customer is set -->
-        <div v-if="selectedCustomer && !isMesaMode" class="bg-surface rounded-2xl border border-border p-4 shadow-sm">
+        <div v-if="selectedCustomer" class="bg-surface rounded-2xl border border-border p-4 shadow-sm">
           <div class="flex items-center justify-between">
             <h3 class="font-bold text-text-primary flex items-center gap-2 text-sm">
               <svg class="h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
