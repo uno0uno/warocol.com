@@ -2,14 +2,14 @@
   <div class="page-layout">
 
     <!-- Header: group name + add button -->
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-lg font-bold text-text-primary">{{ group?.name ?? '…' }}</h1>
+    <div class="flex items-center justify-between mb-3">
+      <h1 class="text-base font-bold text-text-primary">{{ group?.name ?? '…' }}</h1>
       <button
         v-if="group?.slug !== 'cash'"
-        class="flex items-center gap-1.5 min-h-[36px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 active:scale-[0.98] transition-all"
+        class="flex items-center gap-1.5 min-h-[32px] px-3 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 active:scale-[0.98] transition-all"
         @click="openCreate"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
         Agregar método
@@ -17,27 +17,24 @@
     </div>
 
     <!-- GL account card -->
-    <div class="mb-4 rounded-xl border border-border bg-surface px-4 py-3 flex flex-wrap items-center gap-3">
-      <div class="flex items-center gap-2 flex-1 min-w-0">
-        <svg class="w-4 h-4 flex-shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-        <span class="text-sm font-medium text-text-primary">Cuenta contable (débito)</span>
+    <div class="mb-3 rounded-lg border border-border bg-surface px-3 py-2 flex flex-wrap items-center gap-2">
+      <div class="flex items-center gap-1.5 flex-1 min-w-0">
+        <span class="text-xs text-text-secondary">Cuenta contable:</span>
         <span
           v-if="group?.glAccountCode"
           class="text-xs font-mono bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary"
         >
           {{ group.glAccountCode }}
         </span>
-        <span v-if="currentGlAccount" class="text-sm text-text-secondary truncate">{{ currentGlAccount.name }}</span>
-        <span v-else-if="!group?.glAccountCode" class="text-sm text-text-secondary italic">Sin asignar</span>
+        <span v-if="currentGlAccount" class="text-xs text-text-secondary truncate">{{ currentGlAccount.name }}</span>
+        <span v-else-if="!group?.glAccountCode" class="text-xs text-text-secondary italic">Sin asignar</span>
       </div>
 
       <!-- Editable for custom groups only -->
-      <div v-if="group?.tenantId !== null" class="flex items-center gap-2 flex-shrink-0">
+      <div v-if="group?.tenantId !== null" class="flex items-center gap-1.5 flex-shrink-0">
         <select
           v-model="glAccountCode"
-          class="text-sm border border-border rounded-lg px-2.5 py-1.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary min-h-[36px]"
+          class="text-xs border border-border rounded px-2 py-1 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary min-h-[28px]"
           :disabled="savingGl"
           aria-label="Seleccionar cuenta contable de débito"
         >
@@ -48,14 +45,14 @@
         </select>
         <button
           :disabled="savingGl || glAccountCode === (group?.glAccountCode ?? '')"
-          class="min-h-[36px] px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+          class="min-h-[28px] px-2.5 rounded bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
           @click="saveGlAccount"
         >
-          <svg v-if="savingGl" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+          <svg v-if="savingGl" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          {{ savingGl ? 'Guardando…' : 'Guardar' }}
+          {{ savingGl ? '…' : 'Guardar' }}
         </button>
       </div>
 

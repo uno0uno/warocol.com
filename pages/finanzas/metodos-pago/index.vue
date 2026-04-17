@@ -40,8 +40,7 @@
         >
           <div class="flex-1 min-w-0">
             <span class="text-sm font-semibold text-text-primary">{{ item.name }}</span>
-            <p class="text-xs text-text-secondary mt-0.5 font-mono">{{ item.slug }}</p>
-            <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+            <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
               <UiStatusBadge
                 :value="item.tenantId === null ? 'Predeterminado' : 'Personalizable'"
                 format="text"
@@ -71,11 +70,6 @@
         <span class="font-medium text-text-primary">{{ row.name }}</span>
       </template>
 
-      <!-- slug -->
-      <template #cell-slug="{ row }">
-        <span class="text-xs font-mono bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary">{{ row.slug }}</span>
-      </template>
-
       <!-- tipo -->
       <template #cell-tenantId="{ row }">
         <UiStatusBadge
@@ -89,11 +83,13 @@
       <!-- genera cartera -->
       <template #cell-triggersCartera="{ row }">
         <UiStatusBadge
-          :value="row.triggersCartera ? 'Genera cartera' : 'No'"
+          v-if="row.triggersCartera"
+          value="Genera cartera"
           format="text"
-          :variant="row.triggersCartera ? 'warning' : 'secondary'"
+          variant="warning"
           size="sm"
         />
+        <span v-else class="text-text-secondary text-xs">—</span>
       </template>
 
       <!-- method count -->
@@ -134,7 +130,6 @@ interface PaymentGroup {
 
 const columns: Column[] = [
   { key: 'name',            title: 'Grupo',          sortable: false },
-  { key: 'slug',            title: 'Slug',           sortable: false },
   { key: 'tenantId',        title: 'Tipo',           sortable: false },
   { key: 'triggersCartera', title: 'Genera cartera', sortable: false, align: 'center' },
   { key: 'methodCount',     title: 'Métodos',        sortable: false, align: 'center' },
