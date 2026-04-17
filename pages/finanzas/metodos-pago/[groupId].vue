@@ -49,6 +49,53 @@
       </div>
     </div>
 
+    <!-- GL account card -->
+    <div class="mb-4 rounded-xl border border-border bg-surface px-4 py-3 flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-2 flex-1 min-w-0">
+        <svg class="w-4 h-4 flex-shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        <span class="text-sm font-medium text-text-primary">Cuenta contable (débito)</span>
+        <span
+          v-if="group?.glAccountCode"
+          class="text-xs font-mono bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary"
+        >
+          {{ group.glAccountCode }}
+        </span>
+        <span v-if="currentGlAccount" class="text-sm text-text-secondary truncate">{{ currentGlAccount.name }}</span>
+        <span v-else-if="!group?.glAccountCode" class="text-sm text-text-secondary italic">Sin asignar</span>
+      </div>
+
+      <!-- Editable for custom groups only -->
+      <div v-if="group?.tenantId !== null" class="flex items-center gap-2 flex-shrink-0">
+        <select
+          v-model="glAccountCode"
+          class="text-sm border border-border rounded-lg px-2.5 py-1.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary min-h-[36px]"
+          :disabled="savingGl"
+          aria-label="Seleccionar cuenta contable de débito"
+        >
+          <option value="">— Sin asignar —</option>
+          <option v-for="acct in leafAccounts" :key="acct.code" :value="acct.code">
+            {{ acct.code }} · {{ acct.name }}
+          </option>
+        </select>
+        <button
+          :disabled="savingGl || glAccountCode === (group?.glAccountCode ?? '')"
+          class="min-h-[36px] px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+          @click="saveGlAccount"
+        >
+          <svg v-if="savingGl" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          {{ savingGl ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+
+      <!-- Read-only for global groups -->
+      <span v-else class="text-xs text-text-secondary flex-shrink-0">predeterminado</span>
+    </div>
+
     <!-- Loading -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[300px]">
       <CommonsTheCustomLoader size="large" />
@@ -290,6 +337,15 @@ interface PaymentGroup {
   isActive: boolean
   sortOrder: number
   methodCount: number
+  glAccountCode: string | null
+}
+
+interface TenantAccount {
+  id: string
+  code: string
+  name: string
+  is_detail: boolean
+  is_active: boolean
 }
 
 interface PaymentMethod {
@@ -312,6 +368,7 @@ const columns: Column[] = [
 const {
   data: groupsData,
   error: groupsError,
+  refetch: refetchGroups,
 } = useQuery({
   key: () => ['payments', 'groups', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: PaymentGroup[] }>('/api/finanzas/metodos-pago/grupos'),
@@ -344,6 +401,44 @@ const methods = computed<PaymentMethod[]>(() =>
 const isLoading    = computed(() => methodsStatus.value === 'pending' && !methodsData.value)
 const isRefreshing = computed(() => methodsAsyncStatus.value === 'loading' && methodsData.value != null)
 const fetchError   = computed(() => groupsError.value || methodsError.value)
+
+// ── Accounts (for GL selector) ────────────────────────────────────────────
+
+const { data: accountsData } = useQuery({
+  key: () => ['accounting', 'accounts', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: TenantAccount[] }>('/api/accounting/accounts'),
+  enabled: () => !!currentTenant.value && group.value?.tenantId !== null,
+  staleTime: 60_000,
+})
+
+const leafAccounts = computed<TenantAccount[]>(() =>
+  (accountsData.value?.data ?? []).filter(a => a.is_detail && a.is_active)
+)
+
+const currentGlAccount = computed(() =>
+  leafAccounts.value.find(a => a.code === group.value?.glAccountCode)
+)
+
+const savingGl = ref(false)
+const glAccountCode = ref<string>('')
+
+watch(group, (g) => {
+  if (g) glAccountCode.value = g.glAccountCode ?? ''
+}, { immediate: true })
+
+const saveGlAccount = async () => {
+  if (savingGl.value) return
+  savingGl.value = true
+  try {
+    await $fetch(`/api/finanzas/metodos-pago/grupos/${groupId}`, {
+      method: 'PATCH',
+      body: { glAccountCode: glAccountCode.value || null },
+    })
+    await refetchGroups()
+  } finally {
+    savingGl.value = false
+  }
+}
 
 useHead(() => ({
   title: group.value ? `${group.value.name} — Métodos de pago` : 'Métodos de pago - Warocol',
