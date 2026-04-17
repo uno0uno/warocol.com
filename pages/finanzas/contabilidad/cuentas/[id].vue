@@ -728,10 +728,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <label for="create-code" class="text-sm font-medium text-text-primary">
               Código PUC <span class="text-destructive" aria-hidden="true">*</span>
             </label>
-            <div class="flex items-stretch rounded-lg border border-border overflow-hidden focus-within:ring-2 focus-within:ring-primary">
-              <span class="flex items-center px-3 py-2.5 bg-surface-secondary border-r border-border text-sm font-mono text-text-secondary select-none flex-shrink-0">
-                {{ account?.code }}
-              </span>
+            <div class="flex items-center border border-border rounded-lg bg-background overflow-hidden focus-within:ring-2 focus-within:ring-primary">
+              <span class="pl-3 pr-1 text-sm font-mono text-text-secondary select-none flex-shrink-0">{{ account?.code }}</span>
+              <span class="text-text-secondary select-none flex-shrink-0 pr-1">·</span>
               <input
                 id="create-code"
                 ref="codeInput"
@@ -739,14 +738,14 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 type="text"
                 placeholder="05"
                 maxlength="6"
-                class="flex-1 min-w-0 text-sm px-3 py-2.5 bg-background text-text-primary font-mono focus:outline-none placeholder:text-text-secondary"
+                class="flex-1 min-w-0 py-2.5 pr-3 bg-transparent text-sm font-mono text-text-primary focus:outline-none placeholder:text-text-secondary"
                 @keydown.escape="closeCreatePanel"
               />
-              <span class="flex items-center px-3 py-2.5 bg-surface-secondary border-l border-border text-xs font-mono text-text-secondary select-none flex-shrink-0">
-                = {{ createFullCode }}
-              </span>
             </div>
-            <p class="text-xs text-text-secondary">Escribe solo el sufijo — el código completo será <span class="font-mono">{{ createFullCode || account?.code + '…' }}</span></p>
+            <p class="text-xs text-text-secondary">
+              Código completo:
+              <span class="font-mono font-medium text-text-primary">{{ createFullCode || (account?.code + '…') }}</span>
+            </p>
           </div>
 
           <!-- Nombre -->
