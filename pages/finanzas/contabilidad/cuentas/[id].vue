@@ -74,6 +74,13 @@ const account = computed<TenantAccount | null>(() =>
   accountsData.value?.data?.find(a => a.id === accountId.value) ?? null
 )
 
+// Sub-accounts: direct children of this account
+const subAccounts = computed<TenantAccount[]>(() =>
+  (accountsData.value?.data ?? [])
+    .filter(a => a.parentId === accountId.value)
+    .sort((a, b) => a.code.localeCompare(b.code))
+)
+
 useHead(() => ({
   title: account.value ? `${account.value.code} · ${account.value.name}` : 'Cuenta contable',
 }))
@@ -472,6 +479,31 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             size="sm"
           />
         </div>
+      </div>
+    </div>
+
+    <!-- Sub-accounts strip -->
+    <div v-if="subAccounts.length" class="flex flex-col gap-1.5">
+      <p class="text-xs font-medium text-text-secondary uppercase tracking-wider">Subcuentas</p>
+      <div class="flex flex-wrap gap-2">
+        <NuxtLink
+          v-for="sub in subAccounts"
+          :key="sub.id"
+          :to="`/finanzas/contabilidad/cuentas/${sub.id}`"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-surface hover:bg-surface-secondary hover:border-primary/40 transition-colors group"
+        >
+          <span class="text-xs font-mono font-medium text-text-primary">{{ sub.code }}</span>
+          <span class="text-xs text-text-secondary truncate max-w-[160px]">{{ sub.name }}</span>
+          <UiStatusBadge
+            :value="sub.isActive ? 'Activa' : 'Inactiva'"
+            format="text"
+            :variant="sub.isActive ? 'success' : 'secondary'"
+            size="sm"
+          />
+          <svg class="w-3.5 h-3.5 text-text-secondary group-hover:text-primary transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </NuxtLink>
       </div>
     </div>
 
