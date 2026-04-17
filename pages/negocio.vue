@@ -481,6 +481,108 @@
         </template>
       </div>
 
+      <!-- ══════ CONFIGURACIÓN FISCAL ══════ -->
+      <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+          <ReceiptPercentIcon class="w-5 h-5 text-primary flex-shrink-0" />
+          Configuración fiscal
+        </h3>
+
+        <div class="space-y-5">
+
+          <!-- INC -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between py-1">
+              <div>
+                <p class="text-sm font-medium text-text-primary">INC — Impoconsumo 8%</p>
+                <p class="text-xs text-text-secondary mt-0.5">Restaurantes y bares sin franquicia (Art. 512-1 ET)</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
+                <input v-model="taxForm.inc_applicable" type="checkbox" class="sr-only peer" />
+                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              </label>
+            </div>
+            <div v-if="taxForm.inc_applicable" class="ml-1 pl-3 border-l-2 border-primary/20 space-y-2">
+              <p class="text-xs font-medium text-text-secondary">Cómo aplicarlo:</p>
+              <label class="flex items-start gap-2.5 cursor-pointer">
+                <input v-model="taxForm.inc_included_in_price" :value="true" type="radio" class="mt-0.5 text-primary focus:ring-primary border-border" />
+                <div>
+                  <p class="text-sm text-text-primary">Incluido en el precio del menú</p>
+                  <p class="text-xs text-text-secondary">Mis precios ya tienen el 8% incluido — el sistema lo extrae al registrar la venta</p>
+                </div>
+              </label>
+              <label class="flex items-start gap-2.5 cursor-pointer">
+                <input v-model="taxForm.inc_included_in_price" :value="false" type="radio" class="mt-0.5 text-primary focus:ring-primary border-border" />
+                <div>
+                  <p class="text-sm text-text-primary">Sumar al precio base en cada venta</p>
+                  <p class="text-xs text-text-secondary">El sistema agrega el 8% sobre el precio base al registrar la venta</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="border-t border-border/40" />
+
+          <!-- IVA -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between py-1">
+              <div>
+                <p class="text-sm font-medium text-text-primary">IVA — 19%</p>
+                <p class="text-xs text-text-secondary mt-0.5">Solo para establecimientos bajo franquicia (Form. DIAN 300)</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
+                <input v-model="taxForm.iva_applicable" type="checkbox" class="sr-only peer" />
+                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              </label>
+            </div>
+            <div v-if="taxForm.iva_applicable" class="ml-1 pl-3 border-l-2 border-primary/20 space-y-2">
+              <p class="text-xs font-medium text-text-secondary">Cómo aplicarlo:</p>
+              <label class="flex items-start gap-2.5 cursor-pointer">
+                <input v-model="taxForm.iva_included_in_price" :value="true" type="radio" class="mt-0.5 text-primary focus:ring-primary border-border" />
+                <div>
+                  <p class="text-sm text-text-primary">Incluido en el precio del menú</p>
+                  <p class="text-xs text-text-secondary">Mis precios ya tienen el 19% incluido — el sistema lo extrae al registrar la venta</p>
+                </div>
+              </label>
+              <label class="flex items-start gap-2.5 cursor-pointer">
+                <input v-model="taxForm.iva_included_in_price" :value="false" type="radio" class="mt-0.5 text-primary focus:ring-primary border-border" />
+                <div>
+                  <p class="text-sm text-text-primary">Sumar al precio base en cada venta</p>
+                  <p class="text-xs text-text-secondary">El sistema agrega el 19% sobre el precio base al registrar la venta</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="border-t border-border/40" />
+
+          <!-- IVA Licores -->
+          <div class="flex items-center justify-between py-1">
+            <div>
+              <p class="text-sm font-medium text-text-primary">IVA Licores para llevar — 5%</p>
+              <p class="text-xs text-text-secondary mt-0.5">Si vendés botellas o licores para llevar (siempre se suma al precio base)</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
+              <input v-model="taxForm.liquor_tax_applicable" type="checkbox" class="sr-only peer" />
+              <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            </label>
+          </div>
+
+        </div>
+
+        <!-- Save button -->
+        <div class="mt-5 flex justify-end">
+          <button
+            @click="saveTaxConfig"
+            :disabled="isSavingTax"
+            class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
+          >
+            <CheckIcon v-if="!isSavingTax" class="w-4 h-4" aria-hidden="true" />
+            <span>{{ isSavingTax ? 'Guardando...' : 'Guardar configuración' }}</span>
+          </button>
+        </div>
+      </div>
+
     </div>
 
     <!-- Image Upload Modal -->
@@ -507,6 +609,7 @@ import {
   PencilSquareIcon,
   CheckIcon,
   ArrowUpTrayIcon,
+  ReceiptPercentIcon,
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({ layout: 'dashboard' })
@@ -525,6 +628,50 @@ const isBusinessProfileLoading = computed(() => !profileData.value && !profileEr
 const isRefreshing = computed(() => profileAsyncStatus.value === 'loading' && profileData.value != null)
 const businessProfile = computed(() => profileData.value?.data ?? null)
 const toast = useToast()
+
+// ─── Tax config ───
+const { data: taxConfigData, refetch: refreshTaxConfig } = useQuery({
+  key: () => ['tenant', 'tax-config', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/tax-config'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+const taxConfig = computed(() => taxConfigData.value?.data ?? null)
+
+const taxForm = reactive({
+  inc_applicable: false,
+  inc_included_in_price: true,
+  iva_applicable: false,
+  iva_included_in_price: false,
+  liquor_tax_applicable: false,
+})
+const isSavingTax = ref(false)
+
+watch(taxConfig, (cfg) => {
+  if (!cfg) return
+  taxForm.inc_applicable = cfg.inc_applicable
+  taxForm.inc_included_in_price = cfg.inc_included_in_price
+  taxForm.iva_applicable = cfg.iva_applicable
+  taxForm.iva_included_in_price = cfg.iva_included_in_price
+  taxForm.liquor_tax_applicable = cfg.liquor_tax_applicable
+}, { immediate: true })
+
+// INC and IVA are mutually exclusive
+watch(() => taxForm.inc_applicable, (val) => { if (val) taxForm.iva_applicable = false })
+watch(() => taxForm.iva_applicable, (val) => { if (val) taxForm.inc_applicable = false })
+
+const saveTaxConfig = async () => {
+  isSavingTax.value = true
+  try {
+    await $fetch('/api/api/tenant/tax-config', { method: 'PUT', body: { ...taxForm } })
+    await refreshTaxConfig()
+    toast.success('Configuración fiscal guardada correctamente', { title: 'Guardado' })
+  } catch (error: any) {
+    toast.error(error.data?.detail || 'Error al guardar configuración fiscal', { title: 'Error' })
+  } finally {
+    isSavingTax.value = false
+  }
+}
 
 // ─── Edit state ───
 const isEditMode = ref(false)
