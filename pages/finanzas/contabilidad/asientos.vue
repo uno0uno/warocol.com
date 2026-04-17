@@ -421,7 +421,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         :columns="tableColumns"
         :data="entries"
         empty-message="No hay asientos contables registrados"
-        empty-sub-message="Crea el primer asiento manual con el botón \"Nuevo asiento\""
+        empty-sub-message="Crea el primer asiento manual con el botón 'Nuevo asiento'"
         variant="default"
       >
         <!-- Mobile card -->
