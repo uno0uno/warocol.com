@@ -8,11 +8,15 @@
     <CommonsTheErrorState v-else-if="fetchError" />
 
     <!-- Summary stats -->
-    <div v-else-if="groups.length" class="grid grid-cols-3 gap-4 mb-4">
-      <MetricCard title="Efectivo"        :value="cashGroup?.methodCount ?? 0" format="number" variant="primary" size="sm" />
-      <MetricCard title="Predeterminados" :value="defaultGroups.length"         format="number" variant="primary" size="sm" />
-      <MetricCard title="Personalizables" :value="customGroups.length"          format="number" variant="primary" size="sm" />
-    </div>
+    <FinanzasMetricStrip
+      v-else-if="groups.length"
+      class="mb-4"
+      :items="[
+        { label: 'Efectivo',        value: String(cashGroup?.methodCount ?? 0) },
+        { label: 'Predeterminados', value: String(defaultGroups.length) },
+        { label: 'Personalizables', value: String(customGroups.length) },
+      ]"
+    />
 
     <UiResponsiveDataView
       v-if="!isLoading && !fetchError"
@@ -91,7 +95,6 @@
 </template>
 
 <script setup lang="ts">
-import MetricCard from '~/components/shared/MetricCard.vue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({ layout: 'dashboard' })
