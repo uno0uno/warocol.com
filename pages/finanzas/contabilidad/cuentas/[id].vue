@@ -140,7 +140,7 @@ const availableMethods = computed<PaymentMethod[]>(() => {
 
 // ── Create sub-account slide-over ──────────────────────────────────────────
 const showCreatePanel  = ref(false)
-const createCode       = ref('')
+const createSuffix     = ref('')   // only the part the user types (e.g. "05")
 const createName       = ref('')
 const createIsDetail   = ref(true)
 const createMethodId   = ref('')   // optional: associate to payment method
@@ -148,19 +148,22 @@ const creating         = ref(false)
 const createError      = ref('')
 const codeInput        = ref<HTMLInputElement | null>(null)
 
-const suggestCode = (parentCode: string) => {
-  // Suggest next available suffix: parent + '05', '10', '15'…
+// Full code = parent prefix + user-typed suffix
+const createFullCode = computed(() => (account.value?.code ?? '') + createSuffix.value.trim())
+
+const suggestSuffix = (parentCode: string): string => {
+  // Suggest next available suffix digits: '05', '10', '15'…
   const existing = (accountsData.value?.data ?? [])
     .filter(a => a.code.startsWith(parentCode) && a.code.length === parentCode.length + 2)
     .map(a => parseInt(a.code.slice(parentCode.length)))
     .filter(n => !isNaN(n))
-  if (!existing.length) return parentCode + '05'
+  if (!existing.length) return '05'
   const next = Math.max(...existing) + 5
-  return parentCode + String(next).padStart(2, '0')
+  return String(next).padStart(2, '0')
 }
 
 const openCreatePanel = async () => {
-  createCode.value     = account.value ? suggestCode(account.value.code) : ''
+  createSuffix.value   = account.value ? suggestSuffix(account.value.code) : ''
   createName.value     = ''
   createIsDetail.value = true
   createMethodId.value = ''
@@ -176,7 +179,7 @@ const closeCreatePanel = () => {
 }
 
 const saveSubAccount = async () => {
-  if (!createCode.value.trim() || !createName.value.trim() || creating.value) return
+  if (!createFullCode.value || !createSuffix.value.trim() || !createName.value.trim() || creating.value) return
   creating.value = true
   createError.value = ''
   try {
@@ -184,7 +187,7 @@ const saveSubAccount = async () => {
     await $fetch('/api/accounting/accounts', {
       method: 'POST',
       body: {
-        code: createCode.value.trim(),
+        code: createFullCode.value,
         name: createName.value.trim(),
         parentId: account.value?.id ?? null,
         isDetail: createIsDetail.value,
@@ -194,7 +197,7 @@ const saveSubAccount = async () => {
     if (createMethodId.value) {
       await $fetch(`/api/finanzas/metodos-pago/${createMethodId.value}`, {
         method: 'PATCH',
-        body: { glAccountCode: createCode.value.trim() },
+        body: { glAccountCode: createFullCode.value },
       })
     }
     closeCreatePanel()
@@ -725,16 +728,25 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <label for="create-code" class="text-sm font-medium text-text-primary">
               Código PUC <span class="text-destructive" aria-hidden="true">*</span>
             </label>
-            <input
-              id="create-code"
-              ref="codeInput"
-              v-model="createCode"
-              type="text"
-              placeholder="ej: 111005"
-              class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary font-mono focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-text-secondary"
-              @keydown.escape="closeCreatePanel"
-            />
-            <p class="text-xs text-text-secondary">Debe ser único y comenzar con {{ account?.code }}</p>
+            <div class="flex items-stretch rounded-lg border border-border overflow-hidden focus-within:ring-2 focus-within:ring-primary">
+              <span class="flex items-center px-3 py-2.5 bg-surface-secondary border-r border-border text-sm font-mono text-text-secondary select-none flex-shrink-0">
+                {{ account?.code }}
+              </span>
+              <input
+                id="create-code"
+                ref="codeInput"
+                v-model="createSuffix"
+                type="text"
+                placeholder="05"
+                maxlength="6"
+                class="flex-1 min-w-0 text-sm px-3 py-2.5 bg-background text-text-primary font-mono focus:outline-none placeholder:text-text-secondary"
+                @keydown.escape="closeCreatePanel"
+              />
+              <span class="flex items-center px-3 py-2.5 bg-surface-secondary border-l border-border text-xs font-mono text-text-secondary select-none flex-shrink-0">
+                = {{ createFullCode }}
+              </span>
+            </div>
+            <p class="text-xs text-text-secondary">Escribe solo el sufijo — el código completo será <span class="font-mono">{{ createFullCode || account?.code + '…' }}</span></p>
           </div>
 
           <!-- Nombre -->
@@ -776,26 +788,43 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <!-- Tipo de cuenta -->
           <div class="flex flex-col gap-1.5">
             <span class="text-sm font-medium text-text-primary">Tipo</span>
-            <div class="flex gap-3">
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input
-                  v-model="createIsDetail"
-                  type="radio"
-                  :value="true"
-                  class="accent-primary w-4 h-4"
-                />
-                <span class="text-sm text-text-primary">Detalle</span>
-                <span class="text-xs text-text-secondary">(registra movimientos)</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input
-                  v-model="createIsDetail"
-                  type="radio"
-                  :value="false"
-                  class="accent-primary w-4 h-4"
-                />
-                <span class="text-sm text-text-primary">Agrupadora</span>
-              </label>
+            <div class="grid grid-cols-2 gap-2" role="group" aria-label="Tipo de cuenta">
+              <button
+                type="button"
+                :class="[
+                  'flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 transition-all focus:outline-none',
+                  createIsDetail
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+                @click="createIsDetail = true"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                <span class="text-xs font-bold tracking-wide">Detalle</span>
+                <span :class="['text-[10px] font-mono px-2 py-0.5 rounded-full', createIsDetail ? 'bg-primary/15 text-primary' : 'bg-surface-secondary text-text-tertiary']">
+                  registra movimientos
+                </span>
+              </button>
+              <button
+                type="button"
+                :class="[
+                  'flex flex-col items-center gap-2 py-4 px-2 rounded-2xl border-2 transition-all focus:outline-none',
+                  !createIsDetail
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+                @click="createIsDetail = false"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h8m-8 6h4" />
+                </svg>
+                <span class="text-xs font-bold tracking-wide">Agrupadora</span>
+                <span :class="['text-[10px] font-mono px-2 py-0.5 rounded-full', !createIsDetail ? 'bg-primary/15 text-primary' : 'bg-surface-secondary text-text-tertiary']">
+                  solo agrupa saldos
+                </span>
+              </button>
             </div>
           </div>
 
@@ -811,7 +840,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <!-- Footer -->
         <div class="flex-shrink-0 border-t border-border px-6 py-4 flex gap-3">
           <button
-            :disabled="creating || !createCode.trim() || !createName.trim()"
+            :disabled="creating || !createSuffix.trim() || !createName.trim()"
             class="flex-1 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             @click="saveSubAccount"
           >
