@@ -199,6 +199,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
       <!-- ── Accounts table ──────────────────────────────────────────────── -->
       <HealthSemaphore :is-unlocked="true" title="Plan de cuentas PUC">
+        <div class="[&_td]:!py-1 [&_th]:!py-1.5">
         <UiResponsiveDataView
           row-size="sm"
           :columns="tableColumns"
@@ -209,51 +210,24 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <!-- Mobile card -->
           <template #card="{ item, index }">
             <div
-              class="flex items-start gap-3 py-3 px-3 border-b border-border"
+              class="flex items-center gap-3 py-2 px-3 border-b border-border"
               :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
             >
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-1.5">
                   <span class="text-xs font-mono text-text-secondary flex-shrink-0">{{ item.code }}</span>
-                  <svg
-                    v-if="item.isSystem"
-                    class="w-3 h-3 text-text-secondary flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-label="Cuenta del sistema"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
+                  <span class="text-sm font-medium text-text-primary truncate">{{ item.name }}</span>
                 </div>
-                <p class="text-sm font-medium text-text-primary mt-0.5 truncate">
-                  {{ item.name }}
-                </p>
-                <div class="flex items-center gap-1.5 mt-1 flex-wrap">
-                  <UiStatusBadge
-                    :value="CLASS_SHORT[item.accountClass] || item.accountClass"
-                    format="text"
-                    :variant="CLASS_VARIANTS[item.accountClass] || 'secondary'"
-                    size="sm"
-                  />
-                  <UiStatusBadge
-                    :value="pucLevel(item.code).label"
-                    format="text"
-                    :variant="pucLevel(item.code).variant"
-                    size="sm"
-                  />
+                <div class="flex items-center gap-1 mt-0.5">
+                  <UiStatusBadge :value="CLASS_SHORT[item.accountClass] || item.accountClass" format="text" :variant="CLASS_VARIANTS[item.accountClass] || 'secondary'" size="sm" />
+                  <UiStatusBadge :value="pucLevel(item.code).label" format="text" :variant="pucLevel(item.code).variant" size="sm" />
                 </div>
               </div>
-              <div class="flex flex-col items-end gap-2 flex-shrink-0">
-                <UiStatusBadge
-                  :value="item.isActive ? 'Activa' : 'Inactiva'"
-                  format="text"
-                  :variant="item.isActive ? 'success' : 'secondary'"
-                  size="sm"
-                />
+              <div class="flex items-center gap-1.5 flex-shrink-0">
+                <UiStatusBadge :value="item.isActive ? 'Activa' : 'Inactiva'" format="text" :variant="item.isActive ? 'success' : 'secondary'" size="sm" />
                 <button
                   type="button"
-                  class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  class="flex items-center justify-center w-7 h-7 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   :disabled="togglingId === item.id"
                   :aria-label="item.isActive ? `Desactivar cuenta ${item.code}` : `Activar cuenta ${item.code}`"
                   @click="toggleActive(item)"
@@ -361,6 +335,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             </div>
           </template>
         </UiResponsiveDataView>
+        </div>
       </HealthSemaphore>
 
     </div>
