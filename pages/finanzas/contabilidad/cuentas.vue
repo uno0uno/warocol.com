@@ -55,6 +55,15 @@ const CLASS_SHORT: Record<string, string> = {
   '6': 'Costos',
 }
 
+const CLASS_VARIANTS: Record<string, string> = {
+  '1': 'primary',
+  '2': 'warning',
+  '3': 'secondary',
+  '4': 'success',
+  '5': 'destructive',
+  '6': 'warning',
+}
+
 // ── Data ───────────────────────────────────────────────────────────────────
 interface TenantAccount {
   id: string
@@ -254,8 +263,13 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <p class="text-sm font-medium text-text-primary mt-0.5 truncate">
                   {{ item.name }}
                 </p>
-                <div class="flex items-center gap-1.5 mt-1">
-                  <span class="text-xs text-text-secondary">{{ CLASS_SHORT[item.accountClass] || item.accountClass }}</span>
+                <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                  <UiStatusBadge
+                    :value="CLASS_SHORT[item.accountClass] || item.accountClass"
+                    format="text"
+                    :variant="CLASS_VARIANTS[item.accountClass] || 'secondary'"
+                    size="sm"
+                  />
                   <UiStatusBadge
                     :value="ACCOUNT_TYPE_LABELS[item.accountType] || item.accountType"
                     format="text"
@@ -273,7 +287,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 />
                 <button
                   type="button"
-                  class="flex items-center justify-center w-8 h-8 rounded-lg border border-border text-text-secondary hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   :disabled="togglingId === item.id"
                   :aria-label="item.isActive ? `Desactivar cuenta ${item.code}` : `Activar cuenta ${item.code}`"
                   @click="toggleActive(item)"
@@ -327,7 +341,12 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
           <!-- Desktop: class -->
           <template #cell-accountClass="{ value }">
-            <span class="text-sm text-text-secondary">{{ CLASS_SHORT[value] || value }}</span>
+            <UiStatusBadge
+              :value="CLASS_SHORT[value] || value"
+              format="text"
+              :variant="CLASS_VARIANTS[value] || 'secondary'"
+              size="sm"
+            />
           </template>
 
           <!-- Desktop: accountType -->
@@ -355,7 +374,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <div class="flex justify-center">
               <button
                 type="button"
-                class="flex items-center justify-center w-9 h-9 rounded-lg border border-border text-text-secondary hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 :disabled="togglingId === row.id"
                 :aria-label="row.isActive ? `Desactivar cuenta ${row.code}` : `Activar cuenta ${row.code}`"
                 :title="row.isActive ? 'Desactivar cuenta' : 'Activar cuenta'"
