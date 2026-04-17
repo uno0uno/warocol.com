@@ -1,52 +1,19 @@
 <template>
   <div class="page-layout">
 
-    <!-- Back + group info -->
-    <div class="flex items-center gap-3 mb-4 flex-wrap">
-      <NuxtLink
-        to="/finanzas/metodos-pago"
-        class="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
+    <!-- Header: group name + add button -->
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-lg font-bold text-text-primary">{{ group?.name ?? '…' }}</h1>
+      <button
+        v-if="group?.slug !== 'cash'"
+        class="flex items-center gap-1.5 min-h-[36px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 active:scale-[0.98] transition-all"
+        @click="openCreate"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
-        Grupos
-      </NuxtLink>
-      <span class="text-text-secondary" aria-hidden="true">/</span>
-      <div class="flex items-center gap-2 flex-wrap">
-        <span class="text-sm font-semibold text-text-primary">{{ group?.name ?? '…' }}</span>
-        <span
-          v-if="group"
-          class="text-xs font-mono bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary"
-        >
-          {{ group.slug }}
-        </span>
-        <span
-          v-if="group?.tenantId === null"
-          class="text-xs bg-background border border-border rounded px-1.5 py-0.5 text-text-secondary"
-        >
-          predeterminado
-        </span>
-        <span
-          v-if="group?.triggersCartera"
-          class="text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded px-1.5 py-0.5"
-        >
-          genera cartera
-        </span>
-      </div>
-
-      <div class="ml-auto">
-        <button
-          v-if="group?.slug !== 'cash'"
-          class="flex items-center gap-1.5 min-h-[36px] px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 active:scale-[0.98] transition-all"
-          @click="openCreate"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Agregar método
-        </button>
-      </div>
+        Agregar método
+      </button>
     </div>
 
     <!-- GL account card -->
