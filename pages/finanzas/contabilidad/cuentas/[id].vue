@@ -22,6 +22,14 @@ const CLASS_VARIANTS: Record<string, string> = {
   '1': 'primary', '2': 'warning', '3': 'secondary',
   '4': 'success', '5': 'destructive', '6': 'warning',
 }
+const CLASS_BG: Record<string, string> = {
+  '1': 'bg-primary/10', '2': 'bg-amber-100', '3': 'bg-violet-100',
+  '4': 'bg-green-100',  '5': 'bg-red-100',   '6': 'bg-amber-100',
+}
+const CLASS_TEXT: Record<string, string> = {
+  '1': 'text-primary',   '2': 'text-amber-600',  '3': 'text-violet-600',
+  '4': 'text-green-600', '5': 'text-red-600',     '6': 'text-amber-600',
+}
 const pucLevel = (code: string) => {
   const len = code.length
   if (len === 1) return { label: 'Clase',    variant: 'primary' }
@@ -159,39 +167,123 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 <template>
   <div class="page-layout">
 
-    <!-- Back + Account Header -->
-    <div class="flex flex-col gap-3">
+    <!-- ── Account header card (matches clientes/[id] visual style) ──── -->
+    <div v-if="account" class="bg-white border border-border rounded-xl overflow-hidden">
 
-      <!-- Account info card -->
-      <div v-if="account" class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border border-border bg-surface">
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-lg font-bold font-mono text-text-primary">{{ account.code }}</span>
-            <svg v-if="account.isSystem" class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Cuenta del sistema">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <UiStatusBadge :value="CLASS_SHORT[account.accountClass] || account.accountClass" format="text" :variant="CLASS_VARIANTS[account.accountClass] || 'secondary'" size="sm" />
-            <UiStatusBadge :value="pucLevel(account.code).label" format="text" :variant="pucLevel(account.code).variant" size="sm" />
-            <UiStatusBadge :value="account.isActive ? 'Activa' : 'Inactiva'" format="text" :variant="account.isActive ? 'success' : 'secondary'" size="sm" />
+      <!-- Top: avatar + name (left) / code + toggle (right) -->
+      <div class="p-5 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+          <!-- Left: class-colored circle + name + subtitle -->
+          <div class="flex items-center gap-3 min-w-0">
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+              :class="CLASS_BG[account.accountClass] || 'bg-primary/10'"
+            >
+              <span class="text-lg font-bold font-mono" :class="CLASS_TEXT[account.accountClass] || 'text-primary'">
+                {{ account.code[0] }}
+              </span>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <h2 class="text-xl font-bold text-text-primary truncate">{{ account.name }}</h2>
+                <svg v-if="account.isSystem" class="w-3.5 h-3.5 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Cuenta del sistema">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">Cuenta PUC</p>
+            </div>
           </div>
-          <p class="text-sm font-medium text-text-primary mt-1">{{ account.name }}</p>
-          <p class="text-xs text-text-secondary mt-0.5">Saldo normal: <span class="font-medium">{{ account.normalBalance === 'debit' ? 'Débito' : 'Crédito' }}</span></p>
+
+          <!-- Right: account code (big) + toggle button -->
+          <div class="flex items-center gap-3 flex-shrink-0">
+            <div class="text-right">
+              <p class="text-2xl sm:text-3xl font-bold font-mono text-text-primary">{{ account.code }}</p>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">Código PUC</p>
+            </div>
+            <button
+              type="button"
+              class="min-h-[44px] px-3 rounded-lg border-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+              :class="account.isActive
+                ? 'border-border text-text-secondary hover:border-destructive hover:text-destructive'
+                : 'border-primary text-primary hover:bg-primary/10'"
+              :disabled="togglingActive"
+              :aria-label="account.isActive ? 'Desactivar cuenta' : 'Activar cuenta'"
+              @click="toggleActive"
+            >
+              <svg v-if="togglingActive" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              <span>{{ account.isActive ? 'Desactivar' : 'Activar' }}</span>
+            </button>
+          </div>
         </div>
-        <button
-          type="button"
-          class="flex items-center gap-1.5 h-9 px-3 rounded-lg border-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          :class="account.isActive
-            ? 'border-border text-text-secondary hover:border-destructive hover:text-destructive'
-            : 'border-primary text-primary hover:bg-primary/10'"
-          :disabled="togglingActive"
-          @click="toggleActive"
-        >
-          <svg v-if="togglingActive" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
-          <span>{{ account.isActive ? 'Desactivar cuenta' : 'Activar cuenta' }}</span>
-        </button>
+      </div>
+
+      <!-- Info grid: Clase / Nivel / Saldo normal / Estado -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 border-t border-border">
+
+        <!-- Clase -->
+        <div class="p-4 border-b sm:border-b-0 border-r border-border">
+          <div class="flex items-center gap-1.5 mb-1.5">
+            <svg class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Clase</p>
+          </div>
+          <UiStatusBadge
+            :value="CLASS_SHORT[account.accountClass] || account.accountClass"
+            format="text"
+            :variant="CLASS_VARIANTS[account.accountClass] || 'secondary'"
+            size="sm"
+          />
+        </div>
+
+        <!-- Nivel -->
+        <div class="p-4 border-b sm:border-b-0 sm:border-r border-border">
+          <div class="flex items-center gap-1.5 mb-1.5">
+            <svg class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h4" />
+            </svg>
+            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Nivel</p>
+          </div>
+          <UiStatusBadge
+            :value="pucLevel(account.code).label"
+            format="text"
+            :variant="pucLevel(account.code).variant"
+            size="sm"
+          />
+        </div>
+
+        <!-- Saldo normal -->
+        <div class="p-4 border-r border-border">
+          <div class="flex items-center gap-1.5 mb-1.5">
+            <svg class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+            </svg>
+            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Saldo normal</p>
+          </div>
+          <p class="text-sm font-semibold text-text-primary">
+            {{ account.normalBalance === 'debit' ? 'Débito' : 'Crédito' }}
+          </p>
+        </div>
+
+        <!-- Estado -->
+        <div class="p-4">
+          <div class="flex items-center gap-1.5 mb-1.5">
+            <svg class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-xs text-text-secondary uppercase tracking-wider font-medium">Estado</p>
+          </div>
+          <UiStatusBadge
+            :value="account.isActive ? 'Activa' : 'Inactiva'"
+            format="text"
+            :variant="account.isActive ? 'success' : 'secondary'"
+            size="sm"
+          />
+        </div>
       </div>
     </div>
 
