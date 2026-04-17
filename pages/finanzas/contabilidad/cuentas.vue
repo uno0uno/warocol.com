@@ -112,13 +112,12 @@ const summaryStats = computed(() => {
 
 // ── Table columns ──────────────────────────────────────────────────────────
 const tableColumns = [
-  { key: 'code',         title: 'Código',        sortable: false },
-  { key: 'name',         title: 'Nombre',        sortable: false },
-  { key: 'isSystem',     title: 'Sistema',       sortable: false },
-  { key: 'accountClass', title: 'Clase',         sortable: false },
-  { key: 'accountType',  title: 'Tipo de cuenta', sortable: false },
-  { key: 'isActive',     title: 'Estado',        sortable: false },
-  { key: 'actions',      title: '',              sortable: false },
+  { key: 'code',         title: 'Código',  sortable: false },
+  { key: 'name',         title: 'Nombre',  sortable: false },
+  { key: 'isSystem',     title: 'Sistema', sortable: false },
+  { key: 'accountClass', title: 'Clase',   sortable: false },
+  { key: 'isActive',     title: 'Estado',  sortable: false },
+  { key: 'actions',      title: '',        sortable: false },
 ]
 
 // ── Toggle active ──────────────────────────────────────────────────────────
@@ -263,17 +262,11 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <p class="text-sm font-medium text-text-primary mt-0.5 truncate">
                   {{ item.name }}
                 </p>
-                <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                <div class="flex items-center gap-1.5 mt-1">
                   <UiStatusBadge
                     :value="CLASS_SHORT[item.accountClass] || item.accountClass"
                     format="text"
                     :variant="CLASS_VARIANTS[item.accountClass] || 'secondary'"
-                    size="sm"
-                  />
-                  <UiStatusBadge
-                    :value="ACCOUNT_TYPE_LABELS[item.accountType] || item.accountType"
-                    format="text"
-                    :variant="ACCOUNT_TYPE_VARIANTS[item.accountType] || 'secondary'"
                     size="sm"
                   />
                 </div>
@@ -345,16 +338,6 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               :value="CLASS_SHORT[value] || value"
               format="text"
               :variant="CLASS_VARIANTS[value] || 'secondary'"
-              size="sm"
-            />
-          </template>
-
-          <!-- Desktop: accountType -->
-          <template #cell-accountType="{ value }">
-            <UiStatusBadge
-              :value="ACCOUNT_TYPE_LABELS[value] || value"
-              format="text"
-              :variant="ACCOUNT_TYPE_VARIANTS[value] || 'secondary'"
               size="sm"
             />
           </template>
