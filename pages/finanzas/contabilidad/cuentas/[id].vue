@@ -728,7 +728,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             <label for="create-code" class="text-sm font-medium text-text-primary">
               Código PUC <span class="text-destructive" aria-hidden="true">*</span>
             </label>
-            <div class="flex items-center border border-border rounded-lg bg-background overflow-hidden focus-within:ring-2 focus-within:ring-primary">
+            <div class="flex items-center rounded-lg bg-background overflow-hidden">
               <span class="pl-3 pr-1 text-sm font-mono text-text-secondary select-none flex-shrink-0">{{ account?.code }}</span>
               <span class="text-text-secondary select-none flex-shrink-0 pr-1">·</span>
               <input
