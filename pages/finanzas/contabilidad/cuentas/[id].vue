@@ -183,14 +183,19 @@ const saveSubAccount = async () => {
   creating.value = true
   createError.value = ''
   try {
-    // 1. Create the sub-account
+    // 1. Create the sub-account — inherit class/type/balance/level from parent
+    const parent = account.value!
     await $fetch('/api/accounting/accounts', {
       method: 'POST',
       body: {
         code: createFullCode.value,
         name: createName.value.trim(),
-        parentId: account.value?.id ?? null,
+        parentId: parent.id,
         isDetail: createIsDetail.value,
+        accountClass: parent.accountClass,
+        accountType: parent.accountType,
+        normalBalance: parent.normalBalance,
+        level: parent.level + 1,
       },
     })
     // 2. If a payment method was selected, assign this account code to it
