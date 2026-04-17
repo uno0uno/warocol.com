@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, startOfMonth } from 'date-fns'
 // @ts-ignore
@@ -93,6 +93,64 @@ const toggleActive = async () => {
     alert(err?.data?.detail || 'Error al actualizar la cuenta')
   } finally {
     togglingActive.value = false
+  }
+}
+
+// ── Create sub-account slide-over ──────────────────────────────────────────
+const showCreatePanel = ref(false)
+const createCode      = ref('')
+const createName      = ref('')
+const createIsDetail  = ref(true)
+const creating        = ref(false)
+const createError     = ref('')
+const codeInput       = ref<HTMLInputElement | null>(null)
+
+const suggestCode = (parentCode: string) => {
+  // Suggest next available suffix: parent + '05', '10', '15'…
+  const existing = (accountsData.value?.data ?? [])
+    .filter(a => a.code.startsWith(parentCode) && a.code.length === parentCode.length + 2)
+    .map(a => parseInt(a.code.slice(parentCode.length)))
+    .filter(n => !isNaN(n))
+  if (!existing.length) return parentCode + '05'
+  const next = Math.max(...existing) + 5
+  return parentCode + String(next).padStart(2, '0')
+}
+
+const openCreatePanel = async () => {
+  createCode.value  = account.value ? suggestCode(account.value.code) : ''
+  createName.value  = ''
+  createIsDetail.value = true
+  createError.value = ''
+  showCreatePanel.value = true
+  await nextTick()
+  codeInput.value?.focus()
+}
+
+const closeCreatePanel = () => {
+  showCreatePanel.value = false
+  createError.value = ''
+}
+
+const saveSubAccount = async () => {
+  if (!createCode.value.trim() || !createName.value.trim() || creating.value) return
+  creating.value = true
+  createError.value = ''
+  try {
+    await $fetch('/api/accounting/accounts', {
+      method: 'POST',
+      body: {
+        code: createCode.value.trim(),
+        name: createName.value.trim(),
+        parentId: account.value?.id ?? null,
+        isDetail: createIsDetail.value,
+      },
+    })
+    closeCreatePanel()
+    await refetchAccounts()
+  } catch (err: any) {
+    createError.value = err?.data?.detail || 'Error al crear la subcuenta'
+  } finally {
+    creating.value = false
   }
 }
 
@@ -251,12 +309,27 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             </div>
           </div>
 
-          <!-- Right: account code (big) + toggle button -->
-          <div class="flex items-center gap-3 flex-shrink-0">
-            <div class="text-right">
+          <!-- Right: account code (big) + actions -->
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <div class="text-right mr-1">
               <p class="text-2xl sm:text-3xl font-bold font-mono text-text-primary">{{ account.code }}</p>
               <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">Código PUC</p>
             </div>
+
+            <!-- + Subcuenta — only for non-system accounts -->
+            <button
+              v-if="!account.isSystem"
+              type="button"
+              class="min-h-[44px] px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center gap-1.5"
+              aria-label="Crear subcuenta"
+              @click="openCreatePanel"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span class="hidden sm:inline">Subcuenta</span>
+            </button>
+
             <button
               type="button"
               class="min-h-[44px] px-3 rounded-lg border-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
@@ -526,4 +599,182 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
     </div>
   </div>
+
+  <!-- ── Slide-over: crear subcuenta ───────────────────────────────────────── -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition-opacity duration-200"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="showCreatePanel"
+        class="fixed inset-0 z-40 bg-black/40"
+        aria-hidden="true"
+        @click="closeCreatePanel"
+      />
+    </Transition>
+
+    <Transition name="cuenta-panel">
+      <div
+        v-if="showCreatePanel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Crear subcuenta"
+        class="fixed z-50 flex flex-col bg-surface shadow-2xl
+               inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
+               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+      >
+        <!-- Mobile drag handle -->
+        <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+          <div class="w-10 h-1 rounded-full bg-border" aria-hidden="true" />
+        </div>
+
+        <!-- Header -->
+        <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <div
+                class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                :class="CLASS_BG[account?.accountClass ?? '1'] || 'bg-primary/10'"
+                aria-hidden="true"
+              >
+                <svg class="w-5 h-5" :class="CLASS_TEXT[account?.accountClass ?? '1'] || 'text-primary'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <h2 class="text-base font-bold text-text-primary leading-tight">Crear subcuenta</h2>
+                <p class="text-xs text-text-secondary leading-snug mt-0.5 font-mono">
+                  {{ account?.code }} · {{ account?.name }}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              aria-label="Cerrar panel"
+              class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              @click="closeCreatePanel"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
+
+          <!-- Código -->
+          <div class="flex flex-col gap-1.5">
+            <label for="create-code" class="text-sm font-medium text-text-primary">
+              Código PUC <span class="text-destructive" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="create-code"
+              ref="codeInput"
+              v-model="createCode"
+              type="text"
+              placeholder="ej: 111005"
+              class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary font-mono focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-text-secondary"
+              @keydown.escape="closeCreatePanel"
+            />
+            <p class="text-xs text-text-secondary">Debe ser único y comenzar con {{ account?.code }}</p>
+          </div>
+
+          <!-- Nombre -->
+          <div class="flex flex-col gap-1.5">
+            <label for="create-name" class="text-sm font-medium text-text-primary">
+              Nombre <span class="text-destructive" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="create-name"
+              v-model="createName"
+              type="text"
+              placeholder="ej: Nequi, Daviplata…"
+              class="w-full text-sm border border-border rounded-lg px-3 py-2.5 bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-text-secondary"
+              @keydown.enter="saveSubAccount"
+              @keydown.escape="closeCreatePanel"
+            />
+          </div>
+
+          <!-- Tipo de cuenta -->
+          <div class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-text-primary">Tipo</span>
+            <div class="flex gap-3">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  v-model="createIsDetail"
+                  type="radio"
+                  :value="true"
+                  class="accent-primary w-4 h-4"
+                />
+                <span class="text-sm text-text-primary">Detalle</span>
+                <span class="text-xs text-text-secondary">(registra movimientos)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  v-model="createIsDetail"
+                  type="radio"
+                  :value="false"
+                  class="accent-primary w-4 h-4"
+                />
+                <span class="text-sm text-text-primary">Agrupadora</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Error inline -->
+          <div v-if="createError" class="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2.5 text-sm text-destructive" role="alert">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ createError }}
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex-shrink-0 border-t border-border px-6 py-4 flex gap-3">
+          <button
+            :disabled="creating || !createCode.trim() || !createName.trim()"
+            class="flex-1 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            @click="saveSubAccount"
+          >
+            <svg v-if="creating" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            {{ creating ? 'Creando…' : 'Crear subcuenta' }}
+          </button>
+          <button
+            class="min-h-[44px] px-5 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
+            @click="closeCreatePanel"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
+
+<style scoped>
+.cuenta-panel-enter-active,
+.cuenta-panel-leave-active {
+  transition: transform 0.3s ease;
+}
+.cuenta-panel-enter-from,
+.cuenta-panel-leave-to {
+  transform: translateY(100%);
+}
+@media (min-width: 768px) {
+  .cuenta-panel-enter-from,
+  .cuenta-panel-leave-to {
+    transform: translateX(100%);
+  }
+}
+</style>
