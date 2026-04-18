@@ -282,11 +282,11 @@
             </div>
           </div>
 
-          <!-- Peso por unidad (solo para und) -->
-          <div v-if="form.unit === 'und'" class="flex flex-col gap-1.5">
+          <!-- Equivalencia por unidad (gr, ml o und) -->
+          <div v-if="form.unit === 'und' || form.unit === 'gr' || form.unit === 'ml'" class="flex flex-col gap-1.5">
             <label for="ing-weight" class="text-sm font-medium text-text-primary">
-              Peso por unidad (gr)
-              <span class="text-xs text-text-tertiary font-normal">— para conversión en recetas</span>
+              {{ form.unit === 'und' ? 'gr o ml por unidad' : `${form.unit} por unidad` }}
+              <span class="text-xs text-text-tertiary font-normal">— conversión dual</span>
             </label>
             <input
               id="ing-weight"
@@ -294,10 +294,13 @@
               type="number"
               min="0"
               step="0.1"
-              placeholder="Ej: 400 (una unidad = 400 gr)"
+              :placeholder="form.unit === 'und' ? 'Ej: 400 (1 und = 400 gr o 400 ml)' : `Ej: 750 (1 unidad vendida = 750 ${form.unit})`"
               :class="inputClass"
             />
-            <p class="text-xs text-text-tertiary">Si una receta usa este ingrediente en gr, el sistema divide por este valor para descontar stock en und.</p>
+            <p class="text-xs text-text-tertiary">
+              <template v-if="form.unit === 'und'">Recetas que usen este ingrediente en gr/ml se convierten automáticamente a unidades.</template>
+              <template v-else>Cuando se vende como unidad (reventa), el sistema descuenta este valor en {{ form.unit }}.</template>
+            </p>
           </div>
 
           <!-- EDICIÓN: unidades de compra con CRUD -->
