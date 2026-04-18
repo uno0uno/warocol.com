@@ -258,9 +258,21 @@ const PAGE_SIZE = 50
 // ── Journal entries ────────────────────────────────────────────────────────
 interface JournalEntry {
   id: string; entryDate: string; description: string; reference: string | null
-  sourceModule: string | null; status: string
+  sourceModule: string | null; sourceId: string | null; status: string
   totalDebit: number; totalCredit: number
   postedAt: string | null; createdAt: string
+}
+
+// Maps a journal entry's source to a navigation URL (returns null if no link)
+const entryLink = (entry: JournalEntry): string | null => {
+  if (!entry.sourceId) return null
+  if (entry.sourceModule === 'orden' || entry.sourceModule === 'orden_cogs') {
+    return `/ventas/${entry.sourceId}`
+  }
+  if (entry.sourceModule === 'inventario') {
+    return `/abastecimiento/compras-directas/${entry.sourceId}`
+  }
+  return null
 }
 
 interface JournalEntriesResponse {
@@ -619,7 +631,8 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                     <span class="text-xs text-text-secondary flex-shrink-0">{{ formatDate(item.entryDate) }}</span>
                     <UiStatusBadge v-if="item.sourceModule" :value="SOURCE_LABELS[item.sourceModule] || item.sourceModule" format="text" :variant="SOURCE_VARIANTS[item.sourceModule] || 'secondary'" size="sm" />
                   </div>
-                  <p class="text-sm font-medium text-text-primary truncate mt-0.5">{{ item.description }}</p>
+                  <NuxtLink v-if="entryLink(item)" :to="entryLink(item) || ''" class="text-sm font-medium text-primary hover:underline underline-offset-2 truncate mt-0.5 block">{{ item.description }}</NuxtLink>
+                  <p v-else class="text-sm font-medium text-text-primary truncate mt-0.5">{{ item.description }}</p>
                 </div>
                 <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
                   <span v-if="item.totalDebit" class="text-xs font-mono text-primary tabular-nums">+{{ formatCOP(item.totalDebit) }}</span>
@@ -635,8 +648,13 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               <span class="text-xs text-text-secondary tabular-nums">{{ formatDate(value) }}</span>
             </template>
 
-            <template #cell-description="{ value }">
-              <span class="text-sm text-text-primary">{{ value }}</span>
+            <template #cell-description="{ value, item }">
+              <NuxtLink
+                v-if="entryLink(item)"
+                :to="entryLink(item) || ''"
+                class="text-sm text-primary hover:underline underline-offset-2 font-medium"
+              >{{ value }}</NuxtLink>
+              <span v-else class="text-sm text-text-primary">{{ value }}</span>
             </template>
 
             <template #cell-sourceModule="{ value }">
