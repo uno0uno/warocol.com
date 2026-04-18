@@ -285,21 +285,57 @@
           <!-- Equivalencia por unidad (gr, ml o und) -->
           <div v-if="form.unit === 'und' || form.unit === 'gr' || form.unit === 'ml'" class="flex flex-col gap-1.5">
             <label for="ing-weight" class="text-sm font-medium text-text-primary">
-              {{ form.unit === 'und' ? 'gr o ml por unidad' : `${form.unit} por unidad` }}
-              <span class="text-xs text-text-tertiary font-normal">— conversión dual</span>
+              {{ form.unit === 'und' ? `${unitWeightUnit} por unidad` : `${form.unit} por unidad` }}
+              <span class="text-xs text-text-tertiary font-normal">— conversión en recetas</span>
             </label>
+
+            <!-- Para und: selector gr | ml + input -->
+            <div v-if="form.unit === 'und'" class="flex gap-2">
+              <!-- Toggle gr / ml -->
+              <div class="flex rounded-lg border border-border overflow-hidden flex-shrink-0">
+                <button
+                  type="button"
+                  @click="unitWeightUnit = 'gr'"
+                  :class="[
+                    'px-3 py-2 text-sm font-medium transition-colors',
+                    unitWeightUnit === 'gr' ? 'bg-primary text-white' : 'bg-background text-text-tertiary hover:bg-surface-secondary'
+                  ]"
+                >gr</button>
+                <button
+                  type="button"
+                  @click="unitWeightUnit = 'ml'"
+                  :class="[
+                    'px-3 py-2 text-sm font-medium transition-colors border-l border-border',
+                    unitWeightUnit === 'ml' ? 'bg-primary text-white' : 'bg-background text-text-tertiary hover:bg-surface-secondary'
+                  ]"
+                >ml</button>
+              </div>
+              <input
+                id="ing-weight"
+                v-model.number="form.unitWeightGr"
+                type="number"
+                min="0"
+                step="0.1"
+                :placeholder="`Ej: 400 (1 und = 400 ${unitWeightUnit})`"
+                :class="inputClass + ' flex-1'"
+              />
+            </div>
+
+            <!-- Para gr / ml: solo input -->
             <input
+              v-else
               id="ing-weight"
               v-model.number="form.unitWeightGr"
               type="number"
               min="0"
               step="0.1"
-              :placeholder="form.unit === 'und' ? 'Ej: 400 (1 und = 400 gr o 400 ml)' : `Ej: 750 (1 unidad vendida = 750 ${form.unit})`"
+              :placeholder="`Ej: 750 (1 und vendida = 750 ${form.unit})`"
               :class="inputClass"
             />
+
             <p class="text-xs text-text-tertiary">
-              <template v-if="form.unit === 'und'">Recetas que usen este ingrediente en gr/ml se convierten automáticamente a unidades.</template>
-              <template v-else>Cuando se vende como unidad (reventa), el sistema descuenta este valor en {{ form.unit }}.</template>
+              <template v-if="form.unit === 'und'">Si una receta usa este ingrediente en {{ unitWeightUnit }}, el sistema divide por este valor para descontar stock en und.</template>
+              <template v-else>Si una receta usa este ingrediente en und, el sistema multiplica por este valor para descontar stock en {{ form.unit }}.</template>
             </p>
           </div>
 
@@ -633,6 +669,7 @@ type UnitTypeKey = 'peso' | 'volumen' | 'pieza' | ''
 
 // --- State ---
 const unitType = ref<UnitTypeKey>('')
+const unitWeightUnit = ref<'gr' | 'ml'>('gr')
 const form = ref({ name: '', unit: '', category: '', parentId: null as string | null, parentName: '', isResale: false, type: 'food', unitWeightGr: null as number | null })
 const errors = ref<Record<string, string>>({})
 const saving = ref(false)
@@ -665,6 +702,7 @@ const setUnitType = (key: UnitTypeKey) => {
 const resetCreate = () => {
   form.value = { name: props.initialName ?? '', unit: '', category: '', parentId: null, parentName: '', isResale: false, type: props.initialType ?? 'food', unitWeightGr: null }
   unitType.value = ''
+  unitWeightUnit.value = 'gr'
   errors.value = {}
 }
 
