@@ -648,10 +648,10 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               <span class="text-xs text-text-secondary tabular-nums">{{ formatDate(value) }}</span>
             </template>
 
-            <template #cell-description="{ value, item }">
+            <template #cell-description="{ value, row }">
               <NuxtLink
-                v-if="entryLink(item)"
-                :to="entryLink(item) || ''"
+                v-if="entryLink(row)"
+                :to="entryLink(row) || ''"
                 class="text-sm text-primary hover:underline underline-offset-2 font-medium"
               >{{ value }}</NuxtLink>
               <span v-else class="text-sm text-text-primary">{{ value }}</span>
