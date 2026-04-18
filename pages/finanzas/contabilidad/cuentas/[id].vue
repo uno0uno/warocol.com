@@ -199,6 +199,7 @@ const saveSubAccount = async () => {
         name: createName.value.trim(),
         parentId: parent.id,
         isDetail: createIsDetail.value,
+        isActive: true,
         accountClass: parent.accountClass,
         accountType: parent.accountType,
         normalBalance: parent.normalBalance,
