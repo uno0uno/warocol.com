@@ -282,8 +282,8 @@
             </div>
           </div>
 
-          <!-- EDICIÓN: peso por unidad (solo para und) -->
-          <div v-if="isEdit && form.unit === 'und'" class="flex flex-col gap-1.5">
+          <!-- Peso por unidad (solo para und) -->
+          <div v-if="form.unit === 'und'" class="flex flex-col gap-1.5">
             <label for="ing-weight" class="text-sm font-medium text-text-primary">
               Peso por unidad (gr)
               <span class="text-xs text-text-tertiary font-normal">— para conversión en recetas</span>
@@ -760,6 +760,9 @@ async function submit() {
       result = await $fetch(`/api/suppliers/ingredients/${props.ingredient.id}`, { method: 'PATCH', body })
     } else {
       body.type = form.value.type
+      if (form.value.unit === 'und' && form.value.unitWeightGr !== null) {
+        body.unit_weight_gr = form.value.unitWeightGr
+      }
       body.purchase_units = currentSuggestions.value.map((s, i) => ({
         purchase_unit: s.purchase_unit,
         is_default: i === 0,
