@@ -282,6 +282,34 @@
             </div>
           </div>
 
+          <!-- Reventa -->
+          <div class="flex items-center justify-between rounded-xl border border-border px-4 py-3 bg-surface-secondary/30">
+            <div class="flex flex-col gap-0.5">
+              <span class="text-sm font-medium text-text-primary">Vender como reventa</span>
+              <span v-if="form.unit && form.unit !== 'und'" class="text-xs text-amber-600">Solo disponible para ingredientes de tipo Pieza (und)</span>
+              <span v-else class="text-xs text-text-tertiary">Aparece en POS y domicilios con precio directo</span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              :disabled="form.unit !== 'und' && form.unit !== ''"
+              :aria-checked="form.isResale"
+              @click="form.unit === 'und' && (form.isResale = !form.isResale)"
+              :class="[
+                'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                form.isResale && form.unit === 'und' ? 'bg-primary' : 'bg-border',
+                form.unit !== 'und' && form.unit !== '' ? 'opacity-40 cursor-not-allowed' : ''
+              ]"
+            >
+              <span
+                :class="[
+                  'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform',
+                  form.isResale && form.unit === 'und' ? 'translate-x-5' : 'translate-x-0'
+                ]"
+              />
+            </button>
+          </div>
+
           <!-- Equivalencia por unidad (gr, ml o und) -->
           <div v-if="form.unit === 'und' || form.unit === 'gr' || form.unit === 'ml'" class="flex flex-col gap-1.5">
             <label for="ing-weight" class="text-sm font-medium text-text-primary">
@@ -419,34 +447,6 @@
 
           <!-- EDICIÓN: sin unidades → muestra las que se crearán al guardar (para tipos sin sugerencias) -->
           <!-- (handled above in the CRUD block) -->
-
-          <!-- Reventa -->
-          <div class="flex items-center justify-between rounded-xl border border-border px-4 py-3 bg-surface-secondary/30">
-            <div class="flex flex-col gap-0.5">
-              <span class="text-sm font-medium text-text-primary">Vender como reventa</span>
-              <span v-if="form.unit && form.unit !== 'und'" class="text-xs text-amber-600">Solo disponible para ingredientes de tipo Pieza (und)</span>
-              <span v-else class="text-xs text-text-tertiary">Aparece en POS y domicilios con precio directo</span>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              :disabled="form.unit !== 'und' && form.unit !== ''"
-              :aria-checked="form.isResale"
-              @click="form.unit === 'und' && (form.isResale = !form.isResale)"
-              :class="[
-                'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-                form.isResale && form.unit === 'und' ? 'bg-primary' : 'bg-border',
-                form.unit !== 'und' && form.unit !== '' ? 'opacity-40 cursor-not-allowed' : ''
-              ]"
-            >
-              <span
-                :class="[
-                  'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform',
-                  form.isResale && form.unit === 'und' ? 'translate-x-5' : 'translate-x-0'
-                ]"
-              />
-            </button>
-          </div>
 
           <!-- Categoría -->
           <div class="flex flex-col gap-1.5">
