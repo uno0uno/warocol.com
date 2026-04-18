@@ -9,9 +9,9 @@
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Stats Cards -->
       <UiStats>
-        <UiStatsCard label="Total Personalizados" :value="stats.total" icon="beaker" />
-        <UiStatsCard label="Con base global" :value="stats.withParent" icon="link" />
-        <UiStatsCard label="Sin base" :value="stats.withoutParent" icon="plus-circle" />
+        <UiStatsCard label="Total ingredientes" :value="stats.total" icon="beaker" />
+        <UiStatsCard label="En reventa" :value="stats.resale" icon="shopping-cart" />
+        <UiStatsCard label="Con costo" :value="stats.withCost" icon="currency-dollar" />
       </UiStats>
 
       <!-- Filters Bar -->
@@ -24,12 +24,13 @@
       >
         <template #additional-filters>
           <select
-            v-model="parentFilter"
+            v-model="typeFilter"
             class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer flex-shrink-0"
           >
-            <option value="all">Todos</option>
-            <option value="with_parent">Con base global</option>
-            <option value="without_parent">Sin base</option>
+            <option value="all">Todos los tipos</option>
+            <option value="food">Alimento</option>
+            <option value="supply">Insumo</option>
+            <option value="service">Servicio</option>
           </select>
           <button
             type="button"
@@ -78,12 +79,15 @@
             @click="openPanel(item)"
           >
             <div class="flex-1 min-w-0">
-              <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
-              <div class="flex items-center gap-2 mt-0.5">
-                <span class="text-xs text-text-secondary">{{ item.unit }}</span>
-                <span v-if="item.parent_name" class="text-xs text-primary bg-primary/10 rounded px-1">
-                  {{ item.parent_name }}
-                </span>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
+                <span v-if="item.is_resale" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">Reventa</span>
+                <span v-if="item.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">Archivado</span>
+              </div>
+              <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                <span class="text-xs text-text-secondary font-mono">{{ item.unit }}{{ item.unit_weight_gr ? ` · ${item.unit_weight_gr} gr/und` : '' }}</span>
+                <span class="text-xs text-text-tertiary">{{ TYPE_LABELS[item.type] || item.type }}</span>
+                <span v-if="item.costo_unitario" class="text-xs text-text-secondary">${{ Number(item.costo_unitario).toLocaleString('es-CO') }}</span>
               </div>
             </div>
             <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -94,19 +98,30 @@
 
         <!-- Desktop Cells -->
         <template #cell-name="{ value, row }">
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1.5 flex-wrap">
             <span class="text-sm font-bold" :class="row.is_active === false ? 'text-text-tertiary' : 'text-text-primary'">{{ value }}</span>
+            <span v-if="row.is_resale" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">Reventa</span>
             <span v-if="row.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">Archivado</span>
           </div>
         </template>
 
-        <template #cell-unit="{ value }">
-          <span class="text-sm text-text-secondary">{{ value }}</span>
+        <template #cell-unit="{ value, row }">
+          <span class="text-sm font-mono text-text-secondary">{{ value }}{{ row.unit_weight_gr ? ` · ${row.unit_weight_gr}` : '' }}</span>
         </template>
 
-        <template #cell-parent_name="{ value }">
-          <span v-if="value" class="text-sm text-primary bg-primary/10 rounded px-2 py-0.5">{{ value }}</span>
-          <span v-else class="text-sm text-text-secondary">—</span>
+        <template #cell-type="{ value }">
+          <span :class="[
+            'text-xs font-medium px-2 py-0.5 rounded-full',
+            value === 'food'    ? 'bg-green-100 text-green-700' :
+            value === 'supply'  ? 'bg-blue-100 text-blue-700' :
+            value === 'service' ? 'bg-purple-100 text-purple-700' :
+            'bg-surface-secondary text-text-secondary'
+          ]">{{ TYPE_LABELS[value] || value }}</span>
+        </template>
+
+        <template #cell-costo_unitario="{ value }">
+          <span v-if="value" class="text-sm text-text-primary">${{ Number(value).toLocaleString('es-CO') }}</span>
+          <span v-else class="text-sm text-text-tertiary">—</span>
         </template>
 
         <template #cell-category="{ value }">
@@ -223,9 +238,11 @@ useHead({ title: 'Ingredientes Personalizados' })
 
 const { currentTenant } = useTenantReactive()
 
+const TYPE_LABELS: Record<string, string> = { food: 'Alimento', supply: 'Insumo', service: 'Servicio' }
+
 // State
 const searchQuery = ref('')
-const parentFilter = ref('all')
+const typeFilter = ref('all')
 const sortField = ref('')
 const sortDirection = ref('asc')
 const showPanel = ref(false)
@@ -252,18 +269,15 @@ const ingredients = computed(() => (ingredientsData.value as any)?.data || [])
 
 const stats = computed(() => ({
   total: ingredients.value.length,
-  withParent: ingredients.value.filter((i: any) => i.parent_name).length,
-  withoutParent: ingredients.value.filter((i: any) => !i.parent_name).length,
+  resale: ingredients.value.filter((i: any) => i.is_resale).length,
+  withCost: ingredients.value.filter((i: any) => i.costo_unitario != null).length,
 }))
 
 const filteredIngredients = computed(() => {
   return ingredients.value.filter((item: any) => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesParent =
-      parentFilter.value === 'all' ||
-      (parentFilter.value === 'with_parent' && !!item.parent_name) ||
-      (parentFilter.value === 'without_parent' && !item.parent_name)
-    return matchesSearch && matchesParent
+    const matchesType = typeFilter.value === 'all' || item.type === typeFilter.value
+    return matchesSearch && matchesType
   })
 })
 
@@ -323,15 +337,16 @@ const handleSort = (field: string) => {
 
 const clearFilters = () => {
   searchQuery.value = ''
-  parentFilter.value = 'all'
+  typeFilter.value = 'all'
 }
 
 const tableColumns = [
-  { key: 'name', title: 'Nombre', sortable: true, format: 'text', align: 'left' },
-  { key: 'unit', title: 'Unidad', sortable: false, format: 'text', align: 'left' },
-  { key: 'parent_name', title: 'Basado en', sortable: true, format: 'custom', align: 'left' },
-  { key: 'category', title: 'Categoría', sortable: false, format: 'text', align: 'left' },
-  { key: 'actions', title: '', sortable: false, format: 'custom', align: 'center' },
+  { key: 'name',          title: 'Nombre',    sortable: true,  format: 'custom', align: 'left' },
+  { key: 'unit',          title: 'Unidad',    sortable: false, format: 'custom', align: 'left' },
+  { key: 'type',          title: 'Tipo',      sortable: false, format: 'custom', align: 'left' },
+  { key: 'costo_unitario',title: 'Costo',     sortable: true,  format: 'custom', align: 'left' },
+  { key: 'category',      title: 'Categoría', sortable: false, format: 'custom', align: 'left' },
+  { key: 'actions',       title: '',          sortable: false, format: 'custom', align: 'center' },
 ]
 
 // Layout integration
