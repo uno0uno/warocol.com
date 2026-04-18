@@ -518,20 +518,7 @@
                         </div>
                         <!-- Bottom Row: Unit Section -->
                         <div class="w-full">
-                          <div class="flex items-center gap-2 mb-1">
-                            <label class="text-xs font-medium text-text-primary">Unidad *</label>
-                            <button
-                              v-if="item.ingredient_id && !newUnitForms[form.items.indexOf(item)]?.show"
-                              type="button"
-                              class="text-[10px] text-primary hover:underline flex items-center gap-0.5"
-                              @click="initNewUnitForm(form.items.indexOf(item))"
-                            >
-                              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                              </svg>
-                              Nueva
-                            </button>
-                          </div>
+                          <label class="text-xs font-medium text-text-primary mb-1 block">Unidad *</label>
                           <div class="flex items-start gap-2">
                             <!-- Unit Select -->
                             <div class="flex-1 min-w-[120px]">
@@ -558,69 +545,14 @@
                             </div>
                             <!-- Peso por unidad -->
                             <div
-                              v-if="needsGramsPerUnit(item.ingredient_id)"
-                              class="rounded-md p-1 transition-colors"
-                              :class="getExistingGramsPerUnit(item.ingredient_id) ? 'bg-success/8 border border-success/25' : ''"
+                              v-if="item.ingredient_id && getPurchaseUnitOptions(item.ingredient_id).length === 0"
+                              class="flex items-start gap-1.5 px-2.5 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex-1"
                             >
-                              <label class="block text-[10px] font-semibold text-text-primary mb-0.5">
-                                Peso(gr){{ getExistingGramsPerUnit(item.ingredient_id) ? ' ✓' : '' }}
-                              </label>
-                              <input
-                                v-model.number="item.grams_per_unit"
-                                type="number"
-                                min="1"
-                                step="1"
-                                placeholder="0"
-                                class="input-base w-20 px-1 py-1.5 text-xs text-center h-[34px]"
-                              />
-                              <p class="text-[10px] mt-0.5 text-text-secondary font-medium">
-                                {{ getExistingGramsPerUnit(item.ingredient_id) ? 'Guardado' : 'Solo esta vez' }}
-                              </p>
+                              <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                              </svg>
+                              <span>Sin unidades de compra. <a :href="`/abastecimiento/ingredientes?highlight=${item.ingredient_id}`" class="underline font-medium">Configúralas en el panel de ingrediente.</a></span>
                             </div>
-                            <!-- New Unit Form Fields -->
-                            <template v-if="newUnitForms[form.items.indexOf(item)]?.show">
-                              <div>
-                                <label class="block text-[10px] font-medium text-text-secondary mb-0.5">Nombre</label>
-                                <input
-                                  v-model="newUnitForms[form.items.indexOf(item)].label"
-                                  type="text"
-                                  placeholder="Ej: Caja"
-                                  class="input-base w-24 px-1.5 py-1.5 text-[10px] h-[34px]"
-                                />
-                              </div>
-                              <div>
-                                <label class="block text-[10px] font-medium text-text-secondary mb-0.5 text-center">Cant.</label>
-                                <input
-                                  v-model.number="newUnitForms[form.items.indexOf(item)].factor"
-                                  type="number"
-                                  min="1"
-                                  placeholder="1"
-                                  class="input-base w-16 px-1 py-1.5 text-[10px] text-center h-[34px]"
-                                />
-                              </div>
-                              <div class="flex gap-0.5 h-[34px] items-center">
-                                <button
-                                  type="button"
-                                  class="p-1 bg-primary text-white rounded hover:bg-primary/90 transition-colors h-7 w-7 flex items-center justify-center"
-                                  title="Guardar"
-                                  @click="saveNewUnit(form.items.indexOf(item))"
-                                >
-                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                  </svg>
-                                </button>
-                                <button
-                                  type="button"
-                                  class="p-1 border border-border text-text-secondary rounded hover:bg-surface-secondary transition-colors h-7 w-7 flex items-center justify-center"
-                                  title="Cancelar"
-                                  @click="newUnitForms[form.items.indexOf(item)] = { ...newUnitForms[form.items.indexOf(item)], show: false }"
-                                >
-                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                  </svg>
-                                </button>
-                              </div>
-                            </template>
                           </div>
                         </div>
                       </div>
@@ -798,20 +730,7 @@
                         </div>
                         <!-- Bottom Row: Unit Section -->
                         <div class="w-full">
-                          <div class="flex items-center gap-2 mb-1">
-                            <label class="text-xs font-medium text-text-primary">Unidad *</label>
-                            <button
-                              v-if="item.ingredient_id && !newUnitForms[form.items.indexOf(item)]?.show"
-                              type="button"
-                              class="text-[10px] text-primary hover:underline flex items-center gap-0.5"
-                              @click="initNewUnitForm(form.items.indexOf(item))"
-                            >
-                              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                              </svg>
-                              Nueva
-                            </button>
-                          </div>
+                          <label class="text-xs font-medium text-text-primary mb-1 block">Unidad *</label>
                           <div class="flex items-start gap-2">
                             <div class="flex-1 min-w-[120px]">
                               <select
@@ -836,68 +755,14 @@
                               </p>
                             </div>
                             <div
-                              v-if="needsGramsPerUnit(item.ingredient_id)"
-                              class="rounded-md p-1 transition-colors"
-                              :class="getExistingGramsPerUnit(item.ingredient_id) ? 'bg-success/8 border border-success/25' : ''"
+                              v-if="item.ingredient_id && getPurchaseUnitOptions(item.ingredient_id).length === 0"
+                              class="flex items-start gap-1.5 px-2.5 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex-1"
                             >
-                              <label class="block text-[10px] font-semibold text-text-primary mb-0.5">
-                                Peso(gr){{ getExistingGramsPerUnit(item.ingredient_id) ? ' ✓' : '' }}
-                              </label>
-                              <input
-                                v-model.number="item.grams_per_unit"
-                                type="number"
-                                min="1"
-                                step="1"
-                                placeholder="0"
-                                class="input-base w-20 px-1 py-1.5 text-xs text-center h-[34px]"
-                              />
-                              <p class="text-[10px] mt-0.5 text-text-secondary font-medium">
-                                {{ getExistingGramsPerUnit(item.ingredient_id) ? 'Guardado' : 'Solo esta vez' }}
-                              </p>
+                              <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                              </svg>
+                              <span>Sin unidades de compra. <a :href="`/abastecimiento/ingredientes?highlight=${item.ingredient_id}`" class="underline font-medium">Configúralas en el panel de ingrediente.</a></span>
                             </div>
-                            <template v-if="newUnitForms[form.items.indexOf(item)]?.show">
-                              <div>
-                                <label class="block text-[10px] font-medium text-text-secondary mb-0.5">Nombre</label>
-                                <input
-                                  v-model="newUnitForms[form.items.indexOf(item)].label"
-                                  type="text"
-                                  placeholder="Ej: Caja"
-                                  class="input-base w-24 px-1.5 py-1.5 text-[10px] h-[34px]"
-                                />
-                              </div>
-                              <div>
-                                <label class="block text-[10px] font-medium text-text-secondary mb-0.5 text-center">Cant.</label>
-                                <input
-                                  v-model.number="newUnitForms[form.items.indexOf(item)].factor"
-                                  type="number"
-                                  min="1"
-                                  placeholder="1"
-                                  class="input-base w-16 px-1 py-1.5 text-[10px] text-center h-[34px]"
-                                />
-                              </div>
-                              <div class="flex gap-0.5 h-[34px] items-center">
-                                <button
-                                  type="button"
-                                  class="p-1 bg-primary text-white rounded hover:bg-primary/90 transition-colors h-7 w-7 flex items-center justify-center"
-                                  title="Guardar"
-                                  @click="saveNewUnit(form.items.indexOf(item))"
-                                >
-                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                  </svg>
-                                </button>
-                                <button
-                                  type="button"
-                                  class="p-1 border border-border text-text-secondary rounded hover:bg-surface-secondary transition-colors h-7 w-7 flex items-center justify-center"
-                                  title="Cancelar"
-                                  @click="newUnitForms[form.items.indexOf(item)] = { ...newUnitForms[form.items.indexOf(item)], show: false }"
-                                >
-                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                  </svg>
-                                </button>
-                              </div>
-                            </template>
                           </div>
                         </div>
                       </div>
@@ -1075,20 +940,7 @@
                         </div>
                         <!-- Bottom Row: Unit Section -->
                         <div class="w-full">
-                          <div class="flex items-center gap-2 mb-1">
-                            <label class="text-xs font-medium text-text-primary">Unidad *</label>
-                            <button
-                              v-if="item.ingredient_id && !newUnitForms[form.items.indexOf(item)]?.show"
-                              type="button"
-                              class="text-[10px] text-primary hover:underline flex items-center gap-0.5"
-                              @click="initNewUnitForm(form.items.indexOf(item))"
-                            >
-                              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                              </svg>
-                              Nueva
-                            </button>
-                          </div>
+                          <label class="text-xs font-medium text-text-primary mb-1 block">Unidad *</label>
                           <div class="flex items-start gap-2">
                             <div class="flex-1 min-w-[120px]">
                               <select
@@ -1113,68 +965,14 @@
                               </p>
                             </div>
                             <div
-                              v-if="needsGramsPerUnit(item.ingredient_id)"
-                              class="rounded-md p-1 transition-colors"
-                              :class="getExistingGramsPerUnit(item.ingredient_id) ? 'bg-success/8 border border-success/25' : ''"
+                              v-if="item.ingredient_id && getPurchaseUnitOptions(item.ingredient_id).length === 0"
+                              class="flex items-start gap-1.5 px-2.5 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex-1"
                             >
-                              <label class="block text-[10px] font-semibold text-text-primary mb-0.5">
-                                Peso(gr){{ getExistingGramsPerUnit(item.ingredient_id) ? ' ✓' : '' }}
-                              </label>
-                              <input
-                                v-model.number="item.grams_per_unit"
-                                type="number"
-                                min="1"
-                                step="1"
-                                placeholder="0"
-                                class="input-base w-20 px-1 py-1.5 text-xs text-center h-[34px]"
-                              />
-                              <p class="text-[10px] mt-0.5 text-text-secondary font-medium">
-                                {{ getExistingGramsPerUnit(item.ingredient_id) ? 'Guardado' : 'Solo esta vez' }}
-                              </p>
+                              <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                              </svg>
+                              <span>Sin unidades de compra. <a :href="`/abastecimiento/ingredientes?highlight=${item.ingredient_id}`" class="underline font-medium">Configúralas en el panel de ingrediente.</a></span>
                             </div>
-                            <template v-if="newUnitForms[form.items.indexOf(item)]?.show">
-                              <div>
-                                <label class="block text-[10px] font-medium text-text-secondary mb-0.5">Nombre</label>
-                                <input
-                                  v-model="newUnitForms[form.items.indexOf(item)].label"
-                                  type="text"
-                                  placeholder="Ej: Caja"
-                                  class="input-base w-24 px-1.5 py-1.5 text-[10px] h-[34px]"
-                                />
-                              </div>
-                              <div>
-                                <label class="block text-[10px] font-medium text-text-secondary mb-0.5 text-center">Cant.</label>
-                                <input
-                                  v-model.number="newUnitForms[form.items.indexOf(item)].factor"
-                                  type="number"
-                                  min="1"
-                                  placeholder="1"
-                                  class="input-base w-16 px-1 py-1.5 text-[10px] text-center h-[34px]"
-                                />
-                              </div>
-                              <div class="flex gap-0.5 h-[34px] items-center">
-                                <button
-                                  type="button"
-                                  class="p-1 bg-primary text-white rounded hover:bg-primary/90 transition-colors h-7 w-7 flex items-center justify-center"
-                                  title="Guardar"
-                                  @click="saveNewUnit(form.items.indexOf(item))"
-                                >
-                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                  </svg>
-                                </button>
-                                <button
-                                  type="button"
-                                  class="p-1 border border-border text-text-secondary rounded hover:bg-surface-secondary transition-colors h-7 w-7 flex items-center justify-center"
-                                  title="Cancelar"
-                                  @click="newUnitForms[form.items.indexOf(item)] = { ...newUnitForms[form.items.indexOf(item)], show: false }"
-                                >
-                                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                  </svg>
-                                </button>
-                              </div>
-                            </template>
                           </div>
                         </div>
                       </div>
@@ -1463,7 +1261,6 @@
                         <span class="text-xs bg-surface-secondary border border-border px-2 py-0.5 rounded-md font-medium text-text-secondary">
                           {{ item.purchase_quantity }} × {{ getItemUnitLabel(item) }}
                         </span>
-                        <span v-if="item.grams_per_unit" class="text-xs text-text-secondary">· {{ item.grams_per_unit }} gr</span>
                       </div>
                       <p v-if="item.notes" class="text-xs text-text-secondary truncate mt-1">{{ item.notes }}</p>
                     </div>
@@ -1602,7 +1399,6 @@ interface PurchaseItem {
   suggested_price: number | null
   item_type?: string // 'food' | 'service' | 'supply'
   ocr_description?: string // texto libre de la factura, solo para UI
-  grams_per_unit?: number | null // solo para ingredientes und: peso en gr por unidad
   searchTerm?: string // para el input de busqueda
   showResults?: boolean // controla visibilidad del dropdown de búsqueda
 }
@@ -1656,7 +1452,6 @@ function createEmptyItem(itemType: string = 'food'): PurchaseItem {
     notes: '',
     suggested_price: null,
     item_type: itemType,
-    grams_per_unit: null,
     showResults: false
   }
 }
@@ -1874,16 +1669,6 @@ const getIngredientUnit = (ingredientId: string) => {
   return ingredientCache.value[ingredientId]?.unit || ''
 }
 
-// Detecta si el ingrediente es 'und' — siempre se pide el peso
-const needsGramsPerUnit = (ingredientId: string) => {
-  if (!ingredientId) return false
-  return ingredientCache.value[ingredientId]?.unit === 'und'
-}
-
-// Obtiene el peso existente desde ingredientCache.unit_weight_gr
-const getExistingGramsPerUnit = (ingredientId: string): number | null => {
-  return ingredientCache.value[ingredientId]?.unit_weight_gr || null
-}
 
 // Obtener el factor de conversión para una unidad de compra
 const getConversionFactor = (purchaseUnitLabel: string, ingredientId: string) => {
@@ -1921,39 +1706,6 @@ const getConvertedQuantity = (index: number) => {
   return converted.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// --- Nueva presentación de compra inline ---
-const initNewUnitForm = (index: number) => {
-  newUnitForms.value[index] = { show: true, label: '', factor: 1, saving: false }
-}
-
-const saveNewUnit = (index: number) => {
-  const entry = newUnitForms.value[index]
-  if (!entry?.label || entry.factor < 1) return
-
-  const item = form.value.items[index]
-  if (!item.ingredient_id) return
-
-  const purchaseUnitKey = entry.label.toLowerCase().replace(/\s+/g, '_').slice(0, 50)
-
-  // Check if this unit already exists (server or local)
-  const alreadyExists = localPurchaseUnits.value.some(
-    u => u.ingredient_id === item.ingredient_id && u.purchase_unit_label === entry.label
-  )
-  if (!alreadyExists) {
-    localPurchaseUnits.value.push({
-      ingredient_id: item.ingredient_id,
-      purchase_unit: purchaseUnitKey,
-      purchase_unit_label: entry.label,
-      conversion_factor: entry.factor
-    })
-  }
-
-  // Auto-select the new unit and update totals
-  item.purchase_unit = entry.label
-  onUnitChange(index)
-  newUnitForms.value[index] = { ...entry, show: false }
-}
-
 // Fetch supplier catalog when supplier changes
 const onSupplierChange = async (supplierId: string) => {
   if (!supplierId) {
@@ -1987,11 +1739,6 @@ const onIngredientChange = (index: number) => {
     const defaultUnit = units.find((u: any) => u.is_default) || units[0]
     if (defaultUnit) {
       item.purchase_unit = defaultUnit.value
-    }
-
-    // Pre-populate grams_per_unit for 'und' ingredients
-    if (ingredient.unit === 'und') {
-      item.grams_per_unit = getExistingGramsPerUnit(item.ingredient_id)
     }
 
     // Update suggested price from catalog
@@ -2344,9 +2091,6 @@ const handleScanFileSelect = async (event: Event) => {
               item.purchase_unit = match.value
               onUnitChange(index)
             }
-          } else if (ingredient.unit === 'und' && !item.grams_per_unit) {
-            // Ingrediente en und: guardar peso como referencia para recetas
-            item.grams_per_unit = pesoGr
           }
         })
         ocrItemsLoaded.value = true
@@ -2448,19 +2192,6 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    // Guardar unit_weight_gr en ingredients para items und con peso definido
-    const gramsItems = form.value.items.filter(item => item.ingredient_id && item.grams_per_unit && item.grams_per_unit > 0)
-    for (const item of gramsItems) {
-      try {
-        await $fetch(`/api/suppliers/ingredients/${item.ingredient_id}/unit-weight`, {
-          method: 'PATCH',
-          body: { unit_weight_gr: item.grams_per_unit }
-        })
-      } catch (_) {
-        // No bloqueamos el flujo si falla el guardado del peso
-      }
-    }
-
     // Build JSON payload
     const payload: Record<string, any> = {
       supplier_id: form.value.supplier_id,
@@ -2473,11 +2204,6 @@ const handleSubmit = async () => {
         notes: item.notes
       }))),
       payment_type: form.value.payment_type
-    }
-
-    // Include pending new purchase units to be created on the backend
-    if (localPurchaseUnits.value.length > 0) {
-      payload.new_units_data = JSON.stringify(localPurchaseUnits.value)
     }
 
     if (form.value.purchase_date) payload.purchase_date = form.value.purchase_date.toISOString()
