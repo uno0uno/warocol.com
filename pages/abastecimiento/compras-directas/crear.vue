@@ -525,12 +525,12 @@
                               <select
                                 v-model="item.purchase_unit"
                                 required
-                                :disabled="!item.ingredient_id"
+                                :disabled="!item.ingredient_id || loadingPurchaseUnits"
                                 class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
-                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id }"
+                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingPurchaseUnits }"
                                 @change="() => onUnitChange(form.items.indexOf(item))"
                               >
-                                <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
+                                <option value="">{{ loadingPurchaseUnits ? 'Cargando...' : item.ingredient_id ? 'Seleccionar' : '...' }}</option>
                                 <option
                                   v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
                                   :key="unitOpt.value"
@@ -736,12 +736,12 @@
                               <select
                                 v-model="item.purchase_unit"
                                 required
-                                :disabled="!item.ingredient_id"
+                                :disabled="!item.ingredient_id || loadingPurchaseUnits"
                                 class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
-                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id }"
+                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingPurchaseUnits }"
                                 @change="() => onUnitChange(form.items.indexOf(item))"
                               >
-                                <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
+                                <option value="">{{ loadingPurchaseUnits ? 'Cargando...' : item.ingredient_id ? 'Seleccionar' : '...' }}</option>
                                 <option
                                   v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
                                   :key="unitOpt.value"
@@ -946,12 +946,12 @@
                               <select
                                 v-model="item.purchase_unit"
                                 required
-                                :disabled="!item.ingredient_id"
+                                :disabled="!item.ingredient_id || loadingPurchaseUnits"
                                 class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
-                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id }"
+                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingPurchaseUnits }"
                                 @change="() => onUnitChange(form.items.indexOf(item))"
                               >
-                                <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
+                                <option value="">{{ loadingPurchaseUnits ? 'Cargando...' : item.ingredient_id ? 'Seleccionar' : '...' }}</option>
                                 <option
                                   v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
                                   :key="unitOpt.value"
