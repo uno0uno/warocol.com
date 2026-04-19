@@ -582,6 +582,10 @@ function getIngredientUnitOptions(ingredientId: string) {
   const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
   const unitSet = new Set<string>([baseUnit])
   purchaseUnits.forEach((pu: any) => { if (pu.purchase_unit) unitSet.add(pu.purchase_unit) })
+  // If ingredient has unit_weight_gr, also offer the weight/volume unit (e.g. ml for a und ingredient)
+  if (ingredient?.unit_weight_gr > 0 && ingredient?.unit_weight_unit && ingredient.unit_weight_unit !== baseUnit) {
+    unitSet.add(ingredient.unit_weight_unit)
+  }
   return Array.from(unitSet).map(u => ({ value: u, label: unitLabels[u] || u }))
 }
 
