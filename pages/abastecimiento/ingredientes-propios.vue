@@ -100,7 +100,6 @@
         <template #cell-name="{ value, row }">
           <div class="flex items-center gap-1.5 flex-wrap">
             <span class="text-sm font-bold" :class="row.is_active === false ? 'text-text-tertiary' : 'text-text-primary'">{{ value }}</span>
-            <span v-if="row.is_resale" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">Reventa</span>
             <span v-if="row.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">Archivado</span>
           </div>
         </template>
@@ -109,8 +108,9 @@
           <span class="text-sm font-mono text-text-secondary">{{ value }}</span>
         </template>
 
-        <template #cell-default_purchase_unit_label="{ value }">
-          <span class="text-sm text-text-secondary">{{ value || '—' }}</span>
+        <template #cell-is_resale="{ value }">
+          <span v-if="value" class="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">Sí</span>
+          <span v-else class="text-sm text-text-tertiary">—</span>
         </template>
 
         <template #cell-unit_weight_gr="{ value, row }">
@@ -350,10 +350,10 @@ const clearFilters = () => {
 }
 
 const tableColumns = [
-  { key: 'name',                       title: 'Nombre',        sortable: true,  format: 'custom', align: 'left' },
-  { key: 'unit',                       title: 'Unidad base',   sortable: false, format: 'custom', align: 'left' },
-  { key: 'default_purchase_unit_label',title: 'Unidad compra', sortable: false, format: 'custom', align: 'left' },
-  { key: 'unit_weight_gr',             title: 'Gr/und',        sortable: false, format: 'custom', align: 'left' },
+  { key: 'name',         title: 'Nombre',   sortable: true,  format: 'custom', align: 'left' },
+  { key: 'unit',         title: 'Unidad',   sortable: false, format: 'custom', align: 'left' },
+  { key: 'is_resale',    title: 'Reventa',  sortable: false, format: 'custom', align: 'left' },
+  { key: 'unit_weight_gr',title: 'Gr/und',  sortable: false, format: 'custom', align: 'left' },
   { key: 'type',                       title: 'Tipo',          sortable: false, format: 'custom', align: 'left' },
   { key: 'costo_unitario',             title: 'Costo',         sortable: true,  format: 'custom', align: 'left' },
   { key: 'category',                   title: 'Categoría',     sortable: false, format: 'custom', align: 'left' },
