@@ -2,6 +2,8 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
+// @ts-ignore
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Asientos contables - Warocol' })
@@ -200,13 +202,24 @@ const STATUS_LABELS: Record<string, string> = {
 const tableColumns = [
   { key: 'entryDate',     title: 'Fecha',       sortable: false },
   { key: 'description',   title: 'Descripción', sortable: false },
-  { key: 'reference',     title: 'Referencia',  sortable: false },
   { key: 'sourceModule',  title: 'Módulo',      sortable: false },
   { key: 'status',        title: 'Estado',      sortable: false },
   { key: 'totalDebit',    title: 'Débito',      sortable: false },
   { key: 'totalCredit',   title: 'Crédito',     sortable: false },
-  { key: 'actions',       title: '',            sortable: false },
+  { key: 'actions',       title: 'Acciones',    sortable: false },
 ]
+
+// ── Entry navigation link ─────────────────────────────────────────────────────
+const entryLink = (entry: JournalEntry): string | null => {
+  if (!entry.sourceId) return null
+  if (entry.sourceModule === 'orden' || entry.sourceModule === 'orden_cogs') {
+    return `/ventas/${entry.sourceId}`
+  }
+  if (entry.sourceModule === 'inventario') {
+    return `/abastecimiento/compras-directas/${entry.sourceId}`
+  }
+  return null
+}
 
 // ── Detail modal ─────────────────────────────────────────────────────────────
 const showDetailModal = ref(false)
@@ -421,65 +434,56 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       </div>
 
       <!-- Entries table -->
-      <UiResponsiveDataView
-        v-else
-        row-size="sm"
-        :columns="tableColumns"
-        :data="entries"
-        empty-message="No hay asientos contables registrados"
-        empty-sub-message="Crea el primer asiento manual con el botón 'Nuevo asiento'"
-        variant="default"
-      >
+      <HealthSemaphore v-else :is-unlocked="true" :title="`${totalEntries.toLocaleString('es-CO')} asientos`">
+        <div class="[&_td]:!py-1 [&_th]:!py-1.5">
+        <UiResponsiveDataView
+          row-size="sm"
+          :columns="tableColumns"
+          :data="entries"
+          empty-message="No hay asientos contables registrados"
+          empty-sub-message="Crea el primer asiento manual con el botón 'Nuevo asiento'"
+          variant="default"
+          @row-click="openDetail"
+        >
         <!-- Mobile card -->
         <template #card="{ item, index }">
           <div
-            class="flex items-start gap-3 py-3 px-3 border-b border-border cursor-pointer hover:bg-surface-secondary transition-colors"
+            class="flex items-center gap-3 py-2 px-3 border-b border-border cursor-pointer hover:bg-surface-secondary transition-colors"
             :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
             @click="openDetail(item)"
           >
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-text-secondary tabular-nums">{{ formatDate(item.entryDate) }}</span>
-                <span class="text-xs px-1.5 py-0.5 rounded-full font-medium"
-                  :class="{
-                    'bg-gray-100 text-gray-600': item.status === 'draft',
-                    'bg-green-100 text-green-700': item.status === 'posted',
-                    'bg-red-100 text-red-700': item.status === 'voided',
-                  }"
-                >{{ STATUS_LABELS[item.status] || item.status }}</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs text-text-secondary flex-shrink-0">{{ formatDate(item.entryDate) }}</span>
+                <UiStatusBadge v-if="item.sourceModule" :value="SOURCE_MODULE_LABELS[item.sourceModule] || item.sourceModule" format="text" variant="secondary" size="sm" />
               </div>
-              <p class="text-sm font-medium text-text-primary mt-0.5 truncate">{{ item.description }}</p>
-              <p class="text-xs text-text-secondary mt-0.5">
-                {{ SOURCE_MODULE_LABELS[item.sourceModule] || item.sourceModule }}
-                <template v-if="item.reference"> · {{ item.reference }}</template>
-              </p>
+              <NuxtLink v-if="entryLink(item)" :to="entryLink(item) || ''" class="text-sm font-medium text-primary hover:underline underline-offset-2 truncate mt-0.5 block">{{ item.description }}</NuxtLink>
+              <p v-else class="text-sm font-medium text-text-primary truncate mt-0.5">{{ item.description }}</p>
             </div>
-            <div class="flex flex-col items-end gap-1 flex-shrink-0">
-              <span class="text-xs text-text-secondary tabular-nums">D: {{ formatCurrency(item.totalDebit) }}</span>
-              <span class="text-xs text-text-secondary tabular-nums">C: {{ formatCurrency(item.totalCredit) }}</span>
+            <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
+              <span v-if="item.totalDebit" class="text-xs font-mono text-primary tabular-nums">+{{ formatCurrency(item.totalDebit) }}</span>
+              <span v-if="item.totalCredit" class="text-xs font-mono text-text-secondary tabular-nums">-{{ formatCurrency(item.totalCredit) }}</span>
             </div>
           </div>
         </template>
 
         <!-- Desktop cells -->
         <template #cell-entryDate="{ value }">
-          <span class="text-sm text-text-secondary tabular-nums">{{ formatDate(value) }}</span>
+          <span class="text-xs text-text-secondary tabular-nums">{{ formatDate(value) }}</span>
         </template>
 
-        <template #cell-description="{ value }">
-          <span class="text-sm text-text-primary truncate max-w-[200px] block" :title="value">{{ value }}</span>
-        </template>
-
-        <template #cell-reference="{ value }">
-          <span class="text-sm text-text-secondary">{{ value || '—' }}</span>
+        <template #cell-description="{ value, row }">
+          <NuxtLink
+            v-if="entryLink(row)"
+            :to="entryLink(row) || ''"
+            class="text-sm text-primary hover:underline underline-offset-2 font-medium"
+          >{{ value }}</NuxtLink>
+          <span v-else class="text-sm text-text-primary">{{ value }}</span>
         </template>
 
         <template #cell-sourceModule="{ value }">
-          <span
-            class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-surface-secondary text-text-secondary"
-          >
-            {{ SOURCE_MODULE_LABELS[value] || value }}
-          </span>
+          <UiStatusBadge v-if="value" :value="SOURCE_MODULE_LABELS[value] || value" format="text" variant="secondary" size="sm" />
+          <span v-else class="text-xs text-text-secondary">—</span>
         </template>
 
         <template #cell-status="{ value }">
@@ -492,30 +496,34 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
         <template #cell-totalDebit="{ value }">
-          <span class="text-sm tabular-nums text-text-primary">{{ formatCurrency(value) }}</span>
+          <span v-if="value" class="text-sm font-mono font-medium text-primary tabular-nums">{{ formatCurrency(value) }}</span>
+          <span v-else class="text-xs text-text-secondary">—</span>
         </template>
 
         <template #cell-totalCredit="{ value }">
-          <span class="text-sm tabular-nums text-text-primary">{{ formatCurrency(value) }}</span>
+          <span v-if="value" class="text-sm font-mono text-text-secondary tabular-nums">{{ formatCurrency(value) }}</span>
+          <span v-else class="text-xs text-text-secondary">—</span>
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex justify-center">
+          <div class="flex items-center justify-center">
             <button
               type="button"
-              class="flex items-center justify-center w-9 h-9 rounded-lg border border-border text-text-secondary hover:text-primary hover:border-primary transition-colors"
+              class="flex items-center justify-center w-8 h-8 rounded-lg text-text-secondary hover:bg-surface-secondary hover:text-primary transition-colors"
               :aria-label="`Ver asiento del ${formatDate(row.entryDate)}`"
               title="Ver detalle"
               @click.stop="openDetail(row)"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </div>
         </template>
-      </UiResponsiveDataView>
+
+        </UiResponsiveDataView>
+        </div>
+      </HealthSemaphore>
 
       <!-- Pagination -->
       <div v-if="totalEntries > 0" class="flex items-center justify-end px-1 py-2">
@@ -596,11 +604,14 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             </div>
             <div class="col-span-2">
               <span class="text-xs font-medium text-text-secondary uppercase tracking-wide">Descripción</span>
-              <p class="mt-0.5 text-text-primary">{{ selectedEntryDetail.description }}</p>
-            </div>
-            <div v-if="selectedEntryDetail.reference">
-              <span class="text-xs font-medium text-text-secondary uppercase tracking-wide">Referencia</span>
-              <p class="mt-0.5 text-text-primary">{{ selectedEntryDetail.reference }}</p>
+              <p class="mt-0.5 text-text-primary">
+                <NuxtLink
+                  v-if="entryLink(selectedEntryDetail)"
+                  :to="entryLink(selectedEntryDetail) || ''"
+                  class="text-primary hover:underline"
+                >{{ selectedEntryDetail.description }}</NuxtLink>
+                <span v-else>{{ selectedEntryDetail.description }}</span>
+              </p>
             </div>
             <div>
               <span class="text-xs font-medium text-text-secondary uppercase tracking-wide">Módulo</span>
@@ -767,11 +778,14 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             </div>
             <div class="col-span-2">
               <span class="text-xs font-medium text-text-secondary">Descripción</span>
-              <p class="text-text-primary">{{ selectedEntryDetail.description }}</p>
-            </div>
-            <div v-if="selectedEntryDetail.reference" class="col-span-2">
-              <span class="text-xs font-medium text-text-secondary">Referencia</span>
-              <p class="text-text-primary">{{ selectedEntryDetail.reference }}</p>
+              <p class="text-text-primary">
+                <NuxtLink
+                  v-if="entryLink(selectedEntryDetail)"
+                  :to="entryLink(selectedEntryDetail) || ''"
+                  class="text-primary hover:underline"
+                >{{ selectedEntryDetail.description }}</NuxtLink>
+                <span v-else>{{ selectedEntryDetail.description }}</span>
+              </p>
             </div>
             <div>
               <span class="text-xs font-medium text-text-secondary">Módulo</span>

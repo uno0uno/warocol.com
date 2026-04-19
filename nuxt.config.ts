@@ -164,6 +164,11 @@ export default defineNuxtConfig({
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
       ],
       script: [
+        // Figma MCP capture script (dev only)
+        ...(process.env.NODE_ENV === 'development' ? [{
+          src: 'https://mcp.figma.com/mcp/html-to-design/capture.js',
+          async: true
+        }] : []),
         // JSON-LD Schema.org Organization
         {
           type: 'application/ld+json',

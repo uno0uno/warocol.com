@@ -177,7 +177,7 @@ const tableColumns = computed(() => [
   { key: 'periodCredits',  title: 'Créditos',   sortable: false },
   { key: 'closingBalance', title: 'Saldo',      sortable: false },
   { key: 'isActive',       title: 'Estado',     sortable: false },
-  { key: 'actions',        title: '',           sortable: false },
+  { key: 'actions',        title: 'Acciones',   sortable: false },
 ])
 
 // ── Navigation ─────────────────────────────────────────────────────────────
