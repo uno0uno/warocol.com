@@ -1504,6 +1504,7 @@ const cacheIngredient = (ing: any) => {
       name: ing.name,
       unit: ing.unit,
       unit_weight_gr: ing.unit_weight_gr ?? null,
+      unit_weight_unit: ing.unit_weight_unit ?? null,
       type: ing.type
     }
   }
@@ -1616,43 +1617,33 @@ const getPurchaseUnitOptions = (ingredientId: string) => {
   const units = purchaseUnits.value.filter((u: any) => u.ingredient_id === ingredientId)
   const pendingUnits = localPurchaseUnits.value.filter(u => u.ingredient_id === ingredientId)
 
-  if (units.length === 0 && pendingUnits.length === 0) {
-    if (ingredient) {
-      return [{
-        value: ingredient.unit,
-        label: ingredient.unit,
-        conversion_factor: 1,
-        is_default: true
-      }]
-    }
-    return []
+  // Always include the base unit as first option
+  const options: { value: string; label: string; conversion_factor: number; is_default: boolean; unit_cost?: number }[] = []
+  if (ingredient) {
+    options.push({ value: baseUnit, label: baseUnit, conversion_factor: 1, is_default: units.length === 0 && pendingUnits.length === 0 })
   }
 
-  const serverOptions = units.map((u: any) => {
-    let label = u.purchase_unit_label
-    if (u.conversion_factor && u.conversion_factor !== 1) {
-      label = `${u.purchase_unit_label} (${u.conversion_factor} ${baseUnit})`
-    }
-    return {
-      value: u.purchase_unit_label,
-      label: label,
-      conversion_factor: u.conversion_factor,
-      is_default: u.is_default,
-      unit_cost: u.unit_cost
-    }
-  })
+  const serverOptions = units.map((u: any) => ({
+    value: u.purchase_unit_label,
+    label: u.conversion_factor && u.conversion_factor !== 1
+      ? `${u.purchase_unit_label} · ${Number(u.conversion_factor).toLocaleString('es-CO')} ${baseUnit}`
+      : u.purchase_unit_label,
+    conversion_factor: u.conversion_factor,
+    is_default: u.is_default,
+    unit_cost: u.unit_cost
+  }))
 
   const localOptions = pendingUnits.map(u => ({
     value: u.purchase_unit_label,
     label: u.conversion_factor !== 1
-      ? `${u.purchase_unit_label} (${u.conversion_factor} ${baseUnit})`
+      ? `${u.purchase_unit_label} · ${Number(u.conversion_factor).toLocaleString('es-CO')} ${baseUnit}`
       : u.purchase_unit_label,
     conversion_factor: u.conversion_factor,
     is_default: false,
     unit_cost: undefined
   }))
 
-  return [...serverOptions, ...localOptions]
+  return [...options, ...serverOptions, ...localOptions]
 }
 
 // Label completo para el resumen: "4 × 1 Kilogramo (1000 gr)"
