@@ -681,14 +681,14 @@ onUnmounted(() => {
             </tfoot>
           </table>
 
-          <!-- Discount summary — only shown when a discount was applied -->
-          <div v-if="order.discount_amount > 0" class="flex justify-end px-6 py-4 border-t border-border">
+          <!-- Totals summary — shown when discount or taxes apply -->
+          <div v-if="order.discount_amount > 0 || order.standard_tax > 0 || order.liquor_tax > 0" class="flex justify-end px-6 py-4 border-t border-border">
             <div class="flex flex-col gap-2 min-w-[220px]">
               <div class="flex items-center justify-between gap-10">
                 <span class="text-sm text-text-secondary">Subtotal</span>
                 <span class="text-sm text-text-secondary tabular-nums">{{ formatCurrency(grossSubtotal) }}</span>
               </div>
-              <div class="flex items-center justify-between gap-10">
+              <div v-if="order.discount_amount > 0" class="flex items-center justify-between gap-10">
                 <span class="flex items-center gap-1.5 text-sm text-destructive">
                   Descuento
                   <span class="text-xs font-bold bg-destructive/10 text-destructive rounded-full px-1.5 py-0.5 leading-tight">
@@ -696,6 +696,14 @@ onUnmounted(() => {
                   </span>
                 </span>
                 <span class="text-sm font-semibold text-destructive tabular-nums">-{{ formatCurrency(order.discount_amount) }}</span>
+              </div>
+              <div v-if="order.standard_tax > 0" class="flex items-center justify-between gap-10">
+                <span class="text-sm text-text-secondary">{{ order.standard_tax_label }}</span>
+                <span class="text-sm tabular-nums text-text-secondary">{{ formatCurrency(order.standard_tax) }}</span>
+              </div>
+              <div v-if="order.liquor_tax > 0" class="flex items-center justify-between gap-10">
+                <span class="text-sm text-text-secondary">IVA licores 5%</span>
+                <span class="text-sm tabular-nums text-text-secondary">{{ formatCurrency(order.liquor_tax) }}</span>
               </div>
               <div class="flex items-center justify-between gap-10 pt-2 border-t border-border">
                 <span class="text-sm font-bold text-text-primary">Total</span>
