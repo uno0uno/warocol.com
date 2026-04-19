@@ -420,9 +420,10 @@
                                 v-for="ing in ingredientResults[form.items.indexOf(item)]"
                                 :key="ing.id"
                                 @click="selectIngredient(ing, form.items.indexOf(item))"
-                                class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary"
+                                class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary flex items-center gap-2"
                               >
-                                {{ ing.name }}
+                                <span>{{ ing.name }}</span>
+                                <span v-if="ing.is_custom" class="text-xs bg-primary/10 text-primary rounded px-1 flex-shrink-0">Personalizado</span>
                               </li>
                               <li
                                 v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
@@ -522,23 +523,34 @@
                           <div class="flex items-start gap-2">
                             <!-- Unit Select -->
                             <div class="flex-1 min-w-[120px]">
-                              <select
-                                v-model="item.purchase_unit"
-                                required
-                                :disabled="!item.ingredient_id || loadingUnitsFor.has(item.ingredient_id)"
-                                class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
-                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingUnitsFor.has(item.ingredient_id) }"
-                                @change="() => onUnitChange(form.items.indexOf(item))"
-                              >
-                                <option value="">{{ loadingUnitsFor.has(item.ingredient_id) ? 'Cargando...' : item.ingredient_id ? 'Seleccionar' : '...' }}</option>
-                                <option
-                                  v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
-                                  :key="unitOpt.value"
-                                  :value="unitOpt.value"
+                              <div class="relative">
+                                <select
+                                  v-model="item.purchase_unit"
+                                  required
+                                  :disabled="!item.ingredient_id || loadingUnitsFor.has(item.ingredient_id)"
+                                  class="input-base w-full pr-2 py-1.5 text-sm h-[34px]"
+                                  :class="[
+                                    { 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingUnitsFor.has(item.ingredient_id) },
+                                    loadingUnitsFor.has(item.ingredient_id) ? 'pl-7' : 'pl-2'
+                                  ]"
+                                  @change="() => onUnitChange(form.items.indexOf(item))"
                                 >
-                                  {{ unitOpt.label }}
-                                </option>
-                              </select>
+                                  <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
+                                  <option
+                                    v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
+                                    :key="unitOpt.value"
+                                    :value="unitOpt.value"
+                                  >
+                                    {{ unitOpt.label }}
+                                  </option>
+                                </select>
+                                <span v-if="loadingUnitsFor.has(item.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
+                                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                                  </svg>
+                                </span>
+                              </div>
                               <p v-if="item.ingredient_id && item.purchase_unit" class="text-[10px] text-text-secondary mt-0.5">
                                 = {{ getConvertedQuantity(form.items.indexOf(item)) }} {{ getIngredientUnit(item.ingredient_id) }}
                               </p>
@@ -635,9 +647,10 @@
                                 v-for="ing in ingredientResults[form.items.indexOf(item)]"
                                 :key="ing.id"
                                 @click="selectIngredient(ing, form.items.indexOf(item))"
-                                class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary"
+                                class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary flex items-center gap-2"
                               >
-                                {{ ing.name }}
+                                <span>{{ ing.name }}</span>
+                                <span v-if="ing.is_custom" class="text-xs bg-primary/10 text-primary rounded px-1 flex-shrink-0">Personalizado</span>
                               </li>
                               <li
                                 v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
@@ -733,23 +746,34 @@
                           <label class="text-xs font-medium text-text-primary mb-1 block">Unidad *</label>
                           <div class="flex items-start gap-2">
                             <div class="flex-1 min-w-[120px]">
-                              <select
-                                v-model="item.purchase_unit"
-                                required
-                                :disabled="!item.ingredient_id || loadingUnitsFor.has(item.ingredient_id)"
-                                class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
-                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingUnitsFor.has(item.ingredient_id) }"
-                                @change="() => onUnitChange(form.items.indexOf(item))"
-                              >
-                                <option value="">{{ loadingUnitsFor.has(item.ingredient_id) ? 'Cargando...' : item.ingredient_id ? 'Seleccionar' : '...' }}</option>
-                                <option
-                                  v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
-                                  :key="unitOpt.value"
-                                  :value="unitOpt.value"
+                              <div class="relative">
+                                <select
+                                  v-model="item.purchase_unit"
+                                  required
+                                  :disabled="!item.ingredient_id || loadingUnitsFor.has(item.ingredient_id)"
+                                  class="input-base w-full pr-2 py-1.5 text-sm h-[34px]"
+                                  :class="[
+                                    { 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingUnitsFor.has(item.ingredient_id) },
+                                    loadingUnitsFor.has(item.ingredient_id) ? 'pl-7' : 'pl-2'
+                                  ]"
+                                  @change="() => onUnitChange(form.items.indexOf(item))"
                                 >
-                                  {{ unitOpt.label }}
-                                </option>
-                              </select>
+                                  <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
+                                  <option
+                                    v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
+                                    :key="unitOpt.value"
+                                    :value="unitOpt.value"
+                                  >
+                                    {{ unitOpt.label }}
+                                  </option>
+                                </select>
+                                <span v-if="loadingUnitsFor.has(item.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
+                                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                                  </svg>
+                                </span>
+                              </div>
                               <p v-if="item.ingredient_id && item.purchase_unit" class="text-[10px] text-text-secondary mt-0.5">
                                 = {{ getConvertedQuantity(form.items.indexOf(item)) }} {{ getIngredientUnit(item.ingredient_id) }}
                               </p>
@@ -845,9 +869,10 @@
                                 v-for="ing in ingredientResults[form.items.indexOf(item)]"
                                 :key="ing.id"
                                 @click="selectIngredient(ing, form.items.indexOf(item))"
-                                class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary"
+                                class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary flex items-center gap-2"
                               >
-                                {{ ing.name }}
+                                <span>{{ ing.name }}</span>
+                                <span v-if="ing.is_custom" class="text-xs bg-primary/10 text-primary rounded px-1 flex-shrink-0">Personalizado</span>
                               </li>
                               <li
                                 v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
@@ -943,23 +968,34 @@
                           <label class="text-xs font-medium text-text-primary mb-1 block">Unidad *</label>
                           <div class="flex items-start gap-2">
                             <div class="flex-1 min-w-[120px]">
-                              <select
-                                v-model="item.purchase_unit"
-                                required
-                                :disabled="!item.ingredient_id || loadingUnitsFor.has(item.ingredient_id)"
-                                class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
-                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingUnitsFor.has(item.ingredient_id) }"
-                                @change="() => onUnitChange(form.items.indexOf(item))"
-                              >
-                                <option value="">{{ loadingUnitsFor.has(item.ingredient_id) ? 'Cargando...' : item.ingredient_id ? 'Seleccionar' : '...' }}</option>
-                                <option
-                                  v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
-                                  :key="unitOpt.value"
-                                  :value="unitOpt.value"
+                              <div class="relative">
+                                <select
+                                  v-model="item.purchase_unit"
+                                  required
+                                  :disabled="!item.ingredient_id || loadingUnitsFor.has(item.ingredient_id)"
+                                  class="input-base w-full pr-2 py-1.5 text-sm h-[34px]"
+                                  :class="[
+                                    { 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingUnitsFor.has(item.ingredient_id) },
+                                    loadingUnitsFor.has(item.ingredient_id) ? 'pl-7' : 'pl-2'
+                                  ]"
+                                  @change="() => onUnitChange(form.items.indexOf(item))"
                                 >
-                                  {{ unitOpt.label }}
-                                </option>
-                              </select>
+                                  <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
+                                  <option
+                                    v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
+                                    :key="unitOpt.value"
+                                    :value="unitOpt.value"
+                                  >
+                                    {{ unitOpt.label }}
+                                  </option>
+                                </select>
+                                <span v-if="loadingUnitsFor.has(item.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
+                                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                                  </svg>
+                                </span>
+                              </div>
                               <p v-if="item.ingredient_id && item.purchase_unit" class="text-[10px] text-text-secondary mt-0.5">
                                 = {{ getConvertedQuantity(form.items.indexOf(item)) }} {{ getIngredientUnit(item.ingredient_id) }}
                               </p>
@@ -1495,7 +1531,7 @@ const isSearching = (index: number): boolean => {
 }
 
 // Cache of ingredient details keyed by ingredient_id (populated on select + OCR match)
-const ingredientCache = ref<Record<string, { id: string, name: string, unit: string, unit_weight_gr?: number | null, type?: string }>>({})
+const ingredientCache = ref<Record<string, { id: string, name: string, unit: string, unit_weight_gr?: number | null, unit_weight_unit?: string | null, type?: string }>>({})
 
 const cacheIngredient = (ing: any) => {
   if (ing?.id) {
@@ -1542,6 +1578,17 @@ const itemsByType = computed(() => ({
 // Per-ingredient purchase units cache (fetched on demand)
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 const loadingUnitsFor = ref<Set<string>>(new Set())
+
+// Standard catalog matching backend PURCHASE_UNIT_CATALOG
+const UNIT_CATALOG: Record<string, { label: string; factor: number; base: 'gr' | 'ml' }> = {
+  kg:         { label: 'Kilogramo',     factor: 1000,  base: 'gr' },
+  libra:      { label: 'Libra',         factor: 500,   base: 'gr' },
+  arroba:     { label: 'Arroba',        factor: 12500, base: 'gr' },
+  bulto_25kg: { label: 'Bulto (25 kg)', factor: 25000, base: 'gr' },
+  lt:         { label: 'Litro',         factor: 1000,  base: 'ml' },
+  botella:    { label: 'Botella',       factor: 750,   base: 'ml' },
+  galon:      { label: 'Galón',         factor: 3785,  base: 'ml' },
+}
 
 // Loading state
 const isLoadingData = computed(() => loadingSuppliers.value)
@@ -1615,6 +1662,23 @@ const getPurchaseUnitOptions = (ingredientId: string) => {
   const options: { value: string; label: string; conversion_factor: number; is_default: boolean; unit_cost?: number }[] = []
   if (ingredient) {
     options.push({ value: baseUnit, label: baseUnit, conversion_factor: 1, is_default: units.length === 0 && pendingUnits.length === 0 })
+  }
+
+  // For dual und ingredients: show gr/ml raw unit + catalog options for that unit type
+  const isDual = ingredient?.unit_weight_gr > 0 && ingredient?.unit_weight_unit && ingredient.unit_weight_unit !== baseUnit
+  const weightUnit = ingredient?.unit_weight_unit as string | undefined
+  if (isDual && weightUnit) {
+    options.push({ value: weightUnit, label: weightUnit, conversion_factor: 1, is_default: false })
+    Object.entries(UNIT_CATALOG)
+      .filter(([, entry]) => entry.base === weightUnit)
+      .forEach(([key, entry]) => {
+        options.push({
+          value: key,
+          label: `${entry.label} · ${entry.factor.toLocaleString('es-CO')} ${weightUnit}`,
+          conversion_factor: entry.factor,
+          is_default: false,
+        })
+      })
   }
 
   const serverOptions = units.map((u: any) => ({
