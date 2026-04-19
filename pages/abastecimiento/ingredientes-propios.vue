@@ -99,7 +99,7 @@
         <!-- Desktop Cells -->
         <template #cell-name="{ value, row }">
           <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="text-sm font-bold" :class="row.is_active === false ? 'text-text-tertiary' : 'text-text-primary'">{{ value }}</span>
+            <span class="text-sm font-bold capitalize" :class="row.is_active === false ? 'text-text-tertiary' : 'text-text-primary'">{{ value }}</span>
             <span v-if="row.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">Archivado</span>
           </div>
         </template>
@@ -136,7 +136,7 @@
         </template>
 
         <template #cell-category="{ value }">
-          <span class="text-sm text-text-secondary">{{ value || '—' }}</span>
+          <span class="text-sm text-text-secondary capitalize">{{ value || '—' }}</span>
         </template>
 
         <template #cell-actions="{ row }">
