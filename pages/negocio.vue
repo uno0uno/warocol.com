@@ -502,22 +502,40 @@
                 <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
               </label>
             </div>
-            <div v-if="taxForm.inc_applicable" class="ml-1 pl-3 border-l-2 border-primary/20 space-y-2">
-              <p class="text-xs font-medium text-text-secondary">Cómo aplicarlo:</p>
-              <label class="flex items-start gap-2.5 cursor-pointer">
-                <input v-model="taxForm.inc_included_in_price" :value="true" type="radio" class="mt-0.5 text-primary focus:ring-primary border-border" />
-                <div>
-                  <p class="text-sm text-text-primary">Incluido en el precio del menú</p>
-                  <p class="text-xs text-text-secondary">Mis precios ya tienen el 8% incluido — el sistema lo extrae al registrar la venta</p>
-                </div>
-              </label>
-              <label class="flex items-start gap-2.5 cursor-pointer">
-                <input v-model="taxForm.inc_included_in_price" :value="false" type="radio" class="mt-0.5 text-primary focus:ring-primary border-border" />
-                <div>
-                  <p class="text-sm text-text-primary">Sumar al precio base en cada venta</p>
-                  <p class="text-xs text-text-secondary">El sistema agrega el 8% sobre el precio base al registrar la venta</p>
-                </div>
-              </label>
+            <div v-if="taxForm.inc_applicable" class="grid grid-cols-2 gap-2 mt-1" role="group" aria-label="Cómo aplicar el INC">
+              <button
+                type="button"
+                @click="taxForm.inc_included_in_price = true"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                  taxForm.inc_included_in_price
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">Incluido en el precio</span>
+                <span :class="['text-[10px] leading-snug', taxForm.inc_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">El 8% ya está dentro del precio. Ej: $10.800 → base $10.000 + INC $800</span>
+              </button>
+              <button
+                type="button"
+                @click="taxForm.inc_included_in_price = false"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                  !taxForm.inc_included_in_price
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">Se suma al precio</span>
+                <span :class="['text-[10px] leading-snug', !taxForm.inc_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">El 8% se agrega encima. Ej: $10.000 base → cobro $10.800</span>
+              </button>
             </div>
           </div>
 
@@ -535,22 +553,40 @@
                 <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
               </label>
             </div>
-            <div v-if="taxForm.iva_applicable" class="ml-1 pl-3 border-l-2 border-primary/20 space-y-2">
-              <p class="text-xs font-medium text-text-secondary">Cómo aplicarlo:</p>
-              <label class="flex items-start gap-2.5 cursor-pointer">
-                <input v-model="taxForm.iva_included_in_price" :value="true" type="radio" class="mt-0.5 text-primary focus:ring-primary border-border" />
-                <div>
-                  <p class="text-sm text-text-primary">Incluido en el precio del menú</p>
-                  <p class="text-xs text-text-secondary">Mis precios ya tienen el 19% incluido — el sistema lo extrae al registrar la venta</p>
-                </div>
-              </label>
-              <label class="flex items-start gap-2.5 cursor-pointer">
-                <input v-model="taxForm.iva_included_in_price" :value="false" type="radio" class="mt-0.5 text-primary focus:ring-primary border-border" />
-                <div>
-                  <p class="text-sm text-text-primary">Sumar al precio base en cada venta</p>
-                  <p class="text-xs text-text-secondary">El sistema agrega el 19% sobre el precio base al registrar la venta</p>
-                </div>
-              </label>
+            <div v-if="taxForm.iva_applicable" class="grid grid-cols-2 gap-2 mt-1" role="group" aria-label="Cómo aplicar el IVA">
+              <button
+                type="button"
+                @click="taxForm.iva_included_in_price = true"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                  taxForm.iva_included_in_price
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">Incluido en el precio</span>
+                <span :class="['text-[10px] leading-snug', taxForm.iva_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">El 19% ya está dentro del precio. Ej: $11.900 → base $10.000 + IVA $1.900</span>
+              </button>
+              <button
+                type="button"
+                @click="taxForm.iva_included_in_price = false"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                  !taxForm.iva_included_in_price
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">Se suma al precio</span>
+                <span :class="['text-[10px] leading-snug', !taxForm.iva_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">El 19% se agrega encima. Ej: $10.000 base → cobro $11.900</span>
+              </button>
             </div>
           </div>
 
