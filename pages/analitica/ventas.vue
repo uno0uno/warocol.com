@@ -214,6 +214,9 @@ const metrics = computed(() => {
       completed_orders: data.completed_orders ?? 0,
       discount_count: data.discount_count ?? 0,
       total_discount_amount: data.total_discount_amount ?? 0,
+      total_standard_tax: data.total_standard_tax ?? 0,
+      total_liquor_tax: data.total_liquor_tax ?? 0,
+      standard_tax_label: data.standard_tax_label ?? 'Impuesto',
     }
   }
   const main = dashboardData.value?.data?.main || {}
@@ -223,6 +226,9 @@ const metrics = computed(() => {
     completed_orders: main.completed_orders ?? 0,
     discount_count: main.discount_count ?? 0,
     total_discount_amount: main.total_discount_amount ?? 0,
+    total_standard_tax: main.total_standard_tax ?? 0,
+    total_liquor_tax: main.total_liquor_tax ?? 0,
+    standard_tax_label: dashboardData.value?.data?.standard_tax_label ?? 'Impuesto',
   }
 })
 
@@ -283,6 +289,8 @@ const formatCurrency = (value: number) =>
           <MetricCard title="Ticket Promedio" :value="metrics.avg_ticket" format="currency" variant="primary" />
           <MetricCard title="Órdenes con Descuento" :value="metrics.discount_count" format="number" variant="primary" :subtitle="metrics.total_discount_amount > 0 ? formatCurrency(metrics.total_discount_amount) + ' descontado' : 'Sin descuentos'" />
           <MetricCard :title="forecastLabel" :value="forecast" format="currency" variant="primary" :subtitle="forecastSubtitle" class="col-span-2 md:col-span-1" />
+          <MetricCard v-if="metrics.total_standard_tax > 0" :title="metrics.standard_tax_label" :value="metrics.total_standard_tax" format="currency" variant="primary" />
+          <MetricCard v-if="metrics.total_liquor_tax > 0" title="IVA Licores 5%" :value="metrics.total_liquor_tax" format="currency" variant="primary" />
         </div>
 
         <!-- Rentabilidad Teaser Banner -->
