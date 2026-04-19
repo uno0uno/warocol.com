@@ -105,8 +105,17 @@
           </div>
         </template>
 
-        <template #cell-unit="{ value, row }">
-          <span class="text-sm font-mono text-text-secondary">{{ value }}{{ row.unit_weight_gr ? ` · ${row.unit_weight_gr}` : '' }}</span>
+        <template #cell-unit="{ value }">
+          <span class="text-sm font-mono text-text-secondary">{{ value }}</span>
+        </template>
+
+        <template #cell-default_purchase_unit_label="{ value }">
+          <span class="text-sm text-text-secondary">{{ value || '—' }}</span>
+        </template>
+
+        <template #cell-unit_weight_gr="{ value }">
+          <span v-if="value" class="text-sm font-mono text-text-secondary">{{ value }}</span>
+          <span v-else class="text-sm text-text-tertiary">—</span>
         </template>
 
         <template #cell-type="{ value }">
@@ -341,12 +350,14 @@ const clearFilters = () => {
 }
 
 const tableColumns = [
-  { key: 'name',          title: 'Nombre',    sortable: true,  format: 'custom', align: 'left' },
-  { key: 'unit',          title: 'Unidad',    sortable: false, format: 'custom', align: 'left' },
-  { key: 'type',          title: 'Tipo',      sortable: false, format: 'custom', align: 'left' },
-  { key: 'costo_unitario',title: 'Costo',     sortable: true,  format: 'custom', align: 'left' },
-  { key: 'category',      title: 'Categoría', sortable: false, format: 'custom', align: 'left' },
-  { key: 'actions',       title: '',          sortable: false, format: 'custom', align: 'center' },
+  { key: 'name',                       title: 'Nombre',        sortable: true,  format: 'custom', align: 'left' },
+  { key: 'unit',                       title: 'Unidad base',   sortable: false, format: 'custom', align: 'left' },
+  { key: 'default_purchase_unit_label',title: 'Unidad compra', sortable: false, format: 'custom', align: 'left' },
+  { key: 'unit_weight_gr',             title: 'Gr/und',        sortable: false, format: 'custom', align: 'left' },
+  { key: 'type',                       title: 'Tipo',          sortable: false, format: 'custom', align: 'left' },
+  { key: 'costo_unitario',             title: 'Costo',         sortable: true,  format: 'custom', align: 'left' },
+  { key: 'category',                   title: 'Categoría',     sortable: false, format: 'custom', align: 'left' },
+  { key: 'actions',                    title: '',              sortable: false, format: 'custom', align: 'center' },
 ]
 
 // Layout integration
