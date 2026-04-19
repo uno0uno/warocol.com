@@ -123,13 +123,7 @@
         </template>
 
         <template #cell-type="{ value }">
-          <span :class="[
-            'text-xs font-medium px-2 py-0.5 rounded-full',
-            value === 'food'    ? 'bg-green-100 text-green-700' :
-            value === 'supply'  ? 'bg-blue-100 text-blue-700' :
-            value === 'service' ? 'bg-purple-100 text-purple-700' :
-            'bg-surface-secondary text-text-secondary'
-          ]">{{ TYPE_LABELS[value] || value }}</span>
+          <UiStatusBadge :value="TYPE_LABELS[value] || value" format="text" variant="secondary" size="sm" />
         </template>
 
         <template #cell-costo_unitario="{ value }">
