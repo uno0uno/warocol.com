@@ -305,13 +305,20 @@ const openingBalance = computed(() => entriesData.value?.openingBalance ?? 0)
 
 // ── Running balance per row ────────────────────────────────────────────────
 // Entries arrive sorted ASC from backend when accountId is set.
-// running = openingBalance + Σ(debit - credit) for each entry in order.
+// Sign depends on account normal_balance:
+//   debit-normal  (class 1 Activos, 5 Gastos, 6 Costos): running += debit - credit
+//   credit-normal (class 2 Pasivos, 3 Patrimonio, 4 Ingresos): running += credit - debit
 interface EntryWithBalance extends JournalEntry { runningBalance: number }
 
 const entriesWithBalance = computed<EntryWithBalance[]>(() => {
   let running = openingBalance.value
+  const isDebitNormal = (account.value?.normalBalance ?? 'debit') === 'debit'
   return entries.value.map(e => {
-    running = running + (e.totalDebit ?? 0) - (e.totalCredit ?? 0)
+    if (isDebitNormal) {
+      running = running + (e.totalDebit ?? 0) - (e.totalCredit ?? 0)
+    } else {
+      running = running + (e.totalCredit ?? 0) - (e.totalDebit ?? 0)
+    }
     return { ...e, runningBalance: running }
   })
 })
