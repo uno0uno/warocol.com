@@ -651,7 +651,9 @@ const UNIT_TYPES = [
     key: 'pieza' as const,
     label: 'Pieza',
     unit: 'und',
-    suggestions: [],
+    suggestions: [
+      { purchase_unit: 'und', label: 'Unidad', conversion_factor: 1 },
+    ],
   },
 ]
 
