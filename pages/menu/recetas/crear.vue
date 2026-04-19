@@ -575,6 +575,17 @@ const unitLabels: Record<string, string> = {
   lb: 'Libras (lb)',
 }
 
+// Standard catalog matching backend PURCHASE_UNIT_CATALOG
+const UNIT_CATALOG: Record<string, { label: string; factor: number; base: 'gr' | 'ml' }> = {
+  kg:         { label: 'Kilogramo',    factor: 1000,  base: 'gr' },
+  libra:      { label: 'Libra',        factor: 500,   base: 'gr' },
+  arroba:     { label: 'Arroba',       factor: 12500, base: 'gr' },
+  bulto_25kg: { label: 'Bulto (25 kg)',factor: 25000, base: 'gr' },
+  lt:         { label: 'Litro',        factor: 1000,  base: 'ml' },
+  botella:    { label: 'Botella',      factor: 750,   base: 'ml' },
+  galon:      { label: 'Galón',        factor: 3785,  base: 'ml' },
+}
+
 function getIngredientUnitOptions(ingredientId: string) {
   if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
   const ingredient = ingredientCache.value[ingredientId]
@@ -585,10 +596,21 @@ function getIngredientUnitOptions(ingredientId: string) {
     { value: baseUnit, label: unitLabels[baseUnit] || baseUnit }
   ]
 
-  // For und ingredients with unit_weight_gr, offer gr/ml as option (before purchase units)
-  if (ingredient?.unit_weight_gr > 0 && ingredient?.unit_weight_unit && ingredient.unit_weight_unit !== baseUnit) {
-    const wu = ingredient.unit_weight_unit as string
-    options.push({ value: wu, label: unitLabels[wu] || wu })
+  const isDual = ingredient?.unit_weight_gr > 0 && ingredient?.unit_weight_unit && ingredient.unit_weight_unit !== baseUnit
+  const weightUnit = ingredient?.unit_weight_unit as string | undefined
+
+  // For dual und ingredients: show gr/ml raw unit + catalog options for that unit type
+  if (isDual && weightUnit) {
+    options.push({ value: weightUnit, label: unitLabels[weightUnit] || weightUnit })
+    // Add catalog entries compatible with unit_weight_unit (e.g. lt, botella, galon for ml)
+    Object.entries(UNIT_CATALOG)
+      .filter(([, entry]) => entry.base === weightUnit)
+      .forEach(([key, entry]) => {
+        options.push({
+          value: key,
+          label: `${entry.label} · ${entry.factor.toLocaleString('es-CO')} ${weightUnit}`,
+        })
+      })
   }
 
   // Purchase units with proper labels and conversion info
