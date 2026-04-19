@@ -112,7 +112,7 @@
           <UiStatusBadge
             :value="value ? 'Reventa' : 'No'"
             format="text"
-            :variant="value ? 'info' : 'secondary'"
+            :variant="value ? 'success' : 'secondary'"
             size="sm"
           />
         </template>
