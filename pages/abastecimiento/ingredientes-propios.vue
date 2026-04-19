@@ -112,7 +112,7 @@
           <UiStatusBadge
             :value="value ? 'Reventa' : 'No'"
             format="text"
-            :variant="value ? 'primary' : 'secondary'"
+            :variant="value ? 'success' : 'secondary'"
             size="sm"
           />
         </template>
@@ -136,7 +136,7 @@
           <UiStatusBadge
             :value="value ? `$${Number(value).toLocaleString('es-CO')}` : 'Sin costo'"
             format="text"
-            :variant="value ? 'success' : 'secondary'"
+            :variant="value ? 'info' : 'secondary'"
             size="sm"
           />
         </template>
