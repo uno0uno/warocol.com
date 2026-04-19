@@ -131,6 +131,55 @@
             </div>
           </div>
 
+          <!-- Categoría de Impuesto — solo visible cuando el tenant tiene impuestos activos -->
+          <div v-if="hasTaxes" class="mt-8">
+            <h3 class="text-lg font-semibold text-text-primary mb-2">Categoría de Impuesto</h3>
+            <p class="text-sm text-text-secondary mb-4">
+              Define cómo se aplica el impuesto a este producto según la configuración del negocio.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="group" aria-label="Categoría de impuesto">
+              <button
+                type="button"
+                @click="form.tax_category = 'standard'"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                  form.tax_category === 'standard'
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <span class="text-sm font-semibold">Alimento / Bebida</span>
+                <span class="text-xs leading-snug">INC 8% o IVA 19% según configuración del negocio</span>
+              </button>
+              <button
+                type="button"
+                @click="form.tax_category = 'liquor'"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                  form.tax_category === 'liquor'
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <span class="text-sm font-semibold">Licor para llevar</span>
+                <span class="text-xs leading-snug">IVA licores 5% — botellas o licores para llevar</span>
+              </button>
+              <button
+                type="button"
+                @click="form.tax_category = 'exempt'"
+                :class="[
+                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
+                  form.tax_category === 'exempt'
+                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
+                ]"
+              >
+                <span class="text-sm font-semibold">Exento</span>
+                <span class="text-xs leading-snug">Sin impuesto — alimentos básicos sin transformación</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Recetas Base (Opcional) -->
           <div class="mt-8">
             <div class="flex justify-between items-center mb-4">
@@ -439,6 +488,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useQuery } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
@@ -460,6 +510,18 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
+
+// Tax config — only show selector when tenant has taxes enabled
+const { data: taxConfigData } = useQuery({
+  key: () => ['tenant', 'tax-config', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/tax-config'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+const taxConfig = computed(() => taxConfigData.value?.data ?? null)
+const hasTaxes = computed(() =>
+  !!(taxConfig.value?.inc_applicable || taxConfig.value?.iva_applicable || taxConfig.value?.liquor_tax_applicable)
+)
 
 // Get product ID from route
 const productId = route.params.id as string
@@ -600,6 +662,7 @@ const form = ref({
   is_available_online: true,
   is_combo: false,
   allow_modifiers: true,
+  tax_category: 'standard' as 'standard' | 'liquor' | 'exempt',
   recipe_base_ids: [] as string[],
   ingredients: [] as Array<{ ingredient_id: string, ingredient_name: string, quantity: number, unit: string }>
 })
@@ -624,6 +687,7 @@ watch(productData, (data) => {
       is_available_online: product.is_available_online ?? true,
       is_combo: product.is_combo,
       allow_modifiers: product.allow_modifiers,
+      tax_category: (product.tax_category || 'standard') as 'standard' | 'liquor' | 'exempt',
       recipe_base_ids: product.recipe_base_ids || [],
       ingredients: product.ingredients.map((ing: any) => {
         if (ing.ingredient_id) {
