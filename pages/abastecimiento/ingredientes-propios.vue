@@ -123,7 +123,7 @@
         </template>
 
         <template #cell-type="{ value }">
-          <UiStatusBadge :value="TYPE_LABELS[value] || value" format="text" variant="secondary" size="sm" />
+          <UiStatusBadge :value="TYPE_LABELS[value] || value" format="text" variant="info" size="sm" />
         </template>
 
         <template #cell-costo_unitario="{ value }">
