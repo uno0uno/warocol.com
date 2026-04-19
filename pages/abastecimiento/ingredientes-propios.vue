@@ -69,7 +69,7 @@
         empty-message="Aún no tienes ingredientes personalizados"
         empty-sub-message="Crea tu primer ingrediente personalizado desde aquí o desde cualquier receta o modificador"
         variant="default"
-        row-size="sm"
+        row-size="xs"
       >
         <!-- Mobile Card -->
         <template #card="{ item, index }">

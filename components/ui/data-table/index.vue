@@ -117,7 +117,7 @@ export interface DataTableProps {
   rowClass?: (row: any) => string | undefined
 
   // Row density: 'sm' uses tighter padding for information-dense tables
-  rowSize?: 'sm' | 'default'
+  rowSize?: 'xs' | 'sm' | 'default'
 
   rowKey?: string | ((row: Record<string, any>) => string | number)
   animateNewRows?: boolean
@@ -271,7 +271,7 @@ watch(
               v-for="column in columns"
               :key="column.key"
               :class="cn(
-                rowSize === 'sm' ? 'py-2 px-3' : 'py-3 px-4',
+                rowSize === 'xs' ? 'py-1 px-2' : rowSize === 'sm' ? 'py-2 px-3' : 'py-3 px-4',
                 'border-r border-dashed border-border/60 last:border-r-0',
                 column.align === 'center' && 'text-center',
                 column.align === 'right' && 'text-right',
@@ -342,7 +342,7 @@ watch(
               v-for="column in columns"
               :key="column.key"
               :class="cn(
-                rowSize === 'sm' ? 'py-2 px-3' : 'py-3.5 px-4',
+                rowSize === 'xs' ? 'py-1 px-2' : rowSize === 'sm' ? 'py-2 px-3' : 'py-3.5 px-4',
                 'text-sm font-medium border-r border-dashed border-border/60 last:border-r-0',
                 getCellColor(row[column.key], column),
                 column.align === 'center' && 'text-center',

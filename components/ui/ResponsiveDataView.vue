@@ -106,7 +106,7 @@ interface Props {
   // Per-row class function for desktop table highlighting
   rowClass?: (row: any) => string | undefined
   // Row density for desktop table
-  rowSize?: 'sm' | 'default'
+  rowSize?: 'xs' | 'sm' | 'default'
 }
 
 const props = withDefaults(defineProps<Props>(), {
