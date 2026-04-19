@@ -709,6 +709,7 @@ watch(() => props.ingredient, (ing) => {
       type: ing.type ?? 'food',
       unitWeightGr: ing.unit_weight_gr ?? null,
     }
+    unitWeightUnit.value = (ing.unit_weight_unit as 'gr' | 'ml') ?? 'gr'
     unitType.value = ''
     existingPurchaseUnits.value = []
   } else {
@@ -780,6 +781,12 @@ async function submit() {
     if (form.value.parentId !== null) body.parent_id = form.value.parentId
 
     let result: any
+    // unit_weight (both create and edit)
+    if (form.value.unitWeightGr !== null) {
+      body.unit_weight_gr = form.value.unitWeightGr
+      body.unit_weight_unit = form.value.unit === 'und' ? unitWeightUnit.value : form.value.unit
+    }
+
     if (isEdit.value) {
       // type is immutable — never include it in PATCH
       if (existingPurchaseUnits.value.length === 0 && editSuggestions.value.length > 0) {
@@ -791,26 +798,11 @@ async function submit() {
       result = await $fetch(`/api/suppliers/ingredients/${props.ingredient.id}`, { method: 'PATCH', body })
     } else {
       body.type = form.value.type
-      if (form.value.unit === 'und' && form.value.unitWeightGr !== null) {
-        body.unit_weight_gr = form.value.unitWeightGr
-      }
       body.purchase_units = currentSuggestions.value.map((s, i) => ({
         purchase_unit: s.purchase_unit,
         is_default: i === 0,
       }))
       result = await $fetch('/api/suppliers/ingredients', { method: 'POST', body })
-    }
-
-    // Save unit_weight_gr if unit is 'und' and value provided (edit mode only)
-    if (isEdit.value && form.value.unit === 'und' && form.value.unitWeightGr !== null) {
-      try {
-        await $fetch(`/api/suppliers/ingredients/${props.ingredient.id}/unit-weight`, {
-          method: 'PATCH',
-          body: { unit_weight_gr: form.value.unitWeightGr },
-        })
-      } catch {
-        // non-blocking
-      }
     }
 
     emit('saved', result.data)

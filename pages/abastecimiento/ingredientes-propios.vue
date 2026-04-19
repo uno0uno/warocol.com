@@ -113,8 +113,8 @@
           <span class="text-sm text-text-secondary">{{ value || '—' }}</span>
         </template>
 
-        <template #cell-unit_weight_gr="{ value }">
-          <span v-if="value" class="text-sm font-mono text-text-secondary">{{ value }}</span>
+        <template #cell-unit_weight_gr="{ value, row }">
+          <span v-if="value" class="text-sm font-mono text-text-secondary">{{ value }} {{ row.unit_weight_unit || 'gr' }}</span>
           <span v-else class="text-sm text-text-tertiary">—</span>
         </template>
 
