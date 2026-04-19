@@ -109,8 +109,12 @@
         </template>
 
         <template #cell-is_resale="{ value }">
-          <span v-if="value" class="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">Sí</span>
-          <span v-else class="text-sm text-text-tertiary">—</span>
+          <UiStatusBadge
+            :value="value ? 'Reventa' : 'No'"
+            format="text"
+            :variant="value ? 'primary' : 'secondary'"
+            size="sm"
+          />
         </template>
 
         <template #cell-unit_weight_gr="{ value, row }">
@@ -129,8 +133,12 @@
         </template>
 
         <template #cell-costo_unitario="{ value }">
-          <span v-if="value" class="text-sm text-text-primary">${{ Number(value).toLocaleString('es-CO') }}</span>
-          <span v-else class="text-sm text-text-tertiary">—</span>
+          <UiStatusBadge
+            :value="value ? `$${Number(value).toLocaleString('es-CO')}` : 'Sin costo'"
+            format="text"
+            :variant="value ? 'success' : 'secondary'"
+            size="sm"
+          />
         </template>
 
         <template #cell-category="{ value }">
