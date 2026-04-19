@@ -50,7 +50,7 @@ const discountInput = ref('')
 
 // Success modal state
 const showSuccessModal = ref(false)
-const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string; discount_amount?: number; subtotal?: number } | null>(null)
+const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string; discount_amount?: number; subtotal?: number; standard_tax?: number; liquor_tax?: number; standard_tax_label?: string } | null>(null)
 const wasMesaMode = ref(false)
 const receiptEmail = ref('')
 const emailSent = ref(false)
@@ -428,6 +428,9 @@ const processOrder = async () => {
         total_amount: number
         payment_method: string
         items_count: number
+        standard_tax?: number
+        liquor_tax?: number
+        standard_tax_label?: string
       }
     }
 
@@ -441,6 +444,9 @@ const processOrder = async () => {
         payment_method: response.data.payment_method,
         payment_method_name: subMethodName,
         customer_id: selectedCustomer.value?.id,
+        standard_tax: response.data.standard_tax ?? 0,
+        liquor_tax: response.data.liquor_tax ?? 0,
+        standard_tax_label: response.data.standard_tax_label ?? 'Impuesto',
         ...(discountEnabled.value && _discountAmtPos > 0
           ? { discount_amount: _discountAmtPos, subtotal: _subtotalPos }
           : {})
@@ -564,6 +570,9 @@ const sendReceiptEmail = async () => {
         business_phone: businessProfile.value?.phone_number ?? null,
         discount_amount: orderResult.value.discount_amount ?? 0,
         subtotal: orderResult.value.subtotal ?? 0,
+        standard_tax: orderResult.value.standard_tax ?? 0,
+        liquor_tax: orderResult.value.liquor_tax ?? 0,
+        standard_tax_label: orderResult.value.standard_tax_label ?? 'Impuesto',
       }
     })
     emailSent.value = true
@@ -1574,7 +1583,15 @@ onUnmounted(() => {
               <span class="text-sm text-primary">Descuento</span>
               <span class="text-sm font-medium text-primary">-{{ formatCurrency(orderResult.discount_amount) }}</span>
             </div>
-            <div class="flex items-center justify-between" :class="orderResult.discount_amount ? 'border-t border-border pt-3' : ''">
+            <div v-if="orderResult.standard_tax && orderResult.standard_tax > 0" class="flex items-center justify-between">
+              <span class="text-sm text-text-secondary">{{ orderResult.standard_tax_label ?? 'Impuesto' }}</span>
+              <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.standard_tax) }}</span>
+            </div>
+            <div v-if="orderResult.liquor_tax && orderResult.liquor_tax > 0" class="flex items-center justify-between">
+              <span class="text-sm text-text-secondary">IVA licores 5%</span>
+              <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.liquor_tax) }}</span>
+            </div>
+            <div class="flex items-center justify-between" :class="(orderResult.discount_amount || orderResult.standard_tax || orderResult.liquor_tax) ? 'border-t border-border pt-3' : ''">
               <span class="text-sm text-text-secondary">Total</span>
               <span class="text-lg font-bold text-text-primary">{{ formatCurrency(orderResult.total_amount) }}</span>
             </div>
