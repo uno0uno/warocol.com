@@ -361,8 +361,16 @@
           <div v-if="isEdit" class="flex flex-col gap-1.5">
             <p class="text-xs font-medium text-text-secondary">Unidades de compra</p>
 
+            <!-- Skeleton mientras carga -->
+            <div v-if="loadingExistingUnits" class="rounded-xl border border-border divide-y divide-border overflow-hidden bg-surface-secondary/30 animate-pulse">
+              <div v-for="i in 2" :key="i" class="flex items-center justify-between px-3 py-2 gap-2">
+                <div class="h-4 bg-border/60 rounded w-28" />
+                <div class="h-4 bg-border/60 rounded w-16" />
+              </div>
+            </div>
+
             <!-- Lista existente -->
-            <div v-if="!loadingExistingUnits && existingPurchaseUnits.length > 0" class="rounded-xl border border-border divide-y divide-border overflow-hidden bg-surface-secondary/30">
+            <div v-else-if="existingPurchaseUnits.length > 0" class="rounded-xl border border-border divide-y divide-border overflow-hidden bg-surface-secondary/30">
               <div v-for="u in existingPurchaseUnits" :key="u.id" class="flex items-center justify-between px-3 py-2 gap-2">
                 <div class="flex items-center gap-2 min-w-0 flex-1">
                   <span class="text-sm text-text-primary truncate">{{ u.purchase_unit_label }}</span>
@@ -392,7 +400,7 @@
             </div>
 
             <!-- Sin unidades: mostrar sugerencias que se crearán al guardar -->
-            <div v-else-if="!loadingExistingUnits && existingPurchaseUnits.length === 0 && editSuggestions.length > 0" class="rounded-xl border border-primary/30 divide-y divide-border overflow-hidden bg-primary/5">
+            <div v-else-if="existingPurchaseUnits.length === 0 && editSuggestions.length > 0" class="rounded-xl border border-primary/30 divide-y divide-border overflow-hidden bg-primary/5">
               <div v-for="(s, i) in editSuggestions" :key="i" class="flex items-center justify-between px-3 py-2">
                 <div class="flex items-center gap-2 min-w-0">
                   <span class="text-sm text-text-primary">{{ s.label }}</span>
