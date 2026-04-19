@@ -580,19 +580,38 @@ function getIngredientUnitOptions(ingredientId: string) {
   const ingredient = ingredientCache.value[ingredientId]
   const baseUnit = ingredient?.unit || 'g'
   const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
-  const unitSet = new Set<string>([baseUnit])
-  purchaseUnits.forEach((pu: any) => { if (pu.purchase_unit) unitSet.add(pu.purchase_unit) })
-  // If ingredient has unit_weight_gr, also offer the weight/volume unit (e.g. ml for a und ingredient)
+
+  const options: { value: string; label: string }[] = [
+    { value: baseUnit, label: unitLabels[baseUnit] || baseUnit }
+  ]
+
+  // For und ingredients with unit_weight_gr, offer gr/ml as option (before purchase units)
   if (ingredient?.unit_weight_gr > 0 && ingredient?.unit_weight_unit && ingredient.unit_weight_unit !== baseUnit) {
-    unitSet.add(ingredient.unit_weight_unit)
+    const wu = ingredient.unit_weight_unit as string
+    options.push({ value: wu, label: unitLabels[wu] || wu })
   }
-  return Array.from(unitSet).map(u => ({ value: u, label: unitLabels[u] || u }))
+
+  // Purchase units with proper labels and conversion info
+  purchaseUnits.forEach((pu: any) => {
+    if (pu.purchase_unit && !options.find(o => o.value === pu.purchase_unit)) {
+      options.push({
+        value: pu.purchase_unit,
+        label: `${pu.purchase_unit_label} · ${Number(pu.conversion_factor).toLocaleString('es-CO')} ${baseUnit}`,
+      })
+    }
+  })
+
+  return options
 }
 
 async function onIngredientChange(index: number, ingredientId: string) {
   if (!ingredientId) return
   const ingredient = ingredientCache.value[ingredientId]
-  form.value.ingredients[index].unit = ingredient?.unit || 'g'
+  // For dual-unit und ingredients, default to unit_weight_unit (gr/ml) for recipe use
+  const defaultUnit = (ingredient?.unit_weight_gr > 0 && ingredient?.unit_weight_unit && ingredient.unit_weight_unit !== ingredient?.unit)
+    ? ingredient.unit_weight_unit
+    : ingredient?.unit || 'g'
+  form.value.ingredients[index].unit = defaultUnit
   if (!purchaseUnitsCache.value.has(ingredientId)) {
     loadingUnits.value = new Set([...loadingUnits.value, ingredientId])
     try {
