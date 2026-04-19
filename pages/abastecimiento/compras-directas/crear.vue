@@ -525,12 +525,12 @@
                               <select
                                 v-model="item.purchase_unit"
                                 required
-                                :disabled="!item.ingredient_id || loadingPurchaseUnits"
+                                :disabled="!item.ingredient_id || loadingUnitsFor.has(item.ingredient_id)"
                                 class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
-                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingPurchaseUnits }"
+                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingUnitsFor.has(item.ingredient_id) }"
                                 @change="() => onUnitChange(form.items.indexOf(item))"
                               >
-                                <option value="">{{ loadingPurchaseUnits ? 'Cargando...' : item.ingredient_id ? 'Seleccionar' : '...' }}</option>
+                                <option value="">{{ loadingUnitsFor.has(item.ingredient_id) ? 'Cargando...' : item.ingredient_id ? 'Seleccionar' : '...' }}</option>
                                 <option
                                   v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
                                   :key="unitOpt.value"
@@ -736,12 +736,12 @@
                               <select
                                 v-model="item.purchase_unit"
                                 required
-                                :disabled="!item.ingredient_id || loadingPurchaseUnits"
+                                :disabled="!item.ingredient_id || loadingUnitsFor.has(item.ingredient_id)"
                                 class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
-                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingPurchaseUnits }"
+                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingUnitsFor.has(item.ingredient_id) }"
                                 @change="() => onUnitChange(form.items.indexOf(item))"
                               >
-                                <option value="">{{ loadingPurchaseUnits ? 'Cargando...' : item.ingredient_id ? 'Seleccionar' : '...' }}</option>
+                                <option value="">{{ loadingUnitsFor.has(item.ingredient_id) ? 'Cargando...' : item.ingredient_id ? 'Seleccionar' : '...' }}</option>
                                 <option
                                   v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
                                   :key="unitOpt.value"
@@ -946,12 +946,12 @@
                               <select
                                 v-model="item.purchase_unit"
                                 required
-                                :disabled="!item.ingredient_id || loadingPurchaseUnits"
+                                :disabled="!item.ingredient_id || loadingUnitsFor.has(item.ingredient_id)"
                                 class="input-base w-full px-2 py-1.5 text-sm h-[34px]"
-                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingPurchaseUnits }"
+                                :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingUnitsFor.has(item.ingredient_id) }"
                                 @change="() => onUnitChange(form.items.indexOf(item))"
                               >
-                                <option value="">{{ loadingPurchaseUnits ? 'Cargando...' : item.ingredient_id ? 'Seleccionar' : '...' }}</option>
+                                <option value="">{{ loadingUnitsFor.has(item.ingredient_id) ? 'Cargando...' : item.ingredient_id ? 'Seleccionar' : '...' }}</option>
                                 <option
                                   v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
                                   :key="unitOpt.value"
@@ -1539,18 +1539,12 @@ const itemsByType = computed(() => ({
   supply: form.value.items.filter(item => item.item_type === 'supply')
 }))
 
-// Fetch purchase units
-const { data: purchaseUnitsData, pending: loadingPurchaseUnits, refresh: refreshPurchaseUnits } = useFetch('/api/suppliers/ingredient-purchase-units', {
-  server: false,
-  query: { limit: 10000, active_only: true }
-})
-
-const purchaseUnits = computed(() => purchaseUnitsData.value?.data || [])
+// Per-ingredient purchase units cache (fetched on demand)
+const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
+const loadingUnitsFor = ref<Set<string>>(new Set())
 
 // Loading state
-const isLoadingData = computed(() =>
-  loadingSuppliers.value || loadingPurchaseUnits.value
-)
+const isLoadingData = computed(() => loadingSuppliers.value)
 
 // Computed
 const totalAmount = computed(() => {
@@ -1614,7 +1608,7 @@ const getPurchaseUnitOptions = (ingredientId: string) => {
   const ingredient = ingredientCache.value[ingredientId]
   const baseUnit = ingredient?.unit || ''
 
-  const units = purchaseUnits.value.filter((u: any) => u.ingredient_id === ingredientId)
+  const units = purchaseUnitsCache.value.get(ingredientId) || []
   const pendingUnits = localPurchaseUnits.value.filter(u => u.ingredient_id === ingredientId)
 
   // Always include the base unit as first option
@@ -1671,8 +1665,7 @@ const getConversionFactor = (purchaseUnitLabel: string, ingredientId: string) =>
   if (localUnit) return localUnit.conversion_factor
 
   // Buscar en unidades configuradas del servidor
-  const unit = purchaseUnits.value.find((u: any) =>
-    u.ingredient_id === ingredientId &&
+  const unit = (purchaseUnitsCache.value.get(ingredientId) || []).find((u: any) =>
     u.purchase_unit_label === purchaseUnitLabel
   )
   if (unit) return unit.conversion_factor
@@ -1720,21 +1713,36 @@ const onSupplierChange = async (supplierId: string) => {
   }
 }
 
-const onIngredientChange = (index: number) => {
+const onIngredientChange = async (index: number) => {
   const item = form.value.items[index]
   const ingredient = ingredientCache.value[item.ingredient_id]
+  if (!ingredient) return
 
-  if (ingredient) {
-    // Set default unit
-    const units = getPurchaseUnitOptions(item.ingredient_id)
-    const defaultUnit = units.find((u: any) => u.is_default) || units[0]
-    if (defaultUnit) {
-      item.purchase_unit = defaultUnit.value
+  // Fetch purchase units for this ingredient if not cached
+  if (!purchaseUnitsCache.value.has(item.ingredient_id)) {
+    loadingUnitsFor.value = new Set([...loadingUnitsFor.value, item.ingredient_id])
+    try {
+      const res = await $fetch<any>(`/api/suppliers/ingredient-purchase-units/ingredient/${item.ingredient_id}`)
+      const updated = new Map(purchaseUnitsCache.value)
+      updated.set(item.ingredient_id, res.data || [])
+      purchaseUnitsCache.value = updated
+    } catch {
+      const updated = new Map(purchaseUnitsCache.value)
+      updated.set(item.ingredient_id, [])
+      purchaseUnitsCache.value = updated
+    } finally {
+      const next = new Set(loadingUnitsFor.value)
+      next.delete(item.ingredient_id)
+      loadingUnitsFor.value = next
     }
-
-    // Update suggested price from catalog
-    updateSuggestedPrice(index)
   }
+
+  // Set default unit
+  const units = getPurchaseUnitOptions(item.ingredient_id)
+  const defaultUnit = units.find((u: any) => u.is_default) || units[0]
+  if (defaultUnit) item.purchase_unit = defaultUnit.value
+
+  updateSuggestedPrice(index)
 }
 
 const onUnitChange = (index: number) => {
@@ -2141,8 +2149,11 @@ async function onIngredientCreated(ingredient: any) {
   item.ingredient_id = ingredient.id
   item.searchTerm = ingredient.name
   item.showResults = false
-  await refreshPurchaseUnits()
-  onIngredientChange(index)
+  // Clear cache so fresh units are fetched for the newly created ingredient
+  const updated = new Map(purchaseUnitsCache.value)
+  updated.delete(ingredient.id)
+  purchaseUnitsCache.value = updated
+  await onIngredientChange(index)
 }
 
 function onIngredientSelected(ingredient: any) {
