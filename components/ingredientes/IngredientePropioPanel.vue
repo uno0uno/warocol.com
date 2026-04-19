@@ -403,32 +403,48 @@
             </div>
 
             <!-- Añadir nueva unidad -->
-            <div class="flex flex-col gap-1.5 mt-1">
-              <p class="text-xs text-text-tertiary">Nueva unidad de compra</p>
+            <div class="flex flex-col gap-2 mt-1 rounded-xl border border-border px-3 py-3 bg-surface-secondary/20">
+              <p class="text-xs font-medium text-text-secondary">Nueva unidad de compra</p>
               <div class="flex gap-2">
-                <input
-                  v-model="newUnit.purchase_unit_label"
-                  type="text"
-                  placeholder="Ej: Caja, Docena..."
-                  :class="inputClass + ' flex-1'"
-                  @keyup.enter="addPurchaseUnit"
-                />
-                <input
-                  v-model.number="newUnit.conversion_factor"
-                  type="number"
-                  min="0.001"
-                  step="0.001"
-                  :placeholder="`Factor en ${form.unit || 'base'}`"
-                  :class="inputClass + ' w-36'"
-                  @keyup.enter="addPurchaseUnit"
-                />
+                <div class="flex flex-col gap-1 flex-1">
+                  <label class="text-[10px] text-text-tertiary font-medium uppercase tracking-wide">Nombre</label>
+                  <input
+                    v-model="newUnit.purchase_unit_label"
+                    type="text"
+                    placeholder="Ej: Caja, Docena..."
+                    :class="inputClass"
+                    @keyup.enter="addPurchaseUnit"
+                  />
+                </div>
+                <div class="flex flex-col gap-1 w-32">
+                  <label class="text-[10px] text-text-tertiary font-medium uppercase tracking-wide">Cantidad en {{ form.unit || 'base' }}</label>
+                  <input
+                    v-model.number="newUnit.conversion_factor"
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    placeholder="Ej: 12"
+                    :class="inputClass"
+                    @keyup.enter="addPurchaseUnit"
+                  />
+                </div>
+              </div>
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-xs text-text-tertiary">
+                  <template v-if="newUnit.purchase_unit_label && newUnit.conversion_factor">
+                    1 <strong class="text-text-secondary">{{ newUnit.purchase_unit_label }}</strong> = {{ newUnit.conversion_factor }} {{ form.unit || 'base' }}
+                  </template>
+                  <template v-else>
+                    Cuántas {{ form.unit || 'unidades base' }} trae 1 unidad de compra
+                  </template>
+                </p>
                 <button
                   type="button"
                   :disabled="savingUnit"
-                  class="px-3 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors flex-shrink-0"
+                  class="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors flex-shrink-0"
                   @click="addPurchaseUnit"
                 >
-                  {{ savingUnit ? '...' : 'Añadir' }}
+                  {{ savingUnit ? 'Guardando...' : 'Agregar unidad' }}
                 </button>
               </div>
               <p v-if="unitFormError" class="text-xs text-destructive">{{ unitFormError }}</p>
