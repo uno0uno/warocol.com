@@ -291,7 +291,7 @@ const { data: employeeData } = useAsyncData(
   {
     server: false,
     default: () => ({ data: null }),
-    transform: (response) => {
+    transform: (response: any) => {
       const data = response?.data
       // Pre-fill amount from salary config (not for daily workers — amount is days × rate)
       if (data?.calculated_salary && data?.employment_type !== 'daily') {
@@ -337,7 +337,7 @@ const isFormValid = computed(() => {
 })
 
 // Formatters
-const formatCurrency = (value) => {
+const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
@@ -348,7 +348,7 @@ const formatCurrency = (value) => {
 
 const { formatDate } = useFormatters()
 
-const formatPeriod = (periodString) => {
+const formatPeriod = (periodString: string) => {
   if (!periodString) return ''
   const [year, month] = periodString.split('-')
   const date = new Date(year, month - 1)
@@ -390,14 +390,14 @@ const handleSubmit = async () => {
     })
 
     // Upload attachments if present
-    if (form.attachments.length > 0 && response.data?.id) {
+    if (form.attachments.length > 0 && (response as any).data?.id) {
       try {
         const formData = new FormData()
         form.attachments.forEach((file) => {
           formData.append('files', file)
         })
 
-        await $fetch(`/api/salaries/payments/${response.data.id}/attachments`, {
+        await $fetch(`/api/salaries/payments/${(response as any).data.id}/attachments`, {
           method: 'POST',
           body: formData
         })
@@ -413,7 +413,7 @@ const handleSubmit = async () => {
     await navigateTo(`/equipo/salarios/${employeeId}`)
   } catch (err) {
     console.error('Error recording payment:', err)
-    toast.error(err.data?.detail || 'Error al registrar el pago')
+    toast.error((err as any).data?.detail || 'Error al registrar el pago')
   } finally {
     isSubmitting.value = false
   }

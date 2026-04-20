@@ -33,7 +33,7 @@ const { data: employeeData, pending: employeePending, refresh, error: fetchError
   }
 )
 
-const employee = computed(() => employeeData.value?.data)
+const employee = computed(() => (employeeData.value as any)?.data)
 const isLoadingEmployee = computed(() => employeePending.value)
 
 // Fetch salary payments
@@ -57,7 +57,7 @@ const { data: paymentsData, pending: paymentsPending, refresh: refreshPayments }
   }
 )
 
-const payments = computed(() => paymentsData.value?.data || [])
+const payments = computed(() => (paymentsData.value as any)?.data || [])
 const isLoadingPayments = computed(() => paymentsPending.value)
 
 // Edit form

@@ -507,8 +507,8 @@ const smmlv = ref(1423500)
 const form = reactive({
   salary_type: 'smmlv',
   multiplier: 1,
-  fixed_amount: null,
-  hourly_rate: null,
+  fixed_amount: null as number | null,
+  hourly_rate: null as number | null,
   payment_frequency: 'monthly',
   notes: '',
   employment_type: 'employee' as string,
@@ -531,7 +531,7 @@ const { data: employeeData } = useAsyncData(
   {
     server: false,
     default: () => ({ data: null }),
-    transform: (response) => {
+    transform: (response: any) => {
       const data = response?.data
       // Pre-fill form if employee has existing config
       if (data?.salary_type) {
@@ -574,7 +574,7 @@ const calculatedSalary = computed(() => {
 
 // Salary per payment based on frequency
 const salaryPerPayment = computed(() => {
-  const divisors = { monthly: 1, biweekly: 2, weekly: 4 }
+  const divisors: Record<string, number> = { monthly: 1, biweekly: 2, weekly: 4 }
   return calculatedSalary.value / (divisors[form.payment_frequency] || 1)
 })
 
@@ -595,7 +595,7 @@ const isFormValid = computed(() => {
 })
 
 // Formatters
-const formatCurrency = (value) => {
+const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
@@ -604,7 +604,7 @@ const formatCurrency = (value) => {
   }).format(value || 0)
 }
 
-const formatCurrencyShort = (value) => {
+const formatCurrencyShort = (value: number) => {
   if (value >= 1000000) {
     return `$${(value / 1000000).toFixed(1)}M`
   }
@@ -648,7 +648,7 @@ const handleSubmit = async () => {
     await navigateTo(`/equipo/salarios/${employeeId}`)
   } catch (err) {
     console.error('Error saving salary config:', err)
-    toast.error(err.data?.detail || 'Error al guardar la configuracion')
+    toast.error((err as any).data?.detail || 'Error al guardar la configuracion')
   } finally {
     isSubmitting.value = false
   }
