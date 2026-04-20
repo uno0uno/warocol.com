@@ -534,69 +534,70 @@ watch(employeeData, (data) => {
               </div>
 
               <!-- Salary Type -->
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Tipo de Salario *
-                </label>
-                <select
-                  v-model="editForm.salaryType"
-                  required
-                  class="input-base w-full px-4 py-2"
-                >
-                  <option value="smmlv">Salario Mínimo (SMMLV)</option>
-                  <option value="fixed">Fijo</option>
-                  <option value="hourly">Por Hora</option>
-                </select>
-              </div>
+              <!-- Salary type + dependent fields — hidden for daily workers -->
+              <template v-if="editForm.employmentType !== 'daily'">
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-2">
+                    Tipo de Salario *
+                  </label>
+                  <select
+                    v-model="editForm.salaryType"
+                    class="input-base w-full px-4 py-2"
+                  >
+                    <option v-if="editForm.employmentType !== 'contractor'" value="smmlv">Salario Mínimo (SMMLV)</option>
+                    <option value="fixed">Fijo</option>
+                    <option value="hourly">Por Hora</option>
+                  </select>
+                </div>
 
-              <!-- Multiplier (if SMMLV) -->
-              <div v-if="editForm.salaryType === 'smmlv'">
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Multiplicador SMMLV *
-                </label>
-                <input
-                  type="number"
-                  v-model.number="editForm.minimumWageMultiplier"
-                  required
-                  step="0.1"
-                  min="0.5"
-                  class="input-base w-full px-4 py-2"
-                />
-              </div>
-
-              <!-- Fixed Amount (if fixed) -->
-              <div v-if="editForm.salaryType === 'fixed'">
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Monto Fijo *
-                </label>
-                <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                <!-- Multiplier (if SMMLV) -->
+                <div v-if="editForm.salaryType === 'smmlv'">
+                  <label class="block text-sm font-medium text-text-primary mb-2">
+                    Multiplicador SMMLV *
+                  </label>
                   <input
                     type="number"
-                    v-model.number="editForm.fixedAmount"
-                    step="any"
-                    min="0"
-                    class="input-base w-full pl-8 pr-4 py-2"
+                    v-model.number="editForm.minimumWageMultiplier"
+                    step="0.1"
+                    min="0.5"
+                    class="input-base w-full px-4 py-2"
                   />
                 </div>
-              </div>
 
-              <!-- Hourly Rate (if hourly) -->
-              <div v-if="editForm.salaryType === 'hourly'">
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Valor por Hora *
-                </label>
-                <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
-                  <input
-                    type="number"
-                    v-model.number="editForm.hourlyRate"
-                    step="any"
-                    min="0"
-                    class="input-base w-full pl-8 pr-4 py-2"
-                  />
+                <!-- Fixed Amount (if fixed) -->
+                <div v-if="editForm.salaryType === 'fixed'">
+                  <label class="block text-sm font-medium text-text-primary mb-2">
+                    Monto Fijo *
+                  </label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                    <input
+                      type="number"
+                      v-model.number="editForm.fixedAmount"
+                      step="any"
+                      min="0"
+                      class="input-base w-full pl-8 pr-4 py-2"
+                    />
+                  </div>
                 </div>
-              </div>
+
+                <!-- Hourly Rate (if hourly) -->
+                <div v-if="editForm.salaryType === 'hourly'">
+                  <label class="block text-sm font-medium text-text-primary mb-2">
+                    Valor por Hora *
+                  </label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                    <input
+                      type="number"
+                      v-model.number="editForm.hourlyRate"
+                      step="any"
+                      min="0"
+                      class="input-base w-full pl-8 pr-4 py-2"
+                    />
+                  </div>
+                </div>
+              </template>
 
               <!-- Notes -->
               <div class="md:col-span-2">
