@@ -1,6 +1,6 @@
 <template>
   <div class="page-layout">
-    <form @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
+    <form @submit.prevent="handleSubmit" novalidate class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
       <!-- Left Column: Form Content -->
       <div class="xl:col-span-2 space-y-6">
         <div class="relative overflow-hidden bg-white border border-titan-300 rounded-xl p-6 md:p-8 shadow-sm">
@@ -115,7 +115,6 @@
                   type="number"
                   min="0"
                   step="any"
-                  required
                   class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                   placeholder="0"
                 />
@@ -289,7 +288,6 @@
                     step="0.1"
                     min="0.5"
                     max="10"
-                    required
                     class="input-base w-40 px-5 py-3 text-center text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                     placeholder="1.0"
                   />
@@ -339,7 +337,6 @@
                     type="number"
                     min="0"
                     step="any"
-                    required
                     class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                     placeholder="0"
                   />
@@ -385,7 +382,6 @@
                     type="number"
                     min="0"
                     step="any"
-                    required
                     class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                     placeholder="0"
                   />
