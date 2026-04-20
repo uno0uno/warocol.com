@@ -6,8 +6,17 @@
         <!-- Empleado Info -->
         <div class="mb-8 pb-6 border-b border-border">
           <h3 class="text-lg font-semibold text-text-primary mb-4">Empleado</h3>
-          <div class="flex items-center gap-4 bg-background rounded-lg p-4">
-            <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white"
+          <!-- Skeleton -->
+          <div v-if="!employeeData" class="flex items-center gap-4 bg-background rounded-lg p-4 animate-pulse">
+            <div class="w-12 h-12 rounded-full bg-titan-200 flex-shrink-0" />
+            <div class="space-y-2 flex-1">
+              <div class="h-4 w-36 rounded bg-titan-200" />
+              <div class="h-3 w-48 rounded bg-titan-200" />
+            </div>
+          </div>
+          <!-- Data -->
+          <div v-else class="flex items-center gap-4 bg-background rounded-lg p-4">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0"
               :style="{ backgroundColor: employee.color }">
               {{ employee.initials }}
             </div>
@@ -136,7 +145,19 @@
           <!-- Método de Pago -->
           <div>
             <label class="block text-sm font-medium text-text-primary mb-3">Metodo de Pago *</label>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <!-- Skeleton -->
+            <div v-if="isLoadingMethods" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div
+                v-for="i in 4"
+                :key="i"
+                class="flex flex-col items-center p-4 border-2 border-border rounded-xl animate-pulse"
+              >
+                <div class="w-10 h-10 rounded-full bg-titan-200 mb-2" />
+                <div class="h-3 w-14 rounded bg-titan-200" />
+              </div>
+            </div>
+            <!-- Methods -->
+            <div v-else class="grid grid-cols-2 md:grid-cols-4 gap-3">
               <label
                 v-for="method in paymentMethods"
                 :key="method.value"
@@ -293,7 +314,7 @@ import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { useFormatters } from '~/composables/useFormatters'
 import { SLUG_ICON_MAP, SLUG_ICON_FALLBACK } from '~/utils/paymentDefaults'
 
-const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
+const { paymentGroups, fetchPaymentMethods, isLoading: isLoadingMethods } = usePaymentMethods()
 fetchPaymentMethods()
 
 const paymentMethods = computed(() => {
