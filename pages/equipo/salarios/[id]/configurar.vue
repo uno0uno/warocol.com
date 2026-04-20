@@ -114,7 +114,7 @@
                   v-model.number="form.daily_rate"
                   type="number"
                   min="0"
-                  step="1"
+                  step="any"
                   required
                   class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                   placeholder="0"
@@ -338,7 +338,7 @@
                     v-model.number="form.fixed_amount"
                     type="number"
                     min="0"
-                    step="1"
+                    step="any"
                     required
                     class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                     placeholder="0"
@@ -384,7 +384,7 @@
                     v-model.number="form.hourly_rate"
                     type="number"
                     min="0"
-                    step="100"
+                    step="any"
                     required
                     class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                     placeholder="0"
