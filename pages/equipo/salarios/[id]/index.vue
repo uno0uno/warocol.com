@@ -498,7 +498,7 @@ watch(employeeData, (data) => {
           </div>
 
           <!-- Edit Mode -->
-          <form v-else @submit.prevent="saveChanges">
+          <form v-else @submit.prevent="saveChanges" novalidate>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <!-- Employment Type -->
               <div>
@@ -526,9 +526,8 @@ watch(employeeData, (data) => {
                   <input
                     type="number"
                     v-model.number="editForm.dailyRate"
-                    required
-                    step="1000"
-                    min="1"
+                    step="any"
+                    min="0"
                     class="input-base w-full pl-8 pr-4 py-2.5"
                   />
                 </div>
@@ -575,9 +574,8 @@ watch(employeeData, (data) => {
                   <input
                     type="number"
                     v-model.number="editForm.fixedAmount"
-                    required
-                    step="1000"
-                    min="1"
+                    step="any"
+                    min="0"
                     class="input-base w-full pl-8 pr-4 py-2"
                   />
                 </div>
@@ -593,9 +591,8 @@ watch(employeeData, (data) => {
                   <input
                     type="number"
                     v-model.number="editForm.hourlyRate"
-                    required
-                    step="100"
-                    min="1"
+                    step="any"
+                    min="0"
                     class="input-base w-full pl-8 pr-4 py-2"
                   />
                 </div>
