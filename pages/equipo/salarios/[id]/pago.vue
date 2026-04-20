@@ -96,6 +96,43 @@
             </div>
           </div>
 
+          <!-- Retención en la Fuente (solo contratistas) -->
+          <div v-if="isContractor" class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div class="flex items-start justify-between gap-4 mb-3">
+              <div>
+                <p class="text-sm font-medium text-amber-900">Retención en la fuente</p>
+                <p class="text-xs text-amber-700 mt-0.5">Aplica para pagos de honorarios a contratistas (cuenta 2367)</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input type="checkbox" v-model="form.withholding_enabled" class="sr-only peer" />
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+              </label>
+            </div>
+            <div v-if="form.withholding_enabled" class="space-y-3">
+              <div class="flex items-center gap-3">
+                <label class="text-sm text-amber-800 flex-shrink-0">Tarifa (%):</label>
+                <input
+                  v-model.number="form.withholding_rate"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  class="input-base w-24 px-3 py-1.5 text-sm"
+                />
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-sm">
+                <div class="bg-white rounded p-2 border border-amber-200">
+                  <p class="text-xs text-amber-700">Retenido (2367)</p>
+                  <p class="font-semibold text-amber-900">{{ formatCurrency(withholdingAmount) }}</p>
+                </div>
+                <div class="bg-white rounded p-2 border border-amber-200">
+                  <p class="text-xs text-amber-700">Neto a pagar</p>
+                  <p class="font-semibold text-amber-900">{{ formatCurrency(netAmount) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Método de Pago -->
           <div>
             <label class="block text-sm font-medium text-text-primary mb-3">Metodo de Pago *</label>
@@ -209,9 +246,13 @@
               <p class="text-sm text-text-secondary mb-1">Comprobantes</p>
               <p class="font-medium text-text-primary">{{ form.attachments.length }} archivo(s)</p>
             </div>
+            <div v-if="isContractor && form.withholding_enabled && withholdingAmount > 0">
+              <p class="text-sm text-text-secondary mb-1">Retefuente ({{ form.withholding_rate }}%)</p>
+              <p class="font-medium text-amber-600">- {{ formatCurrency(withholdingAmount) }}</p>
+            </div>
             <div class="pt-3 border-t border-border">
-              <p class="text-sm text-text-secondary mb-1">Monto a Pagar</p>
-              <p class="text-2xl font-bold text-primary">{{ formatCurrency(form.payment_amount || 0) }}</p>
+              <p class="text-sm text-text-secondary mb-1">{{ isContractor && form.withholding_enabled ? 'Neto a Pagar' : 'Monto a Pagar' }}</p>
+              <p class="text-2xl font-bold text-primary">{{ formatCurrency(isContractor && form.withholding_enabled ? netAmount : (form.payment_amount || 0)) }}</p>
             </div>
           </div>
         </div>
@@ -278,7 +319,20 @@ const form = reactive({
   payment_date: new Date().toISOString().split('T')[0],
   period_month: new Date().toISOString().slice(0, 7),
   attachments: [],
-  notes: ''
+  notes: '',
+  withholding_enabled: false,
+  withholding_rate: 10
+})
+
+// Computed withholding and net amounts (only for contractors)
+const isContractor = computed(() => employee.value?.employment_type === 'contractor')
+const withholdingAmount = computed(() => {
+  if (!isContractor.value || !form.withholding_enabled || !form.payment_amount) return 0
+  return Math.round(form.payment_amount * (form.withholding_rate / 100))
+})
+const netAmount = computed(() => {
+  if (!form.payment_amount) return 0
+  return form.payment_amount - withholdingAmount.value
 })
 
 const isSubmitting = ref(false)
@@ -382,6 +436,10 @@ const handleSubmit = async () => {
     }
     if (employee.value?.employment_type === 'daily' && daysWorked.value) {
       payload.days_worked = daysWorked.value
+    }
+    if (isContractor.value && form.withholding_enabled && withholdingAmount.value > 0) {
+      payload.withholding_rate = form.withholding_rate / 100
+      payload.withholding_amount = withholdingAmount.value
     }
 
     const response = await $fetch('/api/salaries/payments', {
