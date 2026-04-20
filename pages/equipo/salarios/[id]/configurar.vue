@@ -259,6 +259,106 @@
             </div>
           </div>
 
+          <!-- Tipo de Contrato -->
+          <div class="mt-10">
+            <h3 class="text-lg font-bold text-crocus-700 mb-6 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Tipo de Contrato
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <label
+                class="group relative flex flex-col p-5 border-2 rounded-xl cursor-pointer focus-within:ring-2 focus-within:ring-crocus-400"
+                :class="form.employment_type === 'employee'
+                  ? 'border-crocus-500 bg-crocus-50 shadow-md'
+                  : 'border-titan-300 bg-white hover:border-crocus-300 hover:shadow-sm'"
+              >
+                <input type="radio" v-model="form.employment_type" value="employee" class="sr-only" />
+                <div class="flex flex-col items-center text-center gap-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                    :class="form.employment_type === 'employee'
+                      ? 'bg-crocus-600 text-white shadow-md'
+                      : 'bg-titan-200 text-titan-600 group-hover:bg-titan-300'">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="font-bold text-text-primary block mb-1">Empleado</span>
+                    <p class="text-xs text-text-secondary">Contrato laboral, prestaciones incluidas</p>
+                  </div>
+                </div>
+              </label>
+
+              <label
+                class="group relative flex flex-col p-5 border-2 rounded-xl cursor-pointer focus-within:ring-2 focus-within:ring-crocus-400"
+                :class="form.employment_type === 'contractor'
+                  ? 'border-crocus-500 bg-crocus-50 shadow-md'
+                  : 'border-titan-300 bg-white hover:border-crocus-300 hover:shadow-sm'"
+              >
+                <input type="radio" v-model="form.employment_type" value="contractor" class="sr-only" />
+                <div class="flex flex-col items-center text-center gap-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                    :class="form.employment_type === 'contractor'
+                      ? 'bg-crocus-600 text-white shadow-md'
+                      : 'bg-titan-200 text-titan-600 group-hover:bg-titan-300'">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="font-bold text-text-primary block mb-1">Contratista</span>
+                    <p class="text-xs text-text-secondary">Prestación de servicios, sin prestaciones</p>
+                  </div>
+                </div>
+              </label>
+
+              <label
+                class="group relative flex flex-col p-5 border-2 rounded-xl cursor-pointer focus-within:ring-2 focus-within:ring-crocus-400"
+                :class="form.employment_type === 'daily'
+                  ? 'border-crocus-500 bg-crocus-50 shadow-md'
+                  : 'border-titan-300 bg-white hover:border-crocus-300 hover:shadow-sm'"
+              >
+                <input type="radio" v-model="form.employment_type" value="daily" class="sr-only" />
+                <div class="flex flex-col items-center text-center gap-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                    :class="form.employment_type === 'daily'
+                      ? 'bg-crocus-600 text-white shadow-md'
+                      : 'bg-titan-200 text-titan-600 group-hover:bg-titan-300'">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="font-bold text-text-primary block mb-1">Jornalero</span>
+                    <p class="text-xs text-text-secondary">Pago por días trabajados</p>
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <!-- Valor por Día (solo para jornaleros) -->
+            <div v-if="form.employment_type === 'daily'" class="mt-6">
+              <label class="block text-sm font-bold text-text-primary mb-3">
+                Valor por Día *
+              </label>
+              <div class="relative">
+                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
+                <input
+                  v-model.number="form.daily_rate"
+                  type="number"
+                  min="0"
+                  step="1000"
+                  required
+                  class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
+                  placeholder="0"
+                />
+              </div>
+              <p class="text-xs text-text-tertiary mt-2">Valor a pagar por cada día trabajado</p>
+            </div>
+          </div>
+
           <!-- Frecuencia de Pago -->
           <div class="mt-10">
             <h3 class="text-lg font-bold text-crocus-700 mb-6 flex items-center gap-2">
@@ -332,6 +432,16 @@
                   {{ form.salary_type === 'smmlv' ? 'Basado en SMMLV' : form.salary_type === 'fixed' ? 'Monto Fijo' : form.salary_type === 'hourly' ? 'Por Hora' : 'Sin seleccionar' }}
                 </p>
               </div>
+              <div>
+                <p class="text-xs text-text-tertiary mb-1 uppercase tracking-wide font-semibold">Tipo de Contrato</p>
+                <p class="font-bold text-text-primary">
+                  {{ form.employment_type === 'employee' ? 'Empleado' : form.employment_type === 'contractor' ? 'Contratista' : form.employment_type === 'daily' ? 'Jornalero' : 'Sin seleccionar' }}
+                </p>
+              </div>
+              <div v-if="form.employment_type === 'daily' && form.daily_rate">
+                <p class="text-xs text-text-tertiary mb-1 uppercase tracking-wide font-semibold">Valor por Día</p>
+                <p class="font-bold text-text-primary">{{ formatCurrency(form.daily_rate) }} / día</p>
+              </div>
               <div v-if="form.salary_type === 'hourly' && form.hourly_rate">
                 <p class="text-xs text-text-tertiary mb-1 uppercase tracking-wide font-semibold">Valor Hora</p>
                 <p class="font-bold text-text-primary">{{ formatCurrency(form.hourly_rate) }} / hora</p>
@@ -400,7 +510,9 @@ const form = reactive({
   fixed_amount: null,
   hourly_rate: null,
   payment_frequency: 'monthly',
-  notes: ''
+  notes: '',
+  employment_type: 'employee' as string,
+  daily_rate: null as number | null
 })
 
 // Payment frequencies
@@ -430,6 +542,8 @@ const { data: employeeData } = useAsyncData(
         form.payment_frequency = data.payment_frequency || 'monthly'
         form.notes = data.salary_notes || ''
       }
+      form.employment_type = data?.employment_type || 'employee'
+      form.daily_rate = data?.daily_rate ?? null
       if (response?.smmlv) {
         smmlv.value = response.smmlv
       }
@@ -476,6 +590,7 @@ const isFormValid = computed(() => {
   if (form.salary_type === 'smmlv' && (!form.multiplier || form.multiplier <= 0)) return false
   if (form.salary_type === 'fixed' && (!form.fixed_amount || form.fixed_amount <= 0)) return false
   if (form.salary_type === 'hourly' && (!form.hourly_rate || form.hourly_rate <= 0)) return false
+  if (form.employment_type === 'daily' && (!form.daily_rate || form.daily_rate <= 0)) return false
   return true
 })
 
@@ -503,7 +618,7 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    const body = {
+    const body: Record<string, any> = {
       salary_type: form.salary_type,
       payment_frequency: form.payment_frequency,
       notes: form.notes
@@ -515,6 +630,11 @@ const handleSubmit = async () => {
       body.hourly_rate = form.hourly_rate
     } else {
       body.fixed_amount = form.fixed_amount
+    }
+
+    body.employment_type = form.employment_type
+    if (form.employment_type === 'daily') {
+      body.daily_rate = form.daily_rate
     }
 
     await $fetch(`/api/salaries/employees/${employeeId}/config`, {

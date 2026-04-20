@@ -38,13 +38,37 @@
             </p>
           </div>
 
+          <!-- Días Trabajados (solo jornaleros) -->
+          <div v-if="employee.employment_type === 'daily'">
+            <label class="block text-sm font-medium text-text-primary mb-2">
+              Días trabajados *
+            </label>
+            <input
+              v-model.number="daysWorked"
+              type="number"
+              min="1"
+              max="31"
+              step="1"
+              required
+              class="input-base w-full px-4 py-3"
+              placeholder="0"
+            />
+            <p v-if="daysWorked" class="text-xs text-text-tertiary mt-1">
+              {{ daysWorked }} días × {{ formatCurrency(employee.daily_rate) }} = {{ formatCurrency(form.payment_amount) }}
+            </p>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Monto del Pago -->
             <div>
               <label class="block text-sm font-medium text-text-primary mb-2">
                 Monto del Pago *
               </label>
-              <div class="relative">
+              <div v-if="employee.employment_type === 'daily'" class="px-4 py-2 bg-titan-100 border border-titan-300 rounded-lg">
+                <span class="text-lg font-semibold text-text-primary">{{ formatCurrency(form.payment_amount || 0) }}</span>
+                <p class="text-xs text-text-tertiary mt-0.5">Calculado automáticamente</p>
+              </div>
+              <div v-else class="relative">
                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                 <input
                   v-model.number="form.payment_amount"
@@ -177,6 +201,10 @@
                 {{ form.period_month ? formatPeriod(form.period_month) : 'Sin seleccionar' }}
               </p>
             </div>
+            <div v-if="employee.employment_type === 'daily' && daysWorked">
+              <p class="text-sm text-text-secondary mb-1">Días trabajados</p>
+              <p class="font-medium text-text-primary">{{ daysWorked }} días</p>
+            </div>
             <div v-if="form.attachments.length > 0">
               <p class="text-sm text-text-secondary mb-1">Comprobantes</p>
               <p class="font-medium text-text-primary">{{ form.attachments.length }} archivo(s)</p>
@@ -212,7 +240,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 const route = useRoute()
 const toast = useToast()
 const employeeId = route.params.id
@@ -244,7 +272,7 @@ const paymentMethods = computed(() => {
 
 // Form state
 const form = reactive({
-  payment_amount: null,
+  payment_amount: null as number | null,
   payment_method: 'cash',
   payment_reference: '',
   payment_date: new Date().toISOString().split('T')[0],
@@ -254,6 +282,7 @@ const form = reactive({
 })
 
 const isSubmitting = ref(false)
+const daysWorked = ref<number | null>(null)
 
 // Fetch employee data
 const { data: employeeData } = useAsyncData(
@@ -264,8 +293,8 @@ const { data: employeeData } = useAsyncData(
     default: () => ({ data: null }),
     transform: (response) => {
       const data = response?.data
-      // Pre-fill amount from salary config
-      if (data?.calculated_salary) {
+      // Pre-fill amount from salary config (not for daily workers — amount is days × rate)
+      if (data?.calculated_salary && data?.employment_type !== 'daily') {
         form.payment_amount = data.calculated_salary
       }
       return data
@@ -279,8 +308,17 @@ const employee = computed(() => employeeData.value || {
   initials: '...',
   color: '#ccc',
   salary_type: null,
-  calculated_salary: 0
+  calculated_salary: 0,
+  employment_type: null,
+  daily_rate: 0
 })
+
+// Auto-calculate payment amount for daily workers
+watch(daysWorked, (val) => {
+  if (employee.value?.employment_type === 'daily' && val != null) {
+    form.payment_amount = val * (employee.value.daily_rate || 0)
+  }
+}, { immediate: true })
 
 // Selected method label
 const selectedMethodLabel = computed(() => {
@@ -294,6 +332,7 @@ const isFormValid = computed(() => {
   if (!form.payment_method) return false
   if (!form.payment_date) return false
   if (!form.period_month) return false
+  if (employee.value?.employment_type === 'daily' && (!daysWorked.value || daysWorked.value < 1)) return false
   return true
 })
 
@@ -327,7 +366,7 @@ const handleSubmit = async () => {
 
   try {
     // Build JSON payload
-    const payload = {
+    const payload: Record<string, any> = {
       tenant_member_id: employeeId,
       payment_amount: form.payment_amount,
       payment_method: form.payment_method,
@@ -340,6 +379,9 @@ const handleSubmit = async () => {
     }
     if (form.notes) {
       payload.notes = form.notes
+    }
+    if (employee.value?.employment_type === 'daily' && daysWorked.value) {
+      payload.days_worked = daysWorked.value
     }
 
     const response = await $fetch('/api/salaries/payments', {

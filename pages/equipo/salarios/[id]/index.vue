@@ -8,6 +8,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
 const employeeId = route.params.id as string
 
 useHead({ title: 'Detalle del Salario' })
@@ -65,7 +66,9 @@ const editForm = reactive({
   minimumWageMultiplier: 1,
   fixedAmount: 0,
   hourlyRate: 0,
-  notes: ''
+  notes: '',
+  employmentType: 'employee' as string,
+  dailyRate: 0 as number
 })
 
 // File upload
@@ -107,6 +110,8 @@ const toggleEditMode = () => {
     editForm.fixedAmount = employee.value.fixed_amount || 0
     editForm.hourlyRate = employee.value.hourly_rate || 0
     editForm.notes = employee.value.salary_notes || ''
+    editForm.employmentType = employee.value.employment_type || 'employee'
+    editForm.dailyRate = employee.value.daily_rate || 0
   }
   isEditMode.value = !isEditMode.value
   selectedFiles.value = []
@@ -136,6 +141,11 @@ const saveChanges = async () => {
       config.fixed_amount = editForm.fixedAmount
     } else if (editForm.salaryType === 'hourly') {
       config.hourly_rate = editForm.hourlyRate
+    }
+
+    config.employment_type = editForm.employmentType
+    if (editForm.employmentType === 'daily') {
+      config.daily_rate = editForm.dailyRate
     }
 
     // Send as JSON
@@ -182,7 +192,7 @@ const deleteEmployee = async () => {
     router.push('/equipo/salarios')
   } catch (error: any) {
     console.error('Error deleting employee:', error)
-    alert(error?.data?.detail || 'Error al eliminar empleado')
+    toast.error(error?.data?.detail || 'Error al eliminar empleado')
     isDeleting.value = false
     isSubmitting.value = false
   }
@@ -203,7 +213,7 @@ const markAsPaid = async (payment: any) => {
     await refreshPayments()
   } catch (error: any) {
     console.error('Error marking as paid:', error)
-    alert(error?.data?.detail || 'Error al marcar como pagado')
+    toast.error(error?.data?.detail || 'Error al marcar como pagado')
   }
 }
 
@@ -240,7 +250,17 @@ const getSalaryTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
     'smmlv': 'Salario Mínimo',
     'fixed': 'Fijo',
-    'hourly': 'Por Hora'
+    'hourly': 'Por Hora',
+    'daily': 'Jornalero'
+  }
+  return labels[type] || type
+}
+
+const getEmploymentTypeLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    'employee': 'Empleado',
+    'contractor': 'Contratista',
+    'daily': 'Jornalero'
   }
   return labels[type] || type
 }
@@ -403,6 +423,16 @@ watch(employeeData, (data) => {
                   </tr>
                 </thead>
                 <tbody class="bg-surface divide-y divide-border">
+                  <!-- Employment Type Row -->
+                  <tr class="hover:bg-surface-secondary/50 transition-colors">
+                    <td class="px-4 py-3 text-sm font-medium text-text-secondary">
+                      Tipo de contrato
+                    </td>
+                    <td class="px-4 py-3 text-sm text-text-primary">
+                      <span class="font-medium">{{ employee.employment_type ? getEmploymentTypeLabel(employee.employment_type) : 'Sin configurar' }}</span>
+                    </td>
+                  </tr>
+
                   <!-- Type Row -->
                   <tr class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm font-medium text-text-secondary">
@@ -433,6 +463,16 @@ watch(employeeData, (data) => {
                     </td>
                   </tr>
 
+                  <!-- Daily Rate Row (if daily worker) -->
+                  <tr v-if="employee.employment_type === 'daily'" class="hover:bg-surface-secondary/50 transition-colors">
+                    <td class="px-4 py-3 text-sm font-medium text-text-secondary">
+                      Valor por día
+                    </td>
+                    <td class="px-4 py-3 text-sm text-text-primary">
+                      <span class="font-bold text-primary text-lg">{{ formatCurrency(employee.daily_rate || 0) }}</span>
+                    </td>
+                  </tr>
+
                   <!-- Calculated Salary Row -->
                   <tr class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm font-medium text-text-secondary">
@@ -460,6 +500,40 @@ watch(employeeData, (data) => {
           <!-- Edit Mode -->
           <form v-else @submit.prevent="saveChanges">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <!-- Employment Type -->
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Tipo de Contrato *
+                </label>
+                <select
+                  v-model="editForm.employmentType"
+                  required
+                  class="input-base w-full px-4 py-2"
+                >
+                  <option value="employee">Empleado</option>
+                  <option value="contractor">Contratista</option>
+                  <option value="daily">Jornalero</option>
+                </select>
+              </div>
+
+              <!-- Daily Rate (if daily worker) -->
+              <div v-if="editForm.employmentType === 'daily'">
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Valor por Día *
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <input
+                    type="number"
+                    v-model.number="editForm.dailyRate"
+                    required
+                    step="1000"
+                    min="1"
+                    class="input-base w-full pl-8 pr-4 py-2.5"
+                  />
+                </div>
+              </div>
+
               <!-- Salary Type -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
@@ -643,8 +717,9 @@ watch(employeeData, (data) => {
                     <div class="flex justify-center gap-2">
                       <NuxtLink
                         :to="`/equipo/salarios/pagos/${payment.id}`"
-                        class="text-text-secondary hover:text-primary transition-colors"
+                        class="p-2 text-text-secondary hover:text-primary transition-colors rounded-lg"
                         title="Ver detalles"
+                        aria-label="Ver detalles del pago"
                       >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -654,8 +729,9 @@ watch(employeeData, (data) => {
                       <button
                         v-if="payment.status === 'pending'"
                         @click="markAsPaid(payment)"
-                        class="text-green-600 hover:text-green-700 transition-colors"
+                        class="p-2 text-green-600 hover:text-green-700 transition-colors rounded-lg"
                         title="Marcar como pagado"
+                        aria-label="Marcar como pagado"
                       >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
