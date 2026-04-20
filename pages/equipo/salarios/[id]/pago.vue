@@ -426,7 +426,7 @@ const { formatDate } = useFormatters()
 const formatPeriod = (periodString: string) => {
   if (!periodString) return ''
   const [year, month] = periodString.split('-')
-  const date = new Date(year, month - 1)
+  const date = new Date(Number(year), Number(month) - 1)
   return date.toLocaleDateString('es-CO', {
     month: 'long',
     year: 'numeric'
@@ -445,7 +445,7 @@ const handleSubmit = async () => {
       tenant_member_id: employeeId,
       payment_amount: form.payment_amount,
       payment_method: form.payment_method,
-      payment_date: form.payment_date,
+      payment_date: form.payment_date ? `${form.payment_date}T00:00:00` : new Date().toISOString(),
       period_month: form.period_month
     }
 
