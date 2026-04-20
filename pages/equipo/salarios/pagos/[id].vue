@@ -490,6 +490,40 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- Provisions (social benefits) — shown only when data exists, view mode only -->
+      <div v-if="!isEditMode && payment.provisions" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+        <h3 class="text-base font-semibold text-text-primary mb-1">Provisiones Prestaciones Sociales</h3>
+        <p class="text-xs text-text-secondary mb-4">Provisión mensual contabilizada al registrar este pago (no es un desembolso adicional)</p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-background rounded-lg p-3 border border-border">
+            <p class="text-xs text-text-secondary mb-1">Prima de servicios</p>
+            <p class="text-sm font-semibold text-text-primary">{{ formatCurrency(payment.provisions.prima) }}</p>
+            <p class="text-xs text-text-tertiary mt-0.5">5106 / 2620</p>
+          </div>
+          <div class="bg-background rounded-lg p-3 border border-border">
+            <p class="text-xs text-text-secondary mb-1">Cesantías</p>
+            <p class="text-sm font-semibold text-text-primary">{{ formatCurrency(payment.provisions.cesantias) }}</p>
+            <p class="text-xs text-text-tertiary mt-0.5">5107 / 2610</p>
+          </div>
+          <div class="bg-background rounded-lg p-3 border border-border">
+            <p class="text-xs text-text-secondary mb-1">Int. sobre cesantías</p>
+            <p class="text-sm font-semibold text-text-primary">{{ formatCurrency(payment.provisions.int_cesantias) }}</p>
+            <p class="text-xs text-text-tertiary mt-0.5">5108 / 2615</p>
+          </div>
+          <div class="bg-background rounded-lg p-3 border border-border">
+            <p class="text-xs text-text-secondary mb-1">Vacaciones</p>
+            <p class="text-sm font-semibold text-text-primary">{{ formatCurrency(payment.provisions.vacaciones) }}</p>
+            <p class="text-xs text-text-tertiary mt-0.5">5109 / 2625</p>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-border flex items-center justify-between">
+          <p class="text-xs text-text-secondary">Total provisiones</p>
+          <p class="text-sm font-bold text-text-primary">
+            {{ formatCurrency(payment.provisions.prima + payment.provisions.cesantias + payment.provisions.int_cesantias + payment.provisions.vacaciones) }}
+          </p>
+        </div>
+      </div>
+
       <!-- Notes (view mode only) -->
       <div v-if="!isEditMode && payment.notes" class="bg-surface border-2 border-border rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
         <h3 class="text-base font-semibold text-text-primary mb-3">Notas</h3>
