@@ -3,7 +3,6 @@
     <form @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
       <!-- Left Column: Form Content -->
       <div class="xl:col-span-2 space-y-6">
-        <!-- Enhanced Employee Card -->
         <div class="relative overflow-hidden bg-white border border-titan-300 rounded-xl p-6 md:p-8 shadow-sm">
           <!-- Empleado Info -->
           <div class="mb-8 pb-6 border-b border-titan-300">
@@ -25,242 +24,8 @@
             </div>
           </div>
 
-          <!-- Tipo de Salario -->
+          <!-- 1. TIPO DE CONTRATO (first — determines all other fields) -->
           <div class="mb-8">
-            <h3 class="text-lg font-bold text-crocus-700 mb-6 flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Tipo de Salario
-            </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <label
-                class="group relative flex flex-col p-5 border-2 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02]"
-                :class="form.salary_type === 'smmlv' 
-                  ? 'border-crocus-500 bg-crocus-50 shadow-md' 
-                  : 'border-titan-300 bg-white hover:border-crocus-300 hover:shadow-sm'"
-              >
-                <input type="radio" v-model="form.salary_type" value="smmlv" class="sr-only" />
-                <div class="flex items-center gap-3 mb-3">
-                  <div class="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300"
-                    :class="form.salary_type === 'smmlv' 
-                      ? 'bg-crocus-600 text-white shadow-md' 
-                      : 'bg-titan-200 text-titan-600 group-hover:bg-titan-300'">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <span class="font-bold text-text-primary text-base">Basado en SMMLV</span>
-                </div>
-                <p class="text-sm text-text-secondary leading-relaxed">
-                  El salario se calcula como un multiplicador del salario mínimo. Se actualiza automáticamente.
-                </p>
-              </label>
-
-              <label
-                class="group relative flex flex-col p-5 border-2 rounded-xl cursor-pointer"
-                :class="form.salary_type === 'fixed' 
-                  ? 'border-crocus-500 bg-crocus-50 shadow-md' 
-                  : 'border-titan-300 bg-white hover:border-crocus-300 hover:shadow-sm'"
-              >
-                <input type="radio" v-model="form.salary_type" value="fixed" class="sr-only" />
-                <div class="flex items-center gap-3 mb-3">
-                  <div class="w-12 h-12 rounded-xl flex items-center justify-center"
-                    :class="form.salary_type === 'fixed' 
-                      ? 'bg-crocus-600 text-white shadow-md' 
-                      : 'bg-titan-200 text-titan-600 group-hover:bg-titan-300'">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <span class="font-bold text-text-primary text-base">Monto Fijo</span>
-                </div>
-                <p class="text-sm text-text-secondary leading-relaxed">
-                  Ingresa un monto mensual fijo. No se actualiza automáticamente.
-                </p>
-              </label>
-
-              <label
-                class="group relative flex flex-col p-5 border-2 rounded-xl cursor-pointer"
-                :class="form.salary_type === 'hourly' 
-                  ? 'border-crocus-500 bg-crocus-50 shadow-md' 
-                  : 'border-titan-300 bg-white hover:border-crocus-300 hover:shadow-sm'"
-              >
-                <input type="radio" v-model="form.salary_type" value="hourly" class="sr-only" />
-                <div class="flex items-center gap-3 mb-3">
-                  <div class="w-12 h-12 rounded-xl flex items-center justify-center"
-                    :class="form.salary_type === 'hourly' 
-                      ? 'bg-crocus-600 text-white shadow-md' 
-                      : 'bg-titan-200 text-titan-600 group-hover:bg-titan-300'">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <span class="font-bold text-text-primary text-base">Por Hora</span>
-                </div>
-                <p class="text-sm text-text-secondary leading-relaxed">
-                  Define un valor por hora. El pago se calcula según las horas reportadas.
-                </p>
-              </label>
-            </div>
-          </div>
-
-          <!-- Configuración según tipo -->
-          <div class="mt-8">
-            <!-- SMMLV Config -->
-            <div v-if="form.salary_type === 'smmlv'" class="space-y-6">
-              <h3 class="text-lg font-bold text-crocus-700 flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                Multiplicador SMMLV
-              </h3>
-
-              <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-5">
-                <p class="text-sm text-blue-900 font-medium">
-                  <strong class="text-base">SMMLV 2026:</strong> {{ formatCurrency(smmlv) }}
-                </p>
-              </div>
-
-              <div>
-                <label class="block text-sm font-bold text-text-primary mb-3">
-                  Multiplicador *
-                </label>
-                <div class="flex items-center gap-4">
-                  <input
-                    v-model.number="form.multiplier"
-                    type="number"
-                    step="0.1"
-                    min="0.5"
-                    max="10"
-                    required
-                    class="input-base w-40 px-5 py-3 text-center text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
-                    placeholder="1.0"
-                  />
-                  <span class="text-text-secondary font-medium">× SMMLV</span>
-                </div>
-                <p class="text-xs text-text-tertiary mt-2">
-                  Ejemplos: 1.0 = 1 salario mínimo, 1.5 = 1.5 salarios mínimos
-                </p>
-              </div>
-
-              <!-- Quick select buttons -->
-              <div>
-                <p class="text-sm font-bold text-text-primary mb-3">Selección rápida:</p>
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    v-for="mult in [1, 1.5, 2, 2.5, 3]"
-                    :key="mult"
-                    type="button"
-                    @click="form.multiplier = mult"
-                    class="px-5 py-2.5 rounded-xl text-sm font-bold"
-                    :class="form.multiplier === mult 
-                      ? 'bg-crocus-600 text-white shadow-md' 
-                      : 'bg-white border-2 border-titan-300 text-text-primary hover:border-crocus-400 hover:shadow-sm'"
-                  >
-                    {{ mult }}×
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Fixed Amount Config -->
-            <div v-else-if="form.salary_type === 'fixed'" class="space-y-6">
-              <h3 class="text-lg font-bold text-crocus-700 flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                Monto Mensual Fijo
-              </h3>
-
-              <div>
-                <label class="block text-sm font-bold text-text-primary mb-3">
-                  Salario Mensual *
-                </label>
-                <div class="relative">
-                  <span class="absolute left-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
-                  <input
-                    v-model.number="form.fixed_amount"
-                    type="number"
-                    min="0"
-                    step="1000"
-                    required
-                    class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-
-              <!-- Quick select buttons -->
-              <div>
-                <p class="text-sm font-bold text-text-primary mb-3">Selección rápida:</p>
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    v-for="amount in [1500000, 2000000, 2500000, 3000000, 4000000]"
-                    :key="amount"
-                    type="button"
-                    @click="form.fixed_amount = amount"
-                    class="px-4 py-2.5 rounded-xl text-sm font-bold"
-                    :class="form.fixed_amount === amount 
-                      ? 'bg-crocus-600 text-white shadow-md' 
-                      : 'bg-white border-2 border-titan-300 text-text-primary hover:border-crocus-400 hover:shadow-sm'"
-                  >
-                    {{ formatCurrencyShort(amount) }}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Hourly Config -->
-            <div v-else-if="form.salary_type === 'hourly'" class="space-y-6">
-              <h3 class="text-lg font-bold text-crocus-700 flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Valor por Hora
-              </h3>
-
-              <div>
-                <label class="block text-sm font-bold text-text-primary mb-3">
-                  Valor Hora *
-                </label>
-                <div class="relative">
-                  <span class="absolute left-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
-                  <input
-                    v-model.number="form.hourly_rate"
-                    type="number"
-                    min="0"
-                    step="100"
-                    required
-                    class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-
-               <!-- Quick select buttons -->
-               <div>
-                <p class="text-sm font-bold text-text-primary mb-3">Selección rápida:</p>
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    v-for="amount in [5000, 8000, 10000, 15000, 20000]"
-                    :key="amount"
-                    type="button"
-                    @click="form.hourly_rate = amount"
-                    class="px-4 py-2.5 rounded-xl text-sm font-bold"
-                    :class="form.hourly_rate === amount 
-                      ? 'bg-crocus-600 text-white shadow-md' 
-                      : 'bg-white border-2 border-titan-300 text-text-primary hover:border-crocus-400 hover:shadow-sm'"
-                  >
-                    {{ formatCurrency(amount) }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tipo de Contrato -->
-          <div class="mt-10">
             <h3 class="text-lg font-bold text-crocus-700 mb-6 flex items-center gap-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -338,7 +103,7 @@
               </label>
             </div>
 
-            <!-- Valor por Día (solo para jornaleros) -->
+            <!-- Valor por Día (solo jornaleros) -->
             <div v-if="form.employment_type === 'daily'" class="mt-6">
               <label class="block text-sm font-bold text-text-primary mb-3">
                 Valor por Día *
@@ -359,7 +124,295 @@
             </div>
           </div>
 
-          <!-- Frecuencia de Pago -->
+          <!-- 2. TIPO DE SALARIO — empleados (SMMLV / Fijo / Por Hora) -->
+          <div v-if="form.employment_type === 'employee'" class="mb-8">
+            <h3 class="text-lg font-bold text-crocus-700 mb-6 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Tipo de Salario
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <label
+                class="group relative flex flex-col p-5 border-2 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02]"
+                :class="form.salary_type === 'smmlv'
+                  ? 'border-crocus-500 bg-crocus-50 shadow-md'
+                  : 'border-titan-300 bg-white hover:border-crocus-300 hover:shadow-sm'"
+              >
+                <input type="radio" v-model="form.salary_type" value="smmlv" class="sr-only" />
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300"
+                    :class="form.salary_type === 'smmlv'
+                      ? 'bg-crocus-600 text-white shadow-md'
+                      : 'bg-titan-200 text-titan-600 group-hover:bg-titan-300'">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <span class="font-bold text-text-primary text-base">Basado en SMMLV</span>
+                </div>
+                <p class="text-sm text-text-secondary leading-relaxed">
+                  El salario se calcula como un multiplicador del salario mínimo. Se actualiza automáticamente.
+                </p>
+              </label>
+
+              <label
+                class="group relative flex flex-col p-5 border-2 rounded-xl cursor-pointer"
+                :class="form.salary_type === 'fixed'
+                  ? 'border-crocus-500 bg-crocus-50 shadow-md'
+                  : 'border-titan-300 bg-white hover:border-crocus-300 hover:shadow-sm'"
+              >
+                <input type="radio" v-model="form.salary_type" value="fixed" class="sr-only" />
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                    :class="form.salary_type === 'fixed'
+                      ? 'bg-crocus-600 text-white shadow-md'
+                      : 'bg-titan-200 text-titan-600 group-hover:bg-titan-300'">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <span class="font-bold text-text-primary text-base">Monto Fijo</span>
+                </div>
+                <p class="text-sm text-text-secondary leading-relaxed">
+                  Ingresa un monto mensual fijo. No se actualiza automáticamente.
+                </p>
+              </label>
+
+              <label
+                class="group relative flex flex-col p-5 border-2 rounded-xl cursor-pointer"
+                :class="form.salary_type === 'hourly'
+                  ? 'border-crocus-500 bg-crocus-50 shadow-md'
+                  : 'border-titan-300 bg-white hover:border-crocus-300 hover:shadow-sm'"
+              >
+                <input type="radio" v-model="form.salary_type" value="hourly" class="sr-only" />
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                    :class="form.salary_type === 'hourly'
+                      ? 'bg-crocus-600 text-white shadow-md'
+                      : 'bg-titan-200 text-titan-600 group-hover:bg-titan-300'">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <span class="font-bold text-text-primary text-base">Por Hora</span>
+                </div>
+                <p class="text-sm text-text-secondary leading-relaxed">
+                  Define un valor por hora. El pago se calcula según las horas reportadas.
+                </p>
+              </label>
+            </div>
+          </div>
+
+          <!-- 2b. TIPO DE HONORARIO — contratistas (solo Fijo o Por Hora) -->
+          <div v-else-if="form.employment_type === 'contractor'" class="mb-8">
+            <h3 class="text-lg font-bold text-crocus-700 mb-6 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Tipo de Honorario
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <label
+                class="group relative flex flex-col p-5 border-2 rounded-xl cursor-pointer"
+                :class="form.salary_type === 'fixed'
+                  ? 'border-crocus-500 bg-crocus-50 shadow-md'
+                  : 'border-titan-300 bg-white hover:border-crocus-300 hover:shadow-sm'"
+              >
+                <input type="radio" v-model="form.salary_type" value="fixed" class="sr-only" />
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                    :class="form.salary_type === 'fixed'
+                      ? 'bg-crocus-600 text-white shadow-md'
+                      : 'bg-titan-200 text-titan-600 group-hover:bg-titan-300'">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <span class="font-bold text-text-primary text-base">Honorario Fijo</span>
+                </div>
+                <p class="text-sm text-text-secondary leading-relaxed">
+                  Monto fijo acordado por período de servicio.
+                </p>
+              </label>
+
+              <label
+                class="group relative flex flex-col p-5 border-2 rounded-xl cursor-pointer"
+                :class="form.salary_type === 'hourly'
+                  ? 'border-crocus-500 bg-crocus-50 shadow-md'
+                  : 'border-titan-300 bg-white hover:border-crocus-300 hover:shadow-sm'"
+              >
+                <input type="radio" v-model="form.salary_type" value="hourly" class="sr-only" />
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                    :class="form.salary_type === 'hourly'
+                      ? 'bg-crocus-600 text-white shadow-md'
+                      : 'bg-titan-200 text-titan-600 group-hover:bg-titan-300'">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <span class="font-bold text-text-primary text-base">Por Hora</span>
+                </div>
+                <p class="text-sm text-text-secondary leading-relaxed">
+                  Tarifa por hora trabajada.
+                </p>
+              </label>
+            </div>
+          </div>
+
+          <!-- 3. CONFIG FIELDS (driven by salary_type — hidden for daily workers) -->
+          <div v-if="form.employment_type !== 'daily'" class="mt-8">
+            <!-- SMMLV Config (employees only) -->
+            <div v-if="form.salary_type === 'smmlv'" class="space-y-6">
+              <h3 class="text-lg font-bold text-crocus-700 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                Multiplicador SMMLV
+              </h3>
+
+              <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-5">
+                <p class="text-sm text-blue-900 font-medium">
+                  <strong class="text-base">SMMLV 2026:</strong> {{ formatCurrency(smmlv) }}
+                </p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-bold text-text-primary mb-3">
+                  Multiplicador *
+                </label>
+                <div class="flex items-center gap-4">
+                  <input
+                    v-model.number="form.multiplier"
+                    type="number"
+                    step="0.1"
+                    min="0.5"
+                    max="10"
+                    required
+                    class="input-base w-40 px-5 py-3 text-center text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
+                    placeholder="1.0"
+                  />
+                  <span class="text-text-secondary font-medium">× SMMLV</span>
+                </div>
+                <p class="text-xs text-text-tertiary mt-2">
+                  Ejemplos: 1.0 = 1 salario mínimo, 1.5 = 1.5 salarios mínimos
+                </p>
+              </div>
+
+              <div>
+                <p class="text-sm font-bold text-text-primary mb-3">Selección rápida:</p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="mult in [1, 1.5, 2, 2.5, 3]"
+                    :key="mult"
+                    type="button"
+                    @click="form.multiplier = mult"
+                    class="px-5 py-2.5 rounded-xl text-sm font-bold"
+                    :class="form.multiplier === mult
+                      ? 'bg-crocus-600 text-white shadow-md'
+                      : 'bg-white border-2 border-titan-300 text-text-primary hover:border-crocus-400 hover:shadow-sm'"
+                  >
+                    {{ mult }}×
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fixed Amount Config -->
+            <div v-else-if="form.salary_type === 'fixed'" class="space-y-6">
+              <h3 class="text-lg font-bold text-crocus-700 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {{ form.employment_type === 'contractor' ? 'Honorario Fijo' : 'Monto Mensual Fijo' }}
+              </h3>
+
+              <div>
+                <label class="block text-sm font-bold text-text-primary mb-3">
+                  {{ form.employment_type === 'contractor' ? 'Honorario *' : 'Salario Mensual *' }}
+                </label>
+                <div class="relative">
+                  <span class="absolute left-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
+                  <input
+                    v-model.number="form.fixed_amount"
+                    type="number"
+                    min="0"
+                    step="1000"
+                    required
+                    class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <p class="text-sm font-bold text-text-primary mb-3">Selección rápida:</p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="amount in [1500000, 2000000, 2500000, 3000000, 4000000]"
+                    :key="amount"
+                    type="button"
+                    @click="form.fixed_amount = amount"
+                    class="px-4 py-2.5 rounded-xl text-sm font-bold"
+                    :class="form.fixed_amount === amount
+                      ? 'bg-crocus-600 text-white shadow-md'
+                      : 'bg-white border-2 border-titan-300 text-text-primary hover:border-crocus-400 hover:shadow-sm'"
+                  >
+                    {{ formatCurrencyShort(amount) }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hourly Config -->
+            <div v-else-if="form.salary_type === 'hourly'" class="space-y-6">
+              <h3 class="text-lg font-bold text-crocus-700 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Valor por Hora
+              </h3>
+
+              <div>
+                <label class="block text-sm font-bold text-text-primary mb-3">
+                  Valor Hora *
+                </label>
+                <div class="relative">
+                  <span class="absolute left-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
+                  <input
+                    v-model.number="form.hourly_rate"
+                    type="number"
+                    min="0"
+                    step="100"
+                    required
+                    class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <p class="text-sm font-bold text-text-primary mb-3">Selección rápida:</p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="amount in [5000, 8000, 10000, 15000, 20000]"
+                    :key="amount"
+                    type="button"
+                    @click="form.hourly_rate = amount"
+                    class="px-4 py-2.5 rounded-xl text-sm font-bold"
+                    :class="form.hourly_rate === amount
+                      ? 'bg-crocus-600 text-white shadow-md'
+                      : 'bg-white border-2 border-titan-300 text-text-primary hover:border-crocus-400 hover:shadow-sm'"
+                  >
+                    {{ formatCurrency(amount) }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Frecuencia de Pago -->
           <div class="mt-10">
             <h3 class="text-lg font-bold text-crocus-700 mb-6 flex items-center gap-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -372,15 +425,15 @@
                 v-for="freq in paymentFrequencies"
                 :key="freq.value"
                 class="group relative flex flex-col p-5 border-2 rounded-xl cursor-pointer"
-                :class="form.payment_frequency === freq.value 
-                  ? 'border-crocus-500 bg-crocus-50 shadow-md' 
+                :class="form.payment_frequency === freq.value
+                  ? 'border-crocus-500 bg-crocus-50 shadow-md'
                   : 'border-titan-300 bg-white hover:border-crocus-300 hover:shadow-sm'"
               >
                 <input type="radio" v-model="form.payment_frequency" :value="freq.value" class="sr-only" />
                 <div class="flex flex-col items-center text-center gap-3">
                   <div class="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold"
-                    :class="form.payment_frequency === freq.value 
-                      ? 'bg-crocus-600 text-white shadow-md' 
+                    :class="form.payment_frequency === freq.value
+                      ? 'bg-crocus-600 text-white shadow-md'
                       : 'bg-titan-200 text-titan-600 group-hover:bg-titan-300'">
                     {{ freq.icon }}
                   </div>
@@ -393,7 +446,7 @@
             </div>
           </div>
 
-          <!-- Notas -->
+          <!-- 5. Notas -->
           <div class="mt-10">
             <h3 class="text-lg font-bold text-crocus-700 mb-4 flex items-center gap-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -427,15 +480,17 @@
                 <p class="font-bold text-text-primary">{{ employee.name }}</p>
               </div>
               <div>
-                <p class="text-xs text-text-tertiary mb-1 uppercase tracking-wide font-semibold">Tipo de Salario</p>
-                <p class="font-bold text-text-primary">
-                  {{ form.salary_type === 'smmlv' ? 'Basado en SMMLV' : form.salary_type === 'fixed' ? 'Monto Fijo' : form.salary_type === 'hourly' ? 'Por Hora' : 'Sin seleccionar' }}
-                </p>
-              </div>
-              <div>
                 <p class="text-xs text-text-tertiary mb-1 uppercase tracking-wide font-semibold">Tipo de Contrato</p>
                 <p class="font-bold text-text-primary">
                   {{ form.employment_type === 'employee' ? 'Empleado' : form.employment_type === 'contractor' ? 'Contratista' : form.employment_type === 'daily' ? 'Jornalero' : 'Sin seleccionar' }}
+                </p>
+              </div>
+              <div v-if="form.employment_type !== 'daily'">
+                <p class="text-xs text-text-tertiary mb-1 uppercase tracking-wide font-semibold">
+                  {{ form.employment_type === 'contractor' ? 'Tipo de Honorario' : 'Tipo de Salario' }}
+                </p>
+                <p class="font-bold text-text-primary">
+                  {{ form.salary_type === 'smmlv' ? 'Basado en SMMLV' : form.salary_type === 'fixed' ? (form.employment_type === 'contractor' ? 'Honorario Fijo' : 'Monto Fijo') : form.salary_type === 'hourly' ? 'Por Hora' : 'Sin seleccionar' }}
                 </p>
               </div>
               <div v-if="form.employment_type === 'daily' && form.daily_rate">
@@ -455,7 +510,9 @@
                 <p class="font-bold text-text-primary">{{ frequencyLabel }}</p>
               </div>
               <div class="pt-4 border-t-2 border-titan-300">
-                <p class="text-xs text-text-tertiary mb-2 uppercase tracking-wide font-semibold">Salario Mensual</p>
+                <p class="text-xs text-text-tertiary mb-2 uppercase tracking-wide font-semibold">
+                  {{ form.employment_type === 'contractor' ? 'Honorario Mensual' : 'Salario Mensual' }}
+                </p>
                 <p class="text-3xl font-black text-crocus-600">
                   {{ formatCurrency(calculatedSalary) }}
                 </p>
@@ -494,6 +551,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed, reactive, ref, watch } from 'vue'
 const route = useRoute()
 const toast = useToast()
 const employeeId = route.params.id
@@ -515,6 +573,15 @@ const form = reactive({
   daily_rate: null as number | null
 })
 
+// Reset salary_type to a sensible default when employment type changes
+watch(() => form.employment_type, (newType: string) => {
+  if (newType === 'contractor' && form.salary_type === 'smmlv') {
+    form.salary_type = 'fixed'
+  } else if (newType === 'employee' && form.salary_type !== 'smmlv' && form.salary_type !== 'fixed' && form.salary_type !== 'hourly') {
+    form.salary_type = 'smmlv'
+  }
+})
+
 // Payment frequencies
 const paymentFrequencies = [
   { value: 'monthly', label: 'Mensual', icon: '1x', description: '1 pago por mes' },
@@ -533,17 +600,19 @@ const { data: employeeData } = useAsyncData(
     default: () => ({ data: null }),
     transform: (response: any) => {
       const data = response?.data
-      // Pre-fill form if employee has existing config
+      form.employment_type = data?.employment_type || 'employee'
+      form.daily_rate = data?.daily_rate ?? null
+      // Pre-fill salary config if it exists and is valid for this employment type
       if (data?.salary_type) {
-        form.salary_type = data.salary_type
+        const isContractor = form.employment_type === 'contractor'
+        // Don't pre-fill smmlv for contractors — reset to fixed
+        form.salary_type = (isContractor && data.salary_type === 'smmlv') ? 'fixed' : data.salary_type
         form.multiplier = data.multiplier || 1
         form.fixed_amount = data.fixed_amount
         form.hourly_rate = data.hourly_rate
         form.payment_frequency = data.payment_frequency || 'monthly'
         form.notes = data.salary_notes || ''
       }
-      form.employment_type = data?.employment_type || 'employee'
-      form.daily_rate = data?.daily_rate ?? null
       if (response?.smmlv) {
         smmlv.value = response.smmlv
       }
@@ -561,6 +630,9 @@ const employee = computed(() => employeeData.value || {
 
 // Calculated salary (monthly)
 const calculatedSalary = computed(() => {
+  if (form.employment_type === 'daily') {
+    return form.daily_rate || 0
+  }
   if (form.salary_type === 'smmlv') {
     return (form.multiplier || 0) * smmlv.value
   } else if (form.salary_type === 'fixed') {
@@ -586,11 +658,13 @@ const frequencyLabel = computed(() => {
 
 // Form validation
 const isFormValid = computed(() => {
+  if (form.employment_type === 'daily') {
+    return !!form.daily_rate && form.daily_rate > 0
+  }
   if (!form.salary_type) return false
   if (form.salary_type === 'smmlv' && (!form.multiplier || form.multiplier <= 0)) return false
   if (form.salary_type === 'fixed' && (!form.fixed_amount || form.fixed_amount <= 0)) return false
   if (form.salary_type === 'hourly' && (!form.hourly_rate || form.hourly_rate <= 0)) return false
-  if (form.employment_type === 'daily' && (!form.daily_rate || form.daily_rate <= 0)) return false
   return true
 })
 
@@ -619,22 +693,24 @@ const handleSubmit = async () => {
 
   try {
     const body: Record<string, any> = {
-      salary_type: form.salary_type,
       payment_frequency: form.payment_frequency,
-      notes: form.notes
+      notes: form.notes,
+      employment_type: form.employment_type
     }
 
-    if (form.salary_type === 'smmlv') {
-      body.minimum_wage_multiplier = form.multiplier
-    } else if (form.salary_type === 'hourly') {
-      body.hourly_rate = form.hourly_rate
-    } else {
-      body.fixed_amount = form.fixed_amount
-    }
-
-    body.employment_type = form.employment_type
     if (form.employment_type === 'daily') {
+      // Daily workers: use fixed as salary_type internally, only daily_rate matters
+      body.salary_type = 'fixed'
       body.daily_rate = form.daily_rate
+    } else {
+      body.salary_type = form.salary_type
+      if (form.salary_type === 'smmlv') {
+        body.minimum_wage_multiplier = form.multiplier
+      } else if (form.salary_type === 'hourly') {
+        body.hourly_rate = form.hourly_rate
+      } else {
+        body.fixed_amount = form.fixed_amount
+      }
     }
 
     await $fetch(`/api/salaries/employees/${employeeId}/config`, {
@@ -642,7 +718,7 @@ const handleSubmit = async () => {
       body
     })
 
-    toast.success('Salario configurado correctamente')
+    toast.success('Configuración guardada correctamente')
     clearNuxtData(`employee-salary-detail-${employeeId}`)
     clearNuxtData(`employees-salaries-*`)
     await navigateTo(`/equipo/salarios/${employeeId}`)
