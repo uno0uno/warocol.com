@@ -32,9 +32,15 @@
           <h3 class="text-lg font-semibold text-text-primary">Informacion del Pago</h3>
 
           <!-- Salario configurado info -->
-          <div v-if="employee.salary_type" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div v-if="employee.employment_type === 'daily' && employee.daily_rate" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p class="text-sm text-blue-800">
-              <strong>Salario configurado:</strong> 
+              <strong>Tarifa diaria:</strong>
+              {{ formatCurrency(employee.daily_rate) }} / día
+            </p>
+          </div>
+          <div v-else-if="employee.salary_type && employee.employment_type !== 'daily'" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p class="text-sm text-blue-800">
+              <strong>Salario configurado:</strong>
               <span v-if="employee.salary_type === 'hourly'">
                 {{ formatCurrency(employee.hourly_rate || 0) }} / hora
               </span>
@@ -60,7 +66,7 @@
               step="1"
               required
               class="input-base w-full px-4 py-3"
-              placeholder="0"
+              placeholder="Ej: 15"
             />
             <p v-if="daysWorked" class="text-xs text-text-tertiary mt-1">
               {{ daysWorked }} días × {{ formatCurrency(employee.daily_rate) }} = {{ formatCurrency(form.payment_amount) }}
