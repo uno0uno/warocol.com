@@ -433,8 +433,8 @@ watch(employeeData, (data) => {
                     </td>
                   </tr>
 
-                  <!-- Type Row -->
-                  <tr class="hover:bg-surface-secondary/50 transition-colors">
+                  <!-- Type Row — hidden for daily workers -->
+                  <tr v-if="employee.employment_type !== 'daily'" class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm font-medium text-text-secondary">
                       Tipo de Salario
                     </td>
@@ -444,7 +444,7 @@ watch(employeeData, (data) => {
                   </tr>
 
                   <!-- Multiplier Row (if SMMLV) -->
-                  <tr v-if="employee.salary_type === 'smmlv'" class="hover:bg-surface-secondary/50 transition-colors">
+                  <tr v-if="employee.salary_type === 'smmlv' && employee.employment_type !== 'daily'" class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm font-medium text-text-secondary">
                       Multiplicador SMMLV
                     </td>
@@ -453,8 +453,8 @@ watch(employeeData, (data) => {
                     </td>
                   </tr>
 
-                  <!-- Fixed Amount Row (if fixed) -->
-                  <tr v-if="employee.salary_type === 'fixed'" class="hover:bg-surface-secondary/50 transition-colors">
+                  <!-- Fixed Amount Row — hidden for daily workers -->
+                  <tr v-if="employee.salary_type === 'fixed' && employee.employment_type !== 'daily'" class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm font-medium text-text-secondary">
                       Monto Fijo
                     </td>
@@ -473,8 +473,8 @@ watch(employeeData, (data) => {
                     </td>
                   </tr>
 
-                  <!-- Calculated Salary Row -->
-                  <tr class="hover:bg-surface-secondary/50 transition-colors">
+                  <!-- Calculated Salary Row — hidden for daily workers (no fixed monthly salary) -->
+                  <tr v-if="employee.employment_type !== 'daily'" class="hover:bg-surface-secondary/50 transition-colors">
                     <td class="px-4 py-3 text-sm font-medium text-text-secondary">
                       Salario Calculado
                     </td>
