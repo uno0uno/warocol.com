@@ -47,7 +47,7 @@
             </p>
           </div>
 
-          <!-- Días Trabajados (solo jornaleros) -->
+          <!-- Días Trabajados (jornaleros) -->
           <div v-if="employee.employment_type === 'daily'">
             <label class="block text-sm font-medium text-text-primary mb-2">
               Días trabajados *
@@ -67,6 +67,26 @@
             </p>
           </div>
 
+          <!-- Días Trabajados (contratistas con honorario fijo) -->
+          <div v-if="isContractor && employee.salary_type === 'fixed' && employee.calculated_salary">
+            <label class="block text-sm font-medium text-text-primary mb-2">
+              Días trabajados <span class="text-text-tertiary font-normal">(opcional — calcula el monto proporcional)</span>
+            </label>
+            <input
+              v-model.number="contractorDays"
+              type="number"
+              min="1"
+              max="31"
+              step="1"
+              class="input-base w-full px-4 py-3"
+              placeholder="Ej: 15"
+            />
+            <p v-if="contractorDays" class="text-xs text-text-tertiary mt-1">
+              {{ formatCurrency(employee.calculated_salary) }} ÷ 30 × {{ contractorDays }} días = {{ formatCurrency(contractorProportional) }}
+              <span class="text-blue-600 ml-1">— aplicado al monto (editable)</span>
+            </p>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Monto del Pago -->
             <div>
@@ -83,8 +103,7 @@
                   v-model.number="form.payment_amount"
                   type="number"
                   min="0"
-                  step="1000"
-                  required
+                  step="any"
                   class="input-base w-full pl-8 pr-4 py-2 text-lg font-semibold"
                   placeholder="0"
                 />
@@ -263,6 +282,10 @@
               <p class="text-sm text-text-secondary mb-1">Días trabajados</p>
               <p class="font-medium text-text-primary">{{ daysWorked }} días</p>
             </div>
+            <div v-if="isContractor && contractorDays">
+              <p class="text-sm text-text-secondary mb-1">Días trabajados</p>
+              <p class="font-medium text-text-primary">{{ contractorDays }} días</p>
+            </div>
             <div v-if="form.attachments.length > 0">
               <p class="text-sm text-text-secondary mb-1">Comprobantes</p>
               <p class="font-medium text-text-primary">{{ form.attachments.length }} archivo(s)</p>
@@ -358,6 +381,12 @@ const netAmount = computed(() => {
 
 const isSubmitting = ref(false)
 const daysWorked = ref<number | null>(null)
+const contractorDays = ref<number | null>(null)
+
+const contractorProportional = computed(() => {
+  if (!contractorDays.value || !employee.value?.calculated_salary) return 0
+  return Math.round((Number(employee.value.calculated_salary) / 30) * contractorDays.value)
+})
 
 // Fetch employee data
 const { data: employeeData } = useAsyncData(
@@ -394,6 +423,13 @@ watch(daysWorked, (val) => {
     form.payment_amount = val * (employee.value.daily_rate || 0)
   }
 }, { immediate: true })
+
+// Pre-fill proportional amount for contractors when days change
+watch(contractorDays, (val) => {
+  if (val != null && val > 0 && employee.value?.calculated_salary) {
+    form.payment_amount = Math.round((Number(employee.value.calculated_salary) / 30) * val)
+  }
+})
 
 // Selected method label
 const selectedMethodLabel = computed(() => {
