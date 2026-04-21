@@ -46,6 +46,8 @@ type BenefitCache = {
   cesantias:    any[]
   intCesantias: any[]
   vacaciones:   any[]
+  dotacion:     any[]
+  horasExtras:  any[]
 }
 
 const { data: empData, asyncStatus: empAsyncStatus, refetch: refetchEmployees } = useQuery({
@@ -77,17 +79,21 @@ async function loadBenefits(employees: any[]) {
   try {
     await Promise.all(
       employees.map(async (emp: any) => {
-        const [primaRes, cesantiasRes, intCesantiasRes, vacacionesRes] = await Promise.all([
+        const [primaRes, cesantiasRes, intCesantiasRes, vacacionesRes, dotacionRes, horasExtrasRes] = await Promise.all([
           $fetch<any>(`/api/salaries/employees/${emp.id}/prima`).catch(() => null),
           $fetch<any>(`/api/salaries/employees/${emp.id}/cesantias`).catch(() => null),
           $fetch<any>(`/api/salaries/employees/${emp.id}/int-cesantias`).catch(() => null),
           $fetch<any>(`/api/salaries/employees/${emp.id}/vacaciones`).catch(() => null),
+          $fetch<any>(`/api/salaries/employees/${emp.id}/dotacion`).catch(() => null),
+          $fetch<any>(`/api/salaries/employees/${emp.id}/horas-extras`).catch(() => null),
         ])
         newCache[emp.id] = {
           primas:       primaRes?.data       ?? [],
           cesantias:    cesantiasRes?.data    ?? [],
           intCesantias: intCesantiasRes?.data ?? [],
           vacaciones:   vacacionesRes?.data   ?? [],
+          dotacion:     dotacionRes?.data     ?? [],
+          horasExtras:  horasExtrasRes?.data  ?? [],
         }
       })
     )
@@ -141,6 +147,25 @@ function getVacacionesAmount(id: string): number | null {
   return rec ? Number(rec.vacaciones_amount) : null
 }
 
+function getDotacionAmount(id: string): number | null {
+  const rec = (cache.value[id]?.dotacion ?? []).find(
+    (d: any) => d.year === selectedYear.value && matchMonth(d.payment_date)
+  )
+  return rec ? Number(rec.total_amount) : null
+}
+
+function getHorasExtrasTotal(id: string): number | null {
+  const recs = (cache.value[id]?.horasExtras ?? []).filter(
+    (h: any) => {
+      if (!matchMonth(h.payment_date)) return false
+      if (!h.period_month) return true
+      return new Date(h.period_month + '-01').getFullYear() === selectedYear.value
+    }
+  )
+  if (!recs.length) return null
+  return recs.reduce((sum: number, h: any) => sum + Number(h.total_amount), 0)
+}
+
 // ── Table data — enriched with resolved benefit amounts ───────────────────
 // Computed is re-evaluated reactively when selectedYear/Month/searchTerm change
 const tableData = computed(() => {
@@ -162,15 +187,19 @@ const tableData = computed(() => {
     cesantias:    getCesantiasAmount(emp.id),
     intCesantias: getIntCesantiasAmount(emp.id),
     vacaciones:   getVacacionesAmount(emp.id),
+    dotacion:     getDotacionAmount(emp.id),
+    horasExtras:  getHorasExtrasTotal(emp.id),
   }))
 })
 
 const mobileBenefitCols = [
-  { key: 'primaS1',      label: 'Prima S1',       path: 'prima'         },
-  { key: 'primaS2',      label: 'Prima S2',       path: 'prima'         },
-  { key: 'cesantias',    label: 'Cesantías',      path: 'cesantias'     },
-  { key: 'intCesantias', label: 'Int. Cesantías', path: 'int-cesantias' },
-  { key: 'vacaciones',   label: 'Vacaciones',     path: 'vacaciones'    },
+  { key: 'primaS1',      label: 'Prima S1',       benefit: 'primaS1'      },
+  { key: 'primaS2',      label: 'Prima S2',       benefit: 'primaS2'      },
+  { key: 'cesantias',    label: 'Cesantías',      benefit: 'cesantias'    },
+  { key: 'intCesantias', label: 'Int. Cesantías', benefit: 'intCesantias' },
+  { key: 'vacaciones',   label: 'Vacaciones',     benefit: 'vacaciones'   },
+  { key: 'dotacion',     label: 'Dotación',       benefit: 'dotacion'     },
+  { key: 'horasExtras',  label: 'H. Extras',      benefit: 'horasExtras'  },
 ]
 
 const tableColumns = [
@@ -181,6 +210,8 @@ const tableColumns = [
   { key: 'cesantias',     title: 'Cesantías',      sortable: false, align: 'center' as const },
   { key: 'intCesantias',  title: 'Int. Cesantías', sortable: false, align: 'center' as const },
   { key: 'vacaciones',    title: 'Vacaciones',     sortable: false, align: 'center' as const },
+  { key: 'dotacion',      title: 'Dotación',       sortable: false, align: 'center' as const },
+  { key: 'horasExtras',   title: 'H. Extras',      sortable: false, align: 'center' as const },
 ]
 
 const employmentTypeLabel: Record<string, string> = {
@@ -286,6 +317,194 @@ const MONTH_NAMES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct'
 function formatPeriodMonth(pm: string): string {
   const [y, m] = pm.split('-')
   return `${MONTH_NAMES[parseInt(m) - 1]} ${y}`
+}
+
+// ── Inline benefit form ────────────────────────────────────────────────────
+const TODAY_STR = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date())
+
+const activeCell = ref<{ empId: string; benefit: string } | null>(null)
+const cellSubmitting = ref(false)
+const cellError = ref<string | null>(null)
+
+const cellForm = reactive({
+  payment_date: TODAY_STR,
+  payment_method: 'transfer',
+  // Prima / Cesantías / Int-Cesantías / Vacaciones
+  anio: currentYear,
+  semestre: '',
+  gross_salary: 0,
+  days_worked: 360,
+  cesantias_base: 0,
+  int_cesantias_amount: 0,
+  // Dotación
+  period: '',
+  year: currentYear,
+  total_amount: 0,
+  items_description: '',
+  // Horas Extras
+  period_month: '',
+  base_hourly_rate: 0,
+  hours_diurna: 0,
+  hours_nocturna: 0,
+  hours_dominical_diurna: 0,
+  hours_dominical_nocturna: 0,
+})
+
+function openCellForm(empId: string, benefit: string, row: any) {
+  if (activeCell.value?.empId === empId && activeCell.value?.benefit === benefit) {
+    closeCellForm()
+    return
+  }
+  activeCell.value = { empId, benefit }
+  cellError.value = null
+  // Reset all fields
+  cellForm.payment_date = TODAY_STR
+  cellForm.payment_method = 'transfer'
+  cellForm.anio = selectedYear.value
+  cellForm.year = selectedYear.value
+  cellForm.semestre = benefit === 'primaS1' ? `${selectedYear.value}-S1` : `${selectedYear.value}-S2`
+  cellForm.gross_salary = row.calculated_salary ? Number(row.calculated_salary) : 0
+  cellForm.base_hourly_rate = row.hourly_rate ? Number(row.hourly_rate) : 0
+  cellForm.days_worked = 360
+  cellForm.total_amount = 0
+  cellForm.period = ''
+  cellForm.items_description = ''
+  cellForm.period_month = ''
+  cellForm.hours_diurna = 0
+  cellForm.hours_nocturna = 0
+  cellForm.hours_dominical_diurna = 0
+  cellForm.hours_dominical_nocturna = 0
+  cellForm.cesantias_base = 0
+  cellForm.int_cesantias_amount = 0
+}
+
+function closeCellForm() {
+  activeCell.value = null
+  cellError.value = null
+}
+
+const cellComputedTotal = computed(() => {
+  const r = cellForm.base_hourly_rate || 0
+  return Math.round(
+    (cellForm.hours_diurna || 0) * r * 1.25 +
+    (cellForm.hours_nocturna || 0) * r * 1.75 +
+    (cellForm.hours_dominical_diurna || 0) * r * 2.0 +
+    (cellForm.hours_dominical_nocturna || 0) * r * 2.5
+  )
+})
+
+const cellIntCesantiasPreview = computed(() =>
+  cellForm.cesantias_base ? Math.round(cellForm.cesantias_base * 0.12) : 0
+)
+
+const BENEFIT_LABELS: Record<string, string> = {
+  primaS1:      'Prima de Servicios — S1',
+  primaS2:      'Prima de Servicios — S2',
+  cesantias:    'Cesantías',
+  intCesantias: 'Intereses sobre Cesantías',
+  vacaciones:   'Vacaciones',
+  dotacion:     'Dotación',
+  horasExtras:  'Horas Extras',
+}
+
+const showBenefitModal = computed({
+  get: () => activeCell.value !== null,
+  set: (v) => { if (!v) closeCellForm() },
+})
+
+const modalTitle = computed(() => {
+  if (!activeCell.value) return ''
+  const label = BENEFIT_LABELS[activeCell.value.benefit] ?? activeCell.value.benefit
+  const emp = allEmployeesRaw.value.find((e: any) => e.id === activeCell.value!.empId)
+  return emp ? `${label} — ${emp.name}` : label
+})
+
+async function submitCellForm() {
+  if (!activeCell.value) return
+  const { empId, benefit } = activeCell.value
+  cellSubmitting.value = true
+  cellError.value = null
+  try {
+    const BASE = `/api/salaries/employees/${empId}`
+    if (benefit === 'primaS1' || benefit === 'primaS2') {
+      await $fetch(`${BASE}/prima`, {
+        method: 'POST',
+        body: {
+          semestre: cellForm.semestre,
+          gross_salary: cellForm.gross_salary,
+          days_worked: cellForm.days_worked || 360,
+          payment_method: cellForm.payment_method || null,
+          payment_date: `${cellForm.payment_date}T00:00:00`,
+        },
+      })
+    } else if (benefit === 'cesantias') {
+      await $fetch(`${BASE}/cesantias`, {
+        method: 'POST',
+        body: {
+          anio: cellForm.anio,
+          gross_salary: cellForm.gross_salary,
+          days_worked: cellForm.days_worked || 360,
+          payment_method: cellForm.payment_method || null,
+          payment_date: `${cellForm.payment_date}T00:00:00`,
+        },
+      })
+    } else if (benefit === 'intCesantias') {
+      await $fetch(`${BASE}/int-cesantias`, {
+        method: 'POST',
+        body: {
+          anio: cellForm.anio,
+          cesantias_base: cellForm.cesantias_base,
+          int_cesantias_amount: cellForm.int_cesantias_amount || null,
+          payment_method: cellForm.payment_method || null,
+          payment_date: `${cellForm.payment_date}T00:00:00`,
+        },
+      })
+    } else if (benefit === 'vacaciones') {
+      await $fetch(`${BASE}/vacaciones`, {
+        method: 'POST',
+        body: {
+          anio: cellForm.anio,
+          gross_salary: cellForm.gross_salary,
+          days_worked: cellForm.days_worked || 360,
+          payment_method: cellForm.payment_method || null,
+          payment_date: `${cellForm.payment_date}T00:00:00`,
+        },
+      })
+    } else if (benefit === 'dotacion') {
+      await $fetch(`${BASE}/dotacion`, {
+        method: 'POST',
+        body: {
+          period: cellForm.period,
+          year: cellForm.year,
+          total_amount: cellForm.total_amount,
+          items_description: cellForm.items_description || null,
+          payment_date: `${cellForm.payment_date}T00:00:00`,
+        },
+      })
+    } else if (benefit === 'horasExtras') {
+      await $fetch(`${BASE}/horas-extras`, {
+        method: 'POST',
+        body: {
+          period_month: cellForm.period_month,
+          base_hourly_rate: cellForm.base_hourly_rate,
+          hours_diurna: cellForm.hours_diurna || 0,
+          hours_nocturna: cellForm.hours_nocturna || 0,
+          hours_dominical_diurna: cellForm.hours_dominical_diurna || 0,
+          hours_dominical_nocturna: cellForm.hours_dominical_nocturna || 0,
+          payment_method: cellForm.payment_method || null,
+          payment_date: `${cellForm.payment_date}T00:00:00`,
+        },
+      })
+    }
+    // Refresh only this employee's benefits
+    const emp = allEmployeesRaw.value.find((e: any) => e.id === empId)
+    if (emp) await loadBenefits([emp])
+    closeCellForm()
+  } catch (err: any) {
+    cellError.value = err?.data?.detail || 'Error al registrar. Intente de nuevo.'
+  } finally {
+    cellSubmitting.value = false
+  }
 }
 
 onMounted(() => {
@@ -394,12 +613,25 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               <div class="grid grid-cols-2 gap-1.5 pl-10">
                 <div v-for="col in mobileBenefitCols" :key="col.key" class="flex flex-col gap-0.5">
                   <span class="text-xs text-text-secondary">{{ col.label }}</span>
-                  <NuxtLink v-if="item[col.key] != null" :to="`/equipo/salarios/${item.id}/prestaciones/${col.path}`">
-                    <UiStatusBadge :value="formatCurrency(item[col.key])" variant="success" size="sm" />
-                  </NuxtLink>
-                  <NuxtLink v-else :to="`/equipo/salarios/${item.id}/prestaciones/${col.path}`">
-                    <UiStatusBadge value="Sin registrar" variant="secondary" size="sm" />
-                  </NuxtLink>
+                  <span v-if="col.benefit === 'dotacion' && item.employment_type !== 'employee'" class="text-xs text-text-tertiary">N/A</span>
+                  <button
+                    v-else-if="item[col.key] == null || col.benefit === 'horasExtras'"
+                    class="text-left focus:outline-none focus:ring-2 focus:ring-primary rounded min-h-[44px] flex items-center"
+                    :aria-label="`${item[col.key] != null ? 'Agregar más ' : 'Registrar '}${col.label} — ${item.name}`"
+                    @click="openCellForm(item.id, col.benefit, item)"
+                  >
+                    <UiStatusBadge
+                      :value="item[col.key] != null ? formatCurrency(item[col.key]) : 'Sin registrar'"
+                      :variant="item[col.key] != null ? 'success' : 'secondary'"
+                      size="sm"
+                    />
+                  </button>
+                  <UiStatusBadge
+                    v-else
+                    :value="formatCurrency(item[col.key])"
+                    variant="success"
+                    size="sm"
+                  />
                 </div>
               </div>
             </div>
@@ -427,71 +659,375 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
           <!-- Prima S1 -->
           <template #cell-primaS1="{ row }">
-            <NuxtLink :to="`/equipo/salarios/${row.id}/prestaciones/prima`" :aria-label="`Prima S1 ${selectedYear} — ${row.name}`">
-              <UiStatusBadge
-                :value="row.primaS1 != null ? formatCurrency(row.primaS1) : 'Sin registrar'"
-                :variant="row.primaS1 != null ? 'success' : 'secondary'"
-                size="sm"
-                format="text"
-                class="font-normal"
-              />
-            </NuxtLink>
+            <button
+              v-if="row.primaS1 == null"
+              class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
+              :aria-label="`Registrar Prima S1 ${selectedYear} — ${row.name}`"
+              @click="openCellForm(row.id, 'primaS1', row)"
+            >
+              <UiStatusBadge value="Sin registrar" variant="secondary" size="sm" format="text" class="font-normal" />
+            </button>
+            <UiStatusBadge v-else :value="formatCurrency(row.primaS1)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
 
           <!-- Prima S2 -->
           <template #cell-primaS2="{ row }">
-            <NuxtLink :to="`/equipo/salarios/${row.id}/prestaciones/prima`" :aria-label="`Prima S2 ${selectedYear} — ${row.name}`">
-              <UiStatusBadge
-                :value="row.primaS2 != null ? formatCurrency(row.primaS2) : 'Sin registrar'"
-                :variant="row.primaS2 != null ? 'success' : 'secondary'"
-                size="sm"
-                format="text"
-                class="font-normal"
-              />
-            </NuxtLink>
+            <button
+              v-if="row.primaS2 == null"
+              class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
+              :aria-label="`Registrar Prima S2 ${selectedYear} — ${row.name}`"
+              @click="openCellForm(row.id, 'primaS2', row)"
+            >
+              <UiStatusBadge value="Sin registrar" variant="secondary" size="sm" format="text" class="font-normal" />
+            </button>
+            <UiStatusBadge v-else :value="formatCurrency(row.primaS2)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
 
           <!-- Cesantías -->
           <template #cell-cesantias="{ row }">
-            <NuxtLink :to="`/equipo/salarios/${row.id}/prestaciones/cesantias`" :aria-label="`Cesantías ${selectedYear} — ${row.name}`">
-              <UiStatusBadge
-                :value="row.cesantias != null ? formatCurrency(row.cesantias) : 'Sin registrar'"
-                :variant="row.cesantias != null ? 'success' : 'secondary'"
-                size="sm"
-                format="text"
-                class="font-normal"
-              />
-            </NuxtLink>
+            <button
+              v-if="row.cesantias == null"
+              class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
+              :aria-label="`Registrar Cesantías ${selectedYear} — ${row.name}`"
+              @click="openCellForm(row.id, 'cesantias', row)"
+            >
+              <UiStatusBadge value="Sin registrar" variant="secondary" size="sm" format="text" class="font-normal" />
+            </button>
+            <UiStatusBadge v-else :value="formatCurrency(row.cesantias)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
 
           <!-- Int. Cesantías -->
           <template #cell-intCesantias="{ row }">
-            <NuxtLink :to="`/equipo/salarios/${row.id}/prestaciones/int-cesantias`" :aria-label="`Int. Cesantías ${selectedYear} — ${row.name}`">
-              <UiStatusBadge
-                :value="row.intCesantias != null ? formatCurrency(row.intCesantias) : 'Sin registrar'"
-                :variant="row.intCesantias != null ? 'success' : 'secondary'"
-                size="sm"
-                format="text"
-                class="font-normal"
-              />
-            </NuxtLink>
+            <button
+              v-if="row.intCesantias == null"
+              class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
+              :aria-label="`Registrar Int. Cesantías ${selectedYear} — ${row.name}`"
+              @click="openCellForm(row.id, 'intCesantias', row)"
+            >
+              <UiStatusBadge value="Sin registrar" variant="secondary" size="sm" format="text" class="font-normal" />
+            </button>
+            <UiStatusBadge v-else :value="formatCurrency(row.intCesantias)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
 
           <!-- Vacaciones -->
           <template #cell-vacaciones="{ row }">
-            <NuxtLink :to="`/equipo/salarios/${row.id}/prestaciones/vacaciones`" :aria-label="`Vacaciones ${selectedYear} — ${row.name}`">
+            <button
+              v-if="row.vacaciones == null"
+              class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
+              :aria-label="`Registrar Vacaciones ${selectedYear} — ${row.name}`"
+              @click="openCellForm(row.id, 'vacaciones', row)"
+            >
+              <UiStatusBadge value="Sin registrar" variant="secondary" size="sm" format="text" class="font-normal" />
+            </button>
+            <UiStatusBadge v-else :value="formatCurrency(row.vacaciones)" variant="success" size="sm" format="text" class="font-normal" />
+          </template>
+
+          <!-- Dotación -->
+          <template #cell-dotacion="{ row }">
+            <span v-if="row.employment_type !== 'employee'" class="text-xs text-text-tertiary px-2">N/A</span>
+            <template v-else>
+              <button
+                v-if="row.dotacion == null"
+                class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
+                :aria-label="`Registrar Dotación ${selectedYear} — ${row.name}`"
+                @click="openCellForm(row.id, 'dotacion', row)"
+              >
+                <UiStatusBadge value="Sin registrar" variant="secondary" size="sm" format="text" class="font-normal" />
+              </button>
+              <UiStatusBadge v-else :value="formatCurrency(row.dotacion)" variant="success" size="sm" format="text" class="font-normal" />
+            </template>
+          </template>
+
+          <!-- Horas Extras (always clickable to add more) -->
+          <template #cell-horasExtras="{ row }">
+            <button
+              class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
+              :aria-label="`${row.horasExtras != null ? 'Agregar más horas extras' : 'Registrar Horas Extras'} — ${row.name}`"
+              @click="openCellForm(row.id, 'horasExtras', row)"
+            >
               <UiStatusBadge
-                :value="row.vacaciones != null ? formatCurrency(row.vacaciones) : 'Sin registrar'"
-                :variant="row.vacaciones != null ? 'success' : 'secondary'"
+                :value="row.horasExtras != null ? formatCurrency(row.horasExtras) : 'Agregar'"
+                :variant="row.horasExtras != null ? 'success' : 'secondary'"
                 size="sm"
                 format="text"
                 class="font-normal"
               />
-            </NuxtLink>
+            </button>
           </template>
 
         </UiResponsiveDataView>
       </HealthSemaphore>
+
+      <!-- ── Benefit Registration Modal (desktop) ──────────────────────── -->
+      <UiModal v-model="showBenefitModal" :title="modalTitle" max-height="md">
+        <form v-if="activeCell" class="p-6 space-y-4 overflow-y-auto max-h-[70vh]" @submit.prevent="submitCellForm" novalidate>
+          <template v-if="activeCell.benefit === 'primaS1' || activeCell.benefit === 'primaS2'">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Salario base *</label>
+                <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                  <input v-model.number="cellForm.gross_salary" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Días trabajados</label>
+                <input v-model.number="cellForm.days_worked" type="number" min="1" max="180" step="1" class="input-base w-full px-3 py-2" placeholder="180" />
+              </div>
+            </div>
+          </template>
+          <template v-else-if="activeCell.benefit === 'cesantias' || activeCell.benefit === 'vacaciones'">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Salario base *</label>
+                <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                  <input v-model.number="cellForm.gross_salary" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Días trabajados</label>
+                <input v-model.number="cellForm.days_worked" type="number" min="1" max="360" step="1" class="input-base w-full px-3 py-2" placeholder="360" />
+              </div>
+            </div>
+          </template>
+          <template v-else-if="activeCell.benefit === 'intCesantias'">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Base cesantías *</label>
+                <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                  <input v-model.number="cellForm.cesantias_base" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
+                <p class="text-xs text-text-tertiary mt-0.5">Saldo cesantías sobre el cual se calcula el 12%</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Calculado (12%)</label>
+                <div class="px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <span class="font-bold text-emerald-700">{{ formatCurrency(cellIntCesantiasPreview) }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
+          <template v-else-if="activeCell.benefit === 'dotacion'">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Período *</label>
+                <select v-model="cellForm.period" required class="input-base w-full px-3 py-2">
+                  <option value="" disabled>Seleccionar</option>
+                  <option value="Abr">Abril (antes 30 Abr)</option>
+                  <option value="Ago">Agosto (antes 31 Ago)</option>
+                  <option value="Dic">Diciembre (antes 20 Dic)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Valor total *</label>
+                <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                  <input v-model.number="cellForm.total_amount" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Artículos entregados</label>
+              <textarea v-model="cellForm.items_description" class="input-base w-full px-3 py-2 min-h-[60px]" placeholder="Ej: 2 camisas, 1 pantalón..." />
+            </div>
+          </template>
+          <template v-else-if="activeCell.benefit === 'horasExtras'">
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Período (mes) *</label>
+              <input v-model="cellForm.period_month" type="month" required class="input-base w-full px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Tarifa horaria base *</label>
+              <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                <input v-model.number="cellForm.base_hourly_rate" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Diurnas (×1.25)</label>
+                <input v-model.number="cellForm.hours_diurna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
+                <p v-if="cellForm.hours_diurna > 0 && cellForm.base_hourly_rate > 0" class="text-xs text-emerald-700 mt-0.5">= {{ formatCurrency(Math.round(cellForm.hours_diurna * cellForm.base_hourly_rate * 1.25)) }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Nocturnas (×1.75)</label>
+                <input v-model.number="cellForm.hours_nocturna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
+                <p v-if="cellForm.hours_nocturna > 0 && cellForm.base_hourly_rate > 0" class="text-xs text-emerald-700 mt-0.5">= {{ formatCurrency(Math.round(cellForm.hours_nocturna * cellForm.base_hourly_rate * 1.75)) }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Dom/festivo diurna (×2.00)</label>
+                <input v-model.number="cellForm.hours_dominical_diurna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
+                <p v-if="cellForm.hours_dominical_diurna > 0 && cellForm.base_hourly_rate > 0" class="text-xs text-emerald-700 mt-0.5">= {{ formatCurrency(Math.round(cellForm.hours_dominical_diurna * cellForm.base_hourly_rate * 2.0)) }}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-1">Dom/festivo nocturna (×2.50)</label>
+                <input v-model.number="cellForm.hours_dominical_nocturna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
+                <p v-if="cellForm.hours_dominical_nocturna > 0 && cellForm.base_hourly_rate > 0" class="text-xs text-emerald-700 mt-0.5">= {{ formatCurrency(Math.round(cellForm.hours_dominical_nocturna * cellForm.base_hourly_rate * 2.5)) }}</p>
+              </div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+              <p class="text-sm text-text-secondary">Total calculado</p>
+              <p class="text-xl font-bold text-emerald-700">{{ formatCurrency(cellComputedTotal) }}</p>
+            </div>
+          </template>
+
+          <!-- Shared: payment method + date -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Método de pago</label>
+              <select v-model="cellForm.payment_method" class="input-base w-full px-3 py-2">
+                <option value="transfer">Transferencia</option>
+                <option value="cash">Efectivo</option>
+                <option value="nequi">Nequi</option>
+                <option value="daviplata">Daviplata</option>
+                <option value="check">Cheque</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Fecha de pago *</label>
+              <input v-model="cellForm.payment_date" type="date" required class="input-base w-full px-3 py-2" />
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div v-if="cellError" role="alert" class="bg-red-50 border border-red-200 rounded-lg p-3">
+            <p class="text-sm text-red-700">{{ cellError }}</p>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-3 pt-2">
+            <button
+              type="submit"
+              :disabled="cellSubmitting"
+              class="flex-1 py-2.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold min-h-[44px]"
+            >
+              <CommonsTheCustomLoader v-if="cellSubmitting" size="small" />
+              <span>{{ cellSubmitting ? 'Registrando...' : 'Registrar' }}</span>
+            </button>
+            <button type="button" @click="closeCellForm" class="px-4 py-2.5 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface transition-colors min-h-[44px]">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </UiModal>
+
+      <!-- ── Benefit Registration Sheet (mobile) ───────────────────────── -->
+      <UiBottomSheetModal v-model="showBenefitModal" :title="modalTitle">
+        <form v-if="activeCell" class="p-4 space-y-4 overflow-y-auto max-h-[75vh]" @submit.prevent="submitCellForm" novalidate>
+          <template v-if="activeCell.benefit === 'primaS1' || activeCell.benefit === 'primaS2'">
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Salario base *</label>
+              <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                <input v-model.number="cellForm.gross_salary" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Días trabajados (≤180)</label>
+              <input v-model.number="cellForm.days_worked" type="number" min="1" max="180" step="1" class="input-base w-full px-3 py-2" placeholder="180" />
+            </div>
+          </template>
+          <template v-else-if="activeCell.benefit === 'cesantias' || activeCell.benefit === 'vacaciones'">
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Salario base *</label>
+              <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                <input v-model.number="cellForm.gross_salary" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Días trabajados (≤360)</label>
+              <input v-model.number="cellForm.days_worked" type="number" min="1" max="360" step="1" class="input-base w-full px-3 py-2" placeholder="360" />
+            </div>
+          </template>
+          <template v-else-if="activeCell.benefit === 'intCesantias'">
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Base cesantías *</label>
+              <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                <input v-model.number="cellForm.cesantias_base" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
+              <p class="text-xs text-text-tertiary mt-0.5">Intereses = base × 12%</p>
+            </div>
+            <div v-if="cellIntCesantiasPreview > 0" class="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-2">
+              <span class="font-bold text-emerald-700">{{ formatCurrency(cellIntCesantiasPreview) }}</span>
+            </div>
+          </template>
+          <template v-else-if="activeCell.benefit === 'dotacion'">
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Período *</label>
+              <select v-model="cellForm.period" required class="input-base w-full px-3 py-2">
+                <option value="" disabled>Seleccionar</option>
+                <option value="Abr">Abril</option>
+                <option value="Ago">Agosto</option>
+                <option value="Dic">Diciembre</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Valor total *</label>
+              <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                <input v-model.number="cellForm.total_amount" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
+            </div>
+          </template>
+          <template v-else-if="activeCell.benefit === 'horasExtras'">
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Período (mes) *</label>
+              <input v-model="cellForm.period_month" type="month" required class="input-base w-full px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Tarifa horaria base *</label>
+              <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                <input v-model.number="cellForm.base_hourly_rate" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-text-primary mb-1">Diurnas (×1.25)</label>
+                <input v-model.number="cellForm.hours_diurna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-text-primary mb-1">Nocturnas (×1.75)</label>
+                <input v-model.number="cellForm.hours_nocturna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-text-primary mb-1">Dom. diurna (×2.00)</label>
+                <input v-model.number="cellForm.hours_dominical_diurna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-text-primary mb-1">Dom. nocturna (×2.50)</label>
+                <input v-model.number="cellForm.hours_dominical_nocturna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
+              </div>
+            </div>
+            <div v-if="cellComputedTotal > 0" class="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-2">
+              <p class="text-xs text-text-secondary">Total</p>
+              <p class="font-bold text-emerald-700">{{ formatCurrency(cellComputedTotal) }}</p>
+            </div>
+          </template>
+
+          <!-- Shared: payment method + date -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Método</label>
+              <select v-model="cellForm.payment_method" class="input-base w-full px-3 py-2">
+                <option value="transfer">Transferencia</option>
+                <option value="cash">Efectivo</option>
+                <option value="nequi">Nequi</option>
+                <option value="daviplata">Daviplata</option>
+                <option value="check">Cheque</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Fecha *</label>
+              <input v-model="cellForm.payment_date" type="date" required class="input-base w-full px-3 py-2" />
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div v-if="cellError" role="alert" class="bg-red-50 border border-red-200 rounded-lg p-3">
+            <p class="text-sm text-red-700">{{ cellError }}</p>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-3 pt-2 pb-safe">
+            <button
+              type="submit"
+              :disabled="cellSubmitting"
+              class="flex-1 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold min-h-[44px]"
+            >
+              <CommonsTheCustomLoader v-if="cellSubmitting" size="small" />
+              <span>{{ cellSubmitting ? 'Registrando...' : 'Registrar' }}</span>
+            </button>
+            <button type="button" @click="closeCellForm" class="px-4 py-3 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary min-h-[44px]">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </UiBottomSheetModal>
 
       <!-- ── PILA Section ──────────────────────────────────────────────── -->
       <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm">
