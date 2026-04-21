@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onUnmounted, watch, reactive } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
@@ -97,7 +97,8 @@ async function loadBenefits(employees: any[]) {
         }
       })
     )
-    cache.value = newCache
+    // Merge into existing cache instead of replacing (so partial refresh doesn't wipe other employees)
+    cache.value = { ...cache.value, ...newCache }
   } catch {
     fetchError.value = true
   } finally {
@@ -167,11 +168,9 @@ function getHorasExtrasTotal(id: string): number | null {
 }
 
 // ── Table data — enriched with resolved benefit amounts ───────────────────
-// Computed is re-evaluated reactively when selectedYear/Month/searchTerm change
 const tableData = computed(() => {
   let list = allEmployeesRaw.value
 
-  // Search filter
   if (searchTerm.value) {
     const term = searchTerm.value.toLowerCase()
     list = list.filter((e: any) =>
@@ -203,6 +202,7 @@ const mobileBenefitCols = [
 ]
 
 const tableColumns = [
+  { key: 'select',        title: '',               sortable: false, align: 'center' as const },
   { key: 'name',          title: 'Empleado',       sortable: false },
   { key: 'employmentType',title: 'Tipo',           sortable: false, align: 'center' as const },
   { key: 'primaS1',       title: 'Prima S1',       sortable: false, align: 'center' as const },
@@ -319,191 +319,199 @@ function formatPeriodMonth(pm: string): string {
   return `${MONTH_NAMES[parseInt(m) - 1]} ${y}`
 }
 
-// ── Inline benefit form ────────────────────────────────────────────────────
+// ── Bulk selection ────────────────────────────────────────────────────────
+const selectedEmpIds = ref<string[]>([])
+
+const allPageSelected = computed(() => {
+  if (!tableData.value.length) return false
+  return tableData.value.every(r => selectedEmpIds.value.includes(r.id))
+})
+
+function toggleSelect(id: string) {
+  const idx = selectedEmpIds.value.indexOf(id)
+  if (idx === -1) {
+    selectedEmpIds.value = [...selectedEmpIds.value, id]
+    initSlideData(id)
+  } else {
+    selectedEmpIds.value = selectedEmpIds.value.filter(i => i !== id)
+  }
+}
+
+function toggleSelectAll() {
+  if (allPageSelected.value) {
+    selectedEmpIds.value = []
+  } else {
+    selectedEmpIds.value = tableData.value.map(r => r.id)
+    tableData.value.forEach(r => initSlideData(r.id))
+  }
+}
+
+function clearSelection() {
+  selectedEmpIds.value = []
+  slideError.value = null
+  slideSuccess.value = null
+}
+
+// ── Slide-over state ──────────────────────────────────────────────────────
 const TODAY_STR = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date())
 
-const activeCell = ref<{ empId: string; benefit: string } | null>(null)
-const cellSubmitting = ref(false)
-const cellError = ref<string | null>(null)
+const slideDate    = ref(TODAY_STR)
+const slideMethod  = ref('transfer')
+const isSlideSubmitting = ref(false)
+const slideError   = ref<string | null>(null)
+const slideSuccess = ref<string | null>(null)
 
-const cellForm = reactive({
-  payment_date: TODAY_STR,
-  payment_method: 'transfer',
-  // Prima / Cesantías / Int-Cesantías / Vacaciones
-  anio: currentYear,
-  semestre: '',
-  gross_salary: 0,
-  days_worked: 360,
-  cesantias_base: 0,
-  int_cesantias_amount: 0,
-  // Dotación
-  period: '',
-  year: currentYear,
-  total_amount: 0,
-  items_description: '',
-  // Horas Extras
-  period_month: '',
-  base_hourly_rate: 0,
-  hours_diurna: 0,
-  hours_nocturna: 0,
-  hours_dominical_diurna: 0,
-  hours_dominical_nocturna: 0,
-})
+type EmpSlideData = {
+  gross_salary: number
+  days_worked: number
+  cesantias_base: number
+  int_cesantias_amount: number
+  dot_period: string
+  dot_year: number
+  dot_total: number
+  dot_items: string
+  period_month: string
+  base_hourly_rate: number
+  hours_diurna: number
+  hours_nocturna: number
+  hours_dominical_diurna: number
+  hours_dominical_nocturna: number
+}
 
-function openCellForm(empId: string, benefit: string, row: any) {
-  if (activeCell.value?.empId === empId && activeCell.value?.benefit === benefit) {
-    closeCellForm()
-    return
+const slideData = ref<Record<string, EmpSlideData>>({})
+
+function initSlideData(empId: string) {
+  if (slideData.value[empId]) return
+  const row = tableData.value.find(r => r.id === empId)
+  slideData.value = {
+    ...slideData.value,
+    [empId]: {
+      gross_salary: row?.calculated_salary ? Number(row.calculated_salary) : 0,
+      days_worked: 360,
+      cesantias_base: 0,
+      int_cesantias_amount: 0,
+      dot_period: '',
+      dot_year: selectedYear.value,
+      dot_total: 0,
+      dot_items: '',
+      period_month: '',
+      base_hourly_rate: row?.hourly_rate ? Number(row.hourly_rate) : 0,
+      hours_diurna: 0,
+      hours_nocturna: 0,
+      hours_dominical_diurna: 0,
+      hours_dominical_nocturna: 0,
+    },
   }
-  activeCell.value = { empId, benefit }
-  cellError.value = null
-  // Reset all fields
-  cellForm.payment_date = TODAY_STR
-  cellForm.payment_method = 'transfer'
-  cellForm.anio = selectedYear.value
-  cellForm.year = selectedYear.value
-  cellForm.semestre = benefit === 'primaS1' ? `${selectedYear.value}-S1` : `${selectedYear.value}-S2`
-  cellForm.gross_salary = row.calculated_salary ? Number(row.calculated_salary) : 0
-  cellForm.base_hourly_rate = row.hourly_rate ? Number(row.hourly_rate) : 0
-  cellForm.days_worked = 360
-  cellForm.total_amount = 0
-  cellForm.period = ''
-  cellForm.items_description = ''
-  cellForm.period_month = ''
-  cellForm.hours_diurna = 0
-  cellForm.hours_nocturna = 0
-  cellForm.hours_dominical_diurna = 0
-  cellForm.hours_dominical_nocturna = 0
-  cellForm.cesantias_base = 0
-  cellForm.int_cesantias_amount = 0
 }
 
-function closeCellForm() {
-  activeCell.value = null
-  cellError.value = null
-}
-
-const cellComputedTotal = computed(() => {
-  const r = cellForm.base_hourly_rate || 0
-  return Math.round(
-    (cellForm.hours_diurna || 0) * r * 1.25 +
-    (cellForm.hours_nocturna || 0) * r * 1.75 +
-    (cellForm.hours_dominical_diurna || 0) * r * 2.0 +
-    (cellForm.hours_dominical_nocturna || 0) * r * 2.5
-  )
-})
-
-const cellIntCesantiasPreview = computed(() =>
-  cellForm.cesantias_base ? Math.round(cellForm.cesantias_base * 0.12) : 0
+const selectedEmployeeRows = computed(() =>
+  selectedEmpIds.value
+    .map(id => tableData.value.find(r => r.id === id))
+    .filter(Boolean) as (typeof tableData.value)[number][]
 )
 
-const BENEFIT_LABELS: Record<string, string> = {
-  primaS1:      'Prima de Servicios — S1',
-  primaS2:      'Prima de Servicios — S2',
-  cesantias:    'Cesantías',
-  intCesantias: 'Intereses sobre Cesantías',
-  vacaciones:   'Vacaciones',
-  dotacion:     'Dotación',
-  horasExtras:  'Horas Extras',
+function horasExtrasTotal(empId: string): number {
+  const d = slideData.value[empId]
+  if (!d) return 0
+  const r = d.base_hourly_rate || 0
+  return Math.round(
+    (d.hours_diurna || 0) * r * 1.25 +
+    (d.hours_nocturna || 0) * r * 1.75 +
+    (d.hours_dominical_diurna || 0) * r * 2.0 +
+    (d.hours_dominical_nocturna || 0) * r * 2.5
+  )
 }
 
-const showBenefitModal = computed({
-  get: () => activeCell.value !== null,
-  set: (v) => { if (!v) closeCellForm() },
-})
+function intCesantiasPreview(empId: string): number {
+  const d = slideData.value[empId]
+  return d?.cesantias_base ? Math.round(d.cesantias_base * 0.12) : 0
+}
 
-const modalTitle = computed(() => {
-  if (!activeCell.value) return ''
-  const label = BENEFIT_LABELS[activeCell.value.benefit] ?? activeCell.value.benefit
-  const emp = allEmployeesRaw.value.find((e: any) => e.id === activeCell.value!.empId)
-  return emp ? `${label} — ${emp.name}` : label
-})
+async function submitBulk() {
+  isSlideSubmitting.value = true
+  slideError.value = null
+  slideSuccess.value = null
+  const affectedEmpIds = new Set<string>()
+  const errors: string[] = []
 
-async function submitCellForm() {
-  if (!activeCell.value) return
-  const { empId, benefit } = activeCell.value
-  cellSubmitting.value = true
-  cellError.value = null
-  try {
-    const BASE = `/api/salaries/employees/${empId}`
-    if (benefit === 'primaS1' || benefit === 'primaS2') {
-      await $fetch(`${BASE}/prima`, {
-        method: 'POST',
-        body: {
-          semestre: cellForm.semestre,
-          gross_salary: cellForm.gross_salary,
-          days_worked: cellForm.days_worked || 360,
-          payment_method: cellForm.payment_method || null,
-          payment_date: `${cellForm.payment_date}T00:00:00`,
-        },
-      })
-    } else if (benefit === 'cesantias') {
-      await $fetch(`${BASE}/cesantias`, {
-        method: 'POST',
-        body: {
-          anio: cellForm.anio,
-          gross_salary: cellForm.gross_salary,
-          days_worked: cellForm.days_worked || 360,
-          payment_method: cellForm.payment_method || null,
-          payment_date: `${cellForm.payment_date}T00:00:00`,
-        },
-      })
-    } else if (benefit === 'intCesantias') {
-      await $fetch(`${BASE}/int-cesantias`, {
-        method: 'POST',
-        body: {
-          anio: cellForm.anio,
-          cesantias_base: cellForm.cesantias_base,
-          int_cesantias_amount: cellForm.int_cesantias_amount || null,
-          payment_method: cellForm.payment_method || null,
-          payment_date: `${cellForm.payment_date}T00:00:00`,
-        },
-      })
-    } else if (benefit === 'vacaciones') {
-      await $fetch(`${BASE}/vacaciones`, {
-        method: 'POST',
-        body: {
-          anio: cellForm.anio,
-          gross_salary: cellForm.gross_salary,
-          days_worked: cellForm.days_worked || 360,
-          payment_method: cellForm.payment_method || null,
-          payment_date: `${cellForm.payment_date}T00:00:00`,
-        },
-      })
-    } else if (benefit === 'dotacion') {
-      await $fetch(`${BASE}/dotacion`, {
-        method: 'POST',
-        body: {
-          period: cellForm.period,
-          year: cellForm.year,
-          total_amount: cellForm.total_amount,
-          items_description: cellForm.items_description || null,
-          payment_date: `${cellForm.payment_date}T00:00:00`,
-        },
-      })
-    } else if (benefit === 'horasExtras') {
-      await $fetch(`${BASE}/horas-extras`, {
-        method: 'POST',
-        body: {
-          period_month: cellForm.period_month,
-          base_hourly_rate: cellForm.base_hourly_rate,
-          hours_diurna: cellForm.hours_diurna || 0,
-          hours_nocturna: cellForm.hours_nocturna || 0,
-          hours_dominical_diurna: cellForm.hours_dominical_diurna || 0,
-          hours_dominical_nocturna: cellForm.hours_dominical_nocturna || 0,
-          payment_method: cellForm.payment_method || null,
-          payment_date: `${cellForm.payment_date}T00:00:00`,
-        },
-      })
-    }
-    // Refresh only this employee's benefits
-    const emp = allEmployeesRaw.value.find((e: any) => e.id === empId)
-    if (emp) await loadBenefits([emp])
-    closeCellForm()
-  } catch (err: any) {
-    cellError.value = err?.data?.detail || 'Error al registrar. Intente de nuevo.'
-  } finally {
-    cellSubmitting.value = false
+  await Promise.all(
+    selectedEmployeeRows.value.map(async (row) => {
+      const empId = row.id
+      const d = slideData.value[empId]
+      if (!d) return
+      const BASE = `/api/salaries/employees/${empId}`
+      const pd = `${slideDate.value}T00:00:00`
+      const pm = slideMethod.value || null
+      const tasks: Promise<void>[] = []
+
+      if (row.primaS1 == null) {
+        tasks.push(
+          $fetch(`${BASE}/prima`, { method: 'POST', body: { semestre: `${selectedYear.value}-S1`, gross_salary: d.gross_salary, days_worked: d.days_worked || 180, payment_method: pm, payment_date: pd } })
+            .then(() => { affectedEmpIds.add(empId) })
+            .catch(e => { errors.push(`${row.name} — Prima S1: ${e?.data?.detail ?? 'error'}`) })
+        )
+      }
+      if (row.primaS2 == null) {
+        tasks.push(
+          $fetch(`${BASE}/prima`, { method: 'POST', body: { semestre: `${selectedYear.value}-S2`, gross_salary: d.gross_salary, days_worked: d.days_worked || 180, payment_method: pm, payment_date: pd } })
+            .then(() => { affectedEmpIds.add(empId) })
+            .catch(e => { errors.push(`${row.name} — Prima S2: ${e?.data?.detail ?? 'error'}`) })
+        )
+      }
+      if (row.cesantias == null) {
+        tasks.push(
+          $fetch(`${BASE}/cesantias`, { method: 'POST', body: { anio: selectedYear.value, gross_salary: d.gross_salary, days_worked: d.days_worked || 360, payment_method: pm, payment_date: pd } })
+            .then(() => { affectedEmpIds.add(empId) })
+            .catch(e => { errors.push(`${row.name} — Cesantías: ${e?.data?.detail ?? 'error'}`) })
+        )
+      }
+      if (row.intCesantias == null && d.cesantias_base > 0) {
+        tasks.push(
+          $fetch(`${BASE}/int-cesantias`, { method: 'POST', body: { anio: selectedYear.value, cesantias_base: d.cesantias_base, int_cesantias_amount: d.int_cesantias_amount || null, payment_method: pm, payment_date: pd } })
+            .then(() => { affectedEmpIds.add(empId) })
+            .catch(e => { errors.push(`${row.name} — Int. Cesantías: ${e?.data?.detail ?? 'error'}`) })
+        )
+      }
+      if (row.vacaciones == null) {
+        tasks.push(
+          $fetch(`${BASE}/vacaciones`, { method: 'POST', body: { anio: selectedYear.value, gross_salary: d.gross_salary, days_worked: d.days_worked || 360, payment_method: pm, payment_date: pd } })
+            .then(() => { affectedEmpIds.add(empId) })
+            .catch(e => { errors.push(`${row.name} — Vacaciones: ${e?.data?.detail ?? 'error'}`) })
+        )
+      }
+      if (row.dotacion == null && row.employment_type === 'employee' && d.dot_period && d.dot_total > 0) {
+        tasks.push(
+          $fetch(`${BASE}/dotacion`, { method: 'POST', body: { period: d.dot_period, year: d.dot_year, total_amount: d.dot_total, items_description: d.dot_items || null, payment_date: pd } })
+            .then(() => { affectedEmpIds.add(empId) })
+            .catch(e => { errors.push(`${row.name} — Dotación: ${e?.data?.detail ?? 'error'}`) })
+        )
+      }
+      const totalHrs = (d.hours_diurna || 0) + (d.hours_nocturna || 0) + (d.hours_dominical_diurna || 0) + (d.hours_dominical_nocturna || 0)
+      if (totalHrs > 0 && d.period_month && d.base_hourly_rate > 0) {
+        tasks.push(
+          $fetch(`${BASE}/horas-extras`, { method: 'POST', body: { period_month: d.period_month, base_hourly_rate: d.base_hourly_rate, hours_diurna: d.hours_diurna || 0, hours_nocturna: d.hours_nocturna || 0, hours_dominical_diurna: d.hours_dominical_diurna || 0, hours_dominical_nocturna: d.hours_dominical_nocturna || 0, payment_method: pm, payment_date: pd } })
+            .then(() => { affectedEmpIds.add(empId) })
+            .catch(e => { errors.push(`${row.name} — Horas Extras: ${e?.data?.detail ?? 'error'}`) })
+        )
+      }
+
+      await Promise.all(tasks)
+    })
+  )
+
+  if (affectedEmpIds.size > 0) {
+    const emps = allEmployeesRaw.value.filter((e: any) => affectedEmpIds.has(e.id))
+    await loadBenefits(emps)
+  }
+
+  isSlideSubmitting.value = false
+
+  if (errors.length > 0) {
+    slideError.value = errors.join('\n')
+  } else {
+    slideSuccess.value = 'Prestaciones registradas correctamente'
+    selectedEmpIds.value = []
+    slideData.value = {}
   }
 }
 
@@ -580,6 +588,15 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
         </button>
       </div>
 
+      <!-- Bulk action bar -->
+      <Transition name="slide-down">
+        <div v-if="selectedEmpIds.length > 0" class="flex items-center gap-3 px-4 py-2.5 bg-primary/10 border-2 border-primary rounded-xl">
+          <span class="text-sm font-semibold text-primary">{{ selectedEmpIds.length }} empleado(s) seleccionado(s)</span>
+          <button @click="clearSelection" class="ml-auto text-xs text-text-secondary hover:text-text-primary underline">Deseleccionar</button>
+          <span class="text-xs text-text-secondary">→ Complete el panel de la derecha para registrar</span>
+        </div>
+      </Transition>
+
       <!-- Data table -->
       <HealthSemaphore :is-unlocked="true" title="Estado de Prestaciones Sociales">
         <UiResponsiveDataView
@@ -595,46 +612,68 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <template #card="{ item, index }">
             <div
               class="flex flex-col gap-2 py-3 px-3 border-b border-border"
-              :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+              :class="[index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30', selectedEmpIds.includes(item.id) ? 'ring-2 ring-primary ring-inset' : '']"
             >
-              <!-- Employee header -->
-              <NuxtLink :to="`/equipo/salarios/${item.id}`" class="flex items-center gap-2">
-                <div
-                  class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
-                  :style="{ backgroundColor: item.color }"
-                >{{ item.initials }}</div>
-                <div>
-                  <p class="text-sm font-semibold text-text-primary leading-tight">{{ item.name }}</p>
-                  <UiStatusBadge :value="employmentTypeLabel[item.employment_type] ?? item.employment_type" variant="secondary" size="sm" class="mt-0.5" />
-                </div>
-              </NuxtLink>
+              <!-- Employee header with checkbox -->
+              <div class="flex items-center gap-2">
+                <label class="cursor-pointer flex-shrink-0">
+                  <input type="checkbox" class="sr-only peer" :checked="selectedEmpIds.includes(item.id)" @change="toggleSelect(item.id)" />
+                  <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
+                    <svg v-if="selectedEmpIds.includes(item.id)" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
+                      <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                </label>
+                <NuxtLink :to="`/equipo/salarios/${item.id}`" class="flex items-center gap-2 flex-1">
+                  <div
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
+                    :style="{ backgroundColor: item.color }"
+                  >{{ item.initials }}</div>
+                  <div>
+                    <p class="text-sm font-semibold text-text-primary leading-tight">{{ item.name }}</p>
+                    <UiStatusBadge :value="employmentTypeLabel[item.employment_type] ?? item.employment_type" variant="secondary" size="sm" class="mt-0.5" />
+                  </div>
+                </NuxtLink>
+              </div>
 
               <!-- Benefits grid -->
-              <div class="grid grid-cols-2 gap-1.5 pl-10">
+              <div class="grid grid-cols-2 gap-1.5 pl-7">
                 <div v-for="col in mobileBenefitCols" :key="col.key" class="flex flex-col gap-0.5">
                   <span class="text-xs text-text-secondary">{{ col.label }}</span>
                   <span v-if="col.benefit === 'dotacion' && item.employment_type !== 'employee'" class="text-xs text-text-tertiary">N/A</span>
-                  <button
-                    v-else-if="item[col.key] == null || col.benefit === 'horasExtras'"
-                    class="text-left focus:outline-none focus:ring-2 focus:ring-primary rounded min-h-[44px] flex items-center"
-                    :aria-label="`${item[col.key] != null ? 'Agregar más ' : 'Registrar '}${col.label} — ${item.name}`"
-                    @click="openCellForm(item.id, col.benefit, item)"
-                  >
-                    <UiStatusBadge
-                      :value="item[col.key] != null ? formatCurrency(item[col.key]) : 'Sin registrar'"
-                      :variant="item[col.key] != null ? 'success' : 'secondary'"
-                      size="sm"
-                    />
-                  </button>
                   <UiStatusBadge
                     v-else
-                    :value="formatCurrency(item[col.key])"
-                    variant="success"
+                    :value="item[col.key] != null ? formatCurrency(item[col.key]) : (col.benefit === 'horasExtras' ? 'Agregar' : 'Pendiente')"
+                    :variant="item[col.key] != null ? 'success' : 'secondary'"
                     size="sm"
                   />
                 </div>
               </div>
             </div>
+          </template>
+
+          <!-- ── Desktop: select-all header ─────────────────────────────── -->
+          <template #header-select>
+            <label class="cursor-pointer">
+              <input type="checkbox" class="sr-only peer" :checked="allPageSelected" @change="toggleSelectAll" />
+              <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
+                <svg v-if="allPageSelected" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
+                  <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </label>
+          </template>
+
+          <!-- ── Desktop: per-row checkbox ──────────────────────────────── -->
+          <template #cell-select="{ row }">
+            <label class="cursor-pointer">
+              <input type="checkbox" class="sr-only peer" :checked="selectedEmpIds.includes(row.id)" @change="toggleSelect(row.id)" />
+              <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
+                <svg v-if="selectedEmpIds.includes(row.id)" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
+                  <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </label>
           </template>
 
           <!-- ── Desktop cells ───────────────────────────────────────── -->
@@ -659,65 +698,40 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
           <!-- Prima S1 -->
           <template #cell-primaS1="{ row }">
-            <button
-              v-if="row.primaS1 == null"
-              class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
-              :aria-label="`Registrar Prima S1 ${selectedYear} — ${row.name}`"
-              @click="openCellForm(row.id, 'primaS1', row)"
-            >
-              <UiStatusBadge value="Sin registrar" variant="secondary" size="sm" format="text" class="font-normal" />
+            <button v-if="row.primaS1 == null" class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
+              <UiStatusBadge value="Pendiente" variant="secondary" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.primaS1)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
 
           <!-- Prima S2 -->
           <template #cell-primaS2="{ row }">
-            <button
-              v-if="row.primaS2 == null"
-              class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
-              :aria-label="`Registrar Prima S2 ${selectedYear} — ${row.name}`"
-              @click="openCellForm(row.id, 'primaS2', row)"
-            >
-              <UiStatusBadge value="Sin registrar" variant="secondary" size="sm" format="text" class="font-normal" />
+            <button v-if="row.primaS2 == null" class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
+              <UiStatusBadge value="Pendiente" variant="secondary" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.primaS2)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
 
           <!-- Cesantías -->
           <template #cell-cesantias="{ row }">
-            <button
-              v-if="row.cesantias == null"
-              class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
-              :aria-label="`Registrar Cesantías ${selectedYear} — ${row.name}`"
-              @click="openCellForm(row.id, 'cesantias', row)"
-            >
-              <UiStatusBadge value="Sin registrar" variant="secondary" size="sm" format="text" class="font-normal" />
+            <button v-if="row.cesantias == null" class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
+              <UiStatusBadge value="Pendiente" variant="secondary" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.cesantias)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
 
           <!-- Int. Cesantías -->
           <template #cell-intCesantias="{ row }">
-            <button
-              v-if="row.intCesantias == null"
-              class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
-              :aria-label="`Registrar Int. Cesantías ${selectedYear} — ${row.name}`"
-              @click="openCellForm(row.id, 'intCesantias', row)"
-            >
-              <UiStatusBadge value="Sin registrar" variant="secondary" size="sm" format="text" class="font-normal" />
+            <button v-if="row.intCesantias == null" class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
+              <UiStatusBadge value="Pendiente" variant="secondary" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.intCesantias)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
 
           <!-- Vacaciones -->
           <template #cell-vacaciones="{ row }">
-            <button
-              v-if="row.vacaciones == null"
-              class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
-              :aria-label="`Registrar Vacaciones ${selectedYear} — ${row.name}`"
-              @click="openCellForm(row.id, 'vacaciones', row)"
-            >
-              <UiStatusBadge value="Sin registrar" variant="secondary" size="sm" format="text" class="font-normal" />
+            <button v-if="row.vacaciones == null" class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
+              <UiStatusBadge value="Pendiente" variant="secondary" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.vacaciones)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
@@ -726,25 +740,16 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <template #cell-dotacion="{ row }">
             <span v-if="row.employment_type !== 'employee'" class="text-xs text-text-tertiary px-2">N/A</span>
             <template v-else>
-              <button
-                v-if="row.dotacion == null"
-                class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
-                :aria-label="`Registrar Dotación ${selectedYear} — ${row.name}`"
-                @click="openCellForm(row.id, 'dotacion', row)"
-              >
-                <UiStatusBadge value="Sin registrar" variant="secondary" size="sm" format="text" class="font-normal" />
+              <button v-if="row.dotacion == null" class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
+                <UiStatusBadge value="Pendiente" variant="secondary" size="sm" format="text" class="font-normal" />
               </button>
               <UiStatusBadge v-else :value="formatCurrency(row.dotacion)" variant="success" size="sm" format="text" class="font-normal" />
             </template>
           </template>
 
-          <!-- Horas Extras (always clickable to add more) -->
+          <!-- Horas Extras -->
           <template #cell-horasExtras="{ row }">
-            <button
-              class="focus:outline-none focus:ring-2 focus:ring-primary rounded"
-              :aria-label="`${row.horasExtras != null ? 'Agregar más horas extras' : 'Registrar Horas Extras'} — ${row.name}`"
-              @click="openCellForm(row.id, 'horasExtras', row)"
-            >
+            <button class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
               <UiStatusBadge
                 :value="row.horasExtras != null ? formatCurrency(row.horasExtras) : 'Agregar'"
                 :variant="row.horasExtras != null ? 'success' : 'secondary'"
@@ -757,277 +762,6 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
         </UiResponsiveDataView>
       </HealthSemaphore>
-
-      <!-- ── Benefit Registration Modal (desktop) ──────────────────────── -->
-      <UiModal v-model="showBenefitModal" :title="modalTitle" max-height="md">
-        <form v-if="activeCell" class="p-6 space-y-4 overflow-y-auto max-h-[70vh]" @submit.prevent="submitCellForm" novalidate>
-          <template v-if="activeCell.benefit === 'primaS1' || activeCell.benefit === 'primaS2'">
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Salario base *</label>
-                <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                  <input v-model.number="cellForm.gross_salary" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Días trabajados</label>
-                <input v-model.number="cellForm.days_worked" type="number" min="1" max="180" step="1" class="input-base w-full px-3 py-2" placeholder="180" />
-              </div>
-            </div>
-          </template>
-          <template v-else-if="activeCell.benefit === 'cesantias' || activeCell.benefit === 'vacaciones'">
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Salario base *</label>
-                <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                  <input v-model.number="cellForm.gross_salary" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Días trabajados</label>
-                <input v-model.number="cellForm.days_worked" type="number" min="1" max="360" step="1" class="input-base w-full px-3 py-2" placeholder="360" />
-              </div>
-            </div>
-          </template>
-          <template v-else-if="activeCell.benefit === 'intCesantias'">
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Base cesantías *</label>
-                <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                  <input v-model.number="cellForm.cesantias_base" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
-                <p class="text-xs text-text-tertiary mt-0.5">Saldo cesantías sobre el cual se calcula el 12%</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Calculado (12%)</label>
-                <div class="px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-                  <span class="font-bold text-emerald-700">{{ formatCurrency(cellIntCesantiasPreview) }}</span>
-                </div>
-              </div>
-            </div>
-          </template>
-          <template v-else-if="activeCell.benefit === 'dotacion'">
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Período *</label>
-                <select v-model="cellForm.period" required class="input-base w-full px-3 py-2">
-                  <option value="" disabled>Seleccionar</option>
-                  <option value="Abr">Abril (antes 30 Abr)</option>
-                  <option value="Ago">Agosto (antes 31 Ago)</option>
-                  <option value="Dic">Diciembre (antes 20 Dic)</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Valor total *</label>
-                <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                  <input v-model.number="cellForm.total_amount" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Artículos entregados</label>
-              <textarea v-model="cellForm.items_description" class="input-base w-full px-3 py-2 min-h-[60px]" placeholder="Ej: 2 camisas, 1 pantalón..." />
-            </div>
-          </template>
-          <template v-else-if="activeCell.benefit === 'horasExtras'">
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Período (mes) *</label>
-              <input v-model="cellForm.period_month" type="month" required class="input-base w-full px-3 py-2" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Tarifa horaria base *</label>
-              <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                <input v-model.number="cellForm.base_hourly_rate" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Diurnas (×1.25)</label>
-                <input v-model.number="cellForm.hours_diurna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
-                <p v-if="cellForm.hours_diurna > 0 && cellForm.base_hourly_rate > 0" class="text-xs text-emerald-700 mt-0.5">= {{ formatCurrency(Math.round(cellForm.hours_diurna * cellForm.base_hourly_rate * 1.25)) }}</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Nocturnas (×1.75)</label>
-                <input v-model.number="cellForm.hours_nocturna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
-                <p v-if="cellForm.hours_nocturna > 0 && cellForm.base_hourly_rate > 0" class="text-xs text-emerald-700 mt-0.5">= {{ formatCurrency(Math.round(cellForm.hours_nocturna * cellForm.base_hourly_rate * 1.75)) }}</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Dom/festivo diurna (×2.00)</label>
-                <input v-model.number="cellForm.hours_dominical_diurna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
-                <p v-if="cellForm.hours_dominical_diurna > 0 && cellForm.base_hourly_rate > 0" class="text-xs text-emerald-700 mt-0.5">= {{ formatCurrency(Math.round(cellForm.hours_dominical_diurna * cellForm.base_hourly_rate * 2.0)) }}</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">Dom/festivo nocturna (×2.50)</label>
-                <input v-model.number="cellForm.hours_dominical_nocturna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
-                <p v-if="cellForm.hours_dominical_nocturna > 0 && cellForm.base_hourly_rate > 0" class="text-xs text-emerald-700 mt-0.5">= {{ formatCurrency(Math.round(cellForm.hours_dominical_nocturna * cellForm.base_hourly_rate * 2.5)) }}</p>
-              </div>
-            </div>
-            <div class="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
-              <p class="text-sm text-text-secondary">Total calculado</p>
-              <p class="text-xl font-bold text-emerald-700">{{ formatCurrency(cellComputedTotal) }}</p>
-            </div>
-          </template>
-
-          <!-- Shared: payment method + date -->
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Método de pago</label>
-              <select v-model="cellForm.payment_method" class="input-base w-full px-3 py-2">
-                <option value="transfer">Transferencia</option>
-                <option value="cash">Efectivo</option>
-                <option value="nequi">Nequi</option>
-                <option value="daviplata">Daviplata</option>
-                <option value="check">Cheque</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Fecha de pago *</label>
-              <input v-model="cellForm.payment_date" type="date" required class="input-base w-full px-3 py-2" />
-            </div>
-          </div>
-
-          <!-- Error -->
-          <div v-if="cellError" role="alert" class="bg-red-50 border border-red-200 rounded-lg p-3">
-            <p class="text-sm text-red-700">{{ cellError }}</p>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex gap-3 pt-2">
-            <button
-              type="submit"
-              :disabled="cellSubmitting"
-              class="flex-1 py-2.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold min-h-[44px]"
-            >
-              <CommonsTheCustomLoader v-if="cellSubmitting" size="small" />
-              <span>{{ cellSubmitting ? 'Registrando...' : 'Registrar' }}</span>
-            </button>
-            <button type="button" @click="closeCellForm" class="px-4 py-2.5 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface transition-colors min-h-[44px]">
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </UiModal>
-
-      <!-- ── Benefit Registration Sheet (mobile) ───────────────────────── -->
-      <UiBottomSheetModal v-model="showBenefitModal" :title="modalTitle">
-        <form v-if="activeCell" class="p-4 space-y-4 overflow-y-auto max-h-[75vh]" @submit.prevent="submitCellForm" novalidate>
-          <template v-if="activeCell.benefit === 'primaS1' || activeCell.benefit === 'primaS2'">
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Salario base *</label>
-              <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                <input v-model.number="cellForm.gross_salary" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Días trabajados (≤180)</label>
-              <input v-model.number="cellForm.days_worked" type="number" min="1" max="180" step="1" class="input-base w-full px-3 py-2" placeholder="180" />
-            </div>
-          </template>
-          <template v-else-if="activeCell.benefit === 'cesantias' || activeCell.benefit === 'vacaciones'">
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Salario base *</label>
-              <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                <input v-model.number="cellForm.gross_salary" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Días trabajados (≤360)</label>
-              <input v-model.number="cellForm.days_worked" type="number" min="1" max="360" step="1" class="input-base w-full px-3 py-2" placeholder="360" />
-            </div>
-          </template>
-          <template v-else-if="activeCell.benefit === 'intCesantias'">
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Base cesantías *</label>
-              <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                <input v-model.number="cellForm.cesantias_base" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
-              <p class="text-xs text-text-tertiary mt-0.5">Intereses = base × 12%</p>
-            </div>
-            <div v-if="cellIntCesantiasPreview > 0" class="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-2">
-              <span class="font-bold text-emerald-700">{{ formatCurrency(cellIntCesantiasPreview) }}</span>
-            </div>
-          </template>
-          <template v-else-if="activeCell.benefit === 'dotacion'">
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Período *</label>
-              <select v-model="cellForm.period" required class="input-base w-full px-3 py-2">
-                <option value="" disabled>Seleccionar</option>
-                <option value="Abr">Abril</option>
-                <option value="Ago">Agosto</option>
-                <option value="Dic">Diciembre</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Valor total *</label>
-              <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                <input v-model.number="cellForm.total_amount" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
-            </div>
-          </template>
-          <template v-else-if="activeCell.benefit === 'horasExtras'">
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Período (mes) *</label>
-              <input v-model="cellForm.period_month" type="month" required class="input-base w-full px-3 py-2" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Tarifa horaria base *</label>
-              <div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                <input v-model.number="cellForm.base_hourly_rate" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2" /></div>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-medium text-text-primary mb-1">Diurnas (×1.25)</label>
-                <input v-model.number="cellForm.hours_diurna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-text-primary mb-1">Nocturnas (×1.75)</label>
-                <input v-model.number="cellForm.hours_nocturna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-text-primary mb-1">Dom. diurna (×2.00)</label>
-                <input v-model.number="cellForm.hours_dominical_diurna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-text-primary mb-1">Dom. nocturna (×2.50)</label>
-                <input v-model.number="cellForm.hours_dominical_nocturna" type="number" min="0" step="0.5" class="input-base w-full px-3 py-2" placeholder="0" />
-              </div>
-            </div>
-            <div v-if="cellComputedTotal > 0" class="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-2">
-              <p class="text-xs text-text-secondary">Total</p>
-              <p class="font-bold text-emerald-700">{{ formatCurrency(cellComputedTotal) }}</p>
-            </div>
-          </template>
-
-          <!-- Shared: payment method + date -->
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Método</label>
-              <select v-model="cellForm.payment_method" class="input-base w-full px-3 py-2">
-                <option value="transfer">Transferencia</option>
-                <option value="cash">Efectivo</option>
-                <option value="nequi">Nequi</option>
-                <option value="daviplata">Daviplata</option>
-                <option value="check">Cheque</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-text-primary mb-1">Fecha *</label>
-              <input v-model="cellForm.payment_date" type="date" required class="input-base w-full px-3 py-2" />
-            </div>
-          </div>
-
-          <!-- Error -->
-          <div v-if="cellError" role="alert" class="bg-red-50 border border-red-200 rounded-lg p-3">
-            <p class="text-sm text-red-700">{{ cellError }}</p>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex gap-3 pt-2 pb-safe">
-            <button
-              type="submit"
-              :disabled="cellSubmitting"
-              class="flex-1 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold min-h-[44px]"
-            >
-              <CommonsTheCustomLoader v-if="cellSubmitting" size="small" />
-              <span>{{ cellSubmitting ? 'Registrando...' : 'Registrar' }}</span>
-            </button>
-            <button type="button" @click="closeCellForm" class="px-4 py-3 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary min-h-[44px]">
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </UiBottomSheetModal>
 
       <!-- ── PILA Section ──────────────────────────────────────────────── -->
       <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm">
@@ -1093,99 +827,50 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
             <div v-if="activePilaPeriod === period.period_month" class="border-t border-border p-4 bg-background">
               <form @submit.prevent="submitPila" novalidate>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <!-- Employee SS -->
                   <div>
                     <label for="pila-emp-ss" class="block text-sm font-medium text-text-primary mb-1">Aporte empleado (237005)</label>
                     <div class="relative">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                      <input
-                        id="pila-emp-ss"
-                        v-model.number="pilaForm.employee_ss_amount"
-                        type="number" min="0" step="any"
-                        class="input-base w-full pl-7 pr-3 py-2"
-                        aria-label="Aporte seguridad social empleado"
-                      />
+                      <input id="pila-emp-ss" v-model.number="pilaForm.employee_ss_amount" type="number" min="0" step="any" class="input-base w-full pl-7 pr-3 py-2" aria-label="Aporte seguridad social empleado" />
                     </div>
                   </div>
-
-                  <!-- Employer SS -->
                   <div>
                     <label for="pila-er-ss" class="block text-sm font-medium text-text-primary mb-1">Aporte empleador (237010)</label>
                     <div class="relative">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                      <input
-                        id="pila-er-ss"
-                        v-model.number="pilaForm.employer_ss_amount"
-                        type="number" min="0" step="any"
-                        class="input-base w-full pl-7 pr-3 py-2"
-                        aria-label="Aporte seguridad social empleador"
-                      />
+                      <input id="pila-er-ss" v-model.number="pilaForm.employer_ss_amount" type="number" min="0" step="any" class="input-base w-full pl-7 pr-3 py-2" aria-label="Aporte seguridad social empleador" />
                     </div>
                   </div>
-
-                  <!-- Total -->
                   <div>
                     <label for="pila-total" class="block text-sm font-medium text-text-primary mb-1">Total PILA *</label>
                     <div class="relative">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                      <input
-                        id="pila-total"
-                        v-model.number="pilaForm.total_amount"
-                        type="number" min="1" step="any" required
-                        class="input-base w-full pl-7 pr-3 py-2 font-semibold"
-                        aria-label="Total pago PILA"
-                      />
+                      <input id="pila-total" v-model.number="pilaForm.total_amount" type="number" min="1" step="any" required class="input-base w-full pl-7 pr-3 py-2 font-semibold" aria-label="Total pago PILA" />
                     </div>
                     <p class="text-xs text-text-tertiary mt-0.5">Puede diferir si incluye recargos</p>
                   </div>
-
-                  <!-- Payment method -->
                   <div>
                     <label for="pila-method" class="block text-sm font-medium text-text-primary mb-1">Método de pago</label>
-                    <select
-                      id="pila-method"
-                      v-model="pilaForm.payment_method"
-                      class="input-base w-full px-3 py-2"
-                      aria-label="Método de pago PILA"
-                    >
+                    <select id="pila-method" v-model="pilaForm.payment_method" class="input-base w-full px-3 py-2" aria-label="Método de pago PILA">
                       <option value="transfer">Transferencia</option>
                       <option value="cash">Efectivo</option>
                       <option value="check">Cheque</option>
                     </select>
                   </div>
-
-                  <!-- Date -->
                   <div>
                     <label for="pila-date" class="block text-sm font-medium text-text-primary mb-1">Fecha de pago *</label>
-                    <input
-                      id="pila-date"
-                      v-model="pilaForm.payment_date"
-                      type="date" required
-                      class="input-base w-full px-3 py-2"
-                      aria-label="Fecha de pago PILA"
-                    />
+                    <input id="pila-date" v-model="pilaForm.payment_date" type="date" required class="input-base w-full px-3 py-2" aria-label="Fecha de pago PILA" />
                   </div>
-
-                  <!-- Notes -->
                   <div>
                     <label for="pila-notes" class="block text-sm font-medium text-text-primary mb-1">Notas</label>
-                    <input
-                      id="pila-notes"
-                      v-model="pilaForm.notes"
-                      type="text"
-                      class="input-base w-full px-3 py-2"
-                      placeholder="Número de planilla PILA (opcional)"
-                      aria-label="Notas adicionales PILA"
-                    />
+                    <input id="pila-notes" v-model="pilaForm.notes" type="text" class="input-base w-full px-3 py-2" placeholder="Número de planilla PILA (opcional)" aria-label="Notas adicionales PILA" />
                   </div>
                 </div>
 
-                <!-- Error -->
                 <div v-if="pilaError" role="alert" class="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
                   <p class="text-sm text-red-700">{{ pilaError }}</p>
                 </div>
 
-                <!-- Actions -->
                 <div class="flex gap-3 mt-4">
                   <button
                     type="submit"
@@ -1195,11 +880,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                     <CommonsTheCustomLoader v-if="pilaSubmitting" size="small" />
                     <span>{{ pilaSubmitting ? 'Registrando...' : 'Registrar PILA' }}</span>
                   </button>
-                  <button
-                    type="button"
-                    @click="closePilaForm"
-                    class="px-4 py-2.5 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface transition-colors min-h-[44px]"
-                  >
+                  <button type="button" @click="closePilaForm" class="px-4 py-2.5 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface transition-colors min-h-[44px]">
                     Cancelar
                   </button>
                 </div>
@@ -1239,10 +920,264 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
       </div>
 
     </div>
+
+    <!-- ── Slide-over: Bulk benefit registration ─────────────────────────── -->
+    <Teleport to="body">
+
+    <!-- Backdrop -->
+    <Transition name="fade">
+      <div
+        v-if="selectedEmpIds.length > 0"
+        class="fixed inset-0 z-40 bg-black/40"
+        @click="clearSelection"
+        aria-hidden="true"
+      />
+    </Transition>
+
+    <!-- Panel -->
+    <Transition name="slide-right">
+      <div
+        v-if="selectedEmpIds.length > 0"
+        class="fixed right-0 top-0 bottom-0 z-50 w-full max-w-xl bg-background border-l border-border shadow-xl flex flex-col overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Registrar prestaciones"
+      >
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
+          <div>
+            <h2 class="text-base font-semibold text-text-primary">Registrar Prestaciones</h2>
+            <p class="text-sm text-text-secondary">{{ selectedEmpIds.length }} empleado(s) seleccionado(s)</p>
+          </div>
+          <button @click="clearSelection" class="p-2 rounded-lg hover:bg-surface transition-colors" aria-label="Cerrar panel">
+            <svg class="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Shared: date + method -->
+        <div class="px-6 py-4 border-b border-border bg-surface flex-shrink-0">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Fecha de pago *</label>
+              <input v-model="slideDate" type="date" required class="input-base w-full px-3 py-2" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-text-primary mb-1">Método de pago</label>
+              <select v-model="slideMethod" class="input-base w-full px-3 py-2">
+                <option value="transfer">Transferencia</option>
+                <option value="cash">Efectivo</option>
+                <option value="nequi">Nequi</option>
+                <option value="daviplata">Daviplata</option>
+                <option value="check">Cheque</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scrollable per-employee forms -->
+        <div class="flex-1 overflow-y-auto divide-y divide-border">
+          <div v-for="row in selectedEmployeeRows" :key="row.id" class="px-6 py-5">
+
+            <!-- Employee header -->
+            <div class="flex items-center gap-3 mb-4">
+              <div
+                class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
+                :style="{ backgroundColor: row.color }"
+              >{{ row.initials }}</div>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-text-primary">{{ row.name }}</p>
+                <UiStatusBadge :value="employmentTypeLabel[row.employment_type] ?? row.employment_type" variant="secondary" size="sm" />
+              </div>
+              <button @click="toggleSelect(row.id)" class="p-1 rounded hover:bg-surface text-text-secondary hover:text-text-primary transition-colors" :aria-label="`Quitar ${row.name}`">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <template v-if="slideData[row.id]">
+
+              <!-- Shared salary fields (if any salary-based benefit is pending) -->
+              <div v-if="row.primaS1 == null || row.primaS2 == null || row.cesantias == null || row.vacaciones == null" class="mb-4 p-3 bg-surface rounded-xl space-y-3">
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Campos compartidos</p>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-medium text-text-primary mb-1">Salario base *</label>
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+                      <input v-model.number="slideData[row.id].gross_salary" type="number" min="1" step="any" class="input-base w-full pl-6 pr-2 py-2 text-sm" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-text-primary mb-1">Días trabajados</label>
+                    <input v-model.number="slideData[row.id].days_worked" type="number" min="1" max="360" step="1" class="input-base w-full px-3 py-2 text-sm" placeholder="360" />
+                    <p class="text-xs text-text-tertiary mt-0.5">Prima ≤180 · Cesantías/Vac ≤360</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pending salary-based benefits -->
+              <div class="space-y-1.5 mb-3">
+                <div v-if="row.primaS1 == null" class="flex items-center gap-2 py-1.5 px-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 8v4M12 16h.01"/></svg>
+                  <span class="text-xs font-medium text-amber-800 flex-1">Prima S1 — {{ selectedYear }}-S1</span>
+                  <UiStatusBadge value="Pendiente" variant="warning" size="sm" />
+                </div>
+                <div v-if="row.primaS2 == null" class="flex items-center gap-2 py-1.5 px-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 8v4M12 16h.01"/></svg>
+                  <span class="text-xs font-medium text-amber-800 flex-1">Prima S2 — {{ selectedYear }}-S2</span>
+                  <UiStatusBadge value="Pendiente" variant="warning" size="sm" />
+                </div>
+                <div v-if="row.cesantias == null" class="flex items-center gap-2 py-1.5 px-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 8v4M12 16h.01"/></svg>
+                  <span class="text-xs font-medium text-amber-800 flex-1">Cesantías {{ selectedYear }}</span>
+                  <UiStatusBadge value="Pendiente" variant="warning" size="sm" />
+                </div>
+                <div v-if="row.vacaciones == null" class="flex items-center gap-2 py-1.5 px-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 8v4M12 16h.01"/></svg>
+                  <span class="text-xs font-medium text-amber-800 flex-1">Vacaciones {{ selectedYear }}</span>
+                  <UiStatusBadge value="Pendiente" variant="warning" size="sm" />
+                </div>
+              </div>
+
+              <!-- Int. Cesantías -->
+              <div v-if="row.intCesantias == null" class="mb-4 p-3 bg-surface rounded-xl space-y-2">
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Int. Cesantías {{ selectedYear }}</p>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs font-medium text-text-primary mb-1">Base cesantías (× 12%)</label>
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+                      <input v-model.number="slideData[row.id].cesantias_base" type="number" min="0" step="any" class="input-base w-full pl-6 pr-2 py-2 text-sm" placeholder="0" />
+                    </div>
+                  </div>
+                  <div class="flex items-end">
+                    <div class="px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg w-full">
+                      <p class="text-xs text-text-secondary">Calculado (12%)</p>
+                      <p class="text-sm font-bold text-emerald-700">{{ formatCurrency(intCesantiasPreview(row.id)) }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dotación (employees only) -->
+              <div v-if="row.dotacion == null && row.employment_type === 'employee'" class="mb-4 p-3 bg-surface rounded-xl space-y-2">
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Dotación {{ selectedYear }}</p>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs font-medium text-text-primary mb-1">Período *</label>
+                    <select v-model="slideData[row.id].dot_period" class="input-base w-full px-2 py-2 text-sm">
+                      <option value="">Seleccionar</option>
+                      <option value="Abr">Abril</option>
+                      <option value="Ago">Agosto</option>
+                      <option value="Dic">Diciembre</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-text-primary mb-1">Valor total *</label>
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+                      <input v-model.number="slideData[row.id].dot_total" type="number" min="0" step="any" class="input-base w-full pl-6 pr-2 py-2 text-sm" placeholder="0" />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-text-primary mb-1">Artículos entregados</label>
+                  <textarea v-model="slideData[row.id].dot_items" class="input-base w-full px-3 py-2 text-sm min-h-[52px]" placeholder="Ej: 2 camisas, 1 pantalón..." />
+                </div>
+              </div>
+
+              <!-- Horas Extras -->
+              <div class="p-3 bg-surface rounded-xl space-y-2">
+                <div class="flex items-center gap-2">
+                  <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Horas Extras</p>
+                  <span v-if="row.horasExtras != null" class="text-xs text-text-secondary">(registradas: {{ formatCurrency(row.horasExtras) }})</span>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-text-primary mb-1">Período (mes)</label>
+                  <input v-model="slideData[row.id].period_month" type="month" class="input-base w-full px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-text-primary mb-1">Tarifa horaria base</label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+                    <input v-model.number="slideData[row.id].base_hourly_rate" type="number" min="0" step="any" class="input-base w-full pl-6 pr-2 py-2 text-sm" placeholder="0" />
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs text-text-secondary mb-1">Diurnas ×1.25</label>
+                    <input v-model.number="slideData[row.id].hours_diurna" type="number" min="0" step="0.5" class="input-base w-full px-2 py-2 text-sm" placeholder="0" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-text-secondary mb-1">Nocturnas ×1.75</label>
+                    <input v-model.number="slideData[row.id].hours_nocturna" type="number" min="0" step="0.5" class="input-base w-full px-2 py-2 text-sm" placeholder="0" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-text-secondary mb-1">Dom. diurna ×2.00</label>
+                    <input v-model.number="slideData[row.id].hours_dominical_diurna" type="number" min="0" step="0.5" class="input-base w-full px-2 py-2 text-sm" placeholder="0" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-text-secondary mb-1">Dom. nocturna ×2.50</label>
+                    <input v-model.number="slideData[row.id].hours_dominical_nocturna" type="number" min="0" step="0.5" class="input-base w-full px-2 py-2 text-sm" placeholder="0" />
+                  </div>
+                </div>
+                <div v-if="horasExtrasTotal(row.id) > 0" class="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <span class="text-xs text-text-secondary">Total calculado</span>
+                  <span class="text-sm font-bold text-emerald-700 ml-auto">{{ formatCurrency(horasExtrasTotal(row.id)) }}</span>
+                </div>
+              </div>
+
+            </template>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-border bg-surface flex-shrink-0">
+          <div v-if="slideError" role="alert" class="mb-3 bg-red-50 border border-red-200 rounded-lg p-3">
+            <pre class="text-xs text-red-700 whitespace-pre-wrap font-sans">{{ slideError }}</pre>
+          </div>
+          <div v-if="slideSuccess" role="status" class="mb-3 bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <p class="text-sm text-emerald-800">{{ slideSuccess }}</p>
+          </div>
+          <div class="flex gap-3">
+            <button
+              @click="submitBulk"
+              :disabled="isSlideSubmitting"
+              class="flex-1 py-2.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold min-h-[44px]"
+            >
+              <CommonsTheCustomLoader v-if="isSlideSubmitting" size="small" />
+              <span>{{ isSlideSubmitting ? 'Registrando...' : `Registrar — ${selectedEmpIds.length} empleado(s)` }}</span>
+            </button>
+            <button type="button" @click="clearSelection" class="px-4 py-2.5 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-background transition-colors min-h-[44px]">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+    </Teleport>
   </div>
 </template>
 
 <style scoped>
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Bulk bar animation */
+.slide-down-enter-active, .slide-down-leave-active { transition: all 0.2s ease; }
+.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-8px); }
+
+/* Slide-over backdrop */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* Slide-over panel */
+.slide-right-enter-active, .slide-right-leave-active { transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
+.slide-right-enter-from, .slide-right-leave-to { transform: translateX(100%); }
 </style>
