@@ -75,7 +75,7 @@ const ctaContent = computed<CtaContent>(() => {
       </div>
       <button
         class="blog-cta-button"
-        @click="leadModal.open('blog_cta')"
+        @click="leadModal.open(`blog:${slug}`)"
       >
         {{ ctaContent.button }}
       </button>
