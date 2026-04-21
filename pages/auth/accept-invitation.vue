@@ -85,10 +85,11 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: false
+  layout: false,
+  robots: 'noindex, nofollow'
 });
 
-useHead({ title: 'Aceptar Invitación', meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
+useHead({ title: 'Aceptar Invitación' })
 
 const route = useRoute()
 

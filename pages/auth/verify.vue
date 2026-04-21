@@ -80,10 +80,11 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: false
+  layout: false,
+  robots: 'noindex, nofollow'
 });
 
-useHead({ title: 'Verificando Acceso', meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
+useHead({ title: 'Verificando Acceso' })
 
 const route = useRoute()
 const toast = useToast()

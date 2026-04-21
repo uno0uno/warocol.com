@@ -10,10 +10,11 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: false
+  layout: false,
+  robots: 'noindex, nofollow'
 })
 
-useHead({ title: 'Iniciar Sesión', meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
+useHead({ title: 'Iniciar Sesión' })
 
 const checking = ref(true)
 
