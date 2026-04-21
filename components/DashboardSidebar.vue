@@ -296,7 +296,6 @@ const secondaryItems = [
   { to: '/mesas',                            page: 'mesas',         label: 'Mesas',          icon: TableCellsIcon },
   { to: '/abastecimiento/compras-directas',  page: 'abastecimiento',label: 'Abastecimiento', icon: TruckIcon },
   { to: '/equipo/miembros',                  page: 'equipo',        label: 'Equipo',         icon: UserGroupIcon },
-  { to: '/equipo/nomina',                    page: 'equipo',        label: 'Nómina',         icon: TableCellsIcon },
   { to: '/integraciones',                    page: 'integraciones', label: 'Integraciones',  icon: KeyIcon },
 ]
 
