@@ -348,6 +348,7 @@ function toggleSelectAll() {
 
 function clearSelection() {
   selectedEmpIds.value = []
+  showSlideOver.value = false
   slideError.value = null
   slideSuccess.value = null
 }
@@ -355,11 +356,15 @@ function clearSelection() {
 // ── Slide-over state ──────────────────────────────────────────────────────
 const TODAY_STR = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date())
 
+const showSlideOver = ref(false)
 const slideDate    = ref(TODAY_STR)
 const slideMethod  = ref('transfer')
 const isSlideSubmitting = ref(false)
 const slideError   = ref<string | null>(null)
 const slideSuccess = ref<string | null>(null)
+
+function openSlideOver() { showSlideOver.value = true }
+function closeSlideOver() { showSlideOver.value = false; slideError.value = null; slideSuccess.value = null }
 
 type EmpSlideData = {
   gross_salary: number
@@ -511,6 +516,7 @@ async function submitBulk() {
   } else {
     slideSuccess.value = 'Prestaciones registradas correctamente'
     selectedEmpIds.value = []
+    showSlideOver.value = false
     slideData.value = {}
   }
 }
@@ -591,9 +597,14 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
       <!-- Bulk action bar -->
       <Transition name="slide-down">
         <div v-if="selectedEmpIds.length > 0" class="flex items-center gap-3 px-4 py-2.5 bg-primary/10 border-2 border-primary rounded-xl">
-          <span class="text-sm font-semibold text-primary">{{ selectedEmpIds.length }} empleado(s) seleccionado(s)</span>
-          <button @click="clearSelection" class="ml-auto text-xs text-text-secondary hover:text-text-primary underline">Deseleccionar</button>
-          <span class="text-xs text-text-secondary">→ Complete el panel de la derecha para registrar</span>
+          <span class="text-sm font-semibold text-primary">{{ selectedEmpIds.length }} seleccionado(s)</span>
+          <button
+            @click="openSlideOver"
+            class="ml-auto px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-lg transition-colors min-h-[36px]"
+          >
+            Registrar prestaciones →
+          </button>
+          <button @click="clearSelection" class="text-xs text-text-secondary hover:text-text-primary underline">Cancelar</button>
         </div>
       </Transition>
 
@@ -927,7 +938,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
     <!-- Panel -->
     <Transition name="slide-right">
       <div
-        v-if="selectedEmpIds.length > 0"
+        v-if="showSlideOver && selectedEmpIds.length > 0"
         class="fixed right-0 top-0 bottom-0 z-50 w-full max-w-xl bg-background border-l border-border shadow-xl flex flex-col overflow-hidden"
         role="dialog"
         aria-modal="true"
@@ -939,7 +950,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
             <h2 class="text-base font-semibold text-text-primary">Registrar Prestaciones</h2>
             <p class="text-sm text-text-secondary">{{ selectedEmpIds.length }} empleado(s) seleccionado(s)</p>
           </div>
-          <button @click="clearSelection" class="p-2 rounded-lg hover:bg-surface transition-colors" aria-label="Cerrar panel">
+          <button @click="closeSlideOver" class="p-2 rounded-lg hover:bg-surface transition-colors" aria-label="Cerrar panel">
             <svg class="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -1144,8 +1155,8 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               <CommonsTheCustomLoader v-if="isSlideSubmitting" size="small" />
               <span>{{ isSlideSubmitting ? 'Registrando...' : `Registrar — ${selectedEmpIds.length} empleado(s)` }}</span>
             </button>
-            <button type="button" @click="clearSelection" class="px-4 py-2.5 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-background transition-colors min-h-[44px]">
-              Cancelar
+            <button type="button" @click="closeSlideOver" class="px-4 py-2.5 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-background transition-colors min-h-[44px]">
+              Cerrar
             </button>
           </div>
         </div>
