@@ -7,49 +7,55 @@ export interface BlogCtaContent {
 export function useBlogCta(slug: string): BlogCtaContent {
   const s = slug
 
+  // Nómina y equipo
   if (/nomina|liquidacion|desprendible|prima-de-servicios|mesero|brigada/.test(s)) {
     return {
-      headline: '¿Cuánto te cuesta realmente tu equipo?',
-      body: 'WARO calcula nómina, horas extra y prestaciones automáticamente según la ley colombiana 2026. Sin errores, sin multas.',
-      button: 'Quiero ver la demo',
+      headline: 'Tu equipo, sin errores en nómina.',
+      body: 'Desde $9.000/mes WARO calcula nómina, horas extra y prestaciones según la ley colombiana 2026. Automático, exacto y sin multas.',
+      button: 'Quiero empezar ya',
     }
   }
 
+  // Precios y comparativas
   if (/precio|gratis|free|full|open-source/.test(s)) {
     return {
-      headline: 'El mejor precio es el que más retorna.',
-      body: 'WARO desde $9.000 COP/mes. POS + inventario + nómina + food cost en un solo lugar. Sin sorpresas.',
-      button: 'Ver planes de WARO',
+      headline: 'El software más económico del mercado colombiano.',
+      body: 'Desde $9.000/mes tienes POS, inventario, nómina y food cost en un solo lugar. Sin letras pequeñas.',
+      button: 'Ver mis opciones',
     }
   }
 
+  // Costos, finanzas y operaciones
   if (/food-cost|punto-de-equilibrio|arqueo|inventario|mise-en-place/.test(s)) {
     return {
-      headline: 'Deja de calcular en Excel.',
-      body: 'Food cost, punto de equilibrio e inventario en tiempo real. WARO hace los números por ti para que te concentres en cocinar.',
-      button: 'Ver WARO en acción',
+      headline: 'Deja de perder plata calculando en Excel.',
+      body: 'Desde $9.000/mes WARO te da food cost, punto de equilibrio e inventario en tiempo real. Toma decisiones con datos, no con intuición.',
+      button: 'Quiero ver cómo funciona',
     }
   }
 
+  // Software y POS
   if (/software|pos|pdv|tpv|sistema-pos|contable/.test(s)) {
     return {
-      headline: '¿Ya comparaste todos los software? Ahora conoce el colombiano.',
-      body: 'WARO nació en Colombia para restaurantes colombianos. POS, facturación DIAN y control de costos en un solo lugar.',
-      button: 'Ver cómo funciona WARO',
+      headline: 'El POS colombiano más económico del mercado.',
+      body: 'Desde $9.000/mes: facturación DIAN, inventario y nómina en un solo sistema. Hecho en Colombia para restaurantes colombianos.',
+      button: 'Ver demostración',
     }
   }
 
+  // Administración y menú
   if (/administrar|ingenieria-de-menu|cocinas|corrientazo|gastrobar|nombres/.test(s)) {
     return {
-      headline: 'Del menú a la caja, todo bajo control.',
-      body: 'WARO conecta cada parte de tu operación para que tomes decisiones con datos reales, no con intuición.',
-      button: 'Quiero una demo',
+      headline: 'Llena tu restaurante. Desde $9.000/mes.',
+      body: 'WARO conecta caja, inventario, nómina y domicilios en un panel. El sistema más eficiente del mercado, hecho en Colombia.',
+      button: 'Quiero mi demo gratis',
     }
   }
 
+  // Default
   return {
-    headline: '¿Tu restaurante todavía trabaja a ciegas?',
-    body: 'WARO centraliza ventas, nómina, inventario y costos en un panel. Te mostramos cómo en 15 minutos.',
-    button: 'Quiero mi demostración gratis',
+    headline: 'Llena tu restaurante con WARO. Desde $9.000/mes.',
+    body: 'El software colombiano más completo y económico para restaurantes. POS, nómina, inventario y food cost en un solo lugar.',
+    button: 'Comenzar gratis',
   }
 }

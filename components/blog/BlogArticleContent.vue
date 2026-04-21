@@ -47,7 +47,7 @@ function buildMidCta(cta: { button: string }): HTMLElement {
     'line-height:1.4',
     'color:hsl(var(--crocus-700))',
   ].join(';')
-  text.textContent = 'WARO — el software colombiano para restaurantes.'
+  text.textContent = 'El software más económico del mercado — desde $9.000/mes.'
 
   const btn = document.createElement('button')
   btn.setAttribute('data-blog-cta-btn', '')
