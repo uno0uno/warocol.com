@@ -319,39 +319,115 @@ function formatPeriodMonth(pm: string): string {
   return `${MONTH_NAMES[parseInt(m) - 1]} ${y}`
 }
 
-// ── Bulk selection ────────────────────────────────────────────────────────
-const selectedEmpIds = ref<string[]>([])
+// ── Cell-level selection ──────────────────────────────────────────────────
+// Key format: "${empId}:${benefit}"
+const selectedCells = ref<string[]>([])
 
-const allPageSelected = computed(() => {
+const BENEFIT_KEYS = ['primaS1', 'primaS2', 'cesantias', 'intCesantias', 'vacaciones', 'dotacion', 'horasExtras'] as const
+type BenefitKey = typeof BENEFIT_KEYS[number]
+
+function cellKey(empId: string, benefit: string) { return `${empId}:${benefit}` }
+function isCellSelected(empId: string, benefit: string) { return selectedCells.value.includes(cellKey(empId, benefit)) }
+
+// Returns which benefits a row is eligible to select (pending or always-addable)
+function getEligibleBenefits(row: any): BenefitKey[] {
+  const out: BenefitKey[] = []
+  if (row.primaS1 == null) out.push('primaS1')
+  if (row.primaS2 == null) out.push('primaS2')
+  if (row.cesantias == null) out.push('cesantias')
+  if (row.intCesantias == null) out.push('intCesantias')
+  if (row.vacaciones == null) out.push('vacaciones')
+  if (row.dotacion == null && row.employment_type === 'employee') out.push('dotacion')
+  out.push('horasExtras')
+  return out
+}
+
+function isRowSelected(empId: string): boolean {
+  const row = tableData.value.find(r => r.id === empId)
+  if (!row) return false
+  const eligible = getEligibleBenefits(row)
+  return eligible.length > 0 && eligible.every(b => selectedCells.value.includes(cellKey(empId, b)))
+}
+
+function isColumnSelected(benefit: BenefitKey): boolean {
+  const eligible = tableData.value.filter(r => getEligibleBenefits(r).includes(benefit))
+  return eligible.length > 0 && eligible.every(r => selectedCells.value.includes(cellKey(r.id, benefit)))
+}
+
+function allSelected(): boolean {
   if (!tableData.value.length) return false
-  return tableData.value.every(r => selectedEmpIds.value.includes(r.id))
-})
+  return tableData.value.every(r => isRowSelected(r.id))
+}
 
-function toggleSelect(id: string) {
-  const idx = selectedEmpIds.value.indexOf(id)
-  if (idx === -1) {
-    selectedEmpIds.value = [...selectedEmpIds.value, id]
-    initSlideData(id)
+function toggleCell(empId: string, benefit: string) {
+  const key = cellKey(empId, benefit)
+  if (selectedCells.value.includes(key)) {
+    selectedCells.value = selectedCells.value.filter(k => k !== key)
   } else {
-    selectedEmpIds.value = selectedEmpIds.value.filter(i => i !== id)
+    selectedCells.value = [...selectedCells.value, key]
+    initSlideData(empId)
   }
 }
 
-function toggleSelectAll() {
-  if (allPageSelected.value) {
-    selectedEmpIds.value = []
+function toggleRow(empId: string) {
+  const row = tableData.value.find(r => r.id === empId)
+  if (!row) return
+  const eligible = getEligibleBenefits(row)
+  if (isRowSelected(empId)) {
+    selectedCells.value = selectedCells.value.filter(k => !k.startsWith(`${empId}:`))
   } else {
-    selectedEmpIds.value = tableData.value.map(r => r.id)
-    tableData.value.forEach(r => initSlideData(r.id))
+    const toAdd = eligible.map(b => cellKey(empId, b)).filter(k => !selectedCells.value.includes(k))
+    selectedCells.value = [...selectedCells.value, ...toAdd]
+    initSlideData(empId)
+  }
+}
+
+function toggleColumn(benefit: BenefitKey) {
+  const eligible = tableData.value.filter(r => getEligibleBenefits(r).includes(benefit))
+  if (isColumnSelected(benefit)) {
+    selectedCells.value = selectedCells.value.filter(k => !k.endsWith(`:${benefit}`))
+  } else {
+    const toAdd = eligible.map(r => cellKey(r.id, benefit)).filter(k => !selectedCells.value.includes(k))
+    selectedCells.value = [...selectedCells.value, ...toAdd]
+    eligible.forEach(r => initSlideData(r.id))
+  }
+}
+
+function toggleAll() {
+  if (allSelected()) {
+    selectedCells.value = []
+  } else {
+    const toAdd: string[] = []
+    tableData.value.forEach(r => {
+      getEligibleBenefits(r).forEach(b => {
+        const k = cellKey(r.id, b)
+        if (!selectedCells.value.includes(k)) toAdd.push(k)
+      })
+      initSlideData(r.id)
+    })
+    selectedCells.value = [...selectedCells.value, ...toAdd]
   }
 }
 
 function clearSelection() {
-  selectedEmpIds.value = []
+  selectedCells.value = []
   showSlideOver.value = false
   slideError.value = null
   slideSuccess.value = null
 }
+
+// Group selected cells by employee
+const selectedByEmployee = computed(() => {
+  const map: Record<string, BenefitKey[]> = {}
+  for (const key of selectedCells.value) {
+    const colonIdx = key.indexOf(':')
+    const empId = key.substring(0, colonIdx)
+    const benefit = key.substring(colonIdx + 1) as BenefitKey
+    if (!map[empId]) map[empId] = []
+    map[empId].push(benefit)
+  }
+  return map
+})
 
 // ── Slide-over state ──────────────────────────────────────────────────────
 const TODAY_STR = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date())
@@ -410,7 +486,7 @@ function initSlideData(empId: string) {
 }
 
 const selectedEmployeeRows = computed(() =>
-  selectedEmpIds.value
+  Object.keys(selectedByEmployee.value)
     .map(id => tableData.value.find(r => r.id === id))
     .filter(Boolean) as (typeof tableData.value)[number][]
 )
@@ -449,42 +525,43 @@ async function submitBulk() {
       const pm = slideMethod.value || null
       const tasks: Promise<void>[] = []
 
-      if (row.primaS1 == null) {
+      const sel = selectedByEmployee.value[empId] ?? []
+      if (sel.includes('primaS1') && row.primaS1 == null) {
         tasks.push(
           $fetch(`${BASE}/prima`, { method: 'POST', body: { semestre: `${selectedYear.value}-S1`, gross_salary: d.gross_salary, days_worked: d.days_worked || 180, payment_method: pm, payment_date: pd } })
             .then(() => { affectedEmpIds.add(empId) })
             .catch(e => { errors.push(`${row.name} — Prima S1: ${e?.data?.detail ?? 'error'}`) })
         )
       }
-      if (row.primaS2 == null) {
+      if (sel.includes('primaS2') && row.primaS2 == null) {
         tasks.push(
           $fetch(`${BASE}/prima`, { method: 'POST', body: { semestre: `${selectedYear.value}-S2`, gross_salary: d.gross_salary, days_worked: d.days_worked || 180, payment_method: pm, payment_date: pd } })
             .then(() => { affectedEmpIds.add(empId) })
             .catch(e => { errors.push(`${row.name} — Prima S2: ${e?.data?.detail ?? 'error'}`) })
         )
       }
-      if (row.cesantias == null) {
+      if (sel.includes('cesantias') && row.cesantias == null) {
         tasks.push(
           $fetch(`${BASE}/cesantias`, { method: 'POST', body: { anio: selectedYear.value, gross_salary: d.gross_salary, days_worked: d.days_worked || 360, payment_method: pm, payment_date: pd } })
             .then(() => { affectedEmpIds.add(empId) })
             .catch(e => { errors.push(`${row.name} — Cesantías: ${e?.data?.detail ?? 'error'}`) })
         )
       }
-      if (row.intCesantias == null && d.cesantias_base > 0) {
+      if (sel.includes('intCesantias') && row.intCesantias == null && d.cesantias_base > 0) {
         tasks.push(
           $fetch(`${BASE}/int-cesantias`, { method: 'POST', body: { anio: selectedYear.value, cesantias_base: d.cesantias_base, int_cesantias_amount: d.int_cesantias_amount || null, payment_method: pm, payment_date: pd } })
             .then(() => { affectedEmpIds.add(empId) })
             .catch(e => { errors.push(`${row.name} — Int. Cesantías: ${e?.data?.detail ?? 'error'}`) })
         )
       }
-      if (row.vacaciones == null) {
+      if (sel.includes('vacaciones') && row.vacaciones == null) {
         tasks.push(
           $fetch(`${BASE}/vacaciones`, { method: 'POST', body: { anio: selectedYear.value, gross_salary: d.gross_salary, days_worked: d.days_worked || 360, payment_method: pm, payment_date: pd } })
             .then(() => { affectedEmpIds.add(empId) })
             .catch(e => { errors.push(`${row.name} — Vacaciones: ${e?.data?.detail ?? 'error'}`) })
         )
       }
-      if (row.dotacion == null && row.employment_type === 'employee' && d.dot_period && d.dot_total > 0) {
+      if (sel.includes('dotacion') && row.dotacion == null && row.employment_type === 'employee' && d.dot_period && d.dot_total > 0) {
         tasks.push(
           $fetch(`${BASE}/dotacion`, { method: 'POST', body: { period: d.dot_period, year: d.dot_year, total_amount: d.dot_total, items_description: d.dot_items || null, payment_date: pd } })
             .then(() => { affectedEmpIds.add(empId) })
@@ -492,7 +569,7 @@ async function submitBulk() {
         )
       }
       const totalHrs = (d.hours_diurna || 0) + (d.hours_nocturna || 0) + (d.hours_dominical_diurna || 0) + (d.hours_dominical_nocturna || 0)
-      if (totalHrs > 0 && d.period_month && d.base_hourly_rate > 0) {
+      if (sel.includes('horasExtras') && totalHrs > 0 && d.period_month && d.base_hourly_rate > 0) {
         tasks.push(
           $fetch(`${BASE}/horas-extras`, { method: 'POST', body: { period_month: d.period_month, base_hourly_rate: d.base_hourly_rate, hours_diurna: d.hours_diurna || 0, hours_nocturna: d.hours_nocturna || 0, hours_dominical_diurna: d.hours_dominical_diurna || 0, hours_dominical_nocturna: d.hours_dominical_nocturna || 0, payment_method: pm, payment_date: pd } })
             .then(() => { affectedEmpIds.add(empId) })
@@ -515,7 +592,7 @@ async function submitBulk() {
     slideError.value = errors.join('\n')
   } else {
     slideSuccess.value = 'Prestaciones registradas correctamente'
-    selectedEmpIds.value = []
+    selectedCells.value = []
     showSlideOver.value = false
     slideData.value = {}
   }
@@ -596,8 +673,8 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
       <!-- Bulk action bar -->
       <Transition name="slide-down">
-        <div v-if="selectedEmpIds.length > 0" class="flex items-center gap-3 px-4 py-2.5 bg-primary/10 border-2 border-primary rounded-xl">
-          <span class="text-sm font-semibold text-primary">{{ selectedEmpIds.length }} seleccionado(s)</span>
+        <div v-if="selectedCells.length > 0" class="flex items-center gap-3 px-4 py-2.5 bg-primary/10 border-2 border-primary rounded-xl">
+          <span class="text-sm font-semibold text-primary">{{ selectedCells.length }} prestación(es) · {{ selectedEmployeeRows.length }} empleado(s)</span>
           <button
             @click="openSlideOver"
             class="ml-auto px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-lg transition-colors min-h-[36px]"
@@ -623,14 +700,14 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <template #card="{ item, index }">
             <div
               class="flex flex-col gap-2 py-3 px-3 border-b border-border"
-              :class="[index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30', selectedEmpIds.includes(item.id) ? 'ring-2 ring-primary ring-inset' : '']"
+              :class="[index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30', isRowSelected(item.id) ? 'ring-2 ring-primary ring-inset' : '']"
             >
               <!-- Employee header with checkbox -->
               <div class="flex items-center gap-2">
                 <label class="cursor-pointer flex-shrink-0">
-                  <input type="checkbox" class="sr-only peer" :checked="selectedEmpIds.includes(item.id)" @change="toggleSelect(item.id)" />
+                  <input type="checkbox" class="sr-only peer" :checked="isRowSelected(item.id)" @change="toggleRow(item.id)" />
                   <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
-                    <svg v-if="selectedEmpIds.includes(item.id)" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
+                    <svg v-if="isRowSelected(item.id)" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
                       <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </span>
@@ -665,22 +742,22 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
           <!-- ── Desktop: select-all header ─────────────────────────────── -->
           <template #header-select>
-            <label class="cursor-pointer">
-              <input type="checkbox" class="sr-only peer" :checked="allPageSelected" @change="toggleSelectAll" />
+            <label class="cursor-pointer" :title="allSelected() ? 'Deseleccionar todo' : 'Seleccionar todo'">
+              <input type="checkbox" class="sr-only peer" :checked="allSelected()" @change="toggleAll" />
               <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
-                <svg v-if="allPageSelected" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
+                <svg v-if="allSelected()" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
                   <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </span>
             </label>
           </template>
 
-          <!-- ── Desktop: per-row checkbox ──────────────────────────────── -->
+          <!-- ── Desktop: per-row checkbox (selects all benefits for that employee) ── -->
           <template #cell-select="{ row }">
-            <label class="cursor-pointer">
-              <input type="checkbox" class="sr-only peer" :checked="selectedEmpIds.includes(row.id)" @change="toggleSelect(row.id)" />
+            <label class="cursor-pointer" :title="isRowSelected(row.id) ? 'Deseleccionar fila' : 'Seleccionar todas las prestaciones de esta fila'">
+              <input type="checkbox" class="sr-only peer" :checked="isRowSelected(row.id)" @change="toggleRow(row.id)" />
               <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
-                <svg v-if="selectedEmpIds.includes(row.id)" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
+                <svg v-if="isRowSelected(row.id)" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
                   <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </span>
@@ -707,42 +784,55 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
             />
           </template>
 
+          <!-- ── Column-select headers ───────────────────────────────── -->
+          <template v-for="col in (['primaS1','primaS2','cesantias','intCesantias','vacaciones','dotacion','horasExtras'] as const)" :key="`h-${col}`" #[`header-${col}`]>
+            <label class="cursor-pointer flex flex-col items-center gap-0.5 select-none" :title="`Seleccionar columna ${col}`" @click.stop>
+              <input type="checkbox" class="sr-only peer" :checked="isColumnSelected(col)" @change="toggleColumn(col)" />
+              <span class="w-3.5 h-3.5 rounded border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
+                <svg v-if="isColumnSelected(col)" viewBox="0 0 10 8" fill="none" class="w-2 h-1.5">
+                  <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="text-xs font-medium text-text-primary">{{ { primaS1: 'Prima S1', primaS2: 'Prima S2', cesantias: 'Cesantías', intCesantias: 'Int. Ces.', vacaciones: 'Vacaciones', dotacion: 'Dotación', horasExtras: 'H. Extras' }[col] }}</span>
+            </label>
+          </template>
+
           <!-- Prima S1 -->
           <template #cell-primaS1="{ row }">
-            <button v-if="row.primaS1 == null" class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
-              <UiStatusBadge value="Pendiente" variant="secondary" size="sm" format="text" class="font-normal" />
+            <button v-if="row.primaS1 == null" @click="toggleCell(row.id, 'primaS1')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'primaS1') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'primaS1') ? 'Deseleccionar' : 'Seleccionar'} Prima S1 — ${row.name}`">
+              <UiStatusBadge :value="isCellSelected(row.id,'primaS1') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'primaS1') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.primaS1)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
 
           <!-- Prima S2 -->
           <template #cell-primaS2="{ row }">
-            <button v-if="row.primaS2 == null" class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
-              <UiStatusBadge value="Pendiente" variant="secondary" size="sm" format="text" class="font-normal" />
+            <button v-if="row.primaS2 == null" @click="toggleCell(row.id, 'primaS2')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'primaS2') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'primaS2') ? 'Deseleccionar' : 'Seleccionar'} Prima S2 — ${row.name}`">
+              <UiStatusBadge :value="isCellSelected(row.id,'primaS2') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'primaS2') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.primaS2)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
 
           <!-- Cesantías -->
           <template #cell-cesantias="{ row }">
-            <button v-if="row.cesantias == null" class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
-              <UiStatusBadge value="Pendiente" variant="secondary" size="sm" format="text" class="font-normal" />
+            <button v-if="row.cesantias == null" @click="toggleCell(row.id, 'cesantias')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'cesantias') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'cesantias') ? 'Deseleccionar' : 'Seleccionar'} Cesantías — ${row.name}`">
+              <UiStatusBadge :value="isCellSelected(row.id,'cesantias') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'cesantias') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.cesantias)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
 
           <!-- Int. Cesantías -->
           <template #cell-intCesantias="{ row }">
-            <button v-if="row.intCesantias == null" class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
-              <UiStatusBadge value="Pendiente" variant="secondary" size="sm" format="text" class="font-normal" />
+            <button v-if="row.intCesantias == null" @click="toggleCell(row.id, 'intCesantias')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'intCesantias') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'intCesantias') ? 'Deseleccionar' : 'Seleccionar'} Int. Cesantías — ${row.name}`">
+              <UiStatusBadge :value="isCellSelected(row.id,'intCesantias') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'intCesantias') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.intCesantias)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
 
           <!-- Vacaciones -->
           <template #cell-vacaciones="{ row }">
-            <button v-if="row.vacaciones == null" class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
-              <UiStatusBadge value="Pendiente" variant="secondary" size="sm" format="text" class="font-normal" />
+            <button v-if="row.vacaciones == null" @click="toggleCell(row.id, 'vacaciones')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'vacaciones') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'vacaciones') ? 'Deseleccionar' : 'Seleccionar'} Vacaciones — ${row.name}`">
+              <UiStatusBadge :value="isCellSelected(row.id,'vacaciones') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'vacaciones') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
             </button>
             <UiStatusBadge v-else :value="formatCurrency(row.vacaciones)" variant="success" size="sm" format="text" class="font-normal" />
           </template>
@@ -751,22 +841,20 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <template #cell-dotacion="{ row }">
             <span v-if="row.employment_type !== 'employee'" class="text-xs text-text-tertiary px-2">N/A</span>
             <template v-else>
-              <button v-if="row.dotacion == null" class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
-                <UiStatusBadge value="Pendiente" variant="secondary" size="sm" format="text" class="font-normal" />
+              <button v-if="row.dotacion == null" @click="toggleCell(row.id, 'dotacion')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'dotacion') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'dotacion') ? 'Deseleccionar' : 'Seleccionar'} Dotación — ${row.name}`">
+                <UiStatusBadge :value="isCellSelected(row.id,'dotacion') ? '✓ Seleccionada' : 'Pendiente'" :variant="isCellSelected(row.id,'dotacion') ? 'info' : 'secondary'" size="sm" format="text" class="font-normal" />
               </button>
               <UiStatusBadge v-else :value="formatCurrency(row.dotacion)" variant="success" size="sm" format="text" class="font-normal" />
             </template>
           </template>
 
-          <!-- Horas Extras -->
+          <!-- Horas Extras (always addable) -->
           <template #cell-horasExtras="{ row }">
-            <button class="focus:outline-none focus:ring-2 focus:ring-primary rounded" @click="toggleSelect(row.id)" :aria-label="`Seleccionar ${row.name}`">
+            <button @click="toggleCell(row.id, 'horasExtras')" :class="['focus:outline-none focus:ring-2 focus:ring-primary rounded transition-all', isCellSelected(row.id,'horasExtras') ? 'ring-2 ring-primary' : '']" :aria-label="`${isCellSelected(row.id,'horasExtras') ? 'Deseleccionar' : 'Seleccionar'} Horas Extras — ${row.name}`">
               <UiStatusBadge
-                :value="row.horasExtras != null ? formatCurrency(row.horasExtras) : 'Agregar'"
-                :variant="row.horasExtras != null ? 'success' : 'secondary'"
-                size="sm"
-                format="text"
-                class="font-normal"
+                :value="isCellSelected(row.id,'horasExtras') ? '✓ Seleccionada' : (row.horasExtras != null ? formatCurrency(row.horasExtras) : 'Agregar')"
+                :variant="isCellSelected(row.id,'horasExtras') ? 'info' : (row.horasExtras != null ? 'success' : 'secondary')"
+                size="sm" format="text" class="font-normal"
               />
             </button>
           </template>
@@ -938,7 +1026,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
     <!-- Panel -->
     <Transition name="slide-right">
       <div
-        v-if="showSlideOver && selectedEmpIds.length > 0"
+        v-if="showSlideOver && selectedCells.length > 0"
         class="fixed right-0 top-0 bottom-0 z-50 w-full max-w-xl bg-background border-l border-border shadow-xl flex flex-col overflow-hidden"
         role="dialog"
         aria-modal="true"
@@ -948,7 +1036,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
         <div class="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
           <div>
             <h2 class="text-base font-semibold text-text-primary">Registrar Prestaciones</h2>
-            <p class="text-sm text-text-secondary">{{ selectedEmpIds.length }} empleado(s) seleccionado(s)</p>
+            <p class="text-sm text-text-secondary">{{ selectedCells.length }} prestación(es) · {{ selectedEmployeeRows.length }} empleado(s)</p>
           </div>
           <button @click="closeSlideOver" class="p-2 rounded-lg hover:bg-surface transition-colors" aria-label="Cerrar panel">
             <svg class="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1000,8 +1088,8 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
             <template v-if="slideData[row.id]">
 
-              <!-- Shared salary fields (if any salary-based benefit is pending) -->
-              <div v-if="row.primaS1 == null || row.primaS2 == null || row.cesantias == null || row.vacaciones == null" class="mb-4 p-3 bg-surface rounded-xl space-y-3">
+              <!-- Shared salary fields (shown if any salary-based benefit is selected) -->
+              <div v-if="selectedByEmployee[row.id]?.some(b => ['primaS1','primaS2','cesantias','vacaciones'].includes(b))" class="mb-4 p-3 bg-surface rounded-xl space-y-3">
                 <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Campos compartidos</p>
                 <div class="grid grid-cols-2 gap-3">
                   <div>
@@ -1019,32 +1107,28 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                 </div>
               </div>
 
-              <!-- Pending salary-based benefits -->
+              <!-- Selected salary-based benefits list -->
               <div class="space-y-1.5 mb-3">
-                <div v-if="row.primaS1 == null" class="flex items-center gap-2 py-1.5 px-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 8v4M12 16h.01"/></svg>
-                  <span class="text-xs font-medium text-amber-800 flex-1">Prima S1 — {{ selectedYear }}-S1</span>
-                  <UiStatusBadge value="Pendiente" variant="warning" size="sm" />
+                <div v-if="selectedByEmployee[row.id]?.includes('primaS1') && row.primaS1 == null" class="flex items-center gap-2 py-1.5 px-3 bg-primary/5 border border-primary/30 rounded-lg">
+                  <span class="text-xs font-medium text-text-primary flex-1">Prima S1 — {{ selectedYear }}-S1</span>
+                  <UiStatusBadge value="Incluida" variant="info" size="sm" />
                 </div>
-                <div v-if="row.primaS2 == null" class="flex items-center gap-2 py-1.5 px-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 8v4M12 16h.01"/></svg>
-                  <span class="text-xs font-medium text-amber-800 flex-1">Prima S2 — {{ selectedYear }}-S2</span>
-                  <UiStatusBadge value="Pendiente" variant="warning" size="sm" />
+                <div v-if="selectedByEmployee[row.id]?.includes('primaS2') && row.primaS2 == null" class="flex items-center gap-2 py-1.5 px-3 bg-primary/5 border border-primary/30 rounded-lg">
+                  <span class="text-xs font-medium text-text-primary flex-1">Prima S2 — {{ selectedYear }}-S2</span>
+                  <UiStatusBadge value="Incluida" variant="info" size="sm" />
                 </div>
-                <div v-if="row.cesantias == null" class="flex items-center gap-2 py-1.5 px-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 8v4M12 16h.01"/></svg>
-                  <span class="text-xs font-medium text-amber-800 flex-1">Cesantías {{ selectedYear }}</span>
-                  <UiStatusBadge value="Pendiente" variant="warning" size="sm" />
+                <div v-if="selectedByEmployee[row.id]?.includes('cesantias') && row.cesantias == null" class="flex items-center gap-2 py-1.5 px-3 bg-primary/5 border border-primary/30 rounded-lg">
+                  <span class="text-xs font-medium text-text-primary flex-1">Cesantías {{ selectedYear }}</span>
+                  <UiStatusBadge value="Incluida" variant="info" size="sm" />
                 </div>
-                <div v-if="row.vacaciones == null" class="flex items-center gap-2 py-1.5 px-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 8v4M12 16h.01"/></svg>
-                  <span class="text-xs font-medium text-amber-800 flex-1">Vacaciones {{ selectedYear }}</span>
-                  <UiStatusBadge value="Pendiente" variant="warning" size="sm" />
+                <div v-if="selectedByEmployee[row.id]?.includes('vacaciones') && row.vacaciones == null" class="flex items-center gap-2 py-1.5 px-3 bg-primary/5 border border-primary/30 rounded-lg">
+                  <span class="text-xs font-medium text-text-primary flex-1">Vacaciones {{ selectedYear }}</span>
+                  <UiStatusBadge value="Incluida" variant="info" size="sm" />
                 </div>
               </div>
 
               <!-- Int. Cesantías -->
-              <div v-if="row.intCesantias == null" class="mb-4 p-3 bg-surface rounded-xl space-y-2">
+              <div v-if="selectedByEmployee[row.id]?.includes('intCesantias') && row.intCesantias == null" class="mb-4 p-3 bg-surface rounded-xl space-y-2">
                 <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Int. Cesantías {{ selectedYear }}</p>
                 <div class="grid grid-cols-2 gap-2">
                   <div>
@@ -1064,7 +1148,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               </div>
 
               <!-- Dotación (employees only) -->
-              <div v-if="row.dotacion == null && row.employment_type === 'employee'" class="mb-4 p-3 bg-surface rounded-xl space-y-2">
+              <div v-if="selectedByEmployee[row.id]?.includes('dotacion') && row.dotacion == null && row.employment_type === 'employee'" class="mb-4 p-3 bg-surface rounded-xl space-y-2">
                 <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Dotación {{ selectedYear }}</p>
                 <div class="grid grid-cols-2 gap-2">
                   <div>
@@ -1091,7 +1175,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               </div>
 
               <!-- Horas Extras -->
-              <div class="p-3 bg-surface rounded-xl space-y-2">
+              <div v-if="selectedByEmployee[row.id]?.includes('horasExtras')" class="p-3 bg-surface rounded-xl space-y-2">
                 <div class="flex items-center gap-2">
                   <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Horas Extras</p>
                   <span v-if="row.horasExtras != null" class="text-xs text-text-secondary">(registradas: {{ formatCurrency(row.horasExtras) }})</span>
@@ -1153,7 +1237,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               class="flex-1 py-2.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold min-h-[44px]"
             >
               <CommonsTheCustomLoader v-if="isSlideSubmitting" size="small" />
-              <span>{{ isSlideSubmitting ? 'Registrando...' : `Registrar — ${selectedEmpIds.length} empleado(s)` }}</span>
+              <span>{{ isSlideSubmitting ? 'Registrando...' : `Registrar ${selectedCells.length} prestación(es)` }}</span>
             </button>
             <button type="button" @click="closeSlideOver" class="px-4 py-2.5 border-2 border-border rounded-lg text-text-secondary hover:text-text-primary hover:bg-background transition-colors min-h-[44px]">
               Cerrar
