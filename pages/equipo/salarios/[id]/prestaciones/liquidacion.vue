@@ -30,7 +30,7 @@ const form = reactive({
   cause: 'sin_justa_causa',
   base_salary: '',
   employment_type: '',
-  payment_method: 'transfer',
+  payment_method: '',
   payment_date: new Date().toISOString().split('T')[0],
   notes: '',
 })
@@ -144,6 +144,9 @@ const causeLabels = {
   justa_causa: 'Con justa causa',
   renuncia: 'Renuncia voluntaria',
 }
+
+const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
+fetchPaymentMethods()
 </script>
 
 <template>
@@ -313,11 +316,11 @@ const causeLabels = {
             <label class="text-sm font-medium text-gray-700">Método de pago</label>
             <select v-model="form.payment_method"
               class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[44px]">
-              <option value="transfer">Transferencia bancaria</option>
-              <option value="cash">Efectivo</option>
-              <option value="nequi">Nequi</option>
-              <option value="daviplata">Daviplata</option>
-              <option value="check">Cheque</option>
+              <option value="">Sin especificar</option>
+              <template v-for="group in paymentGroups">
+                <option v-if="group.methods.length === 0" :key="group.id" :value="group.slug">{{ group.name }}</option>
+                <option v-for="method in group.methods" :key="method.id" :value="method.id">{{ method.name }}</option>
+              </template>
             </select>
           </div>
           <div class="flex flex-col gap-1">

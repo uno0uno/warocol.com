@@ -196,11 +196,10 @@
                 aria-label="Método de pago de las horas extras"
               >
                 <option value="">Sin especificar</option>
-                <option value="transfer">Transferencia</option>
-                <option value="cash">Efectivo</option>
-                <option value="nequi">Nequi</option>
-                <option value="daviplata">Daviplata</option>
-                <option value="check">Cheque</option>
+                <template v-for="group in paymentGroups">
+                  <option v-if="group.methods.length === 0" :key="group.id" :value="group.slug">{{ group.name }}</option>
+                  <option v-for="method in group.methods" :key="method.id" :value="method.id">{{ method.name }}</option>
+                </template>
               </select>
             </div>
 
@@ -372,6 +371,8 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+// @ts-ignore
+import { usePaymentMethods } from '~/composables/usePaymentMethods'
 
 definePageMeta({
   layout: 'dashboard'
@@ -384,6 +385,9 @@ const employeeId = route.params.id as string
 useHead({ title: 'Horas Extras - Equipo' })
 
 const { formatDate } = useFormatters()
+
+const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
+fetchPaymentMethods()
 
 // Default period_month = current YYYY-MM
 const defaultPeriodMonth = new Intl.DateTimeFormat('en-CA', {

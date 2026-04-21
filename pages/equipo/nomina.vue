@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { usePaymentMethods } from '~/composables/usePaymentMethods'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
@@ -429,12 +432,15 @@ const selectedByEmployee = computed(() => {
   return map
 })
 
+// ── Payment methods (shared with individual prestaciones pages) ────────────
+const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
+
 // ── Slide-over state ──────────────────────────────────────────────────────
 const TODAY_STR = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date())
 
 const showSlideOver = ref(false)
 const slideDate    = ref(TODAY_STR)
-const slideMethod  = ref('transfer')
+const slideMethod  = ref('')
 const isSlideSubmitting = ref(false)
 const slideError   = ref<string | null>(null)
 const slideSuccess = ref<string | null>(null)
@@ -601,6 +607,7 @@ async function submitBulk() {
 onMounted(() => {
   loadPilaPending()
   loadPilaHistory()
+  fetchPaymentMethods()
 })
 
 // ── Layout refresh integration ────────────────────────────────────────────
@@ -1055,11 +1062,11 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
             <div>
               <label class="block text-sm font-medium text-text-primary mb-1">Método de pago</label>
               <select v-model="slideMethod" class="input-base w-full px-3 py-2">
-                <option value="transfer">Transferencia</option>
-                <option value="cash">Efectivo</option>
-                <option value="nequi">Nequi</option>
-                <option value="daviplata">Daviplata</option>
-                <option value="check">Cheque</option>
+                <option value="">Sin especificar</option>
+                <template v-for="group in paymentGroups">
+                  <option v-if="group.methods.length === 0" :key="group.id" :value="group.slug">{{ group.name }}</option>
+                  <option v-for="method in group.methods" :key="method.id" :value="method.id">{{ method.name }}</option>
+                </template>
               </select>
             </div>
           </div>
@@ -1079,7 +1086,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                 <p class="text-sm font-semibold text-text-primary">{{ row.name }}</p>
                 <UiStatusBadge :value="employmentTypeLabel[row.employment_type] ?? row.employment_type" variant="secondary" size="sm" />
               </div>
-              <button @click="toggleSelect(row.id)" class="p-1 rounded hover:bg-surface text-text-secondary hover:text-text-primary transition-colors" :aria-label="`Quitar ${row.name}`">
+              <button @click="toggleRow(row.id)" class="p-1 rounded hover:bg-surface text-text-secondary hover:text-text-primary transition-colors" :aria-label="`Quitar ${row.name}`">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
