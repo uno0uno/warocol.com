@@ -301,7 +301,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
           <!-- Empleado -->
           <template #cell-name="{ row }">
-            <NuxtLink :to="`/equipo/salarios/${row.id}`" class="text-sm font-medium text-text-primary hover:text-primary transition-colors">
+            <NuxtLink :to="`/equipo/salarios/${row.id}`" class="text-sm font-semibold text-text-primary hover:text-primary transition-colors">
               {{ row.name }}
             </NuxtLink>
           </template>
@@ -313,6 +313,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
               :variant="value === 'employee' ? 'info' : value === 'daily' ? 'warning' : 'secondary'"
               size="sm"
               format="text"
+              class="font-normal"
             />
           </template>
 
@@ -324,6 +325,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                 :variant="row.primaS1 != null ? 'success' : 'secondary'"
                 size="sm"
                 format="text"
+                class="font-normal"
               />
             </NuxtLink>
           </template>
@@ -336,6 +338,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                 :variant="row.primaS2 != null ? 'success' : 'secondary'"
                 size="sm"
                 format="text"
+                class="font-normal"
               />
             </NuxtLink>
           </template>
@@ -348,6 +351,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                 :variant="row.cesantias != null ? 'success' : 'secondary'"
                 size="sm"
                 format="text"
+                class="font-normal"
               />
             </NuxtLink>
           </template>
@@ -360,6 +364,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                 :variant="row.intCesantias != null ? 'success' : 'secondary'"
                 size="sm"
                 format="text"
+                class="font-normal"
               />
             </NuxtLink>
           </template>
@@ -372,6 +377,7 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                 :variant="row.vacaciones != null ? 'success' : 'secondary'"
                 size="sm"
                 format="text"
+                class="font-normal"
               />
             </NuxtLink>
           </template>
