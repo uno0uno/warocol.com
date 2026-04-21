@@ -958,9 +958,11 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                   <div>
                     <label for="pila-method" class="block text-sm font-medium text-text-primary mb-1">Método de pago</label>
                     <select id="pila-method" v-model="pilaForm.payment_method" class="input-base w-full px-3 py-2" aria-label="Método de pago PILA">
-                      <option value="transfer">Transferencia</option>
-                      <option value="cash">Efectivo</option>
-                      <option value="check">Cheque</option>
+                      <option value="">Sin especificar</option>
+                      <template v-for="group in paymentGroups">
+                        <option v-if="group.methods.length === 0" :key="group.id" :value="group.slug">{{ group.name }}</option>
+                        <option v-for="method in group.methods" :key="method.id" :value="method.id">{{ method.name }}</option>
+                      </template>
                     </select>
                   </div>
                   <div>
