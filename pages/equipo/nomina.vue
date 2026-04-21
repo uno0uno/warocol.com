@@ -160,6 +160,14 @@ const tableData = computed(() => {
   }))
 })
 
+const mobileBenefitCols = [
+  { key: 'primaS1',      label: 'Prima S1',       path: 'prima'         },
+  { key: 'primaS2',      label: 'Prima S2',       path: 'prima'         },
+  { key: 'cesantias',    label: 'Cesantías',      path: 'cesantias'     },
+  { key: 'intCesantias', label: 'Int. Cesantías', path: 'int-cesantias' },
+  { key: 'vacaciones',   label: 'Vacaciones',     path: 'vacaciones'    },
+]
+
 const tableColumns = [
   { key: 'name',         title: 'Empleado',       sortable: false },
   { key: 'primaS1',     title: 'Prima S1',        sortable: false, align: 'center' as const },
@@ -273,14 +281,11 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
               <!-- Benefits grid 2×3 -->
               <div class="grid grid-cols-2 gap-1.5 pl-10">
-                <template v-for="col in [
-                  { key: 'primaS1',      label: 'Prima S1',       path: 'prima'         },
-                  { key: 'primaS2',      label: 'Prima S2',       path: 'prima'         },
-                  { key: 'cesantias',    label: 'Cesantías',      path: 'cesantias'     },
-                  { key: 'intCesantias', label: 'Int. Cesantías', path: 'int-cesantias' },
-                  { key: 'vacaciones',   label: 'Vacaciones',     path: 'vacaciones'    },
-                ]">
-                  <div :key="col.key" class="flex flex-col gap-0.5">
+                <div
+                  v-for="col in mobileBenefitCols"
+                  :key="col.key"
+                  class="flex flex-col gap-0.5"
+                >
                     <span class="text-xs text-text-secondary">{{ col.label }}</span>
                     <span
                       v-if="item[col.key] !== null && item[col.key] !== undefined"
@@ -302,7 +307,6 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
                       Registrar
                     </NuxtLink>
                   </div>
-                </template>
               </div>
             </div>
           </template>
