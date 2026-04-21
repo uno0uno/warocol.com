@@ -191,7 +191,7 @@ useHead({
       />
 
       <!-- Article Content -->
-      <BlogArticleContent :content="article.content">
+      <BlogArticleContent :content="article.content" :slug="slug">
         <!-- Breadcrumb Slot -->
         <template #breadcrumb>
           <BlogBreadcrumb />

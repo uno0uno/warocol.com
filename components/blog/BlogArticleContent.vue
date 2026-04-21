@@ -4,11 +4,13 @@ import MarkdownIt from 'markdown-it'
 
 interface Props {
   content: string
+  slug?: string
   showBreadcrumb?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showBreadcrumb: true
+  showBreadcrumb: true,
+  slug: '',
 })
 
 // Markdown renderer
@@ -20,6 +22,63 @@ const readingProgress = ref(0)
 
 const articleRef = ref<HTMLElement | null>(null)
 
+const leadModal = useLeadModal()
+
+function buildMidCta(cta: { button: string }): HTMLElement {
+  const wrap = document.createElement('div')
+  wrap.setAttribute('data-mid-cta', '')
+  wrap.style.cssText = [
+    'display:flex',
+    'align-items:center',
+    'justify-content:space-between',
+    'gap:1rem',
+    'padding:0.875rem 1.125rem',
+    'margin-bottom:1.75rem',
+    'border-radius:0.625rem',
+    'background-color:hsl(var(--crocus-50))',
+    'border:1px solid hsl(var(--crocus-200))',
+  ].join(';')
+
+  const text = document.createElement('p')
+  text.style.cssText = [
+    'margin:0',
+    'font-size:0.8125rem',
+    'font-weight:500',
+    'line-height:1.4',
+    'color:hsl(var(--crocus-700))',
+  ].join(';')
+  text.textContent = 'WARO — el software colombiano para restaurantes.'
+
+  const btn = document.createElement('button')
+  btn.setAttribute('data-blog-cta-btn', '')
+  btn.style.cssText = [
+    'flex-shrink:0',
+    'min-height:34px',
+    'padding:0.375rem 1rem',
+    'border-radius:0.4375rem',
+    'font-size:0.8125rem',
+    'font-weight:600',
+    'color:#ffffff',
+    'background-color:hsl(var(--crocus-600))',
+    'border:none',
+    'cursor:pointer',
+    'white-space:nowrap',
+    'font-family:inherit',
+    'transition:background-color 120ms ease',
+  ].join(';')
+  btn.textContent = cta.button
+
+  btn.addEventListener('mouseenter', () => { btn.style.backgroundColor = 'hsl(var(--crocus-700))' })
+  btn.addEventListener('mouseleave', () => { btn.style.backgroundColor = 'hsl(var(--crocus-600))' })
+  btn.addEventListener('click', () => {
+    leadModal.open(props.slug ? `blog:${props.slug}` : 'blog_cta')
+  })
+
+  wrap.appendChild(text)
+  wrap.appendChild(btn)
+  return wrap
+}
+
 onMounted(() => {
   const update = () => {
     const scrollTop = window.scrollY
@@ -29,9 +88,10 @@ onMounted(() => {
   window.addEventListener('scroll', update, { passive: true })
   onUnmounted(() => window.removeEventListener('scroll', update))
 
-  // Wrap tables in a scrollable container for mobile
   nextTick(() => {
     if (!articleRef.value) return
+
+    // Wrap tables for mobile scroll
     articleRef.value.querySelectorAll('table').forEach((table) => {
       if (table.parentElement?.classList.contains('table-scroll-wrapper')) return
       const wrapper = document.createElement('div')
@@ -39,6 +99,15 @@ onMounted(() => {
       table.parentNode!.insertBefore(wrapper, table)
       wrapper.appendChild(table)
     })
+
+    // Inject CTA banner before each H2
+    if (props.slug) {
+      const cta = useBlogCta(props.slug)
+      articleRef.value.querySelectorAll('h2').forEach((h2) => {
+        const banner = buildMidCta(cta)
+        h2.parentNode!.insertBefore(banner, h2)
+      })
+    }
   })
 })
 </script>
