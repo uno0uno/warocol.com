@@ -301,12 +301,8 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 
           <!-- Empleado -->
           <template #cell-name="{ row }">
-            <NuxtLink :to="`/equipo/salarios/${row.id}`" class="flex items-center gap-2 hover:text-primary transition-colors">
-              <div
-                class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
-                :style="{ backgroundColor: row.color }"
-              >{{ row.initials }}</div>
-              <span class="text-sm font-medium text-text-primary">{{ row.name }}</span>
+            <NuxtLink :to="`/equipo/salarios/${row.id}`" class="text-sm font-medium text-text-primary hover:text-primary transition-colors">
+              {{ row.name }}
             </NuxtLink>
           </template>
 
