@@ -69,6 +69,9 @@ onMounted(() => {
           v-html="renderedContent"
         />
 
+        <!-- CTA banner -->
+        <slot name="cta" />
+
         <!-- Separador antes del autor -->
         <hr class="my-12 border-0 h-px bg-gradient-to-r from-transparent via-titan-300 to-transparent">
 

@@ -197,6 +197,11 @@ useHead({
           <BlogBreadcrumb />
         </template>
 
+        <!-- CTA Slot -->
+        <template #cta>
+          <BlogArticleCTA :slug="slug" />
+        </template>
+
         <!-- Author Card Slot -->
         <template #author>
           <BlogAuthorCard
