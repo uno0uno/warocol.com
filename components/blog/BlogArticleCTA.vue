@@ -25,8 +25,7 @@ const ctaContent = computed(() => useBlogCta(props.slug))
 .blog-cta-banner {
   margin-top: 3rem;
   border-radius: 0.875rem;
-  background-color: hsl(var(--crocus-50));
-  border: 1px solid hsl(var(--crocus-200));
+  background-color: hsl(var(--crocus-600));
 }
 
 .blog-cta-inner {
@@ -58,7 +57,7 @@ const ctaContent = computed(() => useBlogCta(props.slug))
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.35;
-  color: hsl(var(--crocus-900));
+  color: #ffffff;
   margin: 0;
 }
 
@@ -71,7 +70,7 @@ const ctaContent = computed(() => useBlogCta(props.slug))
 .blog-cta-body {
   font-size: 0.875rem;
   line-height: 1.55;
-  color: hsl(var(--crocus-700));
+  color: hsl(var(--crocus-100));
   margin: 0;
 }
 
@@ -83,7 +82,8 @@ const ctaContent = computed(() => useBlogCta(props.slug))
   font-size: 0.875rem;
   font-weight: 600;
   color: #ffffff;
-  background-color: hsl(var(--crocus-600));
+  background-color: #ffffff;
+  color: hsl(var(--crocus-700));
   border: none;
   cursor: pointer;
   white-space: nowrap;
@@ -92,7 +92,7 @@ const ctaContent = computed(() => useBlogCta(props.slug))
 }
 
 .blog-cta-button:hover {
-  background-color: hsl(var(--crocus-700));
+  background-color: hsl(var(--crocus-50));
 }
 
 .blog-cta-button:active {
@@ -100,7 +100,7 @@ const ctaContent = computed(() => useBlogCta(props.slug))
 }
 
 .blog-cta-button:focus-visible {
-  outline: 2px solid hsl(var(--crocus-600));
+  outline: 2px solid #ffffff;
   outline-offset: 3px;
 }
 </style>

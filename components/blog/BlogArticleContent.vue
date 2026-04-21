@@ -35,8 +35,7 @@ function buildMidCta(cta: { button: string }): HTMLElement {
     'padding:0.875rem 1.125rem',
     'margin-bottom:1.75rem',
     'border-radius:0.625rem',
-    'background-color:hsl(var(--crocus-50))',
-    'border:1px solid hsl(var(--crocus-200))',
+    'background-color:hsl(var(--crocus-600))',
   ].join(';')
 
   const text = document.createElement('p')
@@ -45,7 +44,7 @@ function buildMidCta(cta: { button: string }): HTMLElement {
     'font-size:0.8125rem',
     'font-weight:500',
     'line-height:1.4',
-    'color:hsl(var(--crocus-700))',
+    'color:hsl(var(--crocus-100))',
   ].join(';')
   text.textContent = 'El software más económico del mercado — desde $9.000/mes.'
 
@@ -58,8 +57,8 @@ function buildMidCta(cta: { button: string }): HTMLElement {
     'border-radius:0.4375rem',
     'font-size:0.8125rem',
     'font-weight:600',
-    'color:#ffffff',
-    'background-color:hsl(var(--crocus-600))',
+    'color:hsl(var(--crocus-700))',
+    'background-color:#ffffff',
     'border:none',
     'cursor:pointer',
     'white-space:nowrap',
@@ -68,8 +67,8 @@ function buildMidCta(cta: { button: string }): HTMLElement {
   ].join(';')
   btn.textContent = cta.button
 
-  btn.addEventListener('mouseenter', () => { btn.style.backgroundColor = 'hsl(var(--crocus-700))' })
-  btn.addEventListener('mouseleave', () => { btn.style.backgroundColor = 'hsl(var(--crocus-600))' })
+  btn.addEventListener('mouseenter', () => { btn.style.backgroundColor = 'hsl(var(--crocus-50))' })
+  btn.addEventListener('mouseleave', () => { btn.style.backgroundColor = '#ffffff' })
   btn.addEventListener('click', () => {
     leadModal.open(props.slug ? `blog:${props.slug}` : 'blog_cta')
   })
