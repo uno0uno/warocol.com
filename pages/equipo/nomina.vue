@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onUnmounted, watch } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
@@ -40,40 +40,43 @@ const clearFilters = () => {
   selectedMonth.value = null
 }
 
-// ── Raw data ──────────────────────────────────────────────────────────────
-const isLoading    = ref(true)
-const isRefreshing = ref(false)
-const fetchError   = ref(false)
-const hasData      = ref(false)
-
-const allEmployees = ref<any[]>([])
-
+// ── Employees (cached via useQuery) ───────────────────────────────────────
 type BenefitCache = {
   primas:       any[]
   cesantias:    any[]
   intCesantias: any[]
   vacaciones:   any[]
 }
+
+const { data: empData, asyncStatus: empAsyncStatus, refetch: refetchEmployees } = useQuery({
+  key: () => ['nomina', 'employees', currentTenant.value?.id],
+  query: () => $fetch<any>('/api/salaries/employees'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+const allEmployeesRaw = computed(() =>
+  (empData.value?.data ?? []).filter((e: any) => e.employment_type !== 'contractor')
+)
+
+const isLoading = computed(() => empData.value == null && empAsyncStatus.value === 'loading')
+const fetchError = ref(false)
+
+// ── Benefit cache (loaded after employees or on year change) ──────────────
+const isBenefitLoading = ref(false)
+const isRefreshing = computed(() =>
+  (empAsyncStatus.value === 'loading' && empData.value != null) || isBenefitLoading.value
+)
 const cache = ref<Record<string, BenefitCache>>({})
 
-async function loadData() {
+async function loadBenefits(employees: any[]) {
+  if (!employees.length) return
+  isBenefitLoading.value = true
   fetchError.value = false
-  if (hasData.value) {
-    isRefreshing.value = true
-  } else {
-    isLoading.value = true
-  }
-
+  const newCache: Record<string, BenefitCache> = {}
   try {
-    const empData = await $fetch<any>('/api/salaries/employees')
-    const eligible = (empData?.data || []).filter(
-      (e: any) => e.employment_type !== 'contractor'
-    )
-    allEmployees.value = eligible
-    const newCache: Record<string, BenefitCache> = {}
-
     await Promise.all(
-      eligible.map(async (emp: any) => {
+      employees.map(async (emp: any) => {
         const [primaRes, cesantiasRes, intCesantiasRes, vacacionesRes] = await Promise.all([
           $fetch<any>(`/api/salaries/employees/${emp.id}/prima`).catch(() => null),
           $fetch<any>(`/api/salaries/employees/${emp.id}/cesantias`).catch(() => null),
@@ -88,19 +91,20 @@ async function loadData() {
         }
       })
     )
-    cache.value   = newCache
-    hasData.value = true
+    cache.value = newCache
   } catch {
     fetchError.value = true
   } finally {
-    isLoading.value    = false
-    isRefreshing.value = false
+    isBenefitLoading.value = false
   }
 }
 
-onMounted(() => { if (currentTenant.value) loadData() })
-watch(() => currentTenant.value?.id, (id) => { if (id) loadData() })
-watch(selectedYear, loadData)
+watch(allEmployeesRaw, (employees) => { loadBenefits(employees) }, { immediate: true })
+watch(selectedYear, () => { loadBenefits(allEmployeesRaw.value) })
+
+async function loadData() {
+  await refetchEmployees()
+}
 
 // ── Benefit resolvers (with optional month filter) ────────────────────────
 function matchMonth(paymentDate: string | null): boolean {
@@ -140,7 +144,7 @@ function getVacacionesAmount(id: string): number | null {
 // ── Table data — enriched with resolved benefit amounts ───────────────────
 // Computed is re-evaluated reactively when selectedYear/Month/searchTerm change
 const tableData = computed(() => {
-  let list = allEmployees.value
+  let list = allEmployeesRaw.value
 
   // Search filter
   if (searchTerm.value) {
