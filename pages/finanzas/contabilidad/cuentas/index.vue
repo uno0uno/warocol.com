@@ -2,6 +2,10 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, startOfMonth } from 'date-fns'
+import { TZDate } from '@date-fns/tz'
+
+const TZ = 'America/Bogota'
+const nowCO = () => new TZDate(new Date(), TZ)
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
@@ -17,15 +21,15 @@ const formatCOP = (v: number) =>
 const showAll = ref(false)
 
 // ── Date range filter (default: current month) ─────────────────────────────
-const now = new Date()
+const now = nowCO()
 const dateRangeDates = ref<Date[] | null>([startOfMonth(now), now])
 
 const presetDates = [
-  { label: 'Hoy',             value: [new Date(), new Date()] },
-  { label: 'Esta semana',     value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
-  { label: 'Este mes',        value: [startOfMonth(new Date()), new Date()] },
-  { label: 'Último mes',      value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
-  { label: 'Últimos 90 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d })(), new Date()] },
+  { label: 'Hoy',             value: [nowCO(), nowCO()] },
+  { label: 'Esta semana',     value: [(() => { const d = nowCO(); d.setDate(d.getDate() - 7); return d })(), nowCO()] },
+  { label: 'Este mes',        value: [startOfMonth(nowCO()), nowCO()] },
+  { label: 'Último mes',      value: [(() => { const d = nowCO(); d.setDate(d.getDate() - 30); return d })(), nowCO()] },
+  { label: 'Últimos 90 días', value: [(() => { const d = nowCO(); d.setDate(d.getDate() - 90); return d })(), nowCO()] },
 ]
 
 const formatDateRange = (dates: Date[]) => {
@@ -39,7 +43,10 @@ const dateRange = computed(() => {
   if (!dateRangeDates.value || dateRangeDates.value.length < 2) return { from: null, to: null }
   const [from, to] = dateRangeDates.value
   if (!from || !to) return { from: null, to: null }
-  return { from: fnsFormat(from, 'yyyy-MM-dd'), to: fnsFormat(to, 'yyyy-MM-dd') }
+  return {
+    from: fnsFormat(new TZDate(from, TZ), 'yyyy-MM-dd'),
+    to:   fnsFormat(new TZDate(to,   TZ), 'yyyy-MM-dd'),
+  }
 })
 
 // ── Trial balance (period summary) ─────────────────────────────────────────
