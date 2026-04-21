@@ -237,6 +237,15 @@
           </div>
         </div>
 
+        <!-- Comprobante PILA / Aportes (solo empleados y jornaleros) -->
+        <div v-if="employee.employment_type && employee.employment_type !== 'contractor'" class="mt-8">
+          <h3 class="text-lg font-semibold text-text-primary mb-1">Comprobante PILA / Aportes</h3>
+          <p class="text-sm text-text-secondary mb-4">
+            Adjunta el comprobante de pago de seguridad social (salud, pensión, ARL) generado en PILA o Aportes en Línea para este período.
+          </p>
+          <PurchasesAttachmentUploader v-model="pilaFiles" />
+        </div>
+
         <!-- Comprobantes -->
         <div class="mt-8">
           <h3 class="text-lg font-semibold text-text-primary mb-4">Comprobantes</h3>
@@ -388,6 +397,7 @@ const netAmount = computed(() => {
 const isSubmitting = ref(false)
 const daysWorked = ref<number | null>(null)
 const contractorDays = ref<number | null>(null)
+const pilaFiles = ref<File[]>([])
 
 const contractorProportional = computed(() => {
   if (!contractorDays.value || !employee.value?.calculated_salary) return 0
@@ -510,21 +520,42 @@ const handleSubmit = async () => {
       body: payload
     })
 
-    // Upload attachments if present
-    if (form.attachments.length > 0 && (response as any).data?.id) {
+    const paymentId = (response as any).data?.id
+
+    // Upload generic attachments if present
+    if (form.attachments.length > 0 && paymentId) {
       try {
         const formData = new FormData()
         form.attachments.forEach((file) => {
           formData.append('files', file)
         })
 
-        await $fetch(`/api/salaries/payments/${(response as any).data.id}/attachments`, {
+        await $fetch(`/api/salaries/payments/${paymentId}/attachments`, {
           method: 'POST',
           body: formData
         })
       } catch (fileError) {
         console.error('Error uploading files:', fileError)
         toast.error('Pago registrado, pero hubo un error al subir los archivos')
+      }
+    }
+
+    // Upload PILA attachments if present (labeled separately)
+    if (pilaFiles.value.length > 0 && paymentId) {
+      try {
+        const pilaFormData = new FormData()
+        pilaFiles.value.forEach((file) => {
+          pilaFormData.append('files', file)
+        })
+        pilaFormData.append('label', 'pila')
+
+        await $fetch(`/api/salaries/payments/${paymentId}/attachments`, {
+          method: 'POST',
+          body: pilaFormData
+        })
+      } catch (fileError) {
+        console.error('Error uploading PILA files:', fileError)
+        toast.error('Pago registrado, pero hubo un error al subir el comprobante PILA')
       }
     }
 
