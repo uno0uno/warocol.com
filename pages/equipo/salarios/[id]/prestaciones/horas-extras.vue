@@ -414,7 +414,7 @@ const { data: employeeData } = useAsyncData(
   () => $fetch(`/api/salaries/employees/${employeeId}`),
   {
     server: false,
-    default: () => ({ data: null }),
+    default: () => null,
     transform: (response: any) => response?.data,
   }
 )

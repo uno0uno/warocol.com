@@ -423,7 +423,7 @@ const { data: employeeData } = useAsyncData(
   () => $fetch(`/api/salaries/employees/${employeeId}`),
   {
     server: false,
-    default: () => ({ data: null }),
+    default: () => null,
     transform: (response: any) => {
       const data = response?.data
       if (data?.calculated_salary && data?.employment_type !== 'contractor') {

@@ -92,7 +92,7 @@
                     :key="opt.value"
                     :value="opt.value"
                   >
-                    {{ opt.label }}{{ paidPeriods.includes(opt.value) ? ' — YA REGISTRADO' : '' }}
+                    {{ opt.label }}{{ paidPeriods.includes(`${form.year}-${opt.value}`) ? ' — YA REGISTRADO' : '' }}
                   </option>
                 </select>
                 <p v-if="isPaidPeriod" class="text-xs text-red-600 mt-1">
@@ -394,20 +394,12 @@ const paymentMethods = computed(() => {
   return items
 })
 
-// Period options: current year + previous year
-const periodOptions = computed(() => {
-  const now = new Date()
-  const year = now.getFullYear()
-  const prevYear = year - 1
-  return [
-    { value: `${year}-APR`, label: `${year} — Abril (30 Abr)` },
-    { value: `${year}-AUG`, label: `${year} — Agosto (31 Ago)` },
-    { value: `${year}-DEC`, label: `${year} — Diciembre (20 Dic)` },
-    { value: `${prevYear}-APR`, label: `${prevYear} — Abril (30 Abr)` },
-    { value: `${prevYear}-AUG`, label: `${prevYear} — Agosto (31 Ago)` },
-    { value: `${prevYear}-DEC`, label: `${prevYear} — Diciembre (20 Dic)` },
-  ]
-})
+// Period options
+const periodOptions = [
+  { value: 'APR', label: 'Abril (30 Abr)' },
+  { value: 'AUG', label: 'Agosto (31 Ago)' },
+  { value: 'DEC', label: 'Diciembre (20 Dic)' },
+]
 
 // Default period based on current month
 const defaultPeriodKey = (() => {
@@ -443,7 +435,7 @@ const { data: employeeData } = useAsyncData(
   () => $fetch(`/api/salaries/employees/${employeeId}`),
   {
     server: false,
-    default: () => ({ data: null }),
+    default: () => null,
     transform: (response: any) => response?.data,
   }
 )
@@ -472,11 +464,14 @@ const { data: historyData, pending: isLoadingHistory, refresh: refreshHistory } 
   }
 )
 
-const dotacionHistory = computed(() => (historyData.value as any)?.data || [])
+const dotacionHistory = computed(() => {
+  const dt = (historyData.value as any)?.data
+  return Array.isArray(dt) ? dt : []
+})
 
 // Set of period+year keys already registered (e.g. "APR-2026")
 const paidPeriods = computed<string[]>(() =>
-  dotacionHistory.value.map((p: any) => `${p.year}-${p.period}`)
+  dotacionHistory.value.map((p: any) => p ? `${p.year}-${p.period}` : '')
 )
 
 const isPaidPeriod = computed(() =>
