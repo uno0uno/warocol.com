@@ -83,7 +83,7 @@ definePageMeta({
   layout: false
 });
 
-useHead({ title: 'Verificando Acceso' })
+useHead({ title: 'Verificando Acceso', meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
 
 const route = useRoute()
 const toast = useToast()

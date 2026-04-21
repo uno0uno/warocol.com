@@ -13,7 +13,7 @@ definePageMeta({
   layout: false
 })
 
-useHead({ title: 'Iniciar Sesión' })
+useHead({ title: 'Iniciar Sesión', meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
 
 const checking = ref(true)
 

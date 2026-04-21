@@ -88,7 +88,7 @@ definePageMeta({
   layout: false
 });
 
-useHead({ title: 'Aceptar Invitación' })
+useHead({ title: 'Aceptar Invitación', meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
 
 const route = useRoute()
 

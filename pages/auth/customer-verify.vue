@@ -145,7 +145,7 @@ import OTPInput from '~/components/online/OTPInput.vue'
 import { useOtpAuthStore } from '~/stores/otp_auth'
 
 definePageMeta({ layout: false })
-useHead({ title: 'Verificar identidad — WARO' })
+useHead({ title: 'Verificar identidad — WARO', meta: [{ name: 'robots', content: 'noindex, nofollow' }] })
 
 const route = useRoute()
 const otpStore = useOtpAuthStore()
