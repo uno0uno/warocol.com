@@ -403,7 +403,7 @@ const form = reactive({
   cesantias_base: null as number | null,
   int_cesantias_amount: null as number | null,  // null = auto-calculate
   payment_method: 'transfer',
-  payment_date: new Date().toISOString().split('T')[0],
+  payment_date: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date()),
   notes: '',
 })
 

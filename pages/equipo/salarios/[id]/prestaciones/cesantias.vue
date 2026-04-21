@@ -434,7 +434,7 @@ const form = reactive({
   days_worked: 360,
   fondo_name: '',
   payment_method: 'transfer',
-  payment_date: new Date().toISOString().split('T')[0],
+  payment_date: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date()),
   notes: '',
 })
 
