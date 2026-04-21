@@ -67,7 +67,7 @@
 
         <!-- Dynamic cell slots -->
         <template v-for="column in columns" :key="`cell-${column.key}`" #[`cell-${column.key}`]="slotProps">
-          <slot :name="`cell-${column.key}`" v-bind="slotProps">
+          <slot :name="`cell-${column.key}`" v-bind="slotProps" :item="slotProps.row">
             {{ slotProps.value }}
           </slot>
         </template>
