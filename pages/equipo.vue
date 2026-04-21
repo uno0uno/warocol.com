@@ -16,6 +16,7 @@ const route = useRoute()
 
 const navigationItems = [
   { to: '/equipo/miembros', label: 'Miembros' },
-  { to: '/equipo/salarios', label: 'Salarios', matchPath: '/equipo/salarios' }
+  { to: '/equipo/salarios', label: 'Salarios', matchPath: '/equipo/salarios' },
+  { to: '/equipo/nomina', label: 'Nómina' }
 ]
 </script>
