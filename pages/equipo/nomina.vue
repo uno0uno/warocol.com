@@ -924,16 +924,6 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
     <!-- ── Slide-over: Bulk benefit registration ─────────────────────────── -->
     <Teleport to="body">
 
-    <!-- Backdrop -->
-    <Transition name="fade">
-      <div
-        v-if="selectedEmpIds.length > 0"
-        class="fixed inset-0 z-40 bg-black/40"
-        @click="clearSelection"
-        aria-hidden="true"
-      />
-    </Transition>
-
     <!-- Panel -->
     <Transition name="slide-right">
       <div
@@ -1172,10 +1162,6 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
 /* Bulk bar animation */
 .slide-down-enter-active, .slide-down-leave-active { transition: all 0.2s ease; }
 .slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-8px); }
-
-/* Slide-over backdrop */
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
 
 /* Slide-over panel */
 .slide-right-enter-active, .slide-right-leave-active { transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
