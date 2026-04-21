@@ -743,6 +743,55 @@ watch(employeeData, (data) => {
           </div>
         </div>
       </div>
+      <!-- Prestaciones Sociales (solo empleados y jornaleros) -->
+      <div v-if="employee.employment_type && employee.employment_type !== 'contractor'" class="bg-surface border-2 border-border rounded-lg mt-6">
+        <div class="p-4 sm:p-6">
+          <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">Prestaciones Sociales</h3>
+          <p class="text-sm text-text-secondary mb-4">Registro de pagos de beneficios legales: prima, cesantías, intereses y vacaciones.</p>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <NuxtLink
+              :to="`/equipo/salarios/${employeeId}/prestaciones/prima`"
+              class="flex flex-col items-center gap-2 p-4 bg-background border-2 border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-center"
+            >
+              <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+              </svg>
+              <span class="text-sm font-medium text-text-primary">Prima</span>
+              <span class="text-xs text-text-secondary">Jun · Dic</span>
+            </NuxtLink>
+            <NuxtLink
+              :to="`/equipo/salarios/${employeeId}/prestaciones/cesantias`"
+              class="flex flex-col items-center gap-2 p-4 bg-background border-2 border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-center"
+            >
+              <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              <span class="text-sm font-medium text-text-primary">Cesantías</span>
+              <span class="text-xs text-text-secondary">Ene · Feb</span>
+            </NuxtLink>
+            <NuxtLink
+              :to="`/equipo/salarios/${employeeId}/prestaciones/int-cesantias`"
+              class="flex flex-col items-center gap-2 p-4 bg-background border-2 border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-center"
+            >
+              <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span class="text-sm font-medium text-text-primary">Int. Cesantías</span>
+              <span class="text-xs text-text-secondary">12% anual</span>
+            </NuxtLink>
+            <NuxtLink
+              :to="`/equipo/salarios/${employeeId}/prestaciones/vacaciones`"
+              class="flex flex-col items-center gap-2 p-4 bg-background border-2 border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-center"
+            >
+              <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-sm font-medium text-text-primary">Vacaciones</span>
+              <span class="text-xs text-text-secondary">Compensación</span>
+            </NuxtLink>
+          </div>
+        </div>
+      </div>
     </template>
   </div>
 </template>
