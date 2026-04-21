@@ -753,7 +753,7 @@ watch(employeeData, (data) => {
         <div class="p-4 sm:p-6">
           <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">Prestaciones Sociales</h3>
           <p class="text-sm text-text-secondary mb-4">Registro de pagos de beneficios legales: prima, cesantías, intereses y vacaciones.</p>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <NuxtLink
               :to="`/equipo/salarios/${employeeId}/prestaciones/prima`"
               class="flex flex-col items-center gap-2 p-4 bg-background border-2 border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-center"
@@ -793,6 +793,16 @@ watch(employeeData, (data) => {
               </svg>
               <span class="text-sm font-medium text-text-primary">Vacaciones</span>
               <span class="text-xs text-text-secondary">Compensación</span>
+            </NuxtLink>
+            <NuxtLink
+              :to="`/equipo/salarios/${employeeId}/prestaciones/dotacion`"
+              class="flex flex-col items-center gap-2 p-4 bg-background border-2 border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-center"
+            >
+              <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+              <span class="text-sm font-medium text-text-primary">Dotación</span>
+              <span class="text-xs text-text-secondary">Abr · Ago · Dic</span>
             </NuxtLink>
           </div>
         </div>
