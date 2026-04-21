@@ -167,6 +167,65 @@
             </div>
           </div>
 
+          <!-- Seguridad Social y Parafiscales (empleados y jornaleros) -->
+          <div v-if="!isContractor" class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+            <div class="flex items-start justify-between gap-4 mb-3">
+              <div>
+                <p class="text-sm font-medium text-indigo-900">Seguridad Social y Parafiscales</p>
+                <p class="text-xs text-indigo-700 mt-0.5">Calcula deducciones empleado (EPS+AFP) y aportes empleador (EPS+AFP+ARL+Caja)</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input type="checkbox" v-model="form.ss_enabled" class="sr-only peer" />
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
+              </label>
+            </div>
+            <div v-if="form.ss_enabled" class="space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="text-xs text-indigo-800 block mb-1">ARL % (clase riesgo)</label>
+                  <input
+                    v-model.number="form.arl_rate_pct"
+                    type="number"
+                    min="0"
+                    max="7"
+                    step="0.001"
+                    class="input-base w-full px-3 py-1.5 text-sm"
+                    placeholder="0.522"
+                  />
+                </div>
+                <div>
+                  <label class="text-xs text-indigo-800 block mb-1">Caja Compensación %</label>
+                  <input
+                    v-model.number="form.caja_rate_pct"
+                    type="number"
+                    min="0"
+                    max="4"
+                    step="0.1"
+                    class="input-base w-full px-3 py-1.5 text-sm"
+                    placeholder="4"
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-sm">
+                <div class="bg-white rounded p-2 border border-indigo-200">
+                  <p class="text-xs text-indigo-700">Cargo empleado</p>
+                  <p class="font-semibold text-indigo-900">{{ formatCurrency(ssEmployeeTotal) }}</p>
+                  <p class="text-xs text-indigo-600 mt-0.5">EPS 4% + AFP 4%</p>
+                </div>
+                <div class="bg-white rounded p-2 border border-indigo-200">
+                  <p class="text-xs text-indigo-700">Cargo empleador</p>
+                  <p class="font-semibold text-indigo-900">{{ formatCurrency(ssEmployerTotal) }}</p>
+                  <p class="text-xs text-indigo-600 mt-0.5">EPS 8.5%+AFP 12%+ARL+Caja</p>
+                </div>
+                <div class="bg-indigo-100 rounded p-2 border border-indigo-300">
+                  <p class="text-xs text-indigo-800 font-medium">Neto al banco</p>
+                  <p class="font-bold text-indigo-900">{{ formatCurrency(ssNetPay) }}</p>
+                  <p class="text-xs text-indigo-600 mt-0.5">Bruto − cargo empleado</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Método de Pago -->
           <div>
             <label class="block text-sm font-medium text-text-primary mb-3">Metodo de Pago *</label>
@@ -380,7 +439,10 @@ const form = reactive({
   attachments: [],
   notes: '',
   withholding_enabled: false,
-  withholding_rate: 10
+  withholding_rate: 10,
+  ss_enabled: false,
+  arl_rate_pct: 0.522,  // ARL clase I default
+  caja_rate_pct: 4
 })
 
 // Computed withholding and net amounts (only for contractors)
@@ -392,6 +454,22 @@ const withholdingAmount = computed(() => {
 const netAmount = computed(() => {
   if (!form.payment_amount) return 0
   return form.payment_amount - withholdingAmount.value
+})
+
+// SS / parafiscales computeds (employees and daily workers)
+const ssEmployeeTotal = computed(() => {
+  if (!form.ss_enabled || !form.payment_amount) return 0
+  return Math.round(form.payment_amount * 0.08) // 4% EPS + 4% AFP
+})
+const ssEmployerTotal = computed(() => {
+  if (!form.ss_enabled || !form.payment_amount) return 0
+  const arl = (form.arl_rate_pct || 0) / 100
+  const caja = (form.caja_rate_pct || 0) / 100
+  return Math.round(form.payment_amount * (0.085 + 0.12 + arl + caja))
+})
+const ssNetPay = computed(() => {
+  if (!form.payment_amount) return 0
+  return form.payment_amount - ssEmployeeTotal.value
 })
 
 const isSubmitting = ref(false)
@@ -416,6 +494,14 @@ const { data: employeeData } = useAsyncData(
       // Pre-fill amount from salary config (not for daily workers — amount is days × rate)
       if (data?.calculated_salary && data?.employment_type !== 'daily') {
         form.payment_amount = data.calculated_salary
+      }
+      // Pre-fill ARL rate from employee config
+      if (data?.arl_rate) {
+        form.arl_rate_pct = Number(data.arl_rate) * 100
+      }
+      // Default ss_enabled to true for employees
+      if (data?.employment_type === 'employee') {
+        form.ss_enabled = true
       }
       return data
     }
@@ -513,6 +599,11 @@ const handleSubmit = async () => {
     if (isContractor.value && form.withholding_enabled && withholdingAmount.value > 0) {
       payload.withholding_rate = form.withholding_rate / 100
       payload.withholding_amount = withholdingAmount.value
+    }
+    if (!isContractor.value && form.ss_enabled) {
+      payload.ss_enabled = true
+      payload.arl_rate = (form.arl_rate_pct || 0) / 100
+      payload.caja_rate = (form.caja_rate_pct || 0) / 100
     }
 
     const response = await $fetch('/api/salaries/payments', {

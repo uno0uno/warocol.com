@@ -689,7 +689,12 @@ watch(employeeData, (data) => {
                 >
                   <td class="py-3 px-4 text-sm text-text-primary">{{ payment.period_month }}</td>
                   <td class="py-3 px-4 text-sm text-text-secondary">{{ formatDate(payment.payment_date) }}</td>
-                  <td class="py-3 px-4 text-sm text-primary text-right font-medium">{{ formatCurrency(payment.payment_amount) }}</td>
+                  <td class="py-3 px-4 text-sm text-right font-medium">
+                    <span class="text-primary">{{ formatCurrency(payment.net_pay ?? payment.payment_amount) }}</span>
+                    <span v-if="payment.net_pay && payment.net_pay !== payment.payment_amount" class="block text-xs text-text-tertiary">
+                      Bruto: {{ formatCurrency(payment.payment_amount) }}
+                    </span>
+                  </td>
                   <td class="py-3 px-4 text-sm text-text-secondary">{{ payment.payment_method }}</td>
                   <td class="py-3 px-4">
                     <span
