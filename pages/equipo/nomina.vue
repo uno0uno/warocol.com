@@ -313,8 +313,8 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
           <!-- Tipo de contrato -->
           <template #cell-employmentType="{ value }">
             <UiStatusBadge
-              :value="employmentTypeLabel[value] ?? value"
-              :variant="value === 'employee' ? 'info' : 'warning'"
+              :value="employmentTypeLabel[value] ?? 'Sin configurar'"
+              :variant="value === 'employee' ? 'info' : value === 'daily' ? 'warning' : 'secondary'"
               size="sm"
               format="text"
             />
