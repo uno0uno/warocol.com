@@ -214,49 +214,6 @@
                 </select>
               </div>
 
-              <!-- Station assignment (comandas only) -->
-              <template v-if="businessProfile?.comandas_enabled">
-                <div>
-                  <label for="station_id" class="block text-sm font-medium text-text-primary mb-2">
-                    Estación de preparación
-                  </label>
-                  <div class="flex items-center gap-2">
-                    <span
-                      v-if="form.station_id"
-                      class="inline-block w-3 h-3 rounded-full flex-shrink-0"
-                      :style="{ backgroundColor: getStationColor(form.station_id) }"
-                    />
-                    <select
-                      id="station_id"
-                      v-model="form.station_id"
-                      class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary bg-surface"
-                    >
-                      <option :value="null">{{ inheritLabel }}</option>
-                      <option v-for="st in activeStations" :key="st.id" :value="st.id">
-                        {{ st.name }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="md:col-span-2">
-                  <label for="kitchen_name" class="block text-sm font-medium text-text-primary mb-2">
-                    Nombre en cocina <span class="text-text-secondary font-normal">(opcional)</span>
-                  </label>
-                  <input
-                    id="kitchen_name"
-                    v-model="form.kitchen_name"
-                    type="text"
-                    maxlength="100"
-                    placeholder="Ej: Bandeja E."
-                    class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary"
-                  />
-                  <p class="text-xs text-text-secondary mt-1">
-                    Nombre corto que aparece en la pantalla de cocina. Si se deja vacío, se usa el nombre del producto.
-                  </p>
-                </div>
-              </template>
-
               <!-- Preparation Time -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
@@ -779,8 +736,6 @@ const form = ref({
     unit: string
   }>,
   tenant_id: currentTenant.value?.id || '',
-  station_id: null as string | null,
-  kitchen_name: '',
 })
 
 // Fetch categories
@@ -796,36 +751,6 @@ const { data: categoriesData } = useAsyncData(
 
 // Shared ingredients — kept for recipe-base cost calculation only (loads in background)
 const { availableIngredients } = useMenuIngredientsQuery()
-
-// Active stations for KDS assignment picker
-const { activeStations } = useActiveStationsQuery()
-
-// Category→station map (for inherit label in station dropdown)
-const { data: categoryStationsData } = useQuery({
-  key: () => ['tenant', 'category-stations', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/stations/categories'),
-  enabled: () => !!currentTenant.value && !!businessProfile.value?.comandas_enabled,
-  staleTime: 30_000,
-})
-const categoryStations = computed(() => (categoryStationsData.value as any)?.data ?? [])
-
-const selectedCategoryStation = computed(() => {
-  if (!form.value.category_id) return null
-  const mapping = categoryStations.value.find((m: any) => m.category_id === form.value.category_id)
-  if (!mapping?.station_id) return null
-  return activeStations.value.find((s: any) => s.id === mapping.station_id) ?? null
-})
-
-const inheritLabel = computed(() => {
-  const s = selectedCategoryStation.value
-  return s ? `Hereda de categoría: ${s.name}` : 'Sin comanda (heredado)'
-})
-
-function getStationColor(stationId: string | null): string {
-  if (!stationId) return '#ccc'
-  const st = activeStations.value.find((s: any) => s.id === stationId)
-  return st?.color ?? '#ccc'
-}
 
 // Cache populated when user selects an ingredient via UiIngredientSearchInput
 const ingredientCache = ref<Record<string, any>>({})
