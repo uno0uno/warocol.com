@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 
 // Self-contained: fetches active stations, persists ON/OFF state per shift to localStorage.
 // Only renders when there are stations to show.
