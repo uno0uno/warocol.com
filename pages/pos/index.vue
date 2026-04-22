@@ -265,6 +265,21 @@ const addToTab = async () => {
     })
     // Clear cart — items committed to tab
     await posStore.clearCart()
+    // Auto-fire to kitchen if comandas is enabled
+    if (comandasEnabled.value) {
+      try {
+        const result = await $fetch<{ fired_items_count: number; comandas: any[] }>(
+          `/api/tables/${posStore.activeTableSession.tableId}/fire`,
+          { method: 'POST' }
+        )
+        if (result.fired_items_count > 0) {
+          tabSuccess.value = `${result.fired_items_count} ${result.fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
+          setTimeout(() => { tabSuccess.value = null }, 3000)
+        }
+      } catch {
+        // Fire failure is non-critical — items are still on the tab
+      }
+    }
     // Refresh session + tab items
     await refreshTableSession()
   } catch (e: any) {
