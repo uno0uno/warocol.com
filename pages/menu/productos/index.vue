@@ -92,6 +92,13 @@
                 <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}</p>
               </div>
               <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+                <span
+                  v-if="businessProfile?.comandas_enabled && item.station"
+                  class="flex items-center gap-1 text-xs text-text-secondary"
+                >
+                  <span class="inline-block w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: item.station.color }" />
+                  {{ item.station.name }}
+                </span>
                 <UiStatusBadge
                   v-if="getMarginValue(item) !== null"
                   :value="getMarginValue(item)"
@@ -141,6 +148,14 @@
           </template>
 
           <!-- REMOVED: cell-controla_stock - ALL products now control inventory automatically -->
+
+          <template v-if="businessProfile?.comandas_enabled" #cell-station="{ item }">
+            <div v-if="item.station" class="flex items-center gap-1.5">
+              <span class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: item.station.color }" />
+              <span class="text-sm text-text-secondary">{{ item.station.name }}</span>
+            </div>
+            <span v-else class="text-sm text-text-tertiary">—</span>
+          </template>
 
           <template #cell-is_available="{ value }">
             <div class="flex justify-center">
@@ -590,6 +605,16 @@ const productosTableColumns = computed(() => {
       align: 'center'
     }
   )
+
+  if (businessProfile.value?.comandas_enabled) {
+    cols.splice(cols.length - 1, 0, {
+      key: 'station',
+      title: 'Cocina',
+      sortable: false,
+      format: 'text',
+      align: 'left'
+    })
+  }
 
   return cols
 })

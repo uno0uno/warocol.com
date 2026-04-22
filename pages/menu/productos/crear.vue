@@ -214,6 +214,23 @@
                 </select>
               </div>
 
+              <!-- Inherited kitchen station (read-only, comandas only) -->
+              <div v-if="businessProfile?.comandas_enabled">
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Cocina heredada
+                </label>
+                <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-secondary border border-border text-sm">
+                  <template v-if="inheritedStation">
+                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: inheritedStation.color ?? '#94a3b8' }" />
+                    <span class="font-semibold text-text-primary">{{ inheritedStation.name }}</span>
+                    <span class="text-text-tertiary text-xs ml-1">(vía categoría)</span>
+                  </template>
+                  <template v-else>
+                    <span class="text-text-tertiary">Sin comanda — asigna una estación a la categoría</span>
+                  </template>
+                </div>
+              </div>
+
               <!-- Preparation Time -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
@@ -751,6 +768,21 @@ const { data: categoriesData } = useAsyncData(
 
 // Shared ingredients — kept for recipe-base cost calculation only (loads in background)
 const { availableIngredients } = useMenuIngredientsQuery()
+
+// Read-only: which station the selected category maps to
+const { activeStations } = useActiveStationsQuery()
+const { data: categoryStationsData } = useAsyncData(
+  'category-stations',
+  () => $fetch<{ success: boolean; data: any[] }>('/api/api/stations/categories'),
+  { server: false, watch: [currentTenant] }
+)
+const categoryStations = computed(() => (categoryStationsData.value as any)?.data ?? [])
+const inheritedStation = computed(() => {
+  if (!form.value.category_id) return null
+  const mapping = categoryStations.value.find((m: any) => m.category_id === form.value.category_id)
+  if (!mapping?.station_id) return null
+  return activeStations.value.find((s: any) => s.id === mapping.station_id) ?? null
+})
 
 // Cache populated when user selects an ingredient via UiIngredientSearchInput
 const ingredientCache = ref<Record<string, any>>({})

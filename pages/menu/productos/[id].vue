@@ -57,6 +57,23 @@
                 </select>
               </div>
 
+              <!-- Inherited kitchen station (read-only, comandas only) -->
+              <div v-if="businessProfile?.comandas_enabled">
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Cocina heredada
+                </label>
+                <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-secondary border border-border text-sm">
+                  <template v-if="inheritedStation">
+                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: inheritedStation.color ?? '#94a3b8' }" />
+                    <span class="font-semibold text-text-primary">{{ inheritedStation.name }}</span>
+                    <span class="text-text-tertiary text-xs ml-1">(vía categoría)</span>
+                  </template>
+                  <template v-else>
+                    <span class="text-text-tertiary">Sin comanda — asigna una estación a la categoría</span>
+                  </template>
+                </div>
+              </div>
+
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
                   Tiempo de Preparación (min)
@@ -705,6 +722,9 @@ watch(productData, (data) => {
     }
   }
 }, { immediate: true })
+
+// Read-only: station inherited from the product's category (returned by backend)
+const inheritedStation = computed(() => productData.value?.data?.station ?? null)
 
 // Computed
 const calculatedCost = computed(() => {
