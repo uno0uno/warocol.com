@@ -50,11 +50,30 @@
           }"
           :order-number="idx + 1"
           :show-fulfillment-status="comandasEnabled"
+          :class="pendingRemoveItemId === item.orderItemId ? 'opacity-50 pointer-events-none' : ''"
           @increment="$emit('increment-tab-item', item.orderItemId)"
           @decrement="$emit('decrement-tab-item', item.orderItemId)"
           @remove="$emit('remove-tab-item', item.orderItemId)"
           @duplicate="() => {}"
         />
+
+        <!-- Inline confirmation when item is already in kitchen -->
+        <div
+          v-if="pendingRemoveItemId === item.orderItemId"
+          class="mt-1.5 flex items-center gap-2 px-3 py-2 rounded-xl border border-destructive/40 bg-destructive/5 text-xs"
+        >
+          <Icon name="lucide:chef-hat" class="w-3.5 h-3.5 text-destructive flex-shrink-0" aria-hidden="true" />
+          <span class="flex-1 text-text-primary font-medium">Ya está en cocina. ¿Cancelar?</span>
+          <button
+            class="px-2.5 py-1 rounded-lg bg-destructive text-white font-semibold hover:opacity-90 active:scale-95 transition-all"
+            @click="$emit('confirm-remove-tab-item')"
+          >Sí</button>
+          <button
+            class="px-2.5 py-1 rounded-lg border border-border text-text-secondary font-semibold hover:bg-surface-secondary transition-colors"
+            @click="$emit('cancel-remove-tab-item')"
+          >No</button>
+        </div>
+
         <!-- Loading overlay -->
         <div
           v-if="tabItemsLoading.has(item.orderItemId)"
@@ -247,6 +266,7 @@ interface Props {
   comandasEnabled?: boolean
   unfiredCount?: number
   isFiringToKitchen?: boolean
+  pendingRemoveItemId?: string | null
 }
 
 interface Emits {
@@ -264,9 +284,11 @@ interface Emits {
   (e: 'increment-tab-item', orderItemId: string): void
   (e: 'decrement-tab-item', orderItemId: string): void
   (e: 'fire-to-kitchen'): void
+  (e: 'confirm-remove-tab-item'): void
+  (e: 'cancel-remove-tab-item'): void
 }
 
-withDefaults(defineProps<Props>(), { mesaMode: false, isAddingToTab: false, isLoadingTabItems: false, isClearingTab: false, tabItems: () => [], tabTotal: 0, tabItemsLoading: () => new Set(), comandasEnabled: false, unfiredCount: 0, isFiringToKitchen: false })
+withDefaults(defineProps<Props>(), { mesaMode: false, isAddingToTab: false, isLoadingTabItems: false, isClearingTab: false, tabItems: () => [], tabTotal: 0, tabItemsLoading: () => new Set(), comandasEnabled: false, unfiredCount: 0, isFiringToKitchen: false, pendingRemoveItemId: null })
 defineEmits<Emits>()
 
 // Obtener isDeleting directamente del store

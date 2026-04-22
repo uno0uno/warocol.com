@@ -45,6 +45,11 @@ const cardClasses = computed(() => {
   return levels[alertLevel.value] || levels.normal
 })
 
+// ── Visible items — exclude cancelled (removed from POS after firing) ───────
+const visibleItems = computed(() =>
+  props.comanda.items.filter((item: any) => item.status !== 'cancelled')
+)
+
 // ── Actions ────────────────────────────────────────────────────────────────
 const updateStatus = async (newStatus: string) => {
   if (isUpdating.value) return
@@ -121,7 +126,7 @@ onUnmounted(() => {
     <!-- Items List -->
     <div class="flex-1 p-3 flex flex-col gap-3 min-h-0 overflow-y-auto">
       <CocinaItemRow
-        v-for="item in comanda.items"
+        v-for="item in visibleItems"
         :key="item.id"
         :item="item"
         :comanda-status="comanda.status"

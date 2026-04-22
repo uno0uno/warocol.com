@@ -201,8 +201,35 @@ const refreshTableSession = async () => {
 }
 
 const tabItemsLoading = ref<Set<string>>(new Set())
+// ID of a tab item pending confirmation before removal (already fired to kitchen)
+const pendingRemoveItemId = ref<string | null>(null)
 
-const removeTabItem = async (orderItemId: string) => {
+const removeTabItem = (orderItemId: string) => {
+  if (!posStore.activeTableSession) return
+  // If comandas is enabled and the item is already in the kitchen, ask for confirmation
+  if (comandasEnabled.value) {
+    const item = storeTabItems.value.find((i: TabItem) => i.orderItemId === orderItemId)
+    const isFired = item && item.fulfillmentStatus && item.fulfillmentStatus !== 'new'
+    if (isFired) {
+      pendingRemoveItemId.value = orderItemId
+      return
+    }
+  }
+  executeRemoveTabItem(orderItemId)
+}
+
+const confirmRemoveTabItem = () => {
+  if (!pendingRemoveItemId.value) return
+  const id = pendingRemoveItemId.value
+  pendingRemoveItemId.value = null
+  executeRemoveTabItem(id)
+}
+
+const cancelPendingRemove = () => {
+  pendingRemoveItemId.value = null
+}
+
+const executeRemoveTabItem = async (orderItemId: string) => {
   if (!posStore.activeTableSession) return
   tabItemsLoading.value = new Set([...tabItemsLoading.value, orderItemId])
   try {
@@ -965,6 +992,7 @@ onUnmounted(() => {
         :comandas-enabled="comandasEnabled"
         :unfired-count="unfiredCount"
         :is-firing-to-kitchen="isFiringToKitchen"
+        :pending-remove-item-id="pendingRemoveItemId"
         @edit-item="editCartItem"
         @remove-item="removeFromCart"
         @increment-item="incrementCartItem"
@@ -979,6 +1007,8 @@ onUnmounted(() => {
         @increment-tab-item="incrementTabItem"
         @decrement-tab-item="decrementTabItem"
         @fire-to-kitchen="fireToKitchen"
+        @confirm-remove-tab-item="confirmRemoveTabItem"
+        @cancel-remove-tab-item="cancelPendingRemove"
       />
       </div>
     </div>
