@@ -100,9 +100,16 @@ const isResolvingSettings = computed(() => {
 const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
 
 // ── Unfired items count — items in the tab not yet sent to the KDS ──────────
-const unfiredCount = computed(() =>
-  storeTabItems.value.filter((i: TabItem) => i.fulfillmentStatus === 'new').length
-)
+// In counter mode (no mesa session), all cart items are "new" — none have been fired yet.
+// In mesa mode, count tab items with fulfillmentStatus === 'new'.
+const unfiredCount = computed(() => {
+  if (!comandasEnabled.value) return 0
+  if (!posStore.activeTableSession) {
+    // Counter mode: every item in the cart is unfired
+    return posStore.cart.length
+  }
+  return storeTabItems.value.filter((i: TabItem) => i.fulfillmentStatus === 'new').length
+})
 
 // ── Mesa mode ──────────────────────────────────────────────────────────────
 // Bar sessions behave as normal POS — not tab/mesa mode

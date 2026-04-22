@@ -2,6 +2,7 @@
 import { ref, computed, inject, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { $fetch } from 'ofetch'
+import { useQuery } from '@pinia/colada'
 import { usePOSStore } from '~/stores/usePOSStore'
 import { PAYMENT_DEFAULTS, type PosPaymentGroup, type PosPaymentMethod } from '~/utils/paymentDefaults'
 
@@ -70,6 +71,18 @@ const activeAccordion = ref<'insights' | 'summary' | null>('summary')
 // Mesa mode detection — bar sessions behave as normal POS (cart-based, not tab-based)
 const isMesaMode = computed(() => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar)
 const { tabItems: storeTabItems } = storeToRefs(posStore)
+
+// ── KDS / Comandas feature flag — reuses same cache key as index.vue (no extra network request)
+const { data: settingsData } = useQuery({
+  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
+
+// Counter mode: not a real table session (no mesa, no bar)
+const isCounterMode = computed(() => !isMesaMode.value && !posStore.activeTableSession?.isBar)
 
 // Computed (must be before any watchers that reference cartTotal)
 const cartItems = computed(() => {
@@ -1327,6 +1340,21 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- Pre-checkout banner: items will fire to kitchen on checkout (counter mode only) -->
+        <div
+          v-if="comandasEnabled && isCounterMode && cartItems.length > 0"
+          role="status"
+          class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl"
+        >
+          <div class="flex-shrink-0 bg-amber-100 p-1.5 rounded-lg">
+            <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
+            </svg>
+          </div>
+          <p class="text-sm text-amber-800 font-medium">Los ítems serán enviados a cocina al cobrar</p>
+        </div>
+
         <!-- Action Buttons (always visible) -->
         <div class="flex flex-col gap-2">
           <button
@@ -1494,6 +1522,21 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <!-- Pre-checkout banner: items will fire to kitchen on checkout (counter mode only) -->
+      <div
+        v-if="comandasEnabled && isCounterMode && cartItems.length > 0"
+        role="status"
+        class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl"
+      >
+        <div class="flex-shrink-0 bg-amber-100 p-1.5 rounded-lg">
+          <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
+          </svg>
+        </div>
+        <p class="text-sm text-amber-800 font-medium">Los ítems serán enviados a cocina al cobrar</p>
+      </div>
+
       <!-- Action Buttons -->
       <div class="flex flex-col gap-2">
         <button
@@ -1601,6 +1644,19 @@ onUnmounted(() => {
                 {{ orderResult.payment_method_name
                     ? `${getPaymentMethodLabel(orderResult.payment_method)} · ${orderResult.payment_method_name}`
                     : getPaymentMethodLabel(orderResult.payment_method) }}
+              </span>
+            </div>
+            <!-- Kitchen fire confirmation — shown in counter mode when comandas are enabled -->
+            <div v-if="comandasEnabled && isCounterMode" class="flex items-center justify-between">
+              <span class="text-sm text-text-secondary flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
+                </svg>
+                Enviado a cocina
+              </span>
+              <span class="text-sm font-medium text-amber-700">
+                {{ cartItemsSnapshot.length }} {{ cartItemsSnapshot.length === 1 ? 'ítem' : 'ítems' }}
               </span>
             </div>
           </div>
