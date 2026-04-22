@@ -6,7 +6,31 @@
       <div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold mt-0.5">
         {{ orderNumber }}
       </div>
-      <p class="flex-1 text-sm font-semibold text-slate-800 leading-snug">{{ item.product.name }}</p>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <p class="text-sm font-semibold text-slate-800 leading-snug">{{ item.product.name }}</p>
+          
+          <!-- Status Badge -->
+          <span 
+            v-if="item.fulfillmentStatus && item.fulfillmentStatus !== 'new'"
+            class="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-tight rounded-md border"
+            :class="{
+              'bg-blue-50 text-blue-600 border-blue-200': item.fulfillmentStatus === 'sent',
+              'bg-amber-50 text-amber-600 border-amber-200 animate-pulse': item.fulfillmentStatus === 'preparing',
+              'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-sm': item.fulfillmentStatus === 'ready',
+              'bg-slate-50 text-slate-500 border-slate-200': item.fulfillmentStatus === 'delivered' || item.fulfillmentStatus === 'cancelled'
+            }"
+          >
+            {{ 
+              item.fulfillmentStatus === 'sent' ? 'Enviado' : 
+              item.fulfillmentStatus === 'preparing' ? 'En Cocina' :
+              item.fulfillmentStatus === 'ready' ? 'Listo' :
+              item.fulfillmentStatus === 'delivered' ? 'Entregado' : item.fulfillmentStatus
+            }}
+          </span>
+        </div>
+        <p v-if="item.sentAt" class="text-[9px] text-slate-400 mt-0.5">Fuego: {{ formatTime(item.sentAt) }}</p>
+      </div>
       <p class="text-sm font-bold text-violet-700 tabular-nums flex-shrink-0 ml-1">{{ formatCurrency(itemTotal) }}</p>
     </div>
 
@@ -99,6 +123,8 @@ interface CartItem {
   quantity: number
   notes?: string
   is_resale?: boolean
+  fulfillmentStatus?: 'new' | 'sent' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
+  sentAt?: string | null
 }
 
 interface Props {
@@ -129,5 +155,12 @@ const formatCurrency = (value: number) => {
     currency: 'COP',
     minimumFractionDigits: 0
   }).format(value)
+}
+
+const formatTime = (isoString: string) => {
+  return new Date(isoString).toLocaleTimeString('es-CO', {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 </script>

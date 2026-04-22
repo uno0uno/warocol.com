@@ -44,6 +44,8 @@ export interface TabItem {
     quantity: number
     unitPrice: number
     subtotal: number
+    fulfillmentStatus: 'new' | 'sent' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
+    sentAt: string | null
 }
 
 // Producto cacheado con modificadores completos

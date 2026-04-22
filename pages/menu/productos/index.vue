@@ -92,6 +92,16 @@
                 <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}</p>
               </div>
               <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+                <span
+                  v-if="businessProfile?.comandas_enabled && item.station"
+                  class="flex items-center gap-1.5 text-xs text-text-secondary"
+                >
+                  <span
+                    class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    :style="{ backgroundColor: item.station.color }"
+                  />
+                  {{ item.station.name }}
+                </span>
                 <UiStatusBadge
                   v-if="getMarginValue(item) !== null"
                   :value="getMarginValue(item)"
@@ -141,6 +151,17 @@
           </template>
 
           <!-- REMOVED: cell-controla_stock - ALL products now control inventory automatically -->
+
+          <template v-if="businessProfile?.comandas_enabled" #cell-station="{ item }">
+            <div v-if="item.station" class="flex items-center gap-1.5">
+              <span
+                class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+                :style="{ backgroundColor: item.station.color }"
+              />
+              <span class="text-sm text-text-secondary">{{ item.station.name }}</span>
+            </div>
+            <span v-else class="text-sm text-text-tertiary">— Sin comanda</span>
+          </template>
 
           <template #cell-is_available="{ value }">
             <div class="flex justify-center">
@@ -403,7 +424,7 @@ const visiblePages = computed(() => {
 })
 
 // Tenant reactivity
-const { currentTenant } = useTenantReactive()
+const { currentTenant, businessProfile } = useTenantReactive()
 
 // Fetch categories (static per tenant)
 const { data: categoriesData } = useQuery({
@@ -528,64 +549,81 @@ onUnmounted(() => {
 
 // Table columns configuration
 // REMOVED: controla_stock column - ALL products now control inventory automatically
-const productosTableColumns = [
-  {
-    key: 'name',
-    title: 'Producto',
-    sortable: true,
-    format: 'text',
-    align: 'left'
-  },
-  {
-    key: 'category_name',
-    title: 'Categoría',
-    sortable: true,
-    format: 'text',
-    align: 'left'
-  },
-  {
-    key: 'price',
-    title: 'Precio',
-    sortable: true,
-    format: 'currency',
-    align: 'right'
-  },
-  {
-    key: 'costo_calculado',
-    title: 'Costo',
-    sortable: true,
-    format: 'currency',
-    align: 'right'
-  },
-  {
-    key: 'margen',
-    title: 'Margen',
-    sortable: false,
-    format: 'text',
-    align: 'center'
-  },
-  {
-    key: 'is_available',
-    title: 'Estado',
-    sortable: true,
-    format: 'boolean',
-    align: 'center'
-  },
-  {
-    key: 'is_available_online',
-    title: 'Online',
-    sortable: true,
-    format: 'boolean',
-    align: 'center'
-  },
-  {
-    key: 'actions',
-    title: 'Acciones',
-    sortable: false,
-    format: 'text',
-    align: 'center'
+const productosTableColumns = computed(() => {
+  const cols: any[] = [
+    {
+      key: 'name',
+      title: 'Producto',
+      sortable: true,
+      format: 'text',
+      align: 'left'
+    },
+    {
+      key: 'category_name',
+      title: 'Categoría',
+      sortable: true,
+      format: 'text',
+      align: 'left'
+    },
+    {
+      key: 'price',
+      title: 'Precio',
+      sortable: true,
+      format: 'currency',
+      align: 'right'
+    },
+    {
+      key: 'costo_calculado',
+      title: 'Costo',
+      sortable: true,
+      format: 'currency',
+      align: 'right'
+    },
+    {
+      key: 'margen',
+      title: 'Margen',
+      sortable: false,
+      format: 'text',
+      align: 'center'
+    },
+  ]
+
+  if (businessProfile.value?.comandas_enabled) {
+    cols.push({
+      key: 'station',
+      title: 'Estación',
+      sortable: false,
+      format: 'text',
+      align: 'left'
+    })
   }
-]
+
+  cols.push(
+    {
+      key: 'is_available',
+      title: 'Estado',
+      sortable: true,
+      format: 'boolean',
+      align: 'center'
+    },
+    {
+      key: 'is_available_online',
+      title: 'Online',
+      sortable: true,
+      format: 'boolean',
+      align: 'center'
+    },
+    {
+      key: 'actions',
+      title: 'Acciones',
+      sortable: false,
+      format: 'text',
+      align: 'center'
+    }
+  )
+
+  return cols
+})
 
 // Format currency
 const formatCurrency = (value: number) => {

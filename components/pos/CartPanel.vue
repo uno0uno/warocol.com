@@ -45,6 +45,8 @@
             product: { id: item.orderItemId, name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
             modifiers: [],
             quantity: item.quantity,
+            fulfillmentStatus: item.fulfillmentStatus,
+            sentAt: item.sentAt
           }"
           :order-number="idx + 1"
           @increment="$emit('increment-tab-item', item.orderItemId)"

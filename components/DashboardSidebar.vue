@@ -230,6 +230,7 @@ import {
   ComputerDesktopIcon,
   CreditCardIcon,
   CubeIcon,
+  FireIcon,
   KeyIcon,
   MagnifyingGlassIcon,
   MapPinIcon,
@@ -242,7 +243,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'pos' | 'domicilios' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'mesas' | 'finanzas'
+  activePage?: 'dashboard' | 'ventas' | 'pos' | 'domicilios' | 'cocina' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'mesas' | 'finanzas'
 }
 interface Tenant { id: string; name: string; slug: string }
 
@@ -287,15 +288,18 @@ const primaryItems = [
   { to: '/pos',               page: 'pos',       label: 'POS',        icon: ComputerDesktopIcon },
   { to: '/ventas',            page: 'ventas',    label: 'Ventas',     icon: ShoppingCartIcon },
   { to: '/domicilios/pedidos',page: 'domicilios',label: 'Domicilios', icon: MapPinIcon },
+  { to: '/cocina',            page: 'cocina',    label: 'Cocina',     icon: FireIcon },
 ]
 
 const secondaryItems = [
-  { to: '/analitica',                        page: 'analytics',     label: 'Analítica',      icon: ChartBarIcon },
+  { to: '/analitica',                        page: 'analytics',     label: 'Analítica Ventas', icon: ChartBarIcon },
+  { to: '/analitica/cocina',                 page: 'analytics',     label: 'Analítica Cocina', icon: ChartBarIcon },
   { to: '/finanzas/arqueo',                  page: 'finanzas',      label: 'Finanzas',       icon: BanknotesIcon },
   { to: '/menu/productos',                   page: 'menu',          label: 'Menú',           icon: CubeIcon },
   { to: '/mesas',                            page: 'mesas',         label: 'Mesas',          icon: TableCellsIcon },
   { to: '/abastecimiento/compras-directas',  page: 'abastecimiento',label: 'Abastecimiento', icon: TruckIcon },
   { to: '/equipo/miembros',                  page: 'equipo',        label: 'Equipo',         icon: UserGroupIcon },
+  { to: '/gestion/cocina',                 page: 'configuracion', label: 'Config. Cocina', icon: FireIcon },
   { to: '/integraciones',                    page: 'integraciones', label: 'Integraciones',  icon: KeyIcon },
 ]
 

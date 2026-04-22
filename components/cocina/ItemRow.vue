@@ -1,0 +1,78 @@
+<script setup lang="ts">
+const props = defineProps<{
+  item: any
+  comandaStatus: string
+}>()
+
+const emit = defineEmits(['refresh'])
+const toast = useToast()
+const isUpdating = ref(false)
+
+const toggleStatus = async () => {
+  if (props.comandaStatus === 'ready' || isUpdating.value) return
+  isUpdating.value = true
+  const newStatus = props.item.status === 'ready' ? 'pending' : 'ready'
+  try {
+    await $fetch(`/api/api/comandas/items/${props.item.id}/status`, {
+      method: 'PATCH',
+      body: { new_status: newStatus }
+    })
+    emit('refresh')
+  } catch (error: any) {
+    toast.error('Error al actualizar ítem')
+  } finally {
+    isUpdating.value = false
+  }
+}
+</script>
+
+<template>
+  <div class="flex items-start gap-2 group">
+    <span class="text-sm font-black text-primary bg-primary/10 px-1.5 rounded min-w-[1.5rem] text-center leading-relaxed">
+      {{ Math.round(item.quantity) }}
+    </span>
+    
+    <div class="flex-1 min-w-0">
+      <p 
+        class="text-sm font-bold leading-tight uppercase transition-colors"
+        :class="item.status === 'ready' ? 'text-text-tertiary line-through' : 'text-text-primary'"
+      >
+        {{ item.kitchen_name }}
+      </p>
+      
+      <!-- Modifiers -->
+      <div v-if="item.modifiers_snapshot?.length" class="mt-1 flex flex-wrap gap-1">
+        <span 
+          v-for="(mod, idx) in item.modifiers_snapshot" 
+          :key="idx"
+          class="text-[10px] font-bold bg-titan-200 text-titan-800 px-1.5 py-0.5 rounded uppercase"
+        >
+          + {{ mod.name }}
+        </span>
+      </div>
+      
+      <!-- Item Notes -->
+      <p v-if="item.notes" class="text-[10px] italic text-destructive font-bold mt-1 uppercase">
+        ⚠️ {{ item.notes }}
+      </p>
+    </div>
+
+    <!-- Toggle Button -->
+    <button 
+      v-if="comandaStatus !== 'ready'"
+      @click="toggleStatus"
+      :disabled="isUpdating"
+      class="h-7 w-7 rounded-lg flex items-center justify-center transition-all border active:scale-90"
+      :class="item.status === 'ready' 
+        ? 'bg-success border-success text-white shadow-sm shadow-success/30' 
+        : 'bg-surface border-border text-titan-300 hover:border-primary hover:text-primary'"
+    >
+       <Icon v-if="isUpdating" name="lucide:loader-2" class="w-3.5 h-3.5 animate-spin" />
+       <Icon v-else name="lucide:check" class="w-3.5 h-3.5" />
+    </button>
+    
+    <div v-else-if="item.status === 'ready'" class="h-7 w-7 flex items-center justify-center text-success">
+       <Icon name="lucide:check-circle-2" class="w-4 h-4" />
+    </div>
+  </div>
+</template>

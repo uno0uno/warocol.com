@@ -57,6 +57,49 @@
                 </select>
               </div>
 
+              <!-- Station assignment (comandas only) -->
+              <template v-if="businessProfile?.comandas_enabled">
+                <div>
+                  <label for="station_id" class="block text-sm font-medium text-text-primary mb-2">
+                    Estación de preparación
+                  </label>
+                  <div class="flex items-center gap-2">
+                    <span
+                      v-if="form.station_id"
+                      class="inline-block w-3 h-3 rounded-full flex-shrink-0"
+                      :style="{ backgroundColor: getStationColor(form.station_id) }"
+                    />
+                    <select
+                      id="station_id"
+                      v-model="form.station_id"
+                      class="input-base w-full px-4 py-2"
+                    >
+                      <option :value="null">{{ inheritLabel }}</option>
+                      <option v-for="st in activeStations" :key="st.id" :value="st.id">
+                        {{ st.name }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label for="kitchen_name" class="block text-sm font-medium text-text-primary mb-2">
+                    Nombre en cocina <span class="text-text-secondary font-normal">(opcional)</span>
+                  </label>
+                  <input
+                    id="kitchen_name"
+                    v-model="form.kitchen_name"
+                    type="text"
+                    maxlength="100"
+                    placeholder="Ej: Bandeja E."
+                    class="input-base w-full px-4 py-2"
+                  />
+                  <p class="text-xs text-text-secondary mt-1">
+                    Nombre corto que aparece en pantalla de cocina. Si se deja vacío, se usa el nombre del producto.
+                  </p>
+                </div>
+              </template>
+
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
                   Tiempo de Preparación (min)
@@ -490,6 +533,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQuery } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
+import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
@@ -509,7 +553,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
-const { currentTenant } = useTenantReactive()
+const { currentTenant, businessProfile } = useTenantReactive()
 
 // Tax config — only show selector when tenant has taxes enabled
 const { data: taxConfigData } = useQuery({
@@ -664,7 +708,9 @@ const form = ref({
   allow_modifiers: true,
   tax_category: 'standard' as 'standard' | 'liquor' | 'exempt',
   recipe_base_ids: [] as string[],
-  ingredients: [] as Array<{ ingredient_id: string, ingredient_name: string, quantity: number, unit: string }>
+  ingredients: [] as Array<{ ingredient_id: string, ingredient_name: string, quantity: number, unit: string }>,
+  station_id: null as string | null,
+  kitchen_name: '',
 })
 
 const isSubmitting = ref(false)
@@ -700,10 +746,42 @@ watch(productData, (data) => {
           quantity: Number(ing.quantity),
           unit: ing.unit
         }
-      })
+      }),
+      station_id: product.station?.id ?? null,
+      kitchen_name: product.kitchen_name ?? '',
     }
   }
 }, { immediate: true })
+
+// Active stations for KDS assignment picker
+const { activeStations } = useActiveStationsQuery()
+
+// Category→station map (for inherit label in station dropdown)
+const { data: categoryStationsData } = useQuery({
+  key: () => ['tenant', 'category-stations', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/stations/categories'),
+  enabled: () => !!currentTenant.value && !!businessProfile.value?.comandas_enabled,
+  staleTime: 30_000,
+})
+const categoryStations = computed(() => (categoryStationsData.value as any)?.data ?? [])
+
+const selectedCategoryStation = computed(() => {
+  if (!form.value.category_id) return null
+  const mapping = categoryStations.value.find((m: any) => m.category_id === form.value.category_id)
+  if (!mapping?.station_id) return null
+  return activeStations.value.find((s: any) => s.id === mapping.station_id) ?? null
+})
+
+const inheritLabel = computed(() => {
+  const s = selectedCategoryStation.value
+  return s ? `Hereda de categoría: ${s.name}` : 'Sin comanda (heredado)'
+})
+
+function getStationColor(stationId: string | null): string {
+  if (!stationId) return '#ccc'
+  const st = activeStations.value.find((s: any) => s.id === stationId)
+  return st?.color ?? '#ccc'
+}
 
 // Computed
 const calculatedCost = computed(() => {
