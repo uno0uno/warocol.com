@@ -125,6 +125,7 @@ onUnmounted(() => {
         :key="item.id"
         :item="item"
         :comanda-status="comanda.status"
+        :comanda-id="comanda.id"
         @refresh="emit('refresh')"
       />
 

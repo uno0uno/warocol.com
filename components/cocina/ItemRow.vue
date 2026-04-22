@@ -2,6 +2,7 @@
 const props = defineProps<{
   item: any
   comandaStatus: string
+  comandaId: string | number
 }>()
 
 const emit = defineEmits(['refresh'])
@@ -13,7 +14,7 @@ const toggleStatus = async () => {
   isUpdating.value = true
   const newStatus = props.item.status === 'ready' ? 'pending' : 'ready'
   try {
-    await $fetch(`/api/api/comandas/items/${props.item.id}/status`, {
+    await $fetch(`/api/api/comandas/${props.comandaId}/items/${props.item.id}/status`, {
       method: 'PATCH',
       body: { new_status: newStatus }
     })

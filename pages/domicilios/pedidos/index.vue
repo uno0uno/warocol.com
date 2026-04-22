@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, watchEffect } from 'vue'
+import { useTenantReactive } from '@/composables/useTenantReactive'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
@@ -13,7 +14,15 @@ useHead({ title: 'Pedidos Online — WARO' })
 const { formatDateTime, formatCurrency } = useFormatters()
 
 // Tenant reactivity
-const { currentTenant } = useTenantReactive()
+const { currentTenant, businessProfile } = useTenantReactive()
+
+// Redirect to /comandas when feature is enabled
+const router = useRouter()
+watchEffect(() => {
+  if (businessProfile.value?.comandas_enabled === true) {
+    router.replace('/comandas')
+  }
+})
 
 // Sort state
 const sortField = ref('order_date')
