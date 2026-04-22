@@ -142,13 +142,13 @@ const handleEnterTable = async (ctx: { tableId: string; sessionId: string; table
       if (session.data.tab_items) {
         posStore.setTabItems(
           session.data.tab_items.map((i: any) => ({
-            orderItemId: i.order_item_id,
-            productName: i.product_name,
+            orderItemId: i.id,
+            productName: i.productName,
             quantity: i.quantity,
-            unitPrice: i.unit_price,
+            unitPrice: i.unitPrice,
             subtotal: i.subtotal,
-            fulfillmentStatus: i.fulfillment_status ?? 'new',
-            sentAt: i.sent_at ?? null,
+            fulfillmentStatus: i.fulfillmentStatus ?? 'new',
+            sentAt: i.sentAt ?? null,
           }))
         )
       }
@@ -185,13 +185,13 @@ const refreshTableSession = async () => {
     if (session?.data?.tab_items) {
       posStore.setTabItems(
         session.data.tab_items.map((i: any) => ({
-          orderItemId: i.order_item_id,
-          productName: i.product_name,
+          orderItemId: i.id,
+          productName: i.productName,
           quantity: i.quantity,
-          unitPrice: i.unit_price,
+          unitPrice: i.unitPrice,
           subtotal: i.subtotal,
-          fulfillmentStatus: i.fulfillment_status ?? 'new',
-          sentAt: i.sent_at ?? null,
+          fulfillmentStatus: i.fulfillmentStatus ?? 'new',
+          sentAt: i.sentAt ?? null,
         }))
       )
     }
@@ -601,13 +601,13 @@ const startFulfillmentPolling = () => {
       if (session?.data?.tab_items) {
         posStore.setTabItems(
           session.data.tab_items.map((i: any) => ({
-            orderItemId: i.order_item_id,
-            productName: i.product_name,
+            orderItemId: i.id,
+            productName: i.productName,
             quantity: i.quantity,
-            unitPrice: i.unit_price,
+            unitPrice: i.unitPrice,
             subtotal: i.subtotal,
-            fulfillmentStatus: i.fulfillment_status ?? 'new',
-            sentAt: i.sent_at ?? null,
+            fulfillmentStatus: i.fulfillmentStatus ?? 'new',
+            sentAt: i.sentAt ?? null,
           }))
         )
       }
