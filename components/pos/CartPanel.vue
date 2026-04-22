@@ -49,6 +49,7 @@
             sentAt: item.sentAt
           }"
           :order-number="idx + 1"
+          :show-fulfillment-status="comandasEnabled"
           @increment="$emit('increment-tab-item', item.orderItemId)"
           @decrement="$emit('decrement-tab-item', item.orderItemId)"
           @remove="$emit('remove-tab-item', item.orderItemId)"
@@ -185,6 +186,26 @@
           </button>
         </div>
 
+        <!-- Fire to kitchen button — shown when comandasEnabled && unfiredCount > 0 -->
+        <button
+          v-if="comandasEnabled && unfiredCount > 0"
+          type="button"
+          :disabled="isFiringToKitchen"
+          class="w-full min-h-[48px] rounded-xl bg-amber-500 text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-amber-600 active:scale-[0.98] transition-all focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          aria-label="Enviar ítems a cocina"
+          @click="$emit('fire-to-kitchen')"
+        >
+          <svg v-if="isFiringToKitchen" class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.387Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17.25v-.003a3.751 3.751 0 0 0 7.5.003v.003" />
+          </svg>
+          {{ isFiringToKitchen ? 'Enviando...' : `Enviar a cocina (${unfiredCount} ${unfiredCount === 1 ? 'ítem' : 'ítems'})` }}
+        </button>
+
         <!-- Primary: Add to tab — full width -->
         <button
           type="button"
@@ -228,6 +249,8 @@ interface TabItem {
   quantity: number
   unitPrice: number
   subtotal: number
+  fulfillmentStatus?: string
+  sentAt?: string | null
 }
 
 interface Props {
@@ -240,6 +263,9 @@ interface Props {
   tabItems?: TabItem[]
   tabTotal?: number
   tabItemsLoading?: Set<string>
+  comandasEnabled?: boolean
+  unfiredCount?: number
+  isFiringToKitchen?: boolean
 }
 
 interface Emits {
@@ -256,9 +282,10 @@ interface Emits {
   (e: 'remove-tab-item', orderItemId: string): void
   (e: 'increment-tab-item', orderItemId: string): void
   (e: 'decrement-tab-item', orderItemId: string): void
+  (e: 'fire-to-kitchen'): void
 }
 
-withDefaults(defineProps<Props>(), { mesaMode: false, isAddingToTab: false, isLoadingTabItems: false, isClearingTab: false, tabItems: () => [], tabTotal: 0, tabItemsLoading: () => new Set() })
+withDefaults(defineProps<Props>(), { mesaMode: false, isAddingToTab: false, isLoadingTabItems: false, isClearingTab: false, tabItems: () => [], tabTotal: 0, tabItemsLoading: () => new Set(), comandasEnabled: false, unfiredCount: 0, isFiringToKitchen: false })
 defineEmits<Emits>()
 
 // Obtener isDeleting directamente del store

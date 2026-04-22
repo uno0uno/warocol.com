@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, provide, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
+import { $fetch } from 'ofetch'
 import type { CachedProduct, TabItem } from '~/stores/usePOSStore'
 import { usePOSStore } from '~/stores/usePOSStore'
 
@@ -109,7 +110,9 @@ const isMesaMode = computed(() => !!posStore.activeTableSession && !posStore.act
 const isAddingToTab = ref(false)
 const isLoadingTabItems = ref(false)
 const isClearingTab = ref(false)
+const isFiringToKitchen = ref(false)
 const tabError = ref<string | null>(null)
+const tabSuccess = ref<string | null>(null)
 
 // Handle enter-table event from floor plan component
 const handleEnterTable = async (ctx: { tableId: string; sessionId: string; tableName: string; isBar?: boolean; gotoCheckout?: boolean }) => {
@@ -290,6 +293,39 @@ const cancelMesa = async () => {
   }
   posStore.clearAll()
   cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
+}
+
+// ── Fire to kitchen ─────────────────────────────────────────────────────────
+const fireToKitchen = async () => {
+  if (!posStore.activeTableSession || !comandasEnabled.value) return
+  isFiringToKitchen.value = true
+  tabError.value = null
+  tabSuccess.value = null
+  try {
+    const result = await $fetch<{ fired_items_count: number; comandas: any[] }>(
+      `/api/tables/${posStore.activeTableSession.tableId}/fire`,
+      { method: 'POST' }
+    )
+    if (result.fired_items_count > 0) {
+      // Optimistically update local store: new → sent
+      posStore.setTabItems(
+        storeTabItems.value.map((item: TabItem) =>
+          item.fulfillmentStatus === 'new'
+            ? { ...item, fulfillmentStatus: 'sent', sentAt: new Date().toISOString() }
+            : item
+        )
+      )
+      tabSuccess.value = `${result.fired_items_count} ${result.fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
+      setTimeout(() => { tabSuccess.value = null }, 3000)
+    } else {
+      tabError.value = 'No hay ítems con estación configurada'
+      setTimeout(() => { tabError.value = null }, 3000)
+    }
+  } catch (e: any) {
+    tabError.value = e?.data?.detail ?? 'Error al enviar a cocina'
+  } finally {
+    isFiringToKitchen.value = false
+  }
 }
 
 // ── Move table ─────────────────────────────────────────────────────────────
@@ -544,10 +580,61 @@ const processOrder = async () => {
   router.push('/pos/checkout')
 }
 
+// ── Fulfillment status polling ───────────────────────────────────────────────
+let fulfillmentPollInterval: ReturnType<typeof setInterval> | null = null
+
+const startFulfillmentPolling = () => {
+  if (fulfillmentPollInterval) return
+  fulfillmentPollInterval = setInterval(async () => {
+    if (!comandasEnabled.value || !posStore.activeTableSession) return
+    try {
+      const session = await $fetch<{ success: boolean; data: any }>(
+        `/api/tables/${posStore.activeTableSession.tableId}/current`
+      )
+      if (session?.data?.tab_items) {
+        posStore.setTabItems(
+          session.data.tab_items.map((i: any) => ({
+            orderItemId: i.order_item_id,
+            productName: i.product_name,
+            quantity: i.quantity,
+            unitPrice: i.unit_price,
+            subtotal: i.subtotal,
+            fulfillmentStatus: i.fulfillment_status ?? 'new',
+            sentAt: i.sent_at ?? null,
+          }))
+        )
+      }
+    } catch {
+      // Non-critical — polling fails silently
+    }
+  }, 10_000)
+}
+
+const stopFulfillmentPolling = () => {
+  if (fulfillmentPollInterval) {
+    clearInterval(fulfillmentPollInterval)
+    fulfillmentPollInterval = null
+  }
+}
+
+// Start/stop polling when comandas session becomes active/inactive
+watch(
+  () => comandasEnabled.value && !!posStore.activeTableSession,
+  (active) => {
+    if (active) startFulfillmentPolling()
+    else stopFulfillmentPolling()
+  }
+)
+
 // Provide cart data to layout
 onMounted(async () => {
   setRefreshHandler(refetch)
   provide('posCartItemsCount', cartItemsCount)
+
+  // Start polling if already in a comandas-enabled session on mount
+  if (comandasEnabled.value && posStore.activeTableSession) {
+    startFulfillmentPolling()
+  }
 
   // posNavigation flag: set when navigating to POS sub-pages (checkout, producto)
   // exitSession() was already called at setup time for fresh entries
@@ -569,6 +656,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   clearRefreshHandler(refetch)
+  stopFulfillmentPolling()
 })
 </script>
 
@@ -760,6 +848,10 @@ onUnmounted(() => {
         <p v-if="tabError" class="mt-2 text-xs text-destructive bg-destructive/10 rounded-lg px-3 py-1.5">
           {{ tabError }}
         </p>
+        <!-- Tab success (fire to kitchen) -->
+        <p v-if="tabSuccess" class="mt-2 text-xs text-emerald-700 bg-emerald-50 rounded-lg px-3 py-1.5 border border-emerald-200">
+          {{ tabSuccess }}
+        </p>
       </div>
 
       <!-- Customer Header (when customer is identified and no mesa mode) -->
@@ -848,6 +940,9 @@ onUnmounted(() => {
         :tab-items="storeTabItems"
         :tab-total="storeTabTotal"
         :tab-items-loading="tabItemsLoading"
+        :comandas-enabled="comandasEnabled"
+        :unfired-count="unfiredCount"
+        :is-firing-to-kitchen="isFiringToKitchen"
         @edit-item="editCartItem"
         @remove-item="removeFromCart"
         @increment-item="incrementCartItem"
@@ -861,6 +956,7 @@ onUnmounted(() => {
         @remove-tab-item="removeTabItem"
         @increment-tab-item="incrementTabItem"
         @decrement-tab-item="decrementTabItem"
+        @fire-to-kitchen="fireToKitchen"
       />
       </div>
     </div>
