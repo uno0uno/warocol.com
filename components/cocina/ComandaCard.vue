@@ -52,7 +52,7 @@ const updateStatus = async (newStatus: string) => {
   try {
     await $fetch(`/api/api/comandas/${props.comanda.id}/status`, {
       method: 'PATCH',
-      body: { new_status: newStatus }
+      body: { status: newStatus }
     })
     emit('refresh')
     if (newStatus === 'delivered') {

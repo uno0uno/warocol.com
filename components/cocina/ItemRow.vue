@@ -16,7 +16,7 @@ const toggleStatus = async () => {
   try {
     await $fetch(`/api/api/comandas/${props.comandaId}/items/${props.item.id}/status`, {
       method: 'PATCH',
-      body: { new_status: newStatus }
+      body: { status: newStatus }
     })
     emit('refresh')
   } catch (error: any) {
