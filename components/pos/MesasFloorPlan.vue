@@ -2,6 +2,10 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
 
+const props = defineProps<{
+  comandasEnabled?: boolean
+}>()
+
 const emit = defineEmits<{
   (e: 'enter-table', ctx: { tableId: string; sessionId: string; tableName: string; isBar?: boolean; gotoCheckout?: boolean }): void
   (e: 'no-tables'): void
@@ -318,12 +322,19 @@ onUnmounted(() => {
             <!-- Bottom strip: occupied → time + amount / reabrir → single action / libre → label -->
             <template v-if="table.status !== 'free'">
               <div class="flex items-center justify-around px-2 h-11 border-t" :class="stripClass(table.status)">
-                <!-- Cell 1: dot + time -->
+                <!-- Cell 1: dot + time + unfired indicator -->
                 <div class="flex items-center gap-1.5">
                   <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
                   <span class="text-xs font-semibold tabular-nums" :class="stripTextClass(table.status)">
                     {{ formatDuration(table.session.opened_at) }}
                   </span>
+                  <!-- Pulsing red dot when there are unfired items (KDS enabled) -->
+                  <template v-if="props.comandasEnabled && table.session?.unfired_count > 0">
+                    <span class="relative flex h-2 w-2 flex-shrink-0">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                    </span>
+                  </template>
                 </div>
                 <span class="w-px h-4" :class="stripDividerClass(table.status)" />
                 <!-- Cell 2: running total -->

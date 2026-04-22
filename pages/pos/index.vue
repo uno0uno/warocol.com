@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, provide, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
-import type { CachedProduct } from '~/stores/usePOSStore'
+import type { CachedProduct, TabItem } from '~/stores/usePOSStore'
 import { usePOSStore } from '~/stores/usePOSStore'
 
 definePageMeta({
@@ -95,6 +95,14 @@ const isResolvingSettings = computed(() => {
   return false
 })
 
+// ── KDS / Comandas feature flag ─────────────────────────────────────────────
+const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
+
+// ── Unfired items count — items in the tab not yet sent to the KDS ──────────
+const unfiredCount = computed(() =>
+  storeTabItems.value.filter((i: TabItem) => i.fulfillmentStatus === 'new').length
+)
+
 // ── Mesa mode ──────────────────────────────────────────────────────────────
 // Bar sessions behave as normal POS — not tab/mesa mode
 const isMesaMode = computed(() => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar)
@@ -129,6 +137,8 @@ const handleEnterTable = async (ctx: { tableId: string; sessionId: string; table
             quantity: i.quantity,
             unitPrice: i.unit_price,
             subtotal: i.subtotal,
+            fulfillmentStatus: i.fulfillment_status ?? 'new',
+            sentAt: i.sent_at ?? null,
           }))
         )
       }
@@ -571,6 +581,7 @@ onUnmounted(() => {
   <!-- Floor plan view -->
   <div v-else-if="showFloorPlan">
     <PosMesasFloorPlan
+      :comandas-enabled="comandasEnabled"
       @enter-table="handleEnterTable"
       @no-tables="noTablesConfigured = true"
       @move-table="handleMoveTable"
@@ -648,6 +659,16 @@ onUnmounted(() => {
             <span class="text-sm font-bold text-text-primary flex-shrink-0">{{ posStore.activeTableSession.tableName }}</span>
             <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
             <span class="text-xs text-text-secondary tabular-nums truncate">{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado · {{ formatDuration(posStore.activeTableSession.openedAt) }}</span>
+            <template v-if="comandasEnabled && unfiredCount > 0">
+              <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
+              <span class="flex items-center gap-1 text-xs font-semibold text-red-600 flex-shrink-0">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                </span>
+                {{ unfiredCount }} {{ unfiredCount === 1 ? 'ítem' : 'ítems' }} sin enviar
+              </span>
+            </template>
           </div>
           <!-- Action buttons: Cerrar · Descartar · Cambiar -->
           <div class="flex items-center gap-1.5 flex-shrink-0">
@@ -682,6 +703,11 @@ onUnmounted(() => {
               Cambiar
             </button>
           </div>
+        </div>
+
+        <!-- Station toggles — only when comandas enabled and mesa mode -->
+        <div v-if="comandasEnabled && isMesaMode" class="mt-3">
+          <PosStationToggles />
         </div>
 
         <!-- Confirm: close with running total -->
