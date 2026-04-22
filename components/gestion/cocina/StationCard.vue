@@ -55,7 +55,19 @@
         format="text"
         size="sm"
       />
-      <span class="text-[10px] text-text-tertiary font-mono">#{{ station.display_order }}</span>
+      <div class="flex items-center gap-2">
+        <NuxtLink
+          v-if="station.is_active"
+          :to="`/cocina/${station.id}`"
+          target="_blank"
+          class="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+          title="Abrir pantalla KDS"
+        >
+          <Icon name="lucide:monitor" class="w-3 h-3" />
+          Abrir KDS
+        </NuxtLink>
+        <span class="text-[10px] text-text-tertiary font-mono">#{{ station.display_order }}</span>
+      </div>
     </div>
   </div>
 </template>
