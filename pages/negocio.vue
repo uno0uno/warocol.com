@@ -619,7 +619,205 @@
         </div>
       </div>
 
+      <!-- ══════ COMANDAS Y COCINA — TOGGLES ══════ -->
+      <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <FireIcon class="w-5 h-5 text-primary flex-shrink-0" />
+          <h3 class="text-base sm:text-lg font-semibold text-text-primary">Comandas y Cocina</h3>
+        </div>
+
+        <div class="space-y-5">
+          <!-- Activar comandas -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between py-1">
+              <div>
+                <p class="text-sm font-medium text-text-primary">Activar comandas</p>
+                <p class="text-xs text-text-secondary mt-0.5">
+                  Al vender un producto se genera una comanda para cada estación de preparación configurada.
+                </p>
+              </div>
+              <label
+                class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4"
+                :class="{ 'opacity-50 pointer-events-none': isTogglingComandas }"
+              >
+                <input
+                  type="checkbox"
+                  class="sr-only peer"
+                  :checked="businessProfile?.comandas_enabled"
+                  @change="handleToggleComandas"
+                  :disabled="isTogglingComandas"
+                />
+                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              </label>
+            </div>
+            <!-- Inline disable-warning banner -->
+            <div v-if="showDisableComandasWarning" class="rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-start justify-between gap-3">
+              <p class="text-xs text-amber-800 leading-relaxed">
+                Las comandas activas no serán afectadas. Los nuevos pedidos no generarán comandas mientras esté desactivado.
+              </p>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <button @click="showDisableComandasWarning = false" class="text-xs text-amber-700 font-medium hover:underline">Cancelar</button>
+                <button
+                  @click="confirmDisableComandas"
+                  class="text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 px-3 py-1 rounded-lg transition-colors min-h-[32px]"
+                >
+                  Sí, desactivar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t border-border/40" />
+
+          <!-- Activar KDS (only when comandas ON) -->
+          <div v-if="businessProfile?.comandas_enabled" class="space-y-2">
+            <div class="flex items-center justify-between py-1">
+              <div>
+                <p class="text-sm font-medium text-text-primary">Activar pantallas KDS</p>
+                <p class="text-xs text-text-secondary mt-0.5">
+                  Habilita rutas <span class="font-mono text-[11px]">/cocina/[estacion]</span> para pantallas de cocina independientes.
+                </p>
+              </div>
+              <label
+                class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4"
+                :class="{ 'opacity-50 pointer-events-none': isTogglingKds }"
+              >
+                <input
+                  type="checkbox"
+                  class="sr-only peer"
+                  :checked="businessProfile?.kds_enabled"
+                  @change="handleToggleKds"
+                  :disabled="isTogglingKds"
+                />
+                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              </label>
+            </div>
+            <!-- KDS station URLs (when KDS enabled) -->
+            <div v-if="businessProfile?.kds_enabled" class="mt-2 space-y-1.5">
+              <div
+                v-for="st in stations.filter((s: any) => s.is_active)"
+                :key="st.id"
+                class="flex items-center justify-between rounded-lg bg-background border border-border px-3 py-2"
+              >
+                <span class="text-xs font-mono text-text-secondary truncate">warocol.com/cocina/{{ st.id }}</span>
+                <button
+                  @click="copyKdsUrl(st.id)"
+                  class="ml-2 p-1 rounded text-text-tertiary hover:text-primary hover:bg-primary/5 transition-colors flex-shrink-0"
+                  title="Copiar URL"
+                >
+                  <ClipboardIcon class="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════ ESTACIONES DE PREPARACIÓN (shown when comandas ON) ══════ -->
+      <div v-if="businessProfile?.comandas_enabled" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+        <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center gap-2">
+            <QueueListIcon class="w-5 h-5 text-primary flex-shrink-0" />
+            <h3 class="text-base sm:text-lg font-semibold text-text-primary">Estaciones de preparación</h3>
+          </div>
+          <button
+            @click="openCreateStation"
+            class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors min-h-[36px]"
+          >
+            <PlusIcon class="w-3.5 h-3.5" />
+            Nueva
+          </button>
+        </div>
+
+        <UiResponsiveDataView
+          :data="stations"
+          :columns="stationColumns"
+          empty-message="Sin estaciones configuradas"
+          empty-sub-message="Crea la primera estación para empezar."
+          item-key="id"
+          row-size="sm"
+        >
+          <template #card="{ item: st }">
+            <GestionCocinaStationCard
+              :station="st"
+              :is-toggling="togglingStationId === st.id"
+              @edit="openEditStation"
+              @toggle="handleToggleStation"
+            />
+          </template>
+          <template #cell-name="{ item: st }">
+            <div class="flex items-center gap-2">
+              <span class="inline-block w-3 h-3 rounded-full flex-shrink-0" :style="{ backgroundColor: st.color }" />
+              <div>
+                <p class="text-sm font-medium text-text-primary">{{ st.name }}</p>
+                <p v-if="st.kitchen_name" class="text-xs text-text-secondary">{{ st.kitchen_name }}</p>
+              </div>
+            </div>
+          </template>
+          <template #cell-status="{ item: st }">
+            <UiStatusBadge
+              :variant="st.is_active ? 'success' : 'secondary'"
+              :value="st.is_active ? 'Activa' : 'Inactiva'"
+              format="text"
+              size="sm"
+            />
+          </template>
+          <template #cell-thresholds="{ item: st }">
+            <span class="text-xs text-text-secondary">{{ st.alert_threshold_1_min }}m / {{ st.alert_threshold_2_min }}m</span>
+          </template>
+          <template #cell-actions="{ item: st }">
+            <div class="flex items-center gap-1">
+              <button
+                @click="openEditStation(st)"
+                class="p-1.5 rounded-lg text-text-secondary hover:text-primary hover:bg-primary/5 transition-colors"
+              >
+                <PencilSquareIcon class="w-4 h-4" />
+              </button>
+              <button
+                @click="handleToggleStation(st)"
+                :disabled="togglingStationId === st.id"
+                class="p-1.5 rounded-lg transition-colors disabled:opacity-50"
+                :class="st.is_active ? 'text-text-secondary hover:text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'"
+              >
+                <component :is="st.is_active ? PowerIcon : PlayIcon" class="w-4 h-4" />
+              </button>
+            </div>
+          </template>
+        </UiResponsiveDataView>
+      </div>
+
+      <!-- ══════ ROUTING DE CATEGORÍAS (shown when comandas ON) ══════ -->
+      <div v-if="businessProfile?.comandas_enabled" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+        <div class="flex items-center gap-2 mb-4">
+          <ArrowsRightLeftIcon class="w-5 h-5 text-primary flex-shrink-0" />
+          <h3 class="text-base sm:text-lg font-semibold text-text-primary">Routing de categorías</h3>
+        </div>
+        <p class="text-xs text-text-secondary mb-4">
+          Define a qué estación deben enviarse los productos de cada categoría. Sin estación asignada = no genera comanda.
+        </p>
+        <div class="space-y-2">
+          <GestionCocinaCategoryMappingRow
+            v-for="cat in mappedCategoriesForNegocio"
+            :key="cat.id"
+            :category="cat"
+            :stations="stations"
+            :loading="isAssigningCategoryId === cat.id"
+            @assign="(stId) => handleAssignCategoryInNegocio(cat.id, stId)"
+          />
+        </div>
+      </div>
+
     </div>
+
+    <!-- Station Form Modal -->
+    <GestionCocinaStationFormModal
+      v-if="stationModalOpen"
+      v-model="stationModalOpen"
+      :initial-data="editingStation"
+      :loading="isSavingStation"
+      @close="stationModalOpen = false"
+      @submit="handleSaveStation"
+    />
 
     <!-- Image Upload Modal -->
     <NegocioImageUploadModal
@@ -646,6 +844,13 @@ import {
   CheckIcon,
   ArrowUpTrayIcon,
   ReceiptPercentIcon,
+  FireIcon,
+  QueueListIcon,
+  PlusIcon,
+  PowerIcon,
+  PlayIcon,
+  ClipboardIcon,
+  ArrowsRightLeftIcon,
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({ layout: 'dashboard' })
@@ -691,6 +896,171 @@ watch(taxConfig, (cfg) => {
   taxForm.iva_included_in_price = cfg.iva_included_in_price
   taxForm.liquor_tax_applicable = cfg.liquor_tax_applicable
 }, { immediate: true })
+
+// ─── Stations & categories (Comandas section) ───
+const { data: stationsData, refetch: refetchStations } = useQuery({
+  key: () => ['tenant', 'stations', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/stations'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+const stations = computed(() => stationsData.value?.data ?? [])
+
+const { data: categoryStationsData, refetch: refetchCategoryStations } = useQuery({
+  key: () => ['tenant', 'category-stations', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/stations/categories'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+const { data: categoriesData } = useQuery({
+  key: () => ['tenant', 'menu-categories', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any[] }>('/api/menu/categories'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 60_000,
+})
+
+const mappedCategoriesForNegocio = computed(() => {
+  const cats = categoriesData.value?.data ?? []
+  const maps = categoryStationsData.value?.data ?? []
+  return cats.map((cat: any) => {
+    const m = maps.find((x: any) => x.category_id === cat.id)
+    return { ...cat, station_id: m?.station_id ?? null }
+  })
+})
+
+// ─── Comandas / KDS toggles ───
+const isTogglingComandas = ref(false)
+const isTogglingKds = ref(false)
+const showDisableComandasWarning = ref(false)
+
+const handleToggleComandas = async (event: Event) => {
+  const newState = (event.target as HTMLInputElement).checked
+  if (!newState) {
+    // intercept disable — show warning instead of toggling immediately
+    ;(event.target as HTMLInputElement).checked = true // revert visual
+    showDisableComandasWarning.value = true
+    return
+  }
+  if (isTogglingComandas.value) return
+  isTogglingComandas.value = true
+  try {
+    await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: { comandas_enabled: true } })
+    await refreshProfile()
+    toast.success('Módulo de comandas activado', { title: 'Activado' })
+  } catch (error: any) {
+    toast.error(error.data?.detail || 'Error al activar comandas', { title: 'Error' })
+  } finally {
+    isTogglingComandas.value = false
+  }
+}
+
+const confirmDisableComandas = async () => {
+  showDisableComandasWarning.value = false
+  if (isTogglingComandas.value) return
+  isTogglingComandas.value = true
+  try {
+    await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: { comandas_enabled: false } })
+    await refreshProfile()
+    toast.success('Módulo de comandas desactivado', { title: 'Desactivado' })
+  } catch (error: any) {
+    toast.error(error.data?.detail || 'Error al desactivar comandas', { title: 'Error' })
+  } finally {
+    isTogglingComandas.value = false
+  }
+}
+
+const handleToggleKds = async (event: Event) => {
+  if (isTogglingKds.value) return
+  const newState = (event.target as HTMLInputElement).checked
+  isTogglingKds.value = true
+  try {
+    await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: { kds_enabled: newState } })
+    await refreshProfile()
+    toast.success(
+      newState ? 'Pantallas KDS activadas' : 'Pantallas KDS desactivadas',
+      { title: newState ? 'Activado' : 'Desactivado' }
+    )
+  } catch (error: any) {
+    toast.error(error.data?.detail || 'Error al cambiar estado KDS', { title: 'Error' })
+  } finally {
+    isTogglingKds.value = false
+  }
+}
+
+const copyKdsUrl = (stationId: string) => {
+  navigator.clipboard.writeText(`https://warocol.com/cocina/${stationId}`)
+  toast.success('URL copiada al portapapeles')
+}
+
+// ─── Station CRUD (from negocio.vue comandas section) ───
+const stationColumns = [
+  { key: 'name', title: 'Estación', sortable: false },
+  { key: 'status', title: 'Estado', sortable: false },
+  { key: 'thresholds', title: 'Alertas', sortable: false },
+  { key: 'actions', title: '', sortable: false },
+]
+const togglingStationId = ref<string | null>(null)
+const stationModalOpen = ref(false)
+const editingStation = ref<any>(null)
+const isSavingStation = ref(false)
+const isAssigningCategoryId = ref<string | null>(null)
+
+const openCreateStation = () => { editingStation.value = null; stationModalOpen.value = true }
+const openEditStation = (st: any) => { editingStation.value = st; stationModalOpen.value = true }
+
+const handleSaveStation = async (formData: any) => {
+  isSavingStation.value = true
+  try {
+    if (editingStation.value) {
+      await $fetch(`/api/api/stations/${editingStation.value.id}`, { method: 'PATCH', body: formData })
+      toast.success('Estación actualizada', { title: 'Guardado' })
+    } else {
+      await $fetch('/api/api/stations', { method: 'POST', body: formData })
+      toast.success('Estación creada', { title: 'Creado' })
+    }
+    stationModalOpen.value = false
+    await refetchStations()
+  } catch {
+    toast.error('Error al guardar la estación', { title: 'Error' })
+  } finally {
+    isSavingStation.value = false
+  }
+}
+
+const handleToggleStation = async (station: any) => {
+  if (togglingStationId.value === station.id) return
+  togglingStationId.value = station.id
+  try {
+    await $fetch(`/api/api/stations/${station.id}/toggle`, {
+      method: 'PATCH',
+      body: { is_active: !station.is_active },
+    })
+    toast.success(station.is_active ? 'Estación desactivada' : 'Estación activada')
+    await refetchStations()
+  } catch {
+    toast.error('Error al cambiar estado de la estación', { title: 'Error' })
+  } finally {
+    togglingStationId.value = null
+  }
+}
+
+const handleAssignCategoryInNegocio = async (categoryId: string, stationId: string | null) => {
+  isAssigningCategoryId.value = categoryId
+  try {
+    await $fetch(`/api/api/stations/categories/${categoryId}`, {
+      method: 'POST',
+      body: { station_id: stationId },
+    })
+    toast.success('Asignación actualizada')
+    await refetchCategoryStations()
+  } catch (e: any) {
+    const detail = e.data?.detail || e.message
+    toast.error(`Error al asignar categoría: ${detail}`, { title: 'Error' })
+  } finally {
+    isAssigningCategoryId.value = null
+  }
+}
 
 // INC and IVA are mutually exclusive
 watch(() => taxForm.inc_applicable, (val) => { if (val) taxForm.iva_applicable = false })
