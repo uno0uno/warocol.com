@@ -295,9 +295,6 @@ const primaryItems = computed(() => {
     { to: '/domicilios/pedidos',page: 'domicilios',label: 'Domicilios', icon: MapPinIcon },
     { to: '/cocina',            page: 'cocina',    label: 'Cocina',     icon: FireIcon },
   ]
-  if (businessProfile.value?.comandas_enabled === true) {
-    items.push({ to: '/comandas', page: 'comandas', label: 'Comandas', icon: QueueListIcon })
-  }
   return items
 })
 
