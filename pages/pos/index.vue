@@ -185,13 +185,13 @@ const refreshTableSession = async () => {
     if (session?.data?.tab_items) {
       posStore.setTabItems(
         session.data.tab_items.map((i: any) => ({
-          orderItemId: i.id,
-          productName: i.productName,
+          orderItemId: i.order_item_id,
+          productName: i.product_name,
           quantity: i.quantity,
-          unitPrice: i.unitPrice,
+          unitPrice: i.unit_price,
           subtotal: i.subtotal,
-          fulfillmentStatus: i.fulfillmentStatus,
-          sentAt: i.sentAt
+          fulfillmentStatus: i.fulfillment_status ?? 'new',
+          sentAt: i.sent_at ?? null,
         }))
       )
     }
