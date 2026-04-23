@@ -166,8 +166,10 @@ const handleEnterTable = async (ctx: { tableId: string; sessionId: string; table
 }
 
 // Refresh session running total + tab items from the backend
+const isRefreshingSession = ref(false)
 const refreshTableSession = async () => {
   if (!posStore.activeTableSession) return
+  isRefreshingSession.value = true
   try {
     const session = await $fetch<{ success: boolean; data: any }>(
       `/api/tables/${posStore.activeTableSession.tableId}/current`
@@ -197,6 +199,8 @@ const refreshTableSession = async () => {
     }
   } catch {
     // Non-critical — banner will just show stale data
+  } finally {
+    isRefreshingSession.value = false
   }
 }
 
@@ -499,6 +503,7 @@ const loadingProducts = computed(() => productsStatus.value === 'pending')
 const isRefreshing = computed(() => productsAsyncStatus.value === 'loading' && productsData.value != null)
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 registerProgressiveLoading(isRefreshing)
+registerProgressiveLoading(isRefreshingSession)
 
 // Clear POS state when tenant changes
 watch(() => currentTenant.value?.id, () => { posStore.clearAll() })
