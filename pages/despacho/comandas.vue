@@ -85,32 +85,22 @@ const getComandaStatusVariant = (status: string): string => {
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Empty state -->
-    <div
-      v-else-if="!comandas.length"
-      class="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-surface/50 border border-border rounded-2xl"
-    >
-      <div class="w-16 h-16 bg-titan-100 rounded-full flex items-center justify-center mb-4 text-titan-500">
-        <Icon name="lucide:check-circle-2" size="32" />
-      </div>
-      <h3 class="text-lg font-bold text-text-primary">Todo al día</h3>
-      <p class="text-sm text-text-secondary mt-1">No hay comandas activas en este momento.</p>
-    </div>
-
-    <!-- Comanda table -->
-    <HealthSemaphore v-else :is-unlocked="true" title="# Comanda">
-      <template #header-actions>
-        <span class="text-xs font-bold text-text-secondary bg-surface-secondary px-2 py-0.5 rounded-full">
-          {{ comandas.length }} activa{{ comandas.length !== 1 ? 's' : '' }}
-        </span>
-      </template>
-    <UiResponsiveDataView
-      row-size="sm"
-      :columns="columns"
-      :data="comandas"
-      empty-message="No hay comandas."
-      variant="default"
-    >
+    <!-- Main content -->
+    <div v-else>
+      <HealthSemaphore :is-unlocked="true" title="# Comanda">
+        <template #header-actions>
+          <span class="text-xs font-bold text-text-secondary bg-surface-secondary px-2 py-0.5 rounded-full">
+            {{ comandas.length }} activa{{ comandas.length !== 1 ? 's' : '' }}
+          </span>
+        </template>
+        <UiResponsiveDataView
+          row-size="sm"
+          :columns="columns"
+          :data="comandas"
+          empty-message="No hay comandas activas."
+          empty-sub-message="Todo al día por ahora."
+          variant="default"
+        >
       <!-- Mobile card -->
       <template #card="{ item }">
         <div
@@ -174,7 +164,8 @@ const getComandaStatusVariant = (status: string): string => {
           :class="row.alert_level >= 2 ? 'text-destructive' : row.alert_level >= 1 ? 'text-warning' : 'text-text-secondary'"
         >{{ formatElapsed(value) }}</span>
       </template>
-    </UiResponsiveDataView>
-    </HealthSemaphore>
+        </UiResponsiveDataView>
+      </HealthSemaphore>
+    </div>
   </div>
 </template>
