@@ -27,12 +27,12 @@ const COMANDA_STATUS_LABELS: Record<string, string> = {
 }
 
 const columns: Column[] = [
-  { key: 'comanda_number',     title: '# Comanda', sortable: false },
-  { key: 'source_type',        title: 'Origen',  sortable: false },
-  { key: 'table_display_name', title: 'Destino', sortable: false },
-  { key: 'status',             title: 'Estado',  sortable: false },
-  { key: 'items',              title: 'Items',   sortable: false },
-  { key: 'elapsed_seconds',    title: 'Tiempo',  sortable: false },
+  { key: 'comanda_number',     title: '# Comanda', sortable: false, align: 'left' },
+  { key: 'source_type',        title: 'Origen',    sortable: false, align: 'left' },
+  { key: 'table_display_name', title: 'Destino',   sortable: false, align: 'left' },
+  { key: 'status',             title: 'Estado',    sortable: false, align: 'left' },
+  { key: 'items',              title: 'Items',     sortable: false, align: 'left' },
+  { key: 'elapsed_seconds',    title: 'Tiempo',    sortable: false, align: 'left' },
 ]
 
 const {
