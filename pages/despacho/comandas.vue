@@ -210,10 +210,7 @@ const getComandaStatusVariant = (status: string): string => {
                 : 'bg-primary text-primary-foreground hover:bg-primary/90'"
               @click="executeBulkUpdate(status)"
             >
-              <svg v-if="isBulkUpdating" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
+              <UiLoadingDots v-if="isBulkUpdating" size="8px" color="currentColor" />
               {{ TRANSITION_LABELS[status] ?? status }}
             </button>
           </template>
