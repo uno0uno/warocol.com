@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ClipboardList, X, MessageSquare, ChevronRight } from 'lucide-vue-next'
+
 const props = defineProps<{
   modelValue: boolean
   comanda: any | null
@@ -108,7 +110,7 @@ const activeItems = computed(() =>
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0 flex-1">
               <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                <Icon name="lucide:clipboard-list" size="20" aria-hidden="true" />
+                <ClipboardList :size="20" aria-hidden="true" />
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">
@@ -126,7 +128,7 @@ const activeItems = computed(() =>
               class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
               @click="close"
             >
-              <Icon name="lucide:x" size="20" aria-hidden="true" />
+              <X :size="20" aria-hidden="true" />
             </button>
           </div>
 
@@ -183,7 +185,7 @@ const activeItems = computed(() =>
 
                   <!-- Notes -->
                   <p v-if="item.notes" class="mt-1.5 text-xs text-amber-600 font-medium flex items-center gap-1">
-                    <Icon name="lucide:message-square" size="12" aria-hidden="true" />
+                    <MessageSquare :size="12" aria-hidden="true" />
                     {{ item.notes }}
                   </p>
                 </div>

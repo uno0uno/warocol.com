@@ -146,7 +146,7 @@ const getComandaStatusVariant = (status: string): string => {
           aria-label="Ver detalle"
           @click.stop="openPanel(row)"
         >
-          <Icon name="lucide:eye" size="16" />
+          <Icon name="heroicons:eye" size="16" />
         </button>
       </template>
 
@@ -182,13 +182,13 @@ const getComandaStatusVariant = (status: string): string => {
               </span>
             </div>
           </div>
-          <Icon name="lucide:chevron-right" size="16" class="text-text-tertiary flex-shrink-0 mt-1" />
+          <Icon name="heroicons:chevron-right" size="16" class="text-text-tertiary flex-shrink-0 mt-1" />
         </div>
       </template>
         </UiResponsiveDataView>
       </HealthSemaphore>
     </div>
-  </div>
 
-  <DespachoComandaDetailPanel v-model="panelOpen" :comanda="selectedComanda" />
+    <DespachoComandaDetailPanel v-model="panelOpen" :comanda="selectedComanda" />
+  </div>
 </template>
