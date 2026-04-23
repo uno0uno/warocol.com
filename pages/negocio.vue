@@ -1126,19 +1126,27 @@ const handleToggleStation = async (station: any) => {
     }
     return
   }
-  // Deactivating — fetch info and show confirmation modal
-  isLoadingDeactivateInfo.value = true
-  deactivateModalStation.value = station
-  deactivateInfo.value = null
-  deactivateModalOpen.value = true
+  // Deactivating — fetch info first
+  togglingStationId.value = station.id
   try {
     const res = await $fetch<{ success: boolean; data: any }>(`/api/api/stations/${station.id}/deactivate-info`)
-    deactivateInfo.value = res.data
-  } catch {
-    toast.error('Error al obtener información de la estación', { title: 'Error' })
-    deactivateModalOpen.value = false
+    const info = res.data
+    // Only open modal if there's something to show
+    if (info.active_comandas_count > 0 || info.affected_categories.length > 0) {
+      deactivateModalStation.value = station
+      deactivateInfo.value = info
+      deactivateModalOpen.value = true
+      togglingStationId.value = null
+      return
+    }
+    // Nothing to warn about — deactivate directly
+    await $fetch(`/api/api/stations/${station.id}/toggle`, { method: 'PATCH', body: { is_active: false } })
+    toast.success('Estación desactivada')
+    await refetchStations()
+  } catch (e: any) {
+    toast.error(e.data?.detail || 'Error al desactivar la estación', { title: 'Error' })
   } finally {
-    isLoadingDeactivateInfo.value = false
+    togglingStationId.value = null
   }
 }
 
