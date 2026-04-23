@@ -230,15 +230,16 @@ const activeItems = computed(() => props.comanda?.items ?? [])
                 </span>
               </div>
 
-              <!-- Modifiers -->
-              <div v-if="item.modifiers_snapshot?.length && item.status !== 'cancelled'" class="flex flex-wrap gap-1.5 pl-1">
-                <span
+              <!-- Modifiers — each as its own card -->
+              <div v-if="item.modifiers_snapshot?.length && item.status !== 'cancelled'" class="grid grid-cols-2 gap-2 pt-1">
+                <div
                   v-for="(mod, i) in item.modifiers_snapshot"
                   :key="i"
-                  class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary"
+                  class="flex items-center gap-2 rounded-xl border-2 border-primary/20 bg-primary/5 px-3 py-2"
                 >
-                  + {{ mod.name }}
-                </span>
+                  <span class="text-primary font-black text-sm leading-none flex-shrink-0">+</span>
+                  <span class="text-xs font-semibold text-primary leading-tight">{{ mod.name }}</span>
+                </div>
               </div>
 
               <!-- Notes -->
