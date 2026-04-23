@@ -700,10 +700,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
         <template #cell-customer_name="{ item }">
-          <div v-if="item">
-            <p class="text-sm font-medium text-text-primary">{{ item.customer_name }}</p>
-            <p class="text-xs text-text-secondary">{{ item.customer_phone }}</p>
-          </div>
+          <span v-if="item" class="text-sm font-medium text-text-primary">{{ item.customer_name }}</span>
         </template>
 
         <template #cell-customer_phone="{ item }">
