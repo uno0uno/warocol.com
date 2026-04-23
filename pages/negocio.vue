@@ -809,6 +809,78 @@
 
     </div>
 
+    <!-- Station Deactivate Confirmation Modal -->
+    <Teleport to="body">
+      <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-opacity duration-200" leave-from-class="opacity-100" leave-to-class="opacity-0">
+        <div v-if="deactivateModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" @click.self="deactivateModalOpen = false">
+          <div class="bg-surface rounded-2xl shadow-2xl w-full max-w-md p-6 flex flex-col gap-5">
+
+            <!-- Header -->
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="text-base font-bold text-text-primary">Desactivar estación</h3>
+                <p class="text-sm text-text-secondary mt-0.5">{{ deactivateModalStation?.name }}</p>
+              </div>
+              <button type="button" @click="deactivateModalOpen = false" class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary transition-colors">
+                <XMarkIcon class="w-5 h-5" />
+              </button>
+            </div>
+
+            <!-- Loading -->
+            <div v-if="isLoadingDeactivateInfo" class="flex items-center justify-center py-6">
+              <UiLoadingDots size="10px" />
+            </div>
+
+            <!-- Info loaded -->
+            <template v-else-if="deactivateInfo">
+              <!-- Blocked: active comandas -->
+              <div v-if="deactivateInfo.active_comandas_count > 0" class="flex items-start gap-3 rounded-xl bg-destructive/8 border border-destructive/20 px-4 py-3">
+                <ExclamationTriangleIcon class="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                <p class="text-sm text-destructive font-medium">
+                  Esta estación tiene <strong>{{ deactivateInfo.active_comandas_count }} comanda{{ deactivateInfo.active_comandas_count !== 1 ? 's' : '' }} activa{{ deactivateInfo.active_comandas_count !== 1 ? 's' : '' }}</strong>. Resuélvelas antes de desactivarla.
+                </p>
+              </div>
+
+              <!-- Affected categories -->
+              <div v-if="deactivateInfo.affected_categories.length > 0" class="flex flex-col gap-2">
+                <p class="text-sm font-semibold text-text-primary">
+                  {{ deactivateInfo.affected_categories.length }} categoría{{ deactivateInfo.affected_categories.length !== 1 ? 's' : '' }} afectada{{ deactivateInfo.affected_categories.length !== 1 ? 's' : '' }}
+                </p>
+                <p class="text-xs text-text-secondary">Sus productos no generarán comandas mientras la estación esté inactiva.</p>
+                <div class="flex flex-wrap gap-1.5 mt-1">
+                  <span
+                    v-for="cat in deactivateInfo.affected_categories"
+                    :key="cat.id"
+                    class="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"
+                  >{{ cat.name }}</span>
+                </div>
+              </div>
+
+              <div v-if="deactivateInfo.affected_categories.length === 0 && deactivateInfo.active_comandas_count === 0" class="text-sm text-text-secondary">
+                No hay comandas activas ni categorías afectadas. Se puede desactivar sin impacto.
+              </div>
+
+              <!-- Actions -->
+              <div class="flex gap-2 pt-1">
+                <button type="button" @click="deactivateModalOpen = false" class="flex-1 h-10 rounded-xl border border-border text-sm font-medium text-text-secondary hover:bg-surface-secondary transition-colors">
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  :disabled="deactivateInfo.active_comandas_count > 0 || isConfirmingDeactivate"
+                  class="flex-1 h-10 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-destructive text-white hover:bg-destructive/90 flex items-center justify-center gap-2"
+                  @click="confirmDeactivateStation"
+                >
+                  <UiLoadingDots v-if="isConfirmingDeactivate" size="8px" color="currentColor" />
+                  <span v-else>Desactivar</span>
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- Station Form Modal -->
     <GestionCocinaStationFormModal
       v-if="stationModalOpen"
@@ -851,6 +923,8 @@ import {
   PlayIcon,
   ClipboardIcon,
   ArrowsRightLeftIcon,
+  XMarkIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({ layout: 'dashboard' })
@@ -1006,6 +1080,13 @@ const editingStation = ref<any>(null)
 const isSavingStation = ref(false)
 const isAssigningCategoryId = ref<string | null>(null)
 
+// Station deactivate modal
+const deactivateModalOpen = ref(false)
+const deactivateModalStation = ref<any>(null)
+const deactivateInfo = ref<{ active_comandas_count: number; affected_categories: { id: string; name: string }[] } | null>(null)
+const isLoadingDeactivateInfo = ref(false)
+const isConfirmingDeactivate = ref(false)
+
 const openCreateStation = () => { editingStation.value = null; stationModalOpen.value = true }
 const openEditStation = (st: any) => { editingStation.value = st; stationModalOpen.value = true }
 
@@ -1030,18 +1111,51 @@ const handleSaveStation = async (formData: any) => {
 
 const handleToggleStation = async (station: any) => {
   if (togglingStationId.value === station.id) return
-  togglingStationId.value = station.id
+  // Activating — no restrictions, do it directly
+  if (!station.is_active) {
+    togglingStationId.value = station.id
+    try {
+      await $fetch(`/api/api/stations/${station.id}/toggle`, { method: 'PATCH', body: { is_active: true } })
+      toast.success('Estación activada')
+      await refetchStations()
+    } catch {
+      toast.error('Error al activar la estación', { title: 'Error' })
+    } finally {
+      togglingStationId.value = null
+    }
+    return
+  }
+  // Deactivating — fetch info and show confirmation modal
+  isLoadingDeactivateInfo.value = true
+  deactivateModalStation.value = station
+  deactivateInfo.value = null
+  deactivateModalOpen.value = true
   try {
-    await $fetch(`/api/api/stations/${station.id}/toggle`, {
-      method: 'PATCH',
-      body: { is_active: !station.is_active },
-    })
-    toast.success(station.is_active ? 'Estación desactivada' : 'Estación activada')
-    await refetchStations()
+    const res = await $fetch<{ success: boolean; data: any }>(`/api/api/stations/${station.id}/deactivate-info`)
+    deactivateInfo.value = res.data
   } catch {
-    toast.error('Error al cambiar estado de la estación', { title: 'Error' })
+    toast.error('Error al obtener información de la estación', { title: 'Error' })
+    deactivateModalOpen.value = false
   } finally {
-    togglingStationId.value = null
+    isLoadingDeactivateInfo.value = false
+  }
+}
+
+const confirmDeactivateStation = async () => {
+  if (!deactivateModalStation.value) return
+  isConfirmingDeactivate.value = true
+  try {
+    await $fetch(`/api/api/stations/${deactivateModalStation.value.id}/toggle`, {
+      method: 'PATCH',
+      body: { is_active: false },
+    })
+    toast.success('Estación desactivada')
+    deactivateModalOpen.value = false
+    await refetchStations()
+  } catch (e: any) {
+    toast.error(e.data?.detail || 'Error al desactivar la estación', { title: 'Error' })
+  } finally {
+    isConfirmingDeactivate.value = false
   }
 }
 

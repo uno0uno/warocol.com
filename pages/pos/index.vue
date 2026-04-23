@@ -858,11 +858,6 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Station toggles — only when comandas enabled and mesa mode -->
-        <div v-if="comandasEnabled && isMesaMode" class="mt-3">
-          <PosStationToggles />
-        </div>
-
         <!-- Confirm: close with running total -->
         <div v-if="confirmBannerClose" class="mt-3 flex items-center gap-3 flex-wrap bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-200">
           <p class="flex-1 text-xs text-text-secondary">
