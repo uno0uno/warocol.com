@@ -285,11 +285,9 @@ const formatCurrency = (value: number) =>
       <section>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4 mb-6">
           <MetricCard title="Ventas Brutas" :value="metrics.total_sales" format="currency" variant="primary" />
-          <MetricCard title="Pedidos Online" :value="metrics.completed_orders" format="number" variant="primary" />
           <MetricCard title="Ticket Promedio" :value="metrics.avg_ticket" format="currency" variant="primary" />
-          <MetricCard title="Órdenes con Descuento" :value="metrics.discount_count" format="number" variant="primary" :subtitle="metrics.total_discount_amount > 0 ? formatCurrency(metrics.total_discount_amount) + ' descontado' : 'Sin descuentos'" />
+          <MetricCard :title="metrics.standard_tax_label || 'INC 8%'" :value="metrics.total_standard_tax" format="currency" variant="primary" />
           <MetricCard :title="forecastLabel" :value="forecast" format="currency" variant="primary" :subtitle="forecastSubtitle" class="col-span-2 md:col-span-1" />
-          <MetricCard v-if="metrics.total_standard_tax > 0" :title="metrics.standard_tax_label" :value="metrics.total_standard_tax" format="currency" variant="primary" />
           <MetricCard v-if="metrics.total_liquor_tax > 0" title="IVA Licores 5%" :value="metrics.total_liquor_tax" format="currency" variant="primary" />
         </div>
 
