@@ -163,10 +163,10 @@ const getComandaStatusVariant = (status: string): string => {
     pending:   'warning',
     preparing: 'info',
     ready:     'success',
-    delivered: 'default',
-    cancelled: 'error',
+    delivered: 'secondary',
+    cancelled: 'destructive',
   }
-  return map[status] ?? 'default'
+  return map[status] ?? 'secondary'
 }
 </script>
 
@@ -288,10 +288,14 @@ const getComandaStatusVariant = (status: string): string => {
         </span>
       </template>
       <template #cell-elapsed_seconds="{ value, row }">
+        <UiStatusBadge v-if="row.status === 'cancelled'" variant="destructive" size="sm" format="text">
+          Anulada
+        </UiStatusBadge>
         <span
+          v-else
           class="text-sm font-bold tabular-nums"
-          :class="row.status === 'cancelled' ? 'text-text-tertiary' : row.alert_level >= 2 ? 'text-destructive' : row.alert_level >= 1 ? 'text-warning' : 'text-text-secondary'"
-        >{{ row.status === 'cancelled' ? '—' : formatElapsed(liveElapsed(value)) }}</span>
+          :class="row.alert_level >= 2 ? 'text-destructive' : row.alert_level >= 1 ? 'text-warning' : 'text-text-secondary'"
+        >{{ formatElapsed(liveElapsed(value)) }}</span>
       </template>
       <template #cell-_actions="{ row }">
         <button
