@@ -1007,11 +1007,64 @@ onUnmounted(() => {
         @increment-tab-item="incrementTabItem"
         @decrement-tab-item="decrementTabItem"
         @fire-to-kitchen="fireToKitchen"
-        @confirm-remove-tab-item="confirmRemoveTabItem"
-        @cancel-remove-tab-item="cancelPendingRemove"
       />
       </div>
     </div>
   </div>
+
+  <!-- Remove item confirmation modal -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition-opacity duration-150"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-150"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="pendingRemoveItemId"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+        @click.self="cancelPendingRemove"
+      >
+        <div class="w-full max-w-sm bg-surface rounded-2xl shadow-2xl overflow-hidden">
+          <!-- Header -->
+          <div class="px-5 pt-5 pb-4">
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+                <svg class="w-5 h-5 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-text-primary leading-tight">¿Eliminar producto?</h3>
+                <p class="text-sm text-text-secondary mt-0.5 leading-snug">
+                  <span class="font-semibold text-text-primary">{{ storeTabItems.find(i => i.orderItemId === pendingRemoveItemId)?.productName ?? 'Este producto' }}</span>
+                  ya fue enviado a cocina. Se notificará al cocinero que lo anule.
+                </p>
+              </div>
+            </div>
+          </div>
+          <!-- Actions -->
+          <div class="px-5 pb-5 flex gap-2">
+            <button
+              type="button"
+              class="flex-1 h-11 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-secondary transition-colors"
+              @click="cancelPendingRemove"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="flex-1 h-11 rounded-xl bg-destructive text-white text-sm font-semibold hover:bg-destructive/90 active:scale-95 transition-all"
+              @click="confirmRemoveTabItem"
+            >
+              Sí, eliminar
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 
 </template>
