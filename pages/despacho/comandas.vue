@@ -99,6 +99,11 @@ const getComandaStatusVariant = (status: string): string => {
 
     <!-- Comanda table -->
     <HealthSemaphore v-else :is-unlocked="true" title="# Comanda">
+      <template #header-actions>
+        <span class="text-xs font-bold text-text-secondary bg-surface-secondary px-2 py-0.5 rounded-full">
+          {{ comandas.length }} activa{{ comandas.length !== 1 ? 's' : '' }}
+        </span>
+      </template>
     <UiResponsiveDataView
       row-size="sm"
       :columns="columns"
