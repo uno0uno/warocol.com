@@ -117,6 +117,9 @@
               </svg>
             </button>
 
+            <!-- Tenant Selector (Desktop only) -->
+            <DashboardTenantSelector key="tenant-selector" />
+
             <!-- Back Button — text label on desktop only (mobile uses the left arrow icon) -->
             <button
               v-if="backButton"

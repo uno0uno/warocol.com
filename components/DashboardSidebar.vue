@@ -1,4 +1,5 @@
 <template>
+  <div>
   <!-- Loading Global Overlay -->
   <Teleport to="body">
     <div v-if="isLoggingOut" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
@@ -12,86 +13,7 @@
     </div>
   </Teleport>
 
-  <!-- Tenant Modal -->
-  <Teleport to="body">
-    <Transition name="modal-fade">
-      <div
-        v-if="showTenantModal"
-        class="fixed inset-0 z-[9998] flex items-end sm:items-center justify-center"
-        @click.self="closeTenantModal"
-      >
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeTenantModal" />
-
-        <!-- Panel: bottom sheet en mobile, modal centrado en desktop -->
-        <div class="relative w-full sm:w-[420px] sm:max-w-[90vw] bg-white sm:rounded-xl rounded-t-2xl shadow-2xl flex flex-col max-h-[80vh] sm:max-h-[60vh]">
-
-          <!-- Header -->
-          <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-titan-200 flex-shrink-0">
-            <p class="text-sm font-semibold text-ebony-800">Cambiar negocio</p>
-            <button @click="closeTenantModal" class="p-1.5 rounded-lg text-titan-400 hover:bg-titan-100 hover:text-ebony-700 transition-colors">
-              <XMarkIcon class="w-4 h-4" />
-            </button>
-          </div>
-
-          <!-- Buscador -->
-          <div class="px-4 py-3 flex-shrink-0">
-            <div class="flex items-center gap-2 px-3 py-2 border-b border-titan-200 focus-within:border-crocus-400 transition-colors">
-              <MagnifyingGlassIcon class="w-4 h-4 text-titan-400 flex-shrink-0" />
-              <input
-                ref="searchInputRef"
-                v-model="tenantSearch"
-                type="text"
-                placeholder="Buscar negocio..."
-                class="tenant-search-input flex-1 bg-transparent text-sm text-ebony-800 placeholder-titan-400"
-              />
-              <button v-if="tenantSearch" @click="tenantSearch = ''" class="text-titan-400 hover:text-ebony-700">
-                <XMarkIcon class="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          <!-- Lista -->
-          <div class="overflow-y-auto px-3 pb-4 space-y-0.5">
-            <div v-if="isLoadingTenants" class="px-3 py-3 text-sm text-titan-400 text-center">Cargando...</div>
-            <div v-else-if="filteredTenants.length === 0" class="px-3 py-3 text-sm text-titan-400 text-center">Sin resultados</div>
-            <button
-              v-else
-              v-for="tenant in filteredTenants"
-              :key="tenant.id"
-              @click="selectTenant(tenant)"
-              :disabled="isLoadingTenants"
-              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left disabled:opacity-50"
-              :class="selectedTenant?.id === tenant.id
-                ? 'bg-crocus-50 text-crocus-700 font-medium'
-                : 'text-ebony-700 hover:bg-titan-50'"
-            >
-              <div class="w-2 h-2 rounded-full flex-shrink-0" :class="selectedTenant?.id === tenant.id ? 'bg-crocus-500' : 'bg-titan-300'"></div>
-              <span class="truncate">{{ tenant.name }}</span>
-              <CheckIcon v-if="selectedTenant?.id === tenant.id" class="w-4 h-4 ml-auto text-crocus-500 flex-shrink-0" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
-
   <UiBaseSidebar v-bind="$attrs">
-    <!-- Tenant Selector -->
-    <template #selector>
-      <button
-        @click="openTenantModal"
-        :disabled="isLoadingTenants"
-        class="w-full flex items-center justify-between px-3 py-2 border border-ebony-700 rounded-lg text-sm text-white bg-ebony-800 hover:bg-ebony-700 transition-all focus:outline-none focus:ring-2 focus:ring-crocus-500 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <div class="flex items-center gap-2 min-w-0">
-          <div class="w-2 h-2 bg-crocus-500 rounded-full flex-shrink-0"></div>
-          <span v-if="isLoadingTenants" class="text-titan-400 truncate">Cargando...</span>
-          <span v-else class="font-medium truncate">{{ selectedTenant?.name || 'Seleccionar' }}</span>
-        </div>
-      </button>
-    </template>
-
     <!-- Navigation Links -->
     <template #navigation="{ collapsed }">
 
@@ -199,22 +121,8 @@
       </button>
     </template>
 
-    <!-- User Profile -->
-    <template #footer>
-      <div class="flex items-center gap-3 rounded-lg bg-ebony-800/50">
-        <div class="relative flex-shrink-0">
-          <div class="w-8 h-8 bg-crocus-600 rounded-full flex items-center justify-center font-semibold text-white text-xs">
-            {{ userInitials }}
-          </div>
-          <span class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-ebony-900 rounded-full"></span>
-        </div>
-        <div class="flex-1 min-w-0 text-left">
-          <div class="text-sm font-medium text-white truncate">{{ userName }}</div>
-          <div class="text-xs text-titan-400 truncate max-w-[120px]">{{ userEmail }}</div>
-        </div>
-      </div>
-    </template>
   </UiBaseSidebar>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -247,43 +155,14 @@ import {
 interface Props {
   activePage?: 'dashboard' | 'ventas' | 'pos' | 'despacho' | 'cocina' | 'comandas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'mesas' | 'finanzas'
 }
-interface Tenant { id: string; name: string; slug: string }
-
 const props = withDefaults(defineProps<Props>(), { activePage: 'financiero' })
 
-const showTenantModal = ref(false)
-const tenantSearch = ref('')
-const searchInputRef = ref<HTMLInputElement | null>(null)
 const isLoggingOut = ref(false)
 const router = useRouter()
 
-const filteredTenants = computed(() =>
-  tenantSearch.value.trim()
-    ? tenants.value.filter(t => t.name.toLowerCase().includes(tenantSearch.value.toLowerCase()))
-    : tenants.value
-)
-
-const openTenantModal = () => {
-  tenantSearch.value = ''
-  showTenantModal.value = true
-  nextTick(() => searchInputRef.value?.focus())
-}
-const closeTenantModal = () => { showTenantModal.value = false }
-
 const { hasCriticalAlerts } = useDataQualityStatus()
-const { subscription: billingSubscription, fetchSubscription: fetchBillingSubscription } = useBilling()
-const tenantsStore = useTenantsStore()
-const tenants = computed(() => tenantsStore.tenants)
-const selectedTenant = computed(() => tenantsStore.selectedTenant)
-const isLoadingTenants = computed(() => tenantsStore.isLoading)
 
 const authStore = useAuthStore()
-const userName = computed(() => authStore.user?.name || authStore.session?.user?.name || 'Usuario')
-const userEmail = computed(() => authStore.user?.email || authStore.session?.user?.email || 'No email')
-const userInitials = computed(() => {
-  const name = userName.value
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-})
 
 // ── Nav items ──────────────────────────────────────────────
 const { businessProfile } = useTenantReactive()
@@ -313,23 +192,6 @@ const cuentaItems = [
   { to: '/gestion/billing', page: 'admin',   label: 'Mi Plan',    icon: CreditCardIcon },
 ]
 
-const selectTenant = async (tenant: Tenant) => {
-  closeTenantModal()
-  const success = await tenantsStore.selectTenant(tenant)
-  if (!success) return
-
-  // billing-gate middleware only runs on route change, which doesn't happen on tenant switch.
-  // Check billing directly for the new tenant and redirect if no active subscription.
-  if (billingSubscription.value === undefined) {
-    try { await fetchBillingSubscription() } catch { return }
-  }
-  const status = billingSubscription.value?.status
-  const hasAccess = status === 'active' || status === 'past_due'
-  if (!hasAccess) {
-    await router.replace('/gestion/billing')
-  }
-}
-
 const handleLogout = async () => {
   try {
     isLoggingOut.value = true
@@ -344,13 +206,6 @@ const handleLogout = async () => {
     isLoggingOut.value = false
   }
 }
-
-// Cerrar modal con Escape
-onMounted(() => {
-  const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeTenantModal() }
-  document.addEventListener('keydown', onKey)
-  onUnmounted(() => document.removeEventListener('keydown', onKey))
-})
 </script>
 
 <style scoped>
