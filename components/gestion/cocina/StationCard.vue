@@ -36,13 +36,13 @@
           <PencilIcon class="w-4 h-4" />
         </button>
         <button
-          class="p-1.5 rounded-lg transition-colors disabled:opacity-50"
-          :class="station.is_active ? 'text-text-tertiary hover:text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'"
+          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+          :class="station.is_active ? 'text-amber-600 hover:bg-amber-50 border border-amber-200' : 'text-emerald-600 hover:bg-emerald-50 border border-emerald-200'"
           :disabled="isToggling"
           @click="$emit('toggle', station)"
-          :title="station.is_active ? 'Desactivar' : 'Activar'"
         >
-          <component :is="station.is_active ? PowerIcon : PlayIcon" class="w-4 h-4" />
+          <UiLoadingDots v-if="isToggling" size="7px" color="currentColor" />
+          <span v-else>{{ station.is_active ? 'Desactivar' : 'Activar' }}</span>
         </button>
       </div>
     </div>
