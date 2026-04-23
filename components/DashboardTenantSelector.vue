@@ -69,8 +69,8 @@
     <!-- User info — name + purple avatar icon -->
     <div class="flex items-center gap-2 h-11 px-3 bg-surface-secondary rounded-lg">
       <span class="text-sm font-medium text-text-primary truncate max-w-[120px]">{{ userName }}</span>
-      <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-        <UserIcon class="w-4 h-4 text-white" />
+      <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
+        <UserIcon class="w-4 h-4 text-primary" />
       </div>
     </div>
   </div>
