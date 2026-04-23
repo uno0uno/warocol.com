@@ -266,7 +266,7 @@ const getComandaStatusVariant = (status: string): string => {
 
       <!-- Desktop cells -->
       <template #cell-comanda_number="{ value, row }">
-        <span class="text-sm font-black" :class="row.status === 'cancelled' ? 'text-text-tertiary line-through' : 'text-text-primary'">#{{ String(value).padStart(3, '0') }}</span>
+        <span class="text-sm font-black" :class="row.status === 'cancelled' ? 'text-text-tertiary line-through' : 'text-text-primary'">#{{ value }}-{{ String(row.comanda_index).padStart(2, '0') }}</span>
       </template>
       <template #cell-source_type="{ value }">
         <UiStatusBadge variant="info" size="sm" format="text">
@@ -333,7 +333,7 @@ const getComandaStatusVariant = (status: string): string => {
         >
           <div class="flex-1 min-w-0">
             <p class="text-sm font-black text-text-primary leading-tight">
-              <span class="text-primary">#{{ String(item.comanda_number).padStart(3, '0') }}</span>
+              <span class="text-primary">#{{ item.comanda_number }}-{{ String(item.comanda_index).padStart(2, '0') }}</span>
               <span class="text-text-secondary font-normal"> · {{ item.table_display_name }}</span>
             </p>
             <p class="text-xs text-text-secondary mt-0.5">

@@ -137,7 +137,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
         v-if="modelValue && comanda"
         role="dialog"
         aria-modal="true"
-        :aria-label="`Detalle comanda #${String(comanda.comanda_number).padStart(3, '0')}`"
+        :aria-label="`Detalle comanda #${comanda.comanda_number}-${String(comanda.comanda_index).padStart(2, '0')}`"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -156,7 +156,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">
-                  Comanda #{{ String(comanda.comanda_number).padStart(3, '0') }}
+                  Comanda #{{ comanda.comanda_number }}-{{ String(comanda.comanda_index).padStart(2, '0') }}
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
                   {{ SOURCE_LABELS[comanda.source_type] ?? comanda.source_type }}
