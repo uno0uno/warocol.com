@@ -36,8 +36,33 @@ const STATUS_FILTERS = [
   { value: 'delivered', label: 'Entregadas' },
 ]
 
+const SOURCE_LABELS: Record<string, string> = {
+  table:    'Mesa',
+  pos:      'Mostrador',
+  delivery: 'Domicilio',
+  pickup:   'Recogida',
+}
+
+const COMANDA_STATUS_LABELS: Record<string, string> = {
+  pending:   'Pendiente',
+  preparing: 'En preparación',
+  ready:     'Lista',
+  delivered: 'Entregada',
+  cancelled: 'Cancelada',
+}
+
 const sourceFilter = ref('all')
 const statusFilter = ref('active')
+
+const comandaColumns: Column[] = [
+  { key: 'comanda_number',    title: '#',        sortable: false },
+  { key: 'source_type',       title: 'Origen',   sortable: false },
+  { key: 'table_display_name',title: 'Destino',  sortable: false },
+  { key: 'status',            title: 'Estado',   sortable: false },
+  { key: 'items',             title: 'Items',    sortable: false },
+  { key: 'elapsed_seconds',   title: 'Tiempo',   sortable: false },
+  { key: '_actions',          title: '',         sortable: false },
+]
 
 const statusParam = computed(() => {
   if (statusFilter.value === 'active') return 'pending,preparing,ready'
@@ -133,6 +158,51 @@ const ORDER_TYPE_LABELS: Record<string, string> = {
 
 const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
 
+// ── Mode B helpers ──────────────────────────────────────────────────────────
+const updatingComandaId = ref<string | null>(null)
+
+const formatElapsed = (seconds: number | null): string => {
+  if (!seconds) return '—'
+  if (seconds < 60) return `${seconds}s`
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return s === 0 ? `${m}m` : `${m}m ${s}s`
+}
+
+const getComandaStatusVariant = (status: string): string => {
+  const map: Record<string, string> = {
+    pending:   'warning',
+    preparing: 'info',
+    ready:     'success',
+    delivered: 'default',
+    cancelled: 'error',
+  }
+  return map[status] ?? 'default'
+}
+
+const getAlertVariant = (alertLevel: number, status: string): string => {
+  if (status === 'ready') return 'success'
+  if (alertLevel >= 2) return 'error'
+  if (alertLevel >= 1) return 'warning'
+  return 'default'
+}
+
+const updateComandaStatus = async (comanda: any, newStatus: string) => {
+  if (updatingComandaId.value) return
+  updatingComandaId.value = comanda.id
+  try {
+    await $fetch(`/api/api/comandas/${comanda.id}/status`, {
+      method: 'PATCH',
+      body: { status: newStatus },
+    })
+    refetchComandas()
+  } catch {
+    // silent — toast is overkill here
+  } finally {
+    updatingComandaId.value = null
+  }
+}
+
 const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'desc' }) => {
   sortField.value = field
   sortDirection.value = direction
@@ -207,18 +277,125 @@ const viewOrder = (order: any) => {
         </p>
       </div>
 
-      <!-- Comanda grid — reuses CocinaComandaCard -->
-      <div
+      <!-- Comanda table -->
+      <UiResponsiveDataView
         v-else
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4"
+        row-size="sm"
+        :columns="comandaColumns"
+        :data="comandas"
+        empty-message="No hay comandas."
+        variant="default"
       >
-        <CocinaComandaCard
-          v-for="comanda in comandas"
-          :key="comanda.id"
-          :comanda="comanda"
-          @refresh="refetchComandas"
-        />
-      </div>
+        <!-- Mobile card -->
+        <template #card="{ item }">
+          <div
+            class="flex items-start gap-3 py-3 px-3 border-b border-border"
+            :class="[
+              item.alert_level >= 2 ? 'bg-destructive/5' :
+              item.alert_level >= 1 ? 'bg-warning/5' :
+              item.status === 'ready' ? 'bg-success/5' : ''
+            ]"
+          >
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-black text-text-primary leading-tight">
+                <span class="text-primary">#{{ String(item.comanda_number).padStart(3, '0') }}</span>
+                <span class="text-text-secondary font-normal"> · {{ item.table_display_name }}</span>
+              </p>
+              <p class="text-xs text-text-secondary mt-0.5">
+                {{ SOURCE_LABELS[item.source_type] ?? item.source_type }}
+                · {{ item.items?.filter((i: any) => i.status !== 'cancelled').length ?? 0 }} items
+              </p>
+              <div class="flex items-center gap-2 mt-1.5">
+                <UiStatusBadge :variant="getComandaStatusVariant(item.status)" size="sm" format="text">
+                  {{ COMANDA_STATUS_LABELS[item.status] ?? item.status }}
+                </UiStatusBadge>
+                <span
+                  class="text-xs font-bold"
+                  :class="item.alert_level >= 2 ? 'text-destructive' : item.alert_level >= 1 ? 'text-warning' : 'text-text-secondary'"
+                >
+                  {{ formatElapsed(item.elapsed_seconds) }}
+                </span>
+              </div>
+            </div>
+            <div class="flex flex-col gap-1 flex-shrink-0">
+              <button
+                v-if="item.status === 'pending'"
+                :disabled="updatingComandaId === item.id"
+                class="h-8 px-3 rounded-lg bg-primary text-white text-xs font-black disabled:opacity-50"
+                @click="updateComandaStatus(item, 'preparing')"
+              >Empezar</button>
+              <button
+                v-else-if="item.status === 'preparing'"
+                :disabled="updatingComandaId === item.id"
+                class="h-8 px-3 rounded-lg bg-success text-white text-xs font-black disabled:opacity-50"
+                @click="updateComandaStatus(item, 'ready')"
+              >Listo</button>
+              <button
+                v-else-if="item.status === 'ready'"
+                :disabled="updatingComandaId === item.id"
+                class="h-8 px-3 rounded-lg bg-success text-white text-xs font-black disabled:opacity-50"
+                @click="updateComandaStatus(item, 'delivered')"
+              >Entregar</button>
+            </div>
+          </div>
+        </template>
+
+        <!-- Desktop cells -->
+        <template #cell-comanda_number="{ value }">
+          <span class="text-sm font-black text-text-primary">#{{ String(value).padStart(3, '0') }}</span>
+        </template>
+        <template #cell-source_type="{ value }">
+          <UiStatusBadge variant="info" size="sm" format="text">
+            {{ SOURCE_LABELS[value] ?? value }}
+          </UiStatusBadge>
+        </template>
+        <template #cell-table_display_name="{ value }">
+          <span class="text-sm text-text-primary font-medium">{{ value }}</span>
+        </template>
+        <template #cell-status="{ value }">
+          <UiStatusBadge :variant="getComandaStatusVariant(value)" size="sm" format="text">
+            {{ COMANDA_STATUS_LABELS[value] ?? value }}
+          </UiStatusBadge>
+        </template>
+        <template #cell-items="{ value, row }">
+          <span class="text-sm text-text-secondary">
+            {{ value?.filter((i: any) => i.status !== 'cancelled').length ?? 0 }}
+            <span
+              v-if="value?.some((i: any) => i.notes)"
+              class="ml-1 text-amber-500"
+              title="Tiene notas"
+            >📝</span>
+          </span>
+        </template>
+        <template #cell-elapsed_seconds="{ value, row }">
+          <span
+            class="text-sm font-bold tabular-nums"
+            :class="row.alert_level >= 2 ? 'text-destructive' : row.alert_level >= 1 ? 'text-warning' : 'text-text-secondary'"
+          >{{ formatElapsed(value) }}</span>
+        </template>
+        <template #cell-_actions="{ row }">
+          <div class="flex items-center gap-1">
+            <button
+              v-if="row.status === 'pending'"
+              :disabled="updatingComandaId === row.id"
+              class="h-7 px-2.5 rounded-md bg-primary text-white text-xs font-black disabled:opacity-50 transition-opacity"
+              @click="updateComandaStatus(row, 'preparing')"
+            >Empezar</button>
+            <button
+              v-else-if="row.status === 'preparing'"
+              :disabled="updatingComandaId === row.id"
+              class="h-7 px-2.5 rounded-md bg-success text-white text-xs font-black disabled:opacity-50 transition-opacity"
+              @click="updateComandaStatus(row, 'ready')"
+            >Listo</button>
+            <button
+              v-else-if="row.status === 'ready'"
+              :disabled="updatingComandaId === row.id"
+              class="h-7 px-2.5 rounded-md bg-success text-white text-xs font-black disabled:opacity-50 transition-opacity"
+              @click="updateComandaStatus(row, 'delivered')"
+            >Entregar</button>
+          </div>
+        </template>
+      </UiResponsiveDataView>
     </template>
 
     <!-- ── MODE A: Online orders table (comandas_enabled = false) ── -->
