@@ -201,51 +201,51 @@ const activeItems = computed(() => props.comanda?.items ?? [])
             <li
               v-for="item in activeItems"
               :key="item.id"
-              class="px-6 py-4"
+              class="px-5 py-5"
               :class="item.status === 'cancelled' ? 'opacity-50' : ''"
             >
-              <div class="flex items-start gap-3">
+              <div class="flex items-start gap-4">
                 <!-- Quantity badge -->
                 <span
-                  class="flex-shrink-0 w-8 h-8 rounded-lg text-sm font-black flex items-center justify-center"
+                  class="flex-shrink-0 w-12 h-12 rounded-xl text-xl font-black flex items-center justify-center"
                   :class="item.status === 'cancelled' ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'"
                 >
                   {{ item.quantity }}
                 </span>
 
-                <div class="flex-1 min-w-0">
+                <div class="flex-1 min-w-0 pt-1">
                   <p
-                    class="text-sm font-semibold leading-tight"
+                    class="text-base font-bold leading-snug"
                     :class="item.status === 'cancelled' ? 'line-through text-text-tertiary' : 'text-text-primary'"
                   >
                     {{ item.kitchen_name }}
                   </p>
 
-                  <!-- Modifiers -->
-                  <ul v-if="item.modifiers_snapshot?.length && item.status !== 'cancelled'" class="mt-1 space-y-0.5">
-                    <li
+                  <!-- Modifiers as pills -->
+                  <div v-if="item.modifiers_snapshot?.length && item.status !== 'cancelled'" class="flex flex-wrap gap-1.5 mt-2">
+                    <span
                       v-for="(mod, i) in item.modifiers_snapshot"
                       :key="i"
-                      class="text-xs text-text-secondary"
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-surface-secondary border border-border text-text-secondary"
                     >
-                      + {{ mod.name }}
-                    </li>
-                  </ul>
+                      <span class="text-primary font-black">+</span>{{ mod.name }}
+                    </span>
+                  </div>
 
                   <!-- Notes -->
-                  <p v-if="item.notes && item.status !== 'cancelled'" class="mt-1.5 text-xs text-amber-600 font-medium flex items-center gap-1">
-                    <MessageSquare :size="12" aria-hidden="true" />
+                  <p v-if="item.notes && item.status !== 'cancelled'" class="mt-2 text-sm text-amber-600 font-medium flex items-center gap-1.5 bg-amber-50 rounded-lg px-2.5 py-1.5">
+                    <MessageSquare :size="14" aria-hidden="true" />
                     {{ item.notes }}
                   </p>
                 </div>
 
                 <!-- Cancelled badge -->
-                <span v-if="item.status === 'cancelled'" class="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-tight rounded border bg-destructive/10 text-destructive border-destructive/30">
+                <span v-if="item.status === 'cancelled'" class="flex-shrink-0 px-2 py-1 text-xs font-black uppercase tracking-tight rounded-lg border bg-destructive/10 text-destructive border-destructive/30">
                   Anulado
                 </span>
                 <!-- Ready indicator -->
-                <span v-else-if="item.status === 'ready'" class="flex-shrink-0 w-5 h-5 rounded-full bg-success/15 text-success flex items-center justify-center" title="Listo">
-                  <svg viewBox="0 0 10 8" fill="none" class="w-2.5 h-2"><path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span v-else-if="item.status === 'ready'" class="flex-shrink-0 w-6 h-6 rounded-full bg-success/15 text-success flex items-center justify-center mt-1" title="Listo">
+                  <svg viewBox="0 0 10 8" fill="none" class="w-3 h-2.5"><path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
               </div>
             </li>
