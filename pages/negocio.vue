@@ -812,72 +812,143 @@
 
     <!-- Station Deactivate Confirmation Modal -->
     <Teleport to="body">
-      <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-opacity duration-200" leave-from-class="opacity-100" leave-to-class="opacity-0">
-        <div v-if="deactivateModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" @click.self="deactivateModalOpen = false">
-          <div class="bg-surface rounded-2xl shadow-2xl w-full max-w-md p-6 flex flex-col gap-5">
+      <Transition
+        enter-active-class="transition-all duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-all duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="deactivateModalOpen"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          @click.self="deactivateModalOpen = false"
+        >
+          <Transition
+            enter-active-class="transition-all duration-200 ease-out"
+            enter-from-class="opacity-0 scale-95 translate-y-2"
+            enter-to-class="opacity-100 scale-100 translate-y-0"
+            leave-active-class="transition-all duration-150 ease-in"
+            leave-from-class="opacity-100 scale-100 translate-y-0"
+            leave-to-class="opacity-0 scale-95 translate-y-2"
+            appear
+          >
+            <div v-if="deactivateModalOpen" class="bg-surface rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
 
-            <!-- Header -->
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <h3 class="text-base font-bold text-text-primary">Desactivar estación</h3>
-                <p class="text-sm text-text-secondary mt-0.5">{{ deactivateModalStation?.name }}</p>
-              </div>
-              <button type="button" @click="deactivateModalOpen = false" class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary transition-colors">
-                <XMarkIcon class="w-5 h-5" />
-              </button>
-            </div>
-
-            <!-- Loading -->
-            <div v-if="isLoadingDeactivateInfo" class="flex items-center justify-center py-6">
-              <UiLoadingDots size="10px" />
-            </div>
-
-            <!-- Info loaded -->
-            <template v-else-if="deactivateInfo">
-              <!-- Blocked: active comandas -->
-              <div v-if="deactivateInfo.active_comandas_count > 0" class="flex items-start gap-3 rounded-xl bg-destructive/8 border border-destructive/20 px-4 py-3">
-                <ExclamationTriangleIcon class="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                <p class="text-sm text-destructive font-medium">
-                  Esta estación tiene <strong>{{ deactivateInfo.active_comandas_count }} comanda{{ deactivateInfo.active_comandas_count !== 1 ? 's' : '' }} activa{{ deactivateInfo.active_comandas_count !== 1 ? 's' : '' }}</strong>. Resuélvelas antes de desactivarla.
-                </p>
-              </div>
-
-              <!-- Affected categories -->
-              <div v-if="deactivateInfo.affected_categories.length > 0" class="flex flex-col gap-2">
-                <p class="text-sm font-semibold text-text-primary">
-                  {{ deactivateInfo.affected_categories.length }} categoría{{ deactivateInfo.affected_categories.length !== 1 ? 's' : '' }} afectada{{ deactivateInfo.affected_categories.length !== 1 ? 's' : '' }}
-                </p>
-                <p class="text-xs text-text-secondary">Sus productos no generarán comandas mientras la estación esté inactiva.</p>
-                <div class="flex flex-wrap gap-1.5 mt-1">
-                  <span
-                    v-for="cat in deactivateInfo.affected_categories"
-                    :key="cat.id"
-                    class="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"
-                  >{{ cat.name }}</span>
+              <!-- Header strip with station color accent -->
+              <div class="relative px-5 pt-5 pb-4 border-b border-border/60">
+                <div class="flex items-start gap-3">
+                  <!-- Icon badge -->
+                  <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 border border-amber-200">
+                    <ExclamationTriangleIcon class="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div class="min-w-0 flex-1 pt-0.5">
+                    <h3 class="text-base font-bold text-text-primary leading-tight">Desactivar estación</h3>
+                    <!-- Station name with color dot -->
+                    <div class="flex items-center gap-1.5 mt-1">
+                      <span
+                        class="inline-block w-2 h-2 rounded-full flex-shrink-0"
+                        :style="{ backgroundColor: deactivateModalStation?.color ?? '#6B7280' }"
+                      />
+                      <span class="text-sm text-text-secondary font-medium truncate">{{ deactivateModalStation?.name }}</span>
+                    </div>
+                  </div>
                 </div>
+                <!-- Close button -->
+                <button
+                  type="button"
+                  @click="deactivateModalOpen = false"
+                  aria-label="Cerrar"
+                  class="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary transition-colors"
+                >
+                  <XMarkIcon class="w-4 h-4" />
+                </button>
               </div>
 
-              <div v-if="deactivateInfo.affected_categories.length === 0 && deactivateInfo.active_comandas_count === 0" class="text-sm text-text-secondary">
-                No hay comandas activas ni categorías afectadas. Se puede desactivar sin impacto.
+              <!-- Body -->
+              <div class="px-5 py-4 flex flex-col gap-4">
+
+                <!-- Loading -->
+                <div v-if="isLoadingDeactivateInfo" class="flex flex-col items-center justify-center py-8 gap-3">
+                  <UiLoadingDots size="10px" />
+                  <p class="text-xs text-text-tertiary">Verificando estado...</p>
+                </div>
+
+                <!-- Info loaded -->
+                <template v-else-if="deactivateInfo">
+
+                  <!-- BLOCKED: active comandas -->
+                  <div v-if="deactivateInfo.active_comandas_count > 0" class="rounded-xl bg-destructive/8 border border-destructive/20 p-4">
+                    <div class="flex items-start gap-3">
+                      <div class="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                        <ExclamationTriangleIcon class="w-4 h-4 text-destructive" />
+                      </div>
+                      <div>
+                        <p class="text-sm font-semibold text-destructive leading-snug">No se puede desactivar ahora</p>
+                        <p class="text-xs text-destructive/80 mt-1 leading-relaxed">
+                          Hay <strong>{{ deactivateInfo.active_comandas_count }} comanda{{ deactivateInfo.active_comandas_count !== 1 ? 's' : '' }} activa{{ deactivateInfo.active_comandas_count !== 1 ? 's' : '' }}</strong> en esta estación. Resuélvelas antes de desactivarla.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Affected categories -->
+                  <div v-if="deactivateInfo.affected_categories.length > 0" class="rounded-xl bg-amber-50 border border-amber-200/70 p-4">
+                    <p class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-2">
+                      {{ deactivateInfo.affected_categories.length }} categoría{{ deactivateInfo.affected_categories.length !== 1 ? 's' : '' }} afectada{{ deactivateInfo.affected_categories.length !== 1 ? 's' : '' }}
+                    </p>
+                    <p class="text-xs text-amber-700/80 leading-relaxed mb-3">
+                      Sus productos dejarán de generar comandas mientras la estación esté inactiva.
+                    </p>
+                    <div class="flex flex-wrap gap-1.5">
+                      <span
+                        v-for="cat in deactivateInfo.affected_categories"
+                        :key="cat.id"
+                        class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-white border border-amber-200 text-amber-800"
+                      >{{ cat.name }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Clean: no impact -->
+                  <div
+                    v-if="deactivateInfo.affected_categories.length === 0 && deactivateInfo.active_comandas_count === 0"
+                    class="flex items-center gap-3 rounded-xl bg-emerald-50 border border-emerald-200/70 px-4 py-3"
+                  >
+                    <div class="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                    <p class="text-sm text-emerald-700 leading-snug">Sin impacto activo. Se puede desactivar de forma segura.</p>
+                  </div>
+
+                </template>
               </div>
 
-              <!-- Actions -->
-              <div class="flex gap-2 pt-1">
-                <button type="button" @click="deactivateModalOpen = false" class="flex-1 h-10 rounded-xl border border-border text-sm font-medium text-text-secondary hover:bg-surface-secondary transition-colors">
+              <!-- Footer -->
+              <div class="px-5 pb-5 flex gap-2.5">
+                <button
+                  type="button"
+                  @click="deactivateModalOpen = false"
+                  class="flex-1 min-h-[44px] rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-secondary hover:border-border/80 transition-colors"
+                >
                   Cancelar
                 </button>
                 <button
+                  v-if="deactivateInfo"
                   type="button"
                   :disabled="deactivateInfo.active_comandas_count > 0 || isConfirmingDeactivate"
-                  class="flex-1 h-10 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-destructive text-white hover:bg-destructive/90 flex items-center justify-center gap-2"
+                  class="flex-1 min-h-[44px] rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-destructive text-white hover:bg-destructive/90 active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
                   @click="confirmDeactivateStation"
                 >
                   <UiLoadingDots v-if="isConfirmingDeactivate" size="8px" color="currentColor" />
-                  <span v-else>Desactivar</span>
+                  <template v-else>
+                    <span>Desactivar</span>
+                  </template>
                 </button>
               </div>
-            </template>
-          </div>
+
+            </div>
+          </Transition>
         </div>
       </Transition>
     </Teleport>
