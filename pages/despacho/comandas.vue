@@ -282,10 +282,19 @@ const getComandaStatusVariant = (status: string): string => {
         </UiStatusBadge>
       </template>
       <template #cell-items="{ value }">
-        <span class="text-sm text-text-secondary">
-          {{ value?.filter((i: any) => i.status !== 'cancelled').length ?? 0 }}
-          <span v-if="value?.some((i: any) => i.notes)" class="ml-1 text-amber-500" title="Tiene notas">📝</span>
-        </span>
+        <div class="flex flex-col gap-0.5 py-0.5">
+          <div v-for="item in value" :key="item.id" class="flex items-center gap-1.5">
+              <span
+                class="text-xs leading-tight"
+                :class="item.status === 'cancelled' ? 'line-through text-text-tertiary' : 'text-text-primary'"
+              >
+                <span class="text-text-tertiary">{{ item.quantity }}×</span>
+                {{ item.kitchen_name }}
+              </span>
+              <span v-if="item.status === 'cancelled'" class="text-[10px] font-semibold text-destructive bg-destructive/10 px-1 rounded">✕</span>
+              <span v-if="item.notes" class="text-amber-500 text-[10px]" :title="item.notes">📝</span>
+            </div>
+        </div>
       </template>
       <template #cell-elapsed_seconds="{ value, row }">
         <UiStatusBadge v-if="row.status === 'cancelled'" variant="destructive" size="sm" format="text">
