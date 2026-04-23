@@ -285,10 +285,10 @@ const getComandaStatusVariant = (status: string): string => {
         <div class="flex flex-col gap-0.5 py-0.5">
           <div v-for="item in value" :key="item.id" class="flex items-center gap-1.5">
               <span
-                class="text-xs leading-tight"
+                class="text-xs font-semibold leading-tight"
                 :class="item.status === 'cancelled' ? 'line-through text-text-tertiary' : 'text-text-primary'"
               >
-                <span class="text-text-tertiary">{{ item.quantity }}×</span>
+                <span class="text-text-tertiary font-normal">{{ item.quantity }}×</span>
                 {{ item.kitchen_name }}
               </span>
               <span v-if="item.status === 'cancelled'" class="text-[10px] font-semibold text-destructive bg-destructive/10 px-1 rounded">✕</span>
