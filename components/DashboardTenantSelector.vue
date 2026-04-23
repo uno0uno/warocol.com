@@ -54,33 +54,30 @@
 
   <!-- Header: Tenant + User info (desktop only) -->
   <div class="hidden lg:flex items-center gap-2">
-    <!-- Tenant selector button -->
+    <!-- Tenant selector button — same style as refresh button -->
     <button
       @click="openTenantModal"
       :disabled="isLoadingTenants"
       aria-label="Cambiar negocio"
-      class="flex items-center gap-2 h-9 px-3 bg-surface-secondary rounded-lg text-sm font-medium text-text-primary hover:bg-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed max-w-[180px]"
+      class="flex items-center gap-2 h-11 px-3 bg-surface-secondary rounded-lg text-sm font-medium text-text-primary hover:bg-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <span class="w-2 h-2 bg-crocus-500 rounded-full flex-shrink-0" />
-      <span class="truncate">{{ isLoadingTenants ? 'Cargando...' : (selectedTenant?.name || 'Seleccionar') }}</span>
-      <ChevronUpDownIcon class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
+      <span class="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
+      <span class="truncate max-w-[150px]">{{ isLoadingTenants ? 'Cargando...' : (selectedTenant?.name || 'Seleccionar') }}</span>
+      <ChevronDownIcon class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
     </button>
 
-    <!-- User info -->
-    <div class="flex items-center gap-2 h-9 px-3 bg-surface-secondary rounded-lg">
-      <div class="w-6 h-6 bg-crocus-600 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-        {{ userInitials }}
-      </div>
-      <div class="flex flex-col min-w-0">
-        <span class="text-xs font-semibold text-text-primary leading-tight truncate max-w-[120px]">{{ userName }}</span>
-        <span class="text-[10px] text-text-tertiary leading-tight truncate max-w-[120px]">{{ userEmail }}</span>
+    <!-- User info — name + purple avatar icon -->
+    <div class="flex items-center gap-2 h-11 px-3 bg-surface-secondary rounded-lg">
+      <span class="text-sm font-medium text-text-primary truncate max-w-[120px]">{{ userName }}</span>
+      <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+        <UserIcon class="w-4 h-4 text-white" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { XMarkIcon, MagnifyingGlassIcon, CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, MagnifyingGlassIcon, CheckIcon, ChevronDownIcon, UserIcon } from '@heroicons/vue/24/outline'
 
 interface Tenant { id: string; name: string; slug: string }
 
