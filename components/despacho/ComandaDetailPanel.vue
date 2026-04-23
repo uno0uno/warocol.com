@@ -221,14 +221,14 @@ const activeItems = computed(() => props.comanda?.items ?? [])
                     {{ item.kitchen_name }}
                   </p>
 
-                  <!-- Modifiers as pills -->
+                  <!-- Modifiers as pills — mismo estilo que IngredientePropioPanel -->
                   <div v-if="item.modifiers_snapshot?.length && item.status !== 'cancelled'" class="flex flex-wrap gap-1.5 mt-2">
                     <span
                       v-for="(mod, i) in item.modifiers_snapshot"
                       :key="i"
-                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-surface-secondary border border-border text-text-secondary"
+                      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary"
                     >
-                      <span class="text-primary font-black">+</span>{{ mod.name }}
+                      + {{ mod.name }}
                     </span>
                   </div>
 
