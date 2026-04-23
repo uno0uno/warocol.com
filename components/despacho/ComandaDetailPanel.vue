@@ -261,10 +261,7 @@ const activeItems = computed(() => props.comanda?.items ?? [])
             class="flex-1 h-11 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2"
             @click="updateStatus(status)"
           >
-            <svg v-if="isUpdating" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-            </svg>
+            <UiLoadingDots v-if="isUpdating" size="9px" color="currentColor" />
             <span v-else>{{ TRANSITION_LABELS[status] ?? status }}</span>
           </button>
         </div>
