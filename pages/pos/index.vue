@@ -675,9 +675,20 @@ watch(
   }
 )
 
+// Register contextual refresh handler:
+// - mesa active → refresh tab items from backend
+// - floor plan → MesasFloorPlan registers its own handler on mount
+watch(
+  () => posStore.activeTableSession,
+  (session) => {
+    if (session) setRefreshHandler(refreshTableSession)
+    // else: MesasFloorPlan will register when it mounts
+  },
+  { immediate: true }
+)
+
 // Provide cart data to layout
 onMounted(async () => {
-  setRefreshHandler(refetch)
   provide('posCartItemsCount', cartItemsCount)
 
   // Start polling if already in a comandas-enabled session on mount
@@ -704,7 +715,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  clearRefreshHandler(refetch)
+  setRefreshHandler(undefined)
   stopFulfillmentPolling()
 })
 </script>
