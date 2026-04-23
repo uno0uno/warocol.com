@@ -304,7 +304,7 @@ watch(
                   v-else
                   :class="cn(
                     'text-xs font-semibold text-text-secondary uppercase tracking-wider block',
-                    column.align === 'left' && 'text-left',
+                    (!column.align || column.align === 'left') && 'text-left',
                     column.align === 'center' && 'text-center',
                     column.align === 'right' && 'text-right'
                   )"
