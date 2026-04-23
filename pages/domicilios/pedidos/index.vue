@@ -9,6 +9,9 @@ definePageMeta({
   layout: 'dashboard'
 })
 
+const { formatDateTime, formatCurrency } = useFormatters()
+const { currentTenant, businessProfile } = useTenantReactive()
+
 useHead({
   title: computed(() =>
     businessProfile.value?.comandas_enabled
@@ -16,9 +19,6 @@ useHead({
       : 'Pedidos Online — WARO'
   )
 })
-
-const { formatDateTime, formatCurrency } = useFormatters()
-const { currentTenant, businessProfile } = useTenantReactive()
 
 const comandasEnabled = computed(() => businessProfile.value?.comandas_enabled === true)
 
