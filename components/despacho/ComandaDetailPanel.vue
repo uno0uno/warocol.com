@@ -197,59 +197,57 @@ const activeItems = computed(() => props.comanda?.items ?? [])
             Sin items activos
           </div>
 
-          <ul v-else class="divide-y divide-border">
-            <li
+          <div v-else class="grid gap-3 p-4">
+            <div
               v-for="item in activeItems"
               :key="item.id"
-              class="px-5 py-5"
-              :class="item.status === 'cancelled' ? 'opacity-50' : ''"
+              class="flex flex-col gap-2 rounded-xl border-2 px-4 py-3 transition-all"
+              :class="item.status === 'cancelled'
+                ? 'border-destructive/20 bg-destructive/5 opacity-60'
+                : item.status === 'ready'
+                  ? 'border-success/40 bg-success/5'
+                  : 'border-border bg-background'"
             >
-              <div class="flex items-start gap-4">
-                <!-- Quantity badge -->
+              <!-- Top row: qty + name + status indicator -->
+              <div class="flex items-start gap-3">
                 <span
-                  class="flex-shrink-0 w-12 h-12 rounded-xl text-xl font-black flex items-center justify-center"
-                  :class="item.status === 'cancelled' ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'"
+                  class="flex-shrink-0 w-10 h-10 rounded-lg text-lg font-black flex items-center justify-center"
+                  :class="item.status === 'cancelled' ? 'bg-destructive/10 text-destructive' : item.status === 'ready' ? 'bg-success/15 text-success' : 'bg-primary/10 text-primary'"
                 >
                   {{ item.quantity }}
                 </span>
-
-                <div class="flex-1 min-w-0 pt-1">
-                  <p
-                    class="text-base font-bold leading-snug"
-                    :class="item.status === 'cancelled' ? 'line-through text-text-tertiary' : 'text-text-primary'"
-                  >
-                    {{ item.kitchen_name }}
-                  </p>
-
-                  <!-- Modifiers as pills — mismo estilo que IngredientePropioPanel -->
-                  <div v-if="item.modifiers_snapshot?.length && item.status !== 'cancelled'" class="flex flex-wrap gap-1.5 mt-2">
-                    <span
-                      v-for="(mod, i) in item.modifiers_snapshot"
-                      :key="i"
-                      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary"
-                    >
-                      + {{ mod.name }}
-                    </span>
-                  </div>
-
-                  <!-- Notes -->
-                  <p v-if="item.notes && item.status !== 'cancelled'" class="mt-2 text-sm text-amber-600 font-medium flex items-center gap-1.5 bg-amber-50 rounded-lg px-2.5 py-1.5">
-                    <MessageSquare :size="14" aria-hidden="true" />
-                    {{ item.notes }}
-                  </p>
-                </div>
-
-                <!-- Cancelled badge -->
-                <span v-if="item.status === 'cancelled'" class="flex-shrink-0 px-2 py-1 text-xs font-black uppercase tracking-tight rounded-lg border bg-destructive/10 text-destructive border-destructive/30">
+                <p
+                  class="flex-1 text-base font-bold leading-snug pt-1.5"
+                  :class="item.status === 'cancelled' ? 'line-through text-text-tertiary' : 'text-text-primary'"
+                >
+                  {{ item.kitchen_name }}
+                </p>
+                <span v-if="item.status === 'cancelled'" class="flex-shrink-0 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-tight rounded bg-destructive/10 text-destructive">
                   Anulado
                 </span>
-                <!-- Ready indicator -->
-                <span v-else-if="item.status === 'ready'" class="flex-shrink-0 w-6 h-6 rounded-full bg-success/15 text-success flex items-center justify-center mt-1" title="Listo">
-                  <svg viewBox="0 0 10 8" fill="none" class="w-3 h-2.5"><path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span v-else-if="item.status === 'ready'" class="flex-shrink-0 w-5 h-5 rounded-full bg-success/15 text-success flex items-center justify-center mt-1">
+                  <svg viewBox="0 0 10 8" fill="none" class="w-2.5 h-2"><path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
               </div>
-            </li>
-          </ul>
+
+              <!-- Modifiers -->
+              <div v-if="item.modifiers_snapshot?.length && item.status !== 'cancelled'" class="flex flex-wrap gap-1.5 pl-1">
+                <span
+                  v-for="(mod, i) in item.modifiers_snapshot"
+                  :key="i"
+                  class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-primary/10 text-primary"
+                >
+                  + {{ mod.name }}
+                </span>
+              </div>
+
+              <!-- Notes -->
+              <p v-if="item.notes && item.status !== 'cancelled'" class="flex items-center gap-1.5 text-xs text-amber-700 font-medium bg-amber-50 rounded-lg px-2.5 py-1.5 pl-1">
+                <MessageSquare :size="12" aria-hidden="true" class="flex-shrink-0" />
+                {{ item.notes }}
+              </p>
+            </div>
+          </div>
         </div>
 
         <!-- Footer: status actions -->
