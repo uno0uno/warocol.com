@@ -45,10 +45,8 @@ const cardClasses = computed(() => {
   return levels[alertLevel.value] || levels.normal
 })
 
-// ── Visible items — exclude cancelled (removed from POS after firing) ───────
-const visibleItems = computed(() =>
-  props.comanda.items.filter((item: any) => item.status !== 'cancelled')
-)
+// ── Visible items — cancelled shown with strikethrough (industry standard) ──
+const visibleItems = computed(() => props.comanda.items)
 
 // ── Actions ────────────────────────────────────────────────────────────────
 const updateStatus = async (newStatus: string) => {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed } from 'vue'
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 // @ts-ignore
@@ -133,12 +133,29 @@ onMounted(() => { setRefreshHandler(refetchComandas) })
 onUnmounted(() => { clearRefreshHandler(refetchComandas) })
 registerProgressiveLoading(isRefreshingComandas)
 
+// ── Live ticker ──────────────────────────────────────────────────────────────
+const now = ref(Date.now())
+const fetchedAt = ref(Date.now())
+let tickInterval: ReturnType<typeof setInterval> | null = null
+
+watch(comandasData, () => { fetchedAt.value = Date.now() })
+
+onMounted(() => { tickInterval = setInterval(() => { now.value = Date.now() }, 1000) })
+onUnmounted(() => { if (tickInterval) clearInterval(tickInterval) })
+
+const liveElapsed = (base: number | null): number | null => {
+  if (base === null || base === undefined) return null
+  return base + Math.floor((now.value - fetchedAt.value) / 1000)
+}
+
 const formatElapsed = (seconds: number | null): string => {
-  if (!seconds) return '—'
+  if (seconds === null || seconds === undefined || seconds < 0) return '—'
   if (seconds < 60) return `${seconds}s`
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return s === 0 ? `${m}m` : `${m}m ${s}s`
+  const totalMin = Math.floor(seconds / 60)
+  if (totalMin < 60) return `${totalMin}m`
+  const h = Math.floor(totalMin / 60)
+  const m = totalMin % 60
+  return m === 0 ? `${h}h` : `${h}h ${m}m`
 }
 
 const getComandaStatusVariant = (status: string): string => {
@@ -274,7 +291,7 @@ const getComandaStatusVariant = (status: string): string => {
         <span
           class="text-sm font-bold tabular-nums"
           :class="row.alert_level >= 2 ? 'text-destructive' : row.alert_level >= 1 ? 'text-warning' : 'text-text-secondary'"
-        >{{ formatElapsed(value) }}</span>
+        >{{ formatElapsed(liveElapsed(value)) }}</span>
       </template>
       <template #cell-_actions="{ row }">
         <button
@@ -318,7 +335,7 @@ const getComandaStatusVariant = (status: string): string => {
                 class="text-xs font-bold"
                 :class="item.alert_level >= 2 ? 'text-destructive' : item.alert_level >= 1 ? 'text-warning' : 'text-text-secondary'"
               >
-                {{ formatElapsed(item.elapsed_seconds) }}
+                {{ formatElapsed(liveElapsed(item.elapsed_seconds)) }}
               </span>
             </div>
           </div>
@@ -332,6 +349,6 @@ const getComandaStatusVariant = (status: string): string => {
       </HealthSemaphore>
     </div>
 
-    <DespachoComandaDetailPanel v-model="panelOpen" :comanda="selectedComanda" />
+    <DespachoComandaDetailPanel v-model="panelOpen" :comanda="selectedComanda" @status-updated="refetchComandas" />
   </div>
 </template>

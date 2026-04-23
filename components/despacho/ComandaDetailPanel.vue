@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ClipboardList, X, MessageSquare, ChevronRight } from 'lucide-vue-next'
+import { computed, ref, watch, onUnmounted } from 'vue'
+import { ClipboardList, X, MessageSquare } from 'lucide-vue-next'
 
 const props = defineProps<{
   modelValue: boolean
@@ -8,9 +9,47 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: boolean): void
+  (e: 'status-updated'): void
 }>()
 
 const close = () => emit('update:modelValue', false)
+
+const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  pending:   ['preparing'],
+  preparing: ['ready'],
+  ready:     ['delivered'],
+  delivered: [],
+  cancelled: [],
+}
+
+const TRANSITION_LABELS: Record<string, string> = {
+  preparing: 'Marcar en preparación',
+  ready:     'Marcar como lista',
+  delivered: 'Marcar entregada',
+}
+
+const availableTransitions = computed((): string[] =>
+  ALLOWED_TRANSITIONS[props.comanda?.status ?? ''] ?? []
+)
+
+const isUpdating = ref(false)
+
+const updateStatus = async (status: string) => {
+  if (!props.comanda?.id || isUpdating.value) return
+  isUpdating.value = true
+  try {
+    await $fetch(`/api/api/comandas/${props.comanda.id}/status`, {
+      method: 'PATCH',
+      body: { status },
+    })
+    emit('status-updated')
+    close()
+  } catch (err: any) {
+    useToast().error(err.data?.detail || 'Error al actualizar', { title: 'Error' })
+  } finally {
+    isUpdating.value = false
+  }
+}
 
 const SOURCE_LABELS: Record<string, string> = {
   table:    'Mesa',
@@ -27,14 +66,6 @@ const COMANDA_STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelada',
 }
 
-const ITEM_STATUS_LABELS: Record<string, string> = {
-  pending:   'Pendiente',
-  preparing: 'Preparando',
-  ready:     'Listo',
-  delivered: 'Entregado',
-  cancelled: 'Cancelado',
-}
-
 const getComandaStatusVariant = (status: string) => {
   const map: Record<string, string> = {
     pending:   'warning',
@@ -46,28 +77,39 @@ const getComandaStatusVariant = (status: string) => {
   return map[status] ?? 'default'
 }
 
-const getItemStatusVariant = (status: string) => {
-  const map: Record<string, string> = {
-    pending:   'warning',
-    preparing: 'info',
-    ready:     'success',
-    delivered: 'default',
-    cancelled: 'error',
+// ── Live ticker ──────────────────────────────────────────────────────────────
+const now = ref(Date.now())
+const openedAt = ref(Date.now())
+let tickInterval: ReturnType<typeof setInterval> | null = null
+
+watch(() => props.modelValue, (open) => {
+  if (open) {
+    openedAt.value = Date.now()
+    tickInterval = setInterval(() => { now.value = Date.now() }, 1000)
+  } else {
+    if (tickInterval) { clearInterval(tickInterval); tickInterval = null }
   }
-  return map[status] ?? 'default'
-}
+})
+
+onUnmounted(() => { if (tickInterval) clearInterval(tickInterval) })
+
+const effectiveElapsed = computed((): number | null => {
+  const base = props.comanda?.elapsed_seconds
+  if (base === null || base === undefined) return null
+  return base + Math.floor((now.value - openedAt.value) / 1000)
+})
 
 const formatElapsed = (seconds: number | null): string => {
-  if (!seconds) return '—'
+  if (seconds === null || seconds === undefined || seconds < 0) return '—'
   if (seconds < 60) return `${seconds}s`
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return s === 0 ? `${m}m` : `${m}m ${s}s`
+  const totalMin = Math.floor(seconds / 60)
+  if (totalMin < 60) return `${totalMin}m`
+  const h = Math.floor(totalMin / 60)
+  const m = totalMin % 60
+  return m === 0 ? `${h}h` : `${h}h ${m}m`
 }
 
-const activeItems = computed(() =>
-  (props.comanda?.items ?? []).filter((i: any) => i.status !== 'cancelled')
-)
+const activeItems = computed(() => props.comanda?.items ?? [])
 </script>
 
 <template>
@@ -141,10 +183,10 @@ const activeItems = computed(() =>
               class="text-xs font-bold tabular-nums"
               :class="comanda.alert_level >= 2 ? 'text-destructive' : comanda.alert_level >= 1 ? 'text-warning' : 'text-text-secondary'"
             >
-              {{ formatElapsed(comanda.elapsed_seconds) }}
+              {{ formatElapsed(effectiveElapsed) }}
             </span>
             <span class="text-xs text-text-secondary ml-auto">
-              {{ activeItems.length }} item{{ activeItems.length !== 1 ? 's' : '' }}
+              {{ activeItems.filter(i => i.status !== 'cancelled').length }} item{{ activeItems.filter(i => i.status !== 'cancelled').length !== 1 ? 's' : '' }}
             </span>
           </div>
         </div>
@@ -160,20 +202,27 @@ const activeItems = computed(() =>
               v-for="item in activeItems"
               :key="item.id"
               class="px-6 py-4"
+              :class="item.status === 'cancelled' ? 'opacity-50' : ''"
             >
               <div class="flex items-start gap-3">
                 <!-- Quantity badge -->
-                <span class="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 text-primary text-sm font-black flex items-center justify-center">
+                <span
+                  class="flex-shrink-0 w-8 h-8 rounded-lg text-sm font-black flex items-center justify-center"
+                  :class="item.status === 'cancelled' ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'"
+                >
                   {{ item.quantity }}
                 </span>
 
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold text-text-primary leading-tight">
+                  <p
+                    class="text-sm font-semibold leading-tight"
+                    :class="item.status === 'cancelled' ? 'line-through text-text-tertiary' : 'text-text-primary'"
+                  >
                     {{ item.kitchen_name }}
                   </p>
 
                   <!-- Modifiers -->
-                  <ul v-if="item.modifiers_snapshot?.length" class="mt-1 space-y-0.5">
+                  <ul v-if="item.modifiers_snapshot?.length && item.status !== 'cancelled'" class="mt-1 space-y-0.5">
                     <li
                       v-for="(mod, i) in item.modifiers_snapshot"
                       :key="i"
@@ -184,19 +233,41 @@ const activeItems = computed(() =>
                   </ul>
 
                   <!-- Notes -->
-                  <p v-if="item.notes" class="mt-1.5 text-xs text-amber-600 font-medium flex items-center gap-1">
+                  <p v-if="item.notes && item.status !== 'cancelled'" class="mt-1.5 text-xs text-amber-600 font-medium flex items-center gap-1">
                     <MessageSquare :size="12" aria-hidden="true" />
                     {{ item.notes }}
                   </p>
                 </div>
 
-                <!-- Item status -->
-                <UiStatusBadge :variant="getItemStatusVariant(item.status)" size="sm" format="text" class="flex-shrink-0">
-                  {{ ITEM_STATUS_LABELS[item.status] ?? item.status }}
-                </UiStatusBadge>
+                <!-- Cancelled badge -->
+                <span v-if="item.status === 'cancelled'" class="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-tight rounded border bg-destructive/10 text-destructive border-destructive/30">
+                  Anulado
+                </span>
+                <!-- Ready indicator -->
+                <span v-else-if="item.status === 'ready'" class="flex-shrink-0 w-5 h-5 rounded-full bg-success/15 text-success flex items-center justify-center" title="Listo">
+                  <svg viewBox="0 0 10 8" fill="none" class="w-2.5 h-2"><path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
               </div>
             </li>
           </ul>
+        </div>
+
+        <!-- Footer: status actions -->
+        <div v-if="availableTransitions.length" class="flex-shrink-0 border-t border-border px-6 py-4 flex gap-2 bg-surface">
+          <button
+            v-for="status in availableTransitions"
+            :key="status"
+            type="button"
+            :disabled="isUpdating"
+            class="flex-1 h-11 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2"
+            @click="updateStatus(status)"
+          >
+            <svg v-if="isUpdating" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            </svg>
+            <span v-else>{{ TRANSITION_LABELS[status] ?? status }}</span>
+          </button>
         </div>
       </div>
     </Transition>

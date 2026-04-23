@@ -33,47 +33,54 @@ const toggleStatus = async () => {
       {{ Math.round(item.quantity) }}
     </span>
     
-    <div class="flex-1 min-w-0">
-      <p 
+    <div class="flex-1 min-w-0" :class="item.status === 'cancelled' ? 'opacity-50' : ''">
+      <p
         class="text-sm font-bold leading-tight uppercase transition-colors"
-        :class="item.status === 'ready' ? 'text-text-tertiary line-through' : 'text-text-primary'"
+        :class="item.status === 'cancelled' ? 'line-through text-text-tertiary' : item.status === 'ready' ? 'text-text-tertiary line-through' : 'text-text-primary'"
       >
         {{ item.kitchen_name }}
       </p>
-      
+
       <!-- Modifiers -->
       <div v-if="item.modifiers_snapshot?.length" class="mt-1 flex flex-wrap gap-1">
-        <span 
-          v-for="(mod, idx) in item.modifiers_snapshot" 
+        <span
+          v-for="(mod, idx) in item.modifiers_snapshot"
           :key="idx"
           class="text-[10px] font-bold bg-titan-200 text-titan-800 px-1.5 py-0.5 rounded uppercase"
         >
           + {{ mod.name }}
         </span>
       </div>
-      
+
       <!-- Item Notes -->
-      <p v-if="item.notes" class="text-[10px] italic text-destructive font-bold mt-1 uppercase">
+      <p v-if="item.notes && item.status !== 'cancelled'" class="text-[10px] italic text-destructive font-bold mt-1 uppercase">
         ⚠️ {{ item.notes }}
       </p>
     </div>
 
+    <!-- Cancelled badge -->
+    <span v-if="item.status === 'cancelled'" class="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-tight rounded border bg-destructive/10 text-destructive border-destructive/30">
+      ANULADO
+    </span>
+
     <!-- Toggle Button -->
-    <button 
-      v-if="comandaStatus !== 'ready'"
-      @click="toggleStatus"
-      :disabled="isUpdating"
-      class="h-7 w-7 rounded-lg flex items-center justify-center transition-all border active:scale-90"
-      :class="item.status === 'ready' 
-        ? 'bg-success border-success text-white shadow-sm shadow-success/30' 
-        : 'bg-surface border-border text-titan-300 hover:border-primary hover:text-primary'"
-    >
-       <Icon v-if="isUpdating" name="lucide:loader-2" class="w-3.5 h-3.5 animate-spin" />
-       <Icon v-else name="lucide:check" class="w-3.5 h-3.5" />
-    </button>
-    
-    <div v-else-if="item.status === 'ready'" class="h-7 w-7 flex items-center justify-center text-success">
-       <Icon name="lucide:check-circle-2" class="w-4 h-4" />
-    </div>
+    <template v-else>
+      <button
+        v-if="comandaStatus !== 'ready'"
+        @click="toggleStatus"
+        :disabled="isUpdating"
+        class="h-7 w-7 rounded-lg flex items-center justify-center transition-all border active:scale-90"
+        :class="item.status === 'ready'
+          ? 'bg-success border-success text-white shadow-sm shadow-success/30'
+          : 'bg-surface border-border text-titan-300 hover:border-primary hover:text-primary'"
+      >
+         <Icon v-if="isUpdating" name="lucide:loader-2" class="w-3.5 h-3.5 animate-spin" />
+         <Icon v-else name="lucide:check" class="w-3.5 h-3.5" />
+      </button>
+
+      <div v-else-if="item.status === 'ready'" class="h-7 w-7 flex items-center justify-center text-success">
+         <Icon name="lucide:check-circle-2" class="w-4 h-4" />
+      </div>
+    </template>
   </div>
 </template>

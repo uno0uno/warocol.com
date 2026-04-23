@@ -21,12 +21,14 @@
             class="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-tight rounded-md border"
             :class="{
               'bg-blue-50 text-blue-600 border-blue-200': item.fulfillmentStatus === 'sent',
+              'bg-violet-50 text-violet-600 border-violet-200': item.fulfillmentStatus === 'preparing',
               'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-sm': item.fulfillmentStatus === 'ready',
               'bg-slate-50 text-slate-500 border-slate-200': item.fulfillmentStatus === 'delivered' || item.fulfillmentStatus === 'cancelled'
             }"
           >
             {{
               item.fulfillmentStatus === 'sent' ? 'En cocina' :
+              item.fulfillmentStatus === 'preparing' ? 'Preparando' :
               item.fulfillmentStatus === 'ready' ? 'Listo' :
               item.fulfillmentStatus === 'delivered' ? 'Entregado' : item.fulfillmentStatus
             }}
@@ -128,7 +130,7 @@ interface CartItem {
   quantity: number
   notes?: string
   is_resale?: boolean
-  fulfillmentStatus?: 'new' | 'sent' | 'hold' | 'ready' | 'delivered' | 'cancelled'
+  fulfillmentStatus?: 'new' | 'sent' | 'hold' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
   sentAt?: string | null
 }
 
