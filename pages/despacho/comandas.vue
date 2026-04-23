@@ -2,6 +2,8 @@
 import { onMounted, onUnmounted } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
+// @ts-ignore
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -96,8 +98,8 @@ const getComandaStatusVariant = (status: string): string => {
     </div>
 
     <!-- Comanda table -->
+    <HealthSemaphore v-else :is-unlocked="true" title="# Comanda">
     <UiResponsiveDataView
-      v-else
       row-size="sm"
       :columns="columns"
       :data="comandas"
@@ -168,5 +170,6 @@ const getComandaStatusVariant = (status: string): string => {
         >{{ formatElapsed(value) }}</span>
       </template>
     </UiResponsiveDataView>
+    </HealthSemaphore>
   </div>
 </template>
