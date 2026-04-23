@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 // @ts-ignore
@@ -27,6 +27,7 @@ const COMANDA_STATUS_LABELS: Record<string, string> = {
 }
 
 const columns: Column[] = [
+  { key: '_select',            title: '',          sortable: false, align: 'center' as const, width: '44px', class: '!px-0' },
   { key: 'comanda_number',     title: '# Comanda', sortable: false, align: 'left' },
   { key: 'source_type',        title: 'Origen',    sortable: false, align: 'left' },
   { key: 'table_display_name', title: 'Destino',   sortable: false, align: 'left' },
@@ -36,12 +37,77 @@ const columns: Column[] = [
   { key: '_actions',           title: '',          sortable: false, align: 'right', width: '48px' },
 ]
 
+// ── Detail panel ────────────────────────────────────────────────────────────
 const selectedComanda = ref<any>(null)
 const panelOpen = ref(false)
-
 const openPanel = (comanda: any) => {
   selectedComanda.value = comanda
   panelOpen.value = true
+}
+
+// ── Multi-select + bulk status ───────────────────────────────────────────────
+const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  pending:   ['preparing', 'cancelled'],
+  preparing: ['ready', 'cancelled'],
+  ready:     ['delivered'],
+  delivered: [],
+  cancelled: [],
+}
+
+const TRANSITION_LABELS: Record<string, string> = {
+  preparing: 'En preparación',
+  ready:     'Lista',
+  delivered: 'Entregada',
+  cancelled: 'Cancelada',
+}
+
+const selectedIds = ref<string[]>([])
+const isBulkUpdating = ref(false)
+
+const allPageSelected = computed(() => {
+  const ids = comandas.value.map((c: any) => c.id)
+  return ids.length > 0 && ids.every((id: string) => selectedIds.value.includes(id))
+})
+
+// Intersection of valid next-states across all selected comandas
+const availableTransitions = computed((): string[] => {
+  if (!selectedIds.value.length) return []
+  const selected = comandas.value.filter((c: any) => selectedIds.value.includes(c.id))
+  const sets = selected.map((c: any) => new Set(ALLOWED_TRANSITIONS[c.status] ?? []))
+  if (!sets.length) return []
+  return [...sets[0]].filter(t => sets.every(s => s.has(t)))
+})
+
+const toggleSelect = (id: string) => {
+  selectedIds.value = selectedIds.value.includes(id)
+    ? selectedIds.value.filter(i => i !== id)
+    : [...selectedIds.value, id]
+}
+
+const toggleSelectAll = () => {
+  selectedIds.value = allPageSelected.value
+    ? []
+    : comandas.value.map((c: any) => c.id)
+}
+
+const clearSelection = () => { selectedIds.value = [] }
+
+const executeBulkUpdate = async (status: string) => {
+  if (!status || !selectedIds.value.length) return
+  isBulkUpdating.value = true
+  try {
+    const res = await $fetch('/api/api/comandas/bulk-status', {
+      method: 'PATCH',
+      body: { comanda_ids: selectedIds.value, status },
+    }) as any
+    clearSelection()
+    await refetchComandas()
+    useToast().success(res.message || 'Estado actualizado', { title: 'Listo' })
+  } catch (err: any) {
+    useToast().error(err.data?.detail || 'Error al actualizar', { title: 'Error' })
+  } finally {
+    isBulkUpdating.value = false
+  }
 }
 
 const {
@@ -95,7 +161,51 @@ const getComandaStatusVariant = (status: string): string => {
     </div>
 
     <!-- Main content -->
-    <div v-else>
+    <div v-else class="flex flex-col gap-3">
+
+      <!-- Bulk action bar -->
+      <Transition
+        enter-active-class="transition-all duration-200"
+        enter-from-class="opacity-0 -translate-y-2"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition-all duration-200"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 -translate-y-2"
+      >
+        <div
+          v-if="selectedIds.length > 0"
+          class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border-2 border-primary/30 bg-primary/5"
+        >
+          <span class="text-sm font-semibold text-text-primary flex-shrink-0">
+            {{ selectedIds.length }} seleccionada{{ selectedIds.length !== 1 ? 's' : '' }}
+          </span>
+          <button type="button" @click="clearSelection" class="text-xs text-text-secondary hover:text-text-primary underline flex-shrink-0">
+            deseleccionar
+          </button>
+          <div class="flex-1" />
+          <template v-for="status in availableTransitions" :key="status">
+            <button
+              type="button"
+              :disabled="isBulkUpdating"
+              class="h-9 px-4 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              :class="status === 'cancelled'
+                ? 'border border-destructive text-destructive hover:bg-destructive/10'
+                : 'bg-primary text-primary-foreground hover:bg-primary/90'"
+              @click="executeBulkUpdate(status)"
+            >
+              <svg v-if="isBulkUpdating" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              {{ TRANSITION_LABELS[status] ?? status }}
+            </button>
+          </template>
+          <button type="button" @click="clearSelection" class="h-9 px-3 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary transition-colors">
+            Cancelar
+          </button>
+        </div>
+      </Transition>
+
       <HealthSemaphore :is-unlocked="true" title="# Comanda">
         <template #header-actions>
           <span class="text-xs font-bold text-text-secondary bg-surface-secondary px-2 py-0.5 rounded-full">
@@ -111,6 +221,32 @@ const getComandaStatusVariant = (status: string): string => {
           empty-sub-message="Todo al día por ahora."
           variant="default"
         >
+      <!-- Select-all header -->
+      <template #header-_select>
+        <div class="flex items-center justify-center">
+          <label class="cursor-pointer">
+            <input type="checkbox" class="sr-only peer" :checked="allPageSelected" @change="toggleSelectAll" />
+            <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
+              <svg v-if="allPageSelected" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
+                <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </label>
+        </div>
+      </template>
+
+      <!-- Checkbox cell -->
+      <template #cell-_select="{ row }">
+        <label @click.stop class="flex items-center justify-center cursor-pointer">
+          <input type="checkbox" class="sr-only peer" :checked="selectedIds.includes(row.id)" @change.stop="toggleSelect(row.id)" />
+          <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
+            <svg v-if="selectedIds.includes(row.id)" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
+              <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </label>
+      </template>
+
       <!-- Desktop cells -->
       <template #cell-comanda_number="{ value }">
         <span class="text-sm font-black text-text-primary">#{{ String(value).padStart(3, '0') }}</span>
