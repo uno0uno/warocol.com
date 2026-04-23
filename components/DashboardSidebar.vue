@@ -300,7 +300,6 @@ const primaryItems = computed(() => {
 
 const secondaryItems = [
   { to: '/analitica',                        page: 'analytics',     label: 'Analítica Ventas', icon: ChartBarIcon },
-  { to: '/analitica/cocina',                 page: 'analytics',     label: 'Analítica Cocina', icon: ChartBarIcon },
   { to: '/finanzas/arqueo',                  page: 'finanzas',      label: 'Finanzas',       icon: BanknotesIcon },
   { to: '/menu/productos',                   page: 'menu',          label: 'Menú',           icon: CubeIcon },
   { to: '/mesas',                            page: 'mesas',         label: 'Mesas',          icon: TableCellsIcon },
