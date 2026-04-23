@@ -27,7 +27,7 @@ const COMANDA_STATUS_LABELS: Record<string, string> = {
 }
 
 const columns: Column[] = [
-  { key: 'comanda_number',     title: '#',       sortable: false },
+  { key: 'comanda_number',     title: '# Comanda', sortable: false },
   { key: 'source_type',        title: 'Origen',  sortable: false },
   { key: 'table_display_name', title: 'Destino', sortable: false },
   { key: 'status',             title: 'Estado',  sortable: false },
@@ -98,7 +98,7 @@ const getComandaStatusVariant = (status: string): string => {
     </div>
 
     <!-- Comanda table -->
-    <HealthSemaphore v-else :is-unlocked="true" title="# COMANDA">
+    <HealthSemaphore v-else :is-unlocked="true" title="# Comanda">
       <template #header-actions>
         <span class="text-xs font-bold text-text-secondary bg-surface-secondary px-2 py-0.5 rounded-full">
           {{ comandas.length }} activa{{ comandas.length !== 1 ? 's' : '' }}
