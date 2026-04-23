@@ -18,8 +18,8 @@
         </div>
       </div>
 
-      <!-- Selector Slot — only when expanded -->
-      <div class="max-h-0 opacity-0 overflow-hidden group-hover:max-h-32 group-hover:opacity-100 transition-all duration-200">
+      <!-- Selector Slot — only when expanded and slot has content -->
+      <div v-if="$slots.selector" class="max-h-0 opacity-0 overflow-hidden group-hover:max-h-32 group-hover:opacity-100 transition-all duration-200">
         <slot name="selector" />
       </div>
     </div>
@@ -34,8 +34,8 @@
       <slot name="bottom" :collapsed="!isHovered" />
     </div>
 
-    <!-- Footer Slot (User info) — only when expanded -->
-    <div class="max-h-0 opacity-0 overflow-hidden group-hover:max-h-20 group-hover:opacity-100 transition-all duration-200 border-t border-ebony-700/0 group-hover:border-ebony-700">
+    <!-- Footer Slot (User info) — only when expanded and slot has content -->
+    <div v-if="$slots.footer" class="max-h-0 opacity-0 overflow-hidden group-hover:max-h-20 group-hover:opacity-100 transition-all duration-200 border-t border-ebony-700/0 group-hover:border-ebony-700">
       <div class="p-3">
         <slot name="footer" />
       </div>

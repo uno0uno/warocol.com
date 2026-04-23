@@ -52,17 +52,31 @@
     </Transition>
   </Teleport>
 
-  <!-- Header Trigger Button (desktop only) -->
-  <button
-    @click="openTenantModal"
-    :disabled="isLoadingTenants"
-    aria-label="Cambiar negocio"
-    class="hidden lg:flex items-center gap-2 h-11 px-3 bg-surface-secondary rounded-lg text-sm font-medium text-text-primary hover:bg-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed max-w-[200px]"
-  >
-    <span class="w-2 h-2 bg-crocus-500 rounded-full flex-shrink-0" />
-    <span class="truncate">{{ isLoadingTenants ? 'Cargando...' : (selectedTenant?.name || 'Seleccionar') }}</span>
-    <ChevronUpDownIcon class="w-4 h-4 text-text-tertiary flex-shrink-0" />
-  </button>
+  <!-- Header: Tenant + User info (desktop only) -->
+  <div class="hidden lg:flex items-center gap-2">
+    <!-- Tenant selector button -->
+    <button
+      @click="openTenantModal"
+      :disabled="isLoadingTenants"
+      aria-label="Cambiar negocio"
+      class="flex items-center gap-2 h-9 px-3 bg-surface-secondary rounded-lg text-sm font-medium text-text-primary hover:bg-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed max-w-[180px]"
+    >
+      <span class="w-2 h-2 bg-crocus-500 rounded-full flex-shrink-0" />
+      <span class="truncate">{{ isLoadingTenants ? 'Cargando...' : (selectedTenant?.name || 'Seleccionar') }}</span>
+      <ChevronUpDownIcon class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
+    </button>
+
+    <!-- User info -->
+    <div class="flex items-center gap-2 h-9 px-3 bg-surface-secondary rounded-lg">
+      <div class="w-6 h-6 bg-crocus-600 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+        {{ userInitials }}
+      </div>
+      <div class="flex flex-col min-w-0">
+        <span class="text-xs font-semibold text-text-primary leading-tight truncate max-w-[120px]">{{ userName }}</span>
+        <span class="text-[10px] text-text-tertiary leading-tight truncate max-w-[120px]">{{ userEmail }}</span>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -93,6 +107,14 @@ const tenantsStore = useTenantsStore()
 const tenants = computed(() => tenantsStore.tenants)
 const selectedTenant = computed(() => tenantsStore.selectedTenant)
 const isLoadingTenants = computed(() => tenantsStore.isLoading)
+
+const authStore = useAuthStore()
+const userName = computed(() => authStore.user?.name || authStore.session?.user?.name || 'Usuario')
+const userEmail = computed(() => authStore.user?.email || authStore.session?.user?.email || '')
+const userInitials = computed(() => {
+  const name = userName.value
+  return name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+})
 
 const selectTenant = async (tenant: Tenant) => {
   closeTenantModal()
