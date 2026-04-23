@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 // @ts-ignore
@@ -33,7 +33,16 @@ const columns: Column[] = [
   { key: 'status',             title: 'Estado',    sortable: false, align: 'left' },
   { key: 'items',              title: 'Items',     sortable: false, align: 'left' },
   { key: 'elapsed_seconds',    title: 'Tiempo',    sortable: false, align: 'left' },
+  { key: '_actions',           title: '',          sortable: false, align: 'right', width: '48px' },
 ]
+
+const selectedComanda = ref<any>(null)
+const panelOpen = ref(false)
+
+const openPanel = (comanda: any) => {
+  selectedComanda.value = comanda
+  panelOpen.value = true
+}
 
 const {
   data: comandasData,
@@ -101,40 +110,6 @@ const getComandaStatusVariant = (status: string): string => {
           empty-sub-message="Todo al día por ahora."
           variant="default"
         >
-      <!-- Mobile card -->
-      <template #card="{ item }">
-        <div
-          class="flex items-start gap-3 py-3 px-3 border-b border-border"
-          :class="[
-            item.alert_level >= 2 ? 'bg-destructive/5' :
-            item.alert_level >= 1 ? 'bg-warning/5' :
-            item.status === 'ready' ? 'bg-success/5' : ''
-          ]"
-        >
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-black text-text-primary leading-tight">
-              <span class="text-primary">#{{ String(item.comanda_number).padStart(3, '0') }}</span>
-              <span class="text-text-secondary font-normal"> · {{ item.table_display_name }}</span>
-            </p>
-            <p class="text-xs text-text-secondary mt-0.5">
-              {{ SOURCE_LABELS[item.source_type] ?? item.source_type }}
-              · {{ item.items?.filter((i: any) => i.status !== 'cancelled').length ?? 0 }} items
-            </p>
-            <div class="flex items-center gap-2 mt-1.5">
-              <UiStatusBadge :variant="getComandaStatusVariant(item.status)" size="sm" format="text">
-                {{ COMANDA_STATUS_LABELS[item.status] ?? item.status }}
-              </UiStatusBadge>
-              <span
-                class="text-xs font-bold"
-                :class="item.alert_level >= 2 ? 'text-destructive' : item.alert_level >= 1 ? 'text-warning' : 'text-text-secondary'"
-              >
-                {{ formatElapsed(item.elapsed_seconds) }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </template>
-
       <!-- Desktop cells -->
       <template #cell-comanda_number="{ value }">
         <span class="text-sm font-black text-text-primary">#{{ String(value).padStart(3, '0') }}</span>
@@ -164,8 +139,56 @@ const getComandaStatusVariant = (status: string): string => {
           :class="row.alert_level >= 2 ? 'text-destructive' : row.alert_level >= 1 ? 'text-warning' : 'text-text-secondary'"
         >{{ formatElapsed(value) }}</span>
       </template>
+      <template #cell-_actions="{ row }">
+        <button
+          type="button"
+          class="flex items-center justify-center w-8 h-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-primary transition-colors"
+          aria-label="Ver detalle"
+          @click.stop="openPanel(row)"
+        >
+          <Icon name="lucide:eye" size="16" />
+        </button>
+      </template>
+
+      <!-- Mobile card: tap anywhere opens panel -->
+      <template #card="{ item }">
+        <div
+          class="flex items-start gap-3 py-3 px-3 border-b border-border cursor-pointer"
+          :class="[
+            item.alert_level >= 2 ? 'bg-destructive/5' :
+            item.alert_level >= 1 ? 'bg-warning/5' :
+            item.status === 'ready' ? 'bg-success/5' : ''
+          ]"
+          @click="openPanel(item)"
+        >
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-black text-text-primary leading-tight">
+              <span class="text-primary">#{{ String(item.comanda_number).padStart(3, '0') }}</span>
+              <span class="text-text-secondary font-normal"> · {{ item.table_display_name }}</span>
+            </p>
+            <p class="text-xs text-text-secondary mt-0.5">
+              {{ SOURCE_LABELS[item.source_type] ?? item.source_type }}
+              · {{ item.items?.filter((i: any) => i.status !== 'cancelled').length ?? 0 }} items
+            </p>
+            <div class="flex items-center gap-2 mt-1.5">
+              <UiStatusBadge :variant="getComandaStatusVariant(item.status)" size="sm" format="text">
+                {{ COMANDA_STATUS_LABELS[item.status] ?? item.status }}
+              </UiStatusBadge>
+              <span
+                class="text-xs font-bold"
+                :class="item.alert_level >= 2 ? 'text-destructive' : item.alert_level >= 1 ? 'text-warning' : 'text-text-secondary'"
+              >
+                {{ formatElapsed(item.elapsed_seconds) }}
+              </span>
+            </div>
+          </div>
+          <Icon name="lucide:chevron-right" size="16" class="text-text-tertiary flex-shrink-0 mt-1" />
+        </div>
+      </template>
         </UiResponsiveDataView>
       </HealthSemaphore>
     </div>
   </div>
+
+  <DespachoComandaDetailPanel v-model="panelOpen" :comanda="selectedComanda" />
 </template>
