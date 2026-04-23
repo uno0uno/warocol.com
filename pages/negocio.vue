@@ -789,23 +789,70 @@
 
       <!-- ══════ ROUTING DE CATEGORÍAS (shown when comandas ON) ══════ -->
       <div v-if="businessProfile?.comandas_enabled" class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
-        <div class="flex items-center gap-2 mb-4">
+        <div class="flex items-center gap-2 mb-1">
           <ArrowsRightLeftIcon class="w-5 h-5 text-primary flex-shrink-0" />
           <h3 class="text-base sm:text-lg font-semibold text-text-primary">Routing de categorías</h3>
         </div>
         <p class="text-xs text-text-secondary mb-4">
           Define a qué estación deben enviarse los productos de cada categoría. Sin estación asignada = no genera comanda.
         </p>
-        <div class="space-y-2">
-          <GestionCocinaCategoryMappingRow
-            v-for="cat in mappedCategoriesForNegocio"
-            :key="cat.id"
-            :category="cat"
-            :stations="stations"
-            :loading="isAssigningCategoryId === cat.id"
-            @assign="(stId) => handleAssignCategoryInNegocio(cat.id, stId)"
-          />
-        </div>
+        <UiResponsiveDataView
+          :data="mappedCategoriesForNegocio"
+          :columns="categoryColumns"
+          empty-message="Sin categorías"
+          empty-sub-message="Crea categorías en el menú para asignarlas."
+          item-key="id"
+          row-size="sm"
+        >
+          <template #card="{ item: cat }">
+            <GestionCocinaCategoryMappingRow
+              :category="cat"
+              :stations="stations"
+              :loading="isAssigningCategoryId === cat.id"
+              @assign="(stId) => handleAssignCategoryInNegocio(cat.id, stId)"
+            />
+          </template>
+          <template #cell-name="{ item: cat }">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs flex-shrink-0">
+                {{ cat.name.substring(0, 2).toUpperCase() }}
+              </div>
+              <span class="text-sm font-medium text-text-primary">{{ cat.name }}</span>
+            </div>
+          </template>
+          <template #cell-station="{ item: cat }">
+            <template v-if="stations.find((s: any) => s.id === cat.station_id)">
+              <span
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border"
+                :style="{
+                  backgroundColor: `${stations.find((s: any) => s.id === cat.station_id)?.color}15`,
+                  color: stations.find((s: any) => s.id === cat.station_id)?.color,
+                  borderColor: `${stations.find((s: any) => s.id === cat.station_id)?.color}30`,
+                }"
+              >
+                <span
+                  class="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  :style="{ backgroundColor: stations.find((s: any) => s.id === cat.station_id)?.color }"
+                />
+                {{ stations.find((s: any) => s.id === cat.station_id)?.name }}
+              </span>
+            </template>
+            <span v-else class="text-xs text-text-tertiary italic">Sin asignar</span>
+          </template>
+          <template #cell-assign="{ item: cat }">
+            <div class="flex justify-end">
+              <select
+                :value="cat.station_id || ''"
+                @change="(e) => handleAssignCategoryInNegocio(cat.id, (e.target as HTMLSelectElement).value || null)"
+                :disabled="isAssigningCategoryId === cat.id"
+                class="min-w-[130px] px-3 py-1.5 bg-background border border-border rounded-lg text-xs font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none text-text-primary disabled:opacity-50"
+              >
+                <option value="">(Sin asignar)</option>
+                <option v-for="st in stations" :key="st.id" :value="st.id">{{ st.name }}</option>
+              </select>
+            </div>
+          </template>
+        </UiResponsiveDataView>
       </div>
 
     </div>
@@ -1145,6 +1192,12 @@ const stationColumns = [
   { key: 'status', title: 'Estado', sortable: false },
   { key: 'thresholds', title: 'Alertas', sortable: false },
   { key: 'actions', title: '', sortable: false },
+]
+
+const categoryColumns = [
+  { key: 'name', title: 'Categoría', sortable: false },
+  { key: 'station', title: 'Estación asignada', sortable: false },
+  { key: 'assign', title: '', sortable: false },
 ]
 const togglingStationId = ref<string | null>(null)
 const stationModalOpen = ref(false)
