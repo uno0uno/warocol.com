@@ -70,8 +70,8 @@
           >
             <NuxtLink
               :to="notification.payload?.order_id
-                ? `/domicilios/pedidos/${notification.payload.order_id}`
-                : '/domicilios/pedidos'"
+                ? `/despacho/domicilios/${notification.payload.order_id}`
+                : '/despacho/domicilios'"
               @click="handleMarkAsRead(notification.id); close()"
               class="flex gap-3 px-4 py-3 hover:bg-surface-secondary transition-colors"
             >

@@ -23,8 +23,8 @@
           <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl" aria-hidden="true" />
           <NuxtLink
             :to="toast.notification.payload?.order_id
-              ? `/domicilios/pedidos/${toast.notification.payload.order_id}`
-              : '/domicilios/pedidos'"
+              ? `/despacho/domicilios/${toast.notification.payload.order_id}`
+              : '/despacho/domicilios'"
             @click="dismiss(toast.id)"
             class="flex items-center gap-2 pl-4 pr-10 py-2.5"
           >
@@ -78,8 +78,8 @@
           v-for="toast in toasts"
           :key="toast.id"
           :to="toast.notification.payload?.order_id
-            ? `/domicilios/pedidos/${toast.notification.payload.order_id}`
-            : '/domicilios/pedidos'"
+            ? `/despacho/domicilios/${toast.notification.payload.order_id}`
+            : '/despacho/domicilios'"
           @click="dismiss(toast.id)"
           class="flex items-center gap-2.5 px-3 py-2 rounded-full bg-surface/95 backdrop-blur border border-primary/30 shadow-lg overflow-hidden"
         >

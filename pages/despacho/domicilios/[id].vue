@@ -62,7 +62,7 @@ const ORDER_TYPE_LABELS: Record<string, string> = {
 
 const { getStatusText, getStatusVariant } = useOnlineOrderStatus()
 
-const goBack = () => router.push('/domicilios/pedidos')
+const goBack = () => router.push('/despacho/domicilios')
 
 // Dashboard layout inject — dynamic title / subtitle / back button
 const setPageTitle      = inject<(title: string | undefined) => void>('setPageTitle')

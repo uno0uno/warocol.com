@@ -245,7 +245,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'pos' | 'domicilios' | 'cocina' | 'comandas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'mesas' | 'finanzas'
+  activePage?: 'dashboard' | 'ventas' | 'pos' | 'despacho' | 'cocina' | 'comandas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'mesas' | 'finanzas'
 }
 interface Tenant { id: string; name: string; slug: string }
 
@@ -292,7 +292,7 @@ const primaryItems = computed(() => {
   const items = [
     { to: '/pos',               page: 'pos',       label: 'POS',        icon: ComputerDesktopIcon },
     { to: '/ventas',            page: 'ventas',    label: 'Ventas',     icon: ShoppingCartIcon },
-    { to: '/domicilios/pedidos',page: 'domicilios',label: 'Domicilios', icon: MapPinIcon },
+    { to: '/despacho/domicilios', page: 'despacho', label: 'Despacho', icon: MapPinIcon },
     { to: '/cocina',            page: 'cocina',    label: 'Cocina',     icon: FireIcon },
   ]
   return items

@@ -254,18 +254,18 @@
           </NuxtLink>
 
           <NuxtLink
-            to="/domicilios/pedidos"
+            to="/despacho/domicilios"
             @click="showMenuModal = false"
             class="flex flex-col items-center gap-1"
           >
             <div class="relative">
               <div
                 class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-                :class="activePage === 'domicilios' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+                :class="activePage === 'despacho' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
               >
                 <MapPinIcon
                   class="w-6 h-6"
-                  :class="activePage === 'domicilios' ? 'text-crocus-600' : 'text-titan-600'"
+                  :class="activePage === 'despacho' ? 'text-crocus-600' : 'text-titan-600'"
                 />
               </div>
               <span
@@ -328,8 +328,8 @@
         <li v-for="notification in notifications" :key="notification.id">
           <NuxtLink
             :to="notification.payload?.order_id
-              ? `/domicilios/pedidos/${notification.payload.order_id}`
-              : '/domicilios/pedidos'"
+              ? `/despacho/domicilios/${notification.payload.order_id}`
+              : '/despacho/domicilios'"
             @click="handleMarkAsRead(notification.id); showNotificationsModal = false"
             class="flex items-start gap-3 px-4 py-3 hover:bg-titan-50 transition-colors"
             :class="!notification.read_at ? 'bg-crocus-50/40' : ''"
@@ -431,7 +431,7 @@ import { computed, ref } from 'vue'
 import { useLayoutActions } from '../composables/useLayoutActions'
 
 interface Props {
-  activePage?: 'dashboard' | 'pos' | 'domicilios' | 'cocina' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'analitica' | 'reportes' | 'configuracion' | 'admin' | 'ventas' | 'inventario' | 'menu' | 'equipo' | 'integraciones' | 'mesas' | 'finanzas'
+  activePage?: 'dashboard' | 'pos' | 'despacho' | 'cocina' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'analitica' | 'reportes' | 'configuracion' | 'admin' | 'ventas' | 'inventario' | 'menu' | 'equipo' | 'integraciones' | 'mesas' | 'finanzas'
   notificationsCount?: number
 }
 

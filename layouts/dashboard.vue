@@ -906,12 +906,12 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
-  } else if (path.startsWith('/domicilios')) {
+  } else if (path.startsWith('/despacho')) {
     return {
-      pageTitle: 'Domicilios',
+      pageTitle: 'Despacho',
       pageSubtitle: undefined,
       searchPlaceholder: 'Buscar pedidos...',
-      activePage: 'domicilios' as const,
+      activePage: 'despacho' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: undefined
