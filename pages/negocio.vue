@@ -748,11 +748,12 @@
           <template #cell-name="{ item: st }">
             <div class="flex items-center gap-2">
               <span class="inline-block w-3 h-3 rounded-full flex-shrink-0" :style="{ backgroundColor: st.color }" />
-              <div>
-                <p class="text-sm font-medium text-text-primary">{{ st.name }}</p>
-                <p v-if="st.kitchen_name" class="text-xs text-text-secondary">{{ st.kitchen_name }}</p>
-              </div>
+              <span class="text-sm font-medium text-text-primary">{{ st.name }}</span>
             </div>
+          </template>
+          <template #cell-monitor="{ item: st }">
+            <span v-if="st.kitchen_name" class="text-sm text-text-secondary font-mono">{{ st.kitchen_name }}</span>
+            <span v-else class="text-xs text-text-tertiary italic">—</span>
           </template>
           <template #cell-status="{ item: st }">
             <UiStatusBadge
@@ -1188,7 +1189,8 @@ const copyKdsUrl = (stationId: string) => {
 
 // ─── Station CRUD (from negocio.vue comandas section) ───
 const stationColumns = [
-  { key: 'name', title: 'Estación', sortable: false },
+  { key: 'name', title: 'Nombre', sortable: false },
+  { key: 'monitor', title: 'Monitor', sortable: false },
   { key: 'status', title: 'Estado', sortable: false },
   { key: 'thresholds', title: 'Alertas', sortable: false },
   { key: 'actions', title: '', sortable: false },
