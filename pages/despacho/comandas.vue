@@ -118,7 +118,7 @@ const {
 } = useQuery({
   key: () => ['comandas-monitor', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/comandas', {
-    params: { status: 'pending,preparing,ready' },
+    params: { status: 'pending,preparing,ready,cancelled' },
   }),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
@@ -226,7 +226,7 @@ const getComandaStatusVariant = (status: string): string => {
       <HealthSemaphore :is-unlocked="true" title="# Comanda">
         <template #header-actions>
           <span class="text-xs font-bold text-text-secondary bg-surface-secondary px-2 py-0.5 rounded-full">
-            {{ comandas.length }} activa{{ comandas.length !== 1 ? 's' : '' }}
+            {{ comandas.filter(c => c.status !== 'cancelled').length }} activa{{ comandas.filter(c => c.status !== 'cancelled').length !== 1 ? 's' : '' }}
           </span>
         </template>
         <div class="[&_td]:!py-1 [&_th]:!py-1.5">
@@ -265,16 +265,16 @@ const getComandaStatusVariant = (status: string): string => {
       </template>
 
       <!-- Desktop cells -->
-      <template #cell-comanda_number="{ value }">
-        <span class="text-sm font-black text-text-primary">#{{ String(value).padStart(3, '0') }}</span>
+      <template #cell-comanda_number="{ value, row }">
+        <span class="text-sm font-black" :class="row.status === 'cancelled' ? 'text-text-tertiary line-through' : 'text-text-primary'">#{{ String(value).padStart(3, '0') }}</span>
       </template>
       <template #cell-source_type="{ value }">
         <UiStatusBadge variant="info" size="sm" format="text">
           {{ SOURCE_LABELS[value] ?? value }}
         </UiStatusBadge>
       </template>
-      <template #cell-table_display_name="{ value }">
-        <span class="text-sm text-text-primary font-medium">{{ value }}</span>
+      <template #cell-table_display_name="{ value, row }">
+        <span class="text-sm font-medium" :class="row.status === 'cancelled' ? 'text-text-tertiary line-through' : 'text-text-primary'">{{ value }}</span>
       </template>
       <template #cell-status="{ value }">
         <UiStatusBadge :variant="getComandaStatusVariant(value)" size="sm" format="text">
@@ -290,8 +290,8 @@ const getComandaStatusVariant = (status: string): string => {
       <template #cell-elapsed_seconds="{ value, row }">
         <span
           class="text-sm font-bold tabular-nums"
-          :class="row.alert_level >= 2 ? 'text-destructive' : row.alert_level >= 1 ? 'text-warning' : 'text-text-secondary'"
-        >{{ formatElapsed(liveElapsed(value)) }}</span>
+          :class="row.status === 'cancelled' ? 'text-text-tertiary' : row.alert_level >= 2 ? 'text-destructive' : row.alert_level >= 1 ? 'text-warning' : 'text-text-secondary'"
+        >{{ row.status === 'cancelled' ? '—' : formatElapsed(liveElapsed(value)) }}</span>
       </template>
       <template #cell-_actions="{ row }">
         <button
