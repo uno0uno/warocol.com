@@ -776,10 +776,11 @@
               <button
                 @click="handleToggleStation(st)"
                 :disabled="togglingStationId === st.id"
-                class="p-1.5 rounded-lg transition-colors disabled:opacity-50"
-                :class="st.is_active ? 'text-text-secondary hover:text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'"
+                class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+                :class="st.is_active ? 'text-amber-600 hover:bg-amber-50 border border-amber-200' : 'text-emerald-600 hover:bg-emerald-50 border border-emerald-200'"
               >
-                <component :is="st.is_active ? PowerIcon : PlayIcon" class="w-4 h-4" />
+                <UiLoadingDots v-if="togglingStationId === st.id" size="7px" color="currentColor" />
+                <span v-else>{{ st.is_active ? 'Desactivar' : 'Activar' }}</span>
               </button>
             </div>
           </template>
