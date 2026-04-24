@@ -58,7 +58,7 @@ const TRANSITION_LABELS: Record<string, string> = {
   preparing: 'En preparación',
   ready:     'Lista',
   delivered: 'Entregada',
-  cancelled: 'Cancelar',
+  cancelled: 'Cancelar comanda',
 }
 
 const selectedIds = ref<string[]>([])
@@ -214,8 +214,10 @@ const getComandaStatusVariant = (status: string): string => {
               {{ TRANSITION_LABELS[status] ?? status }}
             </button>
           </template>
-          <button type="button" @click="clearSelection" class="h-9 px-3 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary transition-colors">
-            Cancelar
+          <button type="button" @click="clearSelection" aria-label="Deseleccionar" class="h-9 w-9 rounded-lg border border-border text-text-secondary hover:text-text-primary transition-colors flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
       </Transition>
