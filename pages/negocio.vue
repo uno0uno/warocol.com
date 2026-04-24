@@ -636,19 +636,18 @@
                   Al vender un producto se genera una comanda para cada estación de preparación configurada.
                 </p>
               </div>
-              <label
-                class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4"
-                :class="{ 'opacity-50 pointer-events-none': isTogglingComandas }"
-              >
-                <input
-                  type="checkbox"
-                  class="sr-only peer"
-                  :checked="businessProfile?.comandas_enabled"
-                  @change="handleToggleComandas"
-                  :disabled="isTogglingComandas"
-                />
-                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-              </label>
+              <div class="flex-shrink-0 ml-4 flex items-center justify-center w-10 h-6">
+                <UiLoadingDots v-if="isTogglingComandas" color="var(--color-primary)" size="11px" />
+                <label v-else class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    class="sr-only peer"
+                    :checked="businessProfile?.comandas_enabled"
+                    @change="handleToggleComandas"
+                  />
+                  <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                </label>
+              </div>
             </div>
             <!-- Inline disable-warning banner -->
             <div v-if="showDisableComandasWarning" class="rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-start justify-between gap-3">
@@ -678,19 +677,18 @@
                   Habilita rutas <span class="font-mono text-[11px]">/cocina/[estacion]</span> para pantallas de cocina independientes.
                 </p>
               </div>
-              <label
-                class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4"
-                :class="{ 'opacity-50 pointer-events-none': isTogglingKds }"
-              >
-                <input
-                  type="checkbox"
-                  class="sr-only peer"
-                  :checked="businessProfile?.kds_enabled"
-                  @change="handleToggleKds"
-                  :disabled="isTogglingKds"
-                />
-                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-              </label>
+              <div class="flex-shrink-0 ml-4 flex items-center justify-center w-10 h-6">
+                <UiLoadingDots v-if="isTogglingKds" color="var(--color-primary)" size="11px" />
+                <label v-else class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    class="sr-only peer"
+                    :checked="businessProfile?.kds_enabled"
+                    @change="handleToggleKds"
+                  />
+                  <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                </label>
+              </div>
             </div>
             <!-- KDS station URLs (when KDS enabled) -->
             <div v-if="businessProfile?.kds_enabled" class="mt-2 space-y-1.5">

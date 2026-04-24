@@ -1,4 +1,5 @@
 <template>
+  <div>
   <!-- Tenant Switch Modal -->
   <Teleport to="body">
     <Transition name="modal-fade">
@@ -59,7 +60,7 @@
       @click="openTenantModal"
       :disabled="isLoadingTenants"
       aria-label="Cambiar negocio"
-      class="flex items-center gap-2 h-11 px-3 bg-surface-secondary rounded-lg text-sm font-medium text-text-primary hover:bg-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      class="flex items-center gap-2 h-11 px-3 bg-white border-2 border-surface-secondary rounded-lg text-sm font-medium text-text-primary hover:bg-surface-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <span class="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
       <span class="truncate max-w-[150px]">{{ isLoadingTenants ? 'Cargando...' : (selectedTenant?.name || 'Seleccionar') }}</span>
@@ -67,17 +68,23 @@
     </button>
 
     <!-- User info — name + purple avatar icon -->
-    <div class="flex items-center gap-2 h-11 px-3 bg-surface-secondary rounded-lg">
+    <div class="flex items-center gap-2 h-11 px-3 bg-white border-2 border-surface-secondary rounded-lg">
       <span class="text-sm font-medium text-text-primary truncate max-w-[120px]">{{ userName }}</span>
-      <div class="w-8 h-8 bg-white border border-white rounded-lg flex items-center justify-center flex-shrink-0">
+      <div class="w-8 h-8 bg-surface-secondary border border-surface-secondary rounded-lg flex items-center justify-center flex-shrink-0">
         <UserIcon class="w-4 h-4 text-primary" />
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <script setup lang="ts">
+import { ref, computed, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { XMarkIcon, MagnifyingGlassIcon, CheckIcon, ChevronDownIcon, UserIcon } from '@heroicons/vue/24/outline'
+import { useBilling } from '~/composables/useBilling'
+import { useTenantsStore } from '~/stores/tenants'
+import { useAuthStore } from '~/stores/auth'
 
 interface Tenant { id: string; name: string; slug: string }
 

@@ -71,6 +71,7 @@ const updateStatus = async (newStatus: string) => {
 const deliverComanda = () => updateStatus('delivered')
 const startPreparing = () => updateStatus('preparing')
 const markAsReady = () => updateStatus('ready')
+const cancelComanda = () => updateStatus('cancelled')
 
 // ── Lifecycle ──────────────────────────────────────────────────────────────
 onMounted(() => {
@@ -142,22 +143,58 @@ onUnmounted(() => {
 
     <!-- Card Actions -->
     <div class="p-3 bg-surface-secondary/30 mt-auto border-t border-border flex gap-2">
-      <button
-        v-if="comanda.status === 'pending'"
-        @click="startPreparing"
-        class="flex-1 h-10 rounded-lg bg-primary text-white text-xs font-black uppercase tracking-tight shadow-sm active:scale-95 transition-transform"
-      >
-        Empezar
-      </button>
-      
-      <button
-        v-if="comanda.status === 'preparing'"
-        @click="markAsReady"
-        class="flex-1 h-10 rounded-lg bg-success text-white text-xs font-black uppercase tracking-tight shadow-sm active:scale-95 transition-transform"
-      >
-        Listo
-      </button>
 
+      <!-- POS/Counter mode: skip 'preparing', go straight to ready -->
+      <template v-if="comanda.source_type === 'pos'">
+        <template v-if="comanda.status === 'pending'">
+          <button
+            @click="markAsReady"
+            class="flex-1 h-10 rounded-lg bg-success text-white text-xs font-black uppercase tracking-tight shadow-sm active:scale-95 transition-transform"
+          >
+            Listo
+          </button>
+          <button
+            @click="cancelComanda"
+            class="h-10 px-3 rounded-lg border border-border text-text-secondary text-xs font-bold uppercase tracking-tight active:scale-95 transition-transform hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+          >
+            Cancelar
+          </button>
+        </template>
+      </template>
+
+      <!-- Table mode: full flow pending → preparing → ready -->
+      <template v-else>
+        <template v-if="comanda.status === 'pending'">
+          <button
+            @click="startPreparing"
+            class="flex-1 h-10 rounded-lg bg-primary text-white text-xs font-black uppercase tracking-tight shadow-sm active:scale-95 transition-transform"
+          >
+            Empezar
+          </button>
+          <button
+            @click="cancelComanda"
+            class="h-10 px-3 rounded-lg border border-border text-text-secondary text-xs font-bold uppercase tracking-tight active:scale-95 transition-transform hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+          >
+            Cancelar
+          </button>
+        </template>
+        <template v-else-if="comanda.status === 'preparing'">
+          <button
+            @click="markAsReady"
+            class="flex-1 h-10 rounded-lg bg-success text-white text-xs font-black uppercase tracking-tight shadow-sm active:scale-95 transition-transform"
+          >
+            Listo
+          </button>
+          <button
+            @click="cancelComanda"
+            class="h-10 px-3 rounded-lg border border-border text-text-secondary text-xs font-bold uppercase tracking-tight active:scale-95 transition-transform hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+          >
+            Cancelar
+          </button>
+        </template>
+      </template>
+
+      <!-- Shared: deliver when ready -->
       <button
         v-if="comanda.status === 'ready'"
         @click="deliverComanda"
@@ -165,6 +202,7 @@ onUnmounted(() => {
       >
         Entregar
       </button>
+
     </div>
   </div>
 </template>
