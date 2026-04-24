@@ -15,8 +15,8 @@ const emit = defineEmits<{
 const close = () => emit('update:modelValue', false)
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  pending:   ['preparing'],
-  preparing: ['ready'],
+  pending:   ['preparing', 'cancelled'],
+  preparing: ['ready', 'cancelled'],
   ready:     ['delivered'],
   delivered: [],
   cancelled: [],
@@ -26,6 +26,7 @@ const TRANSITION_LABELS: Record<string, string> = {
   preparing: 'Marcar en preparación',
   ready:     'Marcar como lista',
   delivered: 'Marcar entregada',
+  cancelled: 'Cancelar comanda',
 }
 
 const availableTransitions = computed((): string[] =>
@@ -258,10 +259,13 @@ const activeItems = computed(() => props.comanda?.items ?? [])
             :key="status"
             type="button"
             :disabled="isUpdating"
-            class="flex-1 h-11 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2"
+            class="h-11 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            :class="status === 'cancelled'
+              ? 'px-4 border border-border text-text-secondary hover:bg-destructive/10 hover:text-destructive hover:border-destructive'
+              : 'flex-1 bg-primary text-primary-foreground hover:bg-primary/90'"
             @click="updateStatus(status)"
           >
-            <UiLoadingDots v-if="isUpdating" size="9px" color="currentColor" />
+            <UiLoadingDots v-if="isUpdating && status !== 'cancelled'" size="9px" color="currentColor" />
             <span v-else>{{ TRANSITION_LABELS[status] ?? status }}</span>
           </button>
         </div>
