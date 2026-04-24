@@ -46,10 +46,9 @@ const openPanel = (comanda: any) => {
 }
 
 // ── Multi-select + bulk status ───────────────────────────────────────────────
-// Despacho only controls forward progression — cancellations come from POS
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  pending:   ['preparing'],
-  preparing: ['ready'],
+  pending:   ['preparing', 'cancelled'],
+  preparing: ['ready', 'cancelled'],
   ready:     ['delivered'],
   delivered: [],
   cancelled: [],
@@ -59,6 +58,7 @@ const TRANSITION_LABELS: Record<string, string> = {
   preparing: 'En preparación',
   ready:     'Lista',
   delivered: 'Entregada',
+  cancelled: 'Cancelar',
 }
 
 const selectedIds = ref<string[]>([])
