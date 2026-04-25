@@ -180,16 +180,6 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
           tag="div"
           class="relative flex items-center gap-1.5 md:gap-2 flex-shrink-0"
         >
-          <!-- Live clock — 3-tier typographic hierarchy -->
-          <!-- HH:MM: heading weight + text-primary (dominant, readable at distance) -->
-          <!-- :SS:   body weight + text-secondary (supporting)                      -->
-          <!-- .cs:   caption weight + text-tertiary (metadata, just perceptible)    -->
-          <span key="clock" class="inline-flex items-baseline font-mono tabular-nums select-none px-1" aria-label="Hora actual">
-            <span class="text-xl font-black text-text-primary leading-none">{{ clockHM }}</span>
-            <span class="text-sm font-bold text-text-secondary leading-none">:{{ clockS }}</span>
-            <span class="text-[10px] font-medium text-text-tertiary leading-none opacity-70">.{{ clockCs }}</span>
-          </span>
-
           <!-- Progressive loading — next to sound button, same as dashboard -->
           <div
             v-if="isRefreshing"
@@ -234,6 +224,13 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
           </button>
+
+          <!-- Live clock — right of refresh, 3-tier hierarchy -->
+          <span key="clock" class="inline-flex items-baseline font-mono tabular-nums select-none px-1" aria-label="Hora actual">
+            <span class="text-xl font-black text-text-primary leading-none">{{ clockHM }}</span>
+            <span class="text-sm font-bold text-text-secondary leading-none">:{{ clockS }}</span>
+            <span class="text-[10px] font-medium text-text-tertiary leading-none opacity-70">.{{ clockCs }}</span>
+          </span>
         </TransitionGroup>
       </header>
 
