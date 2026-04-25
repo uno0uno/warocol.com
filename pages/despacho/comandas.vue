@@ -118,7 +118,7 @@ const {
 } = useQuery({
   key: () => ['comandas-monitor', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/comandas', {
-    params: { status: 'pending,preparing,ready,cancelled' },
+    params: { status: 'pending,preparing,ready' },
   }),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
