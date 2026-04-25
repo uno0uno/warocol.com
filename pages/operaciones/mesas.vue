@@ -6,7 +6,7 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-useHead({ title: 'Mesas' })
+useHead({ title: 'Mesas | Operaciones' })
 
 const { currentTenant } = useTenantReactive()
 
@@ -110,7 +110,7 @@ const badgeVariant = (status: string) => {
 onMounted(() => setRefreshHandler(refetch))
 onUnmounted(() => clearRefreshHandler(refetch))
 
-// ── Business profile (shared cache key with negocio.vue) ───────────────────
+// ── Business profile (shared cache key) ───────────────────────────────────
 const { data: profileData, refetch: refreshProfile } = useQuery({
   key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
@@ -278,7 +278,7 @@ const toggleTablesEnabled = async () => {
             </UiStatusBadge>
           </template>
 
-          <!-- Desktop: actions — slot exposes { row, value } -->
+          <!-- Desktop: actions -->
           <template #cell-actions="{ row }">
             <div class="flex items-center justify-end gap-1">
               <span v-if="deleteErrors[row.id]" class="text-xs text-destructive mr-2 max-w-[160px] truncate">{{ deleteErrors[row.id] }}</span>

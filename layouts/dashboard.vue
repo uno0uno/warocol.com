@@ -463,12 +463,12 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
-  } else if (path.startsWith('/mesas')) {
+  } else if (path.startsWith('/operaciones')) {
     return {
-      pageTitle: 'Mesas',
-      pageSubtitle: undefined,
+      pageTitle: 'Operaciones',
+      pageSubtitle: 'Comandas, cocina y mesas',
       searchPlaceholder: undefined,
-      activePage: 'mesas' as const,
+      activePage: 'operaciones' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: undefined

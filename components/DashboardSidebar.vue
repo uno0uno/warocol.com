@@ -131,6 +131,7 @@ defineOptions({ inheritAttrs: false })
 import { computed, nextTick, ref } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import {
+  AdjustmentsHorizontalIcon,
   ArrowRightOnRectangleIcon,
   BanknotesIcon,
   BuildingStorefrontIcon,
@@ -146,14 +147,13 @@ import {
   QueueListIcon,
   ShoppingCartIcon,
   Squares2X2Icon,
-  TableCellsIcon,
   TruckIcon,
   UserGroupIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'pos' | 'despacho' | 'cocina' | 'comandas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'mesas' | 'finanzas'
+  activePage?: 'dashboard' | 'ventas' | 'pos' | 'despacho' | 'cocina' | 'comandas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'operaciones' | 'finanzas'
 }
 const props = withDefaults(defineProps<Props>(), { activePage: 'financiero' })
 
@@ -181,7 +181,7 @@ const secondaryItems = [
   { to: '/analitica',                        page: 'analytics',     label: 'Analítica Ventas', icon: ChartBarIcon },
   { to: '/finanzas/arqueo',                  page: 'finanzas',      label: 'Finanzas',       icon: BanknotesIcon },
   { to: '/menu/productos',                   page: 'menu',          label: 'Menú',           icon: CubeIcon },
-  { to: '/mesas',                            page: 'mesas',         label: 'Mesas',          icon: TableCellsIcon },
+  { to: '/operaciones/comandas',             page: 'operaciones',   label: 'Operaciones',    icon: AdjustmentsHorizontalIcon },
   { to: '/abastecimiento/compras-directas',  page: 'abastecimiento',label: 'Abastecimiento', icon: TruckIcon },
   { to: '/equipo/miembros',                  page: 'equipo',        label: 'Equipo',         icon: UserGroupIcon },
   { to: '/integraciones',                    page: 'integraciones', label: 'Integraciones',  icon: KeyIcon },
