@@ -225,12 +225,14 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
             </svg>
           </button>
 
-          <!-- Live clock — right of refresh, 3-tier hierarchy -->
-          <span key="clock" class="inline-flex items-baseline font-mono tabular-nums select-none px-1" aria-label="Hora actual">
-            <span class="text-xl font-black text-text-primary leading-none">{{ clockHM }}</span>
-            <span class="text-sm font-bold text-text-secondary leading-none">:{{ clockS }}</span>
-            <span class="text-[10px] font-medium text-text-tertiary leading-none opacity-70">.{{ clockCs }}</span>
-          </span>
+          <!-- Live clock — same pill as other actions -->
+          <div key="clock" class="h-11 px-3 flex items-center bg-surface-secondary rounded-lg select-none" aria-label="Hora actual">
+            <span class="inline-flex items-baseline font-mono tabular-nums">
+              <span class="text-base font-black text-text-primary leading-none">{{ clockHM }}</span>
+              <span class="text-xs font-bold text-text-secondary leading-none">:{{ clockS }}</span>
+              <span class="text-[9px] font-medium text-text-tertiary leading-none">.{{ clockCs }}</span>
+            </span>
+          </div>
         </TransitionGroup>
       </header>
 
