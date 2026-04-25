@@ -171,12 +171,19 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
           </span>
         </div>
 
-        <!-- Right: actions (mirrors dashboard header actions area) -->
-        <div class="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+        <!-- Right: actions — TransitionGroup matches dashboard header-actions animation -->
+        <TransitionGroup
+          name="header-actions"
+          tag="div"
+          class="relative flex items-center gap-1.5 md:gap-2 flex-shrink-0"
+        >
+          <!-- Live clock -->
+          <span key="clock" class="text-xl font-mono font-bold text-text-secondary tabular-nums px-1">{{ clockLabel }}</span>
 
-          <!-- Progressive loading — same as dashboard -->
+          <!-- Progressive loading — next to sound button, same as dashboard -->
           <div
             v-if="isRefreshing"
+            key="progressive-loading"
             class="hidden md:flex items-center gap-2 h-11 px-3 rounded-lg bg-surface-secondary text-primary"
             aria-live="polite"
           >
@@ -184,11 +191,9 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
             <span class="text-sm font-medium whitespace-nowrap">{{ loadingPhrase }}</span>
           </div>
 
-          <!-- Live clock -->
-          <span class="text-xl font-mono font-bold text-text-secondary tabular-nums px-1">{{ clockLabel }}</span>
-
           <!-- Sound toggle -->
           <button
+            key="sound"
             @click="toggleSound"
             :title="soundEnabled ? 'Silenciar alertas' : 'Activar alertas sonoras'"
             class="w-11 h-11 flex items-center justify-center bg-surface-secondary border-0 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
@@ -207,6 +212,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
 
           <!-- Refresh button — same as dashboard -->
           <button
+            key="refresh"
             @click="refetch()"
             :disabled="isRefreshing"
             aria-label="Refrescar comandas"
@@ -218,7 +224,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
           </button>
-        </div>
+        </TransitionGroup>
       </header>
 
       <!-- Board -->
@@ -286,6 +292,23 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
 </template>
 
 <style scoped>
+/* Header actions animation — identical to dashboard layout */
+.header-actions-move,
+.header-actions-enter-active,
+.header-actions-leave-active {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease, filter 0.24s ease;
+}
+.header-actions-enter-from {
+  opacity: 0;
+  filter: blur(2px);
+  transform: translateX(14px);
+}
+.header-actions-leave-to {
+  opacity: 0;
+  filter: blur(2px);
+  transform: translateX(-10px);
+}
+
 /* Card entrance animation — @keyframes only, no <Transition> (Vue bug #8105) */
 @keyframes kds-slide-in {
   from {
