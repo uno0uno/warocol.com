@@ -22,16 +22,28 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   cancelled: [],
 }
 
+// POS/counter: skip preparing, go straight to ready (auto-delivers on backend)
+const ALLOWED_TRANSITIONS_POS: Record<string, string[]> = {
+  pending:   ['ready', 'cancelled'],
+  preparing: ['ready', 'cancelled'],
+  ready:     [],
+  delivered: [],
+  cancelled: [],
+}
+
 const TRANSITION_LABELS: Record<string, string> = {
   preparing: 'Marcar en preparación',
-  ready:     'Marcar como lista',
+  ready:     'Listo',
   delivered: 'Marcar entregada',
   cancelled: 'Cancelar comanda',
 }
 
-const availableTransitions = computed((): string[] =>
-  ALLOWED_TRANSITIONS[props.comanda?.status ?? ''] ?? []
-)
+const availableTransitions = computed((): string[] => {
+  const map = props.comanda?.source_type === 'pos'
+    ? ALLOWED_TRANSITIONS_POS
+    : ALLOWED_TRANSITIONS
+  return map[props.comanda?.status ?? ''] ?? []
+})
 
 const isUpdating = ref(false)
 
