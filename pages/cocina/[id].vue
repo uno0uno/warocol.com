@@ -74,13 +74,14 @@ onUnmounted(() => {
 // ── Live clock ──────────────────────────────────────────────────────────────
 const now = ref(new Date())
 const clockInterval = ref<any>(null)
-const clockLabel = computed(() => {
+// Split into 3 visual tiers: HH:MM (dominant) · :SS (supporting) · .cs (metadata)
+const clockHM = computed(() => {
   const h = String(now.value.getHours()).padStart(2, '0')
   const m = String(now.value.getMinutes()).padStart(2, '0')
-  const s = String(now.value.getSeconds()).padStart(2, '0')
-  const ms = String(Math.floor(now.value.getMilliseconds() / 10)).padStart(2, '0')
-  return `${h}:${m}:${s}.${ms}`
+  return `${h}:${m}`
 })
+const clockS  = computed(() => String(now.value.getSeconds()).padStart(2, '0'))
+const clockCs = computed(() => String(Math.floor(now.value.getMilliseconds() / 10)).padStart(2, '0'))
 
 onMounted(() => {
   clockInterval.value = setInterval(() => { now.value = new Date() }, 10)
@@ -179,8 +180,15 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
           tag="div"
           class="relative flex items-center gap-1.5 md:gap-2 flex-shrink-0"
         >
-          <!-- Live clock -->
-          <span key="clock" class="text-xl font-mono font-bold text-text-secondary tabular-nums px-1">{{ clockLabel }}</span>
+          <!-- Live clock — 3-tier typographic hierarchy -->
+          <!-- HH:MM: heading weight + text-primary (dominant, readable at distance) -->
+          <!-- :SS:   body weight + text-secondary (supporting)                      -->
+          <!-- .cs:   caption weight + text-tertiary (metadata, just perceptible)    -->
+          <span key="clock" class="inline-flex items-baseline font-mono tabular-nums select-none px-1" aria-label="Hora actual">
+            <span class="text-xl font-black text-text-primary leading-none">{{ clockHM }}</span>
+            <span class="text-sm font-bold text-text-secondary leading-none">:{{ clockS }}</span>
+            <span class="text-[10px] font-medium text-text-tertiary leading-none opacity-70">.{{ clockCs }}</span>
+          </span>
 
           <!-- Progressive loading — next to sound button, same as dashboard -->
           <div
