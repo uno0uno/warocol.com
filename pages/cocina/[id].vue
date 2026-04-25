@@ -155,47 +155,44 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
     <!-- Main KDS UI -->
     <template v-else-if="station">
 
-      <!-- Header bar — same structure as dashboard layout header -->
-      <header class="flex items-center justify-between px-4 py-3 md:px-8 md:py-4 bg-surface border-b border-border flex-shrink-0">
+      <!-- Header -->
+      <header class="flex items-center justify-between px-4 py-3 md:px-6 bg-surface border-b border-border flex-shrink-0 gap-4">
+
         <!-- Left: station identity -->
-        <div class="flex items-center gap-2 min-w-0">
-          <!-- Station color indicator — square pill like action buttons -->
+        <div class="flex items-center gap-3 min-w-0">
+          <!-- Color accent strip — signals station, no extra box noise -->
           <div
-            class="w-11 h-11 rounded-lg bg-surface-secondary flex-shrink-0 flex items-center justify-center"
-          >
-            <span
-              class="w-4 h-4 rounded-full"
-              :style="{ backgroundColor: station.color || '#6B7280' }"
-            />
-          </div>
-          <!-- Station name -->
-          <span class="text-lg sm:text-xl md:text-2xl font-bold leading-tight text-text-primary truncate">
+            class="w-1 h-8 rounded-full flex-shrink-0"
+            :style="{ backgroundColor: station.color || '#6B7280' }"
+          />
+          <!-- Station name — dominant heading -->
+          <span class="text-xl font-bold text-text-primary leading-none truncate">
             {{ station.kitchen_name || station.name }}
           </span>
-          <!-- Active count — muted pill, same tone as refresh -->
+          <!-- Active comanda count — compact, muted -->
           <div
             v-if="activeComandas.length > 0"
-            class="h-11 px-3 rounded-lg bg-surface-secondary flex items-center justify-center flex-shrink-0"
+            class="h-7 min-w-[28px] px-2 rounded-md bg-surface-secondary flex items-center justify-center flex-shrink-0"
           >
-            <span class="text-sm font-black text-text-secondary tabular-nums">{{ activeComandas.length }}</span>
+            <span class="text-xs font-black text-text-secondary tabular-nums leading-none">{{ activeComandas.length }}</span>
           </div>
         </div>
 
-        <!-- Right: actions — TransitionGroup matches dashboard header-actions animation -->
+        <!-- Right: actions -->
         <TransitionGroup
           name="header-actions"
           tag="div"
-          class="relative flex items-center gap-1.5 md:gap-2 flex-shrink-0"
+          class="relative flex items-center gap-1.5 flex-shrink-0"
         >
-          <!-- Progressive loading — next to sound button, same as dashboard -->
+          <!-- Progressive loading -->
           <div
             v-if="isRefreshing"
             key="progressive-loading"
-            class="hidden md:flex items-center gap-2 h-11 px-3 rounded-lg bg-surface-secondary text-primary"
+            class="hidden md:flex items-center gap-2 h-9 px-3 rounded-lg bg-surface-secondary text-text-secondary"
             aria-live="polite"
           >
-            <UiLoadingDots size="9px" class="text-primary" />
-            <span class="text-sm font-medium whitespace-nowrap">{{ loadingPhrase }}</span>
+            <UiLoadingDots size="8px" class="text-text-secondary" />
+            <span class="text-xs font-medium whitespace-nowrap">{{ loadingPhrase }}</span>
           </div>
 
           <!-- Sound toggle -->
@@ -203,40 +200,43 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
             key="sound"
             @click="toggleSound"
             :title="soundEnabled ? 'Silenciar alertas' : 'Activar alertas sonoras'"
-            class="w-11 h-11 flex items-center justify-center bg-surface-secondary border-0 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-            :class="soundEnabled ? 'text-primary' : 'text-text-tertiary'"
+            class="w-9 h-9 flex items-center justify-center rounded-lg bg-surface-secondary hover:bg-surface-tertiary transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+            :class="soundEnabled ? 'text-text-primary' : 'text-text-tertiary'"
           >
-            <svg v-if="soundEnabled" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg v-if="soundEnabled" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
               <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
               <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
             </svg>
-            <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
               <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
             </svg>
           </button>
 
-          <!-- Refresh button — same as dashboard -->
+          <!-- Refresh -->
           <button
             key="refresh"
             @click="refetch()"
             :disabled="isRefreshing"
             aria-label="Refrescar comandas"
-            class="w-11 h-11 flex items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Refrescar"
+            class="w-9 h-9 flex items-center justify-center rounded-lg bg-surface-secondary hover:bg-surface-tertiary text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <UiLoadingMatrix v-if="isRefreshing" size="5.5px" />
-            <svg v-else class="w-5 h-5 transition-transform duration-300 hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <UiLoadingMatrix v-if="isRefreshing" size="5px" />
+            <svg v-else class="w-4 h-4 transition-transform duration-300 hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
           </button>
 
-          <!-- Live clock — same pill as other actions -->
-          <div key="clock" class="h-11 px-3 flex items-center bg-surface-secondary rounded-lg select-none" aria-label="Hora actual">
+          <!-- Clock pill -->
+          <div
+            key="clock"
+            class="h-9 px-3 flex items-center rounded-lg bg-surface-secondary select-none"
+            aria-label="Hora actual"
+          >
             <span class="inline-flex items-baseline font-mono tabular-nums">
-              <span class="text-base font-black text-text-primary leading-none">{{ clockHM }}</span>
-              <span class="text-xs font-bold text-text-secondary leading-none">:{{ clockS }}</span>
+              <span class="text-sm font-bold text-text-primary leading-none">{{ clockHM }}</span>
+              <span class="text-[11px] font-semibold text-text-secondary leading-none">:{{ clockS }}</span>
               <span class="text-[9px] font-medium text-text-tertiary leading-none">.{{ clockCs }}</span>
             </span>
           </div>
