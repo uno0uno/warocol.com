@@ -158,20 +158,27 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
       <!-- Header bar — same structure as dashboard layout header -->
       <header class="flex items-center justify-between px-4 py-3 md:px-8 md:py-4 bg-surface border-b border-border flex-shrink-0">
         <!-- Left: station identity -->
-        <div class="flex items-center gap-3 min-w-0">
-          <span
-            class="w-4 h-4 rounded-full flex-shrink-0 ring-2 ring-border"
-            :style="{ backgroundColor: station.color || '#6B7280' }"
-          />
-          <span class="text-lg sm:text-xl md:text-3xl font-bold leading-tight text-text-primary truncate">
+        <div class="flex items-center gap-2 min-w-0">
+          <!-- Station color indicator — square pill like action buttons -->
+          <div
+            class="w-11 h-11 rounded-lg bg-surface-secondary flex-shrink-0 flex items-center justify-center"
+          >
+            <span
+              class="w-4 h-4 rounded-full"
+              :style="{ backgroundColor: station.color || '#6B7280' }"
+            />
+          </div>
+          <!-- Station name -->
+          <span class="text-lg sm:text-xl md:text-2xl font-bold leading-tight text-text-primary truncate">
             {{ station.kitchen_name || station.name }}
           </span>
-          <span
+          <!-- Active count — muted pill, same tone as refresh -->
+          <div
             v-if="activeComandas.length > 0"
-            class="inline-flex items-center justify-center h-6 min-w-[1.5rem] px-1.5 rounded-full bg-primary text-white text-xs font-black flex-shrink-0"
+            class="h-11 px-3 rounded-lg bg-surface-secondary flex items-center justify-center flex-shrink-0"
           >
-            {{ activeComandas.length }}
-          </span>
+            <span class="text-sm font-black text-text-secondary tabular-nums">{{ activeComandas.length }}</span>
+          </div>
         </div>
 
         <!-- Right: actions — TransitionGroup matches dashboard header-actions animation -->
