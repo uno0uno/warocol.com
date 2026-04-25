@@ -77,11 +77,13 @@ const clockInterval = ref<any>(null)
 const clockLabel = computed(() => {
   const h = String(now.value.getHours()).padStart(2, '0')
   const m = String(now.value.getMinutes()).padStart(2, '0')
-  return `${h}:${m}`
+  const s = String(now.value.getSeconds()).padStart(2, '0')
+  const ms = String(Math.floor(now.value.getMilliseconds() / 10)).padStart(2, '0')
+  return `${h}:${m}:${s}.${ms}`
 })
 
 onMounted(() => {
-  clockInterval.value = setInterval(() => { now.value = new Date() }, 1000)
+  clockInterval.value = setInterval(() => { now.value = new Date() }, 10)
 })
 
 // ── Sound notification ──────────────────────────────────────────────────────
