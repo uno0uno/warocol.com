@@ -63,12 +63,17 @@ onMounted(() => {
     if (comandasStatus.value !== 'pending') {
       refetch()
     }
-  }, 5000)
+  }, 30000)
+  // Pre-decode audio buffer immediately (works without gesture)
+  initAudio()
+  // Resume AudioContext on first user gesture (autoplay policy requires this for playback)
+  document.addEventListener('click', initAudio, { once: true })
 })
 
 onUnmounted(() => {
   if (pollInterval.value) clearInterval(pollInterval.value)
   if (clockInterval.value) clearInterval(clockInterval.value)
+  document.removeEventListener('click', initAudio)
 })
 
 // ── Live clock ──────────────────────────────────────────────────────────────
@@ -93,31 +98,52 @@ const soundEnabled = ref(
 )
 const knownIds = ref<Set<string>>(new Set())
 
+// AudioContext + decoded buffer — created/resumed on first user gesture
+let _audioCtx: AudioContext | null = null
+let _audioBuffer: AudioBuffer | null = null
+
+const initAudio = async () => {
+  if (typeof window === 'undefined') return
+  try {
+    if (!_audioCtx) _audioCtx = new AudioContext()
+    // Decode buffer eagerly — works even when context is suspended
+    if (!_audioBuffer) {
+      const res = await fetch('/sounds/kds-new-order.wav')
+      const raw = await res.arrayBuffer()
+      _audioBuffer = await _audioCtx.decodeAudioData(raw)
+    }
+    // Resume requires a user gesture — called again on first click
+    if (_audioCtx.state === 'suspended') await _audioCtx.resume()
+  } catch { /* not available */ }
+}
+
+const playChime = async () => {
+  if (!_audioCtx || !_audioBuffer) return
+  try {
+    if (_audioCtx.state === 'suspended') await _audioCtx.resume()
+    const src = _audioCtx.createBufferSource()
+    src.buffer = _audioBuffer
+    const gain = _audioCtx.createGain()
+    gain.gain.value = 0.7
+    src.connect(gain)
+    gain.connect(_audioCtx.destination)
+    src.start()
+  } catch { /* not available */ }
+}
+
 const toggleSound = () => {
   soundEnabled.value = !soundEnabled.value
   if (typeof window !== 'undefined') {
     localStorage.setItem('kds_sound_enabled', soundEnabled.value ? 'true' : 'false')
   }
+  if (soundEnabled.value) initAudio()
 }
 
 const checkNewComandas = () => {
   if (!soundEnabled.value) return
-  const currentIds = new Set(allComandas.value.map((c: any) => c.id))
+  const currentIds = new Set<string>(allComandas.value.map((c: any) => String(c.id)))
   const hasNew = [...currentIds].some((id) => !knownIds.value.has(id as string))
-  if (hasNew && knownIds.value.size > 0) {
-    try {
-      const ctx = new AudioContext()
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.frequency.value = 880
-      gain.gain.setValueAtTime(0.3, ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
-      osc.start(ctx.currentTime)
-      osc.stop(ctx.currentTime + 0.3)
-    } catch { /* AudioContext not available */ }
-  }
+  if (hasNew && knownIds.value.size > 0) playChime()  // fire-and-forget async
   knownIds.value = currentIds
 }
 
@@ -247,7 +273,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
       <div class="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-6">
 
         <!-- Loading skeleton -->
-        <div v-if="comandasStatus === 'pending' && !allComandas.length" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div v-if="comandasStatus === 'pending' && !allComandas.length" class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div v-for="i in 4" :key="i" class="h-52 rounded-xl bg-surface-secondary animate-pulse" />
         </div>
 
@@ -271,7 +297,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
                 {{ activeComandas.length }}
               </span>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div
                 v-for="comanda in activeComandas"
                 :key="comanda.id"
@@ -290,7 +316,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
                 {{ readyComandas.length }}
               </span>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
               <CocinaComandaCard
                 v-for="comanda in readyComandas"
                 :key="comanda.id"

@@ -35,12 +35,24 @@ const alertLevel = computed(() => {
   return 'normal'
 })
 
-const cardClasses = computed(() => {
+// Card: static border, alert communicated via header strip + subtle bg tint
+const cardBg = computed(() => {
   const levels: Record<string, string> = {
-    ready: 'border-success bg-success/5 dark:bg-success/10',
-    red: 'border-destructive bg-destructive/5 animate-pulse-slow',
-    yellow: 'border-warning bg-warning/5',
-    normal: 'border-border bg-surface'
+    ready:  'bg-success/5',
+    red:    'bg-destructive/5',
+    yellow: 'bg-warning/5',
+    normal: 'bg-surface',
+  }
+  return levels[alertLevel.value] || levels.normal
+})
+
+// Top urgency strip
+const stripClass = computed(() => {
+  const levels: Record<string, string> = {
+    ready:  'bg-success',
+    red:    'bg-destructive strip-pulse',
+    yellow: 'bg-warning',
+    normal: 'bg-border',
   }
   return levels[alertLevel.value] || levels.normal
 })
@@ -86,10 +98,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div 
-    class="flex flex-col rounded-xl border-2 shadow-sm transition-all overflow-hidden"
-    :class="[cardClasses, isUpdating ? 'opacity-70 pointer-events-none' : '']"
+  <div
+    class="flex flex-col rounded-xl border border-border shadow-sm transition-colors overflow-hidden"
+    :class="[cardBg, isUpdating ? 'opacity-70 pointer-events-none' : '']"
   >
+    <!-- Urgency strip -->
+    <div class="h-1.5 w-full transition-colors" :class="stripClass" />
     <!-- Card Header -->
     <div class="px-3 py-2 border-b border-border flex items-center justify-between bg-surface-secondary/50">
       <div class="flex flex-col">
@@ -97,7 +111,7 @@ onUnmounted(() => {
           {{ comanda.station_kitchen_name || 'COMA' }}
         </span>
         <span class="text-2xl font-black leading-none">
-          #{{ String(comanda.comanda_number).padStart(3, '0') }}
+          #{{ comanda.comanda_number }}-{{ String(comanda.comanda_index).padStart(2, '0') }}
         </span>
       </div>
       <div class="flex flex-col items-end text-right">
@@ -147,23 +161,30 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Card Actions -->
-    <div class="p-3 bg-surface-secondary/30 mt-auto border-t border-border flex gap-2">
+    <!-- Card Actions — hidden for POS when status is not pending (backend auto-delivers) -->
+    <div
+      v-if="!(comanda.source_type === 'pos' && comanda.status !== 'pending')"
+      class="p-3 mt-auto border-t border-border flex gap-2"
+    >
 
       <!-- POS/Counter mode: skip 'preparing', go straight to ready -->
       <template v-if="comanda.source_type === 'pos'">
         <template v-if="comanda.status === 'pending'">
           <button
             @click="markAsReady"
-            class="flex-1 h-10 rounded-lg bg-success text-white text-xs font-black uppercase tracking-tight shadow-sm active:scale-95 transition-transform"
+            :disabled="isUpdating"
+            class="flex-1 h-10 rounded-lg border border-success text-success text-xs font-black uppercase tracking-tight active:scale-95 transition-colors hover:bg-success/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
           >
-            Listo
+            <UiLoadingDots v-if="isUpdating" size="7px" color="currentColor" />
+            <span v-else>Listo</span>
           </button>
           <button
             @click="cancelComanda"
-            class="h-10 px-3 rounded-lg border border-border text-text-secondary text-xs font-bold uppercase tracking-tight active:scale-95 transition-transform hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+            :disabled="isUpdating"
+            class="h-10 px-3 rounded-lg border border-border text-text-tertiary text-xs font-bold uppercase tracking-tight active:scale-95 transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
           >
-            Cancelar
+            <UiLoadingDots v-if="isUpdating" size="7px" color="currentColor" />
+            <span v-else>Cancelar</span>
           </button>
         </template>
       </template>
@@ -173,29 +194,37 @@ onUnmounted(() => {
         <template v-if="comanda.status === 'pending'">
           <button
             @click="startPreparing"
-            class="flex-1 h-10 rounded-lg bg-primary text-white text-xs font-black uppercase tracking-tight shadow-sm active:scale-95 transition-transform"
+            :disabled="isUpdating"
+            class="flex-1 h-10 rounded-lg border border-primary text-primary text-xs font-black uppercase tracking-tight active:scale-95 transition-colors hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
           >
-            Empezar
+            <UiLoadingDots v-if="isUpdating" size="7px" color="currentColor" />
+            <span v-else>Empezar</span>
           </button>
           <button
             @click="cancelComanda"
-            class="h-10 px-3 rounded-lg border border-border text-text-secondary text-xs font-bold uppercase tracking-tight active:scale-95 transition-transform hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+            :disabled="isUpdating"
+            class="h-10 px-3 rounded-lg border border-border text-text-tertiary text-xs font-bold uppercase tracking-tight active:scale-95 transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
           >
-            Cancelar
+            <UiLoadingDots v-if="isUpdating" size="7px" color="currentColor" />
+            <span v-else>Cancelar</span>
           </button>
         </template>
         <template v-else-if="comanda.status === 'preparing'">
           <button
             @click="markAsReady"
-            class="flex-1 h-10 rounded-lg bg-success text-white text-xs font-black uppercase tracking-tight shadow-sm active:scale-95 transition-transform"
+            :disabled="isUpdating"
+            class="flex-1 h-10 rounded-lg border border-success text-success text-xs font-black uppercase tracking-tight active:scale-95 transition-colors hover:bg-success/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
           >
-            Listo
+            <UiLoadingDots v-if="isUpdating" size="7px" color="currentColor" />
+            <span v-else>Listo</span>
           </button>
           <button
             @click="cancelComanda"
-            class="h-10 px-3 rounded-lg border border-border text-text-secondary text-xs font-bold uppercase tracking-tight active:scale-95 transition-transform hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+            :disabled="isUpdating"
+            class="h-10 px-3 rounded-lg border border-border text-text-tertiary text-xs font-bold uppercase tracking-tight active:scale-95 transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
           >
-            Cancelar
+            <UiLoadingDots v-if="isUpdating" size="7px" color="currentColor" />
+            <span v-else>Cancelar</span>
           </button>
         </template>
       </template>
@@ -204,9 +233,11 @@ onUnmounted(() => {
       <button
         v-if="comanda.status === 'ready' && comanda.source_type !== 'pos'"
         @click="deliverComanda"
-        class="flex-1 h-10 rounded-lg bg-success text-white text-xs font-black uppercase tracking-tight shadow-sm active:scale-95 transition-transform"
+        :disabled="isUpdating"
+        class="flex-1 h-10 rounded-lg border border-success text-success text-xs font-black uppercase tracking-tight active:scale-95 transition-colors hover:bg-success/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
       >
-        Entregar
+        <UiLoadingDots v-if="isUpdating" size="7px" color="currentColor" />
+        <span v-else>Entregar</span>
       </button>
 
     </div>
@@ -214,11 +245,11 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-@keyframes pulse-slow {
-  0%, 100% { opacity: 1; border-color: var(--destructive); }
-  50% { opacity: 0.8; border-color: transparent; }
+@keyframes strip-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
-.animate-pulse-slow {
-  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.strip-pulse {
+  animation: strip-pulse 1.5s ease-in-out infinite;
 }
 </style>

@@ -74,12 +74,17 @@ const toggleStatus = async () => {
           ? 'bg-success border-success text-white shadow-sm shadow-success/30'
           : 'bg-surface border-border text-titan-300 hover:border-primary hover:text-primary'"
       >
-         <Icon v-if="isUpdating" name="lucide:loader-2" class="w-3.5 h-3.5 animate-spin" />
-         <Icon v-else name="lucide:check" class="w-3.5 h-3.5" />
+        <UiLoadingMatrix v-if="isUpdating" size="4px" />
+        <svg v-else class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 6 9 17 4 12"/>
+        </svg>
       </button>
 
       <div v-else-if="item.status === 'ready'" class="h-7 w-7 flex items-center justify-center text-success">
-         <Icon name="lucide:check-circle-2" class="w-4 h-4" />
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
       </div>
     </template>
   </div>
