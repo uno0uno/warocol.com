@@ -194,9 +194,9 @@ onUnmounted(() => {
         </template>
       </template>
 
-      <!-- Shared: deliver when ready -->
+      <!-- Table mode only: deliver when ready (POS auto-delivers on backend) -->
       <button
-        v-if="comanda.status === 'ready'"
+        v-if="comanda.status === 'ready' && comanda.source_type !== 'pos'"
         @click="deliverComanda"
         class="flex-1 h-10 rounded-lg bg-success text-white text-xs font-black uppercase tracking-tight shadow-sm active:scale-95 transition-transform"
       >
