@@ -7,7 +7,7 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen bg-zinc-950 text-white">
+  <div class="min-h-screen bg-background text-text-primary">
     <slot />
   </div>
 </template>

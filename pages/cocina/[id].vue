@@ -148,16 +148,16 @@ const fontScaleClass = computed(() => ({
     <!-- Loading station -->
     <div v-if="stationStatus === 'pending' && !station" class="flex items-center justify-center h-full">
       <div class="flex flex-col items-center gap-4">
-        <div class="w-12 h-12 rounded-full border-4 border-zinc-700 border-t-white animate-spin" />
-        <p class="text-zinc-400 text-sm">Cargando estación…</p>
+        <div class="w-12 h-12 rounded-full border-4 border-border border-t-primary animate-spin" />
+        <p class="text-text-secondary text-sm">Cargando estación…</p>
       </div>
     </div>
 
     <!-- Station error / not found -->
     <div v-else-if="stationStatus === 'error'" class="flex items-center justify-center h-full text-center px-8">
       <div>
-        <p class="text-2xl font-bold text-red-400 mb-2">Estación no encontrada</p>
-        <p class="text-zinc-400">Verificá la URL o el enlace de acceso.</p>
+        <p class="text-2xl font-bold text-destructive mb-2">Estación no encontrada</p>
+        <p class="text-text-secondary">Verificá la URL o el enlace de acceso.</p>
       </div>
     </div>
 
@@ -165,14 +165,14 @@ const fontScaleClass = computed(() => ({
     <template v-else-if="station">
 
       <!-- Header bar -->
-      <header class="flex items-center justify-between px-4 py-3 bg-zinc-900 border-b border-zinc-800 flex-shrink-0">
+      <header class="flex items-center justify-between px-4 py-3 bg-surface-secondary border-b border-border flex-shrink-0">
         <div class="flex items-center gap-3">
           <!-- Station color dot -->
           <span
-            class="w-4 h-4 rounded-full flex-shrink-0 ring-2 ring-zinc-700"
+            class="w-4 h-4 rounded-full flex-shrink-0 ring-2 ring-border"
             :style="{ backgroundColor: station.color || '#6B7280' }"
           />
-          <span class="text-2xl font-bold leading-none">{{ station.kitchen_name || station.name }}</span>
+          <span class="text-2xl font-bold leading-none text-text-primary">{{ station.kitchen_name || station.name }}</span>
           <!-- Active comanda count -->
           <span
             v-if="activeComandas.length > 0"
@@ -184,14 +184,14 @@ const fontScaleClass = computed(() => ({
 
         <div class="flex items-center gap-3">
           <!-- Live clock -->
-          <span class="text-xl font-mono font-bold text-zinc-300 tabular-nums">{{ clockLabel }}</span>
+          <span class="text-xl font-mono font-bold text-text-secondary tabular-nums">{{ clockLabel }}</span>
 
           <!-- Sound toggle -->
           <button
             @click="toggleSound"
             :title="soundEnabled ? 'Silenciar alertas' : 'Activar alertas sonoras'"
-            class="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors"
-            :class="soundEnabled ? 'text-primary' : 'text-zinc-500'"
+            class="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-xl bg-surface hover:bg-surface-secondary border border-border transition-colors"
+            :class="soundEnabled ? 'text-primary' : 'text-text-tertiary'"
           >
             <Icon :name="soundEnabled ? 'lucide:volume-2' : 'lucide:volume-x'" class="w-5 h-5" />
           </button>
@@ -199,8 +199,8 @@ const fontScaleClass = computed(() => ({
           <!-- Settings -->
           <button
             @click="settingsOpen = !settingsOpen"
-            class="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-xl bg-zinc-800 hover:bg-zinc-700 transition-colors text-zinc-300"
-            :class="settingsOpen ? 'bg-zinc-700' : ''"
+            class="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-xl bg-surface hover:bg-surface-secondary border border-border transition-colors text-text-secondary"
+            :class="settingsOpen ? 'bg-surface-secondary' : ''"
           >
             <Icon name="lucide:settings" class="w-5 h-5" />
           </button>
@@ -210,17 +210,17 @@ const fontScaleClass = computed(() => ({
       <!-- Settings panel (slide-in, no Transition to avoid Vue bug #8105) -->
       <div
         v-if="settingsOpen"
-        class="absolute top-[64px] right-4 z-50 w-64 bg-zinc-800 border border-zinc-700 rounded-2xl shadow-2xl p-4 flex flex-col gap-4"
+        class="absolute top-[64px] right-4 z-50 w-64 bg-surface border border-border rounded-2xl shadow-2xl p-4 flex flex-col gap-4"
       >
-        <h3 class="text-sm font-bold text-zinc-200 uppercase tracking-wider">Ajustes KDS</h3>
+        <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">Ajustes KDS</h3>
 
         <!-- Sound -->
         <div class="flex items-center justify-between">
-          <span class="text-sm text-zinc-300">Alertas de sonido</span>
+          <span class="text-sm text-text-secondary">Alertas de sonido</span>
           <button
             @click="toggleSound"
             class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-            :class="soundEnabled ? 'bg-primary' : 'bg-zinc-600'"
+            :class="soundEnabled ? 'bg-primary' : 'bg-border'"
           >
             <span
               class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
@@ -231,14 +231,14 @@ const fontScaleClass = computed(() => ({
 
         <!-- Font size -->
         <div class="flex flex-col gap-2">
-          <span class="text-sm text-zinc-300">Tamaño de texto</span>
+          <span class="text-sm text-text-secondary">Tamaño de texto</span>
           <div class="flex gap-1">
             <button
               v-for="opt in FONT_SIZES"
               :key="opt.value"
               @click="setFontSize(opt.value)"
               class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors"
-              :class="fontSize === opt.value ? 'bg-primary text-white' : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'"
+              :class="fontSize === opt.value ? 'bg-primary text-white' : 'bg-surface-secondary text-text-secondary hover:bg-surface-tertiary'"
             >
               {{ opt.label }}
             </button>
@@ -251,7 +251,7 @@ const fontScaleClass = computed(() => ({
 
         <!-- Loading skeleton -->
         <div v-if="comandasStatus === 'pending' && !allComandas.length" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div v-for="i in 4" :key="i" class="h-52 rounded-xl bg-zinc-800 animate-pulse" />
+          <div v-for="i in 4" :key="i" class="h-52 rounded-xl bg-surface-secondary animate-pulse" />
         </div>
 
         <!-- Empty state -->
@@ -259,16 +259,16 @@ const fontScaleClass = computed(() => ({
           v-else-if="!allComandas.length"
           class="flex flex-col items-center justify-center flex-1 text-center py-20"
         >
-          <Icon name="lucide:check-circle-2" class="w-16 h-16 text-zinc-600 mb-4" />
-          <p class="text-xl font-bold text-zinc-400">No hay comandas activas en esta estación</p>
+          <Icon name="lucide:check-circle-2" class="w-16 h-16 text-text-tertiary mb-4" />
+          <p class="text-xl font-bold text-text-secondary">No hay comandas activas en esta estación</p>
         </div>
 
         <!-- Active comandas (pending + preparing) -->
         <div v-else>
           <div v-if="activeComandas.length > 0">
             <div class="flex items-center gap-2 mb-3">
-              <h2 class="text-xs font-black uppercase tracking-widest text-zinc-400">Activas</h2>
-              <span class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-zinc-700 text-zinc-300 text-[10px] font-black">
+              <h2 class="text-xs font-black uppercase tracking-widest text-text-secondary">Activas</h2>
+              <span class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-surface-secondary text-text-secondary text-[10px] font-black">
                 {{ activeComandas.length }}
               </span>
             </div>
@@ -286,8 +286,8 @@ const fontScaleClass = computed(() => ({
           <!-- Ready comandas -->
           <div v-if="readyComandas.length > 0" class="mt-6">
             <div class="flex items-center gap-2 mb-3">
-              <h2 class="text-xs font-black uppercase tracking-widest text-emerald-400">Listos para entregar</h2>
-              <span class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-emerald-900 text-emerald-300 text-[10px] font-black">
+              <h2 class="text-xs font-black uppercase tracking-widest text-success">Listos para entregar</h2>
+              <span class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full bg-success/15 text-success text-[10px] font-black">
                 {{ readyComandas.length }}
               </span>
             </div>
