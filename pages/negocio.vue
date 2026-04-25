@@ -697,7 +697,7 @@
                 :key="st.id"
                 class="flex items-center justify-between rounded-lg bg-background border border-border px-3 py-2"
               >
-                <span class="text-xs font-mono text-text-secondary truncate">warocol.com/cocina/{{ st.id }}</span>
+                <span class="text-xs font-mono text-text-secondary truncate">{{ kdsBaseUrl }}/cocina/{{ st.id }}</span>
                 <button
                   @click="copyKdsUrl(st.id)"
                   class="ml-2 p-1 rounded text-text-tertiary hover:text-primary hover:bg-primary/5 transition-colors flex-shrink-0"
@@ -1180,8 +1180,10 @@ const handleToggleKds = async (event: Event) => {
   }
 }
 
+const kdsBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://warocol.com'
+
 const copyKdsUrl = (stationId: string) => {
-  navigator.clipboard.writeText(`https://warocol.com/cocina/${stationId}`)
+  navigator.clipboard.writeText(`${kdsBaseUrl}/cocina/${stationId}`)
   toast.success('URL copiada al portapapeles')
 }
 
