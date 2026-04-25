@@ -113,10 +113,16 @@ onUnmounted(() => {
 
     <!-- Source Info -->
     <div class="px-3 py-1.5 flex items-center gap-2 bg-surface-tertiary/30">
-      <Icon 
-        :name="comanda.source_type === 'table' ? 'lucide:layout-dashboard' : 'lucide:shopping-cart'" 
-        class="w-3.5 h-3.5 text-primary" 
-      />
+      <!-- table icon -->
+      <svg v-if="comanda.source_type === 'table'" class="w-3.5 h-3.5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/>
+        <rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
+      </svg>
+      <!-- shopping-cart icon (pos / other) -->
+      <svg v-else class="w-3.5 h-3.5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+      </svg>
       <span class="text-xs font-bold text-text-primary">
         {{ comanda.table_display_name || 'Venta Rápida' }}
       </span>

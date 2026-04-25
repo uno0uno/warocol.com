@@ -29,7 +29,7 @@ useHead({ title: computed(() => station.value ? `KDS · ${station.value.name}` :
 // ── Comandas fetch ──────────────────────────────────────────────────────────
 const today = new Date().toISOString().split('T')[0]
 
-const { data: comandasData, status: comandasStatus, refetch } = useQuery({
+const { data: comandasData, status: comandasStatus, asyncStatus: comandasAsyncStatus, refetch } = useQuery({
   key: () => ['kds-comandas', stationId.value],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/comandas', {
     params: {
@@ -41,6 +41,7 @@ const { data: comandasData, status: comandasStatus, refetch } = useQuery({
 })
 
 const allComandas = computed(() => comandasData.value?.data ?? [])
+const isRefreshing = computed(() => comandasAsyncStatus.value === 'loading' && allComandas.value.length > 0)
 
 const activeComandas = computed(() =>
   allComandas.value
@@ -183,6 +184,15 @@ const fontScaleClass = computed(() => ({
         </div>
 
         <div class="flex items-center gap-3">
+          <!-- Progressive loading dots -->
+          <div
+            v-if="isRefreshing"
+            class="flex items-center gap-2 h-9 px-3 rounded-lg bg-surface-secondary text-primary"
+            aria-live="polite"
+          >
+            <UiLoadingDots size="9px" class="text-primary" />
+          </div>
+
           <!-- Live clock -->
           <span class="text-xl font-mono font-bold text-text-secondary tabular-nums">{{ clockLabel }}</span>
 
@@ -193,7 +203,17 @@ const fontScaleClass = computed(() => ({
             class="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-xl bg-surface hover:bg-surface-secondary border border-border transition-colors"
             :class="soundEnabled ? 'text-primary' : 'text-text-tertiary'"
           >
-            <Icon :name="soundEnabled ? 'lucide:volume-2' : 'lucide:volume-x'" class="w-5 h-5" />
+            <!-- volume-2 -->
+            <svg v-if="soundEnabled" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+            <!-- volume-x -->
+            <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+            </svg>
           </button>
 
           <!-- Settings -->
@@ -202,7 +222,11 @@ const fontScaleClass = computed(() => ({
             class="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-xl bg-surface hover:bg-surface-secondary border border-border transition-colors text-text-secondary"
             :class="settingsOpen ? 'bg-surface-secondary' : ''"
           >
-            <Icon name="lucide:settings" class="w-5 h-5" />
+            <!-- settings / gear -->
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
           </button>
         </div>
       </header>
@@ -259,7 +283,9 @@ const fontScaleClass = computed(() => ({
           v-else-if="!allComandas.length"
           class="flex flex-col items-center justify-center flex-1 text-center py-20"
         >
-          <Icon name="lucide:check-circle-2" class="w-16 h-16 text-text-tertiary mb-4" />
+          <svg class="w-16 h-16 text-text-tertiary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
+          </svg>
           <p class="text-xl font-bold text-text-secondary">No hay comandas activas en esta estación</p>
         </div>
 
