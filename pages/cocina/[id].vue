@@ -120,31 +120,18 @@ const checkNewComandas = () => {
 
 watch(allComandas, checkNewComandas)
 
-// ── Settings panel ──────────────────────────────────────────────────────────
-const settingsOpen = ref(false)
+// ── Loading phrases (matches dashboard pattern) ────────────────────────────
+const { currentPhrase: loadingPhrase, start: startPhrases, stop: stopPhrases } = useLoadingPhrases([
+  'Actualizando...',
+  'Sincronizando...',
+  'Cargando cambios...',
+])
+watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true })
 
-const FONT_SIZES = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'large', label: 'Grande' },
-  { value: 'xl', label: 'Extra grande' },
-]
-const fontSize = ref(
-  typeof window !== 'undefined' ? (localStorage.getItem('kds_font_size') || 'normal') : 'normal'
-)
-const setFontSize = (size: string) => {
-  fontSize.value = size
-  if (typeof window !== 'undefined') localStorage.setItem('kds_font_size', size)
-}
-
-const fontScaleClass = computed(() => ({
-  normal: '',
-  large: 'kds-font-large',
-  xl: 'kds-font-xl',
-}[fontSize.value] || ''))
 </script>
 
 <template>
-  <div class="flex flex-col h-screen overflow-hidden" :class="fontScaleClass">
+  <div class="flex flex-col h-screen overflow-hidden">
 
     <!-- Loading station -->
     <div v-if="stationStatus === 'pending' && !station" class="flex items-center justify-center h-full">
@@ -165,110 +152,74 @@ const fontScaleClass = computed(() => ({
     <!-- Main KDS UI -->
     <template v-else-if="station">
 
-      <!-- Header bar -->
-      <header class="flex items-center justify-between px-4 py-3 bg-surface-secondary border-b border-border flex-shrink-0">
-        <div class="flex items-center gap-3">
-          <!-- Station color dot -->
+      <!-- Header bar — same structure as dashboard layout header -->
+      <header class="flex items-center justify-between px-4 py-3 md:px-8 md:py-4 bg-surface border-b border-border flex-shrink-0">
+        <!-- Left: station identity -->
+        <div class="flex items-center gap-3 min-w-0">
           <span
             class="w-4 h-4 rounded-full flex-shrink-0 ring-2 ring-border"
             :style="{ backgroundColor: station.color || '#6B7280' }"
           />
-          <span class="text-2xl font-bold leading-none text-text-primary">{{ station.kitchen_name || station.name }}</span>
-          <!-- Active comanda count -->
+          <span class="text-lg sm:text-xl md:text-3xl font-bold leading-tight text-text-primary truncate">
+            {{ station.kitchen_name || station.name }}
+          </span>
           <span
             v-if="activeComandas.length > 0"
-            class="inline-flex items-center justify-center h-6 min-w-[1.5rem] px-1.5 rounded-full bg-primary text-white text-xs font-black"
+            class="inline-flex items-center justify-center h-6 min-w-[1.5rem] px-1.5 rounded-full bg-primary text-white text-xs font-black flex-shrink-0"
           >
             {{ activeComandas.length }}
           </span>
         </div>
 
-        <div class="flex items-center gap-3">
-          <!-- Progressive loading dots -->
+        <!-- Right: actions (mirrors dashboard header actions area) -->
+        <div class="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+
+          <!-- Progressive loading — same as dashboard -->
           <div
             v-if="isRefreshing"
-            class="flex items-center gap-2 h-9 px-3 rounded-lg bg-surface-secondary text-primary"
+            class="hidden md:flex items-center gap-2 h-11 px-3 rounded-lg bg-surface-secondary text-primary"
             aria-live="polite"
           >
             <UiLoadingDots size="9px" class="text-primary" />
+            <span class="text-sm font-medium whitespace-nowrap">{{ loadingPhrase }}</span>
           </div>
 
           <!-- Live clock -->
-          <span class="text-xl font-mono font-bold text-text-secondary tabular-nums">{{ clockLabel }}</span>
+          <span class="text-xl font-mono font-bold text-text-secondary tabular-nums px-1">{{ clockLabel }}</span>
 
           <!-- Sound toggle -->
           <button
             @click="toggleSound"
             :title="soundEnabled ? 'Silenciar alertas' : 'Activar alertas sonoras'"
-            class="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-xl bg-surface hover:bg-surface-secondary border border-border transition-colors"
+            class="w-11 h-11 flex items-center justify-center bg-surface-secondary border-0 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
             :class="soundEnabled ? 'text-primary' : 'text-text-tertiary'"
           >
-            <!-- volume-2 -->
             <svg v-if="soundEnabled" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
               <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
               <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
             </svg>
-            <!-- volume-x -->
             <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
               <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
             </svg>
           </button>
 
-          <!-- Settings -->
+          <!-- Refresh button — same as dashboard -->
           <button
-            @click="settingsOpen = !settingsOpen"
-            class="flex items-center justify-center min-h-[48px] min-w-[48px] rounded-xl bg-surface hover:bg-surface-secondary border border-border transition-colors text-text-secondary"
-            :class="settingsOpen ? 'bg-surface-secondary' : ''"
+            @click="refetch()"
+            :disabled="isRefreshing"
+            aria-label="Refrescar comandas"
+            class="w-11 h-11 flex items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Refrescar"
           >
-            <!-- settings / gear -->
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            <UiLoadingMatrix v-if="isRefreshing" size="5.5px" />
+            <svg v-else class="w-5 h-5 transition-transform duration-300 hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
           </button>
         </div>
       </header>
-
-      <!-- Settings panel (slide-in, no Transition to avoid Vue bug #8105) -->
-      <div
-        v-if="settingsOpen"
-        class="absolute top-[64px] right-4 z-50 w-64 bg-surface border border-border rounded-2xl shadow-2xl p-4 flex flex-col gap-4"
-      >
-        <h3 class="text-sm font-bold text-text-primary uppercase tracking-wider">Ajustes KDS</h3>
-
-        <!-- Sound -->
-        <div class="flex items-center justify-between">
-          <span class="text-sm text-text-secondary">Alertas de sonido</span>
-          <button
-            @click="toggleSound"
-            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-            :class="soundEnabled ? 'bg-primary' : 'bg-border'"
-          >
-            <span
-              class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-              :class="soundEnabled ? 'translate-x-6' : 'translate-x-1'"
-            />
-          </button>
-        </div>
-
-        <!-- Font size -->
-        <div class="flex flex-col gap-2">
-          <span class="text-sm text-text-secondary">Tamaño de texto</span>
-          <div class="flex gap-1">
-            <button
-              v-for="opt in FONT_SIZES"
-              :key="opt.value"
-              @click="setFontSize(opt.value)"
-              class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors"
-              :class="fontSize === opt.value ? 'bg-primary text-white' : 'bg-surface-secondary text-text-secondary hover:bg-surface-tertiary'"
-            >
-              {{ opt.label }}
-            </button>
-          </div>
-        </div>
-      </div>
 
       <!-- Board -->
       <div class="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-6">
@@ -350,11 +301,4 @@ const fontScaleClass = computed(() => ({
   animation: kds-slide-in 0.2s ease-out both;
 }
 
-/* Font scale tiers */
-.kds-font-large {
-  font-size: 1.125rem;
-}
-.kds-font-xl {
-  font-size: 1.25rem;
-}
 </style>
