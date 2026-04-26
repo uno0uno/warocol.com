@@ -69,7 +69,7 @@
               <span class="font-bold text-text-primary">{{ formatCurrency(cierre.totalSales) }}</span>
             </div>
             <div class="flex justify-between px-4 py-2.5 text-sm">
-              <span class="text-text-secondary">Órdenes</span>
+              <span class="text-text-secondary">Órdenes al cerrar</span>
               <span class="font-medium">{{ cierre.itemsSold }}</span>
             </div>
             <div class="flex justify-between px-4 py-2.5 text-sm">
