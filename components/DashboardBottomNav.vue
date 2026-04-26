@@ -110,22 +110,6 @@
             <span class="text-[10px] text-titan-600">POS</span>
           </NuxtLink>
 
-          <NuxtLink
-            to="/cocina"
-            @click="showMenuModal = false"
-            class="flex flex-col items-center gap-1"
-          >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'cocina' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <FireIcon
-                class="w-6 h-6"
-                :class="activePage === 'cocina' ? 'text-crocus-600' : 'text-titan-600'"
-              />
-            </div>
-            <span class="text-[10px] text-titan-600">Cocina</span>
-          </NuxtLink>
 
           <NuxtLink
             to="/abastecimiento/compras-directas"
@@ -415,7 +399,6 @@ import {
   Cog6ToothIcon,
   CheckCircleIcon,
   Bars3Icon,
-  FireIcon,
   KeyIcon,
   MapPinIcon,
   ShoppingCartIcon,
@@ -431,7 +414,7 @@ import { computed, ref } from 'vue'
 import { useLayoutActions } from '../composables/useLayoutActions'
 
 interface Props {
-  activePage?: 'dashboard' | 'pos' | 'despacho' | 'cocina' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'analitica' | 'reportes' | 'configuracion' | 'admin' | 'ventas' | 'inventario' | 'menu' | 'equipo' | 'integraciones' | 'operaciones' | 'finanzas'
+  activePage?: 'dashboard' | 'pos' | 'despacho' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'analitica' | 'reportes' | 'configuracion' | 'admin' | 'ventas' | 'inventario' | 'menu' | 'equipo' | 'integraciones' | 'operaciones' | 'finanzas'
   notificationsCount?: number
 }
 

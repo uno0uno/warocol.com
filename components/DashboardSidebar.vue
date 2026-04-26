@@ -140,7 +140,7 @@ import {
   ComputerDesktopIcon,
   CreditCardIcon,
   CubeIcon,
-  FireIcon,
+
   KeyIcon,
   MagnifyingGlassIcon,
   MapPinIcon,
@@ -153,7 +153,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'pos' | 'despacho' | 'cocina' | 'comandas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'operaciones' | 'finanzas'
+  activePage?: 'dashboard' | 'ventas' | 'pos' | 'despacho' | 'comandas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'operaciones' | 'finanzas'
 }
 const props = withDefaults(defineProps<Props>(), { activePage: 'financiero' })
 
@@ -172,7 +172,7 @@ const primaryItems = computed(() => {
     { to: '/pos',               page: 'pos',       label: 'POS',        icon: ComputerDesktopIcon },
     { to: '/ventas',            page: 'ventas',    label: 'Ventas',     icon: ShoppingCartIcon },
     { to: '/despacho/domicilios', page: 'despacho', label: 'Despacho', icon: MapPinIcon },
-    { to: '/cocina',            page: 'cocina',    label: 'Cocina',     icon: FireIcon },
+
   ]
   return items
 })
