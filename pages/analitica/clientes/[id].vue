@@ -136,9 +136,48 @@ const tableColumns = [
   { key: 'total', title: 'Total', sortable: false },
   { key: 'payment_method', title: 'Forma de pago', sortable: false },
   { key: 'payment_status', title: 'Crédito', sortable: false },
+  { key: 'invoice', title: 'Factura', sortable: false },
   { key: 'status', title: 'Estado', sortable: false },
   { key: 'waros_earned', title: 'Waros', sortable: false },
 ]
+
+// Invoice slideover state
+const showInvoicePanel = ref(false)
+const selectedInvoice = ref<{ id: string; prefix: string; number: number; status: string; cufe: string; orderId: string } | null>(null)
+const invoicePdfUrl = ref('')
+const invoicePdfLoading = ref(false)
+const copiedCufe = ref(false)
+
+const openInvoicePanel = async (order: any) => {
+  if (!order.invoice_id || order.invoice_status !== 'accepted') return
+  selectedInvoice.value = {
+    id: order.invoice_id,
+    prefix: order.invoice_prefix,
+    number: order.invoice_number,
+    status: order.invoice_status,
+    cufe: order.invoice_cufe,
+    orderId: order.order_id,
+  }
+  invoicePdfUrl.value = ''
+  invoicePdfLoading.value = true
+  showInvoicePanel.value = true
+  try {
+    const result = await $fetch<any>(`/api/documents/${order.invoice_id}/pdf`)
+    invoicePdfUrl.value = result.pdf_url || ''
+  } catch {
+    invoicePdfUrl.value = ''
+  } finally {
+    invoicePdfLoading.value = false
+  }
+}
+
+const copyCufe = async (cufe: string) => {
+  try {
+    await navigator.clipboard.writeText(cufe)
+    copiedCufe.value = true
+    setTimeout(() => { copiedCufe.value = false }, 2000)
+  } catch { /* fallback: do nothing */ }
+}
 
 // ── Edit customer ─────────────────────────────────────────────────────────
 const showEditForm = ref(false)
@@ -713,6 +752,27 @@ onUnmounted(() => {
           </span>
         </template>
 
+        <template #cell-invoice="{ row }">
+          <button
+            v-if="row.invoice_status === 'accepted'"
+            @click.stop="openInvoicePanel(row)"
+            class="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+            :aria-label="`Ver factura ${row.invoice_prefix}-${row.invoice_number}`"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
+            {{ row.invoice_prefix }}-{{ row.invoice_number }}
+          </button>
+          <span v-else-if="row.invoice_status === 'pending'" class="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+            <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+            Procesando
+          </span>
+          <span v-else-if="row.invoice_status === 'rejected'" class="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full bg-red-100 text-red-700" :title="row.error_message || 'Rechazada por DIAN'">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+            Rechazada
+          </span>
+          <span v-else class="text-sm text-text-tertiary">—</span>
+        </template>
+
         <template #cell-waros_earned="{ value }">
           <span v-if="value > 0" class="text-sm font-semibold text-amber-700">
             +{{ value.toLocaleString('es-CO') }}
@@ -998,6 +1058,87 @@ onUnmounted(() => {
           </div>
         </div>
       </Transition>
+    </Teleport>
+
+    <!-- Invoice Slideover Panel -->
+    <Teleport to="body">
+      <div v-if="showInvoicePanel" class="fixed inset-0 z-50 flex justify-end">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/40" @click="showInvoicePanel = false"></div>
+        <!-- Panel -->
+        <div class="relative bg-surface w-full max-w-xl shadow-xl flex flex-col h-full overflow-hidden">
+          <!-- Header -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-border">
+            <h3 class="text-lg font-bold text-text-primary">
+              Factura {{ selectedInvoice?.prefix }}-{{ selectedInvoice?.number }}
+            </h3>
+            <button
+              @click="showInvoicePanel = false"
+              class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg hover:bg-surface-secondary transition-colors"
+              aria-label="Cerrar panel de factura"
+            >
+              <svg class="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+
+          <!-- Body -->
+          <div class="flex-1 overflow-y-auto p-6 space-y-4">
+            <!-- CUFE -->
+            <div v-if="selectedInvoice?.cufe" class="space-y-1">
+              <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">CUFE</p>
+              <div class="flex items-start gap-2">
+                <code class="text-xs text-text-secondary font-mono break-all flex-1 bg-surface-secondary rounded-lg p-2">{{ selectedInvoice.cufe }}</code>
+                <button
+                  @click="copyCufe(selectedInvoice.cufe)"
+                  class="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg border border-border hover:bg-surface-secondary transition-colors shrink-0"
+                  :aria-label="copiedCufe ? 'CUFE copiado' : 'Copiar CUFE'"
+                >
+                  <svg v-if="!copiedCufe" class="w-4 h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
+                  <svg v-else class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- PDF preview -->
+            <div class="space-y-2">
+              <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">PDF</p>
+              <div v-if="invoicePdfLoading" class="flex items-center justify-center py-12">
+                <svg class="h-6 w-6 animate-spin text-primary" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+              </div>
+              <iframe
+                v-else-if="invoicePdfUrl"
+                :src="invoicePdfUrl"
+                class="w-full rounded-lg border border-border"
+                style="height: 500px;"
+                title="Vista previa PDF factura"
+              ></iframe>
+              <div v-else class="text-sm text-text-secondary text-center py-8">
+                PDF no disponible
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-border">
+            <a
+              v-if="invoicePdfUrl"
+              :href="invoicePdfUrl"
+              target="_blank"
+              rel="noopener"
+              class="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+              Abrir en nueva pestaña
+            </a>
+            <button
+              @click="showInvoicePanel = false"
+              class="min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-surface border border-border text-text-primary hover:bg-surface-secondary transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
     </Teleport>
   </div>
 </template>
