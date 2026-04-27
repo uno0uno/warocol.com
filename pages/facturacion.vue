@@ -87,6 +87,72 @@ const progressColor = (percent: number) => {
   if (percent >= 70) return 'bg-amber-500'
   return 'bg-green-500'
 }
+
+// ── Fiscal Data ─────────────────────────────────────────────────────────────
+const { data: fiscalData, refetch: refreshFiscal } = useQuery({
+  key: () => ['tenant', 'fiscal-data', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/tenant/fiscal-data'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+const fiscal = computed(() => fiscalData.value?.data ?? null)
+
+const fiscalForm = reactive({
+  nit: '',
+  business_name: '',
+  type_organization_id: 1,
+  tax_regime_id: 2,
+  tax_level_id: 5,
+  fiscal_address: '',
+  city: '',
+  city_id: 149,
+  phone: '',
+  email: '',
+})
+const isSavingFiscal = ref(false)
+
+watch(fiscal, (f) => {
+  if (!f) return
+  fiscalForm.nit = f.nit || ''
+  fiscalForm.business_name = f.business_name || ''
+  fiscalForm.type_organization_id = f.type_organization_id ?? 1
+  fiscalForm.tax_regime_id = f.tax_regime_id ?? 2
+  fiscalForm.tax_level_id = f.tax_level_id ?? 5
+  fiscalForm.fiscal_address = f.fiscal_address || ''
+  fiscalForm.city = f.city || ''
+  fiscalForm.city_id = f.city_id ?? 149
+  fiscalForm.phone = f.phone || ''
+  fiscalForm.email = f.email || ''
+}, { immediate: true })
+
+const saveFiscalData = async () => {
+  isSavingFiscal.value = true
+  try {
+    await $fetch('/api/tenant/fiscal-data', { method: 'PUT', body: { ...fiscalForm } })
+    await refreshFiscal()
+    toast.success('Datos fiscales guardados correctamente', { title: 'Guardado' })
+  } catch (error: any) {
+    toast.error(error.data?.detail || 'Error al guardar datos fiscales', { title: 'Error' })
+  } finally {
+    isSavingFiscal.value = false
+  }
+}
+
+const orgTypes = [
+  { value: 1, label: 'Persona jurídica' },
+  { value: 2, label: 'Persona natural' },
+]
+const taxRegimes = [
+  { value: 1, label: 'Responsable de IVA' },
+  { value: 2, label: 'No responsable del impuesto' },
+]
+const taxLevels = [
+  { value: 1, label: 'Gran contribuyente' },
+  { value: 2, label: 'Autorretenedor' },
+  { value: 3, label: 'Agente de retención' },
+  { value: 4, label: 'Régimen simple' },
+  { value: 5, label: 'No aplica' },
+]
 </script>
 
 <template>
@@ -146,6 +212,136 @@ const progressColor = (percent: number) => {
             <span>Hasta: <span class="font-medium text-text-primary">{{ res.date_to }}</span></span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ══════ DATOS FISCALES ══════ -->
+    <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+      <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" /></svg>
+        Datos Fiscales del Negocio
+      </h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- NIT -->
+        <div class="flex flex-col gap-1">
+          <label for="fiscal-nit" class="text-sm font-medium text-text-primary">NIT <span class="text-red-500">*</span></label>
+          <input
+            id="fiscal-nit"
+            v-model="fiscalForm.nit"
+            type="text"
+            placeholder="901.234.567-8"
+            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+
+        <!-- Razón social -->
+        <div class="flex flex-col gap-1">
+          <label for="fiscal-name" class="text-sm font-medium text-text-primary">Razón social <span class="text-red-500">*</span></label>
+          <input
+            id="fiscal-name"
+            v-model="fiscalForm.business_name"
+            type="text"
+            placeholder="MI RESTAURANTE SAS"
+            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+
+        <!-- Tipo organización -->
+        <div class="flex flex-col gap-1">
+          <label for="fiscal-org" class="text-sm font-medium text-text-primary">Tipo de organización</label>
+          <select
+            id="fiscal-org"
+            v-model="fiscalForm.type_organization_id"
+            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+          >
+            <option v-for="opt in orgTypes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+
+        <!-- Régimen tributario -->
+        <div class="flex flex-col gap-1">
+          <label for="fiscal-regime" class="text-sm font-medium text-text-primary">Régimen tributario</label>
+          <select
+            id="fiscal-regime"
+            v-model="fiscalForm.tax_regime_id"
+            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+          >
+            <option v-for="opt in taxRegimes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+
+        <!-- Nivel de responsabilidad -->
+        <div class="flex flex-col gap-1">
+          <label for="fiscal-level" class="text-sm font-medium text-text-primary">Nivel de responsabilidad</label>
+          <select
+            id="fiscal-level"
+            v-model="fiscalForm.tax_level_id"
+            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+          >
+            <option v-for="opt in taxLevels" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+
+        <!-- Dirección fiscal -->
+        <div class="flex flex-col gap-1">
+          <label for="fiscal-address" class="text-sm font-medium text-text-primary">Dirección fiscal</label>
+          <input
+            id="fiscal-address"
+            v-model="fiscalForm.fiscal_address"
+            type="text"
+            placeholder="Cra 7 #45-12"
+            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+
+        <!-- Ciudad -->
+        <div class="flex flex-col gap-1">
+          <label for="fiscal-city" class="text-sm font-medium text-text-primary">Ciudad</label>
+          <input
+            id="fiscal-city"
+            v-model="fiscalForm.city"
+            type="text"
+            placeholder="Bogotá"
+            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+
+        <!-- Teléfono -->
+        <div class="flex flex-col gap-1">
+          <label for="fiscal-phone" class="text-sm font-medium text-text-primary">Teléfono</label>
+          <input
+            id="fiscal-phone"
+            v-model="fiscalForm.phone"
+            type="tel"
+            placeholder="3001234567"
+            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+
+        <!-- Email facturación -->
+        <div class="flex flex-col gap-1 sm:col-span-2">
+          <label for="fiscal-email" class="text-sm font-medium text-text-primary">Email facturación</label>
+          <input
+            id="fiscal-email"
+            v-model="fiscalForm.email"
+            type="email"
+            placeholder="facturacion@mirestaurante.com"
+            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+      </div>
+
+      <!-- Save button -->
+      <div class="mt-5 flex justify-end">
+        <button
+          @click="saveFiscalData"
+          :disabled="isSavingFiscal || !fiscalForm.nit || !fiscalForm.business_name"
+          class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
+        >
+          <CheckIcon v-if="!isSavingFiscal" class="w-4 h-4" aria-hidden="true" />
+          <span>{{ isSavingFiscal ? 'Guardando...' : 'Guardar datos fiscales' }}</span>
+        </button>
       </div>
     </div>
 
