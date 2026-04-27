@@ -62,6 +62,50 @@ const { data: itemsData, status: itemsStatus, asyncStatus: itemsAsyncStatus, ref
   staleTime: 60_000,
 })
 
+// Load invoice for this order (404 = no invoice, not an error)
+const { data: invoiceData, refetch: refetchInvoice } = useQuery({
+  key: () => ['order-invoice', currentTenant.value?.id, orderId.value],
+  query: async () => {
+    try {
+      return await $fetch(`/api/orders/${orderId.value}/invoice`) as any
+    } catch (e: any) {
+      if (e.status === 404 || e.statusCode === 404) return null
+      throw e
+    }
+  },
+  enabled: () => !!currentTenant.value && !!orderId.value,
+  staleTime: 60_000,
+})
+
+// Invoice emit state
+const isEmittingInvoice = ref(false)
+const emitInvoiceError = ref('')
+const copiedCufe = ref(false)
+
+const emitInvoice = async () => {
+  if (isEmittingInvoice.value) return
+  isEmittingInvoice.value = true
+  emitInvoiceError.value = ''
+  try {
+    await $fetch(`/api/orders/${orderId.value}/invoice`, { method: 'POST' })
+    await refetchInvoice()
+  } catch (e: any) {
+    emitInvoiceError.value = e.data?.detail || e.data?.message || e.message || 'Error al emitir factura'
+  } finally {
+    isEmittingInvoice.value = false
+  }
+}
+
+const copyCufe = async (cufe: string) => {
+  try {
+    await navigator.clipboard.writeText(cufe)
+    copiedCufe.value = true
+    setTimeout(() => { copiedCufe.value = false }, 2000)
+  } catch {
+    // Fallback: do nothing
+  }
+}
+
 const isLoading = computed(() => !orderData.value && !fetchError.value)
 const itemsLoading = computed(() => !itemsData.value)
 const isRefreshing = computed(() =>
@@ -70,7 +114,7 @@ const isRefreshing = computed(() =>
 )
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const handleRefresh = async () => {
-  await Promise.all([refetchOrder(), refetchItems()])
+  await Promise.all([refetchOrder(), refetchItems(), refetchInvoice()])
 }
 registerProgressiveLoading(isRefreshing)
 
@@ -410,6 +454,102 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <!-- Electronic Invoice Section -->
+      <div class="bg-surface border border-border rounded-xl p-5 space-y-3">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+          </svg>
+          <h2 class="text-xs font-bold text-text-tertiary uppercase tracking-widest">Factura Electrónica</h2>
+        </div>
+
+        <!-- Invoice exists -->
+        <template v-if="invoiceData">
+          <div class="space-y-2.5">
+            <!-- Number + status badge -->
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-lg font-bold text-text-primary">{{ invoiceData.prefix }}-{{ invoiceData.invoice_number }}</span>
+              <span
+                class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
+                :class="{
+                  'bg-green-100 text-green-700': invoiceData.status === 'accepted',
+                  'bg-amber-100 text-amber-700': invoiceData.status === 'pending',
+                  'bg-red-100 text-red-700': invoiceData.status === 'rejected',
+                }"
+              >
+                <svg v-if="invoiceData.status === 'accepted'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                <svg v-else-if="invoiceData.status === 'pending'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                <svg v-else class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+                {{ invoiceData.status === 'accepted' ? 'Aceptada' : invoiceData.status === 'pending' ? 'Pendiente' : 'Rechazada' }}
+              </span>
+            </div>
+
+            <!-- CUFE with copy -->
+            <div v-if="invoiceData.cufe" class="flex items-center gap-2">
+              <span class="text-xs text-text-secondary font-mono truncate flex-1">CUFE: {{ invoiceData.cufe.substring(0, 30) }}...</span>
+              <button
+                @click="copyCufe(invoiceData.cufe)"
+                class="min-h-[32px] min-w-[32px] flex items-center justify-center rounded-lg border border-border hover:bg-surface-secondary transition-colors"
+                :aria-label="copiedCufe ? 'CUFE copiado' : 'Copiar CUFE'"
+              >
+                <svg v-if="!copiedCufe" class="w-3.5 h-3.5 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
+                <svg v-else class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
+              </button>
+            </div>
+
+            <!-- Emitted at -->
+            <div v-if="invoiceData.emitted_at" class="text-xs text-text-secondary">
+              Emitida: {{ useFormatters().formatDate(invoiceData.emitted_at) }}
+            </div>
+
+            <!-- PDF download -->
+            <a
+              v-if="invoiceData.status === 'accepted' && invoiceData.pdf_presigned_url"
+              :href="invoiceData.pdf_presigned_url"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+              Descargar PDF
+            </a>
+
+            <!-- Error message for rejected -->
+            <div v-if="invoiceData.status === 'rejected' && invoiceData.error_message" class="flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-lg p-2.5">
+              <svg class="w-3.5 h-3.5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+              <span>{{ invoiceData.error_message }}</span>
+            </div>
+          </div>
+        </template>
+
+        <!-- No invoice — completed order: show emit button -->
+        <template v-else-if="order.status === 'completed'">
+          <p class="text-sm text-text-secondary">Sin factura electrónica</p>
+          <button
+            @click="emitInvoice"
+            :disabled="isEmittingInvoice"
+            class="min-h-[44px] w-full py-2 px-4 rounded-lg text-sm font-medium transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-surface border border-border text-text-primary hover:bg-surface-secondary flex items-center justify-center gap-2"
+          >
+            <template v-if="isEmittingInvoice">
+              <svg class="h-4 w-4 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+              Generando factura DIAN...
+            </template>
+            <template v-else>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+              Emitir factura electrónica
+            </template>
+          </button>
+          <p v-if="emitInvoiceError" class="text-xs text-red-600 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+            {{ emitInvoiceError }}
+          </p>
+        </template>
+
+        <!-- No invoice — order not completed -->
+        <template v-else>
+          <p class="text-sm text-text-tertiary">Disponible al completar la orden</p>
+        </template>
+      </div>
 
       <!-- Status Update Panel (mesa and barra orders) -->
       <div v-if="order.source === 'mesa' || order.source === 'barra'" class="bg-surface border border-border rounded-xl p-5 space-y-4">
