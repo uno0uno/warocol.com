@@ -3,6 +3,7 @@ import { ref, computed, inject, watch, onMounted, onUnmounted, nextTick } from '
 import { storeToRefs } from 'pinia'
 import { $fetch } from 'ofetch'
 import { useQuery } from '@pinia/colada'
+import QRCode from 'qrcode'
 import { usePOSStore } from '~/stores/usePOSStore'
 import { PAYMENT_DEFAULTS, type PosPaymentGroup, type PosPaymentMethod } from '~/utils/paymentDefaults'
 
@@ -51,13 +52,19 @@ const discountInput = ref('')
 
 // Success modal state
 const showSuccessModal = ref(false)
-const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string; discount_amount?: number; subtotal?: number; standard_tax?: number; liquor_tax?: number; standard_tax_label?: string } | null>(null)
+const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string; discount_amount?: number; subtotal?: number; standard_tax?: number; liquor_tax?: number; standard_tax_label?: string; order_id?: string } | null>(null)
 const wasMesaMode = ref(false)
 const receiptEmail = ref('')
 const emailSent = ref(false)
 const emailFromProfile = ref(false)
 const isSendingEmail = ref(false)
 const cartItemsSnapshot = ref<any[]>([])
+
+// Invoice state
+const invoiceLoading = ref(false)
+const invoiceResult = ref<{ cufe: string; invoice_number: number; prefix: string; pdf_presigned_url: string | null; status: string } | null>(null)
+const invoiceError = ref('')
+const invoiceQrDataUrl = ref('')
 
 // Customer identification via modal
 const showCustomerModal = ref(false)
@@ -452,6 +459,7 @@ const processOrder = async () => {
         ? selectedGroup.value?.methods.find(m => m.id === selectedPaymentMethodId.value)?.name
         : undefined
       orderResult.value = {
+        order_id: response.data.order_id,
         order_number: response.data.order_number,
         total_amount: response.data.total_amount,
         payment_method: response.data.payment_method,
@@ -547,11 +555,39 @@ const cancelOrder = async () => {
 const closeSuccessModal = () => {
   showSuccessModal.value = false
   emailFromProfile.value = false
+  invoiceResult.value = null
+  invoiceError.value = ''
+  invoiceQrDataUrl.value = ''
   if (wasMesaMode.value) {
     cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
     router.push('/pos')
   } else {
     router.push('/pos')
+  }
+}
+
+const generateInvoice = async () => {
+  if (!orderResult.value?.order_id || invoiceLoading.value) return
+  invoiceLoading.value = true
+  invoiceError.value = ''
+  try {
+    const result = await $fetch(`/api/orders/${orderResult.value.order_id}/invoice`, { method: 'POST' }) as any
+    invoiceResult.value = {
+      cufe: result.cufe || '',
+      invoice_number: result.invoice_number,
+      prefix: result.prefix,
+      pdf_presigned_url: result.pdf_presigned_url || null,
+      status: result.status,
+    }
+    // Generate QR for print receipt
+    if (result.cufe) {
+      const dianUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${result.cufe}`
+      invoiceQrDataUrl.value = await QRCode.toDataURL(dianUrl, { width: 150, margin: 1 })
+    }
+  } catch (e: any) {
+    invoiceError.value = e.data?.detail || e.data?.message || e.message || 'Error al generar factura'
+  } finally {
+    invoiceLoading.value = false
   }
 }
 
@@ -586,6 +622,9 @@ const sendReceiptEmail = async () => {
         standard_tax: orderResult.value.standard_tax ?? 0,
         liquor_tax: orderResult.value.liquor_tax ?? 0,
         standard_tax_label: orderResult.value.standard_tax_label ?? 'Impuesto',
+        invoice_prefix: invoiceResult.value?.prefix ?? null,
+        invoice_number: invoiceResult.value?.invoice_number ?? null,
+        invoice_cufe: invoiceResult.value?.cufe ?? null,
       }
     })
     emailSent.value = true
@@ -1661,6 +1700,64 @@ onUnmounted(() => {
             </div>
           </div>
 
+          <!-- Electronic invoice (DIAN) — only for standard POS flow with order_id -->
+          <div v-if="orderResult?.order_id" class="mb-4">
+            <!-- Not requested yet -->
+            <template v-if="!invoiceResult && !invoiceLoading && !invoiceError">
+              <button
+                @click="generateInvoice"
+                class="w-full min-h-[44px] py-2 px-4 bg-surface border border-border text-text-primary text-sm font-medium rounded-lg hover:bg-surface-secondary active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                </svg>
+                Generar factura electrónica DIAN
+              </button>
+            </template>
+
+            <!-- Loading -->
+            <div v-else-if="invoiceLoading" class="flex items-center justify-center gap-2 py-3 px-4 bg-surface-secondary rounded-lg">
+              <svg class="h-4 w-4 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+              <span class="text-sm text-text-secondary">Generando factura DIAN... esto puede tomar unos segundos</span>
+            </div>
+
+            <!-- Success -->
+            <div v-else-if="invoiceResult" class="rounded-lg border border-green-200 bg-green-50 p-3 space-y-2">
+              <div class="flex items-center gap-2 text-green-700">
+                <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                <span class="text-sm font-medium">Factura {{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}</span>
+              </div>
+              <p class="text-xs text-green-600 break-all">CUFE: {{ invoiceResult.cufe }}</p>
+              <a
+                v-if="invoiceResult.pdf_presigned_url"
+                :href="invoiceResult.pdf_presigned_url"
+                target="_blank"
+                rel="noopener"
+                class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                Descargar PDF
+              </a>
+            </div>
+
+            <!-- Error -->
+            <div v-else-if="invoiceError" class="rounded-lg border border-red-200 bg-red-50 p-3 space-y-2">
+              <div class="flex items-center gap-2 text-red-700">
+                <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+                <span class="text-sm font-medium">{{ invoiceError }}</span>
+              </div>
+              <button
+                @click="generateInvoice"
+                class="text-xs font-medium text-red-600 hover:underline"
+              >
+                Reintentar
+              </button>
+            </div>
+          </div>
+
           <!-- Receipt actions -->
           <div class="mb-4 space-y-3">
             <!-- Email receipt -->
@@ -1776,6 +1873,18 @@ onUnmounted(() => {
     <div class="receipt-row">{{ getPaymentMethodLabel(orderResult?.payment_method ?? '') }}</div>
     <div class="receipt-divider">================================</div>
     <div class="receipt-footer">¡Gracias por tu compra!</div>
+    <!-- DIAN invoice section on printed receipt -->
+    <template v-if="invoiceResult">
+      <div class="receipt-divider">================================</div>
+      <div class="receipt-row" style="font-weight:bold;">FACTURA ELECTRÓNICA</div>
+      <div class="receipt-row">{{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}</div>
+      <div class="receipt-row receipt-small" style="word-break:break-all;">CUFE: {{ invoiceResult.cufe }}</div>
+      <div v-if="invoiceQrDataUrl" style="text-align:center;margin:4px 0;">
+        <img :src="invoiceQrDataUrl" alt="QR verificación DIAN" class="receipt-qr" />
+      </div>
+      <div class="receipt-row receipt-small">Verificar en catalogo-vpfe.dian.gov.co</div>
+      <div class="receipt-divider">================================</div>
+    </template>
   </div>
   </div>
 </template>
@@ -1799,6 +1908,7 @@ onUnmounted(() => {
 .receipt-item span:first-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .receipt-item span:last-child { white-space: nowrap; flex-shrink: 0; }
 .receipt-total { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; margin: 4px 0; }
+.receipt-qr { width: 30mm; height: 30mm; margin: 4px auto; display: block; }
 .receipt-footer { text-align: center; margin-top: 8px; }
 .receipt-small { font-size: 0.85em; }
 </style>
