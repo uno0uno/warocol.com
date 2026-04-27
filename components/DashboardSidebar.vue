@@ -140,7 +140,7 @@ import {
   ComputerDesktopIcon,
   CreditCardIcon,
   CubeIcon,
-
+  DocumentTextIcon,
   KeyIcon,
   MagnifyingGlassIcon,
   MapPinIcon,
@@ -153,7 +153,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'pos' | 'despacho' | 'comandas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'operaciones' | 'finanzas'
+  activePage?: 'dashboard' | 'ventas' | 'pos' | 'despacho' | 'comandas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'operaciones' | 'finanzas' | 'facturacion'
 }
 const props = withDefaults(defineProps<Props>(), { activePage: 'financiero' })
 
@@ -180,6 +180,7 @@ const primaryItems = computed(() => {
 const secondaryItems = [
   { to: '/analitica',                        page: 'analytics',     label: 'Analítica Ventas', icon: ChartBarIcon },
   { to: '/finanzas/arqueo',                  page: 'finanzas',      label: 'Finanzas',       icon: BanknotesIcon },
+  { to: '/facturacion',                      page: 'facturacion',   label: 'Facturación',    icon: DocumentTextIcon },
   { to: '/menu/productos',                   page: 'menu',          label: 'Menú',           icon: CubeIcon },
   { to: '/operaciones/comandas',             page: 'operaciones',   label: 'Operaciones',    icon: AdjustmentsHorizontalIcon },
   { to: '/abastecimiento/compras-directas',  page: 'abastecimiento',label: 'Abastecimiento', icon: TruckIcon },

@@ -481,144 +481,6 @@
         </template>
       </div>
 
-      <!-- ══════ CONFIGURACIÓN FISCAL ══════ -->
-      <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-          <ReceiptPercentIcon class="w-5 h-5 text-primary flex-shrink-0" />
-          Configuración fiscal
-        </h3>
-
-        <div class="space-y-5">
-
-          <!-- INC -->
-          <div class="space-y-3">
-            <div class="flex items-center justify-between py-1">
-              <div>
-                <p class="text-sm font-medium text-text-primary">INC — Impoconsumo 8%</p>
-                <p class="text-xs text-text-secondary mt-0.5">Restaurantes y bares sin franquicia (Art. 512-1 ET)</p>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
-                <input v-model="taxForm.inc_applicable" type="checkbox" class="sr-only peer" />
-                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-              </label>
-            </div>
-            <div v-if="taxForm.inc_applicable" class="grid grid-cols-2 gap-2 mt-1" role="group" aria-label="Cómo aplicar el INC">
-              <button
-                type="button"
-                @click="taxForm.inc_included_in_price = true"
-                :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
-                  taxForm.inc_included_in_price
-                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-                ]"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
-                </svg>
-                <span class="text-xs font-bold leading-tight">Incluido en el precio</span>
-                <span :class="['text-[10px] leading-snug', taxForm.inc_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">El 8% ya está dentro del precio. Ej: $10.800 → base $10.000 + INC $800</span>
-              </button>
-              <button
-                type="button"
-                @click="taxForm.inc_included_in_price = false"
-                :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
-                  !taxForm.inc_included_in_price
-                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-                ]"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span class="text-xs font-bold leading-tight">Se suma al precio</span>
-                <span :class="['text-[10px] leading-snug', !taxForm.inc_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">El 8% se agrega encima. Ej: $10.000 base → cobro $10.800</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="border-t border-border/40" />
-
-          <!-- IVA -->
-          <div class="space-y-3">
-            <div class="flex items-center justify-between py-1">
-              <div>
-                <p class="text-sm font-medium text-text-primary">IVA — 19%</p>
-                <p class="text-xs text-text-secondary mt-0.5">Solo para establecimientos bajo franquicia (Form. DIAN 300)</p>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
-                <input v-model="taxForm.iva_applicable" type="checkbox" class="sr-only peer" />
-                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-              </label>
-            </div>
-            <div v-if="taxForm.iva_applicable" class="grid grid-cols-2 gap-2 mt-1" role="group" aria-label="Cómo aplicar el IVA">
-              <button
-                type="button"
-                @click="taxForm.iva_included_in_price = true"
-                :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
-                  taxForm.iva_included_in_price
-                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-                ]"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10M7 12h10M7 17h6" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a1 1 0 011-1h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6z" />
-                </svg>
-                <span class="text-xs font-bold leading-tight">Incluido en el precio</span>
-                <span :class="['text-[10px] leading-snug', taxForm.iva_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">El 19% ya está dentro del precio. Ej: $11.900 → base $10.000 + IVA $1.900</span>
-              </button>
-              <button
-                type="button"
-                @click="taxForm.iva_included_in_price = false"
-                :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
-                  !taxForm.iva_included_in_price
-                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-                ]"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span class="text-xs font-bold leading-tight">Se suma al precio</span>
-                <span :class="['text-[10px] leading-snug', !taxForm.iva_included_in_price ? 'text-primary/80' : 'text-text-tertiary']">El 19% se agrega encima. Ej: $10.000 base → cobro $11.900</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="border-t border-border/40" />
-
-          <!-- IVA Licores -->
-          <div class="flex items-center justify-between py-1">
-            <div>
-              <p class="text-sm font-medium text-text-primary">IVA Licores para llevar — 5%</p>
-              <p class="text-xs text-text-secondary mt-0.5">Si vendés botellas o licores para llevar (siempre se suma al precio base)</p>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
-              <input v-model="taxForm.liquor_tax_applicable" type="checkbox" class="sr-only peer" />
-              <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-            </label>
-          </div>
-
-        </div>
-
-        <!-- Save button -->
-        <div class="mt-5 flex justify-end">
-          <button
-            @click="saveTaxConfig"
-            :disabled="isSavingTax"
-            class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
-          >
-            <CheckIcon v-if="!isSavingTax" class="w-4 h-4" aria-hidden="true" />
-            <span>{{ isSavingTax ? 'Guardando...' : 'Guardar configuración' }}</span>
-          </button>
-        </div>
-      </div>
-
     </div>
 
     <!-- Image Upload Modal -->
@@ -645,7 +507,6 @@ import {
   PencilSquareIcon,
   CheckIcon,
   ArrowUpTrayIcon,
-  ReceiptPercentIcon,
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({ layout: 'dashboard' })
@@ -665,49 +526,7 @@ const isRefreshing = computed(() => profileAsyncStatus.value === 'loading' && pr
 const businessProfile = computed(() => profileData.value?.data ?? null)
 const toast = useToast()
 
-// ─── Tax config ───
-const { data: taxConfigData, refetch: refreshTaxConfig } = useQuery({
-  key: () => ['tenant', 'tax-config', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/tax-config'),
-  enabled: () => !!currentTenant.value,
-  staleTime: 30_000,
-})
-const taxConfig = computed(() => taxConfigData.value?.data ?? null)
-
-const taxForm = reactive({
-  inc_applicable: false,
-  inc_included_in_price: true,
-  iva_applicable: false,
-  iva_included_in_price: false,
-  liquor_tax_applicable: false,
-})
-const isSavingTax = ref(false)
-
-watch(taxConfig, (cfg) => {
-  if (!cfg) return
-  taxForm.inc_applicable = cfg.inc_applicable
-  taxForm.inc_included_in_price = cfg.inc_included_in_price
-  taxForm.iva_applicable = cfg.iva_applicable
-  taxForm.iva_included_in_price = cfg.iva_included_in_price
-  taxForm.liquor_tax_applicable = cfg.liquor_tax_applicable
-}, { immediate: true })
-
-// INC and IVA are mutually exclusive
-watch(() => taxForm.inc_applicable, (val) => { if (val) taxForm.iva_applicable = false })
-watch(() => taxForm.iva_applicable, (val) => { if (val) taxForm.inc_applicable = false })
-
-const saveTaxConfig = async () => {
-  isSavingTax.value = true
-  try {
-    await $fetch('/api/api/tenant/tax-config', { method: 'PUT', body: { ...taxForm } })
-    await refreshTaxConfig()
-    toast.success('Configuración fiscal guardada correctamente', { title: 'Guardado' })
-  } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al guardar configuración fiscal', { title: 'Error' })
-  } finally {
-    isSavingTax.value = false
-  }
-}
+// Tax config moved to /facturacion page
 
 // ─── Edit state ───
 const isEditMode = ref(false)
