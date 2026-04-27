@@ -170,3 +170,11 @@ warocol.com/
 - [Warolabs Backend](https://github.com/uno0uno/warolabs.com)
 - [Inspiración Comunidad](https://www.indiehackers.com/)
 - [Deployment](https://nuxt.com/docs/getting-started/deployment)
+
+## 💰 Bounty Contribution
+
+- **Task:** feat: POS checkout — toggle de factura electrónica al finalizar venta
+- **Reward:** $45000
+- **Source:** GitHub-Paid
+- **Date:** 2026-04-27
+
