@@ -356,7 +356,6 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
     </template>
 
   </div>
-  </div>
 </template>
 
 <style scoped>
