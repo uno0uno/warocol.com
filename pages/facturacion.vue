@@ -116,6 +116,9 @@ const { data: statusData, asyncStatus: statusAsyncStatus, refetch: refetchStatus
 })
 const facturacionStatus = computed(() => statusData.value?.data ?? null)
 
+// ── Initial loading state ────────────────────────────────────────────────────
+const isLoading = computed(() => !resolutionsData.value && !statusData.value)
+
 // ── Progressive loading + refresh ───────────────────────────────────────────
 const isRefreshing = computed(() =>
   (resAsyncStatus.value === 'loading' && resolutionsData.value != null) ||
@@ -252,7 +255,12 @@ const taxLevels = [
 </script>
 
 <template>
-  <div class="space-y-6">
+  <!-- Initial loading -->
+  <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+    <CommonsTheCustomLoader size="large" />
+  </div>
+
+  <div v-else class="space-y-6">
 
     <!-- ══════ RESOLUCIÓN DIAN ══════ -->
     <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
