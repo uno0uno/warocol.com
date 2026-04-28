@@ -13,7 +13,7 @@ const { currentTenant } = useTenantReactive()
 
 // Payment groups for label resolution and method buttons
 const { data: paymentGroupsData } = useQuery({
-  key: () => ['payments', 'groups', currentTenant.value?.id],
+  key: () => ['payments', 'groups', currentTenant.value?.id ?? null],
   query: () => $fetch<{ success: boolean; data: { id: string; slug: string; name: string; methods: { id: string; name: string }[] }[] }>('/api/pos/payment-methods'),
   enabled: () => !!currentTenant.value,
   staleTime: 300_000,
@@ -42,7 +42,7 @@ const selectedPaymentMethod = ref('')
 
 // Load order details
 const { data: orderData, status: orderStatus, asyncStatus: orderAsyncStatus, error: fetchError, refetch: refetchOrder } = useQuery({
-  key: () => ['orders', currentTenant.value?.id, orderId.value],
+  key: () => ['orders', currentTenant.value?.id ?? null, orderId.value],
   query: async () => {
     const response = await $fetch(`/api/orders/${orderId.value}`) as any
     return response.data
@@ -53,7 +53,7 @@ const { data: orderData, status: orderStatus, asyncStatus: orderAsyncStatus, err
 
 // Load order items
 const { data: itemsData, status: itemsStatus, asyncStatus: itemsAsyncStatus, refetch: refetchItems } = useQuery({
-  key: () => ['orders', currentTenant.value?.id, orderId.value, 'items'],
+  key: () => ['orders', currentTenant.value?.id ?? null, orderId.value, 'items'],
   query: async () => {
     const response = await $fetch(`/api/orders/${orderId.value}/items`) as any
     return response.data
@@ -64,7 +64,7 @@ const { data: itemsData, status: itemsStatus, asyncStatus: itemsAsyncStatus, ref
 
 // Load invoice for this order (404 = no invoice, not an error)
 const { data: invoiceData, refetch: refetchInvoice } = useQuery({
-  key: () => ['order-invoice', currentTenant.value?.id, orderId.value],
+  key: () => ['order-invoice', currentTenant.value?.id ?? null, orderId.value],
   query: async () => {
     try {
       return await $fetch(`/api/orders/${orderId.value}/invoice`) as any
@@ -388,13 +388,11 @@ onUnmounted(() => {
         </div>
 
         <!-- Payment Method -->
-        <component
-          :is="order.split_payments && order.split_payments.length > 0 ? 'button' : 'div'"
+        <component :is="order.split_payments && order.split_payments.length > 0 ? 'button' : 'div'"
           class="bg-surface border-2 border-info rounded-xl p-4 text-left w-full"
           :class="order.split_payments && order.split_payments.length > 0 ? 'hover:bg-surface-secondary/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-info/30' : ''"
           @click="order.split_payments && order.split_payments.length > 0 ? showSplitPaymentsPanel = true : null"
-          :aria-label="order.split_payments && order.split_payments.length > 0 ? 'Ver detalle de cobro dividido' : undefined"
-        >
+          :aria-label="order.split_payments && order.split_payments.length > 0 ? 'Ver detalle de cobro dividido' : undefined">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Método de Pago</p>
           <div class="flex items-center justify-between gap-2">
             <p class="text-lg font-bold text-info leading-tight">
@@ -405,7 +403,8 @@ onUnmounted(() => {
                 {{ resolveLabel(order.payment_method, order.payment_method_id) }}
               </template>
             </p>
-            <svg v-if="order.split_payments && order.split_payments.length > 0" class="w-4 h-4 text-info flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg v-if="order.split_payments && order.split_payments.length > 0" class="w-4 h-4 text-info flex-shrink-0"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </div>
@@ -414,22 +413,24 @@ onUnmounted(() => {
         <!-- Source / Origin -->
         <div class="bg-surface border border-border rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Origen</p>
-          <span
-            class="inline-flex items-center gap-1.5 text-sm font-bold px-2.5 py-1 rounded-full"
-            :class="{
-              'bg-amber-100 text-amber-700': order.source === 'barra',
-              'bg-crocus-100 text-crocus-700': order.source === 'mesa',
-              'bg-blue-100 text-blue-700': order.source === 'pos' || !order.source,
-            }"
-          >
-            <svg v-if="order.source === 'barra'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+          <span class="inline-flex items-center gap-1.5 text-sm font-bold px-2.5 py-1 rounded-full" :class="{
+            'bg-amber-100 text-amber-700': order.source === 'barra',
+            'bg-crocus-100 text-crocus-700': order.source === 'mesa',
+            'bg-blue-100 text-blue-700': order.source === 'pos' || !order.source,
+          }">
+            <svg v-if="order.source === 'barra'" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
             </svg>
-            <svg v-else-if="order.source === 'mesa'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+            <svg v-else-if="order.source === 'mesa'" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
             </svg>
             <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
             {{ order.source === 'barra' ? 'Barra' : order.source === 'mesa' ? 'Mesa' : 'POS' }}
           </span>
@@ -440,7 +441,8 @@ onUnmounted(() => {
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Total</p>
           <!-- Discount indicator: crossed-out gross + badge -->
           <div v-if="order.discount_amount > 0 && !isEditMode" class="flex items-center gap-2 mb-1">
-            <span class="text-sm text-text-tertiary line-through tabular-nums">{{ formatCurrency(grossSubtotal) }}</span>
+            <span class="text-sm text-text-tertiary line-through tabular-nums">{{ formatCurrency(grossSubtotal)
+            }}</span>
             <span class="text-xs font-bold bg-destructive/10 text-destructive rounded-full px-2 py-0.5 leading-tight">
               {{ order.discount_type === 'percent' ? `-${order.discount_value}%` : 'Descuento' }}
             </span>
@@ -455,92 +457,149 @@ onUnmounted(() => {
       </div>
 
       <!-- Electronic Invoice Section -->
-      <div class="bg-surface border border-border rounded-xl p-5 space-y-3">
-        <div class="flex items-center gap-2">
-          <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-          </svg>
-          <h2 class="text-xs font-bold text-text-tertiary uppercase tracking-widest">Factura Electrónica</h2>
-        </div>
-
+      <div class="bg-surface border border-border rounded-2xl overflow-hidden">
         <!-- Invoice exists -->
         <template v-if="invoiceData">
-          <div class="space-y-2.5">
-            <!-- Number + status badge -->
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-lg font-bold text-text-primary">{{ invoiceData.prefix }}-{{ invoiceData.invoice_number }}</span>
-              <span
-                class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
-                :class="{
-                  'bg-green-100 text-green-700': invoiceData.status === 'accepted',
-                  'bg-amber-100 text-amber-700': invoiceData.status === 'pending',
-                  'bg-red-100 text-red-700': invoiceData.status === 'rejected',
-                }"
-              >
-                <svg v-if="invoiceData.status === 'accepted'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                <svg v-else-if="invoiceData.status === 'pending'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                <svg v-else class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
-                {{ invoiceData.status === 'accepted' ? 'Aceptada' : invoiceData.status === 'pending' ? 'Pendiente' : 'Rechazada' }}
+          <!-- Header -->
+          <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-border">
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0"
+                aria-hidden="true">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                  stroke-width="1.8" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                </svg>
               </span>
+              <div class="min-w-0">
+                <h2 class="text-sm font-bold text-text-primary truncate">Factura Electrónica</h2>
+                <p class="text-xs text-text-tertiary mt-0.5">DIAN</p>
+              </div>
             </div>
 
-            <!-- CUFE with copy -->
-            <div v-if="invoiceData.cufe" class="flex items-center gap-2">
-              <span class="text-xs text-text-secondary font-mono truncate flex-1">CUFE: {{ invoiceData.cufe.substring(0, 30) }}...</span>
-              <button
-                @click="copyCufe(invoiceData.cufe)"
-                class="min-h-[32px] min-w-[32px] flex items-center justify-center rounded-lg border border-border hover:bg-surface-secondary transition-colors"
-                :aria-label="copiedCufe ? 'CUFE copiado' : 'Copiar CUFE'"
-              >
-                <svg v-if="!copiedCufe" class="w-3.5 h-3.5 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
-                <svg v-else class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
-              </button>
+            <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full flex-shrink-0"
+              :class="{
+                'bg-status-success-bg text-status-success-text': invoiceData.status === 'accepted',
+                'bg-status-warning-bg text-status-warning-text': invoiceData.status === 'pending',
+                'bg-status-critical-bg text-status-critical-text': invoiceData.status === 'rejected',
+              }">
+              <svg v-if="invoiceData.status === 'accepted'" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+              <svg v-else-if="invoiceData.status === 'pending'" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+              <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+              </svg>
+              {{ invoiceData.status === 'accepted' ? 'Aceptada' : invoiceData.status === 'pending' ? 'Pendiente' :
+                'Rechazada' }}
+            </span>
+          </div>
+
+          <!-- Body: 3 columns -->
+          <div class="grid grid-cols-1 md:grid-cols-3 md:divide-x md:divide-border">
+            <!-- Col 1: Información -->
+            <div class="p-5">
+              <h3 class="text-sm font-bold text-text-primary mb-4">Información</h3>
+              <div class="space-y-4">
+                <div>
+                  <p class="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-1">Número</p>
+                  <p class="text-2xl font-extrabold text-text-primary tracking-tight tabular-nums">
+                    {{ invoiceData.prefix }}-{{ invoiceData.invoice_number }}
+                  </p>
+                </div>
+                <div v-if="invoiceData.emitted_at">
+                  <p class="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-1">Emitida</p>
+                  <p class="text-sm text-text-secondary">{{ useFormatters().formatDate(invoiceData.emitted_at) }}</p>
+                </div>
+              </div>
             </div>
 
-            <!-- Emitted at -->
-            <div v-if="invoiceData.emitted_at" class="text-xs text-text-secondary">
-              Emitida: {{ useFormatters().formatDate(invoiceData.emitted_at) }}
+            <!-- Col 2: Descargar -->
+            <div class="p-5 flex flex-col justify-start">
+              <h3 class="text-sm font-bold text-text-primary mb-4">Descargar</h3>
+              <div class="flex-1 flex flex-col justify-start gap-3 w-full h-fit">
+                <p class="text-sm text-text-secondary">
+                  Descarga tu factura electrónica en formato PDF
+                </p>
+                <a v-if="invoiceData.status === 'accepted' && invoiceData.pdf_presigned_url"
+                  :href="invoiceData.pdf_presigned_url" target="_blank" rel="noopener"
+                  class="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 rounded-xl text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                      d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  Descargar PDF
+                </a>
+                <p v-else class="text-xs text-text-tertiary">
+                  Disponible cuando la factura esté aceptada.
+                </p>
+              </div>
             </div>
 
-            <!-- PDF download -->
-            <a
-              v-if="invoiceData.status === 'accepted' && invoiceData.pdf_presigned_url"
-              :href="invoiceData.pdf_presigned_url"
-              target="_blank"
-              rel="noopener"
-              class="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-              Descargar PDF
-            </a>
-
-            <!-- Error message for rejected -->
-            <div v-if="invoiceData.status === 'rejected' && invoiceData.error_message" class="flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-lg p-2.5">
-              <svg class="w-3.5 h-3.5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
-              <span>{{ invoiceData.error_message }}</span>
+            <!-- Col 3: CUFE -->
+            <div class="p-5">
+              <h3 class="text-sm font-bold text-text-primary mb-4">CUFE</h3>
+              <div class="space-y-3">
+                <p class="text-sm text-text-secondary">
+                  Código Único de Factura Electrónica
+                </p>
+                <div v-if="invoiceData.cufe" class="rounded-xl border border-border bg-surface-secondary/50 p-3">
+                  <p class="text-xs font-mono text-text-secondary break-all leading-relaxed">
+                    {{ invoiceData.cufe }}
+                  </p>
+                </div>
+                <button v-if="invoiceData.cufe" @click="copyCufe(invoiceData.cufe)"
+                  class="w-full min-h-[44px] px-3 py-2 rounded-xl text-sm font-semibold border border-primary/20 text-primary hover:bg-primary/5 transition-colors">
+                  {{ copiedCufe ? 'CUFE copiado' : 'Copiar código' }}
+                </button>
+              </div>
             </div>
+          </div>
+
+          <!-- Error message for rejected -->
+          <div v-if="invoiceData.status === 'rejected' && invoiceData.error_message"
+            class="flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-lg p-2.5">
+            <svg class="w-3.5 h-3.5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+            </svg>
+            <span>{{ invoiceData.error_message }}</span>
           </div>
         </template>
 
         <!-- No invoice — completed order: show emit button -->
         <template v-else-if="order.status === 'completed'">
           <p class="text-sm text-text-secondary">Sin factura electrónica</p>
-          <button
-            @click="emitInvoice"
-            :disabled="isEmittingInvoice"
-            class="min-h-[44px] w-full py-2 px-4 rounded-lg text-sm font-medium transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-surface border border-border text-text-primary hover:bg-surface-secondary flex items-center justify-center gap-2"
-          >
+          <button @click="emitInvoice" :disabled="isEmittingInvoice"
+            class="min-h-[44px] w-full py-2 px-4 rounded-lg text-sm font-medium transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-surface border border-border text-text-primary hover:bg-surface-secondary flex items-center justify-center gap-2">
             <template v-if="isEmittingInvoice">
-              <svg class="h-4 w-4 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+              <svg class="h-4 w-4 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
               Generando factura DIAN...
             </template>
             <template v-else>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+              </svg>
               Emitir factura electrónica
             </template>
           </button>
           <p v-if="emitInvoiceError" class="text-xs text-red-600 flex items-center gap-1">
-            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+            </svg>
             {{ emitInvoiceError }}
           </p>
         </template>
@@ -552,11 +611,14 @@ onUnmounted(() => {
       </div>
 
       <!-- Status Update Panel (mesa and barra orders) -->
-      <div v-if="order.source === 'mesa' || order.source === 'barra'" class="bg-surface border border-border rounded-xl p-5 space-y-4">
+      <div v-if="order.source === 'mesa' || order.source === 'barra'"
+        class="bg-surface border border-border rounded-xl p-5 space-y-4">
         <!-- Header -->
         <div class="flex items-center gap-2">
-          <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+          <svg class="w-4 h-4 text-text-tertiary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
           </svg>
           <h2 class="text-xs font-bold text-text-tertiary uppercase tracking-widest">Actualizar estado</h2>
         </div>
@@ -564,60 +626,69 @@ onUnmounted(() => {
         <!-- Status cards -->
         <div class="grid grid-cols-3 gap-2.5">
           <!-- Pendiente -->
-          <button
-            type="button"
-            @click="selectedNewStatus = selectedNewStatus === 'pending' ? '' : 'pending'"
-            :class="[
-              'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
-              selectedNewStatus === 'pending'
-                ? 'bg-status-warning-bg border-status-warning-text/50 shadow-sm'
-                : 'bg-surface border-border'
-            ]"
-          >
-            <div :class="['w-9 h-9 rounded-full flex items-center justify-center', selectedNewStatus === 'pending' ? 'bg-status-warning-text/15' : 'bg-surface-secondary']">
-              <svg class="w-4.5 h-4.5 transition-colors duration-150" :class="selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-tertiary group-hover:text-status-warning-text'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          <button type="button" @click="selectedNewStatus = selectedNewStatus === 'pending' ? '' : 'pending'" :class="[
+            'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
+            selectedNewStatus === 'pending'
+              ? 'bg-status-warning-bg border-status-warning-text/50 shadow-sm'
+              : 'bg-surface border-border'
+          ]">
+            <div
+              :class="['w-9 h-9 rounded-full flex items-center justify-center', selectedNewStatus === 'pending' ? 'bg-status-warning-text/15' : 'bg-surface-secondary']">
+              <svg class="w-4.5 h-4.5 transition-colors duration-150"
+                :class="selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-tertiary group-hover:text-status-warning-text'"
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
             </div>
-            <span :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-secondary group-hover:text-status-warning-text']">Pendiente</span>
+            <span
+              :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'pending' ? 'text-status-warning-text' : 'text-text-secondary group-hover:text-status-warning-text']">Pendiente</span>
           </button>
 
           <!-- Completada -->
-          <button
-            type="button"
+          <button type="button"
             @click="() => { selectedNewStatus = selectedNewStatus === 'completed' ? '' : 'completed'; selectedPaymentMethod = '' }"
             :class="[
               'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
               selectedNewStatus === 'completed'
                 ? 'bg-status-success-bg border-status-success-text/50 shadow-sm'
                 : 'bg-surface border-border'
-            ]"
-          >
-            <div :class="['w-9 h-9 rounded-full flex items-center justify-center', selectedNewStatus === 'completed' ? 'bg-status-success-text/15' : 'bg-surface-secondary']">
-              <svg class="w-4.5 h-4.5 transition-colors duration-150" :class="selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-tertiary group-hover:text-status-success-text'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            ]">
+            <div
+              :class="['w-9 h-9 rounded-full flex items-center justify-center', selectedNewStatus === 'completed' ? 'bg-status-success-text/15' : 'bg-surface-secondary']">
+              <svg class="w-4.5 h-4.5 transition-colors duration-150"
+                :class="selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-tertiary group-hover:text-status-success-text'"
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
             </div>
-            <span :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-secondary group-hover:text-status-success-text']">Completada</span>
+            <span
+              :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'completed' ? 'text-status-success-text' : 'text-text-secondary group-hover:text-status-success-text']">Completada</span>
           </button>
 
           <!-- Cancelada -->
-          <button
-            type="button"
-            @click="selectedNewStatus = selectedNewStatus === 'cancelled' ? '' : 'cancelled'"
+          <button type="button" @click="selectedNewStatus = selectedNewStatus === 'cancelled' ? '' : 'cancelled'"
             :class="[
               'group flex flex-col items-center gap-2.5 py-4 px-2 rounded-xl border-2 transition-all duration-150 focus:outline-none',
               selectedNewStatus === 'cancelled'
                 ? 'bg-status-critical-bg border-status-critical-text/50 shadow-sm'
                 : 'bg-surface border-border'
-            ]"
-          >
-            <div :class="['w-9 h-9 rounded-full flex items-center justify-center', selectedNewStatus === 'cancelled' ? 'bg-status-critical-text/15' : 'bg-surface-secondary']">
-              <svg class="w-4.5 h-4.5 transition-colors duration-150" :class="selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-tertiary group-hover:text-status-critical-text'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            ]">
+            <div
+              :class="['w-9 h-9 rounded-full flex items-center justify-center', selectedNewStatus === 'cancelled' ? 'bg-status-critical-text/15' : 'bg-surface-secondary']">
+              <svg class="w-4.5 h-4.5 transition-colors duration-150"
+                :class="selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-tertiary group-hover:text-status-critical-text'"
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
             </div>
-            <span :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-secondary group-hover:text-status-critical-text']">Cancelada</span>
+            <span
+              :class="['text-xs font-bold uppercase tracking-wider leading-none transition-colors duration-150', selectedNewStatus === 'cancelled' ? 'text-status-critical-text' : 'text-text-secondary group-hover:text-status-critical-text']">Cancelada</span>
           </button>
         </div>
 
@@ -626,14 +697,10 @@ onUnmounted(() => {
           <div v-if="selectedNewStatus === 'completed'" class="space-y-2">
             <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider">Método de pago</p>
             <div class="flex flex-wrap gap-2">
-              <button
-                v-for="group in paymentGroups"
-                :key="group.slug"
-                type="button"
+              <button v-for="group in paymentGroups" :key="group.slug" type="button"
                 @click="selectedPaymentMethod = selectedPaymentMethod === group.slug ? '' : group.slug"
                 :class="selectedPaymentMethod === group.slug ? 'border-primary bg-primary/10 text-primary' : 'border-border text-text-secondary hover:border-primary/40'"
-                class="flex-1 min-h-[44px] px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors"
-              >
+                class="flex-1 min-h-[44px] px-3 py-2 rounded-lg border-2 text-sm font-medium transition-colors">
                 {{ group.name }}
               </button>
             </div>
@@ -641,20 +708,20 @@ onUnmounted(() => {
         </Transition>
 
         <!-- Confirm button -->
-        <button
-          @click="updateStatus"
+        <button @click="updateStatus"
           :disabled="!selectedNewStatus || isUpdatingStatus || (selectedNewStatus === 'completed' && !selectedPaymentMethod)"
           :class="[
             'w-full h-11 rounded-xl text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed',
             selectedNewStatus === 'cancelled'
               ? 'bg-status-critical-bg text-status-critical-text border-2 border-status-critical-text/30 hover:bg-status-critical-text hover:text-white'
               : 'bg-primary text-primary-foreground hover:opacity-90 shadow-sm'
-          ]"
-        >
+          ]">
           <UiLoadingDots v-if="isUpdatingStatus" size="10px" />
           <template v-else>
-            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
             </svg>
             Confirmar cambio
           </template>
@@ -669,31 +736,28 @@ onUnmounted(() => {
           <!-- Edit/Save Buttons -->
           <div class="flex gap-2">
             <template v-if="!isEditMode">
-              <button
-                @click="enterEditMode"
-                class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-              >
+              <button @click="enterEditMode"
+                class="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 Editar Venta
               </button>
             </template>
             <template v-else>
-              <button
-                @click="cancelEdit"
-                class="px-4 py-2 border border-border text-text-secondary hover:bg-surface-secondary rounded-lg text-sm font-medium transition-colors"
-              >
+              <button @click="cancelEdit"
+                class="px-4 py-2 border border-border text-text-secondary hover:bg-surface-secondary rounded-lg text-sm font-medium transition-colors">
                 Cancelar
               </button>
-              <button
-                @click="saveChanges"
-                :disabled="!hasChanges || isSaving"
-                class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg v-if="isSaving" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <button @click="saveChanges" :disabled="!hasChanges || isSaving"
+                class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg v-if="isSaving" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                  viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
                 </svg>
                 <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -705,12 +769,16 @@ onUnmounted(() => {
         </div>
 
         <!-- Edit Mode Warning -->
-        <div v-if="isEditMode" class="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-6 py-3">
+        <div v-if="isEditMode"
+          class="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-6 py-3">
           <p class="text-sm text-yellow-800 dark:text-yellow-300 flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <span><strong>Modo Edición:</strong> Haz clic en la X para eliminar productos o adiciones. Los ingredientes se devolverán al stock al guardar.</span>
+            <span><strong>Modo Edición:</strong> Haz clic en la X para eliminar productos o adiciones. Los ingredientes
+              se
+              devolverán al stock al guardar.</span>
           </p>
         </div>
 
@@ -725,10 +793,15 @@ onUnmounted(() => {
             <thead class="bg-surface-secondary">
               <tr>
                 <th v-if="isEditMode" class="px-4 py-3 w-12"></th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">Producto</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">Cant.</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Precio</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Subtotal</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">
+                  Producto</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-text-primary uppercase tracking-wider">Cant.
+                </th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">Precio
+                </th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">
+                  Subtotal
+                </th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border">
@@ -736,19 +809,19 @@ onUnmounted(() => {
                 <!-- Product Row (Main) -->
                 <tr class="bg-surface hover:bg-surface-secondary/50 transition-colors">
                   <td v-if="isEditMode" class="px-4 py-4">
-                    <button
-                      @click="markItemForDeletion(item.id)"
+                    <button @click="markItemForDeletion(item.id)"
                       class="w-8 h-8 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition-colors"
-                      title="Eliminar producto"
-                    >
+                      title="Eliminar producto">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </td>
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-lg flex-shrink-0">
+                      <div
+                        class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-lg flex-shrink-0">
                         {{ item.product.image || '🍽️' }}
                       </div>
                       <div>
@@ -758,12 +831,14 @@ onUnmounted(() => {
                     </div>
                   </td>
                   <td class="px-6 py-4 text-center">
-                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                    <span
+                      class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
                       {{ item.quantity }}
                     </span>
                   </td>
                   <td class="px-6 py-4 text-right">
-                    <span class="text-sm font-medium text-text-primary">{{ formatCurrency(item.price_at_purchase) }}</span>
+                    <span class="text-sm font-medium text-text-primary">{{ formatCurrency(item.price_at_purchase)
+                    }}</span>
                   </td>
                   <td class="px-6 py-4 text-right">
                     <span class="text-sm font-bold text-primary">{{ formatCurrency(item.subtotal) }}</span>
@@ -772,18 +847,14 @@ onUnmounted(() => {
 
                 <!-- Modifier Rows (Sub-rows) -->
                 <template v-for="modifier in (item.modifiers || [])" :key="`${item.id}-mod-${modifier.id}`">
-                  <tr
-                    v-if="!isModifierDeleted(item.id, modifier.id)"
-                    class="bg-surface-secondary/30"
-                  >
+                  <tr v-if="!isModifierDeleted(item.id, modifier.id)" class="bg-surface-secondary/30">
                     <td v-if="isEditMode" class="px-4 py-2">
-                      <button
-                        @click="markModifierForDeletion(item.id, modifier.id)"
+                      <button @click="markModifierForDeletion(item.id, modifier.id)"
                         class="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition-colors ml-2"
-                        title="Eliminar adición"
-                      >
+                        title="Eliminar adición">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
                     </td>
@@ -822,7 +893,8 @@ onUnmounted(() => {
           </table>
 
           <!-- Totals summary — shown when discount or taxes apply -->
-          <div v-if="order.discount_amount > 0 || order.standard_tax > 0 || order.liquor_tax > 0" class="flex justify-end px-6 py-4 border-t border-border">
+          <div v-if="order.discount_amount > 0 || order.standard_tax > 0 || order.liquor_tax > 0"
+            class="flex justify-end px-6 py-4 border-t border-border">
             <div class="flex flex-col gap-2 min-w-[220px]">
               <div class="flex items-center justify-between gap-10">
                 <span class="text-sm text-text-secondary">Subtotal</span>
@@ -831,11 +903,14 @@ onUnmounted(() => {
               <div v-if="order.discount_amount > 0" class="flex items-center justify-between gap-10">
                 <span class="flex items-center gap-1.5 text-sm text-destructive">
                   Descuento
-                  <span class="text-xs font-bold bg-destructive/10 text-destructive rounded-full px-1.5 py-0.5 leading-tight">
+                  <span
+                    class="text-xs font-bold bg-destructive/10 text-destructive rounded-full px-1.5 py-0.5 leading-tight">
                     {{ order.discount_type === 'percent' ? `${order.discount_value}%` : 'Fijo' }}
                   </span>
                 </span>
-                <span class="text-sm font-semibold text-destructive tabular-nums">-{{ formatCurrency(order.discount_amount) }}</span>
+                <span class="text-sm font-semibold text-destructive tabular-nums">-{{
+                  formatCurrency(order.discount_amount)
+                }}</span>
               </div>
               <div v-if="order.standard_tax > 0" class="flex items-center justify-between gap-10">
                 <span class="text-sm text-text-secondary">{{ order.standard_tax_label }}</span>
@@ -847,7 +922,8 @@ onUnmounted(() => {
               </div>
               <div class="flex items-center justify-between gap-10 pt-2 border-t border-border">
                 <span class="text-sm font-bold text-text-primary">Total</span>
-                <span class="text-base font-bold text-primary tabular-nums">{{ formatCurrency(order.total_amount) }}</span>
+                <span class="text-base font-bold text-primary tabular-nums">{{ formatCurrency(order.total_amount)
+                }}</span>
               </div>
             </div>
           </div>
@@ -864,28 +940,19 @@ onUnmounted(() => {
     <!-- Split Payments Slide-over -->
     <Teleport to="body">
       <!-- Backdrop -->
-      <Transition
-        enter-active-class="transition-opacity duration-200"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition-opacity duration-200"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div v-if="showSplitPaymentsPanel" class="fixed inset-0 z-40 bg-black/40" @click="showSplitPaymentsPanel = false" aria-hidden="true" />
+      <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0"
+        enter-to-class="opacity-100" leave-active-class="transition-opacity duration-200" leave-from-class="opacity-100"
+        leave-to-class="opacity-0">
+        <div v-if="showSplitPaymentsPanel" class="fixed inset-0 z-40 bg-black/40"
+          @click="showSplitPaymentsPanel = false" aria-hidden="true" />
       </Transition>
 
       <!-- Panel -->
       <Transition name="panel">
-        <div
-          v-if="showSplitPaymentsPanel"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Detalle de cobro dividido"
+        <div v-if="showSplitPaymentsPanel" role="dialog" aria-modal="true" aria-label="Detalle de cobro dividido"
           class="fixed z-50 flex flex-col bg-surface shadow-2xl
                  inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-                 md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
-        >
+                 md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full">
           <!-- Mobile drag handle -->
           <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
             <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
@@ -895,9 +962,11 @@ onUnmounted(() => {
           <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
             <div class="flex items-start justify-between gap-3">
               <div class="flex items-center gap-3 min-w-0 flex-1">
-                <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center text-info" aria-hidden="true">
+                <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center text-info"
+                  aria-hidden="true">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                      d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
                   </svg>
                 </div>
                 <div class="min-w-0">
@@ -907,12 +976,8 @@ onUnmounted(() => {
                   </p>
                 </div>
               </div>
-              <button
-                @click="showSplitPaymentsPanel = false"
-                type="button"
-                aria-label="Cerrar panel"
-                class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
-              >
+              <button @click="showSplitPaymentsPanel = false" type="button" aria-label="Cerrar panel"
+                class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -922,21 +987,24 @@ onUnmounted(() => {
 
           <!-- Payment list -->
           <div class="flex-1 overflow-y-auto px-6 py-4 space-y-2">
-            <div
-              v-for="(p, idx) in order.split_payments"
-              :key="p.id"
-              class="flex items-center gap-3 bg-surface border border-border rounded-xl px-4 py-3"
-            >
+            <div v-for="(p, idx) in order.split_payments" :key="p.id"
+              class="flex items-center gap-3 bg-surface border border-border rounded-xl px-4 py-3">
               <div class="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                <svg class="h-3.5 w-3.5 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+                <svg class="h-3.5 w-3.5 text-green-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                  fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd"
+                    d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                    clip-rule="evenodd" />
                 </svg>
               </div>
               <div class="min-w-0 flex-1">
-                <p class="text-xs text-text-secondary">Pago #{{ idx + 1 }}</p>
-                <p class="text-sm font-medium text-text-primary">{{ resolveLabel(p.payment_method, p.payment_method_id) }}</p>
+                <p class="text-xs text-text-secondary">Pago #{{ Number(idx) + 1 }}</p>
+                <p class="text-sm font-medium text-text-primary">{{ resolveLabel(p.payment_method, p.payment_method_id)
+                }}
+                </p>
               </div>
-              <span class="text-base font-bold text-text-primary tabular-nums flex-shrink-0">{{ formatCurrency(p.amount) }}</span>
+              <span class="text-base font-bold text-text-primary tabular-nums flex-shrink-0">{{ formatCurrency(p.amount)
+              }}</span>
             </div>
           </div>
         </div>
@@ -951,6 +1019,7 @@ onUnmounted(() => {
 .slide-down-leave-active {
   transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
 .slide-down-enter-from,
 .slide-down-leave-to {
   opacity: 0;
@@ -961,11 +1030,14 @@ onUnmounted(() => {
 .panel-leave-active {
   transition: transform 0.3s ease;
 }
+
 .panel-enter-from,
 .panel-leave-to {
   transform: translateY(100%);
 }
+
 @media (min-width: 768px) {
+
   .panel-enter-from,
   .panel-leave-to {
     transform: translateX(100%);

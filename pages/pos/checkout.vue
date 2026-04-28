@@ -70,20 +70,80 @@ const invoiceResults = ref<{ order_id: string; prefix: string; invoice_number: n
 
 // Customer identification via modal
 const showCustomerModal = ref(false)
-const selectedCustomer = ref<{ id: string; name: string | null; phone_number: string | null; email: string | null } | null>(null)
+type FiscalIdType = 'CC' | 'NIT' | 'CE' | 'PA' | 'TI'
+interface PosCustomer {
+  id: string
+  name: string | null
+  phone_number: string | null
+  email: string | null
+  fiscal_id_type?: FiscalIdType | null
+  fiscal_id?: string | null
+  fiscal_business_name?: string | null
+  fiscal_email?: string | null
+}
+const selectedCustomer = ref<PosCustomer | null>(null)
+
+// Inline fiscal-data wizard inside the success modal — shown after the user
+// clicks "Generar factura electrónica DIAN" if the customer has no fiscal data yet.
+const fiscalWizardOpen = ref(false)
+const fiscalWizardSaving = ref(false)
+const fiscalWizardError = ref('')
+const fiscalWizardForm = ref({
+  fiscal_id_type: '' as FiscalIdType | '',
+  fiscal_id: '',
+  fiscal_business_name: '',
+})
+const fiscalWizardCanSubmit = computed(() => Boolean(
+  fiscalWizardForm.value.fiscal_id_type
+    && fiscalWizardForm.value.fiscal_id.trim()
+    && fiscalWizardForm.value.fiscal_business_name.trim(),
+))
 
 // Customer insights
 const customerInsights = ref<CustomerInsights | null>(null)
 const insightsLoading = ref(false)
-const activeAccordion = ref<'insights' | 'summary' | null>('summary')
+const activeAccordion = ref<'insights' | 'summary' | 'waros' | null>('summary')
 
 // Mesa mode detection — bar sessions behave as normal POS (cart-based, not tab-based)
 const isMesaMode = computed(() => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar)
 const { tabItems: storeTabItems } = storeToRefs(posStore)
 
+type MesaTaxPreview = {
+  standard_tax: number
+  liquor_tax: number
+  standard_tax_label: string
+}
+const mesaTaxPreview = ref<MesaTaxPreview | null>(null)
+const mesaTaxLoading = ref(false)
+const mesaTaxError = ref('')
+let mesaTaxRefreshTmr: ReturnType<typeof setTimeout> | null = null
+
+const refreshMesaTaxPreview = async () => {
+  if (!isMesaMode.value || !posStore.activeTableSession?.tableId) {
+    mesaTaxPreview.value = null
+    return
+  }
+  mesaTaxLoading.value = true
+  mesaTaxError.value = ''
+  try {
+    const res = await $fetch<{ success: boolean; data: any }>(`/api/tables/${posStore.activeTableSession.tableId}/current`)
+    const session = res?.data?.session
+    mesaTaxPreview.value = {
+      standard_tax: Number(session?.standard_tax) || 0,
+      liquor_tax: Number(session?.liquor_tax) || 0,
+      standard_tax_label: session?.standard_tax_label || 'Impuesto',
+    }
+  } catch (e: any) {
+    mesaTaxError.value = e?.data?.message || e?.message || 'No se pudo calcular impuestos'
+    mesaTaxPreview.value = null
+  } finally {
+    mesaTaxLoading.value = false
+  }
+}
+
 // ── KDS / Comandas feature flag — reuses same cache key as index.vue (no extra network request)
 const { data: settingsData } = useQuery({
-  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
+  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id ?? null],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
@@ -117,6 +177,22 @@ const discountAmount = computed(() => {
   return Math.min(Math.round(val), Math.round(cartTotal.value))
 })
 const discountedTotal = computed(() => cartTotal.value - discountAmount.value)
+
+// Mesa tax preview (for checkout summary UI)
+watch([isMesaMode, cartTotal, () => storeTabItems.value.length], ([mesa]) => {
+  if (!mesa) {
+    mesaTaxPreview.value = null
+    return
+  }
+  if (mesaTaxRefreshTmr) clearTimeout(mesaTaxRefreshTmr)
+  mesaTaxRefreshTmr = setTimeout(() => {
+    refreshMesaTaxPreview()
+  }, 250)
+}, { immediate: true })
+
+onUnmounted(() => {
+  if (mesaTaxRefreshTmr) clearTimeout(mesaTaxRefreshTmr)
+})
 
 // Split payment state
 const splitMode = ref(false)
@@ -382,11 +458,23 @@ const processOrder = async () => {
             : {}),
         },
       }) as any
+
+      // Immediately refresh floor plan availability (don't wait for modal close)
+      cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
+
+      // Mesa close usually returns multiple orders; use the first order number (if provided)
+      const mesaOrderNumber =
+        Number(closeResponse?.data?.order_number) ||
+        Number(closeResponse?.data?.order_numbers?.[0]) ||
+        0
       orderResult.value = {
-        order_number: 0,
+        order_number: mesaOrderNumber,
         total_amount: _discountedTotal,
         payment_method: selectedPaymentMethod.value,
         order_ids: closeResponse.data?.order_ids || [],
+        standard_tax: Number(closeResponse?.data?.standard_tax) || 0,
+        liquor_tax: Number(closeResponse?.data?.liquor_tax) || 0,
+        standard_tax_label: closeResponse?.data?.standard_tax_label || 'Impuesto',
         ...(discountEnabled.value && _discountAmt > 0
           ? { discount_amount: _discountAmt, subtotal: _subtotal }
           : {})
@@ -544,7 +632,7 @@ const cancelOrder = async () => {
       // Non-critical
     }
     posStore.clearAll()
-    cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
+    cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
     router.push('/pos')
   } else if (posStore.activeTableSession?.isBar) {
     // Bar session — clear local cart but keep session alive (it's permanent)
@@ -563,8 +651,10 @@ const closeSuccessModal = () => {
   invoiceQrDataUrl.value = ''
   invoiceResults.value = []
   invoiceProgress.value = ''
+  fiscalWizardOpen.value = false
+  fiscalWizardError.value = ''
   if (wasMesaMode.value) {
-    cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
+    cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
     router.push('/pos')
   } else {
     router.push('/pos')
@@ -658,6 +748,58 @@ const generateInvoice = async () => {
 const printReceipt = async () => {
   await nextTick()
   window.print()
+}
+
+// Entry point for "Generar factura electrónica DIAN" — shows the inline
+// wizard when the customer has no fiscal data, otherwise emits directly.
+const requestInvoice = async () => {
+  if (invoiceLoading.value) return
+  if (selectedCustomer.value && !selectedCustomer.value.fiscal_id && !isAnonymousCustomer.value) {
+    fiscalWizardError.value = ''
+    fiscalWizardForm.value = {
+      fiscal_id_type: '',
+      fiscal_id: '',
+      fiscal_business_name: selectedCustomer.value.name || '',
+    }
+    fiscalWizardOpen.value = true
+    return
+  }
+  await generateInvoiceAndPrint()
+}
+
+// Wizard submit: persist fiscal data on the customer profile, then emit.
+const submitFiscalAndInvoice = async () => {
+  if (!fiscalWizardCanSubmit.value || !selectedCustomer.value) return
+  fiscalWizardSaving.value = true
+  fiscalWizardError.value = ''
+  try {
+    const res = await $fetch<{ success: boolean; data: PosCustomer }>(
+      `/api/customers/${selectedCustomer.value.id}`,
+      {
+        method: 'PATCH',
+        body: {
+          fiscal_id_type: fiscalWizardForm.value.fiscal_id_type || null,
+          fiscal_id: fiscalWizardForm.value.fiscal_id.trim() || null,
+          fiscal_business_name: fiscalWizardForm.value.fiscal_business_name.trim() || null,
+        },
+      },
+    )
+    if (res.success) {
+      selectedCustomer.value = { ...selectedCustomer.value, ...res.data }
+      fiscalWizardOpen.value = false
+      await generateInvoiceAndPrint()
+    }
+  } catch (e: any) {
+    fiscalWizardError.value = e.data?.detail || e.data?.message || e.message || 'Error al guardar los datos'
+  } finally {
+    fiscalWizardSaving.value = false
+  }
+}
+
+// Emit the invoice without auto-printing.
+// Printing is always manual via "Imprimir comprobante".
+const generateInvoiceAndPrint = async () => {
+  await generateInvoice()
 }
 
 const sendReceiptEmail = async () => {
@@ -1153,6 +1295,10 @@ onUnmounted(() => {
             <div class="flex-1 min-w-0">
               <p class="font-semibold text-text-primary truncate">{{ selectedCustomer.name || 'Cliente sin datos' }}</p>
               <p class="text-sm text-text-secondary truncate">{{ selectedCustomer.phone_number || 'Sin teléfono' }}</p>
+              <p v-if="selectedCustomer.fiscal_id" class="text-xs text-emerald-700 dark:text-emerald-400 truncate mt-0.5 flex items-center gap-1">
+                <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                Factura: {{ selectedCustomer.fiscal_id_type }} {{ selectedCustomer.fiscal_id }}
+              </p>
             </div>
             <button
               @click="showCustomerModal = true"
@@ -1179,6 +1325,7 @@ onUnmounted(() => {
         <PosCustomerIdentificationModal
           v-model="showCustomerModal"
           @customer-identified="onCustomerIdentified"
+          @fiscal-updated="onCustomerIdentified"
         />
 
       </div>
@@ -1257,8 +1404,10 @@ onUnmounted(() => {
                 <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
               </div>
               <div class="flex justify-between text-sm text-text-secondary">
-                <span>Impuestos (0%)</span>
-                <span class="font-medium text-text-primary">{{ formatCurrency(0) }}</span>
+                <span>{{ isMesaMode && mesaTaxPreview ? mesaTaxPreview.standard_tax_label : 'Impuestos (0%)' }}</span>
+                <span class="font-medium text-text-primary">
+                  {{ formatCurrency(isMesaMode && mesaTaxPreview ? (mesaTaxPreview.standard_tax + mesaTaxPreview.liquor_tax) : 0) }}
+                </span>
               </div>
               <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-primary">
                 <span>Descuento</span>
@@ -1562,8 +1711,10 @@ onUnmounted(() => {
               <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
             </div>
             <div class="flex justify-between text-sm text-text-secondary">
-              <span>Impuestos (0%)</span>
-              <span class="font-medium text-text-primary">{{ formatCurrency(0) }}</span>
+              <span>{{ isMesaMode && mesaTaxPreview ? mesaTaxPreview.standard_tax_label : 'Impuestos (0%)' }}</span>
+              <span class="font-medium text-text-primary">
+                {{ formatCurrency(isMesaMode && mesaTaxPreview ? (mesaTaxPreview.standard_tax + mesaTaxPreview.liquor_tax) : 0) }}
+              </span>
             </div>
             <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-green-600 dark:text-green-400">
               <span>Descuento</span>
@@ -1717,9 +1868,9 @@ onUnmounted(() => {
 
           <!-- Order Details -->
           <div v-if="orderResult" class="bg-surface-secondary rounded-lg p-4 mb-6 space-y-3">
-            <div v-if="orderResult.order_number > 0" class="flex items-center justify-between">
+            <div v-if="(orderResult?.order_number ?? 0) > 0" class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">Nº Orden</span>
-              <span class="text-lg font-bold text-primary">#{{ orderResult.order_number }}</span>
+              <span class="text-lg font-bold text-primary">#{{ orderResult?.order_number ?? '' }}</span>
             </div>
             <div v-if="orderResult.discount_amount && orderResult.subtotal" class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">Subtotal</span>
@@ -1764,12 +1915,12 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Electronic invoice (DIAN) — only for standard POS flow with order_id -->
+          <!-- Electronic invoice (DIAN) — cashier triggers emission, but never sees CUFE/PDF -->
           <div v-if="orderResult?.order_id || (orderResult?.order_ids?.length ?? 0) > 0" class="mb-4">
             <!-- Not requested yet -->
-            <template v-if="!invoiceResult && !invoiceLoading && !invoiceError">
+            <template v-if="!invoiceResult && !invoiceLoading && !invoiceError && !fiscalWizardOpen">
               <button
-                @click="generateInvoice"
+                @click="requestInvoice"
                 class="w-full min-h-[44px] py-2 px-4 bg-surface border border-border text-text-primary text-sm font-medium rounded-lg hover:bg-surface-secondary active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -1779,33 +1930,98 @@ onUnmounted(() => {
               </button>
             </template>
 
-            <!-- Loading -->
-            <div v-else-if="invoiceLoading" class="flex items-center justify-center gap-2 py-3 px-4 bg-surface-secondary rounded-lg">
-              <svg class="h-4 w-4 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-              </svg>
-              <span class="text-sm text-text-secondary">{{ invoiceProgress || 'Generando factura DIAN... esto puede tomar unos segundos' }}</span>
+            <!-- Inline fiscal-data wizard -->
+            <div v-else-if="fiscalWizardOpen" class="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+              <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 text-primary mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664" /></svg>
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-text-primary">Datos para la factura</p>
+                  <p class="text-xs text-text-secondary mt-0.5">Pídele al cliente su tipo y número de documento.</p>
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-xs font-medium text-text-primary">Tipo de documento</label>
+                <select
+                  v-model="fiscalWizardForm.fiscal_id_type"
+                  :disabled="fiscalWizardSaving"
+                  class="w-full min-h-[44px] px-3 py-2 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-sm disabled:opacity-50"
+                >
+                  <option value="" disabled>Selecciona...</option>
+                  <option value="CC">Cédula de Ciudadanía</option>
+                  <option value="NIT">NIT (empresa)</option>
+                  <option value="CE">Cédula de Extranjería</option>
+                  <option value="PA">Pasaporte</option>
+                  <option value="TI">Tarjeta de Identidad</option>
+                </select>
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-xs font-medium text-text-primary">Número de documento</label>
+                <input
+                  v-model="fiscalWizardForm.fiscal_id"
+                  type="text"
+                  :placeholder="fiscalWizardForm.fiscal_id_type === 'NIT' ? '900123456 (sin DV)' : '1063279307'"
+                  :disabled="fiscalWizardSaving"
+                  class="w-full min-h-[44px] px-3 py-2 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-sm disabled:opacity-50"
+                />
+                <p v-if="fiscalWizardForm.fiscal_id_type === 'NIT'" class="text-xs text-text-tertiary">Sin dígito de verificación</p>
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-xs font-medium text-text-primary">
+                  {{ fiscalWizardForm.fiscal_id_type === 'NIT' ? 'Razón social' : 'Nombre legal completo' }}
+                </label>
+                <input
+                  v-model="fiscalWizardForm.fiscal_business_name"
+                  type="text"
+                  :placeholder="fiscalWizardForm.fiscal_id_type === 'NIT' ? 'ACME SAS' : 'Juan Pérez'"
+                  :disabled="fiscalWizardSaving"
+                  class="w-full min-h-[44px] px-3 py-2 border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-sm disabled:opacity-50"
+                />
+              </div>
+
+              <p v-if="fiscalWizardError" class="text-xs text-red-600 dark:text-red-400">{{ fiscalWizardError }}</p>
+
+              <div class="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  :disabled="fiscalWizardSaving"
+                  @click="fiscalWizardOpen = false"
+                  class="min-h-[44px] px-3 py-2 text-sm text-text-secondary font-medium border border-border bg-surface rounded-lg hover:bg-surface-secondary transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  :disabled="!fiscalWizardCanSubmit || fiscalWizardSaving"
+                  @click="submitFiscalAndInvoice"
+                  class="flex-1 min-h-[44px] px-3 py-2 text-sm bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <svg v-if="fiscalWizardSaving" class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  {{ fiscalWizardSaving ? 'Guardando...' : 'Continuar y emitir' }}
+                </button>
+              </div>
             </div>
 
-            <!-- Success — multi-order results -->
-            <div v-else-if="invoiceResults.length > 0" class="rounded-lg border border-green-200 bg-green-50 p-3 space-y-2">
-              <div v-for="ir in invoiceResults" :key="ir.order_id" class="flex items-center gap-2" :class="ir.status === 'error' ? 'text-red-600' : 'text-green-700'">
-                <svg v-if="ir.status !== 'error'" class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                <svg v-else class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
-                <span class="text-xs font-medium">{{ ir.status === 'error' ? ir.error : `${ir.prefix}-${ir.invoice_number}` }}</span>
-              </div>
-              <p v-if="invoiceResult?.cufe" class="text-xs text-green-600 break-all mt-1">CUFE: {{ invoiceResult.cufe }}</p>
-              <a
-                v-if="invoiceResult?.pdf_presigned_url"
-                :href="invoiceResult.pdf_presigned_url"
-                target="_blank"
-                rel="noopener"
-                class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-              >
-                <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                Descargar PDF
-              </a>
+            <!-- Loading -->
+            <div v-else-if="invoiceLoading" class="flex items-center justify-center gap-2 py-3 px-4 bg-surface-secondary rounded-lg">
+              <UiLoadingDots size="9px" color="currentColor" aria-hidden="true" />
+              <span class="text-sm text-text-secondary">{{ invoiceProgress || 'Generando factura DIAN...' }}</span>
+            </div>
+
+            <!-- Success — show ONLY invoice number -->
+            <div
+              v-else-if="invoiceResult?.prefix && invoiceResult?.invoice_number"
+              class="rounded-lg border border-green-200 bg-green-50 p-3 text-center"
+            >
+              <p class="text-xs font-semibold text-green-800">Factura generada</p>
+              <p class="text-sm font-semibold text-green-700 mt-1">
+                {{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}
+              </p>
             </div>
 
             <!-- Error -->
@@ -1815,7 +2031,7 @@ onUnmounted(() => {
                 <span class="text-sm font-medium">{{ invoiceError }}</span>
               </div>
               <button
-                @click="generateInvoice"
+                @click="requestInvoice"
                 class="text-xs font-medium text-red-600 hover:underline"
               >
                 Reintentar
@@ -1916,7 +2132,7 @@ onUnmounted(() => {
     <div v-if="businessProfile?.address" class="receipt-row receipt-small">{{ businessProfile.address }}<span v-if="businessProfile.city">, {{ businessProfile.city }}</span></div>
     <div v-if="businessProfile?.phone_number" class="receipt-row receipt-small">Tel: {{ businessProfile.phone_number }}</div>
     <div class="receipt-divider">================================</div>
-    <div v-if="orderResult?.order_number > 0" class="receipt-row">Orden #{{ orderResult?.order_number }}</div>
+    <div v-if="(orderResult?.order_number ?? 0) > 0" class="receipt-row">Orden #{{ orderResult?.order_number ?? '' }}</div>
     <div class="receipt-divider">--------------------------------</div>
     <div v-for="item in cartItemsSnapshot" :key="item.id" class="receipt-item">
       <span>{{ item.quantity }}x {{ item.product?.name }}</span>
@@ -1943,11 +2159,6 @@ onUnmounted(() => {
       <div class="receipt-divider">================================</div>
       <div class="receipt-row" style="font-weight:bold;">FACTURA ELECTRÓNICA</div>
       <div class="receipt-row">{{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}</div>
-      <div class="receipt-row receipt-small" style="word-break:break-all;">CUFE: {{ invoiceResult.cufe }}</div>
-      <div v-if="invoiceQrDataUrl" style="text-align:center;margin:4px 0;">
-        <img :src="invoiceQrDataUrl" alt="QR verificación DIAN" class="receipt-qr" />
-      </div>
-      <div class="receipt-row receipt-small">Verificar en catalogo-vpfe.dian.gov.co</div>
       <div class="receipt-divider">================================</div>
     </template>
   </div>
