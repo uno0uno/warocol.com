@@ -72,22 +72,47 @@
               </label>
             </div>
           </div>
-          <!-- KDS station URLs (when KDS enabled) -->
-          <div v-if="businessProfile?.kds_enabled" class="mt-2 space-y-1.5">
+          <!-- KDS station URLs with token management (when KDS enabled) -->
+          <div v-if="businessProfile?.kds_enabled" class="mt-2 space-y-2">
             <div
               v-for="st in stations.filter((s: any) => s.is_active)"
               :key="st.id"
-              class="flex items-center justify-between rounded-lg bg-background border border-border px-3 py-2"
+              class="rounded-lg bg-background border border-border px-3 py-2.5 space-y-1.5"
             >
-              <span class="text-xs font-mono text-text-secondary truncate">{{ kdsBaseUrl }}/cocina/{{ st.id }}</span>
-              <button
-                @click="copyKdsUrl(st.id)"
-                class="ml-2 p-1 rounded text-text-tertiary hover:text-primary hover:bg-primary/5 transition-colors flex-shrink-0"
-                title="Copiar URL"
-                aria-label="Copiar URL de pantalla KDS"
-              >
-                <ClipboardIcon class="w-3.5 h-3.5" />
-              </button>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-text-primary">{{ st.name }}</span>
+                <div class="flex items-center gap-1.5">
+                  <button
+                    v-if="!kdsTokens[st.id]"
+                    @click="generateKdsToken(st.id)"
+                    :disabled="generatingToken === st.id"
+                    class="min-h-[32px] px-2.5 py-1 text-xs font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    {{ generatingToken === st.id ? 'Generando...' : 'Generar enlace' }}
+                  </button>
+                  <template v-else>
+                    <button
+                      @click="copyKdsUrl(st.id)"
+                      class="min-h-[32px] px-2.5 py-1 text-xs font-medium rounded-lg bg-surface border border-border text-text-primary hover:bg-surface-secondary transition-colors flex items-center gap-1"
+                      aria-label="Copiar enlace KDS"
+                    >
+                      <ClipboardIcon class="w-3 h-3" />
+                      Copiar
+                    </button>
+                    <button
+                      @click="revokeKdsToken(st.id)"
+                      :disabled="revokingToken === st.id"
+                      class="min-h-[32px] px-2.5 py-1 text-xs font-medium rounded-lg text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                      aria-label="Revocar enlace KDS"
+                    >
+                      {{ revokingToken === st.id ? '...' : 'Revocar' }}
+                    </button>
+                  </template>
+                </div>
+              </div>
+              <div v-if="kdsTokens[st.id]" class="text-[10px] font-mono text-text-tertiary truncate">
+                {{ kdsBaseUrl }}/cocina/{{ st.id }}?token={{ kdsTokens[st.id] }}
+              </div>
             </div>
           </div>
         </div>
@@ -496,9 +521,46 @@ const handleToggleKds = async (event: Event) => {
 
 const kdsBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://warocol.com'
 
+// KDS token management
+const kdsTokens = ref<Record<string, string>>({})
+const generatingToken = ref<string | null>(null)
+const revokingToken = ref<string | null>(null)
+
+const generateKdsToken = async (stationId: string) => {
+  generatingToken.value = stationId
+  try {
+    const res = await $fetch<any>(`/api/api/stations/${stationId}/kds-token`, { method: 'POST' })
+    if (res.data?.token) {
+      kdsTokens.value[stationId] = res.data.token
+    }
+    toast.success('Enlace KDS generado')
+  } catch (e: any) {
+    toast.error(e.data?.detail || 'Error al generar token')
+  } finally {
+    generatingToken.value = null
+  }
+}
+
+const revokeKdsToken = async (stationId: string) => {
+  revokingToken.value = stationId
+  try {
+    await $fetch(`/api/api/stations/${stationId}/kds-token`, { method: 'DELETE' })
+    delete kdsTokens.value[stationId]
+    toast.success('Enlace KDS revocado')
+  } catch (e: any) {
+    toast.error(e.data?.detail || 'Error al revocar token')
+  } finally {
+    revokingToken.value = null
+  }
+}
+
 const copyKdsUrl = (stationId: string) => {
-  navigator.clipboard.writeText(`${kdsBaseUrl}/cocina/${stationId}`)
-  toast.success('URL copiada al portapapeles')
+  const token = kdsTokens.value[stationId]
+  const url = token
+    ? `${kdsBaseUrl}/cocina/${stationId}?token=${token}`
+    : `${kdsBaseUrl}/cocina/${stationId}`
+  navigator.clipboard.writeText(url)
+  toast.success('Enlace KDS copiado al portapapeles')
 }
 
 // ─── Station CRUD ───
