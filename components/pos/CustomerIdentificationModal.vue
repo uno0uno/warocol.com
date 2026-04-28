@@ -16,10 +16,10 @@
         <div class="p-5 border-b border-border flex items-center justify-between flex-shrink-0">
           <div>
             <h2 class="text-xl font-bold text-text-primary">
-              {{ state === 'create' ? 'Nuevo cliente' : 'Buscar cliente' }}
+              {{ headerTitle }}
             </h2>
             <p class="text-sm text-text-secondary mt-0.5">
-              {{ state === 'create' ? 'Ingresa los datos del nuevo cliente' : 'Busca por nombre o teléfono' }}
+              {{ headerSubtitle }}
             </p>
           </div>
           <button
@@ -221,6 +221,83 @@
                 />
               </div>
 
+              <!-- Toggle: Datos para factura electrónica -->
+              <div class="border-t border-border pt-4">
+                <button
+                  type="button"
+                  :aria-expanded="wantsInvoice ? 'true' : 'false'"
+                  aria-controls="fiscal-fields"
+                  @click="wantsInvoice = !wantsInvoice"
+                  class="w-full min-h-[44px] flex items-center justify-between gap-2 px-3 py-2 rounded-xl hover:bg-surface-secondary transition-colors"
+                >
+                  <span class="flex items-center gap-2 text-text-primary font-medium">
+                    <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
+                    </svg>
+                    ¿Necesita factura electrónica?
+                  </span>
+                  <svg :class="['h-5 w-5 text-text-tertiary transition-transform', wantsInvoice && 'rotate-180']" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
+
+                <div v-if="wantsInvoice" id="fiscal-fields" class="space-y-4 mt-3">
+                  <!-- Tipo doc -->
+                  <div class="flex flex-col gap-1">
+                    <label for="new-fiscal-type" class="text-sm font-medium text-text-primary">
+                      Tipo de documento <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="new-fiscal-type"
+                      v-model="createForm.fiscal_id_type"
+                      :disabled="isCreating"
+                      class="w-full min-h-[44px] px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
+                    >
+                      <option value="" disabled>Selecciona...</option>
+                      <option value="CC">Cédula de Ciudadanía</option>
+                      <option value="NIT">NIT (empresa)</option>
+                      <option value="CE">Cédula de Extranjería</option>
+                      <option value="PA">Pasaporte</option>
+                      <option value="TI">Tarjeta de Identidad</option>
+                    </select>
+                  </div>
+
+                  <!-- Número doc -->
+                  <div class="flex flex-col gap-1">
+                    <label for="new-fiscal-id" class="text-sm font-medium text-text-primary">
+                      Número de documento <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="new-fiscal-id"
+                      v-model="createForm.fiscal_id"
+                      type="text"
+                      :placeholder="createForm.fiscal_id_type === 'NIT' ? '900123456 (sin DV)' : '1063279307'"
+                      :disabled="isCreating"
+                      class="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
+                    />
+                    <p v-if="createForm.fiscal_id_type === 'NIT'" class="text-xs text-text-tertiary">
+                      Ingresa el NIT sin el dígito de verificación
+                    </p>
+                  </div>
+
+                  <!-- Razón social -->
+                  <div class="flex flex-col gap-1">
+                    <label for="new-fiscal-name" class="text-sm font-medium text-text-primary">
+                      {{ createForm.fiscal_id_type === 'NIT' ? 'Razón social' : 'Nombre legal completo' }}
+                      <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="new-fiscal-name"
+                      v-model="createForm.fiscal_business_name"
+                      type="text"
+                      :placeholder="createForm.fiscal_id_type === 'NIT' ? 'ACME SAS' : 'Juan Pérez Gómez'"
+                      :disabled="isCreating"
+                      class="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <!-- Error -->
               <div v-if="createError" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3">
                 <svg class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -242,11 +319,105 @@
               </button>
               <button
                 type="submit"
-                :disabled="!createForm.phone_number || isCreating"
+                :disabled="!canSubmitCreate || isCreating"
                 class="flex-1 min-h-[44px] px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <CommonsTheCustomLoader v-if="isCreating" size="small" />
                 <span>{{ isCreating ? 'Guardando...' : 'Guardar y continuar' }}</span>
+              </button>
+            </div>
+          </form>
+        </template>
+
+        <!-- STATE: Edit fiscal data of an already-identified customer -->
+        <template v-if="state === 'edit-fiscal'">
+          <form @submit.prevent="handleSaveFiscal" class="flex flex-col flex-1 overflow-hidden">
+            <div class="p-5 space-y-4 flex-1 overflow-y-auto">
+
+              <p class="text-sm text-text-secondary">
+                Datos para emitir factura electrónica al cliente. Solo se piden los datos exigidos por la DIAN (Resolución 000202 de 2025).
+              </p>
+
+              <!-- Tipo doc -->
+              <div class="flex flex-col gap-1">
+                <label for="edit-fiscal-type" class="text-sm font-medium text-text-primary">
+                  Tipo de documento <span class="text-red-500">*</span>
+                </label>
+                <select
+                  id="edit-fiscal-type"
+                  v-model="fiscalForm.fiscal_id_type"
+                  :disabled="isCreating"
+                  class="w-full min-h-[44px] px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
+                >
+                  <option value="" disabled>Selecciona...</option>
+                  <option value="CC">Cédula de Ciudadanía</option>
+                  <option value="NIT">NIT (empresa)</option>
+                  <option value="CE">Cédula de Extranjería</option>
+                  <option value="PA">Pasaporte</option>
+                  <option value="TI">Tarjeta de Identidad</option>
+                </select>
+              </div>
+
+              <!-- Número doc -->
+              <div class="flex flex-col gap-1">
+                <label for="edit-fiscal-id" class="text-sm font-medium text-text-primary">
+                  Número de documento <span class="text-red-500">*</span>
+                </label>
+                <input
+                  id="edit-fiscal-id"
+                  v-model="fiscalForm.fiscal_id"
+                  type="text"
+                  :placeholder="fiscalForm.fiscal_id_type === 'NIT' ? '900123456 (sin DV)' : '1063279307'"
+                  :disabled="isCreating"
+                  class="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
+                />
+                <p v-if="fiscalForm.fiscal_id_type === 'NIT'" class="text-xs text-text-tertiary">
+                  Ingresa el NIT sin el dígito de verificación
+                </p>
+              </div>
+
+              <!-- Razón social -->
+              <div class="flex flex-col gap-1">
+                <label for="edit-fiscal-name" class="text-sm font-medium text-text-primary">
+                  {{ fiscalForm.fiscal_id_type === 'NIT' ? 'Razón social' : 'Nombre legal completo' }}
+                  <span class="text-red-500">*</span>
+                </label>
+                <input
+                  id="edit-fiscal-name"
+                  v-model="fiscalForm.fiscal_business_name"
+                  type="text"
+                  :placeholder="fiscalForm.fiscal_id_type === 'NIT' ? 'ACME SAS' : 'Juan Pérez Gómez'"
+                  :disabled="isCreating"
+                  class="w-full px-4 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base disabled:opacity-50"
+                />
+              </div>
+
+              <!-- Error -->
+              <div v-if="createError" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3">
+                <svg class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                </svg>
+                <p class="text-sm text-red-800 dark:text-red-200">{{ createError }}</p>
+              </div>
+
+            </div>
+
+            <!-- Footer buttons -->
+            <div class="p-4 pb-6 md:pb-4 border-t border-border flex-shrink-0 flex gap-3">
+              <button
+                type="button"
+                @click="handleClose"
+                class="min-h-[44px] px-4 py-3 bg-surface border border-border text-text-secondary font-medium rounded-xl hover:bg-surface-secondary transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                :disabled="!canSubmitFiscal || isCreating"
+                class="flex-1 min-h-[44px] px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <CommonsTheCustomLoader v-if="isCreating" size="small" />
+                <span>{{ isCreating ? 'Guardando...' : 'Guardar datos' }}</span>
               </button>
             </div>
           </form>
@@ -258,9 +429,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { $fetch } from 'ofetch'
+
+type FiscalIdType = 'CC' | 'NIT' | 'CE' | 'PA' | 'TI' | ''
+
+interface FiscalFields {
+  fiscal_id_type: FiscalIdType | null
+  fiscal_id: string | null
+  fiscal_business_name: string | null
+  fiscal_email: string | null
+}
 
 interface CustomerSummary {
   id: string
@@ -269,7 +449,7 @@ interface CustomerSummary {
   email: string | null
 }
 
-interface SelectedCustomer {
+interface SelectedCustomer extends FiscalFields {
   id: string
   name: string | null
   phone_number: string | null
@@ -278,18 +458,22 @@ interface SelectedCustomer {
 
 interface Props {
   modelValue: boolean
+  // When provided, the modal opens directly into the fiscal-edit state for an
+  // already-identified customer (used by the POS checkout "Pedir datos para factura" button).
+  editCustomer?: SelectedCustomer | null
 }
 
 interface Emits {
   (e: 'update:modelValue', value: boolean): void
   (e: 'customer-identified', customer: SelectedCustomer): void
+  (e: 'fiscal-updated', customer: SelectedCustomer): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 // UI state
-const state = ref<'search' | 'create'>('search')
+const state = ref<'search' | 'create' | 'edit-fiscal'>('search')
 const searchInputRef = ref<HTMLInputElement | null>(null)
 
 // Search state (two-tier: raw input + committed debounced value)
@@ -300,9 +484,52 @@ const searchResults = ref<CustomerSummary[]>([])
 const isCreatingGeneric = ref(false)
 
 // Create form state
-const createForm = ref({ phone_number: '', name: '', email: '' })
+const wantsInvoice = ref(false)
+const createForm = ref({
+  phone_number: '',
+  name: '',
+  email: '',
+  fiscal_id_type: '' as FiscalIdType,
+  fiscal_id: '',
+  fiscal_business_name: '',
+})
 const isCreating = ref(false)
 const createError = ref('')
+
+// Fiscal-only edit form (state === 'edit-fiscal')
+const fiscalForm = ref({
+  customer_id: '',
+  fiscal_id_type: '' as FiscalIdType,
+  fiscal_id: '',
+  fiscal_business_name: '',
+})
+
+const headerTitle = computed(() => {
+  if (state.value === 'create') return 'Nuevo cliente'
+  if (state.value === 'edit-fiscal') return 'Datos para factura'
+  return 'Buscar cliente'
+})
+const headerSubtitle = computed(() => {
+  if (state.value === 'create') return 'Ingresa los datos del nuevo cliente'
+  if (state.value === 'edit-fiscal') return 'Para emitir factura electrónica identificada'
+  return 'Busca por nombre, teléfono o NIT/cédula'
+})
+
+const canSubmitCreate = computed(() => {
+  if (!createForm.value.phone_number) return false
+  if (!wantsInvoice.value) return true
+  return Boolean(
+    createForm.value.fiscal_id_type
+      && createForm.value.fiscal_id
+      && createForm.value.fiscal_business_name,
+  )
+})
+
+const canSubmitFiscal = computed(() => Boolean(
+  fiscalForm.value.fiscal_id_type
+    && fiscalForm.value.fiscal_id
+    && fiscalForm.value.fiscal_business_name,
+))
 
 // Debounced search — commits query and triggers fetch after 300ms
 const commitSearch = useDebounceFn(async (q: string) => {
@@ -339,15 +566,39 @@ watch(searchQuery, (val) => {
 
 // Reset when modal opens
 watch(() => props.modelValue, (open) => {
-  if (open) {
+  if (!open) return
+
+  searchQuery.value = ''
+  debouncedQuery.value = ''
+  searchResults.value = []
+  isSearching.value = false
+  wantsInvoice.value = false
+  createForm.value = {
+    phone_number: '', name: '', email: '',
+    fiscal_id_type: '', fiscal_id: '', fiscal_business_name: '',
+  }
+  createError.value = ''
+  isCreatingGeneric.value = false
+  isHydratingSelection.value = false
+  selectionError.value = ''
+
+  if (props.editCustomer) {
+    // Fiscal-edit flow: skip search/create and prefill from the active customer
+    state.value = 'edit-fiscal'
+    fiscalForm.value = {
+      customer_id: props.editCustomer.id,
+      fiscal_id_type: (props.editCustomer.fiscal_id_type as FiscalIdType) || '',
+      fiscal_id: props.editCustomer.fiscal_id || '',
+      fiscal_business_name:
+        props.editCustomer.fiscal_business_name
+          || props.editCustomer.name
+          || '',
+    }
+  } else {
     state.value = 'search'
-    searchQuery.value = ''
-    debouncedQuery.value = ''
-    searchResults.value = []
-    isSearching.value = false
-    createForm.value = { phone_number: '', name: '', email: '' }
-    createError.value = ''
-    isCreatingGeneric.value = false
+    fiscalForm.value = {
+      customer_id: '', fiscal_id_type: '', fiscal_id: '', fiscal_business_name: '',
+    }
     nextTick(() => searchInputRef.value?.focus())
   }
 })
@@ -362,72 +613,139 @@ const customerInitial = (c: CustomerSummary) => {
 }
 
 // Select from results
-const selectCustomer = (customer: CustomerSummary) => {
-  emit('customer-identified', {
-    id: String(customer.id),
-    name: customer.name,
-    phone_number: customer.phone_number,
-    email: customer.email
-  })
-  emit('update:modelValue', false)
+const isHydratingSelection = ref(false)
+const selectionError = ref('')
+
+const selectCustomer = async (customer: CustomerSummary) => {
+  if (isHydratingSelection.value) return
+  isHydratingSelection.value = true
+  selectionError.value = ''
+  try {
+    const res = await $fetch<CustomerApiResponse>(`/api/customers/${customer.id}`)
+    if (res?.success) {
+      emit('customer-identified', toSelected(res.data))
+      emit('update:modelValue', false)
+      return
+    }
+    // Fallback: emit what we have (no fiscal fields)
+    emit('customer-identified', {
+      id: String(customer.id),
+      name: customer.name,
+      phone_number: customer.phone_number,
+      email: customer.email,
+      fiscal_id_type: null,
+      fiscal_id: null,
+      fiscal_business_name: null,
+      fiscal_email: null,
+    })
+    emit('update:modelValue', false)
+  } catch (e: any) {
+    selectionError.value = e?.data?.detail || e?.data?.message || e?.message || 'No se pudo cargar el cliente'
+  } finally {
+    isHydratingSelection.value = false
+  }
 }
+
+type CustomerApiResponse = {
+  success: boolean
+  data: {
+    id: string
+    name: string | null
+    phone_number: string | null
+    email: string | null
+    fiscal_id_type?: FiscalIdType | null
+    fiscal_id?: string | null
+    fiscal_business_name?: string | null
+    fiscal_email?: string | null
+  }
+}
+
+const toSelected = (data: CustomerApiResponse['data']): SelectedCustomer => ({
+  id: data.id,
+  name: data.name,
+  phone_number: data.phone_number,
+  email: data.email,
+  fiscal_id_type: (data.fiscal_id_type as FiscalIdType) ?? null,
+  fiscal_id: data.fiscal_id ?? null,
+  fiscal_business_name: data.fiscal_business_name ?? null,
+  fiscal_email: data.fiscal_email ?? null,
+})
 
 // Generic/walk-in customer
 const selectGenericCustomer = async () => {
   isCreatingGeneric.value = true
   try {
-    const response = await $fetch<{
-      success: boolean
-      data: { id: string; name: string | null; phone_number: string | null; email: string | null }
-    }>('/api/customers/search-or-create', {
+    const response = await $fetch<CustomerApiResponse>('/api/customers/search-or-create', {
       method: 'POST',
       body: { phone_number: '0000000000', name: 'Cliente sin datos' }
     })
     if (response.success) {
-      emit('customer-identified', {
-        id: response.data.id,
-        name: response.data.name,
-        phone_number: response.data.phone_number,
-        email: response.data.email
-      })
+      emit('customer-identified', toSelected(response.data))
       emit('update:modelValue', false)
     }
   } catch (e: any) {
-    // Fallback: still close and emit a sentinel so checkout can show feedback
     console.error('Error creating generic customer:', e)
   } finally {
     isCreatingGeneric.value = false
   }
 }
 
-// Create new customer
+// Create new customer (with optional fiscal data)
 const handleCreate = async () => {
-  if (!createForm.value.phone_number) return
+  if (!canSubmitCreate.value) return
   isCreating.value = true
   createError.value = ''
   try {
-    const response = await $fetch<{
-      success: boolean
-      data: { id: string; name: string | null; phone_number: string | null; email: string | null }
-    }>('/api/customers/search-or-create', {
+    const fiscalPayload = wantsInvoice.value ? {
+      fiscal_id_type: createForm.value.fiscal_id_type || null,
+      fiscal_id: createForm.value.fiscal_id?.trim() || null,
+      fiscal_business_name: createForm.value.fiscal_business_name?.trim() || null,
+      fiscal_email: createForm.value.email?.trim() || null,
+    } : {}
+
+    const response = await $fetch<CustomerApiResponse>('/api/customers/search-or-create', {
       method: 'POST',
       body: {
         phone_number: createForm.value.phone_number,
         name: createForm.value.name || null,
-        email: createForm.value.email || null
+        email: createForm.value.email || null,
+        ...fiscalPayload,
       }
     })
     if (response.success) {
-      emit('customer-identified', {
-        id: response.data.id,
-        name: response.data.name,
-        phone_number: response.data.phone_number,
-        email: response.data.email
-      })
+      emit('customer-identified', toSelected(response.data))
       emit('update:modelValue', false)
     }
   } catch (e: any) {
     createError.value = e.data?.message || e.message || 'Error al guardar el cliente'
+  } finally {
+    isCreating.value = false
+  }
+}
+
+// Save fiscal data on an already-identified customer
+const handleSaveFiscal = async () => {
+  if (!canSubmitFiscal.value || !fiscalForm.value.customer_id) return
+  isCreating.value = true
+  createError.value = ''
+  try {
+    const response = await $fetch<CustomerApiResponse>(
+      `/api/customers/${fiscalForm.value.customer_id}`,
+      {
+        method: 'PATCH',
+        body: {
+          fiscal_id_type: fiscalForm.value.fiscal_id_type || null,
+          fiscal_id: fiscalForm.value.fiscal_id?.trim() || null,
+          fiscal_business_name: fiscalForm.value.fiscal_business_name?.trim() || null,
+        },
+      },
+    )
+    if (response.success) {
+      emit('fiscal-updated', toSelected(response.data))
+      emit('update:modelValue', false)
+    }
+  } catch (e: any) {
+    createError.value = e.data?.message || e.message || 'Error al guardar los datos'
   } finally {
     isCreating.value = false
   }
