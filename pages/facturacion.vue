@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive, watch } from 'vue'
+import { ref, computed, reactive, watch, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import {
   CheckIcon,
@@ -16,7 +16,7 @@ const toast = useToast()
 const { formatDate } = useFormatters()
 
 // ── DIAN Resolutions ────────────────────────────────────────────────────────
-const { data: resolutionsData, refetch: refetchResolutions } = useQuery({
+const { data: resolutionsData, asyncStatus: resAsyncStatus, refetch: refetchResolutions } = useQuery({
   key: () => ['tenant', 'dian-resolutions', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/tenant/dian-resolutions'),
   enabled: () => !!currentTenant.value,
@@ -108,13 +108,26 @@ const resolutionDocTypes = [
 ]
 
 // ── Facturación Status ──────────────────────────────────────────────────────
-const { data: statusData } = useQuery({
+const { data: statusData, asyncStatus: statusAsyncStatus, refetch: refetchStatus } = useQuery({
   key: () => ['tenant', 'facturacion-status', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/tenant/facturacion-status'),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
 })
 const facturacionStatus = computed(() => statusData.value?.data ?? null)
+
+// ── Progressive loading + refresh ───────────────────────────────────────────
+const isRefreshing = computed(() =>
+  (resAsyncStatus.value === 'loading' && resolutionsData.value != null) ||
+  (statusAsyncStatus.value === 'loading' && statusData.value != null)
+)
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const handleRefresh = async () => {
+  await Promise.all([refetchResolutions(), refetchStatus()])
+}
+onMounted(() => { setRefreshHandler(handleRefresh) })
+onUnmounted(() => { clearRefreshHandler() })
+registerProgressiveLoading(isRefreshing)
 
 // ── Tax Config (moved from negocio.vue) ─────────────────────────────────────
 const { data: taxConfigData, refetch: refreshTaxConfig } = useQuery({
