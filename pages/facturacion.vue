@@ -18,7 +18,7 @@ const { formatDate } = useFormatters()
 // ── DIAN Resolutions ────────────────────────────────────────────────────────
 const { data: resolutionsData, asyncStatus: resAsyncStatus, refetch: refetchResolutions } = useQuery({
   key: () => ['tenant', 'dian-resolutions', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any[] }>('/api/tenant/dian-resolutions'),
+  query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/tenant/dian-resolutions'),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
 })
@@ -73,11 +73,11 @@ const saveResolution = async () => {
   isSavingResolution.value = true
   try {
     if (editingResolutionId.value) {
-      await $fetch(`/api/tenant/dian-resolutions/${editingResolutionId.value}`, {
+      await $fetch(`/api/api/tenant/dian-resolutions/${editingResolutionId.value}`, {
         method: 'PUT', body: { ...resolutionForm },
       })
     } else {
-      await $fetch('/api/tenant/dian-resolutions', {
+      await $fetch('/api/api/tenant/dian-resolutions', {
         method: 'POST', body: { ...resolutionForm },
       })
     }
@@ -94,7 +94,7 @@ const saveResolution = async () => {
 
 const toggleResolution = async (resId: string) => {
   try {
-    await $fetch(`/api/tenant/dian-resolutions/${resId}/toggle`, { method: 'PATCH' })
+    await $fetch(`/api/api/tenant/dian-resolutions/${resId}/toggle`, { method: 'PATCH' })
     await refetchResolutions()
   } catch (e: any) {
     toast.error(e.data?.detail || 'Error al cambiar estado', { title: 'Error' })
@@ -110,7 +110,7 @@ const resolutionDocTypes = [
 // ── Facturación Status ──────────────────────────────────────────────────────
 const { data: statusData, asyncStatus: statusAsyncStatus, refetch: refetchStatus } = useQuery({
   key: () => ['tenant', 'facturacion-status', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/tenant/facturacion-status'),
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/facturacion-status'),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
 })
@@ -187,7 +187,7 @@ const progressColor = (percent: number) => {
 // ── Fiscal Data ─────────────────────────────────────────────────────────────
 const { data: fiscalData, refetch: refreshFiscal } = useQuery({
   key: () => ['tenant', 'fiscal-data', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/tenant/fiscal-data'),
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/fiscal-data'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
@@ -224,7 +224,7 @@ watch(fiscal, (f) => {
 const saveFiscalData = async () => {
   isSavingFiscal.value = true
   try {
-    await $fetch('/api/tenant/fiscal-data', { method: 'PUT', body: { ...fiscalForm } })
+    await $fetch('/api/api/tenant/fiscal-data', { method: 'PUT', body: { ...fiscalForm } })
     await refreshFiscal()
     toast.success('Datos fiscales guardados correctamente', { title: 'Guardado' })
   } catch (error: any) {
