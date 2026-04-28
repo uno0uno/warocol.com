@@ -16,13 +16,96 @@ const toast = useToast()
 const { formatDate } = useFormatters()
 
 // ── DIAN Resolutions ────────────────────────────────────────────────────────
-const { data: resolutionsData } = useQuery({
+const { data: resolutionsData, refetch: refetchResolutions } = useQuery({
   key: () => ['tenant', 'dian-resolutions', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/tenant/dian-resolutions'),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
 })
 const resolutions = computed(() => resolutionsData.value?.data ?? [])
+
+// Resolution form state
+const showResolutionForm = ref(false)
+const editingResolutionId = ref<string | null>(null)
+const isSavingResolution = ref(false)
+const resolutionForm = reactive({
+  resolution_number: '',
+  prefix: '',
+  from_number: 1,
+  to_number: 1000,
+  current_number: 0,
+  date_from: '',
+  date_to: '',
+  document_type: 'invoice',
+})
+
+const resetResolutionForm = () => {
+  resolutionForm.resolution_number = ''
+  resolutionForm.prefix = ''
+  resolutionForm.from_number = 1
+  resolutionForm.to_number = 1000
+  resolutionForm.current_number = 0
+  resolutionForm.date_from = ''
+  resolutionForm.date_to = ''
+  resolutionForm.document_type = 'invoice'
+  editingResolutionId.value = null
+}
+
+const openNewResolution = () => {
+  resetResolutionForm()
+  showResolutionForm.value = true
+}
+
+const openEditResolution = (res: any) => {
+  editingResolutionId.value = res.id
+  resolutionForm.resolution_number = res.resolution_number
+  resolutionForm.prefix = res.prefix
+  resolutionForm.from_number = res.from_number
+  resolutionForm.to_number = res.to_number
+  resolutionForm.current_number = res.current_number
+  resolutionForm.date_from = res.date_from
+  resolutionForm.date_to = res.date_to
+  resolutionForm.document_type = res.document_type
+  showResolutionForm.value = true
+}
+
+const saveResolution = async () => {
+  isSavingResolution.value = true
+  try {
+    if (editingResolutionId.value) {
+      await $fetch(`/api/tenant/dian-resolutions/${editingResolutionId.value}`, {
+        method: 'PUT', body: { ...resolutionForm },
+      })
+    } else {
+      await $fetch('/api/tenant/dian-resolutions', {
+        method: 'POST', body: { ...resolutionForm },
+      })
+    }
+    await refetchResolutions()
+    showResolutionForm.value = false
+    resetResolutionForm()
+    toast.success(editingResolutionId.value ? 'Resolución actualizada' : 'Resolución creada', { title: 'Guardado' })
+  } catch (e: any) {
+    toast.error(e.data?.detail || 'Error al guardar resolución', { title: 'Error' })
+  } finally {
+    isSavingResolution.value = false
+  }
+}
+
+const toggleResolution = async (resId: string) => {
+  try {
+    await $fetch(`/api/tenant/dian-resolutions/${resId}/toggle`, { method: 'PATCH' })
+    await refetchResolutions()
+  } catch (e: any) {
+    toast.error(e.data?.detail || 'Error al cambiar estado', { title: 'Error' })
+  }
+}
+
+const resolutionDocTypes = [
+  { value: 'invoice', label: 'Factura de venta' },
+  { value: 'credit_note', label: 'Nota crédito' },
+  { value: 'debit_note', label: 'Nota débito' },
+]
 
 // ── Facturación Status ──────────────────────────────────────────────────────
 const { data: statusData } = useQuery({
@@ -160,32 +243,111 @@ const taxLevels = [
 
     <!-- ══════ RESOLUCIÓN DIAN ══════ -->
     <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
-      <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-        <DocumentTextIcon class="w-5 h-5 text-primary flex-shrink-0" />
-        Resolución DIAN
-      </h3>
-
-      <div v-if="resolutions.length === 0" class="text-center py-8">
-        <DocumentTextIcon class="w-10 h-10 mx-auto text-text-tertiary mb-2" />
-        <p class="text-sm text-text-secondary">Sin resoluciones DIAN configuradas</p>
-        <p class="text-xs text-text-tertiary mt-1">Contacta soporte para configurar tu resolución de facturación electrónica</p>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base sm:text-lg font-semibold text-text-primary flex items-center gap-2">
+          <DocumentTextIcon class="w-5 h-5 text-primary flex-shrink-0" />
+          Resolución DIAN
+        </h3>
+        <button
+          @click="openNewResolution"
+          class="min-h-[36px] px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors flex items-center gap-1"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          Agregar
+        </button>
       </div>
 
-      <div v-else class="space-y-4">
+      <!-- Empty state -->
+      <div v-if="resolutions.length === 0 && !showResolutionForm" class="text-center py-8">
+        <DocumentTextIcon class="w-10 h-10 mx-auto text-text-tertiary mb-2" />
+        <p class="text-sm text-text-secondary">Sin resoluciones DIAN configuradas</p>
+        <p class="text-xs text-text-tertiary mt-1">Configura la resolución que registraste en el portal de Matias (número, prefijo, rango)</p>
+        <button @click="openNewResolution" class="mt-3 min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors">
+          Configurar resolución
+        </button>
+      </div>
+
+      <!-- Resolution form (inline) -->
+      <div v-if="showResolutionForm" class="border border-primary/30 bg-primary/5 rounded-xl p-4 mb-4 space-y-4">
+        <h4 class="text-sm font-bold text-text-primary">{{ editingResolutionId ? 'Editar resolución' : 'Nueva resolución' }}</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-text-secondary">Número de resolución <span class="text-red-500">*</span></label>
+            <input v-model="resolutionForm.resolution_number" type="text" placeholder="18764074347312" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-text-secondary">Prefijo <span class="text-red-500">*</span></label>
+            <input v-model="resolutionForm.prefix" type="text" placeholder="LZT" maxlength="10" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary uppercase" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-text-secondary">Rango desde <span class="text-red-500">*</span></label>
+            <input v-model.number="resolutionForm.from_number" type="number" min="1" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-text-secondary">Rango hasta <span class="text-red-500">*</span></label>
+            <input v-model.number="resolutionForm.to_number" type="number" min="1" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-text-secondary">Número actual (consecutivo)</label>
+            <input v-model.number="resolutionForm.current_number" type="number" min="0" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-text-secondary">Tipo de documento</label>
+            <select v-model="resolutionForm.document_type" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+              <option v-for="dt in resolutionDocTypes" :key="dt.value" :value="dt.value">{{ dt.label }}</option>
+            </select>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-text-secondary">Fecha desde <span class="text-red-500">*</span></label>
+            <input v-model="resolutionForm.date_from" type="date" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-text-secondary">Fecha hasta <span class="text-red-500">*</span></label>
+            <input v-model="resolutionForm.date_to" type="date" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+        </div>
+        <div class="flex items-center gap-2 justify-end">
+          <button @click="showResolutionForm = false; resetResolutionForm()" class="min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-surface border border-border text-text-primary hover:bg-surface-secondary transition-colors">
+            Cancelar
+          </button>
+          <button
+            @click="saveResolution"
+            :disabled="isSavingResolution || !resolutionForm.prefix || !resolutionForm.resolution_number || !resolutionForm.date_from || !resolutionForm.date_to"
+            class="min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <CheckIcon v-if="!isSavingResolution" class="w-4 h-4" aria-hidden="true" />
+            <span>{{ isSavingResolution ? 'Guardando...' : (editingResolutionId ? 'Actualizar' : 'Crear resolución') }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Resolution cards -->
+      <div v-if="resolutions.length > 0" class="space-y-4">
         <div v-for="res in resolutions" :key="res.id" class="border border-border rounded-xl p-4 space-y-3">
-          <!-- Header: prefix + status -->
+          <!-- Header: prefix + status + actions -->
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">
               <span class="text-lg font-bold text-text-primary">{{ res.prefix }}</span>
               <span class="text-xs text-text-secondary font-mono">{{ res.resolution_number }}</span>
             </div>
-            <span
-              class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
-              :class="res.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'"
-            >
-              <svg v-if="res.is_active" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
-              {{ res.is_active ? 'Activa' : 'Inactiva' }}
-            </span>
+            <div class="flex items-center gap-2">
+              <button
+                @click="openEditResolution(res)"
+                class="min-h-[32px] min-w-[32px] flex items-center justify-center rounded-lg hover:bg-surface-secondary transition-colors"
+                aria-label="Editar resolución"
+              >
+                <svg class="w-4 h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+              </button>
+              <button
+                @click="toggleResolution(res.id)"
+                class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full cursor-pointer transition-colors"
+                :class="res.is_active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                :aria-label="res.is_active ? 'Desactivar resolución' : 'Activar resolución'"
+              >
+                <svg v-if="res.is_active" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                {{ res.is_active ? 'Activa' : 'Inactiva' }}
+              </button>
+            </div>
           </div>
 
           <!-- Document type -->
