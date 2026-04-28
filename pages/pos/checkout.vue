@@ -52,7 +52,7 @@ const discountInput = ref('')
 
 // Success modal state
 const showSuccessModal = ref(false)
-const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string; discount_amount?: number; subtotal?: number; standard_tax?: number; liquor_tax?: number; standard_tax_label?: string; order_id?: string } | null>(null)
+const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string; discount_amount?: number; subtotal?: number; standard_tax?: number; liquor_tax?: number; standard_tax_label?: string; order_id?: string; order_ids?: string[] } | null>(null)
 const wasMesaMode = ref(false)
 const receiptEmail = ref('')
 const emailSent = ref(false)
@@ -65,6 +65,8 @@ const invoiceLoading = ref(false)
 const invoiceResult = ref<{ cufe: string; invoice_number: number; prefix: string; pdf_presigned_url: string | null; status: string } | null>(null)
 const invoiceError = ref('')
 const invoiceQrDataUrl = ref('')
+const invoiceProgress = ref('')
+const invoiceResults = ref<{ order_id: string; prefix: string; invoice_number: number; cufe: string; status: string; error?: string }[]>([])
 
 // Customer identification via modal
 const showCustomerModal = ref(false)
@@ -366,7 +368,7 @@ const processOrder = async () => {
       const _discountAmt = discountAmount.value
       const _subtotal = cartTotal.value
       const _discountedTotal = discountedTotal.value
-      await $fetch(`/api/tables/${session.tableId}/close`, {
+      const closeResponse = await $fetch(`/api/tables/${session.tableId}/close`, {
         method: 'POST',
         body: {
           payment_method: selectedPaymentMethod.value,
@@ -379,11 +381,12 @@ const processOrder = async () => {
             ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
             : {}),
         },
-      })
+      }) as any
       orderResult.value = {
         order_number: 0,
         total_amount: _discountedTotal,
         payment_method: selectedPaymentMethod.value,
+        order_ids: closeResponse.data?.order_ids || [],
         ...(discountEnabled.value && _discountAmt > 0
           ? { discount_amount: _discountAmt, subtotal: _subtotal }
           : {})
@@ -558,6 +561,8 @@ const closeSuccessModal = () => {
   invoiceResult.value = null
   invoiceError.value = ''
   invoiceQrDataUrl.value = ''
+  invoiceResults.value = []
+  invoiceProgress.value = ''
   if (wasMesaMode.value) {
     cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
     router.push('/pos')
@@ -567,27 +572,73 @@ const closeSuccessModal = () => {
 }
 
 const generateInvoice = async () => {
-  if (!orderResult.value?.order_id || invoiceLoading.value) return
+  if (invoiceLoading.value) return
+
+  // Determine which order_ids to invoice
+  const ids: string[] = []
+  if (orderResult.value?.order_id) ids.push(orderResult.value.order_id)
+  else if (orderResult.value?.order_ids?.length) ids.push(...orderResult.value.order_ids)
+  if (ids.length === 0) return
+
   invoiceLoading.value = true
   invoiceError.value = ''
+  invoiceResults.value = []
+  invoiceProgress.value = ''
+
   try {
-    const result = await $fetch(`/api/orders/${orderResult.value.order_id}/invoice`, { method: 'POST' }) as any
-    invoiceResult.value = {
-      cufe: result.cufe || '',
-      invoice_number: result.invoice_number,
-      prefix: result.prefix,
-      pdf_presigned_url: result.pdf_presigned_url || null,
-      status: result.status,
+    for (let i = 0; i < ids.length; i++) {
+      if (ids.length > 1) invoiceProgress.value = `Facturando orden ${i + 1} de ${ids.length}...`
+      try {
+        const result = await $fetch(`/api/orders/${ids[i]}/invoice`, { method: 'POST' }) as any
+        invoiceResults.value.push({
+          order_id: ids[i],
+          prefix: result.prefix,
+          invoice_number: result.invoice_number,
+          cufe: result.cufe || '',
+          status: result.status,
+        })
+        // For single order, set the legacy invoiceResult for QR/print
+        if (ids.length === 1) {
+          invoiceResult.value = {
+            cufe: result.cufe || '',
+            invoice_number: result.invoice_number,
+            prefix: result.prefix,
+            pdf_presigned_url: result.pdf_presigned_url || null,
+            status: result.status,
+          }
+          if (result.cufe) {
+            const dianUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${result.cufe}`
+            invoiceQrDataUrl.value = await QRCode.toDataURL(dianUrl, { width: 150, margin: 1 })
+          }
+        }
+      } catch (e: any) {
+        invoiceResults.value.push({
+          order_id: ids[i],
+          prefix: '',
+          invoice_number: 0,
+          cufe: '',
+          status: 'error',
+          error: e.data?.detail || e.data?.message || 'Error',
+        })
+      }
     }
-    // Generate QR for print receipt
-    if (result.cufe) {
-      const dianUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${result.cufe}`
-      invoiceQrDataUrl.value = await QRCode.toDataURL(dianUrl, { width: 150, margin: 1 })
+    // For multi-order, set invoiceResult from first successful for QR
+    if (ids.length > 1) {
+      const first = invoiceResults.value.find(r => r.status !== 'error')
+      if (first) {
+        invoiceResult.value = { cufe: first.cufe, invoice_number: first.invoice_number, prefix: first.prefix, pdf_presigned_url: null, status: first.status }
+        if (first.cufe) {
+          const dianUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${first.cufe}`
+          invoiceQrDataUrl.value = await QRCode.toDataURL(dianUrl, { width: 150, margin: 1 })
+        }
+      }
     }
+    invoiceProgress.value = ''
   } catch (e: any) {
-    invoiceError.value = e.data?.detail || e.data?.message || e.message || 'Error al generar factura'
+    invoiceError.value = e.data?.detail || e.data?.message || e.message || 'Error al generar facturas'
   } finally {
     invoiceLoading.value = false
+    invoiceProgress.value = ''
   }
 }
 
@@ -1701,7 +1752,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Electronic invoice (DIAN) — only for standard POS flow with order_id -->
-          <div v-if="orderResult?.order_id" class="mb-4">
+          <div v-if="orderResult?.order_id || (orderResult?.order_ids?.length ?? 0) > 0" class="mb-4">
             <!-- Not requested yet -->
             <template v-if="!invoiceResult && !invoiceLoading && !invoiceError">
               <button
@@ -1711,7 +1762,7 @@ onUnmounted(() => {
                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                 </svg>
-                Generar factura electrónica DIAN
+                {{ (orderResult?.order_ids?.length ?? 0) > 1 ? `Facturar ${orderResult?.order_ids?.length} órdenes` : 'Generar factura electrónica DIAN' }}
               </button>
             </template>
 
@@ -1721,18 +1772,19 @@ onUnmounted(() => {
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
               </svg>
-              <span class="text-sm text-text-secondary">Generando factura DIAN... esto puede tomar unos segundos</span>
+              <span class="text-sm text-text-secondary">{{ invoiceProgress || 'Generando factura DIAN... esto puede tomar unos segundos' }}</span>
             </div>
 
-            <!-- Success -->
-            <div v-else-if="invoiceResult" class="rounded-lg border border-green-200 bg-green-50 p-3 space-y-2">
-              <div class="flex items-center gap-2 text-green-700">
-                <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                <span class="text-sm font-medium">Factura {{ invoiceResult.prefix }}-{{ invoiceResult.invoice_number }}</span>
+            <!-- Success — multi-order results -->
+            <div v-else-if="invoiceResults.length > 0" class="rounded-lg border border-green-200 bg-green-50 p-3 space-y-2">
+              <div v-for="ir in invoiceResults" :key="ir.order_id" class="flex items-center gap-2" :class="ir.status === 'error' ? 'text-red-600' : 'text-green-700'">
+                <svg v-if="ir.status !== 'error'" class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                <svg v-else class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+                <span class="text-xs font-medium">{{ ir.status === 'error' ? ir.error : `${ir.prefix}-${ir.invoice_number}` }}</span>
               </div>
-              <p class="text-xs text-green-600 break-all">CUFE: {{ invoiceResult.cufe }}</p>
+              <p v-if="invoiceResult?.cufe" class="text-xs text-green-600 break-all mt-1">CUFE: {{ invoiceResult.cufe }}</p>
               <a
-                v-if="invoiceResult.pdf_presigned_url"
+                v-if="invoiceResult?.pdf_presigned_url"
                 :href="invoiceResult.pdf_presigned_url"
                 target="_blank"
                 rel="noopener"
