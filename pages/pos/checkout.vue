@@ -590,15 +590,26 @@ const generateInvoice = async () => {
       if (ids.length > 1) invoiceProgress.value = `Facturando orden ${i + 1} de ${ids.length}...`
       try {
         const result = await $fetch(`/api/orders/${ids[i]}/invoice`, { method: 'POST' }) as any
-        invoiceResults.value.push({
-          order_id: ids[i],
-          prefix: result.prefix,
-          invoice_number: result.invoice_number,
-          cufe: result.cufe || '',
-          status: result.status,
-        })
+        if (result.status === 'accepted') {
+          invoiceResults.value.push({
+            order_id: ids[i],
+            prefix: result.prefix,
+            invoice_number: result.invoice_number,
+            cufe: result.cufe || '',
+            status: result.status,
+          })
+        } else {
+          invoiceResults.value.push({
+            order_id: ids[i],
+            prefix: result.prefix,
+            invoice_number: result.invoice_number,
+            cufe: '',
+            status: 'error',
+            error: result.error_message || `Rechazada: ${result.prefix}-${result.invoice_number}`,
+          })
+        }
         // For single order, set the legacy invoiceResult for QR/print
-        if (ids.length === 1) {
+        if (ids.length === 1 && result.status === 'accepted') {
           invoiceResult.value = {
             cufe: result.cufe || '',
             invoice_number: result.invoice_number,
@@ -610,6 +621,8 @@ const generateInvoice = async () => {
             const dianUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${result.cufe}`
             invoiceQrDataUrl.value = await QRCode.toDataURL(dianUrl, { width: 150, margin: 1 })
           }
+        } else if (ids.length === 1 && result.status !== 'accepted') {
+          invoiceError.value = result.error_message || `Factura rechazada: ${result.prefix}-${result.invoice_number}`
         }
       } catch (e: any) {
         invoiceResults.value.push({
