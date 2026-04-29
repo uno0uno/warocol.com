@@ -445,7 +445,6 @@ import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({
   layout: 'dashboard',
-  middleware: ['admin-only'],
 })
 
 useHead({ title: 'Catálogo Global — WaRo Admin' })
