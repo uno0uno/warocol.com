@@ -87,6 +87,18 @@
               ]"
               @click="editProduct(item)"
             >
+              <div class="w-10 h-10 rounded-md bg-surface-secondary overflow-hidden flex-shrink-0 flex items-center justify-center">
+                <img
+                  v-if="item.image_url"
+                  :src="item.image_url"
+                  :alt="item.name"
+                  loading="lazy"
+                  class="w-full h-full object-cover"
+                />
+                <svg v-else class="w-5 h-5 text-text-secondary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
               <div class="flex-1 min-w-0">
                 <span class="text-sm font-bold text-text-primary">{{ toTitleCase(item.name) }}</span>
                 <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}</p>
@@ -125,8 +137,22 @@
 
 
           <!-- Desktop Table Cell Customizations -->
-          <template #cell-name="{ value }">
-            <span class="text-sm font-medium text-text-primary">{{ toTitleCase(value) }}</span>
+          <template #cell-name="{ value, item }">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-md bg-surface-secondary overflow-hidden flex-shrink-0 flex items-center justify-center">
+                <img
+                  v-if="item.image_url"
+                  :src="item.image_url"
+                  :alt="value"
+                  loading="lazy"
+                  class="w-full h-full object-cover"
+                />
+                <svg v-else class="w-4 h-4 text-text-secondary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <span class="text-sm font-medium text-text-primary">{{ toTitleCase(value) }}</span>
+            </div>
           </template>
 
           <template #cell-category_name="{ value }">

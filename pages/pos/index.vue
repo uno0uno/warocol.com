@@ -516,7 +516,8 @@ watch(() => productsData.value, (data) => {
       name: p.name,
       description: p.description || '',
       price: Number(p.price) || 0,
-      image: p.image_url || '🍽️',
+      image: '🍽️',  // Emoji fallback shown when image_url is missing/empty
+      image_url: p.image_url || null,  // Issue #465 — real image when uploaded
       category: p.category_name || p.category?.name || 'Sin categoría',
       is_available: p.is_available,
       is_resale: p.is_resale || false,

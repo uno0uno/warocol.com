@@ -55,6 +55,7 @@ export interface CachedProduct {
     description: string
     price: number
     image: string
+    image_url?: string | null  // Issue #465: real image when uploaded; emoji fallback otherwise
     category: string
     is_available: boolean
     is_resale: boolean

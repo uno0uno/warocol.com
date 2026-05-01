@@ -197,6 +197,42 @@
                 />
               </div>
 
+              <!-- Image (issue #465) -->
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-text-primary mb-2">Imagen</label>
+                <div class="flex items-center gap-4">
+                  <div class="w-24 h-24 rounded-lg border-2 border-dashed border-border bg-surface-secondary overflow-hidden flex items-center justify-center flex-shrink-0">
+                    <img
+                      v-if="form.image_url"
+                      :src="form.image_url"
+                      :alt="form.name || 'Imagen del producto'"
+                      class="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    <svg v-else class="w-8 h-8 text-text-secondary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div class="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      @click="showImageModal = true"
+                      class="min-h-[44px] px-3 py-2 text-sm border border-border rounded-lg hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    >
+                      {{ form.image_url ? 'Cambiar imagen' : 'Subir imagen' }}
+                    </button>
+                    <button
+                      v-if="form.image_url"
+                      type="button"
+                      @click="form.image_url = ''"
+                      class="text-xs text-destructive hover:underline"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <!-- Category — search + inline create (issue #458) -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
@@ -750,6 +786,14 @@
       v-model="showNewStationModal"
       @saved="onStationCreated"
     />
+
+    <CommonsImageUploadModal
+      v-if="showImageModal"
+      image-type="product"
+      upload-endpoint="/api/menu/products/upload-image"
+      @upload="onImageUploaded"
+      @close="showImageModal = false"
+    />
   </div>
 </template>
 
@@ -796,6 +840,7 @@ const tracksInventory = ref(true)
 const form = ref({
   name: '',
   description: '',
+  image_url: '',
   price: 0,
   category_id: '',
   recipe_base_ids: [] as string[],
@@ -1055,6 +1100,14 @@ function onCategoryCreated(cat: { id: string; name: string }) {
   selectedCategoryName.value = cat.name
 }
 
+// ── Image upload (issue #465) ─────────────────────────────────────────────
+const showImageModal = ref(false)
+
+function onImageUploaded(url: string) {
+  form.value.image_url = url
+  showImageModal.value = false
+}
+
 // ── Kitchen station inline create flow (issue #463) ───────────────────────
 const showNewStationModal = ref(false)
 
@@ -1147,10 +1200,12 @@ async function submitProduct() {
     form.value.tenant_id = currentTenant.value?.id || ''
 
     // When toggle is OFF, force empty recipe arrays — product won't track inventory.
+    // Normalise image_url empty string → null so backend stores NULL (issue #465).
     const cleanedForm = {
       ...form.value,
       recipe_base_ids: tracksInventory.value ? uniqueRecipeBaseIds : [],
       ingredients: tracksInventory.value ? form.value.ingredients : [],
+      image_url: form.value.image_url || null,
     }
 
     await $fetch('/api/menu/products', {
