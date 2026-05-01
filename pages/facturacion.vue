@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, reactive, watch, onMounted, onUnmounted } from 'vue'
+import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
+import { useInvoicingReadiness } from '~/composables/useInvoicingReadiness'
 import {
   CheckIcon,
   ReceiptPercentIcon,
   DocumentTextIcon,
   SignalIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  CheckCircleIcon,
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({ layout: 'dashboard' })
@@ -14,6 +19,13 @@ useHead({ title: 'Facturación' })
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
 const { formatDate } = useFormatters()
+const cache = useQueryCache()
+
+// Invoicing readiness banners (#450)
+const { ready: isInvoicingReady, checks: readinessChecks } = useInvoicingReadiness()
+const invalidateReadiness = () => {
+  cache.invalidateQueries({ key: ['tenant', 'invoicing-readiness'] })
+}
 
 // ── DIAN Resolutions ────────────────────────────────────────────────────────
 const { data: resolutionsData, asyncStatus: resAsyncStatus, refetch: refetchResolutions } = useQuery({
@@ -82,6 +94,7 @@ const saveResolution = async () => {
       })
     }
     await refetchResolutions()
+    invalidateReadiness()
     showResolutionForm.value = false
     resetResolutionForm()
     toast.success(editingResolutionId.value ? 'Resolución actualizada' : 'Resolución creada', { title: 'Guardado' })
@@ -96,6 +109,7 @@ const toggleResolution = async (resId: string) => {
   try {
     await $fetch(`/api/api/tenant/dian-resolutions/${resId}/toggle`, { method: 'PATCH' })
     await refetchResolutions()
+    invalidateReadiness()
   } catch (e: any) {
     toast.error(e.data?.detail || 'Error al cambiar estado', { title: 'Error' })
   }
@@ -167,6 +181,7 @@ const saveTaxConfig = async () => {
   try {
     await $fetch('/api/api/tenant/tax-config', { method: 'PUT', body: { ...taxForm } })
     await refreshTaxConfig()
+    invalidateReadiness()
     toast.success('Configuración fiscal guardada correctamente', { title: 'Guardado' })
   } catch (error: any) {
     toast.error(error.data?.detail || 'Error al guardar configuración fiscal', { title: 'Error' })
@@ -229,6 +244,7 @@ const saveFiscalData = async () => {
   try {
     await $fetch('/api/api/tenant/fiscal-data', { method: 'PUT', body: { ...fiscalForm } })
     await refreshFiscal()
+    invalidateReadiness()
     toast.success('Datos fiscales guardados correctamente', { title: 'Guardado' })
   } catch (error: any) {
     toast.error(error.data?.detail || 'Error al guardar datos fiscales', { title: 'Error' })
@@ -261,6 +277,71 @@ const taxLevels = [
   </div>
 
   <div v-else class="space-y-6">
+
+    <!-- ══════ READINESS BANNERS (issue #450) ══════ -->
+    <div v-if="readinessChecks" class="space-y-3">
+      <!-- Dev flag disabled — only WARO team can flip this -->
+      <div
+        v-if="!readinessChecks.dev_flag_enabled"
+        class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-700/40 dark:bg-amber-900/20"
+        role="status"
+      >
+        <ExclamationTriangleIcon class="w-5 h-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+        <div class="flex-1">
+          <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">Cuenta no habilitada para facturación electrónica</p>
+          <p class="text-xs text-amber-800 dark:text-amber-300 mt-0.5">Tu cuenta aún no está habilitada por el equipo de WARO. Contáctanos para activarla.</p>
+        </div>
+      </div>
+
+      <!-- Fiscal data incomplete -->
+      <div
+        v-if="!readinessChecks.fiscal_data_complete"
+        class="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700/40 dark:bg-blue-900/20"
+        role="status"
+      >
+        <InformationCircleIcon class="w-5 h-5 text-blue-700 dark:text-blue-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+        <div class="flex-1">
+          <p class="text-sm font-semibold text-blue-900 dark:text-blue-200">Faltan datos fiscales</p>
+          <p class="text-xs text-blue-800 dark:text-blue-300 mt-0.5">Completa NIT, razón social, teléfono y email en la sección <span class="font-medium">Datos Fiscales del Negocio</span>.</p>
+        </div>
+      </div>
+
+      <!-- No active DIAN resolution -->
+      <div
+        v-if="!readinessChecks.active_resolution"
+        class="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700/40 dark:bg-blue-900/20"
+        role="status"
+      >
+        <InformationCircleIcon class="w-5 h-5 text-blue-700 dark:text-blue-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+        <div class="flex-1">
+          <p class="text-sm font-semibold text-blue-900 dark:text-blue-200">Sin resolución DIAN vigente</p>
+          <p class="text-xs text-blue-800 dark:text-blue-300 mt-0.5">Configura una resolución activa con numeración disponible en la sección <span class="font-medium">Resolución DIAN</span>.</p>
+        </div>
+      </div>
+
+      <!-- No taxes configured (4th check — added in plan amendment) -->
+      <div
+        v-if="!readinessChecks.taxes_configured"
+        class="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-700/40 dark:bg-blue-900/20"
+        role="status"
+      >
+        <InformationCircleIcon class="w-5 h-5 text-blue-700 dark:text-blue-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+        <div class="flex-1">
+          <p class="text-sm font-semibold text-blue-900 dark:text-blue-200">No hay impuestos configurados</p>
+          <p class="text-xs text-blue-800 dark:text-blue-300 mt-0.5">Activa <span class="font-medium">INC</span> o <span class="font-medium">IVA</span> en la sección <span class="font-medium">Configuración fiscal</span> para poder emitir facturas.</p>
+        </div>
+      </div>
+
+      <!-- All four checks passed — ready to invoice -->
+      <div
+        v-if="isInvoicingReady"
+        class="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-700/40 dark:bg-green-900/20"
+        role="status"
+      >
+        <CheckCircleIcon class="w-5 h-5 text-green-700 dark:text-green-400 flex-shrink-0" aria-hidden="true" />
+        <p class="text-sm font-medium text-green-900 dark:text-green-200">Tu cuenta está lista para emitir facturas electrónicas.</p>
+      </div>
+    </div>
 
     <!-- ══════ RESOLUCIÓN DIAN ══════ -->
     <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">

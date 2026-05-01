@@ -5,6 +5,7 @@ import { $fetch } from 'ofetch'
 import { useQuery } from '@pinia/colada'
 import QRCode from 'qrcode'
 import { usePOSStore } from '~/stores/usePOSStore'
+import { useInvoicingReadiness } from '~/composables/useInvoicingReadiness'
 import { PAYMENT_DEFAULTS, type PosPaymentGroup, type PosPaymentMethod } from '~/utils/paymentDefaults'
 
 interface TopProduct {
@@ -60,6 +61,11 @@ const emailSent = ref(false)
 const emailFromProfile = ref(false)
 const isSendingEmail = ref(false)
 const cartItemsSnapshot = ref<any[]>([])
+
+// Invoicing readiness gate (issue #450) — backend tells us if this tenant is
+// fully configured to emit electronic invoices. Drives whether the
+// "Generar factura electrónica DIAN" button is rendered.
+const { ready: isInvoicingReady, isLoading: isReadinessLoading } = useInvoicingReadiness()
 
 // Invoice state
 const invoiceLoading = ref(false)
@@ -1928,11 +1934,11 @@ onUnmounted(() => {
 
           <!-- Electronic invoice (DIAN) — cashier triggers emission, but never sees CUFE/PDF -->
           <div v-if="orderResult?.order_id || (orderResult?.order_ids?.length ?? 0) > 0" class="mb-4">
-            <!-- Not requested yet -->
-            <template v-if="!invoiceResult && !invoiceLoading && !invoiceError && !fiscalWizardOpen">
+            <!-- Not requested yet — gated on tenant readiness (#450) -->
+            <template v-if="isInvoicingReady && !isReadinessLoading && !invoiceResult && !invoiceLoading && !invoiceError && !fiscalWizardOpen">
               <button
                 @click="requestInvoice"
-                class="w-full min-h-[44px] py-2 px-4 bg-surface border border-border text-text-primary text-sm font-medium rounded-lg hover:bg-surface-secondary active:scale-95 transition-all flex items-center justify-center gap-2"
+                class="w-full min-h-[44px] py-2 px-4 bg-surface border border-border text-text-primary text-sm font-medium rounded-lg hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
