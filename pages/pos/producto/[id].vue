@@ -54,6 +54,7 @@ const product = computed(() => {
     price: Number(p.price) || 0,
     category: p.category,
     image: p.image,
+    image_url: p.image_url || null,
     available: p.is_available,
     modifier_groups: p.modifier_groups || []
   }
@@ -486,9 +487,16 @@ onUnmounted(() => {
           </div>
 
           <div class="flex flex-col sm:flex-row gap-4 md:gap-6 items-start sm:items-center">
-            <!-- Product Image/Emoji -->
+            <!-- Product Image/Emoji — real image when uploaded, emoji fallback (#465) -->
             <div class="w-full sm:w-32 md:w-40 h-32 md:h-40 flex-shrink-0 bg-surface-secondary rounded-xl overflow-hidden relative flex items-center justify-center">
-              <div class="text-6xl md:text-8xl">{{ product.image }}</div>
+              <img
+                v-if="product.image_url && product.image_url.startsWith('http')"
+                :src="product.image_url"
+                :alt="product.name"
+                loading="lazy"
+                class="w-full h-full object-cover"
+              />
+              <div v-else class="text-6xl md:text-8xl">{{ product.image }}</div>
             </div>
 
             <!-- Product Info -->

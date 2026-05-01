@@ -1,22 +1,20 @@
 <template>
   <Teleport to="body">
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/60 backdrop-blur-sm"
       @click.self="$emit('close')"
     >
       <div class="bg-surface border-2 border-border rounded-xl w-full max-w-md shadow-xl">
 
         <!-- Header -->
         <div class="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h2 class="text-base font-semibold text-text-primary">
-            Subir imagen de {{ imageType === 'logo' ? 'logo' : 'banner' }}
-          </h2>
+          <h2 class="text-base font-semibold text-text-primary">{{ headerTitle }}</h2>
           <button
             @click="$emit('close')"
-            class="p-1.5 rounded-lg hover:bg-surface-secondary text-text-secondary transition-colors"
+            class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-surface-secondary text-text-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             aria-label="Cerrar modal"
           >
-            <XMarkIcon class="w-5 h-5" />
+            <XMarkIcon class="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -33,16 +31,14 @@
             @dragleave.prevent="isDragging = false"
             @drop.prevent="onDrop"
           >
-            <!-- Preview image -->
             <img
               v-if="preview"
               :src="preview"
               :alt="`Preview de ${imageType}`"
               class="w-full object-cover"
-              :class="imageType === 'logo' ? 'max-h-48 object-contain' : 'h-36'"
+              :class="previewClass"
             />
 
-            <!-- Empty state -->
             <div
               v-else
               class="flex flex-col items-center justify-center py-10 px-6 text-center cursor-pointer"
@@ -56,20 +52,17 @@
                 </button>
               </p>
               <p class="text-xs text-text-secondary">
-                JPEG, PNG o WebP · máx 5 MB ·
-                {{ imageType === 'logo' ? 'cuadrada recomendada' : '1200 × 400 px recomendado' }}
+                JPEG, PNG o WebP · máx 5 MB · {{ recommendationText }}
               </p>
             </div>
 
-            <!-- Compressed size badge -->
             <div
               v-if="preview && compressedSize"
-              class="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm"
+              class="absolute bottom-2 right-2 bg-foreground/50 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm"
             >
               {{ compressedSize }}
             </div>
 
-            <!-- Change overlay on preview -->
             <button
               v-if="preview"
               type="button"
@@ -77,20 +70,18 @@
               class="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 transition-colors group"
               aria-label="Cambiar imagen"
             >
-              <span class="hidden group-hover:flex items-center gap-1.5 bg-black/60 text-white text-sm font-medium px-3 py-1.5 rounded-lg">
+              <span class="hidden group-hover:flex items-center gap-1.5 bg-foreground/60 text-white text-sm font-medium px-3 py-1.5 rounded-lg">
                 <PhotoIcon class="w-4 h-4" aria-hidden="true" />
                 Cambiar imagen
               </span>
             </button>
           </div>
 
-          <!-- Error message -->
           <p v-if="errorMsg" class="flex items-center gap-1.5 text-sm text-destructive" role="alert">
             <ExclamationCircleIcon class="w-4 h-4 flex-shrink-0" aria-hidden="true" />
             {{ errorMsg }}
           </p>
 
-          <!-- Hidden file input -->
           <input
             ref="fileInput"
             type="file"
@@ -105,7 +96,7 @@
           <button
             type="button"
             @click="$emit('close')"
-            class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface-secondary transition-colors"
+            class="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary border border-border rounded-lg hover:bg-surface-secondary transition-colors min-h-[44px]"
           >
             Cancelar
           </button>
@@ -113,7 +104,7 @@
             type="button"
             :disabled="!preview || isUploading"
             @click="confirmUpload"
-            class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[130px] justify-center"
+            class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px] min-w-[130px] justify-center"
           >
             <span v-if="isUploading" class="flex items-center gap-2">
               <CommonsTheCustomLoader size="small" />
@@ -132,11 +123,34 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onUnmounted, ref } from 'vue'
 import { XMarkIcon, PhotoIcon, ExclamationCircleIcon, ArrowUpTrayIcon } from '@heroicons/vue/24/outline'
 
-const props = defineProps<{
-  imageType: 'logo' | 'banner'
-}>()
+interface Props {
+  /** Logical bucket — drives default dimensions, header title, and the
+   *  `image_type` field added to the FormData (only when uploadEndpoint is
+   *  the legacy tenant endpoint). */
+  imageType: 'logo' | 'banner' | 'product'
+  /** Backend POST URL. Receives a multipart/form-data with `file`. */
+  uploadEndpoint: string
+  /** Whether to also send `image_type` as a form field — needed by the legacy
+   *  tenant endpoint that handles logo + banner under one route. */
+  sendImageTypeField?: boolean
+  /** Override max dimensions for compression. Defaults per imageType apply
+   *  if omitted. */
+  maxDims?: { w: number; h: number }
+  /** Helper text inside the empty state, e.g. "cuadrada 800×800 recomendada". */
+  recommendationText?: string
+  /** Custom title in the modal header. Defaults to "Subir imagen de X". */
+  title?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  sendImageTypeField: false,
+  maxDims: undefined,
+  recommendationText: '',
+  title: '',
+})
 
 const emit = defineEmits<{
   upload: [url: string]
@@ -151,18 +165,38 @@ const errorMsg = ref<string | null>(null)
 const isDragging = ref(false)
 const isUploading = ref(false)
 
-const toast = useToast()
-
-// ─── Max dimensions per image type ───
-const MAX_DIMS = {
+const DEFAULT_DIMS = {
   logo: { w: 400, h: 400 },
   banner: { w: 1400, h: 470 },
+  product: { w: 800, h: 800 },
+} as const
+
+const DEFAULT_RECOMMENDATIONS: Record<string, string> = {
+  logo: 'cuadrada recomendada',
+  banner: '1200 × 400 px recomendado',
+  product: 'cuadrada · 800×800 recomendada',
 }
 
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const MAX_SIZE_BYTES = 5 * 1024 * 1024
 
-// ─── Compress via Canvas ───
+const headerTitle = computed(() => {
+  if (props.title) return props.title
+  if (props.imageType === 'logo') return 'Subir imagen de logo'
+  if (props.imageType === 'banner') return 'Subir imagen de banner'
+  return 'Subir imagen del producto'
+})
+
+const recommendationText = computed(() => {
+  return props.recommendationText || DEFAULT_RECOMMENDATIONS[props.imageType] || ''
+})
+
+const previewClass = computed(() => {
+  if (props.imageType === 'logo') return 'max-h-48 object-contain'
+  if (props.imageType === 'product') return 'h-48 object-cover'
+  return 'h-36'
+})
+
 function compressImage(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
@@ -171,12 +205,11 @@ function compressImage(file: File): Promise<Blob> {
     img.onload = () => {
       URL.revokeObjectURL(objectUrl)
 
-      const { w: maxW, h: maxH } = MAX_DIMS[props.imageType]
+      const dims = props.maxDims || DEFAULT_DIMS[props.imageType]
       let { naturalWidth: w, naturalHeight: h } = img
 
-      // Scale down if exceeds max dimensions
-      if (w > maxW || h > maxH) {
-        const ratio = Math.min(maxW / w, maxH / h)
+      if (w > dims.w || h > dims.h) {
+        const ratio = Math.min(dims.w / w, dims.h / h)
         w = Math.round(w * ratio)
         h = Math.round(h * ratio)
       }
@@ -256,9 +289,11 @@ async function confirmUpload() {
   try {
     const formData = new FormData()
     formData.append('file', compressedBlob.value, `${props.imageType}.jpg`)
-    formData.append('image_type', props.imageType)
+    if (props.sendImageTypeField) {
+      formData.append('image_type', props.imageType)
+    }
 
-    const response = await $fetch<{ url: string }>('/api/api/tenant/upload-image', {
+    const response = await $fetch<{ url: string }>(props.uploadEndpoint, {
       method: 'POST',
       body: formData,
     })

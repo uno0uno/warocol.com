@@ -134,6 +134,7 @@ const menuItems = computed(() =>
     '@type': 'MenuItem',
     name: p.name,
     description: p.description || undefined,
+    image: p.image_url || undefined,  // Issue #465 — improves Google Rich Results
     offers: {
       '@type': 'Offer',
       price: p.price,

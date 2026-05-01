@@ -484,9 +484,11 @@
     </div>
 
     <!-- Image Upload Modal -->
-    <NegocioImageUploadModal
+    <CommonsImageUploadModal
       v-if="imageModalOpen"
       :image-type="imageModalType"
+      upload-endpoint="/api/api/tenant/upload-image"
+      :send-image-type-field="true"
       @upload="handleImageUploaded"
       @close="imageModalOpen = false"
     />

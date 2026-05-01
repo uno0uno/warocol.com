@@ -6,9 +6,16 @@
     @mouseleave="isHovered = false"
     @click="$emit('select', product)"
   >
-    <!-- Product icon in white bubble -->
-    <div class="w-12 h-12 md:w-16 md:h-16 bg-white/70 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0">
-      <span class="text-xl md:text-3xl">{{ product.image }}</span>
+    <!-- Product icon: real image when uploaded, emoji as fallback (#465) -->
+    <div class="w-12 h-12 md:w-16 md:h-16 bg-white/70 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0 overflow-hidden">
+      <img
+        v-if="product.image_url && product.image_url.startsWith('http')"
+        :src="product.image_url"
+        :alt="product.name"
+        loading="lazy"
+        class="w-full h-full object-cover"
+      />
+      <span v-else class="text-xl md:text-3xl">{{ product.image }}</span>
     </div>
 
     <!-- Name -->
@@ -34,6 +41,7 @@ interface Product {
   price: number
   category: string
   image: string
+  image_url?: string | null
   available: boolean
 }
 
