@@ -224,6 +224,13 @@
                   </template>
                   <template v-else>
                     <span class="text-text-tertiary">Sin comanda — asigna una estación a la categoría</span>
+                    <button
+                      type="button"
+                      @click="showNewStationModal = true"
+                      class="ml-auto text-xs font-medium text-primary hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded px-2 py-1"
+                    >
+                      + Crear estación
+                    </button>
                   </template>
                 </div>
               </div>
@@ -738,6 +745,11 @@
       :initial-name="newCategoryName"
       @saved="onCategoryCreated"
     />
+
+    <CocinaStationPanel
+      v-model="showNewStationModal"
+      @saved="onStationCreated"
+    />
   </div>
 </template>
 
@@ -756,6 +768,7 @@ useHead({ title: 'Crear Producto' })
 
 const router = useRouter()
 const cache = useQueryCache()
+const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
 
 // Tax config — only show selector when tenant has taxes enabled
@@ -1040,6 +1053,18 @@ function onCategoryCreateRequested(typedName: string) {
 function onCategoryCreated(cat: { id: string; name: string }) {
   form.value.category_id = cat.id
   selectedCategoryName.value = cat.name
+}
+
+// ── Kitchen station inline create flow (issue #463) ───────────────────────
+const showNewStationModal = ref(false)
+
+function onStationCreated(station: { id: string; name: string }) {
+  toast.success(
+    `Estación "${station.name}" creada. Asígnala a una categoría desde Operaciones › Comandas.`,
+    { title: 'Estación creada' }
+  )
+  cache.invalidateQueries({ key: ['tenant', 'stations', currentTenant.value?.id] })
+  cache.invalidateQueries({ key: ['tenant', 'category-stations', currentTenant.value?.id] })
 }
 
 function addIngredient() {
