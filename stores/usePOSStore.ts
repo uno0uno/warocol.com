@@ -52,6 +52,7 @@ export interface TabItem {
 export interface CachedProduct {
     id: string
     name: string
+    description: string
     price: number
     image: string
     category: string
