@@ -45,16 +45,13 @@
                 <label class="block text-sm font-medium text-text-primary mb-2">
                   Categoría *
                 </label>
-                <select
-                  v-model="form.category_id"
-                  required
-                  class="input-base w-full px-4 py-2"
-                >
-                  <option value="" disabled>Seleccione una categoría</option>
-                  <option v-for="category in categories" :key="category.id" :value="category.id">
-                    {{ category.name }}
-                  </option>
-                </select>
+                <UiCategorySearchInput
+                  :allow-create="true"
+                  :initial-value="selectedCategoryName"
+                  placeholder="Buscar o crear categoría..."
+                  @select="onCategorySelected"
+                  @create="onCategoryCreateRequested"
+                />
               </div>
 
               <!-- Inherited kitchen station (read-only, comandas only) -->
@@ -539,6 +536,12 @@
       :initial-name="customIngModalName"
       @saved="onCustomIngredientCreated"
     />
+
+    <CategoriasCategoriaPanel
+      v-model="showNewCategoryModal"
+      :initial-name="newCategoryName"
+      @saved="onCategoryCreated"
+    />
   </div>
 </template>
 
@@ -691,6 +694,26 @@ function onCustomIngredientCreated(ingredient: any) {
   customIngModalIndex.value = -1
 }
 
+// ── Category search + create flow (issue #458) ────────────────────────────
+const showNewCategoryModal = ref(false)
+const newCategoryName = ref('')
+const selectedCategoryName = ref('')
+
+function onCategorySelected(cat: { id: string; name: string }) {
+  form.value.category_id = cat.id
+  selectedCategoryName.value = cat.name
+}
+
+function onCategoryCreateRequested(typedName: string) {
+  newCategoryName.value = typedName
+  showNewCategoryModal.value = true
+}
+
+function onCategoryCreated(cat: { id: string; name: string }) {
+  form.value.category_id = cat.id
+  selectedCategoryName.value = cat.name
+}
+
 const categories = computed(() => categoriesData.value?.data || [])
 const recipeBases = computed(() => recipeBasesData.value?.data || [])
 
@@ -768,6 +791,8 @@ watch(productData, (data) => {
       (product.recipe_base_ids?.length ?? 0) > 0 ||
       (product.ingredients?.length ?? 0) > 0
     )
+    // Pre-fill the category search input with the product's current category name
+    selectedCategoryName.value = product.category_name || ''
   }
 }, { immediate: true })
 
