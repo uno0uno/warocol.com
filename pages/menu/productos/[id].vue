@@ -118,7 +118,7 @@
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                   <input
-                    :value="formatCurrency(calculatedCost)"
+                    :value="calculatedCost === null ? '—' : formatCurrency(calculatedCost)"
                     type="text"
                     disabled
                     class="input-base w-full pl-8 pr-4 py-2 bg-surface-secondary cursor-not-allowed"
@@ -132,7 +132,7 @@
             </div>
 
             <!-- Margin Display -->
-            <div v-if="form.price > 0 && calculatedCost > 0" class="mt-4 p-4 bg-surface-secondary rounded-lg">
+            <div v-if="form.price > 0 && calculatedCost !== null && calculatedCost > 0" class="mt-4 p-4 bg-surface-secondary rounded-lg">
               <div class="flex items-center justify-between">
                 <span class="text-sm font-medium text-text-primary">Margen:</span>
                 <div class="flex items-center gap-3">
@@ -140,8 +140,8 @@
                     {{ formatCurrency(form.price - calculatedCost) }}
                   </span>
                   <UiStatusBadge
-                    :label="`${calculateMargin(form.price, calculatedCost)}%`"
-                    :variant="calculateMargin(form.price, calculatedCost) > 50 ? 'success' : 'warning'"
+                    :label="`${calculateMargin(form.price, calculatedCost) ?? 0}%`"
+                    :variant="(calculateMargin(form.price, calculatedCost) ?? 0) > 50 ? 'success' : 'warning'"
                   />
                 </div>
               </div>
@@ -197,7 +197,41 @@
             </div>
           </div>
 
+          <!-- Toggle: ¿Controla inventario? -->
+          <div class="mt-8 flex items-start gap-3 p-4 bg-surface-secondary border border-border rounded-lg">
+            <button
+              type="button"
+              role="switch"
+              :aria-checked="tracksInventory"
+              @click="tracksInventory = !tracksInventory"
+              :class="[
+                'relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors',
+                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                tracksInventory ? 'bg-primary' : 'bg-border'
+              ]"
+            >
+              <span
+                :class="[
+                  'inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
+                  tracksInventory ? 'translate-x-5' : 'translate-x-0.5'
+                ]"
+              />
+            </button>
+            <div class="flex-1">
+              <p class="text-sm font-semibold text-text-primary">Este producto controla inventario</p>
+              <p class="text-xs text-text-secondary mt-1">
+                <template v-if="tracksInventory">
+                  Define la receta del producto. Cada venta descontará los ingredientes del inventario.
+                </template>
+                <template v-else>
+                  No se descontará nada del inventario al venderlo. Útil para servicios, propinas, promos o productos sin trazabilidad de costo.
+                </template>
+              </p>
+            </div>
+          </div>
+
           <!-- Recetas Base (Opcional) -->
+          <template v-if="tracksInventory">
           <div class="mt-8">
             <div class="flex justify-between items-center mb-4">
               <h3 class="text-lg font-semibold text-text-primary">Recetas Base (Opcional)</h3>
@@ -350,6 +384,7 @@
               Agregar Ingrediente
             </UiButton>
           </div>
+          </template>
 
           <!-- Configuración -->
           <div class="mt-8">
@@ -410,12 +445,16 @@
 
             <div class="flex justify-between text-sm">
               <span class="text-text-secondary">Costo:</span>
-              <span class="font-semibold text-text-primary">{{ formatCurrency(calculatedCost) }}</span>
+              <span class="font-semibold text-text-primary">
+                {{ calculatedCost === null ? '—' : formatCurrency(calculatedCost) }}
+              </span>
             </div>
 
             <div class="flex justify-between text-sm pt-3 border-t border-border">
               <span class="text-text-secondary">Margen:</span>
-              <span class="font-semibold text-primary">{{ formatCurrency(form.price - calculatedCost) }}</span>
+              <span class="font-semibold text-primary">
+                {{ calculatedCost === null ? '—' : formatCurrency(form.price - calculatedCost) }}
+              </span>
             </div>
 
             <div class="flex justify-between text-sm">
@@ -690,6 +729,9 @@ const isSubmitting = ref(false)
 const submitError = ref('')
 const duplicateRecipeBaseError = ref('')
 const quantityError = ref('')
+// Derived from product state on load: true if has any recipe rows.
+// User can flip OFF to remove inventory tracking.
+const tracksInventory = ref(true)
 
 // Watch product data and populate form
 watch(productData, (data) => {
@@ -721,17 +763,29 @@ watch(productData, (data) => {
         }
       }),
     }
+    // Derive toggle from existing data — product without any recipe row → OFF
+    tracksInventory.value = (
+      (product.recipe_base_ids?.length ?? 0) > 0 ||
+      (product.ingredients?.length ?? 0) > 0
+    )
   }
 }, { immediate: true })
 
 // Read-only: station inherited from the product's category (returned by backend)
 const inheritedStation = computed(() => productData.value?.data?.station ?? null)
 
-// Computed
-const calculatedCost = computed(() => {
+// Computed — null when product doesn't track inventory (UI renders "—")
+const calculatedCost = computed<number | null>(() => {
+  if (!tracksInventory.value) return null
+  if (
+    selectedRecipeBaseIngredients.value.length === 0 &&
+    form.value.ingredients.length === 0
+  ) {
+    return null
+  }
+
   let totalCost = 0
 
-  // Add cost from all recipe base ingredients
   if (selectedRecipeBaseIngredients.value.length > 0) {
     totalCost += selectedRecipeBaseIngredients.value.reduce((sum: number, ing: any) => {
       const ingredient = ingredients.value.find((i: any) => i.id === ing.ingredient_id)
@@ -740,7 +794,6 @@ const calculatedCost = computed(() => {
     }, 0)
   }
 
-  // Add cost from additional ingredients
   totalCost += form.value.ingredients.reduce((sum, ing) => {
     const ingredient = ingredientCache.value[ing.ingredient_id]
     const costPerUnit = ingredient?.costo_unitario || ingredient?.price || 0
@@ -752,6 +805,8 @@ const calculatedCost = computed(() => {
 
 // Methods
 function addRecipeBase() {
+  // Adding a recipe base implies the product tracks inventory.
+  tracksInventory.value = true
   form.value.recipe_base_ids.push('')
 }
 
@@ -770,6 +825,8 @@ const onRecipeBaseChange = () => {
 }
 
 const addIngredient = () => {
+  // Adding an ingredient implies the product tracks inventory.
+  tracksInventory.value = true
   form.value.ingredients.push({
     ingredient_id: '',
     ingredient_name: '',
@@ -792,11 +849,13 @@ const handleSubmit = async () => {
   duplicateRecipeBaseError.value = ''
   quantityError.value = ''
 
-  // Validate ingredient quantities > 0
-  const hasZeroQuantity = form.value.ingredients.some(ing => !ing.quantity || ing.quantity <= 0)
-  if (hasZeroQuantity) {
-    quantityError.value = 'Todos los ingredientes deben tener una cantidad mayor a 0.'
-    return
+  // Validate ingredient quantities > 0 (only when tracking inventory)
+  if (tracksInventory.value) {
+    const hasZeroQuantity = form.value.ingredients.some(ing => !ing.quantity || ing.quantity <= 0)
+    if (hasZeroQuantity) {
+      quantityError.value = 'Todos los ingredientes deben tener una cantidad mayor a 0.'
+      return
+    }
   }
 
   isSubmitting.value = true
@@ -812,10 +871,11 @@ const handleSubmit = async () => {
       return
     }
 
-    // Filter out empty recipe base IDs before sending
+    // When toggle is OFF, force empty recipe arrays — product won't track inventory.
     const cleanedForm = {
       ...form.value,
-      recipe_base_ids: uniqueRecipeBaseIds
+      recipe_base_ids: tracksInventory.value ? uniqueRecipeBaseIds : [],
+      ingredients: tracksInventory.value ? form.value.ingredients : [],
     }
     await $fetch(`/api/menu/products/${productId}`, {
       method: 'PUT',
@@ -871,8 +931,8 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-const calculateMargin = (price: number, cost: number) => {
-  if (!cost) return 0
+const calculateMargin = (price: number, cost: number | null) => {
+  if (cost == null || cost <= 0) return null
   return Math.round(((price - cost) / cost) * 100)
 }
 

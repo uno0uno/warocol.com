@@ -348,7 +348,41 @@
           <div class="p-4 sm:p-6">
             <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Receta / Ingredientes</h3>
 
+            <!-- Toggle: ¿Este producto controla inventario? -->
+            <div class="flex items-start gap-3 p-4 mb-6 bg-surface-secondary border border-border rounded-lg">
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="tracksInventory"
+                @click="tracksInventory = !tracksInventory"
+                :class="[
+                  'relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors',
+                  'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                  tracksInventory ? 'bg-primary' : 'bg-border'
+                ]"
+              >
+                <span
+                  :class="[
+                    'inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
+                    tracksInventory ? 'translate-x-5' : 'translate-x-0.5'
+                  ]"
+                />
+              </button>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-text-primary">Este producto controla inventario</p>
+                <p class="text-xs text-text-secondary mt-1">
+                  <template v-if="tracksInventory">
+                    Define la receta del producto. Cada venta descontará los ingredientes del inventario.
+                  </template>
+                  <template v-else>
+                    No se descontará nada del inventario al venderlo. Útil para servicios (cargo de domicilio, propina), promos o productos sin trazabilidad de costo.
+                  </template>
+                </p>
+              </div>
+            </div>
+
             <!-- Recetas Base (Opcional) -->
+            <template v-if="tracksInventory">
             <div class="mb-6">
               <div class="flex justify-between items-center mb-2">
                 <label class="block text-sm font-medium text-text-primary">
@@ -514,6 +548,7 @@
                 </div>
               </div>
             </div>
+            </template>
           </div>
         </div>
 
@@ -622,7 +657,9 @@
                   </div>
                   <div class="flex justify-between items-center">
                     <span class="text-sm text-text-secondary">Costo Calculado</span>
-                    <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(calculatedCost) }}</span>
+                    <span class="text-sm font-semibold text-text-primary">
+                      {{ calculatedCost === null ? '—' : formatCurrency(calculatedCost) }}
+                    </span>
                   </div>
                   <div class="flex justify-between items-center">
                     <span class="text-sm text-text-secondary">Margen</span>
@@ -630,7 +667,9 @@
                   </div>
                   <div class="flex justify-between items-center pt-2 border-t border-border">
                     <span class="text-sm font-semibold text-text-primary">Ganancia</span>
-                    <span class="text-base font-bold text-crocus-600">{{ formatCurrency(marginValue) }}</span>
+                    <span class="text-base font-bold text-crocus-600">
+                      {{ marginValue === null ? '—' : formatCurrency(marginValue) }}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -733,6 +772,9 @@ const currentStep = ref(1)
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
 const nameError = ref('')
+// Toggle for "this product tracks inventory". Default ON (backward compatible).
+// When OFF, Step 2 is skipped at submit (recipe_base_ids and ingredients sent empty).
+const tracksInventory = ref(true)
 
 // Form data
 const form = ref({
@@ -877,10 +919,19 @@ const isLoadingData = computed(() => {
   return !categoriesData.value
 })
 
-const calculatedCost = computed(() => {
+// Returns null when the product has no recipe (toggle off or empty lists).
+// null is rendered as "—" in the UI and means "no aplica" in cost reports.
+const calculatedCost = computed<number | null>(() => {
+  if (!tracksInventory.value) return null
+  if (
+    selectedRecipeBaseIngredients.value.length === 0 &&
+    form.value.ingredients.length === 0
+  ) {
+    return null
+  }
+
   let totalCost = 0
 
-  // Add cost from all recipe base ingredients
   if (selectedRecipeBaseIngredients.value.length > 0) {
     totalCost += selectedRecipeBaseIngredients.value.reduce((sum: number, ing: any) => {
       const ingredient = availableIngredients.value.find((i: any) => i.id === ing.ingredient_id)
@@ -888,7 +939,6 @@ const calculatedCost = computed(() => {
     }, 0)
   }
 
-  // Add cost from additional ingredients
   totalCost += form.value.ingredients.reduce((sum, ing) => {
     const cached = ingredientCache.value[ing.ingredient_id]
     const ingredient = cached || availableIngredients.value.find((i: any) => i.id === ing.ingredient_id)
@@ -899,13 +949,15 @@ const calculatedCost = computed(() => {
   return totalCost
 })
 
-const marginValue = computed(() => {
+const marginValue = computed<number | null>(() => {
+  if (calculatedCost.value === null) return null
   return form.value.price - calculatedCost.value
 })
 
 const formatMarginPercent = computed(() => {
-  if (!form.value.price || !calculatedCost.value) return '—'
-  const margin = ((form.value.price - calculatedCost.value) / calculatedCost.value * 100)
+  const cost = calculatedCost.value
+  if (!form.value.price || cost === null || cost <= 0) return '—'
+  const margin = ((form.value.price - cost) / cost * 100)
   return `${margin.toFixed(1)}%`
 })
 
@@ -914,6 +966,8 @@ const canProceed = computed(() => {
     return form.value.name && form.value.category_id && form.value.price > 0
   }
   if (currentStep.value === 2) {
+    // Toggle off → no recipe required, can always proceed
+    if (!tracksInventory.value) return true
     return form.value.ingredients.length === 0 ||
            form.value.ingredients.every(i => i.ingredient_id && i.quantity > 0)
   }
@@ -966,6 +1020,8 @@ function onCustomIngredientCreated(ingredient: any) {
 }
 
 function addIngredient() {
+  // Adding an ingredient implies the product tracks inventory.
+  tracksInventory.value = true
   form.value.ingredients.push({
     ingredient_id: '',
     quantity: 0,
@@ -979,6 +1035,8 @@ function removeIngredient(index: number) {
 
 
 function addRecipeBase() {
+  // Adding a recipe base implies the product tracks inventory.
+  tracksInventory.value = true
   form.value.recipe_base_ids.push('')
 }
 
@@ -1040,10 +1098,11 @@ async function submitProduct() {
 
     form.value.tenant_id = currentTenant.value?.id || ''
 
-    // Filter out empty recipe base IDs before sending
+    // When toggle is OFF, force empty recipe arrays — product won't track inventory.
     const cleanedForm = {
       ...form.value,
-      recipe_base_ids: uniqueRecipeBaseIds
+      recipe_base_ids: tracksInventory.value ? uniqueRecipeBaseIds : [],
+      ingredients: tracksInventory.value ? form.value.ingredients : [],
     }
 
     await $fetch('/api/menu/products', {
