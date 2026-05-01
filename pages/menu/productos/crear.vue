@@ -197,21 +197,18 @@
                 />
               </div>
 
-              <!-- Category -->
+              <!-- Category — search + inline create (issue #458) -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
                   Categoría *
                 </label>
-                <select
-                  v-model="form.category_id"
-                  class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary bg-surface"
-                  required
-                >
-                  <option value="">Seleccionar categoría</option>
-                  <option v-for="category in categories" :key="category.id" :value="category.id">
-                    {{ category.name }}
-                  </option>
-                </select>
+                <UiCategorySearchInput
+                  :allow-create="true"
+                  :initial-value="selectedCategoryName"
+                  placeholder="Buscar o crear categoría..."
+                  @select="onCategorySelected"
+                  @create="onCategoryCreateRequested"
+                />
               </div>
 
               <!-- Inherited kitchen station (read-only, comandas only) -->
@@ -735,6 +732,12 @@
       :initial-name="customIngModalName"
       @saved="onCustomIngredientCreated"
     />
+
+    <CategoriasCategoriaPanel
+      v-model="showNewCategoryModal"
+      :initial-name="newCategoryName"
+      @saved="onCategoryCreated"
+    />
   </div>
 </template>
 
@@ -1017,6 +1020,26 @@ function onCustomIngredientCreated(ingredient: any) {
   if (index < 0 || index >= form.value.ingredients.length) return
   selectIngredient(ingredient, index)
   customIngModalIndex.value = -1
+}
+
+// ── Category search + create flow (issue #458) ────────────────────────────
+const showNewCategoryModal = ref(false)
+const newCategoryName = ref('')
+const selectedCategoryName = ref('')
+
+function onCategorySelected(cat: { id: string; name: string }) {
+  form.value.category_id = cat.id
+  selectedCategoryName.value = cat.name
+}
+
+function onCategoryCreateRequested(typedName: string) {
+  newCategoryName.value = typedName
+  showNewCategoryModal.value = true
+}
+
+function onCategoryCreated(cat: { id: string; name: string }) {
+  form.value.category_id = cat.id
+  selectedCategoryName.value = cat.name
 }
 
 function addIngredient() {
