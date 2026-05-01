@@ -10,7 +10,6 @@
 <script setup lang="ts">
 definePageMeta({
   layout: 'dashboard',
-  middleware: ['admin-only'],
 })
 
 const route = useRoute()
