@@ -536,7 +536,8 @@ const products = computed(() => {
     name: p.name,
     price: p.price,
     category: p.category_name || p.category?.name || 'Sin categoría',
-    image: p.image_url || '🍽️',
+    image: '🍽️',
+    image_url: p.image_url || null,
     available: p.is_available,
     is_resale: p.is_resale || false
   }))
