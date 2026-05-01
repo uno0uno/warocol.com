@@ -112,6 +112,13 @@
                   :variant="item.is_available ? 'success' : 'secondary'"
                   size="sm"
                 />
+                <UiStatusBadge
+                  v-if="!productTracksInventory(item)"
+                  value="Sin inventario"
+                  format="text"
+                  variant="secondary"
+                  size="sm"
+                />
               </div>
             </div>
           </template>
@@ -131,7 +138,9 @@
           </template>
 
           <template #cell-costo_calculado="{ value }">
-            <span class="text-sm text-text-primary">{{ formatCurrency(value) }}</span>
+            <span class="text-sm text-text-primary">
+              {{ value === null || value === undefined ? '—' : formatCurrency(value) }}
+            </span>
           </template>
 
           <template #cell-margen="{ row }">
@@ -646,6 +655,15 @@ const getMarginValue = (product: any): number | null => {
   if (price <= 0 || cost <= 0) return null
   const margin = ((price - cost) / cost) * 100
   return isFinite(margin) ? margin : null
+}
+
+// True if the product has any recipe row (direct ingredients or recipe bases).
+// Null/zero costo_calculado is the proxy: the backend persists NULL when no recipe.
+// A product with cost=0 but with a recipe (extreme case) is treated as tracking — safer.
+const productTracksInventory = (product: any): boolean => {
+  if ((product?.recipe_base_ids?.length ?? 0) > 0) return true
+  if ((product?.ingredients?.length ?? 0) > 0) return true
+  return product?.costo_calculado != null
 }
 
 // Display product names in Title Case (DB stores them as ALL CAPS)
