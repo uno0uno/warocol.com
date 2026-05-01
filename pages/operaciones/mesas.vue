@@ -18,8 +18,21 @@ const { data: tablesData, status: tablesStatus, asyncStatus: tablesAsyncStatus, 
   staleTime: 30_000,
 })
 
+// Business profile (shared cache key) — declared up here so its asyncStatus
+// can join the layout's progressive-loading indicator (issue #461).
+const { data: profileData, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
+  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+const businessProfile = computed(() => profileData.value?.data ?? null)
+
 const loadingTables = computed(() => !tablesData.value)
-const isRefreshing = computed(() => tablesAsyncStatus.value === 'loading' && tablesData.value != null)
+const isRefreshing = computed(() => (
+  (tablesAsyncStatus.value === 'loading' && tablesData.value != null) ||
+  (profileAsyncStatus.value === 'loading' && profileData.value != null)
+))
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 registerProgressiveLoading(isRefreshing)
@@ -164,17 +177,13 @@ const badgeVariant = (status: string) => {
   return 'secondary'
 }
 
-onMounted(() => setRefreshHandler(refetch))
-onUnmounted(() => clearRefreshHandler(refetch))
-
-// ── Business profile (shared cache key) ───────────────────────────────────
-const { data: profileData, refetch: refreshProfile } = useQuery({
-  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
-  enabled: () => !!currentTenant.value,
-  staleTime: 30_000,
-})
-const businessProfile = computed(() => profileData.value?.data ?? null)
+// Refresh handler — fan out to both queries so the layout's manual refresh
+// button updates the table list AND the tables-enabled toggle in one go.
+const refreshAll = async () => {
+  await Promise.all([refetch(), refreshProfile()])
+}
+onMounted(() => setRefreshHandler(refreshAll))
+onUnmounted(() => clearRefreshHandler(refreshAll))
 
 // ── Toggle tables module ───────────────────────────────────────────────────
 const posStore = usePOSStore()

@@ -1,6 +1,12 @@
 <template>
   <div class="space-y-4 sm:space-y-6">
 
+    <!-- First-load — block UI until critical queries resolve (issue #461) -->
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
+    </div>
+
+    <template v-else>
     <!-- ══════ COMANDAS Y COCINA — TOGGLES ══════ -->
     <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
       <div class="flex items-center gap-2 mb-5">
@@ -262,6 +268,7 @@
         </template>
       </UiResponsiveDataView>
     </div>
+    </template>
 
     <!-- Station Deactivate Confirmation Modal -->
     <Teleport to="body">
@@ -421,7 +428,7 @@ const { currentTenant } = useTenantReactive()
 const toast = useToast()
 
 // ─── Business profile ───
-const { data: profileData, refetch: refreshProfile } = useQuery({
+const { data: profileData, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
   key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
   enabled: () => !!currentTenant.value,
@@ -430,7 +437,7 @@ const { data: profileData, refetch: refreshProfile } = useQuery({
 const businessProfile = computed(() => profileData.value?.data ?? null)
 
 // ─── Stations & categories ───
-const { data: stationsData, refetch: refetchStations } = useQuery({
+const { data: stationsData, asyncStatus: stationsAsyncStatus, refetch: refetchStations } = useQuery({
   key: () => ['tenant', 'stations', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/stations'),
   enabled: () => !!currentTenant.value,
@@ -438,19 +445,48 @@ const { data: stationsData, refetch: refetchStations } = useQuery({
 })
 const stations = computed(() => stationsData.value?.data ?? [])
 
-const { data: categoryStationsData, refetch: refetchCategoryStations } = useQuery({
+const { data: categoryStationsData, asyncStatus: categoryStationsAsyncStatus, refetch: refetchCategoryStations } = useQuery({
   key: () => ['tenant', 'category-stations', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/stations/categories'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
 
-const { data: categoriesData } = useQuery({
+const { data: categoriesData, asyncStatus: categoriesAsyncStatus, refetch: refetchCategories } = useQuery({
   key: () => ['tenant', 'menu-categories', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/menu/categories'),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
 })
+
+// ─── Layout-level loading orchestration (issue #461) ───
+// First-load: block UI until the queries that drive the main listing have data.
+// `stationsData` + `categoriesData` are the critical ones; profile and category-station
+// mappings load alongside but their loading is non-blocking (rendered inline).
+const isLoading = computed(() => !stationsData.value || !categoriesData.value)
+
+// Progressive refresh: any of the four queries revalidating with data in place.
+// OR-combined so any background refetch surfaces in the layout indicator.
+const isRefreshing = computed(() => (
+  (profileAsyncStatus.value === 'loading' && profileData.value != null) ||
+  (stationsAsyncStatus.value === 'loading' && stationsData.value != null) ||
+  (categoryStationsAsyncStatus.value === 'loading' && categoryStationsData.value != null) ||
+  (categoriesAsyncStatus.value === 'loading' && categoriesData.value != null)
+))
+
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+registerProgressiveLoading(isRefreshing)
+
+const refreshAll = async () => {
+  await Promise.all([
+    refreshProfile(),
+    refetchStations(),
+    refetchCategoryStations(),
+    refetchCategories(),
+  ])
+}
+onMounted(() => setRefreshHandler(refreshAll))
+onUnmounted(() => clearRefreshHandler(refreshAll))
 
 const mappedCategories = computed(() => {
   const cats = categoriesData.value?.data ?? []
