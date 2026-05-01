@@ -29,6 +29,7 @@ useHead({ title: 'Checkout' })
 const router = useRouter()
 const posStore = usePOSStore()
 const cache = useQueryCache()
+const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
 
 // Inject subtitle setter from layout
@@ -834,8 +835,18 @@ const sendReceiptEmail = async () => {
       }
     })
     emailSent.value = true
-  } catch {
-    // Silent failure — cashier can try again or skip
+  } catch (e: any) {
+    // Surface the failure so the cashier knows the email did NOT go out (#134).
+    // Most common case: 422 from EmailStr validation when the address is empty
+    // or malformed. detail can be either an array (Pydantic) or a string.
+    const detail = e?.data?.detail
+    const message =
+      Array.isArray(detail)
+        ? detail[0]?.msg ?? 'No se pudo enviar el correo.'
+        : typeof detail === 'string'
+          ? detail
+          : 'No se pudo enviar el correo. Verifica la dirección.'
+    toast.error(message, { title: 'Error al enviar recibo' })
   } finally {
     isSendingEmail.value = false
   }
@@ -2051,7 +2062,7 @@ onUnmounted(() => {
                   <span class="flex-1 truncate text-sm text-text-primary">{{ receiptEmail }}</span>
                   <button
                     @click="sendReceiptEmail"
-                    :disabled="isSendingEmail"
+                    :disabled="!receiptEmail || isSendingEmail"
                     class="shrink-0 min-h-[36px] px-4 py-1.5 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <span v-if="isSendingEmail">Enviando...</span>
