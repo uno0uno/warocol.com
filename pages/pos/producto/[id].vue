@@ -50,6 +50,7 @@ const product = computed(() => {
   return {
     id: p.id,
     name: p.name,
+    description: p.description || '',
     price: Number(p.price) || 0,
     category: p.category,
     image: p.image,
@@ -498,8 +499,11 @@ onUnmounted(() => {
                 </span>
               </div>
               <h2 class="text-xl md:text-2xl font-bold text-text-primary mb-2">{{ product.name }}</h2>
-              <p class="text-text-secondary text-xs md:text-sm mb-3 md:mb-4 leading-relaxed">
-                Delicioso producto preparado con los mejores ingredientes. Personaliza tu pedido a tu gusto.
+              <p
+                v-if="product.description"
+                class="text-text-secondary text-sm md:text-base mb-3 md:mb-4 leading-relaxed"
+              >
+                {{ product.description }}
               </p>
               <div class="text-lg md:text-xl font-bold text-primary">
                 {{ formatCurrency(product.price) }}

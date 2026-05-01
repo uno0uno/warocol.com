@@ -701,7 +701,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useQuery } from '@pinia/colada'
+import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import { useTenantReactive } from '@/composables/useTenantReactive'
@@ -713,6 +713,7 @@ definePageMeta({
 useHead({ title: 'Crear Producto' })
 
 const router = useRouter()
+const cache = useQueryCache()
 const { currentTenant, businessProfile } = useTenantReactive()
 
 // Tax config — only show selector when tenant has taxes enabled
@@ -1050,7 +1051,8 @@ async function submitProduct() {
       body: cleanedForm
     })
 
-    // clearNuxtData()
+    cache.invalidateQueries()
+
     await router.push('/menu/productos')
   } catch (error: any) {
     console.error('Error creating product:', error)

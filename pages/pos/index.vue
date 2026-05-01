@@ -514,6 +514,7 @@ watch(() => productsData.value, (data) => {
     const productsToCache: CachedProduct[] = data.data.map((p: any) => ({
       id: p.id,
       name: p.name,
+      description: p.description || '',
       price: Number(p.price) || 0,
       image: p.image_url || '🍽️',
       category: p.category_name || p.category?.name || 'Sin categoría',
