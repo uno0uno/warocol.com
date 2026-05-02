@@ -7,7 +7,7 @@
     @click="$emit('select', product)"
   >
     <!-- Product icon: real image when uploaded, emoji as fallback (#465) -->
-    <div class="w-full aspect-[3/2] bg-surface-secondary border border-border/40 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0 overflow-hidden">
+    <div :style="iconSlotStyle" class="w-full aspect-[3/2] border border-border/30 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0 overflow-hidden">
       <img
         v-if="product.image_url && product.image_url.startsWith('http')"
         :src="product.image_url"
@@ -63,54 +63,55 @@ interface ColorEntry {
   bg: string
   hoverBg: string
   border: string
+  slotBg: string  // Icon slot uses a -300 tint of the same hue so the slot stands out from the card surface (-200) without competing with the -500 border.
 }
 
 // Similarity-based: score by how many keywords appear in the text.
-// Fondos en -200 (saturados visibles), hover en -300, bordes en -500 con 2px
+// Fondos en -200, hover -300, slot -300, bordes -500/-600 con 2px
 const colorEntries: ColorEntry[] = [
   {
     keywords: ['veg', 'viggi', 'saludab', 'ensalad', 'orella', 'bowl', 'organico', 'orgánico'],
-    bg: '#DCFCE7', hoverBg: '#BBF7D0', border: '#16A34A'   // 🟢 verde
+    bg: '#DCFCE7', hoverBg: '#BBF7D0', border: '#16A34A', slotBg: '#BBF7D0'   // 🟢 verde
   },
   {
     keywords: ['bebida', 'jugo', 'agua', 'cafe', 'café', 'limon', 'cerveza', 'coctel', 'fresco', 'smoothie', 'soda', 'refresc', 'gaseosa', 'drink'],
-    bg: '#E0F2FE', hoverBg: '#BAE6FD', border: '#0284C7'   // 🔵 azul cielo
+    bg: '#E0F2FE', hoverBg: '#BAE6FD', border: '#0284C7', slotBg: '#BAE6FD'   // 🔵 azul cielo
   },
   {
     keywords: ['postre', 'torta', 'helado', 'dulce', 'brownie', 'galleta', 'donut', 'cake', 'tarta', 'flan', 'mousse', 'crepe', 'pastel'],
-    bg: '#FCE7F3', hoverBg: '#FBCFE8', border: '#DB2777'   // 🩷 rosa
+    bg: '#FCE7F3', hoverBg: '#FBCFE8', border: '#DB2777', slotBg: '#FBCFE8'   // 🩷 rosa
   },
   {
     keywords: ['hamburgues', 'burg', 'hot dog', 'hotdog', 'chorizo', 'chori', 'pollo', 'res', 'carne', 'chicken', 'beef', 'costilla', 'cerdo', 'lomo', 'filete', 'asado', 'bestial', 'sencill'],
-    bg: '#FFEDD5', hoverBg: '#FED7AA', border: '#EA580C'   // 🟠 naranja
+    bg: '#FFEDD5', hoverBg: '#FED7AA', border: '#EA580C', slotBg: '#FED7AA'   // 🟠 naranja
   },
   {
     keywords: ['pizza', 'calzone'],
-    bg: '#FFE4E6', hoverBg: '#FECDD3', border: '#E11D48'   // 🔴 rojo coral
+    bg: '#FFE4E6', hoverBg: '#FECDD3', border: '#E11D48', slotBg: '#FECDD3'   // 🔴 rojo coral
   },
   {
     keywords: ['pasta', 'sopa', 'crema', 'arroz', 'fideo', 'lasaña', 'espagueti'],
-    bg: '#FEF9C3', hoverBg: '#FEF08A', border: '#CA8A04'   // 🟡 amarillo
+    bg: '#FEF9C3', hoverBg: '#FEF08A', border: '#CA8A04', slotBg: '#FEF08A'   // 🟡 amarillo
   },
   {
     keywords: ['papa', 'frit', 'empanada', 'snack', 'alita', 'croqueta', 'entrada'],
-    bg: '#CCFBF1', hoverBg: '#99F6E4', border: '#0D9488'   // 🩵 teal
+    bg: '#CCFBF1', hoverBg: '#99F6E4', border: '#0D9488', slotBg: '#99F6E4'   // 🩵 teal
   },
   {
     keywords: ['pescado', 'marisco', 'salmon', 'salmón', 'atun', 'atún', 'camaron', 'camarón', 'langosta', 'pulpo', 'seafood'],
-    bg: '#E0E7FF', hoverBg: '#C7D2FE', border: '#4338CA'   // 🔷 índigo
+    bg: '#E0E7FF', hoverBg: '#C7D2FE', border: '#4338CA', slotBg: '#C7D2FE'   // 🔷 índigo
   },
   {
     keywords: ['desayuno', 'huevo', 'tostada', 'pancake', 'waffle', 'arepa', 'tamal', 'breakfast'],
-    bg: '#FEF3C7', hoverBg: '#FDE68A', border: '#D97706'   // 🟤 ámbar
+    bg: '#FEF3C7', hoverBg: '#FDE68A', border: '#D97706', slotBg: '#FDE68A'   // 🟤 ámbar
   },
   {
     keywords: ['caja', 'llevar', 'empaque', 'bolsa', 'envase'],
-    bg: '#EDE9FE', hoverBg: '#DDD6FE', border: '#7C3AED'   // 🟣 violeta
+    bg: '#EDE9FE', hoverBg: '#DDD6FE', border: '#7C3AED', slotBg: '#DDD6FE'   // 🟣 violeta
   },
   {
     keywords: ['sandwich', 'wrap', 'panini', 'taco', 'burrito', 'quesadilla'],
-    bg: '#FAE8FF', hoverBg: '#F5D0FE', border: '#C026D3'   // 💜 fucsia
+    bg: '#FAE8FF', hoverBg: '#F5D0FE', border: '#C026D3', slotBg: '#F5D0FE'   // 💜 fucsia
   },
 ]
 
@@ -133,7 +134,8 @@ const getColorForProduct = (category: string, name: string) => {
   return bestEntry ?? {
     bg: 'hsl(var(--surface))',
     hoverBg: 'hsl(var(--surface-secondary))',
-    border: 'hsl(var(--border))'
+    border: 'hsl(var(--border))',
+    slotBg: 'hsl(var(--surface-secondary))'
   }
 }
 
@@ -144,6 +146,11 @@ const cardStyle = computed(() => {
     borderColor: colors.border,
     borderWidth: '2px',
   }
+})
+
+const iconSlotStyle = computed(() => {
+  const colors = getColorForProduct(props.product.category, props.product.name)
+  return { backgroundColor: colors.slotBg }
 })
 
 const formatCurrency = (value: number) => {
