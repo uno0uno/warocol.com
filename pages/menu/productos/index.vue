@@ -11,6 +11,9 @@
     <!-- Main Content -->
     <div v-else class="page-layout">
       <div class="flex flex-col gap-3 md:gap-4">
+        <!-- Page subtitle -->
+        <p class="text-sm text-text-secondary">Catálogo y rentabilidad de productos</p>
+
         <!-- Cost Warning Banner -->
         <div
           v-if="costIssueCount > 0 && !bannerDismissed"
