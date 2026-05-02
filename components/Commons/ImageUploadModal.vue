@@ -107,8 +107,8 @@
             class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px] min-w-[130px] justify-center"
           >
             <span v-if="isUploading" class="flex items-center gap-2">
-              <CommonsTheCustomLoader size="small" />
-              Subiendo...
+              Subiendo
+              <CommonsInlineDots aria-label="Subiendo imagen" :size="5" />
             </span>
             <span v-else class="flex items-center gap-2">
               <ArrowUpTrayIcon class="w-4 h-4" aria-hidden="true" />
