@@ -7,7 +7,7 @@
     @click="$emit('select', product)"
   >
     <!-- Product icon: real image when uploaded, emoji as fallback (#465) -->
-    <div class="w-full h-12 h-fit bg-white/70 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0 overflow-hidden">
+    <div class="w-full aspect-square bg-white/70 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0 overflow-hidden">
       <img
         v-if="product.image_url && product.image_url.startsWith('http')"
         :src="product.image_url"
@@ -15,7 +15,7 @@
         loading="lazy"
         class="w-full h-full object-cover"
       />
-      <span v-else class="text-xl md:text-3xl">{{ product.image }}</span>
+      <span v-else class="text-3xl md:text-5xl">{{ product.image }}</span>
     </div>
 
     <!-- Name -->
