@@ -487,17 +487,22 @@ onUnmounted(() => {
           </div>
 
           <div class="flex flex-col sm:flex-row gap-4 md:gap-6 items-start sm:items-center">
-            <!-- Product Image/Emoji — real image when uploaded, emoji fallback (#465) -->
-            <div class="w-full sm:w-32 md:w-40 h-32 md:h-40 flex-shrink-0 bg-surface-secondary rounded-xl overflow-hidden relative flex items-center justify-center">
-              <img
-                v-if="product.image_url && product.image_url.startsWith('http')"
-                :src="product.image_url"
-                :alt="product.name"
-                loading="lazy"
-                class="w-full h-full object-cover"
-              />
-              <div v-else class="text-6xl md:text-8xl">{{ product.image }}</div>
-            </div>
+            <!-- Product Image/Emoji — real image preserves natural aspect (#469); emoji fallback keeps fixed square -->
+            <template v-if="product.image_url && product.image_url.startsWith('http')">
+              <div class="w-fit max-w-full sm:max-w-40 flex-shrink-0 bg-surface-secondary rounded-xl overflow-hidden flex items-center justify-center">
+                <img
+                  :src="product.image_url"
+                  :alt="product.name"
+                  loading="lazy"
+                  class="w-auto max-w-full max-h-32 md:max-h-40 object-contain"
+                />
+              </div>
+            </template>
+            <template v-else>
+              <div class="w-full sm:w-32 md:w-40 h-32 md:h-40 flex-shrink-0 bg-surface-secondary rounded-xl overflow-hidden relative flex items-center justify-center">
+                <div class="text-6xl md:text-8xl">{{ product.image }}</div>
+              </div>
+            </template>
 
             <!-- Product Info -->
             <div class="flex-1">
