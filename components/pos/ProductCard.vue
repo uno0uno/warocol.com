@@ -7,7 +7,7 @@
     @click="$emit('select', product)"
   >
     <!-- Product icon: real image when uploaded, emoji as fallback (#465) -->
-    <div class="w-full aspect-[3/2] bg-white/70 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0 overflow-hidden">
+    <div class="w-full aspect-[3/2] bg-surface-secondary border border-border/40 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0 overflow-hidden">
       <img
         v-if="product.image_url && product.image_url.startsWith('http')"
         :src="product.image_url"
