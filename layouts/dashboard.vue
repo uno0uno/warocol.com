@@ -1011,10 +1011,10 @@ const updateDateTime = () => {
 // Update time immediately and then every minute
 let dateTimeInterval: ReturnType<typeof setInterval> | null = null
 
-// Redirect to blocked page when subscription is expired
+// Redirect to billing portal when subscription is expired
 watch(accessStatus, (status) => {
-  if (status?.level === 'blocked' && !route.path.startsWith('/billing/')) {
-    navigateTo('/billing/renovar')
+  if (status?.level === 'blocked' && !route.path.startsWith('/gestion/billing')) {
+    navigateTo('/gestion/billing')
   }
 }, { immediate: true })
 
