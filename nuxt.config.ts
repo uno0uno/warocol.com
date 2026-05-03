@@ -31,6 +31,11 @@ export default defineNuxtConfig({
     '/cocina/**': { ssr: false },
     '/despacho/**': { ssr: false },
     '/integraciones': { ssr: false },
+    // Legacy redirect: stale link `/billing/renovar` 404'd. Send anyone
+    // who lands there (bookmarks, old emails, Wompi callbacks) to the real
+    // billing portal. Must come BEFORE the wildcard `/billing/**` so the
+    // more-specific rule wins.
+    '/billing/renovar': { redirect: { to: '/gestion/billing', statusCode: 301 } },
     '/billing/**': { ssr: false },
     '/mis-pedidos/**': { ssr: false },
     '/proveedor/**': { ssr: false },
