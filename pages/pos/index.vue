@@ -398,11 +398,9 @@ const handleMoveDone = async (result: { targetTableId: string; targetSessionId: 
   cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
 }
 
-// ── Cerrar / Descartar from Mesa Activa banner ─────────────────────────────
+// ── Liberar mesa from the active-mesa banner ───────────────────────────────
 const confirmBannerClose = ref(false)
-const confirmBannerDiscard = ref(false)
 const isBannerClosing = ref(false)
-const isBannerDiscarding = ref(false)
 
 const handleBannerCerrar = () => {
   const session = posStore.activeTableSession
@@ -417,7 +415,8 @@ const handleBannerCerrar = () => {
 const executeBannerClose = async () => {
   const session = posStore.activeTableSession
   if (!session) return
-  confirmBannerClose.value = false
+  // Keep modal open while loading; close it only after the request settles
+  // so the button can show its inline loading dots.
   isBannerClosing.value = true
   try {
     await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
@@ -425,26 +424,7 @@ const executeBannerClose = async () => {
     // Non-critical
   } finally {
     isBannerClosing.value = false
-  }
-  posStore.clearAll()
-  cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
-}
-
-const handleBannerDescartar = () => {
-  confirmBannerDiscard.value = true
-}
-
-const executeBannerDiscard = async () => {
-  const session = posStore.activeTableSession
-  if (!session) return
-  confirmBannerDiscard.value = false
-  isBannerDiscarding.value = true
-  try {
-    await $fetch(`/api/tables/${session.tableId}/session`, { method: 'DELETE' })
-  } catch {
-    // Non-critical
-  } finally {
-    isBannerDiscarding.value = false
+    confirmBannerClose.value = false
   }
   posStore.clearAll()
   cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
@@ -835,83 +815,36 @@ onUnmounted(() => {
               </span>
             </template>
           </div>
-          <!-- Action buttons: Cerrar · Descartar · Cambiar -->
+          <!-- Action buttons: Volver (back to floor plan, keeps session) · Liberar (destructive) -->
           <div class="flex items-center gap-1.5 flex-shrink-0">
-            <!-- Cerrar — only non-bar tables -->
-            <button
-              v-if="isMesaMode"
-              type="button"
-              class="text-[10px] font-bold text-slate-600 uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              :disabled="isBannerClosing || isBannerDiscarding"
-              @click="handleBannerCerrar"
-            >
-              <span v-if="isBannerClosing">…</span>
-              <span v-else>Cerrar</span>
-            </button>
-            <!-- Descartar — only non-bar tables -->
-            <button
-              v-if="isMesaMode"
-              type="button"
-              class="text-[10px] font-bold text-red-600 uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              :disabled="isBannerClosing || isBannerDiscarding"
-              @click="handleBannerDescartar"
-            >
-              <span v-if="isBannerDiscarding">…</span>
-              <span v-else>Descartar</span>
-            </button>
-            <!-- Change table button — clears activeTableSession, showFloorPlan computed switches view -->
+            <!-- Volver — clears local activeTableSession; the showFloorPlan computed switches view. Session stays open in backend. -->
             <button
               type="button"
-              class="text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors"
+              :disabled="isBannerClosing || posStore.isCancellingMesa"
+              class="inline-flex items-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Volver al plano de mesas (la mesa sigue abierta)"
               @click="posStore.clearAll()"
             >
-              Cambiar
+              <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+              </svg>
+              Volver
             </button>
-          </div>
-        </div>
-
-        <!-- Confirm: close with running total -->
-        <div v-if="confirmBannerClose" class="mt-3 flex items-center gap-3 flex-wrap bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-200">
-          <p class="flex-1 text-xs text-text-secondary">
-            Esta mesa tiene <strong class="text-text-primary">{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }}</strong> en consumo. ¿Cerrar sin cobrar?
-          </p>
-          <div class="flex gap-1.5">
+            <!-- Liberar — destructive: closes the session via confirm modal -->
             <button
               type="button"
-              class="px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary border border-border hover:bg-slate-100 transition-colors"
-              @click="confirmBannerClose = false"
+              :disabled="isBannerClosing || posStore.isCancellingMesa"
+              class="inline-flex items-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Liberar la mesa"
+              @click="handleReleaseMesa"
             >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-slate-700 hover:bg-slate-800 transition-colors"
-              @click="executeBannerClose"
-            >
-              Cerrar
-            </button>
-          </div>
-        </div>
-
-        <!-- Confirm: discard session -->
-        <div v-if="confirmBannerDiscard" class="mt-3 flex items-center gap-3 flex-wrap bg-red-50 rounded-xl px-3 py-2.5 border border-red-200">
-          <p class="flex-1 text-xs text-red-700">
-            ¿Eliminar sesión? Los pedidos pendientes se borrarán.
-          </p>
-          <div class="flex gap-1.5">
-            <button
-              type="button"
-              class="px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary border border-border hover:bg-slate-100 transition-colors"
-              @click="confirmBannerDiscard = false"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              class="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
-              @click="executeBannerDiscard"
-            >
-              Descartar
+              <UiLoadingDots v-if="isBannerClosing || posStore.isCancellingMesa" size="6px" />
+              <template v-else>
+                <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                </svg>
+                Liberar
+              </template>
             </button>
           </div>
         </div>
@@ -1025,7 +958,6 @@ onUnmounted(() => {
         @clear-cart="clearCart"
         @add-to-tab="addToTab"
         @request-bill="requestBill"
-        @release-mesa="handleReleaseMesa"
         @remove-tab-item="removeTabItem"
         @increment-tab-item="incrementTabItem"
         @decrement-tab-item="decrementTabItem"
@@ -1034,6 +966,61 @@ onUnmounted(() => {
       </div>
     </div>
   </div>
+
+  <!-- Liberar mesa confirmation modal — shown by handleBannerCerrar when runningTotal > 0 -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition-opacity duration-150"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-150"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="confirmBannerClose && posStore.activeTableSession"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+        @click.self="!isBannerClosing && (confirmBannerClose = false)"
+      >
+        <div class="w-full max-w-sm bg-surface rounded-2xl shadow-2xl overflow-hidden">
+          <div class="px-5 pt-5 pb-4">
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-status-warning-bg flex items-center justify-center">
+                <svg class="w-5 h-5 text-status-warning-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-base font-bold text-text-primary leading-tight">¿Liberar la mesa?</h3>
+                <p class="text-sm text-text-secondary mt-1 leading-snug">
+                  Esta mesa tiene <strong class="text-text-primary">{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }}</strong> en consumo. Si la liberas ahora, se cerrará sin cobrar.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="px-5 pb-5 flex gap-2">
+            <button
+              type="button"
+              :disabled="isBannerClosing"
+              class="flex-1 min-h-[44px] rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              @click="confirmBannerClose = false"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              :disabled="isBannerClosing"
+              class="flex-1 min-h-[44px] rounded-xl bg-slate-700 text-white text-sm font-semibold hover:bg-slate-800 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-1 disabled:opacity-70 disabled:cursor-not-allowed"
+              @click="executeBannerClose"
+            >
+              <UiLoadingDots v-if="isBannerClosing" size="9px" color="white" aria-hidden="true" />
+              <span v-else>Sí, liberar mesa</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 
   <!-- Remove item confirmation modal -->
   <Teleport to="body">

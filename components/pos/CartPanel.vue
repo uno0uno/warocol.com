@@ -140,24 +140,8 @@
 
       <!-- Actions — Mesa (tab) mode -->
       <div v-else class="space-y-2">
-        <!-- 3-col grid: secondary actions -->
-        <div class="grid grid-cols-3 gap-2">
-          <!-- Liberar mesa -->
-          <button
-            type="button"
-            :disabled="posStore.isCancellingMesa"
-            class="min-h-[44px] rounded-xl border border-status-error-text/30 text-status-error-text text-xs font-medium flex items-center justify-center gap-1 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed"
-            aria-label="Liberar la mesa"
-            @click="$emit('release-mesa')"
-          >
-            <UiLoadingDots v-if="posStore.isCancellingMesa" size="7px" />
-            <template v-else>
-              <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
-              </svg>
-              Liberar
-            </template>
-          </button>
+        <!-- 2-col grid: secondary actions (Liberar moved to the active-mesa banner) -->
+        <div class="grid grid-cols-2 gap-2">
           <!-- Pedir cuenta -->
           <button
             type="button"
@@ -262,7 +246,6 @@ interface Emits {
   (e: 'clear-cart'): void
   (e: 'add-to-tab'): void
   (e: 'request-bill'): void
-  (e: 'release-mesa'): void
   (e: 'remove-tab-item', orderItemId: string): void
   (e: 'increment-tab-item', orderItemId: string): void
   (e: 'decrement-tab-item', orderItemId: string): void
