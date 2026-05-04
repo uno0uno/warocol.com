@@ -328,25 +328,6 @@ const requestBill = () => {
 
 const cache = useQueryCache()
 
-const cancelMesa = async () => {
-  const session = posStore.activeTableSession
-  if (!session || posStore.isCancellingMesa) return
-  posStore.isCancellingMesa = true
-  try {
-    if (session.isBar) {
-      // Bar session is permanent — just clear pending tab items, never close it
-      await $fetch(`/api/tables/${session.tableId}/tab`, { method: 'DELETE' })
-    } else {
-      await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
-    }
-  } catch {
-    // Non-critical — clear local state regardless
-  } finally {
-    posStore.isCancellingMesa = false
-  }
-  posStore.clearAll()
-  cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
-}
 
 // ── Fire to kitchen ─────────────────────────────────────────────────────────
 const fireToKitchen = async () => {
@@ -467,6 +448,34 @@ const executeBannerDiscard = async () => {
   }
   posStore.clearAll()
   cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
+}
+
+// Bar branch: clear pending tab items, never close the (permanent) session.
+const clearBarTab = async () => {
+  const session = posStore.activeTableSession
+  if (!session || posStore.isCancellingMesa) return
+  posStore.isCancellingMesa = true
+  try {
+    await $fetch(`/api/tables/${session.tableId}/tab`, { method: 'DELETE' })
+  } catch {
+    // Non-critical — clear local state regardless
+  } finally {
+    posStore.isCancellingMesa = false
+  }
+  posStore.clearAll()
+  cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
+}
+
+// Cart-panel "Liberar mesa" — bar clears the tab; table reuses the existing
+// banner-confirmation flow (skips confirm when runningTotal = 0).
+const handleReleaseMesa = () => {
+  const session = posStore.activeTableSession
+  if (!session) return
+  if (session.isBar) {
+    clearBarTab()
+  } else {
+    handleBannerCerrar()
+  }
 }
 
 const formatDuration = (openedAt: string): string => {
@@ -1016,7 +1025,7 @@ onUnmounted(() => {
         @clear-cart="clearCart"
         @add-to-tab="addToTab"
         @request-bill="requestBill"
-        @cancel-mesa="cancelMesa"
+        @release-mesa="handleReleaseMesa"
         @remove-tab-item="removeTabItem"
         @increment-tab-item="incrementTabItem"
         @decrement-tab-item="decrementTabItem"
