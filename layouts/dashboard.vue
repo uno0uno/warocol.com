@@ -9,17 +9,6 @@
       <header class="bg-surface border-b border-border px-4 py-3 md:px-8 md:py-4 flex-shrink-0">
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-2 sm:gap-4 min-w-0">
-            <!-- Back Button (if dynamic back is enabled) -->
-            <button
-              v-if="showBackBtn && backBtnHandler"
-              @click="backBtnHandler"
-              class="flex-shrink-0 p-2 hover:bg-surface-secondary rounded-lg transition-colors"
-            >
-              <svg class="h-5 w-5 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-              </svg>
-            </button>
-
             <div class="min-w-0">
               <h1 class="text-lg sm:text-xl md:text-3xl font-bold text-text-primary leading-tight truncate">
                 {{ animatedDisplayTitle }}
@@ -119,16 +108,6 @@
 
             <!-- Tenant Selector (Desktop only) -->
             <DashboardTenantSelector key="tenant-selector" />
-
-            <!-- Back Button — text label on desktop only (mobile uses the left arrow icon) -->
-            <button
-              v-if="backButton"
-              key="back-button"
-              @click="goBack"
-              class="hidden md:inline-flex btn-secondary px-4 py-2 rounded-lg text-sm font-semibold"
-            >
-              {{ backButton.label }}
-            </button>
           </TransitionGroup>
         </div>
       </header>

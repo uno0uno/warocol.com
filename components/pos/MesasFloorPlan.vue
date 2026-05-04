@@ -356,25 +356,8 @@ onUnmounted(() => {
                 </button>
               </div>
             </template>
-            <template v-else-if="table.last_closed_at">
-              <!-- Not role="button" — outer <button> handles keyboard; @click.stop handles mouse/touch -->
-              <div
-                class="flex items-center justify-center gap-1.5 px-2 h-11 border-t border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
-                :class="{ 'opacity-50 pointer-events-none': isReopeningTableId === table.id }"
-                @click.stop="handleReopenTable(table.id, $event)"
-              >
-                <!-- arrow-uturn-left: "go back to previous session" -->
-                <svg v-if="isReopeningTableId !== table.id" class="w-3.5 h-3.5 text-slate-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-                </svg>
-                <CommonsTheCustomLoader v-else size="small" />
-                <span class="text-xs font-semibold text-slate-600">
-                  {{ isReopeningTableId === table.id ? 'Reabriendo…' : 'Reabrir' }}
-                </span>
-              </div>
-            </template>
             <template v-else>
-              <!-- Free table with no prior session — "Libre" label for equal card height -->
+              <!-- Free table — "Libre" label (Reabrir UI removed; endpoint /session/reopen still exists) -->
               <div class="flex items-center justify-center px-2 h-11 border-t border-slate-200 bg-slate-50">
                 <span class="text-xs font-semibold text-slate-400">Libre</span>
               </div>
