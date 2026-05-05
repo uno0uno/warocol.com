@@ -503,9 +503,6 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             aria-label="Mostrar solo domicilios"
             @change="() => { currentPage.value = 1 }"
           />
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0H15M5.25 18.75a1.5 1.5 0 0 0-3 0m12-13.5V1.5m0 3.75v3.75m0 0h3.75m-3.75 0H10.5m4.5 0V8.625c0-.621-.504-1.125-1.125-1.125h-3.375a1.125 1.125 0 0 0-1.125 1.125v.375M15 9.75h3.75m-3.75 0v9m0 0h-3.75m3.75 0H21m-9 0h-3.75M9 14.25v4.5" />
-          </svg>
           <span class="text-sm font-semibold">Solo domicilios</span>
         </label>
 
@@ -745,9 +742,6 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               : value === 'mesa' ? 'bg-crocus-100 text-crocus-700 dark:bg-crocus-900/30 dark:text-crocus-400'
               : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'"
           >
-            <svg v-if="row?.is_delivery" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0H15M5.25 18.75a1.5 1.5 0 0 0-3 0m12-13.5V1.5m0 3.75v3.75m0 0h3.75m-3.75 0H10.5m4.5 0V8.625c0-.621-.504-1.125-1.125-1.125h-3.375a1.125 1.125 0 0 0-1.125 1.125v.375M15 9.75h3.75m-3.75 0v9m0 0h-3.75m3.75 0H21m-9 0h-3.75M9 14.25v4.5" />
-            </svg>
             {{ row?.is_delivery ? 'Domicilio' : (value === 'barra' ? 'Barra' : value === 'mesa' ? 'Mesa' : 'POS') }}
           </span>
         </template>

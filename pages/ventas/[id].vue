@@ -419,24 +419,22 @@ onUnmounted(() => {
             'bg-crocus-100 text-crocus-700': !order.is_delivery && order.source === 'mesa',
             'bg-blue-100 text-blue-700': !order.is_delivery && (order.source === 'pos' || !order.source),
           }">
-            <svg v-if="order.is_delivery" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"
-              stroke-width="1.8" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0H15M5.25 18.75a1.5 1.5 0 0 0-3 0m12-13.5V1.5m0 3.75v3.75m0 0h3.75m-3.75 0H10.5m4.5 0V8.625c0-.621-.504-1.125-1.125-1.125h-3.375a1.125 1.125 0 0 0-1.125 1.125v.375M15 9.75h3.75m-3.75 0v9m0 0h-3.75m3.75 0H21m-9 0h-3.75M9 14.25v4.5" />
-            </svg>
-            <svg v-else-if="order.source === 'barra'" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
-            </svg>
-            <svg v-else-if="order.source === 'mesa'" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
-            </svg>
-            <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
+            <template v-if="!order.is_delivery">
+              <svg v-if="order.source === 'barra'" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21a48.25 48.25 0 0 1-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+              </svg>
+              <svg v-else-if="order.source === 'mesa'" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+              </svg>
+              <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </template>
             {{ order.is_delivery ? 'Domicilio' : order.source === 'barra' ? 'Barra' : order.source === 'mesa' ? 'Mesa' : 'POS' }}
           </span>
         </div>
@@ -462,32 +460,37 @@ onUnmounted(() => {
       </div>
 
       <!-- Delivery Info Section (only for delivery orders) -->
-      <div v-if="order.is_delivery" class="bg-surface border border-border rounded-xl p-4 md:p-6">
-        <h2 class="text-base sm:text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-          <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0H15M5.25 18.75a1.5 1.5 0 0 0-3 0m12-13.5V1.5m0 3.75v3.75m0 0h3.75m-3.75 0H10.5m4.5 0V8.625c0-.621-.504-1.125-1.125-1.125h-3.375a1.125 1.125 0 0 0-1.125 1.125v.375M15 9.75h3.75m-3.75 0v9m0 0h-3.75m3.75 0H21m-9 0h-3.75M9 14.25v4.5" />
-          </svg>
-          Información de entrega
-        </h2>
+      <div v-if="order.is_delivery" class="bg-surface border border-border rounded-2xl overflow-hidden">
+        <!-- Header -->
+        <div class="px-5 py-4 border-b border-border">
+          <h2 class="text-base sm:text-lg font-bold text-text-primary">Información de entrega</h2>
+        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Body — 2 column grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
           <!-- Address column -->
-          <div>
-            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Dirección</p>
+          <div class="px-5 py-5">
+            <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">Dirección</p>
             <template v-if="order.delivery_address">
-              <p class="text-base font-medium text-text-primary">{{ order.delivery_address.address_line1 }}</p>
-              <p v-if="order.delivery_address.address_line2" class="text-sm text-text-secondary">{{ order.delivery_address.address_line2 }}</p>
-              <p class="text-sm text-text-secondary">
-                {{ order.delivery_address.city }}{{ order.delivery_address.state ? ', ' + order.delivery_address.state : '' }}
+              <p class="text-base font-semibold text-text-primary leading-snug">
+                {{ order.delivery_address.address_line1 }}
               </p>
-              <p v-if="order.delivery_address.delivery_notes" class="text-sm text-text-secondary mt-2 italic">
-                "{{ order.delivery_address.delivery_notes }}"
+              <p v-if="order.delivery_address.address_line2" class="text-sm text-text-secondary leading-snug mt-0.5">
+                {{ order.delivery_address.address_line2 }}
               </p>
+              <p class="text-sm text-text-secondary leading-snug mt-0.5">
+                {{ order.delivery_address.city }}<span v-if="order.delivery_address.state">, {{ order.delivery_address.state }}</span>
+              </p>
+              <div v-if="order.delivery_address.delivery_notes"
+                class="mt-3 px-3 py-2 rounded-lg bg-surface-secondary border-l-2 border-emerald-400">
+                <p class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-1">Notas de la dirección</p>
+                <p class="text-sm text-text-primary leading-relaxed">{{ order.delivery_address.delivery_notes }}</p>
+              </div>
               <a v-if="order.delivery_address.latitude && order.delivery_address.longitude"
                  :href="`https://www.google.com/maps/?q=${order.delivery_address.latitude},${order.delivery_address.longitude}`"
                  target="_blank" rel="noopener"
-                 class="inline-flex items-center gap-1 mt-3 text-sm font-semibold text-primary hover:underline focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none rounded">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                 class="inline-flex items-center gap-1.5 mt-4 min-h-[44px] py-2 px-3 -mx-3 text-sm font-semibold text-primary hover:bg-primary/5 transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -495,7 +498,7 @@ onUnmounted(() => {
               </a>
             </template>
             <p v-else class="text-sm text-text-tertiary italic flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
               </svg>
               Dirección eliminada
@@ -503,14 +506,18 @@ onUnmounted(() => {
           </div>
 
           <!-- Schedule + instructions column -->
-          <div>
-            <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Hora de entrega</p>
-            <p class="text-base text-text-primary">
-              {{ order.scheduled_time ? formatDateTime(order.scheduled_time) : 'Inmediato' }}
+          <div class="px-5 py-5">
+            <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">Hora de entrega</p>
+            <p class="text-base font-semibold text-text-primary leading-snug">
+              {{ order.scheduled_time ? formatDate(order.scheduled_time) : 'Inmediato' }}
             </p>
+            <p v-if="!order.scheduled_time" class="text-xs text-text-secondary mt-0.5">Apenas se cobre, listo para despachar</p>
+
             <template v-if="order.delivery_instructions">
-              <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2 mt-4">Notas para el repartidor</p>
-              <p class="text-sm text-text-primary italic">"{{ order.delivery_instructions }}"</p>
+              <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3 mt-5">Notas para el repartidor</p>
+              <div class="px-3 py-2 rounded-lg bg-surface-secondary border-l-2 border-emerald-400">
+                <p class="text-sm text-text-primary leading-relaxed">{{ order.delivery_instructions }}</p>
+              </div>
             </template>
           </div>
         </div>
@@ -636,27 +643,33 @@ onUnmounted(() => {
 
         <!-- No invoice — completed order: show emit button -->
         <template v-else-if="order.status === 'completed'">
-          <p class="text-sm text-text-secondary">Sin factura electrónica</p>
-          <button @click="emitInvoice" :disabled="isEmittingInvoice"
-            class="min-h-[44px] w-full py-2 px-4 rounded-lg text-sm font-medium transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-surface border border-border text-text-primary hover:bg-surface-secondary flex items-center justify-center gap-2">
-            <template v-if="isEmittingInvoice">
-              <svg class="h-4 w-4 animate-spin text-primary" xmlns="http://www.w3.org/2000/svg" fill="none"
-                viewBox="0 0 24 24" aria-hidden="true">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-              </svg>
-              Generando factura DIAN...
-            </template>
-            <template v-else>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          <div class="px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+            <span class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0" aria-hidden="true">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round"
                   d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
               </svg>
-              Emitir factura electrónica
-            </template>
-          </button>
-          <p v-if="emitInvoiceError" class="text-xs text-red-600 flex items-center gap-1">
-            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            </span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-text-primary leading-tight">Sin factura electrónica</p>
+              <p class="text-xs text-text-secondary leading-snug">Genera la factura DIAN cuando lo necesites.</p>
+            </div>
+            <button @click="emitInvoice" :disabled="isEmittingInvoice"
+              class="flex-shrink-0 min-h-[44px] py-2 px-4 rounded-lg text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 flex items-center justify-center gap-2">
+              <template v-if="isEmittingInvoice">
+                <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Generando…
+              </template>
+              <template v-else>
+                Emitir factura
+              </template>
+            </button>
+          </div>
+          <p v-if="emitInvoiceError" class="px-5 pb-3 text-sm text-destructive flex items-center gap-1.5">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
             </svg>
@@ -666,7 +679,12 @@ onUnmounted(() => {
 
         <!-- No invoice — order not completed -->
         <template v-else>
-          <p class="text-sm text-text-tertiary">Disponible al completar la orden</p>
+          <div class="px-5 py-3 flex items-center gap-3">
+            <svg class="w-5 h-5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-sm text-text-tertiary">Factura electrónica disponible al completar la orden</p>
+          </div>
         </template>
       </div>
 
