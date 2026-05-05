@@ -29,7 +29,7 @@
 
       <!-- CTA -->
       <NuxtLink
-        to="/billing/planes"
+        to="/gestion/billing"
         :class="ctaClass"
         class="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg min-h-[44px] flex items-center whitespace-nowrap transition-opacity hover:opacity-80"
       >
