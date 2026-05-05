@@ -43,8 +43,16 @@
       <small class="font-semibold mt-0.5">Faltan {{ formatPrice(minimumOrder - subtotal) }}</small>
     </div>
 
+    <!-- Online orders disabled notice — takes priority over closed notice -->
+    <div v-if="showCheckoutButton && !acceptsOnlineOrders" class="flex items-center gap-2 p-3 mb-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+      <svg class="w-4 h-4 flex-shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z" />
+      </svg>
+      Este restaurante no recibe pedidos en línea actualmente
+    </div>
+
     <!-- Restaurant closed notice -->
-    <div v-if="showCheckoutButton && !restaurantOpen" class="flex items-center gap-2 p-3 mb-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+    <div v-else-if="showCheckoutButton && !restaurantOpen" class="flex items-center gap-2 p-3 mb-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
       <svg class="w-4 h-4 flex-shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
       </svg>
@@ -62,7 +70,8 @@
       :disabled="isCheckoutDisabled"
       @click="$emit('checkout')"
     >
-      <span v-if="!restaurantOpen">Restaurante cerrado</span>
+      <span v-if="!acceptsOnlineOrders">Pedidos en línea no disponibles</span>
+      <span v-else-if="!restaurantOpen">Restaurante cerrado</span>
       <span v-else-if="minimumOrder > subtotal">Pedido mínimo no alcanzado</span>
       <span v-else>Continuar a Checkout</span>
     </button>
@@ -82,6 +91,7 @@ const props = withDefaults(
     minimumOrder?: number
     showCheckoutButton?: boolean
     restaurantOpen?: boolean
+    acceptsOnlineOrders?: boolean
   }>(),
   {
     orderType: 'delivery',
@@ -90,6 +100,7 @@ const props = withDefaults(
     minimumOrder: 0,
     showCheckoutButton: true,
     restaurantOpen: true,
+    acceptsOnlineOrders: true,
   }
 )
 
@@ -102,6 +113,7 @@ const total = computed(() => {
 })
 
 const isCheckoutDisabled = computed(() => {
+  if (!props.acceptsOnlineOrders) return true
   if (!props.restaurantOpen) return true
   return props.minimumOrder > 0 && props.subtotal < props.minimumOrder
 })

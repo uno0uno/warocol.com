@@ -223,6 +223,10 @@ const handleOpenProductFromCart = (product: { id: string; name: string; price: n
 // Handle checkout - refresh profile + menu, purge unavailable items, block if closed or cart empty
 const handleCheckout = async () => {
   await Promise.all([refetchProfile(), refetchMenu()])
+  if (!(restaurant.value?.accepts_online_orders ?? false)) {
+    toast.error('Este restaurante no recibe pedidos en línea actualmente.')
+    return
+  }
   if (!(restaurant.value?.is_currently_open ?? true)) return
 
   // Purge items that are no longer available online (same logic as handleCartOpen)
@@ -328,17 +332,22 @@ const cancelSwitch = () => {
           :products="products"
           :is-loading="menuStatus === 'pending'"
           :restaurant-open="restaurant.is_currently_open ?? true"
+          :accepts-online-orders="restaurant.accepts_online_orders ?? false"
           @product-click="handleProductClick"
         />
       </div>
 
       <!-- Cart Bottom Bar -->
-      <CartBottomBar @open-cart="handleCartOpen" />
+      <CartBottomBar
+        :accepts-online-orders="restaurant.accepts_online_orders ?? false"
+        @open-cart="handleCartOpen"
+      />
 
       <!-- Cart Drawer -->
       <CartDrawer
         v-model="isCartOpen"
         :restaurant-open="restaurant.is_currently_open ?? true"
+        :accepts-online-orders="restaurant.accepts_online_orders ?? false"
         @checkout="handleCheckout"
         @open-product="handleOpenProductFromCart"
       />
