@@ -41,6 +41,7 @@ const paymentMethodIdFilter = computed(() =>
 )
 const statusFilter = ref<string | null>('completed')
 const dateRangeDates = ref<Date[] | null>(null)
+const deliveryOnly = ref<boolean>(false)
 
 // Preset ranges for the date picker shortcuts
 const presetDates = ref([
@@ -102,6 +103,7 @@ const { data: ordersData, status: queryStatus, asyncStatus, error: fetchError, r
     sortDirection: sortDirection.value,
     dateFrom: dateRange.value.from,
     dateTo: dateRange.value.to,
+    deliveryOnly: deliveryOnly.value,
   }],
   query: () => $fetch('/api/orders', {
     params: {
@@ -115,7 +117,8 @@ const { data: ordersData, status: queryStatus, asyncStatus, error: fetchError, r
       sort_field: sortField.value,
       sort_direction: sortDirection.value,
       date_from: dateRange.value.from || undefined,
-      date_to: dateRange.value.to || undefined
+      date_to: dateRange.value.to || undefined,
+      delivery_only: deliveryOnly.value || undefined,
     }
   }),
   enabled: () => !!currentTenant.value,
@@ -245,7 +248,7 @@ const executeBulkUpdate = async (customerId: string | null) => {
 }
 
 // Clear selection when page/filters change
-watch([currentPage, statusFilter, paymentFilter, appliedSearch, dateRange], clearSelection)
+watch([currentPage, statusFilter, paymentFilter, appliedSearch, dateRange, deliveryOnly], clearSelection)
 
 // Show discount column only when at least one order in the current page has a discount
 const hasAnyDiscount = computed(() => orders.value.some((o: any) => o.discount_amount > 0))
@@ -279,6 +282,7 @@ const clearFilters = () => {
   paymentFilter.value = null
   statusFilter.value = 'completed'
   dateRangeDates.value = null
+  deliveryOnly.value = false
   sortField.value = 'order_date'
   sortDirection.value = 'desc'
   currentPage.value = 1
@@ -302,7 +306,8 @@ const exportOrders = async () => {
         sort_field: sortField.value,
         sort_direction: sortDirection.value,
         date_from: dateRange.value.from || undefined,
-        date_to: dateRange.value.to || undefined
+        date_to: dateRange.value.to || undefined,
+        delivery_only: deliveryOnly.value || undefined,
       }
     }) as { success: boolean; message: string; data?: { email: string; orders_count: number } }
 
@@ -484,9 +489,29 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <option value="pending">Pendientes</option>
         </select>
 
+        <!-- Delivery-only filter chip -->
+        <label
+          class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
+          :class="deliveryOnly
+            ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
+            : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
+        >
+          <input
+            v-model="deliveryOnly"
+            type="checkbox"
+            class="sr-only"
+            aria-label="Mostrar solo domicilios"
+            @change="() => { currentPage.value = 1 }"
+          />
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0H15M5.25 18.75a1.5 1.5 0 0 0-3 0m12-13.5V1.5m0 3.75v3.75m0 0h3.75m-3.75 0H10.5m4.5 0V8.625c0-.621-.504-1.125-1.125-1.125h-3.375a1.125 1.125 0 0 0-1.125 1.125v.375M15 9.75h3.75m-3.75 0v9m0 0h-3.75m3.75 0H21m-9 0h-3.75M9 14.25v4.5" />
+          </svg>
+          <span class="text-sm font-semibold">Solo domicilios</span>
+        </label>
+
         <!-- Clear Filters Button -->
         <button
-          v-if="localSearchTerm || dateRangeDates || paymentFilter || (statusFilter && statusFilter !== 'completed')"
+          v-if="localSearchTerm || dateRangeDates || paymentFilter || (statusFilter && statusFilter !== 'completed') || deliveryOnly"
           @click="clearFilters"
           class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
           aria-label="Limpiar filtros"
@@ -622,7 +647,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 </span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ item.customer_name }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ item.source === 'barra' ? 'Barra' : item.source === 'mesa' ? 'Mesa' : 'POS' }}
+                {{ item.customer_name }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ item.is_delivery ? 'Domicilio' : (item.source === 'barra' ? 'Barra' : item.source === 'mesa' ? 'Mesa' : 'POS') }}
               </p>
               <p v-if="item.discount_amount > 0" class="text-xs text-destructive mt-0.5">Descuento: -{{ formatCurrency(item.discount_amount) }}</p>
             </div>
@@ -711,12 +736,19 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <span class="text-sm text-text-secondary">{{ value }}</span>
         </template>
 
-        <template #cell-source="{ value }">
+        <template #cell-source="{ value, row }">
           <span
             class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-            :class="value === 'barra' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : value === 'mesa' ? 'bg-crocus-100 text-crocus-700 dark:bg-crocus-900/30 dark:text-crocus-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'"
+            :class="row?.is_delivery
+              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+              : value === 'barra' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+              : value === 'mesa' ? 'bg-crocus-100 text-crocus-700 dark:bg-crocus-900/30 dark:text-crocus-400'
+              : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'"
           >
-            {{ value === 'barra' ? 'Barra' : value === 'mesa' ? 'Mesa' : 'POS' }}
+            <svg v-if="row?.is_delivery" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0H15M5.25 18.75a1.5 1.5 0 0 0-3 0m12-13.5V1.5m0 3.75v3.75m0 0h3.75m-3.75 0H10.5m4.5 0V8.625c0-.621-.504-1.125-1.125-1.125h-3.375a1.125 1.125 0 0 0-1.125 1.125v.375M15 9.75h3.75m-3.75 0v9m0 0h-3.75m3.75 0H21m-9 0h-3.75M9 14.25v4.5" />
+            </svg>
+            {{ row?.is_delivery ? 'Domicilio' : (value === 'barra' ? 'Barra' : value === 'mesa' ? 'Mesa' : 'POS') }}
           </span>
         </template>
 
