@@ -29,8 +29,16 @@
       </div>
     </div>
 
-    <!-- Closed Banner -->
-    <div v-if="!restaurantOpen" class="max-w-7xl mx-auto px-4 pt-6">
+    <!-- Online ordering disabled banner — takes priority over closed banner -->
+    <div v-if="!acceptsOnlineOrders" class="max-w-7xl mx-auto px-4 pt-6">
+      <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
+        <span>📋</span>
+        <span>Este restaurante no recibe pedidos en línea actualmente. Puedes ver el menú o contactar al restaurante.</span>
+      </div>
+    </div>
+
+    <!-- Closed Banner — only shown when accepting orders but currently closed -->
+    <div v-else-if="!restaurantOpen" class="max-w-7xl mx-auto px-4 pt-6">
       <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
         <span>🔒</span>
         <span>El restaurante está cerrado temporalmente. Puedes explorar el menú pero no se pueden realizar pedidos.</span>
@@ -50,7 +58,7 @@
             v-for="product in category.products"
             :key="product.id"
             :product="product"
-            :restaurant-closed="!restaurantOpen"
+            :restaurant-closed="!ordersAvailable"
             @click="handleProductClick"
           />
         </div>
@@ -88,12 +96,20 @@ const props = defineProps({
   restaurantOpen: {
     type: Boolean,
     default: true
+  },
+  acceptsOnlineOrders: {
+    type: Boolean,
+    default: true
   }
 })
 
 const emit = defineEmits(['product-click'])
 
 const selectedCategory = ref('all')
+
+// Combined gate: orders are available only when restaurant is open AND accepts online orders.
+// Used to disable add-to-cart buttons in product cards.
+const ordersAvailable = computed(() => props.restaurantOpen && props.acceptsOnlineOrders)
 
 // All categories including "Todos"
 const allCategories = computed(() => {

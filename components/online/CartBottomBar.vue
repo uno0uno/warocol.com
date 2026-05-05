@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="bar-slide">
-      <div v-if="cartStore.itemCount > 0" class="cart-bottom-bar bg-white border-t border-border shadow-2xl">
+      <div v-if="cartStore.itemCount > 0 && acceptsOnlineOrders" class="cart-bottom-bar bg-white border-t border-border shadow-2xl">
         <!-- Inner container — matches layout padding -->
         <div class="px-4 md:px-16 2xl:px-[30rem] py-3">
           <div class="flex items-center justify-between gap-3">
@@ -71,6 +71,12 @@
 
 <script setup lang="ts">
 import { useOnlineCartStore } from '~/stores/online_cart'
+
+withDefaults(defineProps<{
+  acceptsOnlineOrders?: boolean
+}>(), {
+  acceptsOnlineOrders: true,
+})
 
 defineEmits<{
   (e: 'open-cart'): void
