@@ -379,9 +379,11 @@ const showWarosModal = ref(false)
 const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
 const isAnonymousCustomer = computed(() => selectedCustomer.value?.phone_number === '0000000000')
 
-// Delivery eligibility — depends on customer + tenant + mode
+// Delivery eligibility — allowed for counter and bar (anything that's not a real mesa).
+// Mesa is dine-in by definition; bar is a permanent counter tab used as walk-in/mostrador.
+const canRegisterDelivery = computed(() => !isMesaMode.value)
 const isDeliveryEligible = computed(() =>
-  isCounterMode.value &&
+  canRegisterDelivery.value &&
   acceptsOnlineOrders.value &&
   !!selectedCustomer.value &&
   !isAnonymousCustomer.value
@@ -1155,8 +1157,8 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Section: Domicilio (counter mode only) -->
-        <div v-if="isCounterMode" class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
+        <!-- Section: Domicilio (mostrador or bar — never mesa) -->
+        <div v-if="canRegisterDelivery" class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
           <div class="flex items-center justify-between gap-3">
             <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
               <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
