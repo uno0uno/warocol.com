@@ -1161,8 +1161,10 @@ onUnmounted(() => {
         <div v-if="canRegisterDelivery" class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
           <div class="flex items-center justify-between gap-3">
             <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
-              <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0H15M5.25 18.75a1.5 1.5 0 0 0-3 0m12-13.5V1.5m0 3.75v3.75m0 0h3.75m-3.75 0H10.5m4.5 0V8.625c0-.621-.504-1.125-1.125-1.125h-3.375a1.125 1.125 0 0 0-1.125 1.125v.375M15 9.75h3.75m-3.75 0v9m0 0h-3.75m3.75 0H21m-9 0h-3.75M9 14.25v4.5" />
+              <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M3.375 4.5C2.339 4.5 1.5 5.34 1.5 6.375V13.5h12V6.375c0-1.036-.84-1.875-1.875-1.875h-8.25zM13.5 15h-12v2.625c0 1.035.84 1.875 1.875 1.875h.375a3 3 0 1 1 6 0h3a.75.75 0 0 0 .75-.75V15z" />
+                <path d="M8.25 19.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0zM15.75 6.75a.75.75 0 0 0-.75.75v11.25c0 .087.015.17.042.248a3 3 0 0 1 5.958.464c.853-.175 1.522-.935 1.464-1.883a18.659 18.659 0 0 0-3.732-10.104 1.837 1.837 0 0 0-1.47-.725H15.75z" />
+                <path d="M19.5 19.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0z" />
               </svg>
               Domicilio
             </h2>
