@@ -29,7 +29,7 @@
             Ya tienes acceso completo a todas las funciones.
           </p>
         </div>
-        <NuxtLink to="/billing" class="btn-primary px-6 py-3 rounded-xl text-sm font-semibold inline-block min-h-[44px] flex items-center justify-center">
+        <NuxtLink to="/gestion/billing" class="btn-primary px-6 py-3 rounded-xl text-sm font-semibold inline-block min-h-[44px] flex items-center justify-center">
           Ver mi suscripción
         </NuxtLink>
       </div>
@@ -50,7 +50,7 @@
             Esto puede tardar unos minutos.
           </p>
         </div>
-        <NuxtLink to="/billing" class="border border-border px-6 py-3 rounded-xl text-sm font-semibold inline-block text-text-primary hover:bg-surface-alt transition-colors min-h-[44px] flex items-center justify-center">
+        <NuxtLink to="/gestion/billing" class="border border-border px-6 py-3 rounded-xl text-sm font-semibold inline-block text-text-primary hover:bg-surface-alt transition-colors min-h-[44px] flex items-center justify-center">
           Ver estado de mi suscripción
         </NuxtLink>
       </div>
@@ -72,10 +72,10 @@
           </p>
         </div>
         <div class="flex flex-col gap-3">
-          <NuxtLink to="/billing/planes" class="btn-primary px-6 py-3 rounded-xl text-sm font-semibold inline-block min-h-[44px] flex items-center justify-center">
+          <NuxtLink to="/gestion/billing" class="btn-primary px-6 py-3 rounded-xl text-sm font-semibold inline-block min-h-[44px] flex items-center justify-center">
             Intentar de nuevo
           </NuxtLink>
-          <NuxtLink to="/billing" class="text-sm text-text-secondary hover:text-text-primary">
+          <NuxtLink to="/gestion/billing" class="text-sm text-text-secondary hover:text-text-primary">
             Volver a mi suscripción
           </NuxtLink>
         </div>

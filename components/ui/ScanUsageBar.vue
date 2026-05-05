@@ -38,7 +38,7 @@
         </div>
         <NuxtLink
           v-if="showPeriod"
-          to="/billing/"
+          to="/gestion/billing"
           class="text-xs font-bold text-primary hover:text-primary/80 transition-colors py-1.5 px-2.5 -mr-2 bg-primary/5 rounded-lg active:scale-95"
           style="min-height: 44px; display: flex; align-items: center;"
         >

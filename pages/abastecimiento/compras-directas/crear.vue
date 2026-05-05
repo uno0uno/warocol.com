@@ -1382,7 +1382,7 @@
       </div>
       <div class="flex flex-col gap-2 pt-1">
         <NuxtLink
-          to="/billing/planes"
+          to="/gestion/billing"
           class="btn-primary px-4 py-3 rounded-xl text-sm font-semibold text-center min-h-[44px] flex items-center justify-center"
           @click="showQuotaModal = false"
         >
