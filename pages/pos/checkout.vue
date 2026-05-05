@@ -5,8 +5,11 @@ import { $fetch } from 'ofetch'
 import { useQuery } from '@pinia/colada'
 import QRCode from 'qrcode'
 import { usePOSStore } from '~/stores/usePOSStore'
+import { useAddressStore, type AddressCreate } from '~/stores/address'
 import { useInvoicingReadiness } from '~/composables/useInvoicingReadiness'
 import { PAYMENT_DEFAULTS, type PosPaymentGroup, type PosPaymentMethod } from '~/utils/paymentDefaults'
+import DeliveryAddressPicker from '~/components/pos/checkout/DeliveryAddressPicker.vue'
+import DeliveryAddressForm from '~/components/pos/checkout/DeliveryAddressForm.vue'
 
 interface TopProduct {
   name: string
@@ -156,9 +159,18 @@ const { data: settingsData } = useQuery({
   staleTime: 30_000,
 })
 const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
+const acceptsOnlineOrders = computed(() => settingsData.value?.data?.accepts_online_orders === true)
 
 // Counter mode: not a real table session (no mesa, no bar)
 const isCounterMode = computed(() => !isMesaMode.value && !posStore.activeTableSession?.isBar)
+
+// ── Delivery state ──────────────────────────────────────────────────────────
+const addressStore = useAddressStore()
+const deliveryEnabled = ref(false)
+const deliveryInstructions = ref('')
+const showAddressForm = ref(false)
+const addressFormError = ref<string | null>(null)
+const addressFormLoading = ref(false)
 
 // Computed (must be before any watchers that reference cartTotal)
 const cartItems = computed(() => {
@@ -367,6 +379,53 @@ const showWarosModal = ref(false)
 const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
 const isAnonymousCustomer = computed(() => selectedCustomer.value?.phone_number === '0000000000')
 
+// Delivery eligibility — depends on customer + tenant + mode
+const isDeliveryEligible = computed(() =>
+  isCounterMode.value &&
+  acceptsOnlineOrders.value &&
+  !!selectedCustomer.value &&
+  !isAnonymousCustomer.value
+)
+
+// Sync address store with selected customer; reset delivery state when customer cleared
+watch(() => selectedCustomer.value?.id, (customerId, prevId) => {
+  if (customerId && customerId !== prevId) {
+    addressStore.fetchAddresses(customerId)
+  } else if (!customerId) {
+    addressStore.reset()
+    deliveryEnabled.value = false
+    deliveryInstructions.value = ''
+    showAddressForm.value = false
+    addressFormError.value = null
+  }
+}, { immediate: true })
+
+// Auto-disable delivery toggle when eligibility is lost (mesa mode, anon customer, gate flipped off)
+watch(isDeliveryEligible, (eligible) => {
+  if (!eligible) {
+    deliveryEnabled.value = false
+    showAddressForm.value = false
+  }
+})
+
+const handleSaveAddress = async (payload: AddressCreate) => {
+  if (!selectedCustomer.value?.id) return
+  addressFormLoading.value = true
+  addressFormError.value = null
+  try {
+    const created = await addressStore.createAddress(selectedCustomer.value.id, payload)
+    if (created?.id) {
+      addressStore.selectAddress(String(created.id))
+    }
+    showAddressForm.value = false
+  } catch (err: any) {
+    addressFormError.value =
+      err?.data?.detail || err?.data?.message || err?.message || 'No se pudo guardar la dirección'
+  } finally {
+    addressFormLoading.value = false
+  }
+}
+
 let estimateTimer: ReturnType<typeof setTimeout> | null = null
 
 watch(discountedTotal, (total) => {
@@ -512,6 +571,11 @@ const processOrder = async () => {
     return
   }
 
+  if (deliveryEnabled.value && !addressStore.selectedAddressId) {
+    processingError.value = 'Selecciona o crea una dirección de entrega'
+    return
+  }
+
   try {
     isProcessing.value = true
     processingError.value = ''
@@ -535,6 +599,14 @@ const processOrder = async () => {
           : {}),
         ...(posStore.activeTableSession?.isBar
           ? { table_session_id: posStore.activeTableSession.sessionId }
+          : {}),
+        ...(deliveryEnabled.value && addressStore.selectedAddressId
+          ? {
+              delivery_address_id: addressStore.selectedAddressId,
+              ...(deliveryInstructions.value.trim()
+                ? { delivery_instructions: deliveryInstructions.value.trim() }
+                : {}),
+            }
           : {}),
       }
     }) as {
@@ -660,6 +732,12 @@ const closeSuccessModal = () => {
   invoiceProgress.value = ''
   fiscalWizardOpen.value = false
   fiscalWizardError.value = ''
+  // Reset delivery state after successful order
+  deliveryEnabled.value = false
+  deliveryInstructions.value = ''
+  showAddressForm.value = false
+  addressFormError.value = null
+  addressStore.reset()
   if (wasMesaMode.value) {
     cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
     router.push('/pos')
@@ -1075,6 +1153,80 @@ onUnmounted(() => {
               <span class="text-sm font-bold text-primary">-{{ formatCurrency(discountAmount) }}</span>
             </div>
           </div>
+        </div>
+
+        <!-- Section: Domicilio (counter mode only) -->
+        <div v-if="isCounterMode" class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
+              <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0H15M5.25 18.75a1.5 1.5 0 0 0-3 0m12-13.5V1.5m0 3.75v3.75m0 0h3.75m-3.75 0H10.5m4.5 0V8.625c0-.621-.504-1.125-1.125-1.125h-3.375a1.125 1.125 0 0 0-1.125 1.125v.375M15 9.75h3.75m-3.75 0v9m0 0h-3.75m3.75 0H21m-9 0h-3.75M9 14.25v4.5" />
+              </svg>
+              Domicilio
+            </h2>
+            <label
+              class="relative inline-flex items-center"
+              :class="isDeliveryEligible ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
+            >
+              <input
+                v-model="deliveryEnabled"
+                type="checkbox"
+                class="sr-only peer"
+                :disabled="!isDeliveryEligible"
+                aria-label="Activar domicilio para esta orden"
+              />
+              <div class="w-11 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            </label>
+          </div>
+
+          <!-- Helper messages — explain why the toggle is disabled -->
+          <p v-if="!acceptsOnlineOrders" class="text-xs text-text-secondary mt-2">
+            Activa "Pedidos en línea" en /negocio para habilitar domicilios.
+          </p>
+          <p v-else-if="!selectedCustomer" class="text-xs text-text-secondary mt-2">
+            Selecciona un cliente para habilitar domicilio.
+          </p>
+          <p v-else-if="isAnonymousCustomer" class="text-xs text-text-secondary mt-2">
+            Identifica al cliente (no anónimo) para habilitar domicilio.
+          </p>
+
+          <!-- Expanded delivery details — only when toggle is on -->
+          <Transition name="fade" mode="out-in">
+            <div v-if="deliveryEnabled && selectedCustomer" class="mt-4 space-y-4">
+              <!-- Address picker / form switch -->
+              <DeliveryAddressForm
+                v-if="showAddressForm"
+                :customer-id="selectedCustomer.id"
+                :loading="addressFormLoading"
+                :error="addressFormError"
+                @submit="handleSaveAddress"
+                @cancel="showAddressForm = false"
+              />
+              <DeliveryAddressPicker
+                v-else
+                :addresses="addressStore.addresses"
+                :selected-id="addressStore.selectedAddressId"
+                :loading="addressStore.isLoading"
+                @update:selected-id="addressStore.selectAddress"
+                @add-new="showAddressForm = true"
+              />
+
+              <!-- Delivery instructions (order-level) -->
+              <div class="flex flex-col gap-1">
+                <label for="pos-delivery-instructions" class="text-sm font-medium text-text-primary">
+                  Notas para el repartidor (opcional)
+                </label>
+                <textarea
+                  id="pos-delivery-instructions"
+                  v-model="deliveryInstructions"
+                  rows="3"
+                  maxlength="500"
+                  placeholder="Ej: tocar el timbre, llegar por la entrada lateral…"
+                  class="input-base w-full px-3 py-2 text-sm resize-none"
+                />
+              </div>
+            </div>
+          </Transition>
         </div>
 
         <!-- Section: Payment Method -->
