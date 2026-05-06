@@ -120,36 +120,63 @@ const activeAccordion = ref<'insights' | 'summary' | 'waros' | null>(null)
 const isMesaMode = computed(() => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar)
 const { tabItems: storeTabItems } = storeToRefs(posStore)
 
-type MesaTaxPreview = {
+// Issue #526 — tax preview for the cart sidebar.
+// Mesa: reads from /api/tables/{id}/current.session (existing).
+// Counter / Bar: reads from /api/pos/cart/{id}/tax-preview (new — see #526).
+// Both endpoints route through the shared `_compute_tax_breakdown` helper,
+// so the sidebar always agrees with the cobrar response.
+type TaxPreview = {
   standard_tax: number
   liquor_tax: number
   standard_tax_label: string
 }
-const mesaTaxPreview = ref<MesaTaxPreview | null>(null)
-const mesaTaxLoading = ref(false)
-const mesaTaxError = ref('')
-let mesaTaxRefreshTmr: ReturnType<typeof setTimeout> | null = null
+const taxPreview = ref<TaxPreview | null>(null)
+const taxLoading = ref(false)
+const taxError = ref('')
+let taxRefreshTmr: ReturnType<typeof setTimeout> | null = null
 
-const refreshMesaTaxPreview = async () => {
-  if (!isMesaMode.value || !posStore.activeTableSession?.tableId) {
-    mesaTaxPreview.value = null
-    return
-  }
-  mesaTaxLoading.value = true
-  mesaTaxError.value = ''
+const refreshTaxPreview = async () => {
+  taxLoading.value = true
+  taxError.value = ''
   try {
-    const res = await $fetch<{ success: boolean; data: any }>(`/api/tables/${posStore.activeTableSession.tableId}/current`)
-    const session = res?.data?.session
-    mesaTaxPreview.value = {
-      standard_tax: Number(session?.standard_tax) || 0,
-      liquor_tax: Number(session?.liquor_tax) || 0,
-      standard_tax_label: session?.standard_tax_label || 'Impuesto',
+    // Mesa: existing endpoint, ignores any in-flight discount (computed
+    // from already-saved orders in the session).
+    if (isMesaMode.value && posStore.activeTableSession?.tableId) {
+      const res = await $fetch<{ success: boolean; data: any }>(
+        `/api/tables/${posStore.activeTableSession.tableId}/current`
+      )
+      const session = res?.data?.session
+      taxPreview.value = {
+        standard_tax: Number(session?.standard_tax) || 0,
+        liquor_tax: Number(session?.liquor_tax) || 0,
+        standard_tax_label: session?.standard_tax_label || 'Impuesto',
+      }
+      return
     }
+
+    // Counter / Bar: new endpoint, accepts the in-flight discount as a query param.
+    if (posStore.cartId) {
+      const params = new URLSearchParams()
+      if (discountAmount.value > 0) params.set('discount_amount', String(discountAmount.value))
+      const qs = params.toString() ? `?${params.toString()}` : ''
+      const res = await $fetch<{ standard_tax: number; liquor_tax: number; standard_tax_label: string }>(
+        `/api/pos/cart/${posStore.cartId}/tax-preview${qs}`
+      )
+      taxPreview.value = {
+        standard_tax: Number(res?.standard_tax) || 0,
+        liquor_tax: Number(res?.liquor_tax) || 0,
+        standard_tax_label: res?.standard_tax_label || 'Impuesto',
+      }
+      return
+    }
+
+    // No cart yet → clear preview
+    taxPreview.value = null
   } catch (e: any) {
-    mesaTaxError.value = e?.data?.message || e?.message || 'No se pudo calcular impuestos'
-    mesaTaxPreview.value = null
+    taxError.value = e?.data?.message || e?.message || 'No se pudo calcular impuestos'
+    taxPreview.value = null
   } finally {
-    mesaTaxLoading.value = false
+    taxLoading.value = false
   }
 }
 
@@ -199,20 +226,27 @@ const discountAmount = computed(() => {
 })
 const discountedTotal = computed(() => cartTotal.value - discountAmount.value)
 
-// Mesa tax preview (for checkout summary UI)
-watch([isMesaMode, cartTotal, () => storeTabItems.value.length], ([mesa]) => {
-  if (!mesa) {
-    mesaTaxPreview.value = null
-    return
-  }
-  if (mesaTaxRefreshTmr) clearTimeout(mesaTaxRefreshTmr)
-  mesaTaxRefreshTmr = setTimeout(() => {
-    refreshMesaTaxPreview()
-  }, 250)
-}, { immediate: true })
+// Tax preview — runs for all 3 modes (mesa / counter / bar). Debounced to
+// avoid flooding when items / discount change rapidly.
+watch(
+  [
+    isMesaMode,
+    cartTotal,
+    discountAmount,
+    () => storeTabItems.value.length,
+    () => posStore.cart.length,
+  ],
+  () => {
+    if (taxRefreshTmr) clearTimeout(taxRefreshTmr)
+    taxRefreshTmr = setTimeout(() => {
+      refreshTaxPreview()
+    }, 250)
+  },
+  { immediate: true },
+)
 
 onUnmounted(() => {
-  if (mesaTaxRefreshTmr) clearTimeout(mesaTaxRefreshTmr)
+  if (taxRefreshTmr) clearTimeout(taxRefreshTmr)
 })
 
 // Split payment state
@@ -1670,9 +1704,9 @@ onUnmounted(() => {
                 <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
               </div>
               <div class="flex justify-between text-sm text-text-secondary">
-                <span>{{ isMesaMode && mesaTaxPreview ? mesaTaxPreview.standard_tax_label : 'Impuestos (0%)' }}</span>
+                <span>{{ taxPreview ? taxPreview.standard_tax_label : 'Impuestos (0%)' }}</span>
                 <span class="font-medium text-text-primary">
-                  {{ formatCurrency(isMesaMode && mesaTaxPreview ? (mesaTaxPreview.standard_tax + mesaTaxPreview.liquor_tax) : 0) }}
+                  {{ formatCurrency(taxPreview ? (taxPreview.standard_tax + taxPreview.liquor_tax) : 0) }}
                 </span>
               </div>
               <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-primary">
@@ -2095,9 +2129,9 @@ onUnmounted(() => {
               <span class="font-medium text-text-primary">{{ formatCurrency(cartTotal) }}</span>
             </div>
             <div class="flex justify-between text-sm text-text-secondary">
-              <span>{{ isMesaMode && mesaTaxPreview ? mesaTaxPreview.standard_tax_label : 'Impuestos (0%)' }}</span>
+              <span>{{ taxPreview ? taxPreview.standard_tax_label : 'Impuestos (0%)' }}</span>
               <span class="font-medium text-text-primary">
-                {{ formatCurrency(isMesaMode && mesaTaxPreview ? (mesaTaxPreview.standard_tax + mesaTaxPreview.liquor_tax) : 0) }}
+                {{ formatCurrency(taxPreview ? (taxPreview.standard_tax + taxPreview.liquor_tax) : 0) }}
               </span>
             </div>
             <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-green-600 dark:text-green-400">
