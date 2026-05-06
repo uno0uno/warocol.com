@@ -727,17 +727,26 @@ const cashIsValid = computed(() =>
   !isCashMethod.value || (cashReceivedInput.value > 0 && cashShortfall.value <= 0.01)
 )
 
-const cashPresets = computed(() => {
+// Issue #524 — quick-tap presets. "Sin vuelto" is the friendly equivalent of
+// the industry term "exact tender" — it tells the cashier what happens
+// (no change to give) instead of generic POS jargon.
+//
+// The four "extra-amount" presets are split off from "Sin vuelto" because
+// they semantically mean "customer paid more, give change". Visually treated
+// in a 2x2 grid (see template), with "Siguiente" as a separate full-width
+// action below — the round-up to next thousand is a one-tap shortcut for
+// the most common Colombian cash bills.
+const cashPresetsExtra = computed(() => {
   const a = cashAmountToCharge.value
-  // Round-up to next thousand (always go up — even on exact thousands)
-  const nextThousand = Math.floor(a / 1000) * 1000 + 1000
   return [
-    { label: 'Justo',          value: a },
-    { label: '+$5.000',        value: a + 5000 },
-    { label: '+$10.000',       value: a + 10000 },
-    { label: '+$20.000',       value: a + 20000 },
-    { label: 'Siguiente $',    value: nextThousand > a ? nextThousand : a + 1000 },
+    { label: '+ $5.000',  value: a + 5000 },
+    { label: '+ $10.000', value: a + 10000 },
+    { label: '+ $20.000', value: a + 20000 },
   ]
+})
+const cashSiguienteValue = computed(() => {
+  const a = cashAmountToCharge.value
+  return Math.floor(a / 1000) * 1000 + 1000
 })
 
 // Re-prefill the input whenever the cash amount changes (method switch, split
@@ -749,6 +758,19 @@ watch(
   },
   { immediate: true }
 )
+
+// Issue #524 — thousand-separator formatting (Colombian style: "145.000").
+// Cajero ve el valor con puntos pero la lógica trabaja con un número limpio.
+const cashReceivedDisplay = computed(() =>
+  cashReceivedInput.value > 0 ? cashReceivedInput.value.toLocaleString('es-CO') : ''
+)
+const onCashReceivedInput = (e: Event) => {
+  const input = e.target as HTMLInputElement
+  const raw = Number(input.value.replace(/\./g, '').replace(/\D/g, ''))
+  cashReceivedInput.value = Number.isFinite(raw) ? raw : 0
+  // Reflect the formatted value back into the field so the user sees dots.
+  input.value = raw ? raw.toLocaleString('es-CO') : ''
+}
 
 const filteredMethods = computed(() => {
   const methods = selectedGroup.value?.methods ?? []
@@ -1821,45 +1843,66 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Issue #524 — Cash tender + change calculation (only when method is cash) -->
-            <div v-if="isCashMethod && !splitIsComplete" class="flex flex-col gap-2 p-3 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40">
+            <!-- Issue #524 — Cash tender + change calculation (split mode) -->
+            <div v-if="isCashMethod && !splitIsComplete" class="flex flex-col gap-3 p-4 rounded-xl bg-surface border border-border">
               <label for="cash-received-input" class="text-sm font-medium text-text-primary">
                 Efectivo recibido
               </label>
+              <!-- Big input with $ on the right (matches mockup) -->
               <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-secondary pointer-events-none">$</span>
                 <input
                   id="cash-received-input"
-                  v-model.number="cashReceivedInput"
-                  type="number"
-                  min="0"
-                  step="any"
-                  inputmode="decimal"
+                  type="text"
+                  inputmode="numeric"
+                  :value="cashReceivedDisplay"
+                  @input="onCashReceivedInput"
                   :aria-label="`Efectivo recibido por el cliente, monto a cobrar ${formatCurrency(cashAmountToCharge)}`"
-                  class="w-full min-h-[44px] pl-7 pr-3 py-3 bg-white dark:bg-surface border border-border rounded-xl text-lg font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 tabular-nums"
+                  placeholder="0"
+                  class="w-full min-h-[60px] pl-4 pr-10 py-3 bg-white dark:bg-surface border-2 border-green-500 rounded-xl text-3xl font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500 tabular-nums placeholder:text-text-tertiary placeholder:font-normal"
                 />
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-green-600 pointer-events-none">$</span>
               </div>
-              <!-- Quick-tap presets -->
-              <div class="flex flex-wrap gap-2">
+              <!-- 2×2 grid of presets — "Sin vuelto" is gray (different semantic), the +amount ones are green -->
+              <div class="grid grid-cols-2 gap-3">
                 <button
-                  v-for="preset in cashPresets"
+                  type="button"
+                  @click="cashReceivedInput = cashAmountToCharge"
+                  aria-label="Pagar exacto, sin vuelto"
+                  class="min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  Sin vuelto
+                </button>
+                <button
+                  v-for="preset in cashPresetsExtra"
                   :key="preset.label"
                   type="button"
                   @click="cashReceivedInput = preset.value"
-                  class="min-h-[44px] min-w-[80px] px-3 py-2 rounded-lg border border-border bg-white dark:bg-surface text-sm font-medium text-text-primary hover:bg-green-100 dark:hover:bg-green-900/30 hover:border-green-400 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+                  class="min-h-[56px] px-4 py-3 rounded-lg bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-base font-semibold hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   {{ preset.label }}
                 </button>
               </div>
-              <!-- Vuelto display (large green) when received >= amount -->
+              <!-- Siguiente $ — solid green primary CTA -->
+              <button
+                type="button"
+                @click="cashReceivedInput = cashSiguienteValue"
+                :aria-label="`Redondear al siguiente mil, ${formatCurrency(cashSiguienteValue)}`"
+                class="min-h-[52px] px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-base font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-center gap-2"
+              >
+                <span>Siguiente</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </button>
+              <!-- Vuelto card -->
               <div
                 v-if="cashShortfall <= 0.01"
-                class="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-surface border-2 border-green-500"
+                class="flex items-center justify-between p-4 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40"
                 role="status"
                 aria-live="polite"
               >
-                <span class="text-sm font-medium text-green-700 dark:text-green-400">Vuelto</span>
-                <span class="text-2xl font-bold text-green-700 dark:text-green-400 tabular-nums">
+                <span class="text-base font-medium text-green-700 dark:text-green-400">Vuelto</span>
+                <span class="text-3xl font-bold text-green-700 dark:text-green-400 tabular-nums">
                   {{ formatCurrency(cashChange) }}
                 </span>
               </div>
@@ -1895,42 +1938,64 @@ onUnmounted(() => {
         </div>
 
         <!-- Issue #524 — Cash tender + change calculation (single-payment mode) -->
-        <div v-if="!splitMode && isCashMethod && selectedCustomer" class="flex flex-col gap-2 p-4 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40">
+        <div v-if="!splitMode && isCashMethod && selectedCustomer" class="flex flex-col gap-3 p-4 rounded-xl bg-surface border border-border">
           <label for="cash-received-input-single" class="text-sm font-medium text-text-primary">
             Efectivo recibido
           </label>
           <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-secondary pointer-events-none">$</span>
             <input
               id="cash-received-input-single"
-              v-model.number="cashReceivedInput"
-              type="number"
-              min="0"
-              step="any"
-              inputmode="decimal"
+              type="text"
+              inputmode="numeric"
+              :value="cashReceivedDisplay"
+              @input="onCashReceivedInput"
               :aria-label="`Efectivo recibido por el cliente, monto a cobrar ${formatCurrency(cashAmountToCharge)}`"
-              class="w-full min-h-[44px] pl-7 pr-3 py-3 bg-white dark:bg-surface border border-border rounded-xl text-lg font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 tabular-nums"
+              placeholder="0"
+              class="w-full min-h-[60px] pl-4 pr-10 py-3 bg-white dark:bg-surface border-2 border-green-500 rounded-xl text-3xl font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500 tabular-nums placeholder:text-text-tertiary placeholder:font-normal"
             />
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-green-600 pointer-events-none">$</span>
           </div>
-          <div class="flex flex-wrap gap-2">
+          <!-- 2×2 grid of presets -->
+          <div class="grid grid-cols-2 gap-3">
             <button
-              v-for="preset in cashPresets"
+              type="button"
+              @click="cashReceivedInput = cashAmountToCharge"
+              aria-label="Pagar exacto, sin vuelto"
+              class="min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              Sin vuelto
+            </button>
+            <button
+              v-for="preset in cashPresetsExtra"
               :key="preset.label"
               type="button"
               @click="cashReceivedInput = preset.value"
-              class="min-h-[44px] min-w-[80px] px-3 py-2 rounded-lg border border-border bg-white dark:bg-surface text-sm font-medium text-text-primary hover:bg-green-100 dark:hover:bg-green-900/30 hover:border-green-400 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+              class="min-h-[56px] px-4 py-3 rounded-lg bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-base font-semibold hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               {{ preset.label }}
             </button>
           </div>
+          <!-- Siguiente — solid green CTA -->
+          <button
+            type="button"
+            @click="cashReceivedInput = cashSiguienteValue"
+            :aria-label="`Redondear al siguiente mil, ${formatCurrency(cashSiguienteValue)}`"
+            class="min-h-[52px] px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-base font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-center gap-2"
+          >
+            <span>Siguiente</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </button>
+          <!-- Vuelto card -->
           <div
             v-if="cashShortfall <= 0.01"
-            class="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-surface border-2 border-green-500"
+            class="flex items-center justify-between p-4 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40"
             role="status"
             aria-live="polite"
           >
-            <span class="text-sm font-medium text-green-700 dark:text-green-400">Vuelto</span>
-            <span class="text-2xl font-bold text-green-700 dark:text-green-400 tabular-nums">
+            <span class="text-base font-medium text-green-700 dark:text-green-400">Vuelto</span>
+            <span class="text-3xl font-bold text-green-700 dark:text-green-400 tabular-nums">
               {{ formatCurrency(cashChange) }}
             </span>
           </div>
