@@ -338,16 +338,36 @@ const submitOrder = async () => {
   checkoutError.value = ''
 
   try {
-    // Ensure delivery_address_id is set on the cart if address was selected,
-    // forwarding all existing delivery info to prevent overwriting scheduled_time
-    // and delivery_instructions (backend does a full UPDATE, not a partial PATCH)
-    if (cartStore.orderType === 'delivery' && addressStore.selectedAddressId) {
-      await cartStore.updateDeliveryInfo({
-        order_type: 'delivery',
-        delivery_address_id: addressStore.selectedAddressId,
-        scheduled_time: cartStore.deliveryInfo?.scheduled_time,
-        delivery_instructions: cartStore.deliveryInfo?.delivery_instructions,
-      })
+    // Ensure delivery_address_id is set on the cart, forwarding all existing
+    // delivery info to prevent overwriting scheduled_time and
+    // delivery_instructions (backend does a full UPDATE, not a partial PATCH).
+    //
+    // Two cases:
+    // - Returning customer with a saved address selected → selectedAddressId set.
+    // - New customer who typed a new address AFTER OTP verification (the
+    //   wizard runs OTP in step 3 and the address form in step 4, so the
+    //   "post-OTP applyDeliveryAddress" hook in StepIdentity runs before the
+    //   address exists). In that case pendingAddress is set; persist it here.
+    if (cartStore.orderType === 'delivery') {
+      if (addressStore.selectedAddressId) {
+        await cartStore.updateDeliveryInfo({
+          order_type: 'delivery',
+          delivery_address_id: addressStore.selectedAddressId,
+          scheduled_time: cartStore.deliveryInfo?.scheduled_time,
+          delivery_instructions: cartStore.deliveryInfo?.delivery_instructions,
+        })
+      }
+      else if (addressStore.pendingAddress && otpAuthStore.customerId) {
+        const addressId = await addressStore.persistPendingAddress(otpAuthStore.customerId)
+        if (addressId) {
+          await cartStore.updateDeliveryInfo({
+            order_type: 'delivery',
+            delivery_address_id: addressId,
+            scheduled_time: cartStore.deliveryInfo?.scheduled_time,
+            delivery_instructions: cartStore.deliveryInfo?.delivery_instructions,
+          })
+        }
+      }
     }
 
     const response = await $fetch<{ success: boolean; data: ConfirmedOrder }>(
