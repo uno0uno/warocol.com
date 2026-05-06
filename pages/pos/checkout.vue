@@ -729,13 +729,9 @@ const cashIsValid = computed(() =>
 
 // Issue #524 — quick-tap presets. "Sin vuelto" is the friendly equivalent of
 // the industry term "exact tender" — it tells the cashier what happens
-// (no change to give) instead of generic POS jargon.
-//
-// The four "extra-amount" presets are split off from "Sin vuelto" because
-// they semantically mean "customer paid more, give change". Visually treated
-// in a 2x2 grid (see template), with "Siguiente" as a separate full-width
-// action below — the round-up to next thousand is a one-tap shortcut for
-// the most common Colombian cash bills.
+// (no change to give) instead of generic POS jargon. The three +amount
+// shortcuts cover the most common Colombian bill denominations the customer
+// hands over above the total.
 const cashPresetsExtra = computed(() => {
   const a = cashAmountToCharge.value
   return [
@@ -743,10 +739,6 @@ const cashPresetsExtra = computed(() => {
     { label: '+ $10.000', value: a + 10000 },
     { label: '+ $20.000', value: a + 20000 },
   ]
-})
-const cashSiguienteValue = computed(() => {
-  const a = cashAmountToCharge.value
-  return Math.floor(a / 1000) * 1000 + 1000
 })
 
 // Re-prefill the input whenever the cash amount changes (method switch, split
@@ -1862,7 +1854,7 @@ onUnmounted(() => {
                 />
                 <span class="absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-green-600 pointer-events-none">$</span>
               </div>
-              <!-- 2×2 grid of presets — "Sin vuelto" is gray (different semantic), the +amount ones are green -->
+              <!-- 2×2 grid of presets — uniform neutral treatment -->
               <div class="grid grid-cols-2 gap-3">
                 <button
                   type="button"
@@ -1877,23 +1869,11 @@ onUnmounted(() => {
                   :key="preset.label"
                   type="button"
                   @click="cashReceivedInput = preset.value"
-                  class="min-h-[56px] px-4 py-3 rounded-lg bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-base font-semibold hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+                  class="min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   {{ preset.label }}
                 </button>
               </div>
-              <!-- Siguiente $ — solid green primary CTA -->
-              <button
-                type="button"
-                @click="cashReceivedInput = cashSiguienteValue"
-                :aria-label="`Redondear al siguiente mil, ${formatCurrency(cashSiguienteValue)}`"
-                class="min-h-[52px] px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-base font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-center gap-2"
-              >
-                <span>Siguiente</span>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </button>
               <!-- Vuelto card -->
               <div
                 v-if="cashShortfall <= 0.01"
@@ -1975,18 +1955,6 @@ onUnmounted(() => {
               {{ preset.label }}
             </button>
           </div>
-          <!-- Siguiente — solid green CTA -->
-          <button
-            type="button"
-            @click="cashReceivedInput = cashSiguienteValue"
-            :aria-label="`Redondear al siguiente mil, ${formatCurrency(cashSiguienteValue)}`"
-            class="min-h-[52px] px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-base font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-center gap-2"
-          >
-            <span>Siguiente</span>
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
-          </button>
           <!-- Vuelto card -->
           <div
             v-if="cashShortfall <= 0.01"
