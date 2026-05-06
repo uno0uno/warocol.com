@@ -92,7 +92,7 @@
     <!-- Postal Code -->
     <div class="mb-5">
       <label for="postal_code" class="block text-sm font-semibold text-foreground mb-2">
-        Código Postal *
+        Código Postal (opcional)
       </label>
       <input
         id="postal_code"
@@ -102,7 +102,6 @@
                placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring
                focus:border-ring transition-all"
         placeholder="110111"
-        required
         maxlength="10"
       />
     </div>
@@ -220,7 +219,7 @@ watch(
       formData.address_line2 = address.address_line2 || ''
       formData.city = address.city
       formData.state = address.state
-      formData.postal_code = address.postal_code
+      formData.postal_code = address.postal_code ?? ''
       formData.country = address.country
       formData.is_default = address.is_default
       formData.address_type = address.address_type
@@ -234,8 +233,7 @@ const isFormValid = computed(() => {
   return (
     formData.address_line1.trim().length >= 5 &&
     formData.city.trim().length >= 2 &&
-    formData.state.trim().length >= 2 &&
-    formData.postal_code.trim().length >= 4
+    formData.state.trim().length >= 2
   )
 })
 
@@ -246,6 +244,13 @@ const handleSubmit = () => {
   }
 
   error.value = null
-  emit('submit', { ...formData })
+  // Omit postal_code when empty so the backend stores NULL instead of "".
+  const payload = { ...formData }
+  if (!payload.postal_code?.trim()) {
+    delete payload.postal_code
+  } else {
+    payload.postal_code = payload.postal_code.trim()
+  }
+  emit('submit', payload)
 }
 </script>

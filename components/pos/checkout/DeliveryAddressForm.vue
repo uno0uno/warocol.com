@@ -16,7 +16,7 @@ const emit = defineEmits<{
 // Backend constraints (app/models/address_profile.py):
 // - address_line1: required, min 5 chars
 // - city, state: required, min 2 chars
-// - postal_code: required, min 4 chars
+// - postal_code: optional (DB column nullable; backend coerces empty → NULL)
 // - country: max 2 chars (ISO code, e.g. "CO")
 const form = reactive<AddressCreate>({
   address_line1: '',
@@ -34,7 +34,6 @@ const isValid = computed(
   () => form.address_line1.trim().length >= 5
     && form.city.trim().length >= 2
     && form.state.trim().length >= 2
-    && form.postal_code.trim().length >= 4
 )
 
 const submit = () => {
@@ -43,7 +42,6 @@ const submit = () => {
     address_line1: form.address_line1.trim(),
     city: form.city.trim(),
     state: (form.state ?? '').trim(),
-    postal_code: (form.postal_code ?? '').trim(),
     country: form.country,
     address_type: form.address_type,
     is_default: form.is_default,
@@ -52,6 +50,8 @@ const submit = () => {
   if (addr2) payload.address_line2 = addr2
   const notes = form.delivery_notes?.trim()
   if (notes) payload.delivery_notes = notes
+  const postal = form.postal_code?.trim()
+  if (postal) payload.postal_code = postal
   emit('submit', payload)
 }
 </script>
@@ -140,14 +140,12 @@ const submit = () => {
       </div>
       <div class="flex flex-col gap-1">
         <label for="addr-postal" class="text-sm font-medium text-text-primary">
-          Código postal <span class="text-destructive">*</span>
+          Código postal (opcional)
         </label>
         <input
           id="addr-postal"
           v-model="form.postal_code"
           type="text"
-          minlength="4"
-          required
           placeholder="Ej: 110221"
           autocomplete="postal-code"
           class="input-base w-full px-3 py-2 text-sm"

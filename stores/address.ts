@@ -15,7 +15,7 @@ export interface Address {
   address_line2?: string
   city: string
   state: string
-  postal_code: string
+  postal_code: string | null
   country: string
   latitude?: number
   longitude?: number
@@ -31,7 +31,7 @@ export interface AddressCreate {
   address_line2?: string
   city: string
   state: string
-  postal_code: string
+  postal_code?: string
   country?: string
   latitude?: number
   longitude?: number
