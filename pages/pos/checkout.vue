@@ -623,6 +623,7 @@ const processOrder = async () => {
         standard_tax?: number
         liquor_tax?: number
         standard_tax_label?: string
+        next_table_session_id?: string | null
       }
     }
 
@@ -649,6 +650,12 @@ const processOrder = async () => {
       emailSent.value = false
       emailFromProfile.value = !!emailForReceipt
       posStore.clearAll()
+      // Bar session rotated server-side: point local state at the new session
+      // so the next sale opens a clean tab against the right session ID.
+      if (response.data.next_table_session_id && posStore.activeTableSession?.isBar) {
+        posStore.activeTableSession.sessionId = response.data.next_table_session_id
+        posStore.activeTableSession.runningTotal = 0
+      }
       showSuccessModal.value = true
     }
   } catch (error: any) {
