@@ -735,6 +735,7 @@ const cashIsValid = computed(() =>
 const cashPresetsExtra = computed(() => {
   const a = cashAmountToCharge.value
   return [
+    { label: '+ $1.000',  value: a + 1000 },
     { label: '+ $5.000',  value: a + 5000 },
     { label: '+ $10.000', value: a + 10000 },
     { label: '+ $20.000', value: a + 20000 },
@@ -1854,16 +1855,16 @@ onUnmounted(() => {
                 />
                 <span class="absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-green-600 pointer-events-none">$</span>
               </div>
-              <!-- 2×2 grid of presets — uniform neutral treatment -->
+              <!-- "Sin vuelto" full-width on top, then 4 amount presets in 2×2 — all neutral gray -->
+              <button
+                type="button"
+                @click="cashReceivedInput = cashAmountToCharge"
+                aria-label="Pagar exacto, sin vuelto"
+                class="w-full min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                Sin vuelto
+              </button>
               <div class="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  @click="cashReceivedInput = cashAmountToCharge"
-                  aria-label="Pagar exacto, sin vuelto"
-                  class="min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  Sin vuelto
-                </button>
                 <button
                   v-for="preset in cashPresetsExtra"
                   :key="preset.label"
@@ -1950,7 +1951,7 @@ onUnmounted(() => {
               :key="preset.label"
               type="button"
               @click="cashReceivedInput = preset.value"
-              class="min-h-[56px] px-4 py-3 rounded-lg bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-base font-semibold hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+              class="min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {{ preset.label }}
             </button>
