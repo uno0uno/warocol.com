@@ -705,7 +705,9 @@ const cancelEdit = () => {
 // ─── Public link (URL + copy + share) ───
 const runtimeConfig = useRuntimeConfig()
 const publicUrl = computed(() => {
-  const slug = currentTenant.value?.slug || businessProfile.value?.slug
+  // Prefer the public profile slug (storefront URL slug, e.g. "sandwichito-monroy"),
+  // not the internal tenant slug (e.g. "warocolombia"). They can differ.
+  const slug = businessProfile.value?.slug || currentTenant.value?.slug
   if (!slug) return ''
   const base = (runtimeConfig.public.siteUrl as string | undefined) || 'https://warocol.com'
   return `${base.replace(/\/$/, '')}/${slug}`
