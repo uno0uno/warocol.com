@@ -278,6 +278,10 @@ const addSplitPayment = async () => {
               : {}),
             split_mode: true,
             split_first_amount: amountToCharge,
+            // Issue #524 — cash tender on the first split when method is cash
+            ...(isCashMethod.value
+              ? { split_first_cash_received: Number(cashReceivedInput.value) }
+              : {}),
           }
         }) as any
         paidTotal = response.data.paid_total ?? amountToCharge
@@ -292,6 +296,9 @@ const addSplitPayment = async () => {
             amount: amountToCharge,
             payment_method: selectedPaymentMethod.value,
             payment_method_id: selectedPaymentMethodId.value ?? null,
+            ...(isCashMethod.value
+              ? { cash_received: Number(cashReceivedInput.value) }
+              : {}),
           }
         }) as any
         paidTotal = response.data.paid_total
@@ -314,6 +321,10 @@ const addSplitPayment = async () => {
               : {}),
             split_mode: true,
             split_first_amount: amountToCharge,
+            // Issue #524 — cash tender on the first split when method is cash
+            ...(isCashMethod.value
+              ? { split_first_cash_received: Number(cashReceivedInput.value) }
+              : {}),
           }
         }) as any
         paidTotal = response.data.paid_total ?? amountToCharge
@@ -328,6 +339,9 @@ const addSplitPayment = async () => {
             amount: amountToCharge,
             payment_method: selectedPaymentMethod.value,
             payment_method_id: selectedPaymentMethodId.value ?? undefined,
+            ...(isCashMethod.value
+              ? { cash_received: Number(cashReceivedInput.value) }
+              : {}),
           }
         }) as any
         paidTotal = response.data.paid_total
@@ -524,6 +538,10 @@ const processOrder = async () => {
           ...(discountEnabled.value && _discountAmt > 0
             ? { discount_type: discountType.value, discount_value: Number(discountInput.value) }
             : {}),
+          // Issue #524 — single-payment cash close: capture cash_received
+          ...(isCashMethod.value
+            ? { cash_received: Number(cashReceivedInput.value) }
+            : {}),
         },
       }) as any
 
@@ -601,6 +619,10 @@ const processOrder = async () => {
           : {}),
         ...(posStore.activeTableSession?.isBar
           ? { table_session_id: posStore.activeTableSession.sessionId }
+          : {}),
+        // Issue #524 — single-payment cash sale: capture cash_received on the order
+        ...(isCashMethod.value
+          ? { cash_received: Number(cashReceivedInput.value) }
           : {}),
         ...(deliveryEnabled.value && addressStore.selectedAddressId
           ? {
@@ -681,6 +703,52 @@ watch(selectedPaymentMethod, () => {
   selectedPaymentMethodId.value = null
   methodSearch.value = ''
 })
+
+// ── Issue #524 — Cash tender + change calculation ────────────────────────────
+// Active only when the selected payment group is "cash". Cashier types how
+// much cash the customer handed over and the system shows the change live.
+// In split mode the input applies to splitAmountToCharge; in single payment
+// it applies to discountedTotal. Backend persists cash_received on
+// order_payments (split lines) or orders (single payment).
+const isCashMethod = computed(() => selectedGroup.value?.slug === 'cash')
+const cashReceivedInput = ref<number>(0)
+
+const cashAmountToCharge = computed(() =>
+  splitMode.value ? splitAmountToCharge.value : discountedTotal.value
+)
+
+const cashChange = computed(() =>
+  Math.max(0, (cashReceivedInput.value || 0) - cashAmountToCharge.value)
+)
+const cashShortfall = computed(() =>
+  Math.max(0, cashAmountToCharge.value - (cashReceivedInput.value || 0))
+)
+const cashIsValid = computed(() =>
+  !isCashMethod.value || (cashReceivedInput.value > 0 && cashShortfall.value <= 0.01)
+)
+
+const cashPresets = computed(() => {
+  const a = cashAmountToCharge.value
+  // Round-up to next thousand (always go up — even on exact thousands)
+  const nextThousand = Math.floor(a / 1000) * 1000 + 1000
+  return [
+    { label: 'Justo',          value: a },
+    { label: '+$5.000',        value: a + 5000 },
+    { label: '+$10.000',       value: a + 10000 },
+    { label: '+$20.000',       value: a + 20000 },
+    { label: 'Siguiente $',    value: nextThousand > a ? nextThousand : a + 1000 },
+  ]
+})
+
+// Re-prefill the input whenever the cash amount changes (method switch, split
+// remainder updates, etc.) so cashier doesn't have to re-type the default.
+watch(
+  [cashAmountToCharge, isCashMethod],
+  ([newAmount, isCash]) => {
+    cashReceivedInput.value = isCash ? Number(newAmount) : 0
+  },
+  { immediate: true }
+)
 
 const filteredMethods = computed(() => {
   const methods = selectedGroup.value?.methods ?? []
@@ -1753,11 +1821,62 @@ onUnmounted(() => {
               </div>
             </div>
 
+            <!-- Issue #524 — Cash tender + change calculation (only when method is cash) -->
+            <div v-if="isCashMethod && !splitIsComplete" class="flex flex-col gap-2 p-3 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40">
+              <label for="cash-received-input" class="text-sm font-medium text-text-primary">
+                Efectivo recibido
+              </label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-secondary pointer-events-none">$</span>
+                <input
+                  id="cash-received-input"
+                  v-model.number="cashReceivedInput"
+                  type="number"
+                  min="0"
+                  step="any"
+                  inputmode="decimal"
+                  :aria-label="`Efectivo recibido por el cliente, monto a cobrar ${formatCurrency(cashAmountToCharge)}`"
+                  class="w-full min-h-[44px] pl-7 pr-3 py-3 bg-white dark:bg-surface border border-border rounded-xl text-lg font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 tabular-nums"
+                />
+              </div>
+              <!-- Quick-tap presets -->
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="preset in cashPresets"
+                  :key="preset.label"
+                  type="button"
+                  @click="cashReceivedInput = preset.value"
+                  class="min-h-[44px] min-w-[80px] px-3 py-2 rounded-lg border border-border bg-white dark:bg-surface text-sm font-medium text-text-primary hover:bg-green-100 dark:hover:bg-green-900/30 hover:border-green-400 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  {{ preset.label }}
+                </button>
+              </div>
+              <!-- Vuelto display (large green) when received >= amount -->
+              <div
+                v-if="cashShortfall <= 0.01"
+                class="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-surface border-2 border-green-500"
+                role="status"
+                aria-live="polite"
+              >
+                <span class="text-sm font-medium text-green-700 dark:text-green-400">Vuelto</span>
+                <span class="text-2xl font-bold text-green-700 dark:text-green-400 tabular-nums">
+                  {{ formatCurrency(cashChange) }}
+                </span>
+              </div>
+              <!-- Inline shortfall error -->
+              <p v-else class="flex items-center gap-2 text-sm text-destructive">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Falta cobrar {{ formatCurrency(cashShortfall) }}
+              </p>
+            </div>
+
             <!-- Add payment button -->
             <button
               v-if="!splitIsComplete"
               type="button"
-              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isMesaMode && !posStore.cartId)"
+              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isMesaMode && !posStore.cartId) || !cashIsValid"
               @click="addSplitPayment"
               class="w-full min-h-[44px] px-4 py-3 bg-primary text-primary-foreground text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
@@ -1773,6 +1892,54 @@ onUnmounted(() => {
             <span class="text-xl">⚠️</span>
             <p class="text-sm text-red-800 dark:text-red-200">{{ processingError }}</p>
           </div>
+        </div>
+
+        <!-- Issue #524 — Cash tender + change calculation (single-payment mode) -->
+        <div v-if="!splitMode && isCashMethod && selectedCustomer" class="flex flex-col gap-2 p-4 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40">
+          <label for="cash-received-input-single" class="text-sm font-medium text-text-primary">
+            Efectivo recibido
+          </label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-secondary pointer-events-none">$</span>
+            <input
+              id="cash-received-input-single"
+              v-model.number="cashReceivedInput"
+              type="number"
+              min="0"
+              step="any"
+              inputmode="decimal"
+              :aria-label="`Efectivo recibido por el cliente, monto a cobrar ${formatCurrency(cashAmountToCharge)}`"
+              class="w-full min-h-[44px] pl-7 pr-3 py-3 bg-white dark:bg-surface border border-border rounded-xl text-lg font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 tabular-nums"
+            />
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="preset in cashPresets"
+              :key="preset.label"
+              type="button"
+              @click="cashReceivedInput = preset.value"
+              class="min-h-[44px] min-w-[80px] px-3 py-2 rounded-lg border border-border bg-white dark:bg-surface text-sm font-medium text-text-primary hover:bg-green-100 dark:hover:bg-green-900/30 hover:border-green-400 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              {{ preset.label }}
+            </button>
+          </div>
+          <div
+            v-if="cashShortfall <= 0.01"
+            class="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-surface border-2 border-green-500"
+            role="status"
+            aria-live="polite"
+          >
+            <span class="text-sm font-medium text-green-700 dark:text-green-400">Vuelto</span>
+            <span class="text-2xl font-bold text-green-700 dark:text-green-400 tabular-nums">
+              {{ formatCurrency(cashChange) }}
+            </span>
+          </div>
+          <p v-else class="flex items-center gap-2 text-sm text-destructive">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            Falta cobrar {{ formatCurrency(cashShortfall) }}
+          </p>
         </div>
 
         <!-- Pre-checkout banner: items will fire to kitchen on checkout (counter mode only) -->
@@ -1795,7 +1962,7 @@ onUnmounted(() => {
           <button
             @click="processOrder"
             v-if="!splitMode"
-            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection"
+            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid"
             class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <UiLoadingDots v-if="isProcessing" size="9px" />
