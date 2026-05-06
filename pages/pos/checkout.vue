@@ -623,6 +623,7 @@ const processOrder = async () => {
         standard_tax?: number
         liquor_tax?: number
         standard_tax_label?: string
+        next_table_session_id?: string | null
       }
     }
 
@@ -649,6 +650,13 @@ const processOrder = async () => {
       emailSent.value = false
       emailFromProfile.value = !!emailForReceipt
       posStore.clearAll()
+      // After a bar POS sale, drop the local session so /pos shows the floor
+      // plan again (clearAll keeps bar sessions alive on purpose; here we
+      // explicitly exit because the backend already rotated to a new session
+      // and the next entry must come through the floor plan).
+      if (posStore.activeTableSession?.isBar) {
+        posStore.exitSession()
+      }
       showSuccessModal.value = true
     }
   } catch (error: any) {
