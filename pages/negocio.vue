@@ -709,7 +709,12 @@ const publicUrl = computed(() => {
   // not the internal tenant slug (e.g. "warocolombia"). They can differ.
   const slug = businessProfile.value?.slug || currentTenant.value?.slug
   if (!slug) return ''
-  const base = (runtimeConfig.public.siteUrl as string | undefined) || 'https://warocol.com'
+  // Use the live origin so the URL matches the current environment
+  // (localhost in dev, dev.warocol.com on staging, warocol.com in prod).
+  // Fall back to runtime config / the production domain on SSR where window is undefined.
+  const base = (typeof window !== 'undefined' && window.location?.origin)
+    || (runtimeConfig.public.siteUrl as string | undefined)
+    || 'https://warocol.com'
   return `${base.replace(/\/$/, '')}/${slug}`
 })
 
