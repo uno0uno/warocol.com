@@ -112,7 +112,9 @@ const fiscalWizardCanSubmit = computed(() => Boolean(
 // Customer insights
 const customerInsights = ref<CustomerInsights | null>(null)
 const insightsLoading = ref(false)
-const activeAccordion = ref<'insights' | 'summary' | 'waros' | null>('summary')
+// Accordions start closed; the user opens them on demand. Previous behavior
+// auto-opened "summary" / "insights" on customer change — too noisy.
+const activeAccordion = ref<'insights' | 'summary' | 'waros' | null>(null)
 
 // Mesa mode detection — bar sessions behave as normal POS (cart-based, not tab-based)
 const isMesaMode = computed(() => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar)
@@ -458,25 +460,22 @@ const onWarosAssigned = async (_payload: { newBalance: number }) => {
 }
 
 watch(selectedCustomer, async (customer) => {
-  // Reset Waros state on customer change
+  // Reset Waros state on customer change. Accordions stay where the user
+  // last left them — never auto-open on customer change.
   resetSummary()
   resetEstimate()
   customerInsights.value = null
   insightsLoading.value = false
-  activeAccordion.value = 'summary'
   if (!customer || customer.phone_number === '0000000000') return
   insightsLoading.value = true
-  activeAccordion.value = 'insights'
 
   // Fetch insights + Waros in parallel so the right column doesn't fill in step by step.
   const insightsPromise = (async () => {
     try {
       const res = await $fetch<{ data: CustomerInsights }>(`/api/customers/${customer.id}/insights`)
       customerInsights.value = res.data
-      if (res.data.orders_count === 0) activeAccordion.value = 'summary'
     } catch {
       customerInsights.value = null
-      activeAccordion.value = 'summary'
     } finally {
       insightsLoading.value = false
     }
@@ -742,14 +741,15 @@ const cashPresetsExtra = computed(() => {
   ]
 })
 
-// Re-prefill the input whenever the cash amount changes (method switch, split
-// remainder updates, etc.) so cashier doesn't have to re-type the default.
+// Issue #524 — input starts at 0 and stays at 0 until the cashier either
+// taps a preset or types. Auto-prefilling with the amount made it look like
+// "Sin vuelto" was already chosen, which was confusing. Reset to 0 only when
+// the method group changes (so switching methods clears the previous tender).
 watch(
-  [cashAmountToCharge, isCashMethod],
-  ([newAmount, isCash]) => {
-    cashReceivedInput.value = isCash ? Number(newAmount) : 0
+  isCashMethod,
+  () => {
+    cashReceivedInput.value = 0
   },
-  { immediate: true }
 )
 
 // Issue #524 — thousand-separator formatting (Colombian style: "145.000").
@@ -1875,9 +1875,9 @@ onUnmounted(() => {
                   {{ preset.label }}
                 </button>
               </div>
-              <!-- Vuelto card -->
+              <!-- Vuelto card — only when the cashier has typed/picked something -->
               <div
-                v-if="cashShortfall <= 0.01"
+                v-if="cashReceivedInput > 0 && cashShortfall <= 0.01"
                 class="flex items-center justify-between p-4 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40"
                 role="status"
                 aria-live="polite"
@@ -1887,8 +1887,8 @@ onUnmounted(() => {
                   {{ formatCurrency(cashChange) }}
                 </span>
               </div>
-              <!-- Inline shortfall error -->
-              <p v-else class="flex items-center gap-2 text-sm text-destructive">
+              <!-- Inline shortfall error — only when the cashier typed an insufficient amount -->
+              <p v-else-if="cashReceivedInput > 0" class="flex items-center gap-2 text-sm text-destructive">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
