@@ -441,34 +441,50 @@
               </p>
 
               <!-- Lista de recetas base seleccionadas -->
-              <div v-if="form.recipe_base_ids.length > 0" class="space-y-3 mb-4">
+              <div v-if="form.recipe_bases.length > 0" class="space-y-3 mb-4">
                 <div
-                  v-for="(recipeBaseId, index) in form.recipe_base_ids"
+                  v-for="(link, index) in form.recipe_bases"
                   :key="index"
                   class="flex items-start gap-3 p-3 bg-surface-secondary rounded-lg border border-border"
                 >
                   <div class="flex-1">
-                    <select
-                      v-model="form.recipe_base_ids[index]"
-                      class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
-                      @change="onRecipeBaseChange"
-                    >
-                      <option value="">Seleccionar receta base...</option>
-                      <option v-for="recipe in recipeBases" :key="recipe.id" :value="recipe.id">
-                        {{ recipe.name }}
-                      </option>
-                    </select>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                      <select
+                        v-model="link.recipe_base_id"
+                        class="flex-1 min-h-[44px] px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
+                        @change="onRecipeBaseChange"
+                        :aria-label="`Receta base ${index + 1}`"
+                      >
+                        <option value="">Seleccionar receta base...</option>
+                        <option v-for="recipe in recipeBases" :key="recipe.id" :value="recipe.id">
+                          {{ recipe.name }}
+                        </option>
+                      </select>
+                      <div class="flex items-center gap-1.5 sm:w-32">
+                        <input
+                          v-model.number="link.quantity"
+                          type="number"
+                          min="0"
+                          step="any"
+                          inputmode="decimal"
+                          class="w-full min-h-[44px] px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
+                          :aria-label="`Cantidad de la receta ${index + 1}`"
+                          :title="'Cuántas unidades de esta receta consume el producto (ej. 2× = doble del rendimiento)'"
+                        />
+                        <span class="text-xs text-text-secondary whitespace-nowrap">× receta</span>
+                      </div>
+                    </div>
 
                     <!-- Ingredientes de esta receta base -->
-                    <div v-if="recipeBaseId && getRecipeBaseIngredients(recipeBaseId).length > 0" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                    <div v-if="link.recipe_base_id && getRecipeBaseIngredients(link.recipe_base_id).length > 0" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
                       <div class="text-xs space-y-1">
                         <div
-                          v-for="ing in getRecipeBaseIngredients(recipeBaseId)"
+                          v-for="ing in getRecipeBaseIngredients(link.recipe_base_id)"
                           :key="ing.id"
                           class="flex justify-between text-text-secondary"
                         >
                           <span>{{ ing.ingredient_name }}</span>
-                          <span>{{ ing.base_quantity }} {{ ing.unit }}</span>
+                          <span>{{ (Number(ing.base_quantity) * (Number(link.quantity) || 1)).toFixed(2) }} {{ ing.unit }}</span>
                         </div>
                       </div>
                     </div>
@@ -476,10 +492,10 @@
                   <button
                     type="button"
                     @click="removeRecipeBase(index)"
-                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Eliminar receta base"
+                    class="min-h-[44px] min-w-[44px] p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    :aria-label="`Eliminar receta base ${index + 1}`"
                   >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
@@ -610,27 +626,30 @@
             <div class="w-full lg:flex-1 space-y-4">
 
               <!-- Recetas Base -->
-              <div v-if="form.recipe_base_ids.length > 0" class="bg-surface border border-border rounded-lg p-4">
+              <div v-if="form.recipe_bases.length > 0" class="bg-surface border border-border rounded-lg p-4">
                 <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
-                  Recetas Base ({{ form.recipe_base_ids.length }})
+                  Recetas Base ({{ form.recipe_bases.length }})
                 </p>
                 <div class="space-y-3">
                   <div
-                    v-for="(recipeBaseId, index) in form.recipe_base_ids"
+                    v-for="(link, index) in form.recipe_bases"
                     :key="index"
                     class="border border-border rounded-lg p-3 bg-background"
                   >
                     <h4 class="font-semibold text-text-primary mb-2 flex items-center gap-2 text-sm">
-                      📋 {{ getRecipeBaseName(recipeBaseId) }}
+                      📋 {{ getRecipeBaseName(link.recipe_base_id) }}
+                      <span v-if="Number(link.quantity) !== 1" class="text-xs font-normal text-text-secondary">
+                        × {{ Number(link.quantity) }}
+                      </span>
                     </h4>
                     <div class="space-y-1">
                       <div
-                        v-for="ing in getRecipeBaseIngredients(recipeBaseId)"
+                        v-for="ing in getRecipeBaseIngredients(link.recipe_base_id)"
                         :key="ing.id"
                         class="flex justify-between text-xs py-1 border-b border-border last:border-0"
                       >
                         <span class="text-text-primary">{{ ing.ingredient_name }}</span>
-                        <span class="text-text-secondary">{{ ing.base_quantity }} {{ ing.unit }}</span>
+                        <span class="text-text-secondary">{{ (Number(ing.base_quantity) * (Number(link.quantity) || 1)).toFixed(2) }} {{ ing.unit }}</span>
                       </div>
                     </div>
                   </div>
@@ -843,7 +862,7 @@ const form = ref({
   image_url: '',
   price: 0,
   category_id: '',
-  recipe_base_ids: [] as string[],
+  recipe_bases: [] as Array<{ recipe_base_id: string; quantity: number }>,
   preparation_time: null,
   controla_stock: true,
   is_available: true,
@@ -963,15 +982,21 @@ const categories = computed(() => categoriesData.value?.data || [])
 const recipeBases = computed(() => recipeBasesData.value?.data || [])
 
 // Computed: Get all ingredients from all selected recipe bases
+// Issue #517: each ingredient quantity is multiplied by the per-product
+// recipe quantity so the cost preview matches what the backend computes.
 const selectedRecipeBaseIngredients = computed(() => {
   const allIngredients: any[] = []
-  form.value.recipe_base_ids.forEach((recipeBaseId: string) => {
-    if (recipeBaseId) {
-      const selectedRecipe = recipeBases.value.find((r: any) => r.id === recipeBaseId)
-      if (selectedRecipe?.ingredients) {
-        allIngredients.push(...selectedRecipe.ingredients)
-      }
-    }
+  form.value.recipe_bases.forEach(link => {
+    if (!link.recipe_base_id) return
+    const selectedRecipe = recipeBases.value.find((r: any) => r.id === link.recipe_base_id)
+    if (!selectedRecipe?.ingredients) return
+    const multiplier = Number(link.quantity) || 1
+    selectedRecipe.ingredients.forEach((ing: any) => {
+      allIngredients.push({
+        ...ing,
+        base_quantity: Number(ing.base_quantity) * multiplier,
+      })
+    })
   })
   return allIngredients
 })
@@ -1138,11 +1163,11 @@ function removeIngredient(index: number) {
 function addRecipeBase() {
   // Adding a recipe base implies the product tracks inventory.
   tracksInventory.value = true
-  form.value.recipe_base_ids.push('')
+  form.value.recipe_bases.push({ recipe_base_id: '', quantity: 1 })
 }
 
 function removeRecipeBase(index: number) {
-  form.value.recipe_base_ids.splice(index, 1)
+  form.value.recipe_bases.splice(index, 1)
 }
 
 function getRecipeBaseIngredients(recipeBaseId: string) {
@@ -1159,7 +1184,7 @@ function getRecipeBaseName(recipeBaseId: string) {
 
 function onRecipeBaseChange() {
   // Trigger reactivity when recipe base changes
-  console.log('Recipe bases:', form.value.recipe_base_ids)
+  console.log('Recipe bases:', form.value.recipe_bases)
 }
 
 async function handleNext() {
@@ -1187,23 +1212,36 @@ async function submitProduct() {
   submitError.value = null
 
   try {
-    // Validate no duplicate recipe bases
-    const recipeBaseIds = form.value.recipe_base_ids.filter(id => id !== '')
-    const uniqueRecipeBaseIds = [...new Set(recipeBaseIds)]
-
-    if (recipeBaseIds.length !== uniqueRecipeBaseIds.length) {
-      submitError.value = 'No puedes agregar la misma receta base más de una vez.'
-      isSubmitting.value = false
-      return
+    // Validate no duplicate recipe bases and positive quantity
+    const validLinks = form.value.recipe_bases.filter(l => l.recipe_base_id !== '')
+    const seenIds = new Set<string>()
+    for (const link of validLinks) {
+      if (seenIds.has(link.recipe_base_id)) {
+        submitError.value = 'No puedes agregar la misma receta base más de una vez.'
+        isSubmitting.value = false
+        return
+      }
+      if (!Number.isFinite(Number(link.quantity)) || Number(link.quantity) <= 0) {
+        submitError.value = 'La cantidad de cada receta debe ser mayor que 0.'
+        isSubmitting.value = false
+        return
+      }
+      seenIds.add(link.recipe_base_id)
     }
 
     form.value.tenant_id = currentTenant.value?.id || ''
 
     // When toggle is OFF, force empty recipe arrays — product won't track inventory.
     // Normalise image_url empty string → null so backend stores NULL (issue #465).
+    // recipe_bases is the new shape (Issue #517); recipe_base_ids is kept for
+    // backwards compat with any older backend / proxy that still expects it.
+    const cleanedRecipeBases = tracksInventory.value
+      ? validLinks.map(l => ({ recipe_base_id: l.recipe_base_id, quantity: Number(l.quantity) }))
+      : []
     const cleanedForm = {
       ...form.value,
-      recipe_base_ids: tracksInventory.value ? uniqueRecipeBaseIds : [],
+      recipe_bases: cleanedRecipeBases,
+      recipe_base_ids: cleanedRecipeBases.map(l => l.recipe_base_id),
       ingredients: tracksInventory.value ? form.value.ingredients : [],
       image_url: form.value.image_url || null,
     }
