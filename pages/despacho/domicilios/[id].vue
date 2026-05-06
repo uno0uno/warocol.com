@@ -77,16 +77,24 @@ watch(order, (newOrder) => {
   }
 }, { immediate: true })
 
+// Header refresh button + progressive loader (parity with /ventas/ordenes)
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const refreshAll = async () => {
+  await Promise.all([refetchOrder(), refetchHistory()])
+}
 onMounted(() => {
   setShowBackButton?.(true)
   setBackHandler?.(goBack)
+  setRefreshHandler(refreshAll)
 })
+registerProgressiveLoading(isRefreshing)
 
 onUnmounted(() => {
   setPageTitle?.(undefined)
   setPageSubtitle?.(undefined)
   setShowBackButton?.(false)
   setBackHandler?.(undefined)
+  clearRefreshHandler(refreshAll)
 })
 </script>
 
@@ -102,10 +110,6 @@ onUnmounted(() => {
 
     <!-- Main Content -->
     <div v-else-if="order" class="space-y-6">
-      <div v-if="isRefreshing" class="flex justify-end -mb-4">
-        <UiLoadingDots size="10px" class="text-text-secondary" />
-      </div>
-
       <!-- ── Section 1: Info Cards ── -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Card 1: Cliente -->
