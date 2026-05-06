@@ -464,8 +464,8 @@
                         <input
                           v-model.number="link.quantity"
                           type="number"
-                          min="0.0001"
-                          step="0.5"
+                          min="0"
+                          step="any"
                           inputmode="decimal"
                           class="w-full min-h-[44px] px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
                           :aria-label="`Cantidad de la receta ${index + 1}`"
