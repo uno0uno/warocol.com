@@ -187,6 +187,62 @@
         </label>
       </div>
 
+      <!-- ══════ PUBLIC LINK CARD ══════ -->
+      <div
+        v-if="publicUrl"
+        class="bg-surface border-2 border-border rounded-xl p-4 sm:p-5"
+      >
+        <div class="flex items-center gap-2 mb-2">
+          <GlobeAltIcon class="w-5 h-5 text-primary flex-shrink-0" />
+          <h3 class="text-sm sm:text-base font-semibold text-text-primary">Tu enlace público</h3>
+        </div>
+
+        <p class="text-xs text-text-secondary mb-3 leading-snug">
+          Comparte este enlace con tus clientes para que puedan ver tu carta y hacer pedidos.
+        </p>
+
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+          <div class="flex items-center px-3 py-2 bg-surface-secondary border border-border rounded-lg sm:flex-1 min-w-0 min-h-[44px]">
+            <span
+              class="text-sm font-mono text-text-primary truncate select-all"
+              :title="publicUrl"
+            >{{ publicUrl }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="copyPublicLink"
+              :disabled="isCopyingLink"
+              :aria-label="`Copiar enlace público: ${publicUrl}`"
+              class="flex-1 sm:flex-none min-h-[44px] px-4 py-2 inline-flex items-center justify-center gap-2 text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ClipboardDocumentIcon class="w-4 h-4" aria-hidden="true" />
+              Copiar
+            </button>
+            <button
+              type="button"
+              @click="sharePublicLink"
+              :disabled="isSharingLink"
+              aria-label="Compartir enlace público"
+              class="flex-1 sm:flex-none min-h-[44px] px-4 py-2 inline-flex items-center justify-center gap-2 text-sm font-semibold bg-surface-secondary text-text-primary border border-border rounded-lg hover:bg-surface-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ShareIcon class="w-4 h-4" aria-hidden="true" />
+              Compartir
+            </button>
+          </div>
+        </div>
+
+        <div
+          v-if="businessProfile && !businessProfile.is_active"
+          class="flex items-start gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-lg"
+        >
+          <ExclamationTriangleIcon class="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+          <p class="text-xs text-amber-800 dark:text-amber-300 leading-snug">
+            Tu página pública aún no está activa. Actívala arriba para que tus clientes puedan abrir este enlace desde el directorio.
+          </p>
+        </div>
+      </div>
+
       <!-- ══════ STATS STRIP ══════ -->
       <div v-if="businessProfile" class="grid grid-cols-3 divide-x divide-border bg-surface border-2 border-border rounded-xl overflow-hidden">
         <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-left sm:text-center">
@@ -509,6 +565,9 @@ import {
   PencilSquareIcon,
   CheckIcon,
   ArrowUpTrayIcon,
+  ClipboardDocumentIcon,
+  ShareIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({ layout: 'dashboard' })
@@ -641,6 +700,65 @@ const enterEditMode = () => {
 
 const cancelEdit = () => {
   isEditMode.value = false
+}
+
+// ─── Public link (URL + copy + share) ───
+const runtimeConfig = useRuntimeConfig()
+const publicUrl = computed(() => {
+  const slug = currentTenant.value?.slug || businessProfile.value?.slug
+  if (!slug) return ''
+  const base = (runtimeConfig.public.siteUrl as string | undefined) || 'https://warocol.com'
+  return `${base.replace(/\/$/, '')}/${slug}`
+})
+
+const isCopyingLink = ref(false)
+const copyPublicLink = async () => {
+  if (!publicUrl.value || isCopyingLink.value) return
+  isCopyingLink.value = true
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(publicUrl.value)
+    } else {
+      const textArea = document.createElement('textarea')
+      textArea.value = publicUrl.value
+      textArea.style.position = 'fixed'
+      textArea.style.opacity = '0'
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+    }
+    toast.success('Enlace copiado al portapapeles', { title: 'Enlace copiado' })
+  } catch {
+    toast.error('No se pudo copiar el enlace', { title: 'Error' })
+  } finally {
+    isCopyingLink.value = false
+  }
+}
+
+const isSharingLink = ref(false)
+const sharePublicLink = async () => {
+  if (!publicUrl.value || isSharingLink.value) return
+  isSharingLink.value = true
+  const shareTitle = businessProfile.value?.display_name || 'Mi negocio'
+  const shareText = `¡Hazme tu pedido en línea aquí! ${publicUrl.value}`
+  try {
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
+      await (navigator as any).share({
+        title: shareTitle,
+        text: shareText,
+        url: publicUrl.value,
+      })
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank', 'noopener,noreferrer')
+    }
+  } catch (err: any) {
+    if (err?.name !== 'AbortError') {
+      toast.error('No se pudo compartir el enlace', { title: 'Error' })
+    }
+  } finally {
+    isSharingLink.value = false
+  }
 }
 
 // ─── Toggle active ───
