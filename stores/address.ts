@@ -50,7 +50,7 @@ export const useAddressStore = defineStore('address', () => {
   const _customerId = ref<string | null>(null)
 
   // ── Query — reactive on _customerId ──────────────────────────────────────────
-  const { data: _addressesQueryData, status } = useQuery({
+  const { data: _addressesQueryData, status, refetch: _refetchAddresses } = useQuery({
     key: () => ['addresses', _customerId.value],
     query: () =>
       $fetch<{ addresses: Address[]; total: number; default_address_id: string | null }>(
@@ -145,9 +145,15 @@ export const useAddressStore = defineStore('address', () => {
 
   // ── Public action wrappers (preserve original signatures) ─────────────────────
 
-  /** Fetch addresses for authenticated customer (post-OTP) */
-  const fetchAddresses = (customerId: string) => {
+  /** Fetch addresses for authenticated customer (post-OTP).
+   * Returns a promise that resolves AFTER the underlying Pinia Colada query
+   * has actually loaded — so callers that `await fetchAddresses(...)` can
+   * safely render UI that depends on `addresses` / `hasAddresses` without
+   * showing the empty/new-customer state during the split-second it takes
+   * the request to come back. */
+  const fetchAddresses = async (customerId: string): Promise<void> => {
     _customerId.value = customerId
+    await _refetchAddresses()
   }
 
   const createAddress = (customerId: string, data: AddressCreate) =>
