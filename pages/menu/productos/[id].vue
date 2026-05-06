@@ -292,34 +292,50 @@
             </p>
 
             <!-- Lista de recetas base seleccionadas -->
-            <div v-if="form.recipe_base_ids.length > 0" class="space-y-3 mb-6">
+            <div v-if="form.recipe_bases.length > 0" class="space-y-3 mb-6">
               <div
-                v-for="(recipeBaseId, index) in form.recipe_base_ids"
+                v-for="(link, index) in form.recipe_bases"
                 :key="index"
                 class="flex items-start gap-3 p-3 bg-surface-secondary rounded-lg border border-border"
               >
                 <div class="flex-1">
-                  <select
-                    v-model="form.recipe_base_ids[index]"
-                    class="input-base w-full px-3 py-2 text-sm"
-                    @change="onRecipeBaseChange"
-                  >
-                    <option value="">Seleccionar receta base...</option>
-                    <option v-for="recipe in recipeBases" :key="recipe.id" :value="recipe.id">
-                      {{ recipe.name }}
-                    </option>
-                  </select>
+                  <div class="flex flex-col sm:flex-row gap-2">
+                    <select
+                      v-model="link.recipe_base_id"
+                      class="input-base flex-1 min-h-[44px] px-3 py-2 text-sm"
+                      @change="onRecipeBaseChange"
+                      :aria-label="`Receta base ${index + 1}`"
+                    >
+                      <option value="">Seleccionar receta base...</option>
+                      <option v-for="recipe in recipeBases" :key="recipe.id" :value="recipe.id">
+                        {{ recipe.name }}
+                      </option>
+                    </select>
+                    <div class="flex items-center gap-1.5 sm:w-32">
+                      <input
+                        v-model.number="link.quantity"
+                        type="number"
+                        min="0.0001"
+                        step="0.5"
+                        inputmode="decimal"
+                        class="input-base w-full min-h-[44px] px-3 py-2 text-sm"
+                        :aria-label="`Cantidad de la receta ${index + 1}`"
+                        :title="'Cuántas unidades de esta receta consume el producto (ej. 2× = doble del rendimiento)'"
+                      />
+                      <span class="text-xs text-text-secondary whitespace-nowrap">× receta</span>
+                    </div>
+                  </div>
 
                   <!-- Ingredientes de esta receta base -->
-                  <div v-if="recipeBaseId && getRecipeBaseIngredients(recipeBaseId).length > 0" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                  <div v-if="link.recipe_base_id && getRecipeBaseIngredients(link.recipe_base_id).length > 0" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
                     <div class="text-xs space-y-1">
                       <div
-                        v-for="ing in getRecipeBaseIngredients(recipeBaseId)"
+                        v-for="ing in getRecipeBaseIngredients(link.recipe_base_id)"
                         :key="ing.id"
                         class="flex justify-between text-text-secondary"
                       >
                         <span>{{ ing.ingredient_name }}</span>
-                        <span>{{ ing.base_quantity }} {{ ing.unit }}</span>
+                        <span>{{ (Number(ing.base_quantity) * (Number(link.quantity) || 1)).toFixed(2) }} {{ ing.unit }}</span>
                       </div>
                     </div>
                   </div>
@@ -327,10 +343,10 @@
                 <button
                   type="button"
                   @click="removeRecipeBase(index)"
-                  class="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                  title="Eliminar receta base"
+                  class="min-h-[44px] min-w-[44px] p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                  :aria-label="`Eliminar receta base ${index + 1}`"
                 >
-                  <Icon name="heroicons:trash" class="h-5 w-5" />
+                  <Icon name="heroicons:trash" class="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -795,15 +811,21 @@ const categories = computed(() => categoriesData.value?.data || [])
 const recipeBases = computed(() => recipeBasesData.value?.data || [])
 
 // Computed: Get all ingredients from all selected recipe bases
+// Issue #517: each ingredient is multiplied by the per-product recipe quantity
+// so the calculated cost preview matches what the backend will compute.
 const selectedRecipeBaseIngredients = computed(() => {
   const allIngredients: any[] = []
-  form.value.recipe_base_ids.forEach((recipeBaseId: string) => {
-    if (recipeBaseId) {
-      const selectedRecipe = recipeBases.value.find((r: any) => r.id === recipeBaseId)
-      if (selectedRecipe?.ingredients) {
-        allIngredients.push(...selectedRecipe.ingredients)
-      }
-    }
+  form.value.recipe_bases.forEach(link => {
+    if (!link.recipe_base_id) return
+    const selectedRecipe = recipeBases.value.find((r: any) => r.id === link.recipe_base_id)
+    if (!selectedRecipe?.ingredients) return
+    const multiplier = Number(link.quantity) || 1
+    selectedRecipe.ingredients.forEach((ing: any) => {
+      allIngredients.push({
+        ...ing,
+        base_quantity: Number(ing.base_quantity) * multiplier,
+      })
+    })
   })
   return allIngredients
 })
@@ -822,7 +844,7 @@ const form = ref({
   is_combo: false,
   allow_modifiers: true,
   tax_category: 'standard' as 'standard' | 'liquor' | 'exempt',
-  recipe_base_ids: [] as string[],
+  recipe_bases: [] as Array<{ recipe_base_id: string; quantity: number }>,
   ingredients: [] as Array<{ ingredient_id: string, ingredient_name: string, quantity: number, unit: string }>,
 })
 
@@ -851,7 +873,16 @@ watch(productData, (data) => {
       is_combo: product.is_combo,
       allow_modifiers: product.allow_modifiers,
       tax_category: (product.tax_category || 'standard') as 'standard' | 'liquor' | 'exempt',
-      recipe_base_ids: product.recipe_base_ids || [],
+      // Issue #517: hydrate from `recipe_bases` (new shape) when present;
+      // fall back to legacy `recipe_base_ids` with quantity=1 per row.
+      recipe_bases: (
+        Array.isArray(product.recipe_bases) && product.recipe_bases.length > 0
+          ? product.recipe_bases.map((b: any) => ({
+              recipe_base_id: b.recipe_base_id ?? b.id ?? '',
+              quantity: Number(b.quantity) || 1,
+            }))
+          : (product.recipe_base_ids || []).map((id: string) => ({ recipe_base_id: id, quantity: 1 }))
+      ),
       ingredients: product.ingredients.map((ing: any) => {
         if (ing.ingredient_id) {
           ingredientCache.value[ing.ingredient_id] = { id: ing.ingredient_id, name: ing.ingredient_name || '', unit: ing.unit }
@@ -867,7 +898,7 @@ watch(productData, (data) => {
     }
     // Derive toggle from existing data — product without any recipe row → OFF
     tracksInventory.value = (
-      (product.recipe_base_ids?.length ?? 0) > 0 ||
+      (product.recipe_bases?.length ?? product.recipe_base_ids?.length ?? 0) > 0 ||
       (product.ingredients?.length ?? 0) > 0
     )
     // Pre-fill the category search input with the product's current category name
@@ -911,11 +942,11 @@ const calculatedCost = computed<number | null>(() => {
 function addRecipeBase() {
   // Adding a recipe base implies the product tracks inventory.
   tracksInventory.value = true
-  form.value.recipe_base_ids.push('')
+  form.value.recipe_bases.push({ recipe_base_id: '', quantity: 1 })
 }
 
 function removeRecipeBase(index: number) {
-  form.value.recipe_base_ids.splice(index, 1)
+  form.value.recipe_bases.splice(index, 1)
 }
 
 function getRecipeBaseIngredients(recipeBaseId: string) {
@@ -925,7 +956,7 @@ function getRecipeBaseIngredients(recipeBaseId: string) {
 }
 
 const onRecipeBaseChange = () => {
-  console.log('Recipe bases:', form.value.recipe_base_ids)
+  console.log('Recipe bases:', form.value.recipe_bases)
 }
 
 const addIngredient = () => {
@@ -965,21 +996,34 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    // Validate no duplicate recipe bases
-    const recipeBaseIds = form.value.recipe_base_ids.filter(id => id !== '')
-    const uniqueRecipeBaseIds = [...new Set(recipeBaseIds)]
-
-    if (recipeBaseIds.length !== uniqueRecipeBaseIds.length) {
-      duplicateRecipeBaseError.value = 'No puedes agregar la misma receta base más de una vez.'
-      isSubmitting.value = false
-      return
+    // Validate no duplicate recipe bases and positive quantity (Issue #517)
+    const validLinks = form.value.recipe_bases.filter(l => l.recipe_base_id !== '')
+    const seenIds = new Set<string>()
+    for (const link of validLinks) {
+      if (seenIds.has(link.recipe_base_id)) {
+        duplicateRecipeBaseError.value = 'No puedes agregar la misma receta base más de una vez.'
+        isSubmitting.value = false
+        return
+      }
+      if (!Number.isFinite(Number(link.quantity)) || Number(link.quantity) <= 0) {
+        quantityError.value = 'La cantidad de cada receta debe ser mayor que 0.'
+        isSubmitting.value = false
+        return
+      }
+      seenIds.add(link.recipe_base_id)
     }
 
     // When toggle is OFF, force empty recipe arrays — product won't track inventory.
     // Normalise image_url empty string → null so backend stores NULL (issue #465).
+    // recipe_bases is the new shape (Issue #517); recipe_base_ids is sent as
+    // a derived list for backwards compat.
+    const cleanedRecipeBases = tracksInventory.value
+      ? validLinks.map(l => ({ recipe_base_id: l.recipe_base_id, quantity: Number(l.quantity) }))
+      : []
     const cleanedForm = {
       ...form.value,
-      recipe_base_ids: tracksInventory.value ? uniqueRecipeBaseIds : [],
+      recipe_bases: cleanedRecipeBases,
+      recipe_base_ids: cleanedRecipeBases.map(l => l.recipe_base_id),
       ingredients: tracksInventory.value ? form.value.ingredients : [],
       image_url: form.value.image_url || null,
     }
