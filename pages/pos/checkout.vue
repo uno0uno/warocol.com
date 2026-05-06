@@ -650,11 +650,12 @@ const processOrder = async () => {
       emailSent.value = false
       emailFromProfile.value = !!emailForReceipt
       posStore.clearAll()
-      // Bar session rotated server-side: point local state at the new session
-      // so the next sale opens a clean tab against the right session ID.
-      if (response.data.next_table_session_id && posStore.activeTableSession?.isBar) {
-        posStore.activeTableSession.sessionId = response.data.next_table_session_id
-        posStore.activeTableSession.runningTotal = 0
+      // After a bar POS sale, drop the local session so /pos shows the floor
+      // plan again (clearAll keeps bar sessions alive on purpose; here we
+      // explicitly exit because the backend already rotated to a new session
+      // and the next entry must come through the floor plan).
+      if (posStore.activeTableSession?.isBar) {
+        posStore.exitSession()
       }
       showSuccessModal.value = true
     }
