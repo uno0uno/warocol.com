@@ -34,9 +34,25 @@ interface LineItem {
 const loading = ref(false)
 const activeItemIndex = ref<number | null>(null)
 
+// Pre-fill the datetime-local input with the user's LOCAL time, not UTC.
+// `Date.prototype.toISOString()` returns UTC, which the input then renders
+// AS IF it were local — so a user in Bogota (UTC-5) at 2:30 PM would see
+// the input showing "8:30 PM" of the wrong date and submit a 5-hour-skewed
+// timestamp without noticing. Build the local-time string manually instead.
+const localNowISO = (): string => {
+  const d = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// Form state stores BOTH the group slug AND the method UUID. The slug is
+// what /api/orders/manual has historically accepted; payment_method_id is
+// the specific method (Nequi / PSE / Daviplata...) so the GL posting can
+// resolve to the right sub-account when manual orders also auto-post.
 const form = ref({
-  order_date: new Date().toISOString().slice(0, 16),
+  order_date: localNowISO(),
   payment_method: 'cash',
+  payment_method_id: null as string | null,
   items: [] as LineItem[]
 })
 
@@ -47,6 +63,29 @@ const { data: productsData, pending: loadingProducts } = useFetch('/api/menu/pro
 })
 
 const products = computed(() => productsData.value?.data ?? [])
+
+// ─── Payment methods (dynamic, same source as POS) ──────────────────────────
+interface PaymentMethodLite { id: string; name: string }
+interface PaymentGroupLite { id: string; slug: string; name: string; methods?: PaymentMethodLite[] }
+
+const { data: paymentGroupsData } = useFetch<{ success: boolean; data: PaymentGroupLite[] }>(
+  '/api/pos/payment-methods',
+)
+const paymentGroups = computed(() => paymentGroupsData.value?.data ?? [])
+
+// Single composed value for the v-model: "groupSlug:methodId" or "groupSlug:".
+// "cash:" means group "cash" without a specific method (group default).
+// "digital:b523-…" means group "digital" + that specific method UUID.
+const paymentSelectValue = computed({
+  get: () => `${form.value.payment_method}:${form.value.payment_method_id ?? ''}`,
+  set: (v: string) => {
+    const idx = v.indexOf(':')
+    const slug = idx === -1 ? v : v.slice(0, idx)
+    const methodId = idx === -1 ? '' : v.slice(idx + 1)
+    form.value.payment_method = slug
+    form.value.payment_method_id = methodId || null
+  },
+})
 
 // ─── Computed helpers ─────────────────────────────────────────────────────────
 
@@ -160,11 +199,20 @@ async function submit() {
   if (!canSubmit.value) return
   loading.value = true
   try {
-    const res = await $fetch<any>('/api/orders/manual', {
+    // Convert the local-time input value (e.g. "2026-05-07T14:30") to a UTC
+     // ISO string with explicit "+00:00" offset so the backend stores the
+     // right moment. new Date(localStr) interprets the string as local time;
+     // toISOString emits UTC with a "Z" suffix that Python 3.9 fromisoformat
+     // does NOT accept — strip the "Z" + ms and append "+00:00".
+     const orderDateUtc =
+       new Date(form.value.order_date).toISOString().slice(0, 19) + '+00:00'
+
+     const res = await $fetch<any>('/api/orders/manual', {
       method: 'POST',
       body: {
-        order_date: form.value.order_date,
+        order_date: orderDateUtc,
         payment_method: form.value.payment_method,
+        payment_method_id: form.value.payment_method_id,
         items: form.value.items.map(i => ({
           product_id: i.product_id,
           quantity: i.quantity,
@@ -230,14 +278,21 @@ async function submit() {
           />
           <select
             id="payment_method"
-            v-model="form.payment_method"
+            v-model="paymentSelectValue"
             required
             aria-label="Método de pago"
             class="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
           >
-            <option value="cash">Efectivo</option>
-            <option value="card">Tarjeta</option>
-            <option value="digital">Digital</option>
+            <template v-for="g in paymentGroups" :key="g.id">
+              <!-- Group default option (when no specific method picked) -->
+              <option :value="`${g.slug}:`">{{ g.name }}</option>
+              <!-- Specific methods nested under the group -->
+              <optgroup v-if="g.methods && g.methods.length > 0" :label="g.name">
+                <option v-for="m in g.methods" :key="m.id" :value="`${g.slug}:${m.id}`">
+                  {{ g.name }} · {{ m.name }}
+                </option>
+              </optgroup>
+            </template>
           </select>
         </div>
       </div>

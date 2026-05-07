@@ -440,15 +440,25 @@ const taxLevels = [
               >
                 <svg class="w-4 h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
               </button>
-              <button
-                @click="toggleResolution(res.id)"
-                class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full cursor-pointer transition-colors"
-                :class="res.is_active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+              <!-- Toggle switch — mismo patrón que /operaciones/mesas y /operaciones/personalizar -->
+              <span
+                class="text-xs font-semibold tabular-nums"
+                :class="res.is_active ? 'text-emerald-700 dark:text-emerald-400' : 'text-text-secondary'"
+              >
+                {{ res.is_active ? 'Activa' : 'Inactiva' }}
+              </span>
+              <label
+                class="relative inline-flex items-center cursor-pointer flex-shrink-0"
                 :aria-label="res.is_active ? 'Desactivar resolución' : 'Activar resolución'"
               >
-                <svg v-if="res.is_active" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                {{ res.is_active ? 'Activa' : 'Inactiva' }}
-              </button>
+                <input
+                  type="checkbox"
+                  class="sr-only peer"
+                  :checked="res.is_active"
+                  @change="toggleResolution(res.id)"
+                />
+                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              </label>
             </div>
           </div>
 

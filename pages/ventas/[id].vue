@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+import { useInvoicingReadiness } from '~/composables/useInvoicingReadiness'
 
 definePageMeta({
   layout: 'dashboard'
@@ -76,6 +77,10 @@ const { data: invoiceData, refetch: refetchInvoice } = useQuery({
   enabled: () => !!currentTenant.value && !!orderId.value,
   staleTime: 60_000,
 })
+
+// DIAN invoicing readiness — gates the entire electronic-invoice UI section.
+// Same composable / pattern used by the POS checkout (pages/pos/checkout.vue:71).
+const { ready: isInvoicingReady, isLoading: isReadinessLoading } = useInvoicingReadiness()
 
 // Invoice emit state
 const isEmittingInvoice = ref(false)
@@ -523,8 +528,14 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Electronic Invoice Section -->
-      <div class="bg-surface border border-border rounded-2xl overflow-hidden">
+      <!-- Electronic Invoice Section — visible when:
+           (a) the order already has an emitted invoice (historical data), OR
+           (b) the tenant has DIAN invoicing configured and ready.
+           Otherwise hidden entirely (matches the POS checkout guard pattern). -->
+      <div
+        v-if="invoiceData || (isInvoicingReady && !isReadinessLoading)"
+        class="bg-surface border border-border rounded-2xl overflow-hidden"
+      >
         <!-- Invoice exists -->
         <template v-if="invoiceData">
           <!-- Header -->
