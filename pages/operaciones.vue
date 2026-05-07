@@ -15,6 +15,7 @@ definePageMeta({
 const navigationItems = [
   { to: '/operaciones/comandas', label: 'Comandas & Cocina' },
   { to: '/operaciones/mesas', label: 'Mesas' },
+  { to: '/operaciones/personalizar', label: 'Personalizar' },
 ]
 
 useHead({ title: 'Operaciones | WARO' })
