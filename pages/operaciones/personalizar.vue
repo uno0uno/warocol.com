@@ -8,6 +8,7 @@ definePageMeta({
 useHead({ title: 'Personalizar | Operaciones' })
 
 const { currentTenant } = useTenantReactive()
+const cache = useQueryCache()
 
 // Shared cache key with /operaciones/mesas and /operaciones/comandas so a
 // PATCH from any of these pages refreshes the others on next visit.
@@ -42,6 +43,10 @@ const toggleAutoSelectGeneric = async () => {
       method: 'PATCH',
       body: { auto_select_generic_enabled: newState },
     })
+    // Invalidate both cache entries that hold the public profile:
+    //  - local 'negocio-profile' (this page + mesas/comandas)
+    //  - tenants store 'business-profile' (read by useTenantReactive in checkout)
+    await cache.invalidateQueries({ key: ['tenant'] })
     await refreshProfile()
     toast.success(
       newState

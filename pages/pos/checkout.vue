@@ -1118,14 +1118,23 @@ onMounted(async () => {
 
   // Sincronizar carrito al backend (batch, sin cliente)
   await syncCart()
+})
 
-  // Issue #529 — auto-select Genérico in counter / bar mode when the tenant
-  // flag is on. Mesa mode keeps its own session-customer binding flow.
-  if (
-    businessProfile.value?.auto_select_generic_enabled
-    && !isMesaMode.value
-    && !selectedCustomer.value
-  ) {
+// Issue #529 — auto-select Genérico when the tenant flag is on. Applies to
+// counter, bar, AND mesa modes: the customer is only attached to orders at
+// close time anyway, so pre-selecting Genérico is safe and uniform across
+// modes. Uses a watcher (not onMounted) because businessProfile is loaded
+// asynchronously by the tenants store and may still be undefined when
+// checkout mounts on a fresh page load.
+const autoSelectAttempted = ref(false)
+watch(
+  () => businessProfile.value,
+  async (profile) => {
+    if (autoSelectAttempted.value) return
+    if (!profile) return                                  // not loaded yet — wait
+    if (!profile.auto_select_generic_enabled) return      // tenant opted out
+    if (selectedCustomer.value) return                    // already chosen — don't override
+    autoSelectAttempted.value = true
     try {
       const res = await $fetch<{ success: boolean; data: PosCustomer }>(
         '/api/customers/search-or-create',
@@ -1138,8 +1147,9 @@ onMounted(async () => {
     } catch {
       // Silent fallback: cashier still has the modal button (no UX regression).
     }
-  }
-})
+  },
+  { immediate: true },
+)
 
 // Clear subtitle and pending timers on unmount
 onUnmounted(() => {
