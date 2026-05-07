@@ -167,16 +167,9 @@ const codeInput        = ref<HTMLInputElement | null>(null)
 // Full code = parent prefix + user-typed suffix
 const createFullCode = computed(() => (account.value?.code ?? '') + createSuffix.value.trim())
 
-const suggestSuffix = (parentCode: string): string => {
-  // Suggest next available suffix digits: '05', '10', '15'…
-  const existing = (accountsData.value?.data ?? [])
-    .filter(a => a.code.startsWith(parentCode) && a.code.length === parentCode.length + 2)
-    .map(a => parseInt(a.code.slice(parentCode.length)))
-    .filter(n => !isNaN(n))
-  if (!existing.length) return '05'
-  const next = Math.max(...existing) + 5
-  return String(next).padStart(2, '0')
-}
+// Issue #533 — shared with /finanzas/metodos-pago for the auto-create flow.
+const suggestSuffix = (parentCode: string): string =>
+  suggestSubAccountSuffix(parentCode, accountsData.value?.data ?? [])
 
 const openCreatePanel = async () => {
   createSuffix.value   = account.value ? suggestSuffix(account.value.code) : ''

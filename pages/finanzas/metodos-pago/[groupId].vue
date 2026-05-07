@@ -250,7 +250,7 @@
         </div>
 
         <!-- Body -->
-        <div class="flex-1 overflow-y-auto px-6 py-5">
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div class="flex flex-col gap-1.5">
             <label for="panel-method-name" class="text-sm font-medium text-text-primary">
               Nombre del método
@@ -266,6 +266,65 @@
               @keydown.escape="closePanel"
             />
           </div>
+
+          <!-- Issue #533 — Auto-create PUC sub-account on method creation -->
+          <!-- Checkbox: only on create + when group supports it -->
+          <label
+            v-if="panelMode === 'create' && canAutoCreate"
+            class="flex items-start gap-3 px-4 py-3 rounded-lg border-2 border-border bg-surface cursor-pointer hover:border-primary/40 transition-colors"
+          >
+            <input
+              v-model="autoCreateAccount"
+              type="checkbox"
+              :disabled="saving"
+              class="mt-1 h-4 w-4 text-primary focus:ring-2 focus:ring-primary/30"
+              aria-describedby="auto-create-help"
+            />
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-text-primary leading-snug">
+                Crear sub-cuenta contable automáticamente
+              </p>
+              <p id="auto-create-help" class="text-xs text-text-secondary leading-snug mt-0.5">
+                Se crea una cuenta dedicada en tu plan de cuentas para que las ventas con este método se registren separadas en los reportes.
+              </p>
+            </div>
+          </label>
+
+          <!-- Preview line -->
+          <div
+            v-if="panelMode === 'create' && autoCreateAccount && canAutoCreate && panelName.trim()"
+            class="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3"
+          >
+            <p class="text-xs uppercase tracking-wider text-primary font-medium mb-1">
+              Vista previa
+            </p>
+            <p class="text-sm text-text-primary leading-snug">
+              Se creará la cuenta
+              <span class="font-mono font-semibold">{{ previewCode }} "{{ panelName.trim() }}"</span>
+              bajo
+              <span class="font-mono">{{ parentAccount!.code }} {{ parentAccount!.name }}</span>.
+            </p>
+          </div>
+
+          <!-- Warning: group has no default account configured -->
+          <div
+            v-else-if="panelMode === 'create' && group?.slug !== 'cash' && !group?.glAccountCode"
+            class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800/40 dark:bg-amber-950/20"
+          >
+            <p class="text-xs text-amber-700 dark:text-amber-400 leading-snug flex items-start gap-1.5">
+              <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>
+                Para crear sub-cuentas automáticamente, primero asigna una cuenta contable al grupo desde el selector de arriba.
+              </span>
+            </p>
+          </div>
+
+          <!-- Submit error -->
+          <div v-if="panelError" class="rounded-lg border border-destructive/40 bg-destructive/8 px-4 py-3">
+            <p class="text-sm text-destructive font-medium">{{ panelError }}</p>
+          </div>
         </div>
 
         <!-- Footer -->
@@ -275,11 +334,8 @@
             class="flex-1 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             @click="savePanel"
           >
-            <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            {{ saving ? 'Guardando…' : panelMode === 'create' ? 'Agregar' : 'Guardar' }}
+            <UiLoadingDots v-if="saving" size="8px" color="currentColor" />
+            <template v-else>{{ panelMode === 'create' ? 'Agregar' : 'Guardar' }}</template>
           </button>
           <button
             class="min-h-[44px] px-5 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
@@ -320,8 +376,14 @@ interface TenantAccount {
   id: string
   code: string
   name: string
-  is_detail: boolean
-  is_active: boolean
+  // FastAPI default response_model_by_alias=True → API emits camelCase.
+  isDetail: boolean
+  isActive: boolean
+  accountClass: string
+  accountType: string
+  normalBalance: 'debit' | 'credit'
+  level: number
+  parentId: string | null
 }
 
 interface PaymentMethod {
@@ -382,7 +444,7 @@ const fetchError   = computed(() => groupsError.value || methodsError.value)
 
 // ── Accounts (for GL selector) ────────────────────────────────────────────
 
-const { data: accountsData } = useQuery({
+const { data: accountsData, refetch: refetchAccounts } = useQuery({
   key: () => ['accounting', 'accounts', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: TenantAccount[] }>('/api/accounting/accounts'),
   enabled: () => !!currentTenant.value && group.value?.tenantId !== null,
@@ -390,7 +452,7 @@ const { data: accountsData } = useQuery({
 })
 
 const leafAccounts = computed<TenantAccount[]>(() =>
-  (accountsData.value?.data ?? []).filter(a => a.is_detail && a.is_active)
+  (accountsData.value?.data ?? []).filter(a => a.isDetail && a.isActive)
 )
 
 const currentGlAccount = computed(() =>
@@ -465,11 +527,35 @@ const panelMethod = ref<PaymentMethod | null>(null)
 const panelName  = ref('')
 const saving     = ref(false)
 const panelInput = ref<HTMLInputElement | null>(null)
+// Issue #533 — auto-create PUC sub-account state
+const autoCreateAccount = ref(true)
+const panelError = ref('')
+
+const parentAccount = computed<TenantAccount | null>(() =>
+  group.value?.glAccountCode
+    ? leafAccounts.value.find(a => a.code === group.value!.glAccountCode) ?? null
+    : null,
+)
+const previewSuffix = computed(() =>
+  parentAccount.value
+    ? suggestSubAccountSuffix(parentAccount.value.code, accountsData.value?.data ?? [])
+    : '',
+)
+const previewCode = computed(() =>
+  parentAccount.value ? parentAccount.value.code + previewSuffix.value : '',
+)
+const canAutoCreate = computed(() =>
+  group.value?.slug !== 'cash'
+  && !!group.value?.glAccountCode
+  && !!parentAccount.value,
+)
 
 const openCreate = async () => {
   panelMode.value = 'create'
   panelMethod.value = null
   panelName.value = ''
+  autoCreateAccount.value = true
+  panelError.value = ''
   showPanel.value = true
   await nextTick()
   panelInput.value?.focus()
@@ -479,6 +565,8 @@ const openEdit = async (method: PaymentMethod) => {
   panelMode.value = 'edit'
   panelMethod.value = method
   panelName.value = method.name
+  autoCreateAccount.value = false
+  panelError.value = ''
   showPanel.value = true
   await nextTick()
   panelInput.value?.focus()
@@ -488,16 +576,70 @@ const closePanel = () => {
   showPanel.value = false
   panelMethod.value = null
   panelName.value = ''
+  panelError.value = ''
+}
+
+const createAccountForMethod = async (
+  parent: TenantAccount,
+  desiredCode: string,
+  methodName: string,
+): Promise<string> => {
+  // Helper that POSTs the sub-account; on uniqueness conflict (race condition)
+  // it refetches the chart and retries once with a recomputed code.
+  const buildBody = (code: string) => ({
+    code,
+    name: methodName,
+    parentId: parent.id,
+    isDetail: true,
+    isActive: true,
+    accountClass: parent.accountClass,
+    accountType: parent.accountType,
+    normalBalance: parent.normalBalance,
+    level: parent.level + 1,
+  })
+  try {
+    await $fetch('/api/accounting/accounts', { method: 'POST', body: buildBody(desiredCode) })
+    return desiredCode
+  } catch (err: any) {
+    const msg = err?.data?.detail ?? err?.data?.message ?? ''
+    if (/Ya existe/.test(msg)) {
+      // Race-condition retry: someone else just took this code.
+      await refetchAccounts()
+      const retrySuffix = suggestSubAccountSuffix(parent.code, accountsData.value?.data ?? [])
+      const retryCode = parent.code + retrySuffix
+      await $fetch('/api/accounting/accounts', { method: 'POST', body: buildBody(retryCode) })
+      return retryCode
+    }
+    throw err
+  }
 }
 
 const savePanel = async () => {
   if (!panelName.value.trim() || saving.value) return
   saving.value = true
+  panelError.value = ''
   try {
     if (panelMode.value === 'create') {
+      let glAccountCode: string | null = null
+
+      // Issue #533 — optionally auto-create the PUC sub-account first.
+      if (autoCreateAccount.value && canAutoCreate.value && parentAccount.value) {
+        glAccountCode = await createAccountForMethod(
+          parentAccount.value,
+          previewCode.value,
+          panelName.value.trim(),
+        )
+      }
+
+      // Create the method (now with glAccountCode if auto-created).
       await $fetch('/api/finanzas/metodos-pago', {
         method: 'POST',
-        body: { groupId, name: panelName.value.trim(), sortOrder: 0 },
+        body: {
+          groupId,
+          name: panelName.value.trim(),
+          sortOrder: 0,
+          glAccountCode,
+        },
       })
     } else {
       await $fetch(`/api/finanzas/metodos-pago/${panelMethod.value!.id}`, {
@@ -506,7 +648,9 @@ const savePanel = async () => {
       })
     }
     closePanel()
-    await refetchMethods()
+    await Promise.all([refetchMethods(), refetchAccounts()])
+  } catch (err: any) {
+    panelError.value = err?.data?.detail || err?.data?.message || err?.message || 'Error al guardar el método'
   } finally {
     saving.value = false
   }
