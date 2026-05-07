@@ -1118,6 +1118,27 @@ onMounted(async () => {
 
   // Sincronizar carrito al backend (batch, sin cliente)
   await syncCart()
+
+  // Issue #529 — auto-select Genérico in counter / bar mode when the tenant
+  // flag is on. Mesa mode keeps its own session-customer binding flow.
+  if (
+    businessProfile.value?.auto_select_generic_enabled
+    && !isMesaMode.value
+    && !selectedCustomer.value
+  ) {
+    try {
+      const res = await $fetch<{ success: boolean; data: PosCustomer }>(
+        '/api/customers/search-or-create',
+        {
+          method: 'POST',
+          body: { phone_number: '0000000000', name: 'Cliente sin datos' },
+        },
+      )
+      if (res.success) selectedCustomer.value = res.data
+    } catch {
+      // Silent fallback: cashier still has the modal button (no UX regression).
+    }
+  }
 })
 
 // Clear subtitle and pending timers on unmount
