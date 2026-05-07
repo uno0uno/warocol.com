@@ -14,6 +14,15 @@ const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = u
 const formatCOP = (v: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v ?? 0)
 
+// Truncate a long description to keep table rows compact.
+// Click on the row opens the slide-over with the full text.
+const truncateDescription = (text: string | null | undefined, maxWords = 4): string => {
+  if (!text) return ''
+  const words = text.trim().split(/\s+/)
+  if (words.length <= maxWords) return text
+  return words.slice(0, maxWords).join(' ') + '…'
+}
+
 // ── Labels & variants ──────────────────────────────────────────────────────
 const CLASS_SHORT: Record<string, string> = {
   '1': 'Activos', '2': 'Pasivos', '3': 'Patrimonio',
@@ -253,7 +262,7 @@ const dateRange = computed(() => {
 const statusFilter = ref<string | null>(null)
 const sourceFilter = ref<string | null>(null)
 const page = ref(1)
-const PAGE_SIZE = 50
+const PAGE_SIZE = 20
 
 // ── Journal entries ────────────────────────────────────────────────────────
 interface JournalEntry {
@@ -363,6 +372,25 @@ const refetch = () => { refetchEntries(); refetchAccounts() }
 registerProgressiveLoading(isRefreshing)
 onMounted(() => { setRefreshHandler(refetch) })
 onUnmounted(() => { clearRefreshHandler(refetch) })
+
+// ── Issue #531 — Actualizar saldo real ────────────────────────────────────
+const showAdjustPanel = ref(false)
+const toast = useToast()
+const allAccountsForPanel = computed(() => {
+  return (accountsData.value?.data ?? []).map(a => ({ id: a.id, code: a.code, name: a.name }))
+})
+const onAdjustSuccess = async () => {
+  await refetch()
+  toast.success('Saldo actualizado correctamente', { title: 'Asiento contable creado' })
+}
+
+// ── Issue #531 — Detalle del asiento (slide-over) ─────────────────────────
+const showEntryDetailPanel = ref(false)
+const selectedEntryId = ref<string | null>(null)
+const openEntryDetail = (entry: { id: string }) => {
+  selectedEntryId.value = entry.id
+  showEntryDetailPanel.value = true
+}
 </script>
 
 <template>
@@ -432,6 +460,20 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
               </svg>
               <span>{{ account.isActive ? 'Desactivar' : 'Activar' }}</span>
+            </button>
+
+            <!-- Issue #531 — Actualizar saldo real (solo Activo debit-normal hoja activa) -->
+            <button
+              v-if="account.isDetail && account.accountClass === '1' && account.normalBalance === 'debit' && account.isActive"
+              type="button"
+              class="min-h-[44px] px-3 rounded-lg border-2 border-primary text-primary text-sm font-medium transition-colors hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/30 active:scale-[0.98] flex items-center gap-1.5"
+              :aria-label="`Actualizar saldo real de ${account.name}`"
+              @click="showAdjustPanel = true"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Actualizar saldo</span>
             </button>
           </div>
         </div>
@@ -626,20 +668,23 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             empty-message="Sin asientos para esta cuenta en el período"
             empty-sub-message="Selecciona otro rango de fechas o crea un nuevo asiento"
             variant="default"
+            @row-click="openEntryDetail"
           >
             <!-- Mobile card -->
             <template #card="{ item, index }">
-              <div
-                class="flex items-center gap-3 py-2 px-3 border-b border-border"
+              <button
+                type="button"
+                class="w-full flex items-center gap-3 py-2 px-3 border-b border-border text-left hover:bg-primary/5 transition-colors focus:outline-none focus:bg-primary/5"
                 :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+                :aria-label="`Ver detalle del asiento ${item.reference || item.description}`"
+                @click="openEntryDetail(item)"
               >
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-1.5">
                     <span class="text-xs text-text-secondary flex-shrink-0">{{ formatDate(item.entryDate) }}</span>
                     <UiStatusBadge v-if="item.sourceModule" :value="SOURCE_LABELS[item.sourceModule] || item.sourceModule" format="text" :variant="SOURCE_VARIANTS[item.sourceModule] || 'secondary'" size="sm" />
                   </div>
-                  <NuxtLink v-if="entryLink(item)" :to="entryLink(item) || ''" class="text-sm font-medium text-primary hover:underline underline-offset-2 truncate mt-0.5 block">{{ item.description }}</NuxtLink>
-                  <p v-else class="text-sm font-medium text-text-primary truncate mt-0.5">{{ item.description }}</p>
+                  <p class="text-sm font-medium text-text-primary mt-0.5" :title="item.description">{{ truncateDescription(item.description) }}</p>
                 </div>
                 <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
                   <span v-if="item.totalDebit" class="text-xs font-mono text-primary tabular-nums">+{{ formatCOP(item.totalDebit) }}</span>
@@ -648,20 +693,18 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                     {{ formatCOP(item.runningBalance) }}
                   </span>
                 </div>
-              </div>
+              </button>
             </template>
 
             <template #cell-entryDate="{ value }">
               <span class="text-xs text-text-secondary tabular-nums">{{ formatDate(value) }}</span>
             </template>
 
-            <template #cell-description="{ value, row }">
-              <NuxtLink
-                v-if="entryLink(row)"
-                :to="entryLink(row) || ''"
-                class="text-sm text-primary hover:underline underline-offset-2 font-medium"
-              >{{ value }}</NuxtLink>
-              <span v-else class="text-sm text-text-primary">{{ value }}</span>
+            <template #cell-description="{ value }">
+              <span
+                class="text-sm text-text-primary"
+                :title="value"
+              >{{ truncateDescription(value) }}</span>
             </template>
 
             <template #cell-sourceModule="{ value }">
@@ -923,6 +966,22 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
       </div>
     </Transition>
   </Teleport>
+
+  <!-- Issue #531 — Actualizar saldo real -->
+  <FinanzasContabilidadAjustarSaldoPanel
+    v-model="showAdjustPanel"
+    :account="account"
+    :book-balance="closingBalance"
+    :all-accounts="allAccountsForPanel"
+    @success="onAdjustSuccess"
+  />
+
+  <!-- Issue #531 — Detalle del asiento (slide-over) -->
+  <FinanzasContabilidadAsientoDetailPanel
+    v-model="showEntryDetailPanel"
+    :entry-id="selectedEntryId"
+    :all-accounts="allAccountsForPanel"
+  />
 </template>
 
 <style scoped>
