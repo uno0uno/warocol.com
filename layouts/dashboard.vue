@@ -41,7 +41,7 @@
               key="pos-link"
               type="button"
               @click="navigateToPOS"
-              class="flex items-center gap-1 md:gap-2 h-11 bg-card border border-border text-foreground px-2 md:px-4 rounded-xl font-medium hover:bg-accent transition-all"
+              class="flex items-center gap-1 md:gap-2 h-11 bg-white border-2 border-surface-secondary text-text-primary px-2 md:px-4 rounded-lg text-sm font-medium hover:bg-surface-secondary transition-colors"
               title="Venta POS"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>

@@ -188,6 +188,9 @@ const { data: settingsData } = useQuery({
   staleTime: 30_000,
 })
 const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
+// Issue #537 — expediter mode (waiter advances comanda state from POS)
+const expediterEnabled = computed(() => settingsData.value?.data?.expediter_enabled === true)
+const showExpediterPanel = ref(false)
 const acceptsOnlineOrders = computed(() => settingsData.value?.data?.accepts_online_orders === true)
 
 // Counter mode: not a real table session (no mesa, no bar)
@@ -2128,6 +2131,20 @@ onUnmounted(() => {
             <span>Imprimir prefactura</span>
           </button>
 
+          <!-- Issue #537 — Estado de comandas (expediter) -->
+          <button
+            v-if="expediterEnabled && comandasEnabled && (isMesaMode || posStore.activeTableSession)"
+            type="button"
+            class="w-full bg-surface border-2 border-border hover:border-primary hover:text-primary text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            aria-label="Ver estado de comandas"
+            @click="showExpediterPanel = true"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Estado de comandas</span>
+          </button>
+
           <button
             @click="cancelOrder"
             class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
@@ -2761,6 +2778,14 @@ onUnmounted(() => {
       <div class="receipt-divider">================================</div>
     </template>
   </div>
+
+  <!-- Issue #537 — Estado de comandas (expediter) slide-over -->
+  <PosComandasEstadoPanel
+    v-if="expediterEnabled && comandasEnabled"
+    v-model="showExpediterPanel"
+    :table-session-id="posStore.activeTableSession?.tableId ?? null"
+    :table-display-name="posStore.activeTableSession?.tableName ?? null"
+  />
   </div>
 </template>
 
