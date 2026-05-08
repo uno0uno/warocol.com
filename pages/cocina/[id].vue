@@ -80,22 +80,11 @@ onMounted(() => {
       refetch()
     }
   }, 30000)
-  // Pre-decode audio buffer immediately (works without gesture)
-  initAudio()
-  // Resume AudioContext on the first user gesture of ANY kind
-  // (autoplay policy: any interaction unlocks playback, not just the sound button).
-  const unlockEvents = ['click', 'touchstart', 'keydown', 'pointerdown'] as const
-  for (const evt of unlockEvents) {
-    document.addEventListener(evt, initAudio, { once: true, passive: true })
-  }
 })
 
 onUnmounted(() => {
   if (pollInterval.value) clearInterval(pollInterval.value)
   if (clockInterval.value) clearInterval(clockInterval.value)
-  for (const evt of ['click', 'touchstart', 'keydown', 'pointerdown'] as const) {
-    document.removeEventListener(evt, initAudio)
-  }
 })
 
 // ── Live clock ──────────────────────────────────────────────────────────────
@@ -120,7 +109,13 @@ const soundEnabled = ref(
 )
 const knownIds = ref<Set<string>>(new Set())
 
-// AudioContext + decoded buffer — created/resumed on first user gesture
+// Audio gate — explicit user click required (browser autoplay policy).
+// Once authorized in this tab, the AudioContext is unlocked for the session.
+const audioAuthorized = ref(false)
+const isAuthorizingAudio = ref(false)
+
+// AudioContext + decoded buffer — created/resumed inside the user click in
+// the authorization gate (browser autoplay policy).
 let _audioCtx: AudioContext | null = null
 let _audioBuffer: AudioBuffer | null = null
 
@@ -128,13 +123,11 @@ const initAudio = async () => {
   if (typeof window === 'undefined') return
   try {
     if (!_audioCtx) _audioCtx = new AudioContext()
-    // Decode buffer eagerly — works even when context is suspended
     if (!_audioBuffer) {
       const res = await fetch('/sounds/kds-new-order.wav')
       const raw = await res.arrayBuffer()
       _audioBuffer = await _audioCtx.decodeAudioData(raw)
     }
-    // Resume requires a user gesture — called again on first click
     if (_audioCtx.state === 'suspended') await _audioCtx.resume()
   } catch { /* not available */ }
 }
@@ -143,6 +136,7 @@ const playChime = async () => {
   if (!_audioCtx || !_audioBuffer) return
   try {
     if (_audioCtx.state === 'suspended') await _audioCtx.resume()
+    if (_audioCtx.state !== 'running') return
     const src = _audioCtx.createBufferSource()
     src.buffer = _audioBuffer
     const gain = _audioCtx.createGain()
@@ -161,11 +155,35 @@ const toggleSound = () => {
   if (soundEnabled.value) initAudio()
 }
 
+// Explicit authorization handler: runs inside the user click so the
+// AudioContext can resume() under the autoplay policy. Plays a short
+// confirmation chime so the user hears that audio is working.
+const authorizeAudio = async () => {
+  if (isAuthorizingAudio.value) return
+  isAuthorizingAudio.value = true
+  try {
+    await initAudio()
+    await playChime()
+    audioAuthorized.value = true
+  } finally {
+    isAuthorizingAudio.value = false
+  }
+}
+
+const continueWithoutSound = () => {
+  audioAuthorized.value = true
+  soundEnabled.value = false
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('kds_sound_enabled', 'false')
+  }
+}
+
 const checkNewComandas = () => {
-  if (!soundEnabled.value) return
+  // Always update knownIds — even when sound is muted — so re-enabling
+  // doesn't unleash a chime burst for everything seen during the mute window.
   const currentIds = new Set<string>(allComandas.value.map((c: any) => String(c.id)))
   const hasNew = [...currentIds].some((id) => !knownIds.value.has(id as string))
-  if (hasNew && knownIds.value.size > 0) playChime()  // fire-and-forget async
+  if (hasNew && knownIds.value.size > 0 && soundEnabled.value) playChime()
   knownIds.value = currentIds
 }
 
@@ -192,6 +210,66 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
   </div>
 
   <div v-else class="flex flex-col h-screen overflow-hidden">
+
+    <!-- Audio authorization gate — required by browser autoplay policy.
+         Full-screen overlay until the user picks an option. Both choices
+         dismiss the overlay; one enables audio, the other skips. -->
+    <Transition
+      enter-active-class="transition-opacity duration-200"
+      enter-from-class="opacity-0"
+      leave-active-class="transition-opacity duration-300"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="!audioAuthorized && station"
+        class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-8 bg-surface px-6 text-center"
+      >
+        <div class="flex flex-col items-center gap-3 max-w-md">
+          <div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-bold text-text-primary">Activar alertas sonoras</h2>
+          <p class="text-sm md:text-base text-text-secondary">
+            El navegador requiere un toque para permitir audio. Activa el
+            aviso sonoro o continúa en silencio.
+          </p>
+        </div>
+        <div class="flex flex-col sm:flex-row items-stretch gap-3 w-full max-w-md">
+          <button
+            type="button"
+            :disabled="isAuthorizingAudio"
+            class="flex-1 min-h-[60px] px-6 rounded-2xl bg-primary text-white text-base md:text-lg font-bold shadow-md hover:bg-primary/90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            @click="authorizeAudio"
+          >
+            <UiLoadingDots v-if="isAuthorizingAudio" size="9px" color="currentColor" />
+            <template v-else>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+              <span>Activar sonido</span>
+            </template>
+          </button>
+          <button
+            type="button"
+            :disabled="isAuthorizingAudio"
+            class="flex-1 min-h-[60px] px-6 rounded-2xl border-2 border-border bg-surface text-text-primary text-base md:text-lg font-semibold hover:bg-surface-secondary active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-border disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            @click="continueWithoutSound"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+            </svg>
+            <span>Sin sonido</span>
+          </button>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Loading station -->
     <div v-if="stationStatus === 'pending' && !station" class="flex items-center justify-center h-full">
