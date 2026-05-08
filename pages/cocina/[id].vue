@@ -79,7 +79,13 @@ onMounted(() => {
     if (comandasStatus.value !== 'pending') {
       refetch()
     }
-  }, 30000)
+  }, 10000)
+  // Pre-fetch + decode the chime buffer eagerly. The fetch/decode awaits
+  // would otherwise consume the user gesture inside authorizeAudio(),
+  // pushing AudioContext.resume() out of the activation window — and the
+  // context would silently stay 'suspended' even though the test chime
+  // appeared to fire. Decoding is allowed on a suspended context.
+  prefetchAudioBuffer()
 })
 
 onUnmounted(() => {
@@ -114,12 +120,15 @@ const knownIds = ref<Set<string>>(new Set())
 const audioAuthorized = ref(false)
 const isAuthorizingAudio = ref(false)
 
-// AudioContext + decoded buffer — created/resumed inside the user click in
-// the authorization gate (browser autoplay policy).
+// AudioContext + decoded buffer.
+//   - Buffer is decoded eagerly on mount via prefetchAudioBuffer (no resume,
+//     no gesture required — decoding is allowed on a suspended context).
+//   - resume() is called from authorizeAudio synchronously inside the user
+//     click, with NO awaits before it, so the activation isn't consumed.
 let _audioCtx: AudioContext | null = null
 let _audioBuffer: AudioBuffer | null = null
 
-const initAudio = async () => {
+const prefetchAudioBuffer = async () => {
   if (typeof window === 'undefined') return
   try {
     if (!_audioCtx) _audioCtx = new AudioContext()
@@ -128,7 +137,6 @@ const initAudio = async () => {
       const raw = await res.arrayBuffer()
       _audioBuffer = await _audioCtx.decodeAudioData(raw)
     }
-    if (_audioCtx.state === 'suspended') await _audioCtx.resume()
   } catch { /* not available */ }
 }
 
@@ -152,17 +160,33 @@ const toggleSound = () => {
   if (typeof window !== 'undefined') {
     localStorage.setItem('kds_sound_enabled', soundEnabled.value ? 'true' : 'false')
   }
-  if (soundEnabled.value) initAudio()
+  // Re-prime the context on the gesture in case it was suspended.
+  if (soundEnabled.value && _audioCtx && _audioCtx.state === 'suspended') {
+    _audioCtx.resume().catch(() => {})
+  }
 }
 
-// Explicit authorization handler: runs inside the user click so the
-// AudioContext can resume() under the autoplay policy. Plays a short
-// confirmation chime so the user hears that audio is working.
+// Explicit authorization handler. CRITICAL: AudioContext.resume() is called
+// synchronously inside the user click, BEFORE any await, so the browser's
+// "sticky activation" window covers it. The buffer was pre-fetched on mount
+// (prefetchAudioBuffer), so no fetch/decode awaits are needed here.
 const authorizeAudio = async () => {
   if (isAuthorizingAudio.value) return
   isAuthorizingAudio.value = true
   try {
-    await initAudio()
+    if (!_audioCtx) _audioCtx = new AudioContext()
+    // Kick off resume in the same tick as the click — DO NOT await yet.
+    const resumePromise = _audioCtx.state === 'suspended'
+      ? _audioCtx.resume()
+      : Promise.resolve()
+    // Ensure buffer is decoded (usually already done by prefetchAudioBuffer).
+    if (!_audioBuffer) {
+      const res = await fetch('/sounds/kds-new-order.wav')
+      const raw = await res.arrayBuffer()
+      _audioBuffer = await _audioCtx.decodeAudioData(raw)
+    }
+    // Now wait for the resume to settle and play the test chime.
+    await resumePromise
     await playChime()
     audioAuthorized.value = true
   } finally {
