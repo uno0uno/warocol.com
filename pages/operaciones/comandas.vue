@@ -484,19 +484,57 @@ const { data: categoriesData, asyncStatus: categoriesAsyncStatus, refetch: refet
   staleTime: 60_000,
 })
 
+// KDS tokens — fetched per-active-station in parallel and merged into a single
+// object keyed by station_id. Defined here (not next to the mutation handlers)
+// so isRefreshing / refreshAll below can reference its asyncStatus + refetch.
+const stationsForTokens = computed(() =>
+  (stationsData.value?.data ?? []).filter((s: any) => s.is_active),
+)
+const {
+  data: kdsTokensData,
+  asyncStatus: kdsTokensAsyncStatus,
+  refetch: refetchKdsTokens,
+} = useQuery({
+  key: () => ['tenant', 'kds-tokens', currentTenant.value?.id],
+  query: async () => {
+    const list = stationsForTokens.value
+    if (list.length === 0) return {} as Record<string, string>
+    const entries = await Promise.all(
+      list.map(async (st: any) => {
+        try {
+          const res = await $fetch<any>(`/api/api/stations/${st.id}/kds-token`)
+          return [st.id, res?.data?.token ?? null] as const
+        } catch {
+          return [st.id, null] as const
+        }
+      }),
+    )
+    return Object.fromEntries(entries.filter(([, t]) => !!t)) as Record<string, string>
+  },
+  enabled: () => !!currentTenant.value && stationsForTokens.value.length > 0,
+  staleTime: 60_000,
+})
+
 // ─── Layout-level loading orchestration (issue #461) ───
 // First-load: block UI until the queries that drive the main listing have data.
 // `stationsData` + `categoriesData` are the critical ones; profile and category-station
 // mappings load alongside but their loading is non-blocking (rendered inline).
-const isLoading = computed(() => !stationsData.value || !categoriesData.value)
+// kds-tokens also blocks so the persistent KDS URLs render immediately without
+// flickering from "Generar enlace" → "Copiar" once tokens hydrate.
+const isLoading = computed(() => (
+  !stationsData.value
+  || !categoriesData.value
+  || (stationsForTokens.value.length > 0 && !kdsTokensData.value)
+))
 
-// Progressive refresh: any of the four queries revalidating with data in place.
+// Progressive refresh: any of the queries revalidating with data in place.
 // OR-combined so any background refetch surfaces in the layout indicator.
 const isRefreshing = computed(() => (
   (profileAsyncStatus.value === 'loading' && profileData.value != null) ||
   (stationsAsyncStatus.value === 'loading' && stationsData.value != null) ||
   (categoryStationsAsyncStatus.value === 'loading' && categoryStationsData.value != null) ||
-  (categoriesAsyncStatus.value === 'loading' && categoriesData.value != null)
+  (categoriesAsyncStatus.value === 'loading' && categoriesData.value != null) ||
+  (kdsTokensAsyncStatus.value === 'loading' && kdsTokensData.value != null)
 ))
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -508,6 +546,7 @@ const refreshAll = async () => {
     refetchStations(),
     refetchCategoryStations(),
     refetchCategories(),
+    refetchKdsTokens(),
   ])
 }
 onMounted(() => setRefreshHandler(refreshAll))
@@ -604,28 +643,16 @@ const handleToggleExpediter = async (event: Event) => {
 
 const kdsBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://warocol.com'
 
-// KDS token management
+// Local writable mirror of the kds-tokens query above — kept so generate /
+// revoke mutations can update the UI optimistically without an extra refetch.
 const kdsTokens = ref<Record<string, string>>({})
 const generatingToken = ref<string | null>(null)
 const revokingToken = ref<string | null>(null)
 
-// Hydrate existing tokens whenever the active stations list resolves so the
-// operator sees the persistent KDS URL without having to regenerate it.
-watch(stations, async (list) => {
-  if (!Array.isArray(list) || list.length === 0) return
-  await Promise.all(
-    list
-      .filter((st: any) => st.is_active)
-      .map(async (st: any) => {
-        if (kdsTokens.value[st.id]) return
-        try {
-          const res = await $fetch<any>(`/api/api/stations/${st.id}/kds-token`)
-          if (res?.data?.token) kdsTokens.value[st.id] = res.data.token
-        } catch {
-          // No token yet for this station — operator will see "Generar enlace"
-        }
-      }),
-  )
+// Hydrate the mirror whenever the query refreshes (initial load + manual
+// refresh + tenant switch all flow through the same path).
+watch(kdsTokensData, (data) => {
+  if (data) kdsTokens.value = { ...data }
 }, { immediate: true })
 
 const generateKdsToken = async (stationId: string) => {
