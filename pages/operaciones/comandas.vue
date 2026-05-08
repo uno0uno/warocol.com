@@ -609,6 +609,25 @@ const kdsTokens = ref<Record<string, string>>({})
 const generatingToken = ref<string | null>(null)
 const revokingToken = ref<string | null>(null)
 
+// Hydrate existing tokens whenever the active stations list resolves so the
+// operator sees the persistent KDS URL without having to regenerate it.
+watch(stations, async (list) => {
+  if (!Array.isArray(list) || list.length === 0) return
+  await Promise.all(
+    list
+      .filter((st: any) => st.is_active)
+      .map(async (st: any) => {
+        if (kdsTokens.value[st.id]) return
+        try {
+          const res = await $fetch<any>(`/api/api/stations/${st.id}/kds-token`)
+          if (res?.data?.token) kdsTokens.value[st.id] = res.data.token
+        } catch {
+          // No token yet for this station — operator will see "Generar enlace"
+        }
+      }),
+  )
+}, { immediate: true })
+
 const generateKdsToken = async (stationId: string) => {
   generatingToken.value = stationId
   try {
