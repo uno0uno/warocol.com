@@ -99,6 +99,39 @@ const isResolvingSettings = computed(() => {
 // ── KDS / Comandas feature flag ─────────────────────────────────────────────
 const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
 
+// Issue #537 — expediter mode (waiter advances comanda state from POS)
+const expediterEnabled = computed(() => settingsData.value?.data?.expediter_enabled === true)
+const showExpediterPanel = ref(false)
+const readyComandasCount = ref(0)
+let readyCountInterval: ReturnType<typeof setInterval> | null = null
+const refreshReadyComandasCount = async () => {
+  if (!expediterEnabled.value || !comandasEnabled.value) {
+    readyComandasCount.value = 0
+    return
+  }
+  try {
+    const res = await $fetch<{ success: boolean; data: any[] }>(
+      '/api/api/comandas?status=ready&source_type=table,pos',
+    )
+    readyComandasCount.value = (res?.data ?? []).length
+  } catch {
+    // silent — non-critical
+  }
+}
+watch(
+  () => expediterEnabled.value && comandasEnabled.value,
+  (on) => {
+    if (on) {
+      refreshReadyComandasCount()
+      readyCountInterval = setInterval(refreshReadyComandasCount, 30_000)
+    } else if (readyCountInterval) {
+      clearInterval(readyCountInterval)
+      readyCountInterval = null
+    }
+  },
+  { immediate: true },
+)
+
 // ── Unfired items count — items in the tab not yet sent to the KDS ──────────
 // In counter mode (no mesa session), all cart items are "new" — none have been fired yet.
 // In mesa mode, count tab items with fulfillmentStatus === 'new'.
@@ -714,6 +747,7 @@ onMounted(async () => {
 onUnmounted(() => {
   setRefreshHandler(undefined)
   stopFulfillmentPolling()
+  if (readyCountInterval) clearInterval(readyCountInterval)
 })
 </script>
 
@@ -1076,5 +1110,52 @@ onUnmounted(() => {
       </div>
     </Transition>
   </Teleport>
+
+  <!-- Issue #537 — Expediter chip teleported into the dashboard header so it
+       never overlaps content. Icon-only on mobile, icon + label on sm+.
+       Sits just left of the refresh button (header-actions portal renders
+       before the refresh in the layout). -->
+  <ClientOnly>
+    <Teleport to="#dashboard-header-actions">
+      <button
+        v-if="expediterEnabled && comandasEnabled"
+        type="button"
+        :aria-label="readyComandasCount > 0 ? `Estado de comandas — ${readyComandasCount} listas` : 'Estado de comandas'"
+        :title="readyComandasCount > 0 ? `${readyComandasCount} comanda${readyComandasCount === 1 ? '' : 's'} lista${readyComandasCount === 1 ? '' : 's'}` : 'Estado de comandas'"
+        class="relative inline-flex items-center gap-2 h-11 rounded-lg border-2 border-surface-secondary bg-white text-text-primary text-sm font-medium hover:bg-surface-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary mr-1.5 md:mr-2 px-2.5 sm:px-3 md:px-4"
+        :class="readyComandasCount > 0 ? 'ring-1 ring-emerald-300/60' : ''"
+        @click="showExpediterPanel = true"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+          <path d="m9 14 2 2 4-4"/>
+        </svg>
+        <span class="hidden sm:inline text-sm font-medium">Comandas</span>
+        <!-- Count badge: numeric on sm+, dot indicator on mobile -->
+        <span
+          v-if="readyComandasCount > 0"
+          class="hidden sm:inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-emerald-500 text-white text-[11px] font-bold tabular-nums"
+        >
+          {{ readyComandasCount }}
+        </span>
+        <span
+          v-if="readyComandasCount > 0"
+          class="sm:hidden absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-bold text-white tabular-nums ring-2 ring-surface"
+          aria-hidden="true"
+        >
+          {{ readyComandasCount > 9 ? '9+' : readyComandasCount }}
+        </span>
+      </button>
+    </Teleport>
+  </ClientOnly>
+
+  <PosComandasEstadoPanel
+    v-if="expediterEnabled && comandasEnabled"
+    v-model="showExpediterPanel"
+    :table-session-id="posStore.activeTableSession?.tableId ?? null"
+    :table-display-name="posStore.activeTableSession?.tableName ?? null"
+    @success="refreshReadyComandasCount"
+  />
 
 </template>

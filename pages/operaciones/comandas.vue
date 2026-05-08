@@ -122,6 +122,31 @@
             </div>
           </div>
         </div>
+
+        <!-- Issue #537 — Expediter mode (waiter advances comanda state from POS) -->
+        <div v-if="businessProfile?.comandas_enabled" class="space-y-2 pt-3 border-t border-border">
+          <div class="flex items-center justify-between py-1">
+            <div>
+              <p class="text-sm font-medium text-text-primary">Mesero avanza estado desde POS</p>
+              <p class="text-xs text-text-secondary mt-0.5">
+                Habilita un panel en <span class="font-mono text-[11px]">/pos</span> donde el mesero
+                puede marcar comandas como "lista" o "entregada" sin tocar la pantalla de cocina.
+              </p>
+            </div>
+            <div class="flex-shrink-0 ml-4 flex items-center justify-center w-10 h-6">
+              <UiLoadingDots v-if="isTogglingExpediter" color="var(--color-primary)" size="11px" />
+              <label v-else class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="sr-only peer"
+                  :checked="businessProfile?.expediter_enabled"
+                  @change="handleToggleExpediter"
+                />
+                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -552,6 +577,28 @@ const handleToggleKds = async (event: Event) => {
     toast.error(error.data?.detail || 'Error al cambiar estado KDS', { title: 'Error' })
   } finally {
     isTogglingKds.value = false
+  }
+}
+
+// Issue #537 — Expediter mode toggle (waiter advances comanda state from POS)
+const isTogglingExpediter = ref(false)
+const handleToggleExpediter = async (event: Event) => {
+  if (isTogglingExpediter.value) return
+  const newState = (event.target as HTMLInputElement).checked
+  isTogglingExpediter.value = true
+  try {
+    await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: { expediter_enabled: newState } })
+    await refreshProfile()
+    toast.success(
+      newState
+        ? 'El mesero puede avanzar comandas desde el POS'
+        : 'Solo cocina avanza comandas (desde KDS)',
+      { title: newState ? 'Activado' : 'Desactivado' }
+    )
+  } catch (error: any) {
+    toast.error(error.data?.detail || 'Error al cambiar modo expedidor', { title: 'Error' })
+  } finally {
+    isTogglingExpediter.value = false
   }
 }
 
