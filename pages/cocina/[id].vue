@@ -81,21 +81,25 @@ onMounted(() => {
     }
   }, 30000)
   // Pre-decode audio buffer immediately (works without gesture)
-  initAudio()
+  initAudio('mount')
   // Resume AudioContext on the first user gesture of ANY kind
   // (autoplay policy: any interaction unlocks playback, not just the sound button).
   const unlockEvents = ['click', 'touchstart', 'keydown', 'pointerdown'] as const
   for (const evt of unlockEvents) {
-    document.addEventListener(evt, initAudio, { once: true, passive: true })
+    const handler = () => { initAudio(`gesture:${evt}`); unlockHandlers.delete(evt) }
+    unlockHandlers.set(evt, handler)
+    document.addEventListener(evt, handler, { once: true, passive: true })
   }
+  audioLog('listeners-attached', { events: [...unlockEvents] })
 })
 
 onUnmounted(() => {
   if (pollInterval.value) clearInterval(pollInterval.value)
   if (clockInterval.value) clearInterval(clockInterval.value)
-  for (const evt of ['click', 'touchstart', 'keydown', 'pointerdown'] as const) {
-    document.removeEventListener(evt, initAudio)
+  for (const [evt, handler] of unlockHandlers) {
+    document.removeEventListener(evt, handler)
   }
+  unlockHandlers.clear()
 })
 
 // ── Live clock ──────────────────────────────────────────────────────────────
@@ -123,26 +127,65 @@ const knownIds = ref<Set<string>>(new Set())
 // AudioContext + decoded buffer — created/resumed on first user gesture
 let _audioCtx: AudioContext | null = null
 let _audioBuffer: AudioBuffer | null = null
+const unlockHandlers = new Map<string, EventListener>()
 
-const initAudio = async () => {
-  if (typeof window === 'undefined') return
+// Diagnostic logger — open DevTools console to follow the audio lifecycle.
+// Tag with [KDS audio] so users can grep / filter easily.
+const audioLog = (event: string, extra: Record<string, any> = {}) => {
   try {
-    if (!_audioCtx) _audioCtx = new AudioContext()
+    // eslint-disable-next-line no-console
+    console.log(`[KDS audio] ${event}`, {
+      ctx: _audioCtx ? _audioCtx.state : 'none',
+      hasBuffer: !!_audioBuffer,
+      soundEnabled: soundEnabled.value,
+      ...extra,
+    })
+  } catch {}
+}
+
+const initAudio = async (source: string = 'unknown') => {
+  if (typeof window === 'undefined') return
+  audioLog('initAudio:enter', { source })
+  try {
+    if (!_audioCtx) {
+      _audioCtx = new AudioContext()
+      audioLog('initAudio:created-context', { source })
+    }
     // Decode buffer eagerly — works even when context is suspended
     if (!_audioBuffer) {
+      audioLog('initAudio:fetching-buffer', { source })
       const res = await fetch('/sounds/kds-new-order.wav')
       const raw = await res.arrayBuffer()
       _audioBuffer = await _audioCtx.decodeAudioData(raw)
+      audioLog('initAudio:buffer-decoded', { source, bytes: raw.byteLength })
     }
-    // Resume requires a user gesture — called again on first click
-    if (_audioCtx.state === 'suspended') await _audioCtx.resume()
-  } catch { /* not available */ }
+    // Resume requires a user gesture — only succeeds after one occurred
+    if (_audioCtx.state === 'suspended') {
+      audioLog('initAudio:resume-attempt', { source })
+      await _audioCtx.resume()
+      audioLog('initAudio:resume-result', { source })
+    }
+  } catch (err: any) {
+    audioLog('initAudio:error', { source, message: err?.message ?? String(err) })
+  }
 }
 
-const playChime = async () => {
-  if (!_audioCtx || !_audioBuffer) return
+const playChime = async (reason: string = 'new-comanda') => {
+  audioLog('playChime:enter', { reason })
+  if (!_audioCtx || !_audioBuffer) {
+    audioLog('playChime:abort-not-ready', { reason })
+    return
+  }
   try {
-    if (_audioCtx.state === 'suspended') await _audioCtx.resume()
+    if (_audioCtx.state === 'suspended') {
+      audioLog('playChime:resume-attempt', { reason })
+      await _audioCtx.resume()
+      audioLog('playChime:resume-result', { reason })
+    }
+    if (_audioCtx.state !== 'running') {
+      audioLog('playChime:abort-still-suspended', { reason })
+      return
+    }
     const src = _audioCtx.createBufferSource()
     src.buffer = _audioBuffer
     const gain = _audioCtx.createGain()
@@ -150,22 +193,34 @@ const playChime = async () => {
     src.connect(gain)
     gain.connect(_audioCtx.destination)
     src.start()
-  } catch { /* not available */ }
+    audioLog('playChime:started', { reason })
+  } catch (err: any) {
+    audioLog('playChime:error', { reason, message: err?.message ?? String(err) })
+  }
 }
 
 const toggleSound = () => {
   soundEnabled.value = !soundEnabled.value
+  audioLog('toggleSound', { newValue: soundEnabled.value })
   if (typeof window !== 'undefined') {
     localStorage.setItem('kds_sound_enabled', soundEnabled.value ? 'true' : 'false')
   }
-  if (soundEnabled.value) initAudio()
+  if (soundEnabled.value) initAudio('toggle')
 }
 
 const checkNewComandas = () => {
-  if (!soundEnabled.value) return
+  if (!soundEnabled.value) {
+    audioLog('checkNewComandas:skip-disabled')
+    return
+  }
   const currentIds = new Set<string>(allComandas.value.map((c: any) => String(c.id)))
   const hasNew = [...currentIds].some((id) => !knownIds.value.has(id as string))
-  if (hasNew && knownIds.value.size > 0) playChime()  // fire-and-forget async
+  audioLog('checkNewComandas', {
+    total: currentIds.size,
+    known: knownIds.value.size,
+    hasNew,
+  })
+  if (hasNew && knownIds.value.size > 0) playChime('new-comanda')
   knownIds.value = currentIds
 }
 
