@@ -82,14 +82,20 @@ onMounted(() => {
   }, 30000)
   // Pre-decode audio buffer immediately (works without gesture)
   initAudio()
-  // Resume AudioContext on first user gesture (autoplay policy requires this for playback)
-  document.addEventListener('click', initAudio, { once: true })
+  // Resume AudioContext on the first user gesture of ANY kind
+  // (autoplay policy: any interaction unlocks playback, not just the sound button).
+  const unlockEvents = ['click', 'touchstart', 'keydown', 'pointerdown'] as const
+  for (const evt of unlockEvents) {
+    document.addEventListener(evt, initAudio, { once: true, passive: true })
+  }
 })
 
 onUnmounted(() => {
   if (pollInterval.value) clearInterval(pollInterval.value)
   if (clockInterval.value) clearInterval(clockInterval.value)
-  document.removeEventListener('click', initAudio)
+  for (const evt of ['click', 'touchstart', 'keydown', 'pointerdown'] as const) {
+    document.removeEventListener(evt, initAudio)
+  }
 })
 
 // ── Live clock ──────────────────────────────────────────────────────────────
@@ -298,7 +304,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
       <div class="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-6">
 
         <!-- Loading skeleton -->
-        <div v-if="comandasStatus === 'pending' && !allComandas.length" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div v-if="comandasStatus === 'pending' && !allComandas.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <div v-for="i in 4" :key="i" class="h-52 rounded-xl bg-surface-secondary animate-pulse" />
         </div>
 
@@ -322,7 +328,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
                 {{ activeComandas.length }}
               </span>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <div
                 v-for="comanda in activeComandas"
                 :key="comanda.id"
@@ -341,7 +347,7 @@ watch(isRefreshing, (v) => v ? startPhrases() : stopPhrases(), { immediate: true
                 {{ readyComandas.length }}
               </span>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <CocinaComandaCard
                 v-for="comanda in readyComandas"
                 :key="comanda.id"
