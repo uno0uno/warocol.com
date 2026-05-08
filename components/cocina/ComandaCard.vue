@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, inject, onMounted, onUnmounted, type Ref } from 'vue'
 import { formatDistanceToNow, differenceInMinutes } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -11,6 +11,10 @@ const emit = defineEmits(['refresh'])
 
 const toast = useToast()
 const isUpdating = ref(false)
+
+// KDS token (provided by /cocina/[id].vue). Optional so the component
+// keeps working under cookie auth in non-KDS contexts.
+const kdsToken = inject<Ref<string>>('kdsToken')
 
 // ── Timer ──────────────────────────────────────────────────────────────────
 const now = ref(new Date())
@@ -67,6 +71,7 @@ const updateStatus = async (newStatus: string) => {
   try {
     await $fetch(`/api/api/comandas/${props.comanda.id}/status`, {
       method: 'PATCH',
+      params: kdsToken?.value ? { token: kdsToken.value } : undefined,
       body: { status: newStatus }
     })
     emit('refresh')
@@ -74,7 +79,12 @@ const updateStatus = async (newStatus: string) => {
       toast.success('Comanda entregada')
     }
   } catch (error: any) {
-    toast.error('Error al actualizar estado')
+    const status = error?.status ?? error?.statusCode ?? error?.response?.status
+    toast.error(
+      status === 401
+        ? 'Enlace KDS expirado. Recarga la página.'
+        : 'Error al actualizar estado',
+    )
   } finally {
     isUpdating.value = false
   }
