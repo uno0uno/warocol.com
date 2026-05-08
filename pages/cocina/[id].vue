@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, provide, watch } from 'vue'
 
 definePageMeta({
   layout: 'kds',
@@ -8,6 +8,11 @@ definePageMeta({
 const route = useRoute()
 const stationId = computed(() => route.params.id as string)
 const kdsToken = computed(() => (route.query.token as string) || '')
+
+// Make the KDS token available to descendant components (ComandaCard,
+// ItemRow) so their PATCH requests can carry it and satisfy the
+// kds_public middleware bypass on the backend.
+provide('kdsToken', kdsToken)
 
 // ── Token guard ─────────────────────────────────────────────────────────────
 const tokenError = ref(false)

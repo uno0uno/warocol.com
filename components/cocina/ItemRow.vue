@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { inject, type Ref } from 'vue'
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+
 const props = defineProps<{
   item: any
   comandaStatus: string
@@ -9,6 +12,10 @@ const emit = defineEmits(['refresh'])
 const toast = useToast()
 const isUpdating = ref(false)
 
+// KDS token (provided by /cocina/[id].vue). Optional so the component
+// keeps working under cookie auth in non-KDS contexts.
+const kdsToken = inject<Ref<string>>('kdsToken')
+
 const toggleStatus = async () => {
   if (props.comandaStatus === 'ready' || isUpdating.value) return
   isUpdating.value = true
@@ -16,11 +23,17 @@ const toggleStatus = async () => {
   try {
     await $fetch(`/api/api/comandas/${props.comandaId}/items/${props.item.id}/status`, {
       method: 'PATCH',
+      params: kdsToken?.value ? { token: kdsToken.value } : undefined,
       body: { status: newStatus }
     })
     emit('refresh')
   } catch (error: any) {
-    toast.error('Error al actualizar ítem')
+    const status = error?.status ?? error?.statusCode ?? error?.response?.status
+    toast.error(
+      status === 401
+        ? 'Enlace KDS expirado. Recarga la página.'
+        : 'Error al actualizar ítem',
+    )
   } finally {
     isUpdating.value = false
   }
@@ -53,8 +66,12 @@ const toggleStatus = async () => {
       </div>
 
       <!-- Item Notes -->
-      <p v-if="item.notes && item.status !== 'cancelled'" class="text-[10px] italic text-destructive font-bold mt-1 uppercase">
-        ⚠️ {{ item.notes }}
+      <p
+        v-if="item.notes && item.status !== 'cancelled'"
+        class="text-[10px] italic text-destructive font-bold mt-1 uppercase flex items-start gap-1"
+      >
+        <ExclamationTriangleIcon class="w-3 h-3 flex-shrink-0 mt-px" aria-hidden="true" />
+        <span>{{ item.notes }}</span>
       </p>
     </div>
 
