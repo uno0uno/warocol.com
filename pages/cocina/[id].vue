@@ -114,6 +114,12 @@ const soundEnabled = ref(
   typeof window !== 'undefined' ? localStorage.getItem('kds_sound_enabled') !== 'false' : true
 )
 const knownIds = ref<Set<string>>(new Set())
+// Track whether the first poll has settled. The previous size-based guard
+// (knownIds.size > 0) silently swallowed the chime for the first comanda
+// when the page loaded with zero existing comandas — that comanda was
+// genuinely new but the guard treated the empty initial state as
+// "uninitialized" forever.
+const hasSeenFirstPoll = ref(false)
 
 // Audio gate — explicit user click required (browser autoplay policy).
 // Once authorized in this tab, the AudioContext is unlocked for the session.
@@ -207,8 +213,9 @@ const checkNewComandas = () => {
   // doesn't unleash a chime burst for everything seen during the mute window.
   const currentIds = new Set<string>(allComandas.value.map((c: any) => String(c.id)))
   const hasNew = [...currentIds].some((id) => !knownIds.value.has(id as string))
-  if (hasNew && knownIds.value.size > 0 && soundEnabled.value) playChime()
+  if (hasNew && hasSeenFirstPoll.value && soundEnabled.value) playChime()
   knownIds.value = currentIds
+  hasSeenFirstPoll.value = true
 }
 
 watch(allComandas, checkNewComandas)
