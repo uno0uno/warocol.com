@@ -962,6 +962,43 @@ const printReceipt = async () => {
   window.print()
 }
 
+// Issue #535 — fetch tenant fiscal data once for the prefactura header
+// (NIT, razón social, fiscal address). Same source as the /facturacion page.
+const { data: fiscalDataRes } = useQuery({
+  key: () => ['tenant', 'fiscal-data', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/fiscal-data'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 300_000,
+})
+const fiscalData = computed(() => fiscalDataRes.value?.data ?? null)
+
+// Issue #535 — print pre-bill (prefactura) before payment.
+// Toggles a body class so @media print rules switch which printable div is
+// exposed (#pos-prefactura instead of the default #pos-receipt). The post-
+// payment receipt path is undisturbed.
+const prefacturaDateTime = computed(() =>
+  new Date().toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })
+)
+// Prefactura is purely visual — never block on tax preview state. If taxes
+// haven't loaded (or the tenant has no taxes configured), the prefactura
+// just omits those lines. The disclaimer "ESTA NO ES UNA FACTURA" makes the
+// document non-fiscal, so printing without taxes is acceptable.
+const prefacturaDisabled = computed(() => false)
+const printPrefactura = async () => {
+  document.body.classList.add('printing-prefactura')
+
+  const cleanup = () => {
+    document.body.classList.remove('printing-prefactura')
+    window.removeEventListener('afterprint', cleanup)
+  }
+  window.addEventListener('afterprint', cleanup)
+  // Defensive fallback for browsers where afterprint may not fire on cancel.
+  setTimeout(cleanup, 2000)
+
+  await nextTick()
+  window.print()
+}
+
 // Entry point for "Generar factura electrónica DIAN" — shows the inline
 // wizard when the customer has no fiscal data, otherwise emits directly.
 const requestInvoice = async () => {
@@ -2074,6 +2111,23 @@ onUnmounted(() => {
             </svg>
           </button>
           <p v-if="!selectedCustomer && !isProcessing" class="text-center text-xs text-text-tertiary">Identifica al cliente para continuar</p>
+
+          <!-- Issue #535 — Imprimir prefactura (pre-cuenta para revisión del cliente) -->
+          <button
+            v-if="cartItems.length > 0"
+            type="button"
+            :disabled="prefacturaDisabled"
+            :title="prefacturaDisabled ? 'Calculando impuestos…' : 'Imprime una pre-cuenta para revisión del cliente. No es una factura.'"
+            @click="printPrefactura"
+            class="w-full bg-surface border-2 border-border hover:border-primary hover:text-primary text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary/30"
+            aria-label="Imprimir prefactura para revisión del cliente"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0H6.34m11.318 0a23.97 23.97 0 01-3.42-1.5m3.42 1.5l.42-.5m-3.84 1.5a23.97 23.97 0 003.42-1.5M14.25 9.75v.01m-3-.01v.01m-3-.01v.01M7.5 6.75h9a.75.75 0 01.75.75v3a.75.75 0 01-.75.75h-9a.75.75 0 01-.75-.75v-3a.75.75 0 01.75-.75z" />
+            </svg>
+            <span>Imprimir prefactura</span>
+          </button>
+
           <button
             @click="cancelOrder"
             class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
@@ -2255,6 +2309,23 @@ onUnmounted(() => {
           <span v-if="!isProcessing">{{ selectedPaymentMethod === 'credit' ? 'Registrar como crédito' : 'Confirmar Orden' }}</span>
         </button>
         <p v-if="!selectedCustomer && !isProcessing" class="text-center text-xs text-text-tertiary">Identifica al cliente para continuar</p>
+
+        <!-- Issue #535 — Imprimir prefactura (pre-cuenta para revisión del cliente) -->
+        <button
+          v-if="cartItems.length > 0"
+          type="button"
+          :disabled="prefacturaDisabled"
+          :title="prefacturaDisabled ? 'Calculando impuestos…' : 'Imprime una pre-cuenta para revisión del cliente. No es una factura.'"
+          @click="printPrefactura"
+          class="w-full bg-surface border-2 border-border hover:border-primary hover:text-primary text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary/30"
+          aria-label="Imprimir prefactura para revisión del cliente"
+        >
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0H6.34m11.318 0a23.97 23.97 0 01-3.42-1.5m3.42 1.5l.42-.5m-3.84 1.5a23.97 23.97 0 003.42-1.5M14.25 9.75v.01m-3-.01v.01m-3-.01v.01M7.5 6.75h9a.75.75 0 01.75.75v3a.75.75 0 01-.75.75h-9a.75.75 0 01-.75-.75v-3a.75.75 0 01.75-.75z" />
+          </svg>
+          <span>Imprimir prefactura</span>
+        </button>
+
         <button
           @click="cancelOrder"
           class="w-full bg-surface border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 text-text-secondary font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2"
@@ -2575,11 +2646,90 @@ onUnmounted(() => {
       @assigned="onWarosAssigned"
     />
 
+  <!-- Issue #535 — Hidden prefactura for printing.
+       Only visible via @media print + body class .printing-prefactura.
+       The disclaimer "ESTA NO ES UNA FACTURA" is legally relevant — never
+       remove it or make it visually less prominent. -->
+  <div id="pos-prefactura" aria-hidden="true">
+    <!-- Header — datos públicos del negocio (de /negocio) -->
+    <div class="receipt-header">{{ fiscalData?.business_name || businessProfile?.display_name || 'WARO' }}</div>
+    <!-- Datos fiscales (de /facturacion) — mejoran la profesionalidad de la pre-cuenta -->
+    <div v-if="fiscalData?.nit" class="receipt-row receipt-small">
+      NIT: {{ fiscalData.nit }}
+    </div>
+    <div v-if="fiscalData?.fiscal_address || businessProfile?.address" class="receipt-row receipt-small">
+      {{ fiscalData?.fiscal_address || businessProfile?.address }}<span v-if="fiscalData?.city || businessProfile?.city">, {{ fiscalData?.city || businessProfile?.city }}</span>
+    </div>
+    <div v-if="fiscalData?.phone || businessProfile?.phone_number" class="receipt-row receipt-small">
+      Tel: {{ fiscalData?.phone || businessProfile?.phone_number }}
+    </div>
+    <div v-if="fiscalData?.email" class="receipt-row receipt-small">
+      {{ fiscalData.email }}
+    </div>
+    <div class="receipt-divider">================================</div>
+    <div class="receipt-row" style="font-weight:bold;">*** PRE-CUENTA ***</div>
+    <div class="receipt-row receipt-small">{{ prefacturaDateTime }}</div>
+    <div v-if="isMesaMode && posStore.activeTableSession?.tableName" class="receipt-row receipt-small">
+      Mesa: {{ posStore.activeTableSession.tableName }}
+    </div>
+    <div v-else-if="posStore.activeTableSession?.isBar" class="receipt-row receipt-small">Barra</div>
+    <div v-else class="receipt-row receipt-small">Mostrador</div>
+    <div v-if="selectedCustomer && !isAnonymousCustomer" class="receipt-row receipt-small">
+      Cliente: {{ selectedCustomer.name || selectedCustomer.phone_number }}
+    </div>
+    <div class="receipt-divider">--------------------------------</div>
+
+    <div v-for="item in cartItems" :key="item.id" class="receipt-item">
+      <span>
+        {{ item.quantity }}x {{ item.product?.name || item.name }}<span v-if="isMesaMode && item.fired === false"> *</span>
+      </span>
+      <span>{{ formatCurrency(getItemTotal(item)) }}</span>
+    </div>
+    <div class="receipt-divider">--------------------------------</div>
+
+    <div v-if="discountAmount > 0" class="receipt-item">
+      <span>Subtotal</span>
+      <span>{{ formatCurrency(cartTotal) }}</span>
+    </div>
+    <div v-if="discountAmount > 0" class="receipt-item">
+      <span>Descuento</span>
+      <span>-{{ formatCurrency(discountAmount) }}</span>
+    </div>
+    <div v-if="taxPreview && taxPreview.standard_tax > 0" class="receipt-item">
+      <span>{{ taxPreview.standard_tax_label || 'Impuesto' }}</span>
+      <span>{{ formatCurrency(taxPreview.standard_tax) }}</span>
+    </div>
+    <div v-if="taxPreview && taxPreview.liquor_tax > 0" class="receipt-item">
+      <span>Impuesto licores</span>
+      <span>{{ formatCurrency(taxPreview.liquor_tax) }}</span>
+    </div>
+    <div class="receipt-total">
+      <span>TOTAL</span>
+      <span>{{ formatCurrency(discountedTotal) }}</span>
+    </div>
+
+    <div v-if="isMesaMode && cartItems.some(i => i.fired === false)" class="receipt-row receipt-small" style="margin-top:6px;">
+      * pendiente de enviar a cocina
+    </div>
+
+    <div class="receipt-divider">================================</div>
+    <!-- Issue #535 — Legal disclaimer: do NOT remove. -->
+    <div class="receipt-footer receipt-small" style="font-weight:bold;">ESTA NO ES UNA FACTURA</div>
+    <div class="receipt-footer receipt-small">Documento informativo — no apto para fines tributarios</div>
+  </div>
+
   <!-- Hidden receipt for printing — only visible via @media print -->
   <div id="pos-receipt" aria-hidden="true">
-    <div class="receipt-header">{{ businessProfile?.display_name || 'WARO' }}</div>
-    <div v-if="businessProfile?.address" class="receipt-row receipt-small">{{ businessProfile.address }}<span v-if="businessProfile.city">, {{ businessProfile.city }}</span></div>
-    <div v-if="businessProfile?.phone_number" class="receipt-row receipt-small">Tel: {{ businessProfile.phone_number }}</div>
+    <!-- Header — prefer fiscal business name (from /facturacion) over public display name (from /negocio) -->
+    <div class="receipt-header">{{ fiscalData?.business_name || businessProfile?.display_name || 'WARO' }}</div>
+    <div v-if="fiscalData?.nit" class="receipt-row receipt-small">NIT: {{ fiscalData.nit }}</div>
+    <div v-if="fiscalData?.fiscal_address || businessProfile?.address" class="receipt-row receipt-small">
+      {{ fiscalData?.fiscal_address || businessProfile?.address }}<span v-if="fiscalData?.city || businessProfile?.city">, {{ fiscalData?.city || businessProfile?.city }}</span>
+    </div>
+    <div v-if="fiscalData?.phone || businessProfile?.phone_number" class="receipt-row receipt-small">
+      Tel: {{ fiscalData?.phone || businessProfile?.phone_number }}
+    </div>
+    <div v-if="fiscalData?.email" class="receipt-row receipt-small">{{ fiscalData.email }}</div>
     <div class="receipt-divider">================================</div>
     <div v-if="(orderResult?.order_number ?? 0) > 0" class="receipt-row">Orden #{{ orderResult?.order_number ?? '' }}</div>
     <div class="receipt-divider">--------------------------------</div>
@@ -2620,8 +2770,9 @@ onUnmounted(() => {
   padding-bottom: 8rem;
 }
 
-/* Receipt — hidden on screen, visible only when printing */
-#pos-receipt {
+/* Receipt + prefactura — hidden on screen, visible only when printing */
+#pos-receipt,
+#pos-prefactura {
   display: none;
 }
 
@@ -2646,12 +2797,20 @@ onUnmounted(() => {
     padding: 0;
   }
 
-  /* Hide everything, then reveal only the receipt */
+  /* Hide everything, then reveal only the receipt (default — post-payment). */
   body * { visibility: hidden; }
   #pos-receipt,
   #pos-receipt * { visibility: visible; }
 
-  #pos-receipt {
+  /* Issue #535 — when body has .printing-prefactura class, swap which
+     printable div is visible. The receipt path stays the default. */
+  body.printing-prefactura #pos-receipt,
+  body.printing-prefactura #pos-receipt * { visibility: hidden !important; }
+  body.printing-prefactura #pos-prefactura,
+  body.printing-prefactura #pos-prefactura * { visibility: visible !important; }
+
+  #pos-receipt,
+  #pos-prefactura {
     display: block !important;
     font-family: 'Courier New', Courier, monospace;
     font-size: 9pt;
@@ -2661,7 +2820,15 @@ onUnmounted(() => {
     color: #000;
     background: #fff;
     padding: 2mm;
+    position: absolute;
+    top: 0;
+    left: 0;
   }
+
+  /* Hide each by default; the body class toggles which is shown. */
+  #pos-prefactura { display: none !important; }
+  body.printing-prefactura #pos-receipt { display: none !important; }
+  body.printing-prefactura #pos-prefactura { display: block !important; }
 
   /* Prevent item rows from splitting across pages */
   .receipt-item {
