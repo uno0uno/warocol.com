@@ -18,14 +18,23 @@ const { data: tablesData, status: tablesStatus, asyncStatus: tablesAsyncStatus, 
   staleTime: 30_000,
 })
 
-// Business profile (shared cache key) — declared up here so its asyncStatus
-// can join the layout's progressive-loading indicator (issue #461).
+// Operaciones audience aggregator — gated under OPERACIONES.
+// Migrated from /api/api/tenant/public-profile (now owner-only MI_NEGOCIO).
+const cache = useQueryCache()
 const { data: profileData, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
-  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
+  key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/operaciones/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
+
+// Cross-audience cache invalidation — POS reads tables_enabled from its own
+// /pos/restaurant-context aggregator; flipping the toggle here must invalidate
+// that key too so /pos/index reflects the change immediately.
+const invalidateContextCaches = async () => {
+  await cache.invalidateQueries({ key: ['operaciones', 'restaurant-context'] })
+  await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
+}
 const businessProfile = computed(() => profileData.value?.data ?? null)
 
 const loadingTables = computed(() => !tablesData.value)
@@ -194,11 +203,11 @@ const toggleTablesEnabled = async () => {
   isTogglingTables.value = true
   const newState = !businessProfile.value.tables_enabled
   try {
-    await $fetch('/api/api/tenant/public-profile', {
+    await $fetch('/api/api/operaciones/toggles/tables', {
       method: 'PATCH',
-      body: { tables_enabled: newState },
+      body: { enabled: newState },
     })
-    await refreshProfile()
+    await invalidateContextCaches()
     posStore.tablesEnabled = newState
     toast.success(
       newState ? 'Gestión de mesas activada para el POS' : 'Gestión de mesas desactivada',

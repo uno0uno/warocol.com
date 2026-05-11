@@ -452,13 +452,22 @@ useHead({ title: 'Comandas & Cocina | Operaciones' })
 const { currentTenant } = useTenantReactive()
 const toast = useToast()
 
-// ─── Business profile ───
+// ─── Business profile (operaciones audience aggregator — gated under OPERACIONES) ───
+const cache = useQueryCache()
 const { data: profileData, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
-  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
+  key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/operaciones/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
+
+// Toggle helper — invalidates BOTH audience caches so POS reflects operational
+// changes immediately (POS reads kds_enabled / comandas_enabled / expediter_enabled
+// from /api/pos/restaurant-context which shares no cache key with operaciones).
+const invalidateContextCaches = async () => {
+  await cache.invalidateQueries({ key: ['operaciones', 'restaurant-context'] })
+  await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
+}
 const businessProfile = computed(() => profileData.value?.data ?? null)
 
 // ─── Stations & categories ───
@@ -576,8 +585,8 @@ const handleToggleComandas = async (event: Event) => {
   if (isTogglingComandas.value) return
   isTogglingComandas.value = true
   try {
-    await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: { comandas_enabled: true } })
-    await refreshProfile()
+    await $fetch('/api/api/operaciones/toggles/comandas', { method: 'PATCH', body: { enabled: true } })
+    await invalidateContextCaches()
     toast.success('Módulo de comandas activado', { title: 'Activado' })
   } catch (error: any) {
     toast.error(error.data?.detail || 'Error al activar comandas', { title: 'Error' })
@@ -591,8 +600,8 @@ const confirmDisableComandas = async () => {
   if (isTogglingComandas.value) return
   isTogglingComandas.value = true
   try {
-    await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: { comandas_enabled: false } })
-    await refreshProfile()
+    await $fetch('/api/api/operaciones/toggles/comandas', { method: 'PATCH', body: { enabled: false } })
+    await invalidateContextCaches()
     toast.success('Módulo de comandas desactivado', { title: 'Desactivado' })
   } catch (error: any) {
     toast.error(error.data?.detail || 'Error al desactivar comandas', { title: 'Error' })
@@ -606,8 +615,8 @@ const handleToggleKds = async (event: Event) => {
   const newState = (event.target as HTMLInputElement).checked
   isTogglingKds.value = true
   try {
-    await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: { kds_enabled: newState } })
-    await refreshProfile()
+    await $fetch('/api/api/operaciones/toggles/kds', { method: 'PATCH', body: { enabled: newState } })
+    await invalidateContextCaches()
     toast.success(
       newState ? 'Pantallas KDS activadas' : 'Pantallas KDS desactivadas',
       { title: newState ? 'Activado' : 'Desactivado' }
@@ -626,8 +635,8 @@ const handleToggleExpediter = async (event: Event) => {
   const newState = (event.target as HTMLInputElement).checked
   isTogglingExpediter.value = true
   try {
-    await $fetch('/api/api/tenant/public-profile', { method: 'PATCH', body: { expediter_enabled: newState } })
-    await refreshProfile()
+    await $fetch('/api/api/operaciones/toggles/expediter', { method: 'PATCH', body: { enabled: newState } })
+    await invalidateContextCaches()
     toast.success(
       newState
         ? 'El mesero puede avanzar comandas desde el POS'

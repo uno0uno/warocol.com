@@ -10,11 +10,12 @@ useHead({ title: 'Personalizar | Operaciones' })
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
 
-// Shared cache key with /operaciones/mesas and /operaciones/comandas so a
-// PATCH from any of these pages refreshes the others on next visit.
+// Operaciones audience aggregator — gated under OPERACIONES.
+// Migrated from /api/api/tenant/public-profile (now owner-only MI_NEGOCIO).
+// Shared cache key with /operaciones/mesas and /operaciones/comandas.
 const { data: profileData, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
-  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
+  key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/operaciones/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
@@ -39,15 +40,15 @@ const toggleAutoSelectGeneric = async () => {
   isToggling.value = true
   const newState = !businessProfile.value.auto_select_generic_enabled
   try {
-    await $fetch('/api/api/tenant/public-profile', {
+    await $fetch('/api/api/operaciones/toggles/auto-select-generic', {
       method: 'PATCH',
-      body: { auto_select_generic_enabled: newState },
+      body: { enabled: newState },
     })
-    // Invalidate both cache entries that hold the public profile:
-    //  - local 'negocio-profile' (this page + mesas/comandas)
-    //  - tenants store 'business-profile' (read by useTenantReactive in checkout)
-    await cache.invalidateQueries({ key: ['tenant'] })
-    await refreshProfile()
+    // Cross-audience invalidation: operaciones (this page + mesas/comandas)
+    // AND pos (read in /pos/index + /pos/checkout). The previous broad
+    // ['tenant'] invalidation no longer matches the audience-scoped keys.
+    await cache.invalidateQueries({ key: ['operaciones', 'restaurant-context'] })
+    await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
     toast.success(
       newState
         ? 'El cobro abrirá con cliente Genérico ya seleccionado'
