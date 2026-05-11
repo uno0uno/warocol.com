@@ -24,11 +24,13 @@ if (typeof window !== 'undefined' && sessionStorage.getItem('posNavigation') !==
   posStore.exitSession()
 }
 
-// ── Table management settings ──────────────────────────────────────────────
-// Reuses the same cached query key as negocio.vue — no extra network request
+// ── POS restaurant context (BFF aggregator) ────────────────────────────────
+// Single endpoint gated under Module.POS; replaces direct /api/tenant/* reads.
+// `tables_enabled` lives on tenant_public_profiles and is included in the
+// aggregator payload. /api/api/tenant/public-profile is now owner-only (MI_NEGOCIO).
 const { data: settingsData, asyncStatus: settingsAsyncStatus } = useQuery({
-  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
+  key: () => ['pos', 'restaurant-context', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/pos/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
