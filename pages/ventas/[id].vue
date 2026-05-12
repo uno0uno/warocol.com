@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
-import { useInvoicingReadiness } from '~/composables/useInvoicingReadiness'
 
 definePageMeta({
   layout: 'dashboard'
@@ -78,9 +77,18 @@ const { data: invoiceData, refetch: refetchInvoice } = useQuery({
   staleTime: 60_000,
 })
 
-// DIAN invoicing readiness — gates the entire electronic-invoice UI section.
-// Same composable / pattern used by the POS checkout (pages/pos/checkout.vue:71).
-const { ready: isInvoicingReady, isLoading: isReadinessLoading } = useInvoicingReadiness()
+// DIAN invoicing readiness — read from the POS restaurant-context aggregator.
+// /api/api/tenant/invoicing-readiness (the richer detail) is owner-only MI_NEGOCIO;
+// this page is cashier-accessible, so we use the POS-gated boolean instead.
+// Shares the cache key with /pos/index + /pos/checkout — no extra request.
+const { data: posContextRes, asyncStatus: posContextAsyncStatus } = useQuery({
+  key: () => ['pos', 'restaurant-context', currentTenant.value?.id ?? null],
+  query: () => $fetch<{ success: boolean; data: { invoicing_ready: boolean } }>('/api/api/pos/restaurant-context'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 60_000,
+})
+const isInvoicingReady = computed(() => posContextRes.value?.data?.invoicing_ready === true)
+const isReadinessLoading = computed(() => posContextAsyncStatus.value === 'loading' && !posContextRes.value)
 
 // Invoice emit state
 const isEmittingInvoice = ref(false)
