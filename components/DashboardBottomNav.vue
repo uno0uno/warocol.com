@@ -75,226 +75,47 @@
     <!-- Menu Modal (grid of icons) -->
     <UiBottomSheetModal v-model="showMenuModal" title="Navegación" max-height="sm">
       <div class="p-4">
-        <div class="grid grid-cols-4 gap-4">
+        <!-- Module-gated grid (#560). Fail-open when enforcement is disabled. -->
+        <div v-if="visibleGridItems.length > 0" class="grid grid-cols-4 gap-4">
           <NuxtLink
-            to="/ventas"
-            @click="showMenuModal = false"
+            v-for="item in visibleGridItems"
+            :key="item.to"
+            :to="item.to"
             class="flex flex-col items-center gap-1"
-          >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'ventas' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <ShoppingCartIcon
-                class="w-6 h-6"
-                :class="activePage === 'ventas' ? 'text-crocus-600' : 'text-titan-600'"
-              />
-            </div>
-            <span class="text-[10px] text-titan-600">Ventas</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/pos"
             @click="showMenuModal = false"
-            class="flex flex-col items-center gap-1"
-          >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'pos' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <ComputerDesktopIcon
-                class="w-6 h-6"
-                :class="activePage === 'pos' ? 'text-crocus-600' : 'text-titan-600'"
-              />
-            </div>
-            <span class="text-[10px] text-titan-600">POS</span>
-          </NuxtLink>
-
-
-          <NuxtLink
-            to="/abastecimiento/compras-directas"
-            @click="showMenuModal = false"
-            class="flex flex-col items-center gap-1"
           >
             <div class="relative">
               <div
                 class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-                :class="activePage === 'abastecimiento' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
+                :class="activePage === item.page ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
               >
-                <DocumentTextIcon
+                <component
+                  :is="item.icon"
                   class="w-6 h-6"
-                  :class="activePage === 'abastecimiento' ? 'text-crocus-600' : 'text-titan-600'"
+                  :class="activePage === item.page ? 'text-crocus-600' : 'text-titan-600'"
                 />
               </div>
               <span
-                v-if="hasCriticalAlerts"
+                v-if="item.showCriticalDot && hasCriticalAlerts"
                 class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive border-2 border-white rounded-full"
-                aria-label="Alertas críticas en abastecimiento"
+                :aria-label="`Alertas críticas en ${item.label.toLowerCase()}`"
               />
             </div>
-            <span class="text-[10px] text-titan-600">Abastecimiento</span>
+            <span class="text-[10px] text-titan-600">{{ item.label }}</span>
           </NuxtLink>
+        </div>
 
+        <!-- Empty-state fallback — guarantees at least one navigation target. -->
+        <div v-else class="grid grid-cols-4 gap-4">
           <NuxtLink
-            to="/menu/productos"
-            @click="showMenuModal = false"
+            to="/"
             class="flex flex-col items-center gap-1"
-          >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'menu' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <CubeIcon
-                class="w-6 h-6"
-                :class="activePage === 'menu' ? 'text-crocus-600' : 'text-titan-600'"
-              />
-            </div>
-            <span class="text-[10px] text-titan-600">Menú</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/operaciones/comandas"
             @click="showMenuModal = false"
-            class="flex flex-col items-center gap-1"
           >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'operaciones' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <AdjustmentsHorizontalIcon
-                class="w-6 h-6"
-                :class="activePage === 'operaciones' ? 'text-crocus-600' : 'text-titan-600'"
-              />
+            <div class="w-12 h-12 rounded-full flex items-center justify-center bg-crocus-100">
+              <HomeIcon class="w-6 h-6 text-crocus-600" />
             </div>
-            <span class="text-[10px] text-titan-600">Operaciones</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/analitica"
-            @click="showMenuModal = false"
-            class="flex flex-col items-center gap-1"
-          >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'analytics' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <ChartBarIcon
-                class="w-6 h-6"
-                :class="activePage === 'analytics' ? 'text-crocus-600' : 'text-titan-600'"
-              />
-            </div>
-            <span class="text-[10px] text-titan-600">Analítica</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/finanzas/cartera"
-            @click="showMenuModal = false"
-            class="flex flex-col items-center gap-1"
-          >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'finanzas' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <BanknotesIcon
-                class="w-6 h-6"
-                :class="activePage === 'finanzas' ? 'text-crocus-600' : 'text-titan-600'"
-              />
-            </div>
-            <span class="text-[10px] text-titan-600">Finanzas</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/equipo/miembros"
-            @click="showMenuModal = false"
-            class="flex flex-col items-center gap-1"
-          >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'equipo' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <UserGroupIcon
-                class="w-6 h-6"
-                :class="activePage === 'equipo' ? 'text-crocus-600' : 'text-titan-600'"
-              />
-            </div>
-            <span class="text-[10px] text-titan-600">Equipo</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/integraciones"
-            @click="showMenuModal = false"
-            class="flex flex-col items-center gap-1"
-          >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'integraciones' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <KeyIcon
-                class="w-6 h-6"
-                :class="activePage === 'integraciones' ? 'text-crocus-600' : 'text-titan-600'"
-              />
-            </div>
-            <span class="text-[10px] text-titan-600">Integraciones</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/despacho/domicilios"
-            @click="showMenuModal = false"
-            class="flex flex-col items-center gap-1"
-          >
-            <div class="relative">
-              <div
-                class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-                :class="activePage === 'despacho' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-              >
-                <MapPinIcon
-                  class="w-6 h-6"
-                  :class="activePage === 'despacho' ? 'text-crocus-600' : 'text-titan-600'"
-                />
-              </div>
-              <span
-                v-if="props.notificationsCount > 0"
-                aria-label="`${props.notificationsCount} notificaciones sin leer`"
-                class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-crocus-500 text-white text-[10px] font-bold rounded-full leading-none"
-              >
-                {{ props.notificationsCount > 9 ? '9+' : props.notificationsCount }}
-              </span>
-            </div>
-            <span class="text-[10px] text-titan-600">Domicilios</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/negocio"
-            @click="showMenuModal = false"
-            class="flex flex-col items-center gap-1"
-          >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'negocio' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <BuildingStorefrontIcon
-                class="w-6 h-6"
-                :class="activePage === 'negocio' ? 'text-crocus-600' : 'text-titan-600'"
-              />
-            </div>
-            <span class="text-[10px] text-titan-600">Mi Negocio</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/gestion/billing"
-            @click="showMenuModal = false"
-            class="flex flex-col items-center gap-1"
-          >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center transition-colors"
-              :class="activePage === 'admin' ? 'bg-crocus-100' : 'bg-titan-100 hover:bg-titan-200'"
-            >
-              <CreditCardIcon
-                class="w-6 h-6"
-                :class="activePage === 'admin' ? 'text-crocus-600' : 'text-titan-600'"
-              />
-            </div>
-            <span class="text-[10px] text-titan-600">Mi Plan</span>
+            <span class="text-[10px] text-titan-600">Inicio</span>
           </NuxtLink>
         </div>
       </div>
@@ -391,30 +212,43 @@
 
 <script setup lang="ts">
 import {
+  AdjustmentsHorizontalIcon,
   BanknotesIcon,
+  Bars3Icon,
+  BellAlertIcon,
+  BellIcon,
   BuildingStorefrontIcon,
+  ChartBarIcon,
+  CheckCircleIcon,
+  Cog6ToothIcon,
   ComputerDesktopIcon,
   CreditCardIcon,
+  CubeIcon,
   DocumentTextIcon,
-  Cog6ToothIcon,
-  CheckCircleIcon,
-  Bars3Icon,
+  HomeIcon,
   KeyIcon,
   MapPinIcon,
-  ShoppingCartIcon,
-  CubeIcon,
-  ChartBarIcon,
-  AdjustmentsHorizontalIcon,
-  UserGroupIcon,
-  BellIcon,
-  BellAlertIcon,
+  ReceiptPercentIcon,
   ShoppingBagIcon,
+  ShoppingCartIcon,
+  UserGroupIcon,
 } from '@heroicons/vue/24/outline'
 import { computed, ref } from 'vue'
+import type { FunctionalComponent } from 'vue'
 import { useLayoutActions } from '../composables/useLayoutActions'
+import type { Module } from '~/stores/access'
+
+type ActivePage =
+  | 'dashboard'
+  | 'ventas' | 'pos' | 'despacho' | 'comandas'
+  | 'financiero' | 'finanzas' | 'facturacion'
+  | 'abastecimiento' | 'inventario' | 'menu' | 'operaciones'
+  | 'analytics' | 'analitica' | 'reportes' | 'pagos'
+  | 'equipo' | 'integraciones'
+  | 'negocio' | 'admin' | 'configuracion'
 
 interface Props {
-  activePage?: 'dashboard' | 'pos' | 'despacho' | 'financiero' | 'abastecimiento' | 'pagos' | 'analytics' | 'analitica' | 'reportes' | 'configuracion' | 'admin' | 'ventas' | 'inventario' | 'menu' | 'equipo' | 'integraciones' | 'operaciones' | 'finanzas'
+  activePage?: ActivePage
   notificationsCount?: number
 }
 
@@ -422,6 +256,37 @@ const props = withDefaults(defineProps<Props>(), {
   activePage: 'financiero',
   notificationsCount: 0,
 })
+
+// Epic 4 (#560): each grid item declares the backend module it requires.
+// useModuleAccess().can() fails open while enforcementMode !== 'enforce',
+// so today's full grid is preserved until Epic 6 flips a tenant.
+interface GridItem {
+  to: string
+  page: ActivePage
+  label: string
+  icon: FunctionalComponent
+  module: Module
+  showCriticalDot?: boolean
+}
+
+const gridItems: GridItem[] = [
+  { to: '/ventas',                          page: 'ventas',         label: 'Ventas',         icon: ShoppingCartIcon,          module: 'ventas' },
+  { to: '/pos',                             page: 'pos',            label: 'POS',            icon: ComputerDesktopIcon,       module: 'pos' },
+  { to: '/abastecimiento/compras-directas', page: 'abastecimiento', label: 'Abastecimiento', icon: DocumentTextIcon,          module: 'abastecimiento', showCriticalDot: true },
+  { to: '/menu/productos',                  page: 'menu',           label: 'Menú',           icon: CubeIcon,                  module: 'menu' },
+  { to: '/operaciones/comandas',            page: 'operaciones',    label: 'Operaciones',    icon: AdjustmentsHorizontalIcon, module: 'operaciones' },
+  { to: '/analitica',                       page: 'analytics',      label: 'Analítica',      icon: ChartBarIcon,              module: 'analitica' },
+  { to: '/finanzas/cartera',                page: 'finanzas',       label: 'Finanzas',       icon: BanknotesIcon,             module: 'finanzas' },
+  { to: '/facturacion',                     page: 'facturacion',    label: 'Facturación',    icon: ReceiptPercentIcon,        module: 'facturacion' },
+  { to: '/equipo/miembros',                 page: 'equipo',         label: 'Equipo',         icon: UserGroupIcon,             module: 'equipo' },
+  { to: '/integraciones',                   page: 'integraciones',  label: 'Integraciones',  icon: KeyIcon,                   module: 'integraciones' },
+  { to: '/despacho/domicilios',             page: 'despacho',       label: 'Domicilios',     icon: MapPinIcon,                module: 'despacho' },
+  { to: '/negocio',                         page: 'negocio',        label: 'Mi Negocio',     icon: BuildingStorefrontIcon,    module: 'mi_negocio' },
+  { to: '/gestion/billing',                 page: 'admin',          label: 'Mi Plan',        icon: CreditCardIcon,            module: 'mi_plan' },
+]
+
+const { can } = useModuleAccess()
+const visibleGridItems = computed(() => gridItems.filter((item) => can(item.module).value))
 
 // Data quality dot indicator
 const { hasCriticalAlerts } = useDataQualityStatus()
