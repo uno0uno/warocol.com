@@ -1036,145 +1036,6 @@ export const useMenuMockData = () => {
   ])
 
   // ============================================================
-  // COMBOS (Bundles)
-  // ============================================================
-
-  const combos = ref([
-    {
-      id: 7, // Continúa la secuencia de productos
-      name: 'Combo Pizza + Papas',
-      description: 'Pizza Margarita mediana + Papas fritas',
-      category: 'Combos',
-      precio_venta: 28000, // Precio especial
-      precio_individual: 33000, // 25000 + 8000
-      ahorro: 5000,
-      costo_calculado: 9350, // Suma de costos de productos
-      margen_porcentaje: 199,
-      controla_stock: true,
-      is_available: true,
-      is_combo: true,
-      allow_modifiers: true,
-      tiempo_preparacion: 20,
-      image: '/images/combo-pizza-papas.jpg'
-    },
-    {
-      id: 8,
-      name: 'Combo Hamburguesa Completo',
-      description: 'Hamburguesa con tocineta + Papas fritas',
-      category: 'Combos',
-      precio_venta: 26000,
-      precio_individual: 30000, // 22000 + 8000
-      ahorro: 4000,
-      costo_calculado: 9720,
-      margen_porcentaje: 167,
-      controla_stock: true,
-      is_available: true,
-      is_combo: true,
-      allow_modifiers: true,
-      tiempo_preparacion: 15,
-      image: '/images/combo-hamburguesa.jpg'
-    },
-    {
-      id: 9,
-      name: 'Combo Familiar',
-      description: '2 Pizzas Pepperoni medianas + 2 Papas fritas',
-      category: 'Combos',
-      precio_venta: 65000,
-      precio_individual: 76000, // (30000*2) + (8000*2)
-      ahorro: 11000,
-      costo_calculado: 25100,
-      margen_porcentaje: 159,
-      controla_stock: true,
-      is_available: true,
-      is_combo: true,
-      allow_modifiers: false,
-      tiempo_preparacion: 25,
-      image: '/images/combo-familiar.jpg'
-    }
-  ])
-
-  // Items de combos (qué productos incluye cada combo)
-  const comboItems = ref([
-    // Combo: Pizza + Papas
-    {
-      combo_id: 7,
-      combo_name: 'Combo Pizza + Papas',
-      producto_id: 1,
-      producto_name: 'Pizza Margarita',
-      cantidad: 1,
-      es_opcional: false,
-      es_personalizable: true,
-      precio_individual: 25000,
-      precio_en_combo: 20000,
-      descuento: 5000
-    },
-    {
-      combo_id: 7,
-      combo_name: 'Combo Pizza + Papas',
-      producto_id: 6,
-      producto_name: 'Papas Fritas',
-      cantidad: 1,
-      es_opcional: false,
-      es_personalizable: false,
-      precio_individual: 8000,
-      precio_en_combo: 8000,
-      descuento: 0
-    },
-
-    // Combo: Hamburguesa Completo
-    {
-      combo_id: 8,
-      combo_name: 'Combo Hamburguesa Completo',
-      producto_id: 5,
-      producto_name: 'Hamburguesa con Tocineta',
-      cantidad: 1,
-      es_opcional: false,
-      es_personalizable: true,
-      precio_individual: 22000,
-      precio_en_combo: 18000,
-      descuento: 4000
-    },
-    {
-      combo_id: 8,
-      combo_name: 'Combo Hamburguesa Completo',
-      producto_id: 6,
-      producto_name: 'Papas Fritas',
-      cantidad: 1,
-      es_opcional: false,
-      es_personalizable: false,
-      precio_individual: 8000,
-      precio_en_combo: 8000,
-      descuento: 0
-    },
-
-    // Combo: Familiar
-    {
-      combo_id: 9,
-      combo_name: 'Combo Familiar',
-      producto_id: 2,
-      producto_name: 'Pizza Pepperoni',
-      cantidad: 2,
-      es_opcional: false,
-      es_personalizable: true,
-      precio_individual: 30000,
-      precio_en_combo: 27000,
-      descuento: 3000
-    },
-    {
-      combo_id: 9,
-      combo_name: 'Combo Familiar',
-      producto_id: 6,
-      producto_name: 'Papas Fritas',
-      cantidad: 2,
-      es_opcional: false,
-      es_personalizable: false,
-      precio_individual: 8000,
-      precio_en_combo: 8000,
-      descuento: 0
-    }
-  ])
-
-  // ============================================================
   // HELPER FUNCTIONS
   // ============================================================
 
@@ -1192,10 +1053,6 @@ export const useMenuMockData = () => {
 
   const getRecetaModificador = (modificadorId: number) => {
     return recetasModificadores.value.find(rm => rm.modificador_id === modificadorId)
-  }
-
-  const getComboItems = (comboId: number) => {
-    return comboItems.value.filter(ci => ci.combo_id === comboId)
   }
 
   const calcularDisponibilidadProducto = (productoId: number) => {
@@ -1230,15 +1087,12 @@ export const useMenuMockData = () => {
     gruposModificadores,
     modificadores,
     recetasModificadores,
-    combos,
-    comboItems,
 
     // Helper functions
     getRecetaByProducto,
     getGruposModificadoresByProducto,
     getModificadoresByGrupo,
     getRecetaModificador,
-    getComboItems,
     calcularDisponibilidadProducto
   }
 }
