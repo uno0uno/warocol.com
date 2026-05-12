@@ -231,10 +231,14 @@ const handleLogout = async () => {
     isLoggingOut.value = true
     await $fetch('/api/auth/signout', { method: 'POST', credentials: 'include' })
     authStore.clearAuth()
+    // #562: clear access store too — otherwise the polling setInterval keeps
+    // firing after logout. Symmetric with the auth.global.js cleanup path.
+    accessStore.clear()
     if (typeof window !== 'undefined') { localStorage.clear(); sessionStorage.clear() }
     await router.push('/')
   } catch {
     authStore.clearAuth()
+    accessStore.clear()
     await router.push('/')
   } finally {
     isLoggingOut.value = false
