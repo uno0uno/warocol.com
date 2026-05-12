@@ -1,5 +1,3 @@
-import type { Module } from '~/stores/access'
-
 /**
  * module-access.global.ts — Epic 4 (warocol.com#489) sub-task #557.
  *
@@ -45,9 +43,8 @@ export default defineNuxtRouteMiddleware((to) => {
   ) return
 
   // Page didn't opt in to module gating → pass through.
-  // Type augmentation of PageMeta lives in #558 (where pages add the meta).
-  // Until then, cast to keep this middleware self-contained.
-  const moduleKey = (to.meta as { module?: string })?.module
+  // PageMeta.module type augmentation lives in app.d.ts (added in #558).
+  const moduleKey = to.meta.module
   if (!moduleKey) return
 
   const { can, enforcementMode } = useModuleAccess()
@@ -57,7 +54,7 @@ export default defineNuxtRouteMiddleware((to) => {
   if (enforcementMode.value !== 'enforce') return
 
   // Denied → redirect to /403 (page ships in #561).
-  if (!can(moduleKey as Module).value) {
+  if (!can(moduleKey).value) {
     return navigateTo('/403')
   }
 })

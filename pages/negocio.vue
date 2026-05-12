@@ -570,7 +570,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/vue/24/outline'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'mi_negocio' })
 useHead({ title: 'Mi Negocio' })
 
 const { isOpenNow, currentTenant } = useTenantReactive()

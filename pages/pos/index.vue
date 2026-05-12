@@ -6,7 +6,8 @@ import type { CachedProduct, TabItem } from '~/stores/usePOSStore'
 import { usePOSStore } from '~/stores/usePOSStore'
 
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
+  module: 'pos',
 })
 
 useHead({ title: 'Punto de Venta' })

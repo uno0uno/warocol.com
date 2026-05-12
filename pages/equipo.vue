@@ -7,7 +7,8 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
+  module: 'equipo',
 })
 
 useHead({ title: 'Equipo' })

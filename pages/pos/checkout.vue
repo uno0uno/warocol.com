@@ -25,7 +25,8 @@ interface CustomerInsights {
 }
 
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
+  module: 'pos',
 })
 
 useHead({ title: 'Checkout' })

@@ -291,7 +291,7 @@
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useFormatters } from '~/composables/useFormatters'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'integraciones' })
 useHead({ title: 'Integraciones - API Keys' })
 
 const toast = useToast()

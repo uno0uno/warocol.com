@@ -14,7 +14,8 @@
 const route = useRoute()
 
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
+  module: 'abastecimiento',
 })
 
 // Navigation configuration
