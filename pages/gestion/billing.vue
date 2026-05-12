@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'mi_plan' })
 
 const route = useRoute()
 

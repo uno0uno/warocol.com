@@ -13,7 +13,7 @@ import {
   CheckCircleIcon,
 } from '@heroicons/vue/24/outline'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'facturacion' })
 useHead({ title: 'Facturación' })
 
 const { currentTenant } = useTenantReactive()

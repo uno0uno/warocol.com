@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'despacho' })
 
 const route = useRoute()
 const { businessProfile } = useTenantReactive()

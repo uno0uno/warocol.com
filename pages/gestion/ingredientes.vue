@@ -10,6 +10,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: 'dashboard',
+  module: 'abastecimiento',
 })
 
 const route = useRoute()

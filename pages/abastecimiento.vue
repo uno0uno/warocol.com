@@ -17,7 +17,8 @@ const route = useRoute()
 const lastAbastecimientoPath = useState<string | null>('abastecimiento-last-path', () => null)
 
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
+  module: 'abastecimiento',
 })
 
 watch(
