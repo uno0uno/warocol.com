@@ -6,7 +6,6 @@ import { useQuery } from '@pinia/colada'
 import QRCode from 'qrcode'
 import { usePOSStore } from '~/stores/usePOSStore'
 import { useAddressStore, type AddressCreate } from '~/stores/address'
-import { useInvoicingReadiness } from '~/composables/useInvoicingReadiness'
 import { PAYMENT_DEFAULTS, type PosPaymentGroup, type PosPaymentMethod } from '~/utils/paymentDefaults'
 import DeliveryAddressPicker from '~/components/pos/checkout/DeliveryAddressPicker.vue'
 import DeliveryAddressForm from '~/components/pos/checkout/DeliveryAddressForm.vue'
@@ -66,10 +65,12 @@ const emailFromProfile = ref(false)
 const isSendingEmail = ref(false)
 const cartItemsSnapshot = ref<any[]>([])
 
-// Invoicing readiness gate (issue #450) — backend tells us if this tenant is
-// fully configured to emit electronic invoices. Drives whether the
-// "Generar factura electrónica DIAN" button is rendered.
-const { ready: isInvoicingReady, isLoading: isReadinessLoading } = useInvoicingReadiness()
+// Invoicing readiness gate (issue #450) — derived from the POS restaurant
+// context aggregator (`settingsData` below). Backend gates the rich
+// readiness detail under owner-only MI_NEGOCIO; POS only needs the boolean,
+// which is included in /api/pos/restaurant-context.
+const isInvoicingReady = computed(() => settingsData.value?.data?.invoicing_ready === true)
+const isReadinessLoading = computed(() => !settingsData.value)
 
 // Invoice state
 const invoiceLoading = ref(false)
@@ -181,10 +182,11 @@ const refreshTaxPreview = async () => {
   }
 }
 
-// ── KDS / Comandas feature flag — reuses same cache key as index.vue (no extra network request)
+// ── POS restaurant context (BFF aggregator) — reuses same cache key as index.vue (no extra network request)
+// Migrated from /api/api/tenant/public-profile (now owner-only MI_NEGOCIO).
 const { data: settingsData } = useQuery({
-  key: () => ['tenant', 'negocio-profile', currentTenant.value?.id ?? null],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/public-profile'),
+  key: () => ['pos', 'restaurant-context', currentTenant.value?.id ?? null],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/api/pos/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
@@ -966,15 +968,11 @@ const printReceipt = async () => {
   window.print()
 }
 
-// Issue #535 — fetch tenant fiscal data once for the prefactura header
-// (NIT, razón social, fiscal address). Same source as the /facturacion page.
-const { data: fiscalDataRes } = useQuery({
-  key: () => ['tenant', 'fiscal-data', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/fiscal-data'),
-  enabled: () => !!currentTenant.value,
-  staleTime: 300_000,
-})
-const fiscalData = computed(() => fiscalDataRes.value?.data ?? null)
+// Issue #535 — tenant fiscal data for the prefactura header.
+// Read from the POS restaurant-context aggregator (settingsData above) so
+// the cashier doesn't need MI_NEGOCIO. The /facturacion owner panel reads
+// /api/api/tenant/fiscal-data directly with its richer write surface.
+const fiscalData = computed(() => settingsData.value?.data?.fiscal_data ?? null)
 
 // Issue #535 — print pre-bill (prefactura) before payment.
 // Toggles a body class so @media print rules switch which printable div is
