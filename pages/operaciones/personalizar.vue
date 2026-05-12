@@ -15,7 +15,7 @@ const cache = useQueryCache()
 // Shared cache key with /operaciones/mesas and /operaciones/comandas.
 const { data: profileData, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
   key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/operaciones/restaurant-context'),
+  query: () => $fetch<{ success: boolean; data: any }>('/api/operaciones/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
@@ -40,7 +40,7 @@ const toggleAutoSelectGeneric = async () => {
   isToggling.value = true
   const newState = !businessProfile.value.auto_select_generic_enabled
   try {
-    await $fetch('/api/api/operaciones/toggles/auto-select-generic', {
+    await $fetch('/api/operaciones/toggles/auto-select-generic', {
       method: 'PATCH',
       body: { enabled: newState },
     })

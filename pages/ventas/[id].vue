@@ -83,7 +83,7 @@ const { data: invoiceData, refetch: refetchInvoice } = useQuery({
 // Shares the cache key with /pos/index + /pos/checkout — no extra request.
 const { data: posContextRes, asyncStatus: posContextAsyncStatus } = useQuery({
   key: () => ['pos', 'restaurant-context', currentTenant.value?.id ?? null],
-  query: () => $fetch<{ success: boolean; data: { invoicing_ready: boolean } }>('/api/api/pos/restaurant-context'),
+  query: () => $fetch<{ success: boolean; data: { invoicing_ready: boolean } }>('/api/pos/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
 })
