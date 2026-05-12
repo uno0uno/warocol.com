@@ -186,7 +186,7 @@ const refreshTaxPreview = async () => {
 // Migrated from /api/api/tenant/public-profile (now owner-only MI_NEGOCIO).
 const { data: settingsData } = useQuery({
   key: () => ['pos', 'restaurant-context', currentTenant.value?.id ?? null],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/pos/restaurant-context'),
+  query: () => $fetch<{ success: boolean; data: any }>('/api/pos/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })

@@ -456,7 +456,7 @@ const toast = useToast()
 const cache = useQueryCache()
 const { data: profileData, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
   key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/operaciones/restaurant-context'),
+  query: () => $fetch<{ success: boolean; data: any }>('/api/operaciones/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
@@ -585,7 +585,7 @@ const handleToggleComandas = async (event: Event) => {
   if (isTogglingComandas.value) return
   isTogglingComandas.value = true
   try {
-    await $fetch('/api/api/operaciones/toggles/comandas', { method: 'PATCH', body: { enabled: true } })
+    await $fetch('/api/operaciones/toggles/comandas', { method: 'PATCH', body: { enabled: true } })
     await invalidateContextCaches()
     toast.success('Módulo de comandas activado', { title: 'Activado' })
   } catch (error: any) {
@@ -600,7 +600,7 @@ const confirmDisableComandas = async () => {
   if (isTogglingComandas.value) return
   isTogglingComandas.value = true
   try {
-    await $fetch('/api/api/operaciones/toggles/comandas', { method: 'PATCH', body: { enabled: false } })
+    await $fetch('/api/operaciones/toggles/comandas', { method: 'PATCH', body: { enabled: false } })
     await invalidateContextCaches()
     toast.success('Módulo de comandas desactivado', { title: 'Desactivado' })
   } catch (error: any) {
@@ -615,7 +615,7 @@ const handleToggleKds = async (event: Event) => {
   const newState = (event.target as HTMLInputElement).checked
   isTogglingKds.value = true
   try {
-    await $fetch('/api/api/operaciones/toggles/kds', { method: 'PATCH', body: { enabled: newState } })
+    await $fetch('/api/operaciones/toggles/kds', { method: 'PATCH', body: { enabled: newState } })
     await invalidateContextCaches()
     toast.success(
       newState ? 'Pantallas KDS activadas' : 'Pantallas KDS desactivadas',
@@ -635,7 +635,7 @@ const handleToggleExpediter = async (event: Event) => {
   const newState = (event.target as HTMLInputElement).checked
   isTogglingExpediter.value = true
   try {
-    await $fetch('/api/api/operaciones/toggles/expediter', { method: 'PATCH', body: { enabled: newState } })
+    await $fetch('/api/operaciones/toggles/expediter', { method: 'PATCH', body: { enabled: newState } })
     await invalidateContextCaches()
     toast.success(
       newState

@@ -23,7 +23,7 @@ const { data: tablesData, status: tablesStatus, asyncStatus: tablesAsyncStatus, 
 const cache = useQueryCache()
 const { data: profileData, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
   key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: any }>('/api/api/operaciones/restaurant-context'),
+  query: () => $fetch<{ success: boolean; data: any }>('/api/operaciones/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
@@ -203,7 +203,7 @@ const toggleTablesEnabled = async () => {
   isTogglingTables.value = true
   const newState = !businessProfile.value.tables_enabled
   try {
-    await $fetch('/api/api/operaciones/toggles/tables', {
+    await $fetch('/api/operaciones/toggles/tables', {
       method: 'PATCH',
       body: { enabled: newState },
     })
