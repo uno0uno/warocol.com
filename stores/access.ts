@@ -38,6 +38,14 @@ interface AccessResponse {
   enforcement_mode: EnforcementMode
 }
 
+// Polling handle — module scope so it survives store re-evaluation but stays
+// per-tab on the client. Never written on SSR (the `import.meta.client` guard
+// in armPolling() ensures every server request leaves this as null).
+// Epic 4 (#562): refreshes access state every 60s so mid-session permission
+// changes (owner edits matrix in Epic 5) propagate without a page reload.
+const POLL_INTERVAL_MS = 60_000
+let pollingHandle: ReturnType<typeof setInterval> | null = null
+
 export const useAccessStore = defineStore('access', () => {
   const role = ref<string | null>(null)
   const modules = ref<string[]>([])
@@ -56,19 +64,38 @@ export const useAccessStore = defineStore('access', () => {
       modules.value = data.modules ?? []
       enforcementMode.value = data.enforcement_mode ?? 'disabled'
       isLoaded.value = true
+      armPolling()
     } catch (err) {
       // Fail-open: keep current state. enforcementMode stays at its current
       // value (initially 'disabled' which makes can() always return true).
-      // Matches the safety guarantee in Epic 4's body.
+      // Matches the safety guarantee in Epic 4's body. Polling stays unarmed
+      // until a successful load — next auth navigation will retry.
       console.error('useAccessStore.load() failed:', err)
     }
   }
 
   function clear() {
+    stopPolling()
     role.value = null
     modules.value = []
     enforcementMode.value = 'disabled'
     isLoaded.value = false
+  }
+
+  // Self-arms after first successful load. Idempotent — subsequent load()
+  // calls (whether from auth middleware re-entry or from the polling tick
+  // itself) won't double-arm.
+  function armPolling() {
+    if (!import.meta.client) return
+    if (pollingHandle !== null) return
+    pollingHandle = setInterval(() => { load() }, POLL_INTERVAL_MS)
+  }
+
+  function stopPolling() {
+    if (pollingHandle !== null) {
+      clearInterval(pollingHandle)
+      pollingHandle = null
+    }
   }
 
   /**
