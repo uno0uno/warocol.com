@@ -47,7 +47,7 @@
                 ref="searchInputRef"
                 v-model="searchQuery"
                 type="text"
-                placeholder="Nombre o teléfono..."
+                placeholder="Nombre, teléfono, cédula o NIT..."
                 class="w-full pl-10 pr-10 py-3 border-2 border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-text-primary bg-background text-base"
                 autocomplete="off"
               />
@@ -68,11 +68,12 @@
           <div class="flex-1 overflow-y-auto">
 
             <!-- Empty state: no query -->
-            <div v-if="!searchQuery" class="flex flex-col items-center justify-center py-8 text-text-secondary">
+            <div v-if="!searchQuery" class="flex flex-col items-center justify-center py-8 text-text-secondary px-6">
               <svg class="h-12 w-12 mb-3 opacity-40" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
               </svg>
-              <p class="text-sm">Escribe para buscar un cliente</p>
+              <p class="text-sm font-medium text-text-primary">Buscar cliente</p>
+              <p class="text-xs mt-1 text-center">Por nombre, teléfono, cédula o NIT</p>
             </div>
 
             <!-- Loading skeleton -->
@@ -100,6 +101,9 @@
                 <div class="flex-1 min-w-0">
                   <p class="font-medium text-text-primary truncate">{{ customer.name || 'Sin nombre' }}</p>
                   <p class="text-sm text-text-secondary truncate">{{ customer.phone_number || 'Sin teléfono' }}</p>
+                  <p v-if="customer.fiscal_id" class="text-xs text-text-tertiary truncate">
+                    {{ customer.fiscal_id_type || 'Doc' }}: {{ customer.fiscal_id }}
+                  </p>
                 </div>
                 <svg class="h-4 w-4 text-text-tertiary flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -447,6 +451,8 @@ interface CustomerSummary {
   name: string | null
   phone_number: string | null
   email: string | null
+  fiscal_id: string | null
+  fiscal_id_type: string | null
 }
 
 interface SelectedCustomer extends FiscalFields {
