@@ -18,90 +18,94 @@
     <template #navigation="{ collapsed }">
 
       <!-- ── OPERACIÓN (frecuente) ── -->
-      <div class="space-y-0.5">
-        <p v-if="!collapsed" class="nav-section-label">Operación</p>
-        <NuxtLink
-          v-for="item in primaryItems"
-          :key="item.to"
-          :to="item.to"
-          :title="item.label"
-          :class="[
-            'nav-item group',
-            collapsed ? 'justify-center' : '',
-            activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
-          ]"
-        >
-          <component :is="item.icon" class="nav-icon" />
-          <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ item.label }}</span>
-        </NuxtLink>
-      </div>
+      <template v-if="visiblePrimaryItems.length">
+        <div class="space-y-0.5">
+          <p v-if="!collapsed" class="nav-section-label">Operación</p>
+          <NuxtLink
+            v-for="item in visiblePrimaryItems"
+            :key="item.to"
+            :to="item.to"
+            :title="item.label"
+            :class="[
+              'nav-item group',
+              collapsed ? 'justify-center' : '',
+              activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
+            ]"
+          >
+            <component :is="item.icon" class="nav-icon" />
+            <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ item.label }}</span>
+          </NuxtLink>
+        </div>
+      </template>
 
-      <!-- ── DIVIDER ── -->
-      <div class="my-1.5 mx-1 border-t nav-divider" />
+      <!-- ── HERRAMIENTAS (with leading divider) ── -->
+      <template v-if="visibleSecondaryItems.length">
+        <div class="my-1.5 mx-1 border-t nav-divider" />
+        <div class="space-y-0.5">
+          <p v-if="!collapsed" class="nav-section-label">Herramientas</p>
+          <NuxtLink
+            v-for="item in visibleSecondaryItems"
+            :key="item.to"
+            :to="item.to"
+            :title="item.label"
+            :class="[
+              'nav-item',
+              collapsed ? 'justify-center' : '',
+              activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
+            ]"
+          >
+            <component :is="item.icon" class="nav-icon" />
+            <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">
+              {{ item.label }}
+              <span
+                v-if="item.page === 'abastecimiento' && hasCriticalAlerts"
+                class="inline-block w-1.5 h-1.5 rounded-full bg-destructive align-middle ml-1.5"
+              />
+            </span>
+          </NuxtLink>
+        </div>
+      </template>
 
-      <!-- ── HERRAMIENTAS ── -->
-      <div class="space-y-0.5">
-        <p v-if="!collapsed" class="nav-section-label">Herramientas</p>
-        <NuxtLink
-          v-for="item in secondaryItems"
-          :key="item.to"
-          :to="item.to"
-          :title="item.label"
-          :class="[
-            'nav-item',
-            collapsed ? 'justify-center' : '',
-            activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
-          ]"
-        >
-          <component :is="item.icon" class="nav-icon" />
-          <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">
-            {{ item.label }}
-            <span
-              v-if="item.page === 'abastecimiento' && hasCriticalAlerts"
-              class="inline-block w-1.5 h-1.5 rounded-full bg-destructive align-middle ml-1.5"
-            />
-          </span>
-        </NuxtLink>
-      </div>
-
-      <!-- ── DIVIDER ── -->
-      <div class="my-1.5 mx-1 border-t nav-divider" />
-
-      <!-- ── APPS ── -->
-      <div class="space-y-0.5">
-        <p v-if="!collapsed" class="nav-section-label">Apps</p>
-        <a
-          href="https://warotickets.com/gestion/eventos"
-          target="_blank"
-          title="Eventos"
-          :class="['nav-item nav-item--idle', collapsed ? 'justify-center' : '']"
-        >
-          <Squares2X2Icon class="nav-icon" />
-          <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">Eventos</span>
-        </a>
-      </div>
+      <!-- ── APPS (with leading divider) — Eventos is owner-only — -->
+      <template v-if="showEventos">
+        <div class="my-1.5 mx-1 border-t nav-divider" />
+        <div class="space-y-0.5">
+          <p v-if="!collapsed" class="nav-section-label">Apps</p>
+          <a
+            href="https://warotickets.com/gestion/eventos"
+            target="_blank"
+            title="Eventos"
+            :class="['nav-item nav-item--idle', collapsed ? 'justify-center' : '']"
+          >
+            <Squares2X2Icon class="nav-icon" />
+            <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">Eventos</span>
+          </a>
+        </div>
+      </template>
 
       <!-- ── SPACER ── -->
       <div class="flex-1" style="min-height: 1rem;" />
 
       <!-- ── CUENTA (fondo) ── -->
-      <div class="space-y-0.5">
-        <p v-if="!collapsed" class="nav-section-label">Cuenta</p>
-        <NuxtLink
-          v-for="item in cuentaItems"
-          :key="item.to"
-          :to="item.to"
-          :title="item.label"
-          :class="[
-            'nav-item',
-            collapsed ? 'justify-center' : '',
-            activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
-          ]"
-        >
-          <component :is="item.icon" class="nav-icon" />
-          <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ item.label }}</span>
-        </NuxtLink>
-      </div>
+      <template v-if="visibleCuentaItems.length">
+        <div class="space-y-0.5">
+          <p v-if="!collapsed" class="nav-section-label">Cuenta</p>
+          <NuxtLink
+            v-for="item in visibleCuentaItems"
+            :key="item.to"
+            :to="item.to"
+            :title="item.label"
+            :class="[
+              'nav-item',
+              collapsed ? 'justify-center' : '',
+              activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
+            ]"
+          >
+            <component :is="item.icon" class="nav-icon" />
+            <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ item.label }}</span>
+          </NuxtLink>
+        </div>
+      </template>
 
     </template>
 
@@ -129,7 +133,9 @@
 defineOptions({ inheritAttrs: false })
 
 import { computed, nextTick, ref } from 'vue'
+import type { FunctionalComponent } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
+import type { Module } from '~/stores/access'
 import {
   AdjustmentsHorizontalIcon,
   ArrowRightOnRectangleIcon,
@@ -157,6 +163,14 @@ interface Props {
 }
 const props = withDefaults(defineProps<Props>(), { activePage: 'financiero' })
 
+interface SidebarItem {
+  to: string
+  page: string
+  label: string
+  icon: FunctionalComponent
+  module: Module
+}
+
 const isLoggingOut = ref(false)
 const router = useRouter()
 
@@ -167,31 +181,50 @@ const authStore = useAuthStore()
 // ── Nav items ──────────────────────────────────────────────
 const { businessProfile } = useTenantReactive()
 
-const primaryItems = computed(() => {
-  const items = [
-    { to: '/pos',               page: 'pos',       label: 'POS',        icon: ComputerDesktopIcon },
-    { to: '/ventas',            page: 'ventas',    label: 'Ventas',     icon: ShoppingCartIcon },
-    { to: '/despacho/domicilios', page: 'despacho', label: 'Despacho', icon: MapPinIcon },
+// Epic 4 (#559): each item declares the backend module it requires.
+// useModuleAccess().can() fails open while enforcementMode !== 'enforce',
+// so today's sidebar (every module visible) is preserved until Epic 6
+// flips a tenant.
+const primaryItems = computed<SidebarItem[]>(() => [
+  { to: '/pos',                 page: 'pos',      label: 'POS',      icon: ComputerDesktopIcon, module: 'pos' },
+  { to: '/ventas',              page: 'ventas',   label: 'Ventas',   icon: ShoppingCartIcon,    module: 'ventas' },
+  { to: '/despacho/domicilios', page: 'despacho', label: 'Despacho', icon: MapPinIcon,          module: 'despacho' },
+])
 
-  ]
-  return items
-})
-
-const secondaryItems = [
-  { to: '/analitica',                        page: 'analytics',     label: 'Analítica Ventas', icon: ChartBarIcon },
-  { to: '/finanzas/arqueo',                  page: 'finanzas',      label: 'Finanzas',       icon: BanknotesIcon },
-  { to: '/facturacion',                      page: 'facturacion',   label: 'Facturación',    icon: DocumentTextIcon },
-  { to: '/menu/productos',                   page: 'menu',          label: 'Menú',           icon: CubeIcon },
-  { to: '/operaciones/comandas',             page: 'operaciones',   label: 'Operaciones',    icon: AdjustmentsHorizontalIcon },
-  { to: '/abastecimiento/compras-directas',  page: 'abastecimiento',label: 'Abastecimiento', icon: TruckIcon },
-  { to: '/equipo/miembros',                  page: 'equipo',        label: 'Equipo',         icon: UserGroupIcon },
-  { to: '/integraciones',                    page: 'integraciones', label: 'Integraciones',  icon: KeyIcon },
+const secondaryItems: SidebarItem[] = [
+  { to: '/analitica',                        page: 'analytics',      label: 'Analítica Ventas', icon: ChartBarIcon,              module: 'analitica' },
+  { to: '/finanzas/arqueo',                  page: 'finanzas',       label: 'Finanzas',         icon: BanknotesIcon,             module: 'finanzas' },
+  { to: '/facturacion',                      page: 'facturacion',    label: 'Facturación',      icon: DocumentTextIcon,          module: 'facturacion' },
+  { to: '/menu/productos',                   page: 'menu',           label: 'Menú',             icon: CubeIcon,                  module: 'menu' },
+  { to: '/operaciones/comandas',             page: 'operaciones',    label: 'Operaciones',      icon: AdjustmentsHorizontalIcon, module: 'operaciones' },
+  { to: '/abastecimiento/compras-directas',  page: 'abastecimiento', label: 'Abastecimiento',   icon: TruckIcon,                 module: 'abastecimiento' },
+  { to: '/equipo/miembros',                  page: 'equipo',         label: 'Equipo',           icon: UserGroupIcon,             module: 'equipo' },
+  { to: '/integraciones',                    page: 'integraciones',  label: 'Integraciones',    icon: KeyIcon,                   module: 'integraciones' },
 ]
 
-const cuentaItems = [
-  { to: '/negocio',         page: 'negocio', label: 'Mi Negocio', icon: BuildingStorefrontIcon },
-  { to: '/gestion/billing', page: 'admin',   label: 'Mi Plan',    icon: CreditCardIcon },
+const cuentaItems: SidebarItem[] = [
+  { to: '/negocio',         page: 'negocio', label: 'Mi Negocio', icon: BuildingStorefrontIcon, module: 'mi_negocio' },
+  { to: '/gestion/billing', page: 'admin',   label: 'Mi Plan',    icon: CreditCardIcon,         module: 'mi_plan' },
 ]
+
+// ── Module-based filtering (#559) ──────────────────────────────
+const { can } = useModuleAccess()
+const accessStore = useAccessStore()
+
+const visiblePrimaryItems = computed(() =>
+  primaryItems.value.filter((item) => can(item.module).value)
+)
+const visibleSecondaryItems = computed(() =>
+  secondaryItems.filter((item) => can(item.module).value)
+)
+const visibleCuentaItems = computed(() =>
+  cuentaItems.filter((item) => can(item.module).value)
+)
+
+// Eventos is special: Module.EVENTOS was removed from the backend enum
+// in api-warolabs#212 (Eventos lives in warotickets.com — external product).
+// Gate by role directly. Owner-only.
+const showEventos = computed(() => accessStore.role === 'owner')
 
 const handleLogout = async () => {
   try {
