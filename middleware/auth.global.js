@@ -11,6 +11,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const isKds = to.meta?.layout === 'kds'
 
   const authStore = useAuthStore()
+  const accessStore = useAccessStore()
 
   // If user already has a valid session and tries to access login, redirect to ventas
   if (authStore.isSessionValid && to.path === '/auth/login') {
@@ -33,6 +34,12 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   // ✅ Check if we already have a valid session in the store
   if (authStore.isSessionValid) {
+    // Hydrate the access store on first navigation if it wasn't loaded yet
+    // (e.g. page refresh inside an authenticated session). Fire-and-forget —
+    // sidebar / gates fail-open while enforcementMode stays at 'disabled'.
+    if (!accessStore.isLoaded) {
+      accessStore.load()
+    }
     return
   }
 
@@ -53,6 +60,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     if (error.value || !sessionResponse.value?.user) {
       // No valid session
       authStore.clearAuth()
+      accessStore.clear()
 
       // If not on a public route, redirect to login
 
@@ -69,10 +77,14 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
           // ... other user properties
         }
       })
+
+      // Hydrate access store (role + modules + enforcement_mode for Epic 4)
+      await accessStore.load()
     }
   } catch (err) {
     console.error('Auth middleware error:', err)
     authStore.clearAuth()
+    accessStore.clear()
     return navigateTo('/auth/login')
   } finally {
     authStore.setLoading(false)
