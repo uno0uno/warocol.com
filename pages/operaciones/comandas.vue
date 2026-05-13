@@ -748,11 +748,11 @@ const tenantMembers = computed(() =>
   (businessProfile.value as any)?.members ?? [],
 )
 
-// Tables data (reusing /api/api/tables which is already gated under POS).
+// Tables data (reusing /api/tables which is already gated under POS).
 // Only assignable tables: not bar, active, not deleted.
 const { data: tablesData, refetch: refetchTables } = useQuery({
   key: () => ['tables', 'for-assignment'],
-  query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/tables?include_inactive=false'),
+  query: () => $fetch<{ success: boolean; data: any[] }>('/api/tables?include_inactive=false'),
 })
 const assignableTables = computed(() => {
   const rows = tablesData.value?.data ?? []
