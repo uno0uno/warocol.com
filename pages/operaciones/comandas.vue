@@ -148,30 +148,6 @@
           </div>
         </div>
 
-        <!-- Issue #573 — Waiter attribution feature flag (independent of comandas) -->
-        <div class="space-y-2 pt-3 border-t border-border">
-          <div class="flex items-center justify-between py-1">
-            <div>
-              <p class="text-sm font-medium text-text-primary">Asignar mesero por mesa</p>
-              <p class="text-xs text-text-secondary mt-0.5">
-                Permite asignar un mesero por defecto a cada mesa (con historial), y atribuir
-                meseros por sesión y por orden en POS. Habilita el panel de gestión debajo.
-              </p>
-            </div>
-            <div class="flex-shrink-0 ml-4 flex items-center justify-center w-10 h-6">
-              <UiLoadingDots v-if="isTogglingWaiterAttribution" color="var(--color-primary)" size="11px" />
-              <label v-else class="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  class="sr-only peer"
-                  :checked="businessProfile?.waiter_attribution_enabled"
-                  @change="handleToggleWaiterAttribution"
-                />
-                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-              </label>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -318,48 +294,6 @@
         </template>
       </UiResponsiveDataView>
     </div>
-
-    <!-- ══════ MESERO POR MESA (issue #573) — visible solo si toggles ON ══════ -->
-    <div
-      v-if="businessProfile?.waiter_attribution_enabled && businessProfile?.tables_enabled"
-      class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6"
-    >
-      <div class="flex items-center gap-2 mb-1">
-        <UserGroupIcon class="w-5 h-5 text-primary flex-shrink-0" />
-        <h3 class="text-base sm:text-lg font-semibold text-text-primary">Mesero por mesa</h3>
-      </div>
-      <p class="text-xs text-text-secondary mb-4">
-        Asigna un mesero por defecto a cada mesa. Las barras no aplican.
-        El historial se preserva incluso si el miembro se elimina.
-      </p>
-
-      <div v-if="assignableTables.length === 0" class="py-8 text-center">
-        <p class="text-sm font-semibold text-text-secondary">Sin mesas asignables</p>
-        <p class="text-xs text-text-tertiary mt-1">
-          Crea mesas en <span class="font-mono">/operaciones/mesas</span> para asignar meseros.
-        </p>
-      </div>
-
-      <div v-else class="space-y-2">
-        <GestionOperacionesMesaMemberAssignRow
-          v-for="tbl in assignableTables"
-          :key="tbl.id"
-          :table="tbl"
-          :members="tenantMembers"
-          :loading="isAssigningMemberTableId === tbl.id"
-          @assign="(memberId) => handleAssignMember(tbl.id, memberId)"
-          @view-history="() => openHistoryModal(tbl)"
-        />
-      </div>
-    </div>
-
-    <!-- History modal -->
-    <GestionOperacionesMesaAssignmentHistoryModal
-      v-if="historyModalTable"
-      :open="!!historyModalTable"
-      :table="historyModalTable"
-      @close="historyModalTable = null"
-    />
 
     </template>
 
@@ -512,7 +446,6 @@ import {
   XMarkIcon,
   ExclamationTriangleIcon,
   PencilSquareIcon,
-  UserGroupIcon,
 } from '@heroicons/vue/24/outline'
 
 definePageMeta({ layout: 'dashboard' })
@@ -717,73 +650,6 @@ const handleToggleExpediter = async (event: Event) => {
   } finally {
     isTogglingExpediter.value = false
   }
-}
-
-// Issue #573 — Waiter attribution toggle + per-table assignment
-const isTogglingWaiterAttribution = ref(false)
-const handleToggleWaiterAttribution = async (event: Event) => {
-  if (isTogglingWaiterAttribution.value) return
-  const newState = (event.target as HTMLInputElement).checked
-  isTogglingWaiterAttribution.value = true
-  try {
-    await $fetch('/api/operaciones/toggles/waiter-attribution', { method: 'PATCH', body: { enabled: newState } })
-    await invalidateContextCaches()
-    await cache.invalidateQueries({ key: ['tables'] })
-    toast.success(
-      newState
-        ? 'Habilitado. Configura meseros en el panel debajo.'
-        : 'Asignación de meseros deshabilitada',
-      { title: newState ? 'Activado' : 'Desactivado' }
-    )
-  } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al cambiar el toggle', { title: 'Error' })
-  } finally {
-    isTogglingWaiterAttribution.value = false
-  }
-}
-
-// Members list comes embedded in the operaciones aggregator (so cashiers/
-// supervisors don't need Module.EQUIPO to populate the dropdown).
-const tenantMembers = computed(() =>
-  (businessProfile.value as any)?.members ?? [],
-)
-
-// Tables data (reusing /api/tables which is already gated under POS).
-// Only assignable tables: not bar, active, not deleted.
-const { data: tablesData, refetch: refetchTables } = useQuery({
-  key: () => ['tables', 'for-assignment'],
-  query: () => $fetch<{ success: boolean; data: any[] }>('/api/tables?include_inactive=false'),
-})
-const assignableTables = computed(() => {
-  const rows = tablesData.value?.data ?? []
-  return rows.filter((t: any) => !t.is_bar && t.is_active && !t.deleted_at)
-})
-
-const isAssigningMemberTableId = ref<string | null>(null)
-const handleAssignMember = async (tableId: string, memberId: string | null) => {
-  if (isAssigningMemberTableId.value) return
-  isAssigningMemberTableId.value = tableId
-  try {
-    await $fetch(`/api/operaciones/tables/${tableId}/assigned-member`, {
-      method: 'PATCH',
-      body: { member_id: memberId },
-    })
-    await refetchTables()
-    await cache.invalidateQueries({ key: ['operaciones', 'tables', tableId, 'assignment-history'] })
-    toast.success(
-      memberId ? 'Mesero asignado' : 'Asignación removida',
-      { title: 'Guardado' },
-    )
-  } catch (error: any) {
-    toast.error(error.data?.detail || 'Error al asignar mesero', { title: 'Error' })
-  } finally {
-    isAssigningMemberTableId.value = null
-  }
-}
-
-const historyModalTable = ref<{ id: string; name: string } | null>(null)
-const openHistoryModal = (tbl: any) => {
-  historyModalTable.value = { id: tbl.id, name: tbl.name }
 }
 
 const kdsBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://warocol.com'
