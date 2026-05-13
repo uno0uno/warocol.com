@@ -931,7 +931,8 @@ onUnmounted(() => {
                 :value="bannerEffectiveWaiterId || ''"
                 :disabled="isChangingSessionWaiter"
                 aria-label="Cambiar mesero de la sesión activa"
-                class="inline-flex items-center gap-1.5 min-h-[36px] pl-7 pr-7 py-1.5 rounded-lg border text-[11px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer"
+                class="inline-flex items-center gap-1.5 pl-7 pr-7 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-none cursor-pointer [&::-ms-expand]:hidden"
+                style="background-image: none; -webkit-appearance: none; -moz-appearance: none;"
                 :class="bannerEffectiveWaiterId
                   ? 'border-primary/30 bg-primary/5 text-primary'
                   : 'border-border bg-surface text-text-tertiary hover:text-text-secondary'"
@@ -947,7 +948,7 @@ onUnmounted(() => {
                 </option>
               </select>
               <!-- Icon (overlapping left) -->
-              <svg class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 flex-shrink-0"
+              <svg class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 flex-shrink-0"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                 :class="bannerEffectiveWaiterId ? 'text-primary' : 'text-text-tertiary'"
                 stroke="currentColor" aria-hidden="true">
@@ -960,7 +961,7 @@ onUnmounted(() => {
                 size="6px"
                 color="currentColor"
               />
-              <svg v-else class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-text-tertiary"
+              <svg v-else class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-text-tertiary"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                 stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
