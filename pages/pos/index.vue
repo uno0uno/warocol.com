@@ -930,7 +930,7 @@ onUnmounted(() => {
                 :value="bannerEffectiveWaiterId || ''"
                 :disabled="isChangingSessionWaiter"
                 aria-label="Cambiar mesero de la sesión activa"
-                class="h-8 inline-flex items-center justify-center text-center pl-3 pr-7 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-none cursor-pointer [&::-ms-expand]:hidden"
+                class="h-9 inline-flex items-center justify-center text-center leading-none pl-3 pr-7 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-none cursor-pointer [&::-ms-expand]:hidden"
                 style="background-image: none; -webkit-appearance: none; -moz-appearance: none; text-align-last: center;"
                 :class="bannerEffectiveWaiterId
                   ? 'border-primary/30 bg-primary/5 text-primary'
@@ -963,7 +963,7 @@ onUnmounted(() => {
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-8 inline-flex items-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-9 inline-flex items-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Volver al plano de mesas (la mesa sigue abierta)"
               @click="posStore.clearAll()"
             >
@@ -976,7 +976,7 @@ onUnmounted(() => {
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="h-8 inline-flex items-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-9 inline-flex items-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Liberar la mesa"
               @click="handleReleaseMesa"
             >
