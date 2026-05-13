@@ -940,20 +940,27 @@ onUnmounted(() => {
           </div>
           <!-- Action buttons: [Mesero ▾ (#574)] · Volver (back to floor plan, keeps session) · Liberar (destructive) -->
           <div class="flex items-center gap-1.5 flex-shrink-0">
-            <!-- Issue #574 — Waiter chip with auto-handoff dropdown -->
-            <div v-if="waiterAttributionEnabled" class="relative">
+            <!-- Issue #574 — Waiter loading chip — width adapts to the rotating
+                 phrase so it doesn't overflow the original chip. Same pattern
+                 as the dashboard header progressive-load indicator. -->
+            <div
+              v-if="waiterAttributionEnabled && isChangingSessionWaiter"
+              class="h-9 inline-flex items-center gap-2 px-3 rounded-lg border border-primary/30 bg-primary/5 text-primary text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+              aria-live="polite"
+            >
+              <UiLoadingDots size="7px" color="currentColor" />
+              <span>{{ waiterChipLoadingPhrase }}</span>
+            </div>
+            <!-- Issue #574 — Idle waiter chip with auto-handoff dropdown -->
+            <div v-else-if="waiterAttributionEnabled" class="relative">
               <select
                 :value="bannerEffectiveWaiterId || ''"
-                :disabled="isChangingSessionWaiter"
                 aria-label="Cambiar mesero de la sesión activa"
-                class="h-9 inline-flex items-center leading-none pl-7 pr-7 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-none cursor-pointer [&::-ms-expand]:hidden"
+                class="h-9 inline-flex items-center leading-none pl-7 pr-7 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 appearance-none bg-none cursor-pointer [&::-ms-expand]:hidden"
                 style="background-image: none; -webkit-appearance: none; -moz-appearance: none; text-align-last: center;"
-                :class="[
-                  bannerEffectiveWaiterId
-                    ? 'border-primary/30 bg-primary/5 text-primary'
-                    : 'border-border bg-surface text-text-tertiary hover:text-text-secondary',
-                  isChangingSessionWaiter ? 'invisible' : '',
-                ]"
+                :class="bannerEffectiveWaiterId
+                  ? 'border-primary/30 bg-primary/5 text-primary'
+                  : 'border-border bg-surface text-text-tertiary hover:text-text-secondary'"
                 @change="handleChangeSessionWaiter"
               >
                 <option value="">Sin mesero</option>
@@ -965,10 +972,8 @@ onUnmounted(() => {
                   {{ m.name }}
                 </option>
               </select>
-              <!-- User icon (overlapping left) — hidden during loading so the
-                   dots+phrase overlay can use the full width. -->
+              <!-- User icon (overlapping left) -->
               <svg
-                v-if="!isChangingSessionWaiter"
                 class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 flex-shrink-0"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                 :class="bannerEffectiveWaiterId ? 'text-primary' : 'text-text-tertiary'"
@@ -978,22 +983,12 @@ onUnmounted(() => {
               </svg>
               <!-- Caret (overlapping right) -->
               <svg
-                v-if="!isChangingSessionWaiter"
                 class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-text-tertiary"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                 stroke="currentColor" aria-hidden="true"
               >
                 <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
               </svg>
-              <!-- Loading overlay (dots + rotating phrase) — mirrors the dashboard header progressive-load indicator -->
-              <div
-                v-if="isChangingSessionWaiter"
-                class="pointer-events-none absolute inset-0 flex items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 text-primary text-[10px] font-bold uppercase tracking-wider whitespace-nowrap px-3"
-                aria-live="polite"
-              >
-                <UiLoadingDots size="7px" color="currentColor" />
-                <span>{{ waiterChipLoadingPhrase }}</span>
-              </div>
             </div>
             <!-- Volver — clears local activeTableSession; the showFloorPlan computed switches view. Session stays open in backend. -->
             <button
