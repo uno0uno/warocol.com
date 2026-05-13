@@ -834,7 +834,6 @@ onUnmounted(() => {
     <PosMesasFloorPlan
       :comandas-enabled="comandasEnabled"
       :waiter-attribution-enabled="waiterAttributionEnabled"
-      :members="tenantMembers"
       @enter-table="handleEnterTable"
       @no-tables="noTablesConfigured = true"
       @move-table="handleMoveTable"
@@ -931,8 +930,8 @@ onUnmounted(() => {
                 :value="bannerEffectiveWaiterId || ''"
                 :disabled="isChangingSessionWaiter"
                 aria-label="Cambiar mesero de la sesión activa"
-                class="inline-flex items-center gap-1.5 pl-7 pr-7 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-none cursor-pointer [&::-ms-expand]:hidden"
-                style="background-image: none; -webkit-appearance: none; -moz-appearance: none;"
+                class="h-8 inline-flex items-center justify-center text-center pl-3 pr-7 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-none cursor-pointer [&::-ms-expand]:hidden"
+                style="background-image: none; -webkit-appearance: none; -moz-appearance: none; text-align-last: center;"
                 :class="bannerEffectiveWaiterId
                   ? 'border-primary/30 bg-primary/5 text-primary'
                   : 'border-border bg-surface text-text-tertiary hover:text-text-secondary'"
@@ -947,13 +946,6 @@ onUnmounted(() => {
                   {{ m.name }}
                 </option>
               </select>
-              <!-- Icon (overlapping left) -->
-              <svg class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 flex-shrink-0"
-                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                :class="bannerEffectiveWaiterId ? 'text-primary' : 'text-text-tertiary'"
-                stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
               <!-- Caret (overlapping right) — swapped for loading dots while the PATCH is in flight -->
               <UiLoadingDots
                 v-if="isChangingSessionWaiter"
@@ -971,7 +963,7 @@ onUnmounted(() => {
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="inline-flex items-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-8 inline-flex items-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Volver al plano de mesas (la mesa sigue abierta)"
               @click="posStore.clearAll()"
             >
@@ -984,7 +976,7 @@ onUnmounted(() => {
             <button
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
-              class="inline-flex items-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 py-1.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-8 inline-flex items-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Liberar la mesa"
               @click="handleReleaseMesa"
             >
