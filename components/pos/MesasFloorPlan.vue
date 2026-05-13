@@ -2,8 +2,18 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
 
+interface WaiterMember {
+  id: string
+  name: string
+  role: string
+}
+
 const props = defineProps<{
   comandasEnabled?: boolean
+  /** Issue #574 — when true, show modal on table open + waiter chip in cards */
+  waiterAttributionEnabled?: boolean
+  /** Issue #574 — list of active tenant members for the waiter dropdown */
+  members?: WaiterMember[]
 }>()
 
 const emit = defineEmits<{
@@ -48,30 +58,20 @@ let pollInterval: ReturnType<typeof setInterval> | null = null
 // ── Open session ───────────────────────────────────────────────────────────
 const openingTableId = ref<string | null>(null)
 
+// Issue #574 — modal at table-open for waiter pre-selection
+const showWaiterModal = ref(false)
+const pendingOpenTable = ref<any | null>(null)
+
 const handleTableClick = async (table: any) => {
   if (table.status === 'free') {
     if (openingTableId.value) return
-    openingTableId.value = table.id
-    try {
-      const result = await $fetch<{ success: boolean; data: { session_id: string } }>(
-        `/api/tables/${table.id}/open`, { method: 'POST' }
-      )
-      await refetch()
-      emit('enter-table', {
-        tableId: table.id,
-        sessionId: result?.data?.session_id,
-        tableName: table.name,
-      })
-    } catch {
-      await refetch()
-      emit('enter-table', {
-        tableId: table.id,
-        sessionId: table.session?.id,
-        tableName: table.name,
-      })
-    } finally {
-      openingTableId.value = null
+    // #574: if waiter attribution is enabled, show modal before opening
+    if (props.waiterAttributionEnabled) {
+      pendingOpenTable.value = table
+      showWaiterModal.value = true
+      return
     }
+    await doOpenTable(table, null)
   } else if (table.status === 'open') {
     emit('enter-table', {
       tableId: table.id,
@@ -86,6 +86,46 @@ const handleTableClick = async (table: any) => {
       gotoCheckout: true,
     })
   }
+}
+
+const doOpenTable = async (table: any, attendedByMemberId: string | null) => {
+  openingTableId.value = table.id
+  try {
+    const result = await $fetch<{ success: boolean; data: { session_id: string } }>(
+      `/api/tables/${table.id}/open`,
+      {
+        method: 'POST',
+        body: attendedByMemberId ? { attended_by_member_id: attendedByMemberId } : undefined,
+      },
+    )
+    await refetch()
+    emit('enter-table', {
+      tableId: table.id,
+      sessionId: result?.data?.session_id,
+      tableName: table.name,
+    })
+  } catch {
+    await refetch()
+    emit('enter-table', {
+      tableId: table.id,
+      sessionId: table.session?.id,
+      tableName: table.name,
+    })
+  } finally {
+    openingTableId.value = null
+  }
+}
+
+const handleWaiterModalConfirm = async (memberId: string | null) => {
+  const target = pendingOpenTable.value
+  showWaiterModal.value = false
+  pendingOpenTable.value = null
+  if (target) await doOpenTable(target, memberId)
+}
+
+const handleWaiterModalClose = () => {
+  showWaiterModal.value = false
+  pendingOpenTable.value = null
 }
 
 // ── Bar click — session is always open, fetch current and enter ─────────────
@@ -362,10 +402,35 @@ onUnmounted(() => {
                 <span class="text-xs font-semibold text-slate-400">Libre</span>
               </div>
             </template>
+
+            <!-- Issue #574 — Waiter line (below strip). Visible only if feature ON
+                 and there's an effective waiter (session override > table default). -->
+            <div
+              v-if="waiterAttributionEnabled && table.effective_waiter_member_name"
+              class="flex items-center gap-1 px-2 h-6 border-t border-slate-100 bg-slate-50/60"
+            >
+              <svg class="w-3 h-3 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span class="text-[10px] font-medium text-slate-500 truncate">
+                {{ table.effective_waiter_member_name }}
+              </span>
+            </div>
           </button>
 
         </div>
       </div>
     </div>
+
+    <!-- Issue #574 — Waiter assignment modal at table-open -->
+    <PosWaiterAssignModal
+      v-if="waiterAttributionEnabled"
+      :show="showWaiterModal"
+      :table-name="pendingOpenTable?.name ?? ''"
+      :default-member-id="pendingOpenTable?.assigned_member_id ?? null"
+      :members="members ?? []"
+      @close="handleWaiterModalClose"
+      @confirm="handleWaiterModalConfirm"
+    />
   </div>
 </template>
