@@ -80,6 +80,11 @@ export const usePOSStore = defineStore('pos', () => {
     // Mesa context — set when entering POS from a table session
     const activeTableSession = ref<ActiveTableSession | null>(null)
 
+    // Issue #575 — per-order waiter attribution (bar + counter modes)
+    // Tracks the "served_by" choice for the cart in flight. Sent in the
+    // body of POST /pos-cart/{id}/complete. Resets between sales.
+    const cartServedByMemberId = ref<string | null>(null)
+
     // Tenant feature flags — persists across navigation
     const tablesEnabled = ref<boolean | null>(null)
 
@@ -304,11 +309,18 @@ export const usePOSStore = defineStore('pos', () => {
         currentCustomer.value = null
         cartId.value = null
         tabItems.value = []
+        // #575 — reset served_by between sales
+        cartServedByMemberId.value = null
         // Keep bar session alive — bar is a permanent fixture, not a per-order session
         if (!activeTableSession.value?.isBar) {
             activeTableSession.value = null
         }
         // NO limpiar cachedProducts - se mantienen entre ventas
+    }
+
+    // #575 — setter exposed for the chip in cart panel
+    const setCartServedBy = (memberId: string | null) => {
+        cartServedByMemberId.value = memberId
     }
 
     // Explicit exit — always clears session including bar
@@ -410,6 +422,7 @@ export const usePOSStore = defineStore('pos', () => {
         activeTableSession,
         tabItems,
         tablesEnabled,
+        cartServedByMemberId,  // #575
 
         // Getters
         cartItemsCount,
@@ -428,6 +441,7 @@ export const usePOSStore = defineStore('pos', () => {
         clearCart,
         getCartItem,
         setCustomer,
+        setCartServedBy,  // #575
         clearCustomer,
         clearAll,
         exitSession,

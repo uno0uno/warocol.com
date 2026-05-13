@@ -367,6 +367,10 @@ const addSplitPayment = async () => {
             ...(isCashMethod.value
               ? { split_first_cash_received: Number(cashReceivedInput.value) }
               : {}),
+            // Issue #575 — per-order waiter attribution (bar + counter; mesa uses #574 session override)
+            ...(posStore.cartServedByMemberId
+              ? { served_by_member_id: posStore.cartServedByMemberId }
+              : {}),
           }
         }) as any
         paidTotal = response.data.paid_total ?? amountToCharge
@@ -670,6 +674,10 @@ const processOrder = async () => {
                 ? { delivery_instructions: deliveryInstructions.value.trim() }
                 : {}),
             }
+          : {}),
+        // Issue #575 — per-order waiter attribution (bar + counter; mesa uses #574 session override)
+        ...(posStore.cartServedByMemberId
+          ? { served_by_member_id: posStore.cartServedByMemberId }
           : {}),
       }
     }) as {

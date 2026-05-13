@@ -10,6 +10,34 @@
       </div>
     </div>
 
+    <!-- Issue #575 — Served by chip (bar + counter only, gated by waiter_attribution_enabled) -->
+    <div
+      v-if="showServedByChip"
+      class="px-4 py-2 border-b border-border bg-surface-secondary/40"
+    >
+      <div class="flex items-center gap-2">
+        <svg class="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        <span class="text-[10px] font-bold text-text-tertiary uppercase tracking-wider flex-shrink-0">Servido por</span>
+        <select
+          :value="servedByMemberId || ''"
+          class="flex-1 min-h-[36px] px-2.5 py-1 text-xs font-medium bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors outline-none text-text-primary cursor-pointer"
+          aria-label="Atribuir esta orden a un mesero"
+          @change="onServedByChange"
+        >
+          <option value="">Sin asignar</option>
+          <option
+            v-for="m in (members || [])"
+            :key="m.id"
+            :value="m.id"
+          >
+            {{ m.name }} ({{ m.role }})
+          </option>
+        </select>
+      </div>
+    </div>
+
     <!-- Items list: tab items (committed) + current cart items -->
     <div class="flex-1 overflow-y-auto p-4 space-y-2.5">
 
@@ -234,6 +262,10 @@ interface Props {
   unfiredCount?: number
   isFiringToKitchen?: boolean
   pendingRemoveItemId?: string | null
+  // Issue #575 — per-order waiter attribution (bar + counter)
+  showServedByChip?: boolean
+  servedByMemberId?: string | null
+  members?: Array<{ id: string; name: string; role: string }>
 }
 
 interface Emits {
@@ -250,10 +282,18 @@ interface Emits {
   (e: 'increment-tab-item', orderItemId: string): void
   (e: 'decrement-tab-item', orderItemId: string): void
   (e: 'fire-to-kitchen'): void
+  // Issue #575
+  (e: 'update:served-by', memberId: string | null): void
 }
 
-withDefaults(defineProps<Props>(), { mesaMode: false, isAddingToTab: false, isLoadingTabItems: false, isClearingTab: false, tabItems: () => [], tabTotal: 0, tabItemsLoading: () => new Set(), comandasEnabled: false, unfiredCount: 0, isFiringToKitchen: false, pendingRemoveItemId: null })
-defineEmits<Emits>()
+withDefaults(defineProps<Props>(), { mesaMode: false, isAddingToTab: false, isLoadingTabItems: false, isClearingTab: false, tabItems: () => [], tabTotal: 0, tabItemsLoading: () => new Set(), comandasEnabled: false, unfiredCount: 0, isFiringToKitchen: false, pendingRemoveItemId: null, showServedByChip: false, servedByMemberId: null, members: () => [] })
+const emit = defineEmits<Emits>()
+
+// Issue #575 — handler for the served_by select
+const onServedByChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement
+  emit('update:served-by', target.value || null)
+}
 
 // Obtener isDeleting directamente del store
 const posStore = usePOSStore()
