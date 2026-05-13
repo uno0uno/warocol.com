@@ -953,8 +953,14 @@ onUnmounted(() => {
                 stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <!-- Caret (overlapping right) -->
-              <svg class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-text-tertiary"
+              <!-- Caret (overlapping right) — swapped for loading dots while the PATCH is in flight -->
+              <UiLoadingDots
+                v-if="isChangingSessionWaiter"
+                class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2"
+                size="6px"
+                color="currentColor"
+              />
+              <svg v-else class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-text-tertiary"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                 stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
