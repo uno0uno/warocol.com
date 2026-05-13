@@ -76,12 +76,20 @@ const inactiveTables = computed(() => {
 })
 
 // ── Table columns ──────────────────────────────────────────────────────────
-const tableColumns = [
-  { key: 'name', title: 'Mesa', sortable: false },
-  { key: 'capacity', title: 'Capacidad' },
-  { key: 'status', title: 'Estado' },
-  { key: 'actions', title: '' },
-]
+// "Mesero" column only shows when waiter-attribution is on; the cell is
+// read-only — clicking "Editar" is the only way to change the assignment.
+const tableColumns = computed(() => {
+  const cols: Array<{ key: string; title: string; sortable?: boolean }> = [
+    { key: 'name', title: 'Mesa', sortable: false },
+    { key: 'capacity', title: 'Capacidad' },
+  ]
+  if (businessProfile.value?.waiter_attribution_enabled) {
+    cols.push({ key: 'mesero', title: 'Mesero' })
+  }
+  cols.push({ key: 'status', title: 'Estado' })
+  cols.push({ key: 'actions', title: '' })
+  return cols
+})
 
 // ── Panel state ────────────────────────────────────────────────────────────
 const showPanel = ref(false)
@@ -219,6 +227,40 @@ const toggleTablesEnabled = async () => {
     isTogglingTables.value = false
   }
 }
+
+// ── Toggle waiter attribution (issue #573) ─────────────────────────────────
+// Lives here (not on /operaciones/comandas) because the panel that depends on
+// it — per-mesa default mesero — also lives on this page now.
+const isTogglingWaiterAttribution = ref(false)
+const toggleWaiterAttribution = async () => {
+  if (!businessProfile.value || isTogglingWaiterAttribution.value) return
+  isTogglingWaiterAttribution.value = true
+  const newState = !businessProfile.value.waiter_attribution_enabled
+  try {
+    await $fetch('/api/operaciones/toggles/waiter-attribution', {
+      method: 'PATCH',
+      body: { enabled: newState },
+    })
+    await invalidateContextCaches()
+    await cache.invalidateQueries({ key: ['tables'] })
+    toast.success(
+      newState
+        ? 'Habilitado. Asigna meseros desde la tabla o al editar cada mesa.'
+        : 'Asignación de meseros deshabilitada',
+      { title: newState ? 'Activado' : 'Desactivado' }
+    )
+  } catch (error: any) {
+    toast.error(error.data?.detail || 'Error al cambiar el toggle', { title: 'Error' })
+  } finally {
+    isTogglingWaiterAttribution.value = false
+  }
+}
+
+// Members embedded in the operaciones aggregator (no Module.EQUIPO required).
+// Used by MesaPanel to render the "Mesero por defecto" picker.
+const tenantMembers = computed<Array<{ id: string; name: string; role: string }>>(() =>
+  (businessProfile.value as any)?.members ?? [],
+)
 </script>
 
 <template>
@@ -237,39 +279,69 @@ const toggleTablesEnabled = async () => {
       <!-- ══════ MÓDULOS ══════ -->
       <div
         v-if="businessProfile"
-        class="flex items-center justify-between gap-4 rounded-xl border-2 px-4 py-3 transition-colors"
+        class="rounded-xl border-2 transition-colors divide-y divide-border"
         :class="businessProfile.tables_enabled
           ? 'border-border bg-surface'
           : 'border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20'"
       >
-        <div class="min-w-0">
-          <p
-            class="text-sm font-semibold leading-snug"
-            :class="businessProfile.tables_enabled ? 'text-text-primary' : 'text-amber-800 dark:text-amber-300'"
+        <!-- Tables module -->
+        <div class="flex items-center justify-between gap-4 px-4 py-3">
+          <div class="min-w-0">
+            <p
+              class="text-sm font-semibold leading-snug"
+              :class="businessProfile.tables_enabled ? 'text-text-primary' : 'text-amber-800 dark:text-amber-300'"
+            >
+              {{ businessProfile.tables_enabled ? 'Gestión de mesas activa' : 'Gestión de mesas desactivada' }}
+            </p>
+            <p
+              class="text-xs mt-0.5 leading-snug"
+              :class="businessProfile.tables_enabled ? 'text-text-secondary' : 'text-amber-700 dark:text-amber-400'"
+            >
+              {{ businessProfile.tables_enabled ? 'El flujo de mesas está disponible en el punto de venta' : 'Actívala para usar el flujo de mesas en el punto de venta' }}
+            </p>
+          </div>
+          <label
+            class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+            :class="isTogglingTables ? 'opacity-50 pointer-events-none' : ''"
+            :aria-label="businessProfile.tables_enabled ? 'Desactivar gestión de mesas' : 'Activar gestión de mesas'"
           >
-            {{ businessProfile.tables_enabled ? 'Gestión de mesas activa' : 'Gestión de mesas desactivada' }}
-          </p>
-          <p
-            class="text-xs mt-0.5 leading-snug"
-            :class="businessProfile.tables_enabled ? 'text-text-secondary' : 'text-amber-700 dark:text-amber-400'"
-          >
-            {{ businessProfile.tables_enabled ? 'El flujo de mesas está disponible en el punto de venta' : 'Actívala para usar el flujo de mesas en el punto de venta' }}
-          </p>
+            <input
+              type="checkbox"
+              class="sr-only peer"
+              :checked="businessProfile.tables_enabled"
+              @change="toggleTablesEnabled"
+              :disabled="isTogglingTables"
+            />
+            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          </label>
         </div>
-        <label
-          class="relative inline-flex items-center cursor-pointer flex-shrink-0"
-          :class="isTogglingTables ? 'opacity-50 pointer-events-none' : ''"
-          :aria-label="businessProfile.tables_enabled ? 'Desactivar gestión de mesas' : 'Activar gestión de mesas'"
-        >
-          <input
-            type="checkbox"
-            class="sr-only peer"
-            :checked="businessProfile.tables_enabled"
-            @change="toggleTablesEnabled"
-            :disabled="isTogglingTables"
-          />
-          <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-        </label>
+
+        <!-- Waiter attribution (issue #573) — only meaningful when tables are enabled -->
+        <div v-if="businessProfile.tables_enabled" class="flex items-center justify-between gap-4 px-4 py-3">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold leading-snug text-text-primary">
+              Asignar mesero por mesa
+            </p>
+            <p class="text-xs mt-0.5 leading-snug text-text-secondary">
+              Cada mesa puede tener un mesero por defecto. Se puede cambiar al abrir la sesión o por orden.
+              El historial se preserva incluso si el miembro se elimina.
+            </p>
+          </div>
+          <label
+            class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+            :class="isTogglingWaiterAttribution ? 'opacity-50 pointer-events-none' : ''"
+            :aria-label="businessProfile.waiter_attribution_enabled ? 'Desactivar asignación de meseros por mesa' : 'Activar asignación de meseros por mesa'"
+          >
+            <input
+              type="checkbox"
+              class="sr-only peer"
+              :checked="businessProfile.waiter_attribution_enabled"
+              @change="toggleWaiterAttribution"
+              :disabled="isTogglingWaiterAttribution"
+            />
+            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          </label>
+        </div>
       </div>
 
       <!-- Filters -->
@@ -312,6 +384,13 @@ const toggleTablesEnabled = async () => {
                 <p class="text-xs text-text-secondary mt-0.5">
                   {{ item.capacity ? `${item.capacity} persona${item.capacity !== 1 ? 's' : ''}` : 'Sin capacidad definida' }}
                 </p>
+                <p
+                  v-if="businessProfile?.waiter_attribution_enabled"
+                  class="text-[11px] mt-0.5 font-medium truncate"
+                  :class="item.assigned_member_name ? 'text-primary' : 'text-text-tertiary italic'"
+                >
+                  Mesero: {{ item.assigned_member_name || 'sin asignar' }}
+                </p>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
                 <UiStatusBadge :variant="badgeVariant(item.status)" size="sm">
@@ -339,6 +418,22 @@ const toggleTablesEnabled = async () => {
           <template #cell-capacity="{ value }">
             <span class="text-sm text-text-secondary">
               {{ value ? `${value} persona${value !== 1 ? 's' : ''}` : '—' }}
+            </span>
+          </template>
+
+          <!-- Desktop: mesero (only present when waiter-attribution is enabled) -->
+          <template #cell-mesero="{ row }">
+            <span
+              v-if="row.assigned_member_name"
+              class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20"
+            >
+              {{ row.assigned_member_name }}
+            </span>
+            <span
+              v-else
+              class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-surface-secondary text-text-tertiary border border-border"
+            >
+              Sin asignar
             </span>
           </template>
 
@@ -446,6 +541,8 @@ const toggleTablesEnabled = async () => {
     <MesasMesaPanel
       v-model="showPanel"
       :table="panelTable"
+      :members="tenantMembers"
+      :waiter-attribution-enabled="!!businessProfile?.waiter_attribution_enabled"
       @saved="onSaved"
     />
 

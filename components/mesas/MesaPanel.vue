@@ -95,6 +95,27 @@
             <p v-if="errors.capacity" class="text-xs text-destructive">{{ errors.capacity }}</p>
           </div>
 
+          <!-- Mesero asignado (issue #573, only when feature flag ON) -->
+          <div v-if="showMeseroField" class="flex flex-col gap-1.5">
+            <label for="mesa-mesero" class="text-sm font-medium text-text-primary">
+              Mesero por defecto <span class="text-xs font-normal text-text-tertiary ml-1">(opcional)</span>
+            </label>
+            <select
+              id="mesa-mesero"
+              :value="form.assignedMemberId || ''"
+              :class="inputClass"
+              @change="(e) => (form.assignedMemberId = (e.target as HTMLSelectElement).value || null)"
+            >
+              <option value="">(Sin asignar)</option>
+              <option v-for="m in members" :key="m.id" :value="m.id">
+                {{ m.name }} ({{ m.role }})
+              </option>
+            </select>
+            <p class="text-[11px] text-text-tertiary leading-snug">
+              Se podrá cambiar al abrir la sesión o por orden desde POS.
+            </p>
+          </div>
+
           <!-- Error general -->
           <p v-if="errors.general" class="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
             {{ errors.general }}
@@ -128,9 +149,17 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 
+interface Member {
+  id: string
+  name: string
+  role: string
+}
+
 interface Props {
   modelValue: boolean
   table?: any // null/undefined = create mode, object = edit mode
+  members?: Member[]
+  waiterAttributionEnabled?: boolean
 }
 
 interface Emits {
@@ -138,23 +167,41 @@ interface Emits {
   (e: 'saved', table: any): void
 }
 
-const props = withDefaults(defineProps<Props>(), { table: null })
+const props = withDefaults(defineProps<Props>(), {
+  table: null,
+  members: () => [],
+  waiterAttributionEnabled: false,
+})
 const emit = defineEmits<Emits>()
 
 const isEdit = computed(() => !!props.table)
+const showMeseroField = computed(
+  () => props.waiterAttributionEnabled && props.members.length > 0,
+)
 
 const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 
-const form = ref({ name: '', capacity: null as number | null })
+const form = ref({
+  name: '',
+  capacity: null as number | null,
+  assignedMemberId: null as string | null,
+})
+const initialAssignedMemberId = ref<string | null>(null)
 const errors = ref<Record<string, string>>({})
 const saving = ref(false)
 
 // Populate form when table changes
 watch(() => props.table, (t) => {
   if (t) {
-    form.value = { name: t.name ?? '', capacity: t.capacity ?? null }
+    form.value = {
+      name: t.name ?? '',
+      capacity: t.capacity ?? null,
+      assignedMemberId: t.assigned_member_id ?? null,
+    }
+    initialAssignedMemberId.value = t.assigned_member_id ?? null
   } else {
-    form.value = { name: '', capacity: null }
+    form.value = { name: '', capacity: null, assignedMemberId: null }
+    initialAssignedMemberId.value = null
   }
   errors.value = {}
 }, { immediate: true })
@@ -163,7 +210,8 @@ watch(() => props.table, (t) => {
 watch(() => props.modelValue, (open) => {
   if (!open) return
   if (!props.table) {
-    form.value = { name: '', capacity: null }
+    form.value = { name: '', capacity: null, assignedMemberId: null }
+    initialAssignedMemberId.value = null
     errors.value = {}
   }
 })
@@ -196,6 +244,16 @@ async function submit() {
       result = await $fetch(`/api/tables/${props.table.id}`, { method: 'PUT', body })
     } else {
       result = await $fetch('/api/tables', { method: 'POST', body })
+    }
+
+    // Persist mesero assignment via the dedicated operaciones endpoint. We
+    // skip the PATCH when the value didn't change to avoid no-op writes
+    // (which would still create an empty history entry).
+    if (showMeseroField.value && result?.data?.id && form.value.assignedMemberId !== initialAssignedMemberId.value) {
+      await $fetch(`/api/operaciones/tables/${result.data.id}/assigned-member`, {
+        method: 'PATCH',
+        body: { member_id: form.value.assignedMemberId },
+      })
     }
 
     emit('saved', result.data)
