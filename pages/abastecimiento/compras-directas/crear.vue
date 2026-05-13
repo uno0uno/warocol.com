@@ -367,8 +367,7 @@
                   <div
                     v-for="item in itemsByType.food"
                     :key="form.items.indexOf(item)"
-                    class="border-2 border-border rounded-lg p-3 bg-background relative"
-                    :class="{ 'z-20': item.showResults }"
+                    class="border-2 border-border rounded-lg p-3 bg-background relative z-10"
                   >
                     <div class="flex justify-between items-center mb-2">
                       <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">{{ form.items.indexOf(item) + 1 }}</span>
@@ -389,61 +388,13 @@
                         <label class="block text-xs font-medium text-text-primary mb-1">
                           Ítem / Ingrediente *
                         </label>
-                        <div class="relative">
-                          <input
-                            type="text"
-                            v-model="item.searchTerm"
-                            @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
-                            @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
-                            @blur="() => hideResults(item)"
-                            class="input-base w-full pl-8 pr-8 py-1.5 text-sm"
-                            placeholder="Buscar ingrediente..."
-                          />
-                          <span class="absolute left-2.5 top-2 text-text-secondary">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-                            </svg>
-                          </span>
-                          <span v-if="isSearching(form.items.indexOf(item))" class="absolute right-2.5 top-2 text-text-secondary" aria-hidden="true">
-                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                            </svg>
-                          </span>
-                          <!-- Search Results Dropdown -->
-                          <div
-                            v-if="item.showResults && item.searchTerm"
-                            class="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
-                          >
-                            <ul class="py-1">
-                              <li
-                                v-for="ing in ingredientResults[form.items.indexOf(item)]"
-                                :key="ing.id"
-                                @click="selectIngredient(ing, form.items.indexOf(item))"
-                                class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary flex items-center gap-2"
-                              >
-                                <span>{{ ing.name }}</span>
-                                <span v-if="ing.is_custom" class="text-xs bg-primary/10 text-primary rounded px-1 flex-shrink-0">Personalizado</span>
-                              </li>
-                              <li
-                                v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
-                                class="px-3 py-2 text-sm text-text-tertiary"
-                              >
-                                Sin resultados
-                              </li>
-                              <li
-                                v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
-                                @mousedown.prevent="openCreateModal(form.items.indexOf(item), item.searchTerm)"
-                                class="px-3 py-2 text-sm text-primary border-t border-border hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5"
-                              >
-                                <svg class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                                Crear "{{ item.searchTerm }}"
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
+                        <UiIngredientSearchInput
+                          :initial-value="item.searchTerm ?? ''"
+                          :allow-create="true"
+                          placeholder="Buscar ingrediente..."
+                          @select="(ing) => selectIngredient(ing, form.items.indexOf(item))"
+                          @create="(name) => openCreateModal(form.items.indexOf(item), name)"
+                        />
                         <!-- OCR hint -->
                         <div v-if="item.ocr_description" class="mt-1 flex items-center gap-1 flex-wrap">
                           <p class="text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-warning'">
@@ -594,8 +545,7 @@
                   <div
                     v-for="item in itemsByType.service"
                     :key="form.items.indexOf(item)"
-                    class="border-2 border-border rounded-lg p-3 bg-background relative"
-                    :class="{ 'z-20': item.showResults }"
+                    class="border-2 border-border rounded-lg p-3 bg-background relative z-10"
                   >
                     <div class="flex justify-between items-center mb-2">
                       <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">{{ form.items.indexOf(item) + 1 }}</span>
@@ -616,61 +566,13 @@
                         <label class="block text-xs font-medium text-text-primary mb-1">
                           Ítem / Ingrediente *
                         </label>
-                        <div class="relative">
-                          <input
-                            type="text"
-                            v-model="item.searchTerm"
-                            @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
-                            @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
-                            @blur="() => hideResults(item)"
-                            class="input-base w-full pl-8 pr-8 py-1.5 text-sm"
-                            placeholder="Buscar ingrediente..."
-                          />
-                          <span class="absolute left-2.5 top-2 text-text-secondary">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-                            </svg>
-                          </span>
-                          <span v-if="isSearching(form.items.indexOf(item))" class="absolute right-2.5 top-2 text-text-secondary" aria-hidden="true">
-                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                            </svg>
-                          </span>
-                          <!-- Search Results Dropdown -->
-                          <div
-                            v-if="item.showResults && item.searchTerm"
-                            class="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
-                          >
-                            <ul class="py-1">
-                              <li
-                                v-for="ing in ingredientResults[form.items.indexOf(item)]"
-                                :key="ing.id"
-                                @click="selectIngredient(ing, form.items.indexOf(item))"
-                                class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary flex items-center gap-2"
-                              >
-                                <span>{{ ing.name }}</span>
-                                <span v-if="ing.is_custom" class="text-xs bg-primary/10 text-primary rounded px-1 flex-shrink-0">Personalizado</span>
-                              </li>
-                              <li
-                                v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
-                                class="px-3 py-2 text-sm text-text-tertiary"
-                              >
-                                Sin resultados
-                              </li>
-                              <li
-                                v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
-                                @mousedown.prevent="openCreateModal(form.items.indexOf(item), item.searchTerm)"
-                                class="px-3 py-2 text-sm text-primary border-t border-border hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5"
-                              >
-                                <svg class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                                Crear "{{ item.searchTerm }}"
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
+                        <UiIngredientSearchInput
+                          :initial-value="item.searchTerm ?? ''"
+                          :allow-create="true"
+                          placeholder="Buscar ingrediente..."
+                          @select="(ing) => selectIngredient(ing, form.items.indexOf(item))"
+                          @create="(name) => openCreateModal(form.items.indexOf(item), name)"
+                        />
                         <!-- OCR hint -->
                         <div v-if="item.ocr_description" class="mt-1 flex items-center gap-1 flex-wrap">
                           <p class="text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-warning'">
@@ -816,8 +718,7 @@
                   <div
                     v-for="item in itemsByType.supply"
                     :key="form.items.indexOf(item)"
-                    class="border-2 border-border rounded-lg p-3 bg-background relative"
-                    :class="{ 'z-20': item.showResults }"
+                    class="border-2 border-border rounded-lg p-3 bg-background relative z-10"
                   >
                     <div class="flex justify-between items-center mb-2">
                       <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">{{ form.items.indexOf(item) + 1 }}</span>
@@ -838,61 +739,13 @@
                         <label class="block text-xs font-medium text-text-primary mb-1">
                           Ítem / Ingrediente *
                         </label>
-                        <div class="relative">
-                          <input
-                            type="text"
-                            v-model="item.searchTerm"
-                            @input="(e) => searchIngredients(e.target.value, form.items.indexOf(item))"
-                            @focus="() => { if (item.searchTerm) searchIngredients(item.searchTerm, form.items.indexOf(item)) }"
-                            @blur="() => hideResults(item)"
-                            class="input-base w-full pl-8 pr-8 py-1.5 text-sm"
-                            placeholder="Buscar ingrediente..."
-                          />
-                          <span class="absolute left-2.5 top-2 text-text-secondary">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-                            </svg>
-                          </span>
-                          <span v-if="isSearching(form.items.indexOf(item))" class="absolute right-2.5 top-2 text-text-secondary" aria-hidden="true">
-                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                            </svg>
-                          </span>
-                          <!-- Search Results Dropdown -->
-                          <div
-                            v-if="item.showResults && item.searchTerm"
-                            class="absolute z-50 w-full mt-1 bg-background border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
-                          >
-                            <ul class="py-1">
-                              <li
-                                v-for="ing in ingredientResults[form.items.indexOf(item)]"
-                                :key="ing.id"
-                                @click="selectIngredient(ing, form.items.indexOf(item))"
-                                class="px-3 py-2 hover:bg-surface-secondary cursor-pointer text-sm text-text-primary flex items-center gap-2"
-                              >
-                                <span>{{ ing.name }}</span>
-                                <span v-if="ing.is_custom" class="text-xs bg-primary/10 text-primary rounded px-1 flex-shrink-0">Personalizado</span>
-                              </li>
-                              <li
-                                v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
-                                class="px-3 py-2 text-sm text-text-tertiary"
-                              >
-                                Sin resultados
-                              </li>
-                              <li
-                                v-if="!ingredientResults[form.items.indexOf(item)]?.length && !isSearching(form.items.indexOf(item))"
-                                @mousedown.prevent="openCreateModal(form.items.indexOf(item), item.searchTerm)"
-                                class="px-3 py-2 text-sm text-primary border-t border-border hover:bg-surface-secondary cursor-pointer flex items-center gap-1.5"
-                              >
-                                <svg class="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                                Crear "{{ item.searchTerm }}"
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
+                        <UiIngredientSearchInput
+                          :initial-value="item.searchTerm ?? ''"
+                          :allow-create="true"
+                          placeholder="Buscar ingrediente..."
+                          @select="(ing) => selectIngredient(ing, form.items.indexOf(item))"
+                          @create="(name) => openCreateModal(form.items.indexOf(item), name)"
+                        />
                         <!-- OCR hint -->
                         <div v-if="item.ocr_description" class="mt-1 flex items-center gap-1 flex-wrap">
                           <p class="text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-warning'">
@@ -1413,7 +1266,6 @@ import { ref, computed, onMounted } from 'vue'
 import { TrashIcon, DocumentTextIcon, CreditCardIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
-import { useIngredientSearch } from '@/composables/useIngredientSearch'
 import { useBilling } from '@/composables/useBilling'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
@@ -1435,8 +1287,7 @@ interface PurchaseItem {
   suggested_price: number | null
   item_type?: string // 'food' | 'service' | 'supply'
   ocr_description?: string // texto libre de la factura, solo para UI
-  searchTerm?: string // para el input de busqueda
-  showResults?: boolean // controla visibilidad del dropdown de búsqueda
+  searchTerm?: string // OCR-seeded value passed to UiIngredientSearchInput as :initial-value
 }
 
 interface NewUnitForm {
@@ -1453,7 +1304,6 @@ const currentStep = ref(1)
 const isSubmitting = ref(false)
 const supplierCatalog = ref<any[]>([])
 const newUnitForms = ref<Record<number, NewUnitForm>>({})
-const ingredientResults = ref<Record<number, any[]>>({})
 
 interface LocalPurchaseUnit {
   ingredient_id: string
@@ -1488,7 +1338,6 @@ function createEmptyItem(itemType: string = 'food'): PurchaseItem {
     notes: '',
     suggested_price: null,
     item_type: itemType,
-    showResults: false
   }
 }
 
@@ -1514,21 +1363,6 @@ const supplierOptions = computed(() => suppliers.value.map((s: any) => ({
   value: s.id,
   label: s.name
 })))
-
-// Per-index server-side ingredient search (replaces full catalog fetch)
-// Plain object (not ref) to avoid Vue deep-unwrapping inner refs from useIngredientSearch()
-const ingredientSearches: Record<number, ReturnType<typeof useIngredientSearch>> = {}
-
-const getIngredientSearch = (index: number) => {
-  if (!ingredientSearches[index]) {
-    ingredientSearches[index] = useIngredientSearch()
-  }
-  return ingredientSearches[index]
-}
-
-const isSearching = (index: number): boolean => {
-  return ingredientSearches[index]?.loading.value ?? false
-}
 
 // Cache of ingredient details keyed by ingredient_id (populated on select + OCR match)
 const ingredientCache = ref<Record<string, { id: string, name: string, unit: string, unit_weight_gr?: number | null, unit_weight_unit?: string | null, type?: string }>>({})
@@ -2017,38 +1851,10 @@ const createSupplierFromOcr = async () => {
   }
 }
 
-const searchIngredients = async (term: string, index: number) => {
-  const item = form.value.items[index]
-  item.ingredient_id = ''
-  if (!term || term.trim().length < 1) {
-    ingredientResults.value[index] = []
-    item.showResults = false
-    return
-  }
-  const search = getIngredientSearch(index)
-  search.query.value = term
-  // results are reactive — watch them to update ingredientResults
-  watch(
-    () => search.results.value,
-    (results) => {
-      ingredientResults.value[index] = results
-      item.showResults = true
-    },
-    { immediate: true }
-  )
-}
-
-const hideResults = (item: any) => {
-  setTimeout(() => { item.showResults = false }, 150)
-}
-
 const selectIngredient = (ingredient: any, index: number) => {
   const item = form.value.items[index]
   item.ingredient_id = ingredient.id
-  item.searchTerm = ingredient.name
-  item.showResults = false
   if (ingredient.type) item.item_type = ingredient.type
-  ingredientResults.value[index] = []
   cacheIngredient(ingredient)
   onIngredientChange(index)
 }
@@ -2211,27 +2017,11 @@ async function onIngredientCreated(ingredient: any) {
   const item = form.value.items[index]
   ingredientCache.value[ingredient.id] = ingredient
   item.ingredient_id = ingredient.id
-  item.searchTerm = ingredient.name
-  item.showResults = false
   // Clear cache so fresh units are fetched for the newly created ingredient
   const updated = new Map(purchaseUnitsCache.value)
   updated.delete(ingredient.id)
   purchaseUnitsCache.value = updated
   await onIngredientChange(index)
-}
-
-function onIngredientSelected(ingredient: any) {
-  const index = createModalItemIndex.value
-  if (index < 0 || index >= form.value.items.length) return
-  const item = form.value.items[index]
-  // If the selected ingredient is already in cache we use it; otherwise do a quick fetch
-  if (!ingredientCache.value[ingredient.id]) {
-    ingredientCache.value[ingredient.id] = ingredient
-  }
-  item.ingredient_id = ingredient.id
-  item.searchTerm = ingredient.name
-  item.showResults = false
-  onIngredientChange(index)
 }
 
 // Wizard navigation
