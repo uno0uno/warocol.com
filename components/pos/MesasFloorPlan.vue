@@ -378,18 +378,15 @@ onUnmounted(() => {
             </template>
 
             <!-- Issue #574 — Waiter line (below strip). Always rendered when the
-                 feature is on so every card has the same height; shows the
-                 effective waiter (session override > table default) or a
-                 "Sin asignar" placeholder when null. -->
+                 feature is on so every card has the same height; centered text
+                 only (no icon) — shows the effective waiter (session override >
+                 table default) or a "Sin asignar" placeholder when null. -->
             <div
               v-if="waiterAttributionEnabled"
-              class="flex items-center gap-1 px-2 h-6 border-t border-slate-100 bg-slate-50/60"
+              class="flex items-center justify-center px-2 h-6 border-t border-slate-100 bg-slate-50/60"
             >
-              <svg class="w-3 h-3 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
               <span
-                class="text-[10px] font-medium truncate"
+                class="text-[10px] font-medium truncate text-center"
                 :class="table.effective_waiter_member_name ? 'text-slate-500' : 'text-slate-400 italic'"
               >
                 {{ table.effective_waiter_member_name || 'Sin asignar' }}
