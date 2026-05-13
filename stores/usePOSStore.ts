@@ -36,6 +36,12 @@ export interface ActiveTableSession {
     runningTotal: number
     openedAt: string
     isBar: boolean
+    // Waiter attribution (warocol.com#574) — optional for backward compat.
+    // `effectiveWaiter*` is the resolver result (session override > table default).
+    attendedByMemberId?: string | null
+    attendedByMemberName?: string | null
+    effectiveWaiterMemberId?: string | null
+    effectiveWaiterMemberName?: string | null
 }
 
 export interface TabItem {

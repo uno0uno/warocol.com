@@ -104,6 +104,60 @@ const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enable
 
 // Issue #537 — expediter mode (waiter advances comanda state from POS)
 const expediterEnabled = computed(() => settingsData.value?.data?.expediter_enabled === true)
+
+// Issue #574 — waiter attribution (per-session override + auto-handoff)
+const waiterAttributionEnabled = computed(() => settingsData.value?.data?.waiter_attribution_enabled === true)
+const tenantMembers = computed(() => (settingsData.value?.data as any)?.members ?? [])
+
+// Effective waiter id for the active session — used by the banner chip.
+const bannerEffectiveWaiterId = computed(() =>
+  posStore.activeTableSession?.effectiveWaiterMemberId ?? null,
+)
+const isChangingSessionWaiter = ref(false)
+const handleChangeSessionWaiter = async (event: Event) => {
+  if (isChangingSessionWaiter.value) return
+  if (!posStore.activeTableSession) return
+  const target = event.target as HTMLSelectElement
+  const newMemberId = target.value || null
+  isChangingSessionWaiter.value = true
+  try {
+    const result = await $fetch<{ success: boolean; data: { attended_by_member_id: string | null; attended_by_member_name: string | null } }>(
+      `/api/pos/tables/${posStore.activeTableSession.tableId}/session-waiter`,
+      { method: 'PATCH', body: { member_id: newMemberId } },
+    )
+    // Refresh session info so banner reflects the new effective waiter
+    const sessionData = await $fetch<{ success: boolean; data: any }>(
+      `/api/tables/${posStore.activeTableSession.tableId}/current`,
+    )
+    const s = sessionData?.data?.session
+    if (s && posStore.activeTableSession) {
+      posStore.setTableSession({
+        ...posStore.activeTableSession,
+        attendedByMemberId: s.attended_by_member_id ?? null,
+        attendedByMemberName: s.attended_by_member_name ?? null,
+        effectiveWaiterMemberId: s.effective_waiter_member_id ?? null,
+        effectiveWaiterMemberName: s.effective_waiter_member_name ?? null,
+      })
+    }
+    toast.success(
+      newMemberId ? `Mesero: ${result.data.attended_by_member_name}` : 'Sin mesero asignado',
+      { title: 'Actualizado' },
+    )
+  } catch (error: any) {
+    if (error?.statusCode === 403 || error?.response?.status === 403) {
+      toast.error(
+        'Solo el mesero actual o un supervisor pueden cambiar la asignación',
+        { title: 'No permitido' },
+      )
+    } else {
+      toast.error(error?.data?.detail || 'Error al cambiar mesero', { title: 'Error' })
+    }
+    // Reset the select to current value to avoid showing stale selection
+    target.value = posStore.activeTableSession?.effectiveWaiterMemberId ?? ''
+  } finally {
+    isChangingSessionWaiter.value = false
+  }
+}
 const showExpediterPanel = ref(false)
 const readyComandasCount = ref(0)
 let readyCountInterval: ReturnType<typeof setInterval> | null = null
@@ -167,13 +221,18 @@ const handleEnterTable = async (ctx: { tableId: string; sessionId: string; table
       `/api/tables/${ctx.tableId}/current`
     )
     if (session?.data?.session) {
+      const s = session.data.session
       posStore.setTableSession({
         tableId: ctx.tableId,
-        sessionId: session.data.session.id,
+        sessionId: s.id,
         tableName: ctx.tableName,
-        runningTotal: session.data.session.running_total,
-        openedAt: session.data.session.opened_at,
+        runningTotal: s.running_total,
+        openedAt: s.opened_at,
         isBar: ctx.isBar ?? false,
+        attendedByMemberId: s.attended_by_member_id ?? null,
+        attendedByMemberName: s.attended_by_member_name ?? null,
+        effectiveWaiterMemberId: s.effective_waiter_member_id ?? null,
+        effectiveWaiterMemberName: s.effective_waiter_member_name ?? null,
       })
       if (session.data.tab_items) {
         posStore.setTabItems(
@@ -211,13 +270,18 @@ const refreshTableSession = async () => {
       `/api/tables/${posStore.activeTableSession.tableId}/current`
     )
     if (session?.data?.session) {
+      const s = session.data.session
       posStore.setTableSession({
         tableId: posStore.activeTableSession.tableId,
-        sessionId: session.data.session.id,
+        sessionId: s.id,
         tableName: posStore.activeTableSession.tableName,
-        runningTotal: session.data.session.running_total,
-        openedAt: session.data.session.opened_at,
+        runningTotal: s.running_total,
+        openedAt: s.opened_at,
         isBar: posStore.activeTableSession.isBar,
+        attendedByMemberId: s.attended_by_member_id ?? null,
+        attendedByMemberName: s.attended_by_member_name ?? null,
+        effectiveWaiterMemberId: s.effective_waiter_member_id ?? null,
+        effectiveWaiterMemberName: s.effective_waiter_member_name ?? null,
       })
     }
     if (session?.data?.tab_items) {
@@ -764,6 +828,8 @@ onUnmounted(() => {
   <div v-else-if="showFloorPlan">
     <PosMesasFloorPlan
       :comandas-enabled="comandasEnabled"
+      :waiter-attribution-enabled="waiterAttributionEnabled"
+      :members="tenantMembers"
       @enter-table="handleEnterTable"
       @no-tables="noTablesConfigured = true"
       @move-table="handleMoveTable"
@@ -852,8 +918,43 @@ onUnmounted(() => {
               </span>
             </template>
           </div>
-          <!-- Action buttons: Volver (back to floor plan, keeps session) · Liberar (destructive) -->
+          <!-- Action buttons: [Mesero ▾ (#574)] · Volver (back to floor plan, keeps session) · Liberar (destructive) -->
           <div class="flex items-center gap-1.5 flex-shrink-0">
+            <!-- Issue #574 — Waiter chip with auto-handoff dropdown -->
+            <div v-if="waiterAttributionEnabled" class="relative">
+              <select
+                :value="bannerEffectiveWaiterId || ''"
+                :disabled="isChangingSessionWaiter"
+                aria-label="Cambiar mesero de la sesión activa"
+                class="inline-flex items-center gap-1.5 min-h-[36px] pl-7 pr-7 py-1.5 rounded-lg border text-[11px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer"
+                :class="bannerEffectiveWaiterId
+                  ? 'border-primary/30 bg-primary/5 text-primary'
+                  : 'border-border bg-surface text-text-tertiary hover:text-text-secondary'"
+                @change="handleChangeSessionWaiter"
+              >
+                <option value="">Sin mesero</option>
+                <option
+                  v-for="m in tenantMembers"
+                  :key="m.id"
+                  :value="m.id"
+                >
+                  {{ m.name }}
+                </option>
+              </select>
+              <!-- Icon (overlapping left) -->
+              <svg class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 flex-shrink-0"
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                :class="bannerEffectiveWaiterId ? 'text-primary' : 'text-text-tertiary'"
+                stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <!-- Caret (overlapping right) -->
+              <svg class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-text-tertiary"
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
             <!-- Volver — clears local activeTableSession; the showFloorPlan computed switches view. Session stays open in backend. -->
             <button
               type="button"
