@@ -95,6 +95,15 @@ const isEmittingInvoice = ref(false)
 const emitInvoiceError = ref('')
 const copiedCufe = ref(false)
 
+// warocol.com#589 — detect the "ya validado" un-recoverable case so the UI
+// shows a clearer support-action banner instead of dumping the raw Matias
+// error and confusing the cashier into clicking emit again.
+const isUnrecoverableRejection = computed(() => {
+  if (!invoiceData.value || invoiceData.value.status !== 'rejected') return false
+  const msg = (invoiceData.value.error_message || '').toLowerCase()
+  return msg.includes('ya se encuentra validado')
+})
+
 const emitInvoice = async () => {
   if (isEmittingInvoice.value) return
   isEmittingInvoice.value = true
@@ -648,9 +657,30 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Error message for rejected -->
-          <div v-if="invoiceData.status === 'rejected' && invoiceData.error_message"
-            class="flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-lg p-2.5">
+          <!-- warocol.com#589 — unrecoverable rejection: factura ya validada en DIAN
+               pero la fila local no se pudo persistir. La emisión ya consumió
+               un número de la resolución; no tiene sentido reintentar. -->
+          <div v-if="isUnrecoverableRejection"
+            class="mx-5 mb-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:bg-amber-950/20 dark:border-amber-800/40">
+            <svg class="w-5 h-5 mt-0.5 shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+            </svg>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                Factura {{ invoiceData.prefix }}{{ invoiceData.invoice_number }} ya validada en DIAN
+              </p>
+              <p class="text-xs text-amber-700/90 dark:text-amber-400 mt-1 leading-relaxed">
+                DIAN tiene esta factura validada pero la información local quedó desincronizada.
+                Contacta soporte para reconciliar el documento — no la vuelvas a emitir, eso consumiría
+                otro número de la resolución sin éxito.
+              </p>
+            </div>
+          </div>
+
+          <!-- Error message for rejected (other reasons — retry is allowed elsewhere) -->
+          <div v-else-if="invoiceData.status === 'rejected' && invoiceData.error_message"
+            class="mx-5 mb-5 flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-lg p-2.5">
             <svg class="w-3.5 h-3.5 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"
               aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

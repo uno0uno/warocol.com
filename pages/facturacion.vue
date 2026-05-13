@@ -40,12 +40,26 @@ const resolutions = computed(() => resolutionsData.value?.data ?? [])
 const showResolutionForm = ref(false)
 const editingResolutionId = ref<string | null>(null)
 const isSavingResolution = ref(false)
-const resolutionForm = reactive({
+// warocol.com#589 — `current_number` initialised to null on create so the
+// backend seeds it to `from_number - 1` (the correct initial state for the
+// api-facturacion allocator). Sending 0 here was the root cause of the
+// "ya validado" bug: it forced the allocator to start at LZT1/LZT2 and
+// collide with Matias' cross-resolution history.
+const resolutionForm = reactive<{
+  resolution_number: string
+  prefix: string
+  from_number: number
+  to_number: number
+  current_number: number | null
+  date_from: string
+  date_to: string
+  document_type: string
+}>({
   resolution_number: '',
   prefix: '',
   from_number: 1,
   to_number: 1000,
-  current_number: 0,
+  current_number: null,
   date_from: '',
   date_to: '',
   document_type: 'invoice',
@@ -56,12 +70,24 @@ const resetResolutionForm = () => {
   resolutionForm.prefix = ''
   resolutionForm.from_number = 1
   resolutionForm.to_number = 1000
-  resolutionForm.current_number = 0
+  resolutionForm.current_number = null
   resolutionForm.date_from = ''
   resolutionForm.date_to = ''
   resolutionForm.document_type = 'invoice'
   editingResolutionId.value = null
 }
+
+// warocol.com#589 — surface the same validation the backend enforces.
+// current_number must satisfy from_number - 1 <= current_number <= to_number,
+// otherwise the next emission will reuse already-validated DIAN numbers.
+const isCurrentNumberInvalid = computed(() => {
+  if (resolutionForm.current_number === null) return false
+  if (!resolutionForm.from_number || !resolutionForm.to_number) return false
+  return (
+    resolutionForm.current_number < resolutionForm.from_number - 1 ||
+    resolutionForm.current_number > resolutionForm.to_number
+  )
+})
 
 const openNewResolution = () => {
   resetResolutionForm()
@@ -389,9 +415,29 @@ const taxLevels = [
             <label class="text-xs font-medium text-text-secondary">Rango hasta <span class="text-red-500">*</span></label>
             <input v-model.number="resolutionForm.to_number" type="number" min="1" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
-          <div class="flex flex-col gap-1">
+          <!-- warocol.com#589 — `current_number` solo visible al editar.
+               Al crear se omite del payload → backend lo siembra como
+               `from_number - 1` automáticamente, evitando colisiones con
+               la historia cruzada de Matias. -->
+          <div v-if="editingResolutionId" class="flex flex-col gap-1">
             <label class="text-xs font-medium text-text-secondary">Número actual (consecutivo)</label>
-            <input v-model.number="resolutionForm.current_number" type="number" min="0" class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
+            <input
+              v-model.number="resolutionForm.current_number"
+              type="number"
+              :min="resolutionForm.from_number - 1"
+              :max="resolutionForm.to_number"
+              :class="[
+                'min-h-[44px] px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2',
+                isCurrentNumberInvalid ? 'border-destructive focus:ring-destructive/30' : 'border-border focus:ring-primary',
+              ]"
+            />
+            <p v-if="isCurrentNumberInvalid" class="text-xs text-destructive leading-snug">
+              Debe estar entre {{ resolutionForm.from_number - 1 }} y {{ resolutionForm.to_number }}. Valores
+              menores reusarían números ya emitidos en DIAN.
+            </p>
+            <p v-else class="text-[11px] text-text-tertiary leading-snug">
+              Próxima emisión usará {{ (resolutionForm.current_number ?? resolutionForm.from_number - 1) + 1 }}.
+            </p>
           </div>
           <div class="flex flex-col gap-1">
             <label class="text-xs font-medium text-text-secondary">Tipo de documento</label>
@@ -414,7 +460,7 @@ const taxLevels = [
           </button>
           <button
             @click="saveResolution"
-            :disabled="isSavingResolution || !resolutionForm.prefix || !resolutionForm.resolution_number || !resolutionForm.date_from || !resolutionForm.date_to"
+            :disabled="isSavingResolution || !resolutionForm.prefix || !resolutionForm.resolution_number || !resolutionForm.date_from || !resolutionForm.date_to || isCurrentNumberInvalid"
             class="min-h-[44px] px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <CheckIcon v-if="!isSavingResolution" class="w-4 h-4" aria-hidden="true" />
