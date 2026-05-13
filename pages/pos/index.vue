@@ -109,6 +109,11 @@ const expediterEnabled = computed(() => settingsData.value?.data?.expediter_enab
 const waiterAttributionEnabled = computed(() => settingsData.value?.data?.waiter_attribution_enabled === true)
 const tenantMembers = computed(() => (settingsData.value?.data as any)?.members ?? [])
 
+// Issue #575 — per-order chip in cart (bar + counter only; mesa uses #574 session override)
+const showServedByChip = computed(() =>
+  waiterAttributionEnabled.value && !isMesaMode.value,
+)
+
 // Effective waiter id for the active session — used by the banner chip.
 const bannerEffectiveWaiterId = computed(() =>
   posStore.activeTableSession?.effectiveWaiterMemberId ?? null,
@@ -1087,6 +1092,9 @@ onUnmounted(() => {
         :unfired-count="unfiredCount"
         :is-firing-to-kitchen="isFiringToKitchen"
         :pending-remove-item-id="pendingRemoveItemId"
+        :show-served-by-chip="showServedByChip"
+        :served-by-member-id="posStore.cartServedByMemberId"
+        :members="tenantMembers"
         @edit-item="editCartItem"
         @remove-item="removeFromCart"
         @increment-item="incrementCartItem"
@@ -1100,6 +1108,7 @@ onUnmounted(() => {
         @increment-tab-item="incrementTabItem"
         @decrement-tab-item="decrementTabItem"
         @fire-to-kitchen="fireToKitchen"
+        @update:served-by="(id) => posStore.setCartServedBy(id)"
       />
       </div>
     </div>
