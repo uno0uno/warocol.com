@@ -36,15 +36,25 @@ const { data: resolutionsData, asyncStatus: resAsyncStatus, refetch: refetchReso
 })
 const resolutions = computed(() => resolutionsData.value?.data ?? [])
 
+// DIAN sequence-gap summary — drives the range-burn alert (#592)
+const { data: gapsSummaryData, refetch: refetchGapsSummary } = useQuery({
+  key: () => ['tenant', 'dian-gaps-summary', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: { last_24h: number; last_7d: number; last_30d: number; total: number } }>(
+    '/api/api/tenant/dian-resolutions/gaps-summary'
+  ),
+  enabled: () => !!currentTenant.value,
+  staleTime: 60_000,
+})
+const gapsSummary = computed(() => gapsSummaryData.value?.data ?? null)
+const hasRecentGaps = computed(() => (gapsSummary.value?.last_7d ?? 0) > 0)
+
 // Resolution form state
 const showResolutionForm = ref(false)
 const editingResolutionId = ref<string | null>(null)
 const isSavingResolution = ref(false)
-// warocol.com#589 — `current_number` initialised to null on create so the
-// backend seeds it to `from_number - 1` (the correct initial state for the
-// api-facturacion allocator). Sending 0 here was the root cause of the
-// "ya validado" bug: it forced the allocator to start at LZT1/LZT2 and
-// collide with Matias' cross-resolution history.
+// warocol.com#592 — stored value when opening edit. DIAN forbids rewinds,
+// so the form clamps `current_number` at or above this value.
+const editingStoredCurrentNumber = ref<number | null>(null)
 const resolutionForm = reactive<{
   resolution_number: string
   prefix: string
@@ -75,16 +85,24 @@ const resetResolutionForm = () => {
   resolutionForm.date_to = ''
   resolutionForm.document_type = 'invoice'
   editingResolutionId.value = null
+  editingStoredCurrentNumber.value = null
 }
 
-// warocol.com#589 — surface the same validation the backend enforces.
-// current_number must satisfy from_number - 1 <= current_number <= to_number,
-// otherwise the next emission will reuse already-validated DIAN numbers.
+// Forward-only floor: when editing, clamp at the stored value (#592).
+// Otherwise clamp at from_number - 1 (the allocator's initial state).
+const currentNumberFloor = computed(() => {
+  const fromFloor = (resolutionForm.from_number || 1) - 1
+  if (editingStoredCurrentNumber.value !== null) {
+    return Math.max(fromFloor, editingStoredCurrentNumber.value)
+  }
+  return fromFloor
+})
+
 const isCurrentNumberInvalid = computed(() => {
   if (resolutionForm.current_number === null) return false
   if (!resolutionForm.from_number || !resolutionForm.to_number) return false
   return (
-    resolutionForm.current_number < resolutionForm.from_number - 1 ||
+    resolutionForm.current_number < currentNumberFloor.value ||
     resolutionForm.current_number > resolutionForm.to_number
   )
 })
@@ -96,6 +114,7 @@ const openNewResolution = () => {
 
 const openEditResolution = (res: any) => {
   editingResolutionId.value = res.id
+  editingStoredCurrentNumber.value = res.current_number
   resolutionForm.resolution_number = res.resolution_number
   resolutionForm.prefix = res.prefix
   resolutionForm.from_number = res.from_number
@@ -166,7 +185,7 @@ const isRefreshing = computed(() =>
 )
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const handleRefresh = async () => {
-  await Promise.all([refetchResolutions(), refetchStatus()])
+  await Promise.all([refetchResolutions(), refetchStatus(), refetchGapsSummary()])
 }
 onMounted(() => { setRefreshHandler(handleRefresh) })
 onUnmounted(() => { clearRefreshHandler() })
@@ -385,6 +404,31 @@ const taxLevels = [
         </button>
       </div>
 
+      <!-- Range-burn alert (#592) -->
+      <NuxtLink
+        v-if="hasRecentGaps"
+        to="/facturacion/audit"
+        class="block mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 hover:bg-amber-100/70 transition-colors dark:border-amber-700/40 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
+      >
+        <div class="flex items-start gap-3">
+          <ExclamationTriangleIcon class="w-5 h-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">
+              Números quemados detectados en tu numeración
+            </p>
+            <p class="text-xs text-amber-800 dark:text-amber-300 mt-0.5 leading-snug">
+              <span class="font-semibold tabular-nums">{{ gapsSummary?.last_24h ?? 0 }}</span> en 24h ·
+              <span class="font-semibold tabular-nums">{{ gapsSummary?.last_7d ?? 0 }}</span> en 7d ·
+              <span class="font-semibold tabular-nums">{{ gapsSummary?.last_30d ?? 0 }}</span> en 30d.
+              DIAN no permite reutilizarlos — revisa la bitácora.
+            </p>
+          </div>
+          <svg class="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </NuxtLink>
+
       <!-- Empty state -->
       <div v-if="resolutions.length === 0 && !showResolutionForm" class="text-center py-8">
         <DocumentTextIcon class="w-10 h-10 mx-auto text-text-tertiary mb-2" />
@@ -424,7 +468,7 @@ const taxLevels = [
             <input
               v-model.number="resolutionForm.current_number"
               type="number"
-              :min="resolutionForm.from_number - 1"
+              :min="currentNumberFloor"
               :max="resolutionForm.to_number"
               :class="[
                 'min-h-[44px] px-3 py-2 border rounded-lg text-sm bg-background focus:outline-none focus:ring-2',
@@ -432,11 +476,11 @@ const taxLevels = [
               ]"
             />
             <p v-if="isCurrentNumberInvalid" class="text-xs text-destructive leading-snug">
-              Debe estar entre {{ resolutionForm.from_number - 1 }} y {{ resolutionForm.to_number }}. Valores
-              menores reusarían números ya emitidos en DIAN.
+              Debe estar entre {{ currentNumberFloor }} y {{ resolutionForm.to_number }}. DIAN
+              prohíbe reutilizar números — el contador solo avanza.
             </p>
             <p v-else class="text-[11px] text-text-tertiary leading-snug">
-              Próxima emisión usará {{ (resolutionForm.current_number ?? resolutionForm.from_number - 1) + 1 }}.
+              Próxima emisión usará {{ (resolutionForm.current_number ?? currentNumberFloor) + 1 }}.
             </p>
           </div>
           <div class="flex flex-col gap-1">
