@@ -10,9 +10,26 @@
       </div>
     </div>
 
-    <!-- Issue #575 — Served by chip (bar + counter only, gated by waiter_attribution_enabled) -->
+    <!-- Issue #575 — Served by chip (bar + counter only, gated by
+         waiter_attribution_enabled). Three states:
+         - Skeleton while a tab is being loaded.
+         - Hidden entirely when there's nothing to attribute (no current
+           items, no tab items) — avoids a useless "Sin asignar" sitting on
+           an empty cart.
+         - Interactive picker when there are items in cart or tab. -->
     <div
-      v-if="showServedByChip"
+      v-if="showServedByChip && isLoadingTabItems"
+      class="px-4 py-2 border-b border-border bg-surface-secondary/40"
+      aria-hidden="true"
+    >
+      <div class="flex items-center gap-2 animate-pulse">
+        <div class="w-3.5 h-3.5 rounded-full bg-surface-secondary flex-shrink-0" />
+        <div class="h-3 w-20 rounded bg-surface-secondary flex-shrink-0" />
+        <div class="flex-1 min-h-[36px] rounded-lg bg-surface-secondary" />
+      </div>
+    </div>
+    <div
+      v-else-if="showServedByChip && (items.length > 0 || (tabItems && tabItems.length > 0))"
       class="px-4 py-2 border-b border-border bg-surface-secondary/40"
     >
       <div class="flex items-center gap-2">
