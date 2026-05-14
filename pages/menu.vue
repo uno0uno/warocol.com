@@ -35,7 +35,8 @@ const navigationItems = [
   { to: '/menu/recetas', label: 'Recetas', matchPath: '/menu/recetas' },
   { to: '/menu/productos', label: 'Productos' },
   { to: '/menu/reventa', label: 'Reventa', matchPath: '/menu/reventa' },
-  { to: '/menu/modificadores', label: 'Modificadores', matchPath: '/menu/modificadores' }
+  { to: '/menu/modificadores', label: 'Modificadores', matchPath: '/menu/modificadores' },
+  { to: '/menu/categorias', label: 'Categorías', matchPath: '/menu/categorias' }
 ]
 
 // Meta tags
