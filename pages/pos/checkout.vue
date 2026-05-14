@@ -2444,19 +2444,6 @@ onUnmounted(() => {
                     : getPaymentMethodLabel(orderResult.payment_method) }}
               </span>
             </div>
-            <!-- Kitchen fire confirmation — shown in counter mode when comandas are enabled -->
-            <div v-if="comandasEnabled && isCounterMode" class="flex items-center justify-between">
-              <span class="text-sm text-text-secondary flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
-                </svg>
-                Enviado a cocina
-              </span>
-              <span class="text-sm font-medium text-amber-700">
-                {{ cartItemsSnapshot.length }} {{ cartItemsSnapshot.length === 1 ? 'ítem' : 'ítems' }}
-              </span>
-            </div>
           </div>
 
           <!-- Electronic invoice (DIAN) — cashier triggers emission, but never sees CUFE/PDF -->
@@ -2654,7 +2641,7 @@ onUnmounted(() => {
             @click="closeSuccessModal"
             class="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
           >
-            {{ wasMesaMode ? 'Ver mesas' : 'Nueva Venta' }}
+            Nueva Venta
           </button>
         </div>
       </div>
