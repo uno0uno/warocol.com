@@ -95,6 +95,13 @@ const isEmittingInvoice = ref(false)
 const emitInvoiceError = ref('')
 const copiedCufe = ref(false)
 
+// warocol.com#598 — invoice email modal trigger
+const showEmailModal = ref(false)
+const toast = useToast()
+const onInvoiceEmailSent = (email: string) => {
+  toast.success(`Factura enviada a ${email}`, { title: 'Enviado' })
+}
+
 // warocol.com#589 — detect the "ya validado" un-recoverable case so the UI
 // shows a clearer support-action banner instead of dumping the raw Matias
 // error and confusing the cashier into clicking emit again.
@@ -615,7 +622,7 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Col 2: Descargar -->
+            <!-- Col 2: Descargar / Enviar -->
             <div class="p-5 flex flex-col justify-start">
               <h3 class="text-sm font-bold text-text-primary mb-4">Descargar</h3>
               <div class="flex-1 flex flex-col justify-start gap-3 w-full h-fit">
@@ -631,6 +638,16 @@ onUnmounted(() => {
                   </svg>
                   Descargar PDF
                 </a>
+                <button v-if="invoiceData.status === 'accepted'"
+                  type="button"
+                  @click="showEmailModal = true"
+                  class="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 rounded-xl text-sm font-semibold border border-primary/20 text-primary hover:bg-primary/5 transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                      d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                  </svg>
+                  Enviar por correo
+                </button>
                 <p v-else class="text-xs text-text-tertiary">
                   Disponible cuando la factura esté aceptada.
                 </p>
@@ -1138,6 +1155,15 @@ onUnmounted(() => {
       </Transition>
     </Teleport>
 
+    <!-- warocol.com#598 — send-invoice-by-email modal -->
+    <VentasInvoiceEmailModal
+      v-if="invoiceData"
+      v-model:open="showEmailModal"
+      :track-id="invoiceData.id"
+      :invoice-label="`${invoiceData.prefix}-${invoiceData.invoice_number}`"
+      :customer="orderData?.customer ?? null"
+      @sent="onInvoiceEmailSent"
+    />
   </div>
 </template>
 
