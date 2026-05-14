@@ -92,7 +92,7 @@ const submit = async () => {
   state.value = 'sending'
   errorMessage.value = ''
   try {
-    await $fetch(`/api/api/orders/${props.orderId}/invoice/send-email`, {
+    await $fetch(`/api/orders/${props.orderId}/invoice/send-email`, {
       method: 'POST',
       body: { email: recipientForMode.value },
     })
