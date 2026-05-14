@@ -34,6 +34,70 @@ const statusHistory = computed(() => (historyResponse.value as any)?.data ?? [])
 const isStatusUpdating = ref(false)
 const statusUpdateError = ref<string | null>(null)
 
+// ── Payment-method capture on delivered (warocol.com#606) ────────────────────
+interface PaymentSelection {
+  slug: string
+  id: string | null
+}
+
+const paymentModal = ref<{ open: boolean }>({ open: false })
+const paymentSelection = ref<PaymentSelection>({ slug: '', id: null })
+const paymentSubmitError = ref<string | null>(null)
+
+const { data: paymentMethodsResponse } = useQuery({
+  key: () => ['online-orders', 'payment-methods'],
+  query: () => $fetch<{ success: boolean; data: any[] }>('/api/online/orders/payment-methods'),
+  staleTime: 5 * 60_000,
+})
+const paymentGroups = computed(() => paymentMethodsResponse.value?.data ?? [])
+
+const selectedGroupHasMethods = computed(() => {
+  const g = paymentGroups.value.find((x: any) => x.slug === paymentSelection.value.slug)
+  return (g?.methods?.length ?? 0) > 0
+})
+const canConfirmDelivered = computed(() => {
+  if (!paymentSelection.value.slug) return false
+  if (selectedGroupHasMethods.value && !paymentSelection.value.id) return false
+  return true
+})
+
+const openDeliveredCapture = () => {
+  if (order.value?.payment_method) {
+    // Order already has captured payment (future online-gateway scenario) —
+    // skip the modal entirely.
+    void updateStatus('delivered')
+    return
+  }
+  paymentSelection.value = { slug: '', id: null }
+  paymentSubmitError.value = null
+  paymentModal.value.open = true
+}
+
+const closePaymentModal = () => {
+  if (isStatusUpdating.value) return
+  paymentModal.value.open = false
+}
+
+const confirmDelivered = async () => {
+  if (!canConfirmDelivered.value || isStatusUpdating.value) return
+  paymentSubmitError.value = null
+  try {
+    await updateStatus('delivered', {
+      payment_method: paymentSelection.value.slug,
+      payment_method_id: paymentSelection.value.id ?? null,
+    })
+    if (!statusUpdateError.value) {
+      paymentModal.value.open = false
+    } else {
+      paymentSubmitError.value = typeof statusUpdateError.value === 'string'
+        ? statusUpdateError.value
+        : (statusUpdateError.value as any)?.message ?? 'Error al guardar el pago'
+    }
+  } catch (err: any) {
+    paymentSubmitError.value = err?.data?.detail?.message ?? err?.message ?? 'Error al guardar el pago'
+  }
+}
+
 const updateStatus = async (newStatus: string, extra: Record<string, unknown> = {}) => {
   if (!order.value || isStatusUpdating.value) return
   isStatusUpdating.value = true
@@ -172,7 +236,7 @@ onUnmounted(() => {
           <UiButton v-else-if="order.status === 'confirmed'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('preparing')">
             {{ isStatusUpdating ? 'Actualizando...' : 'Marcar en preparación' }}
           </UiButton>
-          <UiButton v-else-if="order.status === 'preparing'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('delivered')">
+          <UiButton v-else-if="order.status === 'preparing'" size="lg" :disabled="isStatusUpdating" @click="openDeliveredCapture">
             {{ isStatusUpdating ? 'Actualizando...' : 'Marcar como entregado' }}
           </UiButton>
           <UiButton v-else-if="order.status === 'delivered'" size="lg" :disabled="isStatusUpdating" @click="updateStatus('completed')">
@@ -398,5 +462,97 @@ onUnmounted(() => {
       />
 
     </div>
+
+    <!-- Payment capture modal (warocol.com#606) — opens on "Marcar como entregado" -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="paymentModal.open"
+          class="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 sm:p-6 bg-black/50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="payment-modal-title"
+          @click.self="closePaymentModal"
+          @keydown.esc="closePaymentModal"
+        >
+          <Transition
+            enter-active-class="transition-all duration-200"
+            enter-from-class="opacity-0 translate-y-full sm:translate-y-0 sm:scale-95"
+            enter-to-class="opacity-100 translate-y-0 sm:scale-100"
+            leave-active-class="transition-all duration-200"
+            leave-from-class="opacity-100 translate-y-0 sm:scale-100"
+            leave-to-class="opacity-0 translate-y-full sm:translate-y-0 sm:scale-95"
+          >
+            <div
+              v-if="paymentModal.open"
+              class="relative bg-surface rounded-t-2xl sm:rounded-2xl shadow-xl border border-border w-full max-w-lg max-h-[90vh] flex flex-col"
+              @click.stop
+            >
+              <!-- Header -->
+              <div class="flex-shrink-0 px-6 py-4 border-b border-border flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <h3 id="payment-modal-title" class="text-xl font-bold text-text-primary">¿Cómo pagó el cliente?</h3>
+                  <p class="text-sm text-text-secondary mt-1">
+                    Total: <span class="font-semibold text-text-primary">{{ formatCurrency(order?.total_amount ?? 0) }}</span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  :disabled="isStatusUpdating"
+                  aria-label="Cerrar"
+                  class="flex-shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 transition-colors"
+                  @click="closePaymentModal"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Body -->
+              <div class="flex-1 overflow-y-auto px-6 py-5">
+                <PaymentsPaymentMethodSelector
+                  v-model="paymentSelection"
+                  :groups="(paymentGroups as any)"
+                  :disabled="isStatusUpdating"
+                />
+
+                <p v-if="paymentSubmitError" role="alert" class="mt-4 text-sm text-destructive">
+                  {{ paymentSubmitError }}
+                </p>
+              </div>
+
+              <!-- Footer -->
+              <div class="flex-shrink-0 px-6 py-4 border-t border-border bg-surface flex flex-col-reverse sm:flex-row gap-2">
+                <button
+                  type="button"
+                  :disabled="isStatusUpdating"
+                  class="flex-1 min-h-[44px] py-3 px-4 border-2 border-border rounded-lg text-text-primary font-medium hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  @click="closePaymentModal"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  :disabled="!canConfirmDelivered || isStatusUpdating"
+                  class="flex-1 min-h-[44px] py-3 px-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                  @click="confirmDelivered"
+                >
+                  <UiLoadingDots v-if="isStatusUpdating" size="8px" color="currentColor" />
+                  <span>{{ isStatusUpdating ? 'Guardando...' : 'Marcar como entregado' }}</span>
+                </button>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
