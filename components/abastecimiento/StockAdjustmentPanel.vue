@@ -39,7 +39,7 @@
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0 flex-1">
               <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
-                <Icon name="heroicons:adjustments-horizontal" class="w-5 h-5" />
+                <AdjustmentsHorizontalIcon class="w-5 h-5" />
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">Ajustar stock</h2>
@@ -65,7 +65,7 @@
         <!-- ─── Success state ─────────────────────────────────────────────── -->
         <div v-if="state === 'success'" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div class="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-700/40 dark:bg-green-900/20">
-            <Icon name="heroicons:check-circle" class="w-5 h-5 text-green-700 dark:text-green-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <CheckCircleIcon class="w-5 h-5 text-green-700 dark:text-green-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
             <div class="min-w-0 flex-1">
               <p class="text-sm font-semibold text-green-900 dark:text-green-200">Ajuste registrado</p>
               <p class="text-xs text-green-800 dark:text-green-300 mt-0.5 leading-snug break-words">
@@ -132,7 +132,11 @@
                 :class="form.adjustmentType === t.value ? t.activeClass : 'border-border bg-background hover:border-primary/30 hover:bg-surface-secondary/60'"
                 @click="form.adjustmentType = t.value"
               >
-                <Icon :name="t.icon" :class="['w-5 h-5', form.adjustmentType === t.value ? t.iconClass : 'text-text-secondary']" aria-hidden="true" />
+                <component
+                  :is="t.icon"
+                  :class="['w-5 h-5', form.adjustmentType === t.value ? t.iconClass : 'text-text-secondary']"
+                  aria-hidden="true"
+                />
                 <span class="text-xs font-semibold leading-tight" :class="form.adjustmentType === t.value ? t.labelClass : 'text-text-primary'">
                   {{ t.label }}
                 </span>
@@ -206,7 +210,7 @@
             v-if="selectedIngredient && !purchaseUnitsApi.isLoading(form.ingredientId) && purchaseUnitOptions.length === 0"
             class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-700/40 dark:bg-amber-900/20"
           >
-            <Icon name="heroicons:exclamation-triangle" class="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <ExclamationTriangleIcon class="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
             <p class="text-xs text-amber-800 dark:text-amber-300 leading-snug">
               Sin unidades de compra configuradas. Podés ajustar usando la unidad base ({{ selectedIngredient.unit }}) o
               <a :href="`/abastecimiento/ingredientes?highlight=${selectedIngredient.id}`" class="underline font-medium">configurar unidades</a>.
@@ -285,7 +289,7 @@
             v-if="showLargeWarning"
             class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-700/40 dark:bg-amber-900/20"
           >
-            <Icon name="heroicons:exclamation-triangle" class="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <ExclamationTriangleIcon class="w-4 h-4 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
             <p class="text-xs text-amber-800 dark:text-amber-300 leading-snug">
               <strong>Advertencia:</strong> este ajuste representa un cambio mayor al 50% del stock actual. Verificá los datos antes de registrar.
             </p>
@@ -297,7 +301,7 @@
             class="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-destructive"
             role="alert"
           >
-            <Icon name="heroicons:exclamation-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <ExclamationTriangleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
             <p class="text-xs leading-snug break-words">{{ errorMessage }}</p>
           </div>
         </div>
@@ -348,6 +352,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import {
+  AdjustmentsHorizontalIcon,
+  ArrowDownCircleIcon,
+  ArrowUpCircleIcon,
+  ArrowsRightLeftIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/vue/24/outline'
+import {
   useIngredientPurchaseUnits,
 } from '~/composables/useIngredientPurchaseUnits'
 import {
@@ -376,9 +388,9 @@ const notesId = `stock-adj-notes-${uid}`
 const REASONS = ADJUSTMENT_REASONS
 
 const TYPE_OPTIONS = [
-  { value: 'increment' as const, label: 'Incremento', icon: 'heroicons:arrow-up-circle',     activeClass: 'border-green-500 bg-green-50 dark:bg-green-900/20', iconClass: 'text-green-600', labelClass: 'text-green-700 dark:text-green-400' },
-  { value: 'decrement' as const, label: 'Decremento', icon: 'heroicons:arrow-down-circle',   activeClass: 'border-red-500 bg-red-50 dark:bg-red-900/20',       iconClass: 'text-red-600',   labelClass: 'text-red-700 dark:text-red-400' },
-  { value: 'set'       as const, label: 'Ajustar a',  icon: 'heroicons:arrows-right-left',   activeClass: 'border-primary bg-primary/5',                      iconClass: 'text-primary',   labelClass: 'text-primary' },
+  { value: 'increment' as const, label: 'Incremento', icon: ArrowUpCircleIcon,    activeClass: 'border-green-500 bg-green-50 dark:bg-green-900/20', iconClass: 'text-green-600', labelClass: 'text-green-700 dark:text-green-400' },
+  { value: 'decrement' as const, label: 'Decremento', icon: ArrowDownCircleIcon,  activeClass: 'border-red-500 bg-red-50 dark:bg-red-900/20',       iconClass: 'text-red-600',   labelClass: 'text-red-700 dark:text-red-400' },
+  { value: 'set'       as const, label: 'Ajustar a',  icon: ArrowsRightLeftIcon,  activeClass: 'border-primary bg-primary/5',                      iconClass: 'text-primary',   labelClass: 'text-primary' },
 ]
 
 const purchaseUnitsApi = useIngredientPurchaseUnits()
