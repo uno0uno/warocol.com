@@ -1,32 +1,40 @@
 <template>
-  <div class="px-3 md:px-4 py-4 space-y-4">
-    <!-- Header -->
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1 class="text-lg sm:text-xl font-bold text-text-primary">Categorías</h1>
-        <p class="text-sm text-text-secondary mt-0.5">
-          Agrupa productos del menú y enruta comandas por categoría.
-        </p>
-      </div>
-      <button
-        type="button"
-        class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px]"
-        @click="openCreatePanel"
-      >
-        + Nueva categoría
-      </button>
+  <div>
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- List -->
-    <UiResponsiveDataView
-      :columns="columns"
-      :data="categories"
-      :loading="isLoading"
-      empty-message="No hay categorías"
-      empty-sub-message="Crea la primera para organizar tu menú."
-      variant="default"
-      row-size="sm"
-    >
+    <!-- Error State -->
+    <CommonsTheErrorState v-else-if="fetchError" />
+
+    <!-- Main Content -->
+    <div v-else class="page-layout">
+      <div class="flex flex-col gap-3 md:gap-4">
+        <!-- Page subtitle + CTA -->
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <p class="text-sm text-text-secondary">
+            Agrupa productos del menú y enruta comandas por categoría.
+          </p>
+          <button
+            type="button"
+            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px]"
+            @click="openCreatePanel"
+          >
+            <span class="hidden sm:inline">+ Nueva categoría</span>
+            <span class="sm:hidden">+ Nueva</span>
+          </button>
+        </div>
+
+        <!-- List -->
+        <UiResponsiveDataView
+          :columns="columns"
+          :data="categories"
+          empty-message="No hay categorías"
+          empty-sub-message="Crea la primera para organizar tu menú."
+          variant="default"
+          row-size="sm"
+        >
       <!-- Mobile Card -->
       <template #card="{ item }">
         <div class="flex items-center gap-3 py-3 px-3 border-b border-border bg-surface">
@@ -37,10 +45,12 @@
             <div class="flex items-center gap-2 flex-wrap">
               <span class="text-sm font-semibold text-text-primary">{{ item.name }}</span>
               <span
-                v-if="item.tenant_id === null"
-                class="text-xs font-medium px-2 py-0.5 rounded-full bg-text-secondary/10 text-text-secondary"
+                class="text-xs font-medium px-2 py-0.5 rounded-full"
+                :class="item.tenant_id === null
+                  ? 'bg-text-secondary/10 text-text-secondary'
+                  : 'bg-primary/10 text-primary'"
               >
-                Global
+                {{ item.tenant_id === null ? 'Global' : 'Propia' }}
               </span>
             </div>
             <p v-if="item.description" class="text-xs text-text-secondary mt-0.5 truncate">{{ item.description }}</p>
@@ -68,17 +78,20 @@
         </div>
       </template>
 
-      <!-- Desktop cells -->
-      <template #cell-name="{ value, item }">
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-medium text-text-primary">{{ value }}</span>
-          <span
-            v-if="item.tenant_id === null"
-            class="text-xs font-medium px-2 py-0.5 rounded-full bg-text-secondary/10 text-text-secondary"
-          >
-            Global
-          </span>
-        </div>
+      <!-- Desktop cells: one data per column -->
+      <template #cell-name="{ value }">
+        <span class="text-sm font-medium text-text-primary">{{ value }}</span>
+      </template>
+
+      <template #cell-tipo="{ item }">
+        <span
+          class="text-xs font-medium px-2 py-0.5 rounded-full inline-block"
+          :class="item.tenant_id === null
+            ? 'bg-text-secondary/10 text-text-secondary'
+            : 'bg-primary/10 text-primary'"
+        >
+          {{ item.tenant_id === null ? 'Global' : 'Propia' }}
+        </span>
       </template>
 
       <template #cell-description="{ value }">
@@ -108,7 +121,9 @@
           <span v-if="item.tenant_id === null" class="text-xs text-text-tertiary px-2">Solo lectura</span>
         </div>
       </template>
-    </UiResponsiveDataView>
+        </UiResponsiveDataView>
+      </div>
+    </div>
 
     <!-- Create/Edit slide-over -->
     <MenuCategoryPanel
@@ -168,11 +183,17 @@ const cache = useQueryCache()
 
 const columns = [
   { key: 'name', title: 'Nombre' },
+  { key: 'tipo', title: 'Tipo' },
   { key: 'description', title: 'Descripción' },
   { key: 'actions', title: '', align: 'right' as const },
 ]
 
-const { data: categoriesData, status: queryStatus } = useQuery({
+const {
+  data: categoriesData,
+  asyncStatus: queryAsyncStatus,
+  error: queryError,
+  refetch,
+} = useQuery({
   key: () => ['tenant', 'menu-categories', currentTenant.value?.id ?? null],
   query: () => $fetch<{ success: boolean; data: Category[] }>('/api/menu/categories'),
   enabled: () => !!currentTenant.value,
@@ -180,7 +201,26 @@ const { data: categoriesData, status: queryStatus } = useQuery({
 })
 
 const categories = computed<Category[]>(() => categoriesData.value?.data ?? [])
-const isLoading = computed(() => queryStatus.value === 'pending')
+// Matrix loader: only the very first load (no data yet). Subsequent refetches
+// surface as a progressive indicator in the header — see registerProgressiveLoading.
+const isLoading = computed(() => !categoriesData.value && !queryError.value)
+const fetchError = computed(() => !!queryError.value)
+const isRefreshing = computed(
+  () => queryAsyncStatus.value === 'loading' && categoriesData.value != null,
+)
+
+// Header refresh button + progressive loading indicator (mirrors siblings).
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const refreshHandler = async () => {
+  await refetch()
+}
+onMounted(() => {
+  setRefreshHandler(refreshHandler)
+  registerProgressiveLoading(isRefreshing)
+})
+onUnmounted(() => {
+  clearRefreshHandler(refreshHandler)
+})
 
 // ── Slide-over (create/edit) ────────────────────────────────────────────
 const panelOpen = ref(false)
