@@ -89,36 +89,58 @@
             />
           </div>
 
-          <!-- 2. Selected ingredient summary (3 cards) -->
+          <!-- 2. Selected ingredient summary (3 cards) — skeleton while loading -->
           <div
             v-if="selectedIngredient"
             class="rounded-xl border border-border bg-background p-4 grid grid-cols-3 gap-3"
           >
             <div>
               <p class="text-[10px] font-medium text-text-secondary uppercase tracking-wide">Stock Actual</p>
-              <p class="text-lg font-bold text-text-primary mt-0.5 leading-tight">
+              <div v-if="isLoadingStock || !stockLoaded" class="mt-1 h-6 w-20 bg-surface-secondary rounded animate-pulse" aria-label="Cargando stock actual" />
+              <p v-else class="text-lg font-bold text-text-primary mt-0.5 leading-tight">
                 {{ formatNumber(currentStock) }}
                 <span class="text-xs text-text-secondary font-normal">{{ selectedIngredient.unit }}</span>
               </p>
             </div>
             <div>
               <p class="text-[10px] font-medium text-text-secondary uppercase tracking-wide">Mínimo</p>
-              <p class="text-sm font-semibold text-text-primary mt-0.5 leading-tight">
+              <div v-if="isLoadingStock || !stockLoaded" class="mt-1 h-5 w-16 bg-surface-secondary rounded animate-pulse" aria-label="Cargando mínimo" />
+              <p v-else class="text-sm font-semibold text-text-primary mt-0.5 leading-tight">
                 {{ formatNumber(selectedIngredient.minimum_stock || 0) }}
                 <span class="text-xs text-text-secondary font-normal">{{ selectedIngredient.unit }}</span>
               </p>
             </div>
             <div>
               <p class="text-[10px] font-medium text-text-secondary uppercase tracking-wide">Máximo</p>
-              <p class="text-sm font-semibold text-text-primary mt-0.5 leading-tight">
+              <div v-if="isLoadingStock || !stockLoaded" class="mt-1 h-5 w-12 bg-surface-secondary rounded animate-pulse" aria-label="Cargando máximo" />
+              <p v-else class="text-sm font-semibold text-text-primary mt-0.5 leading-tight">
                 {{ selectedIngredient.maximum_stock ? formatNumber(selectedIngredient.maximum_stock) : '-' }}
                 <span v-if="selectedIngredient.maximum_stock" class="text-xs text-text-secondary font-normal">{{ selectedIngredient.unit }}</span>
               </p>
             </div>
           </div>
 
-          <!-- 3. Type cards -->
-          <div v-if="selectedIngredient" class="flex flex-col gap-2">
+          <!-- 2b. Stock-load error: refetch action so operator can recover -->
+          <div
+            v-if="selectedIngredient && !isLoadingStock && !stockLoaded && errorMessage"
+            class="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-destructive"
+            role="alert"
+          >
+            <ExclamationTriangleIcon class="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <div class="flex-1 min-w-0 flex items-start justify-between gap-2">
+              <p class="text-xs leading-snug break-words">{{ errorMessage }}</p>
+              <button
+                type="button"
+                class="text-xs font-semibold underline hover:no-underline flex-shrink-0"
+                @click="retryStockFetch"
+              >
+                Reintentar
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. Type cards (only after stock confirmed) -->
+          <div v-if="selectedIngredient && stockLoaded" class="flex flex-col gap-2">
             <span class="text-sm font-medium text-text-primary">
               Tipo de Ajuste <span class="text-destructive">*</span>
             </span>
@@ -399,6 +421,8 @@ const {
   form,
   selectedIngredient,
   currentStock,
+  isLoadingStock,
+  stockLoaded,
   isSubmitting,
   errorMessage,
   isFormValid,
@@ -465,8 +489,11 @@ const onIngredientSelect = async (ingredient: { id: string; name: string; unit: 
   form.cost_per_unit = null
   errorMessage.value = ''
 
-  // Fetch purchase units (cached) and stock in parallel.
-  const [units] = await Promise.all([
+  // Fire both fetches in parallel but tolerate either failing individually.
+  // Stock-load failure shows the "Reintentar" banner via the composable
+  // (loadCurrentStock now throws on failure instead of falling back to 0).
+  // Purchase-units failure is already swallowed inside the composable.
+  await Promise.allSettled([
     purchaseUnitsApi.fetch(ingredient.id),
     loadCurrentStock(ingredient.id),
   ])
@@ -474,6 +501,15 @@ const onIngredientSelect = async (ingredient: { id: string; name: string; unit: 
   // Default unit selection: is_default → first → base.
   const def = purchaseUnitsApi.defaultFor(ingredient.id)
   form.unit = def ? def.value : ingredient.unit
+}
+
+const retryStockFetch = async () => {
+  if (!form.ingredientId) return
+  try {
+    await loadCurrentStock(form.ingredientId)
+  } catch {
+    /* errorMessage already set by composable */
+  }
 }
 
 const onSubmit = async () => {
@@ -489,9 +525,25 @@ const onSubmit = async () => {
   }
 }
 
-const resetForAnother = () => {
+const resetForAnother = async () => {
+  // Preserve the selected ingredient so the operator can chain another
+  // adjustment without re-typing the search. Refetch its stock so the
+  // "Stock Actual" reflects what the previous submit just changed.
+  const keepId = form.ingredientId
+  const keepIngredient = selectedIngredient.value
   state.value = 'idle'
+  successMessage.value = ''
   reset()
+  if (keepId && keepIngredient) {
+    selectedIngredient.value = keepIngredient
+    form.ingredientId = keepId
+    await Promise.allSettled([
+      purchaseUnitsApi.fetch(keepId),
+      loadCurrentStock(keepId),  // ← refetch fresh stock for the new attempt
+    ])
+    const def = purchaseUnitsApi.defaultFor(keepId)
+    form.unit = def ? def.value : keepIngredient.unit
+  }
 }
 
 const close = () => {

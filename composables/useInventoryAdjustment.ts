@@ -67,10 +67,16 @@ export function useInventoryAdjustment() {
 
   const selectedIngredient = ref<SelectedIngredient | null>(null)
   const currentStock = ref<number>(0)
+  const isLoadingStock = ref(false)
+  const stockLoaded = ref(false)
   const isSubmitting = ref(false)
   const errorMessage = ref('')
 
   const isFormValid = computed(() => {
+    // Block submit until the current stock has been confirmed by the
+    // backend — otherwise an operator could increment against a stale 0
+    // and silently distort inventory (caught in #608 follow-up).
+    if (!stockLoaded.value || isLoadingStock.value) return false
     if (!form.ingredientId || !form.adjustmentType || !form.unit) return false
     if (!form.quantity || form.quantity <= 0) return false
     if (!form.reason) return false
@@ -119,15 +125,23 @@ export function useInventoryAdjustment() {
     form.notes = ''
     selectedIngredient.value = null
     currentStock.value = 0
+    stockLoaded.value = false
+    isLoadingStock.value = false
     isSubmitting.value = false
     errorMessage.value = ''
   }
 
   /**
-   * Loads the current stock for an ingredient.
-   * Returns the numeric value (0 if not found / null).
+   * Loads the current stock for an ingredient. Throws on failure so the
+   * caller (panel) can show an error banner and gate the submit — we do
+   * NOT silently fall back to 0 because doing so misled the operator in
+   * a prior incident (a +2 libras "Incremento" was applied against an
+   * unknown real stock).
    */
   const loadCurrentStock = async (ingredientId: string): Promise<number> => {
+    isLoadingStock.value = true
+    stockLoaded.value = false
+    errorMessage.value = ''
     try {
       const res = await $fetch<{ current_stock?: number | null }>(
         `/api/inventory/stock/${ingredientId}`,
@@ -135,10 +149,19 @@ export function useInventoryAdjustment() {
       const v = res?.current_stock
       const num = typeof v === 'number' ? v : Number(v ?? 0)
       currentStock.value = isFinite(num) ? num : 0
-    } catch {
+      stockLoaded.value = true
+      return currentStock.value
+    } catch (e: any) {
       currentStock.value = 0
+      stockLoaded.value = false
+      errorMessage.value =
+        e?.data?.detail ||
+        e?.message ||
+        'No se pudo cargar el stock actual. Reintentá antes de registrar el ajuste.'
+      throw e
+    } finally {
+      isLoadingStock.value = false
     }
-    return currentStock.value
   }
 
   /**
@@ -207,6 +230,8 @@ export function useInventoryAdjustment() {
     form,
     selectedIngredient,
     currentStock,
+    isLoadingStock,
+    stockLoaded,
     isSubmitting,
     errorMessage,
     isFormValid,
