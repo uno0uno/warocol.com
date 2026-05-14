@@ -229,10 +229,10 @@
 
             <button 
               type="button"
-              @click="handleDelete"
+              @click="requestDelete"
               :disabled="isDeleting"
               class="w-full py-3 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-semibold">
-              <CommonsTheCustomLoader v-if="isDeleting" size="small" />
+              <UiLoadingDots v-if="isDeleting" size="9px" color="currentColor" />
               <span>{{ isDeleting ? 'Eliminando...' : 'Eliminar Proveedor' }}</span>
             </button>
           </div>
@@ -385,6 +385,17 @@
     </div>
   </div>
 
+    <UiConfirmActionModal
+      v-model="showDeleteConfirm"
+      title="¿Eliminar proveedor?"
+      message="Esta acción no se puede deshacer. El proveedor desaparecerá del listado."
+      confirm-label="Eliminar"
+      loading-label="Eliminando..."
+      variant="destructive"
+      :loading="isDeleting"
+      @confirm="performDelete"
+    />
+
     <UiErrorAlertModal
       v-model="errorModal.open"
       :title="errorModal.title"
@@ -418,6 +429,7 @@ const form = reactive({
 
 const isSubmitting = ref(false)
 const isDeleting = ref(false)
+const showDeleteConfirm = ref(false)
 
 interface ErrorModalDependent {
   label: string
@@ -481,18 +493,20 @@ const handleSubmit = async () => {
   }
 }
 
-// Handle provider deletion
-const handleDelete = async () => {
-  if (!confirm('¿Está seguro de que desea eliminar este proveedor? Esta acción no se puede deshacer.')) {
-    return
-  }
+// Handle provider deletion — opens confirmation modal; performDelete runs on confirm
+const requestDelete = () => {
+  if (isDeleting.value) return
+  showDeleteConfirm.value = true
+}
 
+const performDelete = async () => {
   isDeleting.value = true
   try {
     await $fetch(`/api/suppliers/providers/${supplierId}`, {
       method: 'DELETE',
     })
 
+    showDeleteConfirm.value = false
     await navigateTo('/abastecimiento/proveedores')
 
   } catch (err: any) {
@@ -511,6 +525,7 @@ const handleDelete = async () => {
         ].filter((dep) => dep.count > 0)
       : []
 
+    showDeleteConfirm.value = false
     errorModal.value = {
       open: true,
       title: 'No se pudo eliminar el proveedor',
