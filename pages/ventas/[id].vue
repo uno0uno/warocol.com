@@ -1155,11 +1155,11 @@ onUnmounted(() => {
       </Transition>
     </Teleport>
 
-    <!-- warocol.com#598 — send-invoice-by-email modal -->
+    <!-- warocol.com#603 — send-invoice-by-email modal (WARO-branded via SES) -->
     <VentasInvoiceEmailModal
       v-if="invoiceData"
       v-model:open="showEmailModal"
-      :track-id="invoiceData.id"
+      :order-id="orderId"
       :invoice-label="`${invoiceData.prefix}-${invoiceData.invoice_number}`"
       :customer="orderData?.customer ?? null"
       @sent="onInvoiceEmailSent"
