@@ -35,46 +35,37 @@
           variant="default"
           row-size="sm"
         >
-      <!-- Mobile Card -->
-      <template #card="{ item }">
-        <div class="flex items-center gap-3 py-3 px-3 border-b border-border bg-surface">
-          <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
-            <TagIcon class="w-4 h-4" />
-          </div>
+      <!-- Mobile row (matches /menu/modificadores pattern) -->
+      <template #card="{ item, index }">
+        <div
+          class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors"
+          :class="[
+            item.tenant_id !== null ? 'hover:bg-surface-secondary cursor-pointer' : 'cursor-default',
+            index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30',
+          ]"
+          @click="item.tenant_id !== null && openEditPanel(item)"
+        >
           <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-sm font-semibold text-text-primary">{{ item.name }}</span>
-              <span
-                class="text-xs font-medium px-2 py-0.5 rounded-full"
-                :class="item.tenant_id === null
-                  ? 'bg-text-secondary/10 text-text-secondary'
-                  : 'bg-primary/10 text-primary'"
-              >
-                {{ item.tenant_id === null ? 'Global' : 'Propia' }}
-              </span>
-            </div>
+            <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
             <p v-if="item.description" class="text-xs text-text-secondary mt-0.5 truncate">{{ item.description }}</p>
           </div>
-          <div class="flex items-center gap-1 flex-shrink-0">
-            <button
-              v-if="item.tenant_id !== null"
-              type="button"
-              :aria-label="`Editar categoría ${item.name}`"
-              class="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-              @click.stop="openEditPanel(item)"
-            >
-              <PencilSquareIcon class="w-5 h-5" />
-            </button>
-            <button
-              v-if="item.tenant_id !== null"
-              type="button"
-              :aria-label="`Eliminar categoría ${item.name}`"
-              class="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 focus:outline-none focus:ring-2 focus:ring-destructive/30 transition-colors"
-              @click.stop="requestDelete(item)"
-            >
-              <TrashIcon class="w-5 h-5" />
-            </button>
-          </div>
+          <span
+            class="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0"
+            :class="item.tenant_id === null
+              ? 'bg-text-secondary/10 text-text-secondary'
+              : 'bg-primary/10 text-primary'"
+          >
+            {{ item.tenant_id === null ? 'Global' : 'Propia' }}
+          </span>
+          <button
+            v-if="item.tenant_id !== null"
+            type="button"
+            :aria-label="`Eliminar categoría ${item.name}`"
+            class="flex-shrink-0 min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 focus:outline-none focus:ring-2 focus:ring-destructive/30 transition-colors"
+            @click.stop="requestDelete(item)"
+          >
+            <TrashIcon class="w-4 h-4" />
+          </button>
         </div>
       </template>
 
@@ -155,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import { TagIcon, PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { PencilSquareIcon, TrashIcon } from '@heroicons/vue/24/outline'
 
 definePageMeta({
   // layout: 'dashboard' — inherited from parent menu.vue
