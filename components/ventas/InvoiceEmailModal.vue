@@ -23,8 +23,8 @@ interface Customer {
 
 interface Props {
   open: boolean
-  trackId: string
-  invoiceLabel: string  // e.g. "LZT-5462" for the modal copy
+  orderId: string
+  invoiceLabel: string  // e.g. "LZT-5462" for the in-modal copy
   customer: Customer | null
 }
 
@@ -36,10 +36,11 @@ const emit = defineEmits<{
 
 const title = 'Enviar factura por correo'
 
-// warocol.com#598 — A profile is "generic" (no useful email to prefill) when
-// either the phone is '0000000000' (per-tenant default Genérico) OR the email
-// ends in '@customer.temp' (auto-created POS walk-in). Both signals are used
-// elsewhere in the codebase — see pages/pos/checkout.vue:440,614.
+// warocol.com#603 — A profile is "generic" (no useful email to prefill)
+// when either the phone is '0000000000' (per-tenant default Genérico) OR
+// the email ends in '@customer.temp' (auto-created POS walk-in). Both
+// signals are used elsewhere in the codebase — see
+// pages/pos/checkout.vue:440,614.
 const isGenericCustomer = computed(() => {
   const c = props.customer
   if (!c) return true
@@ -76,6 +77,10 @@ watch(() => props.open, (isOpen) => {
   if (isOpen) resetForm()
 })
 
+const recipientForMode = computed(() =>
+  mode.value === 'customer' ? customerEmail.value : customEmail.value,
+)
+
 const canSubmit = computed(() => {
   if (state.value === 'sending') return false
   if (mode.value === 'customer') return !!customerEmail.value
@@ -87,16 +92,11 @@ const submit = async () => {
   state.value = 'sending'
   errorMessage.value = ''
   try {
-    if (mode.value === 'customer') {
-      await $fetch(`/api/api/documents/${props.trackId}/resend-email`, { method: 'POST' })
-      sentToEmail.value = customerEmail.value
-    } else {
-      await $fetch(`/api/api/documents/${props.trackId}/send-email-to`, {
-        method: 'POST',
-        body: { email: customEmail.value },
-      })
-      sentToEmail.value = customEmail.value
-    }
+    await $fetch(`/api/orders/${props.orderId}/invoice/send-email`, {
+      method: 'POST',
+      body: { email: recipientForMode.value },
+    })
+    sentToEmail.value = recipientForMode.value
     state.value = 'sent'
     emit('sent', sentToEmail.value)
   } catch (e: any) {
@@ -112,17 +112,17 @@ const submit = async () => {
   }
 }
 
+// warocol.com#603 — preserve the last-typed email when going back to the
+// form (the v0 in #598 cleared it, forcing the operator to retype).
 const sendAnother = () => {
   state.value = 'idle'
   errorMessage.value = ''
-  // Pre-fill custom mode with the just-sent address as a convenience.
-  if (mode.value === 'custom') customEmail.value = ''
 }
 
 const cancel = () => emit('update:open', false)
 
-// Shared template body rendered once and slotted into both modal frames.
-// Avoids duplicating ~80 lines of JSX in the SFC template.
+// Shared form/success body rendered once per breakpoint (Modal + BottomSheet
+// both mount but each is hidden at the wrong viewport via internal classes).
 const contentTemplate = () =>
   h('div', { class: 'p-5 sm:p-6 space-y-5' }, [
     // ─── Success ────────────────────────────────────────────────────────────
@@ -183,7 +183,7 @@ const contentTemplate = () =>
               )
             : null,
 
-          // Option 1 — customer email (only for real customers)
+          // Option 1 — customer email (real customers only)
           !isGenericCustomer.value
             ? h(
                 'button',
