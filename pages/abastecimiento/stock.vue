@@ -72,6 +72,20 @@
               {{ unit }}
             </option>
           </select>
+
+          <!-- warocol.com#608 — Adjust stock for any ingredient (including
+               those with zero stock, which never render as rows). -->
+          <button
+            type="button"
+            title="Ajustar stock"
+            @click="showAdjustmentPanel = true"
+            class="min-h-[44px] h-10 px-3 inline-flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 transition-colors flex-shrink-0"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+            <span class="hidden sm:inline">Ajustar stock</span>
+          </button>
         </template>
       </SharedFiltersBar>
 
@@ -188,11 +202,18 @@
       </UiResponsiveDataView>
       </HealthSemaphore>
     </div>
+
+    <!-- warocol.com#608 — Stock adjustment slide-over -->
+    <AbastecimientoStockAdjustmentPanel
+      v-model="showAdjustmentPanel"
+      @saved="onAdjustmentSaved"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, inject, onMounted } from 'vue'
+import { useQueryCache } from '@pinia/colada'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 
@@ -206,6 +227,16 @@ const searchQuery = ref('')
 const categoryFilter = ref('')
 const statusFilter = ref('all')
 const unitFilter = ref('')
+
+// warocol.com#608 — stock adjustment slide-over
+const showAdjustmentPanel = ref(false)
+const toast = useToast()
+const cache = useQueryCache()
+const onAdjustmentSaved = () => {
+  // Invalidate the inventory query so the table reflects the new stock.
+  cache.invalidateQueries({ key: ['inventory'] })
+  toast.success('Ajuste registrado', { title: 'Stock actualizado' })
+}
 
 // Sorting state
 const sortField = ref('')
