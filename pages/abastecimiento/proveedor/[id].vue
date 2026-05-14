@@ -384,6 +384,13 @@
       </div>
     </div>
   </div>
+
+    <UiErrorAlertModal
+      v-model="errorModal.open"
+      :title="errorModal.title"
+      :message="errorModal.message"
+      :dependents="errorModal.dependents"
+    />
   </div>
 </template>
 
@@ -411,6 +418,23 @@ const form = reactive({
 
 const isSubmitting = ref(false)
 const isDeleting = ref(false)
+
+interface ErrorModalDependent {
+  label: string
+  count: number
+}
+
+const errorModal = ref<{
+  open: boolean
+  title: string
+  message: string
+  dependents: ErrorModalDependent[]
+}>({
+  open: false,
+  title: '',
+  message: '',
+  dependents: [],
+})
 
 // Fetch provider data
 const { data: supplierData, pending: isLoading, error, refresh } = useAsyncData(
@@ -469,12 +493,32 @@ const handleDelete = async () => {
       method: 'DELETE',
     })
 
-    console.log('Proveedor eliminado exitosamente!') // Temporary feedback
     await navigateTo('/abastecimiento/proveedores')
 
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error deleting supplier:', err)
-    alert('Error al eliminar el proveedor.') // Temporary feedback
+    const detail = err?.data?.detail
+    const isStructured409 =
+      err?.status === 409 &&
+      detail &&
+      typeof detail === 'object' &&
+      (detail.code === 'supplier_has_dependents' || detail.code === 'supplier_has_dependents_unknown')
+
+    const dependents: ErrorModalDependent[] = isStructured409 && detail.counts
+      ? [
+          { label: 'Órdenes de compra', count: detail.counts.purchases ?? 0 },
+          { label: 'Precios registrados', count: detail.counts.supplier_prices ?? 0 },
+        ].filter((dep) => dep.count > 0)
+      : []
+
+    errorModal.value = {
+      open: true,
+      title: 'No se pudo eliminar el proveedor',
+      message: isStructured409 && typeof detail.message === 'string'
+        ? detail.message
+        : 'Ocurrió un error al intentar eliminar el proveedor. Inténtalo de nuevo.',
+      dependents,
+    }
   } finally {
     isDeleting.value = false
   }
