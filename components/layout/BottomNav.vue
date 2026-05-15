@@ -1,5 +1,5 @@
 <template>
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-[50] bg-white/95 backdrop-blur-sm border-t border-titan-200 shadow-[0_-1px_4px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]">
+  <nav aria-label="Navegación móvil" class="md:hidden fixed bottom-0 left-0 right-0 z-[50] bg-white/95 backdrop-blur-sm border-t border-titan-200 shadow-[0_-1px_4px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]">
     <div class="flex items-stretch h-[58px]">
 
       <!-- Inicio -->
@@ -10,13 +10,14 @@
         <span>Inicio</span>
       </NuxtLink>
 
-      <!-- Bogotá -->
-      <NuxtLink to="/bogota" class="nav-item" :class="route.path.startsWith('/bogota') ? 'active' : 'inactive'">
+      <!-- Ciudades (warocol.com#619) — replaces the hardcoded /bogota entry.
+           Active on /ciudades AND on any /<city_slug> directory page. -->
+      <NuxtLink to="/ciudades" class="nav-item" :class="isCitiesActive ? 'active' : 'inactive'">
         <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
           <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-        <span>Bogotá</span>
+        <span>Ciudades</span>
       </NuxtLink>
 
       <!-- Blog -->
@@ -60,12 +61,18 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
 import { useDocsNav } from '~/composables/useDocsNav'
+import { useCityCatalog } from '~/composables/useCityCatalog'
 
 const route = useRoute()
 const authStore = useAuthStore()
 const { showDocsNav } = useDocsNav()
+const { isCityRoute } = useCityCatalog()
 
 const isOnDocs = computed(() => route.path.startsWith('/docs'))
+// "Ciudades" item highlights on the hub and on every city directory page.
+const isCitiesActive = computed(
+  () => route.path === '/ciudades' || isCityRoute(route.path),
+)
 </script>
 
 <style scoped>
