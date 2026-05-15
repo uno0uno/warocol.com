@@ -68,6 +68,28 @@ export default defineEventHandler(async (event) => {
     console.error('Error fetching restaurants for sitemap:', error)
   }
 
+  // URLs de directorios por ciudad (warocol.com#615) — un entry por ciudad
+  // con tenants activos. Sin estas entries el directorio /<ciudad> existe
+  // pero no llega a Google.
+  let cityUrls: Array<{ loc: string; lastmod: string; changefreq: string; priority: string }> = []
+  try {
+    const fetchHeaders = { 'Origin': siteUrl, 'Referer': `${siteUrl}/` }
+    const response = await $fetch<{ success: boolean; data: Array<{ city_slug: string }> }>(
+      `${apiUrl}/public/cities`,
+      { query: { include_empty: 'false' }, headers: fetchHeaders }
+    )
+    if (response?.data?.length > 0) {
+      cityUrls = response.data.map((c) => ({
+        loc: `/${c.city_slug}`,
+        lastmod: today,
+        changefreq: 'weekly',
+        priority: '0.85',
+      }))
+    }
+  } catch (error) {
+    console.error('Error fetching cities for sitemap:', error)
+  }
+
   // URLs base
   const baseUrls = [
     { loc: '/', lastmod: today, changefreq: 'daily', priority: '1.0' },
@@ -75,7 +97,7 @@ export default defineEventHandler(async (event) => {
   ]
 
   // Combinar todas las URLs
-  const allUrls = [...baseUrls, ...restaurantUrls, ...blogUrls]
+  const allUrls = [...baseUrls, ...cityUrls, ...restaurantUrls, ...blogUrls]
 
   // Generar XML
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
