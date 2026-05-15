@@ -74,8 +74,10 @@ export default defineEventHandler(async (event) => {
   let cityUrls: Array<{ loc: string; lastmod: string; changefreq: string; priority: string }> = []
   try {
     const fetchHeaders = { 'Origin': siteUrl, 'Referer': `${siteUrl}/` }
+    // Endpoint is under the public_restaurant router (prefix
+    // /public/restaurant) — see api-warolabs/app/main.py:196.
     const response = await $fetch<{ success: boolean; data: Array<{ city_slug: string }> }>(
-      `${apiUrl}/public/cities`,
+      `${apiUrl}/public/restaurant/cities`,
       { query: { include_empty: 'false' }, headers: fetchHeaders }
     )
     if (response?.data?.length > 0) {

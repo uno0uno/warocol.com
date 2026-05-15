@@ -32,8 +32,13 @@ export function useCityCatalog() {
     // and changes rarely, so a per-request fetch is enough.
     if (cities.value.length > 0) return
     try {
+      // Endpoint lives under the public_restaurant router (prefix
+      // /public/restaurant), so the canonical path is
+      // /public/restaurant/cities — NOT /public/cities. The /public/* path
+      // hits the tenant-detection middleware and returns 404. See
+      // api-warolabs/app/main.py:196 for the router registration.
       const res = await $fetch<{ success: boolean; data: PublicCity[] }>(
-        '/api/public/cities',
+        '/api/public/restaurant/cities',
         { params: { include_empty: opts?.includeEmpty ? 'true' : 'false' } },
       )
       cities.value = res?.data ?? []
