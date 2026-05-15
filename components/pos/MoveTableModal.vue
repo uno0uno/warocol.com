@@ -7,6 +7,10 @@
 import { ref, computed } from 'vue'
 import { useMoveTable } from '~/composables/useMoveTable'
 
+const { singular: tableSingular, plural: tablePlural } = useTableLabel()
+const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
+const tablePluralLower = computed(() => tablePlural.value.toLowerCase())
+
 const props = defineProps<{
   show: boolean
   sourceTable: { tableId: string; sessionId: string; tableName: string } | null
@@ -65,7 +69,7 @@ const tableShortId = (name: string) => {
       class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       aria-modal="true"
       role="dialog"
-      :aria-label="`Mover ${sourceTable?.tableName ?? 'mesa'} a otra mesa`"
+      :aria-label="`Mover ${sourceTable?.tableName ?? tableSingularLower} a otra ${tableSingularLower}`"
     >
       <!-- Backdrop -->
       <div
@@ -80,9 +84,9 @@ const tableShortId = (name: string) => {
         <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border flex-shrink-0">
           <div>
             <h2 class="text-base font-bold text-text-primary">
-              Mover {{ sourceTable?.tableName ?? 'mesa' }} a...
+              Mover {{ sourceTable?.tableName ?? tableSingularLower }} a...
             </h2>
-            <p class="text-xs text-text-secondary mt-0.5">Selecciona una mesa libre como destino</p>
+            <p class="text-xs text-text-secondary mt-0.5">{{ `Selecciona una ${tableSingularLower} libre como destino` }}</p>
           </div>
           <button
             type="button"
@@ -108,7 +112,7 @@ const tableShortId = (name: string) => {
           </div>
 
           <div v-if="destinationTables.length === 0" class="py-8 text-center text-sm text-text-secondary">
-            No hay otras mesas disponibles
+            {{ `No hay otras ${tablePluralLower} disponibles` }}
           </div>
 
           <div v-else class="grid grid-cols-3 gap-3">

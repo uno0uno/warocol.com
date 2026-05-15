@@ -7,17 +7,18 @@
 
 <script setup lang="ts">
 const route = useRoute()
+const { plural } = useTableLabel()
 
 definePageMeta({
   layout: 'dashboard',
   module: 'operaciones',
 })
 
-const navigationItems = [
+const navigationItems = computed(() => [
   { to: '/operaciones/comandas', label: 'Comandas & Cocina' },
-  { to: '/operaciones/mesas', label: 'Mesas' },
+  { to: '/operaciones/mesas', label: plural.value },
   { to: '/operaciones/personalizar', label: 'Personalizar' },
-]
+])
 
 useHead({ title: 'Operaciones | WARO' })
 </script>

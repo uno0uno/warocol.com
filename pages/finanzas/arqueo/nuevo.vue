@@ -226,8 +226,8 @@
               </svg>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-amber-800">{{ xPreviewData.openTablesCount }} mesa{{ xPreviewData.openTablesCount !== 1 ? 's' : '' }} con cuenta abierta</p>
-              <p class="text-xs text-amber-700 mt-0.5">Cierra todas las mesas en el POS antes de registrar el arqueo.</p>
+              <p class="text-sm font-semibold text-amber-800">{{ xPreviewData.openTablesCount }} {{ xPreviewData.openTablesCount === 1 ? tableSingular.toLowerCase() : tablePlural.toLowerCase() }} con cuenta abierta</p>
+              <p class="text-xs text-amber-700 mt-0.5">Cierra todas las {{ tablePlural.toLowerCase() }} en el POS antes de registrar el arqueo.</p>
               <div class="flex flex-wrap gap-2 mt-3">
                 <NuxtLink to="/pos" target="_blank" class="inline-flex items-center gap-1.5 min-h-[36px] px-4 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
@@ -715,6 +715,7 @@ useHead({ title: 'Nuevo arqueo de caja - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
+const { singular: tableSingular, plural: tablePlural } = useTableLabel()
 const cache = useQueryCache()
 
 const today = new Date().toISOString().split('T')[0]

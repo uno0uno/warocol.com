@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue'
+
+const { singular: tableSingular } = useTableLabel()
 import {
   XMarkIcon,
   ClipboardDocumentListIcon,
@@ -250,7 +252,7 @@ const submit = async () => {
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">Estado de comandas</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5 truncate">
-                  {{ tableDisplayName ? `Mesa ${tableDisplayName}` : 'Comandas activas' }}
+                  {{ tableDisplayName ? `${tableSingular} ${tableDisplayName}` : 'Comandas activas' }}
                   · {{ comandas.length }} {{ comandas.length === 1 ? 'comanda' : 'comandas' }}
                 </p>
               </div>

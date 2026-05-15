@@ -7,7 +7,7 @@
       <div class="min-w-0">
         <p class="text-sm font-bold text-text-primary truncate">{{ table.name }}</p>
         <p class="text-[10px] text-text-tertiary font-medium uppercase tracking-wider">
-          {{ table.capacity ? `${table.capacity} personas` : 'Mesa' }}
+          {{ table.capacity ? `${table.capacity} personas` : tableSingular }}
         </p>
       </div>
     </div>
@@ -55,6 +55,8 @@
 
 <script setup lang="ts">
 import { UserIcon, ClockIcon } from '@heroicons/vue/24/outline'
+
+const { singular: tableSingular } = useTableLabel()
 
 interface Member {
   id: string

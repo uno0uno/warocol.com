@@ -14,6 +14,9 @@ useHead({ title: 'Punto de Venta' })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
+const { singular: tableSingular, plural: tablePlural } = useTableLabel()
+const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
+const tablePluralLower = computed(() => tablePlural.value.toLowerCase())
 
 const router = useRouter()
 const posStore = usePOSStore()
@@ -435,7 +438,7 @@ const addToTab = async () => {
     // Refresh session + tab items
     await refreshTableSession()
   } catch (e: any) {
-    tabError.value = e?.data?.detail ?? 'Error al agregar a la mesa'
+    tabError.value = e?.data?.detail ?? `Error al agregar a la ${tableSingularLower.value}`
   } finally {
     isAddingToTab.value = false
   }
@@ -922,7 +925,7 @@ onUnmounted(() => {
             </svg>
           </div>
           <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-            <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest flex-shrink-0">Mesa Activa</span>
+            <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest flex-shrink-0">{{ tableSingular }} Activa</span>
             <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
             <span class="text-sm font-bold text-text-primary flex-shrink-0">{{ posStore.activeTableSession.tableName }}</span>
             <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
@@ -995,7 +998,7 @@ onUnmounted(() => {
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
               class="h-9 inline-flex items-center gap-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider px-2.5 rounded-lg border border-border hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Volver al plano de mesas (la mesa sigue abierta)"
+              :aria-label="`Volver al plano de ${tablePluralLower} (la ${tableSingularLower} sigue abierta)`"
               @click="posStore.clearAll()"
             >
               <svg class="h-3.5 w-3.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
@@ -1008,7 +1011,7 @@ onUnmounted(() => {
               type="button"
               :disabled="isBannerClosing || posStore.isCancellingMesa"
               class="h-9 inline-flex items-center gap-1.5 text-[10px] font-bold text-status-error-text uppercase tracking-wider px-2.5 rounded-lg border border-status-error-text/30 hover:bg-status-error-bg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Liberar la mesa"
+              :aria-label="`Liberar la ${tableSingularLower}`"
               @click="handleReleaseMesa"
             >
               <UiLoadingDots v-if="isBannerClosing || posStore.isCancellingMesa" size="6px" />
@@ -1168,9 +1171,9 @@ onUnmounted(() => {
                 </svg>
               </div>
               <div class="flex-1 min-w-0">
-                <h3 class="text-base font-bold text-text-primary leading-tight">¿Liberar la mesa?</h3>
+                <h3 class="text-base font-bold text-text-primary leading-tight">{{ `¿Liberar la ${tableSingularLower}?` }}</h3>
                 <p class="text-sm text-text-secondary mt-1 leading-snug">
-                  Esta mesa tiene <strong class="text-text-primary">{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }}</strong> en consumo. Si la liberas ahora, se cerrará sin cobrar.
+                  {{ `Esta ${tableSingularLower} tiene` }} <strong class="text-text-primary">{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }}</strong> en consumo. Si la liberas ahora, se cerrará sin cobrar.
                 </p>
               </div>
             </div>
@@ -1191,7 +1194,7 @@ onUnmounted(() => {
               @click="executeBannerClose"
             >
               <UiLoadingDots v-if="isBannerClosing" size="9px" color="white" aria-hidden="true" />
-              <span v-else>Sí, liberar mesa</span>
+              <span v-else>{{ `Sí, liberar ${tableSingularLower}` }}</span>
             </button>
           </div>
         </div>

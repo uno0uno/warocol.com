@@ -11,6 +11,7 @@ useHead({ title: 'Órdenes - Ventas' })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
+const { singular: tableSingular } = useTableLabel()
 
 // Payment groups for filter and bulk-update dropdowns
 const { data: paymentGroupsData } = useQuery({
@@ -644,7 +645,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
                 </span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ item.customer_name }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ item.is_delivery ? 'Domicilio' : (item.source === 'barra' ? 'Barra' : item.source === 'mesa' ? 'Mesa' : 'POS') }}
+                {{ item.customer_name }} · {{ item.items_count }} items · {{ resolveLabel(item.payment_method, item.payment_method_id) }} · {{ item.is_delivery ? 'Domicilio' : (item.source === 'barra' ? 'Barra' : item.source === 'mesa' ? tableSingular : 'POS') }}
               </p>
               <p v-if="item.discount_amount > 0" class="text-xs text-destructive mt-0.5">Descuento: -{{ formatCurrency(item.discount_amount) }}</p>
             </div>
@@ -742,7 +743,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
               : value === 'mesa' ? 'bg-crocus-100 text-crocus-700 dark:bg-crocus-900/30 dark:text-crocus-400'
               : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'"
           >
-            {{ row?.is_delivery ? 'Domicilio' : (value === 'barra' ? 'Barra' : value === 'mesa' ? 'Mesa' : 'POS') }}
+            {{ row?.is_delivery ? 'Domicilio' : (value === 'barra' ? 'Barra' : value === 'mesa' ? tableSingular : 'POS') }}
           </span>
         </template>
 
