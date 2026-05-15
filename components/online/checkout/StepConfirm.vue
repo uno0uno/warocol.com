@@ -142,12 +142,20 @@
       </div>
     </div>
 
-    <!-- Payment method -->
-    <div class="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
-      <svg class="w-5 h-5 text-amber-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-      </svg>
-      <p class="text-sm text-amber-900"><strong>Pago:</strong> Efectivo contra entrega</p>
+    <!-- Payment method (warocol.com#610) -->
+    <div class="rounded-xl border border-border bg-card p-4">
+      <p class="text-sm font-semibold text-foreground mb-3">¿Cómo vas a pagar?</p>
+      <p v-if="paymentGroups.length === 0" class="text-sm text-muted-foreground">
+        Cargando métodos disponibles…
+      </p>
+      <PaymentsPaymentMethodSelector
+        v-else
+        v-model="paymentSelection"
+        :groups="paymentGroups"
+        exclude-cartera
+        :disabled="isSubmitting"
+      />
+      <p v-if="paymentError" class="mt-2 text-xs text-destructive">{{ paymentError }}</p>
     </div>
 
     <!-- Checkout error -->
@@ -230,18 +238,20 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useOtpAuthStore } from '~/stores/otp_auth'
 import { useAddressStore } from '~/stores/address'
 import { useOrderNotification } from '~/composables/useOrderNotification'
 import CartSummary from '~/components/online/CartSummary.vue'
 import { Button } from '~/components/ui'
+import type { PosPaymentGroup } from '~/utils/paymentDefaults'
 
 const emit = defineEmits<{
   (e: 'success'): void
 }>()
 
+const route = useRoute()
 const router = useRouter()
 const cartStore = useOnlineCartStore()
 const otpAuthStore = useOtpAuthStore()
@@ -313,6 +323,39 @@ const fetchWarosInfo = async () => {
 
 onMounted(fetchWarosInfo)
 
+// ── Payment method (warocol.com#610) ──────────────────────────────────────
+// Public endpoint returns the same shape as /pos/payment-methods but is
+// scoped by tenant slug and already excludes triggersCartera groups.
+
+const paymentGroups = ref<PosPaymentGroup[]>([])
+const paymentSelection = ref<{ slug: string; id: string | null }>({ slug: '', id: null })
+const paymentError = ref('')
+
+const tenantSlug = computed(() => String(route.params.tenant ?? ''))
+
+const fetchPaymentMethods = async () => {
+  if (!tenantSlug.value) return
+  try {
+    const res = await $fetch<{ success: boolean; data: PosPaymentGroup[] }>(
+      `/api/public/restaurant/${tenantSlug.value}/payment-methods`,
+    )
+    const groups = res?.data ?? []
+    paymentGroups.value = groups
+    // Default to the first non-cartera group so a returning customer can
+    // confirm in a single tap. excludeCartera on the selector already hides
+    // them visually, but we also gate here to stay safe.
+    const first = groups.find((g) => !g.triggersCartera)
+    if (first) {
+      paymentSelection.value = { slug: first.slug, id: null }
+    }
+  } catch {
+    // Keep empty — selector will render "Cargando…" and isValid will block submit.
+    paymentGroups.value = []
+  }
+}
+
+onMounted(fetchPaymentMethods)
+
 // ── Submit logic ──────────────────────────────────────────────────────────
 
 interface ConfirmedOrder {
@@ -333,6 +376,19 @@ const showSuccessModal = ref(false)
 
 const submitOrder = async () => {
   if (!cartStore.cartId) return
+
+  paymentError.value = ''
+  if (!paymentSelection.value.slug) {
+    paymentError.value = 'Selecciona un método de pago.'
+    return
+  }
+  const chosenGroup = paymentGroups.value.find(
+    (g) => g.slug === paymentSelection.value.slug,
+  )
+  if (chosenGroup?.methods?.length && !paymentSelection.value.id) {
+    paymentError.value = `Elegí un método de ${chosenGroup.name}.`
+    return
+  }
 
   isSubmitting.value = true
   checkoutError.value = ''
@@ -372,7 +428,13 @@ const submitOrder = async () => {
 
     const response = await $fetch<{ success: boolean; data: ConfirmedOrder }>(
       `/api/online/cart/${cartStore.cartId}/checkout`,
-      { method: 'POST' },
+      {
+        method: 'POST',
+        body: {
+          payment_method: paymentSelection.value.slug,
+          payment_method_id: paymentSelection.value.id,
+        },
+      },
     )
 
     confirmedOrder.value = response.data
@@ -404,7 +466,13 @@ const goToOrder = () => {
 
 // ── Exposed interface for wizard page ─────────────────────────────────────
 
-const isValid = computed(() => !cartStore.isEmpty && otpAuthStore.isAuthenticated)
+const isValid = computed(() => {
+  if (cartStore.isEmpty || !otpAuthStore.isAuthenticated) return false
+  if (!paymentSelection.value.slug) return false
+  const grp = paymentGroups.value.find((g) => g.slug === paymentSelection.value.slug)
+  if (grp?.methods?.length && !paymentSelection.value.id) return false
+  return true
+})
 
 defineExpose({ isValid, isSubmitting, submitOrder })
 </script>
