@@ -168,7 +168,7 @@
             class="text-xs mt-0.5 leading-snug"
             :class="businessProfile.is_active ? 'text-text-secondary' : 'text-amber-700 dark:text-amber-400'"
           >
-            {{ businessProfile.is_active ? 'Aparece en warocol.com/bogota' : 'Actívalo para aparecer en el directorio de WaRo Colombia' }}
+            {{ businessProfile.is_active ? `Aparece en ${publicCityPath}` : 'Actívalo para aparecer en el directorio de WaRo Colombia' }}
           </p>
         </div>
         <label
@@ -185,6 +185,23 @@
           />
           <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
         </label>
+      </div>
+
+      <!-- City-missing warning (warocol.com#615): toggle is on but no city
+           was picked, so the business won't appear in any directory page. -->
+      <div
+        v-if="directoryWarning && !isEditMode"
+        class="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20 px-4 py-3"
+      >
+        <ExclamationTriangleIcon class="w-5 h-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-semibold text-amber-800 dark:text-amber-300 leading-snug">
+            Selecciona tu ciudad para aparecer en el directorio
+          </p>
+          <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5 leading-snug">
+            Tu negocio está visible pero aún no tiene ciudad asignada. Editá tu perfil y elegí una ciudad del listado.
+          </p>
+        </div>
       </div>
 
       <!-- ══════ PUBLIC LINK CARD ══════ -->
@@ -319,8 +336,43 @@
               <input v-model="editForm.neighborhood" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="Chapinero" />
             </div>
             <div>
-              <label class="block text-xs font-medium text-text-secondary mb-1">Ciudad</label>
-              <input v-model="editForm.city" type="text" class="input-base w-full px-3 py-2 text-sm" placeholder="Bogotá" />
+              <label for="negocio-country" class="block text-xs font-medium text-text-secondary mb-1">País</label>
+              <select
+                id="negocio-country"
+                v-model="editForm.country"
+                disabled
+                aria-describedby="negocio-country-help"
+                class="input-base w-full px-3 py-2 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                <option value="Colombia">Colombia</option>
+              </select>
+              <p id="negocio-country-help" class="text-[10px] text-text-tertiary mt-1">
+                Por ahora WaRo opera solo en Colombia.
+              </p>
+            </div>
+            <div>
+              <label for="negocio-city" class="block text-xs font-medium text-text-secondary mb-1">
+                Ciudad
+                <span class="text-amber-600" aria-hidden="true">*</span>
+              </label>
+              <select
+                id="negocio-city"
+                :value="editForm.city_slug"
+                class="input-base w-full px-3 py-2 text-sm"
+                @change="onCityChange(($event.target as HTMLSelectElement).value)"
+              >
+                <option value="">Selecciona tu ciudad…</option>
+                <option
+                  v-for="c in cityCatalog"
+                  :key="c.city_slug"
+                  :value="c.city_slug"
+                >
+                  {{ c.city }}
+                </option>
+              </select>
+              <p class="text-[10px] text-text-tertiary mt-1">
+                Define en qué directorio aparece tu negocio (warocol.com/&lt;ciudad&gt;).
+              </p>
             </div>
             <div>
               <label class="block text-xs font-medium text-text-secondary mb-1">Teléfono</label>
@@ -552,7 +604,8 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
+import { useCityCatalog } from '~/composables/useCityCatalog'
 import { usePOSStore } from '~/stores/usePOSStore'
 import {
   BuildingStorefrontIcon,
@@ -602,13 +655,38 @@ const editForm = reactive({
   phone_number: '',
   email: '',
   address: '',
+  country: 'Colombia',
   city: '',
+  city_slug: '',
   neighborhood: '',
   accepts_online_orders: false,
   min_order_amount: 0,
   estimated_preparation_time: 30,
   business_hours: {} as Record<string, { open: string; close: string; closed: boolean }>,
   social_media: { instagram: '', whatsapp: '', facebook: '', twitter: '', tiktok: '' },
+})
+
+// ─── City catalog (warocol.com#615) ───
+const { cities: cityCatalog, fetchCatalog: ensureCityCatalog } = useCityCatalog()
+// Make sure the selector has the full catalog (include_empty=true). The SSR
+// plugin already warmed this — this is a no-op on subsequent visits and only
+// hits the API on a fresh client load.
+onMounted(() => { ensureCityCatalog({ includeEmpty: true }) })
+
+const onCityChange = (slug: string) => {
+  editForm.city_slug = slug
+  const entry = cityCatalog.value.find((c) => c.city_slug === slug)
+  editForm.city = entry?.city || ''
+  editForm.country = entry?.country || 'Colombia'
+}
+
+const publicCityPath = computed(() => {
+  const slug = businessProfile.value?.city_slug
+  return slug ? `warocol.com/${slug}` : 'el directorio de WaRo Colombia'
+})
+
+const directoryWarning = computed(() => {
+  return businessProfile.value?.is_active && !businessProfile.value?.city_slug
 })
 
 // ─── Computed visuals ───
@@ -670,7 +748,9 @@ const enterEditMode = () => {
   editForm.phone_number = bp?.phone_number || ''
   editForm.email = bp?.email || ''
   editForm.address = bp?.address || ''
+  editForm.country = bp?.country || 'Colombia'
   editForm.city = bp?.city || ''
+  editForm.city_slug = bp?.city_slug || ''
   editForm.neighborhood = bp?.neighborhood || ''
   editForm.accepts_online_orders = bp?.accepts_online_orders ?? false
   editForm.min_order_amount = Number(bp?.min_order_amount) || 0
@@ -810,7 +890,9 @@ const saveChanges = async () => {
       phone_number: editForm.phone_number || null,
       email: editForm.email || null,
       address: editForm.address || null,
+      country: editForm.country || 'Colombia',
       city: editForm.city || null,
+      city_slug: editForm.city_slug || null,
       neighborhood: editForm.neighborhood || null,
       accepts_online_orders: editForm.accepts_online_orders,
       min_order_amount: editForm.min_order_amount,

@@ -4,19 +4,30 @@ import PublicMenu from '~/components/public/PublicMenu.vue'
 import CartBottomBar from '~/components/online/CartBottomBar.vue'
 import CartDrawer from '~/components/online/CartDrawer.vue'
 import ProductDetailDrawer from '~/components/online/ProductDetailDrawer.vue'
+import DirectoryView from '~/components/directory/DirectoryView.vue'
 import { useOnlineCartStore } from '~/stores/online_cart'
 import { useToast } from '~/composables/useToast'
-
-definePageMeta({
-  layout: 'public-restaurant'
-})
+import { useCityCatalog } from '~/composables/useCityCatalog'
 
 const route = useRoute()
 const router = useRouter()
 const config = useRuntimeConfig()
-const tenantSlug = route.params.tenant
+const tenantSlug = route.params.tenant as string
 
-// Initialize cart store
+// City vs tenant dispatch (warocol.com#615). The city catalog is prefetched
+// in `plugins/city-catalog.server.ts` so `isCitySlug` is decidable
+// synchronously during SSR — no hydration mismatch. When the slug is a city
+// the tenant queries below stay disabled and `DirectoryView` renders.
+const { isCitySlug } = useCityCatalog()
+const isCity = computed(() => isCitySlug(tenantSlug))
+
+definePageMeta({
+  // City directory uses the default layout (no restaurant header / cart bar);
+  // tenant profile keeps the public-restaurant layout. Resolved per-request.
+  layout: false,
+})
+
+// Initialize cart store (only matters for the tenant path)
 const cartStore = useOnlineCartStore()
 const toast = useToast()
 
@@ -37,15 +48,18 @@ const pendingTenant = ref<{ id: string; name: string } | null>(null)
 const isProductDrawerOpen = ref(false)
 const selectedProduct = ref<Record<string, any> | null>(null)
 
-// SSR data fetching — Pinia Colada + @pinia/colada-nuxt handles server-side prefetch automatically
+// SSR data fetching — Pinia Colada + @pinia/colada-nuxt handles server-side prefetch automatically.
+// `enabled` gates the queries off when the slug is a city — avoids a 404 burst on city pages.
 const { data: profileData, status: profileStatus, asyncStatus: profileAsyncStatus, error: profileError, refetch: refetchProfile } = useQuery({
-  key: () => ['restaurant', 'public', tenantSlug as string],
+  key: () => ['restaurant', 'public', tenantSlug],
   query: () => $fetch(`/api/public/restaurant/${tenantSlug}`),
+  enabled: () => !isCity.value,
 })
 
 const { data: menuData, status: menuStatus, asyncStatus: menuAsyncStatus, error: menuError, refetch: refetchMenu } = useQuery({
-  key: () => ['restaurant', 'public', tenantSlug as string, 'menu'],
+  key: () => ['restaurant', 'public', tenantSlug, 'menu'],
   query: () => $fetch(`/api/public/restaurant/${tenantSlug}/menu`),
+  enabled: () => !isCity.value,
 })
 
 const restaurant = computed(() => (profileData.value as any)?.data || null)
@@ -292,6 +306,15 @@ const cancelSwitch = () => {
 </script>
 
 <template>
+  <!-- City directory dispatch (warocol.com#615). When the URL slug matches an
+       active public_cities entry, render the generic directory instead of the
+       tenant profile. The catalog is prefetched on SSR so this branches
+       synchronously and Vue does not see a hydration mismatch. -->
+  <NuxtLayout v-if="isCity" name="default">
+    <DirectoryView :city-slug="tenantSlug" />
+  </NuxtLayout>
+
+  <NuxtLayout v-else name="public-restaurant">
   <div class="min-h-screen bg-gray-50">
     <!-- Loading State -->
     <div v-if="isLoading && !restaurant" class="min-h-screen flex items-center justify-center">
@@ -394,6 +417,7 @@ const cancelSwitch = () => {
       </Transition>
     </div>
   </div>
+  </NuxtLayout>
 </template>
 
 <style scoped>
