@@ -33,8 +33,8 @@ onUnmounted(() => clearRefreshHandler(refreshProfile))
 
 const toast = useToast()
 
-// ── Table label customization (issue #612) ──────────────────────────────────
-const { singular: storedSingular, plural: storedPlural, setLabel } = useTableLabel()
+// ── Table label customization (issue #612 → DB-backed in #614) ─────────────
+const { singular: storedSingular, plural: storedPlural, setLabel, migrateLocalStorageIfPresent } = useTableLabel()
 
 interface LabelPreset {
   key: string
@@ -110,18 +110,25 @@ const hasChanges = computed(
 
 const isSavingLabel = ref(false)
 
-const saveLabel = () => {
+const saveLabel = async () => {
   if (!hasChanges.value || isSavingLabel.value) return
   isSavingLabel.value = true
   try {
-    setLabel(previewSingular.value, previewPlural.value)
-    toast.success('Nombre actualizado en este dispositivo', { title: 'Guardado' })
+    await setLabel(previewSingular.value, previewPlural.value)
+    toast.success('Nombre actualizado para todo el restaurante', { title: 'Guardado' })
   } catch (error: any) {
-    toast.error('No se pudo guardar el nombre', { title: 'Error' })
+    toast.error(error?.data?.detail || 'No se pudo guardar el nombre', { title: 'Error' })
   } finally {
     isSavingLabel.value = false
   }
 }
+
+// One-shot migration: read any pre-#614 per-device value and push it to
+// the DB on first mount per device. No-op if the localStorage key is
+// already gone (already migrated, or never set).
+onMounted(() => {
+  void migrateLocalStorageIfPresent()
+})
 
 // ── Toggle: auto-select Genérico at /pos/checkout open ──────────────────────
 const isToggling = ref(false)
@@ -265,7 +272,7 @@ const toggleAutoSelectGeneric = async () => {
         <!-- Disclosure + Save -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p class="text-xs text-text-secondary">
-            Configuración guardada en este dispositivo. Otros dispositivos verán el nombre por defecto.
+            Configuración guardada para todo el restaurante. Todos los dispositivos verán el mismo nombre.
           </p>
           <button
             type="button"
