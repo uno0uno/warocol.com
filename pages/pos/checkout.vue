@@ -1295,149 +1295,47 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Section: Descuento -->
+        <!-- Section: Customer Identification -->
         <div class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
-          <!-- Header with toggle -->
-          <div class="flex items-center justify-between">
-            <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
-              <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185ZM9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008h-.008V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-              </svg>
-              Descuento
-            </h2>
+          <h2 class="font-bold text-text-primary flex items-center gap-2 mb-3 text-sm md:text-base">
+            <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+            Datos del Cliente
+          </h2>
+
+          <!-- Customer selected: show card -->
+          <div v-if="selectedCustomer" class="flex items-center gap-4 p-4 bg-primary/5 border border-primary/20 rounded-xl">
+            <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
+              {{ selectedCustomer.name?.charAt(0)?.toUpperCase() || selectedCustomer.phone_number?.charAt(0) || '?' }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-text-primary truncate">{{ selectedCustomer.name || 'Cliente sin datos' }}</p>
+              <p class="text-sm text-text-secondary truncate">{{ selectedCustomer.phone_number || 'Sin teléfono' }}</p>
+              <p v-if="selectedCustomer.fiscal_id" class="text-xs text-emerald-700 dark:text-emerald-400 truncate mt-0.5 flex items-center gap-1">
+                <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                Factura: {{ selectedCustomer.fiscal_id_type }} {{ selectedCustomer.fiscal_id }}
+              </p>
+            </div>
             <button
-              type="button"
-              role="switch"
-              :aria-checked="discountEnabled"
-              @click="discountEnabled = !discountEnabled"
-              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              :class="discountEnabled ? 'bg-primary' : 'bg-border'"
+              @click="showCustomerModal = true"
+              class="min-h-[44px] px-3 py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors flex-shrink-0"
             >
-              <span
-                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition duration-200"
-                :class="discountEnabled ? 'translate-x-5' : 'translate-x-0'"
-              />
+              Cambiar
             </button>
           </div>
 
-          <!-- Discount inputs — revealed when enabled -->
-          <div v-if="discountEnabled" class="mt-4 space-y-3">
-            <!-- Type pill toggle -->
-            <div class="flex rounded-xl border border-border overflow-hidden">
-              <button
-                type="button"
-                @click="discountType = 'percent'; discountInput = ''"
-                class="flex-1 min-h-[44px] text-sm font-semibold transition-colors"
-                :class="discountType === 'percent' ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
-              >
-                %
-              </button>
-              <button
-                type="button"
-                @click="discountType = 'fixed'; discountInput = ''"
-                class="flex-1 min-h-[44px] text-sm font-semibold transition-colors border-l border-border"
-                :class="discountType === 'fixed' ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
-              >
-                $ Fijo
-              </button>
-            </div>
-
-            <!-- Value input -->
-            <div class="relative">
-              <input
-                v-model="discountInput"
-                type="number"
-                :min="0"
-                :max="discountType === 'percent' ? 100 : cartTotal"
-                :placeholder="discountType === 'percent' ? 'Ej: 10 (10%)' : 'Ej: 5000'"
-                class="w-full min-h-[44px] px-4 py-2.5 rounded-xl border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-
-            <!-- Live preview -->
-            <div v-if="discountAmount > 0" class="flex items-center justify-between px-4 py-2.5 bg-primary/10 rounded-lg">
-              <span class="text-sm font-medium text-primary">Descuento aplicado</span>
-              <span class="text-sm font-bold text-primary">-{{ formatCurrency(discountAmount) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section: Domicilio (mostrador or bar — never mesa) -->
-        <div v-if="canRegisterDelivery" class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
-          <div class="flex items-center justify-between gap-3">
-            <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
-              <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
-                <path d="M15 18H9" />
-                <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
-                <circle cx="17" cy="18" r="2" />
-                <circle cx="7" cy="18" r="2" />
-              </svg>
-              Domicilio
-            </h2>
-            <label
-              class="relative inline-flex items-center"
-              :class="isDeliveryEligible ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
-            >
-              <input
-                v-model="deliveryEnabled"
-                type="checkbox"
-                class="sr-only peer"
-                :disabled="!isDeliveryEligible"
-                aria-label="Activar domicilio para esta orden"
-              />
-              <div class="w-11 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-            </label>
-          </div>
-
-          <!-- Helper messages — explain why the toggle is disabled -->
-          <p v-if="!acceptsOnlineOrders" class="text-xs text-text-secondary mt-2">
-            Activa "Pedidos en línea" en /negocio para habilitar domicilios.
-          </p>
-          <p v-else-if="!selectedCustomer" class="text-xs text-text-secondary mt-2">
-            Selecciona un cliente para habilitar domicilio.
-          </p>
-          <p v-else-if="isAnonymousCustomer" class="text-xs text-text-secondary mt-2">
-            Identifica al cliente (no anónimo) para habilitar domicilio.
-          </p>
-
-          <!-- Expanded delivery details — only when toggle is on -->
-          <Transition name="fade" mode="out-in">
-            <div v-if="deliveryEnabled && selectedCustomer" class="mt-4 space-y-4">
-              <!-- Address picker / form switch -->
-              <DeliveryAddressForm
-                v-if="showAddressForm"
-                :customer-id="selectedCustomer.id"
-                :loading="addressFormLoading"
-                :error="addressFormError"
-                @submit="handleSaveAddress"
-                @cancel="showAddressForm = false"
-              />
-              <DeliveryAddressPicker
-                v-else
-                :addresses="addressStore.addresses"
-                :selected-id="addressStore.selectedAddressId"
-                :loading="addressStore.isLoading"
-                @update:selected-id="addressStore.selectAddress"
-                @add-new="showAddressForm = true"
-              />
-
-              <!-- Delivery instructions (order-level) -->
-              <div class="flex flex-col gap-1">
-                <label for="pos-delivery-instructions" class="text-sm font-medium text-text-primary">
-                  Notas para el repartidor (opcional)
-                </label>
-                <textarea
-                  id="pos-delivery-instructions"
-                  v-model="deliveryInstructions"
-                  rows="3"
-                  maxlength="500"
-                  placeholder="Ej: tocar el timbre, llegar por la entrada lateral…"
-                  class="input-base w-full px-3 py-2 text-sm resize-none"
-                />
-              </div>
-            </div>
-          </Transition>
+          <!-- No customer yet: open modal button -->
+          <button
+            v-else
+            @click="showCustomerModal = true"
+            class="w-full min-h-[56px] flex items-center justify-center gap-3 border-2 border-dashed border-border rounded-xl text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all"
+          >
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <span class="font-medium">Buscar o identificar cliente</span>
+          </button>
         </div>
 
         <!-- Section: Payment Method -->
@@ -1658,47 +1556,149 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Section: Customer Identification -->
+        <!-- Section: Descuento -->
         <div class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
-          <h2 class="font-bold text-text-primary flex items-center gap-2 mb-3 text-sm md:text-base">
-            <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-            </svg>
-            Datos del Cliente
-          </h2>
-
-          <!-- Customer selected: show card -->
-          <div v-if="selectedCustomer" class="flex items-center gap-4 p-4 bg-primary/5 border border-primary/20 rounded-xl">
-            <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
-              {{ selectedCustomer.name?.charAt(0)?.toUpperCase() || selectedCustomer.phone_number?.charAt(0) || '?' }}
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-semibold text-text-primary truncate">{{ selectedCustomer.name || 'Cliente sin datos' }}</p>
-              <p class="text-sm text-text-secondary truncate">{{ selectedCustomer.phone_number || 'Sin teléfono' }}</p>
-              <p v-if="selectedCustomer.fiscal_id" class="text-xs text-emerald-700 dark:text-emerald-400 truncate mt-0.5 flex items-center gap-1">
-                <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                Factura: {{ selectedCustomer.fiscal_id_type }} {{ selectedCustomer.fiscal_id }}
-              </p>
-            </div>
+          <!-- Header with toggle -->
+          <div class="flex items-center justify-between">
+            <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
+              <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185ZM9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008h-.008V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+              </svg>
+              Descuento
+            </h2>
             <button
-              @click="showCustomerModal = true"
-              class="min-h-[44px] px-3 py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors flex-shrink-0"
+              type="button"
+              role="switch"
+              :aria-checked="discountEnabled"
+              @click="discountEnabled = !discountEnabled"
+              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              :class="discountEnabled ? 'bg-primary' : 'bg-border'"
             >
-              Cambiar
+              <span
+                class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition duration-200"
+                :class="discountEnabled ? 'translate-x-5' : 'translate-x-0'"
+              />
             </button>
           </div>
 
-          <!-- No customer yet: open modal button -->
-          <button
-            v-else
-            @click="showCustomerModal = true"
-            class="w-full min-h-[56px] flex items-center justify-center gap-3 border-2 border-dashed border-border rounded-xl text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all"
-          >
-            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
-            <span class="font-medium">Buscar o identificar cliente</span>
-          </button>
+          <!-- Discount inputs — revealed when enabled -->
+          <div v-if="discountEnabled" class="mt-4 space-y-3">
+            <!-- Type pill toggle -->
+            <div class="flex rounded-xl border border-border overflow-hidden">
+              <button
+                type="button"
+                @click="discountType = 'percent'; discountInput = ''"
+                class="flex-1 min-h-[44px] text-sm font-semibold transition-colors"
+                :class="discountType === 'percent' ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
+              >
+                %
+              </button>
+              <button
+                type="button"
+                @click="discountType = 'fixed'; discountInput = ''"
+                class="flex-1 min-h-[44px] text-sm font-semibold transition-colors border-l border-border"
+                :class="discountType === 'fixed' ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary hover:bg-surface-secondary/70'"
+              >
+                $ Fijo
+              </button>
+            </div>
+
+            <!-- Value input -->
+            <div class="relative">
+              <input
+                v-model="discountInput"
+                type="number"
+                :min="0"
+                :max="discountType === 'percent' ? 100 : cartTotal"
+                :placeholder="discountType === 'percent' ? 'Ej: 10 (10%)' : 'Ej: 5000'"
+                class="w-full min-h-[44px] px-4 py-2.5 rounded-xl border border-border bg-background text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            <!-- Live preview -->
+            <div v-if="discountAmount > 0" class="flex items-center justify-between px-4 py-2.5 bg-primary/10 rounded-lg">
+              <span class="text-sm font-medium text-primary">Descuento aplicado</span>
+              <span class="text-sm font-bold text-primary">-{{ formatCurrency(discountAmount) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Domicilio (mostrador or bar — never mesa) -->
+        <div v-if="canRegisterDelivery" class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="font-bold text-text-primary flex items-center gap-2 text-sm md:text-base">
+              <svg class="h-4 w-4 md:h-5 md:w-5 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+                <path d="M15 18H9" />
+                <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
+                <circle cx="17" cy="18" r="2" />
+                <circle cx="7" cy="18" r="2" />
+              </svg>
+              Domicilio
+            </h2>
+            <label
+              class="relative inline-flex items-center"
+              :class="isDeliveryEligible ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
+            >
+              <input
+                v-model="deliveryEnabled"
+                type="checkbox"
+                class="sr-only peer"
+                :disabled="!isDeliveryEligible"
+                aria-label="Activar domicilio para esta orden"
+              />
+              <div class="w-11 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            </label>
+          </div>
+
+          <!-- Helper messages — explain why the toggle is disabled -->
+          <p v-if="!acceptsOnlineOrders" class="text-xs text-text-secondary mt-2">
+            Activa "Pedidos en línea" en /negocio para habilitar domicilios.
+          </p>
+          <p v-else-if="!selectedCustomer" class="text-xs text-text-secondary mt-2">
+            Selecciona un cliente para habilitar domicilio.
+          </p>
+          <p v-else-if="isAnonymousCustomer" class="text-xs text-text-secondary mt-2">
+            Identifica al cliente (no anónimo) para habilitar domicilio.
+          </p>
+
+          <!-- Expanded delivery details — only when toggle is on -->
+          <Transition name="fade" mode="out-in">
+            <div v-if="deliveryEnabled && selectedCustomer" class="mt-4 space-y-4">
+              <!-- Address picker / form switch -->
+              <DeliveryAddressForm
+                v-if="showAddressForm"
+                :customer-id="selectedCustomer.id"
+                :loading="addressFormLoading"
+                :error="addressFormError"
+                @submit="handleSaveAddress"
+                @cancel="showAddressForm = false"
+              />
+              <DeliveryAddressPicker
+                v-else
+                :addresses="addressStore.addresses"
+                :selected-id="addressStore.selectedAddressId"
+                :loading="addressStore.isLoading"
+                @update:selected-id="addressStore.selectAddress"
+                @add-new="showAddressForm = true"
+              />
+
+              <!-- Delivery instructions (order-level) -->
+              <div class="flex flex-col gap-1">
+                <label for="pos-delivery-instructions" class="text-sm font-medium text-text-primary">
+                  Notas para el repartidor (opcional)
+                </label>
+                <textarea
+                  id="pos-delivery-instructions"
+                  v-model="deliveryInstructions"
+                  rows="3"
+                  maxlength="500"
+                  placeholder="Ej: tocar el timbre, llegar por la entrada lateral…"
+                  class="input-base w-full px-3 py-2 text-sm resize-none"
+                />
+              </div>
+            </div>
+          </Transition>
         </div>
 
         <!-- Customer Search Modal -->
