@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { MapPinIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+import { MapPinIcon } from '@heroicons/vue/24/outline'
 import { useCityCatalog } from '~/composables/useCityCatalog'
 
 /**
@@ -62,18 +62,31 @@ useHead({
         <MapPinIcon class="ciudades-section-icon" aria-hidden="true" />
         Disponibles ahora
       </h2>
-      <div class="ciudades-grid">
+      <div class="ciudades-row">
         <NuxtLink
           v-for="city in activeCities"
           :key="city.city_slug"
           :to="`/${city.city_slug}`"
-          class="city-tile city-tile--active"
+          class="city-card"
         >
-          <span class="city-name">{{ city.city }}</span>
-          <span class="city-count">
-            {{ city.tenant_count }} restaurante{{ city.tenant_count !== 1 ? 's' : '' }}
-          </span>
-          <ChevronRightIcon class="city-arrow" aria-hidden="true" />
+          <!-- Header image / illustration: gradient placeholder with the
+               city name typeset large. Will be swapped for per-city hero
+               photos as we acquire them. -->
+          <div class="city-card__image">
+            <div class="city-card__gradient">
+              <span class="city-card__overlay-name">{{ city.city }}</span>
+            </div>
+            <div class="city-card__count-pill" aria-label="restaurantes activos">
+              <span>{{ city.tenant_count }}</span>
+              <span class="city-card__count-label">
+                restaurante{{ city.tenant_count !== 1 ? 's' : '' }}
+              </span>
+            </div>
+          </div>
+          <div class="city-card__meta">
+            <MapPinIcon class="city-card__meta-icon" aria-hidden="true" />
+            <span class="city-card__meta-text">{{ city.city }}, {{ city.country }}</span>
+          </div>
         </NuxtLink>
       </div>
     </section>
@@ -84,15 +97,23 @@ useHead({
         <MapPinIcon class="ciudades-section-icon" aria-hidden="true" />
         Próximamente
       </h2>
-      <div class="ciudades-grid">
+      <div class="ciudades-row">
         <NuxtLink
           v-for="city in upcomingCities"
           :key="city.city_slug"
           :to="`/${city.city_slug}`"
-          class="city-tile city-tile--upcoming"
+          class="city-card city-card--upcoming"
         >
-          <span class="city-name">{{ city.city }}</span>
-          <span class="city-badge">Próximamente</span>
+          <div class="city-card__image">
+            <div class="city-card__gradient city-card__gradient--upcoming">
+              <span class="city-card__overlay-name">{{ city.city }}</span>
+            </div>
+            <span class="city-card__badge">Próximamente</span>
+          </div>
+          <div class="city-card__meta">
+            <MapPinIcon class="city-card__meta-icon" aria-hidden="true" />
+            <span class="city-card__meta-text">{{ city.city }}, {{ city.country }}</span>
+          </div>
         </NuxtLink>
       </div>
     </section>
@@ -113,6 +134,7 @@ useHead({
   padding: 48px 24px 80px;
   max-width: 1200px;
   margin: 0 auto;
+  background: hsl(220, 14%, 97%);
 }
 
 /* Hero */
@@ -159,79 +181,167 @@ useHead({
   color: hsl(262, 83%, 58%);
 }
 
-/* Grid */
-.ciudades-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+/* Row — horizontal scroll on mobile, grid on wider viewports.
+   Matches the "Próximos Viajes" card-strip pattern. */
+.ciudades-row {
+  display: flex;
   gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.ciudades-row > * {
+  scroll-snap-align: start;
+}
+@media (min-width: 768px) {
+  .ciudades-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    overflow: visible;
+    padding-bottom: 0;
+  }
 }
 
-/* Tiles */
-.city-tile {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-  min-height: 112px;
-  padding: 20px 20px;
+/* Card — outer pill, inner image with rounded-[28px], meta row below. */
+.city-card {
+  display: block;
+  flex: 0 0 240px;
+  min-width: 240px;
   background: #ffffff;
-  border: 1px solid hsl(220, 14%, 88%);
-  border-radius: 14px;
+  border-radius: 32px;
+  padding: 8px;
   text-decoration: none;
   color: hsl(250, 30%, 16%);
-  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  border: 1px solid hsl(220, 14%, 92%);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
-.city-tile:hover {
-  border-color: hsl(262, 83%, 58%);
+@media (min-width: 768px) {
+  .city-card {
+    flex: initial;
+    min-width: 0;
+  }
+}
+.city-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px -6px rgba(124, 58, 237, 0.15);
+  box-shadow: 0 12px 24px -10px rgba(124, 58, 237, 0.18);
+  border-color: hsl(262, 83%, 88%);
 }
-.city-tile:focus-visible {
+.city-card:focus-visible {
   outline: 2px solid hsl(262, 83%, 58%);
   outline-offset: 2px;
 }
-.city-tile--upcoming {
-  opacity: 0.75;
+.city-card--upcoming {
+  opacity: 0.85;
 }
-.city-tile--upcoming:hover {
+.city-card--upcoming:hover {
   opacity: 1;
 }
 
-.city-name {
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+/* Image area inside the card. Currently a gradient placeholder; will be
+   swapped for per-city hero photos when available. */
+.city-card__image {
+  position: relative;
+  width: 100%;
+  height: 192px;
+  border-radius: 28px;
+  overflow: hidden;
+  margin-bottom: 12px;
 }
-.city-count {
-  font-size: 0.875rem;
-  color: hsl(250, 10%, 45%);
-}
-.city-badge {
-  display: inline-flex;
+.city-card__gradient {
+  position: absolute;
+  inset: 0;
+  display: flex;
   align-items: center;
-  width: fit-content;
-  padding: 2px 8px;
+  justify-content: center;
+  background:
+    linear-gradient(160deg, hsl(262, 83%, 62%) 0%, hsl(252, 83%, 48%) 100%);
+}
+.city-card__gradient::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 70% 110%, rgba(255,255,255,0.18), transparent 55%);
+  pointer-events: none;
+}
+.city-card__gradient--upcoming {
+  background:
+    linear-gradient(160deg, hsl(220, 18%, 70%) 0%, hsl(220, 14%, 45%) 100%);
+}
+.city-card__overlay-name {
+  position: relative;
+  z-index: 1;
+  color: #ffffff;
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-align: center;
+  padding: 0 20px;
+  line-height: 1.15;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Count pill bottom-right (active cities). Substitutes the "avatar
+   stack" position from the reference design with a tenant-count chip. */
+.city-card__count-pill {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: hsl(38, 92%, 95%);
-  color: hsl(28, 80%, 32%);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(4px);
+  color: hsl(250, 30%, 16%);
   font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.city-card__count-pill > span:first-child {
+  font-size: 0.95rem;
+  color: hsl(262, 83%, 50%);
+}
+.city-card__count-label {
   font-weight: 600;
+  color: hsl(250, 10%, 35%);
+}
+
+/* "Próximamente" badge bottom-right (upcoming cities) */
+.city-card__badge {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(4px);
+  color: hsl(28, 80%, 32%);
+  font-size: 0.72rem;
+  font-weight: 700;
   letter-spacing: 0.02em;
 }
-.city-arrow {
-  position: absolute;
-  top: 50%;
-  right: 16px;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  color: hsl(250, 10%, 60%);
-  transition: transform 0.2s ease, color 0.2s ease;
+
+/* Meta row: pin + location text. */
+.city-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 8px;
 }
-.city-tile--active:hover .city-arrow {
-  transform: translateY(-50%) translateX(2px);
-  color: hsl(262, 83%, 58%);
+.city-card__meta-icon {
+  width: 16px;
+  height: 16px;
+  color: hsl(250, 10%, 55%);
+  flex-shrink: 0;
+}
+.city-card__meta-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(250, 30%, 30%);
+  line-height: 1.25;
 }
 
 /* Empty (defensive) */
