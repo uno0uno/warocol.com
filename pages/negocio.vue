@@ -524,11 +524,17 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-medium text-text-secondary mb-1">Tiempo de preparación (min)</label>
+                <!-- text + inputmode='numeric' instead of type='number' to
+                     prevent the spinner buttons and mouse-wheel scroll
+                     from accidentally incrementing the value by the
+                     `step` amount — that caused values to drift up
+                     (warocol.com#626 follow-up). v-model.number still
+                     parses the string to a JS number. -->
                 <input
                   v-model.number="editForm.estimated_preparation_time"
-                  type="number"
-                  min="1"
-                  step="5"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
                   class="input-base w-full px-3 py-2 text-sm"
                 />
               </div>
@@ -536,9 +542,9 @@
                 <label class="block text-xs font-medium text-text-secondary mb-1">Pedido mínimo (COP)</label>
                 <input
                   v-model.number="editForm.min_order_amount"
-                  type="number"
-                  min="0"
-                  step="1000"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
                   class="input-base w-full px-3 py-2 text-sm"
                 />
               </div>
