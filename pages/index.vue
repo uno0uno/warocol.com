@@ -81,42 +81,15 @@
         </div>
     </section>
 
-    <!-- City discovery (warocol.com#615): one tile per city with active
-         tenants. Reads from the SSR-warmed catalog so the section renders
-         server-side and benefits from SEO. -->
-    <section v-if="discoveryCities.length > 0" class="cities-section">
-      <h2 class="cities-title font-quantico">DESCUBRÍ RESTAURANTES EN TU CIUDAD</h2>
-      <div class="cities-grid">
-        <NuxtLink
-          v-for="city in discoveryCities"
-          :key="city.city_slug"
-          :to="`/${city.city_slug}`"
-          class="city-tile"
-        >
-          <span class="city-name">{{ city.city }}</span>
-          <span class="city-count">
-            {{ city.tenant_count }} restaurante{{ city.tenant_count !== 1 ? 's' : '' }}
-          </span>
-        </NuxtLink>
-      </div>
-    </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useCityCatalog } from '~/composables/useCityCatalog'
 
 const leadModal = useLeadModal()
 const route = useRoute()
 const { public: config } = useRuntimeConfig()
-
-// City discovery (warocol.com#615) — only cities with active tenants surface
-// on the marketing landing so customers don't click into empty directories.
-const { cities: cityCatalog } = useCityCatalog()
-const discoveryCities = computed(() =>
-  cityCatalog.value.filter((c) => c.tenant_count > 0),
-)
 
 const canonicalUrl = computed(() => {
   const baseUrl = config.siteUrl || 'https://warocol.com'
@@ -359,62 +332,6 @@ h1 {
     opacity: 1;
     filter: grayscale(0%) brightness(1) contrast(1);
     transform: scale(1.05);
-}
-
-/* ─── City discovery (warocol.com#615) ─── */
-.cities-section {
-    position: relative;
-    z-index: 2;
-    padding: 60px 24px 80px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-.cities-title {
-    font-size: 14px;
-    letter-spacing: 4px;
-    text-align: center;
-    color: hsl(250, 30%, 16%);
-    opacity: 0.6;
-    margin-bottom: 32px;
-    font-weight: 600;
-}
-.cities-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-}
-.city-tile {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    min-height: 96px;
-    padding: 20px 16px;
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid hsl(220, 14%, 88%);
-    border-radius: 14px;
-    text-decoration: none;
-    color: hsl(250, 30%, 16%);
-    transition: all 0.2s ease;
-}
-.city-tile:hover {
-    border-color: hsl(262, 83%, 58%);
-    background: rgba(255, 255, 255, 1);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px -6px rgba(124, 58, 237, 0.15);
-}
-.city-tile:focus-visible {
-    outline: 2px solid hsl(262, 83%, 58%);
-    outline-offset: 2px;
-}
-.city-name {
-    font-size: 18px;
-    font-weight: 700;
-}
-.city-count {
-    font-size: 13px;
-    color: hsl(250, 10%, 45%);
 }
 
 @media (max-width: 768px) {
