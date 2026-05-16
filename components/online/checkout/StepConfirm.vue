@@ -107,6 +107,18 @@
       :show-checkout-button="false"
     />
 
+    <!-- warocol.com#639 — Tip selector (hidden when tenant has tip_enabled=false).
+         Placed between cart summary and payment method so the customer sees the
+         total they're committing to before choosing how to pay. -->
+    <TipSelector
+      v-if="tipEnabled"
+      :enabled="tipEnabled"
+      :presets="tipPresets"
+      :preselect-index="tipPreselectIndex"
+      :subtotal="cartStore.subtotal"
+      v-model="tipModel"
+    />
+
     <!-- WaRos card -->
     <div
       v-if="warosSystemEnabled === true"
@@ -272,6 +284,28 @@ const minOrderAmount = computed(
   () => (tenantProfile.value as { data?: { min_order_amount?: number | string } } | null)
     ?.data?.min_order_amount ?? 0,
 )
+
+// warocol.com#639 — tipping config (read from the same tenantProfile query;
+// backend exposes the 3 fields in api-warolabs#247). Hidden by default until
+// the tenant opts in via /ventas/propinas (warocol.com#638).
+type TipProfile = {
+  tip_enabled?: boolean
+  tip_default_percentages?: number[]
+  tip_preselect_index?: number | null
+}
+const tipEnabled = computed(
+  () => (tenantProfile.value as { data?: TipProfile } | null)?.data?.tip_enabled === true,
+)
+const tipPresets = computed<number[]>(
+  () => (tenantProfile.value as { data?: TipProfile } | null)?.data?.tip_default_percentages ?? [10],
+)
+const tipPreselectIndex = computed<number | null>(
+  () => (tenantProfile.value as { data?: TipProfile } | null)?.data?.tip_preselect_index ?? null,
+)
+const tipModel = ref<{ amount: number; source: 'preset' | 'custom' | 'none' }>({
+  amount: 0,
+  source: 'none',
+})
 
 // ── Display helpers ───────────────────────────────────────────────────────
 
@@ -449,6 +483,10 @@ const submitOrder = async () => {
         body: {
           payment_method: paymentSelection.value.slug,
           payment_method_id: paymentSelection.value.id,
+          // warocol.com#639 — tip capture (server validates against tenant.tip_enabled)
+          ...(tipModel.value.amount > 0
+            ? { tip_amount: tipModel.value.amount, tip_source: tipModel.value.source }
+            : {}),
         },
       },
     )
