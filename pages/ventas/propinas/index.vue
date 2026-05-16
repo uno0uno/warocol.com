@@ -309,11 +309,9 @@ const saveConfig = async () => {
           </button>
         </div>
 
-        <!-- TODO(#640): unhide when /ventas/propinas/historial (history page) ships
         <NuxtLink to="/ventas/propinas/historial" class="text-sm text-primary hover:underline self-start">
           Ver historial de propinas →
         </NuxtLink>
-        -->
       </template>
     </div>
   </div>
