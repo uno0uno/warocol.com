@@ -59,7 +59,7 @@ const discountInput = ref('')
 
 // Success modal state
 const showSuccessModal = ref(false)
-const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string; discount_amount?: number; subtotal?: number; standard_tax?: number; liquor_tax?: number; standard_tax_label?: string; order_id?: string; order_ids?: string[] } | null>(null)
+const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string; discount_amount?: number; subtotal?: number; standard_tax?: number; liquor_tax?: number; standard_tax_label?: string; order_id?: string; order_ids?: string[]; tip_amount?: number; charged_amount?: number } | null>(null)
 const wasMesaMode = ref(false)
 const receiptEmail = ref('')
 const emailSent = ref(false)
@@ -198,6 +198,19 @@ const expediterEnabled = computed(() => settingsData.value?.data?.expediter_enab
 const showExpediterPanel = ref(false)
 const acceptsOnlineOrders = computed(() => settingsData.value?.data?.accepts_online_orders === true)
 
+// warocol.com#639 — tipping config (gated by tenant; defaults keep selector hidden)
+const tipEnabled = computed(() => settingsData.value?.data?.tip_enabled === true)
+const tipPresets = computed<number[]>(() => settingsData.value?.data?.tip_default_percentages ?? [10])
+const tipPreselectIndex = computed<number | null>(() => settingsData.value?.data?.tip_preselect_index ?? null)
+const tipModel = ref<{ amount: number; source: 'preset' | 'custom' | 'none' }>({ amount: 0, source: 'none' })
+const tipAmount = computed(() => tipModel.value.amount)
+const tipSource = computed(() => tipModel.value.source)
+// Reset whenever the cart is cleared / customer changes so a previous tip
+// doesn't bleed into the next sale.
+watch([() => posStore.cartId, () => selectedCustomer.value?.id], () => {
+  tipModel.value = { amount: 0, source: 'none' }
+})
+
 // Counter mode: not a real table session (no mesa, no bar)
 const isCounterMode = computed(() => !isMesaMode.value && !posStore.activeTableSession?.isBar)
 
@@ -233,6 +246,10 @@ const discountAmount = computed(() => {
   return Math.min(Math.round(val), Math.round(cartTotal.value))
 })
 const discountedTotal = computed(() => cartTotal.value - discountAmount.value)
+// warocol.com#639 — final amount charged to the customer when tipping is enabled.
+// total_amount on orders never includes tip (tax-base invariant from migration 079);
+// charged_amount = total_amount + tip_amount lives at the payment layer only.
+const finalChargedAmount = computed(() => discountedTotal.value + tipAmount.value)
 
 // Tax preview — runs for all 3 modes (mesa / counter / bar). Debounced to
 // avoid flooding when items / discount change rapidly.
@@ -689,6 +706,10 @@ const processOrder = async () => {
         ...(posStore.cartServedByMemberId
           ? { served_by_member_id: posStore.cartServedByMemberId }
           : {}),
+        // warocol.com#639 — tip capture (server validates against tenant.tip_enabled)
+        ...(tipAmount.value > 0
+          ? { tip_amount: tipAmount.value, tip_source: tipSource.value }
+          : {}),
       }
     }) as {
       success: boolean
@@ -697,6 +718,9 @@ const processOrder = async () => {
         order_id: string
         order_number: number
         total_amount: number
+        tip_amount?: number
+        tip_source?: string
+        charged_amount?: number
         payment_method: string
         items_count: number
         standard_tax?: number
@@ -722,7 +746,11 @@ const processOrder = async () => {
         standard_tax_label: response.data.standard_tax_label ?? 'Impuesto',
         ...(discountEnabled.value && _discountAmtPos > 0
           ? { discount_amount: _discountAmtPos, subtotal: _subtotalPos }
-          : {})
+          : {}),
+        // warocol.com#639 — surface tip in the success modal when present
+        ...(response.data.tip_amount && response.data.tip_amount > 0
+          ? { tip_amount: response.data.tip_amount, charged_amount: response.data.charged_amount }
+          : {}),
       }
       cartItemsSnapshot.value = [...cartItems.value]
       receiptEmail.value = emailForReceipt ?? ''
@@ -770,8 +798,10 @@ watch(selectedPaymentMethod, () => {
 const isCashMethod = computed(() => selectedGroup.value?.slug === 'cash')
 const cashReceivedInput = ref<number>(0)
 
+// warocol.com#639 — single-payment cash flow must cover total + tip (split mode
+// disallows tips, enforced by the backend in api-warolabs#245).
 const cashAmountToCharge = computed(() =>
-  splitMode.value ? splitAmountToCharge.value : discountedTotal.value
+  splitMode.value ? splitAmountToCharge.value : finalChargedAmount.value
 )
 
 const cashChange = computed(() =>
@@ -2038,6 +2068,19 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- warocol.com#639 — Tip selector (hidden when tenant has tip_enabled=false).
+             Placed between totals and payment so cashier-controlled tipping in POS
+             stays visible right where the operator confirms the order. Split mode
+             intentionally excluded — backend rejects tips in split payments. -->
+        <TipSelector
+          v-if="tipEnabled && !splitMode"
+          :enabled="tipEnabled"
+          :presets="tipPresets"
+          :preselect-index="tipPreselectIndex"
+          :subtotal="cartTotal"
+          v-model="tipModel"
+        />
+
         <!-- Issue #524 — Cash tender + change calculation (single-payment mode) -->
         <div v-if="!splitMode && isCashMethod && selectedCustomer" class="flex flex-col gap-3 p-4 rounded-xl bg-surface border border-border">
           <label for="cash-received-input-single" class="text-sm font-medium text-text-primary">
@@ -2123,7 +2166,13 @@ onUnmounted(() => {
             <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
-            <span v-if="!isProcessing">{{ selectedPaymentMethod === 'credit' ? 'Registrar como crédito' : 'Confirmar Orden' }}</span>
+            <span v-if="!isProcessing">
+              {{ selectedPaymentMethod === 'credit'
+                ? 'Registrar como crédito'
+                : tipAmount > 0
+                  ? `Confirmar — ${formatCurrency(finalChargedAmount)}`
+                  : 'Confirmar Orden' }}
+            </span>
             <svg v-if="!isProcessing" class="h-5 w-5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
             </svg>
@@ -2443,6 +2492,15 @@ onUnmounted(() => {
             <div class="flex items-center justify-between" :class="(orderResult.discount_amount || orderResult.standard_tax || orderResult.liquor_tax) ? 'border-t border-border pt-3' : ''">
               <span class="text-sm text-text-secondary">Total</span>
               <span class="text-lg font-bold text-text-primary">{{ formatCurrency(orderResult.total_amount) }}</span>
+            </div>
+            <!-- warocol.com#639 — show tip on a separate line + the total charged to the customer -->
+            <div v-if="orderResult.tip_amount && orderResult.tip_amount > 0" class="flex items-center justify-between">
+              <span class="text-sm text-text-secondary">Propina</span>
+              <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.tip_amount) }}</span>
+            </div>
+            <div v-if="orderResult.tip_amount && orderResult.tip_amount > 0 && orderResult.charged_amount" class="flex items-center justify-between border-t border-border pt-3">
+              <span class="text-sm text-text-secondary">Total cobrado</span>
+              <span class="text-lg font-bold text-primary">{{ formatCurrency(orderResult.charged_amount) }}</span>
             </div>
             <div class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">Método de Pago</span>
