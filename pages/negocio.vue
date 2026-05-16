@@ -260,8 +260,12 @@
         </div>
       </div>
 
-      <!-- ══════ STATS STRIP ══════ -->
-      <div v-if="businessProfile" class="grid grid-cols-3 divide-x divide-border bg-surface border-2 border-border rounded-xl overflow-hidden">
+      <!-- ══════ STATS STRIP ══════
+           Hidden while editing (warocol.com#626): the "Pedidos en línea"
+           section below owns the editable inputs for these three fields,
+           so showing the read-only summary at the same time duplicates
+           labels and confuses the operator about where to edit. -->
+      <div v-if="businessProfile && !isEditMode" class="grid grid-cols-3 divide-x divide-border bg-surface border-2 border-border rounded-xl overflow-hidden">
         <div class="px-3 sm:px-5 py-3 sm:py-4 flex flex-col justify-between text-left sm:text-center">
           <p class="text-[10px] sm:text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
             Tiempo prep.
@@ -724,17 +728,24 @@ const hasSocialMedia = computed(() => {
   return sm && Object.values(sm).some(v => !!v)
 })
 
-const formatCurrency = (value: number) => {
-  if (!value) return '$0'
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
+// Both formatters normalize the input to a number first because the API
+// serializes Decimal fields (e.g. min_order_amount) as JSON strings like
+// "0.00" — JS coerces strings in arithmetic but a string like "0.00" is
+// truthy, so `if (!value)` falsely fell through and the literal "0.00"
+// ended up in the template (warocol.com#626).
+const formatCurrency = (value: number | string | null | undefined) => {
+  const n = Number(value) || 0
+  if (!n) return '$0'
+  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
 }
 
-const formatCurrencyCompact = (value: number) => {
-  if (!value) return '$0'
-  if (value >= 1000) {
-    return `$${(value / 1000).toFixed(0)}k`
+const formatCurrencyCompact = (value: number | string | null | undefined) => {
+  const n = Number(value) || 0
+  if (!n) return '$0'
+  if (n >= 1000) {
+    return `$${(n / 1000).toFixed(0)}k`
   }
-  return `$${value}`
+  return `$${n}`
 }
 
 // ─── Edit actions ───
