@@ -165,6 +165,10 @@ const props = defineProps<{
   modelValue: boolean
   restaurantOpen?: boolean
   acceptsOnlineOrders?: boolean
+  // Real minimum from tenant_public_profiles.min_order_amount, forwarded
+  // by the parent page (warocol.com#632). Decimal-string-safe — the
+  // CartSummary boundary normalizes via Number().
+  minOrderAmount?: number | string
 }>()
 
 const emit = defineEmits<{
@@ -188,8 +192,12 @@ const showError = (msg: string) => {
 
 const deliveryFee = computed(() => 0)
 
+// The pickup/dine-in branches never enforce a minimum (delivery-only
+// business rule). For delivery, defer to the tenant's configured
+// min_order_amount instead of a hardcoded value (warocol.com#632).
 const minimumOrder = computed(() => {
-  return cartStore.orderType === 'delivery' ? 20000 : 0
+  if (cartStore.orderType !== 'delivery') return 0
+  return props.minOrderAmount ?? 0
 })
 
 const close = () => {

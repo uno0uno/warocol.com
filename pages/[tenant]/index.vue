@@ -371,6 +371,7 @@ const cancelSwitch = () => {
         v-model="isCartOpen"
         :restaurant-open="restaurant.is_currently_open ?? true"
         :accepts-online-orders="restaurant.accepts_online_orders ?? false"
+        :min-order-amount="restaurant.min_order_amount ?? 0"
         @checkout="handleCheckout"
         @open-product="handleOpenProductFromCart"
       />

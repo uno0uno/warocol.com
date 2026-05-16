@@ -38,9 +38,14 @@
     </div>
 
     <!-- Minimum order warning -->
-    <div v-if="minimumOrder > subtotal" class="flex flex-col items-center text-center text-xs p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 mb-3">
-      ⚠️ Pedido mínimo: {{ formatPrice(minimumOrder) }}
-      <small class="font-semibold mt-0.5">Faltan {{ formatPrice(minimumOrder - subtotal) }}</small>
+    <div v-if="normalizedMinimumOrder > subtotal" class="flex flex-col items-center text-center text-sm p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 mb-3">
+      <span class="flex items-center gap-1.5">
+        <svg class="w-4 h-4 flex-shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.732 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+        </svg>
+        Pedido mínimo: {{ formatPrice(normalizedMinimumOrder) }}
+      </span>
+      <small class="font-semibold mt-0.5">Faltan {{ formatPrice(normalizedMinimumOrder - subtotal) }}</small>
     </div>
 
     <!-- Online orders disabled notice — takes priority over closed notice -->
@@ -72,7 +77,7 @@
     >
       <span v-if="!acceptsOnlineOrders">Pedidos en línea no disponibles</span>
       <span v-else-if="!restaurantOpen">Restaurante cerrado</span>
-      <span v-else-if="minimumOrder > subtotal">Pedido mínimo no alcanzado</span>
+      <span v-else-if="normalizedMinimumOrder > subtotal">Pedido mínimo no alcanzado</span>
       <span v-else>Continuar a Checkout</span>
     </button>
   </div>
@@ -88,7 +93,11 @@ const props = withDefaults(
     orderType?: 'delivery' | 'pickup' | 'dine-in'
     deliveryFee?: number
     discount?: number
-    minimumOrder?: number
+    // Accepts string too because the public restaurant endpoint
+    // serializes Decimal as a JSON string (warocol.com#632). Normalized
+    // below via `normalizedMinimumOrder` so consumers can pass the raw
+    // API value without thinking about it.
+    minimumOrder?: number | string
     showCheckoutButton?: boolean
     restaurantOpen?: boolean
     acceptsOnlineOrders?: boolean
@@ -108,6 +117,12 @@ defineEmits<{
   (e: 'checkout'): void
 }>()
 
+// Single boundary normalization for the Decimal-string trap. Every
+// downstream check (warning v-if, math, checkout-disabled, button label)
+// reads through this — so future consumers of <CartSummary> stay safe
+// without repeating the Number(...) || 0 dance.
+const normalizedMinimumOrder = computed(() => Number(props.minimumOrder) || 0)
+
 const total = computed(() => {
   return props.subtotal + props.deliveryFee - props.discount
 })
@@ -115,7 +130,7 @@ const total = computed(() => {
 const isCheckoutDisabled = computed(() => {
   if (!props.acceptsOnlineOrders) return true
   if (!props.restaurantOpen) return true
-  return props.minimumOrder > 0 && props.subtotal < props.minimumOrder
+  return normalizedMinimumOrder.value > 0 && props.subtotal < normalizedMinimumOrder.value
 })
 
 const formatPrice = (price: number) => {

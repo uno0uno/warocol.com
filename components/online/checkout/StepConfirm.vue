@@ -103,6 +103,7 @@
       :item-count="cartStore.itemCount"
       :order-type="cartStore.orderType"
       :delivery-fee="deliveryFee"
+      :minimum-order="minOrderAmount"
       :show-checkout-button="false"
     />
 
@@ -256,6 +257,21 @@ const router = useRouter()
 const cartStore = useOnlineCartStore()
 const otpAuthStore = useOtpAuthStore()
 const addressStore = useAddressStore()
+
+// Tenant profile fetch — same Pinia Colada query key as the parent
+// `pages/[tenant]/index.vue` so this is a cache hit when the user
+// navigates from the menu page (warocol.com#632). Falls back to one
+// fresh fetch when the user arrives directly at /checkout (bookmark).
+const restaurantSlug = computed(() => String(route.params.tenant ?? ''))
+const { data: tenantProfile } = useQuery({
+  key: () => ['restaurant', 'public', restaurantSlug.value],
+  query: () => $fetch(`/api/public/restaurant/${restaurantSlug.value}`),
+  enabled: () => !!restaurantSlug.value,
+})
+const minOrderAmount = computed(
+  () => (tenantProfile.value as { data?: { min_order_amount?: number | string } } | null)
+    ?.data?.min_order_amount ?? 0,
+)
 
 // ── Display helpers ───────────────────────────────────────────────────────
 
