@@ -97,10 +97,18 @@
             <div>
               <p class="text-[10px] font-medium text-text-secondary uppercase tracking-wide">Stock Actual</p>
               <div v-if="isLoadingStock || !stockLoaded" class="mt-1 h-6 w-20 bg-surface-secondary rounded animate-pulse" aria-label="Cargando stock actual" />
-              <p v-else class="text-lg font-bold text-text-primary mt-0.5 leading-tight">
-                {{ formatNumber(currentStock) }}
-                <span class="text-xs text-text-secondary font-normal">{{ selectedIngredient.unit }}</span>
-              </p>
+              <template v-else>
+                <p class="text-lg font-bold text-text-primary mt-0.5 leading-tight">
+                  {{ formatNumber(currentStock) }}
+                  <span class="text-xs text-text-secondary font-normal">{{ selectedIngredient.unit }}</span>
+                </p>
+                <p
+                  v-if="currentStockInFormUnit !== null"
+                  class="text-[10px] text-text-secondary leading-snug mt-0.5"
+                >
+                  ≈ {{ formatNumber(currentStockInFormUnit) }} {{ form.unit }}
+                </p>
+              </template>
             </div>
             <div>
               <p class="text-[10px] font-medium text-text-secondary uppercase tracking-wide">Mínimo</p>
@@ -454,6 +462,17 @@ const convertedQuantity = computed(() => {
   return purchaseUnitsApi.convertToBase(form.ingredientId, form.quantity, form.unit)
 })
 
+// Stock Actual rendered in the operator-selected unit, when it differs from
+// the base unit. Returns null when no conversion is needed so the template
+// can hide the secondary line.
+const currentStockInFormUnit = computed<number | null>(() => {
+  if (!selectedIngredient.value || !form.unit) return null
+  if (form.unit === selectedIngredient.value.unit) return null
+  const factor = purchaseUnitsApi.convertToBase(form.ingredientId, 1, form.unit)
+  if (!factor || factor === 1) return null
+  return currentStock.value / factor
+})
+
 const newStockInBase = computed(() =>
   calculateNewStockInBase((qty, unit) =>
     purchaseUnitsApi.convertToBase(form.ingredientId, qty, unit),
@@ -514,7 +533,7 @@ const retryStockFetch = async () => {
 
 const onSubmit = async () => {
   try {
-    await submit()
+    await submit((qty, unit) => purchaseUnitsApi.convertToBase(form.ingredientId, qty, unit))
     const sign = form.adjustmentType === 'decrement' ? '-' : (form.adjustmentType === 'set' ? '→ ' : '+')
     const qty = form.quantity ?? 0
     successMessage.value = `Se registró el ajuste de ${selectedIngredient.value?.name}: ${sign}${formatNumber(qty)} ${form.unit}.`

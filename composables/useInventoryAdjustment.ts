@@ -165,43 +165,56 @@ export function useInventoryAdjustment() {
   }
 
   /**
-   * Submits the adjustment. Translates the chosen adjustment type into a
-   * signed `quantity_change` value in the PURCHASE unit (backend converts
-   * to base). On success returns the API response payload; on failure
-   * throws — caller surfaces `errorMessage`.
+   * Submits the adjustment. Converts `qty` to base unit via `convertToBase`,
+   * builds a signed `quantity_change` in base unit, and sends `unit = base`.
+   * The backend then treats the delta as a base-unit value (factor = 1),
+   * which removes the mixed-unit class of bugs that previously zeroed stock
+   * on "set" with non-1 conversion factors (warocol.com#616).
+   *
+   * `cost_per_unit` is divided by the same factor before sending so the
+   * recorded base-unit cost matches the operator's intent (the backend used
+   * to do this division itself — it becomes a no-op now that we send base
+   * unit, so the frontend owns the conversion).
    */
-  const submit = async (): Promise<unknown> => {
+  const submit = async (
+    convertToBase: (qty: number, unit: string) => number,
+  ): Promise<unknown> => {
     if (!isFormValid.value) {
       throw new Error('Formulario inválido')
+    }
+    if (!selectedIngredient.value) {
+      throw new Error('Ingrediente no seleccionado')
     }
     isSubmitting.value = true
     errorMessage.value = ''
     try {
       const qty = form.quantity as number
+      const baseUnit = selectedIngredient.value.unit
+      const qtyInBase = convertToBase(qty, form.unit)
       let quantityChange = 0
       if (form.adjustmentType === 'increment') {
-        quantityChange = qty
+        quantityChange = qtyInBase
       } else if (form.adjustmentType === 'decrement') {
-        quantityChange = -qty
+        quantityChange = -qtyInBase
       } else if (form.adjustmentType === 'set') {
-        // Backend interprets quantity_change as a DELTA. For "set", the
-        // delta is `target - current` — both in the SAME unit. We send the
-        // PURCHASE unit, so we must express current_stock in that unit too.
-        // Simplest path: send the target as-is and let the cashier verify;
-        // matches the standalone page behaviour at ajustes/crear.vue:533.
-        // (`quantity` is the target value in the chosen unit.)
-        quantityChange = qty - currentStock.value
+        quantityChange = qtyInBase - currentStock.value
       }
 
       const payload: Record<string, unknown> = {
         ingredient_id: form.ingredientId,
         quantity_change: quantityChange,
-        unit: form.unit,
+        unit: baseUnit,
         reason: `${REASON_LABELS[form.reason] || form.reason}${form.notes ? ': ' + form.notes : ''}`,
         source: 'manual_adjustment',
       }
       if (form.adjustmentType === 'increment' && form.cost_per_unit) {
-        payload.cost_per_unit = form.cost_per_unit
+        // Backend stores cost_per_base_unit. Convert the operator-entered
+        // cost_per_form_unit using the same factor we used for qty.
+        const factorForFormUnit = convertToBase(1, form.unit)
+        payload.cost_per_unit =
+          factorForFormUnit > 0
+            ? form.cost_per_unit / factorForFormUnit
+            : form.cost_per_unit
       }
 
       const res = await $fetch('/api/inventory/adjustments', {
