@@ -241,11 +241,36 @@ const docTypeLabels: Record<string, string> = {
   debit_note: 'Nota débito',
 }
 
+const docTypeShort: Record<string, string> = {
+  invoice: 'Factura',
+  credit_note: 'NC',
+  debit_note: 'ND',
+}
+
 const progressColor = (percent: number) => {
   if (percent >= 90) return 'bg-red-500'
   if (percent >= 70) return 'bg-amber-500'
   return 'bg-green-500'
 }
+
+const progressTextColor = (percent: number) => {
+  if (percent >= 90) return 'text-red-600 dark:text-red-400'
+  if (percent >= 70) return 'text-amber-600 dark:text-amber-400'
+  return 'text-emerald-700 dark:text-emerald-400'
+}
+
+const resolutionColumns = [
+  { key: 'prefix',        title: 'Prefijo',       align: 'left'   as const },
+  { key: 'number',        title: 'N° Resolución', align: 'left'   as const },
+  { key: 'document_type', title: 'Tipo',          align: 'left'   as const },
+  { key: 'range',         title: 'Rango',         align: 'left'   as const },
+  { key: 'available',     title: 'Disponibles',   align: 'right'  as const },
+  { key: 'used',          title: 'Usadas',        align: 'right'  as const },
+  { key: 'percent',       title: '% Usado',       align: 'right'  as const },
+  { key: 'validity',      title: 'Vigencia',      align: 'left'   as const },
+  { key: 'is_active',     title: 'Estado',        align: 'center' as const },
+  { key: 'actions',       title: '',              align: 'right'  as const },
+]
 
 // ── Fiscal Data ─────────────────────────────────────────────────────────────
 const { data: fiscalData, refetch: refreshFiscal } = useQuery({
@@ -397,9 +422,9 @@ const taxLevels = [
         </h3>
         <button
           @click="openNewResolution"
-          class="min-h-[36px] px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors flex items-center gap-1"
+          class="min-h-[44px] px-3 py-2 text-sm font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors flex items-center gap-1"
         >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           Agregar
         </button>
       </div>
@@ -479,7 +504,7 @@ const taxLevels = [
               Debe estar entre {{ currentNumberFloor }} y {{ resolutionForm.to_number }}. DIAN
               prohíbe reutilizar números — el contador solo avanza.
             </p>
-            <p v-else class="text-[11px] text-text-tertiary leading-snug">
+            <p v-else class="text-xs text-text-tertiary leading-snug">
               Próxima emisión usará {{ (resolutionForm.current_number ?? currentNumberFloor) + 1 }}.
             </p>
           </div>
@@ -513,70 +538,153 @@ const taxLevels = [
         </div>
       </div>
 
-      <!-- Resolution cards -->
-      <div v-if="resolutions.length > 0" class="space-y-4">
-        <div v-for="res in resolutions" :key="res.id" class="border border-border rounded-xl p-4 space-y-3">
-          <!-- Header: prefix + status + actions -->
-          <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2">
-              <span class="text-lg font-bold text-text-primary">{{ res.prefix }}</span>
-              <span class="text-xs text-text-secondary font-mono">{{ res.resolution_number }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <button
-                @click="openEditResolution(res)"
-                class="min-h-[32px] min-w-[32px] flex items-center justify-center rounded-lg hover:bg-surface-secondary transition-colors"
-                aria-label="Editar resolución"
-              >
-                <svg class="w-4 h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
-              </button>
-              <!-- Toggle switch — mismo patrón que /operaciones/mesas y /operaciones/personalizar -->
-              <span
-                class="text-xs font-semibold tabular-nums"
-                :class="res.is_active ? 'text-emerald-700 dark:text-emerald-400' : 'text-text-secondary'"
-              >
-                {{ res.is_active ? 'Activa' : 'Inactiva' }}
-              </span>
-              <label
-                class="relative inline-flex items-center cursor-pointer flex-shrink-0"
-                :aria-label="res.is_active ? 'Desactivar resolución' : 'Activar resolución'"
-              >
-                <input
-                  type="checkbox"
-                  class="sr-only peer"
-                  :checked="res.is_active"
-                  @change="toggleResolution(res.id)"
-                />
-                <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-              </label>
-            </div>
-          </div>
+      <!-- Resolutions list — desktop table + mobile card via UiResponsiveDataView (#621) -->
+      <UiResponsiveDataView
+        v-if="resolutions.length > 0"
+        :columns="resolutionColumns"
+        :data="resolutions"
+        row-size="sm"
+        item-key="id"
+      >
+        <!-- Desktop cells -->
+        <template #cell-prefix="{ row }">
+          <span class="text-base font-bold text-text-primary">{{ row.prefix }}</span>
+        </template>
 
-          <!-- Document type -->
-          <p class="text-xs text-text-secondary">{{ docTypeLabels[res.document_type] || res.document_type }}</p>
+        <template #cell-number="{ row }">
+          <span class="text-xs text-text-secondary font-mono">{{ row.resolution_number }}</span>
+        </template>
 
-          <!-- Progress bar -->
-          <div class="space-y-1">
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-text-secondary">Rango: {{ res.from_number }} → {{ res.to_number }}</span>
-              <span class="font-medium text-text-primary">{{ res.used }} de {{ res.total_range }} usados ({{ res.usage_percent }}%)</span>
-            </div>
-            <div class="w-full h-2 bg-surface-secondary rounded-full overflow-hidden">
-              <div
-                class="h-full rounded-full transition-all"
-                :class="progressColor(res.usage_percent)"
-                :style="{ width: `${Math.min(res.usage_percent, 100)}%` }"
+        <template #cell-document_type="{ row }">
+          <span
+            class="text-xs text-text-secondary"
+            :title="docTypeLabels[row.document_type] || row.document_type"
+          >
+            {{ docTypeShort[row.document_type] ?? row.document_type }}
+          </span>
+        </template>
+
+        <template #cell-range="{ row }">
+          <span class="text-xs tabular-nums text-text-primary">
+            {{ row.from_number }} → {{ row.to_number }}
+          </span>
+        </template>
+
+        <template #cell-available="{ row }">
+          <span class="text-xs tabular-nums text-text-primary">
+            {{ Math.max(0, row.total_range - row.used) }}
+          </span>
+        </template>
+
+        <template #cell-used="{ row }">
+          <span class="text-xs tabular-nums text-text-primary">{{ row.used }}</span>
+        </template>
+
+        <template #cell-percent="{ row }">
+          <span class="text-xs font-semibold tabular-nums" :class="progressTextColor(row.usage_percent)">
+            {{ row.usage_percent }}%
+          </span>
+        </template>
+
+        <template #cell-validity="{ row }">
+          <span class="text-xs tabular-nums text-text-secondary">
+            {{ row.date_from }} → {{ row.date_to }}
+          </span>
+        </template>
+
+        <template #cell-is_active="{ row }">
+          <div class="inline-flex items-center gap-2 justify-center">
+            <span
+              class="text-xs font-semibold"
+              :class="row.is_active ? 'text-emerald-700 dark:text-emerald-400' : 'text-text-secondary'"
+            >
+              {{ row.is_active ? 'Activa' : 'Inactiva' }}
+            </span>
+            <label
+              class="relative inline-flex items-center cursor-pointer flex-shrink-0 min-h-[44px]"
+              :aria-label="row.is_active ? 'Desactivar resolución' : 'Activar resolución'"
+              @click.stop
+            >
+              <input
+                type="checkbox"
+                class="sr-only peer"
+                :checked="row.is_active"
+                @change="toggleResolution(row.id)"
               />
+              <div class="relative w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+            </label>
+          </div>
+        </template>
+
+        <template #cell-actions="{ row }">
+          <button
+            type="button"
+            @click.stop="openEditResolution(row)"
+            class="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+            aria-label="Editar resolución"
+          >
+            <svg class="w-4 h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+          </button>
+        </template>
+
+        <!-- Mobile card -->
+        <template #card="{ item: row }">
+          <div class="border border-border rounded-xl p-4 space-y-3 bg-surface">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-lg font-bold text-text-primary">{{ row.prefix }}</span>
+                <span class="text-xs text-text-secondary font-mono truncate">{{ row.resolution_number }}</span>
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <button
+                  type="button"
+                  @click="openEditResolution(row)"
+                  class="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                  aria-label="Editar resolución"
+                >
+                  <svg class="w-4 h-4 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                </button>
+                <span
+                  class="text-xs font-semibold"
+                  :class="row.is_active ? 'text-emerald-700 dark:text-emerald-400' : 'text-text-secondary'"
+                >
+                  {{ row.is_active ? 'Activa' : 'Inactiva' }}
+                </span>
+                <label
+                  class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+                  :aria-label="row.is_active ? 'Desactivar resolución' : 'Activar resolución'"
+                >
+                  <input
+                    type="checkbox"
+                    class="sr-only peer"
+                    :checked="row.is_active"
+                    @change="toggleResolution(row.id)"
+                  />
+                  <div class="relative w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                </label>
+              </div>
+            </div>
+            <p class="text-xs text-text-secondary">{{ docTypeLabels[row.document_type] || row.document_type }}</p>
+            <div class="space-y-1">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-text-secondary">Rango: {{ row.from_number }} → {{ row.to_number }}</span>
+                <span class="font-medium text-text-primary">{{ row.used }} de {{ row.total_range }} usados ({{ row.usage_percent }}%)</span>
+              </div>
+              <div class="w-full h-2 bg-surface-secondary rounded-full overflow-hidden">
+                <div
+                  class="h-full rounded-full transition-all"
+                  :class="progressColor(row.usage_percent)"
+                  :style="{ width: `${Math.min(row.usage_percent, 100)}%` }"
+                />
+              </div>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-text-secondary">
+              <span>Desde: <span class="font-medium text-text-primary">{{ row.date_from }}</span></span>
+              <span>Hasta: <span class="font-medium text-text-primary">{{ row.date_to }}</span></span>
             </div>
           </div>
-
-          <!-- Dates -->
-          <div class="flex items-center gap-4 text-xs text-text-secondary">
-            <span>Desde: <span class="font-medium text-text-primary">{{ res.date_from }}</span></span>
-            <span>Hasta: <span class="font-medium text-text-primary">{{ res.date_to }}</span></span>
-          </div>
-        </div>
-      </div>
+        </template>
+      </UiResponsiveDataView>
     </div>
 
     <!-- ══════ DATOS FISCALES ══════ -->
