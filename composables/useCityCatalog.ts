@@ -61,11 +61,75 @@ export function useCityCatalog() {
   const findCity = (slug: string): PublicCity | null =>
     cities.value.find((c) => c.city_slug === slug) ?? null
 
+  // Prefixes that are NOT cities but live at the same path level. Listed
+  // here so the route-aware helpers below short-circuit before doing a
+  // catalog lookup. Keep alphabetised. Add new top-level literal routes
+  // here as they are added to pages/.
+  const NON_CITY_PREFIXES = new Set([
+    '',          // root
+    'admin',
+    'analitica',
+    'api',
+    'auth',
+    'blog',
+    'ciudades',
+    'cocina',
+    'comandas',
+    'docs',
+    'equipo',
+    'facturacion',
+    'finanzas',
+    'inventario',
+    'menu',
+    'mis-pedidos',
+    'negocio',
+    'operaciones',
+    'pagos',
+    'pos',
+    'ventas',
+  ])
+
+  /**
+   * First path segment, lowercased. `/bogota/foo` → `bogota`. Empty for `/`.
+   * Used internally by `isCityRoute` and `cityFromRoute` to peel off the
+   * candidate slug before catalog lookup.
+   */
+  const firstSegment = (path: string): string => {
+    const trimmed = path.startsWith('/') ? path.slice(1) : path
+    return trimmed.split('/')[0].toLowerCase()
+  }
+
+  /**
+   * True when the route is a city directory (warocol.com#619).
+   * Used by the Header desktop nav and the BottomNav mobile bar to
+   * highlight the "Ciudades" link on both `/ciudades` and `/<city_slug>`.
+   * Falls back to false for any known non-city top-level prefix.
+   */
+  const isCityRoute = (path: string): boolean => {
+    const seg = firstSegment(path)
+    if (NON_CITY_PREFIXES.has(seg)) return false
+    return isCitySlug(seg)
+  }
+
+  /**
+   * Resolve the catalog entry for the current route's city, or null when
+   * the route is not a city directory. Used by the Header badge so it
+   * shows "Bogotá" on `/bogota`, "Medellín" on `/medellin`, and nothing
+   * on tenant URLs like `/sandwichito-monroy`.
+   */
+  const cityFromRoute = (path: string): PublicCity | null => {
+    const seg = firstSegment(path)
+    if (NON_CITY_PREFIXES.has(seg)) return null
+    return findCity(seg)
+  }
+
   return {
     cities,
     citySlugSet,
     isCitySlug,
     findCity,
+    isCityRoute,
+    cityFromRoute,
     fetchCatalog,
   }
 }

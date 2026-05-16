@@ -95,6 +95,7 @@ export default defineEventHandler(async (event) => {
   // URLs base
   const baseUrls = [
     { loc: '/', lastmod: today, changefreq: 'daily', priority: '1.0' },
+    { loc: '/ciudades', lastmod: today, changefreq: 'weekly', priority: '0.95' },
     { loc: '/blog', lastmod: latestBlogDate, changefreq: 'daily', priority: '0.9' }
   ]
 

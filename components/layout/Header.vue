@@ -9,7 +9,7 @@
       </NuxtLink>
 
       <!-- Nav principal (centro) — solo desktop -->
-      <nav class="hidden md:flex items-center gap-1 ml-6">
+      <nav aria-label="Navegación principal" class="hidden md:flex items-center gap-1 ml-6">
         <NuxtLink
           v-for="link in navLinks"
           :key="link.to"
@@ -60,28 +60,39 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
+import { useCityCatalog } from '~/composables/useCityCatalog'
 import logo from '~/public/logo_waro_colombia.png'
 
 const route = useRoute()
 const authStore = useAuthStore()
 const leadModal = useLeadModal()
+const { cityFromRoute, isCityRoute } = useCityCatalog()
 
 const isDocs = computed(() => route.path.startsWith('/docs'))
 
+// Contextual badge next to the logo. Order matters — known literal
+// prefixes win before the catalog lookup so future cities can't shadow
+// `/docs` or `/blog` accidentally (warocol.com#619).
 const badgeText = computed(() => {
   if (route.path.startsWith('/docs')) return 'Docs'
   if (route.path.startsWith('/blog')) return 'Blog'
-  if (route.path.startsWith('/bogota')) return 'Bogotá'
-  return null
+  if (route.path === '/ciudades') return 'Ciudades'
+  const city = cityFromRoute(route.path)
+  return city?.city ?? null
 })
 
 const navLinks = [
-  { to: '/bogota', label: 'Bogotá' },
+  { to: '/ciudades', label: 'Ciudades' },
   { to: '/blog', label: 'Blog' },
   { to: '/docs', label: 'Docs' },
 ]
 
 function isActive(path: string) {
+  // The "Ciudades" link highlights on both /ciudades and any /<city_slug>
+  // route so the customer always sees where they are in the directory.
+  if (path === '/ciudades') {
+    return route.path === '/ciudades' || isCityRoute(route.path)
+  }
   return route.path.startsWith(path)
 }
 </script>
