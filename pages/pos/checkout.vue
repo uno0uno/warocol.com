@@ -786,18 +786,16 @@ const cashIsValid = computed(() =>
 
 // Issue #524 — quick-tap presets. "Sin vuelto" is the friendly equivalent of
 // the industry term "exact tender" — it tells the cashier what happens
-// (no change to give) instead of generic POS jargon. The three +amount
+// (no change to give) instead of generic POS jargon. The four +amount
 // shortcuts cover the most common Colombian bill denominations the customer
-// hands over above the total.
-const cashPresetsExtra = computed(() => {
-  const a = cashAmountToCharge.value
-  return [
-    { label: '+ $1.000',  value: a + 1000 },
-    { label: '+ $5.000',  value: a + 5000 },
-    { label: '+ $10.000', value: a + 10000 },
-    { label: '+ $20.000', value: a + 20000 },
-  ]
-})
+// hands over above the total. Issue #646: presets add cumulatively to the
+// tender — tapping "+ $1.000" then "+ $5.000" lands at $6.000.
+const cashPresetsExtra = [
+  { label: '+ $1.000',  offset: 1000 },
+  { label: '+ $5.000',  offset: 5000 },
+  { label: '+ $10.000', offset: 10000 },
+  { label: '+ $20.000', offset: 20000 },
+] as const
 
 // Issue #524 — input starts at 0 and stays at 0 until the cashier either
 // taps a preset or types. Auto-prefilling with the amount made it look like
@@ -1991,7 +1989,7 @@ onUnmounted(() => {
                   v-for="preset in cashPresetsExtra"
                   :key="preset.label"
                   type="button"
-                  @click="cashReceivedInput = preset.value"
+                  @click="cashReceivedInput = (cashReceivedInput || 0) + preset.offset"
                   class="min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   {{ preset.label }}
@@ -2072,7 +2070,7 @@ onUnmounted(() => {
               v-for="preset in cashPresetsExtra"
               :key="preset.label"
               type="button"
-              @click="cashReceivedInput = preset.value"
+              @click="cashReceivedInput = (cashReceivedInput || 0) + preset.offset"
               class="min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {{ preset.label }}
