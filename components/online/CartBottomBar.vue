@@ -2,8 +2,12 @@
   <Teleport to="body">
     <Transition name="bar-slide">
       <div v-if="cartStore.itemCount > 0 && acceptsOnlineOrders" class="cart-bottom-bar bg-white border-t border-border shadow-2xl">
-        <!-- Inner container — matches layout padding -->
-        <div class="px-4 md:px-16 2xl:px-[30rem] py-3">
+        <!-- Inner container — aligned with body content
+             (max-w-7xl mx-auto px-4 — same shape PublicMenu and
+             RestaurantHeader use). Previous `md:px-16 2xl:px-[30rem]`
+             diverged from the body at md+ breakpoints (e.g. on 2xl the
+             bar had 480px sides while body had ~320px). -->
+        <div class="max-w-7xl mx-auto px-4 py-3">
           <div class="flex items-center justify-between gap-3">
 
             <!-- Left: icon + stacked text -->
