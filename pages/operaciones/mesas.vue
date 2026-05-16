@@ -6,7 +6,11 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-useHead({ title: 'Mesas | Operaciones' })
+const { singular, plural } = useTableLabel()
+const singularLower = computed(() => singular.value.toLowerCase())
+const pluralLower = computed(() => plural.value.toLowerCase())
+
+useHead({ title: computed(() => `${plural.value} | Operaciones`) })
 
 const { currentTenant } = useTenantReactive()
 
@@ -80,7 +84,7 @@ const inactiveTables = computed(() => {
 // read-only — clicking "Editar" is the only way to change the assignment.
 const tableColumns = computed(() => {
   const cols: Array<{ key: string; title: string; sortable?: boolean }> = [
-    { key: 'name', title: 'Mesa', sortable: false },
+    { key: 'name', title: singular.value, sortable: false },
     { key: 'capacity', title: 'Capacidad' },
   ]
   if (businessProfile.value?.waiter_attribution_enabled) {
@@ -125,7 +129,7 @@ const confirmDeactivate = async () => {
   } catch (err: any) {
     const status = err?.response?.status ?? err?.status
     deactivateError.value = status === 409
-      ? (err?.data?.detail ?? 'Mesa con sesión abierta, ciérrala primero')
+      ? (err?.data?.detail ?? `${singular.value} con sesión abierta, ciérrala primero`)
       : (err?.data?.detail ?? 'Error al desactivar')
   } finally {
     isDeactivating.value = false
@@ -174,7 +178,7 @@ const confirmDelete = async () => {
   } catch (err: any) {
     const status = err?.response?.status ?? err?.status
     deleteError.value = status === 409
-      ? (err?.data?.detail ?? 'No se puede eliminar esta mesa ahora')
+      ? (err?.data?.detail ?? `No se puede eliminar esta ${singularLower.value} ahora`)
       : (err?.data?.detail ?? 'Error al eliminar')
   } finally {
     isDeleting.value = false
@@ -218,7 +222,7 @@ const toggleTablesEnabled = async () => {
     await invalidateContextCaches()
     posStore.tablesEnabled = newState
     toast.success(
-      newState ? 'Gestión de mesas activada para el POS' : 'Gestión de mesas desactivada',
+      newState ? `Gestión de ${pluralLower.value} activada para el POS` : `Gestión de ${pluralLower.value} desactivada`,
       { title: newState ? '¡Módulo activado!' : 'Módulo desactivado' }
     )
   } catch (error: any) {
@@ -291,19 +295,19 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
               class="text-sm font-semibold leading-snug"
               :class="businessProfile.tables_enabled ? 'text-text-primary' : 'text-amber-800 dark:text-amber-300'"
             >
-              {{ businessProfile.tables_enabled ? 'Gestión de mesas activa' : 'Gestión de mesas desactivada' }}
+              {{ businessProfile.tables_enabled ? `Gestión de ${pluralLower} activa` : `Gestión de ${pluralLower} desactivada` }}
             </p>
             <p
               class="text-xs mt-0.5 leading-snug"
               :class="businessProfile.tables_enabled ? 'text-text-secondary' : 'text-amber-700 dark:text-amber-400'"
             >
-              {{ businessProfile.tables_enabled ? 'El flujo de mesas está disponible en el punto de venta' : 'Actívala para usar el flujo de mesas en el punto de venta' }}
+              {{ businessProfile.tables_enabled ? `El flujo de ${pluralLower} está disponible en el punto de venta` : `Actívala para usar el flujo de ${pluralLower} en el punto de venta` }}
             </p>
           </div>
           <label
             class="relative inline-flex items-center cursor-pointer flex-shrink-0"
             :class="isTogglingTables ? 'opacity-50 pointer-events-none' : ''"
-            :aria-label="businessProfile.tables_enabled ? 'Desactivar gestión de mesas' : 'Activar gestión de mesas'"
+            :aria-label="businessProfile.tables_enabled ? `Desactivar gestión de ${pluralLower}` : `Activar gestión de ${pluralLower}`"
           >
             <input
               type="checkbox"
@@ -320,17 +324,17 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         <div v-if="businessProfile.tables_enabled" class="flex items-center justify-between gap-4 px-4 py-3">
           <div class="min-w-0">
             <p class="text-sm font-semibold leading-snug text-text-primary">
-              Asignar mesero por mesa
+              {{ `Asignar mesero por ${singularLower}` }}
             </p>
             <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-              Cada mesa puede tener un mesero por defecto. Se puede cambiar al abrir la sesión o por orden.
+              {{ `Cada ${singularLower} puede tener un mesero por defecto. Se puede cambiar al abrir la sesión o por orden.` }}
               El historial se preserva incluso si el miembro se elimina.
             </p>
           </div>
           <label
             class="relative inline-flex items-center cursor-pointer flex-shrink-0"
             :class="isTogglingWaiterAttribution ? 'opacity-50 pointer-events-none' : ''"
-            :aria-label="businessProfile.waiter_attribution_enabled ? 'Desactivar asignación de meseros por mesa' : 'Activar asignación de meseros por mesa'"
+            :aria-label="businessProfile.waiter_attribution_enabled ? `Desactivar asignación de meseros por ${singularLower}` : `Activar asignación de meseros por ${singularLower}`"
           >
             <input
               type="checkbox"
@@ -349,21 +353,21 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         v-model:search="searchTerm"
         v-model:status-filter="statusFilter"
         :status-options="statusOptions"
-        search-placeholder="Buscar mesa..."
+        :search-placeholder="`Buscar ${singularLower}...`"
         status-label="Estado"
         status-placeholder="Todos los estados"
         show-status-filter
       />
 
       <!-- ══════ ACTIVE TABLES ══════ -->
-      <HealthSemaphore :is-unlocked="true" title="Mesas configuradas">
+      <HealthSemaphore :is-unlocked="true" :title="`${plural} configuradas`">
         <template #header-actions>
           <button
             type="button"
             class="h-9 px-4 rounded-lg bg-primary text-sm font-semibold text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] transition-all shadow-sm shadow-primary/30 whitespace-nowrap"
             @click="openPanel(null)"
           >
-            <span class="hidden sm:inline">+ Nueva mesa</span>
+            <span class="hidden sm:inline">{{ `+ Nueva ${singularLower}` }}</span>
             <span class="sm:hidden">+ Nueva</span>
           </button>
         </template>
@@ -371,8 +375,8 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
         <UiResponsiveDataView
           :columns="tableColumns"
           :data="activeTables"
-          empty-message="No hay mesas configuradas"
-          empty-sub-message="Crea tu primera mesa para empezar a gestionar el salón"
+          :empty-message="`No hay ${pluralLower} configuradas`"
+          :empty-sub-message="`Crea tu primera ${singularLower} para empezar a gestionar el salón`"
           variant="default"
           row-size="sm"
         >
@@ -462,7 +466,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
       </HealthSemaphore>
 
       <!-- ══════ INACTIVE TABLES ══════ -->
-      <HealthSemaphore v-if="inactiveTables.length > 0" :is-unlocked="true" title="Mesas desactivadas">
+      <HealthSemaphore v-if="inactiveTables.length > 0" :is-unlocked="true" :title="`${plural} desactivadas`">
         <UiResponsiveDataView
           :columns="tableColumns"
           :data="inactiveTables"
@@ -577,7 +581,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                     <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                   </div>
                   <div class="min-w-0 flex-1 pt-0.5">
-                    <h3 class="text-base font-bold text-text-primary leading-tight">Desactivar mesa</h3>
+                    <h3 class="text-base font-bold text-text-primary leading-tight">{{ `Desactivar ${singularLower}` }}</h3>
                     <p class="text-sm text-text-secondary mt-0.5 truncate font-medium">{{ deactivateModalTable?.name }}</p>
                   </div>
                 </div>
@@ -593,7 +597,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
 
               <div class="px-5 py-4 flex flex-col gap-3">
                 <p class="text-sm text-text-secondary leading-relaxed">
-                  La mesa quedará inactiva y no aparecerá en el punto de venta. Podrás reactivarla en cualquier momento desde esta pantalla.
+                  {{ `La ${singularLower} quedará inactiva y no aparecerá en el punto de venta. Podrás reactivarla en cualquier momento desde esta pantalla.` }}
                 </p>
                 <div v-if="deactivateError" class="rounded-xl bg-destructive/8 border border-destructive/20 px-4 py-3">
                   <p class="text-sm text-destructive font-medium">{{ deactivateError }}</p>
@@ -655,7 +659,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                     <svg class="w-5 h-5 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </div>
                   <div class="min-w-0 flex-1 pt-0.5">
-                    <h3 class="text-base font-bold text-text-primary leading-tight">Eliminar mesa</h3>
+                    <h3 class="text-base font-bold text-text-primary leading-tight">{{ `Eliminar ${singularLower}` }}</h3>
                     <p class="text-sm text-text-secondary mt-0.5 truncate font-medium">{{ deleteModalTable?.name }}</p>
                   </div>
                 </div>
@@ -678,7 +682,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                     </div>
                     <div>
                       <p class="text-sm font-semibold text-destructive leading-snug">No se puede eliminar ahora</p>
-                      <p class="text-xs text-destructive/80 mt-1 leading-relaxed">Esta mesa tiene una sesión activa. Ciérrala antes de eliminarla.</p>
+                      <p class="text-xs text-destructive/80 mt-1 leading-relaxed">{{ `Esta ${singularLower} tiene una sesión activa. Ciérrala antes de eliminarla.` }}</p>
                     </div>
                   </div>
                 </div>
@@ -690,7 +694,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                       <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
                     </div>
                     <div>
-                      <p class="text-sm font-semibold text-amber-800 dark:text-amber-300 leading-snug">Esta mesa se archivará</p>
+                      <p class="text-sm font-semibold text-amber-800 dark:text-amber-300 leading-snug">{{ `Esta ${singularLower} se archivará` }}</p>
                       <p class="text-xs text-amber-700/80 dark:text-amber-400 mt-1 leading-relaxed">Tiene historial de sesiones. Se archivará para preservar los reportes y dejará de aparecer en el sistema.</p>
                     </div>
                   </div>
@@ -704,7 +708,7 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                     </div>
                     <div>
                       <p class="text-sm font-semibold text-emerald-800 dark:text-emerald-300 leading-snug">Sin historial — eliminación permanente</p>
-                      <p class="text-xs text-emerald-700/80 dark:text-emerald-400 mt-1 leading-relaxed">Esta mesa no tiene sesiones registradas. Se eliminará de forma definitiva.</p>
+                      <p class="text-xs text-emerald-700/80 dark:text-emerald-400 mt-1 leading-relaxed">{{ `Esta ${singularLower} no tiene sesiones registradas. Se eliminará de forma definitiva.` }}</p>
                     </div>
                   </div>
                 </div>

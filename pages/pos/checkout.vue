@@ -35,6 +35,8 @@ const posStore = usePOSStore()
 const cache = useQueryCache()
 const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
+const { singular: tableSingular } = useTableLabel()
+const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
 
 // Inject subtitle setter from layout
 const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle', () => {})
@@ -616,7 +618,7 @@ const processOrder = async () => {
       posStore.clearAll()
       showSuccessModal.value = true
     } catch (error: any) {
-      processingError.value = error.data?.message || error.message || 'Error al cerrar la mesa'
+      processingError.value = error.data?.message || error.message || `Error al cerrar la ${tableSingularLower.value}`
     } finally {
       isProcessing.value = false
     }
@@ -2681,7 +2683,7 @@ onUnmounted(() => {
     <div class="receipt-row" style="font-weight:bold;">*** PRE-CUENTA ***</div>
     <div class="receipt-row receipt-small">{{ prefacturaDateTime }}</div>
     <div v-if="isMesaMode && posStore.activeTableSession?.tableName" class="receipt-row receipt-small">
-      Mesa: {{ posStore.activeTableSession.tableName }}
+      {{ tableSingular }}: {{ posStore.activeTableSession.tableName }}
     </div>
     <div v-else-if="posStore.activeTableSession?.isBar" class="receipt-row receipt-small">Barra</div>
     <div v-else class="receipt-row receipt-small">Mostrador</div>

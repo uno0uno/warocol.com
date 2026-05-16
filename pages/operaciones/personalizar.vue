@@ -31,8 +31,99 @@ registerProgressiveLoading(isRefreshing)
 onMounted(() => setRefreshHandler(refreshProfile))
 onUnmounted(() => clearRefreshHandler(refreshProfile))
 
-// ── Toggle: auto-select Genérico at /pos/checkout open ──────────────────────
 const toast = useToast()
+
+// ── Table label customization (issue #612) ──────────────────────────────────
+const { singular: storedSingular, plural: storedPlural, setLabel } = useTableLabel()
+
+interface LabelPreset {
+  key: string
+  label: string
+  singular: string
+  plural: string
+}
+
+const labelPresets: LabelPreset[] = [
+  { key: 'mesas', label: 'Mesas (predeterminado)', singular: 'Mesa', plural: 'Mesas' },
+  { key: 'habitaciones', label: 'Habitaciones', singular: 'Habitación', plural: 'Habitaciones' },
+  { key: 'cabanas', label: 'Cabañas', singular: 'Cabaña', plural: 'Cabañas' },
+  { key: 'areas', label: 'Áreas', singular: 'Área', plural: 'Áreas' },
+  { key: 'custom', label: 'Personalizado', singular: '', plural: '' },
+]
+
+const matchPresetKey = (sin: string, plu: string): string => {
+  const match = labelPresets.find(
+    (p) => p.key !== 'custom' && p.singular === sin && p.plural === plu,
+  )
+  return match ? match.key : 'custom'
+}
+
+const selectedPresetKey = ref<string>('mesas')
+const customSingular = ref<string>('')
+const customPlural = ref<string>('')
+
+// Initialize from stored values
+watch(
+  [storedSingular, storedPlural],
+  ([sin, plu]) => {
+    const key = matchPresetKey(sin, plu)
+    selectedPresetKey.value = key
+    if (key === 'custom') {
+      customSingular.value = sin
+      customPlural.value = plu
+    } else {
+      customSingular.value = ''
+      customPlural.value = ''
+    }
+  },
+  { immediate: true },
+)
+
+const selectPreset = (key: string) => {
+  selectedPresetKey.value = key
+  if (key !== 'custom') {
+    const preset = labelPresets.find((p) => p.key === key)
+    if (preset) {
+      customSingular.value = preset.singular
+      customPlural.value = preset.plural
+    }
+  }
+}
+
+const previewSingular = computed(() => {
+  if (selectedPresetKey.value === 'custom') return customSingular.value.trim() || 'Mesa'
+  const preset = labelPresets.find((p) => p.key === selectedPresetKey.value)
+  return preset?.singular || 'Mesa'
+})
+
+const previewPlural = computed(() => {
+  if (selectedPresetKey.value === 'custom') return customPlural.value.trim() || 'Mesas'
+  const preset = labelPresets.find((p) => p.key === selectedPresetKey.value)
+  return preset?.plural || 'Mesas'
+})
+
+const hasChanges = computed(
+  () =>
+    previewSingular.value !== storedSingular.value
+    || previewPlural.value !== storedPlural.value,
+)
+
+const isSavingLabel = ref(false)
+
+const saveLabel = () => {
+  if (!hasChanges.value || isSavingLabel.value) return
+  isSavingLabel.value = true
+  try {
+    setLabel(previewSingular.value, previewPlural.value)
+    toast.success('Nombre actualizado en este dispositivo', { title: 'Guardado' })
+  } catch (error: any) {
+    toast.error('No se pudo guardar el nombre', { title: 'Error' })
+  } finally {
+    isSavingLabel.value = false
+  }
+}
+
+// ── Toggle: auto-select Genérico at /pos/checkout open ──────────────────────
 const isToggling = ref(false)
 
 const toggleAutoSelectGeneric = async () => {
@@ -103,6 +194,88 @@ const toggleAutoSelectGeneric = async () => {
           />
           <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
         </label>
+      </div>
+
+      <!-- ══════ TABLE LABEL CUSTOMIZATION (Issue #612) ══════ -->
+      <div class="rounded-xl border-2 border-border bg-surface px-4 py-4 flex flex-col gap-4">
+        <div class="flex flex-col gap-1">
+          <p class="text-sm font-semibold text-text-primary">Nombre de las mesas</p>
+          <p class="text-xs leading-snug text-text-secondary">
+            Cambia el sustantivo que aparece en toda la plataforma. Usa palabras femeninas para que la concordancia del texto siga siendo correcta.
+          </p>
+        </div>
+
+        <!-- Preset chips -->
+        <div role="group" aria-label="Sustantivo predeterminado" class="flex flex-wrap gap-2">
+          <button
+            v-for="preset in labelPresets"
+            :key="preset.key"
+            type="button"
+            :aria-pressed="selectedPresetKey === preset.key"
+            class="min-h-[44px] px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all active:scale-95"
+            :class="selectedPresetKey === preset.key
+              ? 'border-primary bg-primary/10 text-primary shadow-sm'
+              : 'border-border bg-background text-text-secondary hover:border-primary/40 hover:text-text-primary'"
+            @click="selectPreset(preset.key)"
+          >
+            {{ preset.label }}
+          </button>
+        </div>
+
+        <!-- Custom inputs (only when Personalizado is selected) -->
+        <div v-if="selectedPresetKey === 'custom'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="flex flex-col gap-1">
+            <label for="label-singular" class="text-sm font-medium text-text-primary">
+              Singular
+            </label>
+            <input
+              id="label-singular"
+              v-model="customSingular"
+              type="text"
+              maxlength="40"
+              placeholder="Ej: Habitación"
+              class="input-base w-full px-4 py-2 min-h-[44px]"
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="label-plural" class="text-sm font-medium text-text-primary">
+              Plural
+            </label>
+            <input
+              id="label-plural"
+              v-model="customPlural"
+              type="text"
+              maxlength="40"
+              placeholder="Ej: Habitaciones"
+              class="input-base w-full px-4 py-2 min-h-[44px]"
+            />
+          </div>
+        </div>
+
+        <!-- Live preview -->
+        <div class="rounded-lg bg-background border border-border px-4 py-3 flex flex-col gap-1">
+          <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">Vista previa</p>
+          <p class="text-sm text-text-primary leading-relaxed">
+            Tu menú dirá: <span class="font-semibold">{{ previewSingular }} 5</span>,
+            <span class="font-semibold">{{ previewPlural }} abiertas</span>,
+            <span class="font-semibold">{{ previewPlural }} configuradas</span>.
+          </p>
+        </div>
+
+        <!-- Disclosure + Save -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p class="text-xs text-text-secondary">
+            Configuración guardada en este dispositivo. Otros dispositivos verán el nombre por defecto.
+          </p>
+          <button
+            type="button"
+            :disabled="!hasChanges || isSavingLabel"
+            class="min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+            @click="saveLabel"
+          >
+            {{ isSavingLabel ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>

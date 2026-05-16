@@ -10,6 +10,7 @@ useHead({ title: 'Detalle de Venta' })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
+const { singular: tableSingular } = useTableLabel()
 
 // Payment groups for label resolution and method buttons
 const { data: paymentGroupsData } = useQuery({
@@ -464,7 +465,7 @@ onUnmounted(() => {
                   d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
             </template>
-            {{ order.is_delivery ? 'Domicilio' : order.source === 'barra' ? 'Barra' : order.source === 'mesa' ? 'Mesa' : 'POS' }}
+            {{ order.is_delivery ? 'Domicilio' : order.source === 'barra' ? 'Barra' : order.source === 'mesa' ? tableSingular : 'POS' }}
           </span>
         </div>
 

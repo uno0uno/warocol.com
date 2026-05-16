@@ -10,13 +10,14 @@ definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Comandas — WARO' })
 
 const { currentTenant } = useTenantReactive()
+const { singular: tableSingular } = useTableLabel()
 
-const SOURCE_LABELS: Record<string, string> = {
-  table:    'Mesa',
+const SOURCE_LABELS = computed<Record<string, string>>(() => ({
+  table:    tableSingular.value,
   pos:      'Mostrador',
   delivery: 'Domicilio',
   pickup:   'Recogida',
-}
+}))
 
 const COMANDA_STATUS_LABELS: Record<string, string> = {
   pending:   'Pendiente',

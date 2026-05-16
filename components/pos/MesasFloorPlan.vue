@@ -2,6 +2,9 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
 
+const { singular: tableSingular } = useTableLabel()
+const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
+
 const props = defineProps<{
   comandasEnabled?: boolean
   /** Issue #574 — when true, render the effective-waiter line under each mesa card */
@@ -361,7 +364,7 @@ onUnmounted(() => {
                   type="button"
                   class="w-7 h-7 flex items-center justify-center rounded hover:bg-black/10 transition-colors focus:outline-none"
                   :class="stripTextClass(table.status)"
-                  :aria-label="`Mover ${table.name} a otra mesa`"
+                  :aria-label="`Mover ${table.name} a otra ${tableSingularLower}`"
                   @click.stop="handleMoveTable(table, $event)"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

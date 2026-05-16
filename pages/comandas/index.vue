@@ -9,19 +9,20 @@ definePageMeta({
 useHead({ title: 'Monitor de Comandas — WARO' })
 
 const { currentTenant, businessProfile } = useTenantReactive()
+const { plural: tablePlural } = useTableLabel()
 const toast = useToast()
 
 // ── Feature flag guard ──────────────────────────────────────────────────────
 const comandasEnabled = computed(() => businessProfile.value?.comandas_enabled === true)
 
 // ── Filters ────────────────────────────────────────────────────────────────
-const SOURCE_TYPES = [
+const SOURCE_TYPES = computed(() => [
   { value: '',         label: 'Todas' },
-  { value: 'table',    label: 'Mesas' },
+  { value: 'table',    label: tablePlural.value },
   { value: 'pos',      label: 'Mostrador' },
   { value: 'delivery', label: 'Domicilios' },
   { value: 'pickup',   label: 'Recogidas' },
-]
+])
 
 const STATUS_OPTIONS = [
   { value: 'pending,preparing', label: 'Activas' },

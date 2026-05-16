@@ -44,7 +44,7 @@
               </div>
               <p class="text-sm font-semibold text-text-secondary">Sin historial</p>
               <p class="text-xs text-text-tertiary mt-1 max-w-[14rem]">
-                Esta mesa nunca ha tenido un mesero asignado.
+                {{ `Esta ${tableSingularLower} nunca ha tenido un mesero asignado.` }}
               </p>
             </div>
 
@@ -106,6 +106,9 @@
 import { computed, watch } from 'vue'
 import { useQuery } from '@pinia/colada'
 import { XMarkIcon, ClockIcon } from '@heroicons/vue/24/outline'
+
+const { singular: tableSingular } = useTableLabel()
+const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
 
 interface HistoryEntry {
   id: string

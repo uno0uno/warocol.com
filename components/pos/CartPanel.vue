@@ -139,7 +139,7 @@
         <svg class="h-16 w-16 mx-auto text-text-secondary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
         </svg>
-        <p class="text-text-secondary">{{ mesaMode ? 'Mesa sin pedidos' : 'Carrito vacío' }}</p>
+        <p class="text-text-secondary">{{ mesaMode ? `${tableSingular} sin pedidos` : 'Carrito vacío' }}</p>
         <p class="text-sm text-text-tertiary mt-1">Selecciona productos para agregar</p>
       </div>
       </template>
@@ -223,14 +223,14 @@
           type="button"
           :disabled="items.length === 0 || isDeleting || isAddingToTab"
           class="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-          aria-label="Agregar items a la mesa"
+          :aria-label="`Agregar items a la ${tableSingularLower}`"
           @click="$emit('add-to-tab')"
         >
           <UiLoadingDots v-if="isAddingToTab" size="9px" />
           <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          {{ isAddingToTab ? 'Enviando...' : (comandasEnabled ? 'Agregar y enviar a cocina' : 'Agregar a la mesa') }}
+          {{ isAddingToTab ? 'Enviando...' : (comandasEnabled ? 'Agregar y enviar a cocina' : `Agregar a la ${tableSingularLower}`) }}
         </button>
       </div>
     </div>
@@ -240,6 +240,9 @@
 <script setup lang="ts">
 import { usePOSStore } from '~/stores/usePOSStore'
 import { storeToRefs } from 'pinia'
+
+const { singular: tableSingular } = useTableLabel()
+const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
 
 interface CartItem {
   product: {

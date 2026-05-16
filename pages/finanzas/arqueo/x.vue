@@ -87,7 +87,7 @@
             <span class="text-text-primary">{{ formatCurrency(previewData.cashExpected) }}</span>
           </div>
           <div class="flex justify-between px-4 py-2.5 text-sm">
-            <span class="text-text-secondary">Mesas abiertas</span>
+            <span class="text-text-secondary">{{ tablePlural }} abiertas</span>
             <span
               class="font-medium"
               :class="previewData.openTablesCount > 0 ? 'text-amber-600 font-semibold' : 'text-text-primary'"
@@ -174,6 +174,7 @@ useHead({ title: 'Previsualización arqueo - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
+const { plural: tablePlural } = useTableLabel()
 const route = useRoute()
 
 const today = new Date().toISOString().split('T')[0]

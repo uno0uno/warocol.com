@@ -18,7 +18,7 @@
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        :aria-label="isEdit ? `Editar mesa: ${table?.name}` : 'Crear nueva mesa'"
+        :aria-label="isEdit ? `Editar ${tableSingularLower}: ${table?.name}` : `Crear nueva ${tableSingularLower}`"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -39,7 +39,7 @@
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">
-                  {{ isEdit ? 'Editar mesa' : 'Nueva mesa' }}
+                  {{ isEdit ? `Editar ${tableSingularLower}` : `Nueva ${tableSingularLower}` }}
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
                   {{ isEdit ? table?.name : 'Configura el nombre y capacidad' }}
@@ -70,7 +70,7 @@
               id="mesa-name"
               v-model="form.name"
               type="text"
-              placeholder="Ej: Mesa 1, Barra 2, Terraza 3"
+              :placeholder="`Ej: ${tableSingular} 1, Barra 2, Terraza 3`"
               maxlength="50"
               :class="inputClass"
               @input="clearError('name')"
@@ -138,7 +138,7 @@
             @click="submit"
           >
             <span v-if="saving">Guardando...</span>
-            <span v-else>{{ isEdit ? 'Guardar cambios' : 'Crear mesa' }}</span>
+            <span v-else>{{ isEdit ? 'Guardar cambios' : `Crear ${tableSingularLower}` }}</span>
           </button>
         </div>
       </div>
@@ -148,6 +148,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+
+const { singular: tableSingular } = useTableLabel()
+const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
 
 interface Member {
   id: string

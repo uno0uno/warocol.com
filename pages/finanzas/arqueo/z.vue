@@ -142,7 +142,7 @@
               <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Gastos en efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
               <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Esperado en caja</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
               <div class="flex justify-between px-4 py-2.5 text-sm">
-                <span class="text-text-secondary">Mesas abiertas</span>
+                <span class="text-text-secondary">{{ tablePlural }} abiertas</span>
                 <span class="font-medium" :class="xPreviewData.openTablesCount > 0 ? 'text-amber-600 font-semibold' : 'text-text-primary'">{{ xPreviewData.openTablesCount }}</span>
               </div>
             </div>
@@ -293,9 +293,9 @@
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-semibold text-amber-800">
-              {{ previewData.openTablesCount }} mesa{{ previewData.openTablesCount !== 1 ? 's' : '' }} con cuenta abierta
+              {{ previewData.openTablesCount }} {{ previewData.openTablesCount === 1 ? tableSingular.toLowerCase() : tablePlural.toLowerCase() }} con cuenta abierta
             </p>
-            <p class="text-xs text-amber-700 mt-0.5">Cierra todas las mesas en el POS antes de registrar el arqueo.</p>
+            <p class="text-xs text-amber-700 mt-0.5">Cierra todas las {{ tablePlural.toLowerCase() }} en el POS antes de registrar el arqueo.</p>
             <div class="flex flex-wrap gap-2 mt-3">
               <NuxtLink
                 to="/pos"
@@ -319,7 +319,7 @@
             </div>
           </div>
         </div>
-        <div v-else class="text-sm text-text-secondary py-2">No se pudo cargar el estado de las mesas.</div>
+        <div v-else class="text-sm text-text-secondary py-2">No se pudo cargar el estado de las {{ tablePlural.toLowerCase() }}.</div>
       </div>
 
       <!-- Step 2: Conteo de caja -->
@@ -785,6 +785,7 @@ useHead({ title: 'Arqueo de caja - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
+const { singular: tableSingular, plural: tablePlural } = useTableLabel()
 const route = useRoute()
 
 const today = new Date().toISOString().split('T')[0]
