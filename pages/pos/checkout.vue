@@ -278,6 +278,8 @@ onUnmounted(() => {
 const splitMode = ref(false)
 const splitPayments = ref<Array<{ id: string; amount: number; payment_method: string; payment_method_name: string }>>([])
 const splitPaidTotal = ref(0)
+// Issue warocol.com#649 — track the id being voided so we can disable the row's button
+const isVoidingPayment = ref<string | null>(null)
 const splitRemaining = computed(() => Math.max(0, discountedTotal.value - splitPaidTotal.value))
 const splitIsComplete = computed(() => splitRemaining.value <= 0.01)
 
@@ -456,6 +458,41 @@ const addSplitPayment = async () => {
     processingError.value = e.data?.message || 'Error al registrar el pago parcial'
   } finally {
     isAddingPayment.value = false
+  }
+}
+
+// Issue warocol.com#649 — void an already-registered partial payment.
+// Backend voids the row (soft-delete via voided_at), recomputes paid_total,
+// reopens the cart/session if the void cleared the closing payment, and
+// reverses the posted GL entry atomically. For mesa it voids the entire
+// proportional sibling group; voided_ids in the response drives the splice.
+const onVoidSplitPayment = async (p: { id: string; amount: number; payment_method: string; payment_method_name: string }) => {
+  if (isVoidingPayment.value) return
+  const reason = window.prompt(
+    `¿Eliminar el pago de ${formatCurrency(p.amount)} (${p.payment_method_name})?\n\nEscribe el motivo:`,
+  )
+  if (!reason || !reason.trim()) return
+  if (p.payment_method === 'cash') {
+    if (!window.confirm('Pago en efectivo: asegúrate de devolver físicamente el dinero al cliente antes de continuar. ¿Confirmar?')) return
+  }
+
+  isVoidingPayment.value = p.id
+  processingError.value = ''
+  try {
+    const endpoint = isMesaMode.value
+      ? `/api/tables/${posStore.activeTableSession!.tableId}/payments/${p.id}`
+      : `/api/pos/cart/${posStore.cartId}/payments/${p.id}`
+    const res = await $fetch(endpoint, {
+      method: 'DELETE',
+      body: { reason: reason.trim() },
+    }) as any
+    const voidedIds: string[] = res.data?.voided_ids ?? [p.id]
+    splitPayments.value = splitPayments.value.filter(row => !voidedIds.includes(row.id))
+    splitPaidTotal.value = Number(res.data?.paid_total ?? 0)
+  } catch (e: any) {
+    processingError.value = e.data?.message || 'No se pudo eliminar el pago'
+  } finally {
+    isVoidingPayment.value = null
   }
 }
 
@@ -1948,6 +1985,22 @@ onUnmounted(() => {
                   </svg>
                   <span class="text-text-secondary flex-1">#{{ idx + 1 }} · {{ p.payment_method_name }}</span>
                   <span class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(p.amount) }}</span>
+                  <!-- Issue warocol.com#649 — void this partial payment -->
+                  <button
+                    type="button"
+                    :disabled="isVoidingPayment === p.id"
+                    @click="onVoidSplitPayment(p)"
+                    :aria-label="`Eliminar pago #${idx + 1} de ${formatCurrency(p.amount)}`"
+                    class="ml-1 p-1 rounded text-text-tertiary hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-destructive/30"
+                  >
+                    <svg v-if="isVoidingPayment === p.id" class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    <svg v-else class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
