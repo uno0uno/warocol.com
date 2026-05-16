@@ -268,18 +268,25 @@ const onSplitAmountInput = (e: Event) => {
   const input = e.target as HTMLInputElement
   const raw = Number(input.value.replace(/\./g, '').replace(/\D/g, ''))
   splitPartialAmount.value = raw || null
+  cashReceivedInput.value = 0
   input.value = raw ? raw.toLocaleString('es-CO') : ''
 }
 const isAddingPayment = ref(false)
 const splitPartialAmount = ref<number | null>(null)
 
-// When splitMode activates or remaining changes, reset the partial input to the full remaining
-watch(splitRemaining, (val) => {
-  if (!splitIsComplete.value) splitPartialAmount.value = val
+// After a payment lands, suggest the new remaining as the next partial — but
+// never seed it on initial toggle. The cashier must explicitly set the first
+// partial, otherwise the calculator was silently charging the full total and
+// the backend was closing the order instead of registering a partial.
+watch(splitRemaining, (val, oldVal) => {
+  if (splitIsComplete.value) return
+  if (splitPayments.value.length === 0) return
+  if (val !== oldVal) splitPartialAmount.value = val
 }, { immediate: false })
 watch(splitMode, (val) => {
+  cashReceivedInput.value = 0
   if (val) {
-    splitPartialAmount.value = splitRemaining.value
+    splitPartialAmount.value = null
     activeAccordion.value = null
   }
 })
@@ -287,7 +294,7 @@ watch(splitMode, (val) => {
 const splitAmountToCharge = computed(() =>
   splitPartialAmount.value !== null && splitPartialAmount.value > 0
     ? Math.min(splitPartialAmount.value, splitRemaining.value)
-    : splitRemaining.value
+    : 0
 )
 
 const addSplitPayment = async () => {
@@ -409,6 +416,7 @@ const addSplitPayment = async () => {
       payment_method_name: subMethodName ?? getPaymentMethodLabel(selectedPaymentMethod.value),
     })
     splitPaidTotal.value = paidTotal
+    cashReceivedInput.value = 0
 
     if (isComplete) {
       orderResult.value = {
