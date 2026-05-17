@@ -231,7 +231,7 @@ const channelVariant = (ch: string | null | undefined) => {
 
 // ── Columns ─────────────────────────────────────────────────────────────────
 const columns: Column[] = [
-  { key: 'order_date', title: 'Fecha', sortable: true, width: '160px' },
+  { key: 'order_date', title: 'Fecha', sortable: true, width: '180px' },
   { key: 'order_number', title: 'Orden', sortable: true, width: '90px' },
   { key: 'channel', title: 'Canal', width: '100px' },
   { key: 'total_amount', title: 'Subtotal', sortable: true, align: 'right' },
@@ -463,7 +463,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
 
         <!-- Desktop cells -->
         <template #cell-order_date="{ value }">
-          <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+          <span class="text-sm text-text-secondary whitespace-nowrap">{{ formatDate(value) }}</span>
         </template>
         <template #cell-order_number="{ value }">
           <span class="text-sm font-medium text-primary">#{{ value }}</span>
