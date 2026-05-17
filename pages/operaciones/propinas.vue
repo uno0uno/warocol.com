@@ -15,16 +15,16 @@ const toast = useToast()
 // Returns tip_enabled, tip_default_percentages, tip_preselect_index in
 // addition to the existing operaciones/POS toggles (warocol.com#638
 // backend extension).
-const { data: profileData, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
+const { data: profileData, asyncStatus: profileAsyncStatus, error: fetchError, refetch: refreshProfile } = useQuery({
   key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/operaciones/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
 const businessProfile = computed(() => profileData.value?.data ?? null)
-const loading = computed(() => !profileData.value)
-const isRefreshing = computed(() =>
-  profileAsyncStatus.value === 'loading' && profileData.value != null
+const isLoading = computed(() => !profileData.value && !fetchError.value)
+const isRefreshing = computed(
+  () => profileAsyncStatus.value === 'loading' && profileData.value != null,
 )
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
@@ -163,13 +163,13 @@ const saveConfig = async () => {
 </script>
 
 <template>
-  <div>
-    <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center min-h-[400px]">
+  <div class="flex flex-col gap-3 md:gap-4">
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Content -->
+    <CommonsTheErrorState v-else-if="fetchError" />
+
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- ══════ MASTER TOGGLE ══════ -->
       <div

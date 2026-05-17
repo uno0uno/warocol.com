@@ -158,6 +158,27 @@ const order = computed(() => {
   }
 })
 
+// warocol.com#662 — tip display on order detail (API returns tip_amount / tip_source)
+const tipSourceLabel = (source: string | undefined) => {
+  if (source === 'preset') return 'Porcentaje sugerido'
+  if (source === 'custom') return 'Personalizada'
+  return '—'
+}
+
+const orderTipPercent = computed(() => {
+  const o = order.value
+  if (!o?.tip_amount || o.tip_amount <= 0) return null
+  const total = Number(o.total_amount) || 0
+  if (total <= 0) return null
+  return Math.round((Number(o.tip_amount) / total) * 10000) / 100
+})
+
+const orderChargedTotal = computed(() => {
+  const o = order.value
+  if (!o?.tip_amount || o.tip_amount <= 0) return null
+  return Number(o.total_amount) + Number(o.tip_amount)
+})
+
 const items = computed(() => itemsData.value || [])
 
 // Filtered items (excluding deleted ones in edit mode)
@@ -417,6 +438,33 @@ onUnmounted(() => {
           <p class="text-lg font-bold text-text-primary">{{ order.customer_phone }}</p>
         </div>
 
+        <!-- Waiter (checkout / mesa close attribution — #663/#665/#666) -->
+        <div
+          v-if="order.served_by_member_id"
+          class="bg-surface border border-border rounded-xl p-4"
+        >
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Mesero</p>
+          <NuxtLink
+            :to="`/equipo/miembros/${order.served_by_member_id}`"
+            class="text-lg font-bold text-primary hover:underline"
+          >
+            {{ order.served_by_member_name || 'Asignado' }}
+          </NuxtLink>
+        </div>
+
+        <!-- Tip (warocol.com#662) -->
+        <div
+          v-if="order.tip_amount && order.tip_amount > 0"
+          class="bg-surface border border-border rounded-xl p-4"
+        >
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Propina</p>
+          <p class="text-lg font-bold text-primary tabular-nums">{{ formatCurrency(order.tip_amount) }}</p>
+          <p class="text-xs text-text-secondary mt-1">
+            {{ tipSourceLabel(order.tip_source) }}
+            <template v-if="orderTipPercent != null"> · {{ orderTipPercent }}% sobre venta</template>
+          </p>
+        </div>
+
         <!-- Payment Method -->
         <component :is="order.split_payments && order.split_payments.length > 0 ? 'button' : 'div'"
           class="bg-surface border-2 border-info rounded-xl p-4 text-left w-full"
@@ -485,6 +533,12 @@ onUnmounted(() => {
           </p>
           <p v-if="isEditMode && hasChanges" class="text-xs text-text-tertiary line-through">
             {{ formatCurrency(order.total_amount) }}
+          </p>
+          <p
+            v-if="!isEditMode && orderChargedTotal != null"
+            class="text-sm font-semibold text-text-primary tabular-nums mt-2 pt-2 border-t border-border"
+          >
+            Total cobrado: {{ formatCurrency(orderChargedTotal) }}
           </p>
         </div>
       </div>

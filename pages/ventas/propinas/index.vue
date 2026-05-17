@@ -26,7 +26,7 @@ const { resolveLabel } = usePaymentLabel(paymentGroups)
 
 // Tenant context (for tip_enabled gate + members dropdown). Shared cache key
 // with /operaciones/propinas (config page) and the rest of /operaciones/*.
-const { data: ctxData } = useQuery({
+const { data: ctxData, asyncStatus: ctxAsyncStatus } = useQuery({
   key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/operaciones/restaurant-context'),
   enabled: () => !!currentTenant.value,
@@ -107,8 +107,14 @@ const { data: tipsData, asyncStatus, error: fetchError, refetch } = useQuery({
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => !tipsData.value && !fetchError.value)
-const isRefreshing = computed(() => asyncStatus.value === 'loading' && tipsData.value != null)
+const isLoading = computed(
+  () =>
+    (!tipsData.value && !fetchError.value)
+    || (ctxAsyncStatus.value === 'loading' && !ctxData.value),
+)
+const isRefreshing = computed(
+  () => asyncStatus.value === 'loading' && tipsData.value != null,
+)
 const tips = computed<any[]>(() => tipsData.value?.data ?? [])
 const aggregates = computed<{ sum_tip: number; count_with_tip: number; avg_pct: number }>(
   () => tipsData.value?.aggregates ?? { sum_tip: 0, count_with_tip: 0, avg_pct: 0 }
@@ -153,6 +159,12 @@ const clearAllFilters = () => {
 const filterByMember = (memberId: string | null) => {
   if (!memberId) return
   memberFilter.value = memberId
+}
+
+// warocol.com#662 — open order detail in the same tab (like /ventas/ordenes)
+const goToOrderDetail = (orderId: string) => {
+  if (!orderId) return
+  navigateTo(`/ventas/${orderId}`)
 }
 
 // ── Export by email ─────────────────────────────────────────────────────────
@@ -271,9 +283,15 @@ onUnmounted(() => clearRefreshHandler(refetch))
 
 <template>
   <div class="flex flex-col gap-3 md:gap-4">
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
+    </div>
+
+    <CommonsTheErrorState v-else-if="fetchError" />
+
     <!-- ══════ EMPTY STATE: tipping disabled ══════ -->
     <div
-      v-if="!isLoading && ctxData && !tipEnabled"
+      v-else-if="ctxData && !tipEnabled"
       class="flex flex-col items-center justify-center gap-3 py-16 px-6 bg-surface rounded-xl border-2 border-border text-center"
     >
       <span aria-hidden="true" class="text-4xl">💡</span>
@@ -290,7 +308,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
     </div>
 
     <!-- ══════ MAIN CONTENT: tipping enabled ══════ -->
-    <template v-else>
+    <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Aggregates — MetricCard pattern (matches /analitica/ventas) -->
       <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3">
         <MetricCard
@@ -419,7 +437,12 @@ onUnmounted(() => clearRefreshHandler(refetch))
         </button>
       </div>
 
-      <!-- Table -->
+      <!-- Table loading (filter change, empty result) — mirrors /ventas/ordenes -->
+      <div v-if="isRefreshing && tips.length === 0" class="flex items-center justify-center min-h-[200px]">
+        <CommonsTheCustomLoader size="medium" />
+      </div>
+
+      <template v-else>
       <UiResponsiveDataView
         :columns="columns"
         :data="tips"
@@ -437,7 +460,13 @@ onUnmounted(() => clearRefreshHandler(refetch))
             <div class="flex items-center justify-between">
               <div class="flex items-baseline gap-2">
                 <span class="text-xs text-text-secondary">{{ formatDate(item.order_date) }}</span>
-                <span class="text-sm font-semibold text-primary">#{{ item.order_number }}</span>
+                <button
+                  type="button"
+                  class="text-sm font-semibold text-primary hover:underline"
+                  @click.stop="goToOrderDetail(item.id)"
+                >
+                  #{{ item.order_number }}
+                </button>
               </div>
               <UiStatusBadge :variant="channelVariant(item.channel)" size="sm" :value="channelLabel(item.channel)" />
             </div>
@@ -465,8 +494,14 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <template #cell-order_date="{ value }">
           <span class="text-sm text-text-secondary whitespace-nowrap">{{ formatDate(value) }}</span>
         </template>
-        <template #cell-order_number="{ value }">
-          <span class="text-sm font-medium text-primary">#{{ value }}</span>
+        <template #cell-order_number="{ row, value }">
+          <button
+            type="button"
+            class="text-sm font-medium text-primary hover:underline"
+            @click.stop="goToOrderDetail(row.id)"
+          >
+            #{{ value }}
+          </button>
         </template>
         <template #cell-channel="{ row }">
           <UiStatusBadge :variant="channelVariant(row.channel)" size="sm" :value="channelLabel(row.channel)" />
@@ -495,7 +530,7 @@ onUnmounted(() => clearRefreshHandler(refetch))
       </UiResponsiveDataView>
 
       <!-- Pagination -->
-      <div v-if="totalCount > PAGE_SIZE" class="flex items-center justify-between gap-2 px-2">
+      <div v-if="totalCount > PAGE_SIZE" class="flex items-center justify-between gap-2 px-2 mt-0">
         <p class="text-xs text-text-secondary">
           Página {{ currentPage }} de {{ totalPages }} · {{ totalCount }} resultados
         </p>
@@ -530,7 +565,8 @@ onUnmounted(() => clearRefreshHandler(refetch))
           >»</button>
         </div>
       </div>
-    </template>
+      </template>
+    </div>
 
     <!-- Export result modal -->
     <Teleport to="body">

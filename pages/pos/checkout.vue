@@ -184,6 +184,35 @@ watch([() => posStore.cartId, () => selectedCustomer.value?.id], () => {
   tipModel.value = { amount: 0, source: 'none' }
 })
 
+// warocol.com#663 + #666 — checkout waiter picker before confirm
+const waiterAttributionEnabled = computed(() => settingsData.value?.data?.waiter_attribution_enabled === true)
+const tenantMembers = computed(() => settingsData.value?.data?.members ?? [])
+const showCheckoutWaiterSelector = computed(() => {
+  if (!waiterAttributionEnabled.value) return true
+  // Mesa: always show so cashier can confirm/override effective session waiter (#666)
+  if (isMesaMode.value) return true
+  // Counter/bar: cart chip already set served_by — skip duplicate picker (#663)
+  return !posStore.cartServedByMemberId
+})
+// Seed once from session effective waiter so dropdown defaults and body sends explicit id
+const checkoutWaiterSeeded = ref(false)
+const seedCheckoutWaiterFromSession = () => {
+  if (checkoutWaiterSeeded.value || !isMesaMode.value) return
+  const effectiveId = posStore.activeTableSession?.effectiveWaiterMemberId
+  if (effectiveId && !posStore.cartServedByMemberId) {
+    posStore.setCartServedBy(effectiveId)
+    checkoutWaiterSeeded.value = true
+  }
+}
+watch(
+  () => posStore.activeTableSession?.effectiveWaiterMemberId,
+  seedCheckoutWaiterFromSession,
+  { immediate: true },
+)
+const checkoutServedByBody = computed(() =>
+  posStore.cartServedByMemberId ? { served_by_member_id: posStore.cartServedByMemberId } : {},
+)
+
 // Counter mode: not a real table session (no mesa, no bar)
 const isCounterMode = computed(() => !isMesaMode.value && !posStore.activeTableSession?.isBar)
 
@@ -392,6 +421,7 @@ const addSplitPayment = async () => {
             ...(isCashMethod.value
               ? { split_first_cash_received: Number(cashReceivedInput.value) }
               : {}),
+            ...checkoutServedByBody.value,
           }
         }) as any
         paidTotal = response.data.paid_total ?? amountToCharge
@@ -437,10 +467,7 @@ const addSplitPayment = async () => {
             ...(isCashMethod.value
               ? { split_first_cash_received: Number(cashReceivedInput.value) }
               : {}),
-            // Issue #575 — per-order waiter attribution (bar + counter; mesa uses #574 session override)
-            ...(posStore.cartServedByMemberId
-              ? { served_by_member_id: posStore.cartServedByMemberId }
-              : {}),
+            ...checkoutServedByBody.value,
           }
         }) as any
         paidTotal = response.data.paid_total ?? amountToCharge
@@ -730,6 +757,7 @@ const processOrder = async () => {
           ...(tipAmount.value > 0
             ? { tip_amount: tipAmount.value, tip_source: tipSource.value }
             : {}),
+          ...checkoutServedByBody.value,
         },
       }) as any
 
@@ -825,10 +853,7 @@ const processOrder = async () => {
                 : {}),
             }
           : {}),
-        // Issue #575 — per-order waiter attribution (bar + counter; mesa uses #574 session override)
-        ...(posStore.cartServedByMemberId
-          ? { served_by_member_id: posStore.cartServedByMemberId }
-          : {}),
+        ...checkoutServedByBody.value,
         // warocol.com#639 — tip capture (server validates against tenant.tip_enabled)
         ...(tipAmount.value > 0
           ? { tip_amount: tipAmount.value, tip_source: tipSource.value }
@@ -1844,6 +1869,14 @@ onUnmounted(() => {
           :preselect-index="tipPreselectIndex"
           :subtotal="cartTotal"
           v-model="tipModel"
+        />
+
+        <!-- warocol.com#663 — Waiter at checkout when session has no effective waiter -->
+        <CheckoutWaiterSelector
+          v-if="showCheckoutWaiterSelector"
+          :members="tenantMembers"
+          :model-value="posStore.cartServedByMemberId"
+          @update:model-value="posStore.setCartServedBy"
         />
 
         <!-- Section: Domicilio (mostrador or bar — never mesa) -->
