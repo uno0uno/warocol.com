@@ -314,6 +314,24 @@ watch(splitMode, (val) => {
   }
 })
 
+// Issue warocol.com#656 — toggle split mode without dropping splitPayments
+// when there are already-committed partials. The previous inline handler
+// reset the array unconditionally, which on a freshly-rehydrated checkout
+// would visually erase the DB-backed partials and lead to a double-charge.
+// When the cashier toggles off with partials present, we only hide the panel.
+const toggleSplitMode = () => {
+  const next = !splitMode.value
+  if (!next && splitPayments.value.length > 0) {
+    splitMode.value = false
+    return
+  }
+  splitMode.value = next
+  if (!next) {
+    splitPayments.value = []
+    splitPaidTotal.value = 0
+  }
+}
+
 const splitAmountToCharge = computed(() =>
   splitPartialAmount.value !== null && splitPartialAmount.value > 0
     ? Math.min(splitPartialAmount.value, splitRemaining.value)
@@ -1261,6 +1279,35 @@ onMounted(async () => {
 
   // Sincronizar carrito al backend (batch, sin cliente)
   await syncCart()
+
+  // Issue warocol.com#656 — rehydrate Cobro Parcial state so re-entering
+  // checkout on an order with active partials doesn't reset the list and
+  // risk a double-charge. Mesa reads from /api/tables/<id>/current; POS
+  // reads from /api/pos/cart/<customer_id>. Non-fatal on error — checkout
+  // stays usable; worst case the cashier sees the un-aware totals.
+  try {
+    let partials: any[] = []
+    if (isMesaMode.value && posStore.activeTableSession?.tableId) {
+      const res = await $fetch<any>(`/api/tables/${posStore.activeTableSession.tableId}/current`)
+      partials = res?.data?.session?.partial_payments ?? []
+    } else if (posStore.cartId && selectedCustomer.value?.id) {
+      const res = await $fetch<any>(`/api/pos/cart/${selectedCustomer.value.id}`)
+      partials = res?.data?.partial_payments ?? []
+    }
+    if (partials.length > 0) {
+      splitPayments.value = partials.map((p: any) => ({
+        id: p.id,
+        amount: Number(p.amount),
+        payment_method: p.payment_method,
+        payment_method_name: p.payment_method_name ?? getPaymentMethodLabel(p.payment_method),
+      }))
+      splitPaidTotal.value = splitPayments.value.reduce((acc, p) => acc + p.amount, 0)
+      splitMode.value = true
+    }
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[#656] partial-payments rehydration failed', e)
+  }
 })
 
 // Issue #529 — auto-select Genérico when the tenant flag is on. Applies to
@@ -1968,7 +2015,7 @@ onUnmounted(() => {
               role="switch"
               :aria-checked="splitMode"
               :aria-label="splitMode ? 'Desactivar cobro parcial' : 'Activar cobro parcial'"
-              @click="splitMode = !splitMode; splitPayments = []; splitPaidTotal = 0"
+              @click="toggleSplitMode"
               class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               :class="splitMode ? 'bg-primary' : 'bg-border'"
             >
