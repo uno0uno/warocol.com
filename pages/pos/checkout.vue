@@ -725,6 +725,11 @@ const processOrder = async () => {
           ...(isCashMethod.value
             ? { cash_received: Number(cashReceivedInput.value) }
             : {}),
+          // warocol.com#639 — tip applied at mesa close (session-level, server stores
+          // it on the first completed order of the session).
+          ...(tipAmount.value > 0
+            ? { tip_amount: tipAmount.value, tip_source: tipSource.value }
+            : {}),
         },
       }) as any
 
@@ -746,6 +751,11 @@ const processOrder = async () => {
         standard_tax_label: closeResponse?.data?.standard_tax_label || 'Impuesto',
         ...(discountEnabled.value && _discountAmt > 0
           ? { discount_amount: _discountAmt, subtotal: _subtotal }
+          : {}),
+        // warocol.com#639 — surface tip in the success modal when the mesa close
+        // returned a tip_amount (server-side validated against tenant.tip_enabled).
+        ...(closeResponse.data?.tip_amount && closeResponse.data.tip_amount > 0
+          ? { tip_amount: closeResponse.data.tip_amount, charged_amount: closeResponse.data.charged_amount }
           : {})
       }
       wasMesaMode.value = true
