@@ -278,8 +278,12 @@ onUnmounted(() => {
 const splitMode = ref(false)
 const splitPayments = ref<Array<{ id: string; amount: number; payment_method: string; payment_method_name: string }>>([])
 const splitPaidTotal = ref(0)
-// Issue warocol.com#649 — track the id being voided so we can disable the row's button
+// Issue warocol.com#649 — void partial payment state: modal + per-row spinner.
+// The reason is optional (audit-only); empty string is accepted by the backend.
 const isVoidingPayment = ref<string | null>(null)
+const voidPaymentTarget = ref<{ id: string; amount: number; payment_method: string; payment_method_name: string } | null>(null)
+const voidPaymentReason = ref('')
+const voidPaymentError = ref('')
 const splitRemaining = computed(() => Math.max(0, discountedTotal.value - splitPaidTotal.value))
 const splitIsComplete = computed(() => splitRemaining.value <= 0.01)
 
@@ -462,35 +466,52 @@ const addSplitPayment = async () => {
 }
 
 // Issue warocol.com#649 — void an already-registered partial payment.
-// Backend voids the row (soft-delete via voided_at), recomputes paid_total,
-// reopens the cart/session if the void cleared the closing payment, and
-// reverses the posted GL entry atomically. For mesa it voids the entire
-// proportional sibling group; voided_ids in the response drives the splice.
-const onVoidSplitPayment = async (p: { id: string; amount: number; payment_method: string; payment_method_name: string }) => {
+// Click on the trash icon opens a confirmation modal (no prompt/alert).
+// The motivo is optional; an empty value is accepted by the backend.
+const openVoidPaymentModal = (p: { id: string; amount: number; payment_method: string; payment_method_name: string }) => {
   if (isVoidingPayment.value) return
-  const reason = window.prompt(
-    `¿Eliminar el pago de ${formatCurrency(p.amount)} (${p.payment_method_name})?\n\nEscribe el motivo:`,
-  )
-  if (!reason || !reason.trim()) return
-  if (p.payment_method === 'cash') {
-    if (!window.confirm('Pago en efectivo: asegúrate de devolver físicamente el dinero al cliente antes de continuar. ¿Confirmar?')) return
-  }
+  voidPaymentTarget.value = p
+  voidPaymentReason.value = ''
+  voidPaymentError.value = ''
+}
+
+const closeVoidPaymentModal = () => {
+  if (isVoidingPayment.value) return
+  voidPaymentTarget.value = null
+  voidPaymentReason.value = ''
+  voidPaymentError.value = ''
+}
+
+const confirmVoidPayment = async () => {
+  const p = voidPaymentTarget.value
+  if (!p || isVoidingPayment.value) return
 
   isVoidingPayment.value = p.id
-  processingError.value = ''
+  voidPaymentError.value = ''
   try {
     const endpoint = isMesaMode.value
       ? `/api/tables/${posStore.activeTableSession!.tableId}/payments/${p.id}`
       : `/api/pos/cart/${posStore.cartId}/payments/${p.id}`
     const res = await $fetch(endpoint, {
       method: 'DELETE',
-      body: { reason: reason.trim() },
+      body: { reason: voidPaymentReason.value.trim() || null },
     }) as any
     const voidedIds: string[] = res.data?.voided_ids ?? [p.id]
     splitPayments.value = splitPayments.value.filter(row => !voidedIds.includes(row.id))
     splitPaidTotal.value = Number(res.data?.paid_total ?? 0)
+    voidPaymentTarget.value = null
+    voidPaymentReason.value = ''
   } catch (e: any) {
-    processingError.value = e.data?.message || 'No se pudo eliminar el pago'
+    // Surface whatever the backend returned (FastAPI puts validation errors in
+    // e.data.detail; APIError instances put text in e.data.message). Falls back
+    // to the HTTP status + message so the cashier sees something actionable.
+    const beMessage = e?.data?.message
+      ?? (Array.isArray(e?.data?.detail) ? e.data.detail.map((d: any) => d.msg ?? JSON.stringify(d)).join('; ') : e?.data?.detail)
+      ?? e?.statusMessage
+      ?? e?.message
+    voidPaymentError.value = beMessage || 'No se pudo eliminar el pago'
+    // eslint-disable-next-line no-console
+    console.error('[#649] void payment failed', { status: e?.status, statusCode: e?.statusCode, data: e?.data, message: e?.message })
   } finally {
     isVoidingPayment.value = null
   }
@@ -1989,7 +2010,7 @@ onUnmounted(() => {
                   <button
                     type="button"
                     :disabled="isVoidingPayment === p.id"
-                    @click="onVoidSplitPayment(p)"
+                    @click="openVoidPaymentModal(p)"
                     :aria-label="`Eliminar pago #${idx + 1} de ${formatCurrency(p.amount)}`"
                     class="ml-1 p-1 rounded text-text-tertiary hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-destructive/30"
                   >
@@ -2478,6 +2499,81 @@ onUnmounted(() => {
     </div>
 
     <!-- Success Modal -->
+    <!-- Issue warocol.com#649 — Void partial payment modal -->
+    <Teleport to="body">
+      <div
+        v-if="voidPaymentTarget"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="void-payment-title"
+      >
+        <div class="absolute inset-0 bg-black/50" @click="closeVoidPaymentModal" />
+        <div class="relative bg-surface rounded-2xl shadow-xl border border-border w-full max-w-md p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-full flex items-center justify-center bg-destructive/10">
+              <svg class="w-6 h-6 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166M19.228 5.79 18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m11.456-.397a48.11 48.11 0 0 0-3.478-.397m0 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+            </div>
+            <div>
+              <h3 id="void-payment-title" class="font-bold text-text-primary text-lg leading-tight">Eliminar pago</h3>
+              <p class="text-sm text-text-secondary mt-0.5">
+                {{ formatCurrency(voidPaymentTarget.amount) }} · {{ voidPaymentTarget.payment_method_name }}
+              </p>
+            </div>
+          </div>
+
+          <p
+            v-if="voidPaymentTarget.payment_method === 'cash'"
+            class="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4"
+          >
+            <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>Pago en efectivo — recuerda devolver físicamente el dinero al cliente antes de confirmar.</span>
+          </p>
+
+          <label for="void-payment-reason" class="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1.5">
+            Motivo <span class="text-text-tertiary normal-case">(opcional)</span>
+          </label>
+          <textarea
+            id="void-payment-reason"
+            v-model="voidPaymentReason"
+            rows="2"
+            :disabled="isVoidingPayment === voidPaymentTarget.id"
+            placeholder="Ej: cobro registrado por error"
+            class="w-full px-3 py-2 bg-surface-secondary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+          />
+
+          <p v-if="voidPaymentError" class="mt-3 text-sm text-destructive flex items-start gap-2">
+            <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>{{ voidPaymentError }}</span>
+          </p>
+
+          <div class="flex gap-2 mt-5">
+            <button
+              type="button"
+              :disabled="isVoidingPayment === voidPaymentTarget.id"
+              @click="closeVoidPaymentModal"
+              class="flex-1 min-h-[44px] px-4 py-2.5 rounded-lg border border-border bg-surface text-text-primary text-sm font-semibold hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >Cancelar</button>
+            <button
+              type="button"
+              :disabled="isVoidingPayment === voidPaymentTarget.id"
+              @click="confirmVoidPayment"
+              class="flex-1 min-h-[44px] px-4 py-2.5 rounded-lg bg-destructive text-white text-sm font-semibold hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            >
+              <UiLoadingDots v-if="isVoidingPayment === voidPaymentTarget.id" size="8px" />
+              <span v-else>Eliminar pago</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <Teleport to="body">
       <div
         v-if="showSuccessModal"
