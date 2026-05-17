@@ -112,7 +112,7 @@
       </header>
 
       <!-- Content Area -->
-      <div class="flex-1 overflow-y-auto pb-20 md:pb-0">
+      <div class="flex-1 overflow-y-auto pb-20 lg:pb-0">
         <div class="p-4 sm:p-6 md:p-8">
           <Transition name="page-transition" mode="out-in">
             <slot />

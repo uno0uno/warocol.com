@@ -10,7 +10,7 @@
     >
       <div
         v-if="modelValue"
-        class="hidden md:flex fixed inset-0 bg-black bg-opacity-50 z-[60] items-center justify-center p-4"
+        class="hidden lg:flex fixed inset-0 bg-black bg-opacity-50 z-[60] items-center justify-center p-4"
         @click="closeModal"
       >
         <Transition

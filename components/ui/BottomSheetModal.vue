@@ -10,7 +10,7 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-end md:hidden"
+        class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-end lg:hidden"
         @click="closeModal"
       >
         <Transition
@@ -23,7 +23,8 @@
         >
           <div
             v-if="modelValue"
-            class="bg-white rounded-t-2xl w-full flex flex-col"
+            class="bg-white rounded-t-2xl w-full flex flex-col overflow-hidden"
+            :class="maxHeightClass"
             @click.stop
           >
             <!-- Header -->
@@ -39,7 +40,7 @@
             </div>
 
             <!-- Content -->
-            <div class="flex-1">
+            <div class="flex-1 overflow-y-auto">
               <slot />
             </div>
 
