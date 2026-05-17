@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
+import MetricCard from '~/components/shared/MetricCard.vue'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({
@@ -290,56 +291,88 @@ onUnmounted(() => clearRefreshHandler(refetch))
 
     <!-- ══════ MAIN CONTENT: tipping enabled ══════ -->
     <template v-else>
-      <!-- Aggregates strip -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div class="rounded-xl border-2 border-border bg-surface px-4 py-3">
-          <p class="text-xs uppercase tracking-wider text-text-secondary">Total propinas</p>
-          <p class="text-2xl font-bold text-primary tabular-nums mt-1">{{ formatCurrency(aggregates.sum_tip) }}</p>
-        </div>
-        <div class="rounded-xl border-2 border-border bg-surface px-4 py-3">
-          <p class="text-xs uppercase tracking-wider text-text-secondary">Promedio sobre venta</p>
-          <p class="text-2xl font-bold text-text-primary tabular-nums mt-1">{{ formatPercent(aggregates.avg_pct) }}</p>
-        </div>
-        <div class="rounded-xl border-2 border-border bg-surface px-4 py-3">
-          <p class="text-xs uppercase tracking-wider text-text-secondary">Órdenes con propina</p>
-          <p class="text-2xl font-bold text-text-primary tabular-nums mt-1">{{ aggregates.count_with_tip }}</p>
-        </div>
+      <!-- Aggregates — MetricCard pattern (matches /analitica/ventas) -->
+      <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3">
+        <MetricCard
+          title="Total propinas"
+          :value="aggregates.sum_tip"
+          format="currency"
+          variant="primary"
+        />
+        <MetricCard
+          title="Promedio sobre venta"
+          :value="aggregates.avg_pct"
+          format="percentage"
+          :precision="2"
+          variant="secondary"
+        />
+        <MetricCard
+          title="Órdenes con propina"
+          :value="aggregates.count_with_tip"
+          format="number"
+          variant="secondary"
+          class="col-span-2 md:col-span-1"
+        />
       </div>
 
-      <!-- Filter bar -->
-      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide rounded-xl border-2 border-border bg-surface px-3 py-3">
-        <!-- Date range -->
+      <!-- Filter bar — matches /ventas/ordenes -->
+      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
+        <!-- Search Input -->
+        <div class="relative flex-1 min-w-[200px]">
+          <button
+            type="button"
+            class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
+            @click="applySearch"
+            aria-label="Buscar"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+          </button>
+          <input
+            v-model="localSearchTerm"
+            type="text"
+            inputmode="numeric"
+            placeholder="Buscar por Nº orden..."
+            class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+            @keydown.enter.prevent="applySearch"
+          />
+        </div>
+
+        <!-- Date Range Picker -->
         <VueDatePicker
           v-model="dateRangeDates"
           range
+          :preset-dates="presetDates"
           :enable-time-picker="false"
           :locale="es"
-          :preset-dates="presetDates"
-          placeholder="Fecha"
+          placeholder="Rango de fechas"
           auto-apply
-          teleport
+          :teleport="true"
           :max-date="new Date()"
           :format="formatDateRange"
-          input-class-name="min-w-[180px] min-h-[40px]"
+          input-class-name="dp-custom-input"
+          menu-class-name="dp-custom-menu"
+          calendar-cell-class-name="dp-custom-cell"
         />
 
         <!-- Mesero -->
         <select
           v-model="memberFilter"
-          class="input-base min-h-[40px] px-3 text-sm min-w-[160px]"
+          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           aria-label="Filtrar por mesero"
         >
-          <option :value="null">Todos los meseros</option>
+          <option :value="null">Mesero</option>
           <option v-for="m in memberOptions" :key="m.id" :value="m.id">{{ m.name }}</option>
         </select>
 
         <!-- Channel -->
         <select
           v-model="channelFilter"
-          class="input-base min-h-[40px] px-3 text-sm min-w-[120px]"
+          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           aria-label="Filtrar por canal"
         >
-          <option :value="null">Todos los canales</option>
+          <option :value="null">Canal</option>
           <option value="pos">POS</option>
           <option value="mesa">Mesa</option>
           <option value="online">Online</option>
@@ -348,52 +381,41 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <!-- Payment method -->
         <select
           v-model="paymentFilter"
-          class="input-base min-h-[40px] px-3 text-sm min-w-[140px]"
+          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
           aria-label="Filtrar por método de pago"
         >
-          <option :value="null">Todos los métodos</option>
+          <option :value="null">Método pago</option>
           <option v-for="g in paymentGroups" :key="g.slug" :value="g.slug">{{ g.name }}</option>
         </select>
 
-        <!-- Search by order # -->
-        <div class="flex items-center gap-1">
-          <input
-            v-model="localSearchTerm"
-            type="text"
-            inputmode="numeric"
-            placeholder="Nº orden"
-            class="input-base min-h-[40px] px-3 text-sm w-28"
-            @keydown.enter.prevent="applySearch"
-          />
-          <button
-            type="button"
-            class="min-h-[40px] px-3 rounded-lg border-2 border-border bg-background text-sm font-medium hover:border-primary/40"
-            @click="applySearch"
-          >
-            Buscar
-          </button>
-        </div>
-
         <!-- Clear -->
         <button
+          v-if="localSearchTerm || dateRangeDates || memberFilter || paymentFilter || channelFilter"
           type="button"
-          class="min-h-[40px] px-3 rounded-lg text-sm text-text-secondary hover:text-text-primary"
+          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex-shrink-0"
+          aria-label="Limpiar filtros"
           @click="clearAllFilters"
         >
-          Limpiar
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
-
-        <div class="flex-1" />
 
         <!-- Export -->
         <button
           type="button"
-          class="hidden md:flex min-h-[40px] px-4 items-center gap-2 rounded-lg bg-surface border-2 border-border hover:border-primary text-sm font-medium disabled:opacity-50"
+          class="hidden md:flex h-10 px-3 items-center gap-2 rounded-lg border-2 border-border bg-background text-text-secondary text-sm font-medium hover:text-text-primary hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
           :disabled="isExporting || tips.length === 0"
+          :aria-label="isExporting ? 'Exportando propinas...' : 'Exportar propinas a correo'"
           @click="exportToEmail"
         >
-          <UiLoadingDots v-if="isExporting" size="6px" />
-          <span v-else>Exportar por correo</span>
+          <svg v-if="!isExporting" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <svg v-else class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
         </button>
       </div>
 
@@ -561,4 +583,42 @@ onUnmounted(() => clearRefreshHandler(refetch))
 .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from,
 .fade-leave-to { opacity: 0; }
+</style>
+
+<style>
+.dp-custom-input {
+  height: 40px !important;
+  border: 2px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem !important;
+  background: hsl(var(--background)) !important;
+  font-size: 0.875rem !important;
+  color: hsl(var(--foreground)) !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  min-width: 150px;
+}
+.dp-custom-input:focus {
+  outline: none !important;
+  border-color: hsl(var(--primary)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2) !important;
+}
+.dp-custom-input::placeholder {
+  color: hsl(var(--muted-foreground)) !important;
+}
+.dp__theme_light {
+  --dp-primary-color: hsl(var(--primary));
+  --dp-primary-text-color: hsl(var(--primary-foreground));
+  --dp-background-color: hsl(var(--card));
+  --dp-text-color: hsl(var(--foreground));
+  --dp-border-color: hsl(var(--border));
+  --dp-menu-border-color: hsl(var(--border));
+  --dp-hover-color: hsl(var(--accent));
+  --dp-hover-text-color: hsl(var(--foreground));
+  --dp-secondary-color: hsl(var(--muted));
+  --dp-border-color-hover: hsl(var(--primary));
+}
+.dp-custom-menu {
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
 </style>
