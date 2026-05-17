@@ -908,6 +908,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path === '/ventas/propinas/historial' || path === '/ventas/propinas/historial/') {
+    return {
+      pageTitle: 'Historial de propinas',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar propinas...',
+      activePage: 'propinas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path === '/ventas/propinas' || path === '/ventas/propinas/') {
     return {
       pageTitle: 'Propinas',
