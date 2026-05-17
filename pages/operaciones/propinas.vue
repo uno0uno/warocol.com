@@ -23,12 +23,10 @@ const { data: profileData, asyncStatus: profileAsyncStatus, refetch: refreshProf
 })
 const businessProfile = computed(() => profileData.value?.data ?? null)
 const loading = computed(() => !profileData.value)
-const isRefreshing = computed(() =>
-  profileAsyncStatus.value === 'loading' && profileData.value != null
-)
+const isHeaderLoading = computed(() => profileAsyncStatus.value === 'loading')
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-registerProgressiveLoading(isRefreshing)
+registerProgressiveLoading(isHeaderLoading)
 onMounted(() => setRefreshHandler(refreshProfile))
 onUnmounted(() => clearRefreshHandler(refreshProfile))
 
@@ -163,14 +161,18 @@ const saveConfig = async () => {
 </script>
 
 <template>
-  <div>
+  <div class="flex flex-col gap-3 md:gap-4">
     <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center min-h-[400px]">
-      <CommonsTheCustomLoader size="large" />
-    </div>
+    <template v-if="loading">
+      <div class="rounded-xl border-2 border-border bg-surface px-4 py-3 animate-pulse">
+        <div class="h-4 w-40 rounded bg-titan-200 mb-2" />
+        <div class="h-3 w-full max-w-lg rounded bg-titan-200" />
+      </div>
+      <div class="rounded-xl border-2 border-border bg-surface px-4 py-4 h-36 animate-pulse" />
+    </template>
 
     <!-- Content -->
-    <div v-else class="flex flex-col gap-3 md:gap-4">
+    <template v-else>
       <!-- ══════ MASTER TOGGLE ══════ -->
       <div
         v-if="businessProfile"
@@ -313,6 +315,6 @@ const saveConfig = async () => {
           Ver historial de propinas →
         </NuxtLink>
       </template>
-    </div>
+    </template>
   </div>
 </template>

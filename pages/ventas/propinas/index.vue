@@ -26,7 +26,7 @@ const { resolveLabel } = usePaymentLabel(paymentGroups)
 
 // Tenant context (for tip_enabled gate + members dropdown). Shared cache key
 // with /operaciones/propinas (config page) and the rest of /operaciones/*.
-const { data: ctxData } = useQuery({
+const { data: ctxData, asyncStatus: ctxAsyncStatus } = useQuery({
   key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/operaciones/restaurant-context'),
   enabled: () => !!currentTenant.value,
@@ -108,7 +108,11 @@ const { data: tipsData, asyncStatus, error: fetchError, refetch } = useQuery({
 })
 
 const isLoading = computed(() => !tipsData.value && !fetchError.value)
-const isRefreshing = computed(() => asyncStatus.value === 'loading' && tipsData.value != null)
+const isHeaderLoading = computed(() =>
+  (ctxAsyncStatus.value === 'loading' && !ctxData.value)
+  || (asyncStatus.value === 'loading' && !tipsData.value)
+  || (asyncStatus.value === 'loading' && tipsData.value != null),
+)
 const tips = computed<any[]>(() => tipsData.value?.data ?? [])
 const aggregates = computed<{ sum_tip: number; count_with_tip: number; avg_pct: number }>(
   () => tipsData.value?.aggregates ?? { sum_tip: 0, count_with_tip: 0, avg_pct: 0 }
@@ -249,7 +253,7 @@ const columns: Column[] = [
 
 // ── Layout integration ──────────────────────────────────────────────────────
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-registerProgressiveLoading(isRefreshing)
+registerProgressiveLoading(isHeaderLoading)
 
 // warocol.com#641 — pre-apply the date range when arriving via the
 // "Propinas del periodo" MetricCard on /analitica/ventas. URL is the

@@ -18,13 +18,15 @@ const { currentTenant } = useTenantReactive()
 
 // Members list — shares cache key with /equipo/miembros so this is almost
 // always a cache hit. Direct URL hit on the detail page fetches once.
-const { data: membersResponse, asyncStatus: membersAsyncStatus } = useQuery({
+const { data: membersResponse, asyncStatus: membersAsyncStatus, refetch: refetchMembers } = useQuery({
   key: () => ['team-members', currentTenant.value?.id],
   query: () => $fetch<any>('/api/tenants/members'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
-const isLoadingMembers = computed(() => !membersResponse.value && membersAsyncStatus.value !== 'idle')
+const isLoadingMembers = computed(
+  () => !membersResponse.value && membersAsyncStatus.value === 'loading',
+)
 
 const member = computed(() => {
   const list = (membersResponse.value as any)?.data ?? []
@@ -47,7 +49,7 @@ const roleLabel = (role: string | null) =>
   : (role ?? '—')
 
 // Tenant context for tip_enabled gate (cache-shared)
-const { data: ctxData } = useQuery({
+const { data: ctxData, asyncStatus: ctxAsyncStatus, refetch: refetchCtx } = useQuery({
   key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/operaciones/restaurant-context'),
   enabled: () => !!currentTenant.value,
@@ -97,7 +99,7 @@ const weekAgg = computed(() => periodAgg(tipsWeekData.value))
 const monthAgg = computed(() => periodAgg(tipsMonthData.value))
 
 // ── Last 10 tips for the member ─────────────────────────────────────────────
-const { data: recentTipsData, asyncStatus: recentAsyncStatus } = useQuery({
+const { data: recentTipsData, asyncStatus: recentAsyncStatus, refetch: refetchRecent } = useQuery({
   key: () => ['tips', 'member-recent', memberId.value],
   query: () => $fetch<any>('/api/orders/tips', {
     params: {
@@ -112,9 +114,21 @@ const { data: recentTipsData, asyncStatus: recentAsyncStatus } = useQuery({
 })
 const recentTips = computed<any[]>(() => recentTipsData.value?.data ?? [])
 
-const isRefreshing = computed(() =>
-  recentAsyncStatus.value === 'loading' && recentTipsData.value != null
-)
+const isHeaderLoading = computed(() => {
+  if (membersAsyncStatus.value === 'loading' && !membersResponse.value) return true
+  if (ctxAsyncStatus.value === 'loading' && !ctxData.value) return true
+  if (!tipEnabled.value) return false
+  return (
+    (recentAsyncStatus.value === 'loading' && !recentTipsData.value)
+    || (recentAsyncStatus.value === 'loading' && recentTipsData.value != null)
+  )
+})
+
+const handleRefresh = async () => {
+  const tasks: Promise<unknown>[] = [refetchMembers(), refetchCtx()]
+  if (tipEnabled.value) tasks.push(refetchRecent())
+  await Promise.all(tasks)
+}
 
 // ── Formatters ──────────────────────────────────────────────────────────────
 const formatCurrency = (v: number) =>
@@ -158,9 +172,9 @@ const historyLink = computed(() => ({
 
 // Layout integration
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-registerProgressiveLoading(isRefreshing)
-onMounted(() => setRefreshHandler(() => {}))
-onUnmounted(() => clearRefreshHandler(() => {}))
+registerProgressiveLoading(isHeaderLoading)
+onMounted(() => setRefreshHandler(handleRefresh))
+onUnmounted(() => clearRefreshHandler(handleRefresh))
 </script>
 
 <template>
@@ -176,9 +190,17 @@ onUnmounted(() => clearRefreshHandler(() => {}))
       Equipo
     </NuxtLink>
 
-    <!-- Loading skeleton -->
-    <div v-if="isLoadingMembers" class="flex items-center justify-center min-h-[300px]">
-      <CommonsTheCustomLoader size="large" />
+    <!-- Profile skeleton (header shows progressive loading) -->
+    <div
+      v-if="isLoadingMembers"
+      class="flex items-center gap-4 p-4 rounded-xl border-2 border-border bg-surface animate-pulse"
+    >
+      <div class="w-14 h-14 rounded-full bg-titan-200 flex-shrink-0" />
+      <div class="flex-1 space-y-2 min-w-0">
+        <div class="h-5 w-40 rounded bg-titan-200" />
+        <div class="h-3 w-56 rounded bg-titan-200" />
+        <div class="h-5 w-20 rounded-full bg-titan-200" />
+      </div>
     </div>
 
     <!-- Empty state — member not found -->
