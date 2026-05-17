@@ -65,6 +65,12 @@
 
           <!-- Actions -->
           <div class="flex items-center gap-0.5 flex-shrink-0">
+            <!-- warocol.com#642 — Ver perfil → /equipo/miembros/[id] (tip totals + recent tips) -->
+            <NuxtLink :to="`/equipo/miembros/${item.id}`"
+              class="flex items-center justify-center w-8 h-8 rounded-lg text-primary hover:bg-surface-secondary transition-colors"
+              title="Ver perfil">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+            </NuxtLink>
             <button v-if="isCurrentUser(item)" @click="openEditProfileModal(item)"
               class="flex items-center justify-center w-8 h-8 rounded-lg text-primary hover:bg-surface-secondary transition-colors"
               title="Editar mi perfil">
@@ -122,6 +128,16 @@
 
       <template #cell-actions="{ row }">
         <div class="flex items-center gap-1">
+          <!-- warocol.com#642 — Ver perfil → /equipo/miembros/[id] -->
+          <NuxtLink
+            :to="`/equipo/miembros/${row.id}`"
+            class="text-primary hover:text-primary/70 transition-colors p-1"
+            title="Ver perfil"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </NuxtLink>
           <!-- Edit Profile Button (for current user) -->
           <button
             v-if="isCurrentUser(row)"
