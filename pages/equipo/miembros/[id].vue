@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
+// @ts-ignore
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 definePageMeta({
   layout: 'dashboard',
@@ -44,6 +46,13 @@ const roleLabel = (role: string | null) =>
   : role === 'employee' ? 'Empleado'
   : role === 'member' ? 'Miembro'
   : (role ?? '—')
+
+const memberRoleClass = (role: string | null) => ({
+  'bg-amber-100 text-amber-800': role === 'superuser',
+  'bg-blue-100 text-blue-800': role === 'admin',
+  'bg-slate-100 text-slate-700': role === 'employee',
+  'bg-green-100 text-green-800': role === 'member',
+})
 
 // Tenant context for tip_enabled gate (cache-shared)
 const { data: ctxData, asyncStatus: ctxAsyncStatus, refetch: refetchCtx } = useQuery({
@@ -218,117 +227,125 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
       </p>
     </div>
 
-    <div v-else class="flex flex-col gap-4 md:gap-5">
-      <!-- Member header -->
-      <div class="flex items-center gap-4 p-4 rounded-xl border-2 border-border bg-surface">
-        <div v-if="member.avatar" class="w-14 h-14 rounded-full overflow-hidden flex-shrink-0">
-          <img :src="member.avatar" :alt="member.name" class="w-full h-full object-cover" />
-        </div>
-        <div v-else class="w-14 h-14 rounded-full bg-primary/15 text-primary flex items-center justify-center text-lg font-bold flex-shrink-0">
-          {{ (member.name || '?').slice(0, 2).toUpperCase() }}
-        </div>
-        <div class="min-w-0">
-          <p class="text-lg font-bold text-text-primary leading-tight truncate">{{ member.name }}</p>
-          <p v-if="member.email" class="text-xs text-text-secondary truncate">{{ member.email }}</p>
-          <span
-            class="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-            :class="{
-              'bg-amber-100 text-amber-800': member.role === 'superuser',
-              'bg-blue-100 text-blue-800': member.role === 'admin',
-              'bg-slate-100 text-slate-700': member.role === 'employee',
-              'bg-green-100 text-green-800': member.role === 'member',
-            }"
-          >
-            {{ roleLabel(member.role) }}
-          </span>
-        </div>
-      </div>
-
-      <!-- ══════ TIPS BLOCK (only when tipping is enabled) ══════ -->
+    <div v-else class="flex flex-col gap-3 md:gap-4">
       <template v-if="tipEnabled">
         <div v-if="isRefreshing && recentTips.length === 0" class="flex items-center justify-center min-h-[200px]">
           <CommonsTheCustomLoader size="medium" />
         </div>
 
-        <template v-else>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-          <MetricCard
-            title="Hoy"
-            :value="todayAgg.sum"
-            format="currency"
-            variant="primary"
-            :subtitle="`Promedio: ${formatPercent(todayAgg.avg)}`"
-          />
-          <MetricCard
-            title="Últimos 7 días"
-            :value="weekAgg.sum"
-            format="currency"
-            variant="primary"
-            :subtitle="`Promedio: ${formatPercent(weekAgg.avg)}`"
-          />
-          <MetricCard
-            title="Últimos 30 días"
-            :value="monthAgg.sum"
-            format="currency"
-            variant="primary"
-            :subtitle="`Promedio: ${formatPercent(monthAgg.avg)}`"
-          />
-        </div>
+        <HealthSemaphore v-else :is-unlocked="true" :title="member.name">
+          <template #header-actions>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span
+                v-if="member.email"
+                class="hidden md:inline text-xs text-text-secondary truncate max-w-[220px]"
+              >{{ member.email }}</span>
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                :class="memberRoleClass(member.role)"
+              >
+                {{ roleLabel(member.role) }}
+              </span>
+            </div>
+          </template>
 
-        <!-- Recent tips table -->
-        <div class="flex flex-col gap-3">
-          <p class="text-sm font-semibold text-text-primary">Últimas 10 propinas</p>
-          <UiResponsiveDataView
-            :columns="columns"
-            :data="recentTips"
-            empty-message="Sin propinas registradas"
-            empty-sub-message="Las propinas atribuidas a este mesero aparecerán aquí."
-            item-key="id"
-            row-size="sm"
-          >
-            <!-- Mobile card -->
-            <template #card="{ item, index }">
-              <div :class="['flex flex-col gap-1.5 p-4 border-b border-border', index % 2 === 0 ? 'bg-surface' : 'bg-background']">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-baseline gap-2">
-                    <span class="text-xs text-text-secondary whitespace-nowrap shrink-0">{{ formatDate(item.order_date) }}</span>
-                    <span class="text-sm font-semibold text-primary">#{{ item.order_number }}</span>
-                  </div>
-                  <UiStatusBadge :variant="channelVariant(item.channel)" size="sm" :value="channelLabel(item.channel)" />
-                </div>
-                <div class="flex items-end justify-between">
-                  <p class="text-xs text-text-secondary">Subtotal: {{ formatCurrency(item.total_amount) }}</p>
-                  <div class="text-right">
-                    <p class="text-lg font-bold text-primary tabular-nums">{{ formatCurrency(item.tip_amount) }}</p>
-                    <p class="text-xs text-text-secondary tabular-nums">{{ formatPercent(item.tip_percent) }}</p>
-                  </div>
-                </div>
-              </div>
-            </template>
+          <div class="flex flex-col gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+              <MetricCard
+                title="Hoy"
+                :value="todayAgg.sum"
+                format="currency"
+                variant="primary"
+                :subtitle="`Promedio: ${formatPercent(todayAgg.avg)}`"
+              />
+              <MetricCard
+                title="Últimos 7 días"
+                :value="weekAgg.sum"
+                format="currency"
+                variant="primary"
+                :subtitle="`Promedio: ${formatPercent(weekAgg.avg)}`"
+              />
+              <MetricCard
+                title="Últimos 30 días"
+                :value="monthAgg.sum"
+                format="currency"
+                variant="primary"
+                :subtitle="`Promedio: ${formatPercent(monthAgg.avg)}`"
+              />
+            </div>
 
-            <!-- Desktop cells -->
-            <template #cell-order_date="{ value }">
-              <span class="text-sm text-text-secondary whitespace-nowrap">{{ formatDate(value) }}</span>
-            </template>
-            <template #cell-order_number="{ value }">
-              <span class="text-sm font-medium text-primary">#{{ value }}</span>
-            </template>
-            <template #cell-channel="{ row }">
-              <UiStatusBadge :variant="channelVariant(row.channel)" size="sm" :value="channelLabel(row.channel)" />
-            </template>
-            <template #cell-total_amount="{ value }">
-              <span class="text-sm tabular-nums">{{ formatCurrency(value) }}</span>
-            </template>
-            <template #cell-tip_amount="{ value }">
-              <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(value) }}</span>
-            </template>
-            <template #cell-tip_percent="{ value }">
-              <span class="text-sm tabular-nums text-text-secondary">{{ formatPercent(value) }}</span>
-            </template>
-          </UiResponsiveDataView>
-        </div>
-        </template>
+            <div class="flex flex-col gap-3">
+              <p class="text-sm font-semibold text-text-primary">Últimas 10 propinas</p>
+              <UiResponsiveDataView
+                :columns="columns"
+                :data="recentTips"
+                empty-message="Sin propinas registradas"
+                empty-sub-message="Las propinas atribuidas a este mesero aparecerán aquí."
+                item-key="id"
+                row-size="sm"
+              >
+                <template #card="{ item, index }">
+                  <div :class="['flex flex-col gap-1.5 p-4 border-b border-border', index % 2 === 0 ? 'bg-surface' : 'bg-background']">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-baseline gap-2">
+                        <span class="text-xs text-text-secondary whitespace-nowrap shrink-0">{{ formatDate(item.order_date) }}</span>
+                        <span class="text-sm font-semibold text-primary">#{{ item.order_number }}</span>
+                      </div>
+                      <UiStatusBadge :variant="channelVariant(item.channel)" size="sm" :value="channelLabel(item.channel)" />
+                    </div>
+                    <div class="flex items-end justify-between">
+                      <p class="text-xs text-text-secondary">Subtotal: {{ formatCurrency(item.total_amount) }}</p>
+                      <div class="text-right">
+                        <p class="text-lg font-bold text-primary tabular-nums">{{ formatCurrency(item.tip_amount) }}</p>
+                        <p class="text-xs text-text-secondary tabular-nums">{{ formatPercent(item.tip_percent) }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+
+                <template #cell-order_date="{ value }">
+                  <span class="text-sm text-text-secondary whitespace-nowrap">{{ formatDate(value) }}</span>
+                </template>
+                <template #cell-order_number="{ value }">
+                  <span class="text-sm font-medium text-primary">#{{ value }}</span>
+                </template>
+                <template #cell-channel="{ row }">
+                  <UiStatusBadge :variant="channelVariant(row.channel)" size="sm" :value="channelLabel(row.channel)" />
+                </template>
+                <template #cell-total_amount="{ value }">
+                  <span class="text-sm tabular-nums">{{ formatCurrency(value) }}</span>
+                </template>
+                <template #cell-tip_amount="{ value }">
+                  <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(value) }}</span>
+                </template>
+                <template #cell-tip_percent="{ value }">
+                  <span class="text-sm tabular-nums text-text-secondary">{{ formatPercent(value) }}</span>
+                </template>
+              </UiResponsiveDataView>
+            </div>
+          </div>
+        </HealthSemaphore>
       </template>
+
+      <HealthSemaphore v-else :is-unlocked="true" :title="member.name">
+        <template #header-actions>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <span
+              v-if="member.email"
+              class="hidden md:inline text-xs text-text-secondary truncate max-w-[220px]"
+            >{{ member.email }}</span>
+            <span
+              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+              :class="memberRoleClass(member.role)"
+            >
+              {{ roleLabel(member.role) }}
+            </span>
+          </div>
+        </template>
+        <p class="text-sm text-text-secondary">
+          Las propinas no están habilitadas en este restaurante.
+        </p>
+      </HealthSemaphore>
     </div>
   </div>
 </template>
