@@ -89,6 +89,32 @@ const { data: filteredMetricsData, status: filteredMetricsStatus, asyncStatus: f
   staleTime: 30_000,
 })
 
+// warocol.com#641 — tip aggregates for the "Propinas del periodo" MetricCard.
+// Reuses the same cache key as /operaciones/* and /ventas/propinas — Pinia
+// Colada dedupes the network call.
+const { data: ctxData } = useQuery({
+  key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/operaciones/restaurant-context'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+const tipEnabled = computed<boolean>(() => ctxData.value?.data?.tip_enabled === true)
+
+const { data: tipsAggData } = useQuery({
+  key: () => ['analytics', 'tips-metrics', currentTenant.value?.id, dateRange.value.from, dateRange.value.to],
+  query: () => $fetch<any>('/api/orders/tips', {
+    params: {
+      limit: 1,
+      date_from: dateRange.value.from || undefined,
+      date_to: dateRange.value.to || undefined,
+    },
+  }),
+  enabled: () => !!currentTenant.value && tipEnabled.value,
+  staleTime: 30_000,
+})
+const tipSum = computed<number>(() => tipsAggData.value?.aggregates?.sum_tip ?? 0)
+const tipAvgPct = computed<number>(() => tipsAggData.value?.aggregates?.avg_pct ?? 0)
+
 const { data: salesFlowData, status: salesFlowStatus, asyncStatus: salesFlowAsyncStatus, refetch: refetchSalesFlow } = useQuery({
   key: () => ['analytics', 'ventas-sales-flow', currentTenant.value?.id, {
     from: dateRange.value.from,
@@ -283,9 +309,27 @@ const formatCurrency = (value: number) =>
       </div>
       </ClientOnly>
       <section>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+        <div :class="['grid grid-cols-2 gap-3 md:gap-4 mb-6', tipEnabled ? 'md:grid-cols-5' : 'md:grid-cols-4']">
           <MetricCard title="Ventas Brutas" :value="metrics.total_sales" format="currency" variant="primary" />
           <MetricCard title="Ticket Promedio" :value="metrics.avg_ticket" format="currency" variant="primary" />
+          <!-- warocol.com#641 — Tips card with deep-link to /ventas/propinas/historial -->
+          <NuxtLink
+            v-if="tipEnabled"
+            :to="{
+              path: '/ventas/propinas/historial',
+              query: dateRange.from && dateRange.to ? { date_from: dateRange.from, date_to: dateRange.to } : {},
+            }"
+            class="contents"
+            aria-label="Ver historial de propinas"
+          >
+            <MetricCard
+              title="Propinas del periodo"
+              :value="tipSum"
+              format="currency"
+              variant="primary"
+              :subtitle="`Promedio: ${tipAvgPct.toFixed(2)}%`"
+            />
+          </NuxtLink>
           <MetricCard :title="metrics.standard_tax_label || 'INC 8%'" :value="metrics.total_standard_tax" format="currency" variant="primary" />
           <MetricCard :title="forecastLabel" :value="forecast" format="currency" variant="primary" :subtitle="forecastSubtitle" class="col-span-2 md:col-span-1" />
         </div>
