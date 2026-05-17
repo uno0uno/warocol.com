@@ -76,27 +76,16 @@
             <!-- Restaurant open/close toggle -->
             <DashboardBusinessStatusToggle key="business-status-toggle" />
 
-            <div
-              v-if="isProgressiveLoading"
-              key="progressive-loading"
-              class="hidden md:flex items-center gap-2 h-11 px-3 rounded-lg bg-surface-secondary text-primary transition-all"
-              aria-live="polite"
-            >
-              <UiLoadingDots size="9px" class="text-primary" />
-              <span class="text-sm font-medium whitespace-nowrap">
-                {{ headerLoadingPhrase }}
-              </span>
-            </div>
-
-            <!-- Refresh Button (Desktop only) - always visible -->
+            <!-- Refresh Button (Desktop only) - matrix on manual refresh and progressive/first load -->
             <button
               key="refresh-button"
               @click="handleRefresh"
-              :disabled="isRefreshing"
+              :disabled="isRefreshing || isProgressiveLoading"
               aria-label="Refrescar datos"
+              :aria-busy="isRefreshing || isProgressiveLoading"
               class="hidden md:flex w-11 h-11 items-center justify-center bg-surface-secondary border-0 rounded-lg text-primary transition-all focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
               title="Refrescar">
-              <UiLoadingMatrix v-if="isRefreshing" size="5.5px" />
+              <UiLoadingMatrix v-if="isRefreshing || isProgressiveLoading" size="5.5px" />
               <svg v-else
                 class="w-5 h-5 transition-transform duration-300 hover:rotate-180"
                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1048,24 +1037,6 @@ const {
   triggerRefresh
 } = useLayoutActions()
 const handleRefresh = triggerRefresh
-const {
-  currentPhrase: rotatingHeaderLoadingPhrase,
-  start: startHeaderLoadingPhrases,
-  stop: stopHeaderLoadingPhrases
-} = useLoadingPhrases([
-  'Actualizando...',
-  'Sincronizando...',
-  'Cargando cambios...'
-])
-const headerLoadingPhrase = computed(() => rotatingHeaderLoadingPhrase.value)
-
-watch(isProgressiveLoading, (loading) => {
-  if (loading) {
-    startHeaderLoadingPhrases()
-  } else {
-    stopHeaderLoadingPhrases()
-  }
-}, { immediate: true })
 
 // Dynamic title - can be set by child pages
 const dynamicTitle = ref<string | undefined>(undefined)

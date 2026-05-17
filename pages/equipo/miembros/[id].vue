@@ -65,7 +65,7 @@ const thirtyAgoDate = new Date(); thirtyAgoDate.setDate(thirtyAgoDate.getDate() 
 const sevenAgoStr = fnsFormat(sevenAgoDate, 'yyyy-MM-dd')
 const thirtyAgoStr = fnsFormat(thirtyAgoDate, 'yyyy-MM-dd')
 
-const { data: tipsTodayData } = useQuery({
+const { data: tipsTodayData, asyncStatus: tipsTodayAsyncStatus, refetch: refetchTipsToday } = useQuery({
   key: () => ['tips', 'member-period', memberId.value, 'today', todayStr],
   query: () => $fetch<any>('/api/orders/tips', {
     params: { member_id: memberId.value, date_from: todayStr, date_to: todayStr, limit: 1 },
@@ -73,7 +73,7 @@ const { data: tipsTodayData } = useQuery({
   enabled: () => !!memberId.value && tipEnabled.value,
   staleTime: 30_000,
 })
-const { data: tipsWeekData } = useQuery({
+const { data: tipsWeekData, asyncStatus: tipsWeekAsyncStatus, refetch: refetchTipsWeek } = useQuery({
   key: () => ['tips', 'member-period', memberId.value, '7d', sevenAgoStr, todayStr],
   query: () => $fetch<any>('/api/orders/tips', {
     params: { member_id: memberId.value, date_from: sevenAgoStr, date_to: todayStr, limit: 1 },
@@ -81,7 +81,7 @@ const { data: tipsWeekData } = useQuery({
   enabled: () => !!memberId.value && tipEnabled.value,
   staleTime: 30_000,
 })
-const { data: tipsMonthData } = useQuery({
+const { data: tipsMonthData, asyncStatus: tipsMonthAsyncStatus, refetch: refetchTipsMonth } = useQuery({
   key: () => ['tips', 'member-period', memberId.value, '30d', thirtyAgoStr, todayStr],
   query: () => $fetch<any>('/api/orders/tips', {
     params: { member_id: memberId.value, date_from: thirtyAgoStr, date_to: todayStr, limit: 1 },
@@ -114,19 +114,36 @@ const { data: recentTipsData, asyncStatus: recentAsyncStatus, refetch: refetchRe
 })
 const recentTips = computed<any[]>(() => recentTipsData.value?.data ?? [])
 
-const isHeaderLoading = computed(() => {
-  if (membersAsyncStatus.value === 'loading' && !membersResponse.value) return true
-  if (ctxAsyncStatus.value === 'loading' && !ctxData.value) return true
-  if (!tipEnabled.value) return false
+const isQueryLoading = (status: string, data: unknown) =>
+  status === 'loading' && !data
+
+const isTipsSectionLoading = computed(() => {
+  if (!tipEnabled.value || !member.value) return false
   return (
-    (recentAsyncStatus.value === 'loading' && !recentTipsData.value)
+    isQueryLoading(tipsTodayAsyncStatus.value, tipsTodayData.value)
+    || isQueryLoading(tipsWeekAsyncStatus.value, tipsWeekData.value)
+    || isQueryLoading(tipsMonthAsyncStatus.value, tipsMonthData.value)
+    || isQueryLoading(recentAsyncStatus.value, recentTipsData.value)
     || (recentAsyncStatus.value === 'loading' && recentTipsData.value != null)
   )
 })
 
+const isHeaderLoading = computed(() => {
+  if (membersAsyncStatus.value === 'loading' && !membersResponse.value) return true
+  if (ctxAsyncStatus.value === 'loading' && !ctxData.value) return true
+  return isTipsSectionLoading.value
+})
+
 const handleRefresh = async () => {
   const tasks: Promise<unknown>[] = [refetchMembers(), refetchCtx()]
-  if (tipEnabled.value) tasks.push(refetchRecent())
+  if (tipEnabled.value) {
+    tasks.push(
+      refetchTipsToday(),
+      refetchTipsWeek(),
+      refetchTipsMonth(),
+      refetchRecent(),
+    )
+  }
   await Promise.all(tasks)
 }
 
@@ -259,8 +276,19 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
           </NuxtLink>
         </div>
 
+        <div
+          v-if="isTipsSectionLoading"
+          class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4"
+        >
+          <div
+            v-for="i in 3"
+            :key="`tips-metric-skeleton-${i}`"
+            class="rounded-xl border-2 border-border bg-surface p-4 h-24 animate-pulse"
+          />
+        </div>
+
         <!-- 3 MetricCards -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+        <div v-else class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
           <MetricCard
             title="Hoy"
             :value="todayAgg.sum"
@@ -285,7 +313,9 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
         </div>
 
         <!-- Recent tips table -->
-        <div class="flex flex-col gap-3">
+        <div v-if="isTipsSectionLoading" class="rounded-xl border-2 border-border bg-surface h-48 animate-pulse" />
+
+        <div v-else class="flex flex-col gap-3">
           <p class="text-sm font-semibold text-text-primary">Últimas 10 propinas</p>
           <UiResponsiveDataView
             :columns="columns"
