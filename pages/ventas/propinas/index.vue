@@ -155,6 +155,12 @@ const filterByMember = (memberId: string | null) => {
   memberFilter.value = memberId
 }
 
+// warocol.com#662 — open order detail in the same tab (like /ventas/ordenes)
+const goToOrderDetail = (orderId: string) => {
+  if (!orderId) return
+  navigateTo(`/ventas/${orderId}`)
+}
+
 // ── Export by email ─────────────────────────────────────────────────────────
 const isExporting = ref(false)
 const showExportModal = ref(false)
@@ -437,7 +443,13 @@ onUnmounted(() => clearRefreshHandler(refetch))
             <div class="flex items-center justify-between">
               <div class="flex items-baseline gap-2">
                 <span class="text-xs text-text-secondary">{{ formatDate(item.order_date) }}</span>
-                <span class="text-sm font-semibold text-primary">#{{ item.order_number }}</span>
+                <button
+                  type="button"
+                  class="text-sm font-semibold text-primary hover:underline"
+                  @click.stop="goToOrderDetail(item.id)"
+                >
+                  #{{ item.order_number }}
+                </button>
               </div>
               <UiStatusBadge :variant="channelVariant(item.channel)" size="sm" :value="channelLabel(item.channel)" />
             </div>
@@ -465,8 +477,14 @@ onUnmounted(() => clearRefreshHandler(refetch))
         <template #cell-order_date="{ value }">
           <span class="text-sm text-text-secondary whitespace-nowrap">{{ formatDate(value) }}</span>
         </template>
-        <template #cell-order_number="{ value }">
-          <span class="text-sm font-medium text-primary">#{{ value }}</span>
+        <template #cell-order_number="{ row, value }">
+          <button
+            type="button"
+            class="text-sm font-medium text-primary hover:underline"
+            @click.stop="goToOrderDetail(row.id)"
+          >
+            #{{ value }}
+          </button>
         </template>
         <template #cell-channel="{ row }">
           <UiStatusBadge :variant="channelVariant(row.channel)" size="sm" :value="channelLabel(row.channel)" />
