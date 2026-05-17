@@ -417,6 +417,15 @@ onUnmounted(() => {
           <p class="text-lg font-bold text-text-primary">{{ order.customer_phone }}</p>
         </div>
 
+        <!-- Waiter (checkout attribution) -->
+        <div
+          v-if="order.served_by_member_id"
+          class="bg-surface border border-border rounded-xl p-4"
+        >
+          <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Mesero</p>
+          <p class="text-lg font-bold text-text-primary">{{ order.served_by_member_name || 'Asignado' }}</p>
+        </div>
+
         <!-- Payment Method -->
         <component :is="order.split_payments && order.split_payments.length > 0 ? 'button' : 'div'"
           class="bg-surface border-2 border-info rounded-xl p-4 text-left w-full"
