@@ -110,7 +110,7 @@
     <!-- warocol.com#639 — Tip selector (hidden when tenant has tip_enabled=false).
          Placed between cart summary and payment method so the customer sees the
          total they're committing to before choosing how to pay. -->
-    <TipSelector
+    <CheckoutTipSelector
       v-if="tipEnabled"
       :enabled="tipEnabled"
       :presets="tipPresets"

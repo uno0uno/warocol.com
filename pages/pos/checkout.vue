@@ -1825,6 +1825,17 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- warocol.com#639 — Tip selector in the LEFT column (after Descuento, before Domicilio).
+             Hidden when tip_enabled=false or in split mode (backend rejects tip + split). -->
+        <CheckoutTipSelector
+          v-if="tipEnabled && !splitMode"
+          :enabled="tipEnabled"
+          :presets="tipPresets"
+          :preselect-index="tipPreselectIndex"
+          :subtotal="cartTotal"
+          v-model="tipModel"
+        />
+
         <!-- Section: Domicilio (mostrador or bar — never mesa) -->
         <div v-if="canRegisterDelivery" class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
           <div class="flex items-center justify-between gap-3">
@@ -2249,19 +2260,6 @@ onUnmounted(() => {
             <p class="text-sm text-red-800 dark:text-red-200">{{ processingError }}</p>
           </div>
         </div>
-
-        <!-- warocol.com#639 — Tip selector (hidden when tenant has tip_enabled=false).
-             Placed between totals and payment so cashier-controlled tipping in POS
-             stays visible right where the operator confirms the order. Split mode
-             intentionally excluded — backend rejects tips in split payments. -->
-        <TipSelector
-          v-if="tipEnabled && !splitMode"
-          :enabled="tipEnabled"
-          :presets="tipPresets"
-          :preselect-index="tipPreselectIndex"
-          :subtotal="cartTotal"
-          v-model="tipModel"
-        />
 
         <!-- Issue #524 — Cash tender + change calculation (single-payment mode) -->
         <div v-if="!splitMode && isCashMethod && selectedCustomer" class="flex flex-col gap-3 p-4 rounded-xl bg-surface border border-border">
