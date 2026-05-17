@@ -322,13 +322,13 @@ onUnmounted(() => clearRefreshHandler(refetch))
           :value="aggregates.avg_pct"
           format="percentage"
           :precision="2"
-          variant="secondary"
+          variant="primary"
         />
         <MetricCard
           title="Órdenes con propina"
           :value="aggregates.count_with_tip"
           format="number"
-          variant="secondary"
+          variant="primary"
           class="col-span-2 md:col-span-1"
         />
       </div>
