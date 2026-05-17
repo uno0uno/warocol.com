@@ -26,9 +26,9 @@ const onChange = (event: Event) => {
 <template>
   <div class="flex flex-col gap-3 p-4 rounded-xl bg-surface border-2 border-border">
     <div class="flex flex-col gap-0.5">
-      <p class="text-sm font-semibold text-text-primary">Mesero (opcional)</p>
+      <p class="text-sm font-semibold text-text-primary">Mesero para propina</p>
       <p class="text-xs leading-snug text-text-secondary">
-        Atribuye esta venta para propinas y reportes por mesero.
+        Confirma o cambia quién recibe el crédito de esta venta en propinas y reportes.
       </p>
     </div>
 
