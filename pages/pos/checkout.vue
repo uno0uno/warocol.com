@@ -134,55 +134,10 @@ type TaxPreview = {
   liquor_tax: number
   standard_tax_label: string
 }
-const taxPreview = ref<TaxPreview | null>(null)
-const taxLoading = ref(false)
-const taxError = ref('')
-let taxRefreshTmr: ReturnType<typeof setTimeout> | null = null
-
-const refreshTaxPreview = async () => {
-  taxLoading.value = true
-  taxError.value = ''
-  try {
-    // Mesa: existing endpoint, ignores any in-flight discount (computed
-    // from already-saved orders in the session).
-    if (isMesaMode.value && posStore.activeTableSession?.tableId) {
-      const res = await $fetch<{ success: boolean; data: any }>(
-        `/api/tables/${posStore.activeTableSession.tableId}/current`
-      )
-      const session = res?.data?.session
-      taxPreview.value = {
-        standard_tax: Number(session?.standard_tax) || 0,
-        liquor_tax: Number(session?.liquor_tax) || 0,
-        standard_tax_label: session?.standard_tax_label || 'Impuesto',
-      }
-      return
-    }
-
-    // Counter / Bar: new endpoint, accepts the in-flight discount as a query param.
-    if (posStore.cartId) {
-      const params = new URLSearchParams()
-      if (discountAmount.value > 0) params.set('discount_amount', String(discountAmount.value))
-      const qs = params.toString() ? `?${params.toString()}` : ''
-      const res = await $fetch<{ standard_tax: number; liquor_tax: number; standard_tax_label: string }>(
-        `/api/pos/cart/${posStore.cartId}/tax-preview${qs}`
-      )
-      taxPreview.value = {
-        standard_tax: Number(res?.standard_tax) || 0,
-        liquor_tax: Number(res?.liquor_tax) || 0,
-        standard_tax_label: res?.standard_tax_label || 'Impuesto',
-      }
-      return
-    }
-
-    // No cart yet → clear preview
-    taxPreview.value = null
-  } catch (e: any) {
-    taxError.value = e?.data?.message || e?.message || 'No se pudo calcular impuestos'
-    taxPreview.value = null
-  } finally {
-    taxLoading.value = false
-  }
-}
+// taxPreview is now a computed derived from the mesa/POS useQuery results
+// (declared further down, after discountedTotal). The legacy refreshTaxPreview
+// function + manual debounced watcher were removed in the parallel-loading
+// refactor — keys reactive to cartId/discountAmount drive refetches.
 
 // ── POS restaurant context (BFF aggregator) — reuses same cache key as index.vue (no extra network request)
 // Migrated from /api/api/tenant/public-profile (now owner-only MI_NEGOCIO).
@@ -192,6 +147,24 @@ const { data: settingsData } = useQuery({
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
+
+// Payment methods — shared cache with /ventas/ordenes (same key).
+// 5 min staleTime: methods change rarely; navigating back to checkout reuses
+// the cache without a network call.
+const {
+  data: paymentMethodsData,
+  asyncStatus: paymentMethodsAsyncStatus,
+} = useQuery({
+  key: () => ['payments', 'groups', currentTenant.value?.id ?? null],
+  query: () => $fetch<{ success: boolean; data: PosPaymentGroup[] }>('/api/pos/payment-methods'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 300_000,
+})
+watch(paymentMethodsData, (data) => {
+  if (data?.success && data.data?.length) {
+    posPaymentGroups.value = data.data
+  }
+}, { immediate: true })
 const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
 // Issue #537 — expediter mode (waiter advances comanda state from POS)
 const expediterEnabled = computed(() => settingsData.value?.data?.expediter_enabled === true)
@@ -251,28 +224,78 @@ const discountedTotal = computed(() => cartTotal.value - discountAmount.value)
 // charged_amount = total_amount + tip_amount lives at the payment layer only.
 const finalChargedAmount = computed(() => discountedTotal.value + tipAmount.value)
 
-// Tax preview — runs for all 3 modes (mesa / counter / bar). Debounced to
-// avoid flooding when items / discount change rapidly.
-watch(
-  [
-    isMesaMode,
-    cartTotal,
-    discountAmount,
-    () => storeTabItems.value.length,
-    () => posStore.cart.length,
-  ],
-  () => {
-    if (taxRefreshTmr) clearTimeout(taxRefreshTmr)
-    taxRefreshTmr = setTimeout(() => {
-      refreshTaxPreview()
-    }, 250)
-  },
-  { immediate: true },
-)
-
-onUnmounted(() => {
-  if (taxRefreshTmr) clearTimeout(taxRefreshTmr)
+// ── Parallel-loading queries (replaces manual refreshTaxPreview + #656 rehydration $fetch).
+//
+// Mesa session — ONE query covers tax preview, running total, AND the #656
+// partial_payments rehydration. Replaces the legacy refreshTaxPreview mesa
+// branch and the manual rehydration $fetch in onMounted.
+const {
+  data: mesaCurrentData,
+  asyncStatus: mesaCurrentAsyncStatus,
+  error: mesaCurrentError,
+} = useQuery({
+  key: () => ['tables', posStore.activeTableSession?.tableId ?? null, 'current'],
+  query: () => $fetch<{ success: boolean; data: any }>(
+    `/api/tables/${posStore.activeTableSession!.tableId}/current`
+  ),
+  enabled: () => isMesaMode.value && !!posStore.activeTableSession?.tableId,
+  staleTime: 5_000,  // short — running_total changes when items are added
 })
+
+// POS cart (counter / bar) — covers the #656 partial_payments rehydration.
+// The endpoint is keyed by customer_id but returns the active cart's order.
+const {
+  data: posCartData,
+  asyncStatus: posCartAsyncStatus,
+  error: posCartError,
+} = useQuery({
+  key: () => ['pos', 'cart', 'by-customer', selectedCustomer.value?.id ?? null],
+  query: () => $fetch<{ success: boolean; data: any }>(
+    `/api/pos/cart/${selectedCustomer.value!.id}`
+  ),
+  enabled: () => !isMesaMode.value && !!posStore.cartId && !!selectedCustomer.value?.id,
+  staleTime: 5_000,
+})
+
+// POS tax preview — only when in counter/bar mode. discountAmount is part of
+// the key so a discount change re-fetches automatically.
+const { data: posTaxPreviewData } = useQuery({
+  key: () => ['pos', 'cart', posStore.cartId ?? null, 'tax-preview', discountAmount.value],
+  query: () => {
+    const params = new URLSearchParams()
+    if (discountAmount.value > 0) params.set('discount_amount', String(discountAmount.value))
+    const qs = params.toString() ? `?${params.toString()}` : ''
+    return $fetch<{ standard_tax: number; liquor_tax: number; standard_tax_label: string }>(
+      `/api/pos/cart/${posStore.cartId}/tax-preview${qs}`
+    )
+  },
+  enabled: () => !isMesaMode.value && !!posStore.cartId,
+  staleTime: 5_000,
+})
+
+// Tax preview derived from whichever query is active (mesa vs POS).
+// Replaces the manually-managed taxPreview ref + refreshTaxPreview function.
+const taxPreview = computed<TaxPreview | null>(() => {
+  if (isMesaMode.value) {
+    const session = mesaCurrentData.value?.data?.session
+    if (!session) return null
+    return {
+      standard_tax: Number(session.standard_tax) || 0,
+      liquor_tax: Number(session.liquor_tax) || 0,
+      standard_tax_label: session.standard_tax_label || 'Impuesto',
+    }
+  }
+  const data = posTaxPreviewData.value
+  if (!data) return null
+  return {
+    standard_tax: Number(data.standard_tax) || 0,
+    liquor_tax: Number(data.liquor_tax) || 0,
+    standard_tax_label: data.standard_tax_label || 'Impuesto',
+  }
+})
+
+// Tax preview is auto-recomputed via useQuery (mesaCurrentData / posTaxPreviewData)
+// — discount/cart changes invalidate the query keys, no manual debounce needed.
 
 // Split payment state
 const splitMode = ref(false)
@@ -458,6 +481,13 @@ const addSplitPayment = async () => {
     })
     splitPaidTotal.value = paidTotal
     cashReceivedInput.value = 0
+    // Invalidate the read query so future reloads see the new partial.
+    // Triggers a background refetch — header shows "Actualizando pagos".
+    cache.invalidateQueries({
+      key: isMesaMode.value
+        ? ['tables', posStore.activeTableSession?.tableId ?? null, 'current']
+        : ['pos', 'cart', 'by-customer', selectedCustomer.value?.id ?? null],
+    })
 
     if (isComplete) {
       orderResult.value = {
@@ -517,6 +547,12 @@ const confirmVoidPayment = async () => {
     const voidedIds: string[] = res.data?.voided_ids ?? [p.id]
     splitPayments.value = splitPayments.value.filter(row => !voidedIds.includes(row.id))
     splitPaidTotal.value = Number(res.data?.paid_total ?? 0)
+    // Invalidate the read query so background refetch syncs the new state.
+    cache.invalidateQueries({
+      key: isMesaMode.value
+        ? ['tables', posStore.activeTableSession?.tableId ?? null, 'current']
+        : ['pos', 'cart', 'by-customer', selectedCustomer.value?.id ?? null],
+    })
     voidPaymentTarget.value = null
     voidPaymentReason.value = ''
   } catch (e: any) {
@@ -1224,22 +1260,12 @@ const sendReceiptEmail = async () => {
   }
 }
 
-// Fetch dynamic payment methods from API — falls back to hardcoded defaults on error
-const isLoadingPaymentMethods = ref(true)
-
-const fetchPaymentMethods = async () => {
-  isLoadingPaymentMethods.value = true
-  try {
-    const response = await $fetch<{ success: boolean; data: PosPaymentGroup[] }>('/api/pos/payment-methods')
-    if (response.success && response.data?.length) {
-      posPaymentGroups.value = response.data
-    }
-  } catch {
-    // Keep PAYMENT_DEFAULTS — POS must never break
-  } finally {
-    isLoadingPaymentMethods.value = false
-  }
-}
+// Payment methods now hydrate from the `paymentMethodsData` useQuery defined
+// at the top of the script (cache shared with /ventas/ordenes). The legacy
+// fetchPaymentMethods() function was removed in the parallel-loading refactor.
+const isLoadingPaymentMethods = computed(() =>
+  paymentMethodsAsyncStatus.value === 'loading' && !paymentMethodsData.value
+)
 
 // Sincronizar carrito al backend cuando carga la página
 const syncCart = async () => {
@@ -1264,50 +1290,80 @@ const syncCart = async () => {
   }
 }
 
-// Set page subtitle and sync cart on mount
+// ── Initial-load + optimistic-refresh wiring (mirrors /ventas/ordenes).
+// isLoading: page is mounting and the relevant backend read is in-flight for
+// the first time. Renders a full-page CommonsTheCustomLoader in the template.
+// isRefreshing: a refetch is in-flight while we already have data. Surfaced
+// in the layout header via registerProgressiveLoading — content stays visible.
+const isLoading = computed(() => {
+  if (isMesaMode.value) {
+    return !mesaCurrentData.value && !mesaCurrentError.value && mesaCurrentAsyncStatus.value === 'loading'
+  }
+  if (posStore.cartId && selectedCustomer.value?.id) {
+    return !posCartData.value && !posCartError.value && posCartAsyncStatus.value === 'loading'
+  }
+  return false
+})
+const isRefreshing = computed(() => {
+  if (isMesaMode.value) {
+    return mesaCurrentAsyncStatus.value === 'loading' && mesaCurrentData.value != null
+  }
+  if (selectedCustomer.value?.id) {
+    return posCartAsyncStatus.value === 'loading' && posCartData.value != null
+  }
+  return false
+})
+const checkoutError = computed(() => isMesaMode.value ? mesaCurrentError.value : posCartError.value)
+
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const refreshAll = async () => {
+  await Promise.all([
+    cache.invalidateQueries({ key: ['pos', 'payment-methods'] }),
+    isMesaMode.value
+      ? cache.invalidateQueries({ key: ['tables', posStore.activeTableSession?.tableId ?? null, 'current'] })
+      : cache.invalidateQueries({ key: ['pos', 'cart', 'by-customer', selectedCustomer.value?.id ?? null] }),
+  ])
+}
+registerProgressiveLoading(isRefreshing, 'Actualizando pagos')
+
+// Issue warocol.com#656 — rehydrate splitPayments from the active query.
+// The same source of truth feeds both the initial render and any refetch
+// (after a mutation or manual refresh). Replaces the previous one-shot
+// onMounted block that used a separate $fetch and ignored future refreshes.
+const hydratePartialsFrom = (partials: any[] | undefined) => {
+  if (!partials || partials.length === 0) return
+  splitPayments.value = partials.map((p: any) => ({
+    id: p.id,
+    amount: Number(p.amount),
+    payment_method: p.payment_method,
+    payment_method_name: p.payment_method_name ?? getPaymentMethodLabel(p.payment_method),
+  }))
+  splitPaidTotal.value = splitPayments.value.reduce((acc, p) => acc + p.amount, 0)
+  if (!splitMode.value) splitMode.value = true
+}
+watch(() => mesaCurrentData.value?.data?.session?.partial_payments, hydratePartialsFrom)
+watch(() => posCartData.value?.data?.partial_payments, hydratePartialsFrom)
+
+// Set page subtitle and sync cart on mount. payment-methods, mesa /current
+// and pos cart queries are already in flight (declared above as useQuery —
+// they fire from setup, in parallel with the mount).
 onMounted(async () => {
   setPageSubtitle('Checkout')
-
 
   // Siempre regeneramos el carrito backend desde el estado local actual.
   if (posStore.cart.length > 0) {
     isSyncingCart.value = true
   }
 
-  // Fetch dynamic payment methods (fallback to defaults on error)
-  await fetchPaymentMethods()
+  setRefreshHandler(refreshAll)
 
-  // Sincronizar carrito al backend (batch, sin cliente)
+  // Cart sync is the only operation that's genuinely sequential (mutation
+  // local → backend). All read queries already kicked off from setup.
   await syncCart()
+})
 
-  // Issue warocol.com#656 — rehydrate Cobro Parcial state so re-entering
-  // checkout on an order with active partials doesn't reset the list and
-  // risk a double-charge. Mesa reads from /api/tables/<id>/current; POS
-  // reads from /api/pos/cart/<customer_id>. Non-fatal on error — checkout
-  // stays usable; worst case the cashier sees the un-aware totals.
-  try {
-    let partials: any[] = []
-    if (isMesaMode.value && posStore.activeTableSession?.tableId) {
-      const res = await $fetch<any>(`/api/tables/${posStore.activeTableSession.tableId}/current`)
-      partials = res?.data?.session?.partial_payments ?? []
-    } else if (posStore.cartId && selectedCustomer.value?.id) {
-      const res = await $fetch<any>(`/api/pos/cart/${selectedCustomer.value.id}`)
-      partials = res?.data?.partial_payments ?? []
-    }
-    if (partials.length > 0) {
-      splitPayments.value = partials.map((p: any) => ({
-        id: p.id,
-        amount: Number(p.amount),
-        payment_method: p.payment_method,
-        payment_method_name: p.payment_method_name ?? getPaymentMethodLabel(p.payment_method),
-      }))
-      splitPaidTotal.value = splitPayments.value.reduce((acc, p) => acc + p.amount, 0)
-      splitMode.value = true
-    }
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error('[#656] partial-payments rehydration failed', e)
-  }
+onUnmounted(() => {
+  clearRefreshHandler(refreshAll)
 })
 
 // Issue #529 — auto-select Genérico when the tenant flag is on. Applies to
@@ -1350,16 +1406,20 @@ onUnmounted(() => {
 
 <template>
   <div class="w-full pb-32 lg:pb-0">
-    <!-- Loading State (syncing cart) -->
-    <div v-if="isSyncingCart" class="flex items-center justify-center min-h-[70vh]">
+    <!-- Loading State: initial cart sync OR first-read queries in-flight.
+         Optimistic refetches (after mutations) keep content visible and surface
+         in the layout header via registerProgressiveLoading instead. -->
+    <div v-if="isSyncingCart || isLoading" class="flex items-center justify-center min-h-[70vh]">
       <div class="text-center">
         <CommonsTheCustomLoader size="large" />
-        <p class="text-text-secondary font-medium mt-6">Preparando checkout...</p>
+        <p class="text-text-secondary font-medium mt-6">
+          {{ isSyncingCart ? 'Preparando checkout...' : 'Cargando checkout...' }}
+        </p>
       </div>
     </div>
 
-    <!-- Sync Error State -->
-    <CommonsTheErrorState v-else-if="syncError" />
+    <!-- Error State (cart sync OR initial read failure) -->
+    <CommonsTheErrorState v-else-if="syncError || checkoutError" />
 
     <!-- Empty Cart State -->
     <div v-else-if="cartItems.length === 0 && !isMesaMode && !showSuccessModal" class="text-center py-16">
