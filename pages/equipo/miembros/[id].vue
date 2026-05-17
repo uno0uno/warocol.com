@@ -18,15 +18,12 @@ const { currentTenant } = useTenantReactive()
 
 // Members list — shares cache key with /equipo/miembros so this is almost
 // always a cache hit. Direct URL hit on the detail page fetches once.
-const { data: membersResponse, asyncStatus: membersAsyncStatus, refetch: refetchMembers } = useQuery({
+const { data: membersResponse, asyncStatus: membersAsyncStatus, error: membersError, refetch: refetchMembers } = useQuery({
   key: () => ['team-members', currentTenant.value?.id],
   query: () => $fetch<any>('/api/tenants/members'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
-const isLoadingMembers = computed(
-  () => !membersResponse.value && membersAsyncStatus.value === 'loading',
-)
 
 const member = computed(() => {
   const list = (membersResponse.value as any)?.data ?? []
@@ -114,25 +111,37 @@ const { data: recentTipsData, asyncStatus: recentAsyncStatus, refetch: refetchRe
 })
 const recentTips = computed<any[]>(() => recentTipsData.value?.data ?? [])
 
-const isQueryLoading = (status: string, data: unknown) =>
+const isQueryInitial = (status: string, data: unknown) =>
   status === 'loading' && !data
 
-const isTipsSectionLoading = computed(() => {
-  if (!tipEnabled.value || !member.value) return false
+const isQueryRefetching = (status: string, data: unknown) =>
+  status === 'loading' && data != null
+
+const isLoading = computed(() => {
+  if (isQueryInitial(membersAsyncStatus.value, membersResponse.value)) return true
+  if (isQueryInitial(ctxAsyncStatus.value, ctxData.value)) return true
+  if (!member.value || !tipEnabled.value) return false
   return (
-    isQueryLoading(tipsTodayAsyncStatus.value, tipsTodayData.value)
-    || isQueryLoading(tipsWeekAsyncStatus.value, tipsWeekData.value)
-    || isQueryLoading(tipsMonthAsyncStatus.value, tipsMonthData.value)
-    || isQueryLoading(recentAsyncStatus.value, recentTipsData.value)
-    || (recentAsyncStatus.value === 'loading' && recentTipsData.value != null)
+    isQueryInitial(tipsTodayAsyncStatus.value, tipsTodayData.value)
+    || isQueryInitial(tipsWeekAsyncStatus.value, tipsWeekData.value)
+    || isQueryInitial(tipsMonthAsyncStatus.value, tipsMonthData.value)
+    || isQueryInitial(recentAsyncStatus.value, recentTipsData.value)
   )
 })
 
-const isHeaderLoading = computed(() => {
-  if (membersAsyncStatus.value === 'loading' && !membersResponse.value) return true
-  if (ctxAsyncStatus.value === 'loading' && !ctxData.value) return true
-  return isTipsSectionLoading.value
+const isRefreshing = computed(() => {
+  if (isQueryRefetching(membersAsyncStatus.value, membersResponse.value)) return true
+  if (isQueryRefetching(ctxAsyncStatus.value, ctxData.value)) return true
+  if (!tipEnabled.value) return false
+  return (
+    isQueryRefetching(tipsTodayAsyncStatus.value, tipsTodayData.value)
+    || isQueryRefetching(tipsWeekAsyncStatus.value, tipsWeekData.value)
+    || isQueryRefetching(tipsMonthAsyncStatus.value, tipsMonthData.value)
+    || isQueryRefetching(recentAsyncStatus.value, recentTipsData.value)
+  )
 })
+
+const pageError = computed(() => membersError.value)
 
 const handleRefresh = async () => {
   const tasks: Promise<unknown>[] = [refetchMembers(), refetchCtx()]
@@ -174,7 +183,7 @@ const channelVariant = (ch: string | null | undefined) => {
 }
 
 const columns: Column[] = [
-  { key: 'order_date', title: 'Fecha', width: '160px' },
+  { key: 'order_date', title: 'Fecha', width: '180px' },
   { key: 'order_number', title: 'Orden', width: '80px' },
   { key: 'channel', title: 'Canal', width: '90px' },
   { key: 'total_amount', title: 'Subtotal', align: 'right' },
@@ -182,43 +191,20 @@ const columns: Column[] = [
   { key: 'tip_percent', title: '%', align: 'right', width: '70px' },
 ]
 
-const historyLink = computed(() => ({
-  path: '/ventas/propinas',
-  query: { member_id: memberId.value },
-}))
-
 // Layout integration
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-registerProgressiveLoading(isHeaderLoading)
+registerProgressiveLoading(isRefreshing)
 onMounted(() => setRefreshHandler(handleRefresh))
 onUnmounted(() => clearRefreshHandler(handleRefresh))
 </script>
 
 <template>
   <div class="flex flex-col gap-4 md:gap-5">
-    <!-- Back link -->
-    <NuxtLink
-      to="/equipo/miembros"
-      class="self-start inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors"
-    >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-      </svg>
-      Equipo
-    </NuxtLink>
-
-    <!-- Profile skeleton (header shows progressive loading) -->
-    <div
-      v-if="isLoadingMembers"
-      class="flex items-center gap-4 p-4 rounded-xl border-2 border-border bg-surface animate-pulse"
-    >
-      <div class="w-14 h-14 rounded-full bg-titan-200 flex-shrink-0" />
-      <div class="flex-1 space-y-2 min-w-0">
-        <div class="h-5 w-40 rounded bg-titan-200" />
-        <div class="h-3 w-56 rounded bg-titan-200" />
-        <div class="h-5 w-20 rounded-full bg-titan-200" />
-      </div>
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
     </div>
+
+    <CommonsTheErrorState v-else-if="pageError" />
 
     <!-- Empty state — member not found -->
     <div
@@ -230,15 +216,9 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
       <p class="text-sm text-text-secondary max-w-md">
         El miembro que buscas no existe o ya no pertenece al equipo.
       </p>
-      <NuxtLink
-        to="/equipo/miembros"
-        class="mt-2 min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all"
-      >
-        Volver al equipo →
-      </NuxtLink>
     </div>
 
-    <template v-else>
+    <div v-else class="flex flex-col gap-4 md:gap-5">
       <!-- Member header -->
       <div class="flex items-center gap-4 p-4 rounded-xl border-2 border-border bg-surface">
         <div v-if="member.avatar" class="w-14 h-14 rounded-full overflow-hidden flex-shrink-0">
@@ -266,29 +246,12 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
 
       <!-- ══════ TIPS BLOCK (only when tipping is enabled) ══════ -->
       <template v-if="tipEnabled">
-        <div class="flex items-center justify-between gap-3">
-          <h3 class="text-base font-bold text-text-primary">Propinas</h3>
-          <NuxtLink
-            :to="historyLink"
-            class="text-sm text-primary hover:underline"
-          >
-            Ver todo en propinas →
-          </NuxtLink>
+        <div v-if="isRefreshing && recentTips.length === 0" class="flex items-center justify-center min-h-[200px]">
+          <CommonsTheCustomLoader size="medium" />
         </div>
 
-        <div
-          v-if="isTipsSectionLoading"
-          class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4"
-        >
-          <div
-            v-for="i in 3"
-            :key="`tips-metric-skeleton-${i}`"
-            class="rounded-xl border-2 border-border bg-surface p-4 h-24 animate-pulse"
-          />
-        </div>
-
-        <!-- 3 MetricCards -->
-        <div v-else class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+        <template v-else>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
           <MetricCard
             title="Hoy"
             :value="todayAgg.sum"
@@ -313,9 +276,7 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
         </div>
 
         <!-- Recent tips table -->
-        <div v-if="isTipsSectionLoading" class="rounded-xl border-2 border-border bg-surface h-48 animate-pulse" />
-
-        <div v-else class="flex flex-col gap-3">
+        <div class="flex flex-col gap-3">
           <p class="text-sm font-semibold text-text-primary">Últimas 10 propinas</p>
           <UiResponsiveDataView
             :columns="columns"
@@ -330,7 +291,7 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
               <div :class="['flex flex-col gap-1.5 p-4 border-b border-border', index % 2 === 0 ? 'bg-surface' : 'bg-background']">
                 <div class="flex items-center justify-between">
                   <div class="flex items-baseline gap-2">
-                    <span class="text-xs text-text-secondary">{{ formatDate(item.order_date) }}</span>
+                    <span class="text-xs text-text-secondary whitespace-nowrap shrink-0">{{ formatDate(item.order_date) }}</span>
                     <span class="text-sm font-semibold text-primary">#{{ item.order_number }}</span>
                   </div>
                   <UiStatusBadge :variant="channelVariant(item.channel)" size="sm" :value="channelLabel(item.channel)" />
@@ -347,7 +308,7 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
 
             <!-- Desktop cells -->
             <template #cell-order_date="{ value }">
-              <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+              <span class="text-sm text-text-secondary whitespace-nowrap">{{ formatDate(value) }}</span>
             </template>
             <template #cell-order_number="{ value }">
               <span class="text-sm font-medium text-primary">#{{ value }}</span>
@@ -366,7 +327,8 @@ onUnmounted(() => clearRefreshHandler(handleRefresh))
             </template>
           </UiResponsiveDataView>
         </div>
+        </template>
       </template>
-    </template>
+    </div>
   </div>
 </template>
