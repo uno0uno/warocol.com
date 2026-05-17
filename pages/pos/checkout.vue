@@ -320,15 +320,10 @@ const onSplitAmountInput = (e: Event) => {
 const isAddingPayment = ref(false)
 const splitPartialAmount = ref<number | null>(null)
 
-// After a payment lands, suggest the new remaining as the next partial — but
-// never seed it on initial toggle. The cashier must explicitly set the first
-// partial, otherwise the calculator was silently charging the full total and
-// the backend was closing the order instead of registering a partial.
-watch(splitRemaining, (val, oldVal) => {
-  if (splitIsComplete.value) return
-  if (splitPayments.value.length === 0) return
-  if (val !== oldVal) splitPartialAmount.value = val
-}, { immediate: false })
+// Issue warocol.com#649 — the partial amount input is always reset after each
+// payment lands and when split mode toggles. The cashier must explicitly type
+// the next partial — no auto-fill — avoids confusion with stale values like
+// "$1.100" sitting in the field after a payment was already submitted.
 watch(splitMode, (val) => {
   cashReceivedInput.value = 0
   if (val) {
@@ -402,7 +397,8 @@ const addSplitPayment = async () => {
         paidTotal = response.data.paid_total ?? amountToCharge
         remaining = response.data.remaining ?? (discountedTotal.value - amountToCharge)
         isComplete = response.data.is_complete ?? false
-        paymentId = 'mesa-split-1'
+        // Issue warocol.com#649 — real UUID from backend so the trash button can DELETE it.
+        paymentId = response.data.payment_id
       } else {
         // Subsequent payments
         const response = await $fetch(`/api/tables/${session.tableId}/payments`, {
@@ -419,7 +415,8 @@ const addSplitPayment = async () => {
         paidTotal = response.data.paid_total
         remaining = response.data.remaining
         isComplete = response.data.is_complete
-        paymentId = response.data.payment_id ?? `mesa-split-${splitPayments.value.length + 1}`
+        // Issue warocol.com#649 — backend always returns a real UUID; no fallback.
+        paymentId = response.data.payment_id
       }
     } else {
       if (splitPayments.value.length === 0) {
@@ -449,7 +446,8 @@ const addSplitPayment = async () => {
         paidTotal = response.data.paid_total ?? amountToCharge
         remaining = response.data.remaining ?? (discountedTotal.value - amountToCharge)
         isComplete = response.data.is_complete ?? false
-        paymentId = response.data.payment_id ?? 'split-1'
+        // Issue warocol.com#649 — backend always returns a real UUID; no fallback.
+        paymentId = response.data.payment_id
       } else {
         // Subsequent payments: add to existing order
         const response = await $fetch(`/api/pos/cart/${posStore.cartId}/payments`, {
@@ -481,6 +479,8 @@ const addSplitPayment = async () => {
     })
     splitPaidTotal.value = paidTotal
     cashReceivedInput.value = 0
+    // Issue warocol.com#649 — reset partial so next iteration starts at 0.
+    splitPartialAmount.value = null
     // Invalidate the read query so future reloads see the new partial.
     // Triggers a background refetch — header shows "Actualizando pagos".
     cache.invalidateQueries({
@@ -547,6 +547,7 @@ const confirmVoidPayment = async () => {
     const voidedIds: string[] = res.data?.voided_ids ?? [p.id]
     splitPayments.value = splitPayments.value.filter(row => !voidedIds.includes(row.id))
     splitPaidTotal.value = Number(res.data?.paid_total ?? 0)
+    splitPartialAmount.value = null
     // Invalidate the read query so background refetch syncs the new state.
     cache.invalidateQueries({
       key: isMesaMode.value
