@@ -188,6 +188,7 @@ watch([() => posStore.cartId, () => selectedCustomer.value?.id], () => {
 const waiterAttributionEnabled = computed(() => settingsData.value?.data?.waiter_attribution_enabled === true)
 const tenantMembers = computed(() => settingsData.value?.data?.members ?? [])
 const showCheckoutWaiterSelector = computed(() => {
+  if (!tipEnabled.value) return false
   if (!waiterAttributionEnabled.value) return true
   // Mesa: always show so cashier can confirm/override effective session waiter (#666)
   if (isMesaMode.value) return true
@@ -197,7 +198,7 @@ const showCheckoutWaiterSelector = computed(() => {
 // Seed once from session effective waiter so dropdown defaults and body sends explicit id
 const checkoutWaiterSeeded = ref(false)
 const seedCheckoutWaiterFromSession = () => {
-  if (checkoutWaiterSeeded.value || !isMesaMode.value) return
+  if (!tipEnabled.value || checkoutWaiterSeeded.value || !isMesaMode.value) return
   const effectiveId = posStore.activeTableSession?.effectiveWaiterMemberId
   if (effectiveId && !posStore.cartServedByMemberId) {
     posStore.setCartServedBy(effectiveId)
@@ -209,8 +210,15 @@ watch(
   seedCheckoutWaiterFromSession,
   { immediate: true },
 )
+watch(tipEnabled, (enabled) => {
+  if (enabled) return
+  posStore.setCartServedBy(null)
+  checkoutWaiterSeeded.value = false
+})
 const checkoutServedByBody = computed(() =>
-  posStore.cartServedByMemberId ? { served_by_member_id: posStore.cartServedByMemberId } : {},
+  tipEnabled.value && posStore.cartServedByMemberId
+    ? { served_by_member_id: posStore.cartServedByMemberId }
+    : {},
 )
 
 // Counter mode: not a real table session (no mesa, no bar)
