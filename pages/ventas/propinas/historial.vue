@@ -243,7 +243,25 @@ const columns: Column[] = [
 // ── Layout integration ──────────────────────────────────────────────────────
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 registerProgressiveLoading(isRefreshing)
-onMounted(() => setRefreshHandler(refetch))
+
+// warocol.com#641 — pre-apply the date range when arriving via the
+// "Propinas del periodo" MetricCard on /analitica/ventas. URL is the
+// source of truth on first paint; subsequent user interactions update
+// the local ref directly (we don't sync back to the URL — out of scope).
+const route = useRoute()
+
+onMounted(() => {
+  const qFrom = route.query.date_from as string | undefined
+  const qTo = route.query.date_to as string | undefined
+  if (qFrom && qTo) {
+    const from = new Date(`${qFrom}T00:00:00`)
+    const to = new Date(`${qTo}T00:00:00`)
+    if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
+      dateRangeDates.value = [from, to]
+    }
+  }
+  setRefreshHandler(refetch)
+})
 onUnmounted(() => clearRefreshHandler(refetch))
 </script>
 
