@@ -18,6 +18,7 @@ const navigationItems = computed(() => [
   { to: '/operaciones/comandas', label: 'Comandas & Cocina' },
   { to: '/operaciones/mesas', label: plural.value },
   { to: '/operaciones/personalizar', label: 'Personalizar' },
+  { to: '/operaciones/propinas', label: 'Propinas' },
 ])
 
 useHead({ title: 'Operaciones | WARO' })

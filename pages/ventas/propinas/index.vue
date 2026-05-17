@@ -1,318 +1,564 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { es } from 'date-fns/locale'
+import { format as fnsFormat } from 'date-fns'
+import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({
   layout: 'dashboard',
 })
 
-useHead({ title: 'Propinas | Ventas' })
+useHead({ title: 'Historial de propinas — Ventas' })
 
 const { currentTenant } = useTenantReactive()
-const cache = useQueryCache()
 const toast = useToast()
 
-// Aggregator query — shared with /operaciones/* siblings.
-// Returns tip_enabled, tip_default_percentages, tip_preselect_index in
-// addition to the existing operaciones/POS toggles (warocol.com#638
-// backend extension).
-const { data: profileData, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
+// Payment groups (same query as /ventas/ordenes — shared cache)
+const { data: paymentGroupsData } = useQuery({
+  key: () => ['payments', 'groups', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: { id: string; slug: string; name: string; methods: { id: string; name: string }[] }[] }>('/api/pos/payment-methods'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 300_000,
+})
+const paymentGroups = computed(() => paymentGroupsData.value?.data ?? [])
+const { resolveLabel } = usePaymentLabel(paymentGroups)
+
+// Tenant context (for tip_enabled gate + members dropdown). Shared cache key
+// with /operaciones/propinas (config page) and the rest of /operaciones/*.
+const { data: ctxData } = useQuery({
   key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/operaciones/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
-const businessProfile = computed(() => profileData.value?.data ?? null)
-const loading = computed(() => !profileData.value)
-const isRefreshing = computed(() =>
-  profileAsyncStatus.value === 'loading' && profileData.value != null
+const tipEnabled = computed<boolean>(() => ctxData.value?.data?.tip_enabled === true)
+const memberOptions = computed<{ id: string; name: string }[]>(
+  () => (ctxData.value?.data?.members ?? []).map((m: any) => ({ id: String(m.id), name: m.name || 'Sin nombre' }))
 )
 
-const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-registerProgressiveLoading(isRefreshing)
-onMounted(() => setRefreshHandler(refreshProfile))
-onUnmounted(() => clearRefreshHandler(refreshProfile))
+// ── Filter state ────────────────────────────────────────────────────────────
+const localSearchTerm = ref<string>('')
+const appliedSearch = ref<string>('')
+const memberFilter = ref<string | null>(null)
+const paymentFilter = ref<string | null>(null) // group slug
+const channelFilter = ref<'pos' | 'mesa' | 'online' | null>(null)
+const dateRangeDates = ref<Date[] | null>(null)
+const sortField = ref<'order_number' | 'order_date' | 'total_amount' | 'tip_amount' | 'payment_method'>('order_date')
+const sortDirection = ref<'asc' | 'desc'>('desc')
 
-const invalidateContextCaches = async () => {
-  // POS reads tip_enabled at checkout (warocol.com#637 wiring), so both
-  // audiences must be invalidated after any save.
-  await cache.invalidateQueries({ key: ['operaciones', 'restaurant-context'] })
-  await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
+const presetDates = ref([
+  { label: 'Hoy', value: [new Date(), new Date()] },
+  { label: 'Ayer', value: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return [d, d] })() },
+  { label: 'Última semana', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
+  { label: 'Últimos 15 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 15); return d })(), new Date()] },
+  { label: 'Último mes', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
+  { label: 'Últimos 90 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d })(), new Date()] },
+])
+
+const formatDateRange = (dates: Date[]) => {
+  if (!dates || !dates[0]) return ''
+  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
+  if (!dates[1]) return from
+  const to = fnsFormat(dates[1], 'dd/MM/yy', { locale: es })
+  return `${from} - ${to}`
 }
 
-// ── Master toggle ──────────────────────────────────────────────────────────
-const isToggling = ref(false)
-
-const toggleTipEnabled = async () => {
-  if (!businessProfile.value || isToggling.value) return
-  const newState = !businessProfile.value.tip_enabled
-  isToggling.value = true
-  try {
-    await $fetch('/api/operaciones/toggles/tip', {
-      method: 'PATCH',
-      body: { enabled: newState },
-    })
-    await invalidateContextCaches()
-    toast.success(
-      newState
-        ? 'Los clientes verán la opción de propina en el checkout'
-        : 'La propina queda oculta en el checkout',
-      { title: newState ? 'Propinas activadas' : 'Propinas desactivadas' },
-    )
-  } catch (error: any) {
-    toast.error(error?.data?.detail || 'Error al cambiar la configuración', { title: 'Error' })
-  } finally {
-    isToggling.value = false
-  }
-}
-
-// ── Presets + preselect (editable local state, save explicit) ──────────────
-const draftPresets = ref<number[]>([])
-const draftPreselect = ref<boolean>(false)
-const newPresetInput = ref<string>('')
-const presetError = ref<string>('')
-
-// Hydrate the draft from the server every time the profile loads/refreshes.
-watch(
-  businessProfile,
-  (profile) => {
-    if (!profile) return
-    const serverPresets: number[] = (profile.tip_default_percentages ?? [10]).map((p: any) => Number(p))
-    draftPresets.value = [...serverPresets]
-    draftPreselect.value = profile.tip_preselect_index === 0
-  },
-  { immediate: true },
-)
-
-const serverPresets = computed<number[]>(() =>
-  (businessProfile.value?.tip_default_percentages ?? [10]).map((p: any) => Number(p)),
-)
-const serverPreselect = computed<boolean>(() => businessProfile.value?.tip_preselect_index === 0)
-
-const hasChanges = computed(() => {
-  if (draftPresets.value.length !== serverPresets.value.length) return true
-  for (let i = 0; i < draftPresets.value.length; i++) {
-    if (draftPresets.value[i] !== serverPresets.value[i]) return true
-  }
-  if (draftPreselect.value !== serverPreselect.value) return true
-  return false
+const dateRange = computed(() => {
+  if (!dateRangeDates.value || dateRangeDates.value.length < 2) return { from: null as string | null, to: null as string | null }
+  const [from, to] = dateRangeDates.value
+  if (!from || !to) return { from: null, to: null }
+  return { from: fnsFormat(from, 'yyyy-MM-dd'), to: fnsFormat(to, 'yyyy-MM-dd') }
 })
 
-const addPreset = () => {
-  presetError.value = ''
-  const raw = newPresetInput.value.trim().replace(',', '.')
-  if (!raw) {
-    presetError.value = 'Ingresa un porcentaje.'
-    return
-  }
-  const value = Number(raw)
-  if (!Number.isFinite(value)) {
-    presetError.value = 'Ingresa un número válido.'
-    return
-  }
-  if (value < 0 || value > 100) {
-    presetError.value = 'El porcentaje debe estar entre 0 y 100.'
-    return
-  }
-  if (draftPresets.value.length >= 5) {
-    presetError.value = 'Máximo 5 sugerencias.'
-    return
-  }
-  // Round to 2 decimals to match DB numeric(5,2) precision and avoid silent rounding.
-  const rounded = Math.round(value * 100) / 100
-  draftPresets.value.push(rounded)
-  newPresetInput.value = ''
+// Pagination
+const PAGE_SIZE = 25
+const currentPage = ref(1)
+
+// ── Main query ──────────────────────────────────────────────────────────────
+const { data: tipsData, asyncStatus, error: fetchError, refetch } = useQuery({
+  key: () => ['tips', currentTenant.value?.id, {
+    limit: PAGE_SIZE,
+    offset: (currentPage.value - 1) * PAGE_SIZE,
+    search: appliedSearch.value || null,
+    member_id: memberFilter.value,
+    payment_method: paymentFilter.value,
+    channel: channelFilter.value,
+    dateFrom: dateRange.value.from,
+    dateTo: dateRange.value.to,
+    sortField: sortField.value,
+    sortDirection: sortDirection.value,
+  }],
+  query: () => $fetch<any>('/api/orders/tips', {
+    params: {
+      limit: PAGE_SIZE,
+      offset: (currentPage.value - 1) * PAGE_SIZE,
+      search: appliedSearch.value || undefined,
+      member_id: memberFilter.value || undefined,
+      payment_method: paymentFilter.value || undefined,
+      channel: channelFilter.value || undefined,
+      date_from: dateRange.value.from || undefined,
+      date_to: dateRange.value.to || undefined,
+      sort_field: sortField.value,
+      sort_direction: sortDirection.value,
+    }
+  }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+const isLoading = computed(() => !tipsData.value && !fetchError.value)
+const isRefreshing = computed(() => asyncStatus.value === 'loading' && tipsData.value != null)
+const tips = computed<any[]>(() => tipsData.value?.data ?? [])
+const aggregates = computed<{ sum_tip: number; count_with_tip: number; avg_pct: number }>(
+  () => tipsData.value?.aggregates ?? { sum_tip: 0, count_with_tip: 0, avg_pct: 0 }
+)
+const totalCount = computed<number>(() => tipsData.value?.pagination?.total ?? 0)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / PAGE_SIZE)))
+
+// Reset page on tenant or filter change
+watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
+watch([memberFilter, paymentFilter, channelFilter, dateRangeDates, appliedSearch], () => {
+  currentPage.value = 1
+})
+
+const goToPage = (page: number) => {
+  currentPage.value = Math.max(1, Math.min(page, totalPages.value))
 }
 
-const removePreset = (index: number) => {
-  // Removing the preselected first preset turns the toggle off (the index becomes invalid).
-  if (index === 0 && draftPreselect.value) {
-    draftPreselect.value = false
+// ── Sort + filter handlers ──────────────────────────────────────────────────
+const handleSort = (field: string) => {
+  if (sortField.value === field) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortField.value = field as any
+    sortDirection.value = 'desc'
   }
-  draftPresets.value.splice(index, 1)
 }
 
-const formatPreset = (p: number): string => {
-  return Number.isInteger(p) ? `${p}%` : `${p}%`
+const applySearch = () => {
+  appliedSearch.value = localSearchTerm.value.trim()
 }
 
-const isSavingConfig = ref(false)
+const clearAllFilters = () => {
+  localSearchTerm.value = ''
+  appliedSearch.value = ''
+  memberFilter.value = null
+  paymentFilter.value = null
+  channelFilter.value = null
+  dateRangeDates.value = null
+}
 
-const saveConfig = async () => {
-  if (!hasChanges.value || isSavingConfig.value) return
-  if (draftPresets.value.length === 0) {
-    toast.error('Necesitas al menos un preset.', { title: 'Sin presets' })
-    return
-  }
-  isSavingConfig.value = true
+// Mesero click on a row → filter to that mesero
+const filterByMember = (memberId: string | null) => {
+  if (!memberId) return
+  memberFilter.value = memberId
+}
+
+// ── Export by email ─────────────────────────────────────────────────────────
+const isExporting = ref(false)
+const showExportModal = ref(false)
+const exportResult = ref<{ success: boolean; message: string; email?: string; count?: number } | null>(null)
+
+const exportToEmail = async () => {
+  if (isExporting.value) return
+  isExporting.value = true
+  exportResult.value = null
   try {
-    await $fetch('/api/operaciones/tip/config', {
-      method: 'PATCH',
-      body: {
-        percentages: draftPresets.value,
-        preselect_index: draftPreselect.value && draftPresets.value.length > 0 ? 0 : null,
+    const res = await $fetch<{ success: boolean; message: string; data: { email: string; orders_count: number } }>(
+      '/api/orders/export',
+      {
+        method: 'POST',
+        params: {
+          tips_only: true,
+          search: appliedSearch.value || undefined,
+          member_id: memberFilter.value || undefined,
+          payment_method: paymentFilter.value || undefined,
+          channel: channelFilter.value || undefined,
+          date_from: dateRange.value.from || undefined,
+          date_to: dateRange.value.to || undefined,
+          sort_field: sortField.value,
+          sort_direction: sortDirection.value,
+        },
       },
-    })
-    await invalidateContextCaches()
-    toast.success('Configuración guardada', { title: 'Guardado' })
-  } catch (error: any) {
-    toast.error(error?.data?.detail || 'Error al guardar la configuración', { title: 'Error' })
+    )
+    exportResult.value = {
+      success: true,
+      message: res.message,
+      email: res.data?.email,
+      count: res.data?.orders_count,
+    }
+    showExportModal.value = true
+  } catch (e: any) {
+    exportResult.value = {
+      success: false,
+      message: e?.data?.detail || e?.message || 'No se pudo exportar el reporte',
+    }
+    showExportModal.value = true
   } finally {
-    isSavingConfig.value = false
+    isExporting.value = false
   }
 }
+
+// ── Formatting helpers ──────────────────────────────────────────────────────
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+  }).format(value || 0)
+
+const formatDate = (iso: string | null | undefined) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return fnsFormat(d, "d MMM yyyy, h:mm a", { locale: es })
+}
+
+const formatPercent = (value: number) => `${(value || 0).toFixed(2)}%`
+
+const channelLabel = (ch: string | null | undefined) => {
+  if (ch === 'online') return 'Online'
+  if (ch === 'mesa') return 'Mesa'
+  if (ch === 'barra') return 'Barra'
+  return 'POS'
+}
+const channelVariant = (ch: string | null | undefined) => {
+  if (ch === 'online') return 'success'
+  if (ch === 'mesa') return 'info'
+  if (ch === 'barra') return 'warning'
+  return 'secondary'
+}
+
+// ── Columns ─────────────────────────────────────────────────────────────────
+const columns: Column[] = [
+  { key: 'order_date', title: 'Fecha', sortable: true, width: '160px' },
+  { key: 'order_number', title: 'Orden', sortable: true, width: '90px' },
+  { key: 'channel', title: 'Canal', width: '100px' },
+  { key: 'total_amount', title: 'Subtotal', sortable: true, align: 'right' },
+  { key: 'tip_amount', title: 'Propina', sortable: true, align: 'right' },
+  { key: 'tip_percent', title: '%', align: 'right', width: '80px' },
+  { key: 'member_name', title: 'Mesero' },
+  { key: 'payment_method', title: 'Método de pago' },
+]
+
+// ── Layout integration ──────────────────────────────────────────────────────
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+registerProgressiveLoading(isRefreshing)
+
+// warocol.com#641 — pre-apply the date range when arriving via the
+// "Propinas del periodo" MetricCard on /analitica/ventas. URL is the
+// source of truth on first paint; subsequent user interactions update
+// the local ref directly (we don't sync back to the URL — out of scope).
+const route = useRoute()
+
+onMounted(() => {
+  const qFrom = route.query.date_from as string | undefined
+  const qTo = route.query.date_to as string | undefined
+  if (qFrom && qTo) {
+    const from = new Date(`${qFrom}T00:00:00`)
+    const to = new Date(`${qTo}T00:00:00`)
+    if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
+      dateRangeDates.value = [from, to]
+    }
+  }
+  // warocol.com#642 — pre-apply mesero filter when arriving from /equipo/miembros/[id]
+  const qMember = route.query.member_id as string | undefined
+  if (qMember) memberFilter.value = qMember
+  setRefreshHandler(refetch)
+})
+onUnmounted(() => clearRefreshHandler(refetch))
 </script>
 
 <template>
-  <div>
-    <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center min-h-[400px]">
-      <CommonsTheCustomLoader size="large" />
+  <div class="flex flex-col gap-3 md:gap-4">
+    <!-- ══════ EMPTY STATE: tipping disabled ══════ -->
+    <div
+      v-if="!isLoading && ctxData && !tipEnabled"
+      class="flex flex-col items-center justify-center gap-3 py-16 px-6 bg-surface rounded-xl border-2 border-border text-center"
+    >
+      <span aria-hidden="true" class="text-4xl">💡</span>
+      <p class="text-base font-semibold text-text-primary">Las propinas no están activadas</p>
+      <p class="text-sm text-text-secondary max-w-md">
+        Activa el cobro de propinas para empezar a verlas aquí. Hoy el checkout no muestra la opción de propina a tus clientes.
+      </p>
+      <NuxtLink
+        to="/operaciones/propinas"
+        class="mt-2 min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all"
+      >
+        Configurar propinas →
+      </NuxtLink>
     </div>
 
-    <!-- Content -->
-    <div v-else class="flex flex-col gap-3 md:gap-4">
-      <!-- ══════ MASTER TOGGLE ══════ -->
-      <div
-        v-if="businessProfile"
-        class="flex items-center justify-between gap-4 rounded-xl border-2 border-border bg-surface px-4 py-3"
-      >
-        <div class="min-w-0">
-          <p class="text-sm font-semibold leading-snug text-text-primary">
-            {{ businessProfile.tip_enabled ? 'Propinas activadas' : 'Propinas desactivadas' }}
-          </p>
-          <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-            Cuando está activado, los clientes ven sugerencias de propina al cobrar (POS y online). La propina es voluntaria y se asigna al mesero de la orden.
-          </p>
+    <!-- ══════ MAIN CONTENT: tipping enabled ══════ -->
+    <template v-else>
+      <!-- Aggregates strip -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="rounded-xl border-2 border-border bg-surface px-4 py-3">
+          <p class="text-xs uppercase tracking-wider text-text-secondary">Total propinas</p>
+          <p class="text-2xl font-bold text-primary tabular-nums mt-1">{{ formatCurrency(aggregates.sum_tip) }}</p>
         </div>
-        <label
-          class="relative inline-flex items-center cursor-pointer flex-shrink-0"
-          :class="isToggling ? 'opacity-50 pointer-events-none' : ''"
-          :aria-label="businessProfile.tip_enabled ? 'Desactivar propinas' : 'Activar propinas'"
-        >
-          <input
-            type="checkbox"
-            class="sr-only peer"
-            :checked="businessProfile.tip_enabled"
-            :disabled="isToggling"
-            @change="toggleTipEnabled"
-          />
-          <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-        </label>
+        <div class="rounded-xl border-2 border-border bg-surface px-4 py-3">
+          <p class="text-xs uppercase tracking-wider text-text-secondary">Promedio sobre venta</p>
+          <p class="text-2xl font-bold text-text-primary tabular-nums mt-1">{{ formatPercent(aggregates.avg_pct) }}</p>
+        </div>
+        <div class="rounded-xl border-2 border-border bg-surface px-4 py-3">
+          <p class="text-xs uppercase tracking-wider text-text-secondary">Órdenes con propina</p>
+          <p class="text-2xl font-bold text-text-primary tabular-nums mt-1">{{ aggregates.count_with_tip }}</p>
+        </div>
       </div>
 
-      <!-- ══════ SUB-BLOCK (only when tip_enabled) ══════ -->
-      <template v-if="businessProfile?.tip_enabled">
-        <!-- Fixed informational banner (Ley 1935 framing) -->
-        <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex gap-3">
-          <span aria-hidden="true" class="text-amber-700 mt-0.5">⚠</span>
-          <p class="text-sm text-amber-900 leading-snug">
-            En este momento las propinas se asignan directamente al mesero de la orden. La distribución entre el equipo (cocina, auxiliares, etc.) es responsabilidad del dueño.
-          </p>
-        </div>
+      <!-- Filter bar -->
+      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide rounded-xl border-2 border-border bg-surface px-3 py-3">
+        <!-- Date range -->
+        <VueDatePicker
+          v-model="dateRangeDates"
+          range
+          :enable-time-picker="false"
+          :locale="es"
+          :preset-dates="presetDates"
+          placeholder="Fecha"
+          auto-apply
+          teleport
+          :max-date="new Date()"
+          :format="formatDateRange"
+          input-class-name="min-w-[180px] min-h-[40px]"
+        />
 
-        <!-- ── Presets section ── -->
-        <div class="rounded-xl border-2 border-border bg-surface px-4 py-4 flex flex-col gap-4">
-          <div class="flex flex-col gap-1">
-            <p class="text-sm font-semibold text-text-primary">Porcentajes sugeridos</p>
-            <p class="text-xs leading-snug text-text-secondary">
-              Hasta 5 opciones, cada una entre 0 y 100. Se muestran como chips en el checkout, calculados sobre el subtotal (antes de impuestos).
-            </p>
-          </div>
+        <!-- Mesero -->
+        <select
+          v-model="memberFilter"
+          class="input-base min-h-[40px] px-3 text-sm min-w-[160px]"
+          aria-label="Filtrar por mesero"
+        >
+          <option :value="null">Todos los meseros</option>
+          <option v-for="m in memberOptions" :key="m.id" :value="m.id">{{ m.name }}</option>
+        </select>
 
-          <!-- Chip row -->
-          <div role="group" aria-label="Porcentajes sugeridos" class="flex flex-wrap gap-2">
-            <div
-              v-for="(p, i) in draftPresets"
-              :key="`preset-${i}-${p}`"
-              class="min-h-[44px] inline-flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-primary bg-primary/10 text-primary text-sm font-medium"
-            >
-              <span>{{ formatPreset(p) }}</span>
-              <button
-                type="button"
-                class="text-primary/70 hover:text-primary"
-                :aria-label="`Quitar ${formatPreset(p)}`"
-                @click="removePreset(i)"
-              >
-                ×
-              </button>
-            </div>
-            <p v-if="draftPresets.length === 0" class="text-xs text-text-secondary self-center">
-              Sin presets — agrega al menos uno para que el checkout muestre sugerencias.
-            </p>
-          </div>
+        <!-- Channel -->
+        <select
+          v-model="channelFilter"
+          class="input-base min-h-[40px] px-3 text-sm min-w-[120px]"
+          aria-label="Filtrar por canal"
+        >
+          <option :value="null">Todos los canales</option>
+          <option value="pos">POS</option>
+          <option value="mesa">Mesa</option>
+          <option value="online">Online</option>
+        </select>
 
-          <!-- Add control -->
-          <div class="flex flex-col sm:flex-row gap-2 sm:items-start">
-            <div class="flex-1 flex flex-col gap-1">
-              <label for="new-preset" class="sr-only">Agregar porcentaje</label>
-              <input
-                id="new-preset"
-                v-model="newPresetInput"
-                type="text"
-                inputmode="decimal"
-                placeholder="Ej: 12.5"
-                maxlength="6"
-                :disabled="draftPresets.length >= 5"
-                class="input-base w-full sm:w-40 px-4 py-2 min-h-[44px]"
-                @keydown.enter.prevent="addPreset"
-              />
-              <p v-if="presetError" class="text-xs text-destructive">{{ presetError }}</p>
-            </div>
-            <button
-              type="button"
-              :disabled="draftPresets.length >= 5"
-              class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border bg-background text-text-primary text-sm font-medium hover:border-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
-              @click="addPreset"
-            >
-              Agregar
-            </button>
-          </div>
-        </div>
+        <!-- Payment method -->
+        <select
+          v-model="paymentFilter"
+          class="input-base min-h-[40px] px-3 text-sm min-w-[140px]"
+          aria-label="Filtrar por método de pago"
+        >
+          <option :value="null">Todos los métodos</option>
+          <option v-for="g in paymentGroups" :key="g.slug" :value="g.slug">{{ g.name }}</option>
+        </select>
 
-        <!-- ── Preselect toggle ── -->
-        <div class="flex items-center justify-between gap-4 rounded-xl border-2 border-border bg-surface px-4 py-3">
-          <div class="min-w-0">
-            <p class="text-sm font-semibold leading-snug text-text-primary">
-              Pre-seleccionar primer preset
-            </p>
-            <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-              Recomendado: <strong>desactivado</strong>. La Ley 1935 establece que la propina es voluntaria — al no pre-seleccionar, el cliente la elige de forma consciente.
-            </p>
-          </div>
-          <label
-            class="relative inline-flex items-center cursor-pointer flex-shrink-0"
-            :aria-label="draftPreselect ? 'Desactivar pre-selección' : 'Activar pre-selección'"
-          >
-            <input
-              type="checkbox"
-              class="sr-only peer"
-              :checked="draftPreselect"
-              :disabled="draftPresets.length === 0"
-              @change="draftPreselect = !draftPreselect"
-            />
-            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
-          </label>
-        </div>
-
-        <!-- ── Save bar ── -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-surface border-2 border-border px-4 py-3">
-          <p class="text-xs text-text-secondary">
-            Los cambios en los porcentajes y la pre-selección se aplican al guardar.
-          </p>
+        <!-- Search by order # -->
+        <div class="flex items-center gap-1">
+          <input
+            v-model="localSearchTerm"
+            type="text"
+            inputmode="numeric"
+            placeholder="Nº orden"
+            class="input-base min-h-[40px] px-3 text-sm w-28"
+            @keydown.enter.prevent="applySearch"
+          />
           <button
             type="button"
-            :disabled="!hasChanges || isSavingConfig"
-            class="min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
-            @click="saveConfig"
+            class="min-h-[40px] px-3 rounded-lg border-2 border-border bg-background text-sm font-medium hover:border-primary/40"
+            @click="applySearch"
           >
-            {{ isSavingConfig ? 'Guardando...' : 'Guardar cambios' }}
+            Buscar
           </button>
         </div>
 
-        <NuxtLink to="/ventas/propinas/historial" class="text-sm text-primary hover:underline self-start">
-          Ver historial de propinas →
-        </NuxtLink>
-      </template>
-    </div>
+        <!-- Clear -->
+        <button
+          type="button"
+          class="min-h-[40px] px-3 rounded-lg text-sm text-text-secondary hover:text-text-primary"
+          @click="clearAllFilters"
+        >
+          Limpiar
+        </button>
+
+        <div class="flex-1" />
+
+        <!-- Export -->
+        <button
+          type="button"
+          class="hidden md:flex min-h-[40px] px-4 items-center gap-2 rounded-lg bg-surface border-2 border-border hover:border-primary text-sm font-medium disabled:opacity-50"
+          :disabled="isExporting || tips.length === 0"
+          @click="exportToEmail"
+        >
+          <UiLoadingDots v-if="isExporting" size="6px" />
+          <span v-else>Exportar por correo</span>
+        </button>
+      </div>
+
+      <!-- Table -->
+      <UiResponsiveDataView
+        :columns="columns"
+        :data="tips"
+        :sort-field="sortField"
+        :sort-direction="sortDirection"
+        empty-message="Sin propinas en el periodo seleccionado"
+        empty-sub-message="Ajusta los filtros para ver más resultados."
+        item-key="id"
+        row-size="sm"
+        @sort="handleSort"
+      >
+        <!-- Mobile card -->
+        <template #card="{ item, index }">
+          <div :class="['flex flex-col gap-2 p-4 border-b border-border', index % 2 === 0 ? 'bg-surface' : 'bg-background']">
+            <div class="flex items-center justify-between">
+              <div class="flex items-baseline gap-2">
+                <span class="text-xs text-text-secondary">{{ formatDate(item.order_date) }}</span>
+                <span class="text-sm font-semibold text-primary">#{{ item.order_number }}</span>
+              </div>
+              <UiStatusBadge :variant="channelVariant(item.channel)" size="sm" :value="channelLabel(item.channel)" />
+            </div>
+            <div class="flex items-end justify-between">
+              <div>
+                <p class="text-xs text-text-secondary">Subtotal: {{ formatCurrency(item.total_amount) }}</p>
+                <button
+                  type="button"
+                  class="text-sm font-medium text-text-primary hover:text-primary hover:underline mt-0.5"
+                  @click.stop="filterByMember(item.served_by_member_id)"
+                >
+                  {{ item.member_name || 'Sin asignar' }}
+                </button>
+                <p class="text-xs text-text-tertiary mt-0.5">{{ resolveLabel(item.payment_method) }}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xl font-bold text-primary tabular-nums">{{ formatCurrency(item.tip_amount) }}</p>
+                <p class="text-xs text-text-secondary tabular-nums">{{ formatPercent(item.tip_percent) }}</p>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Desktop cells -->
+        <template #cell-order_date="{ value }">
+          <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
+        </template>
+        <template #cell-order_number="{ value }">
+          <span class="text-sm font-medium text-primary">#{{ value }}</span>
+        </template>
+        <template #cell-channel="{ row }">
+          <UiStatusBadge :variant="channelVariant(row.channel)" size="sm" :value="channelLabel(row.channel)" />
+        </template>
+        <template #cell-total_amount="{ value }">
+          <span class="text-sm tabular-nums">{{ formatCurrency(value) }}</span>
+        </template>
+        <template #cell-tip_amount="{ value }">
+          <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(value) }}</span>
+        </template>
+        <template #cell-tip_percent="{ value }">
+          <span class="text-sm tabular-nums text-text-secondary">{{ formatPercent(value) }}</span>
+        </template>
+        <template #cell-member_name="{ row }">
+          <button
+            type="button"
+            class="text-sm text-text-primary hover:text-primary hover:underline text-left"
+            @click.stop="filterByMember(row.served_by_member_id)"
+          >
+            {{ row.member_name || 'Sin asignar' }}
+          </button>
+        </template>
+        <template #cell-payment_method="{ value }">
+          <span class="text-sm text-text-secondary">{{ resolveLabel(value) }}</span>
+        </template>
+      </UiResponsiveDataView>
+
+      <!-- Pagination -->
+      <div v-if="totalCount > PAGE_SIZE" class="flex items-center justify-between gap-2 px-2">
+        <p class="text-xs text-text-secondary">
+          Página {{ currentPage }} de {{ totalPages }} · {{ totalCount }} resultados
+        </p>
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            class="min-h-[36px] min-w-[36px] px-2 rounded-md border border-border hover:border-primary disabled:opacity-40"
+            :disabled="currentPage === 1"
+            aria-label="Primera página"
+            @click="goToPage(1)"
+          >«</button>
+          <button
+            type="button"
+            class="min-h-[36px] min-w-[36px] px-2 rounded-md border border-border hover:border-primary disabled:opacity-40"
+            :disabled="currentPage === 1"
+            aria-label="Página anterior"
+            @click="goToPage(currentPage - 1)"
+          >‹</button>
+          <button
+            type="button"
+            class="min-h-[36px] min-w-[36px] px-2 rounded-md border border-border hover:border-primary disabled:opacity-40"
+            :disabled="currentPage === totalPages"
+            aria-label="Página siguiente"
+            @click="goToPage(currentPage + 1)"
+          >›</button>
+          <button
+            type="button"
+            class="min-h-[36px] min-w-[36px] px-2 rounded-md border border-border hover:border-primary disabled:opacity-40"
+            :disabled="currentPage === totalPages"
+            aria-label="Última página"
+            @click="goToPage(totalPages)"
+          >»</button>
+        </div>
+      </div>
+    </template>
+
+    <!-- Export result modal -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div
+          v-if="showExportModal"
+          class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-5"
+          @click.self="showExportModal = false"
+        >
+          <div class="bg-background rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div
+              :class="[
+                'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5',
+                exportResult?.success ? 'bg-green-100' : 'bg-red-100',
+              ]"
+            >
+              <svg v-if="exportResult?.success" class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <svg v-else class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h2 class="text-xl font-bold text-text-primary mb-2">
+              {{ exportResult?.success ? 'Reporte enviado' : 'No se pudo exportar' }}
+            </h2>
+            <p v-if="exportResult?.success" class="text-sm text-text-secondary mb-1">
+              {{ exportResult.count }} propinas enviadas a
+            </p>
+            <p v-if="exportResult?.success && exportResult.email" class="text-sm font-medium text-text-primary mb-5">
+              {{ exportResult.email }}
+            </p>
+            <p v-else class="text-sm text-text-secondary mb-5">{{ exportResult?.message }}</p>
+            <button
+              type="button"
+              class="w-full min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium"
+              @click="showExportModal = false"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from,
+.fade-leave-to { opacity: 0; }
+</style>

@@ -16,6 +16,7 @@ definePageMeta({
 const navigationItems = [
   { to: '/ventas/ordenes', label: 'Órdenes' },
   { to: '/ventas/productos', label: 'Productos' },
+  { to: '/ventas/propinas', label: 'Propinas' },
 ]
 
 useHead({

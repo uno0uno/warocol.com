@@ -312,11 +312,11 @@ const formatCurrency = (value: number) =>
         <div :class="['grid grid-cols-2 gap-3 md:gap-4 mb-6', tipEnabled ? 'md:grid-cols-5' : 'md:grid-cols-4']">
           <MetricCard title="Ventas Brutas" :value="metrics.total_sales" format="currency" variant="primary" />
           <MetricCard title="Ticket Promedio" :value="metrics.avg_ticket" format="currency" variant="primary" />
-          <!-- warocol.com#641 — Tips card with deep-link to /ventas/propinas/historial -->
+          <!-- warocol.com#641 — Tips card with deep-link to /ventas/propinas -->
           <NuxtLink
             v-if="tipEnabled"
             :to="{
-              path: '/ventas/propinas/historial',
+              path: '/ventas/propinas',
               query: dateRange.from && dateRange.to ? { date_from: dateRange.from, date_to: dateRange.to } : {},
             }"
             class="contents"

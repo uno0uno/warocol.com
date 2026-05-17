@@ -152,7 +152,7 @@ const columns: Column[] = [
 ]
 
 const historyLink = computed(() => ({
-  path: '/ventas/propinas/historial',
+  path: '/ventas/propinas',
   query: { member_id: memberId.value },
 }))
 

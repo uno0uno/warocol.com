@@ -287,7 +287,7 @@ const minOrderAmount = computed(
 
 // warocol.com#639 — tipping config (read from the same tenantProfile query;
 // backend exposes the 3 fields in api-warolabs#247). Hidden by default until
-// the tenant opts in via /ventas/propinas (warocol.com#638).
+// the tenant opts in via /operaciones/propinas (warocol.com#638).
 type TipProfile = {
   tip_enabled?: boolean
   tip_default_percentages?: number[]

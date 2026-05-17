@@ -188,7 +188,6 @@ const { businessProfile } = useTenantReactive()
 const primaryItems = computed<SidebarItem[]>(() => [
   { to: '/pos',                 page: 'pos',      label: 'POS',      icon: ComputerDesktopIcon, module: 'pos' },
   { to: '/ventas',              page: 'ventas',   label: 'Ventas',   icon: ShoppingCartIcon,    module: 'ventas' },
-  { to: '/ventas/propinas',     page: 'propinas', label: 'Propinas', icon: BanknotesIcon,       module: 'ventas' },
   { to: '/despacho/domicilios', page: 'despacho', label: 'Despacho', icon: MapPinIcon,          module: 'despacho' },
 ])
 
