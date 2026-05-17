@@ -908,6 +908,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path === '/ventas/propinas' || path === '/ventas/propinas/') {
+    return {
+      pageTitle: 'Propinas',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar propinas...',
+      activePage: 'propinas' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path.startsWith('/ventas')) {
     return {
       pageTitle: 'Ventas',
