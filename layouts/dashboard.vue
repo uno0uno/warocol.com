@@ -452,6 +452,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path.startsWith('/equipo/miembros/') && path !== '/equipo/miembros' && path !== '/equipo/miembros/') {
+    return {
+      pageTitle: 'Perfil de mesero',
+      pageSubtitle: undefined,
+      searchPlaceholder: undefined,
+      activePage: 'equipo' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path.startsWith('/equipo')) {
     return {
       pageTitle: 'Equipo',

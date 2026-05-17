@@ -260,6 +260,9 @@ onMounted(() => {
       dateRangeDates.value = [from, to]
     }
   }
+  // warocol.com#642 — pre-apply mesero filter when arriving from /equipo/miembros/[id]
+  const qMember = route.query.member_id as string | undefined
+  if (qMember) memberFilter.value = qMember
   setRefreshHandler(refetch)
 })
 onUnmounted(() => clearRefreshHandler(refetch))
