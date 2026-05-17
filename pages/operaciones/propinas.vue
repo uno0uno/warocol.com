@@ -15,18 +15,20 @@ const toast = useToast()
 // Returns tip_enabled, tip_default_percentages, tip_preselect_index in
 // addition to the existing operaciones/POS toggles (warocol.com#638
 // backend extension).
-const { data: profileData, asyncStatus: profileAsyncStatus, refetch: refreshProfile } = useQuery({
+const { data: profileData, asyncStatus: profileAsyncStatus, error: fetchError, refetch: refreshProfile } = useQuery({
   key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/operaciones/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
 const businessProfile = computed(() => profileData.value?.data ?? null)
-const loading = computed(() => !profileData.value)
-const isHeaderLoading = computed(() => profileAsyncStatus.value === 'loading')
+const isLoading = computed(() => !profileData.value && !fetchError.value)
+const isRefreshing = computed(
+  () => profileAsyncStatus.value === 'loading' && profileData.value != null,
+)
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-registerProgressiveLoading(isHeaderLoading)
+registerProgressiveLoading(isRefreshing)
 onMounted(() => setRefreshHandler(refreshProfile))
 onUnmounted(() => clearRefreshHandler(refreshProfile))
 
@@ -162,17 +164,13 @@ const saveConfig = async () => {
 
 <template>
   <div class="flex flex-col gap-3 md:gap-4">
-    <!-- Loading -->
-    <template v-if="loading">
-      <div class="rounded-xl border-2 border-border bg-surface px-4 py-3 animate-pulse">
-        <div class="h-4 w-40 rounded bg-titan-200 mb-2" />
-        <div class="h-3 w-full max-w-lg rounded bg-titan-200" />
-      </div>
-      <div class="rounded-xl border-2 border-border bg-surface px-4 py-4 h-36 animate-pulse" />
-    </template>
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+      <CommonsTheCustomLoader size="large" />
+    </div>
 
-    <!-- Content -->
-    <template v-else>
+    <CommonsTheErrorState v-else-if="fetchError" />
+
+    <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- ══════ MASTER TOGGLE ══════ -->
       <div
         v-if="businessProfile"
@@ -315,6 +313,6 @@ const saveConfig = async () => {
           Ver historial de propinas →
         </NuxtLink>
       </template>
-    </template>
+    </div>
   </div>
 </template>
