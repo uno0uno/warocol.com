@@ -111,12 +111,34 @@
         >{{ p.label }}</button>
 
         <VueDatePicker
+          v-if="arqueoWindowMode === 'template'"
+          v-model="templateAnchorDate"
+          :teleport="true"
+          :enable-time-picker="false"
+          :locale="es"
+          auto-apply
+          :max-date="new Date()"
+          :format="formatTemplatePickerInput"
+          input-class-name="dp-custom-input !min-w-[10.5rem] sm:!min-w-[12rem]"
+          menu-class-name="dp-custom-menu"
+          calendar-cell-class-name="dp-custom-cell"
+          @update:model-value="onTemplateAnchorPick"
+        />
+
+        <VueDatePicker
+          v-else
           v-model="dateRangeDates"
           range
-          :teleport="true" :preset-dates="dpPresets" :enable-time-picker="false" :locale="es"
-          auto-apply :max-date="new Date()" :format="formatDateRange"
-          :input-class-name="arqueoWindowMode === 'template' ? 'dp-custom-input !w-[7.5rem] sm:!w-[8.5rem]' : 'dp-custom-input'"
-          menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
+          :teleport="true"
+          :preset-dates="dpPresets"
+          :enable-time-picker="false"
+          :locale="es"
+          auto-apply
+          :max-date="new Date()"
+          :format="formatDateRange"
+          input-class-name="dp-custom-input"
+          menu-class-name="dp-custom-menu"
+          calendar-cell-class-name="dp-custom-cell"
           @update:model-value="activePreset = null"
         />
 
@@ -883,7 +905,12 @@ const dpPresets    = presets.map(p => ({ label: p.label, value: [p.start, p.end]
 
 const applyPreset = (p: Preset) => {
   activePreset.value = p.key
-  dateRangeDates.value = [new Date(p.start), new Date(p.end)]
+  const anchor = new Date(p.start)
+  if (arqueoWindowMode.value === 'template') {
+    dateRangeDates.value = [anchor, anchor]
+  } else {
+    dateRangeDates.value = [anchor, new Date(p.end)]
+  }
 }
 
 const formatDateRange = (dates: Date[]) => {
@@ -975,6 +1002,56 @@ const { data: rawShiftTemplates, status: templatesStatus } = useQuery({
 })
 const shiftTemplates = computed(() => rawShiftTemplates.value?.data ?? [])
 const templatesLoading = computed(() => templatesStatus.value === 'pending')
+
+const templateAnchorDate = computed({
+  get: () => dateRangeDates.value[0] ?? new Date(),
+  set: (d: Date) => {
+    if (!d) return
+    dateRangeDates.value = [d, d]
+  },
+})
+
+const { data: rawTemplateWindow, status: templateWindowStatus } = useQuery({
+  key: () => ['cierre', 'shift-window', currentTenant.value?.id, selectedTemplateId.value, periodStart.value],
+  query: () => $fetch<{
+    success: boolean
+    data: { periodStartTime: string; periodEndTime: string; crossesMidnight?: boolean }
+  }>('/api/cierre/shift-window', {
+    params: { shift_template_id: selectedTemplateId.value, date: periodStart.value },
+  }),
+  enabled: () =>
+    !!currentTenant.value
+    && arqueoWindowMode.value === 'template'
+    && !!selectedTemplateId.value,
+  staleTime: 30_000,
+})
+
+const templatePeriodDisplay = computed(() => {
+  const w = rawTemplateWindow.value?.data
+  if (!w?.periodStartTime || !w?.periodEndTime) {
+    if (templateWindowStatus.value === 'pending' && selectedTemplateId.value) return 'Calculando…'
+    return fnsFormat(templateAnchorDate.value, 'dd/MM/yy', { locale: es })
+  }
+  const start = new Date(w.periodStartTime)
+  const end = new Date(w.periodEndTime)
+  const anchor = fnsFormat(start, 'dd/MM/yy', { locale: es })
+  const startT = fnsFormat(start, 'HH:mm')
+  const endT = fnsFormat(end, 'HH:mm')
+  const endDay = fnsFormat(end, 'dd/MM/yy', { locale: es })
+  if (anchor === endDay) return `${anchor} · ${startT} – ${endT}`
+  return `${anchor} ${startT} – ${endDay} ${endT}`
+})
+
+const formatTemplatePickerInput = () => templatePeriodDisplay.value
+
+const onTemplateAnchorPick = () => {
+  const anchor = fnsFormat(templateAnchorDate.value, 'yyyy-MM-dd')
+  if (anchor === today) activePreset.value = 'today'
+  else {
+    const y = new Date(); y.setDate(y.getDate() - 1)
+    activePreset.value = anchor === fnsFormat(y, 'yyyy-MM-dd') ? 'yesterday' : null
+  }
+}
 
 const applySuggestedWindow = async () => {
   suggestedLoading.value = true
