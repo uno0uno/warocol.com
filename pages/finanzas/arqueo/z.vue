@@ -59,53 +59,50 @@
 
     <!-- ── PASO 0: Seleccionar período ─────────────────────────────────── -->
     <template v-else-if="currentStep === 0">
-      <div class="flex flex-wrap items-center gap-2 mb-2">
-        <span class="text-xs font-medium text-text-secondary uppercase tracking-wide">Modo</span>
+      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-2">
+        <span class="text-xs font-medium text-text-secondary uppercase tracking-wide flex-shrink-0">Modo</span>
         <button
           type="button"
-          class="h-9 px-3 rounded-lg border-2 text-sm font-medium transition-colors"
+          class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
           :class="arqueoWindowMode === 'template' ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
           @click="setArqueoMode('template')"
         >Plantilla</button>
         <button
           type="button"
-          class="h-9 px-3 rounded-lg border-2 text-sm font-medium transition-colors"
+          class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
           :class="arqueoWindowMode === 'custom' ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
           @click="setArqueoMode('custom')"
         >Personalizado</button>
+
+        <select
+          v-if="arqueoWindowMode === 'template'"
+          v-model="selectedTemplateId"
+          class="h-10 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 flex-shrink-0 max-w-[11rem] sm:max-w-[13rem]"
+        >
+          <option value="">Turno…</option>
+          <option v-for="t in shiftTemplates" :key="t.id" :value="t.id">
+            {{ t.name }} ({{ t.startTime }}–{{ t.endTime }})
+          </option>
+        </select>
+
         <button
           type="button"
-          class="h-9 px-3 rounded-lg border-2 border-border text-sm text-text-secondary hover:border-primary/50 hover:text-text-primary transition-colors ml-auto"
+          class="h-10 px-3 rounded-lg border-2 border-border text-sm text-text-secondary hover:border-primary/50 hover:text-text-primary transition-colors flex-shrink-0 whitespace-nowrap"
           :disabled="suggestedLoading"
           @click="applySuggestedWindow"
         >
           {{ suggestedLoading ? 'Cargando…' : 'Desde último arqueo' }}
         </button>
-      </div>
 
-      <div v-if="arqueoWindowMode === 'template'" class="flex flex-wrap items-end gap-2 mb-2">
-        <div class="flex flex-col gap-0.5 min-w-[180px]">
-          <label class="text-xs text-text-secondary">Turno</label>
-          <select
-            v-model="selectedTemplateId"
-            class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
-          >
-            <option value="">Seleccionar turno…</option>
-            <option v-for="t in shiftTemplates" :key="t.id" :value="t.id">
-              {{ t.name }} ({{ t.startTime }}–{{ t.endTime }})
-            </option>
-          </select>
-        </div>
-        <p v-if="templateWindowLabel" class="text-sm text-text-secondary self-end pb-2">
-          {{ templateWindowLabel }}
+        <p
+          v-if="arqueoWindowMode === 'template' && shiftTemplates.length === 0 && !templatesLoading"
+          class="text-xs text-amber-700 whitespace-nowrap flex-shrink-0"
+        >
+          Sin turnos activos
         </p>
-        <p v-else-if="shiftTemplates.length === 0 && !templatesLoading" class="text-sm text-amber-700 self-end pb-2">
-          No hay turnos activos. Configúralos en Operaciones → Turnos.
-        </p>
-      </div>
 
-      <!-- Filter bar -->
-      <div class="flex items-end gap-2 w-full overflow-x-auto scrollbar-hide">
+        <div class="h-10 w-px bg-border flex-shrink-0" aria-hidden="true" />
+
         <button
           v-for="p in visiblePresets" :key="p.key"
           class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
@@ -118,11 +115,12 @@
           range
           :teleport="true" :preset-dates="dpPresets" :enable-time-picker="false" :locale="es"
           auto-apply :max-date="new Date()" :format="formatDateRange"
-          input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
+          :input-class-name="arqueoWindowMode === 'template' ? 'dp-custom-input !w-[7.5rem] sm:!w-[8.5rem]' : 'dp-custom-input'"
+          menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
           @update:model-value="activePreset = null"
         />
 
-        <div v-if="arqueoWindowMode === 'custom'" class="h-10 w-px bg-border flex-shrink-0 self-end" />
+        <div v-if="arqueoWindowMode === 'custom'" class="h-10 w-px bg-border flex-shrink-0" aria-hidden="true" />
 
         <button
           v-if="arqueoWindowMode === 'custom' && !isMultiDay"
@@ -159,7 +157,7 @@
               </ul>
             </div>
           </div>
-          <span v-if="shiftLabel" class="text-xs text-text-secondary whitespace-nowrap flex-shrink-0 self-end pb-2">{{ shiftLabel }}</span>
+          <span v-if="shiftLabel" class="text-xs text-text-secondary whitespace-nowrap flex-shrink-0">{{ shiftLabel }}</span>
         </template>
       </div>
 
@@ -892,7 +890,9 @@ const formatDateRange = (dates: Date[]) => {
   if (!dates?.[0]) return ''
   const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
   if (!dates[1]) return from
-  return `${from} – ${fnsFormat(dates[1], 'dd/MM/yy', { locale: es })}`
+  const to = fnsFormat(dates[1], 'dd/MM/yy', { locale: es })
+  if (from === to) return from
+  return `${from} – ${to}`
 }
 
 // Time inputs
@@ -975,28 +975,6 @@ const { data: rawShiftTemplates, status: templatesStatus } = useQuery({
 })
 const shiftTemplates = computed(() => rawShiftTemplates.value?.data ?? [])
 const templatesLoading = computed(() => templatesStatus.value === 'pending')
-
-const { data: rawTemplateWindow } = useQuery({
-  key: () => ['cierre', 'shift-window', currentTenant.value?.id, selectedTemplateId.value, periodStart.value],
-  query: () => $fetch<{ success: boolean; data: { periodStartTime: string; periodEndTime: string; templateName?: string } }>(
-    '/api/cierre/shift-window',
-    { params: { shift_template_id: selectedTemplateId.value, date: periodStart.value } },
-  ),
-  enabled: () =>
-    !!currentTenant.value
-    && arqueoWindowMode.value === 'template'
-    && !!selectedTemplateId.value,
-  staleTime: 30_000,
-})
-
-const templateWindowLabel = computed(() => {
-  const w = rawTemplateWindow.value?.data
-  if (!w?.periodStartTime || !w?.periodEndTime) return null
-  const start = new Date(w.periodStartTime)
-  const end = new Date(w.periodEndTime)
-  const name = w.templateName ? `${w.templateName}: ` : ''
-  return `${name}${fnsFormat(start, 'dd/MM HH:mm', { locale: es })} – ${fnsFormat(end, 'dd/MM HH:mm', { locale: es })}`
-})
 
 const applySuggestedWindow = async () => {
   suggestedLoading.value = true
