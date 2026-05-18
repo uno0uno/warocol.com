@@ -170,7 +170,7 @@ import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Previsualización arqueo - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()

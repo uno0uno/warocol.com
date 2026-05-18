@@ -171,7 +171,7 @@ const GROUP_LABELS: Record<string, string> = {
   credit:  'Crédito',
 }
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()

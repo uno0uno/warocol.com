@@ -876,7 +876,7 @@ import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Arqueo de caja - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()

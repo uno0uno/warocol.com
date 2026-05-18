@@ -710,7 +710,7 @@ import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useQueryCache } from '@pinia/colada'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Nuevo arqueo de caja - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
