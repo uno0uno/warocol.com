@@ -22,9 +22,23 @@ Menú lateral → **Finanzas**. La pantalla tiene nueve pestañas en este orden:
 
 ## Arqueo de caja
 
-El **arqueo** (también llamado Cierre Z) registra el corte diario del negocio: cuánto vendiste, cuánto efectivo recibiste, cuánto contaste en caja y si hay diferencia. Es el equivalente digital de cuadrar la caja al final del turno.
+El **arqueo** registra el cuadre de caja de un período: cuánto vendiste, cuánto efectivo recibiste, cuánto contaste en caja y si hay diferencia. Es el equivalente digital de cuadrar la caja al final del turno.
 
-> Esta sección es **diaria** y reversible (puedes eliminar un arqueo). El **Cierre contable mensual** (siguiente sección) es distinto e irreversible.
+> Esta sección es **reversible** (puedes eliminar un arqueo). El **Cierre contable mensual** (siguiente sección) es distinto e irreversible.
+
+### Tres formas de arquear
+
+Desde **Finanzas → Arqueo de caja** eliges cómo cerrar:
+
+| Modo | Cuándo usarlo | Cómo iniciarlo |
+|------|---------------|----------------|
+| **Día completo** | Un solo cierre por día calendario (cierre nocturno o negocio de un turno único) | Tarjeta **Arqueo del día** o botón **Día completo** |
+| **Turno u horario** | Varios cortes el mismo día (mañana / tarde / noche) o un rango entre fechas con hora exacta | Tarjeta **Turno u horario** |
+| **Plantillas de turno** *(próximamente)* | Horarios fijos reutilizables (ej. almuerzo 12:00–15:00) configurados en Operaciones | Llegará en **Operaciones → Turnos** |
+
+**Vista previa (Corte X):** revisa ventas y caja en vivo **sin registrar** nada. Enlace al pie de la pantalla principal de arqueo. Desde ahí puedes pasar a registrar con el mismo período.
+
+> Los arqueos por horario muestran la ventana (ej. `14:00 – 22:30`) en el historial con la etiqueta **Por horario**. Los de día completo muestran **Día completo**.
 
 ### Historial de arqueos
 
@@ -47,15 +61,11 @@ Cada fila del historial tiene dos botones:
 | Ojo | Abre el detalle del arqueo en un panel lateral |
 | Papelera | Elimina el arqueo (pide confirmación) |
 
-El panel de detalle muestra: ventas del período, caja (efectivo esperado, contado y diferencia), métodos de pago, notas y fecha de registro.
+El panel de detalle muestra: tipo de cierre (día completo o por horario), fechas y —si aplica— la ventana horaria, ventas del período, caja, métodos de pago, notas y fecha de registro.
 
-### Cierre X (preview sin guardar)
+### Arqueo del día (día completo)
 
-Antes de cerrar puedes consultar el **Cierre X** desde el atajo `/finanzas/arqueo/x`. Es un resumen en vivo de las ventas del día sin registrar nada. Útil para revisar cómo va el turno.
-
-### Registrar un nuevo arqueo
-
-Haz clic en **Nuevo arqueo**. El proceso tiene 5 pasos.
+Haz clic en **Arqueo del día**. El proceso tiene 5 pasos.
 
 **Paso 1 — Período**
 
@@ -100,6 +110,16 @@ Puedes agregar **notas** opcionales (observaciones, incidencias del día).
 
 Confirma el arqueo. El botón se activa solo después de revisar el resumen. Una vez registrado, el arqueo no se puede editar, solo eliminar.
 
+### Arqueo por turno u horario
+
+Haz clic en **Turno u horario**. En el primer paso defines el período:
+
+1. Elige fechas (Hoy, Ayer, últimos 7 días, o un rango personalizado).
+2. Activa **Horario** para acotar por hora (obligatorio si el rango abarca varios días).
+3. Revisa el resumen previo y continúa con los mismos 5 pasos de conteo (efectivo, otros métodos, resumen, cerrar).
+
+Útil cuando cierras caja entre turnos sin esperar al final del día.
+
 ### Eliminar un arqueo
 
 Desde el historial, haz clic en el ícono de papelera. Al eliminar, el período queda liberado y puedes registrar un nuevo arqueo para esas mismas fechas. Los datos de ventas no se borran — solo el registro del arqueo.
@@ -107,7 +127,12 @@ Desde el historial, haz clic en el ícono de papelera. Al eliminar, el período 
 ### Preguntas frecuentes — Arqueo
 
 **¿Puedo hacer arqueo de varios días a la vez?**
-El wizard está diseñado para arqueos de un día. Si necesitas cerrar períodos más largos, registra cada día por separado.
+En **Arqueo del día**, un solo día por registro. En **Turno u horario** puedes elegir un rango de fechas; si abarca más de un día debes indicar hora de inicio y fin.
+
+**¿Cuál modo elijo?**
+- Un cierre al cerrar el local → **Día completo**.
+- Varios cortes el mismo día (ej. almuerzo y cena) → **Turno u horario**.
+- Horarios fijos repetibles → próximamente **Plantillas de turno** en Operaciones.
 
 **¿Qué pasa si hay mesas abiertas?**
 El sistema bloquea el arqueo y muestra cuántas mesas están abiertas. Ve al módulo de Mesas, cierra las sesiones pendientes y regresa.

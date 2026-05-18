@@ -553,8 +553,8 @@ const getPageConfig = () => {
     }
   } else if (path === '/finanzas/arqueo/z') {
     return {
-      pageTitle: 'Corte Z',
-      pageSubtitle: undefined,
+      pageTitle: 'Arqueo por turno u horario',
+      pageSubtitle: 'Ventana personalizada de fechas y horas',
       searchPlaceholder: undefined,
       activePage: 'finanzas' as const,
       showBreadcrumb: false,

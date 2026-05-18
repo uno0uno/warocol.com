@@ -39,7 +39,14 @@
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">Arqueo de caja</h2>
-                <p class="text-xs text-text-secondary leading-snug mt-0.5">{{ formatPeriod(cierre?.periodStart, cierre?.periodEnd) }}</p>
+                <p class="text-xs text-text-secondary leading-snug mt-0.5">
+                  <span
+                    class="inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded mr-1"
+                    :class="hasTimeWindow(detail) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
+                  >{{ periodTypeLabel(detail) }}</span>
+                  {{ formatPeriodDates(detail) }}
+                </p>
+                <p v-if="formatPeriodTimes(detail)" class="text-xs text-text-secondary font-mono mt-0.5">{{ formatPeriodTimes(detail) }}</p>
               </div>
             </div>
             <button
@@ -230,13 +237,7 @@ const handleDelete = async () => {
 const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
 
-const formatPeriod = (start?: string, end?: string) => {
-  if (!start) return ''
-  const fmt = (d: string) => new Intl.DateTimeFormat('es-CO', {
-    day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Bogota',
-  }).format(new Date(d + 'T12:00:00'))
-  return !end || start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
-}
+const { hasTimeWindow, formatPeriodDates, formatPeriodTimes, periodTypeLabel } = useCierrePeriod()
 
 const formatDate = (iso: string) => {
   if (!iso) return ''

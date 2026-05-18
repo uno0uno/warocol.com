@@ -21,7 +21,12 @@
               </div>
               <div>
                 <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Período</p>
-                <p class="text-base font-semibold text-text-primary">{{ formatPeriod(cierre.periodStart, cierre.periodEnd) }}</p>
+                <p class="text-base font-semibold text-text-primary">{{ formatPeriodDates(cierre) }}</p>
+                <p v-if="formatPeriodTimes(cierre)" class="text-xs text-text-secondary font-mono mt-0.5">{{ formatPeriodTimes(cierre) }}</p>
+                <span
+                  class="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
+                  :class="hasTimeWindow(cierre) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
+                >{{ periodTypeLabel(cierre) }}</span>
               </div>
             </div>
 
@@ -208,22 +213,17 @@ onMounted(() => { setRefreshHandler(refetch) })
 onUnmounted(() => { clearRefreshHandler(refetch) })
 
 useHead(() => ({
-  title: cierre.value ? `Arqueo ${formatPeriod(cierre.value.periodStart, cierre.value.periodEnd)} - Warocol` : 'Arqueo de caja - Warocol',
+  title: cierre.value ? `Arqueo ${formatPeriodDates(cierre.value)} - Warocol` : 'Arqueo de caja - Warocol',
 }))
 
 const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
 
-const { formatDate: _fmtDate, formatDateTime: _fmtDateTime } = useFormatters()
+const { formatDateTime: _fmtDateTime } = useFormatters()
+const { hasTimeWindow, formatPeriodDates, formatPeriodTimes, periodTypeLabel } = useCierrePeriod()
 
 const formatDate = (iso: string) => {
   if (!iso) return ''
   return _fmtDateTime(iso)
-}
-
-const formatPeriod = (start: string, end: string) => {
-  if (!start) return ''
-  const fmt = (d: string) => _fmtDate(d + 'T12:00:00')
-  return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 </script>

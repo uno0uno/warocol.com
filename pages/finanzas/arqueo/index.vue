@@ -77,19 +77,59 @@
         </div>
       </div>
 
+      <!-- ── Entry CTAs ──────────────────────────────────────────────────────── -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <NuxtLink
+          to="/finanzas/arqueo/nuevo"
+          class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors"
+        >
+          <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center text-primary" aria-hidden="true">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-text-primary">Arqueo del día</p>
+            <p class="text-xs text-text-secondary mt-0.5">Cierra un día calendario completo (turno único o cierre nocturno).</p>
+          </div>
+        </NuxtLink>
+        <NuxtLink
+          to="/finanzas/arqueo/z"
+          class="flex items-start gap-3 p-4 rounded-lg border-2 border-border bg-surface hover:border-primary/40 transition-colors"
+        >
+          <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center text-primary" aria-hidden="true">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-text-primary">Turno u horario</p>
+            <p class="text-xs text-text-secondary mt-0.5">Ventana personalizada por horas (mañana, tarde, o rango entre días).</p>
+          </div>
+        </NuxtLink>
+      </div>
+      <p class="text-xs text-text-secondary">
+        ¿Solo quieres revisar sin cerrar?
+        <NuxtLink to="/finanzas/arqueo/x" class="text-primary font-medium hover:underline">Vista previa (Corte X)</NuxtLink>
+      </p>
+
       <!-- ── Historial ─────────────────────────────────────────────────────── -->
       <HealthSemaphore :is-unlocked="true" title="Historial de arqueos">
         <template #header-actions>
-          <NuxtLink
-            to="/finanzas/arqueo/nuevo"
-            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap flex items-center gap-1.5"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span class="hidden sm:inline">Nuevo arqueo</span>
-            <span class="sm:hidden">Nuevo</span>
-          </NuxtLink>
+          <div class="flex flex-wrap items-center gap-2 justify-end">
+            <NuxtLink
+              to="/finanzas/arqueo/nuevo"
+              class="btn-primary px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
+            >
+              Día completo
+            </NuxtLink>
+            <NuxtLink
+              to="/finanzas/arqueo/z"
+              class="btn-secondary px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
+            >
+              Turno u horario
+            </NuxtLink>
+          </div>
         </template>
       <UiResponsiveDataView
         :data="filteredHistorial"
@@ -104,8 +144,15 @@
             @click="openPanel(item.id)"
           >
             <div class="flex-1 min-w-0">
-              <span class="text-sm font-bold text-text-primary">{{ formatDay(item.periodStart) }}</span>
-              <p class="text-xs text-text-secondary mt-0.5">{{ formatDay(item.periodEnd) }} · {{ formatDate(item.closedAt) }}</p>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span
+                  class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
+                  :class="hasTimeWindow(item) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
+                >{{ periodTypeLabel(item) }}</span>
+                <span class="text-sm font-bold text-text-primary">{{ formatPeriodDates(item) }}</span>
+              </div>
+              <p v-if="formatPeriodTimes(item)" class="text-xs text-text-secondary mt-0.5 font-mono">{{ formatPeriodTimes(item) }}</p>
+              <p class="text-xs text-text-secondary mt-0.5">Registrado {{ formatDate(item.closedAt) }}</p>
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
               <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.totalSales) }}</span>
@@ -117,10 +164,20 @@
         </template>
 
         <template #cell-periodStart="{ row }">
-          <span class="text-sm font-bold text-text-primary">{{ formatDay(row.periodStart) }}</span>
+          <div class="flex flex-col gap-0.5 min-w-0">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span
+                class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded flex-shrink-0"
+                :class="hasTimeWindow(row) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
+              >{{ periodTypeLabel(row) }}</span>
+              <span class="text-sm font-bold text-text-primary">{{ formatPeriodDates(row) }}</span>
+            </div>
+            <span v-if="formatPeriodTimes(row)" class="text-xs text-text-secondary font-mono">{{ formatPeriodTimes(row) }}</span>
+          </div>
         </template>
         <template #cell-periodEnd="{ row }">
-          <span class="text-sm text-text-secondary">{{ formatDay(row.periodEnd) }}</span>
+          <span v-if="row.periodStart !== row.periodEnd" class="text-sm text-text-secondary">{{ formatDay(row.periodEnd) }}</span>
+          <span v-else class="text-xs text-text-tertiary">—</span>
         </template>
         <template #cell-totalSales="{ value }">
           <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
@@ -186,7 +243,7 @@
           </div>
           <h3 class="text-lg font-bold text-text-primary mb-1">Eliminar arqueo</h3>
           <p class="text-sm text-text-secondary mb-6">
-            ¿Eliminar el arqueo del período <strong>{{ formatPeriod(cierreToDelete?.periodStart, cierreToDelete?.periodEnd) }}</strong>? Esta acción no se puede deshacer.
+            ¿Eliminar el arqueo del período <strong>{{ formatPeriodDates(cierreToDelete) }}</strong><template v-if="formatPeriodTimes(cierreToDelete)"> ({{ formatPeriodTimes(cierreToDelete) }})</template>? Esta acción no se puede deshacer.
           </p>
           <div class="flex gap-3">
             <button
@@ -298,8 +355,8 @@ const summaryStats = computed(() => {
 })
 
 const historialColumns = [
-  { key: 'periodStart',    title: 'Período inicial', sortable: false },
-  { key: 'periodEnd',      title: 'Período final',   sortable: false },
+  { key: 'periodStart',    title: 'Período',         sortable: false },
+  { key: 'periodEnd',      title: 'Hasta',           sortable: false },
   { key: 'totalSales',     title: 'Ventas',          sortable: false },
   { key: 'gastosEfectivo', title: 'Gastos',          sortable: false },
   { key: 'cashDifference', title: 'Diferencia',      sortable: false },
@@ -325,7 +382,8 @@ const isCurrentMonthActive = computed(() => {
   return activeStart.value === first && activeEnd.value === last
 })
 
-const { formatDate: _fmtDate, formatDateTime: _fmtDateTime } = useFormatters()
+const { formatDateTime: _fmtDateTime } = useFormatters()
+const { hasTimeWindow, formatPeriodDates, formatPeriodTimes, periodTypeLabel } = useCierrePeriod()
 
 const formatDay = (d: string) => {
   if (!d) return ''
@@ -335,12 +393,6 @@ const formatDay = (d: string) => {
 const formatDate = (iso: string) => {
   if (!iso) return ''
   return _fmtDateTime(iso)
-}
-
-const formatPeriod = (start: string, end: string) => {
-  if (!start) return ''
-  const fmt = (d: string) => _fmtDate(d + 'T12:00:00')
-  return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 
 // ── Panel ─────────────────────────────────────────────────────────────────
