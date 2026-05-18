@@ -110,20 +110,38 @@
           @click="applyPreset(p)"
         >{{ p.label }}</button>
 
-        <VueDatePicker
+        <!-- Plantilla: calendario = solo día; horas = ventana del turno (solo lectura) -->
+        <div
           v-if="arqueoWindowMode === 'template'"
-          v-model="templateAnchorDate"
-          :teleport="true"
-          :enable-time-picker="false"
-          :locale="es"
-          auto-apply
-          :max-date="new Date()"
-          :format="formatTemplatePickerInput"
-          input-class-name="dp-custom-input !min-w-[10.5rem] sm:!min-w-[12rem]"
-          menu-class-name="dp-custom-menu"
-          calendar-cell-class-name="dp-custom-cell"
-          @update:model-value="onTemplateAnchorPick"
-        />
+          class="flex items-stretch h-10 rounded-lg border-2 border-border bg-background overflow-hidden flex-shrink-0"
+        >
+          <VueDatePicker
+            v-model="templateAnchorDate"
+            :teleport="true"
+            :enable-time-picker="false"
+            :locale="es"
+            auto-apply
+            :max-date="new Date()"
+            :format="formatTemplateDateOnly"
+            input-class-name="dp-custom-input !border-0 !rounded-none !shadow-none !min-w-[5.25rem] !w-[5.25rem] sm:!min-w-[5.75rem] sm:!w-[5.75rem]"
+            menu-class-name="dp-custom-menu"
+            calendar-cell-class-name="dp-custom-cell"
+            @update:model-value="onTemplateAnchorPick"
+          />
+          <span
+            v-if="templateHoursLabel"
+            class="flex items-center px-2.5 text-sm font-mono text-text-secondary border-l border-border whitespace-nowrap"
+            title="Horario definido por el turno"
+          >
+            {{ templateHoursLabel }}
+          </span>
+          <span
+            v-else-if="selectedTemplateId && templateWindowStatus === 'pending'"
+            class="flex items-center px-2.5 text-xs text-text-secondary border-l border-border"
+          >
+            …
+          </span>
+        </div>
 
         <VueDatePicker
           v-else
@@ -1026,23 +1044,22 @@ const { data: rawTemplateWindow, status: templateWindowStatus } = useQuery({
   staleTime: 30_000,
 })
 
-const templatePeriodDisplay = computed(() => {
+const formatTemplateDateOnly = (date?: Date) =>
+  fnsFormat(date ?? templateAnchorDate.value, 'dd/MM/yy', { locale: es })
+
+/** Horas del turno resueltas en servidor — no editables en plantilla */
+const templateHoursLabel = computed(() => {
   const w = rawTemplateWindow.value?.data
-  if (!w?.periodStartTime || !w?.periodEndTime) {
-    if (templateWindowStatus.value === 'pending' && selectedTemplateId.value) return 'Calculando…'
-    return fnsFormat(templateAnchorDate.value, 'dd/MM/yy', { locale: es })
-  }
+  if (!w?.periodStartTime || !w?.periodEndTime) return null
   const start = new Date(w.periodStartTime)
   const end = new Date(w.periodEndTime)
-  const anchor = fnsFormat(start, 'dd/MM/yy', { locale: es })
   const startT = fnsFormat(start, 'HH:mm')
   const endT = fnsFormat(end, 'HH:mm')
-  const endDay = fnsFormat(end, 'dd/MM/yy', { locale: es })
-  if (anchor === endDay) return `${anchor} · ${startT} – ${endT}`
-  return `${anchor} ${startT} – ${endDay} ${endT}`
+  const endDay = fnsFormat(end, 'dd/MM', { locale: es })
+  const anchorDay = fnsFormat(start, 'dd/MM', { locale: es })
+  if (anchorDay === endDay) return `${startT} – ${endT}`
+  return `${startT} – ${endDay} ${endT}`
 })
-
-const formatTemplatePickerInput = () => templatePeriodDisplay.value
 
 const onTemplateAnchorPick = () => {
   const anchor = fnsFormat(templateAnchorDate.value, 'yyyy-MM-dd')
