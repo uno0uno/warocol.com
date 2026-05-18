@@ -25,7 +25,7 @@
                 <p v-if="formatPeriodTimes(cierre)" class="text-xs text-text-secondary font-mono mt-0.5">{{ formatPeriodTimes(cierre) }}</p>
                 <span
                   class="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
-                  :class="hasTimeWindow(cierre) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
+                  :class="periodBadgeClass(cierre)"
                 >{{ periodTypeLabel(cierre) }}</span>
               </div>
             </div>
@@ -220,7 +220,7 @@ const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
 
 const { formatDateTime: _fmtDateTime } = useFormatters()
-const { hasTimeWindow, formatPeriodDates, formatPeriodTimes, periodTypeLabel } = useCierrePeriod()
+const { formatPeriodDates, formatPeriodTimes, periodTypeLabel, periodBadgeClass } = useCierrePeriod()
 
 const formatDate = (iso: string) => {
   if (!iso) return ''

@@ -5,6 +5,8 @@ export interface CierrePeriodLike {
   periodEnd?: string
   periodStartTime?: string | null
   periodEndTime?: string | null
+  shiftTemplateId?: string | null
+  shiftTemplateName?: string | null
 }
 
 const _timeFormatter = new Intl.DateTimeFormat('es-CO', {
@@ -19,6 +21,9 @@ export function useCierrePeriod() {
 
   const hasTimeWindow = (cierre: CierrePeriodLike | null | undefined): boolean =>
     !!(cierre?.periodStartTime || cierre?.periodEndTime)
+
+  const isTemplateCierre = (cierre: CierrePeriodLike | null | undefined): boolean =>
+    !!(cierre?.shiftTemplateId && cierre?.shiftTemplateName)
 
   const formatPeriodDates = (cierre: CierrePeriodLike | null | undefined): string => {
     const start = cierre?.periodStart
@@ -38,13 +43,24 @@ export function useCierrePeriod() {
     return null
   }
 
-  const periodTypeLabel = (cierre: CierrePeriodLike | null | undefined): string =>
-    hasTimeWindow(cierre) ? 'Por horario' : 'Día completo'
+  const periodTypeLabel = (cierre: CierrePeriodLike | null | undefined): string => {
+    if (isTemplateCierre(cierre)) return cierre!.shiftTemplateName!
+    if (hasTimeWindow(cierre)) return 'Personalizado'
+    return 'Día completo'
+  }
+
+  const periodBadgeClass = (cierre: CierrePeriodLike | null | undefined): string => {
+    if (isTemplateCierre(cierre)) return 'bg-primary/10 text-primary'
+    if (hasTimeWindow(cierre)) return 'bg-violet-50 text-violet-800 border border-violet-200'
+    return 'bg-surface-secondary text-text-secondary'
+  }
 
   return {
     hasTimeWindow,
+    isTemplateCierre,
     formatPeriodDates,
     formatPeriodTimes,
     periodTypeLabel,
+    periodBadgeClass,
   }
 }

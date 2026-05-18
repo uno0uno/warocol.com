@@ -131,7 +131,7 @@
               <div class="flex flex-wrap items-center gap-1.5">
                 <span
                   class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
-                  :class="hasTimeWindow(item) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
+                  :class="periodBadgeClass(item)"
                 >{{ periodTypeLabel(item) }}</span>
                 <span class="text-sm font-bold text-text-primary">{{ formatPeriodDates(item) }}</span>
               </div>
@@ -152,7 +152,7 @@
             <div class="flex flex-wrap items-center gap-1.5">
               <span
                 class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded flex-shrink-0"
-                :class="hasTimeWindow(row) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
+                :class="periodBadgeClass(row)"
               >{{ periodTypeLabel(row) }}</span>
               <span class="text-sm font-bold text-text-primary">{{ formatPeriodDates(row) }}</span>
             </div>
@@ -367,7 +367,7 @@ const isCurrentMonthActive = computed(() => {
 })
 
 const { formatDateTime: _fmtDateTime } = useFormatters()
-const { hasTimeWindow, formatPeriodDates, formatPeriodTimes, periodTypeLabel } = useCierrePeriod()
+const { formatPeriodDates, formatPeriodTimes, periodTypeLabel, periodBadgeClass } = useCierrePeriod()
 
 const formatDay = (d: string) => {
   if (!d) return ''
