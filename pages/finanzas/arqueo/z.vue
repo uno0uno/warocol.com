@@ -59,10 +59,55 @@
 
     <!-- ── PASO 0: Seleccionar período ─────────────────────────────────── -->
     <template v-else-if="currentStep === 0">
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        <span class="text-xs font-medium text-text-secondary uppercase tracking-wide">Modo</span>
+        <button
+          type="button"
+          class="h-9 px-3 rounded-lg border-2 text-sm font-medium transition-colors"
+          :class="arqueoWindowMode === 'template' ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
+          @click="setArqueoMode('template')"
+        >Plantilla</button>
+        <button
+          type="button"
+          class="h-9 px-3 rounded-lg border-2 text-sm font-medium transition-colors"
+          :class="arqueoWindowMode === 'custom' ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
+          @click="setArqueoMode('custom')"
+        >Personalizado</button>
+        <button
+          type="button"
+          class="h-9 px-3 rounded-lg border-2 border-border text-sm text-text-secondary hover:border-primary/50 hover:text-text-primary transition-colors ml-auto"
+          :disabled="suggestedLoading"
+          @click="applySuggestedWindow"
+        >
+          {{ suggestedLoading ? 'Cargando…' : 'Desde último arqueo' }}
+        </button>
+      </div>
+
+      <div v-if="arqueoWindowMode === 'template'" class="flex flex-wrap items-end gap-2 mb-2">
+        <div class="flex flex-col gap-0.5 min-w-[180px]">
+          <label class="text-xs text-text-secondary">Turno</label>
+          <select
+            v-model="selectedTemplateId"
+            class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+          >
+            <option value="">Seleccionar turno…</option>
+            <option v-for="t in shiftTemplates" :key="t.id" :value="t.id">
+              {{ t.name }} ({{ t.startTime }}–{{ t.endTime }})
+            </option>
+          </select>
+        </div>
+        <p v-if="templateWindowLabel" class="text-sm text-text-secondary self-end pb-2">
+          {{ templateWindowLabel }}
+        </p>
+        <p v-else-if="shiftTemplates.length === 0 && !templatesLoading" class="text-sm text-amber-700 self-end pb-2">
+          No hay turnos activos. Configúralos en Operaciones → Turnos.
+        </p>
+      </div>
+
       <!-- Filter bar -->
       <div class="flex items-end gap-2 w-full overflow-x-auto scrollbar-hide">
         <button
-          v-for="p in presets" :key="p.key"
+          v-for="p in visiblePresets" :key="p.key"
           class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
           :class="activePreset === p.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-text-secondary hover:border-primary/50 hover:text-text-primary'"
           @click="applyPreset(p)"
@@ -70,16 +115,17 @@
 
         <VueDatePicker
           v-model="dateRangeDates"
-          range :teleport="true" :preset-dates="dpPresets" :enable-time-picker="false" :locale="es"
+          range
+          :teleport="true" :preset-dates="dpPresets" :enable-time-picker="false" :locale="es"
           auto-apply :max-date="new Date()" :format="formatDateRange"
           input-class-name="dp-custom-input" menu-class-name="dp-custom-menu" calendar-cell-class-name="dp-custom-cell"
           @update:model-value="activePreset = null"
         />
 
-        <div class="h-10 w-px bg-border flex-shrink-0 self-end" />
+        <div v-if="arqueoWindowMode === 'custom'" class="h-10 w-px bg-border flex-shrink-0 self-end" />
 
         <button
-          v-if="!isMultiDay"
+          v-if="arqueoWindowMode === 'custom' && !isMultiDay"
           @click="toggleTimePicker"
           class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0 flex items-center gap-1.5"
           :class="enableTimePicker ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-text-secondary hover:border-primary/50'"
@@ -88,7 +134,7 @@
           Horario
         </button>
 
-        <template v-if="isMultiDay || enableTimePicker">
+        <template v-if="arqueoWindowMode === 'custom' && (isMultiDay || enableTimePicker)">
           <div class="flex flex-col gap-0.5 flex-shrink-0">
             <label class="text-xs text-text-secondary">Desde</label>
             <div class="relative">
@@ -788,6 +834,21 @@ const { currentTenant } = useTenantReactive()
 const { singular: tableSingular, plural: tablePlural } = useTableLabel()
 const route = useRoute()
 
+type ArqueoWindowMode = 'template' | 'custom'
+interface ShiftTemplateOption {
+  id: string
+  name: string
+  startTime: string
+  endTime: string
+  crossesMidnight: boolean
+}
+
+const arqueoWindowMode = ref<ArqueoWindowMode>(
+  (route.query.mode as string) === 'template' ? 'template' : 'custom',
+)
+const selectedTemplateId = ref<string>('')
+const suggestedLoading = ref(false)
+
 const today = new Date().toISOString().split('T')[0]
 
 // ── Date picker state (paso 0) ─────────────────────────────────────────────
@@ -814,6 +875,11 @@ const buildPresets = (): Preset[] => {
   ]
 }
 const presets      = buildPresets()
+const visiblePresets = computed(() =>
+  arqueoWindowMode.value === 'template'
+    ? presets.filter(p => p.key === 'today' || p.key === 'yesterday')
+    : presets,
+)
 const activePreset = ref<string | null>(initStart === today && initEnd === today ? 'today' : null)
 const dpPresets    = presets.map(p => ({ label: p.label, value: [p.start, p.end] }))
 
@@ -872,16 +938,122 @@ const periodStart = computed(() => fnsFormat(dateRangeDates.value[0], 'yyyy-MM-d
 const periodEnd   = computed(() => fnsFormat(dateRangeDates.value[1] ?? dateRangeDates.value[0], 'yyyy-MM-dd'))
 const isMultiDay  = computed(() => periodStart.value !== periodEnd.value)
 
-watch(isMultiDay, (multi) => { if (multi) enableTimePicker.value = true })
+const previewShiftTemplateId = computed(() =>
+  arqueoWindowMode.value === 'template' && selectedTemplateId.value
+    ? selectedTemplateId.value
+    : null,
+)
+
+watch(isMultiDay, (multi) => {
+  if (multi && arqueoWindowMode.value === 'custom') enableTimePicker.value = true
+})
+
+watch(dateRangeDates, (dates) => {
+  if (arqueoWindowMode.value !== 'template' || !dates?.[0] || !dates?.[1]) return
+  const a = fnsFormat(dates[0], 'yyyy-MM-dd')
+  const b = fnsFormat(dates[1], 'yyyy-MM-dd')
+  if (a !== b) dateRangeDates.value = [dates[0], dates[0]]
+}, { deep: true })
+
+const setArqueoMode = (mode: ArqueoWindowMode) => {
+  arqueoWindowMode.value = mode
+  timeError.value = null
+  if (mode === 'template') {
+    const d = dateRangeDates.value[0] ?? new Date()
+    dateRangeDates.value = [d, d]
+    enableTimePicker.value = false
+    startTimeInput.value = ''
+    endTimeInput.value = ''
+  }
+}
+
+const { data: rawShiftTemplates, status: templatesStatus } = useQuery({
+  key: () => ['cierre', 'shift-templates', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: ShiftTemplateOption[] }>('/api/cierre/shift-templates'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 120_000,
+})
+const shiftTemplates = computed(() => rawShiftTemplates.value?.data ?? [])
+const templatesLoading = computed(() => templatesStatus.value === 'pending')
+
+const { data: rawTemplateWindow } = useQuery({
+  key: () => ['cierre', 'shift-window', currentTenant.value?.id, selectedTemplateId.value, periodStart.value],
+  query: () => $fetch<{ success: boolean; data: { periodStartTime: string; periodEndTime: string; templateName?: string } }>(
+    '/api/cierre/shift-window',
+    { params: { shift_template_id: selectedTemplateId.value, date: periodStart.value } },
+  ),
+  enabled: () =>
+    !!currentTenant.value
+    && arqueoWindowMode.value === 'template'
+    && !!selectedTemplateId.value,
+  staleTime: 30_000,
+})
+
+const templateWindowLabel = computed(() => {
+  const w = rawTemplateWindow.value?.data
+  if (!w?.periodStartTime || !w?.periodEndTime) return null
+  const start = new Date(w.periodStartTime)
+  const end = new Date(w.periodEndTime)
+  const name = w.templateName ? `${w.templateName}: ` : ''
+  return `${name}${fnsFormat(start, 'dd/MM HH:mm', { locale: es })} – ${fnsFormat(end, 'dd/MM HH:mm', { locale: es })}`
+})
+
+const applySuggestedWindow = async () => {
+  suggestedLoading.value = true
+  timeError.value = null
+  try {
+    const res = await $fetch<{ success: boolean; data: {
+      periodStart: string
+      periodEnd: string
+      periodStartTime: string
+      periodEndTime: string
+    } }>('/api/cierre/suggested-window', { params: { date: periodStart.value } })
+    const d = res.data
+    if (arqueoWindowMode.value === 'template') {
+      const anchor = new Date(`${d.periodStart}T12:00:00`)
+      dateRangeDates.value = [anchor, anchor]
+    } else {
+      dateRangeDates.value = [
+        new Date(`${d.periodStart}T12:00:00`),
+        new Date(`${d.periodEnd}T12:00:00`),
+      ]
+      enableTimePicker.value = true
+      startTimeInput.value = fnsFormat(new Date(d.periodStartTime), 'HH:mm')
+      endTimeInput.value = fnsFormat(new Date(d.periodEndTime), 'HH:mm')
+    }
+    activePreset.value = null
+  } catch (err: any) {
+    timeError.value = err?.data?.detail ?? err?.data?.message ?? 'No hay ventana sugerida desde el último arqueo.'
+  } finally {
+    suggestedLoading.value = false
+  }
+}
 
 const periodStartTime = computed((): string | null => {
+  if (arqueoWindowMode.value === 'template') return null
   if (!enableTimePicker.value) return null
   return buildDateTime(dateRangeDates.value[0], startTimeInput.value)?.toISOString() ?? null
 })
 const periodEndTime = computed((): string | null => {
+  if (arqueoWindowMode.value === 'template') return null
   if (!enableTimePicker.value) return null
   return buildDateTime(dateRangeDates.value[1] ?? dateRangeDates.value[0], endTimeInput.value)?.toISOString() ?? null
 })
+
+const buildPreviewParams = (completedOnly: boolean) => {
+  const base: Record<string, string | boolean> = {
+    period_start: periodStart.value,
+    period_end: periodEnd.value,
+  }
+  if (completedOnly) base.completed_only = true
+  if (previewShiftTemplateId.value) {
+    base.shift_template_id = previewShiftTemplateId.value
+    return base
+  }
+  if (periodStartTime.value) base.period_start_time = periodStartTime.value
+  if (periodEndTime.value) base.period_end_time = periodEndTime.value
+  return base
+}
 
 const shiftLabel = computed(() => {
   if (!enableTimePicker.value) return null
@@ -893,16 +1065,11 @@ const shiftLabel = computed(() => {
 
 // X preview (paso 0 — all orders, not completed_only)
 const { data: rawXPreview, status: xPreviewStatus, error: xPreviewError } = useQuery({
-  key: () => ['cierre', 'preview-x0', currentTenant.value?.id, periodStart.value, periodEnd.value, periodStartTime.value, periodEndTime.value],
+  key: () => ['cierre', 'preview-x0', currentTenant.value?.id, arqueoWindowMode.value, previewShiftTemplateId.value, periodStart.value, periodEnd.value, periodStartTime.value, periodEndTime.value],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
-    params: {
-      period_start: periodStart.value,
-      period_end:   periodEnd.value,
-      ...(periodStartTime.value && { period_start_time: periodStartTime.value }),
-      ...(periodEndTime.value   && { period_end_time:   periodEndTime.value   }),
-    },
+    params: buildPreviewParams(false),
   }),
-  enabled: () => !!currentTenant.value,
+  enabled: () => !!currentTenant.value && (arqueoWindowMode.value !== 'template' || !!selectedTemplateId.value),
   staleTime: 60_000,
 })
 const xPreviewData    = computed(() => rawXPreview.value?.data ?? null)
@@ -911,7 +1078,16 @@ const xPreviewLoading = computed(() => xPreviewStatus.value === 'pending' && !xP
 // Navigate to step 1
 const goToStep1 = () => {
   timeError.value = null
-  if (isMultiDay.value && (!startTimeInput.value || !endTimeInput.value)) {
+  if (arqueoWindowMode.value === 'template') {
+    if (!selectedTemplateId.value) {
+      timeError.value = 'Selecciona un turno para continuar'
+      return
+    }
+    if (isMultiDay.value) {
+      timeError.value = 'La plantilla de turno solo aplica a un solo día'
+      return
+    }
+  } else if (isMultiDay.value && (!startTimeInput.value || !endTimeInput.value)) {
     timeError.value = 'Para períodos de varios días debes especificar hora de inicio y fin'
     return
   }
@@ -957,17 +1133,11 @@ const totalCounted = computed(() =>
 
 // ── Preview API (completed orders only — cash already in drawer) ───────────
 const { data: rawPreview, status: previewStatus, asyncStatus: previewAsyncStatus, refetch: refetchPreview } = useQuery({
-  key: () => ['cierre', 'preview-z', currentTenant.value?.id, periodStart.value, periodEnd.value, periodStartTime.value, periodEndTime.value],
+  key: () => ['cierre', 'preview-z', currentTenant.value?.id, arqueoWindowMode.value, previewShiftTemplateId.value, periodStart.value, periodEnd.value, periodStartTime.value, periodEndTime.value],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
-    params: {
-      period_start:  periodStart.value,
-      period_end:    periodEnd.value,
-      completed_only: true,
-      ...(periodStartTime.value && { period_start_time: periodStartTime.value }),
-      ...(periodEndTime.value   && { period_end_time:   periodEndTime.value   }),
-    },
+    params: buildPreviewParams(true),
   }),
-  enabled: () => !!currentTenant.value,
+  enabled: () => !!currentTenant.value && currentStep.value >= 1 && (arqueoWindowMode.value !== 'template' || !!selectedTemplateId.value),
   staleTime: 0,
 })
 
@@ -1072,16 +1242,21 @@ const submitCierre = async () => {
   isSubmitting.value = true
   submitError.value  = null
   try {
+    const body: Record<string, unknown> = {
+      periodStart: periodStart.value,
+      periodEnd: periodEnd.value,
+      cashCounted: totalCounted.value,
+      notes: notes.value || null,
+    }
+    if (arqueoWindowMode.value === 'template' && selectedTemplateId.value) {
+      body.shiftTemplateId = selectedTemplateId.value
+    } else {
+      if (periodStartTime.value) body.periodStartTime = periodStartTime.value
+      if (periodEndTime.value) body.periodEndTime = periodEndTime.value
+    }
     const result = await $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre', {
       method: 'POST',
-      body: {
-        periodStart:      periodStart.value,
-        periodEnd:        periodEnd.value,
-        ...(periodStartTime.value && { periodStartTime: periodStartTime.value }),
-        ...(periodEndTime.value   && { periodEndTime:   periodEndTime.value   }),
-        cashCounted:      totalCounted.value,
-        notes:            notes.value || null,
-      },
+      body,
     })
     successData.value = result.data
     cierreSuccess.value = true
