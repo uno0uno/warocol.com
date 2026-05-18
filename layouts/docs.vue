@@ -13,10 +13,13 @@ import {
   UserGroupIcon,
   ChartBarIcon,
   ShoppingCartIcon,
-  TableCellsIcon,
   TruckIcon,
   MapPinIcon,
-  BuildingLibraryIcon,
+  BanknotesIcon,
+  DocumentTextIcon,
+  AdjustmentsHorizontalIcon,
+  BuildingStorefrontIcon,
+  CreditCardIcon,
 } from '@heroicons/vue/24/outline'
 
 type NavSection = { section: string; path?: undefined; icon?: undefined; label?: undefined }
@@ -24,24 +27,28 @@ type NavItem    = { label: string; path: string; icon: unknown; section?: undefi
 type NavEntry   = NavSection | NavItem
 
 const nav: NavEntry[] = [
-  { label: 'Primeros pasos', path: '/docs/usuarios/primeros-pasos', icon: BookOpenIcon },
+  { label: 'Primeros pasos',  path: '/docs/usuarios/primeros-pasos', icon: BookOpenIcon },
 
-  { section: 'Operación' },
-  { label: 'POS',            path: '/docs/usuarios/pos',            icon: ComputerDesktopIcon },
-  { label: 'Ventas',         path: '/docs/usuarios/ventas',         icon: ShoppingCartIcon },
-  { label: 'Domicilios',     path: '/docs/usuarios/domicilios',     icon: MapPinIcon },
+  { label: 'POS',             path: '/docs/usuarios/pos',            icon: ComputerDesktopIcon },
+  { label: 'Ventas',          path: '/docs/usuarios/ventas',         icon: ShoppingCartIcon },
+  { label: 'Despacho',        path: '/docs/usuarios/despacho',       icon: MapPinIcon },
 
   { section: 'Herramientas' },
-  { label: 'Analítica',      path: '/docs/usuarios/analitica',      icon: ChartBarIcon },
-  { label: 'Finanzas',       path: '/docs/usuarios/finanzas',       icon: BuildingLibraryIcon },
-  { label: 'Menú',           path: '/docs/usuarios/menu',           icon: CubeIcon },
-  { label: 'Mesas',          path: '/docs/usuarios/mesas',          icon: TableCellsIcon },
-  { label: 'Abastecimiento', path: '/docs/usuarios/compras',        icon: TruckIcon },
-  { label: 'Equipo',         path: '/docs/usuarios/equipo',         icon: UserGroupIcon },
-  { label: 'Integraciones',  path: '/docs/dev',                     icon: CodeBracketIcon },
+  { label: 'Analítica Ventas', path: '/docs/usuarios/analitica',     icon: ChartBarIcon },
+  { label: 'Finanzas',         path: '/docs/usuarios/finanzas',      icon: BanknotesIcon },
+  { label: 'Facturación',      path: '/docs/usuarios/facturacion',   icon: DocumentTextIcon },
+  { label: 'Menú',             path: '/docs/usuarios/menu',          icon: CubeIcon },
+  { label: 'Operaciones',      path: '/docs/usuarios/operaciones',   icon: AdjustmentsHorizontalIcon },
+  { label: 'Abastecimiento',   path: '/docs/usuarios/abastecimiento', icon: TruckIcon },
+  { label: 'Equipo',           path: '/docs/usuarios/equipo',        icon: UserGroupIcon },
+  { label: 'Integraciones',    path: '/docs/dev',                    icon: CodeBracketIcon },
+
+  { section: 'Cuenta' },
+  { label: 'Mi Negocio',      path: '/docs/usuarios/negocio',        icon: BuildingStorefrontIcon },
+  { label: 'Mi Plan',         path: '/docs/usuarios/mi-plan',        icon: CreditCardIcon },
 
   { section: 'Dev' },
-  { label: 'CLI',            path: '/docs/cli',                     icon: CommandLineIcon },
+  { label: 'CLI',             path: '/docs/cli',                     icon: CommandLineIcon },
 ]
 
 function isActive(path: string) {
