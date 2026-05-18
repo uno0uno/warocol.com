@@ -1,6 +1,16 @@
 # Equipo
 
-Desde el módulo de Equipo gestionas los miembros de tu restaurante: quién tiene acceso, con qué rol, cuánto gana y cuándo le pagas.
+Desde el módulo de Equipo gestionas los miembros de tu restaurante: quién tiene acceso, con qué rol, cuánto gana, cuándo le pagas y sus prestaciones sociales.
+
+## Cómo acceder
+
+Menú lateral → **Equipo**. La pantalla tiene tres pestañas:
+
+| Pestaña | Para qué |
+|---------|----------|
+| **Miembros** | Gestión de accesos, roles y perfil de meseros |
+| **Salarios** | Configurar salario y registrar pagos de salario corriente |
+| **Nómina** | Prestaciones sociales (Prima, Cesantías, etc.) y PILA. Ver [Nómina](./equipo/nomina) |
 
 ---
 

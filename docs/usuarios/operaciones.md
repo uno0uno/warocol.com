@@ -25,9 +25,9 @@ Pantalla en vivo para cocina: muestra las órdenes nuevas, en preparación y lis
 
 ## Mesas
 
-Atajo al plano del salón. Aquí se activa/desactiva el módulo de mesas, se editan posiciones y se ajustan los nombres de las áreas.
+Aquí se activa/desactiva el módulo de mesas, se crean/editan/desactivan mesas, y se asigna la columna de mesero a las sesiones (si tu negocio tiene atribución de meseros activa).
 
-Ver [Mesas](./mesas) para la guía completa.
+Ver [Mesas](./operaciones/mesas) para la guía completa: estados, crear/editar, reactivar mesas inactivas, etiqueta configurable (Mesa / Cubículo / Habitación / etc.).
 
 ---
 
