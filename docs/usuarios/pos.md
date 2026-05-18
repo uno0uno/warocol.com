@@ -42,14 +42,62 @@ Si el pedido es anónimo, puedes omitir este paso.
 
 ### 4. Cobra
 
-Haz clic en **Ir a checkout**. En la pantalla de checkout:
+Haz clic en **Ir a checkout**. En la pantalla de checkout puedes ajustar:
 
 | Campo | Qué hacer |
 |-------|-----------|
-| Método de pago | Selecciona: **Efectivo**, **Tarjeta** o **Digital** |
+| Método de pago | Selecciona un grupo (ej: Tarjeta) o un método específico dentro del grupo. La lista la define el administrador. |
 | Puntos Waros | Si el cliente tiene puntos, puedes aplicarlos como descuento |
+| Descuento | Aplica un porcentaje o monto fijo sobre el subtotal |
+| Propina | Aparece solo si las propinas están activas. Ver [Propinas](#propinas) |
+| Mesero | Asigna el mesero responsable de la orden. Ver [Asignar mesero al cobrar](#asignar-mesero-al-cobrar) |
+| Domicilio | Si la orden es para enviar, agrega dirección y valor de domicilio |
+| Cobro parcial | Permite dividir el pago en varios métodos. Ver [Cobro parcial](#cobro-parcial-split) |
 
 Confirma el pago. WARO registra la orden, actualiza el inventario y muestra el resumen de la venta.
+
+---
+
+### Propinas
+
+Si el administrador activó las propinas en **Operaciones → Propinas**, aparece un selector durante el checkout.
+
+- El cajero ve **chips con los porcentajes preconfigurados** (por ejemplo 5% · 10% · 15%) y puede tocar uno para aplicarlo sobre el subtotal antes de impuestos.
+- También puede ingresar un **monto personalizado** en pesos.
+- El botón "Confirmar" cambia su etiqueta a **Confirmar — $X.XXX** mostrando el total cobrado (subtotal + propina).
+- La propina **no entra dentro de la base de impuestos**: se cobra encima del total.
+- Si el administrador activó la opción de pre-seleccionar un porcentaje, ese chip aparece marcado por defecto.
+
+> **Importante:** no se puede combinar propina con cobro parcial. Si activas el modo "cobro parcial", el selector de propina desaparece.
+
+En mesas, la propina se envía al cerrar la sesión de la mesa.
+
+---
+
+### Asignar mesero al cobrar
+
+Si las propinas están activas, aparece un selector de mesero en el checkout para atribuir la venta (y su propina) al miembro del equipo correspondiente.
+
+- **Modo mesa:** el selector siempre aparece. Viene precargado con el mesero efectivo de la sesión (el último que tomó la orden), pero el cajero puede confirmarlo o cambiarlo antes de cobrar.
+- **Modo mostrador / barra:** el selector solo aparece si todavía no se asignó un mesero desde el chip del carrito.
+- Si las propinas están **desactivadas**, el selector no aparece y la venta no queda atribuida.
+
+El mesero asignado queda visible en el detalle de la orden en **Ventas** y alimenta las métricas del perfil del mesero en **Equipo → Miembros**.
+
+---
+
+### Cobro parcial (split)
+
+Cuando un cliente quiere pagar con varios métodos (ej: parte en efectivo y parte con tarjeta):
+
+1. Activa el toggle **Cobro parcial** en el checkout.
+2. Selecciona el método y escribe el monto del primer pago. Confirma.
+3. Repite para cada pago adicional hasta cubrir el total.
+4. Si te equivocaste en un pago ya registrado, toca el ícono de **papelera** para eliminarlo. Puedes opcionalmente escribir un motivo. Si el pago fue en efectivo, el sistema te advierte que debes devolverlo físicamente al cliente.
+
+Para pagos en efectivo, los presets de billetes (**$10K · $20K · $50K**) se suman acumulativamente al monto recibido, facilitando calcular el vuelto.
+
+> **Importante:** no se puede combinar cobro parcial con propinas. Si activas split, el selector de propina desaparece.
 
 ---
 
@@ -83,7 +131,10 @@ Dentro de una sesión de mesa, usa el botón **Cambiar mesa** en el carrito para
 - La orden queda registrada en el historial de ventas
 - El inventario se descuenta automáticamente (si los productos tienen recetas)
 - Si el cliente estaba identificado, acumula sus puntos Waros
+- Si hubo propina, queda asociada a la orden y al mesero asignado
 - Aparece en el dashboard de analítica
+
+El modal de éxito muestra el desglose final: subtotal, descuento, **propina** (si aplica) y **Total cobrado** como línea destacada cuando hubo propina.
 
 ---
 
@@ -126,3 +177,12 @@ Sí, la interfaz se adapta a pantallas pequeñas.
 
 **¿Cómo activo o desactivo el módulo de mesas?**
 Desde **Mesas** en el menú lateral. Ahí encontrarás el toggle para activar o desactivar la gestión de mesas.
+
+**¿Puedo cobrar propinas en el POS?**
+Sí, si el administrador las activó en **Operaciones → Propinas**. Allí también se definen los porcentajes sugeridos.
+
+**¿Puedo eliminar un pago parcial ya registrado?**
+Sí, con el ícono de papelera junto al pago. Puedes escribir un motivo opcional. Si el pago fue en efectivo, recuerda devolverlo físicamente al cliente.
+
+**¿Puedo combinar propina y cobro parcial?**
+No. Hay que elegir uno de los dos modos en cada venta.

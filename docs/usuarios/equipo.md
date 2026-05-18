@@ -16,9 +16,10 @@ Ve a **Equipo → Miembros → Invitar miembro**. Ingresa el correo electrónico
 
 | Rol | Qué puede hacer |
 |-----|-----------------|
-| **Admin** | Acceso completo a todas las secciones |
+| **Super Usuario** | Acceso total, incluyendo configuración de roles y billing |
+| **Administrador** | Acceso completo a todas las secciones operativas |
 | **Empleado** | Acceso limitado (principalmente POS y operaciones básicas) |
-| **Super** | Acceso total incluyendo configuración de roles y billing |
+| **Miembro** | Acceso mínimo. Útil para personal que aparece como mesero o staff pero no opera la plataforma |
 
 > El rol se puede cambiar después desde la lista de miembros.
 
@@ -32,6 +33,27 @@ Pídele que revise spam. Si no llega, reenvía la invitación desde la lista de 
 
 **¿Puedo tener varios administradores?**
 Sí, no hay límite.
+
+---
+
+## Ver perfil de un mesero
+
+Si tu restaurante tiene propinas activas, puedes abrir el perfil de cada miembro para ver cuánto recibe en propinas y qué tan bien lo está haciendo.
+
+### Cómo acceder
+
+Ve a **Equipo → Miembros**. En cada fila aparece un ícono de **ojo** ("Ver perfil") que abre `/equipo/miembros/{id}`.
+
+### Qué muestra el perfil
+
+- **Encabezado** con nombre, correo y rol del miembro.
+- **Tres tarjetas** con el desempeño de propinas:
+  - **Hoy** — total de propinas y promedio sobre la venta
+  - **Últimos 7 días**
+  - **Últimos 30 días**
+- **Tabla "Últimas 10 propinas"** con: fecha, número de orden, canal (POS · Mesa · Barra · Online), subtotal, propina y porcentaje. El número de orden enlaza al detalle de la venta.
+
+> Si las propinas no están activadas en **Operaciones → Propinas**, el perfil muestra el mensaje "Las propinas no están habilitadas en este restaurante" en lugar de las tarjetas.
 
 ---
 

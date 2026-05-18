@@ -19,9 +19,10 @@ Ingresa el correo electrónico de la persona. WARO le enviará un correo con un 
 
 | Rol | Qué puede hacer |
 |-----|-----------------|
-| **Admin** | Acceso completo a todas las secciones |
+| **Super Usuario** | Acceso total, incluyendo configuración de roles y billing |
+| **Administrador** | Acceso completo a todas las secciones operativas |
 | **Empleado** | Acceso limitado (principalmente POS y operaciones básicas) |
-| **Super** | Acceso total incluyendo configuración de roles y billing |
+| **Miembro** | Acceso mínimo. Útil para personal que aparece como mesero pero no opera la plataforma |
 
 > El rol se puede cambiar después desde la lista de miembros.
 
@@ -46,6 +47,10 @@ Configura el tipo y el monto, luego guarda. Esto queda como referencia para cuan
 ## Cómo cambiar el rol de un empleado
 
 Ve a **Equipo → Miembros**, busca al empleado y haz clic en el ícono de editar rol (solo disponible para administradores).
+
+## Cómo ver el perfil de un miembro
+
+En la lista de miembros, cada fila tiene un ícono de **ojo** ("Ver perfil") que abre el perfil individual del mesero. Allí se ven las propinas que ha recibido (Hoy, últimos 7 y 30 días) y sus últimas órdenes con propina. Solo aparece información de propinas si están activadas en **Operaciones → Propinas**.
 
 ---
 

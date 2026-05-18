@@ -23,22 +23,29 @@ Desde el menú de analítica también puedes acceder a:
 
 En la parte superior puedes filtrar los datos por:
 
-- **Método de pago** — efectivo, tarjeta, digital
+- **Método de pago** — selecciona un grupo o un método específico
 - **Estado** — órdenes completadas, canceladas, pendientes
-- **Rango de fechas** — hoy, ayer, última semana, último mes, últimos 90 días, o un rango personalizado
+- **Rango de fechas** — Hoy · Ayer · Última semana · 15 días · 30 días · 90 días, o un rango personalizado
 
 > Los datos se actualizan en tiempo real. Puedes usar el botón de recarga para ver los más recientes.
 
 ### Métricas principales
 
-El dashboard muestra tarjetas con los indicadores más importantes:
+El dashboard muestra hasta cinco tarjetas con los indicadores del periodo filtrado:
 
 | Métrica | Qué significa |
 |---------|---------------|
-| **Total ventas** | Suma de dinero vendido en el período seleccionado |
-| **Número de órdenes** | Cuántos pedidos se procesaron |
-| **Ticket promedio** | Cuánto gasta en promedio cada pedido |
-| **Productos más vendidos** | Qué ítems tienen más salida |
+| **Ventas Brutas** | Suma del subtotal de ventas en el periodo (antes de impuestos y propina) |
+| **Ticket Promedio** | Cuánto se vende en promedio por orden |
+| **Propinas del periodo** | Total cobrado en propinas y % promedio sobre venta. Aparece solo si las propinas están activas en **Operaciones → Propinas**. Al hacer clic, abre el [historial de propinas](./ventas/propinas) con el rango actual ya aplicado. |
+| **INC 8%** | Impuesto al Consumo recaudado. La etiqueta varía según los impuestos configurados en tu tenant. |
+| **Proyección** | Forecast del mes o año según el filtro activo |
+
+> Cuando las propinas están desactivadas, la grilla colapsa a 4 columnas.
+
+### Banner de rentabilidad
+
+Debajo de las tarjetas aparece un banner ("Tu plato más vendido puede ser tu peor negocio") que invita a revisar el módulo de Rentabilidad para detectar productos con baja contribución.
 
 ### Gráfica de ventas
 

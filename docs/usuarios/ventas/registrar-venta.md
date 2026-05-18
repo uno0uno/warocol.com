@@ -43,3 +43,6 @@ Sí, el cliente es opcional en ventas manuales.
 
 **¿Puedo usar una fecha de hace varios días?**
 Sí, puedes seleccionar cualquier fecha pasada. La venta aparecerá en los reportes de ese día.
+
+**¿Puedo registrar una propina o asignar un mesero en una venta manual?**
+No. Las ventas manuales no soportan propina ni atribución de mesero. Para esos casos usa el POS, que sí registra ambos campos en el checkout.

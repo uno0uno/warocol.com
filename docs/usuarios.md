@@ -17,6 +17,7 @@ Bienvenido a la documentación de WARO. Aquí encuentras todo lo que necesitas p
 | [Gastos](./usuarios/gastos) | Costos operativos del negocio |
 | [Inventario](./usuarios/inventario) | Stock, ajustes y movimientos |
 | [Domicilios](./usuarios/domicilios) | Pedidos online y delivery |
-| [Equipo](./usuarios/equipo) | Miembros, salarios y pagos |
+| [Equipo](./usuarios/equipo) | Miembros, salarios, pagos y perfil de meseros |
+| [Operaciones](./usuarios/operaciones) | Comandas & cocina, mesas, personalización y propinas |
 | [Analítica](./usuarios/analitica) | Dashboards de ventas, rentabilidad y clientes |
 | [Integraciones](../dev) | API pública para construir integraciones |

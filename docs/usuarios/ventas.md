@@ -2,6 +2,14 @@
 
 Desde el módulo de Ventas consultas el historial completo de órdenes, las filtras, exportas y puedes registrar ventas que ocurrieron fuera del POS.
 
+El módulo tiene tres pestañas en la barra superior:
+
+- **Órdenes** — historial general de ventas (vista por defecto)
+- **Productos** — qué productos se vendieron y en qué cantidad
+- **Propinas** — historial de propinas. Ver [Propinas](./ventas/propinas)
+
+> La **configuración** de propinas (activarlas, definir porcentajes sugeridos) vive en **Operaciones → Propinas**, no aquí.
+
 ---
 
 ## Ver ventas
@@ -15,6 +23,8 @@ Ve a **Ventas** en el menú lateral.
 | Búsqueda | Número de orden, nombre o teléfono del cliente |
 | Rango de fechas | Hoy · Ayer · Última semana · 15 días · 30 días · 90 días |
 | Método de pago | Selecciona un grupo (ej: Tarjeta) o un método específico dentro del grupo (ej: Visa) |
+| Mesero | Filtra órdenes atribuidas a un mesero del equipo |
+| Canal | POS · Mesa · Online |
 | Estado | Completada · Cancelada · Pendiente |
 
 ### Estados de una orden
@@ -31,7 +41,12 @@ Usa el botón **Exportar** para recibir el reporte en tu correo con todas las ó
 
 Haz clic en cualquier fila para ver el desglose completo: productos, modificadores, cliente y total.
 
-Desde el detalle puedes:
+El detalle incluye, cuando aplica:
+- **Mesero** asignado — clic para abrir su perfil en Equipo
+- **Propina** cobrada — con monto, tipo (porcentaje sugerido o personalizada) y % sobre la venta
+- Línea **Total cobrado** = subtotal + propina (solo si hubo propina)
+
+Desde el detalle también puedes:
 - **Imprimir** el recibo
 - **Editar** ítems — eliminar productos o modificadores (el inventario se ajusta automáticamente)
 
