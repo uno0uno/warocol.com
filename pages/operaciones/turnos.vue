@@ -7,15 +7,6 @@
     <CommonsTheErrorState v-else-if="fetchError" />
 
     <template v-else>
-      <p class="text-sm text-text-secondary leading-relaxed">
-        Define turnos reutilizables para arqueos de caja por horario.
-        Para ventanas únicas sin plantilla, usa
-        <NuxtLink to="/finanzas/arqueo/z" class="text-primary font-medium hover:underline">
-          arqueo por turno u horario
-        </NuxtLink>
-        en Finanzas.
-      </p>
-
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p class="text-sm text-text-secondary">
           {{ activeCount }} activo{{ activeCount === 1 ? '' : 's' }}
@@ -40,12 +31,11 @@
         <template #card="{ item, index }">
           <div
             v-if="item"
-            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors cursor-pointer hover:bg-surface-secondary"
+            class="flex items-center gap-2 py-3 px-3 border-b border-border"
             :class="[
               index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30',
               !item.is_active && 'opacity-60',
             ]"
-            @click="openEdit(item)"
           >
             <div class="flex-1 min-w-0">
               <span class="text-sm font-semibold text-text-primary">{{ item.name }}</span>
@@ -57,6 +47,37 @@
               :variant="item.is_active ? 'success' : 'secondary'"
               size="sm"
             />
+            <div class="flex items-center gap-0.5 flex-shrink-0">
+              <button
+                type="button"
+                :aria-label="`Editar ${item.name}`"
+                title="Editar"
+                class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                @click="openEdit(item)"
+              >
+                <PencilSquareIcon class="w-4 h-4" />
+              </button>
+              <button
+                v-if="item.is_active"
+                type="button"
+                :aria-label="`Desactivar ${item.name}`"
+                title="Desactivar"
+                class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-amber-600 hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-colors"
+                @click="requestDeactivate(item)"
+              >
+                <NoSymbolIcon class="w-4 h-4" />
+              </button>
+              <button
+                v-else
+                type="button"
+                :aria-label="`Reactivar ${item.name}`"
+                title="Reactivar"
+                class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                @click="reactivate(item)"
+              >
+                <ArrowPathIcon class="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </template>
 
@@ -78,29 +99,35 @@
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex items-center justify-end gap-1" @click.stop>
+          <div class="flex items-center justify-end gap-0.5">
             <button
               type="button"
-              class="min-h-[36px] px-2.5 text-xs font-medium rounded-lg text-text-secondary hover:bg-surface-secondary"
+              :aria-label="`Editar ${row.name}`"
+              title="Editar"
+              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
               @click="openEdit(row)"
             >
-              Editar
+              <PencilSquareIcon class="w-4 h-4" />
             </button>
             <button
               v-if="row.is_active"
               type="button"
-              class="min-h-[36px] px-2.5 text-xs font-medium rounded-lg text-destructive hover:bg-destructive/10"
+              :aria-label="`Desactivar ${row.name}`"
+              title="Desactivar"
+              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-amber-600 hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-colors"
               @click="requestDeactivate(row)"
             >
-              Desactivar
+              <NoSymbolIcon class="w-4 h-4" />
             </button>
             <button
               v-else
               type="button"
-              class="min-h-[36px] px-2.5 text-xs font-medium rounded-lg text-primary hover:bg-primary/10"
+              :aria-label="`Reactivar ${row.name}`"
+              title="Reactivar"
+              class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
               @click="reactivate(row)"
             >
-              Reactivar
+              <ArrowPathIcon class="w-4 h-4" />
             </button>
           </div>
         </template>
@@ -127,6 +154,7 @@
 </template>
 
 <script setup lang="ts">
+import { ArrowPathIcon, NoSymbolIcon, PencilSquareIcon } from '@heroicons/vue/24/outline'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import type { ShiftTemplate } from '~/components/operaciones/ShiftTemplatePanel.vue'
 

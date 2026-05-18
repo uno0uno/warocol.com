@@ -115,22 +115,6 @@
 
       <!-- ── Historial ─────────────────────────────────────────────────────── -->
       <HealthSemaphore :is-unlocked="true" title="Historial de arqueos">
-        <template #header-actions>
-          <div class="flex flex-wrap items-center gap-2 justify-end">
-            <NuxtLink
-              to="/finanzas/arqueo/nuevo"
-              class="btn-primary px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
-            >
-              Día completo
-            </NuxtLink>
-            <NuxtLink
-              to="/finanzas/arqueo/z"
-              class="btn-secondary px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
-            >
-              Turno u horario
-            </NuxtLink>
-          </div>
-        </template>
       <UiResponsiveDataView
         :data="filteredHistorial"
         :columns="historialColumns"
