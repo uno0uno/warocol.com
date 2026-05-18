@@ -148,6 +148,7 @@
       <div class="sm:col-span-2 flex flex-wrap gap-3">
         <button
           @click="navigateTo({ path: '/finanzas/arqueo/z', query: {
+            mode: 'custom',
             start: periodStart,
             end:   periodEnd,
             ...(periodStartTime && { startTime: periodStartTime }),

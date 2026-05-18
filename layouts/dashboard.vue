@@ -553,8 +553,8 @@ const getPageConfig = () => {
     }
   } else if (path === '/finanzas/arqueo/z') {
     return {
-      pageTitle: 'Corte Z',
-      pageSubtitle: undefined,
+      pageTitle: 'Arqueo por turno u horario',
+      pageSubtitle: 'Ventana personalizada de fechas y horas',
       searchPlaceholder: undefined,
       activePage: 'finanzas' as const,
       showBreadcrumb: false,
@@ -903,6 +903,16 @@ const getPageConfig = () => {
       pageSubtitle: 'Información y configuración de tu negocio',
       searchPlaceholder: 'Buscar en negocio...',
       activePage: 'negocio' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
+  } else if (path === '/operaciones/turnos' || path === '/operaciones/turnos/') {
+    return {
+      pageTitle: 'Turnos',
+      pageSubtitle: 'Horarios reutilizables para arqueos de caja',
+      searchPlaceholder: undefined,
+      activePage: 'operaciones' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: undefined

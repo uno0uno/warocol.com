@@ -77,20 +77,65 @@
         </div>
       </div>
 
-      <!-- ── Historial ─────────────────────────────────────────────────────── -->
-      <HealthSemaphore :is-unlocked="true" title="Historial de arqueos">
-        <template #header-actions>
+      <!-- ── Nuevo arqueo (hub) ─────────────────────────────────────────────── -->
+      <div>
+        <h2 class="text-sm font-semibold text-text-primary mb-2">Nuevo arqueo</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <NuxtLink
             to="/finanzas/arqueo/nuevo"
-            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap flex items-center gap-1.5"
+            class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors min-h-[44px]"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span class="hidden sm:inline">Nuevo arqueo</span>
-            <span class="sm:hidden">Nuevo</span>
+            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center text-primary" aria-hidden="true">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-text-primary">Día completo</p>
+              <p class="text-xs text-text-secondary mt-0.5">Un cierre por día calendario (cierre nocturno o turno único).</p>
+            </div>
           </NuxtLink>
-        </template>
+          <NuxtLink
+            to="/finanzas/arqueo/z?mode=template"
+            class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/20 bg-surface hover:border-primary/40 hover:bg-primary/5 transition-colors min-h-[44px]"
+          >
+            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-text-primary">Por plantilla</p>
+              <p class="text-xs text-text-secondary mt-0.5">Turno fijo ya configurado (Mañana, Tarde, noche…).</p>
+            </div>
+          </NuxtLink>
+          <NuxtLink
+            to="/finanzas/arqueo/z?mode=custom"
+            class="flex items-start gap-3 p-4 rounded-lg border-2 border-violet-200 bg-violet-50/40 hover:border-violet-300 hover:bg-violet-50 transition-colors min-h-[44px]"
+          >
+            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center text-violet-800" aria-hidden="true">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-text-primary">Horario personalizado</p>
+              <p class="text-xs text-text-secondary mt-0.5">Ventana a mano por horas o entre varios días.</p>
+            </div>
+          </NuxtLink>
+        </div>
+        <p class="text-xs text-text-secondary mt-2">
+          Los turnos fijos se administran en
+          <NuxtLink to="/operaciones/turnos" class="text-primary font-medium hover:underline">Operaciones → Turnos</NuxtLink>.
+        </p>
+      </div>
+      <p class="text-xs text-text-secondary">
+        ¿Solo quieres revisar sin cerrar?
+        <NuxtLink to="/finanzas/arqueo/x" class="text-primary font-medium hover:underline">Vista previa (Corte X)</NuxtLink>
+      </p>
+
+      <!-- ── Historial ─────────────────────────────────────────────────────── -->
+      <HealthSemaphore :is-unlocked="true" title="Historial de arqueos">
       <UiResponsiveDataView
         :data="filteredHistorial"
         :columns="historialColumns"
@@ -104,8 +149,15 @@
             @click="openPanel(item.id)"
           >
             <div class="flex-1 min-w-0">
-              <span class="text-sm font-bold text-text-primary">{{ formatDay(item.periodStart) }}</span>
-              <p class="text-xs text-text-secondary mt-0.5">{{ formatDay(item.periodEnd) }} · {{ formatDate(item.closedAt) }}</p>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span
+                  class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
+                  :class="hasTimeWindow(item) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
+                >{{ periodTypeLabel(item) }}</span>
+                <span class="text-sm font-bold text-text-primary">{{ formatPeriodDates(item) }}</span>
+              </div>
+              <p v-if="formatPeriodTimes(item)" class="text-xs text-text-secondary mt-0.5 font-mono">{{ formatPeriodTimes(item) }}</p>
+              <p class="text-xs text-text-secondary mt-0.5">Registrado {{ formatDate(item.closedAt) }}</p>
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
               <span class="text-sm font-bold text-primary tabular-nums">{{ formatCurrency(item.totalSales) }}</span>
@@ -117,10 +169,20 @@
         </template>
 
         <template #cell-periodStart="{ row }">
-          <span class="text-sm font-bold text-text-primary">{{ formatDay(row.periodStart) }}</span>
+          <div class="flex flex-col gap-0.5 min-w-0">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span
+                class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded flex-shrink-0"
+                :class="hasTimeWindow(row) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
+              >{{ periodTypeLabel(row) }}</span>
+              <span class="text-sm font-bold text-text-primary">{{ formatPeriodDates(row) }}</span>
+            </div>
+            <span v-if="formatPeriodTimes(row)" class="text-xs text-text-secondary font-mono">{{ formatPeriodTimes(row) }}</span>
+          </div>
         </template>
         <template #cell-periodEnd="{ row }">
-          <span class="text-sm text-text-secondary">{{ formatDay(row.periodEnd) }}</span>
+          <span v-if="row.periodStart !== row.periodEnd" class="text-sm text-text-secondary">{{ formatDay(row.periodEnd) }}</span>
+          <span v-else class="text-xs text-text-tertiary">—</span>
         </template>
         <template #cell-totalSales="{ value }">
           <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
@@ -186,7 +248,7 @@
           </div>
           <h3 class="text-lg font-bold text-text-primary mb-1">Eliminar arqueo</h3>
           <p class="text-sm text-text-secondary mb-6">
-            ¿Eliminar el arqueo del período <strong>{{ formatPeriod(cierreToDelete?.periodStart, cierreToDelete?.periodEnd) }}</strong>? Esta acción no se puede deshacer.
+            ¿Eliminar el arqueo del período <strong>{{ formatPeriodDates(cierreToDelete) }}</strong><template v-if="formatPeriodTimes(cierreToDelete)"> ({{ formatPeriodTimes(cierreToDelete) }})</template>? Esta acción no se puede deshacer.
           </p>
           <div class="flex gap-3">
             <button
@@ -298,8 +360,8 @@ const summaryStats = computed(() => {
 })
 
 const historialColumns = [
-  { key: 'periodStart',    title: 'Período inicial', sortable: false },
-  { key: 'periodEnd',      title: 'Período final',   sortable: false },
+  { key: 'periodStart',    title: 'Período',         sortable: false },
+  { key: 'periodEnd',      title: 'Hasta',           sortable: false },
   { key: 'totalSales',     title: 'Ventas',          sortable: false },
   { key: 'gastosEfectivo', title: 'Gastos',          sortable: false },
   { key: 'cashDifference', title: 'Diferencia',      sortable: false },
@@ -325,7 +387,8 @@ const isCurrentMonthActive = computed(() => {
   return activeStart.value === first && activeEnd.value === last
 })
 
-const { formatDate: _fmtDate, formatDateTime: _fmtDateTime } = useFormatters()
+const { formatDateTime: _fmtDateTime } = useFormatters()
+const { hasTimeWindow, formatPeriodDates, formatPeriodTimes, periodTypeLabel } = useCierrePeriod()
 
 const formatDay = (d: string) => {
   if (!d) return ''
@@ -335,12 +398,6 @@ const formatDay = (d: string) => {
 const formatDate = (iso: string) => {
   if (!iso) return ''
   return _fmtDateTime(iso)
-}
-
-const formatPeriod = (start: string, end: string) => {
-  if (!start) return ''
-  const fmt = (d: string) => _fmtDate(d + 'T12:00:00')
-  return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 
 // ── Panel ─────────────────────────────────────────────────────────────────
