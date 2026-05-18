@@ -907,6 +907,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path === '/operaciones/turnos' || path === '/operaciones/turnos/') {
+    return {
+      pageTitle: 'Turnos',
+      pageSubtitle: 'Horarios reutilizables para arqueos de caja',
+      searchPlaceholder: undefined,
+      activePage: 'operaciones' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path === '/operaciones/propinas' || path === '/operaciones/propinas/') {
     return {
       pageTitle: 'Configuración de propinas',
