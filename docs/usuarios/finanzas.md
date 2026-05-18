@@ -32,13 +32,13 @@ Desde **Finanzas → Arqueo de caja** eliges cómo cerrar:
 
 | Modo | Cuándo usarlo | Cómo iniciarlo |
 |------|---------------|----------------|
-| **Día completo** | Un solo cierre por día calendario (cierre nocturno o negocio de un turno único) | Tarjeta **Arqueo del día** o botón **Día completo** |
-| **Turno u horario** | Varios cortes el mismo día (mañana / tarde / noche) o un rango entre fechas con hora exacta | Tarjeta **Turno u horario** |
-| **Plantillas de turno** *(próximamente)* | Horarios fijos reutilizables (ej. almuerzo 12:00–15:00) configurados en Operaciones | Llegará en **Operaciones → Turnos** |
+| **Día completo** | Un solo cierre por día calendario (cierre nocturno o negocio de un turno único) | Tarjeta **Día completo** en **Nuevo arqueo** |
+| **Por plantilla** | Turnos fijos reutilizables (Mañana, Tarde…) configurados en Operaciones | Tarjeta **Por plantilla** |
+| **Horario personalizado** | Varios cortes el mismo día o un rango entre fechas con hora exacta a mano | Tarjeta **Horario personalizado** |
 
 **Vista previa (Corte X):** revisa ventas y caja en vivo **sin registrar** nada. Enlace al pie de la pantalla principal de arqueo. Desde ahí puedes pasar a registrar con el mismo período.
 
-> Los arqueos por horario muestran la ventana (ej. `14:00 – 22:30`) en el historial con la etiqueta **Por horario**. Los de día completo muestran **Día completo**.
+> En el historial: **Día completo** (sin horas), nombre del turno (plantilla) o **Personalizado** con ventana `HH:mm – HH:mm`.
 
 ### Historial de arqueos
 
@@ -63,9 +63,9 @@ Cada fila del historial tiene dos botones:
 
 El panel de detalle muestra: tipo de cierre (día completo o por horario), fechas y —si aplica— la ventana horaria, ventas del período, caja, métodos de pago, notas y fecha de registro.
 
-### Arqueo del día (día completo)
+### Arqueo día completo
 
-Haz clic en **Arqueo del día**. El proceso tiene 5 pasos.
+Haz clic en **Día completo** (sección **Nuevo arqueo**). El proceso tiene 5 pasos.
 
 **Paso 1 — Período**
 
@@ -110,9 +110,9 @@ Puedes agregar **notas** opcionales (observaciones, incidencias del día).
 
 Confirma el arqueo. El botón se activa solo después de revisar el resumen. Una vez registrado, el arqueo no se puede editar, solo eliminar.
 
-### Arqueo por turno u horario
+### Arqueo por plantilla o horario personalizado
 
-Haz clic en **Turno u horario**. En el primer paso defines el período:
+Haz clic en **Por plantilla** o **Horario personalizado**. En el primer paso defines el período:
 
 1. Elige fechas (Hoy, Ayer, últimos 7 días, o un rango personalizado).
 2. Activa **Horario** para acotar por hora (obligatorio si el rango abarca varios días).
@@ -127,12 +127,12 @@ Desde el historial, haz clic en el ícono de papelera. Al eliminar, el período 
 ### Preguntas frecuentes — Arqueo
 
 **¿Puedo hacer arqueo de varios días a la vez?**
-En **Arqueo del día**, un solo día por registro. En **Turno u horario** puedes elegir un rango de fechas; si abarca más de un día debes indicar hora de inicio y fin.
+En **Día completo**, un solo día por registro. En **Horario personalizado** (o **Por plantilla**) puedes elegir un rango de fechas; si abarca más de un día debes indicar hora de inicio y fin.
 
 **¿Cuál modo elijo?**
 - Un cierre al cerrar el local → **Día completo**.
-- Varios cortes el mismo día (ej. almuerzo y cena) → **Turno u horario**.
-- Horarios fijos repetibles → próximamente **Plantillas de turno** en Operaciones.
+- Varios cortes el mismo día (ej. almuerzo y cena) → **Horario personalizado**.
+- Horarios fijos repetibles → **Por plantilla** (configúralos en **Operaciones → Turnos**).
 
 **¿Qué pasa si hay mesas abiertas?**
 El sistema bloquea el arqueo y muestra cuántas mesas están abiertas. Ve al módulo de Mesas, cierra las sesiones pendientes y regresa.

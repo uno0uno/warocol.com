@@ -77,36 +77,57 @@
         </div>
       </div>
 
-      <!-- ── Entry CTAs ──────────────────────────────────────────────────────── -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <NuxtLink
-          to="/finanzas/arqueo/nuevo"
-          class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors"
-        >
-          <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center text-primary" aria-hidden="true">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-sm font-semibold text-text-primary">Arqueo del día</p>
-            <p class="text-xs text-text-secondary mt-0.5">Cierra un día calendario completo (turno único o cierre nocturno).</p>
-          </div>
-        </NuxtLink>
-        <NuxtLink
-          to="/finanzas/arqueo/z"
-          class="flex items-start gap-3 p-4 rounded-lg border-2 border-border bg-surface hover:border-primary/40 transition-colors"
-        >
-          <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-background border border-border flex items-center justify-center text-primary" aria-hidden="true">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-sm font-semibold text-text-primary">Turno u horario</p>
-            <p class="text-xs text-text-secondary mt-0.5">Ventana personalizada por horas (mañana, tarde, o rango entre días).</p>
-          </div>
-        </NuxtLink>
+      <!-- ── Nuevo arqueo (hub) ─────────────────────────────────────────────── -->
+      <div>
+        <h2 class="text-sm font-semibold text-text-primary mb-2">Nuevo arqueo</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <NuxtLink
+            to="/finanzas/arqueo/nuevo"
+            class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors min-h-[44px]"
+          >
+            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center text-primary" aria-hidden="true">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-text-primary">Día completo</p>
+              <p class="text-xs text-text-secondary mt-0.5">Un cierre por día calendario (cierre nocturno o turno único).</p>
+            </div>
+          </NuxtLink>
+          <NuxtLink
+            to="/finanzas/arqueo/z?mode=template"
+            class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/20 bg-surface hover:border-primary/40 hover:bg-primary/5 transition-colors min-h-[44px]"
+          >
+            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-text-primary">Por plantilla</p>
+              <p class="text-xs text-text-secondary mt-0.5">Turno fijo ya configurado (Mañana, Tarde, noche…).</p>
+            </div>
+          </NuxtLink>
+          <NuxtLink
+            to="/finanzas/arqueo/z?mode=custom"
+            class="flex items-start gap-3 p-4 rounded-lg border-2 border-violet-200 bg-violet-50/40 hover:border-violet-300 hover:bg-violet-50 transition-colors min-h-[44px]"
+          >
+            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center text-violet-800" aria-hidden="true">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-text-primary">Horario personalizado</p>
+              <p class="text-xs text-text-secondary mt-0.5">Ventana a mano por horas o entre varios días.</p>
+            </div>
+          </NuxtLink>
+        </div>
+        <p class="text-xs text-text-secondary mt-2">
+          Los turnos fijos se administran en
+          <NuxtLink to="/operaciones/turnos" class="text-primary font-medium hover:underline">Operaciones → Turnos</NuxtLink>.
+        </p>
       </div>
       <p class="text-xs text-text-secondary">
         ¿Solo quieres revisar sin cerrar?
