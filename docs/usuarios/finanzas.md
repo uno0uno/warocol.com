@@ -26,19 +26,21 @@ El **arqueo** registra el cuadre de caja de un período: cuánto vendiste, cuán
 
 > Esta sección es **reversible** (puedes eliminar un arqueo). El **Cierre contable mensual** (siguiente sección) es distinto e irreversible.
 
-### Tres formas de arquear
+### Nuevo arqueo — tres formas de cerrar
 
-Desde **Finanzas → Arqueo de caja** eliges cómo cerrar:
+En la pantalla principal de arqueo verás la sección **Nuevo arqueo** con tres tarjetas. Elige la que corresponda a tu operación:
 
-| Modo | Cuándo usarlo | Cómo iniciarlo |
-|------|---------------|----------------|
-| **Día completo** | Un solo cierre por día calendario (cierre nocturno o negocio de un turno único) | Tarjeta **Día completo** en **Nuevo arqueo** |
-| **Por plantilla** | Turnos fijos reutilizables (Mañana, Tarde…) configurados en Operaciones | Tarjeta **Por plantilla** |
-| **Horario personalizado** | Varios cortes el mismo día o un rango entre fechas con hora exacta a mano | Tarjeta **Horario personalizado** |
+| Modo | Cuándo usarlo | Tarjeta |
+|------|---------------|---------|
+| **Día completo** | Un solo cierre por día calendario (cierre nocturno o negocio de un solo turno) | **Día completo** |
+| **Por plantilla** | Turnos fijos ya configurados (Mañana, Tarde, Noche…) | **Por plantilla** |
+| **Horario personalizado** | Ventana de horas a mano, varios cortes el mismo día o entre varios días | **Horario personalizado** |
 
-**Vista previa (Corte X):** revisa ventas y caja en vivo **sin registrar** nada. Enlace al pie de la pantalla principal de arqueo. Desde ahí puedes pasar a registrar con el mismo período.
+**Vista previa (Corte X):** enlace al pie de la pantalla. Revisa ventas y caja en vivo **sin registrar** nada. Desde ahí puedes pasar a registrar un arqueo con el mismo período.
 
-> En el historial: **Día completo** (sin horas), nombre del turno (plantilla) o **Personalizado** con ventana `HH:mm – HH:mm`.
+> En el **historial**, cada fila muestra una etiqueta: **Día completo** (sin horas), el **nombre del turno** (plantilla) o **Personalizado**, y —si aplica— la ventana `HH:mm – HH:mm`.
+
+> **Permisos:** registrar arqueos requiere acceso al módulo **Finanzas** (por defecto dueño y administrador). Configurar plantillas de turno es en **Operaciones → Turnos** (módulo Operaciones). Ver [Turnos](../operaciones/turnos).
 
 ### Historial de arqueos
 
@@ -81,7 +83,7 @@ Una vez seleccionado, el sistema muestra automáticamente el resumen del períod
 | Efectivo esperado | Efectivo recibido menos gastos |
 | Métodos de pago | Desglose por grupo (tarjeta, digital, etc.) |
 
-Si hay mesas abiertas para ese período, el sistema bloquea el avance y muestra un aviso. Debes cerrar las mesas en el POS antes de continuar.
+Si hay mesas abiertas para ese período **y el día que cierras es hoy o futuro**, el sistema bloquea el avance y muestra un aviso. Debes cerrar las mesas en el POS antes de continuar. Para períodos **pasados**, el control de mesas abiertas no aplica (solo importan las ventas de ese rango).
 
 **Paso 2 — Efectivo**
 
@@ -110,32 +112,73 @@ Puedes agregar **notas** opcionales (observaciones, incidencias del día).
 
 Confirma el arqueo. El botón se activa solo después de revisar el resumen. Una vez registrado, el arqueo no se puede editar, solo eliminar.
 
-### Arqueo por plantilla o horario personalizado
+### Arqueo por plantilla
 
-Haz clic en **Por plantilla** o **Horario personalizado**. En el primer paso defines el período:
+Haz clic en **Por plantilla** (o en la tarjeta equivalente en **Nuevo arqueo**). Sirve cuando ya tienes turnos definidos en [Operaciones → Turnos](../operaciones/turnos) (ej. Mañana 06:00–14:00).
 
-1. Elige fechas (Hoy, Ayer, últimos 7 días, o un rango personalizado).
-2. Activa **Horario** para acotar por hora (obligatorio si el rango abarca varios días).
-3. Revisa el resumen previo y continúa con los mismos 5 pasos de conteo (efectivo, otros métodos, resumen, cerrar).
+**Paso 1 — Período**
 
-Útil cuando cierras caja entre turnos sin esperar al final del día.
+1. Confirma que el modo **Plantilla** está activo.
+2. Elige el **turno** en el desplegable (solo aparecen plantillas activas).
+3. Elige el **día** del calendario; las horas del turno se muestran en solo lectura según la plantilla.
+4. Opcional: **Desde último arqueo** propone la ventana desde el fin del último arqueo registrado hasta ahora.
+5. Usa accesos rápidos (Hoy, Ayer, etc.) si aplica.
+6. Revisa el resumen previo y continúa con los mismos 5 pasos de conteo (efectivo, otros métodos, resumen, cerrar).
+
+Si no hay turnos activos, verás **Sin turnos activos** — créalos primero en Operaciones.
+
+### Arqueo por horario personalizado
+
+Haz clic en **Horario personalizado**. Define tú mismo la ventana de fechas y horas.
+
+**Paso 1 — Período**
+
+1. Confirma que el modo **Personalizado** está activo.
+2. Elige fechas (Hoy, Ayer, últimos 7 días, o un rango personalizado).
+3. Activa **Horario** y define hora de inicio y fin (obligatorio si el rango abarca **varios días**).
+4. Opcional: **Desde último arqueo** (misma idea que en plantilla).
+5. Revisa el resumen previo y continúa con los 5 pasos de conteo.
+
+Útil para cortes puntuales (ej. 15:00–18:00) sin crear una plantilla.
+
+### Varios arqueos el mismo día
+
+Puedes registrar **más de un arqueo en el mismo día calendario** siempre que las **ventanas de tiempo no se superpongan**.
+
+Ejemplos válidos el mismo día:
+
+- Mañana 06:00–14:00 (por plantilla) y tarde 15:00–22:00 (personalizado).
+- Dos turnos de plantilla con horarios distintos.
+
+Ejemplos que **no** permite el sistema:
+
+- Dos arqueos de **día completo** el mismo día (el día completo cubre 00:00–23:59).
+- Dos ventanas cuyas horas se cruzan (ej. 10:00–18:00 y 14:00–22:00).
+
+Si intentas un período que choca con uno ya registrado, verás un mensaje como *Ya existe un arqueo para este período* (o que se superpone).
 
 ### Eliminar un arqueo
 
-Desde el historial, haz clic en el ícono de papelera. Al eliminar, el período queda liberado y puedes registrar un nuevo arqueo para esas mismas fechas. Los datos de ventas no se borran — solo el registro del arqueo.
+Desde el historial, haz clic en el ícono de papelera. Al eliminar, esa ventana de tiempo queda **liberada** y puedes registrar un nuevo arqueo que la use. Los datos de ventas no se borran — solo el registro del arqueo.
 
 ### Preguntas frecuentes — Arqueo
 
 **¿Puedo hacer arqueo de varios días a la vez?**
-En **Día completo**, un solo día por registro. En **Horario personalizado** (o **Por plantilla**) puedes elegir un rango de fechas; si abarca más de un día debes indicar hora de inicio y fin.
+En **Día completo**, un solo día por registro. En **Horario personalizado** o **Por plantilla** puedes elegir un rango de fechas; si abarca más de un día debes indicar hora de inicio y fin.
 
 **¿Cuál modo elijo?**
 - Un cierre al cerrar el local → **Día completo**.
-- Varios cortes el mismo día (ej. almuerzo y cena) → **Horario personalizado**.
-- Horarios fijos repetibles → **Por plantilla** (configúralos en **Operaciones → Turnos**).
+- Varios cortes el mismo día (ej. almuerzo y cena) → **Horario personalizado** o **Por plantilla** si los horarios son fijos.
+- Horarios repetibles cada semana → **Por plantilla** (configúralos en [Operaciones → Turnos](../operaciones/turnos)).
+
+**¿Puedo hacer dos arqueos hoy?**
+Sí, si las ventanas no se solapan. Un arqueo de día completo ocupa todo el día; después de ese no puedes registrar otro en el mismo día salvo que elimines el primero.
 
 **¿Qué pasa si hay mesas abiertas?**
-El sistema bloquea el arqueo y muestra cuántas mesas están abiertas. Ve al módulo de Mesas, cierra las sesiones pendientes y regresa.
+Para períodos de **hoy o futuro**, el sistema bloquea el arqueo y muestra cuántas mesas están abiertas. Ve a **Operaciones → Mesas** o al POS, cierra las sesiones pendientes y regresa. En períodos **pasados** no se exige cerrar mesas actuales.
+
+**¿Arqueo o cierre contable mensual?**
+El **arqueo** cuadra la caja de un período y se puede eliminar. El **cierre contable** (pestaña siguiente en Finanzas) cierra el mes contable, bloquea órdenes del mes y **no** se revierte. Son procesos distintos.
 
 **¿Qué es la diferencia de caja?**
 Es la diferencia entre el efectivo que debería haber en caja (ventas en efectivo menos gastos en efectivo) y el efectivo que contaste físicamente. Una diferencia de $0 significa que el cuadre es perfecto.
