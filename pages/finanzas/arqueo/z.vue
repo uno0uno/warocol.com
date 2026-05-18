@@ -112,7 +112,7 @@
         <!-- Plantilla: un solo control — día (calendario) + horas del turno (solo lectura) -->
         <div
           v-if="arqueoWindowMode === 'template'"
-          class="arqueo-template-period relative flex items-center h-10 rounded-lg border-2 border-border bg-background flex-shrink-0"
+          class="arqueo-template-period relative flex items-center h-10 w-fit rounded-lg border-2 border-border bg-background flex-shrink-0"
         >
           <VueDatePicker
             v-model="templateAnchorDate"
@@ -125,13 +125,13 @@
             :clearable="false"
             menu-class-name="dp-custom-menu"
             calendar-cell-class-name="dp-custom-cell"
-            class="arqueo-template-dp-trigger flex-shrink-0"
+            class="arqueo-template-dp-trigger w-fit flex-shrink-0"
             @update:model-value="onTemplateAnchorPick"
           >
             <template #trigger>
               <button
                 type="button"
-                class="flex items-center gap-1.5 h-10 px-3 text-sm text-text-primary hover:bg-surface-secondary/60 transition-colors rounded-l-md"
+                class="flex w-fit items-center gap-1.5 h-10 px-3 text-sm text-text-primary hover:bg-surface-secondary/60 transition-colors rounded-l-md"
               >
                 <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -1446,8 +1446,10 @@ const formatPeriod = (start: string, end: string) => {
 
 <style>
 .arqueo-template-dp-trigger {
-  display: inline-flex;
-  height: 2.5rem;
+  display: inline-flex !important;
+  width: fit-content !important;
+  max-width: fit-content !important;
+  height: 2.5rem !important;
   flex-shrink: 0;
 }
 .arqueo-template-dp-trigger :deep(.dp__input_wrap),
@@ -1459,14 +1461,19 @@ const formatPeriod = (start: string, end: string) => {
 .arqueo-template-dp-trigger :deep(.dp__main > div) {
   display: inline-flex !important;
   align-items: stretch !important;
+  width: fit-content !important;
+  max-width: fit-content !important;
   height: 2.5rem !important;
-  width: auto !important;
-  min-width: 0 !important;
+  min-width: unset !important;
   min-height: 0 !important;
   padding: 0 !important;
   margin: 0 !important;
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
+}
+.arqueo-template-dp-trigger :deep(.dp__main > div > button) {
+  width: fit-content !important;
+  min-width: unset !important;
 }
 </style>
