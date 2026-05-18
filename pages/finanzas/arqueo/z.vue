@@ -110,34 +110,47 @@
           @click="applyPreset(p)"
         >{{ p.label }}</button>
 
-        <!-- Plantilla: calendario = solo día; horas = ventana del turno (solo lectura) -->
+        <!-- Plantilla: un solo control — día (calendario) + horas del turno (solo lectura) -->
         <div
           v-if="arqueoWindowMode === 'template'"
-          class="flex items-stretch h-10 rounded-lg border-2 border-border bg-background overflow-hidden flex-shrink-0"
+          class="arqueo-template-period relative flex items-center h-10 rounded-lg border-2 border-border bg-background flex-shrink-0"
         >
           <VueDatePicker
             v-model="templateAnchorDate"
             :teleport="true"
             :enable-time-picker="false"
+            :formats="dateOnlyFormats"
             :locale="es"
             auto-apply
             :max-date="new Date()"
-            :format="formatTemplateDateOnly"
-            input-class-name="dp-custom-input !border-0 !rounded-none !shadow-none !min-w-[5.25rem] !w-[5.25rem] sm:!min-w-[5.75rem] sm:!w-[5.75rem]"
+            :clearable="false"
             menu-class-name="dp-custom-menu"
             calendar-cell-class-name="dp-custom-cell"
+            class="arqueo-template-dp-trigger flex-shrink-0"
             @update:model-value="onTemplateAnchorPick"
-          />
+          >
+            <template #trigger>
+              <button
+                type="button"
+                class="flex items-center gap-1.5 h-10 px-3 text-sm text-text-primary hover:bg-surface-secondary/60 transition-colors rounded-l-md"
+              >
+                <svg class="w-4 h-4 text-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span class="font-medium tabular-nums whitespace-nowrap">{{ formatTemplateDateOnly() }}</span>
+              </button>
+            </template>
+          </VueDatePicker>
           <span
             v-if="templateHoursLabel"
-            class="flex items-center px-2.5 text-sm font-mono text-text-secondary border-l border-border whitespace-nowrap"
+            class="flex items-center h-full px-2.5 text-sm font-mono text-text-secondary border-l border-border whitespace-nowrap"
             title="Horario definido por el turno"
           >
             {{ templateHoursLabel }}
           </span>
           <span
             v-else-if="selectedTemplateId && templateWindowStatus === 'pending'"
-            class="flex items-center px-2.5 text-xs text-text-secondary border-l border-border"
+            class="flex items-center h-full px-2.5 text-xs text-text-secondary border-l border-border"
           >
             …
           </span>
@@ -153,7 +166,7 @@
           :locale="es"
           auto-apply
           :max-date="new Date()"
-          :format="formatDateRange"
+          :formats="dateOnlyFormats"
           input-class-name="dp-custom-input"
           menu-class-name="dp-custom-menu"
           calendar-cell-class-name="dp-custom-cell"
@@ -931,11 +944,14 @@ const applyPreset = (p: Preset) => {
   }
 }
 
+/** Vue Datepicker v12 — sin componente de hora en el input */
+const dateOnlyFormats = { input: 'dd/MM/yyyy', preview: 'dd/MM/yyyy' }
+
 const formatDateRange = (dates: Date[]) => {
   if (!dates?.[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
+  const from = fnsFormat(dates[0], 'dd/MM/yyyy', { locale: es })
   if (!dates[1]) return from
-  const to = fnsFormat(dates[1], 'dd/MM/yy', { locale: es })
+  const to = fnsFormat(dates[1], 'dd/MM/yyyy', { locale: es })
   if (from === to) return from
   return `${from} – ${to}`
 }
@@ -1045,7 +1061,7 @@ const { data: rawTemplateWindow, status: templateWindowStatus } = useQuery({
 })
 
 const formatTemplateDateOnly = (date?: Date) =>
-  fnsFormat(date ?? templateAnchorDate.value, 'dd/MM/yy', { locale: es })
+  fnsFormat(date ?? templateAnchorDate.value, 'dd/MM/yyyy', { locale: es })
 
 /** Horas del turno resueltas en servidor — no editables en plantilla */
 const templateHoursLabel = computed(() => {
@@ -1428,3 +1444,15 @@ const formatPeriod = (start: string, end: string) => {
   return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`
 }
 </script>
+
+<style>
+.arqueo-template-dp-trigger :deep(.dp__input_wrap),
+.arqueo-template-dp-trigger :deep(.dp__input),
+.arqueo-template-dp-trigger :deep(.dp--clear-btn) {
+  display: none !important;
+}
+.arqueo-template-dp-trigger :deep(.dp__main) {
+  border: none !important;
+  background: transparent !important;
+}
+</style>
