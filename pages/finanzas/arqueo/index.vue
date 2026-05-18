@@ -124,10 +124,6 @@
             </div>
           </NuxtLink>
         </div>
-        <p class="text-xs text-text-secondary mt-2">
-          Los turnos fijos se administran en
-          <NuxtLink to="/operaciones/turnos" class="text-primary font-medium hover:underline">Operaciones → Turnos</NuxtLink>.
-        </p>
       </div>
       <p class="text-xs text-text-secondary">
         ¿Solo quieres revisar sin cerrar?
@@ -284,7 +280,7 @@ import MetricCard from '~/components/shared/MetricCard.vue'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Arqueo de caja - Warocol' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()

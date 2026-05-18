@@ -158,7 +158,7 @@ import { ArrowPathIcon, NoSymbolIcon, PencilSquareIcon } from '@heroicons/vue/24
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import type { ShiftTemplate } from '~/components/operaciones/ShiftTemplatePanel.vue'
 
-definePageMeta({ layout: 'dashboard' })
+definePageMeta({ layout: 'dashboard', module: 'operaciones' })
 useHead({ title: 'Turnos | Operaciones' })
 
 const { currentTenant } = useTenantReactive()
