@@ -60,7 +60,6 @@
     <!-- ── PASO 0: Seleccionar período ─────────────────────────────────── -->
     <template v-else-if="currentStep === 0">
       <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide mb-2">
-        <span class="text-xs font-medium text-text-secondary uppercase tracking-wide flex-shrink-0">Modo</span>
         <button
           type="button"
           class="h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0"
@@ -1446,13 +1445,28 @@ const formatPeriod = (start: string, end: string) => {
 </script>
 
 <style>
+.arqueo-template-dp-trigger {
+  display: inline-flex;
+  height: 2.5rem;
+  flex-shrink: 0;
+}
 .arqueo-template-dp-trigger :deep(.dp__input_wrap),
 .arqueo-template-dp-trigger :deep(.dp__input),
 .arqueo-template-dp-trigger :deep(.dp--clear-btn) {
   display: none !important;
 }
-.arqueo-template-dp-trigger :deep(.dp__main) {
+.arqueo-template-dp-trigger :deep(.dp__main),
+.arqueo-template-dp-trigger :deep(.dp__main > div) {
+  display: inline-flex !important;
+  align-items: stretch !important;
+  height: 2.5rem !important;
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
   border: none !important;
   background: transparent !important;
+  box-shadow: none !important;
 }
 </style>
