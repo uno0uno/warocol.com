@@ -585,9 +585,9 @@
           <UiButton type="button" variant="outline" class="flex-1" @click="showDeleteModal = false" :disabled="isSubmitting">
             Cancelar
           </UiButton>
-          <UiButton type="button" variant="destructive" class="flex-1" @click="confirmDelete" :disabled="isSubmitting">
-            <CommonsTheCustomLoader v-if="isSubmitting" size="small" class="mr-2" />
-            {{ isSubmitting ? 'Eliminando...' : 'Sí, eliminar' }}
+          <UiButton type="button" variant="destructive" class="flex-1 flex items-center justify-center gap-2" @click="confirmDelete" :disabled="isSubmitting">
+            <UiLoadingDots v-if="isSubmitting" size="8px" color="currentColor" />
+            <span>{{ isSubmitting ? 'Eliminando...' : 'Sí, eliminar' }}</span>
           </UiButton>
         </div>
       </div>
