@@ -69,9 +69,7 @@
             :key="notification.id"
           >
             <NuxtLink
-              :to="notification.payload?.order_id
-                ? `/despacho/domicilios/${notification.payload.order_id}`
-                : '/despacho/domicilios'"
+              :to="notificationDespachoPath(notification)"
               @click="handleMarkAsRead(notification.id); close()"
               class="flex gap-3 px-4 py-3 hover:bg-surface-secondary transition-colors"
             >
@@ -83,7 +81,7 @@
               <!-- Content -->
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-text-primary leading-snug">
-                  Nuevo pedido #{{ notification.payload?.order_number ?? '—' }}
+                  {{ notificationDespachoTitle(notification) }}
                 </p>
                 <p class="text-xs text-muted-foreground mt-0.5">
                   {{ formatRelativeTime(notification.created_at) }}
@@ -108,6 +106,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { BellIcon, BellAlertIcon, ShoppingBagIcon } from '@heroicons/vue/24/outline'
 import { useNotifications } from '~/composables/useNotifications'
+import { notificationDespachoPath, notificationDespachoTitle } from '~/composables/useNotificationDespachoLink'
 
 const { notifications, unreadCount, init, markAsRead, markAllRead } = useNotifications()
 
