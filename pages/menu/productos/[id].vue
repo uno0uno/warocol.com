@@ -564,7 +564,7 @@
     </form>
 
     <!-- Delete confirmation modal -->
-    <UiModal v-model="showDeleteModal" title="Eliminar Producto">
+    <UiModal v-model="showDeleteModal" title="Eliminar producto">
       <div class="p-6">
         <div class="flex items-start gap-4">
           <div class="flex-shrink-0 w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center">
@@ -572,7 +572,10 @@
           </div>
           <div>
             <p class="text-sm text-text-primary font-medium mb-1">¿Eliminar este producto?</p>
-            <p class="text-sm text-text-secondary">Esta acción no se puede deshacer. El producto será eliminado permanentemente.</p>
+            <p class="text-sm text-text-secondary">
+              Si tiene ventas registradas, se archivará: dejará de venderse en POS y domicilios, pero se conserva el historial.
+              Si nunca se vendió, se elimina permanentemente.
+            </p>
           </div>
         </div>
         <div v-if="deleteError" class="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
@@ -1055,11 +1058,16 @@ const confirmDelete = async () => {
   isSubmitting.value = true
   deleteError.value = ''
   try {
-    await $fetch(`/api/menu/products/${productId}`, {
-      method: 'DELETE'
-    })
+    const result = await $fetch<{ success: boolean; archived?: boolean; message?: string }>(
+      `/api/menu/products/${productId}`,
+      { method: 'DELETE' },
+    )
     showDeleteModal.value = false
+    cache.invalidateQueries()
     await router.push('/menu/productos')
+    if (result?.archived) {
+      console.info(result.message ?? 'Producto archivado')
+    }
   } catch (error: any) {
     console.error('❌ Error al eliminar producto:', error)
     deleteError.value = error.data?.detail || error.message || 'Error al eliminar el producto'
