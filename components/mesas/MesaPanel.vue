@@ -116,6 +116,15 @@
             </p>
           </div>
 
+          <!-- Table QR (warocol.com#711) -->
+          <MesasTableQrControls
+            v-if="isEdit && tableQrModuleEnabled && table"
+            :table="table"
+            variant="panel"
+            show-regenerate
+            @updated="(data) => emit('qr-updated', data)"
+          />
+
           <!-- Error general -->
           <p v-if="errors.general" class="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
             {{ errors.general }}
@@ -163,17 +172,20 @@ interface Props {
   table?: any // null/undefined = create mode, object = edit mode
   members?: Member[]
   waiterAttributionEnabled?: boolean
+  tableQrModuleEnabled?: boolean
 }
 
 interface Emits {
   (e: 'update:modelValue', v: boolean): void
   (e: 'saved', table: any): void
+  (e: 'qr-updated', table: Record<string, unknown>): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   table: null,
   members: () => [],
   waiterAttributionEnabled: false,
+  tableQrModuleEnabled: false,
 })
 const emit = defineEmits<Emits>()
 
