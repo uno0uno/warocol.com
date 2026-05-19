@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { $fetch } from 'ofetch'
 import type { CachedProduct, TabItem } from '~/stores/usePOSStore'
 import { usePOSStore } from '~/stores/usePOSStore'
+import { registerTableSessionRefresh } from '~/composables/useTableSessionSync'
 
 definePageMeta({
   layout: 'dashboard',
@@ -338,6 +339,11 @@ const isTableSessionMutationActive = () =>
   || isRefreshingSession.value
   || isClearingTab.value
   || tabItemsLoading.value.size > 0
+
+registerTableSessionRefresh(
+  () => refreshTableSession(),
+  { isMutationActive: isTableSessionMutationActive },
+)
 
 // ID of a tab item pending confirmation before removal (already fired to kitchen)
 const pendingRemoveItemId = ref<string | null>(null)
@@ -768,6 +774,35 @@ const processOrder = async () => {
   router.push('/pos/checkout')
 }
 
+// ── Table session sync (QR accept / cross-device updates, warocol.com#715) ───
+const SESSION_SYNC_MS = 15_000
+let sessionSyncInterval: ReturnType<typeof setInterval> | null = null
+
+const startSessionSyncPolling = () => {
+  if (sessionSyncInterval) return
+  sessionSyncInterval = setInterval(async () => {
+    if (!posStore.activeTableSession) return
+    if (isTableSessionMutationActive()) return
+    await refreshTableSession()
+  }, SESSION_SYNC_MS)
+}
+
+const stopSessionSyncPolling = () => {
+  if (sessionSyncInterval) {
+    clearInterval(sessionSyncInterval)
+    sessionSyncInterval = null
+  }
+}
+
+watch(
+  () => !!posStore.activeTableSession,
+  (active) => {
+    if (active) startSessionSyncPolling()
+    else stopSessionSyncPolling()
+  },
+  { immediate: true },
+)
+
 // ── Fulfillment status polling ───────────────────────────────────────────────
 let fulfillmentPollInterval: ReturnType<typeof setInterval> | null = null
 
@@ -845,6 +880,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   setRefreshHandler(undefined)
+  stopSessionSyncPolling()
   stopFulfillmentPolling()
   if (readyCountInterval) clearInterval(readyCountInterval)
 })

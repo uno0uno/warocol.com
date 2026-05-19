@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useTenantReactive } from '@/composables/useTenantReactive'
+import { notifyTableSessionUpdated, storeTableQrPaymentIntent } from '~/composables/useTableSessionSync'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -103,7 +104,15 @@ async function acceptSelected() {
   if (!selectedIds.value.length) return
   isBulkWorking.value = true
   try {
-    const res = await $fetch<{ success: boolean; data: { order_number?: number } }>(
+    const res = await $fetch<{
+      success: boolean
+      data: {
+        order_number?: number
+        table_id?: string
+        payment_method?: string | null
+        payment_method_id?: string | null
+      }
+    }>(
       '/api/table-qr-requests/bulk-accept',
       { method: 'POST', body: { request_ids: selectedIds.value } },
     )
@@ -113,6 +122,16 @@ async function acceptSelected() {
         : 'Pedidos aceptados',
       { title: 'Listo' },
     )
+    const tableId = res.data?.table_id ?? activeTableId.value
+    if (tableId && res.data?.payment_method) {
+      storeTableQrPaymentIntent(tableId, {
+        payment_method: res.data.payment_method,
+        payment_method_id: res.data.payment_method_id ?? null,
+      })
+    }
+    if (tableId) {
+      await notifyTableSessionUpdated(tableId)
+    }
     selectedIds.value = []
     await refetchPending()
     invalidateAfterAction()
