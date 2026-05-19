@@ -1,0 +1,206 @@
+<script setup lang="ts">
+/**
+ * Per-table QR toggle, copy link, download PNG (warocol.com#711).
+ */
+const props = withDefaults(defineProps<{
+  table: {
+    id: string
+    name: string
+    qr_enabled?: boolean
+    qr_public_token?: string | null
+  }
+  variant?: 'compact' | 'panel'
+  showRegenerate?: boolean
+}>(), {
+  variant: 'compact',
+  showRegenerate: false,
+})
+
+const emit = defineEmits<{
+  updated: [table: Record<string, unknown>]
+}>()
+
+const toast = useToast()
+const { buildTableQrUrl, copyTableQrLink, downloadTableQrPng } = useTableQrLink()
+
+const isToggling = ref(false)
+const isRegenerating = ref(false)
+const showRegenerateConfirm = ref(false)
+
+const publicUrl = computed(() => buildTableQrUrl(props.table.qr_public_token))
+const hasToken = computed(() => !!props.table.qr_public_token)
+
+const toggleQr = async () => {
+  if (isToggling.value) return
+  isToggling.value = true
+  const newEnabled = !props.table.qr_enabled
+  try {
+    const res = await $fetch<{ success: boolean; data: Record<string, unknown> }>(
+      `/api/tables/${props.table.id}/qr`,
+      { method: 'PATCH', body: { enabled: newEnabled } },
+    )
+    emit('updated', res.data)
+    toast.success(
+      newEnabled ? 'QR activado para esta mesa' : 'QR desactivado',
+      { title: newEnabled ? 'Activado' : 'Desactivado' },
+    )
+  } catch (err: any) {
+    toast.error(err?.data?.detail || 'Error al cambiar el QR', { title: 'Error' })
+  } finally {
+    isToggling.value = false
+  }
+}
+
+const regenerateToken = async () => {
+  if (isRegenerating.value) return
+  isRegenerating.value = true
+  try {
+    const res = await $fetch<{ success: boolean; data: Record<string, unknown> }>(
+      `/api/tables/${props.table.id}/qr-token/regenerate`,
+      { method: 'POST' },
+    )
+    emit('updated', res.data)
+    showRegenerateConfirm.value = false
+    toast.success('Enlace actualizado — imprime el QR de nuevo', { title: 'Token regenerado' })
+  } catch (err: any) {
+    toast.error(err?.data?.detail || 'No se pudo regenerar el enlace', { title: 'Error' })
+  } finally {
+    isRegenerating.value = false
+  }
+}
+</script>
+
+<template>
+  <div
+    v-if="variant === 'panel'"
+    class="rounded-xl border border-border bg-surface-secondary/40 p-4 space-y-3"
+  >
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <p class="text-sm font-semibold text-text-primary">Pedido por QR</p>
+        <p class="text-xs text-text-secondary mt-0.5 leading-snug">
+          El enlace es estable hasta que regeneres el token.
+        </p>
+      </div>
+      <label
+        class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+        :class="isToggling ? 'opacity-50 pointer-events-none' : ''"
+      >
+        <input
+          type="checkbox"
+          class="sr-only peer"
+          :checked="!!table.qr_enabled"
+          :disabled="isToggling"
+          @change="toggleQr"
+        >
+        <div
+          class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
+        />
+      </label>
+    </div>
+
+    <div v-if="table.qr_enabled && hasToken" class="space-y-2">
+      <label class="text-xs font-medium text-text-secondary">Enlace público</label>
+      <input
+        type="text"
+        readonly
+        :value="publicUrl || ''"
+        class="h-9 w-full rounded-lg border border-border bg-background px-3 text-xs text-text-secondary font-mono"
+      >
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="h-9 px-3 rounded-lg border border-border text-xs font-semibold text-text-secondary hover:bg-surface transition-colors"
+          @click="copyTableQrLink(table.qr_public_token)"
+        >
+          Copiar enlace
+        </button>
+        <button
+          type="button"
+          class="h-9 px-3 rounded-lg border border-border text-xs font-semibold text-text-secondary hover:bg-surface transition-colors"
+          @click="downloadTableQrPng(table.qr_public_token, table.name)"
+        >
+          Descargar PNG
+        </button>
+        <button
+          v-if="showRegenerate && !showRegenerateConfirm"
+          type="button"
+          class="h-9 px-3 rounded-lg border border-amber-200 text-xs font-semibold text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950/30 transition-colors"
+          @click="showRegenerateConfirm = true"
+        >
+          Regenerar enlace
+        </button>
+      </div>
+      <div
+        v-if="showRegenerate && showRegenerateConfirm"
+        class="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/40 dark:bg-amber-950/20"
+      >
+        <p class="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+          Los QR impresos dejarán de funcionar. ¿Continuar?
+        </p>
+        <div class="flex gap-2 mt-2">
+          <button
+            type="button"
+            class="h-8 px-3 rounded-lg text-xs font-semibold border border-border"
+            @click="showRegenerateConfirm = false"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            :disabled="isRegenerating"
+            class="h-8 px-3 rounded-lg text-xs font-bold bg-amber-500 text-white disabled:opacity-50"
+            @click="regenerateToken"
+          >
+            {{ isRegenerating ? 'Regenerando…' : 'Sí, regenerar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <p v-else-if="table.qr_enabled && !hasToken" class="text-xs text-text-tertiary">
+      Generando enlace… guarda de nuevo si no aparece.
+    </p>
+  </div>
+
+  <div v-else class="flex flex-wrap items-center gap-1.5">
+    <label
+      class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+      :class="isToggling ? 'opacity-50 pointer-events-none' : ''"
+      :title="table.qr_enabled ? 'Desactivar QR' : 'Activar QR'"
+    >
+      <input
+        type="checkbox"
+        class="sr-only peer"
+        :checked="!!table.qr_enabled"
+        :disabled="isToggling"
+        @change="toggleQr"
+      >
+      <div
+        class="w-8 h-5 bg-border rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-3"
+      />
+    </label>
+    <button
+      type="button"
+      :disabled="!hasToken"
+      class="flex items-center justify-center h-8 w-8 rounded-lg text-text-secondary hover:bg-surface-secondary disabled:opacity-30 disabled:cursor-not-allowed"
+      title="Copiar enlace"
+      @click="copyTableQrLink(table.qr_public_token)"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+      </svg>
+    </button>
+    <button
+      type="button"
+      :disabled="!hasToken"
+      class="flex items-center justify-center h-8 w-8 rounded-lg text-text-secondary hover:bg-surface-secondary disabled:opacity-30 disabled:cursor-not-allowed"
+      title="Descargar QR"
+      @click="downloadTableQrPng(table.qr_public_token, table.name)"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      </svg>
+    </button>
+  </div>
+</template>

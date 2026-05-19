@@ -90,6 +90,9 @@ const tableColumns = computed(() => {
   if (businessProfile.value?.waiter_attribution_enabled) {
     cols.push({ key: 'mesero', title: 'Mesero' })
   }
+  if (businessProfile.value?.tables_enabled && businessProfile.value?.table_qr_module_enabled) {
+    cols.push({ key: 'qr', title: 'QR' })
+  }
   cols.push({ key: 'status', title: 'Estado' })
   cols.push({ key: 'actions', title: '' })
   return cols
@@ -105,6 +108,13 @@ const openPanel = (table: any = null) => {
 }
 
 const onSaved = () => { refetch() }
+
+const onTableQrUpdated = (data: Record<string, unknown>) => {
+  if (panelTable.value?.id === data.id) {
+    panelTable.value = { ...panelTable.value, ...data }
+  }
+  refetch()
+}
 
 // ── Deactivate modal ────────────────────────────────────────────────────────
 const deactivateModalOpen = ref(false)
@@ -260,6 +270,32 @@ const toggleWaiterAttribution = async () => {
   }
 }
 
+// ── Toggle Table QR module (warocol.com#711) ───────────────────────────────
+const isTogglingTableQrModule = ref(false)
+const toggleTableQrModule = async () => {
+  if (!businessProfile.value || isTogglingTableQrModule.value) return
+  isTogglingTableQrModule.value = true
+  const newState = !businessProfile.value.table_qr_module_enabled
+  try {
+    await $fetch('/api/operaciones/toggles/table-qr', {
+      method: 'PATCH',
+      body: { enabled: newState },
+    })
+    await invalidateContextCaches()
+    await cache.invalidateQueries({ key: ['tables'] })
+    toast.success(
+      newState
+        ? 'Los clientes pueden pedir por QR en la mesa (con confirmación del personal)'
+        : 'Pedido por QR en mesa desactivado',
+      { title: newState ? 'Módulo activado' : 'Módulo desactivado' },
+    )
+  } catch (error: any) {
+    toast.error(error.data?.detail || 'Error al cambiar el módulo QR', { title: 'Error' })
+  } finally {
+    isTogglingTableQrModule.value = false
+  }
+}
+
 // Members embedded in the operaciones aggregator (no Module.EQUIPO required).
 // Used by MesaPanel to render the "Mesero por defecto" picker.
 const tenantMembers = computed<Array<{ id: string; name: string; role: string }>>(() =>
@@ -346,6 +382,32 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
             <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
           </label>
         </div>
+
+        <!-- Table QR module (warocol.com#711) -->
+        <div v-if="businessProfile.tables_enabled" class="flex items-center justify-between gap-4 px-4 py-3">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold leading-snug text-text-primary">
+              Pedido por QR en mesa
+            </p>
+            <p class="text-xs mt-0.5 leading-snug text-text-secondary">
+              Enlace estático por {{ singularLower }} para que el comensal pida desde el celular.
+            </p>
+          </div>
+          <label
+            class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+            :class="isTogglingTableQrModule ? 'opacity-50 pointer-events-none' : ''"
+            :aria-label="businessProfile.table_qr_module_enabled ? 'Desactivar pedido por QR' : 'Activar pedido por QR'"
+          >
+            <input
+              type="checkbox"
+              class="sr-only peer"
+              :checked="!!businessProfile.table_qr_module_enabled"
+              @change="toggleTableQrModule"
+              :disabled="isTogglingTableQrModule"
+            >
+            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          </label>
+        </div>
       </div>
 
       <!-- Filters -->
@@ -395,6 +457,16 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
                 >
                   Mesero: {{ item.assigned_member_name || 'sin asignar' }}
                 </p>
+                <div
+                  v-if="businessProfile?.tables_enabled && businessProfile?.table_qr_module_enabled"
+                  class="mt-2"
+                >
+                  <MesasTableQrControls
+                    :table="item"
+                    variant="compact"
+                    @updated="onTableQrUpdated"
+                  />
+                </div>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
                 <UiStatusBadge :variant="badgeVariant(item.status)" size="sm">
@@ -439,6 +511,15 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
             >
               Sin asignar
             </span>
+          </template>
+
+          <!-- Desktop: QR -->
+          <template #cell-qr="{ row }">
+            <MesasTableQrControls
+              :table="row"
+              variant="compact"
+              @updated="onTableQrUpdated"
+            />
           </template>
 
           <!-- Desktop: status -->
@@ -547,7 +628,9 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
       :table="panelTable"
       :members="tenantMembers"
       :waiter-attribution-enabled="!!businessProfile?.waiter_attribution_enabled"
+      :table-qr-module-enabled="!!businessProfile?.tables_enabled && !!businessProfile?.table_qr_module_enabled"
       @saved="onSaved"
+      @qr-updated="onTableQrUpdated"
     />
 
     <!-- ══════ DEACTIVATE MODAL ══════ -->
