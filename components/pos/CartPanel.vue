@@ -5,7 +5,7 @@
       <div class="flex items-center justify-between">
         <h2 class="text-sm font-bold text-text-primary tracking-wide">Orden Actual</h2>
         <span class="px-2.5 py-0.5 text-xs rounded-full font-semibold bg-primary/10 text-primary border border-primary/20">
-          {{ items.length }} {{ items.length === 1 ? 'ítem' : 'ítems' }}
+          {{ displayItemCount }} {{ displayItemCount === 1 ? 'ítem' : 'ítems' }}
         </span>
       </div>
     </div>
@@ -306,8 +306,13 @@ interface Emits {
   (e: 'update:served-by', memberId: string | null): void
 }
 
-withDefaults(defineProps<Props>(), { mesaMode: false, isAddingToTab: false, isLoadingTabItems: false, isClearingTab: false, tabItems: () => [], tabTotal: 0, tabItemsLoading: () => new Set(), comandasEnabled: false, unfiredCount: 0, isFiringToKitchen: false, pendingRemoveItemId: null, showServedByChip: false, servedByMemberId: null, members: () => [] })
+const props = withDefaults(defineProps<Props>(), { mesaMode: false, isAddingToTab: false, isLoadingTabItems: false, isClearingTab: false, tabItems: () => [], tabTotal: 0, tabItemsLoading: () => new Set(), comandasEnabled: false, unfiredCount: 0, isFiringToKitchen: false, pendingRemoveItemId: null, showServedByChip: false, servedByMemberId: null, members: () => [] })
 const emit = defineEmits<Emits>()
+
+// Issue warocol.com#708 — mesa tab lines live outside posStore.cart; count both buckets.
+const displayItemCount = computed(() =>
+  props.mesaMode ? props.tabItems.length + props.items.length : props.items.length
+)
 
 // Issue #575 — handler for the served_by select
 const onServedByChange = (event: Event) => {

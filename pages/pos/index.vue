@@ -235,43 +235,72 @@ const isFiringToKitchen = ref(false)
 const tabError = ref<string | null>(null)
 const tabSuccess = ref<string | null>(null)
 
+// Issue warocol.com#708 — invalidate in-flight GET /current responses after tab mutations.
+let tableSessionFetchGen = 0
+const bumpTableSessionFetchGen = () => {
+  tableSessionFetchGen += 1
+  return tableSessionFetchGen
+}
+
+const mapTabItemsFromApi = (rows: any[]): TabItem[] =>
+  rows.map((i: any) => ({
+    orderItemId: i.id,
+    productName: i.productName,
+    quantity: i.quantity,
+    unitPrice: i.unitPrice,
+    subtotal: i.subtotal,
+    fulfillmentStatus: i.fulfillmentStatus ?? 'new',
+    sentAt: i.sentAt ?? null,
+  }))
+
+const applyTableSessionFromApi = (
+  data: { session?: any; tab_items?: any[] } | undefined,
+  fetchGen: number,
+  tableCtx?: { tableId: string; tableName: string; isBar?: boolean },
+) => {
+  if (fetchGen !== tableSessionFetchGen || !data?.session) return
+  const tableId = tableCtx?.tableId ?? posStore.activeTableSession?.tableId
+  if (!tableId) return
+  const s = data.session
+  posStore.setTableSession({
+    tableId,
+    sessionId: s.id,
+    tableName: tableCtx?.tableName ?? posStore.activeTableSession?.tableName ?? '',
+    runningTotal: s.running_total,
+    openedAt: s.opened_at,
+    isBar: tableCtx?.isBar ?? posStore.activeTableSession?.isBar ?? false,
+    attendedByMemberId: s.attended_by_member_id ?? null,
+    attendedByMemberName: s.attended_by_member_name ?? null,
+    effectiveWaiterMemberId: s.effective_waiter_member_id ?? null,
+    effectiveWaiterMemberName: s.effective_waiter_member_name ?? null,
+  })
+  posStore.setTabItems(mapTabItemsFromApi(data.tab_items ?? []))
+}
+
 // Handle enter-table event from floor plan component
 const handleEnterTable = async (ctx: { tableId: string; sessionId: string; tableName: string; isBar?: boolean; gotoCheckout?: boolean }) => {
   isEnteringTable.value = true
   posStore.clearAll()
+  posStore.setTableSession({
+    tableId: ctx.tableId,
+    sessionId: ctx.sessionId,
+    tableName: ctx.tableName,
+    runningTotal: 0,
+    openedAt: '',
+    isBar: ctx.isBar ?? false,
+  })
+  bumpTableSessionFetchGen()
   isLoadingTabItems.value = true
+  const fetchGen = tableSessionFetchGen
   try {
     const session = await $fetch<{ success: boolean; data: any }>(
       `/api/tables/${ctx.tableId}/current`
     )
-    if (session?.data?.session) {
-      const s = session.data.session
-      posStore.setTableSession({
-        tableId: ctx.tableId,
-        sessionId: s.id,
-        tableName: ctx.tableName,
-        runningTotal: s.running_total,
-        openedAt: s.opened_at,
-        isBar: ctx.isBar ?? false,
-        attendedByMemberId: s.attended_by_member_id ?? null,
-        attendedByMemberName: s.attended_by_member_name ?? null,
-        effectiveWaiterMemberId: s.effective_waiter_member_id ?? null,
-        effectiveWaiterMemberName: s.effective_waiter_member_name ?? null,
-      })
-      if (session.data.tab_items) {
-        posStore.setTabItems(
-          session.data.tab_items.map((i: any) => ({
-            orderItemId: i.id,
-            productName: i.productName,
-            quantity: i.quantity,
-            unitPrice: i.unitPrice,
-            subtotal: i.subtotal,
-            fulfillmentStatus: i.fulfillmentStatus ?? 'new',
-            sentAt: i.sentAt ?? null,
-          }))
-        )
-      }
-    }
+    applyTableSessionFromApi(session?.data, fetchGen, {
+      tableId: ctx.tableId,
+      tableName: ctx.tableName,
+      isBar: ctx.isBar ?? false,
+    })
   } catch {
     // Session may have closed — enter normal POS mode
   } finally {
@@ -289,38 +318,12 @@ const isRefreshingSession = ref(false)
 const refreshTableSession = async () => {
   if (!posStore.activeTableSession) return
   isRefreshingSession.value = true
+  const fetchGen = tableSessionFetchGen
   try {
     const session = await $fetch<{ success: boolean; data: any }>(
       `/api/tables/${posStore.activeTableSession.tableId}/current`
     )
-    if (session?.data?.session) {
-      const s = session.data.session
-      posStore.setTableSession({
-        tableId: posStore.activeTableSession.tableId,
-        sessionId: s.id,
-        tableName: posStore.activeTableSession.tableName,
-        runningTotal: s.running_total,
-        openedAt: s.opened_at,
-        isBar: posStore.activeTableSession.isBar,
-        attendedByMemberId: s.attended_by_member_id ?? null,
-        attendedByMemberName: s.attended_by_member_name ?? null,
-        effectiveWaiterMemberId: s.effective_waiter_member_id ?? null,
-        effectiveWaiterMemberName: s.effective_waiter_member_name ?? null,
-      })
-    }
-    if (session?.data?.tab_items) {
-      posStore.setTabItems(
-        session.data.tab_items.map((i: any) => ({
-          orderItemId: i.id,
-          productName: i.productName,
-          quantity: i.quantity,
-          unitPrice: i.unitPrice,
-          subtotal: i.subtotal,
-          fulfillmentStatus: i.fulfillmentStatus ?? 'new',
-          sentAt: i.sentAt ?? null,
-        }))
-      )
-    }
+    applyTableSessionFromApi(session?.data, fetchGen)
   } catch {
     // Non-critical — banner will just show stale data
   } finally {
@@ -329,6 +332,13 @@ const refreshTableSession = async () => {
 }
 
 const tabItemsLoading = ref<Set<string>>(new Set())
+
+const isTableSessionMutationActive = () =>
+  isAddingToTab.value
+  || isRefreshingSession.value
+  || isClearingTab.value
+  || tabItemsLoading.value.size > 0
+
 // ID of a tab item pending confirmation before removal (already fired to kitchen)
 const pendingRemoveItemId = ref<string | null>(null)
 
@@ -359,6 +369,9 @@ const cancelPendingRemove = () => {
 
 const executeRemoveTabItem = async (orderItemId: string) => {
   if (!posStore.activeTableSession) return
+  const previousTabItems = storeTabItems.value
+  bumpTableSessionFetchGen()
+  posStore.setTabItems(previousTabItems.filter((i: TabItem) => i.orderItemId !== orderItemId))
   tabItemsLoading.value = new Set([...tabItemsLoading.value, orderItemId])
   try {
     await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/items/${orderItemId}`, {
@@ -366,6 +379,8 @@ const executeRemoveTabItem = async (orderItemId: string) => {
     })
     await refreshTableSession()
   } catch (e: any) {
+    bumpTableSessionFetchGen()
+    posStore.setTabItems(previousTabItems)
     tabError.value = e?.data?.detail ?? 'Error al eliminar el producto'
   } finally {
     const next = new Set(tabItemsLoading.value)
@@ -376,6 +391,7 @@ const executeRemoveTabItem = async (orderItemId: string) => {
 
 const updateTabItemQuantity = async (orderItemId: string, quantity: number) => {
   if (!posStore.activeTableSession) return
+  bumpTableSessionFetchGen()
   tabItemsLoading.value = new Set([...tabItemsLoading.value, orderItemId])
   try {
     await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/items/${orderItemId}`, {
@@ -403,7 +419,8 @@ const decrementTabItem = (orderItemId: string) => {
 }
 
 const addToTab = async () => {
-  if (!posStore.activeTableSession || posStore.cart.length === 0) return
+  if (!posStore.activeTableSession || posStore.cart.length === 0 || isAddingToTab.value) return
+  bumpTableSessionFetchGen()
   isAddingToTab.value = true
   tabError.value = null
   try {
@@ -723,6 +740,7 @@ const duplicateCartItem = async (index: number) => {
 const clearCart = async () => {
   const session = posStore.activeTableSession
   if (session) {
+    bumpTableSessionFetchGen()
     isClearingTab.value = true
     try {
       await $fetch(`/api/tables/${session.tableId}/tab`, { method: 'DELETE' })
@@ -757,23 +775,13 @@ const startFulfillmentPolling = () => {
   if (fulfillmentPollInterval) return
   fulfillmentPollInterval = setInterval(async () => {
     if (!comandasEnabled.value || !posStore.activeTableSession) return
+    if (isTableSessionMutationActive()) return
+    const fetchGen = tableSessionFetchGen
     try {
       const session = await $fetch<{ success: boolean; data: any }>(
         `/api/tables/${posStore.activeTableSession.tableId}/current`
       )
-      if (session?.data?.tab_items) {
-        posStore.setTabItems(
-          session.data.tab_items.map((i: any) => ({
-            orderItemId: i.id,
-            productName: i.productName,
-            quantity: i.quantity,
-            unitPrice: i.unitPrice,
-            subtotal: i.subtotal,
-            fulfillmentStatus: i.fulfillmentStatus ?? 'new',
-            sentAt: i.sentAt ?? null,
-          }))
-        )
-      }
+      applyTableSessionFromApi(session?.data, fetchGen)
     } catch {
       // Non-critical — polling fails silently
     }
