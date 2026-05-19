@@ -482,6 +482,23 @@
                 </div>
               </div>
 
+              <div class="flex items-start space-x-3">
+                <input
+                  v-model="form.is_available_table_qr"
+                  type="checkbox"
+                  id="is_available_table_qr"
+                  class="h-4 w-4 mt-0.5 text-primary focus:ring-primary border-border rounded"
+                />
+                <div>
+                  <label for="is_available_table_qr" class="text-sm font-medium text-text-primary block">
+                    Pedido en mesa (QR)
+                  </label>
+                  <p class="text-xs text-text-secondary mt-1">
+                    Independiente de domicilios. Solo aparece en el menú QR de la mesa.
+                  </p>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -844,6 +861,7 @@ const form = ref({
   controla_stock: true,
   is_available: true,
   is_available_online: true,
+  is_available_table_qr: false,
   is_combo: false,
   allow_modifiers: true,
   tax_category: 'standard' as 'standard' | 'liquor' | 'exempt',
@@ -873,6 +891,7 @@ watch(productData, (data) => {
       controla_stock: product.controla_stock,
       is_available: product.is_available,
       is_available_online: product.is_available_online ?? true,
+      is_available_table_qr: product.is_available_table_qr ?? false,
       is_combo: product.is_combo,
       allow_modifiers: product.allow_modifiers,
       tax_category: (product.tax_category || 'standard') as 'standard' | 'liquor' | 'exempt',

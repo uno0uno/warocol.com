@@ -327,6 +327,18 @@
                   </div>
                 </label>
 
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    v-model="form.is_available_table_qr"
+                    class="w-5 h-5 text-primary border-border rounded focus:ring-primary"
+                  />
+                  <div>
+                    <span class="text-sm font-medium text-text-primary">Pedido en mesa (QR)</span>
+                    <p class="text-xs text-text-secondary mt-0.5">Independiente de domicilios. Solo aparece en el menú QR de la mesa.</p>
+                  </div>
+                </label>
+
                 <!-- REMOVED: Controlar stock - Now ALL products control inventory automatically -->
                 <!-- REMOVED: Es combo - Combos are now managed through product_base_recipes -->
               </div>
@@ -867,6 +879,7 @@ const form = ref({
   controla_stock: true,
   is_available: true,
   is_available_online: true,
+  is_available_table_qr: false,
   is_combo: false,
   allow_modifiers: true,
   tax_category: 'standard' as 'standard' | 'liquor' | 'exempt',
