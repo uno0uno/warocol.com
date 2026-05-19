@@ -145,14 +145,14 @@
             @click="openPanel(item.id)"
           >
             <div class="flex-1 min-w-0">
-              <div class="flex flex-wrap items-center gap-1.5">
+              <div class="grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-1 items-center">
                 <span
                   class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
                   :class="hasTimeWindow(item) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
                 >{{ periodTypeLabel(item) }}</span>
                 <span class="text-sm font-bold text-text-primary">{{ formatPeriodDates(item) }}</span>
+                <span class="text-xs text-text-secondary font-mono">{{ formatPeriodTimes(item) ?? '—' }}</span>
               </div>
-              <p v-if="formatPeriodTimes(item)" class="text-xs text-text-secondary mt-0.5 font-mono">{{ formatPeriodTimes(item) }}</p>
               <p class="text-xs text-text-secondary mt-0.5">Registrado {{ formatDate(item.closedAt) }}</p>
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
@@ -164,17 +164,18 @@
           </div>
         </template>
 
-        <template #cell-periodStart="{ row }">
-          <div class="flex flex-col gap-0.5 min-w-0">
-            <div class="flex flex-wrap items-center gap-1.5">
-              <span
-                class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded flex-shrink-0"
-                :class="hasTimeWindow(row) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
-              >{{ periodTypeLabel(row) }}</span>
-              <span class="text-sm font-bold text-text-primary">{{ formatPeriodDates(row) }}</span>
-            </div>
-            <span v-if="formatPeriodTimes(row)" class="text-xs text-text-secondary font-mono">{{ formatPeriodTimes(row) }}</span>
-          </div>
+        <template #cell-periodType="{ row }">
+          <span
+            class="inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded whitespace-nowrap"
+            :class="hasTimeWindow(row) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
+          >{{ periodTypeLabel(row) }}</span>
+        </template>
+        <template #cell-periodDate="{ row }">
+          <span class="text-sm font-bold text-text-primary whitespace-nowrap">{{ formatPeriodDates(row) }}</span>
+        </template>
+        <template #cell-periodTime="{ row }">
+          <span v-if="formatPeriodTimes(row)" class="text-xs text-text-secondary font-mono whitespace-nowrap">{{ formatPeriodTimes(row) }}</span>
+          <span v-else class="text-xs text-text-tertiary">—</span>
         </template>
         <template #cell-periodEnd="{ row }">
           <span v-if="row.periodStart !== row.periodEnd" class="text-sm text-text-secondary">{{ formatDay(row.periodEnd) }}</span>
@@ -364,7 +365,9 @@ const summaryStats = computed(() => {
 })
 
 const historialColumns = [
-  { key: 'periodStart',    title: 'Período',         sortable: false },
+  { key: 'periodType',     title: 'Tipo',            sortable: false },
+  { key: 'periodDate',     title: 'Fecha',           sortable: false },
+  { key: 'periodTime',     title: 'Horario',         sortable: false },
   { key: 'periodEnd',      title: 'Hasta',           sortable: false },
   { key: 'totalSales',     title: 'Ventas',          sortable: false },
   { key: 'gastosEfectivo', title: 'Gastos',          sortable: false },
