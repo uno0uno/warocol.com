@@ -709,6 +709,12 @@ import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useQueryCache } from '@pinia/colada'
+import {
+  addDaysBogotaISO,
+  bogotaDateAtNoon,
+  bogotaISOFromDate,
+  todayBogotaISO,
+} from '~/utils/bogotaDate'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Nuevo arqueo de caja - Warocol' })
@@ -718,7 +724,7 @@ const { currentTenant } = useTenantReactive()
 const { singular: tableSingular, plural: tablePlural } = useTableLabel()
 const cache = useQueryCache()
 
-const today = new Date().toISOString().split('T')[0]
+const today = todayBogotaISO()
 
 // ── Último cierre ──────────────────────────────────────────────────────────
 
@@ -750,11 +756,9 @@ onUnmounted(() => { clearRefreshHandler(refetchUltimo) })
 // Día sugerido: el día siguiente al último cierre (si es ≤ hoy)
 const suggestedRange = computed(() => {
   if (!ultimoCierre.value) return null
-  const after = new Date(ultimoCierre.value.periodEnd + 'T12:00:00')
-  after.setDate(after.getDate() + 1)
-  const todayDate = new Date(); todayDate.setHours(12, 0, 0, 0)
-  if (after > todayDate) return null
-  return { start: fnsFormat(after, 'yyyy-MM-dd'), startDate: after }
+  const afterIso = addDaysBogotaISO(ultimoCierre.value.periodEnd, 1)
+  if (afterIso > today) return null
+  return { start: afterIso, startDate: bogotaDateAtNoon(afterIso) }
 })
 
 const applySuggested = () => {
@@ -767,17 +771,16 @@ const applySuggested = () => {
 
 interface Preset { key: string; label: string; date: Date }
 const buildPresets = (): Preset[] => {
-  const noon = (d: Date) => { d.setHours(12, 0, 0, 0); return d }
-  const now = noon(new Date())
-  const yesterday = noon(new Date()); yesterday.setDate(yesterday.getDate() - 1)
+  const todayNoon = bogotaDateAtNoon(today)
+  const yesterdayNoon = bogotaDateAtNoon(addDaysBogotaISO(today, -1))
   return [
-    { key: 'today',     label: 'Hoy',  date: new Date(now) },
-    { key: 'yesterday', label: 'Ayer', date: yesterday },
+    { key: 'today',     label: 'Hoy',  date: new Date(todayNoon) },
+    { key: 'yesterday', label: 'Ayer', date: yesterdayNoon },
   ]
 }
 const presets      = buildPresets()
 const activePreset = ref<string | null>('today')
-const selectedDate = ref<Date>(new Date(today + 'T12:00:00'))
+const selectedDate = ref<Date>(bogotaDateAtNoon(today))
 
 const applyPreset = (p: Preset) => {
   activePreset.value = p.key
@@ -788,7 +791,7 @@ const formatSingleDate = (date: Date) =>
   date ? fnsFormat(date, 'dd/MM/yy', { locale: es }) : ''
 
 // Period — siempre un solo día
-const periodStart = computed(() => fnsFormat(selectedDate.value, 'yyyy-MM-dd'))
+const periodStart = computed(() => bogotaISOFromDate(selectedDate.value))
 const periodEnd   = computed(() => periodStart.value)
 
 // X preview (paso 0 — all orders, not completed_only)
@@ -1008,7 +1011,7 @@ const loadFromStorage = () => {
   if (!raw) return
   try {
     const s = JSON.parse(raw)
-    if (s.periodStart) selectedDate.value = new Date(s.periodStart + 'T12:00:00')
+    if (s.periodStart) selectedDate.value = bogotaDateAtNoon(s.periodStart)
     // Never restore step from storage — always start at step 0 (X preview)
     if (s.counts)         counts.value         = s.counts
     if (s.monedasAmount)  monedasAmount.value  = s.monedasAmount

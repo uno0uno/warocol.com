@@ -875,6 +875,14 @@ import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from
 import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
+import {
+  addDaysBogotaISO,
+  bogotaDateAtNoon,
+  bogotaISOFromDate,
+  bogotaTimeHHMMFromISO,
+  combineBogotaDateAndTimeISO,
+  todayBogotaISO,
+} from '~/utils/bogotaDate'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Arqueo de caja - Warocol' })
@@ -899,29 +907,29 @@ const arqueoWindowMode = ref<ArqueoWindowMode>(
 const selectedTemplateId = ref<string>('')
 const suggestedLoading = ref(false)
 
-const today = new Date().toISOString().split('T')[0]
+const today = todayBogotaISO()
 
 // ── Date picker state (paso 0) ─────────────────────────────────────────────
 const initStart = (route.query.start as string) || today
 const initEnd   = (route.query.end   as string) || today
 
 const dateRangeDates = ref<Date[]>([
-  new Date(initStart + 'T12:00:00'),
-  new Date(initEnd   + 'T12:00:00'),
+  bogotaDateAtNoon(initStart),
+  bogotaDateAtNoon(initEnd),
 ])
 
 interface Preset { key: string; label: string; start: Date; end: Date }
 const buildPresets = (): Preset[] => {
-  const noon = (d: Date) => { d.setHours(12, 0, 0, 0); return d }
-  const now = noon(new Date())
-  const yesterday  = noon(new Date(now)); yesterday.setDate(now.getDate() - 1)
-  const weekStart  = noon(new Date(now)); weekStart.setDate(now.getDate() - 6)
-  const monthStart = noon(new Date(now.getFullYear(), now.getMonth(), 1))
+  const todayNoon = bogotaDateAtNoon(today)
+  const yesterdayNoon = bogotaDateAtNoon(addDaysBogotaISO(today, -1))
+  const weekStartNoon = bogotaDateAtNoon(addDaysBogotaISO(today, -6))
+  const [y, m] = today.split('-').map(Number)
+  const monthStartNoon = bogotaDateAtNoon(`${y}-${String(m).padStart(2, '0')}-01`)
   return [
-    { key: 'today',     label: 'Hoy',           start: new Date(now), end: new Date(now) },
-    { key: 'yesterday', label: 'Ayer',           start: yesterday,     end: yesterday },
-    { key: 'week',      label: 'Últimos 7 días', start: weekStart,     end: new Date(now) },
-    { key: 'month',     label: 'Este mes',        start: monthStart,    end: new Date(now) },
+    { key: 'today',     label: 'Hoy',           start: new Date(todayNoon), end: new Date(todayNoon) },
+    { key: 'yesterday', label: 'Ayer',           start: yesterdayNoon,       end: yesterdayNoon },
+    { key: 'week',      label: 'Últimos 7 días', start: weekStartNoon,       end: new Date(todayNoon) },
+    { key: 'month',     label: 'Este mes',        start: monthStartNoon,      end: new Date(todayNoon) },
   ]
 }
 const presets      = buildPresets()
@@ -987,15 +995,9 @@ const onTimeInput = (e: Event, field: 'start' | 'end') => {
   el.value = v
 }
 
-const buildDateTime = (datePart: Date, timeStr: string): Date | null => {
-  if (!timeStr || timeStr.length < 5) return null
-  const [h, m] = timeStr.split(':').map(Number)
-  const d = new Date(datePart); d.setHours(h, m, 0, 0); return d
-}
-
-// Period computed from date picker
-const periodStart = computed(() => fnsFormat(dateRangeDates.value[0], 'yyyy-MM-dd'))
-const periodEnd   = computed(() => fnsFormat(dateRangeDates.value[1] ?? dateRangeDates.value[0], 'yyyy-MM-dd'))
+// Period computed from date picker (Bogotá calendar day for API)
+const periodStart = computed(() => bogotaISOFromDate(dateRangeDates.value[0]))
+const periodEnd   = computed(() => bogotaISOFromDate(dateRangeDates.value[1] ?? dateRangeDates.value[0]))
 const isMultiDay  = computed(() => periodStart.value !== periodEnd.value)
 
 const previewShiftTemplateId = computed(() =>
@@ -1010,8 +1012,8 @@ watch(isMultiDay, (multi) => {
 
 watch(dateRangeDates, (dates) => {
   if (arqueoWindowMode.value !== 'template' || !dates?.[0] || !dates?.[1]) return
-  const a = fnsFormat(dates[0], 'yyyy-MM-dd')
-  const b = fnsFormat(dates[1], 'yyyy-MM-dd')
+  const a = bogotaISOFromDate(dates[0])
+  const b = bogotaISOFromDate(dates[1])
   if (a !== b) dateRangeDates.value = [dates[0], dates[0]]
 }, { deep: true })
 
@@ -1077,12 +1079,10 @@ const templateHoursLabel = computed(() => {
 })
 
 const onTemplateAnchorPick = () => {
-  const anchor = fnsFormat(templateAnchorDate.value, 'yyyy-MM-dd')
+  const anchor = bogotaISOFromDate(templateAnchorDate.value)
   if (anchor === today) activePreset.value = 'today'
-  else {
-    const y = new Date(); y.setDate(y.getDate() - 1)
-    activePreset.value = anchor === fnsFormat(y, 'yyyy-MM-dd') ? 'yesterday' : null
-  }
+  else if (anchor === addDaysBogotaISO(today, -1)) activePreset.value = 'yesterday'
+  else activePreset.value = null
 }
 
 const applySuggestedWindow = async () => {
@@ -1097,16 +1097,16 @@ const applySuggestedWindow = async () => {
     } }>('/api/cierre/suggested-window', { params: { date: periodStart.value } })
     const d = res.data
     if (arqueoWindowMode.value === 'template') {
-      const anchor = new Date(`${d.periodStart}T12:00:00`)
+      const anchor = bogotaDateAtNoon(d.periodStart)
       dateRangeDates.value = [anchor, anchor]
     } else {
       dateRangeDates.value = [
-        new Date(`${d.periodStart}T12:00:00`),
-        new Date(`${d.periodEnd}T12:00:00`),
+        bogotaDateAtNoon(d.periodStart),
+        bogotaDateAtNoon(d.periodEnd),
       ]
       enableTimePicker.value = true
-      startTimeInput.value = fnsFormat(new Date(d.periodStartTime), 'HH:mm')
-      endTimeInput.value = fnsFormat(new Date(d.periodEndTime), 'HH:mm')
+      startTimeInput.value = bogotaTimeHHMMFromISO(d.periodStartTime)
+      endTimeInput.value = bogotaTimeHHMMFromISO(d.periodEndTime)
     }
     activePreset.value = null
   } catch (err: any) {
@@ -1119,12 +1119,12 @@ const applySuggestedWindow = async () => {
 const periodStartTime = computed((): string | null => {
   if (arqueoWindowMode.value === 'template') return null
   if (!enableTimePicker.value) return null
-  return buildDateTime(dateRangeDates.value[0], startTimeInput.value)?.toISOString() ?? null
+  return combineBogotaDateAndTimeISO(periodStart.value, startTimeInput.value)
 })
 const periodEndTime = computed((): string | null => {
   if (arqueoWindowMode.value === 'template') return null
   if (!enableTimePicker.value) return null
-  return buildDateTime(dateRangeDates.value[1] ?? dateRangeDates.value[0], endTimeInput.value)?.toISOString() ?? null
+  return combineBogotaDateAndTimeISO(periodEnd.value, endTimeInput.value)
 })
 
 const buildPreviewParams = (completedOnly: boolean) => {
@@ -1144,9 +1144,12 @@ const buildPreviewParams = (completedOnly: boolean) => {
 
 const shiftLabel = computed(() => {
   if (!enableTimePicker.value) return null
-  const s = buildDateTime(dateRangeDates.value[0], startTimeInput.value)
-  const e = buildDateTime(dateRangeDates.value[1] ?? dateRangeDates.value[0], endTimeInput.value)
-  if (!s || !e || s >= e) return null
+  const startIso = periodStartTime.value
+  const endIso = periodEndTime.value
+  if (!startIso || !endIso) return null
+  const s = new Date(startIso)
+  const e = new Date(endIso)
+  if (s >= e) return null
   try { return formatDistanceStrict(s, e, { locale: es }) } catch { return null }
 })
 
@@ -1398,8 +1401,8 @@ const loadFromStorage = () => {
     const hasQueryParams = !!route.query.start || !!route.query.end
     if (!hasQueryParams) {
       if (s.periodStart) {
-        const d0 = new Date(s.periodStart + 'T12:00:00')
-        const d1 = s.periodEnd ? new Date(s.periodEnd + 'T12:00:00') : d0
+        const d0 = bogotaDateAtNoon(s.periodStart)
+        const d1 = s.periodEnd ? bogotaDateAtNoon(s.periodEnd) : d0
         dateRangeDates.value = [d0, d1]
       }
       if (s.periodStartTime) { startTimeInput.value = s.periodStartTime; enableTimePicker.value = true }
