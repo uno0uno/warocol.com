@@ -17,7 +17,7 @@ const cartStore = useTableQrCartStore()
 
 const steps = [
   { title: 'Tu pedido', short: 'Pedido' },
-  { title: 'Pago y envío', short: 'Confirmar' },
+  { title: 'Pago y notas', short: 'Confirmar' },
 ]
 
 const currentStep = ref(0)
