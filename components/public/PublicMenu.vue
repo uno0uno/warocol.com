@@ -100,6 +100,11 @@ const props = defineProps({
   acceptsOnlineOrders: {
     type: Boolean,
     default: true
+  },
+  /** When set, overrides acceptsOnlineOrders for add-to-cart gating (Table QR #713). */
+  orderingEnabled: {
+    type: Boolean,
+    default: undefined
   }
 })
 
@@ -107,9 +112,13 @@ const emit = defineEmits(['product-click'])
 
 const selectedCategory = ref('all')
 
-// Combined gate: orders are available only when restaurant is open AND accepts online orders.
-// Used to disable add-to-cart buttons in product cards.
-const ordersAvailable = computed(() => props.restaurantOpen && props.acceptsOnlineOrders)
+// Combined gate for add-to-cart. Table QR passes orderingEnabled explicitly.
+const ordersAvailable = computed(() => {
+  if (props.orderingEnabled !== undefined) {
+    return props.restaurantOpen && props.orderingEnabled
+  }
+  return props.restaurantOpen && props.acceptsOnlineOrders
+})
 
 // All categories including "Todos"
 const allCategories = computed(() => {

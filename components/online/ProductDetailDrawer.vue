@@ -63,13 +63,13 @@
           </template>
 
           <!-- Product disabled for online orders -->
-          <template v-else-if="productDetail && productDetail.is_available_online === false">
+          <template v-else-if="productDetail && isProductUnavailable">
             <div class="unavailable-banner unavailable-banner--offline">
               <div class="unavailable-icon-wrap unavailable-icon-wrap--offline">
                 <Icon name="heroicons:x-circle" class="unavailable-icon" aria-hidden="true" />
               </div>
-              <p class="unavailable-title">No disponible para domicilios</p>
-              <p class="unavailable-msg">Este producto no está disponible para pedidos en línea en este momento.</p>
+              <p class="unavailable-title">{{ unavailableTitle }}</p>
+              <p class="unavailable-msg">{{ unavailableMessage }}</p>
             </div>
           </template>
 
@@ -244,7 +244,7 @@
           <button
             v-else
             class="cta-btn"
-            :disabled="!isValid || cartStore.isLoading || isLoading || fetchError || productDetail?.is_available_online === false"
+            :disabled="!isValid || cartStore.isLoading || isLoading || fetchError || isProductUnavailable"
             @click="handleAddToCart"
           >
             <span v-if="cartStore.isLoading">Agregando...</span>
@@ -288,6 +288,7 @@ interface ProductDetail {
   preparation_time?: number
   image_url?: string
   is_available_online?: boolean
+  is_available_table_qr?: boolean
   modifier_groups: ModifierGroup[]
 }
 
@@ -296,20 +297,45 @@ interface WizardUnit {
   notes: string
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: boolean
   product: Record<string, any> | null
   tenantSlug: string
-}>()
+  channel?: 'online' | 'table-qr'
+  tableQrToken?: string
+}>(), {
+  channel: 'online',
+})
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'close'): void
 }>()
 
-const cartStore = useOnlineCartStore()
-
 const productDetail = ref<ProductDetail | null>(null)
+
+const onlineCartStore = useOnlineCartStore()
+const tableQrCartStore = useTableQrCartStore()
+const cartStore = computed(() =>
+  props.channel === 'table-qr' ? tableQrCartStore : onlineCartStore,
+)
+
+const isProductUnavailable = computed(() => {
+  if (!productDetail.value) return false
+  if (props.channel === 'table-qr') {
+    return productDetail.value.is_available_table_qr === false
+  }
+  return productDetail.value.is_available_online === false
+})
+
+const unavailableTitle = computed(() =>
+  props.channel === 'table-qr' ? 'No disponible en mesa (QR)' : 'No disponible para domicilios',
+)
+const unavailableMessage = computed(() =>
+  props.channel === 'table-qr'
+    ? 'Este producto no está disponible para pedido en mesa en este momento.'
+    : 'Este producto no está disponible para pedidos en línea en este momento.',
+)
 const isLoading = ref(false)
 const fetchError = ref(false)
 const selectedModifiers = ref<CartModifier[]>([])
@@ -395,9 +421,10 @@ watch(() => props.modelValue, async (val) => {
     wizardStep.value = 0
     wizardUnits.value = []
     try {
-      const res = await $fetch<{ data: ProductDetail }>(
-        `/api/public/restaurant/${props.tenantSlug}/product/${props.product.id}`
-      )
+      const url = props.channel === 'table-qr' && props.tableQrToken
+        ? `/api/public/table-qr/${props.tableQrToken}/product/${props.product.id}`
+        : `/api/public/restaurant/${props.tenantSlug}/product/${props.product.id}`
+      const res = await $fetch<{ data: ProductDetail }>(url)
       productDetail.value = res.data
       // Pre-select defaults
       for (const group of res.data.modifier_groups) {
@@ -542,12 +569,12 @@ async function handleAddToCart() {
   if (!props.product || !isValid.value) return
   try {
     if (wizardMode.value) {
-      await cartStore.addItemsBatch(
+      await cartStore.value.addItemsBatch(
         { id: props.product.id, name: props.product.name, price: props.product.price, has_modifiers: props.product.has_modifiers ?? true },
         wizardUnits.value.map(u => ({ modifiers: u.modifiers, notes: u.notes || undefined }))
       )
     } else {
-      await cartStore.addItem(
+      await cartStore.value.addItem(
         { id: props.product.id, name: props.product.name, price: props.product.price, has_modifiers: props.product.has_modifiers ?? true },
         quantity.value,
         [...selectedModifiers.value],

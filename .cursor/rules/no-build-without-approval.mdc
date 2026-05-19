@@ -1,0 +1,20 @@
+---
+description: Never run build/typecheck/lint scripts without explicit user authorization
+alwaysApply: true
+---
+
+# No builds without authorization
+
+Do **not** run build, compile, or heavy validation commands unless the user explicitly asks in that conversation turn.
+
+Forbidden without explicit approval:
+- `bun run build`, `npm run build`, `nuxt build`, `nuxi build`
+- `bun run lint`, `npm run lint`
+- `nuxi typecheck`, `tsc`, `vue-tsc`
+- Any long-running CI-like script used only to verify the project
+
+Allowed without asking (lightweight):
+- `git status`, `git diff`, `git log`
+- Targeted file reads, grep, small unit tests **only if the user requested tests**
+
+When verification is needed, ask first: *"¿Corro build/lint para verificar?"*
