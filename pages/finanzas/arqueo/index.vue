@@ -182,8 +182,6 @@
           <span v-if="formatPeriodTimes(row)" class="text-xs text-text-secondary font-mono whitespace-nowrap">{{ formatPeriodTimes(row) }}</span>
           <span v-else class="text-xs text-text-tertiary">—</span>
         </template>
-
-        </template>
         <template #cell-periodEnd="{ row }">
           <span v-if="row.periodStart !== row.periodEnd" class="text-sm text-text-secondary">{{ formatDay(row.periodEnd) }}</span>
           <span v-else class="text-xs text-text-tertiary">—</span>
