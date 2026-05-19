@@ -7,6 +7,7 @@ La gestión de mesas te permite organizar el salón de tu restaurante directamen
 Menú lateral → **Operaciones → Mesas**. Desde aquí puedes:
 
 - Activar o desactivar el módulo de mesas para el POS
+- Activar **pedido por QR en mesa** y gestionar el enlace QR de cada mesa
 - Ver el listado de mesas configuradas con su estado actual y, si aplica, el mesero asignado
 - Crear, editar, desactivar y reactivar mesas
 
@@ -72,6 +73,54 @@ Si tu negocio tiene activada la **atribución de meseros** (en **Operaciones →
 
 ---
 
+## Pedido por QR en mesa
+
+Permite que los comensales pidan desde su celular escaneando un código en la mesa. El pedido **no entra al POS ni a cocina** hasta que el personal lo **acepta** en **Despacho → Pedidos en mesa (QR)**.
+
+### Requisitos
+
+1. **Gestión de mesas** activa (toggle superior de esta página).
+2. **Pedido por QR en mesa** activo (segundo toggle en el bloque de módulos).
+3. Cada mesa con QR **activado** y enlace generado.
+4. Productos con **Pedido en mesa (QR)** marcado en **Menú → Productos** (independiente de domicilios).
+
+### Activar el módulo QR
+
+En el mismo bloque de módulos, debajo de **Gestión de mesas**, verás **Pedido por QR en mesa**.
+
+- **Activado** — puedes habilitar QR por mesa y los clientes pueden enviar pedidos pendientes de confirmación.
+- **Desactivado** — no se muestran controles QR en el listado ni en el panel de la mesa.
+
+### QR por mesa
+
+Con el módulo QR activo, cada mesa tiene controles para:
+
+| Acción | Para qué sirve |
+|--------|----------------|
+| Activar QR en esta mesa | Genera el enlace público de esa mesa |
+| **Copiar enlace** | Pegar en WhatsApp o donde compartas el menú |
+| **Descargar PNG** | Imagen del código QR para imprimir en la mesa |
+| **Regenerar enlace** | Invalida el QR anterior y crea uno nuevo (vuelve a imprimir si ya repartiste códigos) |
+
+El enlace tiene la forma `https://warocol.com/{tu-negocio}/mesa/{código}` y **permanece estable** hasta que uses **Regenerar enlace**.
+
+En escritorio también verás una columna **QR** en la tabla de mesas con accesos rápidos a copiar y descargar.
+
+### Qué hace el cliente
+
+1. Escanea el QR o abre el enlace.
+2. Ve el menú (solo productos marcados para QR).
+3. Arma el pedido, elige método de pago y envía.
+4. Ve un mensaje de confirmación: el restaurante revisará el pedido antes de prepararlo.
+
+### Qué hace el personal después
+
+Los pedidos pendientes aparecen en **Despacho → Pedidos en mesa (QR)**. Al **Aceptar**, los ítems se agregan al tab de esa mesa en el **POS** y, si tienes comandas activas, se envían a cocina. Ver [Despacho](../despacho#pedidos-en-mesa-qr).
+
+También puedes recibir una notificación en la campana; al tocarla irás directo a la cola de esa mesa.
+
+---
+
 ## Preguntas frecuentes
 
 **¿Dónde se toman los pedidos de las mesas?**
@@ -85,3 +134,15 @@ El toggle cambia la vista del POS, pero las sesiones abiertas no se cierran. Se 
 
 **¿Una mesa desactivada se pierde para siempre?**
 No. Queda en el listado de mesas inactivas y puedes reactivarla cuando quieras.
+
+**¿En qué se diferencia del pedido por QR de Domicilios?**
+En **Domicilios** el cliente pide por el canal online (envío, recogida o consumo en local) y el pedido sigue estados como Pendiente → Confirmado → En preparación. En **pedido QR en mesa** el cliente está físicamente en una mesa concreta, el menú es solo para esa mesa y el pedido queda **pendiente de aceptación** en **Despacho → Pedidos en mesa (QR)** hasta que el personal lo confirme.
+
+**¿Cambia la URL si vuelvo a abrir Operaciones → Mesas?**
+No. El enlace es estable mientras no uses **Regenerar enlace** en esa mesa.
+
+**¿Qué ve el cliente después de enviar el pedido?**
+Una pantalla de éxito indicando que el restaurante confirmará el pedido. Los ítems **no** aparecen en el POS ni se preparan hasta que alguien los **acepte** en Despacho.
+
+**¿Un producto no sale en el menú QR?**
+Revisa que tenga activo **Pedido en mesa (QR)** en **Menú → Productos** y que el módulo QR y el QR de esa mesa estén encendidos.

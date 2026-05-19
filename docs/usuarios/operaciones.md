@@ -28,7 +28,7 @@ Pantalla en vivo para cocina: muestra las órdenes nuevas, en preparación y lis
 
 Aquí se activa/desactiva el módulo de mesas, se crean/editan/desactivan mesas, y se asigna la columna de mesero a las sesiones (si tu negocio tiene atribución de meseros activa).
 
-Ver [Mesas](./operaciones/mesas) para la guía completa: estados, crear/editar, reactivar mesas inactivas, etiqueta configurable (Mesa / Cubículo / Habitación / etc.).
+Ver [Mesas](./operaciones/mesas) para la guía completa: estados, crear/editar, reactivar mesas inactivas, **pedido por QR en mesa** (activar módulo, enlace por mesa, copiar/imprimir), etiqueta configurable (Mesa / Cubículo / Habitación / etc.).
 
 ---
 

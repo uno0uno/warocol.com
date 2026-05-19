@@ -35,8 +35,11 @@ El formulario tiene 3 pasos:
 | Tiempo de preparación | Cuántos minutos tarda en prepararse | No |
 | Disponible para venta | Si está activo en tu menú | — |
 | Disponible para domicilios | Si aparece en pedidos online (delivery / pickup) | — |
+| Pedido en mesa (QR) | Si aparece en el menú QR de las mesas (solo si el módulo QR está activo en Operaciones) | — |
 
 > Si desactivas "Disponible para venta", el producto no aparece en ningún menú hasta que lo actives de nuevo.
+>
+> **Pedido en mesa (QR)** es independiente de domicilios: un producto puede estar en el QR de mesa sin estar en delivery, y viceversa.
 
 ### Paso 2 — Receta / Ingredientes
 
@@ -54,7 +57,10 @@ Revisa el resumen: nombre, categoría y estado. Si todo está bien, haz clic en 
 
 ## ¿El producto aparece en el menú online inmediatamente?
 
-Sí, siempre que tengas marcada la opción **Disponible para domicilios**. Si no la marcas, el producto existe en el sistema pero no es visible para tus clientes online.
+- **Domicilios / pedidos online:** sí, si está marcado **Disponible para domicilios**.
+- **QR en mesa:** sí, si está marcado **Pedido en mesa (QR)** y el negocio tiene el módulo QR activo en **Operaciones → Mesas**.
+
+Si no marcas ninguna de las dos, el producto existe en el sistema pero no es visible en esos canales.
 
 ---
 
@@ -71,3 +77,6 @@ No. Cada producto pertenece a una sola categoría. Si necesitas que aparezca en 
 
 **¿Cómo agrego una foto al producto?**
 Desde la pantalla de edición del producto, después de crearlo.
+
+**¿Por qué un producto no sale en el menú QR de la mesa?**
+Revisa **Pedido en mesa (QR)** en el producto y que el módulo esté activo en **Operaciones → Mesas**. Ver [Mesas](../../operaciones/mesas#pedido-por-qr-en-mesa).
