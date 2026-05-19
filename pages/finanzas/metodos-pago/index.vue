@@ -8,15 +8,20 @@
     <CommonsTheErrorState v-else-if="fetchError" />
 
     <!-- Summary stats -->
-    <FinanzasMetricStrip
+    <div
       v-else-if="groups.length"
-      class="mb-4"
-      :items="[
-        { label: 'Efectivo',        value: String(cashGroup?.methodCount ?? 0) },
-        { label: 'Predeterminados', value: String(defaultGroups.length) },
-        { label: 'Personalizables', value: String(customGroups.length) },
-      ]"
-    />
+      class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3 mb-4"
+    >
+      <MetricCard title="Efectivo" :value="cashGroup?.methodCount ?? 0" format="number" variant="primary" />
+      <MetricCard title="Predeterminados" :value="defaultGroups.length" format="number" variant="primary" />
+      <MetricCard
+        title="Personalizables"
+        :value="customGroups.length"
+        format="number"
+        variant="primary"
+        class="col-span-2 md:col-span-1"
+      />
+    </div>
 
     <UiResponsiveDataView
       v-if="!isLoading && !fetchError"
@@ -110,6 +115,7 @@
 
 <script setup lang="ts">
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
+import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Métodos de pago - Warocol' })

@@ -8,6 +8,7 @@ const TZ = 'America/Bogota'
 const nowCO = () => new TZDate(new Date(), TZ)
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Cuentas contables' })
@@ -237,12 +238,17 @@ onUnmounted(() => { clearRefreshHandler(refetchAll) })
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
       <!-- ── Period summary strip ───────────────────────────────────────── -->
-      <FinanzasMetricStrip :items="[
-        { label: 'Saldo inicial',    value: formatCOP(periodSummary.openingBalance), mono: true },
-        { label: 'Débitos período',  value: formatCOP(periodSummary.periodDebits),   mono: true, variant: 'primary' },
-        { label: 'Créditos período', value: formatCOP(periodSummary.periodCredits),  mono: true, variant: 'muted' },
-        { label: 'Saldo cierre',     value: formatCOP(periodSummary.closingBalance), mono: true, variant: periodSummary.closingBalance >= 0 ? 'default' : 'destructive' },
-      ]" />
+      <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
+        <MetricCard title="Saldo inicial" :value="periodSummary.openingBalance" format="currency" variant="primary" />
+        <MetricCard title="Débitos período" :value="periodSummary.periodDebits" format="currency" variant="primary" />
+        <MetricCard title="Créditos período" :value="periodSummary.periodCredits" format="currency" variant="primary" />
+        <MetricCard
+          title="Saldo cierre"
+          :value="periodSummary.closingBalance"
+          format="currency"
+          :variant="periodSummary.closingBalance >= 0 ? 'primary' : 'destructive'"
+        />
+      </div>
 
       <!-- ── Filter bar ──────────────────────────────────────────────────── -->
       <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
