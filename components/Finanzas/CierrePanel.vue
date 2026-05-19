@@ -42,7 +42,7 @@
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
                   <span
                     class="inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded mr-1"
-                    :class="hasTimeWindow(detail) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
+                    :class="periodBadgeClass(detail)"
                   >{{ periodTypeLabel(detail) }}</span>
                   {{ formatPeriodDates(detail) }}
                 </p>
@@ -237,7 +237,7 @@ const handleDelete = async () => {
 const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
 
-const { hasTimeWindow, formatPeriodDates, formatPeriodTimes, periodTypeLabel } = useCierrePeriod()
+const { formatPeriodDates, formatPeriodTimes, periodTypeLabel, periodBadgeClass } = useCierrePeriod()
 
 const formatDate = (iso: string) => {
   if (!iso) return ''

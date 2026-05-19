@@ -153,7 +153,7 @@
               <div class="grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-1 items-center">
                 <span
                   class="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
-                  :class="hasTimeWindow(item) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
+                  :class="periodBadgeClass(item)"
                 >{{ periodTypeLabel(item) }}</span>
                 <span class="text-sm font-bold text-text-primary">{{ formatPeriodDates(item) }}</span>
                 <span class="text-xs text-text-secondary font-mono">{{ formatPeriodTimes(item) ?? '—' }}</span>
@@ -172,7 +172,7 @@
         <template #cell-periodType="{ row }">
           <span
             class="inline-block text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded whitespace-nowrap"
-            :class="hasTimeWindow(row) ? 'bg-primary/10 text-primary' : 'bg-surface-secondary text-text-secondary'"
+            :class="periodBadgeClass(row)"
           >{{ periodTypeLabel(row) }}</span>
         </template>
         <template #cell-periodDate="{ row }">
@@ -181,6 +181,8 @@
         <template #cell-periodTime="{ row }">
           <span v-if="formatPeriodTimes(row)" class="text-xs text-text-secondary font-mono whitespace-nowrap">{{ formatPeriodTimes(row) }}</span>
           <span v-else class="text-xs text-text-tertiary">—</span>
+        </template>
+
         </template>
         <template #cell-periodEnd="{ row }">
           <span v-if="row.periodStart !== row.periodEnd" class="text-sm text-text-secondary">{{ formatDay(row.periodEnd) }}</span>
@@ -396,7 +398,7 @@ const isCurrentMonthActive = computed(() => {
 })
 
 const { formatDateTime: _fmtDateTime } = useFormatters()
-const { hasTimeWindow, formatPeriodDates, formatPeriodTimes, periodTypeLabel } = useCierrePeriod()
+const { formatPeriodDates, formatPeriodTimes, periodTypeLabel, periodBadgeClass } = useCierrePeriod()
 
 const formatDay = (d: string) => {
   if (!d) return ''
