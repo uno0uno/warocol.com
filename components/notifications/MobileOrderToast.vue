@@ -22,9 +22,7 @@
         >
           <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-l-xl" aria-hidden="true" />
           <NuxtLink
-            :to="toast.notification.payload?.order_id
-              ? `/despacho/domicilios/${toast.notification.payload.order_id}`
-              : '/despacho/domicilios'"
+            :to="notificationDespachoPath(toast.notification)"
             @click="dismiss(toast.id)"
             class="flex items-center gap-2 pl-4 pr-10 py-2.5"
           >
@@ -33,8 +31,7 @@
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-bold text-text-primary leading-snug">
-                Nuevo pedido
-                <span v-if="toast.notification.payload?.order_number">#{{ toast.notification.payload.order_number }}</span>
+                {{ notificationDespachoTitle(toast.notification) }}
               </p>
               <p v-if="toast.notification.payload?.customer_name" class="text-xs text-muted-foreground truncate">
                 {{ toast.notification.payload.customer_name }}
@@ -77,9 +74,7 @@
         <NuxtLink
           v-for="toast in toasts"
           :key="toast.id"
-          :to="toast.notification.payload?.order_id
-            ? `/despacho/domicilios/${toast.notification.payload.order_id}`
-            : '/despacho/domicilios'"
+          :to="notificationDespachoPath(toast.notification)"
           @click="dismiss(toast.id)"
           class="flex items-center gap-2.5 px-3 py-2 rounded-full bg-surface/95 backdrop-blur border border-primary/30 shadow-lg overflow-hidden"
         >
@@ -87,8 +82,7 @@
             <ShoppingBagIcon class="w-3.5 h-3.5 text-primary" aria-hidden="true" />
           </div>
           <span class="text-xs font-semibold text-text-primary truncate flex-1">
-            Nuevo pedido
-            <span v-if="toast.notification.payload?.order_number" class="text-primary">#{{ toast.notification.payload.order_number }}</span>
+            {{ notificationDespachoTitle(toast.notification) }}
           </span>
           <span v-if="toast.notification.payload?.total_amount" class="text-xs text-muted-foreground flex-shrink-0">
             ${{ Number(toast.notification.payload.total_amount).toLocaleString('es-CO') }}
@@ -110,6 +104,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { ShoppingBagIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useNotifications, type Notification } from '~/composables/useNotifications'
+import { notificationDespachoPath, notificationDespachoTitle } from '~/composables/useNotificationDespachoLink'
 
 interface MobileToast {
   id: number

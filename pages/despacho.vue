@@ -19,6 +19,9 @@ const navigationItems = computed(() => {
   const items: { to: string; label: string }[] = [
     { to: '/despacho/domicilios', label: 'Domicilios' },
   ]
+  if (businessProfile.value?.tables_enabled && businessProfile.value?.table_qr_module_enabled) {
+    items.push({ to: '/despacho/en-mesa', label: 'Pedidos en mesa (QR)' })
+  }
   if (businessProfile.value?.comandas_enabled) {
     items.push({ to: '/despacho/comandas', label: 'Comandas' })
   }
