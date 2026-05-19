@@ -4,7 +4,8 @@ import { storeToRefs } from 'pinia'
 import { $fetch } from 'ofetch'
 import { useQuery } from '@pinia/colada'
 import QRCode from 'qrcode'
-import { usePOSStore } from '~/stores/usePOSStore'
+import { usePOSStore, type TabItem } from '~/stores/usePOSStore'
+import { clearTableQrPaymentIntent, readTableQrPaymentIntent } from '~/composables/useTableSessionSync'
 import { useAddressStore, type AddressCreate } from '~/stores/address'
 import { PAYMENT_DEFAULTS, type PosPaymentGroup, type PosPaymentMethod } from '~/utils/paymentDefaults'
 import DeliveryAddressPicker from '~/components/pos/checkout/DeliveryAddressPicker.vue'
@@ -333,6 +334,76 @@ const taxPreview = computed<TaxPreview | null>(() => {
 
 // Tax preview is auto-recomputed via useQuery (mesaCurrentData / posTaxPreviewData)
 // — discount/cart changes invalidate the query keys, no manual debounce needed.
+
+// warocol.com#715 — QR accept payment intent + tab sync on checkout
+const paymentPrefillSeeded = ref(false)
+
+function mapTabItemsFromApi(rows: any[]): TabItem[] {
+  return rows.map((i: any) => ({
+    orderItemId: i.id,
+    productName: i.productName,
+    quantity: i.quantity,
+    unitPrice: i.unitPrice,
+    subtotal: i.subtotal,
+    fulfillmentStatus: i.fulfillmentStatus ?? 'new',
+    sentAt: i.sentAt ?? null,
+  }))
+}
+
+function seedPaymentFromTableQr() {
+  if (paymentPrefillSeeded.value || !isMesaMode.value || !posPaymentGroups.value.length) return
+
+  const tableId = posStore.activeTableSession?.tableId
+  if (!tableId) return
+
+  const intent = readTableQrPaymentIntent(tableId)
+  if (intent?.payment_method) {
+    const group = posPaymentGroups.value.find(g => g.slug === intent.payment_method)
+    if (group) {
+      selectedPaymentMethod.value = intent.payment_method
+      if (
+        intent.payment_method_id
+        && group.methods?.some(m => m.id === intent.payment_method_id)
+      ) {
+        selectedPaymentMethodId.value = intent.payment_method_id
+      }
+      clearTableQrPaymentIntent(tableId)
+      paymentPrefillSeeded.value = true
+      return
+    }
+  }
+
+  const orders = mesaCurrentData.value?.data?.orders as Array<{
+    status?: string
+    payment_method?: string
+  }> | undefined
+  const pending = orders?.find(o => o.status === 'pending' && o.payment_method)
+  if (pending?.payment_method) {
+    const group = posPaymentGroups.value.find(g => g.slug === pending.payment_method)
+    if (group) {
+      selectedPaymentMethod.value = pending.payment_method
+      paymentPrefillSeeded.value = true
+    }
+  }
+}
+
+watch(
+  [
+    () => posPaymentGroups.value.length,
+    () => mesaCurrentData.value?.data?.orders,
+    () => posStore.activeTableSession?.tableId,
+  ],
+  seedPaymentFromTableQr,
+  { immediate: true },
+)
+
+watch(
+  () => mesaCurrentData.value?.data?.tab_items,
+  (rows) => {
+    if (!isMesaMode.value || !rows?.length) return
+    posStore.setTabItems(mapTabItemsFromApi(rows))
+  },
+)
 
 // Split payment state
 const splitMode = ref(false)
