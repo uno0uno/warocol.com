@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { format as fnsFormat } from 'date-fns'
+import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Nuevo asiento contable - Warocol' })
@@ -172,12 +173,17 @@ const onCreditInput = (line: EntryLine) => {
     <div class="flex flex-col gap-4">
 
       <!-- Summary cards -->
-      <FinanzasMetricStrip :items="[
-        { label: 'Líneas',       value: String(lines.filter(l => l.accountId).length) },
-        { label: 'Total débito', value: formatCurrency(totalDebits),  mono: true },
-        { label: 'Total crédito',value: formatCurrency(totalCredits), mono: true },
-        { label: 'Estado',       value: isBalanced ? 'Cuadrado' : formatCurrency(difference), variant: isBalanced ? 'success' : 'warning', icon: isBalanced ? 'check' : 'warning' },
-      ]" />
+      <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
+        <MetricCard title="Líneas" :value="lines.filter(l => l.accountId).length" format="number" variant="primary" />
+        <MetricCard title="Total débito" :value="totalDebits" format="currency" variant="primary" />
+        <MetricCard title="Total crédito" :value="totalCredits" format="currency" variant="primary" />
+        <MetricCard
+          title="Estado"
+          :value="isBalanced ? 'Cuadrado' : difference"
+          :format="isBalanced ? 'text' : 'currency'"
+          :variant="isBalanced ? 'success' : 'warning'"
+        />
+      </div>
 
       <!-- Header fields -->
       <div class="bg-surface border border-border rounded-xl p-4 flex flex-col gap-3">

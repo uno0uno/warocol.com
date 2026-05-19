@@ -9,100 +9,103 @@
 
     <template v-else>
       <!-- Summary stats -->
-      <FinanzasMetricStrip
-        class="mb-4"
-        :items="[
-          { label: 'Efectivo',        value: String(cashGroup?.methodCount ?? 0) },
-          { label: 'Predeterminados', value: String(defaultGroups.length) },
-          { label: 'Personalizables', value: String(customGroups.length) },
-        ]"
-      />
+      <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3 mb-4">
+        <MetricCard title="Efectivo" :value="cashGroup?.methodCount ?? 0" format="number" variant="primary" />
+        <MetricCard title="Predeterminados" :value="defaultGroups.length" format="number" variant="primary" />
+        <MetricCard
+          title="Personalizables"
+          :value="customGroups.length"
+          format="number"
+          variant="primary"
+          class="col-span-2 md:col-span-1"
+        />
+      </div>
 
       <UiResponsiveDataView
-      :columns="columns"
-      :data="groups"
-      empty-message="No hay grupos de pago configurados"
-      empty-sub-message="Contacta a soporte para configurar grupos"
-      row-size="sm"
-      @row-click="(row) => row.slug !== 'cash' && navigateToGroup(row)"
-    >
-      <!-- Mobile card -->
-      <template #card="{ item, index }">
-        <div
-          v-if="item"
-          class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors"
-          :class="[
-            index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30',
-            item.slug !== 'cash' ? 'cursor-pointer hover:bg-surface-secondary' : 'cursor-default opacity-60',
-          ]"
-          @click="item.slug !== 'cash' && navigateToGroup(item)"
-        >
-          <div class="flex-1 min-w-0">
-            <span class="text-sm font-semibold text-text-primary">{{ item.name }}</span>
-            <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
-              <UiStatusBadge
-                :value="item.tenantId === null ? 'Predeterminado' : 'Personalizable'"
-                format="text"
-                :variant="item.tenantId === null ? 'secondary' : 'primary'"
-                size="sm"
-              />
-              <UiStatusBadge
-                v-if="item.triggersCartera"
-                value="Genera cartera"
-                format="text"
-                variant="warning"
-                size="sm"
-              />
+        :columns="columns"
+        :data="groups"
+        empty-message="No hay grupos de pago configurados"
+        empty-sub-message="Contacta a soporte para configurar grupos"
+        row-size="sm"
+        @row-click="(row) => row.slug !== 'cash' && navigateToGroup(row)"
+      >
+        <!-- Mobile card -->
+        <template #card="{ item, index }">
+          <div
+            v-if="item"
+            class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors"
+            :class="[
+              index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30',
+              item.slug !== 'cash' ? 'cursor-pointer hover:bg-surface-secondary' : 'cursor-default opacity-60',
+            ]"
+            @click="item.slug !== 'cash' && navigateToGroup(item)"
+          >
+            <div class="flex-1 min-w-0">
+              <span class="text-sm font-semibold text-text-primary">{{ item.name }}</span>
+              <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                <UiStatusBadge
+                  :value="item.tenantId === null ? 'Predeterminado' : 'Personalizable'"
+                  format="text"
+                  :variant="item.tenantId === null ? 'secondary' : 'primary'"
+                  size="sm"
+                />
+                <UiStatusBadge
+                  v-if="item.triggersCartera"
+                  value="Genera cartera"
+                  format="text"
+                  variant="warning"
+                  size="sm"
+                />
+              </div>
+            </div>
+            <div class="flex items-center gap-3 flex-shrink-0">
+              <span class="text-sm text-text-secondary">{{ item.methodCount }} método{{ item.methodCount !== 1 ? 's' : '' }}</span>
+              <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
             </div>
           </div>
-          <div class="flex items-center gap-3 flex-shrink-0">
-            <span class="text-sm text-text-secondary">{{ item.methodCount }} método{{ item.methodCount !== 1 ? 's' : '' }}</span>
-            <svg class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </div>
-      </template>
+        </template>
 
-      <!-- name -->
-      <template #cell-name="{ row }">
-        <span class="font-medium text-text-primary">{{ row.name }}</span>
-      </template>
+        <!-- name -->
+        <template #cell-name="{ row }">
+          <span class="font-medium text-text-primary">{{ row.name }}</span>
+        </template>
 
-      <!-- tipo -->
-      <template #cell-tenantId="{ row }">
-        <UiStatusBadge
-          :value="row.tenantId === null ? 'Predeterminado' : 'Personalizable'"
-          format="text"
-          :variant="row.tenantId === null ? 'secondary' : 'primary'"
-          size="sm"
-        />
-      </template>
+        <!-- tipo -->
+        <template #cell-tenantId="{ row }">
+          <UiStatusBadge
+            :value="row.tenantId === null ? 'Predeterminado' : 'Personalizable'"
+            format="text"
+            :variant="row.tenantId === null ? 'secondary' : 'primary'"
+            size="sm"
+          />
+        </template>
 
-      <!-- genera cartera -->
-      <template #cell-triggersCartera="{ row }">
-        <UiStatusBadge
-          v-if="row.triggersCartera"
-          value="Genera cartera"
-          format="text"
-          variant="warning"
-          size="sm"
-        />
-        <span v-else class="text-text-secondary text-xs">—</span>
-      </template>
+        <!-- genera cartera -->
+        <template #cell-triggersCartera="{ row }">
+          <UiStatusBadge
+            v-if="row.triggersCartera"
+            value="Genera cartera"
+            format="text"
+            variant="warning"
+            size="sm"
+          />
+          <span v-else class="text-text-secondary text-xs">—</span>
+        </template>
 
-      <!-- method count -->
-      <template #cell-methodCount="{ row }">
-        <span class="text-text-secondary">{{ row.methodCount }}</span>
-      </template>
+        <!-- method count -->
+        <template #cell-methodCount="{ row }">
+          <span class="text-text-secondary">{{ row.methodCount }}</span>
+        </template>
 
-      <!-- arrow -->
-      <template #cell-actions="{ row }">
-        <svg v-if="row.slug !== 'cash'" class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
-      </template>
-    </UiResponsiveDataView>
+        <!-- arrow -->
+        <template #cell-actions="{ row }">
+          <svg v-if="row.slug !== 'cash'" class="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </template>
+      </UiResponsiveDataView>
     </template>
 
   </div>
@@ -110,6 +113,7 @@
 
 <script setup lang="ts">
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
+import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Métodos de pago - Warocol' })

@@ -4,6 +4,7 @@ import { es } from 'date-fns/locale'
 import { format as fnsFormat, startOfMonth } from 'date-fns'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -644,12 +645,22 @@ const openEntryDetail = (entry: { id: string }) => {
       </div>
 
       <!-- ── Period summary strip ───────────────────────────────────────── -->
-      <FinanzasMetricStrip :items="[
-        { label: 'Saldo inicial',    value: formatCOP(openingBalance), mono: true, variant: openingBalance >= 0 ? 'default' : 'destructive' },
-        { label: 'Débitos período',  value: formatCOP(periodDebits),   mono: true, variant: 'primary' },
-        { label: 'Créditos período', value: formatCOP(periodCredits),  mono: true, variant: 'muted' },
-        { label: 'Saldo cierre',     value: formatCOP(closingBalance), mono: true, variant: closingBalance >= 0 ? 'default' : 'destructive' },
-      ]" />
+      <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
+        <MetricCard
+          title="Saldo inicial"
+          :value="openingBalance"
+          format="currency"
+          :variant="openingBalance >= 0 ? 'primary' : 'destructive'"
+        />
+        <MetricCard title="Débitos período" :value="periodDebits" format="currency" variant="primary" />
+        <MetricCard title="Créditos período" :value="periodCredits" format="currency" variant="primary" />
+        <MetricCard
+          title="Saldo cierre"
+          :value="closingBalance"
+          format="currency"
+          :variant="closingBalance >= 0 ? 'primary' : 'destructive'"
+        />
+      </div>
 
       <!-- ── Ledger table ────────────────────────────────────────────────── -->
       <HealthSemaphore :is-unlocked="true" title="Libro mayor de la cuenta">

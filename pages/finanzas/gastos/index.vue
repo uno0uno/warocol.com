@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+import MetricCard from '~/components/shared/MetricCard.vue'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
@@ -140,14 +141,17 @@ onUnmounted(() => { clearRefreshHandler(refetch)
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Metrics Cards -->
-      <FinanzasMetricStrip
-        v-if="stats"
-        :items="[
-          { label: 'Total gastos',   value: formatCurrency(stats.totalAmount), mono: true },
-          { label: 'Transacciones',  value: stats.count.toLocaleString('es-CO') },
-          { label: 'Promedio',       value: formatCurrency(stats.count > 0 ? stats.totalAmount / stats.count : 0), mono: true },
-        ]"
-      />
+      <div v-if="stats" class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3">
+        <MetricCard title="Total gastos" :value="stats.totalAmount" format="currency" variant="primary" />
+        <MetricCard title="Transacciones" :value="stats.count" format="number" variant="primary" />
+        <MetricCard
+          title="Promedio"
+          :value="stats.count > 0 ? stats.totalAmount / stats.count : 0"
+          format="currency"
+          variant="primary"
+          class="col-span-2 md:col-span-1"
+        />
+      </div>
 
       <!-- Filters Bar -->
       <div class="flex flex-wrap items-center gap-2 w-full">

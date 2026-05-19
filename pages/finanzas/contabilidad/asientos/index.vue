@@ -4,6 +4,7 @@ import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import MetricCard from '~/components/shared/MetricCard.vue'
 
 definePageMeta({ layout: 'dashboard' })
 useHead({ title: 'Asientos contables - Warocol' })
@@ -347,12 +348,17 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
       <!-- Period summary strip -->
-      <FinanzasMetricStrip :items="[
-        { label: 'Total asientos', value: totalEntries.toLocaleString('es-CO') },
-        { label: 'Débitos',        value: formatCurrency(pageDebits),   mono: true },
-        { label: 'Créditos',       value: formatCurrency(pageCredits),  mono: true },
-        { label: 'Estado',         value: pageIsBalanced ? 'Cuadrado' : 'Descuadrado', variant: pageIsBalanced ? 'success' : 'warning', icon: pageIsBalanced ? 'check' : 'warning' },
-      ]" />
+      <div class="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
+        <MetricCard title="Total asientos" :value="totalEntries" format="number" variant="primary" />
+        <MetricCard title="Débitos" :value="pageDebits" format="currency" variant="primary" />
+        <MetricCard title="Créditos" :value="pageCredits" format="currency" variant="primary" />
+        <MetricCard
+          title="Estado"
+          :value="pageIsBalanced ? 'Cuadrado' : 'Descuadrado'"
+          format="text"
+          :variant="pageIsBalanced ? 'success' : 'warning'"
+        />
+      </div>
 
       <!-- Filter Bar -->
       <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
