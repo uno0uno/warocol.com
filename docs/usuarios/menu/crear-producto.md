@@ -41,8 +41,11 @@ El formulario tiene 3 pasos:
 | Tiempo de preparación | Cuántos minutos tarda en prepararse | No |
 | Disponible para venta | Si está activo en tu menú | — |
 | Disponible para domicilios | Si aparece en pedidos online (delivery / pickup) | — |
+| Pedido en mesa (QR) | Si aparece en el menú QR de las mesas | — |
 
 > Si desactivas "Disponible para venta", el producto no aparece en ningún menú hasta que lo actives de nuevo.
+>
+> **Pedido en mesa (QR)** es independiente de domicilios.
 
 ### Paso 2 — Recetas e ingredientes
 

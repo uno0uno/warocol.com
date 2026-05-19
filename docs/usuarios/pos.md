@@ -120,6 +120,15 @@ El flujo es igual al modo mostrador: selecciona productos, ajusta el carrito e i
 
 Al cobrar, la sesión de la mesa se cierra y el POS regresa al plano del salón.
 
+### Pedidos aceptados desde QR
+
+Si el negocio usa **pedido por QR en mesa**, cuando el personal **acepta** un pedido en **Despacho → Pedidos en mesa (QR)**:
+
+- Los ítems aparecen en el tab de esa mesa (si ya tenías la mesa abierta, la lista se actualiza en unos segundos).
+- En **checkout**, el método de pago que eligió el cliente en el QR suele venir **preseleccionado**; el cajero puede cambiarlo antes de cobrar.
+
+Configuración del QR: [Operaciones → Mesas](./operaciones/mesas#pedido-por-qr-en-mesa).
+
 ### Cambiar de mesa
 
 Dentro de una sesión de mesa, usa el botón **Cambiar mesa** en el carrito para volver al plano del salón sin cerrar el pedido.

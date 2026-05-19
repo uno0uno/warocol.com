@@ -1,14 +1,15 @@
 # Despacho
 
-El módulo de **Despacho** centraliza todos los pedidos online y, opcionalmente, el monitor de comandas para cocina.
+El módulo de **Despacho** centraliza pedidos online, la cola de **pedidos QR en mesa** pendientes de confirmación y, opcionalmente, el monitor de comandas para cocina.
 
 ## Cómo acceder
 
-Menú lateral → **Despacho**. La pantalla tiene dos pestañas:
+Menú lateral → **Despacho**. Según la configuración del negocio verás hasta tres pestañas:
 
 | Pestaña | Para qué |
 |---------|----------|
 | **Domicilios** | Pedidos online (domicilio, recogida y consumo en mesa) |
+| **Pedidos en mesa (QR)** | Pedidos enviados por QR de mesa, pendientes de aceptar o rechazar (requiere mesas + módulo QR activos) |
 | **Comandas** | Monitor en vivo de comandas de cocina (solo si el negocio tiene comandas activas) |
 
 ---
@@ -84,6 +85,35 @@ Al final del detalle se muestra la línea de tiempo con cada cambio de estado y 
 
 ---
 
+## Pedidos en mesa (QR)
+
+Cola de pedidos que los comensales envían desde el menú QR de cada mesa. Solo aparece si tienes **Gestión de mesas** y **Pedido por QR en mesa** activos en **Operaciones → Mesas**.
+
+Configuración del QR y enlaces por mesa: ver [Mesas](../operaciones/mesas#pedido-por-qr-en-mesa).
+
+### Vista general
+
+- Los pedidos se agrupan **por mesa** en el panel izquierdo.
+- Al seleccionar una mesa ves cada solicitud pendiente con ítems, notas y método de pago elegido por el cliente.
+- Por defecto **todos los pedidos de la mesa vienen seleccionados** (puedes desmarcar los que no quieras incluir).
+
+### Aceptar o rechazar
+
+| Acción | Efecto |
+|--------|--------|
+| **Aceptar** | Los ítems seleccionados se agregan al tab de esa mesa en el **POS**. Si hay comandas activas, se envían a cocina automáticamente. |
+| **Rechazar** | Descarta las solicitudes seleccionadas; no se agregan al POS. |
+
+Tras aceptar verás un mensaje de confirmación (incluye número de comanda si aplica).
+
+### Notificaciones
+
+Cuando llega un pedido QR nuevo, la campana de notificaciones muestra **Pedido QR — {nombre de mesa}**. Al tocarla entras a esta pestaña con la mesa ya filtrada.
+
+> **Diferencia con Domicilios:** los pedidos QR **no** usan el flujo Pendiente → Confirmado → Entregado de domicilios. Aquí solo existe la cola pendiente hasta que aceptas o rechazas.
+
+---
+
 ## Comandas
 
 Monitor en vivo para cocina. Solo aparece la pestaña si el negocio tiene **comandas activas** en su configuración.
@@ -136,3 +166,6 @@ Sí. Cuando se confirma un pedido de domicilio o se cobra una orden en mesa, el 
 
 **¿El monitor se actualiza solo?**
 Sí, tanto Domicilios como Comandas refrescan en tiempo real.
+
+**¿Dónde confirmo un pedido que mandó el cliente por QR?**
+En **Despacho → Pedidos en mesa (QR)**, no en Domicilios.
