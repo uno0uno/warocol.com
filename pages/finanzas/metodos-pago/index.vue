@@ -7,19 +7,18 @@
 
     <CommonsTheErrorState v-else-if="fetchError" />
 
-    <!-- Summary stats -->
-    <FinanzasMetricStrip
-      v-else-if="groups.length"
-      class="mb-4"
-      :items="[
-        { label: 'Efectivo',        value: String(cashGroup?.methodCount ?? 0) },
-        { label: 'Predeterminados', value: String(defaultGroups.length) },
-        { label: 'Personalizables', value: String(customGroups.length) },
-      ]"
-    />
+    <template v-else>
+      <!-- Summary stats -->
+      <FinanzasMetricStrip
+        class="mb-4"
+        :items="[
+          { label: 'Efectivo',        value: String(cashGroup?.methodCount ?? 0) },
+          { label: 'Predeterminados', value: String(defaultGroups.length) },
+          { label: 'Personalizables', value: String(customGroups.length) },
+        ]"
+      />
 
-    <UiResponsiveDataView
-      v-if="!isLoading && !fetchError"
+      <UiResponsiveDataView
       :columns="columns"
       :data="groups"
       empty-message="No hay grupos de pago configurados"
@@ -104,6 +103,7 @@
         </svg>
       </template>
     </UiResponsiveDataView>
+    </template>
 
   </div>
 </template>
@@ -155,10 +155,19 @@ const groups = computed<PaymentGroup[]>(() =>
 const cashGroup     = computed(() => groups.value.find(g => g.slug === 'efectivo'))
 const defaultGroups = computed(() => groups.value.filter(g => g.tenantId === null && g.slug !== 'efectivo'))
 const customGroups  = computed(() => groups.value.filter(g => g.tenantId !== null))
-const isLoading    = computed(() => !groupsData.value && !fetchError.value)
-const isRefreshing = computed(() => groupsAsyncStatus.value === 'loading' && groupsData.value != null)
 
-registerProgressiveLoading(isRefreshing)
+// First load: full-page loader + header matrix. Refetch: optimistic (content stays, matrix in header).
+const hasEverLoaded = ref(false)
+watch(() => groupsData.value, (v) => { if (v != null) hasEverLoaded.value = true })
+watch(() => currentTenant.value?.id, () => { hasEverLoaded.value = false })
+
+const isFetching = computed(() =>
+  !!currentTenant.value &&
+  (groupsStatus.value === 'pending' || groupsAsyncStatus.value === 'loading'),
+)
+const isLoading = computed(() => !hasEverLoaded.value && isFetching.value && !fetchError.value)
+
+registerProgressiveLoading(isFetching)
 onMounted(() => setRefreshHandler(refetch))
 onUnmounted(() => clearRefreshHandler(refetch))
 

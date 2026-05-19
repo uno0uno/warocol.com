@@ -407,6 +407,8 @@ const columns: Column[] = [
 
 const {
   data: groupsData,
+  status: groupsStatus,
+  asyncStatus: groupsAsyncStatus,
   error: groupsError,
   refetch: refetchGroups,
 } = useQuery({
@@ -438,9 +440,22 @@ const methods = computed<PaymentMethod[]>(() =>
     .sort((a, b) => a.sortOrder - b.sortOrder)
 )
 
-const isLoading    = computed(() => methodsStatus.value === 'pending' && !methodsData.value)
-const isRefreshing = computed(() => methodsAsyncStatus.value === 'loading' && methodsData.value != null)
-const fetchError   = computed(() => groupsError.value || methodsError.value)
+const fetchError = computed(() => groupsError.value || methodsError.value)
+
+const hasEverLoaded = ref(false)
+watch(() => methodsData.value, (v) => { if (v != null) hasEverLoaded.value = true })
+watch(() => currentTenant.value?.id, () => { hasEverLoaded.value = false })
+
+const isMethodsFetching = computed(() =>
+  !!currentTenant.value &&
+  (methodsStatus.value === 'pending' || methodsAsyncStatus.value === 'loading'),
+)
+const isGroupsFetching = computed(() =>
+  !!currentTenant.value &&
+  (groupsStatus.value === 'pending' || groupsAsyncStatus.value === 'loading'),
+)
+const isFetching = computed(() => isMethodsFetching.value || isGroupsFetching.value)
+const isLoading = computed(() => !hasEverLoaded.value && isMethodsFetching.value && !fetchError.value)
 
 // ── Accounts (for GL selector) ────────────────────────────────────────────
 
@@ -484,9 +499,13 @@ useHead(() => ({
   title: group.value ? `${group.value.name} — Métodos de pago` : 'Métodos de pago - Warocol',
 }))
 
-registerProgressiveLoading(isRefreshing)
-onMounted(() => setRefreshHandler(refetchMethods))
-onUnmounted(() => clearRefreshHandler(refetchMethods))
+const refreshAll = async () => {
+  await Promise.all([refetchGroups(), refetchMethods()])
+}
+
+registerProgressiveLoading(isFetching)
+onMounted(() => setRefreshHandler(refreshAll))
+onUnmounted(() => clearRefreshHandler(refreshAll))
 
 // ── Toggle active ────────────────────────────────────────────────────────
 
