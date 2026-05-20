@@ -774,14 +774,14 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-const formatCostCell = (value: unknown) => formatCostCellValue(value, formatCurrency)
-
 const {
   marginRealPct,
   marginOperativoPct,
   hasCostDrift,
   formatCostCell: formatCostCellValue,
 } = useProductMargins()
+
+const formatCostCell = (value: unknown) => formatCostCellValue(value, formatCurrency)
 
 // Backward compat alias
 const getMarginValue = marginRealPct
