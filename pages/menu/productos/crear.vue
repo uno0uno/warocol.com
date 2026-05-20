@@ -304,6 +304,42 @@
                 </div>
               </div>
 
+              <!-- Costo real (preview) -->
+              <div v-if="tracksInventory">
+                <label class="block text-sm font-medium text-text-secondary mb-2">
+                  Costo real (sistema)
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary">$</span>
+                  <input
+                    type="text"
+                    readonly
+                    :value="calculatedCost === null ? '—' : formatCurrency(calculatedCost)"
+                    class="w-full pl-8 pr-4 py-2 border border-border rounded-lg bg-surface-secondary text-text-primary cursor-not-allowed"
+                  />
+                </div>
+                <p class="text-xs text-text-tertiary mt-1">Estimado hasta guardar; se calcula desde la receta y compras.</p>
+              </div>
+
+              <!-- Mi costo del plato -->
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Mi costo del plato
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary">$</span>
+                  <input
+                    type="number"
+                    v-model.number="form.costo_percibido"
+                    placeholder="Opcional"
+                    min="0"
+                    step="100"
+                    class="w-full pl-8 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary"
+                  />
+                </div>
+                <p class="text-xs text-text-tertiary mt-1">Costo operativo que tú defines; no lo cambia el sistema.</p>
+              </div>
+
               <!-- Checkboxes -->
               <div class="space-y-3">
                 <label class="flex items-center gap-3 cursor-pointer">
@@ -727,19 +763,29 @@
                     <span class="text-sm font-bold text-text-primary">{{ formatCurrency(form.price) }}</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-sm text-text-secondary">Costo estimado</span>
+                    <span class="text-sm text-text-secondary">Costo real (estimado)</span>
                     <span class="text-sm font-semibold text-text-primary">
                       {{ calculatedCost === null ? '—' : formatCurrency(calculatedCost) }}
                     </span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-sm text-text-secondary">Margen</span>
-                    <span class="text-sm font-semibold text-crocus-600">{{ formatMarginPercent }}</span>
+                    <span class="text-sm text-text-secondary">Mi costo del plato</span>
+                    <span class="text-sm font-semibold text-text-primary">
+                      {{ form.costo_percibido != null && form.costo_percibido > 0 ? formatCurrency(form.costo_percibido) : '—' }}
+                    </span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-text-secondary">Margen real</span>
+                    <span class="text-sm font-semibold text-crocus-600">{{ formatMarginRealPercent }}</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-text-secondary">Margen operativo</span>
+                    <span class="text-sm font-semibold text-crocus-600">{{ formatMarginOperativoPercent }}</span>
                   </div>
                   <div class="flex justify-between items-center pt-2 border-t border-border">
-                    <span class="text-sm font-semibold text-text-primary">Ganancia</span>
+                    <span class="text-sm font-semibold text-text-primary">Ganancia (real)</span>
                     <span class="text-base font-bold text-crocus-600">
-                      {{ marginValue === null ? '—' : formatCurrency(marginValue) }}
+                      {{ marginRealValue === null ? '—' : formatCurrency(marginRealValue) }}
                     </span>
                   </div>
                 </div>
@@ -889,6 +935,7 @@ const form = ref({
     unit: string
   }>,
   tenant_id: currentTenant.value?.id || '',
+  costo_percibido: null as number | null,
 })
 
 // Fetch categories
@@ -1048,16 +1095,27 @@ const calculatedCost = computed<number | null>(() => {
   return totalCost
 })
 
-const marginValue = computed<number | null>(() => {
+const { marginRealPct, marginOperativoPct } = useProductMargins()
+
+const marginPreview = computed(() => ({
+  price: form.value.price,
+  costo_calculado: calculatedCost.value,
+  costo_percibido: form.value.costo_percibido,
+}))
+
+const marginRealValue = computed<number | null>(() => {
   if (calculatedCost.value === null) return null
   return form.value.price - calculatedCost.value
 })
 
-const formatMarginPercent = computed(() => {
-  const cost = calculatedCost.value
-  if (!form.value.price || cost === null || cost <= 0) return '—'
-  const margin = ((form.value.price - cost) / cost * 100)
-  return `${margin.toFixed(1)}%`
+const formatMarginRealPercent = computed(() => {
+  const pct = marginRealPct(marginPreview.value)
+  return pct === null ? '—' : `${pct.toFixed(1)}%`
+})
+
+const formatMarginOperativoPercent = computed(() => {
+  const pct = marginOperativoPct(marginPreview.value)
+  return pct === null ? '—' : `${pct.toFixed(1)}%`
 })
 
 const canProceed = computed(() => {
@@ -1257,6 +1315,7 @@ async function submitProduct() {
       recipe_base_ids: cleanedRecipeBases.map(l => l.recipe_base_id),
       ingredients: tracksInventory.value ? form.value.ingredients : [],
       image_url: form.value.image_url || null,
+      costo_percibido: form.value.costo_percibido ?? null,
     }
 
     await $fetch('/api/menu/products', {

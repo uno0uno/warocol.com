@@ -151,37 +151,80 @@
                 </div>
               </div>
 
-              <div>
+              <div v-if="tracksInventory">
                 <label class="block text-sm font-medium text-text-secondary mb-2">
-                  Costo estimado (previo al guardar)
+                  Costo real (sistema)
                 </label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
                   <input
-                    :value="calculatedCost === null ? '—' : formatCurrency(calculatedCost)"
+                    :value="displayRealCost === null ? '—' : formatCurrency(displayRealCost)"
                     type="text"
                     disabled
                     class="input-base w-full pl-8 pr-4 py-2 bg-surface-secondary cursor-not-allowed"
                     placeholder="0"
                   />
                 </div>
+                <p v-if="showRecipeCostPreview" class="text-xs text-status-warning mt-1">
+                  Vista previa con receta actual: {{ formatCurrency(calculatedCost!) }} (se confirma al guardar)
+                </p>
+                <p v-else class="text-xs text-text-tertiary mt-1">
+                  Calculado por el sistema desde receta y compras.
+                </p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-text-primary mb-2">
+                  Mi costo del plato
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                  <input
+                    v-model.number="form.costo_percibido"
+                    type="number"
+                    min="0"
+                    step="100"
+                    class="input-base w-full pl-8 pr-4 py-2"
+                    placeholder="Opcional"
+                  />
+                </div>
                 <p class="text-xs text-text-tertiary mt-1">
-                  Vista previa con precios configurados; el costo real se confirma al guardar
+                  Costo operativo que tú defines; no lo cambia el sistema.
                 </p>
               </div>
             </div>
 
-            <!-- Margin Display -->
-            <div v-if="form.price > 0 && calculatedCost !== null && calculatedCost > 0" class="mt-4 p-4 bg-surface-secondary rounded-lg">
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-text-primary">Margen:</span>
+            <!-- Dual margins -->
+            <div
+              v-if="form.price > 0 && (displayRealCost !== null || form.costo_percibido)"
+              class="mt-4 p-4 bg-surface-secondary rounded-lg space-y-3"
+            >
+              <div v-if="displayRealCost !== null && displayRealCost > 0" class="flex items-center justify-between">
+                <span class="text-sm font-medium text-text-primary">Margen real</span>
                 <div class="flex items-center gap-3">
-                  <span class="text-lg font-bold text-text-primary">
-                    {{ formatCurrency(form.price - calculatedCost) }}
+                  <span class="text-sm font-semibold text-text-primary">
+                    {{ marginRealValue === null ? '—' : formatCurrency(marginRealValue) }}
                   </span>
                   <UiStatusBadge
-                    :label="`${calculateMargin(form.price, calculatedCost) ?? 0}%`"
-                    :variant="(calculateMargin(form.price, calculatedCost) ?? 0) > 50 ? 'success' : 'warning'"
+                    v-if="marginRealPct(marginPreview) !== null"
+                    :label="`${marginRealPct(marginPreview)!.toFixed(1)}%`"
+                    :variant="(marginRealPct(marginPreview) ?? 0) > 50 ? 'success' : 'warning'"
+                  />
+                </div>
+              </div>
+              <div
+                v-if="form.costo_percibido != null && form.costo_percibido > 0"
+                class="flex items-center justify-between"
+              >
+                <span class="text-sm font-medium text-text-primary">Margen operativo</span>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm font-semibold text-text-primary">
+                    {{ marginOperativoValue === null ? '—' : formatCurrency(marginOperativoValue) }}
+                  </span>
+                  <UiStatusBadge
+                    v-if="marginOperativoPct(marginPreview) !== null"
+                    :label="`${marginOperativoPct(marginPreview)!.toFixed(1)}%`"
+                    variant="secondary"
                   />
                 </div>
               </div>
@@ -517,16 +560,23 @@
             </div>
 
             <div class="flex justify-between text-sm">
-              <span class="text-text-secondary">Costo estimado:</span>
+              <span class="text-text-secondary">Costo real:</span>
               <span class="font-semibold text-text-primary">
-                {{ calculatedCost === null ? '—' : formatCurrency(calculatedCost) }}
+                {{ displayRealCost === null ? '—' : formatCurrency(displayRealCost) }}
+              </span>
+            </div>
+
+            <div class="flex justify-between text-sm">
+              <span class="text-text-secondary">Mi costo:</span>
+              <span class="font-semibold text-text-primary">
+                {{ form.costo_percibido != null && form.costo_percibido > 0 ? formatCurrency(form.costo_percibido) : '—' }}
               </span>
             </div>
 
             <div class="flex justify-between text-sm pt-3 border-t border-border">
-              <span class="text-text-secondary">Margen:</span>
+              <span class="text-text-secondary">Margen real:</span>
               <span class="font-semibold text-primary">
-                {{ calculatedCost === null ? '—' : formatCurrency(form.price - calculatedCost) }}
+                {{ marginRealValue === null ? '—' : formatCurrency(marginRealValue) }}
               </span>
             </div>
 
@@ -867,6 +917,7 @@ const form = ref({
   tax_category: 'standard' as 'standard' | 'liquor' | 'exempt',
   recipe_bases: [] as Array<{ recipe_base_id: string; quantity: number }>,
   ingredients: [] as Array<{ ingredient_id: string, ingredient_name: string, quantity: number, unit: string }>,
+  costo_percibido: null as number | null,
 })
 
 const isSubmitting = ref(false)
@@ -917,6 +968,7 @@ watch(productData, (data) => {
           unit: ing.unit
         }
       }),
+      costo_percibido: product.costo_percibido != null ? Number(product.costo_percibido) : null,
     }
     // Derive toggle from existing data — product without any recipe row → OFF
     tracksInventory.value = (
@@ -958,6 +1010,45 @@ const calculatedCost = computed<number | null>(() => {
   }, 0)
 
   return totalCost
+})
+
+const savedRealCost = computed<number | null>(() => {
+  const raw = productData.value?.data?.costo_calculado
+  if (raw === null || raw === undefined) return null
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : null
+})
+
+const displayRealCost = computed<number | null>(() => {
+  if (!tracksInventory.value) return null
+  if (savedRealCost.value !== null && savedRealCost.value > 0) return savedRealCost.value
+  return calculatedCost.value
+})
+
+const showRecipeCostPreview = computed(() => {
+  if (!tracksInventory.value || calculatedCost.value === null) return false
+  if (savedRealCost.value === null || savedRealCost.value <= 0) return calculatedCost.value > 0
+  return Math.abs(savedRealCost.value - calculatedCost.value) > 0.01
+})
+
+const { marginRealPct, marginOperativoPct } = useProductMargins()
+
+const marginPreview = computed(() => ({
+  price: form.value.price,
+  costo_calculado: displayRealCost.value,
+  costo_percibido: form.value.costo_percibido,
+}))
+
+const marginRealValue = computed<number | null>(() => {
+  const cost = displayRealCost.value
+  if (cost === null || cost <= 0) return null
+  return form.value.price - cost
+})
+
+const marginOperativoValue = computed<number | null>(() => {
+  const perceived = form.value.costo_percibido
+  if (perceived == null || perceived <= 0) return null
+  return form.value.price - perceived
 })
 
 // Methods
@@ -1048,6 +1139,7 @@ const handleSubmit = async () => {
       recipe_base_ids: cleanedRecipeBases.map(l => l.recipe_base_id),
       ingredients: tracksInventory.value ? form.value.ingredients : [],
       image_url: form.value.image_url || null,
+      costo_percibido: form.value.costo_percibido ?? null,
     }
     await $fetch(`/api/menu/products/${productId}`, {
       method: 'PUT',
@@ -1106,11 +1198,6 @@ const formatCurrency = (value: number) => {
     currency: 'COP',
     minimumFractionDigits: 0
   }).format(value)
-}
-
-const calculateMargin = (price: number, cost: number | null) => {
-  if (cost == null || cost <= 0) return null
-  return Math.round(((price - cost) / cost) * 100)
 }
 
 useHead({

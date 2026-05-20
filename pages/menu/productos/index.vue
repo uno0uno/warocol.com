@@ -86,7 +86,11 @@
             <div
               class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary cursor-pointer"
               :class="[
-                costIssueProductIds?.has(item.id) ? 'bg-status-critical-bg' : (index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30')
+                costIssueProductIds?.has(item.id)
+                  ? 'bg-status-critical-bg'
+                  : costDriftProductIds?.has(item.id)
+                    ? 'bg-status-warning-bg/40'
+                    : (index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30')
               ]"
               @click="editProduct(item)"
             >
@@ -104,7 +108,13 @@
               </div>
               <div class="flex-1 min-w-0">
                 <span class="text-sm font-bold text-text-primary">{{ toTitleCase(item.name) }}</span>
-                <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">
+                  {{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}
+                </p>
+                <p class="text-xs text-text-tertiary">
+                  Real: {{ formatCostCell(item.costo_calculado) }}
+                  · Mi costo: {{ formatCostCell(item.costo_percibido) }}
+                </p>
               </div>
               <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
                 <span
@@ -115,11 +125,20 @@
                   {{ item.station.name }}
                 </span>
                 <UiStatusBadge
-                  v-if="getMarginValue(item) !== null"
-                  :value="getMarginValue(item)"
+                  v-if="marginRealPct(item) !== null"
+                  :value="marginRealPct(item)!"
                   format="percentage"
-                  :variant="(getMarginValue(item) ?? 0) >= 0 ? 'success' : 'secondary'"
+                  :variant="(marginRealPct(item) ?? 0) >= 0 ? 'success' : 'secondary'"
                   size="sm"
+                  title="Margen real"
+                />
+                <UiStatusBadge
+                  v-if="marginOperativoPct(item) !== null"
+                  :value="marginOperativoPct(item)!"
+                  format="percentage"
+                  variant="secondary"
+                  size="sm"
+                  title="Margen operativo"
                 />
                 <UiStatusBadge
                   :value="item.is_available ? 'Disponible' : 'No disponible'"
@@ -168,17 +187,36 @@
 
           <template #cell-costo_calculado="{ value }">
             <span class="text-sm text-text-primary">
-              {{ value === null || value === undefined ? '—' : formatCurrency(value) }}
+              {{ formatCostCell(value) }}
             </span>
           </template>
 
-          <template #cell-margen="{ row }">
+          <template #cell-costo_percibido="{ value }">
+            <span class="text-sm text-text-primary">
+              {{ formatCostCell(value) }}
+            </span>
+          </template>
+
+          <template #cell-margen_real="{ row }">
             <div class="flex justify-end">
               <UiStatusBadge
-                v-if="getMarginValue(row) !== null"
-                :value="getMarginValue(row)!"
+                v-if="marginRealPct(row) !== null"
+                :value="marginRealPct(row)!"
                 format="percentage"
-                :variant="getMarginValue(row)! >= 0 ? 'success' : 'secondary'"
+                :variant="(marginRealPct(row) ?? 0) >= 0 ? 'success' : 'secondary'"
+                size="sm"
+              />
+              <span v-else class="text-sm text-text-secondary">—</span>
+            </div>
+          </template>
+
+          <template #cell-margen_operativo="{ row }">
+            <div class="flex justify-end">
+              <UiStatusBadge
+                v-if="marginOperativoPct(row) !== null"
+                :value="marginOperativoPct(row)!"
+                format="percentage"
+                :variant="(marginOperativoPct(row) ?? 0) >= 0 ? 'success' : 'secondary'"
                 size="sm"
               />
               <span v-else class="text-sm text-text-secondary">—</span>
@@ -558,10 +596,19 @@ const costIssueProductIds = computed(() => {
 
 const costIssueCount = computed(() => costIssueProductIds.value.size)
 
+const costDriftProductIds = computed(() => {
+  const ids = new Set<string>()
+  for (const p of products.value) {
+    if (hasCostDrift(p)) ids.add(p.id)
+  }
+  return ids
+})
+
 const bannerDismissed = ref(false)
 
 const getRowClass = (row: any): string | undefined => {
   if (costIssueProductIds.value.has(row.id)) return 'bg-status-critical-bg'
+  if (costDriftProductIds.value.has(row.id)) return 'bg-status-warning-bg/40'
   return undefined
 }
 
@@ -643,14 +690,28 @@ const productosTableColumns = computed(() => {
     },
     {
       key: 'costo_calculado',
-      title: 'Costo',
+      title: 'Costo real',
       sortable: true,
       format: 'currency',
       align: 'right'
     },
     {
-      key: 'margen',
-      title: 'Margen',
+      key: 'costo_percibido',
+      title: 'Mi costo',
+      sortable: true,
+      format: 'currency',
+      align: 'right'
+    },
+    {
+      key: 'margen_real',
+      title: 'Margen real',
+      sortable: false,
+      format: 'text',
+      align: 'center'
+    },
+    {
+      key: 'margen_operativo',
+      title: 'Margen op.',
       sortable: false,
       format: 'text',
       align: 'center'
@@ -713,24 +774,17 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-// Calculate and format margin
-const formatMargin = (product: any) => {
-  const price = Number(product.price) || 0
-  const cost = Number(product.costo_calculado) || 0
-  if (price <= 0 || cost <= 0) return '—'
-  const margin = ((price - cost) / cost) * 100
-  if (!isFinite(margin)) return '—'
-  return `${margin.toFixed(1)}%`
-}
+const formatCostCell = (value: unknown) => formatCostCellValue(value, formatCurrency)
 
-// Raw margin value for badge autoColor (null = no data)
-const getMarginValue = (product: any): number | null => {
-  const price = Number(product.price) || 0
-  const cost = Number(product.costo_calculado) || 0
-  if (price <= 0 || cost <= 0) return null
-  const margin = ((price - cost) / cost) * 100
-  return isFinite(margin) ? margin : null
-}
+const {
+  marginRealPct,
+  marginOperativoPct,
+  hasCostDrift,
+  formatCostCell: formatCostCellValue,
+} = useProductMargins()
+
+// Backward compat alias
+const getMarginValue = marginRealPct
 
 // True if the product has any recipe row (direct ingredients or recipe bases).
 // Null/zero costo_calculado is the proxy: the backend persists NULL when no recipe.

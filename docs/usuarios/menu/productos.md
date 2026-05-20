@@ -32,6 +32,8 @@ El formulario tiene 3 pasos:
 | Descripción | Una descripción corta del plato | No |
 | Categoría | A qué grupo pertenece (Entradas, Platos fuertes, Bebidas...) | Sí |
 | Precio de venta | Precio en pesos colombianos | Sí |
+| Costo real (sistema) | Lo calcula WARO desde la receta y las compras de ingredientes (solo lectura) | — |
+| Mi costo del plato | Costo operativo que tú defines para márgenes y reportes; el sistema no lo sobrescribe | No |
 | Tiempo de preparación | Cuántos minutos tarda en prepararse | No |
 | Disponible para venta | Si está activo en tu menú | — |
 | Disponible para domicilios | Si aparece en pedidos online (delivery / pickup) | — |
@@ -52,6 +54,21 @@ Aquí vinculas el producto a una o más recetas base que ya creaste.
 ### Paso 3 — Revisión y confirmación
 
 Revisa el resumen: nombre, categoría y estado. Si todo está bien, haz clic en **Crear producto**.
+
+---
+
+## Costo real vs mi costo del plato
+
+WARO maneja dos costos por producto:
+
+| Concepto | Quién lo define | Para qué sirve |
+|----------|-----------------|----------------|
+| **Costo real (sistema)** | WARO, al guardar el producto con receta | Refleja ingredientes y precios de compra; se actualiza si cambian compras o receta |
+| **Mi costo del plato** | Tú, opcional | Tu referencia operativa (mano de obra, merma, proveedor distinto, etc.) |
+
+En el listado verás **Margen real** (precio vs costo del sistema) y **Margen operativo** (precio vs tu costo), cuando hayas definido "Mi costo".
+
+Si ambos costos difieren mucho, la fila se resalta en ámbar para que revises si conviene ajustar tu costo percibido o la receta.
 
 ---
 

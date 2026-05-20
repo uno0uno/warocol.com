@@ -52,14 +52,35 @@
           <template #card="{ item, index }">
             <div
               class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
-              :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+              :class="costDriftProductIds?.has(item.id)
+                ? 'bg-status-warning-bg/40'
+                : (index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30')"
             >
               <div class="flex-1 min-w-0">
                 <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
                 <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}</p>
+                <p class="text-xs text-text-tertiary">
+                  Real: {{ formatCostCell(item.costo_calculado) }}
+                  · Mi costo: {{ formatCostCell(item.costo_percibido) }}
+                </p>
               </div>
               <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
-                <span class="text-sm font-semibold text-text-primary">{{ formatMargin(item) }}</span>
+                <UiStatusBadge
+                  v-if="marginRealPct(item) !== null"
+                  :value="marginRealPct(item)!"
+                  format="percentage"
+                  :variant="(marginRealPct(item) ?? 0) >= 0 ? 'success' : 'secondary'"
+                  size="sm"
+                  title="Margen real"
+                />
+                <UiStatusBadge
+                  v-if="marginOperativoPct(item) !== null"
+                  :value="marginOperativoPct(item)!"
+                  format="percentage"
+                  variant="secondary"
+                  size="sm"
+                  title="Margen operativo"
+                />
                 <UiStatusBadge
                   :value="item.is_available ? 'Disponible' : 'No disponible'"
                   format="text"
@@ -84,11 +105,37 @@
           </template>
 
           <template #cell-costo_calculado="{ value }">
-            <span class="text-sm text-text-primary">{{ formatCurrency(value) }}</span>
+            <span class="text-sm text-text-primary">{{ formatCostCell(value) }}</span>
           </template>
 
-          <template #cell-margen="{ row }">
-            <span class="text-sm text-text-secondary">{{ formatMargin(row) }}</span>
+          <template #cell-costo_percibido="{ value }">
+            <span class="text-sm text-text-primary">{{ formatCostCell(value) }}</span>
+          </template>
+
+          <template #cell-margen_real="{ row }">
+            <div class="flex justify-end">
+              <UiStatusBadge
+                v-if="marginRealPct(row) !== null"
+                :value="marginRealPct(row)!"
+                format="percentage"
+                :variant="(marginRealPct(row) ?? 0) >= 0 ? 'success' : 'secondary'"
+                size="sm"
+              />
+              <span v-else class="text-sm text-text-secondary">—</span>
+            </div>
+          </template>
+
+          <template #cell-margen_operativo="{ row }">
+            <div class="flex justify-end">
+              <UiStatusBadge
+                v-if="marginOperativoPct(row) !== null"
+                :value="marginOperativoPct(row)!"
+                format="percentage"
+                :variant="(marginOperativoPct(row) ?? 0) >= 0 ? 'success' : 'secondary'"
+                size="sm"
+              />
+              <span v-else class="text-sm text-text-secondary">—</span>
+            </div>
           </template>
 
           <template #cell-is_available="{ value }">
@@ -431,14 +478,28 @@ const productosTableColumns = [
   },
   {
     key: 'costo_calculado',
-    title: 'Costo',
+    title: 'Costo real',
     sortable: true,
     format: 'currency',
     align: 'right'
   },
   {
-    key: 'margen',
-    title: 'Margen',
+    key: 'costo_percibido',
+    title: 'Mi costo',
+    sortable: true,
+    format: 'currency',
+    align: 'right'
+  },
+  {
+    key: 'margen_real',
+    title: 'Margen real',
+    sortable: false,
+    format: 'text',
+    align: 'center'
+  },
+  {
+    key: 'margen_operativo',
+    title: 'Margen op.',
     sortable: false,
     format: 'text',
     align: 'center'
@@ -462,12 +523,22 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
-// Calculate and format margin
-const formatMargin = (product: any) => {
-  if (!product.price || !product.costo_calculado) return '--'
-  const margin = ((product.price - product.costo_calculado) / product.costo_calculado) * 100
-  return `${margin.toFixed(1)}%`
-}
+const {
+  marginRealPct,
+  marginOperativoPct,
+  hasCostDrift,
+  formatCostCell: formatCostCellValue,
+} = useProductMargins()
+
+const formatCostCell = (value: unknown) => formatCostCellValue(value, formatCurrency)
+
+const costDriftProductIds = computed(() => {
+  const ids = new Set<string>()
+  for (const p of sortedProducts.value) {
+    if (hasCostDrift(p)) ids.add(p.id)
+  }
+  return ids
+})
 
 </script>
 
