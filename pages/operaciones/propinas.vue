@@ -276,7 +276,7 @@ const saveConfig = async () => {
               Pre-seleccionar primer preset
             </p>
             <p class="text-xs mt-0.5 leading-snug text-text-secondary">
-              Recomendado: <strong>desactivado</strong>. La Ley 1935 establece que la propina es voluntaria — al no pre-seleccionar, el cliente la elige de forma consciente.
+              Recomendado: <strong>desactivado</strong>. La Ley 1935 establece que la propina es voluntaria. Solo aplica en <strong>pedidos online</strong>; en el POS el cajero siempre elige la propina de forma explícita.
             </p>
           </div>
           <label

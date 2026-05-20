@@ -75,10 +75,10 @@ const tipSource = computed<'preset' | 'custom' | 'none'>(() => {
   return activeMode.value.kind === 'preset' ? 'preset' : 'custom'
 })
 
-// Emit on every change
+// Emit on every change (immediate so parent v-model matches hydration/preselect)
 watch([tipAmount, tipSource], () => {
   emit('update:modelValue', { amount: tipAmount.value, source: tipSource.value })
-}, { immediate: false })
+}, { immediate: true })
 
 const formatCurrency = (value: number): string =>
   new Intl.NumberFormat('es-CO', {
