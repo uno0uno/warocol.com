@@ -178,10 +178,32 @@ const tipPresets = computed<number[]>(() => settingsData.value?.data?.tip_defaul
 const tipModel = ref<{ amount: number; source: 'preset' | 'custom' | 'none' }>({ amount: 0, source: 'none' })
 const tipAmount = computed(() => tipModel.value.amount)
 const tipSource = computed(() => tipModel.value.source)
+const tipTaxableDefault = computed(() => settingsData.value?.data?.tip_taxable_default === true)
+const tenantTaxConfig = computed(() => settingsData.value?.data?.tax_config ?? null)
+const tipTaxable = ref(false)
+watch(() => tipAmount.value, (amt, prev) => {
+  if (amt > 0 && !(prev && prev > 0)) tipTaxable.value = tipTaxableDefault.value
+  if (amt === 0) tipTaxable.value = false
+})
+const tipTaxAmount = computed(() =>
+  computeTipTaxAmount(tipAmount.value, tipTaxable.value, tenantTaxConfig.value),
+)
+const tipTaxLabel = computed(() => {
+  const cfg = tenantTaxConfig.value
+  if (cfg?.inc_applicable) return 'INC propina'
+  if (cfg?.iva_applicable) return 'IVA propina'
+  return 'Impuesto propina'
+})
+const checkoutTipBody = computed(() =>
+  tipAmount.value > 0
+    ? { tip_amount: tipAmount.value, tip_source: tipSource.value, tip_taxable: tipTaxable.value }
+    : {},
+)
 // Reset whenever the cart is cleared / customer changes so a previous tip
 // doesn't bleed into the next sale.
 watch([() => posStore.cartId, () => selectedCustomer.value?.id], () => {
   tipModel.value = { amount: 0, source: 'none' }
+  tipTaxable.value = false
 })
 
 watch(() => posStore.cartServedByMemberId, (memberId) => {
@@ -263,7 +285,9 @@ const discountedTotal = computed(() => cartTotal.value - discountAmount.value)
 // warocol.com#639 — final amount charged to the customer when tipping is enabled.
 // total_amount on orders never includes tip (tax-base invariant from migration 079);
 // charged_amount = total_amount + tip_amount lives at the payment layer only.
-const finalChargedAmount = computed(() => discountedTotal.value + tipAmount.value)
+const finalChargedAmount = computed(() =>
+  discountedTotal.value + tipSettlementTotal(tipAmount.value, tipTaxAmount.value),
+)
 
 // ── Parallel-loading queries (replaces manual refreshTaxPreview + #656 rehydration $fetch).
 //
@@ -414,11 +438,6 @@ const splitMode = ref(false)
 const showCheckoutTipSelector = computed(
   () => tipEnabled.value && !!posStore.cartServedByMemberId && splitPayments.value.length === 0,
 )
-const splitTipBody = computed(() =>
-  tipAmount.value > 0
-    ? { tip_amount: tipAmount.value, tip_source: tipSource.value }
-    : {},
-)
 const splitPayments = ref<Array<{ id: string; amount: number; payment_method: string; payment_method_name: string }>>([])
 const splitPaidTotal = ref(0)
 // Issue warocol.com#649 — void partial payment state: modal + per-row spinner.
@@ -427,7 +446,9 @@ const isVoidingPayment = ref<string | null>(null)
 const voidPaymentTarget = ref<{ id: string; amount: number; payment_method: string; payment_method_name: string } | null>(null)
 const voidPaymentReason = ref('')
 const voidPaymentError = ref('')
-const splitAmountDue = computed(() => discountedTotal.value + tipAmount.value)
+const splitAmountDue = computed(() =>
+  discountedTotal.value + tipSettlementTotal(tipAmount.value, tipTaxAmount.value),
+)
 const splitRemaining = computed(() => Math.max(0, splitAmountDue.value - splitPaidTotal.value))
 const splitIsComplete = computed(() => splitRemaining.value <= 0.01)
 
@@ -514,7 +535,7 @@ const addSplitPayment = async () => {
               ? { split_first_cash_received: Number(cashReceivedInput.value) }
               : {}),
             ...checkoutServedByBody.value,
-            ...splitTipBody.value,
+            ...checkoutTipBody.value,
           }
         }) as any
         paidTotal = response.data.paid_total ?? amountToCharge
@@ -561,7 +582,7 @@ const addSplitPayment = async () => {
               ? { split_first_cash_received: Number(cashReceivedInput.value) }
               : {}),
             ...checkoutServedByBody.value,
-            ...splitTipBody.value,
+            ...checkoutTipBody.value,
           }
         }) as any
         paidTotal = response.data.paid_total ?? amountToCharge
@@ -854,9 +875,7 @@ const processOrder = async () => {
             : {}),
           // warocol.com#639 — tip applied at mesa close (session-level, server stores
           // it on the first completed order of the session).
-          ...(tipAmount.value > 0
-            ? { tip_amount: tipAmount.value, tip_source: tipSource.value }
-            : {}),
+          ...checkoutTipBody.value,
           ...checkoutServedByBody.value,
         },
       }) as any
@@ -955,9 +974,7 @@ const processOrder = async () => {
           : {}),
         ...checkoutServedByBody.value,
         // warocol.com#639 — tip capture (server validates against tenant.tip_enabled)
-        ...(tipAmount.value > 0
-          ? { tip_amount: tipAmount.value, tip_source: tipSource.value }
-          : {}),
+        ...checkoutTipBody.value,
       }
     }) as {
       success: boolean
@@ -1977,6 +1994,28 @@ onUnmounted(() => {
           :subtotal="cartTotal"
           v-model="tipModel"
         />
+        <div
+          v-if="showCheckoutTipSelector && tipAmount > 0"
+          class="rounded-xl border border-border bg-surface px-4 py-3 flex flex-col gap-2"
+        >
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input
+              v-model="tipTaxable"
+              type="checkbox"
+              class="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+              aria-label="Propina gravada con impuesto al consumo"
+            />
+            <span class="text-sm text-text-primary leading-snug">
+              Propina gravada
+              <span class="block text-xs text-text-secondary mt-0.5">
+                Incluye {{ tipTaxLabel.toLowerCase() }} según la configuración fiscal del negocio.
+              </span>
+            </span>
+          </label>
+          <p v-if="tipTaxable && tipTaxAmount > 0" class="text-xs text-text-secondary tabular-nums pl-7">
+            {{ tipTaxLabel }}: {{ formatCurrency(tipTaxAmount) }}
+          </p>
+        </div>
 
         <!-- Section: Domicilio (mostrador or bar — never mesa) -->
         <div v-if="canRegisterDelivery" class="bg-surface rounded-2xl shadow-sm border border-border p-4 md:p-6">
@@ -2299,6 +2338,13 @@ onUnmounted(() => {
               <div class="flex items-center justify-between text-text-secondary">
                 <span>Propina</span>
                 <span class="tabular-nums font-medium text-text-primary">{{ formatCurrency(tipAmount) }}</span>
+              </div>
+              <div
+                v-if="tipTaxAmount > 0"
+                class="flex items-center justify-between text-text-secondary"
+              >
+                <span>{{ tipTaxLabel }}</span>
+                <span class="tabular-nums font-medium text-text-primary">{{ formatCurrency(tipTaxAmount) }}</span>
               </div>
               <div class="flex items-center justify-between border-t border-border pt-1.5 font-semibold text-text-primary">
                 <span>Total a cobrar</span>
@@ -3205,6 +3251,10 @@ onUnmounted(() => {
       <div class="receipt-item">
         <span>Propina</span>
         <span>{{ formatCurrency(tipAmount) }}</span>
+      </div>
+      <div v-if="tipTaxAmount > 0" class="receipt-item">
+        <span>{{ tipTaxLabel }}</span>
+        <span>{{ formatCurrency(tipTaxAmount) }}</span>
       </div>
       <div class="receipt-total">
         <span>TOTAL A COBRAR</span>
