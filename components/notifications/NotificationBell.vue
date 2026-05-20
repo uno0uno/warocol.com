@@ -40,15 +40,28 @@
         aria-label="Panel de notificaciones"
       >
         <!-- Header -->
-        <div class="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-border gap-2">
           <h2 class="text-sm font-semibold text-text-primary">Notificaciones</h2>
-          <button
-            v-if="notifications.length > 0"
-            @click="handleMarkAllRead"
-            class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
-          >
-            Marcar todo como leído
-          </button>
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              @click="handleToggleSound"
+              :title="soundEnabled ? 'Silenciar alertas sonoras' : 'Activar alertas sonoras'"
+              :aria-label="soundEnabled ? 'Silenciar alertas sonoras' : 'Activar alertas sonoras'"
+              class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-secondary transition-colors"
+              :class="soundEnabled ? 'text-text-primary' : 'text-muted-foreground'"
+            >
+              <SpeakerWaveIcon v-if="soundEnabled" class="w-4 h-4" aria-hidden="true" />
+              <SpeakerXMarkIcon v-else class="w-4 h-4" aria-hidden="true" />
+            </button>
+            <button
+              v-if="notifications.length > 0"
+              @click="handleMarkAllRead"
+              class="text-xs text-primary hover:text-primary/80 font-medium transition-colors whitespace-nowrap"
+            >
+              Marcar todo como leído
+            </button>
+          </div>
         </div>
 
         <!-- Loading state -->
@@ -104,19 +117,28 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { BellIcon, BellAlertIcon, ShoppingBagIcon } from '@heroicons/vue/24/outline'
+import { BellIcon, BellAlertIcon, ShoppingBagIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/vue/24/outline'
 import { useNotifications } from '~/composables/useNotifications'
 import { notificationDespachoPath, notificationDespachoTitle } from '~/composables/useNotificationDespachoLink'
+import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
 
 const { notifications, unreadCount, init, markAsRead, markAllRead } = useNotifications()
+const { enabled: soundEnabled, toggleEnabled, unlockFromGesture, prefetchBuffer } = useDespachoNotificationAudio()
 
 const isOpen = ref(false)
 const isLoading = ref(false)
 const containerRef = ref<HTMLElement | null>(null)
 const triggerRef = ref<HTMLButtonElement | null>(null)
 
+const handleToggleSound = (event: MouseEvent) => {
+  event.stopPropagation()
+  unlockFromGesture()
+  toggleEnabled()
+}
+
 const toggle = async (event: MouseEvent) => {
   triggerRef.value = event.currentTarget as HTMLButtonElement
+  unlockFromGesture()
   if (isOpen.value) {
     close()
     return
@@ -163,8 +185,10 @@ const handleClickOutside = (event: MouseEvent) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  // Start SSE connection eagerly (no-op if already connected)
-  if (process.client) init()
+  if (process.client) {
+    prefetchBuffer()
+    init()
+  }
 })
 
 onUnmounted(() => {

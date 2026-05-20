@@ -50,7 +50,7 @@ export const useNotifications = () => {
     eventSource.onmessage = async (event) => {
       if (!event.data || event.data.startsWith(':')) return // ignore heartbeat comments
       // Invalidate cache — Pinia Colada refetches automatically
-      // Sound + toast are handled by MobileOrderToast.vue via its length watcher
+      // Toast + chime are handled by MobileOrderToast.vue via its length watcher
       await _queryCache?.invalidateQueries({ key: ['notifications'] })
     }
 

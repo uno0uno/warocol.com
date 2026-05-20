@@ -36,7 +36,7 @@
 
         <!-- Notificaciones -->
         <button
-          @click="showNotificationsModal = true"
+          @click="openNotificationsModal"
           aria-label="Ver notificaciones"
           class="relative w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-titan-100"
         >
@@ -123,6 +123,19 @@
 
     <!-- Notifications Modal -->
     <UiBottomSheetModal v-model="showNotificationsModal" title="Notificaciones" max-height="lg">
+      <div class="flex items-center justify-between px-4 py-2 border-b border-titan-100">
+        <span class="text-xs text-titan-600">Sonido de alertas</span>
+        <button
+          type="button"
+          @click="handleToggleDespachoSound"
+          :aria-label="despachoSoundEnabled ? 'Silenciar alertas sonoras' : 'Activar alertas sonoras'"
+          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-titan-100 transition-colors"
+          :class="despachoSoundEnabled ? 'text-ebony-800' : 'text-titan-400'"
+        >
+          <SpeakerWaveIcon v-if="despachoSoundEnabled" class="w-4 h-4" aria-hidden="true" />
+          <SpeakerXMarkIcon v-else class="w-4 h-4" aria-hidden="true" />
+        </button>
+      </div>
       <!-- Empty state -->
       <div v-if="notifications.length === 0" class="flex flex-col items-center justify-center py-10 px-4 gap-2">
         <BellIcon class="w-8 h-8 text-muted-foreground/40" aria-hidden="true" />
@@ -132,9 +145,7 @@
       <ul v-else class="divide-y divide-titan-100">
         <li v-for="notification in notifications" :key="notification.id">
           <NuxtLink
-            :to="notification.payload?.order_id
-              ? `/despacho/domicilios/${notification.payload.order_id}`
-              : '/despacho/domicilios'"
+            :to="notificationDespachoPath(notification)"
             @click="handleMarkAsRead(notification.id); showNotificationsModal = false"
             class="flex items-start gap-3 px-4 py-3 hover:bg-titan-50 transition-colors"
             :class="!notification.read_at ? 'bg-crocus-50/40' : ''"
@@ -144,7 +155,7 @@
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-ebony-800 leading-snug">
-                Nuevo pedido #{{ notification.payload?.order_number ?? '—' }}
+                {{ notificationDespachoTitle(notification) }}
               </p>
               <p class="text-xs text-titan-500 mt-0.5">{{ formatRelativeTime(notification.created_at) }}</p>
             </div>
@@ -217,6 +228,8 @@ import {
   Bars3Icon,
   BellAlertIcon,
   BellIcon,
+  SpeakerWaveIcon,
+  SpeakerXMarkIcon,
   BuildingStorefrontIcon,
   ChartBarIcon,
   CheckCircleIcon,
@@ -236,6 +249,8 @@ import {
 import { computed, ref } from 'vue'
 import type { FunctionalComponent } from 'vue'
 import { useLayoutActions } from '../composables/useLayoutActions'
+import { notificationDespachoPath, notificationDespachoTitle } from '~/composables/useNotificationDespachoLink'
+import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
 import type { Module } from '~/stores/access'
 
 type ActivePage =
@@ -309,9 +324,24 @@ const showNotificationsModal = ref(false)
 
 // Notifications
 const { notifications, markAsRead } = useNotifications()
+const {
+  enabled: despachoSoundEnabled,
+  toggleEnabled: toggleDespachoSound,
+  unlockFromGesture: unlockDespachoSound,
+} = useDespachoNotificationAudio()
 
 const handleMarkAsRead = async (id: string) => {
   await markAsRead(id)
+}
+
+const openNotificationsModal = () => {
+  unlockDespachoSound()
+  showNotificationsModal.value = true
+}
+
+const handleToggleDespachoSound = () => {
+  unlockDespachoSound()
+  toggleDespachoSound()
 }
 
 const formatRelativeTime = (dateStr: string): string => {

@@ -128,6 +128,8 @@ Tras aceptar verás un mensaje de confirmación (incluye número de comanda si a
 
 ### Notificaciones
 
+Cuando llega un pedido nuevo (domicilio o QR en mesa), la campana muestra el aviso y suena un **tono corto** (mismo estilo que cocina). Puedes silenciarlo con el icono de volumen en el panel de notificaciones (campana en escritorio o modal en móvil).
+
 Cuando llega un pedido QR nuevo, la campana muestra **Pedido QR — {nombre de mesa}**.
 
 | Al tocar la notificación | Destino |

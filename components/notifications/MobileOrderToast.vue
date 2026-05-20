@@ -105,6 +105,7 @@ import { ref, watch, onMounted } from 'vue'
 import { ShoppingBagIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useNotifications, type Notification } from '~/composables/useNotifications'
 import { notificationDespachoPath, notificationDespachoTitle } from '~/composables/useNotificationDespachoLink'
+import { useDespachoNotificationAudio } from '~/composables/useDespachoNotificationAudio'
 
 interface MobileToast {
   id: number
@@ -116,6 +117,7 @@ const MAX_TOASTS = 3
 const DISMISS_AFTER_MS = 8000
 
 const { notifications, isTenantResetting } = useNotifications()
+const { playChime, prefetchBuffer } = useDespachoNotificationAudio()
 const toasts = ref<MobileToast[]>([])
 let toastIdCounter = 0
 let baselineCount = 0
@@ -142,6 +144,7 @@ const addToast = (notification: Notification) => {
 }
 
 onMounted(() => {
+  prefetchBuffer()
   // Set baseline so we don't toast notifications that already existed on load
   baselineCount = notifications.value.length
 
@@ -150,7 +153,8 @@ onMounted(() => {
     (newLen, oldLen) => {
       if (isTenantResetting.value) return // skip post-reset repopulation — not genuine new arrivals
       if (newLen > oldLen) {
-        // One or more new notifications arrived — toast the newest ones
+        // One chime per arrival burst (not per toast in the loop)
+        playChime()
         const newNotifications = notifications.value.slice(0, newLen - oldLen)
         for (const n of newNotifications) {
           addToast(n)
