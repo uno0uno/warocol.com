@@ -40,6 +40,8 @@ export default defineNuxtConfig({
     '/mis-pedidos/**': { ssr: false },
     '/proveedor/**': { ssr: false },
     '/docs/**': { ssr: false },
+    // Mesa QR — client-only (matrix loader + Pinia Colada, no SSR fetch)
+    '/**/mesa/**': { ssr: false },
   },
   experimental: {
     payloadExtraction: false

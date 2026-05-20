@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import CheckoutWizard from '~/components/online/CheckoutWizard.vue'
 import CartSummary from '~/components/online/CartSummary.vue'
-import type { PosPaymentGroup } from '~/utils/paymentDefaults'
-import { useTableQrCartStore } from '~/stores/table_qr_cart'
+import { useTableQrCheckout } from '~/composables/useTableQrCheckout'
 
 definePageMeta({
   layout: 'public-restaurant',
+  ssr: false,
 })
 
-const route = useRoute()
-const router = useRouter()
-const tenantSlug = computed(() => String(route.params.tenant ?? ''))
-const token = computed(() => String(route.params.token ?? ''))
-
-const cartStore = useTableQrCartStore()
+const {
+  tenantSlug,
+  token,
+  cartStore,
+  paymentGroups,
+  paymentSelection,
+  isInitialLoading,
+} = useTableQrCheckout()
 
 const steps = [
   { title: 'Tu pedido', short: 'Pedido' },
@@ -27,32 +29,10 @@ const customerNotes = ref('')
 const submitted = ref(false)
 const successMessage = ref('')
 const successTableName = ref('')
-
-const paymentGroups = ref<PosPaymentGroup[]>([])
-const paymentSelection = ref<{ slug: string; id: string | null }>({ slug: '', id: null })
 const paymentError = ref('')
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(price)
-
-onMounted(async () => {
-  if (cartStore.isEmpty) {
-    router.replace(`/${tenantSlug.value}/mesa/${token.value}`)
-    return
-  }
-  if (token.value) cartStore.setToken(token.value)
-
-  try {
-    const res = await $fetch<{ success: boolean; data: PosPaymentGroup[] }>(
-      `/api/public/table-qr/${token.value}/payment-methods`,
-    )
-    paymentGroups.value = res?.data ?? []
-    const first = paymentGroups.value.find(g => !g.triggersCartera)
-    if (first) paymentSelection.value = { slug: first.slug, id: null }
-  } catch {
-    paymentGroups.value = []
-  }
-})
 
 const canContinue = computed(() => {
   if (currentStep.value === 0) return !cartStore.isEmpty
@@ -111,7 +91,11 @@ const handleSubmit = async () => {
 
 <template>
   <div class="py-8 px-4 max-w-2xl mx-auto">
-    <div v-if="submitted" class="bg-card border border-border rounded-xl p-8 text-center shadow-sm">
+    <div v-if="isInitialLoading" class="min-h-[50vh] flex items-center justify-center">
+      <CommonsTheCustomLoader size="large" />
+    </div>
+
+    <div v-else-if="submitted" class="bg-card border border-border rounded-xl p-8 text-center shadow-sm">
       <div class="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center mx-auto mb-4">
         <svg class="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -121,7 +105,7 @@ const handleSubmit = async () => {
       <p class="text-muted-foreground mb-1">{{ successMessage }}</p>
       <p v-if="successTableName" class="text-sm text-muted-foreground mb-6">Mesa {{ successTableName }}</p>
       <NuxtLink
-        :to="`/${tenantSlug}/mesa/${token}`"
+        :to="`/${tenantSlug}/mesa/${token}/`"
         class="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold"
       >
         Volver al menú
@@ -140,7 +124,7 @@ const handleSubmit = async () => {
     >
       <template #back-action>
         <NuxtLink
-          :to="`/${tenantSlug}/mesa/${token}`"
+          :to="`/${tenantSlug}/mesa/${token}/`"
           class="btn-secondary px-4 py-3 rounded-lg text-sm inline-flex items-center gap-1"
         >
           ← Menú
@@ -192,7 +176,7 @@ const handleSubmit = async () => {
               exclude-cartera
               :disabled="isSubmitting"
             />
-            <p v-else class="text-sm text-muted-foreground">Cargando métodos de pago…</p>
+            <p v-else class="text-sm text-muted-foreground">No hay métodos de pago disponibles.</p>
             <p v-if="paymentError" class="mt-2 text-xs text-destructive">{{ paymentError }}</p>
           </div>
 
