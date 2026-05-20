@@ -5,6 +5,13 @@ import { $fetch } from 'ofetch'
 import type { CachedProduct, TabItem } from '~/stores/usePOSStore'
 import { usePOSStore } from '~/stores/usePOSStore'
 import { registerTableSessionRefresh } from '~/composables/useTableSessionSync'
+import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
+import {
+  mapComandasForPrint,
+  orderItemIdsFromComandas,
+  parseFireTableResponse,
+  printComandaTickets,
+} from '~/composables/useComandaPrint'
 
 definePageMeta({
   layout: 'dashboard',
@@ -236,6 +243,52 @@ const isFiringToKitchen = ref(false)
 const tabError = ref<string | null>(null)
 const tabSuccess = ref<string | null>(null)
 
+// #753 — kitchen ticket print after fire
+const lastFiredComandasRaw = ref<unknown[]>([])
+const comandasForPrint = ref<ComandaPrintPayload[]>([])
+const selectedTabItemIds = ref<string[]>([])
+const posBusinessName = computed(
+  () => settingsData.value?.data?.business_name
+    ?? settingsData.value?.data?.display_name
+    ?? 'WARO',
+)
+const canPrintComandas = computed(() => comandasForPrint.value.length > 0)
+
+function toggleTabItemSelection(orderItemId: string) {
+  const idx = selectedTabItemIds.value.indexOf(orderItemId)
+  if (idx >= 0) {
+    selectedTabItemIds.value = selectedTabItemIds.value.filter(id => id !== orderItemId)
+  } else {
+    selectedTabItemIds.value = [...selectedTabItemIds.value, orderItemId]
+  }
+}
+
+function applyFireResult(rawComandas: unknown[], firedCount: number) {
+  if (rawComandas.length > 0) {
+    lastFiredComandasRaw.value = rawComandas
+    comandasForPrint.value = mapComandasForPrint(rawComandas)
+  }
+  const firedIds = orderItemIdsFromComandas(rawComandas)
+  if (firedCount > 0 && posStore.activeTableSession) {
+    posStore.setTabItems(
+      storeTabItems.value.map((item: TabItem) => {
+        const shouldMarkSent = firedIds.size > 0
+          ? firedIds.has(item.orderItemId)
+          : item.fulfillmentStatus === 'new'
+        return shouldMarkSent
+          ? { ...item, fulfillmentStatus: 'sent' as const, sentAt: new Date().toISOString() }
+          : item
+      }),
+    )
+    selectedTabItemIds.value = []
+  }
+}
+
+function handlePrintComandas() {
+  if (!canPrintComandas.value) return
+  printComandaTickets()
+}
+
 // Issue warocol.com#708 — invalidate in-flight GET /current responses after tab mutations.
 let tableSessionFetchGen = 0
 const bumpTableSessionFetchGen = () => {
@@ -446,12 +499,13 @@ const addToTab = async () => {
     // Auto-fire to kitchen if comandas is enabled
     if (comandasEnabled.value) {
       try {
-        const result = await $fetch<{ fired_items_count: number; comandas: any[] }>(
-          `/api/tables/${posStore.activeTableSession.tableId}/fire`,
-          { method: 'POST' }
-        )
-        if (result.fired_items_count > 0) {
-          tabSuccess.value = `${result.fired_items_count} ${result.fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
+        const raw = await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/fire`, {
+          method: 'POST',
+        })
+        const { comandas, fired_items_count } = parseFireTableResponse(raw as any)
+        applyFireResult(comandas, fired_items_count)
+        if (fired_items_count > 0) {
+          tabSuccess.value = `${fired_items_count} ${fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
           setTimeout(() => { tabSuccess.value = null }, 3000)
         }
       } catch {
@@ -483,23 +537,20 @@ const fireToKitchen = async () => {
   tabError.value = null
   tabSuccess.value = null
   try {
-    const result = await $fetch<{ fired_items_count: number; comandas: any[] }>(
-      `/api/tables/${posStore.activeTableSession.tableId}/fire`,
-      { method: 'POST' }
-    )
-    if (result.fired_items_count > 0) {
-      // Optimistically update local store: new → sent
-      posStore.setTabItems(
-        storeTabItems.value.map((item: TabItem) =>
-          item.fulfillmentStatus === 'new'
-            ? { ...item, fulfillmentStatus: 'sent', sentAt: new Date().toISOString() }
-            : item
-        )
-      )
-      tabSuccess.value = `${result.fired_items_count} ${result.fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
+    const itemIds = selectedTabItemIds.value.length > 0 ? selectedTabItemIds.value : undefined
+    const raw = await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/fire`, {
+      method: 'POST',
+      body: itemIds ? { item_ids: itemIds } : undefined,
+    })
+    const { comandas, fired_items_count } = parseFireTableResponse(raw as any)
+    if (fired_items_count > 0) {
+      applyFireResult(comandas, fired_items_count)
+      tabSuccess.value = `${fired_items_count} ${fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
       setTimeout(() => { tabSuccess.value = null }, 3000)
     } else {
-      tabError.value = 'No hay ítems con estación configurada'
+      tabError.value = itemIds?.length
+        ? 'Los ítems seleccionados no tienen estación de cocina'
+        : 'No hay ítems con estación configurada'
       setTimeout(() => { tabError.value = null }, 3000)
     }
   } catch (e: any) {
@@ -1168,6 +1219,8 @@ onUnmounted(() => {
         :comandas-enabled="comandasEnabled"
         :unfired-count="unfiredCount"
         :is-firing-to-kitchen="isFiringToKitchen"
+        :can-print-comandas="canPrintComandas"
+        :selected-tab-item-ids="selectedTabItemIds"
         :pending-remove-item-id="pendingRemoveItemId"
         :show-served-by-chip="showServedByChip"
         :served-by-member-id="posStore.cartServedByMemberId"
@@ -1185,6 +1238,8 @@ onUnmounted(() => {
         @increment-tab-item="incrementTabItem"
         @decrement-tab-item="decrementTabItem"
         @fire-to-kitchen="fireToKitchen"
+        @print-comandas="handlePrintComandas"
+        @toggle-tab-selection="toggleTabItemSelection"
         @update:served-by="(id) => posStore.setCartServedBy(id)"
       />
       </div>
@@ -1346,6 +1401,12 @@ onUnmounted(() => {
     :table-session-id="posStore.activeTableSession?.tableId ?? null"
     :table-display-name="posStore.activeTableSession?.tableName ?? null"
     @success="refreshReadyComandasCount"
+  />
+
+  <PosComandaPrintTickets
+    v-if="comandasEnabled"
+    :comandas="comandasForPrint"
+    :business-name="posBusinessName"
   />
 
 </template>
