@@ -91,24 +91,51 @@ Cola de pedidos que los comensales envían desde el menú QR de cada mesa. Solo 
 
 Configuración del QR y enlaces por mesa: ver [Mesas](../operaciones/mesas#pedido-por-qr-en-mesa).
 
-### Vista general
+### Lista de pedidos pendientes
 
-- Los pedidos se agrupan **por mesa** en el panel izquierdo.
-- Al seleccionar una mesa ves cada solicitud pendiente con ítems, notas y método de pago elegido por el cliente.
-- Por defecto **todos los pedidos de la mesa vienen seleccionados** (puedes desmarcar los que no quieras incluir).
+La vista funciona como **Domicilios**: una tabla con **una fila por pedido pendiente** (no por mesa). Puedes ordenar por las columnas.
+
+| Columna | Contenido |
+|---------|-----------|
+| Mesa | Nombre de la mesa |
+| Fecha | Cuándo envió el pedido el cliente |
+| Items | Cantidad de líneas del pedido |
+| Pago | Método de pago elegido por el cliente |
+| Total | Suma del pedido |
+
+Haz clic en una fila para abrir el **detalle** del pedido.
+
+Si abres el listado con un filtro de mesa en la URL (`?table=…`), verás solo los pedidos de esa mesa y un enlace **Ver todos** para quitar el filtro.
+
+### Detalle del pedido
+
+Al abrir un pedido verás:
+
+- **Mesa**, **fecha**, **método de pago** y **total**
+- **Ítems** — producto, cantidad, modificadores y notas por línea
+- **Notas del cliente** — si el comensal dejó un comentario al enviar
+
+Desde aquí confirmas o descartas el pedido (no hay barra de acciones en el listado).
 
 ### Aceptar o rechazar
 
 | Acción | Efecto |
 |--------|--------|
-| **Aceptar** | Los ítems seleccionados se agregan al tab de esa mesa en el **POS**. Si hay comandas activas, se envían a cocina automáticamente. |
-| **Rechazar** | Descarta las solicitudes seleccionadas; no se agregan al POS. |
+| **Aceptar pedido** | Los ítems del pedido se agregan al tab de esa mesa en el **POS**. Si hay comandas activas, se envían a cocina automáticamente. |
+| **Rechazar** | Descarta el pedido; no se agregan al POS. |
 
-Tras aceptar verás un mensaje de confirmación (incluye número de comanda si aplica).
+Tras aceptar verás un mensaje de confirmación (incluye número de comanda si aplica) y volverás al listado. Si el pedido ya no está pendiente (otro usuario lo procesó), verás un aviso y podrás regresar al listado.
 
 ### Notificaciones
 
-Cuando llega un pedido QR nuevo, la campana de notificaciones muestra **Pedido QR — {nombre de mesa}**. Al tocarla entras a esta pestaña con la mesa ya filtrada.
+Cuando llega un pedido QR nuevo, la campana muestra **Pedido QR — {nombre de mesa}**.
+
+| Al tocar la notificación | Destino |
+|--------------------------|---------|
+| Pedido aún pendiente | Detalle del pedido (`/despacho/en-mesa/{id}`) |
+| Sin enlace al pedido concreto | Listado filtrado por esa mesa |
+
+También puedes entrar siempre desde **Despacho → Pedidos en mesa (QR)** y elegir la fila en la tabla.
 
 > **Diferencia con Domicilios:** los pedidos QR **no** usan el flujo Pendiente → Confirmado → Entregado de domicilios. Aquí solo existe la cola pendiente hasta que aceptas o rechazas.
 
@@ -168,4 +195,7 @@ Sí. Cuando se confirma un pedido de domicilio o se cobra una orden en mesa, el 
 Sí, tanto Domicilios como Comandas refrescan en tiempo real.
 
 **¿Dónde confirmo un pedido que mandó el cliente por QR?**
-En **Despacho → Pedidos en mesa (QR)**, no en Domicilios.
+En **Despacho → Pedidos en mesa (QR)**, no en Domicilios. Abre la fila del pedido y pulsa **Aceptar pedido** en el detalle.
+
+**¿Puedo aceptar varios pedidos de la misma mesa a la vez?**
+Cada pedido se confirma **uno por uno** desde su detalle. Si el cliente envió varias solicitudes, verás varias filas en el listado.

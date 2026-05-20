@@ -115,9 +115,9 @@ En escritorio también verás una columna **QR** en la tabla de mesas con acceso
 
 ### Qué hace el personal después
 
-Los pedidos pendientes aparecen en **Despacho → Pedidos en mesa (QR)**. Al **Aceptar**, los ítems se agregan al tab de esa mesa en el **POS** y, si tienes comandas activas, se envían a cocina. Ver [Despacho](../despacho#pedidos-en-mesa-qr).
+Los pedidos pendientes aparecen en **Despacho → Pedidos en mesa (QR)** como una lista (una fila por pedido). Haz clic en el pedido para ver el detalle y pulsa **Aceptar pedido** o **Rechazar**. Al aceptar, los ítems se agregan al tab de esa mesa en el **POS** y, si tienes comandas activas, se envían a cocina. Ver [Despacho](../despacho#pedidos-en-mesa-qr).
 
-También puedes recibir una notificación en la campana; al tocarla irás directo a la cola de esa mesa.
+La campana de notificaciones abre el **detalle** del pedido cuando está disponible; en caso contrario, el listado filtrado por esa mesa.
 
 ---
 
