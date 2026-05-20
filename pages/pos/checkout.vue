@@ -410,9 +410,14 @@ watch(
 
 // Split payment state
 const splitMode = ref(false)
-// warocol.com#735 — propina solo tras elegir mesero (o mesero ya en carrito / sesión mesa)
+// warocol.com#735 + #737 — propina tras mesero; editable until first partial is posted
 const showCheckoutTipSelector = computed(
-  () => tipEnabled.value && !splitMode.value && !!posStore.cartServedByMemberId,
+  () => tipEnabled.value && !!posStore.cartServedByMemberId && splitPayments.value.length === 0,
+)
+const splitTipBody = computed(() =>
+  tipAmount.value > 0
+    ? { tip_amount: tipAmount.value, tip_source: tipSource.value }
+    : {},
 )
 const splitPayments = ref<Array<{ id: string; amount: number; payment_method: string; payment_method_name: string }>>([])
 const splitPaidTotal = ref(0)
@@ -422,7 +427,8 @@ const isVoidingPayment = ref<string | null>(null)
 const voidPaymentTarget = ref<{ id: string; amount: number; payment_method: string; payment_method_name: string } | null>(null)
 const voidPaymentReason = ref('')
 const voidPaymentError = ref('')
-const splitRemaining = computed(() => Math.max(0, discountedTotal.value - splitPaidTotal.value))
+const splitAmountDue = computed(() => discountedTotal.value + tipAmount.value)
+const splitRemaining = computed(() => Math.max(0, splitAmountDue.value - splitPaidTotal.value))
 const splitIsComplete = computed(() => splitRemaining.value <= 0.01)
 
 const onSplitAmountInput = (e: Event) => {
@@ -508,10 +514,11 @@ const addSplitPayment = async () => {
               ? { split_first_cash_received: Number(cashReceivedInput.value) }
               : {}),
             ...checkoutServedByBody.value,
+            ...splitTipBody.value,
           }
         }) as any
         paidTotal = response.data.paid_total ?? amountToCharge
-        remaining = response.data.remaining ?? (discountedTotal.value - amountToCharge)
+        remaining = response.data.remaining ?? (splitAmountDue.value - amountToCharge)
         isComplete = response.data.is_complete ?? false
         // Issue warocol.com#649 — real UUID from backend so the trash button can DELETE it.
         paymentId = response.data.payment_id
@@ -554,10 +561,11 @@ const addSplitPayment = async () => {
               ? { split_first_cash_received: Number(cashReceivedInput.value) }
               : {}),
             ...checkoutServedByBody.value,
+            ...splitTipBody.value,
           }
         }) as any
         paidTotal = response.data.paid_total ?? amountToCharge
-        remaining = response.data.remaining ?? (discountedTotal.value - amountToCharge)
+        remaining = response.data.remaining ?? (splitAmountDue.value - amountToCharge)
         isComplete = response.data.is_complete ?? false
         // Issue warocol.com#649 — backend always returns a real UUID; no fallback.
         paymentId = response.data.payment_id
@@ -609,7 +617,13 @@ const addSplitPayment = async () => {
         payment_method: selectedPaymentMethod.value,
         ...(discountEnabled.value && discountAmount.value > 0
           ? { discount_amount: discountAmount.value, subtotal: cartTotal.value }
-          : {})
+          : {}),
+        ...(tipAmount.value > 0
+          ? {
+              tip_amount: tipAmount.value,
+              charged_amount: splitAmountDue.value,
+            }
+          : {}),
       }
       cartItemsSnapshot.value = [...cartItems.value]
       receiptEmail.value = ''
@@ -2270,6 +2284,25 @@ onUnmounted(() => {
                     </svg>
                   </button>
                 </div>
+              </div>
+            </div>
+
+            <!-- warocol.com#737 — settlement total includes tip when selected -->
+            <div
+              v-if="tipAmount > 0"
+              class="rounded-lg border border-border bg-surface-secondary/60 px-3 py-2.5 space-y-1.5 text-sm"
+            >
+              <div class="flex items-center justify-between text-text-secondary">
+                <span>Total orden</span>
+                <span class="tabular-nums font-medium text-text-primary">{{ formatCurrency(discountedTotal) }}</span>
+              </div>
+              <div class="flex items-center justify-between text-text-secondary">
+                <span>Propina</span>
+                <span class="tabular-nums font-medium text-text-primary">{{ formatCurrency(tipAmount) }}</span>
+              </div>
+              <div class="flex items-center justify-between border-t border-border pt-1.5 font-semibold text-text-primary">
+                <span>Total a cobrar</span>
+                <span class="tabular-nums">{{ formatCurrency(splitAmountDue) }}</span>
               </div>
             </div>
 
