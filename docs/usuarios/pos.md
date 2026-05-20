@@ -80,9 +80,7 @@ Si el administrador activó las propinas en **Operaciones → Propinas**, primer
 - La propina **no entra dentro de la base de impuestos**: se cobra encima del total.
 - En el POS **nunca** se pre-selecciona un porcentaje automáticamente (la opción de pre-selección en Operaciones aplica solo a pedidos online).
 
-> **Importante:** no se puede combinar propina con cobro parcial. Si activas el modo "cobro parcial", el selector de propina desaparece.
-
-En mesas, la propina se envía al cerrar la sesión de la mesa.
+En mesas, la propina se envía al cerrar la sesión de la mesa (o con el primer cobro parcial si usas split).
 
 ---
 
@@ -144,13 +142,20 @@ Dentro de una sesión de mesa, usa el botón **Cambiar mesa** en el carrito para
 - Si hubo propina, queda asociada a la orden y al mesero asignado
 - Aparece en el dashboard de analítica
 
-El modal de éxito muestra el desglose final: subtotal, descuento, **propina** (si aplica) y **Total cobrado** como línea destacada cuando hubo propina.
+El modal de éxito, la **tirilla impresa** y el **correo de recibo** muestran el mismo desglose: subtotal, descuento, **propina** (si aplica) y **Total cobrado** cuando hubo propina. La factura electrónica DIAN sigue reflejando solo el total de la orden (sin propina) hasta que se implemente #740.
 
 ---
 
 ## Recibos y comprobantes
 
 Cuando confirmas el pago aparece una pantalla de éxito con dos opciones para entregar el comprobante al cliente.
+
+### Imprimir prefactura (pre-cuenta)
+
+Antes de cobrar, usa **Imprimir prefactura** para que el cliente revise el consumo. No es factura electrónica (lleva el aviso *ESTA NO ES UNA FACTURA*).
+
+- Si hay **propina** seleccionada: muestra **Total orden**, **Propina** y **TOTAL A COBRAR** (orden + propina).
+- Si hay **cobro parcial** en curso: lista los pagos registrados y el **saldo pendiente** (incluye propina cuando aplica).
 
 ### Enviar recibo por correo
 
@@ -161,7 +166,8 @@ Haz clic en **Enviar** para que el sistema despache el recibo al instante. El re
 - Nombre del restaurante y datos de contacto
 - Número de orden
 - Productos comprados con cantidades y precios
-- Total y método de pago
+- Total de la orden, **propina** (si aplica) y **total cobrado**
+- Método de pago (o desglose de pagos si fue cobro parcial)
 
 El botón cambia a **Enviado** cuando el correo fue despachado correctamente.
 
@@ -195,4 +201,4 @@ Sí, si el administrador las activó en **Operaciones → Propinas**. Allí tamb
 Sí, con el ícono de papelera junto al pago. Puedes escribir un motivo opcional. Si el pago fue en efectivo, recuerda devolverlo físicamente al cliente.
 
 **¿Puedo combinar propina y cobro parcial?**
-No. Hay que elegir uno de los dos modos en cada venta.
+Sí. Elige mesero y propina primero; el saldo del cobro parcial incluye orden + propina. La propina queda fijada al registrar el primer pago parcial.

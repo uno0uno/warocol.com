@@ -1046,8 +1046,7 @@ watch(selectedPaymentMethod, () => {
 const isCashMethod = computed(() => selectedGroup.value?.slug === 'cash')
 const cashReceivedInput = ref<number>(0)
 
-// warocol.com#639 — single-payment cash flow must cover total + tip (split mode
-// disallows tips, enforced by the backend in api-warolabs#245).
+// warocol.com#639 — single-payment cash flow must cover total + tip (#737: split too).
 const cashAmountToCharge = computed(() =>
   splitMode.value ? splitAmountToCharge.value : finalChargedAmount.value
 )
@@ -1376,6 +1375,7 @@ const sendReceiptEmail = async () => {
         invoice_prefix: invoiceResult.value?.prefix ?? null,
         invoice_number: invoiceResult.value?.invoice_number ?? null,
         invoice_cufe: invoiceResult.value?.cufe ?? null,
+        tip_amount: orderResult.value.tip_amount ?? 0,
       }
     })
     emailSent.value = true
@@ -3196,10 +3196,41 @@ onUnmounted(() => {
       <span>Impuesto licores</span>
       <span>{{ formatCurrency(taxPreview.liquor_tax) }}</span>
     </div>
-    <div class="receipt-total">
+    <!-- warocol.com#739 — pre-bill totals include tip and split settlement when applicable -->
+    <template v-if="tipAmount > 0">
+      <div class="receipt-item">
+        <span>Total orden</span>
+        <span>{{ formatCurrency(discountedTotal) }}</span>
+      </div>
+      <div class="receipt-item">
+        <span>Propina</span>
+        <span>{{ formatCurrency(tipAmount) }}</span>
+      </div>
+      <div class="receipt-total">
+        <span>TOTAL A COBRAR</span>
+        <span>{{ formatCurrency(splitAmountDue) }}</span>
+      </div>
+    </template>
+    <div v-else class="receipt-total">
       <span>TOTAL</span>
       <span>{{ formatCurrency(discountedTotal) }}</span>
     </div>
+    <template v-if="splitPayments.length > 0">
+      <div class="receipt-divider">--------------------------------</div>
+      <div class="receipt-row receipt-small" style="font-weight:bold;">Pagos registrados</div>
+      <div
+        v-for="(p, idx) in splitPayments"
+        :key="p.id"
+        class="receipt-item receipt-small"
+      >
+        <span>#{{ idx + 1 }} · {{ p.payment_method_name }}</span>
+        <span>{{ formatCurrency(p.amount) }}</span>
+      </div>
+      <div class="receipt-item">
+        <span>{{ splitIsComplete ? 'Cobro completo' : 'Saldo pendiente' }}</span>
+        <span>{{ formatCurrency(splitRemaining) }}</span>
+      </div>
+    </template>
 
     <div v-if="isMesaMode && cartItems.some(i => i.fired === false)" class="receipt-row receipt-small" style="margin-top:6px;">
       * pendiente de enviar a cocina
@@ -3239,11 +3270,38 @@ onUnmounted(() => {
       <span>Descuento</span>
       <span>-{{ formatCurrency(orderResult.discount_amount) }}</span>
     </div>
-    <div class="receipt-total">
+    <!-- warocol.com#739 — printed receipt mirrors success modal + split payments -->
+    <template v-if="orderResult?.tip_amount && orderResult.tip_amount > 0">
+      <div class="receipt-item">
+        <span>Total orden</span>
+        <span>{{ formatCurrency(orderResult?.total_amount ?? 0) }}</span>
+      </div>
+      <div class="receipt-item">
+        <span>Propina</span>
+        <span>{{ formatCurrency(orderResult.tip_amount) }}</span>
+      </div>
+      <div class="receipt-total">
+        <span>TOTAL COBRADO</span>
+        <span>{{ formatCurrency(orderResult.charged_amount ?? (orderResult.total_amount + orderResult.tip_amount)) }}</span>
+      </div>
+    </template>
+    <div v-else class="receipt-total">
       <span>TOTAL</span>
       <span>{{ formatCurrency(orderResult?.total_amount ?? 0) }}</span>
     </div>
-    <div class="receipt-row">{{ getPaymentMethodLabel(orderResult?.payment_method ?? '') }}</div>
+    <template v-if="splitPayments.length > 0">
+      <div class="receipt-divider">--------------------------------</div>
+      <div class="receipt-row receipt-small" style="font-weight:bold;">Pagos</div>
+      <div
+        v-for="(p, idx) in splitPayments"
+        :key="p.id"
+        class="receipt-item receipt-small"
+      >
+        <span>#{{ idx + 1 }} · {{ p.payment_method_name }}</span>
+        <span>{{ formatCurrency(p.amount) }}</span>
+      </div>
+    </template>
+    <div v-else class="receipt-row">{{ getPaymentMethodLabel(orderResult?.payment_method ?? '') }}</div>
     <div class="receipt-divider">================================</div>
     <div class="receipt-footer">¡Gracias por tu compra!</div>
     <!-- DIAN invoice section on printed receipt -->
