@@ -57,3 +57,13 @@ export function formatCostCell(
   if (value === null || value === undefined) return '—'
   return formatCurrency(Number(value))
 }
+
+/** Composable wrapper for auto-import in pages and components. */
+export function useProductMargins() {
+  return {
+    marginRealPct,
+    marginOperativoPct,
+    hasCostDrift,
+    formatCostCell,
+  }
+}
