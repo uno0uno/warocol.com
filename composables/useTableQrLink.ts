@@ -1,32 +1,29 @@
 import QRCode from 'qrcode'
+import { usePublicSiteUrl, usePublicStorefrontSlug } from '~/composables/usePublicSiteUrl'
 
 /**
  * Table QR public link helpers (warocol.com#711).
  * Token must come from the API — never derived in the browser.
- * URLs use the public storefront slug (tenant_public_profiles), not internal tenant.slug.
+ *
+ * Slug: tenant_public_profiles.slug via usePublicStorefrontSlug (same as /negocio).
+ * Base URL: NUXT_PUBLIC_SITE_URL in prod; on localhost falls back to window.origin for testing.
  */
 export function useTableQrLink() {
-  const config = useRuntimeConfig()
-  const { currentTenant } = useTenantReactive()
+  const { siteUrl } = usePublicSiteUrl()
+  const { publicSlug } = usePublicStorefrontSlug()
   const toast = useToast()
 
-  const { data: opsContext } = useQuery({
-    key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
-    query: () =>
-      $fetch<{ success: boolean; data: { slug?: string } }>('/api/operaciones/restaurant-context'),
-    enabled: () => !!currentTenant.value?.id,
-    staleTime: 60_000,
+  const linkBase = computed(() => {
+    if (typeof window !== 'undefined' && window.location?.origin) {
+      return window.location.origin.replace(/\/$/, '')
+    }
+    return siteUrl.value
   })
 
-  const storefrontSlug = computed(
-    () => opsContext.value?.data?.slug || currentTenant.value?.slug || null,
-  )
-
   const buildTableQrUrl = (token: string | null | undefined): string | null => {
-    const slug = storefrontSlug.value
+    const slug = publicSlug.value
     if (!token || !slug) return null
-    const base = String(config.public.siteUrl || 'https://warocol.com').replace(/\/$/, '')
-    return `${base}/${slug}/mesa/${token}`
+    return `${linkBase.value}/${slug}/mesa/${token}`
   }
 
   const copyTableQrLink = async (token: string | null | undefined) => {
@@ -76,5 +73,5 @@ export function useTableQrLink() {
     }
   }
 
-  return { buildTableQrUrl, copyTableQrLink, downloadTableQrPng, storefrontSlug }
+  return { buildTableQrUrl, copyTableQrLink, downloadTableQrPng, publicSlug, linkBase }
 }
