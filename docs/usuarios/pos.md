@@ -90,14 +90,15 @@ En mesas, la propina se envía al cerrar la sesión de la mesa.
 
 Cuando un cliente quiere pagar con varios métodos (ej: parte en efectivo y parte con tarjeta):
 
-1. Activa el toggle **Cobro parcial** en el checkout.
-2. Selecciona el método y escribe el monto del primer pago. Confirma.
-3. Repite para cada pago adicional hasta cubrir el total.
-4. Si te equivocaste en un pago ya registrado, toca el ícono de **papelera** para eliminarlo. Puedes opcionalmente escribir un motivo. Si el pago fue en efectivo, el sistema te advierte que debes devolverlo físicamente al cliente.
+1. Asigna el **mesero** y, si aplica, la **propina** (antes o después de activar cobro parcial).
+2. Activa el toggle **Cobro parcial** en el checkout.
+3. Selecciona el método y escribe el monto del primer pago. Confirma.
+4. Repite para cada pago adicional hasta cubrir **total de la orden + propina** (si hubo propina).
+5. Si te equivocaste en un pago ya registrado, toca el ícono de **papelera** para eliminarlo. Puedes opcionalmente escribir un motivo. Si el pago fue en efectivo, el sistema te advierte que debes devolverlo físicamente al cliente.
 
 Para pagos en efectivo, los presets de billetes (**$10K · $20K · $50K**) se suman acumulativamente al monto recibido, facilitando calcular el vuelto.
 
-> **Importante:** no se puede combinar cobro parcial con propinas. Si activas split, el selector de propina desaparece.
+La propina se calcula sobre el subtotal de la orden; el **saldo pendiente** del cobro parcial incluye orden + propina. Puedes cobrar la propina en cualquier pago parcial (no tiene que ir en el último).
 
 ---
 
