@@ -42,7 +42,7 @@ function formatModifiers(item: ComandaPrintPayload['items'][0]): string {
           ↳ {{ formatModifiers(item) }}
         </div>
         <div v-if="item.notes" class="receipt-row receipt-small" style="padding-left: 8px;">
-          Nota: {{ item.notes }}
+          Notas Especiales: {{ item.notes }}
         </div>
       </template>
       <div class="receipt-divider">--------------------------------</div>
