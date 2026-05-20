@@ -40,19 +40,23 @@ export type FireTableResponse = {
   fired_items_count?: number
 }
 
-/** API wraps fire payload in `data`; older paths may return flat fields. */
+/** API wraps fire payload in `data`; tab/add and /fire share the same fields. */
 export function parseFireTableResponse(raw: FireTableResponse): {
   comandas: unknown[]
   fired_items_count: number
 } {
+  const data = raw.data as Record<string, unknown> | undefined
+  const comandas = data?.comandas ?? raw.comandas
+  const fired = data?.fired_items_count ?? raw.fired_items_count
   return {
-    comandas: raw.data?.comandas ?? raw.comandas ?? [],
-    fired_items_count: raw.data?.fired_items_count ?? raw.fired_items_count ?? 0,
+    comandas: Array.isArray(comandas) ? comandas : [],
+    fired_items_count: typeof fired === 'number' ? fired : Number(fired ?? 0),
   }
 }
 
 export function mapComandasForPrint(rawComandas: unknown[]): ComandaPrintPayload[] {
-  return (rawComandas as Record<string, unknown>[]).map((c) => ({
+  return (rawComandas as Record<string, unknown>[])
+    .map((c) => ({
     id: c.id != null ? String(c.id) : undefined,
     comanda_number: (c.comanda_number as number | string) ?? '—',
     station_name: (c.station_name as string) ?? null,
@@ -65,6 +69,7 @@ export function mapComandasForPrint(rawComandas: unknown[]): ComandaPrintPayload
       notes: (i.notes as string) ?? null,
     })),
   }))
+    .filter(c => c.items.length > 0)
 }
 
 export function orderItemIdsFromComandas(rawComandas: unknown[]): Set<string> {
