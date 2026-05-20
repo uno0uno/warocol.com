@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
-import { es } from 'date-fns/locale'
-import { format as fnsFormat } from 'date-fns'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
@@ -27,8 +25,16 @@ const { resolveLabel } = usePaymentLabel(paymentGroups)
 const showExportModal = ref(false)
 const exportResult = ref<{ success: boolean; message: string; email?: string; count?: number } | null>(null)
 
-// State
-const localSearchTerm = ref('')
+// Filters — shared composables (AdvancedFiltersBar)
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
+const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
+
+const orderSearchFields = [
+  { label: 'Nº Orden', value: 'order_number' },
+  { label: 'Cliente', value: 'customer_name' },
+  { label: 'Teléfono', value: 'customer_phone' },
+]
+
 const apiSearchField = ref('order_number')
 const sortField = ref('order_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
@@ -41,50 +47,20 @@ const paymentMethodIdFilter = computed(() =>
   paymentFilter.value?.startsWith('m:') ? paymentFilter.value.slice(2) : null
 )
 const statusFilter = ref<string | null>('completed')
-const dateRangeDates = ref<Date[] | null>(null)
 const deliveryOnly = ref<boolean>(false)
 
-// Preset ranges for the date picker shortcuts
-const presetDates = ref([
-  { label: 'Hoy', value: [new Date(), new Date()] },
-  {
-    label: 'Ayer',
-    value: (() => {
-      const d = new Date(); d.setDate(d.getDate() - 1); return [d, d]
-    })()
-  },
-  { label: 'Última semana', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
-  { label: 'Últimos 15 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 15); return d })(), new Date()] },
-  { label: 'Último mes', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
-  { label: 'Últimos 90 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d })(), new Date()] },
-])
-
-// Format function for the date picker display
-const formatDateRange = (dates: Date[]) => {
-  if (!dates || !dates[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
-  if (!dates[1]) return from
-  const to = fnsFormat(dates[1], 'dd/MM/yy', { locale: es })
-  return `${from} - ${to}`
-}
-
-// Computed date range for API params (YYYY-MM-DD format)
-const dateRange = computed(() => {
-  if (!dateRangeDates.value || dateRangeDates.value.length < 2) return { from: null, to: null }
-  const [from, to] = dateRangeDates.value
-  if (!from || !to) return { from: null, to: null }
-  return {
-    from: fnsFormat(from, 'yyyy-MM-dd'),
-    to: fnsFormat(to, 'yyyy-MM-dd')
-  }
-})
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!dateRangeDates.value
+    || !!paymentFilter.value
+    || (statusFilter.value != null && statusFilter.value !== 'completed')
+    || deliveryOnly.value,
+)
 
 // Pagination state
 const PAGE_SIZE = 25
 const currentPage = ref(1)
-
-// Applied search — only updated on button click (prevents live-search key churn)
-const appliedSearch = ref('')
 
 // Metrics removed based on request
 
@@ -271,18 +247,14 @@ const ordersTableColumns = computed<Column[]>(() => [
 ])
 
 // Methods
-const performSearch = () => {
-  currentPage.value = 1
-  appliedSearch.value = localSearchTerm.value
-}
+const performSearch = () => applySearch(() => { currentPage.value = 1 })
 
 const clearFilters = () => {
-  localSearchTerm.value = ''
-  appliedSearch.value = ''
+  clearSearch()
+  clearDateRange()
   apiSearchField.value = 'order_number'
   paymentFilter.value = null
   statusFilter.value = 'completed'
-  dateRangeDates.value = null
   deliveryOnly.value = false
   sortField.value = 'order_date'
   sortDirection.value = 'desc'
@@ -299,7 +271,7 @@ const exportOrders = async () => {
     const response = await $fetch('/api/orders/export', {
       method: 'POST',
       params: {
-        search: localSearchTerm.value || undefined,
+        search: appliedSearch.value || undefined,
         search_field: apiSearchField.value || undefined,
         payment_method: paymentGroupFilter.value || undefined,
         payment_method_id: paymentMethodIdFilter.value || undefined,
@@ -416,52 +388,19 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Filters Bar -->
-      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
-        <!-- Search Input -->
-        <div class="relative flex-1 min-w-[200px]">
-          <button
-            @click="performSearch"
-            class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-          </button>
-          <input
-            v-model="localSearchTerm"
-            @keydown.enter="performSearch"
-            placeholder="Buscar ventas..."
-            class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        <!-- Search Field Select -->
-        <select
-          v-model="apiSearchField"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
-        >
-          <option value="order_number">Nº Orden</option>
-          <option value="customer_name">Cliente</option>
-          <option value="customer_phone">Teléfono</option>
-        </select>
-
-        <!-- Date Range Picker -->
-        <VueDatePicker
-          v-model="dateRangeDates"
-          range
-          :preset-dates="presetDates"
-          :enable-time-picker="false"
-          :locale="es"
-          placeholder="Rango de fechas"
-          auto-apply
-          :teleport="true"
-          :max-date="new Date()"
-          :format="formatDateRange"
-          input-class-name="dp-custom-input"
-          menu-class-name="dp-custom-menu"
-          calendar-cell-class-name="dp-custom-cell"
-        />
-
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        v-model:search-field="apiSearchField"
+        v-model:date-range="dateRangeDates"
+        :search-fields="orderSearchFields"
+        search-placeholder="Buscar ventas..."
+        :preset-dates="presetDates"
+        :format-date-range="formatDateRange"
+        :show-clear="hasActiveFilters"
+        @search="performSearch"
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
         <!-- Payment Method Filter -->
         <select
           v-model="paymentFilter"
@@ -506,19 +445,9 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           />
           <span class="text-sm font-semibold">Solo domicilios</span>
         </label>
+        </template>
 
-        <!-- Clear Filters Button -->
-        <button
-          v-if="localSearchTerm || dateRangeDates || paymentFilter || (statusFilter && statusFilter !== 'completed') || deliveryOnly"
-          @click="clearFilters"
-          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-          aria-label="Limpiar filtros"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-
+        <template #trailing>
         <!-- Export Button (Desktop only) -->
         <button
           @click="exportOrders"
@@ -547,7 +476,8 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           </svg>
           <span>Manual</span>
         </NuxtLink>
-      </div>
+        </template>
+      </UiAdvancedFiltersBar>
 
       <!-- Bulk Action Bar -->
       <div
@@ -920,42 +850,6 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 </template>
 
 <style>
-.dp-custom-input {
-  height: 40px !important;
-  border: 2px solid hsl(var(--border)) !important;
-  border-radius: 0.5rem !important;
-  background: hsl(var(--background)) !important;
-  font-size: 0.875rem !important;
-  color: hsl(var(--foreground)) !important;
-  padding-left: 0.75rem !important;
-  padding-right: 0.75rem !important;
-  min-width: 150px;
-}
-.dp-custom-input:focus {
-  outline: none !important;
-  border-color: hsl(var(--primary)) !important;
-  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2) !important;
-}
-.dp-custom-input::placeholder {
-  color: hsl(var(--muted-foreground)) !important;
-}
-.dp__theme_light {
-  --dp-primary-color: hsl(var(--primary));
-  --dp-primary-text-color: hsl(var(--primary-foreground));
-  --dp-background-color: hsl(var(--card));
-  --dp-text-color: hsl(var(--foreground));
-  --dp-border-color: hsl(var(--border));
-  --dp-menu-border-color: hsl(var(--border));
-  --dp-hover-color: hsl(var(--accent));
-  --dp-hover-text-color: hsl(var(--foreground));
-  --dp-secondary-color: hsl(var(--muted));
-  --dp-border-color-hover: hsl(var(--primary));
-}
-.dp-custom-menu {
-  border-radius: 0.75rem !important;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
-}
-
 .bulk-bar-enter-active,
 .bulk-bar-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
