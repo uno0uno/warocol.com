@@ -49,8 +49,8 @@ Haz clic en **Ir a checkout**. En la pantalla de checkout puedes ajustar:
 | Método de pago | Selecciona un grupo (ej: Tarjeta) o un método específico dentro del grupo. La lista la define el administrador. |
 | Puntos Waros | Si el cliente tiene puntos, puedes aplicarlos como descuento |
 | Descuento | Aplica un porcentaje o monto fijo sobre el subtotal |
-| Propina | Aparece solo si las propinas están activas. Ver [Propinas](#propinas) |
 | Mesero | Asigna el mesero responsable de la orden. Ver [Asignar mesero al cobrar](#asignar-mesero-al-cobrar) |
+| Propina | Aparece solo si las propinas están activas. Ver [Propinas](#propinas) |
 | Domicilio | Si la orden es para enviar, agrega dirección y valor de domicilio |
 | Cobro parcial | Permite dividir el pago en varios métodos. Ver [Cobro parcial](#cobro-parcial-split) |
 
@@ -58,31 +58,31 @@ Confirma el pago. WARO registra la orden, actualiza el inventario y muestra el r
 
 ---
 
-### Propinas
-
-Si el administrador activó las propinas en **Operaciones → Propinas**, aparece un selector durante el checkout.
-
-- El cajero ve **chips con los porcentajes preconfigurados** (por ejemplo 5% · 10% · 15%) y puede tocar uno para aplicarlo sobre el subtotal antes de impuestos.
-- También puede ingresar un **monto personalizado** en pesos.
-- El botón "Confirmar" cambia su etiqueta a **Confirmar — $X.XXX** mostrando el total cobrado (subtotal + propina).
-- La propina **no entra dentro de la base de impuestos**: se cobra encima del total.
-- Si el administrador activó la opción de pre-seleccionar un porcentaje, ese chip aparece marcado por defecto.
-
-> **Importante:** no se puede combinar propina con cobro parcial. Si activas el modo "cobro parcial", el selector de propina desaparece.
-
-En mesas, la propina se envía al cerrar la sesión de la mesa.
-
----
-
 ### Asignar mesero al cobrar
 
-Si las propinas están activas, aparece un selector de mesero en el checkout para atribuir la venta (y su propina) al miembro del equipo correspondiente.
+Si las propinas están activas, aparece primero un selector de mesero en el checkout para atribuir la venta (y su propina) al miembro del equipo correspondiente.
 
 - **Modo mesa:** el selector siempre aparece. Viene precargado con el mesero efectivo de la sesión (el último que tomó la orden), pero el cajero puede confirmarlo o cambiarlo antes de cobrar.
 - **Modo mostrador / barra:** el selector solo aparece si todavía no se asignó un mesero desde el chip del carrito.
 - Si las propinas están **desactivadas**, el selector no aparece y la venta no queda atribuida.
 
 El mesero asignado queda visible en el detalle de la orden en **Ventas** y alimenta las métricas del perfil del mesero en **Equipo → Miembros**.
+
+---
+
+### Propinas
+
+Si el administrador activó las propinas en **Operaciones → Propinas**, debajo del mesero aparece el selector de propina durante el checkout.
+
+- El cajero ve **chips con los porcentajes preconfigurados** (por ejemplo 5% · 10% · 15%) y debe tocar uno para aplicarlo sobre el subtotal antes de impuestos; si no elige ninguno, **no se cobra propina**.
+- También puede ingresar un **monto personalizado** en pesos o elegir **Sin propina**.
+- El botón "Confirmar" cambia su etiqueta a **Confirmar — $X.XXX** solo cuando hay propina seleccionada.
+- La propina **no entra dentro de la base de impuestos**: se cobra encima del total.
+- En el POS **nunca** se pre-selecciona un porcentaje automáticamente (la opción de pre-selección en Operaciones aplica solo a pedidos online).
+
+> **Importante:** no se puede combinar propina con cobro parcial. Si activas el modo "cobro parcial", el selector de propina desaparece.
+
+En mesas, la propina se envía al cerrar la sesión de la mesa.
 
 ---
 

@@ -175,7 +175,6 @@ const acceptsOnlineOrders = computed(() => settingsData.value?.data?.accepts_onl
 // warocol.com#639 — tipping config (gated by tenant; defaults keep selector hidden)
 const tipEnabled = computed(() => settingsData.value?.data?.tip_enabled === true)
 const tipPresets = computed<number[]>(() => settingsData.value?.data?.tip_default_percentages ?? [10])
-const tipPreselectIndex = computed<number | null>(() => settingsData.value?.data?.tip_preselect_index ?? null)
 const tipModel = ref<{ amount: number; source: 'preset' | 'custom' | 'none' }>({ amount: 0, source: 'none' })
 const tipAmount = computed(() => tipModel.value.amount)
 const tipSource = computed(() => tipModel.value.source)
@@ -1939,23 +1938,22 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- warocol.com#639 — Tip selector in the LEFT column (after Descuento, before Domicilio).
-             Hidden when tip_enabled=false or in split mode (backend rejects tip + split). -->
-        <CheckoutTipSelector
-          v-if="tipEnabled && !splitMode"
-          :enabled="tipEnabled"
-          :presets="tipPresets"
-          :preselect-index="tipPreselectIndex"
-          :subtotal="cartTotal"
-          v-model="tipModel"
-        />
-
-        <!-- warocol.com#663 — Waiter at checkout when session has no effective waiter -->
+        <!-- warocol.com#663 + #735 — Waiter first, then tip (opt-in; no tenant preselect on POS). -->
         <CheckoutWaiterSelector
           v-if="showCheckoutWaiterSelector"
           :members="tenantMembers"
           :model-value="posStore.cartServedByMemberId"
           @update:model-value="posStore.setCartServedBy"
+        />
+
+        <!-- warocol.com#639 — Tip selector after mesero; hidden in split mode (backend rejects tip + split). -->
+        <CheckoutTipSelector
+          v-if="tipEnabled && !splitMode"
+          :enabled="tipEnabled"
+          :presets="tipPresets"
+          :preselect-index="null"
+          :subtotal="cartTotal"
+          v-model="tipModel"
         />
 
         <!-- Section: Domicilio (mostrador or bar — never mesa) -->
