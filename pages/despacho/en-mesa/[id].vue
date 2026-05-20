@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { inject, watch, onMounted, onUnmounted } from 'vue'
+import { formatTableQrPayment } from '~/composables/formatTableQrPayment'
 import { notifyTableSessionUpdated, storeTableQrPaymentIntent } from '~/composables/useTableSessionSync'
 
 definePageMeta({ layout: 'dashboard' })
@@ -32,6 +33,9 @@ interface TableQrRequestDetail {
   item_count: number
   payment_method?: string
   payment_method_id?: string | null
+  payment_method_group_name?: string | null
+  payment_method_name?: string | null
+  payment_display?: string | null
   customer_notes?: string | null
   created_at: string
   total_amount: number
@@ -192,7 +196,7 @@ function itemDisplayName(item: TableQrItem): string {
 
         <div class="bg-surface border border-border rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Pago</p>
-          <p class="text-lg font-bold text-text-primary">{{ request.payment_method ?? '—' }}</p>
+          <p class="text-lg font-bold text-text-primary">{{ formatTableQrPayment(request) }}</p>
         </div>
 
         <div class="bg-surface border-2 border-primary rounded-xl p-4">

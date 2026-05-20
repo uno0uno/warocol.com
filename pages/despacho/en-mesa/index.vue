@@ -4,6 +4,7 @@ import { useTenantReactive } from '@/composables/useTenantReactive'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import { formatTableQrPayment } from '~/composables/formatTableQrPayment'
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -21,6 +22,9 @@ interface TableQrRequest {
   items: Array<{ line_total?: number }>
   item_count: number
   payment_method?: string
+  payment_method_group_name?: string | null
+  payment_method_name?: string | null
+  payment_display?: string | null
   created_at: string
 }
 
@@ -177,7 +181,7 @@ function clearTableFilter() {
                 <p class="text-xs text-text-secondary mt-0.5">
                   {{ item.item_count }} item{{ item.item_count !== 1 ? 's' : '' }}
                   · {{ formatDateTime(item.created_at) }}
-                  <span v-if="item.payment_method"> · {{ item.payment_method }}</span>
+                  <span v-if="formatTableQrPayment(item) !== '—'"> · {{ formatTableQrPayment(item) }}</span>
                 </p>
               </div>
               <span class="text-sm font-bold text-primary flex-shrink-0">
@@ -195,8 +199,8 @@ function clearTableFilter() {
           <template #cell-item_count="{ value }">
             <span class="text-sm text-text-secondary">{{ value }}</span>
           </template>
-          <template #cell-payment_method="{ value }">
-            <span class="text-sm text-text-secondary">{{ value ?? '—' }}</span>
+          <template #cell-payment_method="{ item }">
+            <span class="text-sm text-text-secondary">{{ formatTableQrPayment(item) }}</span>
           </template>
           <template #cell-total_amount="{ value }">
             <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
