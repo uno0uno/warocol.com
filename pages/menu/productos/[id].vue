@@ -153,7 +153,7 @@
 
               <div>
                 <label class="block text-sm font-medium text-text-secondary mb-2">
-                  Costo Calculado (desde receta)
+                  Costo estimado (previo al guardar)
                 </label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
@@ -166,7 +166,7 @@
                   />
                 </div>
                 <p class="text-xs text-text-tertiary mt-1">
-                  Se calculará automáticamente desde los ingredientes
+                  Vista previa con precios configurados; el costo real se confirma al guardar
                 </p>
               </div>
             </div>
@@ -517,7 +517,7 @@
             </div>
 
             <div class="flex justify-between text-sm">
-              <span class="text-text-secondary">Costo:</span>
+              <span class="text-text-secondary">Costo estimado:</span>
               <span class="font-semibold text-text-primary">
                 {{ calculatedCost === null ? '—' : formatCurrency(calculatedCost) }}
               </span>

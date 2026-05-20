@@ -727,7 +727,7 @@
                     <span class="text-sm font-bold text-text-primary">{{ formatCurrency(form.price) }}</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-sm text-text-secondary">Costo Calculado</span>
+                    <span class="text-sm text-text-secondary">Costo estimado</span>
                     <span class="text-sm font-semibold text-text-primary">
                       {{ calculatedCost === null ? '—' : formatCurrency(calculatedCost) }}
                     </span>
@@ -1042,7 +1042,7 @@ const calculatedCost = computed<number | null>(() => {
     const cached = ingredientCache.value[ing.ingredient_id]
     const ingredient = cached || availableIngredients.value.find((i: any) => i.id === ing.ingredient_id)
     if (!ingredient) return sum
-    return sum + (ing.quantity * (ingredient.price || 0))
+    return sum + (ing.quantity * Number(ingredient.costo_unitario || ingredient.price || 0))
   }, 0)
 
   return totalCost
