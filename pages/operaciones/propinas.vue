@@ -41,6 +41,30 @@ const invalidateContextCaches = async () => {
 
 // ── Master toggle ──────────────────────────────────────────────────────────
 const isToggling = ref(false)
+const isTogglingTaxable = ref(false)
+
+const toggleTipTaxableDefault = async () => {
+  if (!businessProfile.value || isTogglingTaxable.value) return
+  const newState = !businessProfile.value.tip_taxable_default
+  isTogglingTaxable.value = true
+  try {
+    await $fetch('/api/operaciones/toggles/tip-taxable-default', {
+      method: 'PATCH',
+      body: { enabled: newState },
+    })
+    await invalidateContextCaches()
+    toast.success(
+      newState
+        ? 'Por defecto las propinas se cobrarán gravadas (con impuesto)'
+        : 'Por defecto las propinas se cobrarán sin impuesto',
+      { title: newState ? 'Propina gravada por defecto' : 'Propina no gravada por defecto' },
+    )
+  } catch (error: any) {
+    toast.error(error?.data?.detail || 'Error al cambiar la configuración', { title: 'Error' })
+  } finally {
+    isTogglingTaxable.value = false
+  }
+}
 
 const toggleTipEnabled = async () => {
   if (!businessProfile.value || isToggling.value) return
@@ -202,6 +226,34 @@ const saveConfig = async () => {
 
       <!-- ══════ SUB-BLOCK (only when tip_enabled) ══════ -->
       <template v-if="businessProfile?.tip_enabled">
+        <!-- warocol.com#740 — default taxable tip at checkout -->
+        <div
+          class="flex items-center justify-between gap-4 rounded-xl border-2 border-border bg-surface px-4 py-3"
+        >
+          <div class="min-w-0">
+            <p class="text-sm font-semibold leading-snug text-text-primary">
+              {{ businessProfile.tip_taxable_default ? 'Propina gravada por defecto' : 'Propina no gravada por defecto' }}
+            </p>
+            <p class="text-xs mt-0.5 leading-snug text-text-secondary">
+              En el checkout el cajero puede cambiar por venta. Si está activo, se aplica IVA o INC a la propina según la configuración fiscal.
+            </p>
+          </div>
+          <label
+            class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+            :class="isTogglingTaxable ? 'opacity-50 pointer-events-none' : ''"
+            :aria-label="businessProfile.tip_taxable_default ? 'Desactivar propina gravada por defecto' : 'Activar propina gravada por defecto'"
+          >
+            <input
+              type="checkbox"
+              class="sr-only peer"
+              :checked="businessProfile.tip_taxable_default"
+              :disabled="isTogglingTaxable"
+              @change="toggleTipTaxableDefault"
+            />
+            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          </label>
+        </div>
+
         <!-- Fixed informational banner (Ley 1935 framing) -->
         <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex gap-3">
           <span aria-hidden="true" class="text-amber-700 mt-0.5">⚠</span>
