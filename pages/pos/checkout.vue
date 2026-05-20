@@ -184,6 +184,10 @@ watch([() => posStore.cartId, () => selectedCustomer.value?.id], () => {
   tipModel.value = { amount: 0, source: 'none' }
 })
 
+watch(() => posStore.cartServedByMemberId, (memberId) => {
+  if (!memberId) tipModel.value = { amount: 0, source: 'none' }
+})
+
 // warocol.com#663 + #666 — checkout waiter picker before confirm
 const waiterAttributionEnabled = computed(() => settingsData.value?.data?.waiter_attribution_enabled === true)
 const tenantMembers = computed(() => settingsData.value?.data?.members ?? [])
@@ -406,6 +410,10 @@ watch(
 
 // Split payment state
 const splitMode = ref(false)
+// warocol.com#735 — propina solo tras elegir mesero (o mesero ya en carrito / sesión mesa)
+const showCheckoutTipSelector = computed(
+  () => tipEnabled.value && !splitMode.value && !!posStore.cartServedByMemberId,
+)
 const splitPayments = ref<Array<{ id: string; amount: number; payment_method: string; payment_method_name: string }>>([])
 const splitPaidTotal = ref(0)
 // Issue warocol.com#649 — void partial payment state: modal + per-row spinner.
@@ -1946,9 +1954,9 @@ onUnmounted(() => {
           @update:model-value="posStore.setCartServedBy"
         />
 
-        <!-- warocol.com#639 — Tip selector after mesero; hidden in split mode (backend rejects tip + split). -->
+        <!-- warocol.com#735 — Tip block only when a mesero is selected (split mode hides via computed). -->
         <CheckoutTipSelector
-          v-if="tipEnabled && !splitMode"
+          v-if="showCheckoutTipSelector"
           :enabled="tipEnabled"
           :presets="tipPresets"
           :preselect-index="null"

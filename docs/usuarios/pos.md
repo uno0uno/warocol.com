@@ -72,7 +72,7 @@ El mesero asignado queda visible en el detalle de la orden en **Ventas** y alime
 
 ### Propinas
 
-Si el administrador activó las propinas en **Operaciones → Propinas**, debajo del mesero aparece el selector de propina durante el checkout.
+Si el administrador activó las propinas en **Operaciones → Propinas**, primero eliges el mesero; **solo entonces** aparece el selector de propina debajo.
 
 - El cajero ve **chips con los porcentajes preconfigurados** (por ejemplo 5% · 10% · 15%) y debe tocar uno para aplicarlo sobre el subtotal antes de impuestos; si no elige ninguno, **no se cobra propina**.
 - También puede ingresar un **monto personalizado** en pesos o elegir **Sin propina**.
