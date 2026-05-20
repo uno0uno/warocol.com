@@ -11,6 +11,7 @@ definePageMeta({
 const {
   tenantSlug,
   token,
+  menuPath,
   cartStore,
   paymentGroups,
   paymentSelection,
@@ -105,7 +106,7 @@ const handleSubmit = async () => {
       <p class="text-muted-foreground mb-1">{{ successMessage }}</p>
       <p v-if="successTableName" class="text-sm text-muted-foreground mb-6">Mesa {{ successTableName }}</p>
       <NuxtLink
-        :to="`/${tenantSlug}/mesa/${token}`"
+        :to="menuPath"
         class="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold"
       >
         Volver al menú
@@ -124,7 +125,7 @@ const handleSubmit = async () => {
     >
       <template #back-action>
         <NuxtLink
-          :to="`/${tenantSlug}/mesa/${token}`"
+          :to="menuPath"
           class="btn-secondary px-4 py-3 rounded-lg text-sm inline-flex items-center gap-1"
         >
           ← Menú

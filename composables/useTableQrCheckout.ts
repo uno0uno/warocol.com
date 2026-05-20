@@ -16,12 +16,27 @@ export function useTableQrCheckout() {
   const cartChecked = ref(false)
   const cartValid = ref(false)
 
+  const { data: resolveData } = useQuery({
+    key: () => ['table-qr', token.value, 'resolve'],
+    query: () =>
+      $fetch<{ success: boolean; data: { tenant_slug: string } }>(
+        `/api/public/table-qr/${token.value}`,
+      ),
+    enabled: () => isClientReady.value && !!token.value,
+    staleTime: 30_000,
+  })
+
+  const menuPath = computed(() => {
+    const slug = resolveData.value?.data?.tenant_slug ?? tenantSlug.value
+    return `/${slug}/mesa/${token.value}`
+  })
+
   onMounted(() => {
     isClientReady.value = true
     if (token.value) cartStore.setToken(token.value)
     if (cartStore.isEmpty) {
       cartValid.value = false
-      router.replace(`/${tenantSlug.value}/mesa/${token.value}`)
+      router.replace(menuPath.value)
     } else {
       cartValid.value = true
     }
@@ -61,6 +76,7 @@ export function useTableQrCheckout() {
   return {
     tenantSlug,
     token,
+    menuPath,
     cartStore,
     paymentGroups,
     paymentSelection,

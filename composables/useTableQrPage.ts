@@ -1,4 +1,4 @@
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useCityCatalog } from '~/composables/useCityCatalog'
 
 export interface TableQrResolveData {
@@ -42,8 +42,14 @@ export function useTableQrPage() {
 
   const resolve = computed(() => resolveData.value?.data ?? null)
 
-  const slugMismatch = computed(
-    () => !!resolve.value && resolve.value.tenant_slug !== tenantSlug.value,
+  // Canonical storefront slug from API (tenant_public_profiles.slug).
+  // Old QRs may use internal tenant.slug in the URL — normalize once resolved.
+  watch(
+    () => [resolve.value?.tenant_slug, tenantSlug.value, token.value] as const,
+    ([canonical, pathSlug, tok]) => {
+      if (!process.client || !canonical || !tok || canonical === pathSlug) return
+      navigateTo(`/${canonical}/mesa/${tok}`, { replace: true })
+    },
   )
 
   const { data: menuData, status: menuStatus, error: menuError } = useQuery({
@@ -52,12 +58,7 @@ export function useTableQrPage() {
       $fetch<{ success: boolean; data: TableQrMenuPayload }>(
         `/api/public/table-qr/${token.value}/menu`,
       ),
-    enabled: () =>
-      isClientReady.value &&
-      !!token.value &&
-      !!resolve.value &&
-      !slugMismatch.value &&
-      !isCity.value,
+    enabled: () => isClientReady.value && !!token.value && !!resolve.value && !isCity.value,
     staleTime: 30_000,
   })
 
@@ -66,7 +67,7 @@ export function useTableQrPage() {
   const isOpen = computed(
     () => resolve.value?.is_currently_open ?? menuData.value?.data?.is_currently_open ?? false,
   )
-  const orderingEnabled = computed(() => !!resolve.value && !slugMismatch.value)
+  const orderingEnabled = computed(() => !!resolve.value)
 
   /** Full-screen matrix loader — first client fetch only */
   const isInitialLoading = computed(() => {
@@ -80,9 +81,7 @@ export function useTableQrPage() {
     () => menuStatus.value === 'pending' && menuData.value === undefined,
   )
 
-  const loadError = computed(
-    () => !!resolveError.value || !!menuError.value || slugMismatch.value,
-  )
+  const loadError = computed(() => !!resolveError.value || !!menuError.value)
 
   return {
     tenantSlug,
@@ -96,6 +95,5 @@ export function useTableQrPage() {
     isInitialLoading,
     isMenuLoading,
     loadError,
-    slugMismatch,
   }
 }

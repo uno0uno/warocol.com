@@ -23,7 +23,6 @@ const {
   isInitialLoading,
   isMenuLoading,
   loadError,
-  slugMismatch,
 } = useTableQrPage()
 
 const cartStore = useTableQrCartStore()
@@ -60,7 +59,8 @@ const handleCheckout = async () => {
     toast.error('El restaurante está cerrado; no puedes enviar pedidos ahora', { title: 'Cerrado' })
     return
   }
-  await navigateTo(`/${tenantSlug.value}/mesa/${token.value}/checkout`)
+  const slug = resolve.value?.tenant_slug ?? tenantSlug.value
+  await navigateTo(`/${slug}/mesa/${token.value}/checkout`)
 }
 </script>
 
@@ -78,12 +78,7 @@ const handleCheckout = async () => {
       <div class="text-6xl mb-4">🔗</div>
       <h1 class="text-2xl font-bold text-foreground mb-2">Enlace no disponible</h1>
       <p class="text-muted-foreground mb-6">
-        <template v-if="slugMismatch">
-          Este código QR no corresponde a este restaurante.
-        </template>
-        <template v-else>
-          El enlace de mesa no existe, está desactivado o el restaurante está cerrado.
-        </template>
+        El enlace de mesa no existe, está desactivado o el restaurante está cerrado.
       </p>
       <NuxtLink to="/" class="text-primary font-semibold hover:underline">Volver al inicio</NuxtLink>
     </div>
@@ -132,7 +127,7 @@ const handleCheckout = async () => {
     <ProductDetailDrawer
       v-model="isProductDrawerOpen"
       :product="selectedProduct"
-      :tenant-slug="tenantSlug"
+      :tenant-slug="resolve.tenant_slug"
       channel="table-qr"
       :table-qr-token="token"
     />

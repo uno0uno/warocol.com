@@ -3,14 +3,27 @@ import QRCode from 'qrcode'
 /**
  * Table QR public link helpers (warocol.com#711).
  * Token must come from the API — never derived in the browser.
+ * URLs use the public storefront slug (tenant_public_profiles), not internal tenant.slug.
  */
 export function useTableQrLink() {
   const config = useRuntimeConfig()
   const { currentTenant } = useTenantReactive()
   const toast = useToast()
 
+  const { data: opsContext } = useQuery({
+    key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
+    query: () =>
+      $fetch<{ success: boolean; data: { slug?: string } }>('/api/operaciones/restaurant-context'),
+    enabled: () => !!currentTenant.value?.id,
+    staleTime: 60_000,
+  })
+
+  const storefrontSlug = computed(
+    () => opsContext.value?.data?.slug || currentTenant.value?.slug || null,
+  )
+
   const buildTableQrUrl = (token: string | null | undefined): string | null => {
-    const slug = currentTenant.value?.slug
+    const slug = storefrontSlug.value
     if (!token || !slug) return null
     const base = String(config.public.siteUrl || 'https://warocol.com').replace(/\/$/, '')
     return `${base}/${slug}/mesa/${token}`
@@ -63,5 +76,5 @@ export function useTableQrLink() {
     }
   }
 
-  return { buildTableQrUrl, copyTableQrLink, downloadTableQrPng }
+  return { buildTableQrUrl, copyTableQrLink, downloadTableQrPng, storefrontSlug }
 }
