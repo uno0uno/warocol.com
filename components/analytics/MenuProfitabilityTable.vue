@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Star, Shield, Puzzle, AlertTriangle } from 'lucide-vue-next'
+import { Star, Shield, Puzzle, AlertTriangle, Info } from 'lucide-vue-next'
 
 interface MenuProfitabilityItem {
   id: string
@@ -8,8 +8,12 @@ interface MenuProfitabilityItem {
   category: string
   price: number
   estimated_cost: number
+  costo_percibido?: number | null
   profit_per_unit: number
   profit_margin_pct: number
+  profit_margin_real_pct?: number | null
+  profit_margin_operativo_pct?: number | null
+  cost_used_for_classification?: 'real' | 'operativo'
   order_count: number
   total_units_sold: number
   total_revenue: number
@@ -39,13 +43,21 @@ const props = withDefaults(defineProps<{
 
 const menuItems = computed(() => props.items || [])
 
+const {
+  marginRealPct,
+  marginOperativoPct,
+  formatCostCell: formatCostCellValue,
+} = useProductMargins()
+
 const tableColumns: MatrixColumn[] = [
   { key: 'name', title: 'Producto', sortable: false, align: 'left', format: 'text' },
   { key: 'classification', title: 'Clasificación', sortable: false, align: 'center', format: 'text' },
   { key: 'total_units_sold', title: 'Unidades', sortable: false, align: 'right', format: 'number' },
-  { key: 'estimated_cost', title: 'Costo', sortable: false, align: 'right', format: 'text' },
+  { key: 'estimated_cost', title: 'Costo real', sortable: false, align: 'right', format: 'text' },
+  { key: 'costo_percibido', title: 'Mi costo', sortable: false, align: 'right', format: 'text' },
   { key: 'price', title: 'Precio', sortable: false, align: 'right', format: 'text' },
-  { key: 'profit_margin_pct', title: 'Margen', sortable: false, align: 'right', format: 'text' },
+  { key: 'profit_margin_real_pct', title: 'Margen real', sortable: false, align: 'right', format: 'text' },
+  { key: 'profit_margin_operativo_pct', title: 'Margen op.', sortable: false, align: 'right', format: 'text' },
   { key: 'total_revenue', title: 'Ingresos', sortable: false, align: 'right', format: 'text' },
   { key: 'total_profit', title: 'Ganancia', sortable: false, align: 'right', format: 'text' },
 ]
@@ -73,6 +85,23 @@ const formatCurrency = (value: number) => {
   }).format(value)
 }
 
+const formatCostCell = (value: unknown) => formatCostCellValue(value, formatCurrency)
+
+/** Map analytics row to margin helpers (estimated_cost = real). */
+function marginRow(item: MenuProfitabilityItem) {
+  return {
+    price: item.price,
+    costo_calculado: item.estimated_cost,
+    costo_percibido: item.costo_percibido,
+    margen_real_pct: item.profit_margin_real_pct,
+    margen_operativo_pct: item.profit_margin_operativo_pct,
+  }
+}
+
+const usesOperativoClassification = computed(() =>
+  menuItems.value.some(i => i.cost_used_for_classification === 'operativo')
+)
+
 const totals = computed(() => {
   const items = menuItems.value
   if (!items.length) return null
@@ -91,10 +120,20 @@ const totals = computed(() => {
 
 <template>
   <div class="overflow-hidden">
+    <p
+      v-if="usesOperativoClassification"
+      class="flex items-start gap-2 text-xs text-text-secondary mb-3 px-1"
+    >
+      <Info :size="14" class="flex-shrink-0 mt-0.5" aria-hidden="true" />
+      <span>
+        La matriz BCG usa <strong>mi costo del plato</strong> cuando está configurado; si no, costo real del sistema.
+        <strong>Costo real</strong> = inventario/compras; <strong>mi costo</strong> = referencia operativa que tú defines.
+      </span>
+    </p>
+
     <UiResponsiveDataView
       :columns="tableColumns"
       :data="menuItems"
-
       :empty-message="emptyMessage"
       :empty-sub-message="emptySubMessage"
       variant="default"
@@ -105,7 +144,6 @@ const totals = computed(() => {
           class="flex items-center gap-3 py-3 px-3 border-b border-border"
           :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
         >
-          <!-- Classification icon -->
           <div
             class="flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0"
             :class="getCategoryStyles(item.classification).bg"
@@ -117,22 +155,34 @@ const totals = computed(() => {
             />
           </div>
 
-          <!-- Name + units -->
           <div class="flex-1 min-w-0">
             <p class="text-sm font-semibold text-text-primary leading-tight truncate">{{ item.name }}</p>
             <p class="text-xs text-text-secondary mt-0.5">
               {{ item.total_units_sold || 0 }} uds · {{ getCategoryStyles(item.classification).label }}
             </p>
+            <p class="text-xs text-text-tertiary">
+              Real: {{ formatCostCell(item.estimated_cost) }}
+              · Mi costo: {{ formatCostCell(item.costo_percibido) }}
+            </p>
           </div>
 
-          <!-- Margen + Ganancia -->
-          <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
-            <span
-              class="text-sm font-bold"
-              :class="item.profit_margin_pct >= 40 ? 'text-green-600' : item.profit_margin_pct >= 20 ? 'text-text-primary' : 'text-destructive'"
-            >
-              {{ item.profit_margin_pct ? `${item.profit_margin_pct}%` : '—' }}
-            </span>
+          <div class="flex flex-col items-end gap-1 flex-shrink-0">
+            <UiStatusBadge
+              v-if="marginRealPct(marginRow(item)) !== null"
+              :value="marginRealPct(marginRow(item))!"
+              format="percentage"
+              :variant="(marginRealPct(marginRow(item)) ?? 0) >= 0 ? 'success' : 'secondary'"
+              size="sm"
+              title="Margen real"
+            />
+            <UiStatusBadge
+              v-if="marginOperativoPct(marginRow(item)) !== null"
+              :value="marginOperativoPct(marginRow(item))!"
+              format="percentage"
+              variant="secondary"
+              size="sm"
+              title="Margen operativo"
+            />
             <span class="text-xs text-text-secondary">
               {{ item.total_profit ? formatCurrency(item.total_profit) : '—' }}
             </span>
@@ -161,16 +211,38 @@ const totals = computed(() => {
       </template>
 
       <template #cell-estimated_cost="{ value }">
-        <div class="text-right text-text-primary">{{ value ? formatCurrency(value) : '—' }}</div>
+        <div class="text-right text-text-primary">{{ formatCostCell(value) }}</div>
+      </template>
+
+      <template #cell-costo_percibido="{ value }">
+        <div class="text-right text-text-primary">{{ formatCostCell(value) }}</div>
       </template>
 
       <template #cell-price="{ value }">
         <div class="text-right font-semibold text-text-primary">{{ value ? formatCurrency(value) : '—' }}</div>
       </template>
 
-      <template #cell-profit_margin_pct="{ value }">
-        <div class="text-right" :class="value >= 40 ? 'text-green-600 font-bold' : 'text-text-primary'">
-          {{ value ? `${value}%` : '—' }}
+      <template #cell-profit_margin_real_pct="{ row }">
+        <div class="text-right">
+          <span
+            v-if="marginRealPct(marginRow(row)) !== null"
+            :class="(marginRealPct(marginRow(row)) ?? 0) >= 40 ? 'text-green-600 font-bold' : 'text-text-primary'"
+          >
+            {{ marginRealPct(marginRow(row))!.toFixed(1) }}%
+          </span>
+          <span v-else class="text-text-secondary">—</span>
+        </div>
+      </template>
+
+      <template #cell-profit_margin_operativo_pct="{ row }">
+        <div class="text-right">
+          <span
+            v-if="marginOperativoPct(marginRow(row)) !== null"
+            class="text-text-primary font-medium"
+          >
+            {{ marginOperativoPct(marginRow(row))!.toFixed(1) }}%
+          </span>
+          <span v-else class="text-text-secondary">—</span>
         </div>
       </template>
 
@@ -197,6 +269,5 @@ const totals = computed(() => {
         <div class="text-right text-green-600 font-bold">{{ value ? formatCurrency(value) : '—' }}</div>
       </template>
     </UiResponsiveDataView>
-
   </div>
 </template>

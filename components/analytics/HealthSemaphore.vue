@@ -36,6 +36,26 @@ const emit = defineEmits<{
           <h4 class="text-slate-600 font-medium">{{ title || 'Análisis de Menú (Rentabilidad)' }}</h4>
           <slot name="header-actions" />
         </div>
+        <div
+          v-if="foodCostData?.current_period"
+          class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-sm"
+        >
+          <div class="rounded-lg border border-slate-200 bg-white px-3 py-2">
+            <span class="text-slate-500 text-xs">Food cost (real)</span>
+            <p class="font-semibold text-slate-800 tabular-nums">
+              {{ foodCostData.current_period.food_cost_pct }}%
+            </p>
+          </div>
+          <div
+            v-if="foodCostData.current_period.food_cost_operativo_pct != null"
+            class="rounded-lg border border-slate-200 bg-white px-3 py-2"
+          >
+            <span class="text-slate-500 text-xs">Food cost (operativo)</span>
+            <p class="font-semibold text-slate-800 tabular-nums">
+              {{ foodCostData.current_period.food_cost_operativo_pct }}%
+            </p>
+          </div>
+        </div>
         <slot>
           <MenuMatrix :menuData="menuData" />
         </slot>
