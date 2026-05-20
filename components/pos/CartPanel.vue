@@ -85,6 +85,18 @@
         :key="item.orderItemId"
         class="relative"
       >
+        <label
+          v-if="comandasEnabled && item.fulfillmentStatus === 'new'"
+          class="absolute top-2 left-2 z-10 flex items-center"
+        >
+          <input
+            type="checkbox"
+            class="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+            :checked="selectedTabItemIds.includes(item.orderItemId)"
+            :aria-label="`Seleccionar ${item.productName} para enviar a cocina`"
+            @change="$emit('toggle-tab-selection', item.orderItemId)"
+          />
+        </label>
         <PosCartItem
           :item="{
             product: { id: item.orderItemId, name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
@@ -95,7 +107,10 @@
           }"
           :order-number="idx + 1"
           :show-fulfillment-status="comandasEnabled"
-          :class="pendingRemoveItemId === item.orderItemId ? 'opacity-40 pointer-events-none' : ''"
+          :class="[
+            pendingRemoveItemId === item.orderItemId ? 'opacity-40 pointer-events-none' : '',
+            comandasEnabled && item.fulfillmentStatus === 'new' ? 'pl-8' : '',
+          ]"
           @increment="$emit('increment-tab-item', item.orderItemId)"
           @decrement="$emit('decrement-tab-item', item.orderItemId)"
           @remove="$emit('remove-tab-item', item.orderItemId)"
@@ -218,6 +233,36 @@
         </div>
 
 
+        <!-- #753 — Fire / print comandas when KDS enabled -->
+        <template v-if="comandasEnabled">
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              v-if="unfiredCount > 0"
+              type="button"
+              :disabled="isFiringToKitchen || isAddingToTab"
+              class="min-h-[44px] rounded-xl border border-primary/40 bg-primary/5 text-primary text-xs font-semibold flex items-center justify-center gap-1 hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              :aria-label="fireToKitchenLabel"
+              @click="$emit('fire-to-kitchen')"
+            >
+              <UiLoadingDots v-if="isFiringToKitchen" size="7px" />
+              <template v-else>{{ fireToKitchenLabel }}</template>
+            </button>
+            <button
+              type="button"
+              :disabled="!canPrintComandas"
+              class="min-h-[44px] rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              :class="unfiredCount === 0 ? 'col-span-2' : ''"
+              aria-label="Imprimir comanda de cocina"
+              @click="$emit('print-comandas')"
+            >
+              <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18M6.72 13.829 6.34 18m10.94-4.171L17.66 18M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.75A2.25 2.25 0 0 1 5.25 7.5h13.5A2.25 2.25 0 0 1 21 9.75v6A2.25 2.25 0 0 1 18.75 18h-1.09M6.34 18h11.32" />
+              </svg>
+              Imprimir comanda
+            </button>
+          </div>
+        </template>
+
         <!-- Primary: Add to tab — full width -->
         <button
           type="button"
@@ -281,6 +326,8 @@ interface Props {
   comandasEnabled?: boolean
   unfiredCount?: number
   isFiringToKitchen?: boolean
+  canPrintComandas?: boolean
+  selectedTabItemIds?: string[]
   pendingRemoveItemId?: string | null
   // Issue #575 — per-order waiter attribution (bar + counter)
   showServedByChip?: boolean
@@ -302,11 +349,19 @@ interface Emits {
   (e: 'increment-tab-item', orderItemId: string): void
   (e: 'decrement-tab-item', orderItemId: string): void
   (e: 'fire-to-kitchen'): void
+  (e: 'print-comandas'): void
+  (e: 'toggle-tab-selection', orderItemId: string): void
   // Issue #575
   (e: 'update:served-by', memberId: string | null): void
 }
 
-const props = withDefaults(defineProps<Props>(), { mesaMode: false, isAddingToTab: false, isLoadingTabItems: false, isClearingTab: false, tabItems: () => [], tabTotal: 0, tabItemsLoading: () => new Set(), comandasEnabled: false, unfiredCount: 0, isFiringToKitchen: false, pendingRemoveItemId: null, showServedByChip: false, servedByMemberId: null, members: () => [] })
+const props = withDefaults(defineProps<Props>(), { mesaMode: false, isAddingToTab: false, isLoadingTabItems: false, isClearingTab: false, tabItems: () => [], tabTotal: 0, tabItemsLoading: () => new Set(), comandasEnabled: false, unfiredCount: 0, isFiringToKitchen: false, canPrintComandas: false, selectedTabItemIds: () => [], pendingRemoveItemId: null, showServedByChip: false, servedByMemberId: null, members: () => [] })
+
+const fireToKitchenLabel = computed(() => {
+  const n = props.selectedTabItemIds?.length ?? 0
+  if (n > 0) return `Enviar ${n} a cocina`
+  return 'Enviar a cocina'
+})
 const emit = defineEmits<Emits>()
 
 // Issue warocol.com#708 — mesa tab lines live outside posStore.cart; count both buckets.
