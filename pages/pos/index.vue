@@ -490,26 +490,21 @@ const addToTab = async () => {
       modifiers: item.modifiers.map((m) => ({ id: m.id, name: m.name, price: m.price })),
       notes: item.notes ?? null,
     }))
-    await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/add`, {
+    const addRes = await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/add`, {
       method: 'POST',
       body: { items },
     })
     // Clear cart — items committed to tab
     await posStore.clearCart()
-    // Auto-fire to kitchen if comandas is enabled
+    // tab/add already auto-fires when comandas enabled; use its payload for print (#753)
     if (comandasEnabled.value) {
-      try {
-        const raw = await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/fire`, {
-          method: 'POST',
-        })
-        const { comandas, fired_items_count } = parseFireTableResponse(raw as any)
+      const { comandas, fired_items_count } = parseFireTableResponse(addRes as any)
+      if (comandas.length > 0 || fired_items_count > 0) {
         applyFireResult(comandas, fired_items_count)
         if (fired_items_count > 0) {
           tabSuccess.value = `${fired_items_count} ${fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
           setTimeout(() => { tabSuccess.value = null }, 3000)
         }
-      } catch {
-        // Fire failure is non-critical — items are still on the tab
       }
     }
     // Refresh session + tab items
