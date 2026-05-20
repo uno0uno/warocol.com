@@ -2,6 +2,8 @@ import type { Notification } from '~/composables/useNotifications'
 
 export function notificationDespachoPath(notification: Notification): string {
   if (notification.type === 'table_qr_request') {
+    const requestId = notification.payload?.request_id
+    if (requestId) return `/despacho/en-mesa/${requestId}`
     const tableId = notification.payload?.table_id
     return tableId ? `/despacho/en-mesa?table=${tableId}` : '/despacho/en-mesa'
   }
