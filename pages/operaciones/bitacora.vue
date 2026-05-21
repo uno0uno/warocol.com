@@ -136,11 +136,6 @@ const tableNameFor = (row: OperationEventRow) =>
     <CommonsTheErrorState v-else-if="fetchError" />
 
     <template v-else>
-      <p class="text-sm text-text-secondary leading-snug">
-        Registro de acciones en POS (mesas, barra y mostrador). Los eventos aparecen después de que el personal
-        use el sistema con la bitácora activa en producción.
-      </p>
-
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         v-model:date-range="dateRangeDates"
