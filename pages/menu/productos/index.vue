@@ -16,7 +16,7 @@
 
         <!-- Cost Warning Banner -->
         <div
-          v-if="costIssueCount > 0 && !bannerDismissed"
+          v-if="costIssueCount > 0 && !bannerDismissed && !marginNegativeOnly"
           role="alert"
           class="flex items-start gap-2 px-3 py-2.5 bg-status-critical-bg border border-border rounded-lg"
         >
@@ -43,40 +43,117 @@
         </div>
 
         <!-- Filters Bar -->
-        <SharedFiltersBar
+        <UiAdvancedFiltersBar
           v-model:search="localSearchTerm"
           v-model:search-field="apiSearchField"
-          v-model:status-filter="statusFilter"
           :search-fields="searchFields"
-          :status-options="statusOptions"
-          :categories="categories"
-          v-model:category-filter="categoryFilter"
-          status-label="Estado"
-          status-placeholder="Todos los estados"
-          show-status-filter
-          show-category-filter
+          search-placeholder="Buscar productos..."
+          :show-date-range="false"
+          :show-clear="hasActiveFilters"
           @search="performSearch"
-          @clear-filters="clearFilters"
-        />
+          @clear="clearFilters"
+        >
+          <template #additional-filters>
+            <select
+              v-model="categoryFilter"
+              class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+              aria-label="Filtrar por categoría"
+            >
+              <option value="">Categoría</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+            </select>
 
-        <HealthSemaphore :is-unlocked="true" title="Catálogo y rentabilidad de productos">
-          <template #header-actions>
-            <NuxtLink to="/menu/productos/crear"
-              class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
-              <span class="hidden sm:inline">+ Nuevo Producto</span>
-              <span class="sm:hidden">+ Nuevo</span>
+            <select
+              v-model="statusFilter"
+              class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+              aria-label="Filtrar por estado"
+            >
+              <option value="">Estado</option>
+              <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+
+            <select
+              v-if="showComandasStations"
+              v-model="stationFilter"
+              class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+              aria-label="Filtrar por estación de cocina"
+            >
+              <option value="">Estación</option>
+              <option v-for="st in stations" :key="st.id" :value="st.id">{{ st.name }}</option>
+            </select>
+
+            <select
+              v-model="sortFilter"
+              class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+              aria-label="Ordenar productos"
+            >
+              <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+
+            <label
+              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
+              :class="onlineOnly
+                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
+                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
+            >
+              <input v-model="onlineOnly" type="checkbox" class="sr-only" aria-label="Solo visibles online" />
+              <span class="text-sm font-semibold">Online</span>
+            </label>
+
+            <label
+              v-if="showTableQrColumn"
+              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
+              :class="qrOnly
+                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
+                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
+            >
+              <input v-model="qrOnly" type="checkbox" class="sr-only" aria-label="Solo visibles en QR mesa" />
+              <span class="text-sm font-semibold">QR mesa</span>
+            </label>
+
+            <label
+              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
+              :class="noRecipeOnly
+                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
+                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
+            >
+              <input v-model="noRecipeOnly" type="checkbox" class="sr-only" aria-label="Solo productos sin receta" />
+              <span class="text-sm font-semibold">Sin receta</span>
+            </label>
+
+            <label
+              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
+              :class="marginNegativeOnly
+                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
+                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
+            >
+              <input v-model="marginNegativeOnly" type="checkbox" class="sr-only" aria-label="Solo margen negativo" />
+              <span class="text-sm font-semibold">Margen negativo</span>
+            </label>
+          </template>
+
+          <template #trailing>
+            <NuxtLink
+              to="/menu/productos/crear"
+              class="flex h-10 px-3 items-center gap-1.5 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors whitespace-nowrap shrink-0"
+              aria-label="Crear nuevo producto"
+            >
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Nuevo</span>
             </NuxtLink>
           </template>
+        </UiAdvancedFiltersBar>
+
+        <HealthSemaphore :is-unlocked="true" title="Catálogo y rentabilidad de productos">
         <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
         <UiResponsiveDataView
           :columns="productosTableColumns"
-          :data="sortedProducts"
-          :sort-field="sortField"
-          :sort-direction="sortDirection"
+          :data="products"
           :row-class="getRowClass"
-          @sort="handleSort"
-          empty-message="No hay productos registrados"
-          empty-sub-message="Crea un nuevo producto para comenzar"
+          :empty-message="emptyMessage"
+          :empty-sub-message="emptySubMessage"
           variant="default"
           row-size="sm"
         >
@@ -409,7 +486,7 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted } from 'vue'
+import { onUnmounted, watch } from 'vue'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
@@ -423,42 +500,81 @@ useHead({ title: 'Productos' })
 
 const router = useRouter()
 
-// Reactive state
-const localSearchTerm = ref('')
-const apiSearchTerm = ref('')
+// Filters — AdvancedFiltersBar + server-side API (#761)
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const apiSearchField = ref('name')
 const statusFilter = ref('')
 const categoryFilter = ref('')
+const stationFilter = ref('')
+const sortFilter = ref('created_at_desc')
+const onlineOnly = ref(false)
+const qrOnly = ref(false)
+const noRecipeOnly = ref(false)
+const marginNegativeOnly = ref(false)
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
 
 const searchFields = [
   { label: 'Nombre', value: 'name' },
-  { label: 'Descripción', value: 'description' }
+  { label: 'Descripción', value: 'description' },
+  { label: 'Nombre cocina', value: 'kitchen_name' },
 ]
 
 const statusOptions = [
   { label: 'Disponible', value: 'true' },
-  { label: 'No disponible', value: 'false' }
+  { label: 'No disponible', value: 'false' },
 ]
 
-const performSearch = () => {
-  apiSearchTerm.value = localSearchTerm.value
-  currentPage.value = 1
-}
+const sortOptions = [
+  { label: 'Más recientes', value: 'created_at_desc' },
+  { label: 'Más antiguos', value: 'created_at_asc' },
+  { label: 'Nombre A-Z', value: 'name_asc' },
+  { label: 'Nombre Z-A', value: 'name_desc' },
+  { label: 'Precio menor', value: 'price_asc' },
+  { label: 'Precio mayor', value: 'price_desc' },
+  { label: 'Margen menor', value: 'margin_asc' },
+  { label: 'Margen mayor', value: 'margin_desc' },
+]
 
-// Sorting state
-const sortField = ref('')
-const sortDirection = ref('asc')
+const performSearch = () => applySearch(() => { currentPage.value = 1 })
 
-// Clear all filters
 const clearFilters = () => {
-  localSearchTerm.value = ''
-  apiSearchTerm.value = ''
+  clearSearch()
+  apiSearchField.value = 'name'
   statusFilter.value = ''
   categoryFilter.value = ''
+  stationFilter.value = ''
+  sortFilter.value = 'created_at_desc'
+  onlineOnly.value = false
+  qrOnly.value = false
+  noRecipeOnly.value = false
+  marginNegativeOnly.value = false
   currentPage.value = 1
 }
+
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || !!statusFilter.value
+    || !!categoryFilter.value
+    || !!stationFilter.value
+    || sortFilter.value !== 'created_at_desc'
+    || onlineOnly.value
+    || qrOnly.value
+    || noRecipeOnly.value
+    || marginNegativeOnly.value,
+)
+
+const emptyMessage = computed(() =>
+  hasActiveFilters.value ? 'Ningún producto coincide con los filtros' : 'No hay productos registrados',
+)
+
+const emptySubMessage = computed(() =>
+  hasActiveFilters.value
+    ? 'Prueba ajustar o limpiar los filtros'
+    : 'Crea un nuevo producto para comenzar',
+)
 
 // Pagination
 const totalPages = computed(() => {
@@ -533,6 +649,16 @@ const showTableQrColumn = computed(
   () => !!(businessProfile.value?.tables_enabled && businessProfile.value?.table_qr_module_enabled)
 )
 
+const showComandasStations = computed(() => !!businessProfile.value?.comandas_enabled)
+
+const { data: stationsData } = useQuery({
+  key: () => ['tenant', 'stations', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: { id: string; name: string }[] }>('/api/api/stations'),
+  enabled: () => !!currentTenant.value && showComandasStations.value,
+  staleTime: 30_000,
+})
+const stations = computed(() => stationsData.value?.data ?? [])
+
 // Fetch categories (static per tenant)
 const { data: categoriesData } = useQuery({
   key: () => ['menu', 'categories', currentTenant.value?.id],
@@ -544,22 +670,29 @@ const { data: categoriesData } = useQuery({
 const categories = computed(() => (categoriesData.value as any)?.data || [])
 
 // Fetch products
-const { data: productsData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
+const { data: productsData, error: fetchError, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['menu', 'products', currentTenant.value?.id, {
     page: currentPage.value,
     limit: itemsPerPage.value,
-    search: apiSearchTerm.value || null,
+    search: appliedSearch.value || null,
     searchField: apiSearchField.value,
     status: statusFilter.value || null,
     category: categoryFilter.value || null,
+    station: stationFilter.value || null,
+    onlineOnly: onlineOnly.value,
+    qrOnly: qrOnly.value,
+    noRecipeOnly: noRecipeOnly.value,
+    marginNegativeOnly: marginNegativeOnly.value,
+    sort: sortFilter.value,
   }],
   query: () => {
-    const params: any = {
+    const params: Record<string, string | number | boolean> = {
       page: currentPage.value,
       limit: itemsPerPage.value,
+      sort: sortFilter.value,
     }
-    if (apiSearchTerm.value) {
-      params.search = apiSearchTerm.value
+    if (appliedSearch.value) {
+      params.search = appliedSearch.value
       params.search_field = apiSearchField.value
     }
     if (statusFilter.value) {
@@ -567,6 +700,21 @@ const { data: productsData, status: queryStatus, asyncStatus: queryAsyncStatus, 
     }
     if (categoryFilter.value) {
       params.category_id = categoryFilter.value
+    }
+    if (stationFilter.value) {
+      params.station_id = stationFilter.value
+    }
+    if (onlineOnly.value) {
+      params.is_available_online = true
+    }
+    if (qrOnly.value) {
+      params.is_available_table_qr = true
+    }
+    if (noRecipeOnly.value) {
+      params.has_recipe = false
+    }
+    if (marginNegativeOnly.value) {
+      params.margin_negative = true
     }
     return $fetch('/api/menu/products', { params })
   },
@@ -577,8 +725,22 @@ const { data: productsData, status: queryStatus, asyncStatus: queryAsyncStatus, 
 const isLoading = computed(() => !productsData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && productsData.value != null)
 
-// Reset page on tenant change — key change triggers automatic refetch
+// Reset page on tenant or filter change
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
+watch(
+  [
+    statusFilter,
+    categoryFilter,
+    stationFilter,
+    sortFilter,
+    onlineOnly,
+    qrOnly,
+    noRecipeOnly,
+    marginNegativeOnly,
+    appliedSearch,
+  ],
+  () => { currentPage.value = 1 },
+)
 
 // Computed properties for data
 const products = computed(() => productsData.value?.data || [])
@@ -612,44 +774,6 @@ const getRowClass = (row: any): string | undefined => {
   return undefined
 }
 
-// Sorting
-const sortedProducts = computed(() => {
-  if (!sortField.value) return products.value
-
-  return [...products.value].sort((a: any, b: any) => {
-    let aVal = a[sortField.value]
-    let bVal = b[sortField.value]
-
-    // Handle null values
-    if (aVal === null) return 1
-    if (bVal === null) return -1
-
-    // Handle numeric values
-    if (typeof aVal === 'number' && typeof bVal === 'number') {
-      return sortDirection.value === 'asc' ? aVal - bVal : bVal - aVal
-    }
-
-    // Handle string values
-    aVal = String(aVal).toLowerCase()
-    bVal = String(bVal).toLowerCase()
-
-    if (sortDirection.value === 'asc') {
-      return aVal < bVal ? -1 : aVal > bVal ? 1 : 0
-    } else {
-      return aVal > bVal ? -1 : aVal < bVal ? 1 : 0
-    }
-  })
-})
-
-const handleSort = (field: string) => {
-  if (sortField.value === field) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortField.value = field
-    sortDirection.value = 'asc'
-  }
-}
-
 // Inject refresh handler setter from layout
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
@@ -670,35 +794,35 @@ const productosTableColumns = computed(() => {
     {
       key: 'name',
       title: 'Producto',
-      sortable: true,
+      sortable: false,
       format: 'text',
       align: 'left'
     },
     {
       key: 'category_name',
       title: 'Categoría',
-      sortable: true,
+      sortable: false,
       format: 'text',
       align: 'left'
     },
     {
       key: 'price',
       title: 'Precio',
-      sortable: true,
+      sortable: false,
       format: 'currency',
       align: 'right'
     },
     {
       key: 'costo_calculado',
       title: 'Costo real',
-      sortable: true,
+      sortable: false,
       format: 'currency',
       align: 'right'
     },
     {
       key: 'costo_percibido',
       title: 'Mi costo',
-      sortable: true,
+      sortable: false,
       format: 'currency',
       align: 'right'
     },
@@ -722,14 +846,14 @@ const productosTableColumns = computed(() => {
     {
       key: 'is_available',
       title: 'Estado',
-      sortable: true,
+      sortable: false,
       format: 'boolean',
       align: 'center'
     },
     {
       key: 'is_available_online',
       title: 'Online',
-      sortable: true,
+      sortable: false,
       format: 'boolean',
       align: 'center'
     },
@@ -737,7 +861,7 @@ const productosTableColumns = computed(() => {
       ? [{
           key: 'is_available_table_qr',
           title: 'QR mesa',
-          sortable: true,
+          sortable: false,
           format: 'boolean',
           align: 'center'
         }]
