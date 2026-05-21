@@ -400,6 +400,8 @@ registerTableSessionRefresh(
 
 // ID of a tab item pending confirmation before removal (already fired to kitchen)
 const pendingRemoveItemId = ref<string | null>(null)
+const removeTabReason = ref('')
+const removeTabError = ref('')
 
 const removeTabItem = (orderItemId: string) => {
   if (!posStore.activeTableSession) return
@@ -409,6 +411,8 @@ const removeTabItem = (orderItemId: string) => {
     const isFired = item && item.fulfillmentStatus && item.fulfillmentStatus !== 'new'
     if (isFired) {
       pendingRemoveItemId.value = orderItemId
+      removeTabReason.value = ''
+      removeTabError.value = ''
       return
     }
   }
@@ -417,16 +421,21 @@ const removeTabItem = (orderItemId: string) => {
 
 const confirmRemoveTabItem = () => {
   if (!pendingRemoveItemId.value) return
-  const id = pendingRemoveItemId.value
-  pendingRemoveItemId.value = null
-  executeRemoveTabItem(id)
+  if (!removeTabReason.value.trim()) {
+    removeTabError.value = 'Indica el motivo de eliminación'
+    return
+  }
+  removeTabError.value = ''
+  executeRemoveTabItem(pendingRemoveItemId.value, removeTabReason.value.trim())
 }
 
 const cancelPendingRemove = () => {
   pendingRemoveItemId.value = null
+  removeTabReason.value = ''
+  removeTabError.value = ''
 }
 
-const executeRemoveTabItem = async (orderItemId: string) => {
+const executeRemoveTabItem = async (orderItemId: string, reason?: string) => {
   if (!posStore.activeTableSession) return
   const previousTabItems = storeTabItems.value
   bumpTableSessionFetchGen()
@@ -435,12 +444,24 @@ const executeRemoveTabItem = async (orderItemId: string) => {
   try {
     await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/items/${orderItemId}`, {
       method: 'DELETE',
+      body: reason ? { reason } : undefined,
     })
+    pendingRemoveItemId.value = null
+    removeTabReason.value = ''
+    removeTabError.value = ''
     await refreshTableSession()
   } catch (e: any) {
     bumpTableSessionFetchGen()
     posStore.setTabItems(previousTabItems)
-    tabError.value = e?.data?.detail ?? 'Error al eliminar el producto'
+    const beMessage = e?.data?.message
+      ?? (typeof e?.data?.detail === 'string' ? e.data.detail : null)
+      ?? e?.data?.detail
+    const errText = beMessage ?? 'Error al eliminar el producto'
+    if (reason) {
+      removeTabError.value = errText
+    } else {
+      tabError.value = errText
+    }
   } finally {
     const next = new Set(tabItemsLoading.value)
     next.delete(orderItemId)
@@ -1328,6 +1349,19 @@ onUnmounted(() => {
                 </p>
               </div>
             </div>
+            <label for="remove-tab-reason" class="block text-xs font-medium text-text-secondary uppercase tracking-wide mt-4 mb-1.5">
+              Motivo de eliminación <span class="text-destructive">*</span>
+            </label>
+            <textarea
+              id="remove-tab-reason"
+              v-model="removeTabReason"
+              rows="2"
+              placeholder="Ej: cliente cambió de opinión"
+              class="w-full px-3 py-2 bg-surface-secondary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <p v-if="removeTabError" class="mt-2 text-sm text-destructive">
+              {{ removeTabError }}
+            </p>
           </div>
           <!-- Actions -->
           <div class="px-5 pb-5 flex gap-2">
@@ -1340,7 +1374,8 @@ onUnmounted(() => {
             </button>
             <button
               type="button"
-              class="flex-1 h-11 rounded-xl bg-destructive text-white text-sm font-semibold hover:bg-destructive/90 active:scale-95 transition-all"
+              :disabled="!removeTabReason.trim()"
+              class="flex-1 h-11 rounded-xl bg-destructive text-white text-sm font-semibold hover:bg-destructive/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               @click="confirmRemoveTabItem"
             >
               Sí, eliminar
