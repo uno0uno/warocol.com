@@ -12,39 +12,97 @@
     <div v-else class="page-layout">
       <div class="flex flex-col gap-3 md:gap-4">
         <!-- Filters Bar -->
-        <SharedFiltersBar
+        <UiAdvancedFiltersBar
           v-model:search="localSearchTerm"
           v-model:search-field="apiSearchField"
-          v-model:status-filter="statusFilter"
           :search-fields="searchFields"
-          :status-options="statusOptions"
-          :categories="categories"
-          v-model:category-filter="categoryFilter"
-          status-label="Estado"
-          status-placeholder="Todos los estados"
-          show-status-filter
-          show-category-filter
+          search-placeholder="Buscar productos de reventa..."
+          :show-date-range="false"
+          :show-clear="hasActiveFilters"
           @search="performSearch"
-          @clear-filters="clearFilters"
-        />
+          @clear="clearFilters"
+        >
+          <template #additional-filters>
+            <select
+              v-model="categoryFilter"
+              class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+              aria-label="Filtrar por categoría"
+            >
+              <option value="">Categoría</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+            </select>
 
-        <HealthSemaphore :is-unlocked="true" title="Catálogo comercial de productos de reventa">
-          <template #header-actions>
-            <NuxtLink to="/menu/reventa/crear"
-              class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap">
-              <span class="hidden sm:inline">Gestionar Productos</span>
-              <span class="sm:hidden">Gestionar</span>
+            <select
+              v-model="statusFilter"
+              class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+              aria-label="Filtrar por estado"
+            >
+              <option value="">Estado</option>
+              <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+
+            <select
+              v-model="sortFilter"
+              class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+              aria-label="Ordenar productos"
+            >
+              <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+
+            <label
+              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
+              :class="onlineOnly
+                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
+                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
+            >
+              <input v-model="onlineOnly" type="checkbox" class="sr-only" aria-label="Solo visibles online" />
+              <span class="text-sm font-semibold">Online</span>
+            </label>
+
+            <label
+              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
+              :class="marginNegativeOnly
+                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
+                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
+            >
+              <input v-model="marginNegativeOnly" type="checkbox" class="sr-only" aria-label="Solo margen negativo" />
+              <span class="text-sm font-semibold">Margen negativo</span>
+            </label>
+
+            <label
+              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
+              :class="costDriftOnly
+                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
+                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
+            >
+              <input v-model="costDriftOnly" type="checkbox" class="sr-only" aria-label="Solo desfase de costo" />
+              <span class="text-sm font-semibold">Desfase costo</span>
+            </label>
+          </template>
+
+          <template #trailing>
+            <NuxtLink
+              to="/menu/reventa/crear"
+              class="flex h-10 px-3 items-center gap-1.5 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors whitespace-nowrap shrink-0"
+              aria-label="Gestionar productos de reventa"
+            >
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span class="hidden sm:inline">Gestionar</span>
+              <span class="sm:hidden">+</span>
             </NuxtLink>
           </template>
+        </UiAdvancedFiltersBar>
+
+        <HealthSemaphore :is-unlocked="true" title="Catálogo comercial de productos de reventa">
         <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
         <UiResponsiveDataView
           :columns="productosTableColumns"
-          :data="sortedProducts"
-          :sort-field="sortField"
-          :sort-direction="sortDirection"
-          @sort="handleSort"
-          empty-message="No hay productos de reventa registrados"
-          empty-sub-message="Crea un nuevo producto de reventa para comenzar"
+          :data="displayedProducts"
+          :row-class="getRowClass"
+          :empty-message="emptyMessage"
+          :empty-sub-message="emptySubMessage"
           variant="default"
           row-size="sm"
         >
@@ -234,7 +292,7 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted } from 'vue'
+import { onUnmounted, watch } from 'vue'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
@@ -245,42 +303,76 @@ definePageMeta({
 
 useHead({ title: 'Productos de Reventa' })
 
-// Reactive state
-const localSearchTerm = ref('')
-const apiSearchTerm = ref('')
+// Filters — AdvancedFiltersBar + server-side API (#762)
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const apiSearchField = ref('name')
 const statusFilter = ref('')
 const categoryFilter = ref('')
+const sortFilter = ref('created_at_desc')
+const onlineOnly = ref(false)
+const marginNegativeOnly = ref(false)
+const costDriftOnly = ref(false)
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
 
 const searchFields = [
   { label: 'Nombre', value: 'name' },
-  { label: 'Descripcion', value: 'description' }
+  { label: 'Descripción', value: 'description' },
 ]
 
 const statusOptions = [
   { label: 'Disponible', value: 'true' },
-  { label: 'No disponible', value: 'false' }
+  { label: 'No disponible', value: 'false' },
 ]
 
-const performSearch = () => {
-  apiSearchTerm.value = localSearchTerm.value
-  currentPage.value = 1
-}
+const sortOptions = [
+  { label: 'Más recientes', value: 'created_at_desc' },
+  { label: 'Más antiguos', value: 'created_at_asc' },
+  { label: 'Nombre A-Z', value: 'name_asc' },
+  { label: 'Nombre Z-A', value: 'name_desc' },
+  { label: 'Precio menor', value: 'price_asc' },
+  { label: 'Precio mayor', value: 'price_desc' },
+  { label: 'Margen menor', value: 'margin_asc' },
+  { label: 'Margen mayor', value: 'margin_desc' },
+]
 
-// Sorting state
-const sortField = ref('')
-const sortDirection = ref('asc')
+const performSearch = () => applySearch(() => { currentPage.value = 1 })
 
-// Clear all filters
 const clearFilters = () => {
-  localSearchTerm.value = ''
-  apiSearchTerm.value = ''
+  clearSearch()
+  apiSearchField.value = 'name'
   statusFilter.value = ''
   categoryFilter.value = ''
+  sortFilter.value = 'created_at_desc'
+  onlineOnly.value = false
+  marginNegativeOnly.value = false
+  costDriftOnly.value = false
   currentPage.value = 1
 }
+
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || !!statusFilter.value
+    || !!categoryFilter.value
+    || sortFilter.value !== 'created_at_desc'
+    || onlineOnly.value
+    || marginNegativeOnly.value
+    || costDriftOnly.value,
+)
+
+const emptyMessage = computed(() =>
+  hasActiveFilters.value
+    ? 'Ningún producto de reventa coincide con los filtros'
+    : 'No hay productos de reventa registrados',
+)
+
+const emptySubMessage = computed(() =>
+  hasActiveFilters.value
+    ? 'Prueba ajustar o limpiar los filtros'
+    : 'Crea un nuevo producto de reventa para comenzar',
+)
 
 // Pagination
 const totalPages = computed(() => {
@@ -361,24 +453,28 @@ const { data: categoriesData } = useQuery({
 
 const categories = computed(() => (categoriesData.value as any)?.data || [])
 
-// Fetch products - ONLY resale products (is_resale = true)
-const { data: productsData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
+// Fetch products — ONLY resale (is_resale always true)
+const { data: productsData, error: fetchError, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['menu', 'products-resale', currentTenant.value?.id, {
     page: currentPage.value,
     limit: itemsPerPage.value,
-    search: apiSearchTerm.value || null,
+    search: appliedSearch.value || null,
     searchField: apiSearchField.value,
     status: statusFilter.value || null,
     category: categoryFilter.value || null,
+    onlineOnly: onlineOnly.value,
+    marginNegativeOnly: marginNegativeOnly.value,
+    sort: sortFilter.value,
   }],
   query: () => {
-    const params: any = {
+    const params: Record<string, string | number | boolean> = {
       page: currentPage.value,
       limit: itemsPerPage.value,
-      is_resale: true
+      is_resale: true,
+      sort: sortFilter.value,
     }
-    if (apiSearchTerm.value) {
-      params.search = apiSearchTerm.value
+    if (appliedSearch.value) {
+      params.search = appliedSearch.value
       params.search_field = apiSearchField.value
     }
     if (statusFilter.value) {
@@ -386,6 +482,12 @@ const { data: productsData, status: queryStatus, asyncStatus: queryAsyncStatus, 
     }
     if (categoryFilter.value) {
       params.category_id = categoryFilter.value
+    }
+    if (onlineOnly.value) {
+      params.is_available_online = true
+    }
+    if (marginNegativeOnly.value) {
+      params.margin_negative = true
     }
     return $fetch('/api/menu/products', { params })
   },
@@ -396,48 +498,51 @@ const { data: productsData, status: queryStatus, asyncStatus: queryAsyncStatus, 
 const isLoading = computed(() => !productsData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && productsData.value != null)
 
-// Reset page on tenant change — key change triggers automatic refetch
+// Reset page on tenant or filter change
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
+watch(
+  [statusFilter, categoryFilter, sortFilter, onlineOnly, marginNegativeOnly, appliedSearch],
+  () => { currentPage.value = 1 },
+)
+// Client-only drift filter — refetch not required
+watch(costDriftOnly, () => { currentPage.value = 1 })
 
-// Computed properties for data
 const products = computed(() => productsData.value?.data || [])
 
-// Sorting
-const sortedProducts = computed(() => {
-  if (!sortField.value) return products.value
+const formatCurrency = (value: number) => {
+  if (!value) return '$0'
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+  }).format(value)
+}
 
-  return [...products.value].sort((a: any, b: any) => {
-    let aVal = a[sortField.value]
-    let bVal = b[sortField.value]
+const {
+  marginRealPct,
+  marginOperativoPct,
+  hasCostDrift,
+  formatCostCell: formatCostCellValue,
+} = useProductMargins()
 
-    // Handle null values
-    if (aVal === null) return 1
-    if (bVal === null) return -1
+const formatCostCell = (value: unknown) => formatCostCellValue(value, formatCurrency)
 
-    // Handle numeric values
-    if (typeof aVal === 'number' && typeof bVal === 'number') {
-      return sortDirection.value === 'asc' ? aVal - bVal : bVal - aVal
-    }
-
-    // Handle string values
-    aVal = String(aVal).toLowerCase()
-    bVal = String(bVal).toLowerCase()
-
-    if (sortDirection.value === 'asc') {
-      return aVal < bVal ? -1 : aVal > bVal ? 1 : 0
-    } else {
-      return aVal > bVal ? -1 : aVal < bVal ? 1 : 0
-    }
-  })
+const displayedProducts = computed(() => {
+  if (!costDriftOnly.value) return products.value
+  return products.value.filter((p: any) => hasCostDrift(p))
 })
 
-const handleSort = (field: string) => {
-  if (sortField.value === field) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortField.value = field
-    sortDirection.value = 'asc'
+const costDriftProductIds = computed(() => {
+  const ids = new Set<string>()
+  for (const p of displayedProducts.value) {
+    if (hasCostDrift(p)) ids.add(p.id)
   }
+  return ids
+})
+
+const getRowClass = (row: any): string | undefined => {
+  if (costDriftProductIds.value.has(row.id)) return 'bg-status-warning-bg/40'
+  return undefined
 }
 
 // Inject refresh handler setter from layout
@@ -458,35 +563,35 @@ const productosTableColumns = [
   {
     key: 'name',
     title: 'Producto',
-    sortable: true,
+    sortable: false,
     format: 'text',
     align: 'left'
   },
   {
     key: 'category_name',
     title: 'Categoria',
-    sortable: true,
+    sortable: false,
     format: 'text',
     align: 'left'
   },
   {
     key: 'price',
     title: 'Precio',
-    sortable: true,
+    sortable: false,
     format: 'currency',
     align: 'right'
   },
   {
     key: 'costo_calculado',
     title: 'Costo real',
-    sortable: true,
+    sortable: false,
     format: 'currency',
     align: 'right'
   },
   {
     key: 'costo_percibido',
     title: 'Mi costo',
-    sortable: true,
+    sortable: false,
     format: 'currency',
     align: 'right'
   },
@@ -507,38 +612,11 @@ const productosTableColumns = [
   {
     key: 'is_available',
     title: 'Estado',
-    sortable: true,
+    sortable: false,
     format: 'boolean',
     align: 'center'
   }
 ]
-
-// Format currency
-const formatCurrency = (value: number) => {
-  if (!value) return '$0'
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
-
-const {
-  marginRealPct,
-  marginOperativoPct,
-  hasCostDrift,
-  formatCostCell: formatCostCellValue,
-} = useProductMargins()
-
-const formatCostCell = (value: unknown) => formatCostCellValue(value, formatCurrency)
-
-const costDriftProductIds = computed(() => {
-  const ids = new Set<string>()
-  for (const p of sortedProducts.value) {
-    if (hasCostDrift(p)) ids.add(p.id)
-  }
-  return ids
-})
 
 </script>
 
