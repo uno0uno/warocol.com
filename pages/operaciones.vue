@@ -17,6 +17,7 @@ definePageMeta({
 const navigationItems = computed(() => [
   { to: '/operaciones/comandas', label: 'Comandas & Cocina' },
   { to: '/operaciones/mesas', label: plural.value },
+  { to: '/operaciones/bitacora', label: 'Bitácora' },
   { to: '/operaciones/turnos', label: 'Turnos' },
   { to: '/operaciones/personalizar', label: 'Personalizar' },
   { to: '/operaciones/propinas', label: 'Propinas' },
