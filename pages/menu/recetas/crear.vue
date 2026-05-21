@@ -564,76 +564,19 @@ const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 // Tracks which ingredient IDs are currently fetching their purchase units
 const loadingUnits = ref<Set<string>>(new Set())
 
-const unitLabels: Record<string, string> = {
-  g: 'Gramos (g)',
-  gr: 'Gramos (gr)',
-  kg: 'Kilogramos (kg)',
-  ml: 'Mililitros (ml)',
-  l: 'Litros (l)',
-  u: 'Unidades (u)',
-  und: 'Unidades (und)',
-  lb: 'Libras (lb)',
-}
-
-// Standard catalog matching backend PURCHASE_UNIT_CATALOG
-const UNIT_CATALOG: Record<string, { label: string; factor: number; base: 'gr' | 'ml' }> = {
-  kg:         { label: 'Kilogramo',    factor: 1000,  base: 'gr' },
-  libra:      { label: 'Libra',        factor: 500,   base: 'gr' },
-  arroba:     { label: 'Arroba',       factor: 12500, base: 'gr' },
-  bulto_25kg: { label: 'Bulto (25 kg)',factor: 25000, base: 'gr' },
-  lt:         { label: 'Litro',        factor: 1000,  base: 'ml' },
-  botella:    { label: 'Botella',      factor: 750,   base: 'ml' },
-  galon:      { label: 'Galón',        factor: 3785,  base: 'ml' },
-}
+const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient } = useIngredientUnitOptions()
 
 function getIngredientUnitOptions(ingredientId: string) {
-  if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
-  const ingredient = ingredientCache.value[ingredientId]
-  const baseUnit = ingredient?.unit || 'g'
-  const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
-
-  const options: { value: string; label: string }[] = [
-    { value: baseUnit, label: unitLabels[baseUnit] || baseUnit }
-  ]
-
-  const isDual = ingredient?.unit_weight_gr > 0 && ingredient?.unit_weight_unit && ingredient.unit_weight_unit !== baseUnit
-  const weightUnit = ingredient?.unit_weight_unit as string | undefined
-
-  // For dual und ingredients: show gr/ml raw unit + catalog options for that unit type
-  if (isDual && weightUnit) {
-    options.push({ value: weightUnit, label: unitLabels[weightUnit] || weightUnit })
-    // Add catalog entries compatible with unit_weight_unit (e.g. lt, botella, galon for ml)
-    Object.entries(UNIT_CATALOG)
-      .filter(([, entry]) => entry.base === weightUnit)
-      .forEach(([key, entry]) => {
-        options.push({
-          value: key,
-          label: `${entry.label} · ${entry.factor.toLocaleString('es-CO')} ${weightUnit}`,
-        })
-      })
-  }
-
-  // Purchase units with proper labels and conversion info
-  purchaseUnits.forEach((pu: any) => {
-    if (pu.purchase_unit && !options.find(o => o.value === pu.purchase_unit)) {
-      options.push({
-        value: pu.purchase_unit,
-        label: `${pu.purchase_unit_label} · ${Number(pu.conversion_factor).toLocaleString('es-CO')} ${baseUnit}`,
-      })
-    }
+  return buildUnitOptions(ingredientId, {
+    ingredientCache: ingredientCache.value,
+    purchaseUnitsCache: purchaseUnitsCache.value,
   })
-
-  return options
 }
 
 async function onIngredientChange(index: number, ingredientId: string) {
   if (!ingredientId) return
   const ingredient = ingredientCache.value[ingredientId]
-  // For dual-unit und ingredients, default to unit_weight_unit (gr/ml) for recipe use
-  const defaultUnit = (ingredient?.unit_weight_gr > 0 && ingredient?.unit_weight_unit && ingredient.unit_weight_unit !== ingredient?.unit)
-    ? ingredient.unit_weight_unit
-    : ingredient?.unit || 'g'
-  form.value.ingredients[index].unit = defaultUnit
+  form.value.ingredients[index].unit = defaultUnitForIngredient(ingredient)
   if (!purchaseUnitsCache.value.has(ingredientId)) {
     loadingUnits.value = new Set([...loadingUnits.value, ingredientId])
     try {

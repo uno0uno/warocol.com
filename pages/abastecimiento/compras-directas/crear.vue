@@ -1413,16 +1413,10 @@ const itemsByType = computed(() => ({
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 const loadingUnitsFor = ref<Set<string>>(new Set())
 
-// Standard catalog matching backend PURCHASE_UNIT_CATALOG
-const UNIT_CATALOG: Record<string, { label: string; factor: number; base: 'gr' | 'ml' }> = {
-  kg:         { label: 'Kilogramo',     factor: 1000,  base: 'gr' },
-  libra:      { label: 'Libra',         factor: 500,   base: 'gr' },
-  arroba:     { label: 'Arroba',        factor: 12500, base: 'gr' },
-  bulto_25kg: { label: 'Bulto (25 kg)', factor: 25000, base: 'gr' },
-  lt:         { label: 'Litro',         factor: 1000,  base: 'ml' },
-  botella:    { label: 'Botella',       factor: 750,   base: 'ml' },
-  galon:      { label: 'Galón',         factor: 3785,  base: 'ml' },
-}
+const {
+  isDualUnitIngredient,
+  buildDualUnitCatalogOptionsWithMeta,
+} = useIngredientUnitOptions()
 
 // Loading state
 const isLoadingData = computed(() => loadingSuppliers.value)
@@ -1498,21 +1492,17 @@ const getPurchaseUnitOptions = (ingredientId: string) => {
     options.push({ value: baseUnit, label: baseUnit, conversion_factor: 1, is_default: units.length === 0 && pendingUnits.length === 0 })
   }
 
-  // For dual und ingredients: show gr/ml raw unit + catalog options for that unit type
-  const isDual = ingredient?.unit_weight_gr > 0 && ingredient?.unit_weight_unit && ingredient.unit_weight_unit !== baseUnit
   const weightUnit = ingredient?.unit_weight_unit as string | undefined
-  if (isDual && weightUnit) {
+  if (isDualUnitIngredient(ingredient) && weightUnit) {
     options.push({ value: weightUnit, label: weightUnit, conversion_factor: 1, is_default: false })
-    Object.entries(UNIT_CATALOG)
-      .filter(([, entry]) => entry.base === weightUnit)
-      .forEach(([key, entry]) => {
-        options.push({
-          value: key,
-          label: `${entry.label} · ${entry.factor.toLocaleString('es-CO')} ${weightUnit}`,
-          conversion_factor: entry.factor,
-          is_default: false,
-        })
+    buildDualUnitCatalogOptionsWithMeta(weightUnit).forEach((entry) => {
+      options.push({
+        value: entry.value,
+        label: entry.label,
+        conversion_factor: entry.conversion_factor,
+        is_default: false,
       })
+    })
   }
 
   const serverOptions = units.map((u: any) => ({
