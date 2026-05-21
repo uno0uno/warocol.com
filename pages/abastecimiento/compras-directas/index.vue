@@ -12,21 +12,46 @@
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
       <!-- Filters Bar -->
-      <SharedFiltersBar
+      <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
-        v-model:supplier-filter="proveedorFilter"
-        v-model:status-filter="statusFilter"
-        v-model:date-filter="dateFilter"
-        :suppliers="suppliers"
-        :status-options="statusOptions"
-        status-label="Estado"
-        status-placeholder="Todos los estados"
-        show-supplier-filter
-        show-status-filter
-        show-date-filter
+        search-placeholder="Buscar compras directas..."
+        :search-fields="[]"
+        :show-date-range="false"
+        :show-clear="hasActiveFilters"
         @search="performSearch"
-        @clear-filters="clearFilters"
-      />
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
+          <select
+            v-model="proveedorFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por proveedor"
+            @change="currentPage = 1"
+          >
+            <option value="">Proveedor</option>
+            <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
+          </select>
+
+          <select
+            v-model="statusFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por estado"
+            @change="currentPage = 1"
+          >
+            <option value="">Estado</option>
+            <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+
+          <select
+            v-model="dateFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por período"
+            @change="currentPage = 1"
+          >
+            <option v-for="opt in purchaseDateFilterOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </template>
+      </UiAdvancedFiltersBar>
 
       <!-- Responsive Data View -->
       <HealthSemaphore :is-unlocked="true" title="Compras Directas">
@@ -214,10 +239,10 @@ const { quota, warningLevel, scansRemaining } = useScanQuotaQuery()
 // State
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
-const localSearchTerm = ref('')
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const proveedorFilter = ref('')
 const statusFilter = ref('')
-const dateFilter = ref('')
+const { dateFilter, purchaseDateFilterOptions, clearPurchaseDateFilter } = usePurchaseDateFilter()
 const sortField = ref('purchase_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
 
@@ -228,7 +253,7 @@ const { data: purchasesResponse, asyncStatus: queryAsyncStatus, error: fetchErro
   key: () => ['suppliers', 'direct-purchases', currentTenant.value?.id ?? null, {
     page: currentPage.value,
     limit: itemsPerPage.value,
-    search: localSearchTerm.value || null,
+    search: appliedSearch.value || null,
     status: statusFilter.value || null,
     supplier_id: proveedorFilter.value || null,
     date_filter: dateFilter.value || null,
@@ -239,8 +264,8 @@ const { data: purchasesResponse, asyncStatus: queryAsyncStatus, error: fetchErro
       limit: itemsPerPage.value,
     }
 
-    if (localSearchTerm.value) {
-      params.search = localSearchTerm.value
+    if (appliedSearch.value) {
+      params.search = appliedSearch.value
     }
     if (statusFilter.value) {
       params.status = statusFilter.value
@@ -270,10 +295,7 @@ const { data: suppliersResponse } = useQuery({
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
-const suppliers = computed(() => (suppliersResponse.value?.data || []).map((s: any) => ({
-  value: s.id,
-  label: s.name
-})))
+const suppliers = computed(() => suppliersResponse.value?.data || [])
 
 // Status options
 const statusOptions = [
@@ -356,15 +378,22 @@ const handleSort = (field: string) => {
   }
 }
 
-const performSearch = () => {
-  currentPage.value = 1
-}
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || !!proveedorFilter.value
+    || !!statusFilter.value
+    || !!dateFilter.value,
+)
+
+const performSearch = () => applySearch(() => { currentPage.value = 1 })
 
 const clearFilters = () => {
-  localSearchTerm.value = ''
+  clearSearch()
   proveedorFilter.value = ''
   statusFilter.value = ''
-  dateFilter.value = ''
+  clearPurchaseDateFilter()
   currentPage.value = 1
 }
 

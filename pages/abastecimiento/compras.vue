@@ -11,23 +11,47 @@
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Filters Bar -->
-      <SharedFiltersBar
+      <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         v-model:search-field="apiSearchField"
-        v-model:supplier-filter="proveedorFilter"
-        v-model:status-filter="statusFilter"
-        v-model:date-filter="dateFilter"
         :search-fields="searchFields"
-        :suppliers="suppliers"
-        :status-options="purchaseStatusOptions"
-        status-label="Estado"
-        status-placeholder="Todos los estados"
-        show-supplier-filter
-        show-status-filter
-        show-date-filter
+        search-placeholder="Buscar órdenes de compra..."
+        :show-date-range="false"
+        :show-clear="hasActiveFilters"
         @search="performSearch"
-        @clear-filters="clearFilters"
-      />
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
+          <select
+            v-model="proveedorFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por proveedor"
+            @change="currentPage = 1"
+          >
+            <option value="">Proveedor</option>
+            <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
+          </select>
+
+          <select
+            v-model="statusFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por estado"
+            @change="currentPage = 1"
+          >
+            <option value="">Estado</option>
+            <option v-for="opt in purchaseStatusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+
+          <select
+            v-model="dateFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por período"
+            @change="currentPage = 1"
+          >
+            <option v-for="opt in purchaseDateFilterOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </template>
+      </UiAdvancedFiltersBar>
 
       <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
       <HealthSemaphore :is-unlocked="true" title="Órdenes de Compra">
@@ -220,13 +244,12 @@ import {
   ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 
-// Reactive state
-const localSearchTerm = ref('')
-const apiSearchTerm = ref('')
+// Filters — AdvancedFiltersBar (#765)
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const apiSearchField = ref('purchase_number')
 const proveedorFilter = ref('')
 const statusFilter = ref('')
-const dateFilter = ref('')
+const { dateFilter, purchaseDateFilterOptions, clearPurchaseDateFilter } = usePurchaseDateFilter()
 const showCreateModal = ref(false)
 const currentPage = ref(1)
 const itemsPerPage = ref(20) // 20 filas por página
@@ -250,20 +273,27 @@ const purchaseStatusOptions = [
   { label: 'Cancelada', value: 'cancelled' }
 ]
 
-const performSearch = () => {
-  apiSearchTerm.value = localSearchTerm.value
-  currentPage.value = 1
-}
+const performSearch = () => applySearch(() => { currentPage.value = 1 })
+
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || !!proveedorFilter.value
+    || !!statusFilter.value
+    || !!dateFilter.value,
+)
 
 // Sorting state
 const sortField = ref('')
 const sortDirection = ref('asc')
 
-// Clear all filters
 const clearFilters = () => {
+  clearSearch()
   proveedorFilter.value = ''
   statusFilter.value = ''
-  dateFilter.value = ''
+  clearPurchaseDateFilter()
+  currentPage.value = 1
 }
 
 // Pagination
@@ -318,7 +348,7 @@ const { data: purchasesData, status: queryStatus, asyncStatus: purchasesAsyncSta
   key: () => ['suppliers', 'purchases', currentTenant.value?.id, {
     page: currentPage.value,
     limit: itemsPerPage.value,
-    search: apiSearchTerm.value || null,
+    search: appliedSearch.value || null,
     searchField: apiSearchField.value,
     status: statusFilter.value || null,
     supplier: proveedorFilter.value || null,
@@ -329,8 +359,8 @@ const { data: purchasesData, status: queryStatus, asyncStatus: purchasesAsyncSta
       page: currentPage.value,
       limit: itemsPerPage.value,
     }
-    if (apiSearchTerm.value) {
-      params.search = apiSearchTerm.value
+    if (appliedSearch.value) {
+      params.search = appliedSearch.value
       params.search_field = apiSearchField.value
     }
     if (statusFilter.value) params.status = statusFilter.value
