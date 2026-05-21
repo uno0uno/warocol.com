@@ -5,7 +5,7 @@
  * `api_warocol.com/app/services/ingredient_purchase_units_service.py` — converts
  * recipe quantities in gr/ml/und/catalog keys (lt, kg, …) to the ingredient base unit.
  *
- * warocol.com#773, #774
+ * warocol.com#773, #774, #775
  */
 
 export interface IngredientForUnits {
@@ -68,6 +68,28 @@ export function mergeIngredientUnitFields<T extends Record<string, unknown>>(
     unit: (partial.unit as string | undefined) ?? catalogRow?.unit,
     unit_weight_gr: (partial.unit_weight_gr as number | null | undefined) ?? catalogRow?.unit_weight_gr ?? null,
     unit_weight_unit: (partial.unit_weight_unit as string | null | undefined) ?? catalogRow?.unit_weight_unit ?? null,
+  }
+}
+
+export interface IngredientCacheEntry {
+  id: string
+  name?: string
+  unit?: string
+  unit_weight_gr?: number | null
+  unit_weight_unit?: string | null
+}
+
+/** Re-merge composition rows with catalog once menu-ingredients query has loaded (#775). */
+export function rehydrateIngredientCaches(
+  entries: IngredientCacheEntry[],
+  catalog: Array<IngredientForUnits & { id: string }>,
+  cache: Record<string, unknown>,
+): void {
+  if (!entries.length || !catalog.length) return
+  const catalogById = new Map(catalog.map(row => [row.id, row]))
+  for (const entry of entries) {
+    if (!entry.id) continue
+    cache[entry.id] = mergeIngredientUnitFields(entry, catalogById.get(entry.id) ?? null)
   }
 }
 
@@ -191,6 +213,7 @@ export function useIngredientUnitOptions() {
     UNIT_CATALOG,
     allUnitLabelOptions,
     mergeIngredientUnitFields,
+    rehydrateIngredientCaches,
     isDualUnitIngredient,
     defaultUnitForIngredient,
     formatCatalogOptionLabel,

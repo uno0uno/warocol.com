@@ -631,7 +631,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 
@@ -703,7 +703,7 @@ const ingredientCache = ref<Record<string, any>>({})
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 const loadingUnits = ref<Set<string>>(new Set())
 
-const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient, mergeIngredientUnitFields } = useIngredientUnitOptions()
+const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient, mergeIngredientUnitFields, rehydrateIngredientCaches } = useIngredientUnitOptions()
 
 function getIngredientUnitOptions(ingredientId: string | null) {
   return buildUnitOptions(ingredientId || '', {
@@ -715,6 +715,19 @@ function getIngredientUnitOptions(ingredientId: string | null) {
 function cacheIngredientForUnits(ing: any) {
   const catalogRow = availableIngredients.value.find((i: any) => i.id === ing.id)
   ingredientCache.value[ing.id] = mergeIngredientUnitFields(ing, catalogRow)
+}
+
+function rehydrateModifierIngredientCaches() {
+  if (!availableIngredients.value.length) return
+  const entries = form.value.modifiers
+    .filter(m => m.ingredient_id)
+    .map(m => ({
+      id: m.ingredient_id!,
+      name: m.ingredient_name || ingredientCache.value[m.ingredient_id!]?.name,
+      unit: ingredientCache.value[m.ingredient_id!]?.unit ?? m.ingredient_unit ?? undefined,
+      ...ingredientCache.value[m.ingredient_id!],
+    }))
+  rehydrateIngredientCaches(entries, availableIngredients.value, ingredientCache.value)
 }
 
 function getIngredientById(id: string) {
@@ -821,6 +834,12 @@ watch(groupData, (data) => {
     }
   }
 }, { immediate: true })
+
+watch(availableIngredients, (list) => {
+  if (list.length && form.value.modifiers.some(m => m.ingredient_id)) {
+    rehydrateModifierIngredientCaches()
+  }
+})
 
 // Methods
 function getProductName(productId: string) {

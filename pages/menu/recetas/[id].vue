@@ -306,7 +306,7 @@ const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 // Tracks which ingredient IDs are currently fetching purchase units
 const loadingUnits = ref<Set<string>>(new Set())
 
-const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient, mergeIngredientUnitFields } = useIngredientUnitOptions()
+const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient, mergeIngredientUnitFields, rehydrateIngredientCaches } = useIngredientUnitOptions()
 
 function getIngredientUnitOptions(ingredientId: string) {
   return buildUnitOptions(ingredientId, {
@@ -318,6 +318,19 @@ function getIngredientUnitOptions(ingredientId: string) {
 function cacheIngredientForUnits(ing: any) {
   const catalogRow = availableIngredients.value.find((i: any) => i.id === ing.id)
   ingredientCache.value[ing.id] = mergeIngredientUnitFields(ing, catalogRow)
+}
+
+function rehydrateRecipeIngredientCaches() {
+  if (!availableIngredients.value.length) return
+  const entries = form.value.ingredients
+    .filter(ing => ing.ingredient_id)
+    .map(ing => ({
+      id: ing.ingredient_id,
+      name: ing.ingredient_name || ingredientCache.value[ing.ingredient_id]?.name,
+      unit: ing.unit,
+      ...ingredientCache.value[ing.ingredient_id],
+    }))
+  rehydrateIngredientCaches(entries, availableIngredients.value, ingredientCache.value)
 }
 
 async function loadPurchaseUnits(ingredientId: string) {
@@ -407,6 +420,12 @@ watch(recipeData, (data) => {
     }
   }
 }, { immediate: true })
+
+watch(availableIngredients, (list) => {
+  if (list.length && form.value.ingredients.some(ing => ing.ingredient_id)) {
+    rehydrateRecipeIngredientCaches()
+  }
+})
 
 // Methods
 const addIngredient = () => {
