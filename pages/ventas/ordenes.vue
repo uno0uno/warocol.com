@@ -405,7 +405,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <select
           v-model="paymentFilter"
           @change="() => { currentPage.value = 1 }"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          :class="filterSelectClass"
         >
           <option :value="null">Método pago</option>
           <template v-for="group in paymentGroups">
@@ -421,7 +421,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         <select
           v-model="statusFilter"
           @change="() => { currentPage.value = 1 }"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+          :class="filterSelectClass"
         >
           <option :value="null">Estado</option>
           <option value="completed">Completadas</option>
@@ -493,7 +493,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
           <select
             v-model="bulkStatus"
-            class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+            :class="filterSelectClass"
           >
             <option value="">Cambiar estado...</option>
             <option value="completed">Completada</option>
@@ -504,7 +504,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
           <select
             v-if="bulkStatus === 'completed'"
             v-model="bulkPaymentMethod"
-            class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+            :class="filterSelectClass"
           >
             <option value="">Método de pago...</option>
             <template v-for="group in paymentGroups">

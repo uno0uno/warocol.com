@@ -186,7 +186,7 @@ onUnmounted(() => {
             v-if="cachedCategories.length > 0"
             v-model="categoryFilter"
             aria-label="Filtrar por categoría"
-            class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+            :class="filterSelectClass"
           >
             <option :value="null">Categoría</option>
             <option v-for="cat in cachedCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
@@ -195,7 +195,7 @@ onUnmounted(() => {
           <select
             v-model="sortFilter"
             aria-label="Ordenar por"
-            class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+            :class="filterSelectClass"
           >
             <option value="qty_desc">Más vendidos</option>
             <option value="revenue_desc">Más ingresos</option>
@@ -205,7 +205,7 @@ onUnmounted(() => {
           <select
             v-model="channelFilter"
             aria-label="Filtrar por canal"
-            class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+            :class="filterSelectClass"
           >
             <option :value="null">Canal</option>
             <option value="pos">POS</option>

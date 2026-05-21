@@ -25,7 +25,7 @@
           <template #additional-filters>
             <select
               v-model="categoryFilter"
-              class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+              :class="filterSelectClass"
               aria-label="Filtrar por categoría"
             >
               <option value="">Categoría</option>
@@ -34,7 +34,7 @@
 
             <select
               v-model="statusFilter"
-              class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+              :class="filterSelectClass"
               aria-label="Filtrar por estado"
             >
               <option value="">Estado</option>
@@ -43,7 +43,7 @@
 
             <select
               v-model="sortFilter"
-              class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+              :class="filterSelectClass"
               aria-label="Ordenar productos"
             >
               <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
@@ -79,23 +79,18 @@
               <span class="text-sm font-semibold">Desfase costo</span>
             </label>
           </template>
-
-          <template #trailing>
-            <NuxtLink
-              to="/menu/reventa/crear"
-              class="flex h-10 px-3 items-center gap-1.5 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors whitespace-nowrap shrink-0"
-              aria-label="Gestionar productos de reventa"
-            >
-              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-              <span class="hidden sm:inline">Gestionar</span>
-              <span class="sm:hidden">+</span>
-            </NuxtLink>
-          </template>
         </UiAdvancedFiltersBar>
 
         <HealthSemaphore :is-unlocked="true" title="Catálogo comercial de productos de reventa">
+          <template #header-actions>
+            <NuxtLink
+              to="/menu/reventa/crear"
+              class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
+            >
+              <span class="hidden sm:inline">Gestionar productos</span>
+              <span class="sm:hidden">Gestionar</span>
+            </NuxtLink>
+          </template>
         <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
         <UiResponsiveDataView
           :columns="productosTableColumns"
@@ -117,9 +112,13 @@
               <div class="flex-1 min-w-0">
                 <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
                 <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}</p>
-                <p class="text-xs text-text-tertiary">
-                  Real: {{ formatCostCell(item.costo_calculado) }}
-                  · Mi costo: {{ formatCostCell(item.costo_percibido) }}
+                <p class="text-xs text-text-tertiary flex flex-wrap items-center gap-1">
+                  <span>Real:</span>
+                  <span v-if="hasCostValue(item.costo_calculado)">{{ formatCostCell(item.costo_calculado) }}</span>
+                  <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
+                  <span>· Mi costo:</span>
+                  <span v-if="hasCostValue(item.costo_percibido)">{{ formatCostCell(item.costo_percibido) }}</span>
+                  <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
                 </p>
               </div>
               <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
@@ -132,12 +131,30 @@
                   title="Margen real"
                 />
                 <UiStatusBadge
+                  v-else
+                  value="N/A"
+                  format="text"
+                  variant="secondary"
+                  size="sm"
+                  title="Margen real"
+                  class="whitespace-nowrap"
+                />
+                <UiStatusBadge
                   v-if="marginOperativoPct(item) !== null"
                   :value="marginOperativoPct(item)!"
                   format="percentage"
                   variant="secondary"
                   size="sm"
                   title="Margen operativo"
+                />
+                <UiStatusBadge
+                  v-else
+                  value="N/A"
+                  format="text"
+                  variant="secondary"
+                  size="sm"
+                  title="Margen operativo"
+                  class="whitespace-nowrap"
                 />
                 <UiStatusBadge
                   :value="item.is_available ? 'Disponible' : 'No disponible'"
@@ -163,11 +180,21 @@
           </template>
 
           <template #cell-costo_calculado="{ value }">
-            <span class="text-sm text-text-primary">{{ formatCostCell(value) }}</span>
+            <div class="flex justify-end">
+              <span v-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
+                {{ formatCostCell(value) }}
+              </span>
+              <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
+            </div>
           </template>
 
           <template #cell-costo_percibido="{ value }">
-            <span class="text-sm text-text-primary">{{ formatCostCell(value) }}</span>
+            <div class="flex justify-end">
+              <span v-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
+                {{ formatCostCell(value) }}
+              </span>
+              <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
+            </div>
           </template>
 
           <template #cell-margen_real="{ row }">
@@ -179,7 +206,15 @@
                 :variant="(marginRealPct(row) ?? 0) >= 0 ? 'success' : 'secondary'"
                 size="sm"
               />
-              <span v-else class="text-sm text-text-secondary">—</span>
+              <UiStatusBadge
+                v-else
+                value="N/A"
+                title="Sin margen"
+                format="text"
+                variant="secondary"
+                size="sm"
+                class="whitespace-nowrap"
+              />
             </div>
           </template>
 
@@ -192,7 +227,15 @@
                 :variant="(marginOperativoPct(row) ?? 0) >= 0 ? 'success' : 'secondary'"
                 size="sm"
               />
-              <span v-else class="text-sm text-text-secondary">—</span>
+              <UiStatusBadge
+                v-else
+                value="N/A"
+                title="Sin margen"
+                format="text"
+                variant="secondary"
+                size="sm"
+                class="whitespace-nowrap"
+              />
             </div>
           </template>
 
@@ -526,6 +569,8 @@ const {
 } = useProductMargins()
 
 const formatCostCell = (value: unknown) => formatCostCellValue(value, formatCurrency)
+
+const hasCostValue = (value: unknown) => value !== null && value !== undefined
 
 const displayedProducts = computed(() => {
   if (!costDriftOnly.value) return products.value
