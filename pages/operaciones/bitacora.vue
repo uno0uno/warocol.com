@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { es } from 'date-fns/locale'
 import { ClipboardDocumentListIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import {
@@ -142,76 +141,40 @@ const tableNameFor = (row: OperationEventRow) =>
         use el sistema con la bitácora activa en producción.
       </p>
 
-      <!-- Filters -->
-      <div class="flex flex-wrap items-center gap-2">
-        <VueDatePicker
-          v-model="dateRangeDates"
-          range
-          :preset-dates="presetDates"
-          :enable-time-picker="false"
-          :locale="es"
-          placeholder="Rango de fechas"
-          auto-apply
-          :teleport="true"
-          :max-date="new Date()"
-          :format="formatDateRange"
-          input-class-name="dp-custom-input"
-          menu-class-name="dp-custom-menu"
-          calendar-cell-class-name="dp-custom-cell"
-        />
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        v-model:date-range="dateRangeDates"
+        search-placeholder="Buscar producto…"
+        :preset-dates="presetDates"
+        :format-date-range="formatDateRange"
+        :show-clear="hasActiveFilters"
+        @search="applySearch"
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
+          <select
+            v-model="channelFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por canal"
+          >
+            <option :value="null">Todos los canales</option>
+            <option value="mesa">{{ CHANNEL_LABELS.mesa }}</option>
+            <option value="barra">{{ CHANNEL_LABELS.barra }}</option>
+            <option value="mostrador">{{ CHANNEL_LABELS.mostrador }}</option>
+          </select>
 
-        <select
-          v-model="channelFilter"
-          :class="filterSelectClass"
-          aria-label="Filtrar por canal"
-        >
-          <option :value="null">Todos los canales</option>
-          <option value="mesa">{{ CHANNEL_LABELS.mesa }}</option>
-          <option value="barra">{{ CHANNEL_LABELS.barra }}</option>
-          <option value="mostrador">{{ CHANNEL_LABELS.mostrador }}</option>
-        </select>
-
-        <select
-          v-model="actionFilter"
-          :class="filterSelectClass"
-          aria-label="Filtrar por acción"
-        >
-          <option :value="null">Todas las acciones</option>
-          <option v-for="a in OPERATION_EVENT_ACTIONS" :key="a" :value="a">
-            {{ ACTION_LABELS[a] }}
-          </option>
-        </select>
-
-        <input
-          v-model="localSearchTerm"
-          type="search"
-          placeholder="Buscar producto…"
-          class="h-10 min-w-[140px] flex-1 max-w-xs px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-          aria-label="Buscar en resumen"
-          @keydown.enter="applySearch"
-        />
-
-        <button
-          type="button"
-          class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-primary hover:border-primary transition-colors"
-          @click="applySearch"
-        >
-          Buscar
-        </button>
-
-        <button
-          v-if="hasActiveFilters"
-          type="button"
-          class="h-10 px-3 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary transition-colors"
-          @click="clearFilters"
-        >
-          Limpiar
-        </button>
-
-        <span class="text-sm text-text-secondary ml-auto tabular-nums">
-          {{ totalCount }} {{ totalCount === 1 ? 'evento' : 'eventos' }}
-        </span>
-      </div>
+          <select
+            v-model="actionFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por acción"
+          >
+            <option :value="null">Todas las acciones</option>
+            <option v-for="a in OPERATION_EVENT_ACTIONS" :key="a" :value="a">
+              {{ ACTION_LABELS[a] }}
+            </option>
+          </select>
+        </template>
+      </UiAdvancedFiltersBar>
 
       <!-- Empty -->
       <div
