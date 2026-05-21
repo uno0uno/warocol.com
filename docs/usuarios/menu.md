@@ -190,6 +190,8 @@ Ve a **Menú → Reventa → Gestionar**.
 3. **Disponibilidad** — activa o desactiva cada ítem con el toggle
 4. Presiona **Guardar Cambios**
 
+Cada producto creado desde esta pantalla usa **1 unidad** (`und`) del ingrediente en receta — es decir, al vender una unidad del producto se descuenta una unidad del ingrediente en inventario. Para cantidades fraccionadas (por ejemplo vender medio envase en mililitros), configura la receta desde **Menú → Productos** (edición individual).
+
 ### Estados de cada ítem
 
 | Badge | Significado |
