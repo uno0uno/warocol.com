@@ -9,18 +9,35 @@
     <!-- Content -->
     <div v-else class="space-y-6">
       <!-- Filters Bar -->
-      <SharedFiltersBar
+      <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         v-model:search-field="apiSearchField"
-        v-model:supplier-filter="selectedSupplierFilter"
-        v-model:date-filter="selectedDateFilter"
         :search-fields="searchFields"
-        :suppliers="suppliers"
-        show-supplier-filter
-        show-date-filter
+        search-placeholder="Buscar órdenes..."
+        :show-date-range="false"
+        :show-clear="hasActiveFilters"
         @search="performSearch"
-        @clear-filters="clearFilters"
-      />
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
+          <select
+            v-model="selectedSupplierFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por proveedor"
+          >
+            <option value="">Proveedor</option>
+            <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
+          </select>
+
+          <select
+            v-model="selectedDateFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por período"
+          >
+            <option v-for="opt in purchaseDateFilterOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </template>
+      </UiAdvancedFiltersBar>
 
       <!-- Pending Payments -->
       <div class="bg-surface rounded-lg">
@@ -184,13 +201,15 @@ const selectedPurchases = ref<any[]>([])
 const route = useRoute()
 const highlightId = ref<string | null>(null)
 
-// Filter state - Initialize from query params
-const localSearchTerm = ref((route.query.search as string) || '')
-const apiSearchTerm = ref((route.query.search as string) || '')
+// Filter state — AdvancedFiltersBar (#765); init from query params
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
+appliedSearch.value = (route.query.search as string) || ''
+localSearchTerm.value = appliedSearch.value
 const apiSearchField = ref((route.query.search_field as string) || 'purchase_number')
 const selectedSupplierFilter = ref((route.query.supplier_id as string) || '')
 const selectedStatusFilter = ref((route.query.payment_status as string) || '')
-const selectedDateFilter = ref((route.query.date_filter as string) || '')
+const { dateFilter: selectedDateFilter, purchaseDateFilterOptions, clearPurchaseDateFilter } = usePurchaseDateFilter()
+selectedDateFilter.value = (route.query.date_filter as string) || ''
 
 // Sorting state
 const sortField = ref('')
@@ -208,9 +227,15 @@ const statusOptions = [
   { label: 'Vence esta semana', value: 'due_this_week' }
 ]
 
-const performSearch = () => {
-  apiSearchTerm.value = localSearchTerm.value
-}
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || !!selectedSupplierFilter.value
+    || !!selectedDateFilter.value,
+)
+
+const performSearch = () => applySearch()
 
 // Set highlight ID from query params
 if (route.query.highlight) {
@@ -233,7 +258,7 @@ const suppliers = computed(() => (suppliersData.value as any)?.data || [])
 // Fetch all purchases with reactive filters
 const { data: purchasesData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['suppliers', 'purchases-payments', currentTenant.value?.id, {
-    search: apiSearchTerm.value || null,
+    search: appliedSearch.value || null,
     searchField: apiSearchField.value,
     supplier: selectedSupplierFilter.value || null,
     status: selectedStatusFilter.value || null,
@@ -242,7 +267,7 @@ const { data: purchasesData, status: queryStatus, asyncStatus: queryAsyncStatus,
   query: () => $fetch('/api/suppliers/purchases', {
     params: {
       limit: 250,
-      search: apiSearchTerm.value || undefined,
+      search: appliedSearch.value || undefined,
       search_field: apiSearchField.value || undefined,
       supplier_id: selectedSupplierFilter.value || undefined,
       payment_status: selectedStatusFilter.value || undefined,
@@ -496,10 +521,9 @@ function handleSort(field: string) {
 
 // Filter functions
 function clearFilters() {
-  localSearchTerm.value = ''
-  apiSearchTerm.value = ''
+  clearSearch()
   selectedSupplierFilter.value = ''
   selectedStatusFilter.value = ''
-  selectedDateFilter.value = ''
+  clearPurchaseDateFilter()
 }
 </script>

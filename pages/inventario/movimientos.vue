@@ -8,42 +8,42 @@
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Filters Bar -->
-      <SharedFiltersBar
-        v-model:search="searchQuery"
-        v-model:date-filter="dateFilter"
-        search-label="Buscar"
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        v-model:date-range="dateRangeDates"
         search-placeholder="Buscar por ingrediente o referencia..."
-        show-date-filter
-        @search="handleSearch"
-        @clear-filters="clearFilters"
+        :search-fields="[]"
+        :preset-dates="presetDates"
+        :format-date-range="formatDateRange"
+        :show-clear="hasActiveFilters"
+        @search="performSearch"
+        @clear="clearFilters"
       >
         <template #additional-filters>
-          <!-- Ingredient Filter -->
           <select
             v-model="ingredientFilter"
-            class="px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
-            @change="applyFilters"
+            :class="filterSelectClass"
+            aria-label="Filtrar por ingrediente"
           >
-            <option value="">Todos los ingredientes</option>
+            <option value="">Ingrediente</option>
             <option v-for="ingredient in ingredients" :key="ingredient.id" :value="ingredient.id">
               {{ ingredient.name }}
             </option>
           </select>
 
-          <!-- Movement Type Filter -->
           <select
             v-model="movementTypeFilter"
-            class="px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
-            @change="applyFilters"
+            :class="filterSelectClass"
+            aria-label="Filtrar por tipo de movimiento"
           >
-            <option value="">Todos los tipos</option>
+            <option value="">Tipo</option>
             <option value="purchase">Compras</option>
             <option value="consumption">Consumo</option>
             <option value="adjustment">Ajustes</option>
             <option value="loss">Pérdidas</option>
           </select>
         </template>
-      </SharedFiltersBar>
+      </UiAdvancedFiltersBar>
 
       <!-- Responsive Data View -->
       <HealthSemaphore :is-unlocked="true" title="Movimientos de Inventario">
@@ -139,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { useFormatters } from '~/composables/useFormatters'
 // @ts-ignore
@@ -150,11 +150,22 @@ useHead({ title: 'Movimientos de Inventario' })
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
 
-// State
-const searchQuery = ref('')
+// Filters — AdvancedFiltersBar (#765)
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
+const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
 const ingredientFilter = ref('')
 const movementTypeFilter = ref('')
-const dateFilter = ref('')
+
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || !!dateRangeDates.value
+    || !!ingredientFilter.value
+    || !!movementTypeFilter.value,
+)
+
+const performSearch = () => applySearch()
 
 // Sorting state
 const sortField = ref('')
@@ -176,14 +187,9 @@ const ingredients = computed(() => {
   })).sort((a: any, b: any) => a.name.localeCompare(b.name))
 })
 
-// Compute date params from filter string
 const dateParts = computed(() => {
-  if (!dateFilter.value) return {}
-  if (dateFilter.value.includes(' to ')) {
-    const [start, end] = dateFilter.value.split(' to ')
-    return { start_date: start, end_date: end }
-  }
-  return { start_date: dateFilter.value, end_date: dateFilter.value }
+  if (!dateRange.value.from || !dateRange.value.to) return {}
+  return { start_date: dateRange.value.from, end_date: dateRange.value.to }
 })
 
 // Load movements data from API — reactive to tenant + filters
@@ -191,7 +197,8 @@ const { data: movementsData, status: queryStatus, asyncStatus: queryAsyncStatus,
   key: () => ['inventory', 'movements', currentTenant.value?.id, {
     type: movementTypeFilter.value || null,
     ingredient: ingredientFilter.value || null,
-    date: dateFilter.value || null,
+    from: dateRange.value.from,
+    to: dateRange.value.to,
   }],
   query: () => $fetch('/api/inventory/movements', {
     params: {
@@ -212,10 +219,11 @@ const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && move
 const movements = computed(() => movementsData.value?.data || [])
 
 const filteredMovements = computed(() => {
-  return movements.value.filter(movement => {
-    const matchesSearch = movement.ingredient_name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                         (movement.reference_number && movement.reference_number.toLowerCase().includes(searchQuery.value.toLowerCase()))
-    return matchesSearch
+  const q = appliedSearch.value.toLowerCase()
+  if (!q) return movements.value
+  return movements.value.filter((movement) => {
+    return movement.ingredient_name.toLowerCase().includes(q)
+      || (movement.reference_number && movement.reference_number.toLowerCase().includes(q))
   })
 })
 
@@ -252,20 +260,11 @@ const handleSort = (field) => {
   }
 }
 
-// Handle search
-const handleSearch = () => {
-  // Search is handled by computed filteredMovements
-}
-
-// Apply filters — reactive key triggers refetch automatically
-const applyFilters = () => {}
-
-// Clear filters
 const clearFilters = () => {
-  searchQuery.value = ''
+  clearSearch()
+  clearDateRange()
   ingredientFilter.value = ''
   movementTypeFilter.value = ''
-  dateFilter.value = ''
 }
 
 // Table columns configuration
