@@ -4,12 +4,13 @@ El módulo de Operaciones agrupa la configuración del día a día del restauran
 
 ## Cómo acceder
 
-Menú lateral → **Operaciones**. La pantalla tiene cinco pestañas:
+Menú lateral → **Operaciones**. La pantalla tiene seis pestañas:
 
 | Pestaña | Para qué |
 |---------|----------|
 | **Comandas & Cocina** | Vista en tiempo real de los pedidos para el área de producción |
 | **Mesas** | Plano del salón y configuración de mesas (la etiqueta cambia si tu tenant usa "Habitaciones", "Salones", etc.) |
+| **Bitácora** | Auditoría de acciones en POS (eliminaciones, anulaciones de pago, etc.) |
 | **Turnos** | Plantillas de horario reutilizables para arqueos por plantilla (Mañana, Tarde, Noche…) |
 | **Personalizar** | Renombrar módulos, mostrar/ocultar secciones según el tipo de negocio |
 | **Propinas** | Activar propinas, definir porcentajes sugeridos |
@@ -29,6 +30,14 @@ Pantalla en vivo para cocina: muestra las órdenes nuevas, en preparación y lis
 Aquí se activa/desactiva el módulo de mesas, se crean/editan/desactivan mesas, y se asigna la columna de mesero a las sesiones (si tu negocio tiene atribución de meseros activa).
 
 Ver [Mesas](./operaciones/mesas) para la guía completa: estados, crear/editar, reactivar mesas inactivas, **pedido por QR en mesa** (activar módulo, enlace por mesa, copiar/imprimir), etiqueta configurable (Mesa / Cubículo / Habitación / etc.).
+
+---
+
+## Bitácora
+
+Registro de auditoría del POS: quién eliminó productos del tab o carrito, vació tabs, anuló pagos parciales y con qué motivo. Pensado para dueños, administradores y supervisores.
+
+Ver [Bitácora de operaciones](./operaciones/bitacora) para la guía completa: qué se registra, qué no, filtros, políticas de motivo obligatorio en cocina y anulaciones de pago.
 
 ---
 
