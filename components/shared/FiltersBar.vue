@@ -1,3 +1,8 @@
+<!--
+  @deprecated Legacy filter bar — simple date <select>, no VueDatePicker presets.
+  For new list pages use UiAdvancedFiltersBar (components/ui/AdvancedFiltersBar.vue).
+  See epic #759 / issue #760. Consumers will migrate in Phase 3; API unchanged until then.
+-->
 <template>
   <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
     <!-- Search Input -->
