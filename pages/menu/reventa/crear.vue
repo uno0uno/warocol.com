@@ -332,6 +332,20 @@ const canSubmit = computed(() => {
   return activeItems.every(item => item.price > 0)
 })
 
+/** Resale ingredients use base unit `und` (backend ALLOWED_UNITS / is_resale rule). */
+function resaleRecipeUnit(ingredient: { unit?: string }): string {
+  const u = ingredient?.unit || 'und'
+  return u === 'u' ? 'und' : u
+}
+
+function resaleRecipeRow(ingredient: { id: string, unit?: string }, quantity = 1) {
+  return {
+    ingredient_id: ingredient.id,
+    quantity,
+    unit: resaleRecipeUnit(ingredient),
+  }
+}
+
 // Get default category
 const defaultCategoryId = computed(() => {
   const resaleCategory = categories.value.find((c: any) =>
@@ -429,11 +443,7 @@ async function saveChanges() {
             is_combo: false,
             allow_modifiers: false,
             recipe_base_ids: [],
-            ingredients: [{
-              ingredient_id: item.ingredient.id,
-              quantity: 1,
-              unit: 'u'
-            }],
+            ingredients: [resaleRecipeRow(item.ingredient)],
             tenant_id: currentTenant.value?.id || ''
           }
         })
@@ -447,12 +457,18 @@ async function saveChanges() {
     // Update existing products
     for (const item of toUpdate.value) {
       try {
+        const existingRecipe = item.existingProduct?.ingredients?.[0]
+        const body: Record<string, unknown> = {
+          price: item.price,
+          is_available: item.isAvailable,
+        }
+        // Normalize legacy recipe unit `u` → `und` when user saves from Gestionar
+        if (existingRecipe?.unit === 'u' && item.ingredient?.id) {
+          body.ingredients = [resaleRecipeRow(item.ingredient, Number(existingRecipe.quantity) || 1)]
+        }
         await $fetch(`/api/menu/products/${item.existingProduct.id}`, {
           method: 'PUT',
-          body: {
-            price: item.price,
-            is_available: item.isAvailable
-          }
+          body,
         })
         results.updated++
       } catch (error) {

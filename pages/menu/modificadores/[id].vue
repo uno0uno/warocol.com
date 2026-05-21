@@ -631,8 +631,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
+import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -695,25 +696,38 @@ const { data: productsData, pending: loadingProducts } = useAsyncData(
   }
 )
 
+const { availableIngredients } = useMenuIngredientsQuery()
+
 // Ingredient cache and purchase units
 const ingredientCache = ref<Record<string, any>>({})
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 const loadingUnits = ref<Set<string>>(new Set())
 
-const unitLabels: Record<string, string> = {
-  g: 'Gramos (g)', kg: 'Kilogramos (kg)', ml: 'Mililitros (ml)',
-  l: 'Litros (l)', u: 'Unidades (u)', lb: 'Libras (lb)',
-  und: 'Unidades (und)', gr: 'Gramos (gr)',
-}
+const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient, mergeIngredientUnitFields, rehydrateIngredientCaches } = useIngredientUnitOptions()
 
 function getIngredientUnitOptions(ingredientId: string | null) {
-  if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
-  const ingredient = ingredientCache.value[ingredientId]
-  const baseUnit = ingredient?.unit || 'g'
-  const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
-  const unitSet = new Set<string>([baseUnit])
-  purchaseUnits.forEach((pu: any) => { if (pu.purchase_unit) unitSet.add(pu.purchase_unit) })
-  return Array.from(unitSet).map(u => ({ value: u, label: unitLabels[u] || u }))
+  return buildUnitOptions(ingredientId || '', {
+    ingredientCache: ingredientCache.value,
+    purchaseUnitsCache: purchaseUnitsCache.value,
+  })
+}
+
+function cacheIngredientForUnits(ing: any) {
+  const catalogRow = availableIngredients.value.find((i: any) => i.id === ing.id)
+  ingredientCache.value[ing.id] = mergeIngredientUnitFields(ing, catalogRow)
+}
+
+function rehydrateModifierIngredientCaches() {
+  if (!availableIngredients.value.length) return
+  const entries = form.value.modifiers
+    .filter(m => m.ingredient_id)
+    .map(m => ({
+      id: m.ingredient_id!,
+      name: m.ingredient_name || ingredientCache.value[m.ingredient_id!]?.name,
+      unit: ingredientCache.value[m.ingredient_id!]?.unit ?? m.ingredient_unit ?? undefined,
+      ...ingredientCache.value[m.ingredient_id!],
+    }))
+  rehydrateIngredientCaches(entries, availableIngredients.value, ingredientCache.value)
 }
 
 function getIngredientById(id: string) {
@@ -743,8 +757,8 @@ function selectIngredient(modifier: any, ing: any) {
   modifier.ingredient_id = ing.id
   modifier.name = ing.name
   modifier.ingredient_name = ing.name
-  modifier.ingredient_unit = ing.unit || 'g'
-  ingredientCache.value[ing.id] = ing
+  cacheIngredientForUnits(ing)
+  modifier.ingredient_unit = defaultUnitForIngredient(ingredientCache.value[ing.id])
   loadPurchaseUnits(ing.id)
 }
 
@@ -795,12 +809,12 @@ watch(groupData, (data) => {
       sort_order: group.sort_order,
       modifiers: group.modifiers.map((m: any) => {
         if (m.ingredient_id && m.ingredient) {
-          ingredientCache.value[m.ingredient_id] = {
+          cacheIngredientForUnits({
             id: m.ingredient_id,
             name: m.ingredient.name,
             unit: m.ingredient.unit,
-            costo_unitario: m.ingredient.costo_unitario
-          }
+            costo_unitario: m.ingredient.costo_unitario,
+          })
           loadPurchaseUnits(m.ingredient_id)
         }
         return {
@@ -820,6 +834,12 @@ watch(groupData, (data) => {
     }
   }
 }, { immediate: true })
+
+watch(availableIngredients, (list) => {
+  if (list.length && form.value.modifiers.some(m => m.ingredient_id)) {
+    rehydrateModifierIngredientCaches()
+  }
+})
 
 // Methods
 function getProductName(productId: string) {

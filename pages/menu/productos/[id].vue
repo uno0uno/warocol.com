@@ -776,20 +776,31 @@ const ingredientCache = ref<Record<string, any>>({})
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 const loadingUnits = ref<Set<string>>(new Set())
 
-const unitLabels: Record<string, string> = {
-  g: 'Gramos (g)', kg: 'Kilogramos (kg)', ml: 'Mililitros (ml)',
-  l: 'Litros (l)', u: 'Unidades (u)', lb: 'Libras (lb)',
-  und: 'Unidades (und)', gr: 'Gramos (gr)',
-}
+const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient, mergeIngredientUnitFields, rehydrateIngredientCaches } = useIngredientUnitOptions()
 
 function getIngredientUnitOptions(ingredientId: string) {
-  if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
-  const ingredient = ingredientCache.value[ingredientId]
-  const baseUnit = ingredient?.unit || 'g'
-  const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
-  const unitSet = new Set<string>([baseUnit])
-  purchaseUnits.forEach((pu: any) => { if (pu.purchase_unit) unitSet.add(pu.purchase_unit) })
-  return Array.from(unitSet).map(u => ({ value: u, label: unitLabels[u] || u }))
+  return buildUnitOptions(ingredientId, {
+    ingredientCache: ingredientCache.value,
+    purchaseUnitsCache: purchaseUnitsCache.value,
+  })
+}
+
+function cacheIngredientForUnits(ing: any) {
+  const catalogRow = ingredients.value.find((i: any) => i.id === ing.id)
+  ingredientCache.value[ing.id] = mergeIngredientUnitFields(ing, catalogRow)
+}
+
+function rehydrateProductIngredientCaches() {
+  if (!ingredients.value.length) return
+  const entries = form.value.ingredients
+    .filter(ing => ing.ingredient_id)
+    .map(ing => ({
+      id: ing.ingredient_id,
+      name: ing.ingredient_name || ingredientCache.value[ing.ingredient_id]?.name,
+      unit: ing.unit,
+      ...ingredientCache.value[ing.ingredient_id],
+    }))
+  rehydrateIngredientCaches(entries, ingredients.value, ingredientCache.value)
 }
 
 async function loadPurchaseUnits(ingredientId: string) {
@@ -814,8 +825,8 @@ async function loadPurchaseUnits(ingredientId: string) {
 function selectIngredient(ing: any, index: number) {
   form.value.ingredients[index].ingredient_id = ing.id
   form.value.ingredients[index].ingredient_name = ing.name
-  form.value.ingredients[index].unit = ing.unit || 'g'
-  ingredientCache.value[ing.id] = ing
+  cacheIngredientForUnits(ing)
+  form.value.ingredients[index].unit = defaultUnitForIngredient(ingredientCache.value[ing.id])
   loadPurchaseUnits(ing.id)
   form.value.ingredients = [...form.value.ingredients]
 }
@@ -958,7 +969,7 @@ watch(productData, (data) => {
       ),
       ingredients: product.ingredients.map((ing: any) => {
         if (ing.ingredient_id) {
-          ingredientCache.value[ing.ingredient_id] = { id: ing.ingredient_id, name: ing.ingredient_name || '', unit: ing.unit }
+          cacheIngredientForUnits({ id: ing.ingredient_id, name: ing.ingredient_name || '', unit: ing.unit })
           loadPurchaseUnits(ing.ingredient_id)
         }
         return {
@@ -979,6 +990,12 @@ watch(productData, (data) => {
     selectedCategoryName.value = product.category_name || ''
   }
 }, { immediate: true })
+
+watch(ingredients, (list) => {
+  if (list.length && form.value.ingredients.some(ing => ing.ingredient_id)) {
+    rehydrateProductIngredientCaches()
+  }
+})
 
 // Read-only: station inherited from the product's category (returned by backend)
 const inheritedStation = computed(() => productData.value?.data?.station ?? null)
