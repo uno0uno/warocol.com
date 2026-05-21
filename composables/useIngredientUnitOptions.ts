@@ -5,7 +5,7 @@
  * `api_warocol.com/app/services/ingredient_purchase_units_service.py` — converts
  * recipe quantities in gr/ml/und/catalog keys (lt, kg, …) to the ingredient base unit.
  *
- * warocol.com#773
+ * warocol.com#773, #774
  */
 
 export interface IngredientForUnits {
@@ -56,6 +56,19 @@ export const UNIT_CATALOG: Record<string, UnitCatalogEntry> = {
 
 export function allUnitLabelOptions(): UnitOption[] {
   return Object.entries(UNIT_LABELS).map(([value, label]) => ({ value, label }))
+}
+
+/** Merge unit_weight fields from catalog when edit APIs only return id/name/unit. */
+export function mergeIngredientUnitFields<T extends Record<string, unknown>>(
+  partial: T,
+  catalogRow?: IngredientForUnits | null,
+): T & IngredientForUnits {
+  return {
+    ...partial,
+    unit: (partial.unit as string | undefined) ?? catalogRow?.unit,
+    unit_weight_gr: (partial.unit_weight_gr as number | null | undefined) ?? catalogRow?.unit_weight_gr ?? null,
+    unit_weight_unit: (partial.unit_weight_unit as string | null | undefined) ?? catalogRow?.unit_weight_unit ?? null,
+  }
 }
 
 export function isDualUnitIngredient(
@@ -177,6 +190,7 @@ export function useIngredientUnitOptions() {
     UNIT_LABELS,
     UNIT_CATALOG,
     allUnitLabelOptions,
+    mergeIngredientUnitFields,
     isDualUnitIngredient,
     defaultUnitForIngredient,
     formatCatalogOptionLabel,

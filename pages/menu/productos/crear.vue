@@ -976,31 +976,19 @@ const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 // Tracks which ingredient IDs are currently fetching their purchase units
 const loadingUnits = ref<Set<string>>(new Set())
 
-const unitLabels: Record<string, string> = {
-  g: 'Gramos (g)',
-  gr: 'Gramos (gr)',
-  kg: 'Kilogramos (kg)',
-  ml: 'Mililitros (ml)',
-  l: 'Litros (l)',
-  u: 'Unidades (u)',
-  und: 'Unidades (und)',
-  lb: 'Libras (lb)',
-}
+const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient } = useIngredientUnitOptions()
 
 function getIngredientUnitOptions(ingredientId: string) {
-  if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
-  const ingredient = ingredientCache.value[ingredientId]
-  const baseUnit = ingredient?.unit || 'g'
-  const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
-  const unitSet = new Set<string>([baseUnit])
-  purchaseUnits.forEach((pu: any) => { if (pu.purchase_unit) unitSet.add(pu.purchase_unit) })
-  return Array.from(unitSet).map(u => ({ value: u, label: unitLabels[u] || u }))
+  return buildUnitOptions(ingredientId, {
+    ingredientCache: ingredientCache.value,
+    purchaseUnitsCache: purchaseUnitsCache.value,
+  })
 }
 
 async function onIngredientChange(index: number, ingredientId: string) {
   if (!ingredientId) return
   const ingredient = ingredientCache.value[ingredientId]
-  form.value.ingredients[index].unit = ingredient?.unit || 'g'
+  form.value.ingredients[index].unit = defaultUnitForIngredient(ingredient)
   if (!purchaseUnitsCache.value.has(ingredientId)) {
     loadingUnits.value = new Set([...loadingUnits.value, ingredientId])
     try {

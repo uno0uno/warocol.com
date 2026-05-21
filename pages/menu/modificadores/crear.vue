@@ -780,20 +780,13 @@ const ingredientCache = ref<Record<string, any>>({})
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 const loadingUnits = ref<Set<string>>(new Set())
 
-const unitLabels: Record<string, string> = {
-  g: 'Gramos (g)', kg: 'Kilogramos (kg)', ml: 'Mililitros (ml)',
-  l: 'Litros (l)', u: 'Unidades (u)', lb: 'Libras (lb)',
-  und: 'Unidades (und)', gr: 'Gramos (gr)',
-}
+const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient } = useIngredientUnitOptions()
 
 function getIngredientUnitOptions(ingredientId: string | null) {
-  if (!ingredientId) return Object.entries(unitLabels).map(([value, label]) => ({ value, label }))
-  const ingredient = ingredientCache.value[ingredientId]
-  const baseUnit = ingredient?.unit || 'g'
-  const purchaseUnits = purchaseUnitsCache.value.get(ingredientId) || []
-  const unitSet = new Set<string>([baseUnit])
-  purchaseUnits.forEach((pu: any) => { if (pu.purchase_unit) unitSet.add(pu.purchase_unit) })
-  return Array.from(unitSet).map(u => ({ value: u, label: unitLabels[u] || u }))
+  return buildUnitOptions(ingredientId || '', {
+    ingredientCache: ingredientCache.value,
+    purchaseUnitsCache: purchaseUnitsCache.value,
+  })
 }
 
 function getIngredientById(id: string) {
@@ -822,8 +815,8 @@ async function loadPurchaseUnits(ingredientId: string) {
 function selectIngredient(modifier: any, ing: any) {
   modifier.ingredient_id = ing.id
   modifier.name = ing.name
-  modifier.ingredient_unit = ing.unit || 'g'
   ingredientCache.value[ing.id] = ing
+  modifier.ingredient_unit = defaultUnitForIngredient(ingredientCache.value[ing.id])
   loadPurchaseUnits(ing.id)
 }
 
