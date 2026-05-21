@@ -117,6 +117,27 @@ export const usePOSStore = defineStore('pos', () => {
         })
     }
 
+    /** Bitácora channel for pos_cart audit (#784). */
+    const resolveCartChannel = (): 'mostrador' | 'barra' =>
+        activeTableSession.value?.isBar ? 'barra' : 'mostrador'
+
+    const buildCartAuditQuery = (): string => {
+        const params = new URLSearchParams({ channel: resolveCartChannel() })
+        if (cartServedByMemberId.value) {
+            params.set('actor_member_id', cartServedByMemberId.value)
+        }
+        return `?${params.toString()}`
+    }
+
+    const deleteSyncedCartLine = async (item: CartItem): Promise<boolean> => {
+        if (!cartId.value || !item.id || isSyncing.value) return false
+        const qs = buildCartAuditQuery()
+        await $fetch(`/api/pos/cart/${cartId.value}/items/${item.id}${qs}`, {
+            method: 'DELETE',
+        })
+        return true
+    }
+
     // Actions — local-only cart operations (no backend sync per item)
 
     const addToCart = async (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
@@ -139,7 +160,18 @@ export const usePOSStore = defineStore('pos', () => {
     const removeFromCart = async (index: number) => {
         isDeleting.value = true
         try {
-            if (index >= 0 && index < cart.value.length) {
+            if (index < 0 || index >= cart.value.length) return
+            const item = cart.value[index]
+            const isSynced = Boolean(cartId.value && item.id && !isSyncing.value)
+            if (isSynced) {
+                try {
+                    await deleteSyncedCartLine(item)
+                    cart.value.splice(index, 1)
+                } catch {
+                    cart.value.splice(index, 1)
+                    invalidateSyncedCart()
+                }
+            } else {
                 cart.value.splice(index, 1)
                 invalidateSyncedCart()
             }
@@ -192,7 +224,9 @@ export const usePOSStore = defineStore('pos', () => {
         cartId.value = null
         if (oldCartId && !isSyncing.value) {
             try {
-                await $fetch(`/api/pos/cart/${oldCartId}`, { method: 'DELETE' })
+                await $fetch(`/api/pos/cart/${oldCartId}${buildCartAuditQuery()}`, {
+                    method: 'DELETE',
+                })
             } catch {
                 // Non-critical — local state already cleared
             }
@@ -354,7 +388,9 @@ export const usePOSStore = defineStore('pos', () => {
 
             if (cartId.value) {
                 try {
-                    await $fetch(`/api/pos/cart/${cartId.value}`, { method: 'DELETE' })
+                    await $fetch(`/api/pos/cart/${cartId.value}${buildCartAuditQuery()}`, {
+                        method: 'DELETE',
+                    })
                 } catch {
                     // Ignore delete failures for stale carts
                 }

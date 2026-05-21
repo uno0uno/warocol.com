@@ -907,6 +907,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path === '/operaciones/bitacora' || path === '/operaciones/bitacora/') {
+    return {
+      pageTitle: 'Bitácora de operaciones',
+      pageSubtitle: 'Auditoría de acciones en POS — mesas, barra y mostrador',
+      searchPlaceholder: undefined,
+      activePage: 'operaciones' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path === '/operaciones/turnos' || path === '/operaciones/turnos/') {
     return {
       pageTitle: 'Turnos',
