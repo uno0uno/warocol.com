@@ -18,4 +18,16 @@ export function logReventaCatalog(
 ) {
   if (!isReventaCatalogDebugEnabled()) return
   console.log(`[reventa/${scope}]`, phase, payload ?? '')
+
+  if (scope === 'bulk') {
+    const summary = {
+      phase,
+      productIds: payload?.productIds ?? payload?.productIdsForPatch,
+      hasApiPatch: payload?.hasApiPatch ?? payload?.hasApiPatchPreview,
+      productsInCache: payload?.productsInCache,
+      createCount: payload?.createCount,
+      selection: payload?.selection,
+    }
+    console.warn(`[reventa/bulk] ${phase}`, JSON.stringify(summary))
+  }
 }
