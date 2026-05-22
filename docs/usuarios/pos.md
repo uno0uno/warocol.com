@@ -13,6 +13,8 @@ Ve a **POS** en el menú lateral.
 - Si el módulo de mesas está **desactivado**, verás directamente la pantalla de productos.
 - Si el módulo de mesas está **activo**, verás primero el plano del salón con todas las mesas configuradas.
 
+Para cobrar un **monto que no está en el menú** (servicios, cargos varios), usa [Venta libre](./pos-venta-libre).
+
 ---
 
 ## Modo mostrador (sin mesas)

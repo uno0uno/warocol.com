@@ -254,10 +254,12 @@ const openSaleModalRef = ref<{ clearSubmitting: () => void } | null>(null)
 const {
   openSaleProduct,
   showOpenSaleButton,
+  showOpenSaleOnMesa,
   openSaleEnabled,
   openSaleDisabledReason,
   validateOpenSaleAmount,
   buildOpenSaleCartLine,
+  buildOpenSaleTabItem,
 } = useOpenSale({
   settingsData,
   isMesaMode,
@@ -266,6 +268,10 @@ const {
 
 const showBarProcessOrder = computed(
   () => isKitchenServiceMode.value && !!posStore.activeTableSession?.isBar,
+)
+
+const showOpenSaleInPanel = computed(
+  () => showOpenSaleButton.value || showOpenSaleOnMesa.value,
 )
 const isAddingToTab = ref(false)
 const isLoadingTabItems = ref(false)
@@ -334,6 +340,7 @@ const mapTabItemsFromApi = (rows: any[]): TabItem[] =>
     quantity: i.quantity,
     unitPrice: i.unitPrice,
     subtotal: i.subtotal,
+    notes: i.notes ?? null,
     fulfillmentStatus: i.fulfillmentStatus ?? 'new',
     sentAt: i.sentAt ?? null,
   }))
@@ -834,16 +841,54 @@ const handleOpenSaleClick = () => {
   openSaleModalOpen.value = true
 }
 
+const addOpenSaleToTab = async (amount: number, description?: string) => {
+  if (!posStore.activeTableSession || isAddingToTab.value) return
+  bumpTableSessionFetchGen()
+  isAddingToTab.value = true
+  tabError.value = null
+  try {
+    const tabItem = buildOpenSaleTabItem(amount, description)
+    const addRes = await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/add`, {
+      method: 'POST',
+      body: { items: [tabItem] },
+    })
+    if (comandasEnabled.value) {
+      const { comandas, fired_items_count } = parseFireTableResponse(addRes as any)
+      if (comandas.length > 0 || fired_items_count > 0) {
+        applyFireResult(comandas, fired_items_count)
+        if (fired_items_count > 0) {
+          tabSuccess.value = `${fired_items_count} ${fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
+          setTimeout(() => { tabSuccess.value = null }, 3000)
+        }
+      }
+    }
+    await refreshTableSession()
+  } catch (e: any) {
+    tabError.value = e?.data?.detail ?? e?.data?.message ?? `Error al agregar a la ${tableSingularLower.value}`
+    throw e
+  } finally {
+    isAddingToTab.value = false
+  }
+}
+
 const handleOpenSaleConfirm = async (payload: { amount: number; description?: string }) => {
   try {
     const amount = validateOpenSaleAmount(payload.amount)
+    if (isMesaMode.value) {
+      await addOpenSaleToTab(amount, payload.description)
+      openSaleModalOpen.value = false
+      toast.success(`Agregado a la ${tableSingularLower.value}`, { title: 'Venta libre' })
+      return
+    }
     const line = buildOpenSaleCartLine(amount, payload.description)
     await posStore.addToCart(line)
     openSaleModalOpen.value = false
     toast.success('Agregado al carrito', { title: 'Venta libre' })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'No se pudo agregar la venta libre'
-    toast.error(message, { title: 'Venta libre' })
+    toast.error(typeof err === 'object' && err && 'data' in err
+      ? (err as any).data?.detail ?? message
+      : message, { title: 'Venta libre' })
     openSaleModalRef.value?.clearSubmitting()
   }
 }
@@ -1288,7 +1333,7 @@ onUnmounted(() => {
         :items="posStore.cart"
         :total="cartTotal"
         :mesa-mode="isKitchenServiceMode"
-        :show-open-sale="showOpenSaleButton"
+        :show-open-sale="showOpenSaleInPanel"
         :open-sale-enabled="openSaleEnabled"
         :open-sale-tooltip="openSaleDisabledReason"
         :show-bar-process-order="showBarProcessOrder"
@@ -1457,6 +1502,7 @@ onUnmounted(() => {
     ref="openSaleModalRef"
     v-model="openSaleModalOpen"
     :shell-name="openSaleProduct?.name"
+    :confirm-label="isMesaMode ? `Agregar a la ${tableSingularLower}` : 'Agregar al carrito'"
     @confirm="handleOpenSaleConfirm"
   />
 

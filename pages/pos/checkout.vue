@@ -379,6 +379,7 @@ function mapTabItemsFromApi(rows: any[]): TabItem[] {
     quantity: i.quantity,
     unitPrice: i.unitPrice,
     subtotal: i.subtotal,
+    notes: i.notes ?? null,
     fulfillmentStatus: i.fulfillmentStatus ?? 'new',
     sentAt: i.sentAt ?? null,
   }))

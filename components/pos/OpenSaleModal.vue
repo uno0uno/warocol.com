@@ -80,7 +80,7 @@
               :disabled="isSubmitting"
               class="flex-1 min-h-[44px] px-4 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {{ isSubmitting ? 'Agregando...' : 'Agregar al carrito' }}
+              {{ isSubmitting ? 'Agregando...' : confirmLabel }}
             </button>
           </div>
         </form>
@@ -92,10 +92,14 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
 
-const props = defineProps<{
-  modelValue: boolean
-  shellName?: string | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean
+    shellName?: string | null
+    confirmLabel?: string
+  }>(),
+  { confirmLabel: 'Agregar al carrito' },
+)
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void

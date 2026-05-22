@@ -25,6 +25,9 @@ export function useOpenSale(options: {
     return true
   })
 
+  /** Real table session only (not bar) — warocol.com#797. */
+  const showOpenSaleOnMesa = computed(() => options.isMesaMode.value)
+
   const openSaleEnabled = computed(() => !!openSaleProduct.value)
 
   const openSaleDisabledReason = computed(() => {
@@ -70,12 +73,30 @@ export function useOpenSale(options: {
     }
   }
 
+  const buildOpenSaleTabItem = (amount: number, description?: string) => {
+    const shell = openSaleProduct.value
+    if (!shell) {
+      throw new Error('No hay producto de venta libre configurado')
+    }
+    const trimmed = description?.trim()
+    const notes = trimmed ? `VARIOS: ${trimmed}` : null
+    return {
+      product_id: shell.id,
+      quantity: 1,
+      unit_price: amount,
+      modifiers: [] as Array<{ id: string; name: string; price: number }>,
+      notes,
+    }
+  }
+
   return {
     openSaleProduct,
     showOpenSaleButton,
+    showOpenSaleOnMesa,
     openSaleEnabled,
     openSaleDisabledReason,
     validateOpenSaleAmount,
     buildOpenSaleCartLine,
+    buildOpenSaleTabItem,
   }
 }
