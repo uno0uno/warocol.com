@@ -88,9 +88,9 @@
         </svg>
       </button>
 
-      <!-- Editar (oculto para reventa) -->
+      <!-- Editar (oculto para reventa y venta libre) -->
       <button
-        v-if="!item.is_resale"
+        v-if="!item.is_resale && !item.is_open_sale"
         class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded bg-violet-50 border border-violet-300 text-violet-600 hover:bg-violet-100 theme-transition"
         aria-label="Editar ítem"
         @click.stop="$emit('edit')"
@@ -130,6 +130,7 @@ interface CartItem {
   quantity: number
   notes?: string
   is_resale?: boolean
+  is_open_sale?: boolean
   fulfillmentStatus?: 'new' | 'sent' | 'hold' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
   sentAt?: string | null
 }

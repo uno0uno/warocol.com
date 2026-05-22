@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { $fetch } from 'ofetch'
 import type { CachedProduct, TabItem } from '~/stores/usePOSStore'
 import { usePOSStore } from '~/stores/usePOSStore'
+import { useOpenSale } from '~/composables/useOpenSale'
 import { registerTableSessionRefresh } from '~/composables/useTableSessionSync'
 import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
 import {
@@ -27,8 +28,9 @@ const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
 const tablePluralLower = computed(() => tablePlural.value.toLowerCase())
 
 const router = useRouter()
+const toast = useToast()
 const posStore = usePOSStore()
-const { tabItems: storeTabItems, tabTotal: storeTabTotal } = storeToRefs(posStore)
+const { tabItems: storeTabItems, tabTotal: storeTabTotal, activeTableSession } = storeToRefs(posStore)
 
 // Clear session at setup time (before first render) so showFloorPlan is correct immediately.
 // If navigating from a POS sub-page (checkout, producto), posNavigation flag preserves the session.
@@ -245,6 +247,25 @@ const isKitchenServiceMode = computed(
 )
 const isMesaMode = computed(
   () => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar,
+)
+
+const openSaleModalOpen = ref(false)
+const openSaleModalRef = ref<{ clearSubmitting: () => void } | null>(null)
+const {
+  openSaleProduct,
+  showOpenSaleButton,
+  openSaleEnabled,
+  openSaleDisabledReason,
+  validateOpenSaleAmount,
+  buildOpenSaleCartLine,
+} = useOpenSale({
+  settingsData,
+  isMesaMode,
+  activeTableSession,
+})
+
+const showBarProcessOrder = computed(
+  () => isKitchenServiceMode.value && !!posStore.activeTableSession?.isBar,
 )
 const isAddingToTab = ref(false)
 const isLoadingTabItems = ref(false)
@@ -799,9 +820,32 @@ const selectProduct = async (product: any) => {
 
 // Navigate to edit cart item
 const editCartItem = (cartIndex: number, productId: string) => {
-  // Mark that we're navigating within POS
+  const item = posStore.cart[cartIndex]
+  if (item?.is_open_sale) return
   sessionStorage.setItem('posNavigation', 'true')
   router.push(`/pos/producto/${productId}?edit=${cartIndex}`)
+}
+
+const handleOpenSaleClick = () => {
+  if (!openSaleEnabled.value) {
+    toast.warning(openSaleDisabledReason.value ?? 'Venta libre no disponible', { title: 'Venta libre' })
+    return
+  }
+  openSaleModalOpen.value = true
+}
+
+const handleOpenSaleConfirm = async (payload: { amount: number; description?: string }) => {
+  try {
+    const amount = validateOpenSaleAmount(payload.amount)
+    const line = buildOpenSaleCartLine(amount, payload.description)
+    await posStore.addToCart(line)
+    openSaleModalOpen.value = false
+    toast.success('Agregado al carrito', { title: 'Venta libre' })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'No se pudo agregar la venta libre'
+    toast.error(message, { title: 'Venta libre' })
+    openSaleModalRef.value?.clearSubmitting()
+  }
 }
 
 const removeFromCart = async (index: number) => {
@@ -1244,6 +1288,10 @@ onUnmounted(() => {
         :items="posStore.cart"
         :total="cartTotal"
         :mesa-mode="isKitchenServiceMode"
+        :show-open-sale="showOpenSaleButton"
+        :open-sale-enabled="openSaleEnabled"
+        :open-sale-tooltip="openSaleDisabledReason"
+        :show-bar-process-order="showBarProcessOrder"
         :is-adding-to-tab="isAddingToTab"
         :is-loading-tab-items="isLoadingTabItems"
         :is-clearing-tab="isClearingTab"
@@ -1265,6 +1313,7 @@ onUnmounted(() => {
         @decrement-item="decrementCartItem"
         @duplicate-item="duplicateCartItem"
         @process-order="processOrder"
+        @open-sale="handleOpenSaleClick"
         @clear-cart="clearCart"
         @add-to-tab="addToTab"
         @request-bill="requestBill"
@@ -1403,6 +1452,13 @@ onUnmounted(() => {
       </div>
     </Transition>
   </Teleport>
+
+  <PosOpenSaleModal
+    ref="openSaleModalRef"
+    v-model="openSaleModalOpen"
+    :shell-name="openSaleProduct?.name"
+    @confirm="handleOpenSaleConfirm"
+  />
 
   <!-- Issue #537 — Expediter chip teleported into the dashboard header so it
        never overlaps content. Icon-only on mobile, icon + label on sm+.

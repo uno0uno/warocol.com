@@ -20,6 +20,8 @@ export interface CartItem {
     modifiers: CartModifier[]
     notes?: string
     is_resale?: boolean // Productos de reventa no permiten modificadores
+    /** Venta libre (#796): custom unit price; do not merge with catalog lines */
+    is_open_sale?: boolean
 }
 
 export interface Customer {
@@ -142,13 +144,23 @@ export const usePOSStore = defineStore('pos', () => {
 
     const addToCart = async (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
         const quantity = item.quantity || 1
-        // Merge with existing item if same product + same modifiers + same notes
-        const existingIndex = cart.value.findIndex(c =>
-            c.product.id === item.product.id &&
-            c.notes === (item.notes ?? undefined) &&
-            c.modifiers.length === (item.modifiers?.length ?? 0) &&
-            c.modifiers.every((m, i) => m.id === item.modifiers?.[i]?.id)
-        )
+        const existingIndex = cart.value.findIndex((c) => {
+            if (item.is_open_sale || c.is_open_sale) {
+                return (
+                    !!item.is_open_sale &&
+                    !!c.is_open_sale &&
+                    c.product.id === item.product.id &&
+                    Number(c.product.price) === Number(item.product.price) &&
+                    c.notes === (item.notes ?? undefined)
+                )
+            }
+            return (
+                c.product.id === item.product.id &&
+                c.notes === (item.notes ?? undefined) &&
+                c.modifiers.length === (item.modifiers?.length ?? 0) &&
+                c.modifiers.every((m, i) => m.id === item.modifiers?.[i]?.id)
+            )
+        })
         if (existingIndex !== -1) {
             cart.value[existingIndex].quantity += quantity
         } else {
@@ -200,7 +212,8 @@ export const usePOSStore = defineStore('pos', () => {
                 product: { ...originalItem.product },
                 modifiers: [...originalItem.modifiers],
                 notes: originalItem.notes,
-                is_resale: originalItem.is_resale
+                is_resale: originalItem.is_resale,
+                is_open_sale: originalItem.is_open_sale,
             })
         }
     }
