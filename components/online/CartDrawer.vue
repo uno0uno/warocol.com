@@ -157,7 +157,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useOnlineCartStore, type CartItem as CartItemType } from '~/stores/online_cart'
+import { useOnlineCartStore, type OnlineCartItem as CartItemType } from '~/stores/online_cart'
 import CartItem from './CartItem.vue'
 import CartSummary from './CartSummary.vue'
 

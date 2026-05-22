@@ -1,14 +1,9 @@
 <template>
   <div>
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="isLoadingData" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Error State -->
-    <CommonsTheErrorState v-else-if="fetchError" />
-
-    <!-- Main Content -->
     <div v-else class="page-layout">
       <div class="flex flex-col gap-3 md:gap-4">
         <MenuCatalogFiltersBar
@@ -17,7 +12,7 @@
           show-cost-drift
           @search="onCatalogSearch"
           @clear="onCatalogClear"
-          @filter-change="currentPage = 1"
+          @filter-change="() => {}"
         />
 
         <MenuCatalogBulkBar
@@ -29,7 +24,6 @@
           v-model:bulk-online="bulkOnline"
           v-model:bulk-qr="bulkQr"
           :selected-count="selectedIds.length"
-          :edit-mode="editMode"
           :is-submitting="isSubmitting"
           :can-apply="canBulkApply"
           :show-station="false"
@@ -39,106 +33,79 @@
           :availability-options="availabilityBulkOptions"
           @apply="onBulkApply"
           @clear-selection="clearSelection"
-          @cancel="() => cancelEditOperation(clearSelection)"
           @delete="openBulkDeleteModal"
         />
 
         <MenuCatalogBulkBar
-          v-else-if="editMode"
+          v-else-if="hasChanges"
           variant="edit-only"
           :is-submitting="isSubmitting"
           :can-save-edit="hasChanges && canSubmit"
           @apply="saveChanges"
-          @cancel="() => cancelEditOperation(clearSelection)"
+          @cancel="discardChanges"
         />
 
         <HealthSemaphore :is-unlocked="true" title="Catálogo comercial de productos de reventa">
           <template #header-actions>
-            <div class="flex flex-wrap items-center gap-2 justify-end">
-              <button
-                type="button"
-                class="px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] transition-colors"
-                :class="editMode
-                  ? 'bg-surface border-2 border-border text-text-primary hover:bg-surface-secondary'
-                  : 'btn-primary text-primary-foreground'"
-                @click="onToggleEditMode"
-              >
-                <span class="hidden sm:inline">{{ editMode ? 'Ver catálogo' : 'Modo edición' }}</span>
-                <span class="sm:hidden">{{ editMode ? 'Ver' : 'Editar' }}</span>
-              </button>
-              <NuxtLink
-                to="/menu/reventa/crear"
-                class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] flex items-center text-primary-foreground"
-              >
-                <span class="hidden sm:inline">+ Nuevo producto</span>
-                <span class="sm:hidden">+ Nuevo</span>
-              </NuxtLink>
-            </div>
-          </template>
-        <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
-        <UiResponsiveDataView
-          :columns="productosTableColumns"
-          :data="tableRows"
-          :row-class="getRowClass"
-          :empty-message="emptyMessage"
-          :empty-sub-message="emptySubMessage"
-          variant="default"
-          row-size="sm"
-        >
-          <template #header-select>
-            <div class="flex items-center justify-center">
-              <UiBulkSelectCheckbox :checked="allPageSelected" @change="toggleSelectAll" />
+            <div class="text-right flex-shrink-0">
+              <p class="text-xs text-text-secondary">En catálogo</p>
+              <p class="text-2xl font-bold text-primary tabular-nums">{{ activeProductsCount }}</p>
             </div>
           </template>
 
-          <template #cell-select="{ row }">
-            <UiBulkSelectCheckbox
-              v-if="row"
-              :checked="selectedIds.includes(row.id)"
-              @change="toggleSelect(row.id)"
-            />
-          </template>
+          <UiResponsiveDataView
+            :columns="productosTableColumns"
+            :data="tableRows"
+            :row-class="getRowClass"
+            :empty-message="emptyMessage"
+            :empty-sub-message="emptySubMessage"
+            variant="default"
+            row-size="sm"
+          >
+            <template #header-select>
+              <div class="flex items-center justify-center">
+                <UiBulkSelectCheckbox :checked="allPageSelected" @change="toggleSelectAll" />
+              </div>
+            </template>
 
-          <!-- Mobile Card Slot -->
-          <template #card="{ item, index }">
-            <div
-              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors"
-              :class="catalogRowClass(item, index)"
-            >
+            <template #cell-select="{ row }">
               <UiBulkSelectCheckbox
-                :checked="selectedIds.includes(item.id)"
-                @change="toggleSelect(item.id)"
+                v-if="row"
+                :checked="selectedIds.includes(row.id)"
+                @change="toggleSelect(row.id)"
               />
-              <div class="flex-1 min-w-0" @click.stop="editMode">
-                <template v-if="editMode">
-                  <input
-                    v-model="ensureDraft(item).name"
-                    type="text"
-                    class="input-base w-full py-1.5 px-2 text-sm font-medium"
-                    placeholder="Nombre"
-                  />
-                  <UiFilterSelect
-                    v-model="ensureDraft(item).category_id"
-                    placeholder="Categoría"
-                    :options="categories.map(c => ({ label: c.name, value: c.id }))"
-                    class="mt-2 min-w-0"
-                  />
-                  <div class="relative w-fit mt-2">
-                    <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
-                    <input
-                      v-model.number="ensureDraft(item).price"
-                      type="number"
-                      min="0"
-                      step="100"
-                      class="input-base input-money w-fit min-w-[7rem] pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
-                      :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
-                    />
+            </template>
+
+            <template #card="{ item, index }">
+              <div
+                class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors"
+                :class="catalogRowClass(item, index)"
+              >
+                <UiBulkSelectCheckbox
+                  :checked="selectedIds.includes(item.id)"
+                  @change="toggleSelect(item.id)"
+                />
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
+                    <span
+                      v-if="item._item.toDelete"
+                      class="text-xs bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 px-1.5 py-0.5 rounded"
+                    >
+                      Se quitará
+                    </span>
+                    <span
+                      v-else-if="item._item.isNew"
+                      class="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 px-1.5 py-0.5 rounded"
+                    >
+                      Nuevo
+                    </span>
                   </div>
-                </template>
-                <template v-else>
-                  <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
-                  <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}</p>
-                  <p class="text-xs text-text-tertiary flex flex-wrap items-center gap-1">
+                  <p class="text-xs text-text-secondary mt-0.5">
+                    {{ item.category_name }}
+                    <template v-if="isInCatalog(item._item)"> · {{ formatCurrency(item.price) }}</template>
+                  </p>
+                  <p v-if="item._item.existingProduct" class="text-xs text-text-tertiary flex flex-wrap items-center gap-1 mt-0.5">
                     <span>Real:</span>
                     <span v-if="hasCostValue(item.costo_calculado)">{{ formatCostCell(item.costo_calculado) }}</span>
                     <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
@@ -146,278 +113,220 @@
                     <span v-if="hasCostValue(item.costo_percibido)">{{ formatCostCell(item.costo_percibido) }}</span>
                     <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
                   </p>
-                </template>
+                  <div v-if="isInCatalog(item._item)" class="relative w-fit mt-2">
+                    <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+                    <input
+                      v-model.number="item._item.price"
+                      type="number"
+                      min="0"
+                      step="100"
+                      class="input-base input-money w-fit min-w-[7rem] pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
+                      :style="{ width: moneyInputWidth(item._item.price) }"
+                      @click.stop
+                    >
+                  </div>
+                </div>
+                <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <UiStatusBadge
+                    v-if="marginRealPct(item) !== null"
+                    :value="marginRealPct(item)!"
+                    format="percentage"
+                    :variant="(marginRealPct(item) ?? 0) >= 0 ? 'success' : 'secondary'"
+                    size="sm"
+                    title="Margen real"
+                  />
+                  <UiStatusBadge
+                    v-else-if="item._item.existingProduct"
+                    value="N/A"
+                    format="text"
+                    variant="secondary"
+                    size="sm"
+                    title="Margen real"
+                    class="whitespace-nowrap"
+                  />
+                  <UiStatusBadge
+                    v-if="marginOperativoPct(item) !== null"
+                    :value="marginOperativoPct(item)!"
+                    format="percentage"
+                    variant="secondary"
+                    size="sm"
+                    title="Margen operativo"
+                  />
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-text-tertiary uppercase tracking-wide">Catálogo</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      :aria-checked="isInCatalog(item._item)"
+                      class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                      :class="isInCatalog(item._item) ? 'bg-success' : 'bg-titan-300'"
+                      @click.stop="toggleItem(item._item)"
+                    >
+                      <span
+                        class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
+                        :class="isInCatalog(item._item) ? 'translate-x-4' : 'translate-x-0.5'"
+                      />
+                    </button>
+                  </div>
+                  <div v-if="isInCatalog(item._item)" class="flex items-center gap-2">
+                    <span class="text-[10px] text-text-tertiary uppercase tracking-wide">Disp.</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      :aria-checked="item._item.isAvailable"
+                      class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                      :class="item._item.isAvailable ? 'bg-success' : 'bg-titan-300'"
+                      @click.stop="toggleItemAvailability(item._item)"
+                    >
+                      <span
+                        class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
+                        :class="item._item.isAvailable ? 'translate-x-4' : 'translate-x-0.5'"
+                      />
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+            </template>
+
+            <template #cell-name="{ value, item }">
+              <div class="flex items-center gap-2 flex-wrap min-w-0">
+                <span class="text-sm font-medium text-text-primary">{{ value }}</span>
+                <span
+                  v-if="item._item.toDelete"
+                  class="text-xs bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 px-1.5 py-0.5 rounded whitespace-nowrap"
+                >
+                  Se quitará
+                </span>
+                <span
+                  v-else-if="item._item.isNew"
+                  class="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 px-1.5 py-0.5 rounded whitespace-nowrap"
+                >
+                  Nuevo
+                </span>
+              </div>
+            </template>
+
+            <template #cell-category_name="{ value }">
+              <span class="text-sm text-text-secondary">{{ value || 'Sin categoría' }}</span>
+            </template>
+
+            <template #cell-price="{ item }">
+              <div v-if="isInCatalog(item._item)" class="relative w-fit ml-auto shrink-0" @click.stop>
+                <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+                <input
+                  v-model.number="item._item.price"
+                  type="number"
+                  min="0"
+                  step="100"
+                  class="input-base input-money w-fit min-w-[7rem] pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
+                  :style="{ width: moneyInputWidth(item._item.price) }"
+                >
+              </div>
+              <span v-else class="text-sm text-text-tertiary">—</span>
+            </template>
+
+            <template #cell-costo_calculado="{ value }">
+              <div class="flex justify-end">
+                <span v-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
+                  {{ formatCostCell(value) }}
+                </span>
+                <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
+              </div>
+            </template>
+
+            <template #cell-costo_percibido="{ value }">
+              <div class="flex justify-end">
+                <span v-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
+                  {{ formatCostCell(value) }}
+                </span>
+                <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
+              </div>
+            </template>
+
+            <template #cell-margen_real="{ row }">
+              <div class="flex justify-end">
                 <UiStatusBadge
-                  v-if="marginRealPct(item) !== null"
-                  :value="marginRealPct(item)!"
+                  v-if="marginRealPct(row) !== null"
+                  :value="marginRealPct(row)!"
                   format="percentage"
-                  :variant="(marginRealPct(item) ?? 0) >= 0 ? 'success' : 'secondary'"
+                  :variant="(marginRealPct(row) ?? 0) >= 0 ? 'success' : 'secondary'"
                   size="sm"
-                  title="Margen real"
                 />
                 <UiStatusBadge
                   v-else
                   value="N/A"
+                  title="Sin margen"
                   format="text"
                   variant="secondary"
                   size="sm"
-                  title="Margen real"
                   class="whitespace-nowrap"
                 />
+              </div>
+            </template>
+
+            <template #cell-margen_operativo="{ row }">
+              <div class="flex justify-end">
                 <UiStatusBadge
-                  v-if="marginOperativoPct(item) !== null"
-                  :value="marginOperativoPct(item)!"
+                  v-if="marginOperativoPct(row) !== null"
+                  :value="marginOperativoPct(row)!"
                   format="percentage"
                   variant="secondary"
                   size="sm"
-                  title="Margen operativo"
                 />
                 <UiStatusBadge
                   v-else
                   value="N/A"
+                  title="Sin margen"
                   format="text"
                   variant="secondary"
                   size="sm"
-                  title="Margen operativo"
                   class="whitespace-nowrap"
                 />
+              </div>
+            </template>
+
+            <template #cell-in_catalog="{ item }">
+              <div class="flex justify-center" @click.stop>
                 <button
                   type="button"
                   role="switch"
-                  :aria-checked="editMode ? ensureDraft(item).is_available : item.is_available"
-                  :aria-label="(editMode ? ensureDraft(item).is_available : item.is_available) ? 'Marcar no disponible' : 'Marcar disponible'"
-                  :disabled="!editMode && togglingAvailabilityIds.has(item.id)"
-                  class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
-                  :class="[
-                    (editMode ? ensureDraft(item).is_available : item.is_available) ? 'bg-success' : 'bg-titan-300',
-                    !editMode && togglingAvailabilityIds.has(item.id) ? 'cursor-wait opacity-70' : 'cursor-pointer',
-                  ]"
-                  @click.stop="editMode ? toggleDraftAvailability(item) : toggleAvailability(item)"
+                  :aria-checked="isInCatalog(item._item)"
+                  :aria-label="isInCatalog(item._item) ? `Quitar ${item.name} del catálogo al guardar` : `Agregar ${item.name} al catálogo al guardar`"
+                  :title="isInCatalog(item._item) ? 'En catálogo (se aplica al guardar)' : 'Fuera del catálogo'"
+                  class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                  :class="isInCatalog(item._item) ? 'bg-success' : 'bg-titan-300'"
+                  @click="toggleItem(item._item)"
                 >
                   <span
                     class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
-                    :class="(editMode ? ensureDraft(item).is_available : item.is_available) ? 'translate-x-4' : 'translate-x-0.5'"
+                    :class="isInCatalog(item._item) ? 'translate-x-4' : 'translate-x-0.5'"
                   />
                 </button>
               </div>
-            </div>
-          </template>
+            </template>
 
-          <!-- Desktop Table Cell Customizations -->
-          <template #cell-name="{ value, item }">
-            <input
-              v-if="editMode"
-              v-model="ensureDraft(item).name"
-              type="text"
-              class="input-base min-w-[140px] max-w-[220px] py-1.5 px-2 text-sm font-medium"
-              :aria-label="`Nombre de ${item.name}`"
-              @click.stop
-            />
-            <span v-else class="text-sm font-medium text-text-primary">{{ value }}</span>
-          </template>
-
-          <template #cell-category_name="{ value, item }">
-            <UiFilterSelect
-              v-if="editMode"
-              v-model="ensureDraft(item).category_id"
-              placeholder="Categoría"
-              :options="categories.map(c => ({ label: c.name, value: c.id }))"
-              class="min-w-[140px]"
-              @click.stop
-            />
-            <span v-else class="text-sm text-text-secondary">{{ value || 'Sin categoria' }}</span>
-          </template>
-
-          <template #cell-price="{ value, item }">
-            <div v-if="editMode" class="relative w-fit ml-auto shrink-0" @click.stop>
-              <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
-              <input
-                v-model.number="ensureDraft(item).price"
-                type="number"
-                min="0"
-                step="100"
-                class="input-base input-money w-fit min-w-[7rem] pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
-                :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
-              />
-            </div>
-            <span v-else class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
-          </template>
-
-          <template #cell-costo_calculado="{ value }">
-            <div class="flex justify-end">
-              <span v-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
-                {{ formatCostCell(value) }}
-              </span>
-              <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
-            </div>
-          </template>
-
-          <template #cell-costo_percibido="{ value, item }">
-            <div class="flex justify-end">
-              <input
-                v-if="editMode"
-                v-model.number="ensureDraft(item).costo_percibido"
-                type="number"
-                min="0"
-                step="100"
-                class="input-base input-money w-fit min-w-[7rem] px-2 py-1.5 text-sm text-right tabular-nums"
-                :style="{ width: moneyInputWidth(ensureDraft(item).costo_percibido) }"
-                placeholder="—"
-                @click.stop
-              />
-              <span v-else-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
-                {{ formatCostCell(value) }}
-              </span>
-              <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
-            </div>
-          </template>
-
-          <template #cell-margen_real="{ row }">
-            <div class="flex justify-end">
-              <UiStatusBadge
-                v-if="marginRealPct(row) !== null"
-                :value="marginRealPct(row)!"
-                format="percentage"
-                :variant="(marginRealPct(row) ?? 0) >= 0 ? 'success' : 'secondary'"
-                size="sm"
-              />
-              <UiStatusBadge
-                v-else
-                value="N/A"
-                title="Sin margen"
-                format="text"
-                variant="secondary"
-                size="sm"
-                class="whitespace-nowrap"
-              />
-            </div>
-          </template>
-
-          <template #cell-margen_operativo="{ row }">
-            <div class="flex justify-end">
-              <UiStatusBadge
-                v-if="marginOperativoPct(row) !== null"
-                :value="marginOperativoPct(row)!"
-                format="percentage"
-                :variant="(marginOperativoPct(row) ?? 0) >= 0 ? 'success' : 'secondary'"
-                size="sm"
-              />
-              <UiStatusBadge
-                v-else
-                value="N/A"
-                title="Sin margen"
-                format="text"
-                variant="secondary"
-                size="sm"
-                class="whitespace-nowrap"
-              />
-            </div>
-          </template>
-
-          <template #cell-is_available="{ item }">
-            <div class="flex justify-center" @click.stop="!editMode">
-              <button
-                type="button"
-                role="switch"
-                :aria-checked="editMode ? ensureDraft(item).is_available : item.is_available"
-                :aria-label="(editMode ? ensureDraft(item).is_available : item.is_available) ? `Marcar ${item.name} no disponible` : `Marcar ${item.name} disponible`"
-                :title="(editMode ? ensureDraft(item).is_available : item.is_available) ? 'Marcar no disponible' : 'Marcar disponible'"
-                :disabled="!editMode && togglingAvailabilityIds.has(item.id)"
-                class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
-                :class="[
-                  (editMode ? ensureDraft(item).is_available : item.is_available) ? 'bg-success' : 'bg-titan-300',
-                  !editMode && togglingAvailabilityIds.has(item.id) ? 'cursor-wait opacity-70' : 'cursor-pointer',
-                ]"
-                @click="editMode ? toggleDraftAvailability(item) : toggleAvailability(item)"
-              >
-                <span
-                  class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
-                  :class="(editMode ? ensureDraft(item).is_available : item.is_available) ? 'translate-x-4' : 'translate-x-0.5'"
-                />
-              </button>
-            </div>
-          </template>
-
-        </UiResponsiveDataView>
-
-        <!-- Pagination -->
-        <div v-if="productsData.total > itemsPerPage" class="mt-4 bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
-          <div class="flex-1 flex justify-between sm:hidden">
-            <button
-              @click="previousPage"
-              :disabled="!canGoPrevious"
-              :class="[
-                'relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md',
-                canGoPrevious ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed'
-              ]">
-              Anterior
-            </button>
-            <button
-              @click="nextPage"
-              :disabled="!canGoNext"
-              :class="[
-                'ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md',
-                canGoNext ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed'
-              ]">
-              Siguiente
-            </button>
-          </div>
-          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p class="text-sm text-titan-700">
-                Mostrando
-                <span class="font-medium">{{ startItem }}</span>
-                a
-                <span class="font-medium">{{ endItem }}</span>
-                de
-                <span class="font-medium">{{ productsData.total }}</span>
-                productos
-              </p>
-            </div>
-            <div>
-              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <template #cell-is_available="{ item }">
+              <div class="flex justify-center" @click.stop>
                 <button
-                  @click="previousPage"
-                  :disabled="!canGoPrevious"
-                  :class="[
-                    'relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 text-sm font-medium',
-                    canGoPrevious ? 'bg-white text-titan-500 hover:bg-titan-50' : 'bg-titan-50 text-titan-400 cursor-not-allowed'
-                  ]">
-                  <span class="sr-only">Anterior</span>
-                  <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                  </svg>
+                  v-if="isInCatalog(item._item)"
+                  type="button"
+                  role="switch"
+                  :aria-checked="item._item.isAvailable"
+                  :aria-label="item._item.isAvailable ? `Marcar ${item.name} no disponible al guardar` : `Marcar ${item.name} disponible al guardar`"
+                  :title="item._item.isAvailable ? 'Disponible (se aplica al guardar)' : 'No disponible (se aplica al guardar)'"
+                  class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                  :class="item._item.isAvailable ? 'bg-success' : 'bg-titan-300'"
+                  @click="toggleItemAvailability(item._item)"
+                >
+                  <span
+                    class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
+                    :class="item._item.isAvailable ? 'translate-x-4' : 'translate-x-0.5'"
+                  />
                 </button>
-                <button
-                  v-for="page in visiblePages"
-                  :key="page"
-                  @click="goToPage(page)"
-                  :class="[
-                    'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
-                    page === currentPage
-                      ? 'z-10 bg-crocus-50 border-crocus-500 text-crocus-600'
-                      : 'bg-white border-titan-300 text-titan-700 hover:bg-titan-50'
-                  ]">
-                  {{ page }}
-                </button>
-                <button
-                  @click="nextPage"
-                  :disabled="!canGoNext"
-                  :class="[
-                    'relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 text-sm font-medium',
-                    canGoNext ? 'bg-white text-titan-500 hover:bg-titan-50' : 'bg-titan-50 text-titan-400 cursor-not-allowed'
-                  ]">
-                  <span class="sr-only">Siguiente</span>
-                  <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
+                <span v-else class="text-sm text-text-tertiary">—</span>
+              </div>
+            </template>
+          </UiResponsiveDataView>
         </HealthSemaphore>
       </div>
     </div>
@@ -430,10 +339,10 @@
           </div>
           <div>
             <p class="text-sm text-text-primary font-medium mb-1">
-              ¿Eliminar {{ selectedIds.length }} producto{{ selectedIds.length !== 1 ? 's' : '' }}?
+              ¿Eliminar {{ selectedProductIds.length }} producto{{ selectedProductIds.length !== 1 ? 's' : '' }}?
             </p>
             <p class="text-sm text-text-secondary">
-              Si tienen ventas registradas, se archivarán. Si nunca se vendieron, se eliminan permanentemente.
+              Los ítems sin producto creado solo se desmarcarán del catálogo al guardar.
             </p>
           </div>
         </div>
@@ -459,9 +368,17 @@ import { onUnmounted, watch } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
-import { runSequentialProductPatches, runSequentialRequests, toastCatalogBulkResult, toastCatalogDeleteResult } from '@/composables/useMenuCatalogBulkSave'
-import { useMenuCatalogEditMode } from '@/composables/useMenuCatalogEditMode'
+import {
+  runSequentialProductPatches,
+  runSequentialRequests,
+  toastCatalogBulkResult,
+  toastCatalogDeleteResult,
+} from '@/composables/useMenuCatalogBulkSave'
 import { useMenuCatalogSelection } from '@/composables/useMenuCatalogSelection'
+import {
+  useResaleIngredientCatalog,
+  type ResaleIngredientTableRow,
+} from '@/composables/useResaleIngredientCatalog'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useToast } from '@/composables/useToast'
 
@@ -473,174 +390,7 @@ useHead({ title: 'Productos de Reventa' })
 
 const toast = useToast()
 const cache = useQueryCache()
-
-const {
-  appliedSearch,
-  apiSearchField,
-  statusFilter,
-  categoryFilter,
-  sortFilter,
-  onlineOnly,
-  marginNegativeOnly,
-  costDriftOnly,
-  performSearch: applyCatalogSearch,
-  hasActiveFilters,
-} = useMenuCatalogFilters()
-
-const currentPage = ref(1)
-const itemsPerPage = ref(20)
-
-const onCatalogSearch = () => applyCatalogSearch(() => { currentPage.value = 1 })
-const onCatalogClear = () => { currentPage.value = 1 }
-
-const emptyMessage = computed(() =>
-  hasActiveFilters.value
-    ? 'Ningún producto de reventa coincide con los filtros'
-    : 'No hay productos de reventa registrados',
-)
-
-const emptySubMessage = computed(() =>
-  hasActiveFilters.value
-    ? 'Prueba ajustar o limpiar los filtros'
-    : 'Usa «+ Nuevo producto» para activar ingredientes de reventa en el catálogo',
-)
-
-// Pagination
-const totalPages = computed(() => {
-  return Math.ceil((productsData.value?.total || 0) / itemsPerPage.value)
-})
-
-const canGoPrevious = computed(() => currentPage.value > 1)
-const canGoNext = computed(() => currentPage.value < totalPages.value)
-
-const goToPage = (page: number) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-  }
-}
-
-const previousPage = () => {
-  if (canGoPrevious.value) {
-    currentPage.value--
-  }
-}
-
-const nextPage = () => {
-  if (canGoNext.value) {
-    currentPage.value++
-  }
-}
-
-const startItem = computed(() => {
-  return (currentPage.value - 1) * itemsPerPage.value + 1
-})
-
-const endItem = computed(() => {
-  return Math.min(currentPage.value * itemsPerPage.value, productsData.value?.total || 0)
-})
-
-const visiblePages = computed(() => {
-  const total = totalPages.value
-  const current = currentPage.value
-  const pages = []
-
-  if (total <= 7) {
-    for (let i = 1; i <= total; i++) {
-      pages.push(i)
-    }
-  } else {
-    if (current <= 4) {
-      for (let i = 1; i <= 5; i++) {
-        pages.push(i)
-      }
-      pages.push(total)
-    } else if (current >= total - 3) {
-      pages.push(1)
-      for (let i = total - 4; i <= total; i++) {
-        pages.push(i)
-      }
-    } else {
-      pages.push(1)
-      for (let i = current - 1; i <= current + 1; i++) {
-        pages.push(i)
-      }
-      pages.push(total)
-    }
-  }
-
-  return pages
-})
-
-// Tenant reactivity
 const { currentTenant } = useTenantReactive()
-
-const showOnlineControls = computed(() => false)
-const showTableQrColumn = computed(() => false)
-
-const { data: categoriesData } = useQuery({
-  key: () => ['menu', 'categories', currentTenant.value?.id],
-  query: () => $fetch('/api/menu/categories'),
-  enabled: () => !!currentTenant.value,
-  staleTime: 30_000,
-})
-
-const categories = computed(() => (categoriesData.value as { data?: { id: string; name: string }[] })?.data || [])
-
-// Fetch products — ONLY resale (is_resale always true)
-const { data: productsData, error: fetchError, asyncStatus: queryAsyncStatus, refetch } = useQuery({
-  key: () => ['menu', 'products-resale', currentTenant.value?.id, {
-    page: currentPage.value,
-    limit: itemsPerPage.value,
-    search: appliedSearch.value || null,
-    searchField: apiSearchField.value,
-    status: statusFilter.value || null,
-    category: categoryFilter.value || null,
-    onlineOnly: onlineOnly.value,
-    marginNegativeOnly: marginNegativeOnly.value,
-    sort: sortFilter.value,
-  }],
-  query: () => {
-    const params: Record<string, string | number | boolean> = {
-      page: currentPage.value,
-      limit: itemsPerPage.value,
-      is_resale: true,
-      sort: sortFilter.value,
-    }
-    if (appliedSearch.value) {
-      params.search = appliedSearch.value
-      params.search_field = apiSearchField.value
-    }
-    if (statusFilter.value) {
-      params.is_available = statusFilter.value === 'true'
-    }
-    if (categoryFilter.value) {
-      params.category_id = categoryFilter.value
-    }
-    if (onlineOnly.value) {
-      params.is_available_online = true
-    }
-    if (marginNegativeOnly.value) {
-      params.margin_negative = true
-    }
-    return $fetch('/api/menu/products', { params })
-  },
-  enabled: () => !!currentTenant.value,
-  staleTime: 30_000,
-})
-
-const isLoading = computed(() => !productsData.value)
-const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && productsData.value != null)
-
-// Reset page on tenant or filter change
-watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
-// costDriftOnly is client-side; reset page when toggled
-watch(costDriftOnly, () => { currentPage.value = 1 })
-
-const products = computed(() => productsData.value?.data || [])
-
-const isOpenSaleShell = (_row: { open_priced?: boolean }) => false
-
-const isSubmitting = ref(false)
 
 const availabilityBulkOptions = [
   { label: 'Disponible', value: 'true' },
@@ -654,7 +404,6 @@ const {
   bulkAvailability,
   bulkOnline,
   bulkQr,
-  bulkFields,
   toggleSelect: selectionToggleSelect,
   allPageSelected: isAllPageSelected,
   toggleSelectAll: selectionToggleSelectAll,
@@ -663,111 +412,182 @@ const {
   catalogRowSelectionClass,
 } = useMenuCatalogSelection()
 
-const {
-  editMode,
-  productDrafts,
-  ensureDraft,
-  displayProducts,
-  hasChanges,
-  canSubmit,
-  applyBulkOverridesForSelectedRows,
-  discardAllDrafts,
-  cancelEditOperation,
-  toggleEditMode: editToggleEditMode,
-  canBulkApplyEdit,
-  buildSavePatchBody,
-  idsWithDraftChanges,
-} = useMenuCatalogEditMode({
-  categories,
-  products,
-  selectedIds,
-  bulkFields,
-  isOpenSaleShell,
-  showOnlineControls,
-  showTableQrColumn,
-})
-
 const showBulkDeleteModal = ref(false)
 const bulkDeleteError = ref('')
 
-const selectableProductsOnPage = computed(() => displayProducts.value)
+const {
+  categories,
+  resaleIngredients,
+  isLoadingData,
+  isRefreshing,
+  activeProductsCount,
+  hasChanges,
+  canSubmit,
+  isSubmitting,
+  itemToTableRow,
+  isInCatalog,
+  toggleItem,
+  toggleItemAvailability,
+  discardChanges,
+  saveChanges,
+  reloadCatalog,
+  itemsWithStatus,
+} = useResaleIngredientCatalog(currentTenant)
 
-const allPageSelected = computed(() => isAllPageSelected(selectableProductsOnPage.value))
+const {
+  appliedSearch,
+  statusFilter,
+  categoryFilter,
+  marginNegativeOnly,
+  costDriftOnly,
+  performSearch: applyCatalogSearch,
+  hasActiveFilters,
+} = useMenuCatalogFilters()
 
-const canBulkApplyCatalog = computed(() =>
+const onCatalogSearch = () => applyCatalogSearch()
+const onCatalogClear = () => applyCatalogSearch()
+
+const emptyMessage = computed(() =>
+  resaleIngredients.value.length === 0
+    ? 'No hay ingredientes de reventa'
+    : hasActiveFilters.value
+      ? 'Ningún ítem coincide con los filtros'
+      : 'No hay ítems para mostrar',
+)
+
+const emptySubMessage = computed(() =>
+  resaleIngredients.value.length === 0
+    ? 'Activa is_resale en ingredientes propios'
+    : hasActiveFilters.value
+      ? 'Prueba ajustar o limpiar los filtros'
+      : '',
+)
+
+const {
+  marginRealPct,
+  marginOperativoPct,
+  hasCostDrift,
+  formatCostCell: formatCostCellValue,
+} = useProductMargins()
+
+const formatCurrency = (value: number) => {
+  if (!value) return '$0'
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+  }).format(value)
+}
+
+const formatCostCell = (value: unknown) => formatCostCellValue(value, formatCurrency)
+const hasCostValue = (value: unknown) => value !== null && value !== undefined
+
+function moneyInputWidth(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(Number(value))) return '7rem'
+  const digits = String(Math.abs(Math.round(Number(value)))).length
+  return `${Math.max(11, digits + 5)}ch`
+}
+
+const categoryNameById = computed(() => {
+  const map = new Map<string, string>()
+  for (const c of categories.value) {
+    map.set(c.id, c.name)
+  }
+  return map
+})
+
+const tableRows = computed((): ResaleIngredientTableRow[] => {
+  let rows = itemsWithStatus.value.map(itemToTableRow)
+
+  const q = appliedSearch.value.trim().toLowerCase()
+  if (q) {
+    rows = rows.filter(r => r.name.toLowerCase().includes(q))
+  }
+
+  if (statusFilter.value) {
+    const wantAvailable = statusFilter.value === 'true'
+    rows = rows.filter((r) => {
+      if (!isInCatalog(r._item)) return false
+      return r._item.isAvailable === wantAvailable
+    })
+  }
+
+  if (categoryFilter.value) {
+    const catName = categoryNameById.value.get(categoryFilter.value)
+    if (catName) {
+      rows = rows.filter(r =>
+        r.category_name.toLowerCase() === catName.toLowerCase(),
+      )
+    }
+  }
+
+  if (marginNegativeOnly.value) {
+    rows = rows.filter((r) => {
+      const m = marginRealPct(r)
+      return m !== null && m < 0
+    })
+  }
+
+  if (costDriftOnly.value) {
+    rows = rows.filter(r => r._item.existingProduct && hasCostDrift(r))
+  }
+
+  return rows
+})
+
+const selectableRowsOnPage = computed(() => tableRows.value)
+
+const allPageSelected = computed(() => isAllPageSelected(selectableRowsOnPage.value))
+
+const canBulkApply = computed(() =>
   selectionCanBulkApplyCatalog({ showOnline: false, showQr: false }),
 )
 
-const canBulkApply = computed(() =>
-  editMode.value ? canBulkApplyEdit() : canBulkApplyCatalog.value,
-)
+function toggleSelect(id: string) {
+  selectionToggleSelect(id, tableRows.value)
+}
 
-const toggleSelect = (id: string) => selectionToggleSelect(id, products.value)
-
-const toggleSelectAll = () => selectionToggleSelectAll(selectableProductsOnPage.value)
+function toggleSelectAll() {
+  selectionToggleSelectAll(selectableRowsOnPage.value)
+}
 
 function clearSelection() {
   clearCatalogSelection()
   bulkDeleteError.value = ''
 }
 
-const onToggleEditMode = () => editToggleEditMode(clearSelection)
-
-function toggleDraftAvailability(product: {
-  id: string
-  name: string
-  category_id?: string
-  category_name?: string
-  price: number
-  is_available?: boolean
-}) {
-  const draft = ensureDraft(product)
-  draft.is_available = !draft.is_available
+function findItemByIngredientId(ingredientId: string) {
+  return itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
 }
 
-const togglingAvailabilityIds = ref<Set<string>>(new Set())
+const selectedProductIds = computed(() =>
+  selectedIds.value
+    .map(id => findItemByIngredientId(id)?.existingProduct?.id)
+    .filter((id): id is string => !!id),
+)
 
-async function toggleAvailability(product: {
-  id: string
-  name?: string
-  is_available?: boolean
-}) {
-  if (togglingAvailabilityIds.value.has(product.id)) return
-
-  togglingAvailabilityIds.value = new Set([...togglingAvailabilityIds.value, product.id])
-  const previous = !!product.is_available
-  const newValue = !previous
-  product.is_available = newValue
-
-  try {
-    await $fetch(`/api/menu/products/${product.id}`, {
-      method: 'PUT',
-      body: { is_available: newValue },
-    })
-    await invalidateResaleCatalog()
-    toast.success(newValue ? 'Producto disponible' : 'Producto no disponible', { title: 'Estado actualizado' })
-  } catch {
-    product.is_available = previous
-    toast.error('No se pudo actualizar la disponibilidad', { title: 'Error' })
-  } finally {
-    togglingAvailabilityIds.value = new Set(
-      [...togglingAvailabilityIds.value].filter(id => id !== product.id),
-    )
+function applyBulkDraftToSelection() {
+  for (const ingredientId of selectedIds.value) {
+    const item = findItemByIngredientId(ingredientId)
+    if (!item) continue
+    if (bulkAvailability.value !== '' && isInCatalog(item)) {
+      item.isAvailable = bulkAvailability.value === 'true'
+    }
   }
 }
 
-watch(
-  [currentPage, statusFilter, categoryFilter, sortFilter, onlineOnly, marginNegativeOnly, appliedSearch],
-  clearSelection,
-)
-
-async function invalidateResaleCatalog() {
-  cache.invalidateQueries({ key: ['menu', 'products-resale'] })
-  cache.invalidateQueries({ key: ['menu', 'products'] })
-}
-
 async function executeBulkCatalogApply() {
-  if (!canBulkApplyCatalog.value || isSubmitting.value) return
+  if (!canBulkApply.value || isSubmitting.value) return
+
+  applyBulkDraftToSelection()
+
+  const productIds = selectedProductIds.value
+  if (productIds.length === 0) {
+    clearSelection()
+    toast.success('Cambios aplicados a la selección. Guarda para confirmar.', { title: 'Listo' })
+    return
+  }
+
   isSubmitting.value = true
   const body: Record<string, string | boolean> = {}
   if (bulkCategoryId.value) body.category_id = bulkCategoryId.value
@@ -775,10 +595,17 @@ async function executeBulkCatalogApply() {
     body.is_available = bulkAvailability.value === 'true'
   }
 
+  if (Object.keys(body).length === 0) {
+    isSubmitting.value = false
+    clearSelection()
+    return
+  }
+
   try {
-    const result = await runSequentialProductPatches(selectedIds.value, () => body)
-    await invalidateResaleCatalog()
-    await refetch()
+    const result = await runSequentialProductPatches(productIds, () => body)
+    cache.invalidateQueries({ key: ['menu', 'products-resale'] })
+    cache.invalidateQueries({ key: ['menu', 'products'] })
+    await reloadCatalog()
     clearSelection()
     toastCatalogBulkResult(result, toast, {
       title: 'Listo',
@@ -790,59 +617,35 @@ async function executeBulkCatalogApply() {
 }
 
 function onBulkApply() {
-  if (editMode.value) {
-    saveChanges()
-  } else {
-    executeBulkCatalogApply()
-  }
-}
-
-async function saveChanges() {
-  if (isSubmitting.value || !canSubmit.value) return
-  applyBulkOverridesForSelectedRows()
-
-  const idsToSave = idsWithDraftChanges()
-  if (idsToSave.length === 0) return
-
-  isSubmitting.value = true
-
-  try {
-    const result = await runSequentialProductPatches(idsToSave, (id) => {
-      const draft = productDrafts.value[id]
-      if (!draft) return null
-      return buildSavePatchBody(draft)
-    })
-
-    await invalidateResaleCatalog()
-    await refetch()
-    discardAllDrafts()
-    clearSelection()
-
-    toastCatalogBulkResult(result, toast, {
-      title: 'Guardado',
-      emptySuccessMessage: 'Catálogo actualizado',
-    })
-  } finally {
-    isSubmitting.value = false
-  }
+  executeBulkCatalogApply()
 }
 
 const openBulkDeleteModal = () => {
   bulkDeleteError.value = ''
+  if (selectedProductIds.value.length === 0) {
+    for (const ingredientId of selectedIds.value) {
+      const item = findItemByIngredientId(ingredientId)
+      if (item && isInCatalog(item)) toggleItem(item)
+    }
+    clearSelection()
+    return
+  }
   showBulkDeleteModal.value = true
 }
 
-const confirmBulkDelete = async () => {
-  if (selectedIds.value.length === 0 || isSubmitting.value) return
+async function confirmBulkDelete() {
+  const productIds = selectedProductIds.value
+  if (productIds.length === 0 || isSubmitting.value) return
+
   isSubmitting.value = true
   bulkDeleteError.value = ''
   let archived = 0
 
   const result = await runSequentialRequests(
-    selectedIds.value.map((id) => ({
+    productIds.map(id => ({
       key: id,
       run: async () => {
-        const res = await $fetch<{ success: boolean; archived?: boolean }>(
+        const res = await $fetch<{ success: boolean, archived?: boolean }>(
           `/api/menu/products/${id}`,
           { method: 'DELETE' },
         )
@@ -852,8 +655,9 @@ const confirmBulkDelete = async () => {
   )
 
   showBulkDeleteModal.value = false
-  await invalidateResaleCatalog()
-  await refetch()
+  cache.invalidateQueries({ key: ['menu', 'products-resale'] })
+  cache.invalidateQueries({ key: ['menu', 'products'] })
+  await reloadCatalog()
   clearSelection()
   isSubmitting.value = false
 
@@ -868,133 +672,54 @@ const confirmBulkDelete = async () => {
   }
 }
 
-function moneyInputWidth(value: number | null | undefined): string {
-  if (value == null || Number.isNaN(Number(value))) return '7rem'
-  const digits = String(Math.abs(Math.round(Number(value)))).length
-  return `${Math.max(11, digits + 5)}ch`
-}
+watch([appliedSearch, statusFilter, categoryFilter, marginNegativeOnly, costDriftOnly], clearSelection)
 
-const formatCurrency = (value: number) => {
-  if (!value) return '$0'
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-  }).format(value)
-}
-
-const {
-  marginRealPct,
-  marginOperativoPct,
-  hasCostDrift,
-  formatCostCell: formatCostCellValue,
-} = useProductMargins()
-
-const formatCostCell = (value: unknown) => formatCostCellValue(value, formatCurrency)
-
-const hasCostValue = (value: unknown) => value !== null && value !== undefined
-
-const tableRows = computed(() => {
-  const rows = displayProducts.value
-  if (!costDriftOnly.value) return rows
-  return rows.filter((p: { id: string }) => hasCostDrift(p))
-})
-
-const costDriftProductIds = computed(() => {
+const costDriftRowIds = computed(() => {
   const ids = new Set<string>()
-  for (const p of tableRows.value) {
-    if (hasCostDrift(p)) ids.add(p.id)
+  for (const r of tableRows.value) {
+    if (r._item.existingProduct && hasCostDrift(r)) ids.add(r.id)
   }
   return ids
 })
 
-const catalogRowBaseClass = (row: { id: string }, index: number) => {
-  if (costDriftProductIds.value.has(row.id)) return 'bg-status-warning-bg/40'
+const catalogRowBaseClass = (row: ResaleIngredientTableRow, index: number) => {
+  if (row._item.toDelete) return 'bg-red-50 dark:bg-red-950/20'
+  if (costDriftRowIds.value.has(row.id)) return 'bg-status-warning-bg/40'
+  if (isInCatalog(row._item)) return 'bg-primary/5'
   return index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'
 }
 
-const catalogRowClass = (row: { id: string }, index: number) =>
+const catalogRowClass = (row: ResaleIngredientTableRow, index: number) =>
   catalogRowSelectionClass(row.id, catalogRowBaseClass(row, index))
 
-const getRowClass = (row: { id: string }): string => {
-  const index = tableRows.value.findIndex((p: { id: string }) => p.id === row.id)
+const getRowClass = (row: ResaleIngredientTableRow): string => {
+  const index = tableRows.value.findIndex(r => r.id === row.id)
   return catalogRowClass(row, index >= 0 ? index : 0)
 }
 
-// Inject refresh handler setter from layout
-const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-
-// Register refresh handler for mobile bottom nav and desktop header
-onMounted(() => {
-  setRefreshHandler(refetch)
-})
-useMenuReturnRefresh('/menu/reventa', refetch)
-registerProgressiveLoading(isRefreshing)
-onUnmounted(() => {
-  clearRefreshHandler(refetch)
-})
-
-// Table columns configuration
 const productosTableColumns = computed(() => [
   { key: 'select', title: '', sortable: false, width: '44px', class: '!px-0', align: 'center' as const },
-  {
-    key: 'name',
-    title: 'Producto',
-    sortable: false,
-    format: 'text',
-    align: 'left'
-  },
-  {
-    key: 'category_name',
-    title: 'Categoria',
-    sortable: false,
-    format: 'text',
-    align: 'left'
-  },
-  {
-    key: 'price',
-    title: 'Precio',
-    sortable: false,
-    format: 'currency',
-    align: 'right'
-  },
-  {
-    key: 'costo_calculado',
-    title: 'Costo real',
-    sortable: false,
-    format: 'currency',
-    align: 'right'
-  },
-  {
-    key: 'costo_percibido',
-    title: 'Mi costo',
-    sortable: false,
-    format: 'currency',
-    align: 'right'
-  },
-  {
-    key: 'margen_real',
-    title: 'Margen real',
-    sortable: false,
-    format: 'text',
-    align: 'center'
-  },
-  {
-    key: 'margen_operativo',
-    title: 'Margen op.',
-    sortable: false,
-    format: 'text',
-    align: 'center'
-  },
-  {
-    key: 'is_available',
-    title: 'Estado',
-    sortable: false,
-    format: 'boolean',
-    align: 'center'
-  },
+  { key: 'name', title: 'Producto', sortable: false, format: 'text', align: 'left' as const },
+  { key: 'category_name', title: 'Categoría', sortable: false, format: 'text', align: 'left' as const },
+  { key: 'price', title: 'Precio', sortable: false, format: 'currency', align: 'right' as const },
+  { key: 'costo_calculado', title: 'Costo real', sortable: false, format: 'currency', align: 'right' as const },
+  { key: 'costo_percibido', title: 'Mi costo', sortable: false, format: 'currency', align: 'right' as const },
+  { key: 'margen_real', title: 'Margen real', sortable: false, format: 'text', align: 'center' as const },
+  { key: 'margen_operativo', title: 'Margen op.', sortable: false, format: 'text', align: 'center' as const },
+  { key: 'in_catalog', title: 'En catálogo', sortable: false, format: 'boolean', align: 'center' as const },
+  { key: 'is_available', title: 'Disponible', sortable: false, format: 'boolean', align: 'center' as const },
 ])
 
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+
+onMounted(() => {
+  setRefreshHandler(reloadCatalog)
+})
+useMenuReturnRefresh('/menu/reventa', reloadCatalog)
+registerProgressiveLoading(isRefreshing)
+onUnmounted(() => {
+  clearRefreshHandler(reloadCatalog)
+})
 </script>
 
 <style scoped>

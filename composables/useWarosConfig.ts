@@ -6,19 +6,9 @@
  * isLoading/isSaving/error refs and try/catch/finally boilerplate.
  * toggleGlobal uses optimistic update with cache rollback on error.
  *
- * Pure helpers (getRuleMeta, configSummary, DEFAULT_CONFIGS) are re-exported
- * from warosConfigHelpers so callers that only need helpers can import
- * them directly without triggering useQuery.
+ * Pure helpers live in warosConfigHelpers — import from there directly
+ * (no re-export here; avoids Nuxt duplicated auto-import warnings).
  */
-
-export type {
-  WaroRule,
-  WarosConfigResponse,
-  TicketValueTier,
-  PurchaseCountMilestone,
-} from './warosConfigHelpers'
-
-export { DEFAULT_CONFIGS, getRuleMeta, configSummary } from './warosConfigHelpers'
 
 import type { WarosConfigResponse } from './warosConfigHelpers'
 import { getRuleMeta, configSummary } from './warosConfigHelpers'

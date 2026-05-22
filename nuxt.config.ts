@@ -50,6 +50,7 @@ export default defineNuxtConfig({
     port: parseInt(process.env.PORT || '8080')
   },
   nitro: {
+    compatibilityDate: '2026-05-22',
     serverAssets: [{
       baseName: 'docs',
       dir: './docs'

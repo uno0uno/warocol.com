@@ -3,7 +3,7 @@
  * Does not sync to /api/online/cart — items are submitted via POST /public/table-qr/{token}/requests.
  */
 import { defineStore } from 'pinia'
-import type { CartItem, CartModifier } from '~/stores/online_cart'
+import type { OnlineCartItem, CartModifier } from '~/stores/online_cart'
 
 function modifiersKey(mods: CartModifier[]): string {
   return JSON.stringify([...mods].sort((a, b) => a.id.localeCompare(b.id)))
@@ -15,7 +15,7 @@ function newItemId(): string {
 
 export const useTableQrCartStore = defineStore('tableQrCart', () => {
   const token = ref<string | null>(null)
-  const items = ref<CartItem[]>([])
+  const items = ref<OnlineCartItem[]>([])
   const isLoading = ref(false)
 
   const itemCount = computed(() => items.value.reduce((sum, item) => sum + item.quantity, 0))

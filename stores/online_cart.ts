@@ -28,7 +28,7 @@ export interface CartModifier {
   price: number
 }
 
-export interface CartItem {
+export interface OnlineCartItem {
   id: string
   backendId?: string        // UUID assigned by backend after sync
   product_id: string
@@ -89,7 +89,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
   // ── State ──────────────────────────────────────────────────────────────────
   const sessionId = ref<string | null>(null)
   const cartId = ref<string | null>(null)
-  const items = ref<CartItem[]>([])
+  const items = ref<OnlineCartItem[]>([])
   const orderType = ref<'delivery' | 'pickup' | 'dine-in'>('delivery')
   const deliveryInfo = ref<DeliveryInfo | null>(null)
   const tenantId = ref<string | null>(null)
@@ -124,7 +124,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
     }
   }
 
-  /** Map backend item UUIDs back onto local CartItems after a batch sync */
+  /** Map backend item UUIDs back onto local OnlineCartItems after a batch sync */
   function syncItemIds(backendItems: BackendCartItem[]) {
     for (const backendItem of backendItems) {
       const localItem = items.value.find(
@@ -273,7 +273,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
     onMutate(itemId: string) {
       const index = items.value.findIndex(i => i.id === itemId)
       if (index < 0) {
-        return { snapshot: null as CartItem | null, index: -1, backendId: null as string | null, snapshotCartId: null as string | null }
+        return { snapshot: null as OnlineCartItem | null, index: -1, backendId: null as string | null, snapshotCartId: null as string | null }
       }
       const snapshot = items.value[index]
       const backendId = snapshot.backendId ?? null

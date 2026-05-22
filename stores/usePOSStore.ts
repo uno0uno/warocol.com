@@ -1,13 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import type { CartModifier } from '~/stores/online_cart'
 
-export interface CartModifier {
-    id: string
-    name: string
-    price: number
-}
-
-export interface CartItem {
+export interface PosCartItem {
     id?: string // ID del item en la BD (para poder eliminarlo/actualizarlo)
     product: {
         id: string
@@ -73,7 +68,7 @@ export interface CachedProduct {
 
 export const usePOSStore = defineStore('pos', () => {
     // State
-    const cart = ref<CartItem[]>([])
+    const cart = ref<PosCartItem[]>([])
     const currentCustomer = ref<Customer | null>(null)
     const cartId = ref<string | null>(null) // ID del carrito en la BD
     const isSyncing = ref(false) // Flag para evitar loops de sincronización
@@ -132,7 +127,7 @@ export const usePOSStore = defineStore('pos', () => {
         return `?${params.toString()}`
     }
 
-    const deleteSyncedCartLine = async (item: CartItem): Promise<boolean> => {
+    const deleteSyncedCartLine = async (item: PosCartItem): Promise<boolean> => {
         if (!cartId.value || !item.id || isSyncing.value) return false
         const qs = buildCartAuditQuery()
         await $fetch(`/api/pos/cart/${cartId.value}/items/${item.id}${qs}`, {
@@ -143,7 +138,7 @@ export const usePOSStore = defineStore('pos', () => {
 
     // Actions — local-only cart operations (no backend sync per item)
 
-    const addToCart = async (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
+    const addToCart = async (item: Omit<PosCartItem, 'quantity'> & { quantity?: number }) => {
         const quantity = item.quantity || 1
         const existingIndex = cart.value.findIndex((c) => {
             if (item.is_open_sale || c.is_open_sale) {
@@ -219,14 +214,14 @@ export const usePOSStore = defineStore('pos', () => {
         }
     }
 
-    const updateCartItem = async (index: number, updatedItem: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
+    const updateCartItem = async (index: number, updatedItem: Omit<PosCartItem, 'quantity'> & { quantity?: number }) => {
         if (index >= 0 && index < cart.value.length) {
             cart.value[index] = { ...updatedItem, quantity: updatedItem.quantity || 1 }
             invalidateSyncedCart()
         }
     }
 
-    const getCartItem = (index: number): CartItem | undefined => {
+    const getCartItem = (index: number): PosCartItem | undefined => {
         return cart.value[index]
     }
 

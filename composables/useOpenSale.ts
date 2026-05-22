@@ -1,5 +1,5 @@
 import { computed, type ComputedRef, type Ref } from 'vue'
-import type { ActiveTableSession, CartItem } from '~/stores/usePOSStore'
+import type { ActiveTableSession, PosCartItem } from '~/stores/usePOSStore'
 
 export interface OpenSaleProduct {
   id: string
@@ -64,7 +64,7 @@ export function useOpenSale(options: {
   const buildOpenSaleCartLine = (
     amount: number,
     description?: string,
-  ): Omit<CartItem, 'quantity'> & { quantity: number } => {
+  ): Omit<PosCartItem, 'quantity'> & { quantity: number } => {
     const shell = openSaleProduct.value
     if (!shell) {
       throw new Error('No hay producto de venta libre configurado')

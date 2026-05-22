@@ -118,10 +118,10 @@
 </template>
 
 <script setup lang="ts">
-import type { CartItem } from '~/stores/online_cart'
+import type { OnlineCartItem } from '~/stores/online_cart'
 
 const props = defineProps<{
-  item: CartItem
+  item: OnlineCartItem
   loading?: boolean
   restaurantClosed?: boolean
 }>()
@@ -129,7 +129,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update-quantity', itemId: string, quantity: number): void
   (e: 'remove', itemId: string): void
-  (e: 'customize-add', item: CartItem): void
+  (e: 'customize-add', item: OnlineCartItem): void
 }>()
 
 const formatPrice = (price: number) => {
