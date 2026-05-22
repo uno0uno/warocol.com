@@ -68,10 +68,10 @@
               </button>
               <NuxtLink
                 to="/menu/reventa/crear"
-                class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] flex items-center"
+                class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] flex items-center text-primary-foreground"
               >
-                <span class="hidden sm:inline">Gestionar productos</span>
-                <span class="sm:hidden">Gestionar</span>
+                <span class="hidden sm:inline">+ Nuevo producto</span>
+                <span class="sm:hidden">+ Nuevo</span>
               </NuxtLink>
             </div>
           </template>
@@ -183,12 +183,24 @@
                   title="Margen operativo"
                   class="whitespace-nowrap"
                 />
-                <UiStatusBadge
-                  :value="item.is_available ? 'Disponible' : 'No disponible'"
-                  format="text"
-                  :variant="item.is_available ? 'success' : 'default'"
-                  size="sm"
-                />
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="editMode ? ensureDraft(item).is_available : item.is_available"
+                  :aria-label="(editMode ? ensureDraft(item).is_available : item.is_available) ? 'Marcar no disponible' : 'Marcar disponible'"
+                  :disabled="!editMode && togglingAvailabilityIds.has(item.id)"
+                  class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                  :class="[
+                    (editMode ? ensureDraft(item).is_available : item.is_available) ? 'bg-success' : 'bg-titan-300',
+                    !editMode && togglingAvailabilityIds.has(item.id) ? 'cursor-wait opacity-70' : 'cursor-pointer',
+                  ]"
+                  @click.stop="editMode ? toggleDraftAvailability(item) : toggleAvailability(item)"
+                >
+                  <span
+                    class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
+                    :class="(editMode ? ensureDraft(item).is_available : item.is_available) ? 'translate-x-4' : 'translate-x-0.5'"
+                  />
+                </button>
               </div>
             </div>
           </template>
@@ -304,29 +316,27 @@
             </div>
           </template>
 
-          <template #cell-is_available="{ value, item }">
-            <div class="flex justify-center" @click.stop="editMode">
+          <template #cell-is_available="{ item }">
+            <div class="flex justify-center" @click.stop="!editMode">
               <button
-                v-if="editMode"
                 type="button"
                 role="switch"
-                :aria-checked="item.is_available"
-                class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
-                :class="item.is_available ? 'bg-success' : 'bg-titan-300'"
-                @click="toggleDraftAvailability(item)"
+                :aria-checked="editMode ? ensureDraft(item).is_available : item.is_available"
+                :aria-label="(editMode ? ensureDraft(item).is_available : item.is_available) ? `Marcar ${item.name} no disponible` : `Marcar ${item.name} disponible`"
+                :title="(editMode ? ensureDraft(item).is_available : item.is_available) ? 'Marcar no disponible' : 'Marcar disponible'"
+                :disabled="!editMode && togglingAvailabilityIds.has(item.id)"
+                class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                :class="[
+                  (editMode ? ensureDraft(item).is_available : item.is_available) ? 'bg-success' : 'bg-titan-300',
+                  !editMode && togglingAvailabilityIds.has(item.id) ? 'cursor-wait opacity-70' : 'cursor-pointer',
+                ]"
+                @click="editMode ? toggleDraftAvailability(item) : toggleAvailability(item)"
               >
                 <span
-                  class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform"
-                  :class="item.is_available ? 'translate-x-4' : 'translate-x-0.5'"
+                  class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
+                  :class="(editMode ? ensureDraft(item).is_available : item.is_available) ? 'translate-x-4' : 'translate-x-0.5'"
                 />
               </button>
-              <UiStatusBadge
-                v-else
-                :value="value ? 'Disponible' : 'No disponible'"
-                format="text"
-                :variant="value ? 'success' : 'default'"
-                size="sm"
-              />
             </div>
           </template>
 
@@ -492,7 +502,7 @@ const emptyMessage = computed(() =>
 const emptySubMessage = computed(() =>
   hasActiveFilters.value
     ? 'Prueba ajustar o limpiar los filtros'
-    : 'Crea un nuevo producto de reventa para comenzar',
+    : 'Usa «+ Nuevo producto» para activar ingredientes de reventa en el catálogo',
 )
 
 // Pagination
@@ -713,6 +723,37 @@ function toggleDraftAvailability(product: {
 }) {
   const draft = ensureDraft(product)
   draft.is_available = !draft.is_available
+}
+
+const togglingAvailabilityIds = ref<Set<string>>(new Set())
+
+async function toggleAvailability(product: {
+  id: string
+  name?: string
+  is_available?: boolean
+}) {
+  if (togglingAvailabilityIds.value.has(product.id)) return
+
+  togglingAvailabilityIds.value = new Set([...togglingAvailabilityIds.value, product.id])
+  const previous = !!product.is_available
+  const newValue = !previous
+  product.is_available = newValue
+
+  try {
+    await $fetch(`/api/menu/products/${product.id}`, {
+      method: 'PUT',
+      body: { is_available: newValue },
+    })
+    await invalidateResaleCatalog()
+    toast.success(newValue ? 'Producto disponible' : 'Producto no disponible', { title: 'Estado actualizado' })
+  } catch {
+    product.is_available = previous
+    toast.error('No se pudo actualizar la disponibilidad', { title: 'Error' })
+  } finally {
+    togglingAvailabilityIds.value = new Set(
+      [...togglingAvailabilityIds.value].filter(id => id !== product.id),
+    )
+  }
 }
 
 watch(
