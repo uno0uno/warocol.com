@@ -227,15 +227,25 @@ watch(
 const unfiredCount = computed(() => {
   if (!comandasEnabled.value) return 0
   if (!posStore.activeTableSession) {
-    // Counter mode: every item in the cart is unfired
     return posStore.cart.length
   }
-  return storeTabItems.value.filter((i: TabItem) => i.fulfillmentStatus === 'new').length
+  if (isKitchenServiceMode.value) {
+    const tabUnfired = storeTabItems.value.filter((i: TabItem) => i.fulfillmentStatus === 'new').length
+    return tabUnfired + posStore.cart.length
+  }
+  return 0
 })
 
-// ── Mesa mode ──────────────────────────────────────────────────────────────
-// Bar sessions behave as normal POS — not tab/mesa mode
-const isMesaMode = computed(() => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar)
+// ── Kitchen service mode (mesa + barra with comandas) ─────────────────────
+// Bar without comandas stays cart-only (“venta directa”). #799
+const isKitchenServiceMode = computed(
+  () =>
+    !!posStore.activeTableSession
+    && (!posStore.activeTableSession?.isBar || comandasEnabled.value),
+)
+const isMesaMode = computed(
+  () => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar,
+)
 const isAddingToTab = ref(false)
 const isLoadingTabItems = ref(false)
 const isClearingTab = ref(false)
@@ -1015,7 +1025,15 @@ onUnmounted(() => {
           <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
             <span class="text-[10px] font-bold text-amber-600 uppercase tracking-widest flex-shrink-0">Barra</span>
             <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
-            <span class="text-xs text-text-secondary">Venta directa en barra</span>
+            <span class="text-xs text-text-secondary">
+              {{ comandasEnabled ? 'Agregar y enviar a cocina antes de cobrar' : 'Venta directa en barra' }}
+            </span>
+            <template v-if="comandasEnabled && unfiredCount > 0">
+              <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
+              <span class="flex items-center gap-1 text-xs font-semibold text-red-600 flex-shrink-0">
+                {{ unfiredCount }} {{ unfiredCount === 1 ? 'ítem' : 'ítems' }} sin enviar
+              </span>
+            </template>
           </div>
           <button
             type="button"
@@ -1225,7 +1243,7 @@ onUnmounted(() => {
       <PosCartPanel
         :items="posStore.cart"
         :total="cartTotal"
-        :mesa-mode="isMesaMode"
+        :mesa-mode="isKitchenServiceMode"
         :is-adding-to-tab="isAddingToTab"
         :is-loading-tab-items="isLoadingTabItems"
         :is-clearing-tab="isClearingTab"

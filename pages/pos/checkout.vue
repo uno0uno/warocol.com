@@ -121,8 +121,15 @@ const insightsLoading = ref(false)
 // auto-opened "summary" / "insights" on customer change — too noisy.
 const activeAccordion = ref<'insights' | 'summary' | 'waros' | null>(null)
 
-// Mesa mode detection — bar sessions behave as normal POS (cart-based, not tab-based)
-const isMesaMode = computed(() => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar)
+// Mesa vs barra kitchen service (#799)
+const isKitchenServiceMode = computed(
+  () =>
+    !!posStore.activeTableSession
+    && (!posStore.activeTableSession?.isBar || comandasEnabled.value),
+)
+const isMesaMode = computed(
+  () => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar,
+)
 const { tabItems: storeTabItems } = storeToRefs(posStore)
 
 // Issue #526 — tax preview for the cart sidebar.
@@ -260,7 +267,7 @@ const addressFormLoading = ref(false)
 
 // Computed (must be before any watchers that reference cartTotal)
 const cartItems = computed(() => {
-  if (isMesaMode.value) {
+  if (isKitchenServiceMode.value) {
     return storeTabItems.value.map(item => ({
       product: { id: '', name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
       modifiers: [] as Array<{ id: string; name: string; price: number }>,
@@ -271,7 +278,7 @@ const cartItems = computed(() => {
   return posStore.cart
 })
 const cartTotal = computed(() => {
-  if (isMesaMode.value) return posStore.activeTableSession?.runningTotal ?? 0
+  if (isKitchenServiceMode.value) return posStore.activeTableSession?.runningTotal ?? 0
   return posStore.cartTotal
 })
 const discountAmount = computed(() => {
@@ -303,7 +310,7 @@ const {
   query: () => $fetch<{ success: boolean; data: any }>(
     `/api/tables/${posStore.activeTableSession!.tableId}/current`
   ),
-  enabled: () => isMesaMode.value && !!posStore.activeTableSession?.tableId,
+  enabled: () => isKitchenServiceMode.value && !!posStore.activeTableSession?.tableId,
   staleTime: 5_000,  // short — running_total changes when items are added
 })
 
@@ -318,7 +325,7 @@ const {
   query: () => $fetch<{ success: boolean; data: any }>(
     `/api/pos/cart/${selectedCustomer.value!.id}`
   ),
-  enabled: () => !isMesaMode.value && !!posStore.cartId && !!selectedCustomer.value?.id,
+  enabled: () => !isKitchenServiceMode.value && !!posStore.cartId && !!selectedCustomer.value?.id,
   staleTime: 5_000,
 })
 
@@ -334,14 +341,14 @@ const { data: posTaxPreviewData } = useQuery({
       `/api/pos/cart/${posStore.cartId}/tax-preview${qs}`
     )
   },
-  enabled: () => !isMesaMode.value && !!posStore.cartId,
+  enabled: () => !isKitchenServiceMode.value && !!posStore.cartId,
   staleTime: 5_000,
 })
 
 // Tax preview derived from whichever query is active (mesa vs POS).
 // Replaces the manually-managed taxPreview ref + refreshTaxPreview function.
 const taxPreview = computed<TaxPreview | null>(() => {
-  if (isMesaMode.value) {
+  if (isKitchenServiceMode.value) {
     const session = mesaCurrentData.value?.data?.session
     if (!session) return null
     return {
@@ -499,7 +506,7 @@ const splitAmountToCharge = computed(() =>
 )
 
 const addSplitPayment = async () => {
-  if ((!isMesaMode.value && !posStore.cartId) || !selectedPaymentMethod.value || !selectedCustomer.value) {
+  if ((!isKitchenServiceMode.value && !posStore.cartId) || !selectedPaymentMethod.value || !selectedCustomer.value) {
     processingError.value = 'Selecciona método de pago y cliente antes de continuar'
     return
   }
@@ -514,7 +521,7 @@ const addSplitPayment = async () => {
     let isComplete = false
     let paymentId = ''
 
-    if (isMesaMode.value) {
+    if (isKitchenServiceMode.value) {
       const session = posStore.activeTableSession!
       if (splitPayments.value.length === 0) {
         // First payment: close mesa with split_mode=true (marks orders partial, keeps session open)
@@ -626,7 +633,7 @@ const addSplitPayment = async () => {
     // Invalidate the read query so future reloads see the new partial.
     // Triggers a background refetch — header shows "Actualizando pagos".
     cache.invalidateQueries({
-      key: isMesaMode.value
+      key: isKitchenServiceMode.value
         ? ['tables', posStore.activeTableSession?.tableId ?? null, 'current']
         : ['pos', 'cart', 'by-customer', selectedCustomer.value?.id ?? null],
     })
@@ -685,7 +692,7 @@ const confirmVoidPayment = async () => {
   isVoidingPayment.value = p.id
   voidPaymentError.value = ''
   try {
-    const endpoint = isMesaMode.value
+    const endpoint = isKitchenServiceMode.value
       ? `/api/tables/${posStore.activeTableSession!.tableId}/payments/${p.id}`
       : `/api/pos/cart/${posStore.cartId}/payments/${p.id}`
     const res = await $fetch(endpoint, {
@@ -698,7 +705,7 @@ const confirmVoidPayment = async () => {
     splitPartialAmount.value = null
     // Invalidate the read query so background refetch syncs the new state.
     cache.invalidateQueries({
-      key: isMesaMode.value
+      key: isKitchenServiceMode.value
         ? ['tables', posStore.activeTableSession?.tableId ?? null, 'current']
         : ['pos', 'cart', 'by-customer', selectedCustomer.value?.id ?? null],
     })
@@ -849,8 +856,12 @@ const processOrder = async () => {
     return
   }
 
-  if (isMesaMode.value) {
+  if (isKitchenServiceMode.value) {
     const session = posStore.activeTableSession!
+    if (session.isBar && storeTabItems.value.length === 0) {
+      processingError.value = 'Agrega los ítems a la cuenta y envíalos a cocina antes de cobrar'
+      return
+    }
     try {
       isProcessing.value = true
       processingError.value = ''
@@ -911,6 +922,9 @@ const processOrder = async () => {
       receiptEmail.value = customerEmail && !customerEmail.endsWith('@customer.temp') ? customerEmail : ''
       emailSent.value = false
       posStore.clearAll()
+      if (session.isBar) {
+        posStore.exitSession()
+      }
       showSuccessModal.value = true
     } catch (error: any) {
       processingError.value = error.data?.message || error.message || `Error al cerrar la ${tableSingularLower.value}`
@@ -1145,18 +1159,7 @@ const cancelOrder = async () => {
   if (splitPayments.value.length > 0) {
     if (!window.confirm('Ya hay pagos parciales registrados. ¿Seguro que quieres cancelar?')) return
   }
-  if (isMesaMode.value) {
-    // Real mesa session — close it
-    const session = posStore.activeTableSession!
-    try {
-      await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
-    } catch {
-      // Non-critical
-    }
-    posStore.clearAll()
-    cache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
-    router.push('/pos')
-  } else if (posStore.activeTableSession?.isBar) {
+  if (posStore.activeTableSession?.isBar) {
     // Bar session — clear local cart but keep session alive (it's permanent)
     posStore.clearCart()
     router.push('/pos')
@@ -1449,7 +1452,7 @@ const syncCart = async () => {
 // isRefreshing: a refetch is in-flight while we already have data. Surfaced
 // in the layout header via registerProgressiveLoading — content stays visible.
 const isLoading = computed(() => {
-  if (isMesaMode.value) {
+  if (isKitchenServiceMode.value) {
     return !mesaCurrentData.value && !mesaCurrentError.value && mesaCurrentAsyncStatus.value === 'loading'
   }
   if (posStore.cartId && selectedCustomer.value?.id) {
@@ -1458,7 +1461,7 @@ const isLoading = computed(() => {
   return false
 })
 const isRefreshing = computed(() => {
-  if (isMesaMode.value) {
+  if (isKitchenServiceMode.value) {
     return mesaCurrentAsyncStatus.value === 'loading' && mesaCurrentData.value != null
   }
   if (selectedCustomer.value?.id) {
@@ -1466,13 +1469,13 @@ const isRefreshing = computed(() => {
   }
   return false
 })
-const checkoutError = computed(() => isMesaMode.value ? mesaCurrentError.value : posCartError.value)
+const checkoutError = computed(() => isKitchenServiceMode.value ? mesaCurrentError.value : posCartError.value)
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const refreshAll = async () => {
   await Promise.all([
     cache.invalidateQueries({ key: ['pos', 'payment-methods'] }),
-    isMesaMode.value
+    isKitchenServiceMode.value
       ? cache.invalidateQueries({ key: ['tables', posStore.activeTableSession?.tableId ?? null, 'current'] })
       : cache.invalidateQueries({ key: ['pos', 'cart', 'by-customer', selectedCustomer.value?.id ?? null] }),
   ])
@@ -1575,7 +1578,7 @@ onUnmounted(() => {
     <CommonsTheErrorState v-else-if="syncError || checkoutError" />
 
     <!-- Empty Cart State -->
-    <div v-else-if="cartItems.length === 0 && !isMesaMode && !showSuccessModal" class="text-center py-16">
+    <div v-else-if="cartItems.length === 0 && !isKitchenServiceMode && !showSuccessModal" class="text-center py-16">
       <svg class="h-24 w-24 mx-auto text-text-secondary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
       </svg>
@@ -2450,7 +2453,7 @@ onUnmounted(() => {
             <button
               v-if="!splitIsComplete"
               type="button"
-              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isMesaMode && !posStore.cartId) || !cashIsValid"
+              :disabled="isAddingPayment || !selectedPaymentMethod || requiresMethodSelection || !splitAmountToCharge || splitAmountToCharge <= 0 || !selectedCustomer || (!isKitchenServiceMode && !posStore.cartId) || !cashIsValid"
               @click="addSplitPayment"
               class="w-full min-h-[44px] px-4 py-3 bg-primary text-primary-foreground text-sm font-semibold rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             >
@@ -3208,7 +3211,7 @@ onUnmounted(() => {
     <div class="receipt-divider">================================</div>
     <div class="receipt-row" style="font-weight:bold;">*** PRE-CUENTA ***</div>
     <div class="receipt-row receipt-small">{{ prefacturaDateTime }}</div>
-    <div v-if="isMesaMode && posStore.activeTableSession?.tableName" class="receipt-row receipt-small">
+    <div v-if="isKitchenServiceMode && posStore.activeTableSession?.tableName" class="receipt-row receipt-small">
       {{ tableSingular }}: {{ posStore.activeTableSession.tableName }}
     </div>
     <div v-else-if="posStore.activeTableSession?.isBar" class="receipt-row receipt-small">Barra</div>
@@ -3220,7 +3223,7 @@ onUnmounted(() => {
 
     <div v-for="item in cartItems" :key="item.id" class="receipt-item">
       <span>
-        {{ item.quantity }}x {{ item.product?.name || item.name }}<span v-if="isMesaMode && item.fired === false"> *</span>
+        {{ item.quantity }}x {{ item.product?.name || item.name }}<span v-if="isKitchenServiceMode && item.fired === false"> *</span>
       </span>
       <span>{{ formatCurrency(getItemTotal(item)) }}</span>
     </div>
@@ -3282,7 +3285,7 @@ onUnmounted(() => {
       </div>
     </template>
 
-    <div v-if="isMesaMode && cartItems.some(i => i.fired === false)" class="receipt-row receipt-small" style="margin-top:6px;">
+    <div v-if="isKitchenServiceMode && cartItems.some(i => i.fired === false)" class="receipt-row receipt-small" style="margin-top:6px;">
       * pendiente de enviar a cocina
     </div>
 
