@@ -536,6 +536,8 @@ const {
   rollbackProductsResaleCache,
   resolveProductIdForIngredient,
   linkExistingProductOnItem,
+  refreshProductLinksForBulk,
+  buildBulkCreateRequests,
   buildItemsWithStatus,
   itemsWithStatus,
 } = useResaleIngredientCatalog(currentTenant)
@@ -871,13 +873,13 @@ async function executeBulkCatalogApply() {
   logBulkApplyState('start')
   await nextTick()
 
+  const selectedIngredientIds = [...selectedIds.value]
   const bodyPreview = buildBulkPatchBody()
   const hasApiPatchPreview = Object.keys(bodyPreview).length > 0
-  const productIdsForPatch = hasApiPatchPreview ? selectedProductIdsForBulkPatch() : []
 
   logBulkApplyState('pre-apply', {
     hasApiPatchPreview,
-    productIdsForPatch,
+    productIdsForPatch: hasApiPatchPreview ? selectedProductIdsForBulkPatch() : [],
     body: bodyPreview,
     selection: bulkPatchSelectionDebug(),
   })
@@ -890,12 +892,18 @@ async function executeBulkCatalogApply() {
 
     const body = buildBulkPatchBody()
     const hasApiPatch = Object.keys(body).length > 0
-    const productIds = hasApiPatch ? productIdsForPatch : []
+    let productIds = hasApiPatch ? selectedProductIdsForBulkPatch() : []
+
+    if (hasApiPatch && productIds.length === 0) {
+      await refreshProductLinksForBulk(selectedIngredientIds)
+      productIds = selectedProductIdsForBulkPatch()
+      logBulkApplyState('retry-resolve', { productIds, body })
+    }
 
     logBulkApplyState('post-apply', { hasApiPatch, productIds, body })
 
     if (hasApiPatch && productIds.length > 0) {
-      for (const ingredientId of selectedIds.value) {
+      for (const ingredientId of selectedIngredientIds) {
         linkExistingProductOnItem(ingredientId)
       }
       logBulkApplyState('will-patch', { productIds, body })
@@ -916,11 +924,29 @@ async function executeBulkCatalogApply() {
       return
     }
 
+    if (hasApiPatch) {
+      const createRequests = buildBulkCreateRequests(selectedIngredientIds, body)
+      logBulkApplyState('create-check', { createCount: createRequests.length, body })
+      if (createRequests.length > 0) {
+        logBulkApplyState('will-create', { createCount: createRequests.length, body })
+        const result = await runSequentialRequests(createRequests)
+        logBulkApplyState('create-done', { result })
+        await refetchCatalog()
+        clearSelection()
+        toastCatalogBulkResult(result, toast, {
+          title: 'Listo',
+          successLabel: 'Productos creados/actualizados',
+          errorMessage: 'No se pudo crear ningún producto en el servidor',
+        })
+        return
+      }
+    }
+
     clearSelection()
 
     if (hasApiPatch && productIds.length === 0) {
       toast.success(
-        'Categoría o estado guardados en la selección. Esos ítems aún no tienen producto en el servidor — usa Modo edición y Guardar para crearlos.',
+        'Categoría o estado guardados en la selección. Falta precio > 0 o producto en servidor — usa Modo edición y Guardar.',
         { title: 'Listo' },
       )
     } else if (bulkInCatalog.value !== '') {

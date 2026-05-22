@@ -73,13 +73,24 @@ function normalizeEntityId(id: unknown): string {
   return String(id ?? '').trim().toLowerCase()
 }
 
-/** Match resale product by recipe ingredient_id, then by exact name (legacy rows without recipe). */
+function normalizeResaleName(name: string): string {
+  return (name ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/** Match resale product by recipe ingredient_id, then by normalized name. */
 function findProductForIngredient(
   products: ResaleProductRow[],
   ingredient: { id: string, name: string },
 ): ResaleProductRow | null {
   const ingId = normalizeEntityId(ingredient.id)
-  const ingName = (ingredient.name ?? '').trim().toLowerCase()
+  const ingName = normalizeResaleName(ingredient.name)
   let nameFallback: ResaleProductRow | null = null
 
   for (const p of products) {
@@ -87,7 +98,8 @@ function findProductForIngredient(
     if (p.ingredients?.some(ing => normalizeEntityId(ing.ingredient_id) === ingId)) {
       return p
     }
-    if (ingName && (p.name ?? '').trim().toLowerCase() === ingName && !nameFallback) {
+    const productName = normalizeResaleName(p.name ?? '')
+    if (ingName && productName && productName === ingName && !nameFallback) {
       nameFallback = p
     }
   }
@@ -109,8 +121,8 @@ async function fetchAllResaleProducts() {
         query: {
           page,
           limit,
-          is_resale: true,
-          include_ingredients: true,
+          is_resale: 'true',
+          include_ingredients: 'true',
         },
       },
     )
@@ -353,6 +365,74 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     const products = (existingProducts.value || []) as ResaleProductRow[]
     const product = findProductForIngredient(products, item.ingredient)
     if (product) item.existingProduct = product
+  }
+
+  async function refreshProductLinksForBulk(ingredientIds: string[]) {
+    logReventaCatalog('catalog', 'bulk-refresh-products-start', {
+      ingredientIds,
+      productsInCache: (existingProducts.value as unknown[])?.length ?? 0,
+    })
+    cache.invalidateQueries({ key: ['menu', 'products-resale', tenantId.value] })
+    await refetchProducts()
+    for (const ingredientId of ingredientIds) {
+      linkExistingProductOnItem(ingredientId)
+    }
+    logReventaCatalog('catalog', 'bulk-refresh-products-done', {
+      productsInCache: (existingProducts.value as unknown[])?.length ?? 0,
+      resolved: ingredientIds.map(id => ({
+        ingredientId: id,
+        productId: resolveProductIdForIngredient(id),
+      })),
+    })
+  }
+
+  function buildBulkCreateRequests(
+    ingredientIds: string[],
+    patchBody: Record<string, string | boolean>,
+  ): MenuSequentialRequest[] {
+    const requests: MenuSequentialRequest[] = []
+
+    for (const ingredientId of ingredientIds) {
+      if (resolveProductIdForIngredient(ingredientId)) continue
+
+      const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
+      if (!item || !isInCatalog(item)) continue
+
+      const categoryId = patchBody.category_id != null
+        ? String(patchBody.category_id)
+        : (item.categoryId || defaultCategoryId.value)
+      const price = Number(item.price)
+      if (!(price > 0 && categoryId)) continue
+
+      const isAvailable = patchBody.is_available !== undefined
+        ? patchBody.is_available === true || patchBody.is_available === 'true'
+        : item.isAvailable
+
+      requests.push({
+        key: `bulk-create-${ingredientId}`,
+        run: () =>
+          $fetch('/api/menu/products', {
+            method: 'POST',
+            body: {
+              name: item.ingredient.name,
+              description: '',
+              price,
+              category_id: categoryId,
+              costo_percibido: item.costoPercibido,
+              is_available: isAvailable,
+              is_resale: true,
+              controla_stock: true,
+              is_combo: false,
+              allow_modifiers: false,
+              recipe_base_ids: [],
+              ingredients: [resaleRecipeRow(item.ingredient)],
+              tenant_id: currentTenant.value?.id || '',
+            },
+          }).then(() => undefined),
+      })
+    }
+
+    return requests
   }
 
   function itemToTableRow(item: ResaleIngredientItemState): ResaleIngredientTableRow {
@@ -622,6 +702,8 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     rollbackProductsResaleCache,
     resolveProductIdForIngredient,
     linkExistingProductOnItem,
+    refreshProductLinksForBulk,
+    buildBulkCreateRequests,
     buildItemsWithStatus,
   }
 }
