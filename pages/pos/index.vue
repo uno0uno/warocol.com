@@ -235,7 +235,7 @@ const isMesaMode = computed(
 )
 
 // ── Unfired counts — tab vs cart (#807) ───────────────────────────────────
-// Banner uses tab + cart; manual fire only when cart is empty (tab/add auto-fires).
+// Banner uses tab + cart; kitchen send is only via Agregar y enviar (tab/add auto-fires).
 const tabUnfiredCount = computed(() => {
   if (!isKitchenServiceMode.value) return 0
   return storeTabItems.value.filter((i: TabItem) => i.fulfillmentStatus === 'new').length
@@ -251,14 +251,6 @@ const unfiredCount = computed(() => {
   }
   return 0
 })
-
-const showFireToKitchen = computed(
-  () =>
-    comandasEnabled.value
-    && isKitchenServiceMode.value
-    && tabUnfiredCount.value > 0
-    && posStore.cart.length === 0,
-)
 
 const openSaleModalOpen = ref(false)
 const openSaleModalRef = ref<{ clearSubmitting: () => void } | null>(null)
@@ -299,7 +291,6 @@ const showOpenSaleInPanel = computed(
 const isAddingToTab = ref(false)
 const isLoadingTabItems = ref(false)
 const isClearingTab = ref(false)
-const isFiringToKitchen = ref(false)
 const tabError = ref<string | null>(null)
 const tabSuccess = ref<string | null>(null)
 
@@ -313,6 +304,37 @@ const posBusinessName = computed(
     ?? 'WARO',
 )
 const canPrintComandas = computed(() => comandasForPrint.value.length > 0)
+
+/** Tab lines from the last fire batch — checkboxes select tickets to re-print (#812). */
+const printableOrderItemIds = computed(
+  () => orderItemIdsFromComandas(lastFiredComandasRaw.value),
+)
+
+const showPrintItemSelection = computed(
+  () =>
+    comandasEnabled.value
+    && isKitchenServiceMode.value
+    && canPrintComandas.value
+    && printableOrderItemIds.value.size > 0,
+)
+
+const comandasForPrintDisplay = computed(() => {
+  const sel = selectedTabItemIds.value
+  const raw = lastFiredComandasRaw.value
+  if (!Array.isArray(raw) || sel.length === 0) {
+    return comandasForPrint.value
+  }
+  const selSet = new Set(sel)
+  const filteredRaw = (raw as Record<string, unknown>[])
+    .map((c) => {
+      const items = ((c.items as Record<string, unknown>[]) ?? []).filter(
+        (i) => i.order_item_id != null && selSet.has(String(i.order_item_id)),
+      )
+      return { ...c, items }
+    })
+    .filter((c) => ((c.items as unknown[]) ?? []).length > 0)
+  return mapComandasForPrint(filteredRaw)
+})
 
 function toggleTabItemSelection(orderItemId: string) {
   const idx = selectedTabItemIds.value.indexOf(orderItemId)
@@ -345,7 +367,7 @@ function applyFireResult(rawComandas: unknown[], firedCount: number) {
 }
 
 function handlePrintComandas() {
-  if (!canPrintComandas.value) return
+  if (!comandasForPrintDisplay.value.length) return
   printComandaTickets()
 }
 
@@ -606,36 +628,6 @@ const requestBill = () => {
 
 const cache = useQueryCache()
 
-
-// ── Fire to kitchen ─────────────────────────────────────────────────────────
-const fireToKitchen = async () => {
-  if (!posStore.activeTableSession || !comandasEnabled.value) return
-  isFiringToKitchen.value = true
-  tabError.value = null
-  tabSuccess.value = null
-  try {
-    const itemIds = selectedTabItemIds.value.length > 0 ? selectedTabItemIds.value : undefined
-    const raw = await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/fire`, {
-      method: 'POST',
-      body: itemIds ? { item_ids: itemIds } : undefined,
-    })
-    const { comandas, fired_items_count } = parseFireTableResponse(raw as any)
-    if (fired_items_count > 0) {
-      applyFireResult(comandas, fired_items_count)
-      tabSuccess.value = `${fired_items_count} ${fired_items_count === 1 ? 'ítem enviado' : 'ítems enviados'} a cocina`
-      setTimeout(() => { tabSuccess.value = null }, 3000)
-    } else {
-      tabError.value = itemIds?.length
-        ? 'Los ítems seleccionados no tienen estación de cocina'
-        : 'No hay ítems con estación configurada'
-      setTimeout(() => { tabError.value = null }, 3000)
-    }
-  } catch (e: any) {
-    tabError.value = e?.data?.detail ?? 'Error al enviar a cocina'
-  } finally {
-    isFiringToKitchen.value = false
-  }
-}
 
 // ── Move table ─────────────────────────────────────────────────────────────
 const moveTableSource = ref<{ tableId: string; sessionId: string; tableName: string } | null>(null)
@@ -1370,8 +1362,8 @@ onUnmounted(() => {
         :tab-items-loading="tabItemsLoading"
         :comandas-enabled="comandasEnabled"
         :unfired-count="unfiredCount"
-        :show-fire-to-kitchen="showFireToKitchen"
-        :is-firing-to-kitchen="isFiringToKitchen"
+        :show-print-item-selection="showPrintItemSelection"
+        :printable-order-item-ids="[...printableOrderItemIds]"
         :can-print-comandas="canPrintComandas"
         :selected-tab-item-ids="selectedTabItemIds"
         :pending-remove-item-id="pendingRemoveItemId"
@@ -1391,7 +1383,6 @@ onUnmounted(() => {
         @remove-tab-item="removeTabItem"
         @increment-tab-item="incrementTabItem"
         @decrement-tab-item="decrementTabItem"
-        @fire-to-kitchen="fireToKitchen"
         @print-comandas="handlePrintComandas"
         @toggle-tab-selection="toggleTabItemSelection"
         @update:served-by="(id) => posStore.setCartServedBy(id)"
@@ -1581,7 +1572,7 @@ onUnmounted(() => {
 
   <PosComandaPrintTickets
     v-if="comandasEnabled"
-    :comandas="comandasForPrint"
+    :comandas="comandasForPrintDisplay"
     :business-name="posBusinessName"
   />
 
