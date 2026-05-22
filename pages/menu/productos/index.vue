@@ -39,96 +39,67 @@
           </button>
         </div>
 
-        <!-- Filters Bar -->
-        <UiAdvancedFiltersBar
-          v-model:search="localSearchTerm"
-          v-model:search-field="apiSearchField"
-          :search-fields="searchFields"
-          search-placeholder="Buscar productos..."
-          :show-date-range="false"
-          :show-clear="hasActiveFilters"
-          @search="performSearch"
-          @clear="clearFilters"
+        <MenuCatalogFiltersBar
+          show-station
+          :show-qr="showTableQrColumn"
+          @search="onCatalogSearch"
+          @clear="onCatalogClear"
+          @filter-change="currentPage = 1"
+        />
+
+        <!-- Bulk Action Bar (#816) -->
+        <div
+          v-if="selectedIds.length > 0"
+          class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border-2 border-primary/30 bg-primary/5"
         >
-          <template #additional-filters>
-            <select
-              v-model="categoryFilter"
-              :class="filterSelectClass"
-              aria-label="Filtrar por categoría"
-            >
-              <option value="">Categoría</option>
-              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-            </select>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <span class="text-sm font-semibold text-text-primary">{{ selectedIds.length }} seleccionada(s)</span>
+            <button type="button" class="text-xs text-text-secondary hover:text-text-primary underline" @click="clearSelection">
+              deseleccionar
+            </button>
+          </div>
 
-            <select
-              v-model="statusFilter"
-              :class="filterSelectClass"
-              aria-label="Filtrar por estado"
-            >
-              <option value="">Estado</option>
-              <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-            </select>
+          <div class="flex-1" />
 
-            <select
-              v-if="showComandasStations"
-              v-model="stationFilter"
-              :class="filterSelectClass"
-              aria-label="Filtrar por estación de cocina"
-            >
-              <option value="">Estación</option>
-              <option v-for="st in stations" :key="st.id" :value="st.id">{{ st.name }}</option>
-            </select>
+          <UiFilterSelect
+            v-model="bulkCategoryId"
+            placeholder="Categoría..."
+            aria-label="Cambiar categoría masivamente"
+            :options="categories.map(c => ({ label: c.name, value: c.id }))"
+          />
 
-            <select
-              v-model="sortFilter"
-              :class="filterSelectClass"
-              aria-label="Ordenar productos"
-            >
-              <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-            </select>
+          <UiFilterSelect
+            v-if="showComandasStations"
+            v-model="bulkStationId"
+            placeholder="Cocina..."
+            aria-label="Cambiar estación de cocina masivamente"
+            :options="stations.map(s => ({ label: s.name, value: s.id }))"
+          />
 
-            <label
-              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
-              :class="onlineOnly
-                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
-                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
-            >
-              <input v-model="onlineOnly" type="checkbox" class="sr-only" aria-label="Solo visibles online" />
-              <span class="text-sm font-semibold">Online</span>
-            </label>
+          <button
+            class="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            :disabled="!canBulkApply || isBulkUpdating"
+            @click="executeBulkApply"
+          >
+            <UiLoadingDots v-if="isBulkUpdating" size="12px" />
+            <span v-else>Aplicar</span>
+          </button>
 
-            <label
-              v-if="showTableQrColumn"
-              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
-              :class="qrOnly
-                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
-                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
-            >
-              <input v-model="qrOnly" type="checkbox" class="sr-only" aria-label="Solo visibles en QR mesa" />
-              <span class="text-sm font-semibold">QR mesa</span>
-            </label>
+          <button
+            class="h-9 px-3 rounded-lg border border-destructive/40 text-destructive text-sm font-medium hover:bg-destructive/10 disabled:opacity-50 transition-colors"
+            :disabled="isBulkUpdating"
+            @click="openBulkDeleteModal"
+          >
+            Eliminar
+          </button>
 
-            <label
-              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
-              :class="noRecipeOnly
-                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
-                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
-            >
-              <input v-model="noRecipeOnly" type="checkbox" class="sr-only" aria-label="Solo productos sin receta" />
-              <span class="text-sm font-semibold">Sin receta</span>
-            </label>
-
-            <label
-              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
-              :class="marginNegativeOnly
-                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
-                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
-            >
-              <input v-model="marginNegativeOnly" type="checkbox" class="sr-only" aria-label="Solo margen negativo" />
-              <span class="text-sm font-semibold">Margen negativo</span>
-            </label>
-          </template>
-        </UiAdvancedFiltersBar>
+          <button
+            class="h-9 px-3 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary transition-colors"
+            @click="clearSelection"
+          >
+            Cancelar
+          </button>
+        </div>
 
         <HealthSemaphore :is-unlocked="true" title="Catálogo y rentabilidad de productos">
           <template #header-actions>
@@ -150,19 +121,27 @@
           variant="default"
           row-size="sm"
         >
+          <!-- Checkbox header: select all (same pattern as ventas/ordenes) -->
+          <template #header-select>
+            <div class="flex items-center justify-center">
+              <UiBulkSelectCheckbox :checked="allPageSelected" @change="toggleSelectAll" />
+            </div>
+          </template>
+
+          <template #cell-select="{ row }">
+            <UiBulkSelectCheckbox
+              v-if="row && !isOpenSaleShell(row)"
+              :checked="selectedIds.includes(row.id)"
+              @change="toggleSelect(row.id)"
+            />
+          </template>
 
           <!-- Mobile Card Slot -->
           <template #card="{ item, index }">
             <div
               class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary cursor-pointer"
-              :class="[
-                costIssueProductIds?.has(item.id)
-                  ? 'bg-status-critical-bg'
-                  : costDriftProductIds?.has(item.id)
-                    ? 'bg-status-warning-bg/40'
-                    : (index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30')
-              ]"
-              @click="editProduct(item)"
+              :class="catalogRowClass(item, index)"
+              @click="onProductRowClick(item)"
             >
               <div class="w-10 h-10 rounded-md bg-surface-secondary overflow-hidden flex-shrink-0 flex items-center justify-center">
                 <img
@@ -178,10 +157,24 @@
               </div>
               <div class="flex-1 min-w-0">
                 <span class="text-sm font-bold text-text-primary">{{ toTitleCase(item.name) }}</span>
+                <UiStatusBadge
+                  v-if="isOpenSaleShell(item)"
+                  value="POS"
+                  title="Contenedor de venta libre — se gestiona en Operaciones → Personalizar"
+                  format="text"
+                  variant="secondary"
+                  size="sm"
+                  class="mt-0.5"
+                />
                 <p class="text-xs text-text-secondary mt-0.5">
-                  {{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}
+                  <template v-if="isOpenSaleShell(item)">
+                    Precio al vender en el POS · sin categoría de menú
+                  </template>
+                  <template v-else>
+                    {{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}
+                  </template>
                 </p>
-                <p class="text-xs text-text-tertiary flex flex-wrap items-center gap-1">
+                <p v-if="!isOpenSaleShell(item)" class="text-xs text-text-tertiary flex flex-wrap items-center gap-1">
                   <span>Real:</span>
                   <span v-if="hasCostValue(item.costo_calculado)">{{ formatCostCell(item.costo_calculado) }}</span>
                   <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
@@ -192,14 +185,14 @@
               </div>
               <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
                 <span
-                  v-if="businessProfile?.comandas_enabled && item.station"
+                  v-if="!isOpenSaleShell(item) && businessProfile?.comandas_enabled && resolveProductStation(item)"
                   class="flex items-center gap-1 text-xs text-text-secondary whitespace-nowrap"
                 >
-                  <span class="inline-block w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: item.station.color }" />
-                  <span class="whitespace-nowrap">{{ item.station.name }}</span>
+                  <span class="inline-block w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: resolveProductStation(item)!.color }" />
+                  <span class="whitespace-nowrap">{{ resolveProductStation(item)!.name }}</span>
                 </span>
                 <UiStatusBadge
-                  v-if="marginRealPct(item) !== null"
+                  v-if="!isOpenSaleShell(item) && marginRealPct(item) !== null"
                   :value="marginRealPct(item)!"
                   format="percentage"
                   :variant="(marginRealPct(item) ?? 0) >= 0 ? 'success' : 'secondary'"
@@ -207,7 +200,7 @@
                   title="Margen real"
                 />
                 <UiStatusBadge
-                  v-if="marginOperativoPct(item) !== null"
+                  v-if="!isOpenSaleShell(item) && marginOperativoPct(item) !== null"
                   :value="marginOperativoPct(item)!"
                   format="percentage"
                   variant="secondary"
@@ -215,6 +208,15 @@
                   title="Margen operativo"
                 />
                 <UiStatusBadge
+                  v-if="isOpenSaleShell(item)"
+                  value="Personalizar"
+                  title="Activa o desactiva venta libre en Operaciones → Personalizar"
+                  format="text"
+                  variant="secondary"
+                  size="sm"
+                />
+                <UiStatusBadge
+                  v-else
                   :value="item.is_available ? 'Disponible' : 'No disponible'"
                   format="text"
                   :variant="item.is_available ? 'success' : 'secondary'"
@@ -248,29 +250,73 @@
                 </svg>
               </div>
               <span class="text-sm font-medium text-text-primary whitespace-nowrap">{{ toTitleCase(value) }}</span>
+              <UiStatusBadge
+                v-if="isOpenSaleShell(item)"
+                value="Sistema"
+                title="Producto contenedor de venta libre en el POS"
+                format="text"
+                variant="secondary"
+                size="sm"
+              />
             </div>
           </template>
 
-          <template #cell-category_name="{ value }">
-            <span class="text-sm text-text-secondary whitespace-nowrap">{{ value || 'Sin categoría' }}</span>
+          <template #cell-category_name="{ value, item }">
+            <UiStatusBadge
+              v-if="isOpenSaleShell(item)"
+              value="N/A"
+              title="No usa categoría de menú"
+              format="text"
+              variant="secondary"
+              size="sm"
+              class="whitespace-nowrap"
+            />
+            <span v-else class="text-sm text-text-secondary whitespace-nowrap">{{ value || 'Sin categoría' }}</span>
           </template>
 
-          <template #cell-price="{ value }">
-            <span class="text-sm font-semibold text-text-primary">{{ formatCurrency(value) }}</span>
+          <template #cell-price="{ value, item }">
+            <UiStatusBadge
+              v-if="isOpenSaleShell(item)"
+              value="Al vender"
+              title="El cajero define el monto en el POS"
+              format="text"
+              variant="secondary"
+              size="sm"
+              class="whitespace-nowrap"
+            />
+            <span v-else class="text-sm font-semibold text-text-primary">{{ formatCurrency(value) }}</span>
           </template>
 
-          <template #cell-costo_calculado="{ value }">
+          <template #cell-costo_calculado="{ value, item }">
             <div class="flex justify-end">
-              <span v-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
+              <UiStatusBadge
+                v-if="isOpenSaleShell(item)"
+                value="N/A"
+                title="No aplica al contenedor de venta libre"
+                format="text"
+                variant="secondary"
+                size="sm"
+                class="whitespace-nowrap"
+              />
+              <span v-else-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
                 {{ formatCostCell(value) }}
               </span>
               <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
             </div>
           </template>
 
-          <template #cell-costo_percibido="{ value }">
+          <template #cell-costo_percibido="{ value, item }">
             <div class="flex justify-end">
-              <span v-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
+              <UiStatusBadge
+                v-if="isOpenSaleShell(item)"
+                value="N/A"
+                title="No aplica al contenedor de venta libre"
+                format="text"
+                variant="secondary"
+                size="sm"
+                class="whitespace-nowrap"
+              />
+              <span v-else-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
                 {{ formatCostCell(value) }}
               </span>
               <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
@@ -280,7 +326,16 @@
           <template #cell-margen_real="{ row }">
             <div class="flex justify-end">
               <UiStatusBadge
-                v-if="marginRealPct(row) !== null"
+                v-if="isOpenSaleShell(row)"
+                value="N/A"
+                title="No aplica al contenedor de venta libre"
+                format="text"
+                variant="secondary"
+                size="sm"
+                class="whitespace-nowrap"
+              />
+              <UiStatusBadge
+                v-else-if="marginRealPct(row) !== null"
                 :value="marginRealPct(row)!"
                 format="percentage"
                 :variant="(marginRealPct(row) ?? 0) >= 0 ? 'success' : 'secondary'"
@@ -301,7 +356,16 @@
           <template #cell-margen_operativo="{ row }">
             <div class="flex justify-end">
               <UiStatusBadge
-                v-if="marginOperativoPct(row) !== null"
+                v-if="isOpenSaleShell(row)"
+                value="N/A"
+                title="No aplica al contenedor de venta libre"
+                format="text"
+                variant="secondary"
+                size="sm"
+                class="whitespace-nowrap"
+              />
+              <UiStatusBadge
+                v-else-if="marginOperativoPct(row) !== null"
                 :value="marginOperativoPct(row)!"
                 format="percentage"
                 :variant="(marginOperativoPct(row) ?? 0) >= 0 ? 'success' : 'secondary'"
@@ -322,9 +386,18 @@
           <!-- REMOVED: cell-controla_stock - ALL products now control inventory automatically -->
 
           <template v-if="businessProfile?.comandas_enabled" #cell-station="{ item }">
-            <div v-if="item.station" class="flex items-center gap-1.5 whitespace-nowrap">
-              <span class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: item.station.color }" />
-              <span class="text-sm text-text-secondary whitespace-nowrap">{{ item.station.name }}</span>
+            <UiStatusBadge
+              v-if="isOpenSaleShell(item)"
+              value="N/A"
+              title="Sin estación de cocina"
+              format="text"
+              variant="secondary"
+              size="sm"
+              class="whitespace-nowrap"
+            />
+            <div v-else-if="resolveProductStation(item)" class="flex items-center gap-1.5 whitespace-nowrap">
+              <span class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: resolveProductStation(item)!.color }" />
+              <span class="text-sm text-text-secondary whitespace-nowrap">{{ resolveProductStation(item)!.name }}</span>
             </div>
             <UiStatusBadge
               v-else
@@ -337,9 +410,19 @@
             />
           </template>
 
-          <template #cell-is_available="{ value }">
+          <template #cell-is_available="{ value, item }">
             <div class="flex justify-center">
               <UiStatusBadge
+                v-if="isOpenSaleShell(item)"
+                value="Personalizar"
+                title="Activa o desactiva venta libre en Operaciones → Personalizar"
+                format="text"
+                variant="secondary"
+                size="sm"
+                class="whitespace-nowrap max-w-[7rem]"
+              />
+              <UiStatusBadge
+                v-else
                 :value="value ? 'Disponible' : 'No disponible'"
                 format="text"
                 :variant="value ? 'success' : 'secondary'"
@@ -350,7 +433,17 @@
 
           <template #cell-is_available_online="{ row }">
             <div class="flex justify-center">
+              <UiStatusBadge
+                v-if="isOpenSaleShell(row)"
+                value="No aplica"
+                title="No aplica al contenedor de venta libre"
+                format="text"
+                variant="secondary"
+                size="sm"
+                class="whitespace-nowrap"
+              />
               <button
+                v-else
                 @click="toggleOnlineAvailability(row)"
                 role="switch"
                 :aria-checked="row.is_available_online"
@@ -383,7 +476,17 @@
 
           <template v-if="showTableQrColumn" #cell-is_available_table_qr="{ row }">
             <div class="flex justify-center">
+              <UiStatusBadge
+                v-if="isOpenSaleShell(row)"
+                value="No aplica"
+                title="No aplica al contenedor de venta libre"
+                format="text"
+                variant="secondary"
+                size="sm"
+                class="whitespace-nowrap"
+              />
               <button
+                v-else
                 @click="toggleTableQrAvailability(row)"
                 role="switch"
                 :aria-checked="row.is_available_table_qr"
@@ -417,6 +520,20 @@
           <template #cell-actions="{ row }">
             <div class="flex justify-center space-x-2">
               <button
+                v-if="isOpenSaleShell(row)"
+                type="button"
+                class="text-primary hover:text-primary/70 transition-colors"
+                aria-label="Configurar venta libre en Personalizar"
+                title="Operaciones → Personalizar"
+                @click="goToOpenSaleSettings()"
+              >
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+              <button
+                v-else
                 @click="editProduct(row)"
                 class="text-primary hover:text-primary/70 transition-colors"
                 :aria-label="`Editar ${row.name}`"
@@ -509,11 +626,44 @@
         </HealthSemaphore>
       </div>
     </div>
+
+    <!-- Bulk delete confirmation (#816) -->
+    <UiModal v-model="showBulkDeleteModal" title="Eliminar productos">
+      <div class="p-6">
+        <div class="flex items-start gap-4">
+          <div class="flex-shrink-0 w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center">
+            <Icon name="heroicons:trash" class="w-5 h-5 text-destructive" />
+          </div>
+          <div>
+            <p class="text-sm text-text-primary font-medium mb-1">
+              ¿Eliminar {{ selectedIds.length }} producto{{ selectedIds.length !== 1 ? 's' : '' }}?
+            </p>
+            <p class="text-sm text-text-secondary">
+              Si tienen ventas registradas, se archivarán: dejarán de venderse en POS y domicilios, pero se conserva el historial.
+              Si nunca se vendieron, se eliminan permanentemente.
+            </p>
+          </div>
+        </div>
+        <div v-if="bulkDeleteError" class="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
+          {{ bulkDeleteError }}
+        </div>
+        <div class="flex gap-3 mt-6">
+          <UiButton type="button" variant="outline" class="flex-1" :disabled="isBulkUpdating" @click="showBulkDeleteModal = false">
+            Cancelar
+          </UiButton>
+          <UiButton type="button" variant="destructive" class="flex-1 flex items-center justify-center gap-2" :disabled="isBulkUpdating" @click="confirmBulkDelete">
+            <UiLoadingDots v-if="isBulkUpdating" size="8px" color="currentColor" />
+            <span>{{ isBulkUpdating ? 'Eliminando...' : 'Sí, eliminar' }}</span>
+          </UiButton>
+        </div>
+      </div>
+    </UiModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onUnmounted, watch } from 'vue'
+import { useQueryCache } from '@pinia/colada'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
@@ -526,72 +676,30 @@ definePageMeta({
 useHead({ title: 'Productos' })
 
 const router = useRouter()
+const cache = useQueryCache()
+const toast = useToast()
 
-// Filters — AdvancedFiltersBar + server-side API (#761)
-const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
-const apiSearchField = ref('name')
-const statusFilter = ref('')
-const categoryFilter = ref('')
-const stationFilter = ref('')
-const sortFilter = ref('created_at_desc')
-const onlineOnly = ref(false)
-const qrOnly = ref(false)
-const noRecipeOnly = ref(false)
-const marginNegativeOnly = ref(false)
+// Filters — persisted in Pinia across Menú tabs (#816)
+const {
+  appliedSearch,
+  apiSearchField,
+  statusFilter,
+  categoryFilter,
+  stationFilter,
+  sortFilter,
+  onlineOnly,
+  qrOnly,
+  noRecipeOnly,
+  marginNegativeOnly,
+  performSearch: applyCatalogSearch,
+  hasActiveFilters,
+} = useMenuCatalogFilters()
+
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
 
-const searchFields = [
-  { label: 'Nombre', value: 'name' },
-  { label: 'Descripción', value: 'description' },
-  { label: 'Nombre cocina', value: 'kitchen_name' },
-]
-
-const statusOptions = [
-  { label: 'Disponible', value: 'true' },
-  { label: 'No disponible', value: 'false' },
-]
-
-const sortOptions = [
-  { label: 'Más recientes', value: 'created_at_desc' },
-  { label: 'Más antiguos', value: 'created_at_asc' },
-  { label: 'Nombre A-Z', value: 'name_asc' },
-  { label: 'Nombre Z-A', value: 'name_desc' },
-  { label: 'Precio menor', value: 'price_asc' },
-  { label: 'Precio mayor', value: 'price_desc' },
-  { label: 'Margen menor', value: 'margin_asc' },
-  { label: 'Margen mayor', value: 'margin_desc' },
-]
-
-const performSearch = () => applySearch(() => { currentPage.value = 1 })
-
-const clearFilters = () => {
-  clearSearch()
-  apiSearchField.value = 'name'
-  statusFilter.value = ''
-  categoryFilter.value = ''
-  stationFilter.value = ''
-  sortFilter.value = 'created_at_desc'
-  onlineOnly.value = false
-  qrOnly.value = false
-  noRecipeOnly.value = false
-  marginNegativeOnly.value = false
-  currentPage.value = 1
-}
-
-const hasActiveFilters = computed(
-  () =>
-    !!localSearchTerm.value
-    || !!appliedSearch.value
-    || !!statusFilter.value
-    || !!categoryFilter.value
-    || !!stationFilter.value
-    || sortFilter.value !== 'created_at_desc'
-    || onlineOnly.value
-    || qrOnly.value
-    || noRecipeOnly.value
-    || marginNegativeOnly.value,
-)
+const onCatalogSearch = () => applyCatalogSearch(() => { currentPage.value = 1 })
+const onCatalogClear = () => { currentPage.value = 1 }
 
 const emptyMessage = computed(() =>
   hasActiveFilters.value ? 'Ningún producto coincide con los filtros' : 'No hay productos registrados',
@@ -686,6 +794,22 @@ const { data: stationsData } = useQuery({
 })
 const stations = computed(() => stationsData.value?.data ?? [])
 
+/** Product override station_id, else category default from API `station` object. */
+const resolveProductStation = (item: {
+  station?: { id: string; name: string; color?: string } | null
+  station_id?: string | null
+}) => {
+  if (item.station) return item.station
+  if (!item.station_id) return null
+  const st = stations.value.find(s => s.id === item.station_id)
+  if (!st) return null
+  return {
+    id: st.id,
+    name: st.name,
+    color: (st as { color?: string }).color ?? '#6366f1',
+  }
+}
+
 // Fetch categories (static per tenant)
 const { data: categoriesData } = useQuery({
   key: () => ['menu', 'categories', currentTenant.value?.id],
@@ -752,10 +876,65 @@ const { data: productsData, error: fetchError, asyncStatus: queryAsyncStatus, re
 const isLoading = computed(() => !productsData.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && productsData.value != null)
 
-// Reset page on tenant or filter change
+// Reset page on tenant change
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
+
+// Computed properties for data
+const products = computed(() => productsData.value?.data || [])
+
+/** Shell product for POS venta libre (#805) — not a normal catalog item. */
+const isOpenSaleShell = (row: { open_priced?: boolean }) => !!row.open_priced
+
+// Bulk selection (#816 / #817)
+const selectedIds = ref<string[]>([])
+const bulkCategoryId = ref('')
+const bulkStationId = ref('')
+const isBulkUpdating = ref(false)
+const showBulkDeleteModal = ref(false)
+const bulkDeleteError = ref('')
+
+const selectableProductsOnPage = computed(() =>
+  products.value.filter((p: { open_priced?: boolean }) => !isOpenSaleShell(p)),
+)
+
+const allPageSelected = computed(() => {
+  const ids = selectableProductsOnPage.value.map((p: { id: string }) => p.id)
+  return ids.length > 0 && ids.every((id: string) => selectedIds.value.includes(id))
+})
+
+const canBulkApply = computed(
+  () => selectedIds.value.length > 0 && (!!bulkCategoryId.value || !!bulkStationId.value),
+)
+
+const toggleSelect = (id: string) => {
+  const product = products.value.find((p: { id: string }) => p.id === id)
+  if (product && isOpenSaleShell(product)) return
+  const idx = selectedIds.value.indexOf(id)
+  if (idx >= 0) {
+    selectedIds.value = selectedIds.value.filter((_, i) => i !== idx)
+  } else {
+    selectedIds.value = [...selectedIds.value, id]
+  }
+}
+
+const toggleSelectAll = () => {
+  if (allPageSelected.value) {
+    selectedIds.value = []
+  } else {
+    selectedIds.value = selectableProductsOnPage.value.map((p: { id: string }) => p.id)
+  }
+}
+
+const clearSelection = () => {
+  selectedIds.value = []
+  bulkCategoryId.value = ''
+  bulkStationId.value = ''
+  bulkDeleteError.value = ''
+}
+
 watch(
   [
+    currentPage,
     statusFilter,
     categoryFilter,
     stationFilter,
@@ -766,11 +945,86 @@ watch(
     marginNegativeOnly,
     appliedSearch,
   ],
-  () => { currentPage.value = 1 },
+  clearSelection,
 )
 
-// Computed properties for data
-const products = computed(() => productsData.value?.data || [])
+const executeBulkApply = async () => {
+  if (!canBulkApply.value || isBulkUpdating.value) return
+  isBulkUpdating.value = true
+  let ok = 0
+  let fail = 0
+  const body: Record<string, string> = {}
+  if (bulkCategoryId.value) body.category_id = bulkCategoryId.value
+  if (bulkStationId.value) body.station_id = bulkStationId.value
+
+  for (const id of selectedIds.value) {
+    try {
+      await $fetch(`/api/menu/products/${id}`, { method: 'PUT', body })
+      ok++
+    } catch {
+      fail++
+    }
+  }
+
+  cache.invalidateQueries({ key: ['menu', 'products'] })
+  await refetch()
+  clearSelection()
+  isBulkUpdating.value = false
+
+  if (fail === 0) {
+    toast.success(`Actualizados ${ok} producto${ok !== 1 ? 's' : ''}`, { title: 'Listo' })
+  } else if (ok > 0) {
+    toast.warning(`Actualizados ${ok}, fallaron ${fail}`, { title: 'Parcial' })
+  } else {
+    toast.error('No se pudo actualizar ningún producto', { title: 'Error' })
+  }
+}
+
+const openBulkDeleteModal = () => {
+  bulkDeleteError.value = ''
+  showBulkDeleteModal.value = true
+}
+
+const confirmBulkDelete = async () => {
+  if (selectedIds.value.length === 0 || isBulkUpdating.value) return
+  isBulkUpdating.value = true
+  bulkDeleteError.value = ''
+  let ok = 0
+  let archived = 0
+  let fail = 0
+
+  for (const id of selectedIds.value) {
+    try {
+      const result = await $fetch<{ success: boolean; archived?: boolean }>(
+        `/api/menu/products/${id}`,
+        { method: 'DELETE' },
+      )
+      ok++
+      if (result?.archived) archived++
+    } catch {
+      fail++
+    }
+  }
+
+  showBulkDeleteModal.value = false
+  cache.invalidateQueries({ key: ['menu', 'products'] })
+  await refetch()
+  clearSelection()
+  isBulkUpdating.value = false
+
+  if (fail === 0) {
+    const msg = archived > 0
+      ? `${ok} producto${ok !== 1 ? 's' : ''} procesado${ok !== 1 ? 's' : ''} (${archived} archivado${archived !== 1 ? 's' : ''})`
+      : `${ok} producto${ok !== 1 ? 's' : ''} eliminado${ok !== 1 ? 's' : ''}`
+    toast.success(msg, { title: 'Listo' })
+  } else if (ok > 0) {
+    toast.warning(`Procesados ${ok}, fallaron ${fail}`, { title: 'Parcial' })
+  } else {
+    bulkDeleteError.value = 'No se pudo eliminar ningún producto'
+    showBulkDeleteModal.value = true
+    toast.error('Error al eliminar', { title: 'Error' })
+  }
+}
 
 // Cost issue detection — products where costo_calculado > price
 const costIssueProductIds = computed(() => {
@@ -795,10 +1049,20 @@ const costDriftProductIds = computed(() => {
 
 const bannerDismissed = ref(false)
 
-const getRowClass = (row: any): string | undefined => {
+const catalogRowBaseClass = (row: { id: string }, index: number) => {
   if (costIssueProductIds.value.has(row.id)) return 'bg-status-critical-bg'
   if (costDriftProductIds.value.has(row.id)) return 'bg-status-warning-bg/40'
-  return undefined
+  return index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'
+}
+
+const catalogRowClass = (row: { id: string }, index: number) => {
+  if (selectedIds.value.includes(row.id)) return 'bg-primary/10'
+  return catalogRowBaseClass(row, index)
+}
+
+const getRowClass = (row: any): string => {
+  const index = products.value.findIndex((p: { id: string }) => p.id === row.id)
+  return catalogRowClass(row, index >= 0 ? index : 0)
 }
 
 // Inject refresh handler setter from layout
@@ -818,6 +1082,7 @@ onUnmounted(() => {
 // REMOVED: controla_stock column - ALL products now control inventory automatically
 const productosTableColumns = computed(() => {
   const cols: any[] = [
+    { key: 'select', title: '', sortable: false, width: '44px', class: '!px-0', align: 'center' as const },
     {
       key: 'name',
       title: 'Producto',
@@ -952,11 +1217,11 @@ const productTracksInventory = (product: any): boolean => {
 const toTitleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
 
 // Inline toggle for online availability
-const toast = useToast()
 const togglingIds = ref<Set<string>>(new Set())
 const togglingTableQrIds = ref<Set<string>>(new Set())
 
 const toggleOnlineAvailability = async (product: any) => {
+  if (isOpenSaleShell(product)) return
   if (togglingIds.value.has(product.id)) return
   togglingIds.value = new Set([...togglingIds.value, product.id])
 
@@ -980,6 +1245,7 @@ const toggleOnlineAvailability = async (product: any) => {
 }
 
 const toggleTableQrAvailability = async (product: any) => {
+  if (isOpenSaleShell(product)) return
   if (togglingTableQrIds.value.has(product.id)) return
   togglingTableQrIds.value = new Set([...togglingTableQrIds.value, product.id])
 
@@ -1003,6 +1269,18 @@ const toggleTableQrAvailability = async (product: any) => {
 }
 
 // Navigation
+const goToOpenSaleSettings = () => {
+  router.push('/operaciones/personalizar')
+}
+
+const onProductRowClick = (product: any) => {
+  if (isOpenSaleShell(product)) {
+    goToOpenSaleSettings()
+    return
+  }
+  editProduct(product)
+}
+
 const editProduct = (product: any) => {
   router.push(`/menu/productos/${product.id}`)
 }

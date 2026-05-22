@@ -14,9 +14,10 @@
         <!-- Filters Bar -->
         <SharedFiltersBar
           v-model:search="localSearchTerm"
-          v-model:search-field="apiSearchField"
+          search-placeholder="Buscar recetas..."
+          :show-clear-button="hasActiveFilters"
           @search="performSearch"
-          @clear-filters="clearFilters"
+          @clear-filters="onClearRecetasFilters"
         />
 
         <HealthSemaphore :is-unlocked="true" title="Estructura y costo de recetas base">
@@ -277,12 +278,13 @@ useHead({ title: 'Recetas' })
 
 const { currentTenant } = useTenantReactive()
 
-// Reactive state
-const localSearchTerm = ref('')
-const apiSearchTerm = ref('')
-const apiSearchField = ref('name')
-const statusFilter = ref('')
-const categoryFilter = ref('')
+const {
+  localSearchTerm,
+  appliedSearch: apiSearchTerm,
+  clearFilters: clearRecetasFilters,
+  hasActiveFilters,
+} = useMenuRecetasFilters()
+
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
 const expandedRows = ref(new Set())
@@ -316,22 +318,18 @@ const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && prod
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
 
 const performSearch = () => {
-  apiSearchTerm.value = localSearchTerm.value
+  apiSearchTerm.value = localSearchTerm.value.trim()
   currentPage.value = 1
 }
 
-// Debounce search
-let searchTimeout: NodeJS.Timeout
-watch(localSearchTerm, (newVal) => {
+let searchTimeout: ReturnType<typeof setTimeout>
+watch(localSearchTerm, () => {
   clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    performSearch()
-  }, 500)
+  searchTimeout = setTimeout(performSearch, 500)
 })
 
-const clearFilters = () => {
-  localSearchTerm.value = ''
-  apiSearchTerm.value = ''
+const onClearRecetasFilters = () => {
+  clearRecetasFilters()
   currentPage.value = 1
 }
 

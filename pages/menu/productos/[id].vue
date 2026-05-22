@@ -8,6 +8,39 @@
     <!-- Error State -->
     <CommonsTheErrorState v-else-if="fetchError || !productData" />
 
+    <!-- Venta libre shell — not editable as a normal product -->
+    <div v-else-if="isOpenSaleShell" class="max-w-2xl mx-auto">
+      <div class="bg-surface border-2 border-primary/30 rounded-xl p-6 md:p-8 shadow-sm space-y-4">
+        <div class="flex items-start gap-3">
+          <div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <Icon name="heroicons:shopping-bag" class="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold text-text-primary">
+              {{ productData.data.name }} — venta libre
+            </h2>
+            <p class="text-sm text-text-secondary mt-1">
+              Este producto es el contenedor del POS para cobrar montos que no están en el menú.
+              No tiene categoría ni precio fijo de catálogo; el cajero define el valor al vender.
+            </p>
+          </div>
+        </div>
+        <ul class="text-sm text-text-secondary space-y-1 list-disc list-inside">
+          <li>Activa o desactiva la función en <strong class="text-text-primary">Operaciones → Personalizar</strong>.</li>
+          <li>No aparece en la grilla del POS como producto normal.</li>
+          <li>Los toggles de domicilios, QR en mesa y receta no aplican aquí.</li>
+        </ul>
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+          <UiButton type="button" variant="primary" class="flex-1" @click="goToOpenSaleSettings">
+            Ir a Personalizar
+          </UiButton>
+          <UiButton type="button" variant="outline" class="flex-1" @click="router.push('/menu/productos')">
+            Volver al catálogo
+          </UiButton>
+        </div>
+      </div>
+    </div>
+
     <form v-else @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
       <!-- Left Column: Form Content -->
       <div class="xl:col-span-2 space-y-6">
@@ -740,6 +773,12 @@ const { data: productData, pending: isLoading, error: fetchError, refresh } = us
   }
 )
 
+const isOpenSaleShell = computed(() => !!productData.value?.data?.open_priced)
+
+const goToOpenSaleSettings = () => {
+  router.push('/operaciones/personalizar')
+}
+
 // Fetch categories for dropdown
 const { data: categoriesData } = useAsyncData(
   `categories-${currentTenant.value?.id || 'default'}`,
@@ -1110,6 +1149,10 @@ const getIngredientName = (ingredientId: string) => {
 }
 
 const handleSubmit = async () => {
+  if (isOpenSaleShell.value) {
+    goToOpenSaleSettings()
+    return
+  }
   submitError.value = ''
   duplicateRecipeBaseError.value = ''
   quantityError.value = ''
@@ -1164,8 +1207,8 @@ const handleSubmit = async () => {
     })
 
     cache.invalidateQueries()
-
-    await router.push('/menu/productos')
+    await refresh()
+    toast.success('Producto actualizado correctamente', { title: 'Guardado' })
   } catch (error: any) {
     console.error('❌ Error al actualizar producto:', error)
     submitError.value = `Error al actualizar el producto: ${error.data?.detail || error.message}`

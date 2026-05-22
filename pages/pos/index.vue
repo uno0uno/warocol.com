@@ -767,7 +767,9 @@ watch(() => currentTenant.value?.id, () => { posStore.clearAll() })
 // Cachear productos con modificadores cuando cargan
 watch(() => productsData.value, (data) => {
   if (data?.data) {
-    const productsToCache: CachedProduct[] = data.data.map((p: any) => ({
+    const productsToCache: CachedProduct[] = data.data
+      .filter((p: any) => !p.open_priced)
+      .map((p: any) => ({
       id: p.id,
       name: p.name,
       description: p.description || '',
@@ -787,7 +789,9 @@ watch(() => productsData.value, (data) => {
 const products = computed(() => {
   if (!productsData.value?.data) return []
 
-  return productsData.value.data.map((p: any) => ({
+  return productsData.value.data
+    .filter((p: any) => !p.open_priced)
+    .map((p: any) => ({
     id: p.id,
     name: p.name,
     price: p.price,
@@ -898,7 +902,7 @@ const handleOpenSaleConfirm = async (payload: { amount: number; description?: st
     const line = buildOpenSaleCartLine(amount, payload.description)
     await posStore.addToCart(line)
     openSaleModalOpen.value = false
-    await processOrder()
+    toast.success('Agregado al carrito', { title: 'Venta libre' })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'No se pudo agregar la venta libre'
     toast.error(typeof err === 'object' && err && 'data' in err
@@ -1351,7 +1355,6 @@ onUnmounted(() => {
         :show-open-sale="showOpenSaleInPanel"
         :open-sale-enabled="openSaleEnabled"
         :open-sale-primary-idle="openSalePrimaryIdle"
-        :hide-process-order="openSaleEnabled"
         :open-sale-tooltip="openSaleDisabledReason"
         :show-bar-process-order="showBarProcessOrder"
         :is-adding-to-tab="isAddingToTab"

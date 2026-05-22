@@ -155,6 +155,7 @@ const emit = defineEmits<{
   (e: 'saved', category: Category): void
 }>()
 
+const toast = useToast()
 const isEdit = computed(() => !!props.category)
 
 const uid = useId()
@@ -233,7 +234,13 @@ const submit = async () => {
         )
 
     emit('saved', response.data)
-    emit('update:modelValue', false)
+    toast.success(
+      isEdit.value ? 'Categoría actualizada correctamente' : 'Categoría creada correctamente',
+      { title: 'Guardado' },
+    )
+    if (!isEdit.value) {
+      emit('update:modelValue', false)
+    }
   } catch (err: any) {
     if (err?.status === 409) {
       const detail = err?.data?.detail

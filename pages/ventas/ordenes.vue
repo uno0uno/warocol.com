@@ -186,6 +186,16 @@ const clearSelection = () => {
   bulkPaymentMethod.value = ''
 }
 
+const orderRowClass = (row: { id: string }, index: number) => {
+  if (selectedIds.value.includes(row.id)) return 'bg-primary/10'
+  return index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'
+}
+
+const getRowClass = (row: { id: string }) => {
+  const index = orders.value.findIndex((o: { id: string }) => o.id === row.id)
+  return orderRowClass(row, index >= 0 ? index : 0)
+}
+
 const bulkUpdateStatus = () => {
   if (!bulkStatus.value || selectedIds.value.length === 0) return
   if (bulkStatus.value === 'completed') {
@@ -542,6 +552,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         :data="orders"
         :sort-field="sortField"
         :sort-direction="sortDirection"
+        :row-class="getRowClass"
         @sort="handleSort"
         @row-click="viewOrderDetails"
         empty-message="No hay ventas registradas"
@@ -555,7 +566,7 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
             v-if="item"
             @click="viewOrderDetails(item)"
             class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
-            :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
+            :class="orderRowClass(item, index)"
           >
             <!-- Left: order info -->
             <div class="flex-1 min-w-0">
@@ -594,40 +605,18 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         </template>
 
 
-        <!-- Checkbox header: select all -->
         <template #header-select>
           <div class="flex items-center justify-center">
-            <label class="cursor-pointer">
-              <input
-                type="checkbox"
-                class="sr-only peer"
-                :checked="allPageSelected"
-                @change="toggleSelectAll"
-              />
-              <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
-                <svg v-if="allPageSelected" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
-                  <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </span>
-            </label>
+            <UiBulkSelectCheckbox :checked="allPageSelected" @change="toggleSelectAll" />
           </div>
         </template>
 
-        <!-- Checkbox column -->
         <template #cell-select="{ row }">
-          <label @click.stop class="flex items-center justify-center cursor-pointer">
-            <input
-              type="checkbox"
-              class="sr-only peer"
-              :checked="row && selectedIds.includes(row.id)"
-              @change.stop="() => row && toggleSelect(row.id)"
-            />
-            <span class="w-5 h-5 rounded-[5px] border-2 border-border bg-background peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center text-white">
-              <svg v-if="row && selectedIds.includes(row.id)" viewBox="0 0 10 8" fill="none" class="w-2.5 h-2">
-                <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-          </label>
+          <UiBulkSelectCheckbox
+            v-if="row"
+            :checked="selectedIds.includes(row.id)"
+            @change="toggleSelect(row.id)"
+          />
         </template>
 
         <!-- Desktop Table Cells -->

@@ -232,8 +232,11 @@ const invalidateConsumers = async () => {
   await cache.invalidateQueries({ key: ['tenant', 'category-stations'] })
 }
 
-const onSaved = async () => {
+const onSaved = async (cat: Category) => {
   await invalidateConsumers()
+  if (panelCategory.value) {
+    panelCategory.value = cat
+  }
 }
 
 // ── Delete flow ─────────────────────────────────────────────────────────
