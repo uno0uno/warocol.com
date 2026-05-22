@@ -9,6 +9,7 @@ const props = withDefaults(
     searchPlaceholder?: string
     showStation?: boolean
     showQr?: boolean
+    showOnline?: boolean
     showNoRecipe?: boolean
     showCostDrift?: boolean
   }>(),
@@ -16,6 +17,7 @@ const props = withDefaults(
     searchPlaceholder: 'Buscar productos...',
     showStation: false,
     showQr: false,
+    showOnline: false,
     showNoRecipe: true,
     showCostDrift: false,
   },
@@ -156,9 +158,9 @@ watch(
         hide-placeholder
       />
 
-      <label :class="filterChipClass(onlineOnly)">
-        <input v-model="onlineOnly" type="checkbox" class="sr-only" aria-label="Solo visibles online" />
-        <span class="text-sm font-semibold">Online</span>
+      <label v-if="showOnline" :class="filterChipClass(onlineOnly)">
+        <input v-model="onlineOnly" type="checkbox" class="sr-only" aria-label="Solo visibles en domicilios" />
+        <span class="text-sm font-semibold">Domicilios</span>
       </label>
 
       <label v-if="showQr" :class="filterChipClass(qrOnly)">

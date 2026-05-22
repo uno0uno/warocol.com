@@ -31,6 +31,9 @@ export interface TenantBusinessProfile {
   business_hours: Record<string, BusinessHours> | null
   social_media: Record<string, string> | null
   accepts_online_orders: boolean
+  tables_enabled?: boolean
+  table_qr_module_enabled?: boolean
+  comandas_enabled?: boolean
   min_order_amount: number
   estimated_preparation_time: number
   is_active: boolean
