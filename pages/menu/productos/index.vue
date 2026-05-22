@@ -48,118 +48,39 @@
           @filter-change="currentPage = 1"
         />
 
-        <!-- Bulk Action Bar (#816) -->
-        <div
+        <MenuCatalogBulkBar
           v-if="selectedIds.length > 0"
-          class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border-2 border-primary/30 bg-primary/5"
-        >
-          <div class="flex items-center gap-2 flex-shrink-0">
-            <span class="text-sm font-semibold text-text-primary">{{ selectedIds.length }} seleccionada(s)</span>
-            <button type="button" class="text-xs text-text-secondary hover:text-text-primary underline" @click="clearSelection">
-              deseleccionar
-            </button>
-          </div>
+          variant="selection"
+          v-model:bulk-category-id="bulkCategoryId"
+          v-model:bulk-availability="bulkAvailability"
+          v-model:bulk-station-id="bulkStationId"
+          v-model:bulk-online="bulkOnline"
+          v-model:bulk-qr="bulkQr"
+          :selected-count="selectedIds.length"
+          :edit-mode="editMode"
+          :is-submitting="isSubmitting"
+          :can-apply="canBulkApply"
+          :show-station="showComandasStations"
+          :show-online="showOnlineControls"
+          :show-qr="showTableQrColumn"
+          :categories="categories"
+          :stations="stations"
+          :availability-options="availabilityBulkOptions"
+          :channel-options="channelBulkOptions"
+          @apply="onBulkApply"
+          @clear-selection="clearSelection"
+          @cancel="() => cancelEditOperation(clearSelection)"
+          @delete="openBulkDeleteModal"
+        />
 
-          <div class="flex-1" />
-
-          <UiFilterSelect
-            v-model="bulkCategoryId"
-            placeholder="Categoría..."
-            :aria-label="editMode ? 'Categoría al guardar para seleccionadas' : 'Cambiar categoría masivamente'"
-            :options="categories.map(c => ({ label: c.name, value: c.id }))"
-          />
-
-          <UiFilterSelect
-            v-model="bulkAvailability"
-            placeholder="Estado..."
-            :aria-label="editMode ? 'Estado al guardar para seleccionadas' : 'Cambiar estado masivamente'"
-            :options="availabilityBulkOptions"
-          />
-
-          <UiFilterSelect
-            v-if="showComandasStations"
-            v-model="bulkStationId"
-            placeholder="Cocina..."
-            :aria-label="editMode ? 'Cocina al guardar para seleccionadas' : 'Cambiar estación de cocina masivamente'"
-            :options="stations.map(s => ({ label: s.name, value: s.id }))"
-          />
-
-          <UiFilterSelect
-            v-if="showOnlineControls"
-            v-model="bulkOnline"
-            placeholder="Domicilios..."
-            :aria-label="editMode ? 'Domicilios al guardar para seleccionadas' : 'Cambiar domicilios masivamente'"
-            :options="channelBulkOptions"
-          />
-
-          <UiFilterSelect
-            v-if="showTableQrColumn"
-            v-model="bulkQr"
-            placeholder="QR mesa..."
-            :aria-label="editMode ? 'QR mesa al guardar para seleccionadas' : 'Cambiar QR mesa masivamente'"
-            :options="channelBulkOptions"
-          />
-
-          <button
-            type="button"
-            class="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-            :disabled="!canBulkApply || isSubmitting"
-            @click="onBulkApply"
-          >
-            <UiLoadingDots v-if="isSubmitting" size="12px" />
-            <span v-else>Aplicar</span>
-          </button>
-
-          <button
-            v-if="!editMode"
-            type="button"
-            class="h-9 px-3 rounded-lg border border-destructive/40 text-destructive text-sm font-medium hover:bg-destructive/10 disabled:opacity-50 transition-colors"
-            :disabled="isSubmitting"
-            @click="openBulkDeleteModal"
-          >
-            Eliminar
-          </button>
-
-          <button
-            type="button"
-            class="h-9 px-3 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary transition-colors"
-            :disabled="isSubmitting"
-            @click="editMode ? cancelEditOperation() : clearSelection()"
-          >
-            Cancelar
-          </button>
-        </div>
-
-        <!-- Barra modo edición sin selección -->
-        <div
+        <MenuCatalogBulkBar
           v-else-if="editMode"
-          class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border-2 border-primary/30 bg-primary/5"
-        >
-          <span class="text-sm text-text-secondary flex-shrink-0">
-            Modo edición — los cambios se envían al guardar
-          </span>
-
-          <div class="flex-1" />
-
-          <button
-            type="button"
-            class="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-            :disabled="!hasChanges || !canSubmit || isSubmitting"
-            @click="saveChanges"
-          >
-            <UiLoadingDots v-if="isSubmitting" size="12px" />
-            <span v-else>Aplicar</span>
-          </button>
-
-          <button
-            type="button"
-            class="h-9 px-3 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary transition-colors"
-            :disabled="isSubmitting"
-            @click="cancelEditOperation"
-          >
-            Cancelar
-          </button>
-        </div>
+          variant="edit-only"
+          :is-submitting="isSubmitting"
+          :can-save-edit="hasChanges && canSubmit"
+          @apply="saveChanges"
+          @cancel="() => cancelEditOperation(clearSelection)"
+        />
 
         <HealthSemaphore :is-unlocked="true" title="Catálogo y rentabilidad de productos">
           <template #header-actions>
@@ -170,7 +91,7 @@
                 :class="editMode
                   ? 'bg-surface border-2 border-border text-text-primary hover:bg-surface-secondary'
                   : 'btn-primary text-primary-foreground'"
-                @click="toggleEditMode"
+                @click="onToggleEditMode"
               >
                 <span class="hidden sm:inline">{{ editMode ? 'Ver catálogo' : 'Modo edición' }}</span>
                 <span class="sm:hidden">{{ editMode ? 'Ver' : 'Editar' }}</span>
@@ -920,6 +841,9 @@ import { onUnmounted, watch } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
+import { runSequentialProductPatches, runSequentialRequests, toastCatalogBulkResult, toastCatalogDeleteResult } from '@/composables/useMenuCatalogBulkSave'
+import { useMenuCatalogEditMode } from '@/composables/useMenuCatalogEditMode'
+import { useMenuCatalogSelection } from '@/composables/useMenuCatalogSelection'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useToast } from '@/composables/useToast'
 
@@ -1142,27 +1066,6 @@ const products = computed(() => productsData.value?.data || [])
 /** Shell product for POS venta libre (#805) — not a normal catalog item. */
 const isOpenSaleShell = (row: { open_priced?: boolean }) => !!row.open_priced
 
-type ProductDraft = {
-  name: string
-  category_id: string
-  price: number
-  costo_percibido: number | null
-  is_available: boolean
-  is_available_online: boolean
-  is_available_table_qr: boolean
-  station_id: string | null
-  originalName: string
-  originalCategoryId: string
-  originalPrice: number
-  originalCostoPercibido: number | null
-  originalIsAvailable: boolean
-  originalIsAvailableOnline: boolean
-  originalIsAvailableTableQr: boolean
-  originalStationId: string | null
-}
-
-const editMode = ref(false)
-const productDrafts = ref<Record<string, ProductDraft>>({})
 const isSubmitting = ref(false)
 
 const availabilityBulkOptions = [
@@ -1175,244 +1078,48 @@ const channelBulkOptions = [
   { label: 'Deshabilitar', value: 'false' },
 ]
 
-function resolveCategoryId(product: {
-  category_id?: string
-  category_name?: string
-}): string {
-  if (product.category_id) return String(product.category_id)
-  const name = product.category_name
-  if (!name) return ''
-  const match = categories.value.find((c: { id: string; name: string }) => c.name === name)
-  return match?.id ?? ''
-}
+const {
+  selectedIds,
+  bulkCategoryId,
+  bulkStationId,
+  bulkAvailability,
+  bulkOnline,
+  bulkQr,
+  bulkFields,
+  toggleSelect: selectionToggleSelect,
+  allPageSelected: isAllPageSelected,
+  toggleSelectAll: selectionToggleSelectAll,
+  clearSelection: clearCatalogSelection,
+  canBulkApplyCatalog: selectionCanBulkApplyCatalog,
+  catalogRowSelectionClass,
+} = useMenuCatalogSelection({ isRowSelectable: (row) => !isOpenSaleShell(row) })
 
-function createDraftFromProduct(product: {
-  id: string
-  name: string
-  category_id?: string
-  category_name?: string
-  price: number
-  costo_percibido?: number | string | null
-  is_available?: boolean
-  is_available_online?: boolean
-  is_available_table_qr?: boolean
-  station_id?: string | null
-}): ProductDraft {
-  const category_id = resolveCategoryId(product)
-  const price = Number(product.price)
-  const costo =
-    product.costo_percibido != null && product.costo_percibido !== ''
-      ? Number(product.costo_percibido)
-      : null
-  const station_id = product.station_id ?? null
-  const is_available = !!product.is_available
-  const is_available_online = !!product.is_available_online
-  const is_available_table_qr = !!product.is_available_table_qr
-  return {
-    name: String(product.name),
-    category_id,
-    price,
-    costo_percibido: costo,
-    is_available,
-    is_available_online,
-    is_available_table_qr,
-    station_id,
-    originalName: String(product.name),
-    originalCategoryId: category_id,
-    originalPrice: price,
-    originalCostoPercibido: costo,
-    originalIsAvailable: is_available,
-    originalIsAvailableOnline: is_available_online,
-    originalIsAvailableTableQr: is_available_table_qr,
-    originalStationId: station_id,
-  }
-}
-
-function ensureDraft(product: {
-  id: string
-  name: string
-  category_id?: string
-  category_name?: string
-  price: number
-  costo_percibido?: number | string | null
-  is_available?: boolean
-  is_available_online?: boolean
-  is_available_table_qr?: boolean
-  station_id?: string | null
-}): ProductDraft {
-  if (!productDrafts.value[product.id]) {
-    productDrafts.value = {
-      ...productDrafts.value,
-      [product.id]: createDraftFromProduct(product),
-    }
-  }
-  return productDrafts.value[product.id]
-}
-
-function draftHasChanges(d: ProductDraft): boolean {
-  return (
-    d.name !== d.originalName
-    || d.category_id !== d.originalCategoryId
-    || d.price !== d.originalPrice
-    || d.costo_percibido !== d.originalCostoPercibido
-    || d.is_available !== d.originalIsAvailable
-    || d.is_available_online !== d.originalIsAvailableOnline
-    || d.is_available_table_qr !== d.originalIsAvailableTableQr
-    || d.station_id !== d.originalStationId
-  )
-}
-
-const displayProducts = computed(() =>
-  products.value.map((p: Record<string, unknown>) => {
-    const draft = productDrafts.value[String(p.id)]
-    if (!draft) return p
-    const cat = categories.value.find((c: { id: string }) => c.id === draft.category_id)
-    return {
-      ...p,
-      name: draft.name,
-      category_id: draft.category_id,
-      category_name: cat?.name ?? p.category_name,
-      price: draft.price,
-      costo_percibido: draft.costo_percibido,
-      is_available: draft.is_available,
-      is_available_online: draft.is_available_online,
-      is_available_table_qr: draft.is_available_table_qr,
-      station_id: draft.station_id,
-    }
-  }),
-)
-
-function toggleDraftOnline(product: {
-  id: string
-  name: string
-  category_id?: string
-  category_name?: string
-  price: number
-  is_available_online?: boolean
-}) {
-  const draft = ensureDraft(product)
-  draft.is_available_online = !draft.is_available_online
-}
-
-function toggleDraftTableQr(product: {
-  id: string
-  name: string
-  category_id?: string
-  category_name?: string
-  price: number
-  is_available_table_qr?: boolean
-}) {
-  const draft = ensureDraft(product)
-  draft.is_available_table_qr = !draft.is_available_table_qr
-}
-
-function applyBulkOverridesForSelectedRows() {
-  if (selectedIds.value.length === 0) return
-  for (const id of selectedIds.value) {
-    const product = products.value.find((p: { id: string }) => p.id === id)
-    if (!product || isOpenSaleShell(product)) continue
-    const draft = ensureDraft(product)
-    if (bulkCategoryId.value) draft.category_id = bulkCategoryId.value
-    if (bulkAvailability.value !== '') {
-      draft.is_available = bulkAvailability.value === 'true'
-    }
-    if (bulkStationId.value) draft.station_id = bulkStationId.value
-    if (bulkOnline.value !== '') {
-      draft.is_available_online = bulkOnline.value === 'true'
-    }
-    if (bulkQr.value !== '') {
-      draft.is_available_table_qr = bulkQr.value === 'true'
-    }
-  }
-}
-
-const hasBulkPendingOnSelection = computed(() => {
-  if (selectedIds.value.length === 0) return false
-  if (!editMode.value) {
-    return (
-      !!bulkCategoryId.value
-      || bulkAvailability.value !== ''
-      || !!bulkStationId.value
-      || (showOnlineControls.value && bulkOnline.value !== '')
-      || (showTableQrColumn.value && bulkQr.value !== '')
-    )
-  }
-  if (
-    !bulkCategoryId.value
-    && bulkAvailability.value === ''
-    && !bulkStationId.value
-    && (!showOnlineControls.value || bulkOnline.value === '')
-    && (!showTableQrColumn.value || bulkQr.value === '')
-  ) {
-    return false
-  }
-  return selectedIds.value.some((id) => {
-    const product = products.value.find((p: { id: string }) => p.id === id)
-    if (!product || isOpenSaleShell(product)) return false
-    const draft = productDrafts.value[id] ?? createDraftFromProduct(product)
-    if (bulkCategoryId.value && draft.category_id !== bulkCategoryId.value) return true
-    if (bulkAvailability.value !== '') {
-      const want = bulkAvailability.value === 'true'
-      if (draft.is_available !== want) return true
-    }
-    if (bulkStationId.value && draft.station_id !== bulkStationId.value) return true
-    if (showOnlineControls.value && bulkOnline.value !== '') {
-      const want = bulkOnline.value === 'true'
-      if (draft.is_available_online !== want) return true
-    }
-    if (showTableQrColumn.value && bulkQr.value !== '') {
-      const want = bulkQr.value === 'true'
-      if (draft.is_available_table_qr !== want) return true
-    }
-    return false
-  })
+const {
+  editMode,
+  productDrafts,
+  ensureDraft,
+  displayProducts,
+  hasChanges,
+  canSubmit,
+  applyBulkOverridesForSelectedRows,
+  discardAllDrafts,
+  cancelEditOperation,
+  toggleEditMode: editToggleEditMode,
+  toggleDraftOnline,
+  toggleDraftTableQr,
+  canBulkApplyEdit,
+  buildSavePatchBody,
+  idsWithDraftChanges,
+} = useMenuCatalogEditMode({
+  categories,
+  products,
+  selectedIds,
+  bulkFields,
+  isOpenSaleShell,
+  showOnlineControls,
+  showTableQrColumn,
 })
 
-const hasRowChanges = computed(() =>
-  Object.values(productDrafts.value).some(draftHasChanges),
-)
-
-const hasChanges = computed(() => hasRowChanges.value || hasBulkPendingOnSelection.value)
-
-const canSubmit = computed(() => {
-  const drafts = Object.values(productDrafts.value)
-  if (drafts.length === 0 && hasBulkPendingOnSelection.value) {
-    return true
-  }
-  return drafts.every(
-    (d) => !!d.name.trim() && !!d.category_id && d.price > 0,
-  )
-})
-
-function discardAllDrafts() {
-  productDrafts.value = {}
-}
-
-function cancelEditOperation() {
-  if (hasChanges.value) {
-    const ok = window.confirm('¿Descartar los cambios y cancelar la edición?')
-    if (!ok) return
-  }
-  discardAllDrafts()
-  editMode.value = false
-  clearSelection()
-}
-
-function toggleEditMode() {
-  if (editMode.value) {
-    cancelEditOperation()
-    return
-  }
-  editMode.value = true
-}
-
-// Bulk selection (#816 / #817)
-const selectedIds = ref<string[]>([])
-const bulkCategoryId = ref('')
-const bulkStationId = ref('')
-const bulkAvailability = ref('')
-const bulkOnline = ref('')
-const bulkQr = ref('')
 const showBulkDeleteModal = ref(false)
 const bulkDeleteError = ref('')
 
@@ -1420,67 +1127,29 @@ const selectableProductsOnPage = computed(() =>
   displayProducts.value.filter((p: { open_priced?: boolean }) => !isOpenSaleShell(p)),
 )
 
-const allPageSelected = computed(() => {
-  const ids = selectableProductsOnPage.value.map((p: { id: string }) => p.id)
-  return ids.length > 0 && ids.every((id: string) => selectedIds.value.includes(id))
-})
+const allPageSelected = computed(() => isAllPageSelected(selectableProductsOnPage.value))
 
-const canBulkApplyCatalog = computed(
-  () =>
-    selectedIds.value.length > 0
-    && (
-      !!bulkCategoryId.value
-      || bulkAvailability.value !== ''
-      || !!bulkStationId.value
-      || (showOnlineControls.value && bulkOnline.value !== '')
-      || (showTableQrColumn.value && bulkQr.value !== '')
-    ),
+const canBulkApplyCatalog = computed(() =>
+  selectionCanBulkApplyCatalog({
+    showOnline: showOnlineControls.value,
+    showQr: showTableQrColumn.value,
+  }),
 )
-
-const canBulkApplyEdit = computed(() => {
-  if (selectedIds.value.length > 0) {
-    return (hasChanges.value && canSubmit.value) || hasBulkPendingOnSelection.value
-  }
-  return hasChanges.value && canSubmit.value
-})
 
 const canBulkApply = computed(() =>
-  editMode.value ? canBulkApplyEdit.value : canBulkApplyCatalog.value,
+  editMode.value ? canBulkApplyEdit() : canBulkApplyCatalog.value,
 )
 
-const toggleSelect = (id: string) => {
-  const product = products.value.find((p: { id: string }) => p.id === id)
-  if (product && isOpenSaleShell(product)) return
-  const idx = selectedIds.value.indexOf(id)
-  if (idx >= 0) {
-    selectedIds.value = selectedIds.value.filter((_, i) => i !== idx)
-  } else {
-    selectedIds.value = [...selectedIds.value, id]
-  }
-}
+const toggleSelect = (id: string) => selectionToggleSelect(id, products.value)
 
-const toggleSelectAll = () => {
-  if (allPageSelected.value) {
-    const pageIds = new Set(selectableProductsOnPage.value.map((p: { id: string }) => p.id))
-    selectedIds.value = selectedIds.value.filter((id) => !pageIds.has(id))
-  } else {
-    const merged = new Set(selectedIds.value)
-    for (const p of selectableProductsOnPage.value) {
-      merged.add(p.id)
-    }
-    selectedIds.value = [...merged]
-  }
-}
+const toggleSelectAll = () => selectionToggleSelectAll(selectableProductsOnPage.value)
 
-const clearSelection = () => {
-  selectedIds.value = []
-  bulkCategoryId.value = ''
-  bulkStationId.value = ''
-  bulkAvailability.value = ''
-  bulkOnline.value = ''
-  bulkQr.value = ''
+function clearSelection() {
+  clearCatalogSelection()
   bulkDeleteError.value = ''
 }
+
+const onToggleEditMode = () => editToggleEditMode(clearSelection)
 
 watch(
   [
@@ -1501,8 +1170,6 @@ watch(
 async function executeBulkCatalogApply() {
   if (!canBulkApplyCatalog.value || isSubmitting.value) return
   isSubmitting.value = true
-  let ok = 0
-  let fail = 0
   const body: Record<string, string | boolean> = {}
   if (bulkCategoryId.value) body.category_id = bulkCategoryId.value
   if (bulkStationId.value) body.station_id = bulkStationId.value
@@ -1517,26 +1184,17 @@ async function executeBulkCatalogApply() {
   }
 
   try {
-    for (const id of selectedIds.value) {
-      try {
-        await $fetch(`/api/menu/products/${id}`, { method: 'PUT', body })
-        ok++
-      } catch {
-        fail++
-      }
-    }
-
+    const result = await runSequentialProductPatches(
+      selectedIds.value,
+      () => body,
+    )
     cache.invalidateQueries({ key: ['menu', 'products'] })
     await refetch()
     clearSelection()
-
-    if (fail === 0) {
-      toast.success(`Actualizados ${ok} producto${ok !== 1 ? 's' : ''}`, { title: 'Listo' })
-    } else if (ok > 0) {
-      toast.warning(`Actualizados ${ok}, fallaron ${fail}`, { title: 'Parcial' })
-    } else {
-      toast.error('No se pudo actualizar ningún producto', { title: 'Error' })
-    }
+    toastCatalogBulkResult(result, toast, {
+      title: 'Listo',
+      errorMessage: 'No se pudo actualizar ningún producto',
+    })
   } finally {
     isSubmitting.value = false
   }
@@ -1554,62 +1212,27 @@ async function saveChanges() {
   if (isSubmitting.value || !canSubmit.value) return
   applyBulkOverridesForSelectedRows()
 
-  const idsToSave = new Set<string>()
-  for (const [id, draft] of Object.entries(productDrafts.value)) {
-    if (draftHasChanges(draft)) idsToSave.add(id)
-  }
-  if (idsToSave.size === 0) return
+  const idsToSave = idsWithDraftChanges()
+  if (idsToSave.length === 0) return
 
   isSubmitting.value = true
-  let ok = 0
-  let fail = 0
 
   try {
-    for (const id of idsToSave) {
+    const result = await runSequentialProductPatches(idsToSave, (id) => {
       const draft = productDrafts.value[id]
-      if (!draft) continue
-      const body: Record<string, unknown> = {
-        name: draft.name.trim(),
-        category_id: draft.category_id,
-        price: draft.price,
-        costo_percibido: draft.costo_percibido,
-      }
-      if (draft.is_available !== draft.originalIsAvailable) {
-        body.is_available = draft.is_available
-      }
-      if (draft.station_id !== draft.originalStationId) {
-        body.station_id = draft.station_id
-      }
-      if (showOnlineControls.value && draft.is_available_online !== draft.originalIsAvailableOnline) {
-        body.is_available_online = draft.is_available_online
-      }
-      if (showTableQrColumn.value && draft.is_available_table_qr !== draft.originalIsAvailableTableQr) {
-        body.is_available_table_qr = draft.is_available_table_qr
-      }
-      try {
-        await $fetch(`/api/menu/products/${id}`, { method: 'PUT', body })
-        ok++
-      } catch {
-        fail++
-      }
-    }
+      if (!draft) return null
+      return buildSavePatchBody(draft)
+    })
 
     cache.invalidateQueries({ key: ['menu', 'products'] })
     await refetch()
     discardAllDrafts()
     clearSelection()
 
-    if (fail === 0) {
-      if (ok > 0) {
-        toast.success(`Actualizados ${ok} producto${ok !== 1 ? 's' : ''}`, { title: 'Guardado' })
-      } else {
-        toast.success('Catálogo actualizado', { title: 'Guardado' })
-      }
-    } else if (ok > 0) {
-      toast.warning(`Actualizados ${ok}, fallaron ${fail}`, { title: 'Guardado parcial' })
-    } else {
-      toast.error('No se pudo guardar ningún producto', { title: 'Error' })
-    }
+    toastCatalogBulkResult(result, toast, {
+      title: 'Guardado',
+      emptySuccessMessage: 'Catálogo actualizado',
+    })
   } finally {
     isSubmitting.value = false
   }
@@ -1624,22 +1247,20 @@ const confirmBulkDelete = async () => {
   if (selectedIds.value.length === 0 || isSubmitting.value) return
   isSubmitting.value = true
   bulkDeleteError.value = ''
-  let ok = 0
   let archived = 0
-  let fail = 0
 
-  for (const id of selectedIds.value) {
-    try {
-      const result = await $fetch<{ success: boolean; archived?: boolean }>(
-        `/api/menu/products/${id}`,
-        { method: 'DELETE' },
-      )
-      ok++
-      if (result?.archived) archived++
-    } catch {
-      fail++
-    }
-  }
+  const result = await runSequentialRequests(
+    selectedIds.value.map((id) => ({
+      key: id,
+      run: async () => {
+        const res = await $fetch<{ success: boolean; archived?: boolean }>(
+          `/api/menu/products/${id}`,
+          { method: 'DELETE' },
+        )
+        if (res?.archived) archived++
+      },
+    })),
+  )
 
   showBulkDeleteModal.value = false
   cache.invalidateQueries({ key: ['menu', 'products'] })
@@ -1647,13 +1268,10 @@ const confirmBulkDelete = async () => {
   clearSelection()
   isSubmitting.value = false
 
-  if (fail === 0) {
-    const msg = archived > 0
-      ? `${ok} producto${ok !== 1 ? 's' : ''} procesado${ok !== 1 ? 's' : ''} (${archived} archivado${archived !== 1 ? 's' : ''})`
-      : `${ok} producto${ok !== 1 ? 's' : ''} eliminado${ok !== 1 ? 's' : ''}`
-    toast.success(msg, { title: 'Listo' })
-  } else if (ok > 0) {
-    toast.warning(`Procesados ${ok}, fallaron ${fail}`, { title: 'Parcial' })
+  if (result.fail === 0) {
+    toastCatalogDeleteResult({ ...result, archived }, toast)
+  } else if (result.ok > 0) {
+    toastCatalogDeleteResult({ ...result, archived }, toast)
   } else {
     bulkDeleteError.value = 'No se pudo eliminar ningún producto'
     showBulkDeleteModal.value = true
@@ -1690,10 +1308,8 @@ const catalogRowBaseClass = (row: { id: string }, index: number) => {
   return index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'
 }
 
-const catalogRowClass = (row: { id: string }, index: number) => {
-  if (selectedIds.value.includes(row.id)) return 'bg-primary/10'
-  return catalogRowBaseClass(row, index)
-}
+const catalogRowClass = (row: { id: string }, index: number) =>
+  catalogRowSelectionClass(row.id, catalogRowBaseClass(row, index))
 
 const getRowClass = (row: any): string => {
   const index = displayProducts.value.findIndex((p: { id: string }) => p.id === row.id)
