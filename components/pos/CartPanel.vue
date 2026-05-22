@@ -86,7 +86,7 @@
         class="relative"
       >
         <label
-          v-if="comandasEnabled && item.fulfillmentStatus === 'new'"
+          v-if="showFireToKitchen && item.fulfillmentStatus === 'new'"
           class="absolute top-2 left-2 z-10 flex items-center"
         >
           <input
@@ -110,7 +110,7 @@
           :show-fulfillment-status="comandasEnabled"
           :class="[
             pendingRemoveItemId === item.orderItemId ? 'opacity-40 pointer-events-none' : '',
-            comandasEnabled && item.fulfillmentStatus === 'new' ? 'pl-8' : '',
+            showFireToKitchen && item.fulfillmentStatus === 'new' ? 'pl-8' : '',
           ]"
           @increment="$emit('increment-tab-item', item.orderItemId)"
           @decrement="$emit('decrement-tab-item', item.orderItemId)"
@@ -277,7 +277,7 @@
         <template v-if="comandasEnabled">
           <div class="grid grid-cols-2 gap-2">
             <button
-              v-if="unfiredCount > 0"
+              v-if="showFireToKitchen"
               type="button"
               :disabled="isFiringToKitchen || isAddingToTab"
               class="min-h-[44px] rounded-xl border border-primary/40 bg-primary/5 text-primary text-xs font-semibold flex items-center justify-center gap-1 hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -291,7 +291,7 @@
               type="button"
               :disabled="!canPrintComandas"
               class="min-h-[44px] rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
-              :class="unfiredCount === 0 ? 'col-span-2' : ''"
+              :class="!showFireToKitchen ? 'col-span-2' : ''"
               aria-label="Imprimir comanda de cocina"
               @click="$emit('print-comandas')"
             >
@@ -366,6 +366,7 @@ interface Props {
   tabItemsLoading?: Set<string>
   comandasEnabled?: boolean
   unfiredCount?: number
+  showFireToKitchen?: boolean
   isFiringToKitchen?: boolean
   canPrintComandas?: boolean
   selectedTabItemIds?: string[]
@@ -411,6 +412,7 @@ const props = withDefaults(defineProps<Props>(), {
   tabItemsLoading: () => new Set(),
   comandasEnabled: false,
   unfiredCount: 0,
+  showFireToKitchen: false,
   isFiringToKitchen: false,
   canPrintComandas: false,
   selectedTabItemIds: () => [],
