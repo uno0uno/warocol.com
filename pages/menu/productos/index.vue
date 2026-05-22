@@ -64,38 +64,81 @@
           <UiFilterSelect
             v-model="bulkCategoryId"
             placeholder="Categoría..."
-            aria-label="Cambiar categoría masivamente"
+            :aria-label="editMode ? 'Categoría al guardar para seleccionadas' : 'Cambiar categoría masivamente'"
             :options="categories.map(c => ({ label: c.name, value: c.id }))"
+          />
+
+          <UiFilterSelect
+            v-model="bulkAvailability"
+            placeholder="Estado..."
+            :aria-label="editMode ? 'Estado al guardar para seleccionadas' : 'Cambiar estado masivamente'"
+            :options="availabilityBulkOptions"
           />
 
           <UiFilterSelect
             v-if="showComandasStations"
             v-model="bulkStationId"
             placeholder="Cocina..."
-            aria-label="Cambiar estación de cocina masivamente"
+            :aria-label="editMode ? 'Cocina al guardar para seleccionadas' : 'Cambiar estación de cocina masivamente'"
             :options="stations.map(s => ({ label: s.name, value: s.id }))"
           />
 
           <button
+            type="button"
             class="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-            :disabled="!canBulkApply || isBulkUpdating"
-            @click="executeBulkApply"
+            :disabled="!canBulkApply || isSubmitting"
+            @click="onBulkApply"
           >
-            <UiLoadingDots v-if="isBulkUpdating" size="12px" />
+            <UiLoadingDots v-if="isSubmitting" size="12px" />
             <span v-else>Aplicar</span>
           </button>
 
           <button
+            v-if="!editMode"
+            type="button"
             class="h-9 px-3 rounded-lg border border-destructive/40 text-destructive text-sm font-medium hover:bg-destructive/10 disabled:opacity-50 transition-colors"
-            :disabled="isBulkUpdating"
+            :disabled="isSubmitting"
             @click="openBulkDeleteModal"
           >
             Eliminar
           </button>
 
           <button
+            type="button"
             class="h-9 px-3 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary transition-colors"
-            @click="clearSelection"
+            :disabled="isSubmitting"
+            @click="editMode ? cancelEditOperation() : clearSelection()"
+          >
+            Cancelar
+          </button>
+        </div>
+
+        <!-- Barra modo edición sin selección -->
+        <div
+          v-else-if="editMode"
+          class="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border-2 border-primary/30 bg-primary/5"
+        >
+          <span class="text-sm text-text-secondary flex-shrink-0">
+            Modo edición — los cambios se envían al guardar
+          </span>
+
+          <div class="flex-1" />
+
+          <button
+            type="button"
+            class="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            :disabled="!hasChanges || !canSubmit || isSubmitting"
+            @click="saveChanges"
+          >
+            <UiLoadingDots v-if="isSubmitting" size="12px" />
+            <span v-else>Aplicar</span>
+          </button>
+
+          <button
+            type="button"
+            class="h-9 px-3 rounded-lg border border-border text-sm text-text-secondary hover:text-text-primary transition-colors"
+            :disabled="isSubmitting"
+            @click="cancelEditOperation"
           >
             Cancelar
           </button>
@@ -103,18 +146,31 @@
 
         <HealthSemaphore :is-unlocked="true" title="Catálogo y rentabilidad de productos">
           <template #header-actions>
-            <NuxtLink
-              to="/menu/productos/crear"
-              class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
-            >
-              <span class="hidden sm:inline">+ Nuevo producto</span>
-              <span class="sm:hidden">+ Nuevo</span>
-            </NuxtLink>
+            <div class="flex flex-wrap items-center gap-2 justify-end">
+              <button
+                type="button"
+                class="px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] transition-colors"
+                :class="editMode
+                  ? 'bg-surface border-2 border-border text-text-primary hover:bg-surface-secondary'
+                  : 'btn-primary text-primary-foreground'"
+                @click="toggleEditMode"
+              >
+                <span class="hidden sm:inline">{{ editMode ? 'Ver catálogo' : 'Modo edición' }}</span>
+                <span class="sm:hidden">{{ editMode ? 'Ver' : 'Editar' }}</span>
+              </button>
+              <NuxtLink
+                to="/menu/productos/crear"
+                class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] flex items-center"
+              >
+                <span class="hidden sm:inline">+ Nuevo producto</span>
+                <span class="sm:hidden">+ Nuevo</span>
+              </NuxtLink>
+            </div>
           </template>
         <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
         <UiResponsiveDataView
           :columns="productosTableColumns"
-          :data="products"
+          :data="displayProducts"
           :row-class="getRowClass"
           :empty-message="emptyMessage"
           :empty-sub-message="emptySubMessage"
@@ -139,9 +195,12 @@
           <!-- Mobile Card Slot -->
           <template #card="{ item, index }">
             <div
-              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary cursor-pointer"
-              :class="catalogRowClass(item, index)"
-              @click="onProductRowClick(item)"
+              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors"
+              :class="[
+                catalogRowClass(item, index),
+                !editMode ? 'hover:bg-surface-secondary cursor-pointer' : '',
+              ]"
+              @click="!editMode && onProductRowClick(item)"
             >
               <div class="w-10 h-10 rounded-md bg-surface-secondary overflow-hidden flex-shrink-0 flex items-center justify-center">
                 <img
@@ -155,33 +214,79 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <div class="flex-1 min-w-0">
-                <span class="text-sm font-bold text-text-primary">{{ toTitleCase(item.name) }}</span>
-                <UiStatusBadge
-                  v-if="isOpenSaleShell(item)"
-                  value="POS"
-                  title="Contenedor de venta libre — se gestiona en Operaciones → Personalizar"
-                  format="text"
-                  variant="secondary"
-                  size="sm"
-                  class="mt-0.5"
-                />
-                <p class="text-xs text-text-secondary mt-0.5">
-                  <template v-if="isOpenSaleShell(item)">
-                    Precio al vender en el POS · sin categoría de menú
-                  </template>
-                  <template v-else>
-                    {{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}
-                  </template>
-                </p>
-                <p v-if="!isOpenSaleShell(item)" class="text-xs text-text-tertiary flex flex-wrap items-center gap-1">
-                  <span>Real:</span>
-                  <span v-if="hasCostValue(item.costo_calculado)">{{ formatCostCell(item.costo_calculado) }}</span>
-                  <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
-                  <span>· Mi costo:</span>
-                  <span v-if="hasCostValue(item.costo_percibido)">{{ formatCostCell(item.costo_percibido) }}</span>
-                  <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
-                </p>
+              <div class="flex-1 min-w-0" @click.stop="editMode && !isOpenSaleShell(item)">
+                <template v-if="editMode && !isOpenSaleShell(item)">
+                  <label class="sr-only" :for="`mobile-name-${item.id}`">Nombre</label>
+                  <input
+                    :id="`mobile-name-${item.id}`"
+                    v-model="ensureDraft(item).name"
+                    type="text"
+                    class="input-base w-full py-1.5 px-2 text-sm font-medium"
+                    placeholder="Nombre del producto"
+                  />
+                  <UiFilterSelect
+                    v-model="ensureDraft(item).category_id"
+                    placeholder="Categoría"
+                    :aria-label="`Categoría de ${item.name}`"
+                    :options="categories.map(c => ({ label: c.name, value: c.id }))"
+                    class="mt-2 min-w-0"
+                  />
+                  <div class="flex gap-2 mt-2">
+                    <div class="relative flex-1">
+                      <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+                      <label class="sr-only" :for="`mobile-price-${item.id}`">Precio</label>
+                      <input
+                        :id="`mobile-price-${item.id}`"
+                        v-model.number="ensureDraft(item).price"
+                        type="number"
+                        min="0"
+                        step="100"
+                        class="input-base w-full pl-5 pr-2 py-1.5 text-sm tabular-nums"
+                        placeholder="Precio"
+                      />
+                    </div>
+                    <div class="relative flex-1">
+                      <label class="sr-only" :for="`mobile-costo-${item.id}`">Mi costo</label>
+                      <input
+                        :id="`mobile-costo-${item.id}`"
+                        v-model.number="ensureDraft(item).costo_percibido"
+                        type="number"
+                        min="0"
+                        step="100"
+                        class="input-base w-full px-2 py-1.5 text-sm tabular-nums"
+                        placeholder="Mi costo"
+                      />
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <span class="text-sm font-bold text-text-primary">{{ toTitleCase(item.name) }}</span>
+                  <UiStatusBadge
+                    v-if="isOpenSaleShell(item)"
+                    value="POS"
+                    title="Contenedor de venta libre — se gestiona en Operaciones → Personalizar"
+                    format="text"
+                    variant="secondary"
+                    size="sm"
+                    class="mt-0.5"
+                  />
+                  <p class="text-xs text-text-secondary mt-0.5">
+                    <template v-if="isOpenSaleShell(item)">
+                      Precio al vender en el POS · sin categoría de menú
+                    </template>
+                    <template v-else>
+                      {{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}
+                    </template>
+                  </p>
+                  <p class="text-xs text-text-tertiary flex flex-wrap items-center gap-1">
+                    <span>Real:</span>
+                    <span v-if="hasCostValue(item.costo_calculado)">{{ formatCostCell(item.costo_calculado) }}</span>
+                    <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
+                    <span>· Mi costo:</span>
+                    <span v-if="hasCostValue(item.costo_percibido)">{{ formatCostCell(item.costo_percibido) }}</span>
+                    <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
+                  </p>
+                </template>
               </div>
               <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
                 <span
@@ -236,7 +341,7 @@
 
           <!-- Desktop Table Cell Customizations -->
           <template #cell-name="{ value, item }">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 min-w-0" @click.stop="editMode && !isOpenSaleShell(item)">
               <div class="w-8 h-8 rounded-md bg-surface-secondary overflow-hidden flex-shrink-0 flex items-center justify-center">
                 <img
                   v-if="item.image_url"
@@ -249,21 +354,40 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <span class="text-sm font-medium text-text-primary whitespace-nowrap">{{ toTitleCase(value) }}</span>
-              <UiStatusBadge
-                v-if="isOpenSaleShell(item)"
-                value="Sistema"
-                title="Producto contenedor de venta libre en el POS"
-                format="text"
-                variant="secondary"
-                size="sm"
+              <input
+                v-if="editMode && !isOpenSaleShell(item)"
+                v-model="ensureDraft(item).name"
+                type="text"
+                class="input-base min-w-[140px] max-w-[220px] py-1.5 px-2 text-sm font-medium"
+                :aria-label="`Nombre de ${item.name}`"
+                placeholder="Nombre"
               />
+              <template v-else>
+                <span class="text-sm font-medium text-text-primary whitespace-nowrap">{{ toTitleCase(value) }}</span>
+                <UiStatusBadge
+                  v-if="isOpenSaleShell(item)"
+                  value="Sistema"
+                  title="Producto contenedor de venta libre en el POS"
+                  format="text"
+                  variant="secondary"
+                  size="sm"
+                />
+              </template>
             </div>
           </template>
 
           <template #cell-category_name="{ value, item }">
+            <UiFilterSelect
+              v-if="editMode && !isOpenSaleShell(item)"
+              v-model="ensureDraft(item).category_id"
+              placeholder="Categoría"
+              :aria-label="`Categoría de ${item.name}`"
+              :options="categories.map(c => ({ label: c.name, value: c.id }))"
+              class="min-w-[140px]"
+              @click.stop
+            />
             <UiStatusBadge
-              v-if="isOpenSaleShell(item)"
+              v-else-if="isOpenSaleShell(item)"
               value="N/A"
               title="No usa categoría de menú"
               format="text"
@@ -275,8 +399,24 @@
           </template>
 
           <template #cell-price="{ value, item }">
+            <div
+              v-if="editMode && !isOpenSaleShell(item)"
+              class="relative max-w-[120px] ml-auto"
+              @click.stop
+            >
+              <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+              <input
+                v-model.number="ensureDraft(item).price"
+                type="number"
+                min="0"
+                step="100"
+                class="input-base w-full pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
+                :aria-label="`Precio de ${item.name}`"
+                placeholder="0"
+              />
+            </div>
             <UiStatusBadge
-              v-if="isOpenSaleShell(item)"
+              v-else-if="isOpenSaleShell(item)"
               value="Al vender"
               title="El cajero define el monto en el POS"
               format="text"
@@ -307,8 +447,23 @@
 
           <template #cell-costo_percibido="{ value, item }">
             <div class="flex justify-end">
+              <div
+                v-if="editMode && !isOpenSaleShell(item)"
+                class="relative max-w-[120px]"
+                @click.stop
+              >
+                <input
+                  v-model.number="ensureDraft(item).costo_percibido"
+                  type="number"
+                  min="0"
+                  step="100"
+                  class="input-base w-full px-2 py-1.5 text-sm text-right tabular-nums"
+                  :aria-label="`Mi costo de ${item.name}`"
+                  placeholder="—"
+                />
+              </div>
               <UiStatusBadge
-                v-if="isOpenSaleShell(item)"
+                v-else-if="isOpenSaleShell(item)"
                 value="N/A"
                 title="No aplica al contenedor de venta libre"
                 format="text"
@@ -443,7 +598,7 @@
                 class="whitespace-nowrap"
               />
               <button
-                v-else
+                v-else-if="!editMode"
                 @click="toggleOnlineAvailability(row)"
                 role="switch"
                 :aria-checked="row.is_available_online"
@@ -471,6 +626,14 @@
                   :class="row.is_available_online ? 'translate-x-4' : 'translate-x-0.5'"
                 />
               </button>
+              <UiStatusBadge
+                v-else
+                :value="row.is_available_online ? 'Online' : 'Oculto'"
+                format="text"
+                :variant="row.is_available_online ? 'success' : 'secondary'"
+                size="sm"
+                class="whitespace-nowrap"
+              />
             </div>
           </template>
 
@@ -486,7 +649,7 @@
                 class="whitespace-nowrap"
               />
               <button
-                v-else
+                v-else-if="!editMode"
                 @click="toggleTableQrAvailability(row)"
                 role="switch"
                 :aria-checked="row.is_available_table_qr"
@@ -514,6 +677,14 @@
                   :class="row.is_available_table_qr ? 'translate-x-4' : 'translate-x-0.5'"
                 />
               </button>
+              <UiStatusBadge
+                v-else
+                :value="row.is_available_table_qr ? 'QR' : 'Oculto'"
+                format="text"
+                :variant="row.is_available_table_qr ? 'success' : 'secondary'"
+                size="sm"
+                class="whitespace-nowrap"
+              />
             </div>
           </template>
 
@@ -533,7 +704,7 @@
                 </svg>
               </button>
               <button
-                v-else
+                v-else-if="!editMode"
                 @click="editProduct(row)"
                 class="text-primary hover:text-primary/70 transition-colors"
                 :aria-label="`Editar ${row.name}`"
@@ -648,12 +819,12 @@
           {{ bulkDeleteError }}
         </div>
         <div class="flex gap-3 mt-6">
-          <UiButton type="button" variant="outline" class="flex-1" :disabled="isBulkUpdating" @click="showBulkDeleteModal = false">
+          <UiButton type="button" variant="outline" class="flex-1" :disabled="isSubmitting" @click="showBulkDeleteModal = false">
             Cancelar
           </UiButton>
-          <UiButton type="button" variant="destructive" class="flex-1 flex items-center justify-center gap-2" :disabled="isBulkUpdating" @click="confirmBulkDelete">
-            <UiLoadingDots v-if="isBulkUpdating" size="8px" color="currentColor" />
-            <span>{{ isBulkUpdating ? 'Eliminando...' : 'Sí, eliminar' }}</span>
+          <UiButton type="button" variant="destructive" class="flex-1 flex items-center justify-center gap-2" :disabled="isSubmitting" @click="confirmBulkDelete">
+            <UiLoadingDots v-if="isSubmitting" size="8px" color="currentColor" />
+            <span>{{ isSubmitting ? 'Eliminando...' : 'Sí, eliminar' }}</span>
           </UiButton>
         </div>
       </div>
@@ -885,16 +1056,207 @@ const products = computed(() => productsData.value?.data || [])
 /** Shell product for POS venta libre (#805) — not a normal catalog item. */
 const isOpenSaleShell = (row: { open_priced?: boolean }) => !!row.open_priced
 
+type ProductDraft = {
+  name: string
+  category_id: string
+  price: number
+  costo_percibido: number | null
+  is_available: boolean
+  station_id: string | null
+  originalName: string
+  originalCategoryId: string
+  originalPrice: number
+  originalCostoPercibido: number | null
+  originalIsAvailable: boolean
+  originalStationId: string | null
+}
+
+const editMode = ref(false)
+const productDrafts = ref<Record<string, ProductDraft>>({})
+const isSubmitting = ref(false)
+
+const availabilityBulkOptions = [
+  { label: 'Disponible', value: 'true' },
+  { label: 'No disponible', value: 'false' },
+]
+
+function resolveCategoryId(product: {
+  category_id?: string
+  category_name?: string
+}): string {
+  if (product.category_id) return String(product.category_id)
+  const name = product.category_name
+  if (!name) return ''
+  const match = categories.value.find((c: { id: string; name: string }) => c.name === name)
+  return match?.id ?? ''
+}
+
+function createDraftFromProduct(product: {
+  id: string
+  name: string
+  category_id?: string
+  category_name?: string
+  price: number
+  costo_percibido?: number | string | null
+  is_available?: boolean
+  station_id?: string | null
+}): ProductDraft {
+  const category_id = resolveCategoryId(product)
+  const price = Number(product.price)
+  const costo =
+    product.costo_percibido != null && product.costo_percibido !== ''
+      ? Number(product.costo_percibido)
+      : null
+  const station_id = product.station_id ?? null
+  const is_available = !!product.is_available
+  return {
+    name: String(product.name),
+    category_id,
+    price,
+    costo_percibido: costo,
+    is_available,
+    station_id,
+    originalName: String(product.name),
+    originalCategoryId: category_id,
+    originalPrice: price,
+    originalCostoPercibido: costo,
+    originalIsAvailable: is_available,
+    originalStationId: station_id,
+  }
+}
+
+function ensureDraft(product: {
+  id: string
+  name: string
+  category_id?: string
+  category_name?: string
+  price: number
+  costo_percibido?: number | string | null
+  is_available?: boolean
+  station_id?: string | null
+}): ProductDraft {
+  if (!productDrafts.value[product.id]) {
+    productDrafts.value = {
+      ...productDrafts.value,
+      [product.id]: createDraftFromProduct(product),
+    }
+  }
+  return productDrafts.value[product.id]
+}
+
+function draftHasChanges(d: ProductDraft): boolean {
+  return (
+    d.name !== d.originalName
+    || d.category_id !== d.originalCategoryId
+    || d.price !== d.originalPrice
+    || d.costo_percibido !== d.originalCostoPercibido
+    || d.is_available !== d.originalIsAvailable
+    || d.station_id !== d.originalStationId
+  )
+}
+
+const displayProducts = computed(() =>
+  products.value.map((p: Record<string, unknown>) => {
+    const draft = productDrafts.value[String(p.id)]
+    if (!draft) return p
+    const cat = categories.value.find((c: { id: string }) => c.id === draft.category_id)
+    return {
+      ...p,
+      name: draft.name,
+      category_id: draft.category_id,
+      category_name: cat?.name ?? p.category_name,
+      price: draft.price,
+      costo_percibido: draft.costo_percibido,
+      is_available: draft.is_available,
+      station_id: draft.station_id,
+    }
+  }),
+)
+
+function applyBulkOverridesForSelectedRows() {
+  if (selectedIds.value.length === 0) return
+  for (const id of selectedIds.value) {
+    const product = products.value.find((p: { id: string }) => p.id === id)
+    if (!product || isOpenSaleShell(product)) continue
+    const draft = ensureDraft(product)
+    if (bulkCategoryId.value) draft.category_id = bulkCategoryId.value
+    if (bulkAvailability.value !== '') {
+      draft.is_available = bulkAvailability.value === 'true'
+    }
+    if (bulkStationId.value) draft.station_id = bulkStationId.value
+  }
+}
+
+const hasBulkPendingOnSelection = computed(() => {
+  if (selectedIds.value.length === 0) return false
+  if (!editMode.value) {
+    return !!bulkCategoryId.value || bulkAvailability.value !== '' || !!bulkStationId.value
+  }
+  if (!bulkCategoryId.value && bulkAvailability.value === '' && !bulkStationId.value) {
+    return false
+  }
+  return selectedIds.value.some((id) => {
+    const product = products.value.find((p: { id: string }) => p.id === id)
+    if (!product || isOpenSaleShell(product)) return false
+    const draft = productDrafts.value[id] ?? createDraftFromProduct(product)
+    if (bulkCategoryId.value && draft.category_id !== bulkCategoryId.value) return true
+    if (bulkAvailability.value !== '') {
+      const want = bulkAvailability.value === 'true'
+      if (draft.is_available !== want) return true
+    }
+    if (bulkStationId.value && draft.station_id !== bulkStationId.value) return true
+    return false
+  })
+})
+
+const hasRowChanges = computed(() =>
+  Object.values(productDrafts.value).some(draftHasChanges),
+)
+
+const hasChanges = computed(() => hasRowChanges.value || hasBulkPendingOnSelection.value)
+
+const canSubmit = computed(() => {
+  const drafts = Object.values(productDrafts.value)
+  if (drafts.length === 0 && hasBulkPendingOnSelection.value) {
+    return true
+  }
+  return drafts.every(
+    (d) => !!d.name.trim() && !!d.category_id && d.price > 0,
+  )
+})
+
+function discardAllDrafts() {
+  productDrafts.value = {}
+}
+
+function cancelEditOperation() {
+  if (hasChanges.value) {
+    const ok = window.confirm('¿Descartar los cambios y cancelar la edición?')
+    if (!ok) return
+  }
+  discardAllDrafts()
+  editMode.value = false
+  clearSelection()
+}
+
+function toggleEditMode() {
+  if (editMode.value) {
+    cancelEditOperation()
+    return
+  }
+  editMode.value = true
+}
+
 // Bulk selection (#816 / #817)
 const selectedIds = ref<string[]>([])
 const bulkCategoryId = ref('')
 const bulkStationId = ref('')
-const isBulkUpdating = ref(false)
+const bulkAvailability = ref('')
 const showBulkDeleteModal = ref(false)
 const bulkDeleteError = ref('')
 
 const selectableProductsOnPage = computed(() =>
-  products.value.filter((p: { open_priced?: boolean }) => !isOpenSaleShell(p)),
+  displayProducts.value.filter((p: { open_priced?: boolean }) => !isOpenSaleShell(p)),
 )
 
 const allPageSelected = computed(() => {
@@ -902,8 +1264,21 @@ const allPageSelected = computed(() => {
   return ids.length > 0 && ids.every((id: string) => selectedIds.value.includes(id))
 })
 
-const canBulkApply = computed(
-  () => selectedIds.value.length > 0 && (!!bulkCategoryId.value || !!bulkStationId.value),
+const canBulkApplyCatalog = computed(
+  () =>
+    selectedIds.value.length > 0
+    && (!!bulkCategoryId.value || bulkAvailability.value !== '' || !!bulkStationId.value),
+)
+
+const canBulkApplyEdit = computed(() => {
+  if (selectedIds.value.length > 0) {
+    return (hasChanges.value && canSubmit.value) || hasBulkPendingOnSelection.value
+  }
+  return hasChanges.value && canSubmit.value
+})
+
+const canBulkApply = computed(() =>
+  editMode.value ? canBulkApplyEdit.value : canBulkApplyCatalog.value,
 )
 
 const toggleSelect = (id: string) => {
@@ -919,9 +1294,14 @@ const toggleSelect = (id: string) => {
 
 const toggleSelectAll = () => {
   if (allPageSelected.value) {
-    selectedIds.value = []
+    const pageIds = new Set(selectableProductsOnPage.value.map((p: { id: string }) => p.id))
+    selectedIds.value = selectedIds.value.filter((id) => !pageIds.has(id))
   } else {
-    selectedIds.value = selectableProductsOnPage.value.map((p: { id: string }) => p.id)
+    const merged = new Set(selectedIds.value)
+    for (const p of selectableProductsOnPage.value) {
+      merged.add(p.id)
+    }
+    selectedIds.value = [...merged]
   }
 }
 
@@ -929,6 +1309,7 @@ const clearSelection = () => {
   selectedIds.value = []
   bulkCategoryId.value = ''
   bulkStationId.value = ''
+  bulkAvailability.value = ''
   bulkDeleteError.value = ''
 }
 
@@ -948,35 +1329,108 @@ watch(
   clearSelection,
 )
 
-const executeBulkApply = async () => {
-  if (!canBulkApply.value || isBulkUpdating.value) return
-  isBulkUpdating.value = true
+async function executeBulkCatalogApply() {
+  if (!canBulkApplyCatalog.value || isSubmitting.value) return
+  isSubmitting.value = true
   let ok = 0
   let fail = 0
-  const body: Record<string, string> = {}
+  const body: Record<string, string | boolean> = {}
   if (bulkCategoryId.value) body.category_id = bulkCategoryId.value
   if (bulkStationId.value) body.station_id = bulkStationId.value
-
-  for (const id of selectedIds.value) {
-    try {
-      await $fetch(`/api/menu/products/${id}`, { method: 'PUT', body })
-      ok++
-    } catch {
-      fail++
-    }
+  if (bulkAvailability.value !== '') {
+    body.is_available = bulkAvailability.value === 'true'
   }
 
-  cache.invalidateQueries({ key: ['menu', 'products'] })
-  await refetch()
-  clearSelection()
-  isBulkUpdating.value = false
+  try {
+    for (const id of selectedIds.value) {
+      try {
+        await $fetch(`/api/menu/products/${id}`, { method: 'PUT', body })
+        ok++
+      } catch {
+        fail++
+      }
+    }
 
-  if (fail === 0) {
-    toast.success(`Actualizados ${ok} producto${ok !== 1 ? 's' : ''}`, { title: 'Listo' })
-  } else if (ok > 0) {
-    toast.warning(`Actualizados ${ok}, fallaron ${fail}`, { title: 'Parcial' })
+    cache.invalidateQueries({ key: ['menu', 'products'] })
+    await refetch()
+    clearSelection()
+
+    if (fail === 0) {
+      toast.success(`Actualizados ${ok} producto${ok !== 1 ? 's' : ''}`, { title: 'Listo' })
+    } else if (ok > 0) {
+      toast.warning(`Actualizados ${ok}, fallaron ${fail}`, { title: 'Parcial' })
+    } else {
+      toast.error('No se pudo actualizar ningún producto', { title: 'Error' })
+    }
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+function onBulkApply() {
+  if (editMode.value) {
+    saveChanges()
   } else {
-    toast.error('No se pudo actualizar ningún producto', { title: 'Error' })
+    executeBulkCatalogApply()
+  }
+}
+
+async function saveChanges() {
+  if (isSubmitting.value || !canSubmit.value) return
+  applyBulkOverridesForSelectedRows()
+
+  const idsToSave = new Set<string>()
+  for (const [id, draft] of Object.entries(productDrafts.value)) {
+    if (draftHasChanges(draft)) idsToSave.add(id)
+  }
+  if (idsToSave.size === 0) return
+
+  isSubmitting.value = true
+  let ok = 0
+  let fail = 0
+
+  try {
+    for (const id of idsToSave) {
+      const draft = productDrafts.value[id]
+      if (!draft) continue
+      const body: Record<string, unknown> = {
+        name: draft.name.trim(),
+        category_id: draft.category_id,
+        price: draft.price,
+        costo_percibido: draft.costo_percibido,
+      }
+      if (draft.is_available !== draft.originalIsAvailable) {
+        body.is_available = draft.is_available
+      }
+      if (draft.station_id !== draft.originalStationId) {
+        body.station_id = draft.station_id
+      }
+      try {
+        await $fetch(`/api/menu/products/${id}`, { method: 'PUT', body })
+        ok++
+      } catch {
+        fail++
+      }
+    }
+
+    cache.invalidateQueries({ key: ['menu', 'products'] })
+    await refetch()
+    discardAllDrafts()
+    clearSelection()
+
+    if (fail === 0) {
+      if (ok > 0) {
+        toast.success(`Actualizados ${ok} producto${ok !== 1 ? 's' : ''}`, { title: 'Guardado' })
+      } else {
+        toast.success('Catálogo actualizado', { title: 'Guardado' })
+      }
+    } else if (ok > 0) {
+      toast.warning(`Actualizados ${ok}, fallaron ${fail}`, { title: 'Guardado parcial' })
+    } else {
+      toast.error('No se pudo guardar ningún producto', { title: 'Error' })
+    }
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -986,8 +1440,8 @@ const openBulkDeleteModal = () => {
 }
 
 const confirmBulkDelete = async () => {
-  if (selectedIds.value.length === 0 || isBulkUpdating.value) return
-  isBulkUpdating.value = true
+  if (selectedIds.value.length === 0 || isSubmitting.value) return
+  isSubmitting.value = true
   bulkDeleteError.value = ''
   let ok = 0
   let archived = 0
@@ -1010,7 +1464,7 @@ const confirmBulkDelete = async () => {
   cache.invalidateQueries({ key: ['menu', 'products'] })
   await refetch()
   clearSelection()
-  isBulkUpdating.value = false
+  isSubmitting.value = false
 
   if (fail === 0) {
     const msg = archived > 0
@@ -1061,7 +1515,7 @@ const catalogRowClass = (row: { id: string }, index: number) => {
 }
 
 const getRowClass = (row: any): string => {
-  const index = products.value.findIndex((p: { id: string }) => p.id === row.id)
+  const index = displayProducts.value.findIndex((p: { id: string }) => p.id === row.id)
   return catalogRowClass(row, index >= 0 ? index : 0)
 }
 
@@ -1221,7 +1675,7 @@ const togglingIds = ref<Set<string>>(new Set())
 const togglingTableQrIds = ref<Set<string>>(new Set())
 
 const toggleOnlineAvailability = async (product: any) => {
-  if (isOpenSaleShell(product)) return
+  if (editMode.value || isOpenSaleShell(product)) return
   if (togglingIds.value.has(product.id)) return
   togglingIds.value = new Set([...togglingIds.value, product.id])
 
@@ -1245,7 +1699,7 @@ const toggleOnlineAvailability = async (product: any) => {
 }
 
 const toggleTableQrAvailability = async (product: any) => {
-  if (isOpenSaleShell(product)) return
+  if (editMode.value || isOpenSaleShell(product)) return
   if (togglingTableQrIds.value.has(product.id)) return
   togglingTableQrIds.value = new Set([...togglingTableQrIds.value, product.id])
 
@@ -1274,6 +1728,7 @@ const goToOpenSaleSettings = () => {
 }
 
 const onProductRowClick = (product: any) => {
+  if (editMode.value) return
   if (isOpenSaleShell(product)) {
     goToOpenSaleSettings()
     return
@@ -1282,6 +1737,7 @@ const onProductRowClick = (product: any) => {
 }
 
 const editProduct = (product: any) => {
+  if (editMode.value) return
   router.push(`/menu/productos/${product.id}`)
 }
 
@@ -1290,5 +1746,8 @@ const editProduct = (product: any) => {
 <style scoped>
 .page-layout {
   @apply w-full;
+}
+.input-base {
+  @apply border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary bg-surface;
 }
 </style>
