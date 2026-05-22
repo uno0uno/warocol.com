@@ -241,7 +241,7 @@
                         type="number"
                         min="0"
                         step="100"
-                        class="input-base w-fit min-w-[5rem] pl-5 pr-2 py-1.5 text-sm tabular-nums text-right"
+                        class="input-base input-money w-fit min-w-[7rem] max-w-none pl-5 pr-2 py-1.5 text-sm tabular-nums text-right"
                         :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
                         placeholder="Precio"
                       />
@@ -254,7 +254,7 @@
                         type="number"
                         min="0"
                         step="100"
-                        class="input-base w-fit min-w-[5rem] px-2 py-1.5 text-sm tabular-nums text-right"
+                        class="input-base input-money w-fit min-w-[7rem] max-w-none px-2 py-1.5 text-sm tabular-nums text-right"
                         :style="{ width: moneyInputWidth(ensureDraft(item).costo_percibido) }"
                         placeholder="Mi costo"
                       />
@@ -412,7 +412,7 @@
                 type="number"
                 min="0"
                 step="100"
-                class="input-base w-fit min-w-[5rem] pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
+                class="input-base input-money w-fit min-w-[7rem] max-w-none pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
                 :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
                 :aria-label="`Precio de ${item.name}`"
                 placeholder="0"
@@ -460,7 +460,7 @@
                   type="number"
                   min="0"
                   step="100"
-                  class="input-base w-fit min-w-[5rem] px-2 py-1.5 text-sm text-right tabular-nums"
+                  class="input-base input-money w-fit min-w-[7rem] max-w-none px-2 py-1.5 text-sm text-right tabular-nums"
                   :style="{ width: moneyInputWidth(ensureDraft(item).costo_percibido) }"
                   :aria-label="`Mi costo de ${item.name}`"
                   placeholder="—"
@@ -1643,11 +1643,11 @@ const productosTableColumns = computed(() => {
   return cols
 })
 
-/** Ancho dinámico en `ch` para inputs de montos — evita recortar dígitos largos. */
+/** Ancho dinámico en `ch` para inputs de montos (incl. $ y padding). */
 function moneyInputWidth(value: number | null | undefined): string {
-  if (value == null || Number.isNaN(Number(value))) return '5.5rem'
+  if (value == null || Number.isNaN(Number(value))) return '7rem'
   const digits = String(Math.abs(Math.round(Number(value)))).length
-  return `${Math.max(5, digits + 2)}ch`
+  return `${Math.max(11, digits + 5)}ch`
 }
 
 // Format currency
@@ -1765,5 +1765,16 @@ const editProduct = (product: any) => {
 }
 .input-base {
   @apply border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary bg-surface;
+}
+
+/* Sin flechas arriba/abajo del input number (Chrome, Safari, Firefox) */
+.input-money[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.input-money[type='number']::-webkit-outer-spin-button,
+.input-money[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 </style>
