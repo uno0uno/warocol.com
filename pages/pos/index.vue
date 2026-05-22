@@ -527,7 +527,7 @@ const executeRemoveTabItem = async (orderItemId: string, reason?: string) => {
   try {
     await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/items/${orderItemId}`, {
       method: 'DELETE',
-      body: reason ? { reason } : undefined,
+      body: { reason: reason ?? null },
     })
     pendingRemoveItemId.value = null
     removeTabReason.value = ''
