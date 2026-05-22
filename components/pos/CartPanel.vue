@@ -169,57 +169,92 @@
         <span class="text-3xl font-black text-text-primary tabular-nums">{{ formatCurrency(mesaMode ? (tabTotal + total) : total) }}</span>
       </div>
 
-      <!-- Actions — Standard POS mode -->
+      <!-- Actions — Mostrador / barra sin comandas -->
       <div v-if="!mesaMode" class="space-y-2">
-        <button
-          v-if="showOpenSale"
-          type="button"
-          :disabled="!openSaleEnabled"
-          :title="openSaleTooltip ?? undefined"
-          class="w-full min-h-[44px] rounded-xl border border-dashed border-primary/50 text-primary text-sm font-semibold flex items-center justify-center gap-2 hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
-          @click="$emit('open-sale')"
-        >
-          <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-          </svg>
-          Venta libre
-        </button>
-        <button
-          type="button"
-          :disabled="items.length === 0 || isDeleting"
-          class="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-          @click="$emit('process-order')"
-        >
-          <svg v-if="isDeleting" class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-          </svg>
-          {{ isDeleting ? 'Procesando...' : 'Procesar Orden' }}
-        </button>
-        <button
-          type="button"
-          :disabled="items.length === 0 || isDeleting"
-          class="w-full min-h-[44px] rounded-xl border border-border text-text-secondary text-sm font-medium flex items-center justify-center gap-2 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
-          @click="$emit('clear-cart')"
-        >
-          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-          </svg>
-          Limpiar Carrito
-        </button>
+        <template v-if="openSalePrimaryIdle && showOpenSale">
+          <button
+            type="button"
+            :aria-disabled="!openSaleEnabled"
+            :title="openSaleTooltip ?? undefined"
+            class="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 shadow-sm"
+            @click="$emit('open-sale')"
+          >
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+            </svg>
+            Venta libre
+          </button>
+        </template>
+        <template v-else>
+          <button
+            v-if="showOpenSale"
+            type="button"
+            :aria-disabled="!openSaleEnabled"
+            :title="openSaleTooltip ?? undefined"
+            class="w-full"
+            :class="openSaleButtonClass"
+            @click="$emit('open-sale')"
+          >
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+            </svg>
+            Venta libre
+          </button>
+          <button
+            v-if="hasCartItems && !hideProcessOrder"
+            type="button"
+            :disabled="isDeleting"
+            class="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+            @click="$emit('process-order')"
+          >
+            <svg v-if="isDeleting" class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            </svg>
+            {{ isDeleting ? 'Procesando...' : 'Procesar Orden' }}
+          </button>
+          <button
+            v-if="hasCartItems"
+            type="button"
+            :disabled="isDeleting"
+            class="w-full min-h-[44px] rounded-xl border border-border text-text-secondary text-sm font-medium flex items-center justify-center gap-2 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+            @click="$emit('clear-cart')"
+          >
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+            </svg>
+            Limpiar Carrito
+          </button>
+        </template>
       </div>
 
-      <!-- Actions — Mesa (tab) mode -->
+      <!-- Actions — Mesa / barra con comandas -->
       <div v-else class="space-y-2">
+        <template v-if="openSalePrimaryIdle && showOpenSale">
+          <button
+            type="button"
+            :aria-disabled="!openSaleEnabled"
+            :title="openSaleTooltip ?? undefined"
+            class="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 shadow-sm"
+            @click="$emit('open-sale')"
+          >
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+            </svg>
+            Venta libre
+          </button>
+        </template>
+        <template v-else>
         <button
           v-if="showOpenSale"
           type="button"
-          :disabled="!openSaleEnabled"
+          :aria-disabled="!openSaleEnabled"
           :title="openSaleTooltip ?? undefined"
-          class="w-full min-h-[44px] rounded-xl border border-dashed border-primary/50 text-primary text-sm font-semibold flex items-center justify-center gap-2 hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-full"
+          :class="openSaleButtonClass"
           @click="$emit('open-sale')"
         >
           <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -227,7 +262,7 @@
           </svg>
           Venta libre
         </button>
-        <!-- Barra + items en carrito: cobrar sin pasar por tab (#796) -->
+        <!-- Barra + catálogo en carrito sin venta libre como flujo principal (#796, #806) -->
         <button
           v-if="showBarProcessOrder"
           type="button"
@@ -317,6 +352,7 @@
           </svg>
           {{ isAddingToTab ? 'Enviando...' : (comandasEnabled ? 'Agregar y enviar a cocina' : `Agregar a la ${tableSingularLower}`) }}
         </button>
+        </template>
       </div>
     </div>
   </div>
@@ -376,6 +412,8 @@ interface Props {
   members?: Array<{ id: string; name: string; role: string }>
   showOpenSale?: boolean
   openSaleEnabled?: boolean
+  openSalePrimaryIdle?: boolean
+  hideProcessOrder?: boolean
   openSaleTooltip?: string | null
   showBarProcessOrder?: boolean
 }
@@ -420,9 +458,21 @@ const props = withDefaults(defineProps<Props>(), {
   members: () => [],
   showOpenSale: false,
   openSaleEnabled: false,
+  openSalePrimaryIdle: false,
+  hideProcessOrder: false,
   openSaleTooltip: null,
   showBarProcessOrder: false,
 })
+
+const hasCartItems = computed(() => props.items.length > 0)
+const hasTabItems = computed(() => (props.tabItems?.length ?? 0) > 0)
+
+const openSaleButtonClass = computed(() => [
+  'min-h-[44px] rounded-xl border text-sm font-semibold flex items-center justify-center gap-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 cursor-pointer',
+  props.openSaleEnabled
+    ? 'border-dashed border-primary/50 text-primary hover:bg-primary/5'
+    : 'border-dashed border-border text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary',
+])
 
 const fireToKitchenLabel = computed(() => {
   const n = props.selectedTabItemIds?.length ?? 0
