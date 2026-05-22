@@ -107,6 +107,7 @@ export function useOpenSale(options: {
   return {
     openSaleProduct,
     openSaleFeatureOn,
+    openSaleVisible,
     showOpenSaleButton,
     showOpenSaleOnMesa,
     openSaleEnabled,

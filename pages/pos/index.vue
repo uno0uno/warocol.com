@@ -277,8 +277,20 @@ const {
   activeTableSession,
 })
 
+/** Carrito/tab vacíos con venta libre activa → CTA primario (#806). */
+const openSalePrimaryIdle = computed(
+  () =>
+    openSaleEnabled.value
+    && posStore.cart.length === 0
+    && (!isKitchenServiceMode.value || storeTabItems.value.length === 0),
+)
+
 const showBarProcessOrder = computed(
-  () => isKitchenServiceMode.value && !!posStore.activeTableSession?.isBar,
+  () =>
+    isKitchenServiceMode.value
+    && !!posStore.activeTableSession?.isBar
+    && !openSaleEnabled.value
+    && posStore.cart.length > 0,
 )
 
 const showOpenSaleInPanel = computed(
@@ -885,7 +897,7 @@ const addOpenSaleToTab = async (amount: number, description?: string) => {
 const handleOpenSaleConfirm = async (payload: { amount: number; description?: string }) => {
   try {
     const amount = validateOpenSaleAmount(payload.amount)
-    if (isMesaMode.value) {
+    if (isKitchenServiceMode.value) {
       await addOpenSaleToTab(amount, payload.description)
       openSaleModalOpen.value = false
       toast.success(`Agregado a la ${tableSingularLower.value}`, { title: 'Venta libre' })
@@ -894,7 +906,7 @@ const handleOpenSaleConfirm = async (payload: { amount: number; description?: st
     const line = buildOpenSaleCartLine(amount, payload.description)
     await posStore.addToCart(line)
     openSaleModalOpen.value = false
-    toast.success('Agregado al carrito', { title: 'Venta libre' })
+    await processOrder()
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'No se pudo agregar la venta libre'
     toast.error(typeof err === 'object' && err && 'data' in err
@@ -1346,6 +1358,8 @@ onUnmounted(() => {
         :mesa-mode="isKitchenServiceMode"
         :show-open-sale="showOpenSaleInPanel"
         :open-sale-enabled="openSaleEnabled"
+        :open-sale-primary-idle="openSalePrimaryIdle"
+        :hide-process-order="openSaleEnabled"
         :open-sale-tooltip="openSaleDisabledReason"
         :show-bar-process-order="showBarProcessOrder"
         :is-adding-to-tab="isAddingToTab"

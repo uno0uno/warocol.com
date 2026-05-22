@@ -45,11 +45,10 @@ Detalles del producto contenedor (automático):
 
 Cuando el POS abre directamente en productos (módulo de mesas desactivado o modo mostrador):
 
-1. En el panel del carrito, toca **Venta libre**.
+1. En el panel del carrito, toca **Venta libre** (botón principal cuando el carrito está vacío).
 2. Ingresa el monto y, si quieres, la descripción → **Agregar**.
-3. El ítem aparece en el carrito con el monto que ingresaste.
-4. Agrega más productos del menú si hace falta.
-5. Toca **Procesar Orden** y completa el [checkout](./pos) (pago, propina, cliente, etc.).
+3. El sistema abre el [checkout](./pos) automáticamente para cobrar (pago, propina, cliente, etc.).
+4. Si necesitas mezclar con productos del menú, agrégalos antes o después según el flujo de tu negocio; con venta libre activa no verás **Procesar Orden** como paso intermedio obligatorio.
 
 La descripción opcional se muestra como nombre de la línea en el carrito. No puedes editar la línea como un producto de catálogo (no hay modificadores ni cambio de precio desde el detalle del producto).
 
@@ -75,7 +74,7 @@ La **barra** se comporta como una sesión de mesa especial en el plano:
 
 1. Abre la barra como cualquier otra mesa/sesión.
 2. **Venta libre** agrega el ítem al **tab de la barra** (igual que en mesa).
-3. Si además tienes productos en el **carrito** de barra y comandas activas, puede aparecer **Procesar Orden** para enviar esos ítems a cocina antes de cobrar.
+3. Si agregas productos del **catálogo** al carrito temporal, usa **Agregar y enviar a cocina** (no **Procesar Orden** cuando venta libre está activa en Personalizar).
 4. Cierra con **Pedir cuenta** y checkout cuando corresponda.
 
 ---
