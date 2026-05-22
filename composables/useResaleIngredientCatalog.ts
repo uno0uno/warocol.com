@@ -6,6 +6,7 @@ import {
   runConcurrentRequests,
   type MenuSequentialRequest,
 } from '@/composables/useMenuCatalogBulkSave'
+import { logReventaCatalog } from '@/composables/useReventaCatalogDebugLog'
 import { useToast } from '@/composables/useToast'
 
 /** Normaliza is_available del API (boolean o string) para toggles de UI. */
@@ -100,6 +101,11 @@ async function fetchAllResaleProducts() {
   } while (merged.length < total)
 
   return { data: merged, total: merged.length }
+}
+
+type ProductsResaleCache = {
+  data: NonNullable<ResaleIngredientItemState['existingProduct']>[]
+  total: number
 }
 
 export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | null | undefined>) {
@@ -353,6 +359,48 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     item.isAvailable = !item.isAvailable
   }
 
+  function productsResaleCacheKey() {
+    return ['menu', 'products-resale', tenantId.value] as const
+  }
+
+  function optimisticPatchProductsResale(
+    productIds: string[],
+    body: Record<string, string | boolean>,
+  ): ProductsResaleCache | undefined {
+    const snapshot = cache.getQueryData<ProductsResaleCache>(productsResaleCacheKey())
+    logReventaCatalog('catalog', 'optimistic-patch', {
+      productIds,
+      body,
+      cacheRows: snapshot?.data?.length ?? 0,
+    })
+    if (!snapshot?.data?.length) return snapshot
+
+    const ids = new Set(productIds)
+    cache.setQueryData(productsResaleCacheKey(), {
+      ...snapshot,
+      data: snapshot.data.map((p) => {
+        if (!ids.has(p.id)) return p
+        const next = { ...p }
+        if (body.category_id !== undefined) {
+          next.category_id = String(body.category_id)
+        }
+        if (body.is_available !== undefined) {
+          next.is_available = body.is_available
+        }
+        return next
+      }),
+    })
+    mergeServerIntoLocalItems()
+    return snapshot
+  }
+
+  function rollbackProductsResaleCache(snapshot: ProductsResaleCache | undefined) {
+    if (!snapshot) return
+    logReventaCatalog('catalog', 'optimistic-rollback', { cacheRows: snapshot.data?.length ?? 0 })
+    cache.setQueryData(productsResaleCacheKey(), snapshot)
+    mergeServerIntoLocalItems()
+  }
+
   async function toggleItemAvailabilityOptimistic(item: ResaleIngredientItemState) {
     if (!isInCatalog(item) || !item.existingProduct) {
       toggleItemAvailability(item)
@@ -368,16 +416,16 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     item.originalAvailable = newValue
     togglingAvailabilityIds.value = new Set([...togglingAvailabilityIds.value, productId])
 
+    const snapshot = optimisticPatchProductsResale([productId], { is_available: newValue })
+
     try {
       await $fetch(`/api/menu/products/${productId}`, {
         method: 'PUT',
         body: { is_available: newValue },
       })
-      cache.invalidateQueries({ key: ['menu', 'products'] })
-      cache.invalidateQueries({ key: ['menu', 'products-resale'] })
-      await refetchProducts()
-      mergeServerIntoLocalItems()
+      await refetchCatalog()
     } catch {
+      rollbackProductsResaleCache(snapshot)
       item.isAvailable = previous
       item.originalAvailable = previous
       toast.error('Error al actualizar. Intenta de nuevo.', { title: 'Error' })
@@ -454,10 +502,16 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
   }
 
   async function refetchCatalog() {
+    logReventaCatalog('catalog', 'refetch-start', { tenantId: tenantId.value })
+    cache.invalidateQueries({ key: ['menu', 'products'] })
     cache.invalidateQueries({ key: ['menu', 'resale-ingredients', tenantId.value] })
     cache.invalidateQueries({ key: ['menu', 'products-resale', tenantId.value] })
     await Promise.all([refetchIngredients(), refetchProducts()])
     syncItemsFromServer()
+    logReventaCatalog('catalog', 'refetch-done', {
+      ingredients: (resaleIngredients.value as unknown[])?.length ?? 0,
+      products: (existingProducts.value as unknown[])?.length ?? 0,
+    })
   }
 
   async function saveChanges() {
@@ -518,6 +572,8 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     discardChanges,
     saveChanges,
     refetchCatalog,
+    optimisticPatchProductsResale,
+    rollbackProductsResaleCache,
     buildItemsWithStatus,
   }
 }

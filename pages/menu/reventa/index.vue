@@ -476,6 +476,7 @@ import {
   type ResaleIngredientTableRow,
 } from '@/composables/useResaleIngredientCatalog'
 import { useTenantReactive } from '@/composables/useTenantReactive'
+import { logReventaCatalog } from '@/composables/useReventaCatalogDebugLog'
 import { useToast } from '@/composables/useToast'
 
 definePageMeta({
@@ -531,6 +532,8 @@ const {
   toggleItemAvailabilityOptimistic,
   saveChanges,
   refetchCatalog,
+  optimisticPatchProductsResale,
+  rollbackProductsResaleCache,
   buildItemsWithStatus,
   itemsWithStatus,
 } = useResaleIngredientCatalog(currentTenant)
@@ -805,7 +808,7 @@ function applyBulkDraftToSelection() {
     if (bulkCategoryId.value) {
       item.categoryId = bulkCategoryId.value
     }
-    if (bulkAvailability.value !== '' && isInCatalog(item)) {
+    if (bulkAvailability.value !== '') {
       item.isAvailable = bulkAvailability.value === 'true'
     }
   }
@@ -820,18 +823,62 @@ function buildBulkPatchBody(): Record<string, string | boolean> {
   return body
 }
 
-function selectedProductIdsInCatalog() {
-  return selectedIds.value
-    .map(id => findItemByIngredientId(id))
-    .filter((item): item is ResaleIngredientItemState => !!item && isInCatalog(item) && !!item.existingProduct?.id)
-    .map(item => item.existingProduct!.id)
+/** Product ids on the server for selected rows (ingredient ids), regardless of toggle local. */
+function selectedProductIdsForBulkPatch() {
+  const seen = new Set<string>()
+  const ids: string[] = []
+  for (const ingredientId of selectedIds.value) {
+    const productId = findItemByIngredientId(ingredientId)?.existingProduct?.id
+    if (!productId || seen.has(productId)) continue
+    seen.add(productId)
+    ids.push(productId)
+  }
+  return ids
+}
+
+function bulkPatchSelectionDebug() {
+  return selectedIds.value.map((ingredientId) => {
+    const item = findItemByIngredientId(ingredientId)
+    return {
+      ingredientId,
+      inCatalog: item ? isInCatalog(item) : false,
+      productId: item?.existingProduct?.id ?? null,
+    }
+  })
+}
+
+function logBulkApplyState(phase: string, extra: Record<string, unknown> = {}) {
+  logReventaCatalog('bulk', phase, {
+    isSubmittingBulk: isSubmittingBulk.value,
+    isBulkBarSubmitting: isBulkBarSubmitting.value,
+    editMode: editMode.value,
+    selectedCount: selectedIds.value.length,
+    bulkCategoryId: bulkCategoryId.value,
+    bulkAvailability: bulkAvailability.value,
+    bulkInCatalog: bulkInCatalog.value,
+    ...extra,
+  })
 }
 
 async function executeBulkCatalogApply() {
   if (!canBulkApply.value || isBulkBarSubmitting.value) return
 
   isSubmittingBulk.value = true
+  logBulkApplyState('start')
   await nextTick()
+
+  const bodyPreview = buildBulkPatchBody()
+  const hasApiPatchPreview = Object.keys(bodyPreview).length > 0
+  const productIdsForPatch = hasApiPatchPreview ? selectedProductIdsForBulkPatch() : []
+
+  logBulkApplyState('pre-apply', {
+    hasApiPatchPreview,
+    productIdsForPatch,
+    body: bodyPreview,
+    selection: bulkPatchSelectionDebug(),
+  })
+
+  let cacheSnapshot: ReturnType<typeof optimisticPatchProductsResale> | undefined
 
   try {
     applyBulkInCatalogToSelection()
@@ -839,34 +886,54 @@ async function executeBulkCatalogApply() {
 
     const body = buildBulkPatchBody()
     const hasApiPatch = Object.keys(body).length > 0
-    const productIds = hasApiPatch ? selectedProductIdsInCatalog() : []
+    const productIds = hasApiPatch ? productIdsForPatch : []
+
+    logBulkApplyState('post-apply', { hasApiPatch, productIds, body })
 
     if (hasApiPatch && productIds.length > 0) {
-      const result = await runSequentialProductPatches(productIds, () => body)
-      cache.invalidateQueries({ key: ['menu', 'products'] })
-      await refetchCatalog()
-      clearSelection()
-      toastCatalogBulkResult(result, toast, {
-        title: 'Listo',
-        errorMessage: 'No se pudo actualizar ningún producto',
-      })
+      cacheSnapshot = optimisticPatchProductsResale(productIds, body)
+      try {
+        const result = await runSequentialProductPatches(productIds, () => body)
+        logBulkApplyState('patch-done', { result, productIds })
+        await refetchCatalog()
+        clearSelection()
+        toastCatalogBulkResult(result, toast, {
+          title: 'Listo',
+          errorMessage: 'No se pudo actualizar ningún producto',
+        })
+      } catch (error) {
+        rollbackProductsResaleCache(cacheSnapshot)
+        throw error
+      }
       return
     }
 
+    clearSelection()
+
     if (hasApiPatch && productIds.length === 0) {
       toast.success(
-        'Categoría o estado aplicados en la selección. Entra a Modo edición y Guardar para crear productos nuevos.',
+        'Categoría o estado guardados en la selección. Esos ítems aún no tienen producto en el servidor — usa Modo edición y Guardar para crearlos.',
+        { title: 'Listo' },
+      )
+    } else if (bulkInCatalog.value !== '') {
+      toast.success(
+        'En catálogo actualizado en la selección. Usa Modo edición y Guardar para persistir productos nuevos o eliminados.',
         { title: 'Listo' },
       )
     } else {
       toast.success(
-        'Cambios aplicados en la selección. Entra a Modo edición y Guardar para confirmar en el servidor.',
+        'Cambios aplicados en la selección.',
         { title: 'Listo' },
       )
     }
-    clearSelection()
+  } catch (error: unknown) {
+    rollbackProductsResaleCache(cacheSnapshot)
+    const message = error instanceof Error ? error.message : 'Por favor intenta de nuevo.'
+    toast.error(`No se pudo aplicar en lote: ${message}`, { title: 'Error' })
+    logBulkApplyState('error', { message })
   } finally {
     isSubmittingBulk.value = false
+    logBulkApplyState('end')
   }
 }
 
