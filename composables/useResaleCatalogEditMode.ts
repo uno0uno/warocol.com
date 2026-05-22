@@ -173,9 +173,9 @@ export function useResaleCatalogEditMode(options: UseResaleCatalogEditModeOption
 
   function canBulkApplyEdit() {
     if (selectedIds.value.length > 0) {
-      return (hasChanges.value && canSubmit.value) || hasBulkPendingOnSelection.value
+      return hasBulkPendingOnSelection.value || (hasDraftChanges.value && canSubmit.value) || itemHasChanges.value
     }
-    return hasChanges.value && canSubmit.value
+    return (hasDraftChanges.value && canSubmit.value) || itemHasChanges.value
   }
 
   return {

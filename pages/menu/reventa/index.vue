@@ -55,7 +55,7 @@
           v-model:bulk-qr="bulkQr"
           :selected-count="selectedIds.length"
           :edit-mode="editMode"
-          :is-submitting="isSubmittingBulk"
+          :is-submitting="isBulkBarSubmitting"
           :can-apply="canBulkApply"
           :show-station="false"
           :show-in-catalog="true"
@@ -458,7 +458,7 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, watch } from 'vue'
+import { nextTick, onUnmounted, watch } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
@@ -724,6 +724,8 @@ const canBulkApply = computed(() =>
   editMode.value ? canBulkApplyEdit() : canBulkApplyCatalog.value,
 )
 
+const isBulkBarSubmitting = computed(() => isSubmittingBulk.value || isSubmittingSave.value)
+
 function toggleEditMode() {
   if (editMode.value) {
     if (editSessionHasChanges.value) {
@@ -754,7 +756,7 @@ function onBulkCancel() {
 }
 
 async function saveEditSession() {
-  if (isSubmittingSave.value || !editSessionHasChanges.value || !catalogCanSubmit.value) return
+  if (isBulkBarSubmitting.value || !editSessionHasChanges.value || !catalogCanSubmit.value) return
   applyBulkInCatalogToSelection()
   applyBulkOverridesForSelectedRows()
   syncDraftsToItems()
@@ -800,53 +802,69 @@ function applyBulkDraftToSelection() {
   for (const ingredientId of selectedIds.value) {
     const item = findItemByIngredientId(ingredientId)
     if (!item) continue
+    if (bulkCategoryId.value) {
+      item.categoryId = bulkCategoryId.value
+    }
     if (bulkAvailability.value !== '' && isInCatalog(item)) {
       item.isAvailable = bulkAvailability.value === 'true'
     }
   }
 }
 
-async function executeBulkCatalogApply() {
-  if (!canBulkApply.value || isSubmittingBulk.value) return
-
-  applyBulkInCatalogToSelection()
-  applyBulkDraftToSelection()
-
-  const productIds = selectedProductIds.value.filter((id) => {
-    const item = itemsWithStatus.value.find(i => i.existingProduct?.id === id)
-    return item && isInCatalog(item)
-  })
-
-  isSubmittingBulk.value = true
+function buildBulkPatchBody(): Record<string, string | boolean> {
   const body: Record<string, string | boolean> = {}
   if (bulkCategoryId.value) body.category_id = bulkCategoryId.value
   if (bulkAvailability.value !== '') {
     body.is_available = bulkAvailability.value === 'true'
   }
+  return body
+}
 
-  if (Object.keys(body).length === 0) {
-    isSubmittingBulk.value = false
-    clearSelection()
-    toast.success('Cambios aplicados a la selección. Usa Modo edición y Guardar para confirmar.', { title: 'Listo' })
-    return
-  }
+function selectedProductIdsInCatalog() {
+  return selectedIds.value
+    .map(id => findItemByIngredientId(id))
+    .filter((item): item is ResaleIngredientItemState => !!item && isInCatalog(item) && !!item.existingProduct?.id)
+    .map(item => item.existingProduct!.id)
+}
 
-  if (productIds.length === 0) {
-    isSubmittingBulk.value = false
-    clearSelection()
-    toast.success('Cambios aplicados a la selección. Usa Modo edición y Guardar para confirmar.', { title: 'Listo' })
-    return
-  }
+async function executeBulkCatalogApply() {
+  if (!canBulkApply.value || isBulkBarSubmitting.value) return
+
+  isSubmittingBulk.value = true
+  await nextTick()
 
   try {
-    const result = await runSequentialProductPatches(productIds, () => body)
-    cache.invalidateQueries({ key: ['menu', 'products'] })
-    await refetchCatalog()
+    applyBulkInCatalogToSelection()
+    applyBulkDraftToSelection()
+
+    const body = buildBulkPatchBody()
+    const hasApiPatch = Object.keys(body).length > 0
+    const productIds = hasApiPatch ? selectedProductIdsInCatalog() : []
+
+    if (hasApiPatch && productIds.length > 0) {
+      const result = await runSequentialProductPatches(productIds, () => body)
+      cache.invalidateQueries({ key: ['menu', 'products'] })
+      await refetchCatalog()
+      clearSelection()
+      toastCatalogBulkResult(result, toast, {
+        title: 'Listo',
+        errorMessage: 'No se pudo actualizar ningún producto',
+      })
+      return
+    }
+
+    if (hasApiPatch && productIds.length === 0) {
+      toast.success(
+        'Categoría o estado aplicados en la selección. Entra a Modo edición y Guardar para crear productos nuevos.',
+        { title: 'Listo' },
+      )
+    } else {
+      toast.success(
+        'Cambios aplicados en la selección. Entra a Modo edición y Guardar para confirmar en el servidor.',
+        { title: 'Listo' },
+      )
+    }
     clearSelection()
-    toastCatalogBulkResult(result, toast, {
-      title: 'Listo',
-      errorMessage: 'No se pudo actualizar ningún producto',
-    })
   } finally {
     isSubmittingBulk.value = false
   }
