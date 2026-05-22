@@ -42,6 +42,7 @@
         <MenuCatalogFiltersBar
           show-station
           :show-qr="showTableQrColumn"
+          :show-online="showOnlineControls"
           @search="onCatalogSearch"
           @clear="onCatalogClear"
           @filter-change="currentPage = 1"
@@ -81,6 +82,22 @@
             placeholder="Cocina..."
             :aria-label="editMode ? 'Cocina al guardar para seleccionadas' : 'Cambiar estación de cocina masivamente'"
             :options="stations.map(s => ({ label: s.name, value: s.id }))"
+          />
+
+          <UiFilterSelect
+            v-if="showOnlineControls"
+            v-model="bulkOnline"
+            placeholder="Domicilios..."
+            :aria-label="editMode ? 'Domicilios al guardar para seleccionadas' : 'Cambiar domicilios masivamente'"
+            :options="channelBulkOptions"
+          />
+
+          <UiFilterSelect
+            v-if="showTableQrColumn"
+            v-model="bulkQr"
+            placeholder="QR mesa..."
+            :aria-label="editMode ? 'QR mesa al guardar para seleccionadas' : 'Cambiar QR mesa masivamente'"
+            :options="channelBulkOptions"
           />
 
           <button
@@ -259,6 +276,50 @@
                         placeholder="Mi costo"
                       />
                     </div>
+                  </div>
+                  <div
+                    v-if="showOnlineControls || showTableQrColumn"
+                    class="flex flex-wrap items-center gap-4 mt-2 pt-2 border-t border-border/60"
+                    @click.stop
+                  >
+                    <label
+                      v-if="showOnlineControls"
+                      class="flex items-center gap-2 cursor-pointer min-h-[44px]"
+                    >
+                      <span class="text-xs text-text-secondary whitespace-nowrap">Domicilios</span>
+                      <button
+                        type="button"
+                        role="switch"
+                        :aria-checked="item.is_available_online"
+                        class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                        :class="item.is_available_online ? 'bg-success' : 'bg-titan-300'"
+                        @click="toggleDraftOnline(item)"
+                      >
+                        <span
+                          class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
+                          :class="item.is_available_online ? 'translate-x-4' : 'translate-x-0.5'"
+                        />
+                      </button>
+                    </label>
+                    <label
+                      v-if="showTableQrColumn"
+                      class="flex items-center gap-2 cursor-pointer min-h-[44px]"
+                    >
+                      <span class="text-xs text-text-secondary whitespace-nowrap">QR mesa</span>
+                      <button
+                        type="button"
+                        role="switch"
+                        :aria-checked="item.is_available_table_qr"
+                        class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                        :class="item.is_available_table_qr ? 'bg-success' : 'bg-titan-300'"
+                        @click="toggleDraftTableQr(item)"
+                      >
+                        <span
+                          class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
+                          :class="item.is_available_table_qr ? 'translate-x-4' : 'translate-x-0.5'"
+                        />
+                      </button>
+                    </label>
                   </div>
                 </template>
                 <template v-else>
@@ -590,8 +651,8 @@
             </div>
           </template>
 
-          <template #cell-is_available_online="{ row }">
-            <div class="flex justify-center">
+          <template v-if="showOnlineControls" #cell-is_available_online="{ row }">
+            <div class="flex justify-center" @click.stop="editMode && !isOpenSaleShell(row)">
               <UiStatusBadge
                 v-if="isOpenSaleShell(row)"
                 value="No aplica"
@@ -602,7 +663,24 @@
                 class="whitespace-nowrap"
               />
               <button
-                v-else-if="!editMode"
+                v-else-if="editMode"
+                type="button"
+                role="switch"
+                :aria-checked="row.is_available_online"
+                :aria-label="row.is_available_online ? `Deshabilitar ${row.name} para domicilios` : `Habilitar ${row.name} para domicilios`"
+                :title="row.is_available_online ? 'Deshabilitar para domicilios' : 'Habilitar para domicilios'"
+                class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                :class="row.is_available_online ? 'bg-success' : 'bg-titan-300'"
+                @click="toggleDraftOnline(row)"
+              >
+                <span
+                  class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
+                  :class="row.is_available_online ? 'translate-x-4' : 'translate-x-0.5'"
+                />
+              </button>
+              <button
+                v-else
+                type="button"
                 @click="toggleOnlineAvailability(row)"
                 role="switch"
                 :aria-checked="row.is_available_online"
@@ -630,19 +708,11 @@
                   :class="row.is_available_online ? 'translate-x-4' : 'translate-x-0.5'"
                 />
               </button>
-              <UiStatusBadge
-                v-else
-                :value="row.is_available_online ? 'Online' : 'Oculto'"
-                format="text"
-                :variant="row.is_available_online ? 'success' : 'secondary'"
-                size="sm"
-                class="whitespace-nowrap"
-              />
             </div>
           </template>
 
           <template v-if="showTableQrColumn" #cell-is_available_table_qr="{ row }">
-            <div class="flex justify-center">
+            <div class="flex justify-center" @click.stop="editMode && !isOpenSaleShell(row)">
               <UiStatusBadge
                 v-if="isOpenSaleShell(row)"
                 value="No aplica"
@@ -653,7 +723,24 @@
                 class="whitespace-nowrap"
               />
               <button
-                v-else-if="!editMode"
+                v-else-if="editMode"
+                type="button"
+                role="switch"
+                :aria-checked="row.is_available_table_qr"
+                :aria-label="row.is_available_table_qr ? `Deshabilitar ${row.name} para QR en mesa` : `Habilitar ${row.name} para QR en mesa`"
+                :title="row.is_available_table_qr ? 'Deshabilitar para QR en mesa' : 'Habilitar para QR en mesa'"
+                class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                :class="row.is_available_table_qr ? 'bg-success' : 'bg-titan-300'"
+                @click="toggleDraftTableQr(row)"
+              >
+                <span
+                  class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
+                  :class="row.is_available_table_qr ? 'translate-x-4' : 'translate-x-0.5'"
+                />
+              </button>
+              <button
+                v-else
+                type="button"
                 @click="toggleTableQrAvailability(row)"
                 role="switch"
                 :aria-checked="row.is_available_table_qr"
@@ -681,14 +768,6 @@
                   :class="row.is_available_table_qr ? 'translate-x-4' : 'translate-x-0.5'"
                 />
               </button>
-              <UiStatusBadge
-                v-else
-                :value="row.is_available_table_qr ? 'QR' : 'Oculto'"
-                format="text"
-                :variant="row.is_available_table_qr ? 'success' : 'secondary'"
-                size="sm"
-                class="whitespace-nowrap"
-              />
             </div>
           </template>
 
@@ -959,6 +1038,9 @@ const showTableQrColumn = computed(
   () => !!(businessProfile.value?.tables_enabled && businessProfile.value?.table_qr_module_enabled)
 )
 
+/** Pedidos online / domicilios — `tenant_public_profiles.accepts_online_orders` */
+const showOnlineControls = computed(() => !!businessProfile.value?.accepts_online_orders)
+
 const showComandasStations = computed(() => !!businessProfile.value?.comandas_enabled)
 
 const { data: stationsData } = useQuery({
@@ -1066,12 +1148,16 @@ type ProductDraft = {
   price: number
   costo_percibido: number | null
   is_available: boolean
+  is_available_online: boolean
+  is_available_table_qr: boolean
   station_id: string | null
   originalName: string
   originalCategoryId: string
   originalPrice: number
   originalCostoPercibido: number | null
   originalIsAvailable: boolean
+  originalIsAvailableOnline: boolean
+  originalIsAvailableTableQr: boolean
   originalStationId: string | null
 }
 
@@ -1082,6 +1168,11 @@ const isSubmitting = ref(false)
 const availabilityBulkOptions = [
   { label: 'Disponible', value: 'true' },
   { label: 'No disponible', value: 'false' },
+]
+
+const channelBulkOptions = [
+  { label: 'Habilitar', value: 'true' },
+  { label: 'Deshabilitar', value: 'false' },
 ]
 
 function resolveCategoryId(product: {
@@ -1103,6 +1194,8 @@ function createDraftFromProduct(product: {
   price: number
   costo_percibido?: number | string | null
   is_available?: boolean
+  is_available_online?: boolean
+  is_available_table_qr?: boolean
   station_id?: string | null
 }): ProductDraft {
   const category_id = resolveCategoryId(product)
@@ -1113,18 +1206,24 @@ function createDraftFromProduct(product: {
       : null
   const station_id = product.station_id ?? null
   const is_available = !!product.is_available
+  const is_available_online = !!product.is_available_online
+  const is_available_table_qr = !!product.is_available_table_qr
   return {
     name: String(product.name),
     category_id,
     price,
     costo_percibido: costo,
     is_available,
+    is_available_online,
+    is_available_table_qr,
     station_id,
     originalName: String(product.name),
     originalCategoryId: category_id,
     originalPrice: price,
     originalCostoPercibido: costo,
     originalIsAvailable: is_available,
+    originalIsAvailableOnline: is_available_online,
+    originalIsAvailableTableQr: is_available_table_qr,
     originalStationId: station_id,
   }
 }
@@ -1137,6 +1236,8 @@ function ensureDraft(product: {
   price: number
   costo_percibido?: number | string | null
   is_available?: boolean
+  is_available_online?: boolean
+  is_available_table_qr?: boolean
   station_id?: string | null
 }): ProductDraft {
   if (!productDrafts.value[product.id]) {
@@ -1155,6 +1256,8 @@ function draftHasChanges(d: ProductDraft): boolean {
     || d.price !== d.originalPrice
     || d.costo_percibido !== d.originalCostoPercibido
     || d.is_available !== d.originalIsAvailable
+    || d.is_available_online !== d.originalIsAvailableOnline
+    || d.is_available_table_qr !== d.originalIsAvailableTableQr
     || d.station_id !== d.originalStationId
   )
 }
@@ -1172,10 +1275,36 @@ const displayProducts = computed(() =>
       price: draft.price,
       costo_percibido: draft.costo_percibido,
       is_available: draft.is_available,
+      is_available_online: draft.is_available_online,
+      is_available_table_qr: draft.is_available_table_qr,
       station_id: draft.station_id,
     }
   }),
 )
+
+function toggleDraftOnline(product: {
+  id: string
+  name: string
+  category_id?: string
+  category_name?: string
+  price: number
+  is_available_online?: boolean
+}) {
+  const draft = ensureDraft(product)
+  draft.is_available_online = !draft.is_available_online
+}
+
+function toggleDraftTableQr(product: {
+  id: string
+  name: string
+  category_id?: string
+  category_name?: string
+  price: number
+  is_available_table_qr?: boolean
+}) {
+  const draft = ensureDraft(product)
+  draft.is_available_table_qr = !draft.is_available_table_qr
+}
 
 function applyBulkOverridesForSelectedRows() {
   if (selectedIds.value.length === 0) return
@@ -1188,15 +1317,33 @@ function applyBulkOverridesForSelectedRows() {
       draft.is_available = bulkAvailability.value === 'true'
     }
     if (bulkStationId.value) draft.station_id = bulkStationId.value
+    if (bulkOnline.value !== '') {
+      draft.is_available_online = bulkOnline.value === 'true'
+    }
+    if (bulkQr.value !== '') {
+      draft.is_available_table_qr = bulkQr.value === 'true'
+    }
   }
 }
 
 const hasBulkPendingOnSelection = computed(() => {
   if (selectedIds.value.length === 0) return false
   if (!editMode.value) {
-    return !!bulkCategoryId.value || bulkAvailability.value !== '' || !!bulkStationId.value
+    return (
+      !!bulkCategoryId.value
+      || bulkAvailability.value !== ''
+      || !!bulkStationId.value
+      || (showOnlineControls.value && bulkOnline.value !== '')
+      || (showTableQrColumn.value && bulkQr.value !== '')
+    )
   }
-  if (!bulkCategoryId.value && bulkAvailability.value === '' && !bulkStationId.value) {
+  if (
+    !bulkCategoryId.value
+    && bulkAvailability.value === ''
+    && !bulkStationId.value
+    && (!showOnlineControls.value || bulkOnline.value === '')
+    && (!showTableQrColumn.value || bulkQr.value === '')
+  ) {
     return false
   }
   return selectedIds.value.some((id) => {
@@ -1209,6 +1356,14 @@ const hasBulkPendingOnSelection = computed(() => {
       if (draft.is_available !== want) return true
     }
     if (bulkStationId.value && draft.station_id !== bulkStationId.value) return true
+    if (showOnlineControls.value && bulkOnline.value !== '') {
+      const want = bulkOnline.value === 'true'
+      if (draft.is_available_online !== want) return true
+    }
+    if (showTableQrColumn.value && bulkQr.value !== '') {
+      const want = bulkQr.value === 'true'
+      if (draft.is_available_table_qr !== want) return true
+    }
     return false
   })
 })
@@ -1256,6 +1411,8 @@ const selectedIds = ref<string[]>([])
 const bulkCategoryId = ref('')
 const bulkStationId = ref('')
 const bulkAvailability = ref('')
+const bulkOnline = ref('')
+const bulkQr = ref('')
 const showBulkDeleteModal = ref(false)
 const bulkDeleteError = ref('')
 
@@ -1271,7 +1428,13 @@ const allPageSelected = computed(() => {
 const canBulkApplyCatalog = computed(
   () =>
     selectedIds.value.length > 0
-    && (!!bulkCategoryId.value || bulkAvailability.value !== '' || !!bulkStationId.value),
+    && (
+      !!bulkCategoryId.value
+      || bulkAvailability.value !== ''
+      || !!bulkStationId.value
+      || (showOnlineControls.value && bulkOnline.value !== '')
+      || (showTableQrColumn.value && bulkQr.value !== '')
+    ),
 )
 
 const canBulkApplyEdit = computed(() => {
@@ -1314,6 +1477,8 @@ const clearSelection = () => {
   bulkCategoryId.value = ''
   bulkStationId.value = ''
   bulkAvailability.value = ''
+  bulkOnline.value = ''
+  bulkQr.value = ''
   bulkDeleteError.value = ''
 }
 
@@ -1343,6 +1508,12 @@ async function executeBulkCatalogApply() {
   if (bulkStationId.value) body.station_id = bulkStationId.value
   if (bulkAvailability.value !== '') {
     body.is_available = bulkAvailability.value === 'true'
+  }
+  if (showOnlineControls.value && bulkOnline.value !== '') {
+    body.is_available_online = bulkOnline.value === 'true'
+  }
+  if (showTableQrColumn.value && bulkQr.value !== '') {
+    body.is_available_table_qr = bulkQr.value === 'true'
   }
 
   try {
@@ -1408,6 +1579,12 @@ async function saveChanges() {
       }
       if (draft.station_id !== draft.originalStationId) {
         body.station_id = draft.station_id
+      }
+      if (showOnlineControls.value && draft.is_available_online !== draft.originalIsAvailableOnline) {
+        body.is_available_online = draft.is_available_online
+      }
+      if (showTableQrColumn.value && draft.is_available_table_qr !== draft.originalIsAvailableTableQr) {
+        body.is_available_table_qr = draft.is_available_table_qr
       }
       try {
         await $fetch(`/api/menu/products/${id}`, { method: 'PUT', body })
@@ -1600,13 +1777,15 @@ const productosTableColumns = computed(() => {
       format: 'boolean',
       align: 'center'
     },
-    {
-      key: 'is_available_online',
-      title: 'Online',
-      sortable: false,
-      format: 'boolean',
-      align: 'center'
-    },
+    ...(showOnlineControls.value
+      ? [{
+          key: 'is_available_online',
+          title: 'Domicilios',
+          sortable: false,
+          format: 'boolean',
+          align: 'center'
+        }]
+      : []),
     ...(showTableQrColumn.value
       ? [{
           key: 'is_available_table_qr',
