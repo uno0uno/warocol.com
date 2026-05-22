@@ -55,55 +55,86 @@ function resaleRecipeRow(ingredient: { id: string, unit?: string }, quantity = 1
   }
 }
 
+function findProductForIngredient(
+  products: ResaleIngredientItemState['existingProduct'][],
+  ingredientId: string,
+) {
+  return products.find(p =>
+    p?.ingredients?.some(ing => ing.ingredient_id === ingredientId),
+  ) ?? null
+}
+
 export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | null | undefined>) {
   const toast = useToast()
   const cache = useQueryCache()
 
-  const isSubmitting = ref(false)
+  const isSubmittingBulk = ref(false)
+  const isSubmittingSave = ref(false)
   const itemsWithStatus = ref<ResaleIngredientItemState[]>([])
+  const togglingAvailabilityIds = ref<Set<string>>(new Set())
 
-  const { data: categoriesData } = useAsyncData(
-    () => `categories-resale-${currentTenant.value?.id || 'default'}`,
-    () => $fetch('/api/menu/categories'),
-    { server: false, watch: [currentTenant], default: () => ({ data: [] }) },
+  const tenantId = computed(() => currentTenant.value?.id ?? 'default')
+
+  const { data: categoriesData } = useQuery({
+    key: () => ['menu', 'categories', tenantId.value],
+    query: () => $fetch('/api/menu/categories'),
+    enabled: () => !!currentTenant.value,
+    staleTime: 30_000,
+  })
+
+  const {
+    data: ingredientsData,
+    error: ingredientsError,
+    asyncStatus: ingredientsAsyncStatus,
+    refetch: refetchIngredients,
+  } = useQuery({
+    key: () => ['menu', 'resale-ingredients', tenantId.value],
+    query: () =>
+      $fetch('/api/suppliers/ingredients', {
+        query: { limit: INGREDIENTS_FETCH_LIMIT, is_resale: true },
+      }),
+    enabled: () => !!currentTenant.value,
+    staleTime: 30_000,
+  })
+
+  const {
+    data: productsData,
+    error: productsError,
+    asyncStatus: productsAsyncStatus,
+    refetch: refetchProducts,
+  } = useQuery({
+    key: () => ['menu', 'products-resale', tenantId.value],
+    query: () =>
+      $fetch('/api/menu/products', {
+        query: {
+          limit: INGREDIENTS_FETCH_LIMIT,
+          is_resale: true,
+          include_ingredients: true,
+        },
+      }),
+    enabled: () => !!currentTenant.value,
+    staleTime: 30_000,
+  })
+
+  const categories = computed(() => (categoriesData.value as { data?: unknown[] })?.data || [])
+  const resaleIngredients = computed(() => (ingredientsData.value as { data?: unknown[] })?.data || [])
+  const existingProducts = computed(() => (productsData.value as { data?: unknown[] })?.data || [])
+
+  const catalogReady = computed(
+    () => ingredientsData.value != null && productsData.value != null,
   )
-
-  const { data: ingredientsData, pending: loadingIngredients, refresh: refreshIngredients } = useAsyncData(
-    () => `ingredients-resale-${currentTenant.value?.id || 'default'}`,
-    () => $fetch('/api/suppliers/ingredients', {
-      query: { limit: INGREDIENTS_FETCH_LIMIT, is_resale: true },
-    }),
-    { server: false, watch: [currentTenant], default: () => ({ data: [] }) },
-  )
-
-  const { data: productsData, pending: loadingProducts, refresh: refreshProducts } = useAsyncData(
-    () => `products-resale-all-${currentTenant.value?.id || 'default'}`,
-    () => $fetch('/api/menu/products', {
-      query: {
-        limit: INGREDIENTS_FETCH_LIMIT,
-        is_resale: true,
-        include_ingredients: true,
-      },
-    }),
-    { server: false, watch: [currentTenant], default: () => ({ data: [] }) },
-  )
-
-  const categories = computed(() => categoriesData.value?.data || [])
-  const resaleIngredients = computed(() => ingredientsData.value?.data || [])
-  const existingProducts = computed(() => productsData.value?.data || [])
-
-  const isLoadingData = computed(() => loadingIngredients.value || loadingProducts.value)
+  const isLoading = computed(() => !catalogReady.value)
   const isRefreshing = computed(() =>
-    (loadingIngredients.value || loadingProducts.value) && itemsWithStatus.value.length > 0,
+    catalogReady.value
+    && (ingredientsAsyncStatus.value === 'loading' || productsAsyncStatus.value === 'loading'),
   )
+  const fetchError = computed(() => ingredientsError.value || productsError.value)
 
   function buildItemsWithStatus() {
-    const products = existingProducts.value || []
+    const products = (existingProducts.value || []) as NonNullable<ResaleIngredientItemState['existingProduct']>[]
 
-    itemsWithStatus.value = resaleIngredients.value.map((ingredient: ResaleIngredientItemState['ingredient']) => {
-      const existingProduct = products.find((p: ResaleIngredientItemState['existingProduct']) =>
-        p?.ingredients?.some(ing => ing.ingredient_id === ingredient.id),
-      ) ?? null
+    itemsWithStatus.value = (resaleIngredients.value as ResaleIngredientItemState['ingredient'][]).map((ingredient) => {
+      const existingProduct = findProductForIngredient(products, ingredient.id)
 
       const price = existingProduct ? Number(existingProduct.price) : 0
       const isAvailable = existingProduct
@@ -124,10 +155,49 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     })
   }
 
-  watch([resaleIngredients, existingProducts, isLoadingData], () => {
-    if (!isLoadingData.value) {
+  function mergeServerIntoLocalItems() {
+    const products = (existingProducts.value || []) as NonNullable<ResaleIngredientItemState['existingProduct']>[]
+
+    for (const item of itemsWithStatus.value) {
+      const existingProduct = findProductForIngredient(products, item.ingredient.id)
+      const serverPrice = existingProduct ? Number(existingProduct.price) : 0
+      const serverAvail = existingProduct
+        ? normalizeCatalogBoolean(existingProduct.is_available)
+        : true
+
+      item.existingProduct = existingProduct
+
+      if (item.price === item.originalPrice) {
+        item.price = serverPrice
+        item.originalPrice = serverPrice
+      }
+
+      if (item.isAvailable === item.originalAvailable) {
+        item.isAvailable = serverAvail
+        item.originalAvailable = serverAvail
+      }
+
+      if (!item.isNew && !item.toDelete) {
+        const wasInCatalog = item.isActive
+        const serverInCatalog = !!existingProduct
+        if (wasInCatalog === serverInCatalog && item.price === item.originalPrice && item.isAvailable === item.originalAvailable) {
+          item.isActive = serverInCatalog
+        }
+      }
+    }
+  }
+
+  function syncItemsFromServer() {
+    if (!catalogReady.value) return
+    if (hasChanges.value) {
+      mergeServerIntoLocalItems()
+    } else {
       buildItemsWithStatus()
     }
+  }
+
+  watch([resaleIngredients, existingProducts, catalogReady], () => {
+    syncItemsFromServer()
   }, { immediate: true })
 
   const activeProductsCount = computed(() =>
@@ -163,12 +233,12 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
   })
 
   const defaultCategoryId = computed(() => {
-    const resaleCategory = categories.value.find((c: { name: string }) =>
+    const resaleCategory = (categories.value as { id: string, name: string }[]).find(c =>
       c.name.toLowerCase().includes('reventa')
       || c.name.toLowerCase().includes('snack')
       || c.name.toLowerCase().includes('bebida'),
     )
-    return resaleCategory?.id ?? categories.value[0]?.id ?? ''
+    return resaleCategory?.id ?? (categories.value as { id: string }[])[0]?.id ?? ''
   })
 
   function itemToTableRow(item: ResaleIngredientItemState): ResaleIngredientTableRow {
@@ -212,6 +282,41 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
   function toggleItemAvailability(item: ResaleIngredientItemState) {
     if (!isInCatalog(item)) return
     item.isAvailable = !item.isAvailable
+  }
+
+  async function toggleItemAvailabilityOptimistic(item: ResaleIngredientItemState) {
+    if (!isInCatalog(item) || !item.existingProduct) {
+      toggleItemAvailability(item)
+      return
+    }
+
+    const productId = item.existingProduct.id
+    if (togglingAvailabilityIds.value.has(productId)) return
+
+    const newValue = !item.isAvailable
+    const previous = item.isAvailable
+    item.isAvailable = newValue
+    item.originalAvailable = newValue
+    togglingAvailabilityIds.value = new Set([...togglingAvailabilityIds.value, productId])
+
+    try {
+      await $fetch(`/api/menu/products/${productId}`, {
+        method: 'PUT',
+        body: { is_available: newValue },
+      })
+      cache.invalidateQueries({ key: ['menu', 'products'] })
+      cache.invalidateQueries({ key: ['menu', 'products-resale'] })
+      await refetchProducts()
+      mergeServerIntoLocalItems()
+    } catch {
+      item.isAvailable = previous
+      item.originalAvailable = previous
+      toast.error('Error al actualizar. Intenta de nuevo.', { title: 'Error' })
+    } finally {
+      togglingAvailabilityIds.value = new Set(
+        [...togglingAvailabilityIds.value].filter(id => id !== productId),
+      )
+    }
   }
 
   function discardChanges() {
@@ -276,15 +381,17 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     return { creates, updates, deletes }
   }
 
-  async function reloadCatalog() {
-    await Promise.all([refreshIngredients(), refreshProducts()])
-    buildItemsWithStatus()
+  async function refetchCatalog() {
+    cache.invalidateQueries({ key: ['menu', 'resale-ingredients', tenantId.value] })
+    cache.invalidateQueries({ key: ['menu', 'products-resale', tenantId.value] })
+    await Promise.all([refetchIngredients(), refetchProducts()])
+    syncItemsFromServer()
   }
 
   async function saveChanges() {
-    if (isSubmitting.value || !hasChanges.value || !canSubmit.value) return
+    if (isSubmittingSave.value || !hasChanges.value || !canSubmit.value) return
 
-    isSubmitting.value = true
+    isSubmittingSave.value = true
 
     try {
       const { creates, updates, deletes } = buildResaleSaveRequests()
@@ -302,7 +409,8 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
 
       cache.invalidateQueries({ key: ['menu', 'products'] })
       cache.invalidateQueries({ key: ['menu', 'products-resale'] })
-      await reloadCatalog()
+      await refetchCatalog()
+      buildItemsWithStatus()
 
       if (errors > 0) {
         toast.warning(`Guardado parcial: ${messages.join(', ')}`, { title: 'Atención' })
@@ -313,27 +421,31 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
       const message = error instanceof Error ? error.message : 'Por favor intenta de nuevo.'
       toast.error(`Error al guardar: ${message}`, { title: 'Error' })
     } finally {
-      isSubmitting.value = false
+      isSubmittingSave.value = false
     }
   }
 
   return {
     categories,
     resaleIngredients,
-    isLoadingData,
+    isLoading,
     isRefreshing,
+    fetchError,
     itemsWithStatus,
     activeProductsCount,
     hasChanges,
     canSubmit,
-    isSubmitting,
+    isSubmittingBulk,
+    isSubmittingSave,
+    togglingAvailabilityIds,
     itemToTableRow,
     isInCatalog,
     toggleItem,
     toggleItemAvailability,
+    toggleItemAvailabilityOptimistic,
     discardChanges,
     saveChanges,
-    reloadCatalog,
+    refetchCatalog,
     buildItemsWithStatus,
   }
 }

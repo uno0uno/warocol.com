@@ -1,8 +1,10 @@
 <template>
   <div>
-    <div v-if="isLoadingData" class="flex items-center justify-center min-h-[400px]">
+    <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
+
+    <CommonsTheErrorState v-else-if="fetchError" />
 
     <div v-else class="page-layout">
       <div class="flex flex-col gap-3 md:gap-4">
@@ -24,7 +26,7 @@
           v-model:bulk-online="bulkOnline"
           v-model:bulk-qr="bulkQr"
           :selected-count="selectedIds.length"
-          :is-submitting="isSubmitting"
+          :is-submitting="isSubmittingBulk"
           :can-apply="canBulkApply"
           :show-station="false"
           :show-online="false"
@@ -39,7 +41,7 @@
         <MenuCatalogBulkBar
           v-else-if="hasChanges"
           variant="edit-only"
-          :is-submitting="isSubmitting"
+          :is-submitting="isSubmittingSave"
           :can-save-edit="hasChanges && canSubmit"
           @apply="saveChanges"
           @cancel="discardChanges"
@@ -176,7 +178,7 @@
                       :aria-checked="item._item.isAvailable"
                       class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                       :class="item._item.isAvailable ? 'bg-success' : 'bg-titan-300'"
-                      @click.stop="toggleItemAvailability(item._item)"
+                      @click.stop="onToggleAvailability(item._item)"
                     >
                       <span
                         class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
@@ -313,10 +315,11 @@
                   role="switch"
                   :aria-checked="item._item.isAvailable"
                   :aria-label="item._item.isAvailable ? `Marcar ${item.name} no disponible al guardar` : `Marcar ${item.name} disponible al guardar`"
-                  :title="item._item.isAvailable ? 'Disponible (se aplica al guardar)' : 'No disponible (se aplica al guardar)'"
-                  class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                  :title="availabilityToggleTitle(item._item)"
+                  :disabled="isAvailabilityToggleDisabled(item._item)"
+                  class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   :class="item._item.isAvailable ? 'bg-success' : 'bg-titan-300'"
-                  @click="toggleItemAvailability(item._item)"
+                  @click="onToggleAvailability(item._item)"
                 >
                   <span
                     class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
@@ -350,12 +353,12 @@
           {{ bulkDeleteError }}
         </div>
         <div class="flex gap-3 mt-6">
-          <UiButton type="button" variant="outline" class="flex-1" :disabled="isSubmitting" @click="showBulkDeleteModal = false">
+          <UiButton type="button" variant="outline" class="flex-1" :disabled="isSubmittingBulk" @click="showBulkDeleteModal = false">
             Cancelar
           </UiButton>
-          <UiButton type="button" variant="destructive" class="flex-1 flex items-center justify-center gap-2" :disabled="isSubmitting" @click="confirmBulkDelete">
-            <UiLoadingDots v-if="isSubmitting" size="8px" color="currentColor" />
-            <span>{{ isSubmitting ? 'Eliminando...' : 'Sí, eliminar' }}</span>
+          <UiButton type="button" variant="destructive" class="flex-1 flex items-center justify-center gap-2" :disabled="isSubmittingBulk" @click="confirmBulkDelete">
+            <UiLoadingDots v-if="isSubmittingBulk" size="8px" color="currentColor" />
+            <span>{{ isSubmittingBulk ? 'Eliminando...' : 'Sí, eliminar' }}</span>
           </UiButton>
         </div>
       </div>
@@ -377,6 +380,7 @@ import {
 import { useMenuCatalogSelection } from '@/composables/useMenuCatalogSelection'
 import {
   useResaleIngredientCatalog,
+  type ResaleIngredientItemState,
   type ResaleIngredientTableRow,
 } from '@/composables/useResaleIngredientCatalog'
 import { useTenantReactive } from '@/composables/useTenantReactive'
@@ -418,21 +422,44 @@ const bulkDeleteError = ref('')
 const {
   categories,
   resaleIngredients,
-  isLoadingData,
+  isLoading,
   isRefreshing,
+  fetchError,
   activeProductsCount,
   hasChanges,
   canSubmit,
-  isSubmitting,
+  isSubmittingBulk,
+  isSubmittingSave,
+  togglingAvailabilityIds,
   itemToTableRow,
   isInCatalog,
   toggleItem,
   toggleItemAvailability,
+  toggleItemAvailabilityOptimistic,
   discardChanges,
   saveChanges,
-  reloadCatalog,
+  refetchCatalog,
   itemsWithStatus,
 } = useResaleIngredientCatalog(currentTenant)
+
+function onToggleAvailability(item: ResaleIngredientItemState) {
+  if (item.existingProduct) {
+    toggleItemAvailabilityOptimistic(item)
+  } else {
+    toggleItemAvailability(item)
+  }
+}
+
+function isAvailabilityToggleDisabled(item: ResaleIngredientItemState) {
+  return !!item.existingProduct?.id && togglingAvailabilityIds.value.has(item.existingProduct.id)
+}
+
+function availabilityToggleTitle(item: ResaleIngredientItemState) {
+  if (item.existingProduct) {
+    return item.isAvailable ? 'Disponible en POS' : 'No disponible en POS'
+  }
+  return item.isAvailable ? 'Disponible (se aplica al guardar)' : 'No disponible (se aplica al guardar)'
+}
 
 const {
   appliedSearch,
@@ -577,7 +604,7 @@ function applyBulkDraftToSelection() {
 }
 
 async function executeBulkCatalogApply() {
-  if (!canBulkApply.value || isSubmitting.value) return
+  if (!canBulkApply.value || isSubmittingBulk.value) return
 
   applyBulkDraftToSelection()
 
@@ -588,7 +615,7 @@ async function executeBulkCatalogApply() {
     return
   }
 
-  isSubmitting.value = true
+  isSubmittingBulk.value = true
   const body: Record<string, string | boolean> = {}
   if (bulkCategoryId.value) body.category_id = bulkCategoryId.value
   if (bulkAvailability.value !== '') {
@@ -596,23 +623,22 @@ async function executeBulkCatalogApply() {
   }
 
   if (Object.keys(body).length === 0) {
-    isSubmitting.value = false
+    isSubmittingBulk.value = false
     clearSelection()
     return
   }
 
   try {
     const result = await runSequentialProductPatches(productIds, () => body)
-    cache.invalidateQueries({ key: ['menu', 'products-resale'] })
     cache.invalidateQueries({ key: ['menu', 'products'] })
-    await reloadCatalog()
+    await refetchCatalog()
     clearSelection()
     toastCatalogBulkResult(result, toast, {
       title: 'Listo',
       errorMessage: 'No se pudo actualizar ningún producto',
     })
   } finally {
-    isSubmitting.value = false
+    isSubmittingBulk.value = false
   }
 }
 
@@ -635,9 +661,9 @@ const openBulkDeleteModal = () => {
 
 async function confirmBulkDelete() {
   const productIds = selectedProductIds.value
-  if (productIds.length === 0 || isSubmitting.value) return
+  if (productIds.length === 0 || isSubmittingBulk.value) return
 
-  isSubmitting.value = true
+  isSubmittingBulk.value = true
   bulkDeleteError.value = ''
   let archived = 0
 
@@ -655,11 +681,10 @@ async function confirmBulkDelete() {
   )
 
   showBulkDeleteModal.value = false
-  cache.invalidateQueries({ key: ['menu', 'products-resale'] })
   cache.invalidateQueries({ key: ['menu', 'products'] })
-  await reloadCatalog()
+  await refetchCatalog()
   clearSelection()
-  isSubmitting.value = false
+  isSubmittingBulk.value = false
 
   if (result.fail === 0) {
     toastCatalogDeleteResult({ ...result, archived }, toast)
@@ -713,12 +738,12 @@ const productosTableColumns = computed(() => [
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
 onMounted(() => {
-  setRefreshHandler(reloadCatalog)
+  setRefreshHandler(refetchCatalog)
 })
-useMenuReturnRefresh('/menu/reventa', reloadCatalog)
+useMenuReturnRefresh('/menu/reventa', refetchCatalog)
 registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
-  clearRefreshHandler(reloadCatalog)
+  clearRefreshHandler(refetchCatalog)
 })
 </script>
 
