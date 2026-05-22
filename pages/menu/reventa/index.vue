@@ -8,6 +8,33 @@
 
     <div v-else class="page-layout">
       <div class="flex flex-col gap-3 md:gap-4">
+        <div
+          v-if="costIssueCount > 0 && !bannerDismissed && !marginNegativeOnly"
+          role="alert"
+          class="flex items-start gap-2 px-3 py-2.5 bg-status-critical-bg border border-border rounded-lg"
+        >
+          <svg class="w-4 h-4 text-status-critical-text flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.962-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <p class="flex-1 min-w-0 text-sm">
+            <span class="font-bold text-status-critical-text">{{ costIssueCount }} producto{{ costIssueCount !== 1 ? 's' : '' }}</span>
+            <span class="text-text-secondary"> con costo mayor al precio de venta — posibles compras mal registradas. </span>
+            <NuxtLink
+              to="/abastecimiento/calidad-datos"
+              class="font-semibold text-status-critical-text hover:underline whitespace-nowrap"
+            >Ver Calidad de Datos →</NuxtLink>
+          </p>
+          <button
+            class="flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-black/5 transition-colors text-text-tertiary hover:text-text-primary"
+            aria-label="Cerrar aviso"
+            @click="bannerDismissed = true"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
         <MenuCatalogFiltersBar
           search-placeholder="Buscar productos de reventa..."
           :show-no-recipe="false"
@@ -26,6 +53,7 @@
           v-model:bulk-online="bulkOnline"
           v-model:bulk-qr="bulkQr"
           :selected-count="selectedIds.length"
+          :edit-mode="editMode"
           :is-submitting="isSubmittingBulk"
           :can-apply="canBulkApply"
           :show-station="false"
@@ -35,29 +63,43 @@
           :availability-options="availabilityBulkOptions"
           @apply="onBulkApply"
           @clear-selection="clearSelection"
+          @cancel="onBulkCancel"
           @delete="openBulkDeleteModal"
         />
 
         <MenuCatalogBulkBar
-          v-else-if="hasChanges"
+          v-else-if="editMode"
           variant="edit-only"
           :is-submitting="isSubmittingSave"
-          :can-save-edit="hasChanges && canSubmit"
-          @apply="saveChanges"
-          @cancel="discardChanges"
+          :can-save-edit="editSessionHasChanges && canSubmitEdit"
+          @apply="saveEditSession"
+          @cancel="onCancelEdit"
         />
 
         <HealthSemaphore :is-unlocked="true" title="Catálogo comercial de productos de reventa">
           <template #header-actions>
-            <div class="text-right flex-shrink-0">
-              <p class="text-xs text-text-secondary">En catálogo</p>
-              <p class="text-2xl font-bold text-primary tabular-nums">{{ activeProductsCount }}</p>
+            <div class="flex flex-wrap items-center gap-2 justify-end">
+              <button
+                type="button"
+                class="px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] transition-colors"
+                :class="editMode
+                  ? 'bg-surface border-2 border-border text-text-primary hover:bg-surface-secondary'
+                  : 'btn-primary text-primary-foreground'"
+                @click="toggleEditMode"
+              >
+                <span class="hidden sm:inline">{{ editMode ? 'Ver catálogo' : 'Modo edición' }}</span>
+                <span class="sm:hidden">{{ editMode ? 'Ver' : 'Editar' }}</span>
+              </button>
+              <div class="text-right flex-shrink-0">
+                <p class="text-xs text-text-secondary">En catálogo</p>
+                <p class="text-2xl font-bold text-primary tabular-nums">{{ activeProductsCount }}</p>
+              </div>
             </div>
           </template>
 
           <UiResponsiveDataView
             :columns="productosTableColumns"
-            :data="tableRows"
+            :data="displayTableRows"
             :row-class="getRowClass"
             :empty-message="emptyMessage"
             :empty-sub-message="emptySubMessage"
@@ -115,18 +157,20 @@
                     <span v-if="hasCostValue(item.costo_percibido)">{{ formatCostCell(item.costo_percibido) }}</span>
                     <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
                   </p>
-                  <div v-if="isInCatalog(item._item)" class="relative w-fit mt-2">
+                  <div v-if="editMode && isInCatalog(item._item)" class="relative w-fit mt-2" @click.stop>
                     <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
                     <input
-                      v-model.number="item._item.price"
+                      v-model.number="ensureDraft(item._item).price"
                       type="number"
                       min="0"
                       step="100"
                       class="input-base input-money w-fit min-w-[7rem] pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
-                      :style="{ width: moneyInputWidth(item._item.price) }"
-                      @click.stop
+                      :style="{ width: moneyInputWidth(ensureDraft(item._item).price) }"
                     >
                   </div>
+                  <p v-else-if="isInCatalog(item._item)" class="text-sm font-semibold text-text-primary mt-1">
+                    {{ formatCurrency(item.price) }}
+                  </p>
                 </div>
                 <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
                   <UiStatusBadge
@@ -162,7 +206,7 @@
                       :aria-checked="isInCatalog(item._item)"
                       class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                       :class="isInCatalog(item._item) ? 'bg-success' : 'bg-titan-300'"
-                      @click.stop="toggleItem(item._item)"
+                      @click.stop="onToggleCatalog(item._item)"
                     >
                       <span
                         class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
@@ -178,7 +222,7 @@
                       :aria-checked="item._item.isAvailable"
                       class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                       :class="item._item.isAvailable ? 'bg-success' : 'bg-titan-300'"
-                      @click.stop="onToggleAvailability(item._item)"
+                      @click.stop="onToggleAvailabilityMobile(item)"
                     >
                       <span
                         class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
@@ -208,22 +252,37 @@
               </div>
             </template>
 
-            <template #cell-category_name="{ value }">
-              <span class="text-sm text-text-secondary">{{ value || 'Sin categoría' }}</span>
+            <template #cell-category_name="{ value, item }">
+              <UiFilterSelect
+                v-if="editMode && isInCatalog(item._item)"
+                v-model="ensureDraft(item._item).category_id"
+                placeholder="Categoría"
+                :aria-label="`Categoría de ${item.name}`"
+                :options="categoryOptions"
+                class="min-w-[140px]"
+                @click.stop
+              />
+              <span v-else class="text-sm text-text-secondary whitespace-nowrap">{{ value || 'Sin categoría' }}</span>
             </template>
 
-            <template #cell-price="{ item }">
-              <div v-if="isInCatalog(item._item)" class="relative w-fit ml-auto shrink-0" @click.stop>
-                <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+            <template #cell-price="{ value, item }">
+              <div
+                v-if="editMode && isInCatalog(item._item)"
+                class="relative w-fit ml-auto shrink-0"
+                @click.stop
+              >
+                <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs pointer-events-none">$</span>
                 <input
-                  v-model.number="item._item.price"
+                  v-model.number="ensureDraft(item._item).price"
                   type="number"
                   min="0"
                   step="100"
                   class="input-base input-money w-fit min-w-[7rem] pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
-                  :style="{ width: moneyInputWidth(item._item.price) }"
+                  :style="{ width: moneyInputWidth(ensureDraft(item._item).price) }"
+                  :aria-label="`Precio de ${item.name}`"
                 >
               </div>
+              <span v-else-if="isInCatalog(item._item)" class="text-sm font-semibold text-text-primary">{{ formatCurrency(value) }}</span>
               <span v-else class="text-sm text-text-tertiary">—</span>
             </template>
 
@@ -236,9 +295,24 @@
               </div>
             </template>
 
-            <template #cell-costo_percibido="{ value }">
-              <div class="flex justify-end">
-                <span v-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
+            <template #cell-costo_percibido="{ value, item }">
+              <div class="flex justify-end" @click.stop>
+                <div
+                  v-if="editMode && isInCatalog(item._item)"
+                  class="relative w-fit ml-auto shrink-0"
+                >
+                  <input
+                    v-model.number="ensureDraft(item._item).costo_percibido"
+                    type="number"
+                    min="0"
+                    step="100"
+                    class="input-base input-money w-fit min-w-[7rem] px-2 py-1.5 text-sm text-right tabular-nums"
+                    :style="{ width: moneyInputWidth(ensureDraft(item._item).costo_percibido) }"
+                    :aria-label="`Mi costo de ${item.name}`"
+                    placeholder="Mi costo"
+                  >
+                </div>
+                <span v-else-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
                   {{ formatCostCell(value) }}
                 </span>
                 <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
@@ -297,7 +371,7 @@
                   :title="isInCatalog(item._item) ? 'En catálogo (se aplica al guardar)' : 'Fuera del catálogo'"
                   class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                   :class="isInCatalog(item._item) ? 'bg-success' : 'bg-titan-300'"
-                  @click="toggleItem(item._item)"
+                  @click="onToggleCatalog(item._item)"
                 >
                   <span
                     class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
@@ -308,24 +382,43 @@
             </template>
 
             <template #cell-is_available="{ item }">
-              <div class="flex justify-center" @click.stop>
-                <button
-                  v-if="isInCatalog(item._item)"
-                  type="button"
-                  role="switch"
-                  :aria-checked="item._item.isAvailable"
-                  :aria-label="item._item.isAvailable ? `Marcar ${item.name} no disponible al guardar` : `Marcar ${item.name} disponible al guardar`"
-                  :title="availabilityToggleTitle(item._item)"
-                  :disabled="isAvailabilityToggleDisabled(item._item)"
-                  class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                  :class="item._item.isAvailable ? 'bg-success' : 'bg-titan-300'"
-                  @click="onToggleAvailability(item._item)"
-                >
-                  <span
-                    class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
-                    :class="item._item.isAvailable ? 'translate-x-4' : 'translate-x-0.5'"
-                  />
-                </button>
+              <div class="flex justify-center" @click.stop="editMode && isInCatalog(item._item)">
+                <template v-if="isInCatalog(item._item)">
+                  <button
+                    v-if="editMode"
+                    type="button"
+                    role="switch"
+                    :aria-checked="ensureDraft(item._item).is_available"
+                    :aria-label="ensureDraft(item._item).is_available ? `Marcar ${item.name} no disponible al guardar` : `Marcar ${item.name} disponible al guardar`"
+                    class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                    :class="ensureDraft(item._item).is_available ? 'bg-success' : 'bg-titan-300'"
+                    @click="toggleDraftAvailability(item._item)"
+                  >
+                    <span
+                      class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
+                      :class="ensureDraft(item._item).is_available ? 'translate-x-4' : 'translate-x-0.5'"
+                    />
+                  </button>
+                  <button
+                    v-else
+                    type="button"
+                    role="switch"
+                    :aria-checked="item.is_available"
+                    :title="availabilityToggleTitle(item._item)"
+                    :disabled="isAvailabilityToggleDisabled(item._item)"
+                    class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    :class="[
+                      item.is_available ? 'bg-success' : 'bg-titan-300',
+                      isAvailabilityToggleDisabled(item._item) ? 'cursor-wait' : 'cursor-pointer',
+                    ]"
+                    @click="onToggleAvailability(item._item)"
+                  >
+                    <span
+                      class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
+                      :class="item.is_available ? 'translate-x-4' : 'translate-x-0.5'"
+                    />
+                  </button>
+                </template>
                 <span v-else class="text-sm text-text-tertiary">—</span>
               </div>
             </template>
@@ -378,6 +471,7 @@ import {
   toastCatalogDeleteResult,
 } from '@/composables/useMenuCatalogBulkSave'
 import { useMenuCatalogSelection } from '@/composables/useMenuCatalogSelection'
+import { useResaleCatalogEditMode } from '@/composables/useResaleCatalogEditMode'
 import {
   useResaleIngredientCatalog,
   type ResaleIngredientItemState,
@@ -418,6 +512,7 @@ const {
 
 const showBulkDeleteModal = ref(false)
 const bulkDeleteError = ref('')
+const bannerDismissed = ref(false)
 
 const {
   categories,
@@ -426,8 +521,8 @@ const {
   isRefreshing,
   fetchError,
   activeProductsCount,
-  hasChanges,
-  canSubmit,
+  catalogHasChanges,
+  canSubmit: catalogCanSubmit,
   isSubmittingBulk,
   isSubmittingSave,
   togglingAvailabilityIds,
@@ -436,18 +531,70 @@ const {
   toggleItem,
   toggleItemAvailability,
   toggleItemAvailabilityOptimistic,
-  discardChanges,
   saveChanges,
   refetchCatalog,
+  buildItemsWithStatus,
   itemsWithStatus,
 } = useResaleIngredientCatalog(currentTenant)
 
+const categoryOptions = computed(() =>
+  (categories.value as { id: string, name: string }[]).map(c => ({ label: c.name, value: c.id })),
+)
+
+const bulkFields = computed(() => ({
+  bulkCategoryId: bulkCategoryId.value,
+  bulkStationId: bulkStationId.value,
+  bulkAvailability: bulkAvailability.value,
+  bulkOnline: bulkOnline.value,
+  bulkQr: bulkQr.value,
+}))
+
+const {
+  editMode,
+  ensureDraft,
+  itemToDisplayRow,
+  hasChanges: editSessionHasChanges,
+  canSubmit: canSubmitEdit,
+  applyBulkOverridesForSelectedRows,
+  syncDraftsToItems,
+  discardAllDrafts,
+  cancelEditOperation,
+  canBulkApplyEdit,
+} = useResaleCatalogEditMode({
+  categories: computed(() => categories.value as { id: string, name: string }[]),
+  itemsWithStatus,
+  selectedIds,
+  bulkFields,
+  isInCatalog,
+  itemHasChanges: catalogHasChanges,
+})
+
+function onToggleCatalog(item: ResaleIngredientItemState) {
+  toggleItem(item)
+  if (editMode.value && isInCatalog(item)) {
+    ensureDraft(item)
+  }
+}
+
+function toggleDraftAvailability(item: ResaleIngredientItemState) {
+  const draft = ensureDraft(item)
+  draft.is_available = !draft.is_available
+}
+
 function onToggleAvailability(item: ResaleIngredientItemState) {
+  if (editMode.value) {
+    toggleDraftAvailability(item)
+    return
+  }
   if (item.existingProduct) {
     toggleItemAvailabilityOptimistic(item)
   } else {
     toggleItemAvailability(item)
   }
+}
+
+function onToggleAvailabilityMobile(item: ResaleIngredientTableRow) {
+  onToggleAvailability(item._item)
 }
 
 function isAvailabilityToggleDisabled(item: ResaleIngredientItemState) {
@@ -524,7 +671,9 @@ const categoryNameById = computed(() => {
 })
 
 const tableRows = computed((): ResaleIngredientTableRow[] => {
-  let rows = itemsWithStatus.value.map(itemToTableRow)
+  let rows = itemsWithStatus.value.map(item =>
+    editMode.value && isInCatalog(item) ? itemToDisplayRow(item) : itemToTableRow(item),
+  )
 
   const q = appliedSearch.value.trim().toLowerCase()
   if (q) {
@@ -562,13 +711,57 @@ const tableRows = computed((): ResaleIngredientTableRow[] => {
   return rows
 })
 
+const displayTableRows = tableRows
+
 const selectableRowsOnPage = computed(() => tableRows.value)
 
 const allPageSelected = computed(() => isAllPageSelected(selectableRowsOnPage.value))
 
-const canBulkApply = computed(() =>
+const canBulkApplyCatalog = computed(() =>
   selectionCanBulkApplyCatalog({ showOnline: false, showQr: false }),
 )
+
+const canBulkApply = computed(() =>
+  editMode.value ? canBulkApplyEdit() : canBulkApplyCatalog.value,
+)
+
+function toggleEditMode() {
+  if (editMode.value) {
+    if (editSessionHasChanges.value) {
+      const ok = window.confirm('¿Descartar los cambios y salir del modo edición?')
+      if (!ok) return
+    }
+    discardAllDrafts()
+    editMode.value = false
+    buildItemsWithStatus()
+    return
+  }
+  editMode.value = true
+  for (const item of itemsWithStatus.value) {
+    if (isInCatalog(item)) ensureDraft(item)
+  }
+}
+
+function onCancelEdit() {
+  cancelEditOperation(() => buildItemsWithStatus())
+}
+
+function onBulkCancel() {
+  if (editMode.value) {
+    onCancelEdit()
+  } else {
+    clearSelection()
+  }
+}
+
+async function saveEditSession() {
+  if (isSubmittingSave.value || !editSessionHasChanges.value || !catalogCanSubmit.value) return
+  applyBulkOverridesForSelectedRows()
+  syncDraftsToItems()
+  await saveChanges()
+  discardAllDrafts()
+  clearSelection()
+}
 
 function toggleSelect(id: string) {
   selectionToggleSelect(id, tableRows.value)
@@ -643,7 +836,11 @@ async function executeBulkCatalogApply() {
 }
 
 function onBulkApply() {
-  executeBulkCatalogApply()
+  if (editMode.value) {
+    saveEditSession()
+  } else {
+    executeBulkCatalogApply()
+  }
 }
 
 const openBulkDeleteModal = () => {
@@ -651,7 +848,7 @@ const openBulkDeleteModal = () => {
   if (selectedProductIds.value.length === 0) {
     for (const ingredientId of selectedIds.value) {
       const item = findItemByIngredientId(ingredientId)
-      if (item && isInCatalog(item)) toggleItem(item)
+      if (item && isInCatalog(item)) onToggleCatalog(item)
     }
     clearSelection()
     return
@@ -699,6 +896,18 @@ async function confirmBulkDelete() {
 
 watch([appliedSearch, statusFilter, categoryFilter, marginNegativeOnly, costDriftOnly], clearSelection)
 
+const costIssueRowIds = computed(() => {
+  const ids = new Set<string>()
+  for (const r of tableRows.value) {
+    if (r._item.existingProduct && r.costo_calculado != null && Number(r.costo_calculado) > Number(r.price)) {
+      ids.add(r.id)
+    }
+  }
+  return ids
+})
+
+const costIssueCount = computed(() => costIssueRowIds.value.size)
+
 const costDriftRowIds = computed(() => {
   const ids = new Set<string>()
   for (const r of tableRows.value) {
@@ -709,6 +918,7 @@ const costDriftRowIds = computed(() => {
 
 const catalogRowBaseClass = (row: ResaleIngredientTableRow, index: number) => {
   if (row._item.toDelete) return 'bg-red-50 dark:bg-red-950/20'
+  if (costIssueRowIds.value.has(row.id)) return 'bg-status-critical-bg'
   if (costDriftRowIds.value.has(row.id)) return 'bg-status-warning-bg/40'
   if (isInCatalog(row._item)) return 'bg-primary/5'
   return index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'

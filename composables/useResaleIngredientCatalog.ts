@@ -20,18 +20,24 @@ export type ResaleIngredientItemState = {
   existingProduct: {
     id: string
     price: number | string
+    category_id?: string
+    category_name?: string
     is_available?: unknown
     costo_calculado?: number | null
     costo_percibido?: number | null
     ingredients?: { ingredient_id: string, quantity?: number, unit?: string }[]
   } | null
   price: number
+  costoPercibido: number | null
+  categoryId: string
   isAvailable: boolean
   isActive: boolean
   isNew: boolean
   toDelete: boolean
   originalPrice: number
   originalAvailable: boolean
+  originalCostoPercibido: number | null
+  originalCategoryId: string
 }
 
 export type ResaleIngredientTableRow = {
@@ -165,17 +171,28 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
       const isAvailable = existingProduct
         ? normalizeCatalogBoolean(existingProduct.is_available)
         : true
+      const costoPercibido =
+        existingProduct?.costo_percibido != null && existingProduct.costo_percibido !== ''
+          ? Number(existingProduct.costo_percibido)
+          : null
+      const categoryId = existingProduct?.category_id
+        ? String(existingProduct.category_id)
+        : ''
 
       return {
         ingredient,
         existingProduct,
         price,
+        costoPercibido,
+        categoryId,
         isAvailable,
         isActive: !!existingProduct,
         isNew: false,
         toDelete: false,
         originalPrice: price,
         originalAvailable: isAvailable,
+        originalCostoPercibido: costoPercibido,
+        originalCategoryId: categoryId,
       }
     })
   }
@@ -200,6 +217,23 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
       if (item.isAvailable === item.originalAvailable) {
         item.isAvailable = serverAvail
         item.originalAvailable = serverAvail
+      }
+
+      const serverCosto =
+        existingProduct?.costo_percibido != null && existingProduct.costo_percibido !== ''
+          ? Number(existingProduct.costo_percibido)
+          : null
+      if (item.costoPercibido === item.originalCostoPercibido) {
+        item.costoPercibido = serverCosto
+        item.originalCostoPercibido = serverCosto
+      }
+
+      const serverCategoryId = existingProduct?.category_id
+        ? String(existingProduct.category_id)
+        : item.categoryId
+      if (item.categoryId === item.originalCategoryId) {
+        item.categoryId = serverCategoryId
+        item.originalCategoryId = serverCategoryId
       }
 
       if (!item.isNew && !item.toDelete) {
@@ -240,7 +274,12 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
       item.isActive
       && !item.toDelete
       && item.existingProduct
-      && (item.price !== item.originalPrice || item.isAvailable !== item.originalAvailable),
+      && (
+        item.price !== item.originalPrice
+        || item.isAvailable !== item.originalAvailable
+        || item.categoryId !== item.originalCategoryId
+        || item.costoPercibido !== item.originalCostoPercibido
+      ),
     ),
   )
 
@@ -254,7 +293,7 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
 
   const canSubmit = computed(() => {
     const activeItems = itemsWithStatus.value.filter(item => item.isActive && !item.toDelete)
-    return activeItems.every(item => item.price > 0)
+    return activeItems.every(item => item.price > 0 && !!item.categoryId)
   })
 
   const defaultCategoryId = computed(() => {
@@ -268,15 +307,17 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
 
   function itemToTableRow(item: ResaleIngredientItemState): ResaleIngredientTableRow {
     const p = item.existingProduct
+    const cats = categories.value as { id: string, name: string }[]
+    const cat = cats.find(c => c.id === item.categoryId)
     return {
       id: item.ingredient.id,
       _item: item,
       name: item.ingredient.name,
-      category_name: item.ingredient.category || 'Sin categoría',
+      category_name: cat?.name ?? p?.category_name ?? item.ingredient.category ?? 'Sin categoría',
       price: item.price,
       is_available: item.isAvailable,
       costo_calculado: p?.costo_calculado ?? null,
-      costo_percibido: p?.costo_percibido ?? null,
+      costo_percibido: item.costoPercibido ?? p?.costo_percibido ?? null,
     }
   }
 
@@ -301,6 +342,9 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     } else {
       item.isActive = true
       item.isNew = true
+      if (!item.categoryId) {
+        item.categoryId = defaultCategoryId.value
+      }
     }
   }
 
@@ -363,7 +407,8 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
             name: item.ingredient.name,
             description: '',
             price: item.price,
-            category_id: defaultCategoryId.value,
+            category_id: item.categoryId || defaultCategoryId.value,
+            costo_percibido: item.costoPercibido,
             is_available: item.isAvailable,
             is_resale: true,
             controla_stock: true,
@@ -381,6 +426,8 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
       const body: Record<string, unknown> = {
         price: item.price,
         is_available: item.isAvailable,
+        category_id: item.categoryId,
+        costo_percibido: item.costoPercibido,
       }
       if (existingRecipe?.unit === 'u' && item.ingredient?.id) {
         body.ingredients = [resaleRecipeRow(item.ingredient, Number(existingRecipe.quantity) || 1)]
@@ -458,7 +505,7 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     fetchError,
     itemsWithStatus,
     activeProductsCount,
-    hasChanges,
+    catalogHasChanges: hasChanges,
     canSubmit,
     isSubmittingBulk,
     isSubmittingSave,
