@@ -6,36 +6,79 @@ export type MenuSequentialRequest = {
   run: () => Promise<void>
 }
 
+/** Default parallel in-flight requests per batch (#821). */
+export const MENU_CATALOG_SAVE_CONCURRENCY = 8
+
 /**
- * Runs async operations one after another; counts successes and failures.
- * Use for per-id PUT/POST/DELETE until #821 bulk endpoint exists.
+ * Practical max items per client batch (matches GET /menu/products limit=250).
+ * Larger sets should be chunked in a follow-up.
  */
-export async function runSequentialRequests(
+export const MENU_CATALOG_BATCH_MAX = 250
+
+export type RunConcurrentOptions = {
+  /** Max parallel requests; default {@link MENU_CATALOG_SAVE_CONCURRENCY}. */
+  concurrency?: number
+}
+
+/**
+ * Runs requests with bounded concurrency (Promise pool + per-item try/catch).
+ * Returns aggregate ok/fail counts for catalog toasts.
+ */
+export async function runConcurrentRequests(
   requests: MenuSequentialRequest[],
+  options: RunConcurrentOptions = {},
 ): Promise<MenuBulkSaveResult> {
+  if (requests.length === 0) {
+    return { ok: 0, fail: 0 }
+  }
+
+  const concurrency = Math.max(
+    1,
+    Math.min(options.concurrency ?? MENU_CATALOG_SAVE_CONCURRENCY, requests.length),
+  )
+
   let ok = 0
   let fail = 0
   const errors: unknown[] = []
+  let nextIndex = 0
 
-  for (const req of requests) {
-    try {
-      await req.run()
-      ok++
-    } catch (err) {
-      fail++
-      errors.push(err)
+  async function worker() {
+    while (nextIndex < requests.length) {
+      const current = nextIndex++
+      const req = requests[current]
+      try {
+        await req.run()
+        ok++
+      } catch (err) {
+        fail++
+        errors.push(err)
+      }
     }
   }
+
+  await Promise.all(Array.from({ length: concurrency }, () => worker()))
 
   return { ok, fail, errors: errors.length ? errors : undefined }
 }
 
 /**
- * Sequential PUT /api/menu/products/:id with the same or per-id body builder.
+ * Bounded-concurrency batch helper (name kept for #823 callers).
+ * Use {@link runConcurrentRequests} for explicit options.
+ */
+export async function runSequentialRequests(
+  requests: MenuSequentialRequest[],
+  options?: RunConcurrentOptions,
+): Promise<MenuBulkSaveResult> {
+  return runConcurrentRequests(requests, options)
+}
+
+/**
+ * Parallel PUT /api/menu/products/:id with the same or per-id body builder.
  */
 export async function runSequentialProductPatches(
   ids: string[],
   buildBody: (id: string) => Record<string, unknown> | null | undefined,
+  options?: RunConcurrentOptions,
 ): Promise<MenuBulkSaveResult> {
   const requests: MenuSequentialRequest[] = []
 
@@ -48,11 +91,11 @@ export async function runSequentialProductPatches(
         $fetch(`/api/menu/products/${id}`, {
           method: 'PUT',
           body,
-        }),
+        }).then(() => undefined),
     })
   }
 
-  return runSequentialRequests(requests)
+  return runConcurrentRequests(requests, options)
 }
 
 type ToastCatalogBulkOptions = {
