@@ -52,6 +52,7 @@ export interface TabItem {
     quantity: number
     unitPrice: number
     subtotal: number
+    notes?: string | null
     fulfillmentStatus: 'new' | 'sent' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
     sentAt: string | null
 }

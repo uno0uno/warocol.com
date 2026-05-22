@@ -102,6 +102,7 @@
             product: { id: item.orderItemId, name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
             modifiers: [],
             quantity: item.quantity,
+            notes: item.notes ?? undefined,
             fulfillmentStatus: item.fulfillmentStatus,
             sentAt: item.sentAt
           }"
@@ -348,6 +349,7 @@ interface TabItem {
   quantity: number
   unitPrice: number
   subtotal: number
+  notes?: string | null
   fulfillmentStatus?: string
   sentAt?: string | null
 }
