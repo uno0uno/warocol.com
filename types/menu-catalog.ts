@@ -53,6 +53,7 @@ export type MenuCatalogBulkFieldState = {
   bulkCategoryId: string
   bulkStationId: string
   bulkAvailability: string
+  bulkInCatalog: string
   bulkOnline: string
   bulkQr: string
 }

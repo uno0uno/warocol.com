@@ -15,6 +15,7 @@ export function useMenuCatalogSelection(options: MenuCatalogSelectionOptions = {
   const bulkCategoryId = ref('')
   const bulkStationId = ref('')
   const bulkAvailability = ref('')
+  const bulkInCatalog = ref('')
   const bulkOnline = ref('')
   const bulkQr = ref('')
 
@@ -22,6 +23,7 @@ export function useMenuCatalogSelection(options: MenuCatalogSelectionOptions = {
     bulkCategoryId: bulkCategoryId.value,
     bulkStationId: bulkStationId.value,
     bulkAvailability: bulkAvailability.value,
+    bulkInCatalog: bulkInCatalog.value,
     bulkOnline: bulkOnline.value,
     bulkQr: bulkQr.value,
   }))
@@ -30,6 +32,7 @@ export function useMenuCatalogSelection(options: MenuCatalogSelectionOptions = {
     bulkCategoryId.value = ''
     bulkStationId.value = ''
     bulkAvailability.value = ''
+    bulkInCatalog.value = ''
     bulkOnline.value = ''
     bulkQr.value = ''
   }
@@ -71,12 +74,14 @@ export function useMenuCatalogSelection(options: MenuCatalogSelectionOptions = {
   function canBulkApplyCatalog(flags: {
     showOnline: boolean
     showQr: boolean
+    showInCatalog?: boolean
   }) {
     return (
       selectedIds.value.length > 0
       && (
         !!bulkCategoryId.value
         || bulkAvailability.value !== ''
+        || (flags.showInCatalog && bulkInCatalog.value !== '')
         || !!bulkStationId.value
         || (flags.showOnline && bulkOnline.value !== '')
         || (flags.showQr && bulkQr.value !== '')
@@ -94,6 +99,7 @@ export function useMenuCatalogSelection(options: MenuCatalogSelectionOptions = {
     bulkCategoryId,
     bulkStationId,
     bulkAvailability,
+    bulkInCatalog,
     bulkOnline,
     bulkQr,
     bulkFields,

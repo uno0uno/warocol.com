@@ -49,6 +49,7 @@
           variant="selection"
           v-model:bulk-category-id="bulkCategoryId"
           v-model:bulk-availability="bulkAvailability"
+          v-model:bulk-in-catalog="bulkInCatalog"
           v-model:bulk-station-id="bulkStationId"
           v-model:bulk-online="bulkOnline"
           v-model:bulk-qr="bulkQr"
@@ -57,6 +58,7 @@
           :is-submitting="isSubmittingBulk"
           :can-apply="canBulkApply"
           :show-station="false"
+          :show-in-catalog="true"
           :show-online="false"
           :show-qr="false"
           :categories="categories"
@@ -496,6 +498,7 @@ const {
   bulkCategoryId,
   bulkStationId,
   bulkAvailability,
+  bulkInCatalog,
   bulkOnline,
   bulkQr,
   toggleSelect: selectionToggleSelect,
@@ -540,6 +543,7 @@ const bulkFields = computed(() => ({
   bulkCategoryId: bulkCategoryId.value,
   bulkStationId: bulkStationId.value,
   bulkAvailability: bulkAvailability.value,
+  bulkInCatalog: bulkInCatalog.value,
   bulkOnline: bulkOnline.value,
   bulkQr: bulkQr.value,
 }))
@@ -713,7 +717,7 @@ const selectableRowsOnPage = computed(() => tableRows.value)
 const allPageSelected = computed(() => isAllPageSelected(selectableRowsOnPage.value))
 
 const canBulkApplyCatalog = computed(() =>
-  selectionCanBulkApplyCatalog({ showOnline: false, showQr: false }),
+  selectionCanBulkApplyCatalog({ showOnline: false, showQr: false, showInCatalog: true }),
 )
 
 const canBulkApply = computed(() =>
@@ -751,6 +755,7 @@ function onBulkCancel() {
 
 async function saveEditSession() {
   if (isSubmittingSave.value || !editSessionHasChanges.value || !catalogCanSubmit.value) return
+  applyBulkInCatalogToSelection()
   applyBulkOverridesForSelectedRows()
   syncDraftsToItems()
   await saveChanges()
@@ -781,6 +786,16 @@ const selectedProductIds = computed(() =>
     .filter((id): id is string => !!id),
 )
 
+function applyBulkInCatalogToSelection() {
+  if (bulkInCatalog.value === '') return
+  const wantInCatalog = bulkInCatalog.value === 'true'
+  for (const ingredientId of selectedIds.value) {
+    const item = findItemByIngredientId(ingredientId)
+    if (!item || isInCatalog(item) === wantInCatalog) continue
+    onToggleCatalog(item)
+  }
+}
+
 function applyBulkDraftToSelection() {
   for (const ingredientId of selectedIds.value) {
     const item = findItemByIngredientId(ingredientId)
@@ -794,14 +809,13 @@ function applyBulkDraftToSelection() {
 async function executeBulkCatalogApply() {
   if (!canBulkApply.value || isSubmittingBulk.value) return
 
+  applyBulkInCatalogToSelection()
   applyBulkDraftToSelection()
 
-  const productIds = selectedProductIds.value
-  if (productIds.length === 0) {
-    clearSelection()
-    toast.success('Cambios aplicados a la selección. Guarda para confirmar.', { title: 'Listo' })
-    return
-  }
+  const productIds = selectedProductIds.value.filter((id) => {
+    const item = itemsWithStatus.value.find(i => i.existingProduct?.id === id)
+    return item && isInCatalog(item)
+  })
 
   isSubmittingBulk.value = true
   const body: Record<string, string | boolean> = {}
@@ -813,6 +827,14 @@ async function executeBulkCatalogApply() {
   if (Object.keys(body).length === 0) {
     isSubmittingBulk.value = false
     clearSelection()
+    toast.success('Cambios aplicados a la selección. Usa Modo edición y Guardar para confirmar.', { title: 'Listo' })
+    return
+  }
+
+  if (productIds.length === 0) {
+    isSubmittingBulk.value = false
+    clearSelection()
+    toast.success('Cambios aplicados a la selección. Usa Modo edición y Guardar para confirmar.', { title: 'Listo' })
     return
   }
 

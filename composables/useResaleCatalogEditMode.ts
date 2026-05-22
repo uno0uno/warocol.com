@@ -92,12 +92,17 @@ export function useResaleCatalogEditMode(options: UseResaleCatalogEditModeOption
 
   const hasBulkPendingOnSelection = computed(() => {
     if (!editMode.value || selectedIds.value.length === 0) return false
-    const { bulkCategoryId, bulkAvailability } = bulkFields.value
-    if (!bulkCategoryId && bulkAvailability === '') return false
+    const { bulkCategoryId, bulkAvailability, bulkInCatalog } = bulkFields.value
+    if (!bulkCategoryId && bulkAvailability === '' && bulkInCatalog === '') return false
 
     return selectedIds.value.some((id) => {
       const item = itemsWithStatus.value.find(i => i.ingredient.id === id)
-      if (!item || !isInCatalog(item)) return false
+      if (!item) return false
+      if (bulkInCatalog !== '') {
+        const wantInCatalog = bulkInCatalog === 'true'
+        if (isInCatalog(item) !== wantInCatalog) return true
+      }
+      if (!isInCatalog(item)) return false
       const draft = rowDrafts.value[id] ?? createResaleDraftFromItem(item, resolveCategoryId)
       if (bulkCategoryId && draft.category_id !== bulkCategoryId) return true
       if (bulkAvailability !== '') {

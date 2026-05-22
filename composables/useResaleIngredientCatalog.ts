@@ -246,23 +246,6 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     }
   }
 
-  function syncItemsFromServer() {
-    if (!catalogReady.value) return
-    if (hasChanges.value) {
-      mergeServerIntoLocalItems()
-    } else {
-      buildItemsWithStatus()
-    }
-  }
-
-  watch([resaleIngredients, existingProducts, catalogReady], () => {
-    syncItemsFromServer()
-  }, { immediate: true })
-
-  const activeProductsCount = computed(() =>
-    itemsWithStatus.value.filter(item => item.isActive && !item.toDelete).length,
-  )
-
   const toCreate = computed(() =>
     itemsWithStatus.value.filter(item =>
       item.isActive && !item.toDelete && !item.existingProduct && item.price > 0,
@@ -295,6 +278,23 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     const activeItems = itemsWithStatus.value.filter(item => item.isActive && !item.toDelete)
     return activeItems.every(item => item.price > 0 && !!item.categoryId)
   })
+
+  function syncItemsFromServer() {
+    if (!catalogReady.value) return
+    if (hasChanges.value) {
+      mergeServerIntoLocalItems()
+    } else {
+      buildItemsWithStatus()
+    }
+  }
+
+  watch([resaleIngredients, existingProducts, catalogReady], () => {
+    syncItemsFromServer()
+  }, { immediate: true })
+
+  const activeProductsCount = computed(() =>
+    itemsWithStatus.value.filter(item => item.isActive && !item.toDelete).length,
+  )
 
   const defaultCategoryId = computed(() => {
     const resaleCategory = (categories.value as { id: string, name: string }[]).find(c =>

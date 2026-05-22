@@ -11,10 +11,12 @@ const props = withDefaults(
     showOnline?: boolean
     showQr?: boolean
     showDelete?: boolean
+    showInCatalog?: boolean
     categories?: { id: string; name: string }[]
     stations?: { id: string; name: string }[]
     availabilityOptions?: { label: string; value: string }[]
     channelOptions?: { label: string; value: string }[]
+    inCatalogOptions?: { label: string; value: string }[]
   }>(),
   {
     selectedCount: 0,
@@ -26,15 +28,21 @@ const props = withDefaults(
     showOnline: false,
     showQr: false,
     showDelete: true,
+    showInCatalog: false,
     categories: () => [],
     stations: () => [],
     availabilityOptions: () => [],
     channelOptions: () => [],
+    inCatalogOptions: () => [
+      { label: 'En catálogo', value: 'true' },
+      { label: 'Fuera del catálogo', value: 'false' },
+    ],
   },
 )
 
 const bulkCategoryId = defineModel<string>('bulkCategoryId', { default: '' })
 const bulkAvailability = defineModel<string>('bulkAvailability', { default: '' })
+const bulkInCatalog = defineModel<string>('bulkInCatalog', { default: '' })
 const bulkStationId = defineModel<string>('bulkStationId', { default: '' })
 const bulkOnline = defineModel<string>('bulkOnline', { default: '' })
 const bulkQr = defineModel<string>('bulkQr', { default: '' })
@@ -86,6 +94,14 @@ function onCancel() {
       placeholder="Estado..."
       :aria-label="editMode ? 'Estado al guardar para seleccionadas' : 'Cambiar estado masivamente'"
       :options="availabilityOptions"
+    />
+
+    <UiFilterSelect
+      v-if="showInCatalog"
+      v-model="bulkInCatalog"
+      placeholder="En catálogo..."
+      :aria-label="editMode ? 'Catálogo al guardar para seleccionadas' : 'Cambiar en catálogo masivamente'"
+      :options="inCatalogOptions"
     />
 
     <UiFilterSelect
