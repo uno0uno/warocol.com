@@ -16,7 +16,7 @@ La documentación replica la estructura del menú lateral de la plataforma: tres
 
 | Módulo | Qué puedes hacer |
 |--------|------------------|
-| [POS](./usuarios/pos) | Procesar ventas en el punto de venta (mostrador, mesa, barra) |
+| [POS](./usuarios/pos) | Procesar ventas en el punto de venta (mostrador, mesa, barra); incluye [venta libre](./usuarios/pos-venta-libre) |
 | [Ventas](./usuarios/ventas) | Historial de órdenes, productos vendidos y propinas |
 | [Despacho](./usuarios/despacho) | Pedidos online (domicilios y recogida) y comandas de cocina |
 

@@ -39,6 +39,8 @@ Registro de auditoría del POS: quién eliminó productos del tab o carrito, vac
 
 Ver [Bitácora de operaciones](./operaciones/bitacora) para la guía completa: qué se registra, qué no, filtros, políticas de motivo obligatorio en cocina y anulaciones de pago.
 
+Las líneas de [Venta libre en el POS](./pos-venta-libre) en mesa o barra aparecen como producto agregado o eliminado del tab; en mostrador, como línea o carrito vaciado.
+
 ---
 
 ## Turnos
