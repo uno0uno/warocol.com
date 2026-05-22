@@ -20,45 +20,133 @@
           @filter-change="currentPage = 1"
         />
 
+        <MenuCatalogBulkBar
+          v-if="selectedIds.length > 0"
+          variant="selection"
+          v-model:bulk-category-id="bulkCategoryId"
+          v-model:bulk-availability="bulkAvailability"
+          v-model:bulk-station-id="bulkStationId"
+          v-model:bulk-online="bulkOnline"
+          v-model:bulk-qr="bulkQr"
+          :selected-count="selectedIds.length"
+          :edit-mode="editMode"
+          :is-submitting="isSubmitting"
+          :can-apply="canBulkApply"
+          :show-station="false"
+          :show-online="false"
+          :show-qr="false"
+          :categories="categories"
+          :availability-options="availabilityBulkOptions"
+          @apply="onBulkApply"
+          @clear-selection="clearSelection"
+          @cancel="() => cancelEditOperation(clearSelection)"
+          @delete="openBulkDeleteModal"
+        />
+
+        <MenuCatalogBulkBar
+          v-else-if="editMode"
+          variant="edit-only"
+          :is-submitting="isSubmitting"
+          :can-save-edit="hasChanges && canSubmit"
+          @apply="saveChanges"
+          @cancel="() => cancelEditOperation(clearSelection)"
+        />
+
         <HealthSemaphore :is-unlocked="true" title="Catálogo comercial de productos de reventa">
           <template #header-actions>
-            <NuxtLink
-              to="/menu/reventa/crear"
-              class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap"
-            >
-              <span class="hidden sm:inline">Gestionar productos</span>
-              <span class="sm:hidden">Gestionar</span>
-            </NuxtLink>
+            <div class="flex flex-wrap items-center gap-2 justify-end">
+              <button
+                type="button"
+                class="px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] transition-colors"
+                :class="editMode
+                  ? 'bg-surface border-2 border-border text-text-primary hover:bg-surface-secondary'
+                  : 'btn-primary text-primary-foreground'"
+                @click="onToggleEditMode"
+              >
+                <span class="hidden sm:inline">{{ editMode ? 'Ver catálogo' : 'Modo edición' }}</span>
+                <span class="sm:hidden">{{ editMode ? 'Ver' : 'Editar' }}</span>
+              </button>
+              <NuxtLink
+                to="/menu/reventa/crear"
+                class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] flex items-center"
+              >
+                <span class="hidden sm:inline">Gestionar productos</span>
+                <span class="sm:hidden">Gestionar</span>
+              </NuxtLink>
+            </div>
           </template>
         <!-- Responsive Data View (Mobile Cards + Desktop Table) -->
         <UiResponsiveDataView
           :columns="productosTableColumns"
-          :data="displayedProducts"
+          :data="tableRows"
           :row-class="getRowClass"
           :empty-message="emptyMessage"
           :empty-sub-message="emptySubMessage"
           variant="default"
           row-size="sm"
         >
+          <template #header-select>
+            <div class="flex items-center justify-center">
+              <UiBulkSelectCheckbox :checked="allPageSelected" @change="toggleSelectAll" />
+            </div>
+          </template>
+
+          <template #cell-select="{ row }">
+            <UiBulkSelectCheckbox
+              v-if="row"
+              :checked="selectedIds.includes(row.id)"
+              @change="toggleSelect(row.id)"
+            />
+          </template>
+
           <!-- Mobile Card Slot -->
           <template #card="{ item, index }">
             <div
-              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
-              :class="costDriftProductIds?.has(item.id)
-                ? 'bg-status-warning-bg/40'
-                : (index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30')"
+              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors"
+              :class="catalogRowClass(item, index)"
             >
-              <div class="flex-1 min-w-0">
-                <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
-                <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}</p>
-                <p class="text-xs text-text-tertiary flex flex-wrap items-center gap-1">
-                  <span>Real:</span>
-                  <span v-if="hasCostValue(item.costo_calculado)">{{ formatCostCell(item.costo_calculado) }}</span>
-                  <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
-                  <span>· Mi costo:</span>
-                  <span v-if="hasCostValue(item.costo_percibido)">{{ formatCostCell(item.costo_percibido) }}</span>
-                  <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
-                </p>
+              <UiBulkSelectCheckbox
+                :checked="selectedIds.includes(item.id)"
+                @change="toggleSelect(item.id)"
+              />
+              <div class="flex-1 min-w-0" @click.stop="editMode">
+                <template v-if="editMode">
+                  <input
+                    v-model="ensureDraft(item).name"
+                    type="text"
+                    class="input-base w-full py-1.5 px-2 text-sm font-medium"
+                    placeholder="Nombre"
+                  />
+                  <UiFilterSelect
+                    v-model="ensureDraft(item).category_id"
+                    placeholder="Categoría"
+                    :options="categories.map(c => ({ label: c.name, value: c.id }))"
+                    class="mt-2 min-w-0"
+                  />
+                  <div class="relative w-fit mt-2">
+                    <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+                    <input
+                      v-model.number="ensureDraft(item).price"
+                      type="number"
+                      min="0"
+                      step="100"
+                      class="input-base input-money w-fit min-w-[7rem] pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
+                      :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
+                    />
+                  </div>
+                </template>
+                <template v-else>
+                  <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
+                  <p class="text-xs text-text-secondary mt-0.5">{{ item.category_name || 'Sin categoría' }} · {{ formatCurrency(item.price) }}</p>
+                  <p class="text-xs text-text-tertiary flex flex-wrap items-center gap-1">
+                    <span>Real:</span>
+                    <span v-if="hasCostValue(item.costo_calculado)">{{ formatCostCell(item.costo_calculado) }}</span>
+                    <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
+                    <span>· Mi costo:</span>
+                    <span v-if="hasCostValue(item.costo_percibido)">{{ formatCostCell(item.costo_percibido) }}</span>
+                    <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
+                  </p>
+                </template>
               </div>
               <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
                 <UiStatusBadge
@@ -106,16 +194,43 @@
           </template>
 
           <!-- Desktop Table Cell Customizations -->
-          <template #cell-name="{ value }">
-            <span class="text-sm font-medium text-text-primary">{{ value }}</span>
+          <template #cell-name="{ value, item }">
+            <input
+              v-if="editMode"
+              v-model="ensureDraft(item).name"
+              type="text"
+              class="input-base min-w-[140px] max-w-[220px] py-1.5 px-2 text-sm font-medium"
+              :aria-label="`Nombre de ${item.name}`"
+              @click.stop
+            />
+            <span v-else class="text-sm font-medium text-text-primary">{{ value }}</span>
           </template>
 
-          <template #cell-category_name="{ value }">
-            <span class="text-sm text-text-secondary">{{ value || 'Sin categoria' }}</span>
+          <template #cell-category_name="{ value, item }">
+            <UiFilterSelect
+              v-if="editMode"
+              v-model="ensureDraft(item).category_id"
+              placeholder="Categoría"
+              :options="categories.map(c => ({ label: c.name, value: c.id }))"
+              class="min-w-[140px]"
+              @click.stop
+            />
+            <span v-else class="text-sm text-text-secondary">{{ value || 'Sin categoria' }}</span>
           </template>
 
-          <template #cell-price="{ value }">
-            <span class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
+          <template #cell-price="{ value, item }">
+            <div v-if="editMode" class="relative w-fit ml-auto shrink-0" @click.stop>
+              <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+              <input
+                v-model.number="ensureDraft(item).price"
+                type="number"
+                min="0"
+                step="100"
+                class="input-base input-money w-fit min-w-[7rem] pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
+                :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
+              />
+            </div>
+            <span v-else class="text-sm font-bold text-primary">{{ formatCurrency(value) }}</span>
           </template>
 
           <template #cell-costo_calculado="{ value }">
@@ -127,9 +242,20 @@
             </div>
           </template>
 
-          <template #cell-costo_percibido="{ value }">
+          <template #cell-costo_percibido="{ value, item }">
             <div class="flex justify-end">
-              <span v-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
+              <input
+                v-if="editMode"
+                v-model.number="ensureDraft(item).costo_percibido"
+                type="number"
+                min="0"
+                step="100"
+                class="input-base input-money w-fit min-w-[7rem] px-2 py-1.5 text-sm text-right tabular-nums"
+                :style="{ width: moneyInputWidth(ensureDraft(item).costo_percibido) }"
+                placeholder="—"
+                @click.stop
+              />
+              <span v-else-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
                 {{ formatCostCell(value) }}
               </span>
               <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
@@ -178,9 +304,24 @@
             </div>
           </template>
 
-          <template #cell-is_available="{ value }">
-            <div class="flex justify-center">
+          <template #cell-is_available="{ value, item }">
+            <div class="flex justify-center" @click.stop="editMode">
+              <button
+                v-if="editMode"
+                type="button"
+                role="switch"
+                :aria-checked="item.is_available"
+                class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border-2 border-transparent transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                :class="item.is_available ? 'bg-success' : 'bg-titan-300'"
+                @click="toggleDraftAvailability(item)"
+              >
+                <span
+                  class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform"
+                  :class="item.is_available ? 'translate-x-4' : 'translate-x-0.5'"
+                />
+              </button>
               <UiStatusBadge
+                v-else
                 :value="value ? 'Disponible' : 'No disponible'"
                 format="text"
                 :variant="value ? 'success' : 'default'"
@@ -270,20 +411,58 @@
         </HealthSemaphore>
       </div>
     </div>
+
+    <UiModal v-model="showBulkDeleteModal" title="Eliminar productos de reventa">
+      <div class="p-6">
+        <div class="flex items-start gap-4">
+          <div class="flex-shrink-0 w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center">
+            <Icon name="heroicons:trash" class="w-5 h-5 text-destructive" />
+          </div>
+          <div>
+            <p class="text-sm text-text-primary font-medium mb-1">
+              ¿Eliminar {{ selectedIds.length }} producto{{ selectedIds.length !== 1 ? 's' : '' }}?
+            </p>
+            <p class="text-sm text-text-secondary">
+              Si tienen ventas registradas, se archivarán. Si nunca se vendieron, se eliminan permanentemente.
+            </p>
+          </div>
+        </div>
+        <div v-if="bulkDeleteError" class="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive">
+          {{ bulkDeleteError }}
+        </div>
+        <div class="flex gap-3 mt-6">
+          <UiButton type="button" variant="outline" class="flex-1" :disabled="isSubmitting" @click="showBulkDeleteModal = false">
+            Cancelar
+          </UiButton>
+          <UiButton type="button" variant="destructive" class="flex-1 flex items-center justify-center gap-2" :disabled="isSubmitting" @click="confirmBulkDelete">
+            <UiLoadingDots v-if="isSubmitting" size="8px" color="currentColor" />
+            <span>{{ isSubmitting ? 'Eliminando...' : 'Sí, eliminar' }}</span>
+          </UiButton>
+        </div>
+      </div>
+    </UiModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onUnmounted, watch } from 'vue'
+import { useQueryCache } from '@pinia/colada'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
+import { runSequentialProductPatches, runSequentialRequests, toastCatalogBulkResult, toastCatalogDeleteResult } from '@/composables/useMenuCatalogBulkSave'
+import { useMenuCatalogEditMode } from '@/composables/useMenuCatalogEditMode'
+import { useMenuCatalogSelection } from '@/composables/useMenuCatalogSelection'
 import { useTenantReactive } from '@/composables/useTenantReactive'
+import { useToast } from '@/composables/useToast'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
 })
 
 useHead({ title: 'Productos de Reventa' })
+
+const toast = useToast()
+const cache = useQueryCache()
 
 const {
   appliedSearch,
@@ -385,6 +564,18 @@ const visiblePages = computed(() => {
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
 
+const showOnlineControls = computed(() => false)
+const showTableQrColumn = computed(() => false)
+
+const { data: categoriesData } = useQuery({
+  key: () => ['menu', 'categories', currentTenant.value?.id],
+  query: () => $fetch('/api/menu/categories'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+
+const categories = computed(() => (categoriesData.value as { data?: { id: string; name: string }[] })?.data || [])
+
 // Fetch products — ONLY resale (is_resale always true)
 const { data: productsData, error: fetchError, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['menu', 'products-resale', currentTenant.value?.id, {
@@ -437,6 +628,211 @@ watch(costDriftOnly, () => { currentPage.value = 1 })
 
 const products = computed(() => productsData.value?.data || [])
 
+const isOpenSaleShell = (_row: { open_priced?: boolean }) => false
+
+const isSubmitting = ref(false)
+
+const availabilityBulkOptions = [
+  { label: 'Disponible', value: 'true' },
+  { label: 'No disponible', value: 'false' },
+]
+
+const {
+  selectedIds,
+  bulkCategoryId,
+  bulkStationId,
+  bulkAvailability,
+  bulkOnline,
+  bulkQr,
+  bulkFields,
+  toggleSelect: selectionToggleSelect,
+  allPageSelected: isAllPageSelected,
+  toggleSelectAll: selectionToggleSelectAll,
+  clearSelection: clearCatalogSelection,
+  canBulkApplyCatalog: selectionCanBulkApplyCatalog,
+  catalogRowSelectionClass,
+} = useMenuCatalogSelection()
+
+const {
+  editMode,
+  productDrafts,
+  ensureDraft,
+  displayProducts,
+  hasChanges,
+  canSubmit,
+  applyBulkOverridesForSelectedRows,
+  discardAllDrafts,
+  cancelEditOperation,
+  toggleEditMode: editToggleEditMode,
+  canBulkApplyEdit,
+  buildSavePatchBody,
+  idsWithDraftChanges,
+} = useMenuCatalogEditMode({
+  categories,
+  products,
+  selectedIds,
+  bulkFields,
+  isOpenSaleShell,
+  showOnlineControls,
+  showTableQrColumn,
+})
+
+const showBulkDeleteModal = ref(false)
+const bulkDeleteError = ref('')
+
+const selectableProductsOnPage = computed(() => displayProducts.value)
+
+const allPageSelected = computed(() => isAllPageSelected(selectableProductsOnPage.value))
+
+const canBulkApplyCatalog = computed(() =>
+  selectionCanBulkApplyCatalog({ showOnline: false, showQr: false }),
+)
+
+const canBulkApply = computed(() =>
+  editMode.value ? canBulkApplyEdit() : canBulkApplyCatalog.value,
+)
+
+const toggleSelect = (id: string) => selectionToggleSelect(id, products.value)
+
+const toggleSelectAll = () => selectionToggleSelectAll(selectableProductsOnPage.value)
+
+function clearSelection() {
+  clearCatalogSelection()
+  bulkDeleteError.value = ''
+}
+
+const onToggleEditMode = () => editToggleEditMode(clearSelection)
+
+function toggleDraftAvailability(product: {
+  id: string
+  name: string
+  category_id?: string
+  category_name?: string
+  price: number
+  is_available?: boolean
+}) {
+  const draft = ensureDraft(product)
+  draft.is_available = !draft.is_available
+}
+
+watch(
+  [currentPage, statusFilter, categoryFilter, sortFilter, onlineOnly, marginNegativeOnly, appliedSearch],
+  clearSelection,
+)
+
+async function invalidateResaleCatalog() {
+  cache.invalidateQueries({ key: ['menu', 'products-resale'] })
+  cache.invalidateQueries({ key: ['menu', 'products'] })
+}
+
+async function executeBulkCatalogApply() {
+  if (!canBulkApplyCatalog.value || isSubmitting.value) return
+  isSubmitting.value = true
+  const body: Record<string, string | boolean> = {}
+  if (bulkCategoryId.value) body.category_id = bulkCategoryId.value
+  if (bulkAvailability.value !== '') {
+    body.is_available = bulkAvailability.value === 'true'
+  }
+
+  try {
+    const result = await runSequentialProductPatches(selectedIds.value, () => body)
+    await invalidateResaleCatalog()
+    await refetch()
+    clearSelection()
+    toastCatalogBulkResult(result, toast, {
+      title: 'Listo',
+      errorMessage: 'No se pudo actualizar ningún producto',
+    })
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+function onBulkApply() {
+  if (editMode.value) {
+    saveChanges()
+  } else {
+    executeBulkCatalogApply()
+  }
+}
+
+async function saveChanges() {
+  if (isSubmitting.value || !canSubmit.value) return
+  applyBulkOverridesForSelectedRows()
+
+  const idsToSave = idsWithDraftChanges()
+  if (idsToSave.length === 0) return
+
+  isSubmitting.value = true
+
+  try {
+    const result = await runSequentialProductPatches(idsToSave, (id) => {
+      const draft = productDrafts.value[id]
+      if (!draft) return null
+      return buildSavePatchBody(draft)
+    })
+
+    await invalidateResaleCatalog()
+    await refetch()
+    discardAllDrafts()
+    clearSelection()
+
+    toastCatalogBulkResult(result, toast, {
+      title: 'Guardado',
+      emptySuccessMessage: 'Catálogo actualizado',
+    })
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+const openBulkDeleteModal = () => {
+  bulkDeleteError.value = ''
+  showBulkDeleteModal.value = true
+}
+
+const confirmBulkDelete = async () => {
+  if (selectedIds.value.length === 0 || isSubmitting.value) return
+  isSubmitting.value = true
+  bulkDeleteError.value = ''
+  let archived = 0
+
+  const result = await runSequentialRequests(
+    selectedIds.value.map((id) => ({
+      key: id,
+      run: async () => {
+        const res = await $fetch<{ success: boolean; archived?: boolean }>(
+          `/api/menu/products/${id}`,
+          { method: 'DELETE' },
+        )
+        if (res?.archived) archived++
+      },
+    })),
+  )
+
+  showBulkDeleteModal.value = false
+  await invalidateResaleCatalog()
+  await refetch()
+  clearSelection()
+  isSubmitting.value = false
+
+  if (result.fail === 0) {
+    toastCatalogDeleteResult({ ...result, archived }, toast)
+  } else if (result.ok > 0) {
+    toastCatalogDeleteResult({ ...result, archived }, toast)
+  } else {
+    bulkDeleteError.value = 'No se pudo eliminar ningún producto'
+    showBulkDeleteModal.value = true
+    toast.error('Error al eliminar', { title: 'Error' })
+  }
+}
+
+function moneyInputWidth(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(Number(value))) return '7rem'
+  const digits = String(Math.abs(Math.round(Number(value)))).length
+  return `${Math.max(11, digits + 5)}ch`
+}
+
 const formatCurrency = (value: number) => {
   if (!value) return '$0'
   return new Intl.NumberFormat('es-CO', {
@@ -457,22 +853,31 @@ const formatCostCell = (value: unknown) => formatCostCellValue(value, formatCurr
 
 const hasCostValue = (value: unknown) => value !== null && value !== undefined
 
-const displayedProducts = computed(() => {
-  if (!costDriftOnly.value) return products.value
-  return products.value.filter((p: any) => hasCostDrift(p))
+const tableRows = computed(() => {
+  const rows = displayProducts.value
+  if (!costDriftOnly.value) return rows
+  return rows.filter((p: { id: string }) => hasCostDrift(p))
 })
 
 const costDriftProductIds = computed(() => {
   const ids = new Set<string>()
-  for (const p of displayedProducts.value) {
+  for (const p of tableRows.value) {
     if (hasCostDrift(p)) ids.add(p.id)
   }
   return ids
 })
 
-const getRowClass = (row: any): string | undefined => {
+const catalogRowBaseClass = (row: { id: string }, index: number) => {
   if (costDriftProductIds.value.has(row.id)) return 'bg-status-warning-bg/40'
-  return undefined
+  return index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'
+}
+
+const catalogRowClass = (row: { id: string }, index: number) =>
+  catalogRowSelectionClass(row.id, catalogRowBaseClass(row, index))
+
+const getRowClass = (row: { id: string }): string => {
+  const index = tableRows.value.findIndex((p: { id: string }) => p.id === row.id)
+  return catalogRowClass(row, index >= 0 ? index : 0)
 }
 
 // Inject refresh handler setter from layout
@@ -489,7 +894,8 @@ onUnmounted(() => {
 })
 
 // Table columns configuration
-const productosTableColumns = [
+const productosTableColumns = computed(() => [
+  { key: 'select', title: '', sortable: false, width: '44px', class: '!px-0', align: 'center' as const },
   {
     key: 'name',
     title: 'Producto',
@@ -545,8 +951,8 @@ const productosTableColumns = [
     sortable: false,
     format: 'boolean',
     align: 'center'
-  }
-]
+  },
+])
 
 </script>
 
