@@ -90,10 +90,6 @@
                 <span class="hidden sm:inline">{{ editMode ? 'Ver catálogo' : 'Modo edición' }}</span>
                 <span class="sm:hidden">{{ editMode ? 'Ver' : 'Editar' }}</span>
               </button>
-              <div class="text-right flex-shrink-0">
-                <p class="text-xs text-text-secondary">En catálogo</p>
-                <p class="text-2xl font-bold text-primary tabular-nums">{{ activeProductsCount }}</p>
-              </div>
             </div>
           </template>
 
@@ -520,7 +516,6 @@ const {
   isLoading,
   isRefreshing,
   fetchError,
-  activeProductsCount,
   catalogHasChanges,
   canSubmit: catalogCanSubmit,
   isSubmittingBulk,
