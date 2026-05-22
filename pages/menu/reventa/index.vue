@@ -534,6 +534,8 @@ const {
   refetchCatalog,
   optimisticPatchProductsResale,
   rollbackProductsResaleCache,
+  resolveProductIdForIngredient,
+  linkExistingProductOnItem,
   buildItemsWithStatus,
   itemsWithStatus,
 } = useResaleIngredientCatalog(currentTenant)
@@ -823,12 +825,12 @@ function buildBulkPatchBody(): Record<string, string | boolean> {
   return body
 }
 
-/** Product ids on the server for selected rows (ingredient ids), regardless of toggle local. */
+/** Product ids on server for selected ingredient rows (recipe link or name match). */
 function selectedProductIdsForBulkPatch() {
   const seen = new Set<string>()
   const ids: string[] = []
   for (const ingredientId of selectedIds.value) {
-    const productId = findItemByIngredientId(ingredientId)?.existingProduct?.id
+    const productId = resolveProductIdForIngredient(ingredientId)
     if (!productId || seen.has(productId)) continue
     seen.add(productId)
     ids.push(productId)
@@ -841,8 +843,10 @@ function bulkPatchSelectionDebug() {
     const item = findItemByIngredientId(ingredientId)
     return {
       ingredientId,
+      ingredientName: item?.ingredient.name ?? null,
       inCatalog: item ? isInCatalog(item) : false,
-      productId: item?.existingProduct?.id ?? null,
+      productIdOnItem: item?.existingProduct?.id ?? null,
+      productIdResolved: resolveProductIdForIngredient(ingredientId),
     }
   })
 }
@@ -891,6 +895,10 @@ async function executeBulkCatalogApply() {
     logBulkApplyState('post-apply', { hasApiPatch, productIds, body })
 
     if (hasApiPatch && productIds.length > 0) {
+      for (const ingredientId of selectedIds.value) {
+        linkExistingProductOnItem(ingredientId)
+      }
+      logBulkApplyState('will-patch', { productIds, body })
       cacheSnapshot = optimisticPatchProductsResale(productIds, body)
       try {
         const result = await runSequentialProductPatches(productIds, () => body)

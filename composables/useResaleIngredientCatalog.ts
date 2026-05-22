@@ -20,10 +20,12 @@ export type ResaleIngredientItemState = {
   ingredient: { id: string, name: string, category?: string, unit?: string }
   existingProduct: {
     id: string
+    name?: string
     price: number | string
     category_id?: string
     category_name?: string
     is_available?: unknown
+    is_resale?: boolean
     costo_calculado?: number | null
     costo_percibido?: number | null
     ingredients?: { ingredient_id: string, quantity?: number, unit?: string }[]
@@ -65,13 +67,32 @@ function resaleRecipeRow(ingredient: { id: string, unit?: string }, quantity = 1
   }
 }
 
+type ResaleProductRow = NonNullable<ResaleIngredientItemState['existingProduct']>
+
+function normalizeEntityId(id: unknown): string {
+  return String(id ?? '').trim().toLowerCase()
+}
+
+/** Match resale product by recipe ingredient_id, then by exact name (legacy rows without recipe). */
 function findProductForIngredient(
-  products: ResaleIngredientItemState['existingProduct'][],
-  ingredientId: string,
-) {
-  return products.find(p =>
-    p?.ingredients?.some(ing => ing.ingredient_id === ingredientId),
-  ) ?? null
+  products: ResaleProductRow[],
+  ingredient: { id: string, name: string },
+): ResaleProductRow | null {
+  const ingId = normalizeEntityId(ingredient.id)
+  const ingName = (ingredient.name ?? '').trim().toLowerCase()
+  let nameFallback: ResaleProductRow | null = null
+
+  for (const p of products) {
+    if (!p?.id) continue
+    if (p.ingredients?.some(ing => normalizeEntityId(ing.ingredient_id) === ingId)) {
+      return p
+    }
+    if (ingName && (p.name ?? '').trim().toLowerCase() === ingName && !nameFallback) {
+      nameFallback = p
+    }
+  }
+
+  return nameFallback
 }
 
 /** GET /menu/products caps limit at 250 — paginate to load full resale mapping. */
@@ -171,7 +192,7 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     const products = (existingProducts.value || []) as NonNullable<ResaleIngredientItemState['existingProduct']>[]
 
     itemsWithStatus.value = (resaleIngredients.value as ResaleIngredientItemState['ingredient'][]).map((ingredient) => {
-      const existingProduct = findProductForIngredient(products, ingredient.id)
+      const existingProduct = findProductForIngredient(products, ingredient)
 
       const price = existingProduct ? Number(existingProduct.price) : 0
       const isAvailable = existingProduct
@@ -207,7 +228,7 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     const products = (existingProducts.value || []) as NonNullable<ResaleIngredientItemState['existingProduct']>[]
 
     for (const item of itemsWithStatus.value) {
-      const existingProduct = findProductForIngredient(products, item.ingredient.id)
+      const existingProduct = findProductForIngredient(products, item.ingredient)
       const serverPrice = existingProduct ? Number(existingProduct.price) : 0
       const serverAvail = existingProduct
         ? normalizeCatalogBoolean(existingProduct.is_available)
@@ -310,6 +331,29 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     )
     return resaleCategory?.id ?? (categories.value as { id: string }[])[0]?.id ?? ''
   })
+
+  function resolveProductIdForIngredient(ingredientId: string): string | null {
+    const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
+    if (item?.existingProduct?.id) return String(item.existingProduct.id)
+
+    const ingredient = item?.ingredient
+      ?? (resaleIngredients.value as ResaleIngredientItemState['ingredient'][]).find(
+        i => i.id === ingredientId,
+      )
+    if (!ingredient) return null
+
+    const products = (existingProducts.value || []) as ResaleProductRow[]
+    const product = findProductForIngredient(products, ingredient)
+    return product?.id ? String(product.id) : null
+  }
+
+  function linkExistingProductOnItem(ingredientId: string) {
+    const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
+    if (!item || item.existingProduct?.id) return
+    const products = (existingProducts.value || []) as ResaleProductRow[]
+    const product = findProductForIngredient(products, item.ingredient)
+    if (product) item.existingProduct = product
+  }
 
   function itemToTableRow(item: ResaleIngredientItemState): ResaleIngredientTableRow {
     const p = item.existingProduct
@@ -508,9 +552,11 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     cache.invalidateQueries({ key: ['menu', 'products-resale', tenantId.value] })
     await Promise.all([refetchIngredients(), refetchProducts()])
     syncItemsFromServer()
+    const linked = itemsWithStatus.value.filter(i => !!i.existingProduct?.id).length
     logReventaCatalog('catalog', 'refetch-done', {
       ingredients: (resaleIngredients.value as unknown[])?.length ?? 0,
       products: (existingProducts.value as unknown[])?.length ?? 0,
+      itemsLinkedToProduct: linked,
     })
   }
 
@@ -574,6 +620,8 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     refetchCatalog,
     optimisticPatchProductsResale,
     rollbackProductsResaleCache,
+    resolveProductIdForIngredient,
+    linkExistingProductOnItem,
     buildItemsWithStatus,
   }
 }
