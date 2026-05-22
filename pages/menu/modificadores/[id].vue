@@ -632,6 +632,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useQueryCache } from '@pinia/colada'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 
@@ -643,6 +644,8 @@ useHead({ title: 'Editar Modificador' })
 
 const router = useRouter()
 const route = useRoute()
+const toast = useToast()
+const cache = useQueryCache()
 const { currentTenant } = useTenantReactive()
 
 // State
@@ -675,7 +678,7 @@ const form = ref({
 // Fetch existing modifier group
 const groupId = route.params.id as string
 
-const { data: groupData, pending: isLoadingGroup } = useAsyncData(
+const { data: groupData, pending: isLoadingGroup, refresh: refreshGroup } = useAsyncData(
   `modifier-group-${groupId}`,
   () => $fetch(`/api/menu/modifier-groups/${groupId}`),
   {
@@ -903,8 +906,9 @@ async function submitGroup() {
       body: form.value
     })
 
-    // clearNuxtData()
-    await router.push('/menu/modificadores')
+    cache.invalidateQueries()
+    await refreshGroup()
+    toast.success('Grupo de modificadores actualizado correctamente', { title: 'Guardado' })
   } catch (error: any) {
     console.error('Error updating modifier group:', error)
     alert(`Error al actualizar el grupo: ${error.message || 'Por favor intenta de nuevo.'}`)

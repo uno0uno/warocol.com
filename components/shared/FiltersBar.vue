@@ -169,6 +169,6 @@ defineEmits<{
 }>()
 
 const hasActiveFilters = computed(() =>
-  props.search || props.supplierFilter || props.statusFilter || props.dateFilter
+  !!props.search || !!props.supplierFilter || !!props.statusFilter || !!props.dateFilter
 )
 </script>

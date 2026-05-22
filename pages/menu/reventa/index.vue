@@ -11,75 +11,14 @@
     <!-- Main Content -->
     <div v-else class="page-layout">
       <div class="flex flex-col gap-3 md:gap-4">
-        <!-- Filters Bar -->
-        <UiAdvancedFiltersBar
-          v-model:search="localSearchTerm"
-          v-model:search-field="apiSearchField"
-          :search-fields="searchFields"
+        <MenuCatalogFiltersBar
           search-placeholder="Buscar productos de reventa..."
-          :show-date-range="false"
-          :show-clear="hasActiveFilters"
-          @search="performSearch"
-          @clear="clearFilters"
-        >
-          <template #additional-filters>
-            <select
-              v-model="categoryFilter"
-              :class="filterSelectClass"
-              aria-label="Filtrar por categoría"
-            >
-              <option value="">Categoría</option>
-              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-            </select>
-
-            <select
-              v-model="statusFilter"
-              :class="filterSelectClass"
-              aria-label="Filtrar por estado"
-            >
-              <option value="">Estado</option>
-              <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-            </select>
-
-            <select
-              v-model="sortFilter"
-              :class="filterSelectClass"
-              aria-label="Ordenar productos"
-            >
-              <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-            </select>
-
-            <label
-              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
-              :class="onlineOnly
-                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
-                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
-            >
-              <input v-model="onlineOnly" type="checkbox" class="sr-only" aria-label="Solo visibles online" />
-              <span class="text-sm font-semibold">Online</span>
-            </label>
-
-            <label
-              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
-              :class="marginNegativeOnly
-                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
-                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
-            >
-              <input v-model="marginNegativeOnly" type="checkbox" class="sr-only" aria-label="Solo margen negativo" />
-              <span class="text-sm font-semibold">Margen negativo</span>
-            </label>
-
-            <label
-              class="flex items-center gap-2 cursor-pointer min-h-[44px] px-3 py-2 rounded-lg border-2 transition-colors flex-shrink-0"
-              :class="costDriftOnly
-                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
-                : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-emerald-400'"
-            >
-              <input v-model="costDriftOnly" type="checkbox" class="sr-only" aria-label="Solo desfase de costo" />
-              <span class="text-sm font-semibold">Desfase costo</span>
-            </label>
-          </template>
-        </UiAdvancedFiltersBar>
+          :show-no-recipe="false"
+          show-cost-drift
+          @search="onCatalogSearch"
+          @clear="onCatalogClear"
+          @filter-change="currentPage = 1"
+        />
 
         <HealthSemaphore :is-unlocked="true" title="Catálogo comercial de productos de reventa">
           <template #header-actions>
@@ -346,64 +285,24 @@ definePageMeta({
 
 useHead({ title: 'Productos de Reventa' })
 
-// Filters — AdvancedFiltersBar + server-side API (#762)
-const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
-const apiSearchField = ref('name')
-const statusFilter = ref('')
-const categoryFilter = ref('')
-const sortFilter = ref('created_at_desc')
-const onlineOnly = ref(false)
-const marginNegativeOnly = ref(false)
-const costDriftOnly = ref(false)
+const {
+  appliedSearch,
+  apiSearchField,
+  statusFilter,
+  categoryFilter,
+  sortFilter,
+  onlineOnly,
+  marginNegativeOnly,
+  costDriftOnly,
+  performSearch: applyCatalogSearch,
+  hasActiveFilters,
+} = useMenuCatalogFilters()
+
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
 
-const searchFields = [
-  { label: 'Nombre', value: 'name' },
-  { label: 'Descripción', value: 'description' },
-]
-
-const statusOptions = [
-  { label: 'Disponible', value: 'true' },
-  { label: 'No disponible', value: 'false' },
-]
-
-const sortOptions = [
-  { label: 'Más recientes', value: 'created_at_desc' },
-  { label: 'Más antiguos', value: 'created_at_asc' },
-  { label: 'Nombre A-Z', value: 'name_asc' },
-  { label: 'Nombre Z-A', value: 'name_desc' },
-  { label: 'Precio menor', value: 'price_asc' },
-  { label: 'Precio mayor', value: 'price_desc' },
-  { label: 'Margen menor', value: 'margin_asc' },
-  { label: 'Margen mayor', value: 'margin_desc' },
-]
-
-const performSearch = () => applySearch(() => { currentPage.value = 1 })
-
-const clearFilters = () => {
-  clearSearch()
-  apiSearchField.value = 'name'
-  statusFilter.value = ''
-  categoryFilter.value = ''
-  sortFilter.value = 'created_at_desc'
-  onlineOnly.value = false
-  marginNegativeOnly.value = false
-  costDriftOnly.value = false
-  currentPage.value = 1
-}
-
-const hasActiveFilters = computed(
-  () =>
-    !!localSearchTerm.value
-    || !!appliedSearch.value
-    || !!statusFilter.value
-    || !!categoryFilter.value
-    || sortFilter.value !== 'created_at_desc'
-    || onlineOnly.value
-    || marginNegativeOnly.value
-    || costDriftOnly.value,
-)
+const onCatalogSearch = () => applyCatalogSearch(() => { currentPage.value = 1 })
+const onCatalogClear = () => { currentPage.value = 1 }
 
 const emptyMessage = computed(() =>
   hasActiveFilters.value
@@ -486,16 +385,6 @@ const visiblePages = computed(() => {
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
 
-// Fetch categories (static per tenant)
-const { data: categoriesData } = useQuery({
-  key: () => ['menu', 'categories', currentTenant.value?.id],
-  query: () => $fetch('/api/menu/categories'),
-  enabled: () => !!currentTenant.value,
-  staleTime: 30_000,
-})
-
-const categories = computed(() => (categoriesData.value as any)?.data || [])
-
 // Fetch products — ONLY resale (is_resale always true)
 const { data: productsData, error: fetchError, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['menu', 'products-resale', currentTenant.value?.id, {
@@ -543,11 +432,7 @@ const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && prod
 
 // Reset page on tenant or filter change
 watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
-watch(
-  [statusFilter, categoryFilter, sortFilter, onlineOnly, marginNegativeOnly, appliedSearch],
-  () => { currentPage.value = 1 },
-)
-// Client-only drift filter — refetch not required
+// costDriftOnly is client-side; reset page when toggled
 watch(costDriftOnly, () => { currentPage.value = 1 })
 
 const products = computed(() => productsData.value?.data || [])

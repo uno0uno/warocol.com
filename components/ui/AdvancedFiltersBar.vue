@@ -25,7 +25,7 @@
     <select
       v-if="showSearch && searchFields.length > 0"
       :value="searchField"
-      class="h-10 w-fit max-w-full [field-sizing:content] whitespace-nowrap py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
+      :class="filterSelectClassFor(searchField, { active: true })"
       @change="emit('update:searchField', ($event.target as HTMLSelectElement).value)"
     >
       <option v-for="field in searchFields" :key="field.value" :value="field.value">
@@ -73,6 +73,7 @@
 
 <script setup lang="ts">
 import { es } from 'date-fns/locale'
+import { filterSelectClassFor } from '@/composables/useFilterSelectClass'
 
 export interface SearchFieldOption {
   label: string

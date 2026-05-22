@@ -8,11 +8,11 @@
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <SharedFiltersBar
-        :search="searchQuery"
-        @update:search="searchQuery = $event"
+        v-model:search="searchQuery"
         search-placeholder="Buscar grupo o producto..."
+        :show-clear-button="hasActiveFilters"
         @search="() => {}"
-        @clear-filters="searchQuery = ''"
+        @clear-filters="clearModificadoresFilters"
       />
       <HealthSemaphore :is-unlocked="true" title="Reglas y grupos de modificadores">
         <template #header-actions>
@@ -221,7 +221,7 @@ useHead({ title: 'Modificadores' })
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
 
-const searchQuery = ref('')
+const { searchQuery, clearFilters: clearModificadoresFilters, hasActiveFilters } = useMenuModificadoresFilters()
 const expandedRows = ref(new Set())
 
 // Fetch modifier groups from API

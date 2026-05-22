@@ -178,6 +178,7 @@
 </template>
 
 <script setup lang="ts">
+import { useQueryCache } from '@pinia/colada'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 
@@ -188,6 +189,8 @@ definePageMeta({
 useHead({ title: 'Gestionar Productos de Reventa' })
 
 const router = useRouter()
+const toast = useToast()
+const cache = useQueryCache()
 const { currentTenant } = useTenantReactive()
 
 // State
@@ -497,12 +500,16 @@ async function saveChanges() {
     if (results.deleted > 0) messages.push(`${results.deleted} eliminado(s)`)
     if (results.errors > 0) messages.push(`${results.errors} error(es)`)
 
-    if (results.errors > 0) {
-      alert(`Cambios guardados con errores: ${messages.join(', ')}`)
-    }
+    cache.invalidateQueries()
+    await refreshProducts()
 
-    // clearNuxtData()
-    await router.push('/menu/reventa')
+    if (results.errors > 0) {
+      toast.warning(`Cambios guardados con errores: ${messages.join(', ')}`, { title: 'Guardado parcial' })
+    } else if (messages.length > 0) {
+      toast.success(messages.join(', '), { title: 'Guardado' })
+    } else {
+      toast.success('Sin cambios pendientes', { title: 'Guardado' })
+    }
   } catch (error: any) {
     console.error('Error saving changes:', error)
     alert(`Error al guardar: ${error.message || 'Por favor intenta de nuevo.'}`)

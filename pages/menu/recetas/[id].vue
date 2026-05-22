@@ -257,6 +257,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useQueryCache } from '@pinia/colada'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 
@@ -278,6 +279,8 @@ useHead({ title: 'Editar Receta' })
 
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
+const cache = useQueryCache()
 const { currentTenant } = useTenantReactive()
 
 // Get recipe base ID from route
@@ -477,8 +480,9 @@ const handleSubmit = async () => {
       }
     })
 
-    // clearNuxtData()
-    await router.push('/menu/recetas')
+    cache.invalidateQueries()
+    await refresh()
+    toast.success('Receta actualizada correctamente', { title: 'Guardado' })
   } catch (error: any) {
     console.error('Error updating recipe base:', error)
     alert(`Error al actualizar la receta: ${error.data?.detail || error.message || 'Por favor intenta de nuevo.'}`)
