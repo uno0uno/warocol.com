@@ -2,6 +2,7 @@ import type { Ref } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import {
+  MENU_CATALOG_BATCH_MAX,
   runConcurrentRequests,
   type MenuSequentialRequest,
 } from '@/composables/useMenuCatalogBulkSave'
@@ -66,6 +67,35 @@ function findProductForIngredient(
   ) ?? null
 }
 
+/** GET /menu/products caps limit at 250 — paginate to load full resale mapping. */
+async function fetchAllResaleProducts() {
+  const limit = MENU_CATALOG_BATCH_MAX
+  const merged: NonNullable<ResaleIngredientItemState['existingProduct']>[] = []
+  let page = 1
+  let total = 0
+
+  do {
+    const res = await $fetch<{ data?: NonNullable<ResaleIngredientItemState['existingProduct']>[], total?: number }>(
+      '/api/menu/products',
+      {
+        query: {
+          page,
+          limit,
+          is_resale: true,
+          include_ingredients: true,
+        },
+      },
+    )
+    const chunk = res?.data ?? []
+    total = res?.total ?? chunk.length
+    merged.push(...chunk)
+    if (chunk.length < limit) break
+    page += 1
+  } while (merged.length < total)
+
+  return { data: merged, total: merged.length }
+}
+
 export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | null | undefined>) {
   const toast = useToast()
   const cache = useQueryCache()
@@ -106,14 +136,7 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     refetch: refetchProducts,
   } = useQuery({
     key: () => ['menu', 'products-resale', tenantId.value],
-    query: () =>
-      $fetch('/api/menu/products', {
-        query: {
-          limit: INGREDIENTS_FETCH_LIMIT,
-          is_resale: true,
-          include_ingredients: true,
-        },
-      }),
+    query: () => fetchAllResaleProducts(),
     enabled: () => !!currentTenant.value,
     staleTime: 30_000,
   })
