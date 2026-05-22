@@ -171,6 +171,19 @@
       <!-- Actions — Standard POS mode -->
       <div v-if="!mesaMode" class="space-y-2">
         <button
+          v-if="showOpenSale"
+          type="button"
+          :disabled="!openSaleEnabled"
+          :title="openSaleTooltip ?? undefined"
+          class="w-full min-h-[44px] rounded-xl border border-dashed border-primary/50 text-primary text-sm font-semibold flex items-center justify-center gap-2 hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+          @click="$emit('open-sale')"
+        >
+          <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+          </svg>
+          Venta libre
+        </button>
+        <button
           type="button"
           :disabled="items.length === 0 || isDeleting"
           class="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
@@ -200,6 +213,32 @@
 
       <!-- Actions — Mesa (tab) mode -->
       <div v-else class="space-y-2">
+        <button
+          v-if="showOpenSale"
+          type="button"
+          :disabled="!openSaleEnabled"
+          :title="openSaleTooltip ?? undefined"
+          class="w-full min-h-[44px] rounded-xl border border-dashed border-primary/50 text-primary text-sm font-semibold flex items-center justify-center gap-2 hover:bg-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
+          @click="$emit('open-sale')"
+        >
+          <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+          </svg>
+          Venta libre
+        </button>
+        <!-- Barra + items en carrito: cobrar sin pasar por tab (#796) -->
+        <button
+          v-if="showBarProcessOrder"
+          type="button"
+          :disabled="items.length === 0 || isDeleting"
+          class="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+          @click="$emit('process-order')"
+        >
+          <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+          Procesar Orden
+        </button>
         <!-- 2-col grid: secondary actions (Liberar moved to the active-mesa banner) -->
         <div class="grid grid-cols-2 gap-2">
           <!-- Pedir cuenta -->
@@ -333,6 +372,10 @@ interface Props {
   showServedByChip?: boolean
   servedByMemberId?: string | null
   members?: Array<{ id: string; name: string; role: string }>
+  showOpenSale?: boolean
+  openSaleEnabled?: boolean
+  openSaleTooltip?: string | null
+  showBarProcessOrder?: boolean
 }
 
 interface Emits {
@@ -342,6 +385,7 @@ interface Emits {
   (e: 'decrement-item', index: number): void
   (e: 'duplicate-item', index: number): void
   (e: 'process-order'): void
+  (e: 'open-sale'): void
   (e: 'clear-cart'): void
   (e: 'add-to-tab'): void
   (e: 'request-bill'): void
@@ -355,7 +399,28 @@ interface Emits {
   (e: 'update:served-by', memberId: string | null): void
 }
 
-const props = withDefaults(defineProps<Props>(), { mesaMode: false, isAddingToTab: false, isLoadingTabItems: false, isClearingTab: false, tabItems: () => [], tabTotal: 0, tabItemsLoading: () => new Set(), comandasEnabled: false, unfiredCount: 0, isFiringToKitchen: false, canPrintComandas: false, selectedTabItemIds: () => [], pendingRemoveItemId: null, showServedByChip: false, servedByMemberId: null, members: () => [] })
+const props = withDefaults(defineProps<Props>(), {
+  mesaMode: false,
+  isAddingToTab: false,
+  isLoadingTabItems: false,
+  isClearingTab: false,
+  tabItems: () => [],
+  tabTotal: 0,
+  tabItemsLoading: () => new Set(),
+  comandasEnabled: false,
+  unfiredCount: 0,
+  isFiringToKitchen: false,
+  canPrintComandas: false,
+  selectedTabItemIds: () => [],
+  pendingRemoveItemId: null,
+  showServedByChip: false,
+  servedByMemberId: null,
+  members: () => [],
+  showOpenSale: false,
+  openSaleEnabled: false,
+  openSaleTooltip: null,
+  showBarProcessOrder: false,
+})
 
 const fireToKitchenLabel = computed(() => {
   const n = props.selectedTabItemIds?.length ?? 0
