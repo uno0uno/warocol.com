@@ -231,9 +231,9 @@
                     :options="categories.map(c => ({ label: c.name, value: c.id }))"
                     class="mt-2 min-w-0"
                   />
-                  <div class="flex gap-2 mt-2">
-                    <div class="relative flex-1">
-                      <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+                  <div class="flex flex-wrap gap-2 mt-2">
+                    <div class="relative w-fit shrink-0">
+                      <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs pointer-events-none">$</span>
                       <label class="sr-only" :for="`mobile-price-${item.id}`">Precio</label>
                       <input
                         :id="`mobile-price-${item.id}`"
@@ -241,11 +241,12 @@
                         type="number"
                         min="0"
                         step="100"
-                        class="input-base w-full pl-5 pr-2 py-1.5 text-sm tabular-nums"
+                        class="input-base w-fit min-w-[5rem] pl-5 pr-2 py-1.5 text-sm tabular-nums text-right"
+                        :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
                         placeholder="Precio"
                       />
                     </div>
-                    <div class="relative flex-1">
+                    <div class="relative w-fit shrink-0">
                       <label class="sr-only" :for="`mobile-costo-${item.id}`">Mi costo</label>
                       <input
                         :id="`mobile-costo-${item.id}`"
@@ -253,7 +254,8 @@
                         type="number"
                         min="0"
                         step="100"
-                        class="input-base w-full px-2 py-1.5 text-sm tabular-nums"
+                        class="input-base w-fit min-w-[5rem] px-2 py-1.5 text-sm tabular-nums text-right"
+                        :style="{ width: moneyInputWidth(ensureDraft(item).costo_percibido) }"
                         placeholder="Mi costo"
                       />
                     </div>
@@ -401,16 +403,17 @@
           <template #cell-price="{ value, item }">
             <div
               v-if="editMode && !isOpenSaleShell(item)"
-              class="relative max-w-[120px] ml-auto"
+              class="relative w-fit ml-auto shrink-0"
               @click.stop
             >
-              <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs">$</span>
+              <span class="absolute left-2 top-1/2 -translate-y-1/2 text-text-secondary text-xs pointer-events-none">$</span>
               <input
                 v-model.number="ensureDraft(item).price"
                 type="number"
                 min="0"
                 step="100"
-                class="input-base w-full pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
+                class="input-base w-fit min-w-[5rem] pl-5 pr-2 py-1.5 text-sm text-right tabular-nums"
+                :style="{ width: moneyInputWidth(ensureDraft(item).price) }"
                 :aria-label="`Precio de ${item.name}`"
                 placeholder="0"
               />
@@ -449,7 +452,7 @@
             <div class="flex justify-end">
               <div
                 v-if="editMode && !isOpenSaleShell(item)"
-                class="relative max-w-[120px]"
+                class="relative w-fit ml-auto shrink-0"
                 @click.stop
               >
                 <input
@@ -457,7 +460,8 @@
                   type="number"
                   min="0"
                   step="100"
-                  class="input-base w-full px-2 py-1.5 text-sm text-right tabular-nums"
+                  class="input-base w-fit min-w-[5rem] px-2 py-1.5 text-sm text-right tabular-nums"
+                  :style="{ width: moneyInputWidth(ensureDraft(item).costo_percibido) }"
                   :aria-label="`Mi costo de ${item.name}`"
                   placeholder="—"
                 />
@@ -1588,7 +1592,7 @@ const productosTableColumns = computed(() => {
     },
   ]
 
-  cols.push(
+  const tailCols: typeof cols = [
     {
       key: 'is_available',
       title: 'Estado',
@@ -1612,17 +1616,10 @@ const productosTableColumns = computed(() => {
           align: 'center'
         }]
       : []),
-    {
-      key: 'actions',
-      title: 'Acciones',
-      sortable: false,
-      format: 'text',
-      align: 'center'
-    }
-  )
+  ]
 
   if (businessProfile.value?.comandas_enabled) {
-    cols.splice(cols.length - 1, 0, {
+    tailCols.push({
       key: 'station',
       title: 'Cocina',
       sortable: false,
@@ -1631,8 +1628,27 @@ const productosTableColumns = computed(() => {
     })
   }
 
+  if (!editMode.value) {
+    tailCols.push({
+      key: 'actions',
+      title: 'Acciones',
+      sortable: false,
+      format: 'text',
+      align: 'center'
+    })
+  }
+
+  cols.push(...tailCols)
+
   return cols
 })
+
+/** Ancho dinámico en `ch` para inputs de montos — evita recortar dígitos largos. */
+function moneyInputWidth(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(Number(value))) return '5.5rem'
+  const digits = String(Math.abs(Math.round(Number(value)))).length
+  return `${Math.max(5, digits + 2)}ch`
+}
 
 // Format currency
 const formatCurrency = (value: number) => {
