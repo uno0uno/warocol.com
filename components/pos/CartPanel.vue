@@ -86,14 +86,14 @@
         class="relative"
       >
         <label
-          v-if="showFireToKitchen && item.fulfillmentStatus === 'new'"
+          v-if="showPrintItemSelection && printableOrderItemIds.includes(item.orderItemId)"
           class="absolute top-2 left-2 z-10 flex items-center"
         >
           <input
             type="checkbox"
             class="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
             :checked="selectedTabItemIds.includes(item.orderItemId)"
-            :aria-label="`Seleccionar ${item.productName} para enviar a cocina`"
+            :aria-label="`Seleccionar ${item.productName} para reimprimir comanda`"
             @change="$emit('toggle-tab-selection', item.orderItemId)"
           />
         </label>
@@ -110,7 +110,7 @@
           :show-fulfillment-status="comandasEnabled"
           :class="[
             pendingRemoveItemId === item.orderItemId ? 'opacity-40 pointer-events-none' : '',
-            showFireToKitchen && item.fulfillmentStatus === 'new' ? 'pl-8' : '',
+            showPrintItemSelection && printableOrderItemIds.includes(item.orderItemId) ? 'pl-8' : '',
           ]"
           @increment="$emit('increment-tab-item', item.orderItemId)"
           @decrement="$emit('decrement-tab-item', item.orderItemId)"
@@ -308,35 +308,19 @@
         </div>
 
 
-        <!-- #753 — Fire / print comandas when KDS enabled -->
-        <template v-if="comandasEnabled">
-          <div class="grid grid-cols-2 gap-2">
-            <button
-              v-if="showFireToKitchen"
-              type="button"
-              :disabled="isFiringToKitchen || isAddingToTab"
-              class="min-h-[44px] rounded-xl border border-primary/40 bg-primary/5 text-primary text-xs font-semibold flex items-center justify-center gap-1 hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
-              :aria-label="fireToKitchenLabel"
-              @click="$emit('fire-to-kitchen')"
-            >
-              <UiLoadingDots v-if="isFiringToKitchen" size="7px" />
-              <template v-else>{{ fireToKitchenLabel }}</template>
-            </button>
-            <button
-              type="button"
-              :disabled="!canPrintComandas"
-              class="min-h-[44px] rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
-              :class="!showFireToKitchen ? 'col-span-2' : ''"
-              aria-label="Imprimir comanda de cocina"
-              @click="$emit('print-comandas')"
-            >
-              <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18M6.72 13.829 6.34 18m10.94-4.171L17.66 18M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.75A2.25 2.25 0 0 1 5.25 7.5h13.5A2.25 2.25 0 0 1 21 9.75v6A2.25 2.25 0 0 1 18.75 18h-1.09M6.34 18h11.32" />
-              </svg>
-              Imprimir comanda
-            </button>
-          </div>
-        </template>
+        <!-- #753 / #812 — Re-print kitchen tickets (fire is via Agregar y enviar only) -->
+        <button
+          v-if="comandasEnabled && canPrintComandas"
+          type="button"
+          class="w-full min-h-[44px] rounded-xl border border-border text-text-secondary text-xs font-medium flex items-center justify-center gap-1 hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+          :aria-label="printComandaLabel"
+          @click="$emit('print-comandas')"
+        >
+          <svg class="h-4 w-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18M6.72 13.829 6.34 18m10.94-4.171L17.66 18M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.75A2.25 2.25 0 0 1 5.25 7.5h13.5A2.25 2.25 0 0 1 21 9.75v6A2.25 2.25 0 0 1 18.75 18h-1.09M6.34 18h11.32" />
+          </svg>
+          {{ printComandaLabel }}
+        </button>
 
         <!-- Primary: Add to tab — full width -->
         <button
@@ -402,8 +386,8 @@ interface Props {
   tabItemsLoading?: Set<string>
   comandasEnabled?: boolean
   unfiredCount?: number
-  showFireToKitchen?: boolean
-  isFiringToKitchen?: boolean
+  showPrintItemSelection?: boolean
+  printableOrderItemIds?: string[]
   canPrintComandas?: boolean
   selectedTabItemIds?: string[]
   pendingRemoveItemId?: string | null
@@ -433,7 +417,6 @@ interface Emits {
   (e: 'remove-tab-item', orderItemId: string): void
   (e: 'increment-tab-item', orderItemId: string): void
   (e: 'decrement-tab-item', orderItemId: string): void
-  (e: 'fire-to-kitchen'): void
   (e: 'print-comandas'): void
   (e: 'toggle-tab-selection', orderItemId: string): void
   // Issue #575
@@ -450,8 +433,8 @@ const props = withDefaults(defineProps<Props>(), {
   tabItemsLoading: () => new Set(),
   comandasEnabled: false,
   unfiredCount: 0,
-  showFireToKitchen: false,
-  isFiringToKitchen: false,
+  showPrintItemSelection: false,
+  printableOrderItemIds: () => [],
   canPrintComandas: false,
   selectedTabItemIds: () => [],
   pendingRemoveItemId: null,
@@ -476,10 +459,10 @@ const openSaleButtonClass = computed(() => [
     : 'border-dashed border-border text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary',
 ])
 
-const fireToKitchenLabel = computed(() => {
+const printComandaLabel = computed(() => {
   const n = props.selectedTabItemIds?.length ?? 0
-  if (n > 0) return `Enviar ${n} a cocina`
-  return 'Enviar a cocina'
+  if (n > 0) return `Imprimir comanda (${n})`
+  return 'Imprimir comanda'
 })
 const emit = defineEmits<Emits>()
 
