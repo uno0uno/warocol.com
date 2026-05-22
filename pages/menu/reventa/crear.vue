@@ -1,13 +1,5 @@
 <template>
   <div class="w-full">
-    <!-- Loading overlay during submit -->
-    <div v-if="isSubmitting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-8 flex flex-col items-center">
-        <CommonsTheCustomLoader size="large" />
-        <p class="mt-4 text-lg font-semibold text-text-primary">Guardando cambios...</p>
-      </div>
-    </div>
-
     <!-- Loading State -->
     <div v-if="isLoadingData" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
@@ -167,9 +159,10 @@
           <button
             type="submit"
             :disabled="!hasChanges || !canSubmit || isSubmitting"
-            class="btn-primary px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn-primary px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[10rem]"
           >
-            Guardar Cambios
+            <UiLoadingDots v-if="isSubmitting" size="12px" />
+            <span v-else>Guardar Cambios</span>
           </button>
         </div>
       </form>
@@ -179,6 +172,10 @@
 
 <script setup lang="ts">
 import { useQueryCache } from '@pinia/colada'
+import {
+  runConcurrentRequests,
+  type MenuSequentialRequest,
+} from '@/composables/useMenuCatalogBulkSave'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 
@@ -238,7 +235,7 @@ const { data: ingredientsData, pending: loadingIngredients } = useAsyncData(
 )
 
 // Fetch existing resale products WITH ingredients
-const { data: productsData, pending: loadingProducts } = useAsyncData(
+const { data: productsData, pending: loadingProducts, refresh: refreshProducts } = useAsyncData(
   `products-resale-manage-${currentTenant.value?.id || 'default'}`,
   () => $fetch('/api/menu/products', {
     query: {
@@ -422,97 +419,100 @@ function deselectAll() {
   })
 }
 
+function buildResaleSaveRequests(): {
+  creates: MenuSequentialRequest[]
+  updates: MenuSequentialRequest[]
+  deletes: MenuSequentialRequest[]
+} {
+  const creates: MenuSequentialRequest[] = toCreate.value.map((item) => ({
+    key: `create-${item.ingredient.id}`,
+    run: () =>
+      $fetch('/api/menu/products', {
+        method: 'POST',
+        body: {
+          name: item.ingredient.name,
+          description: '',
+          price: item.price,
+          category_id: defaultCategoryId.value,
+          is_available: item.isAvailable,
+          is_resale: true,
+          controla_stock: true,
+          is_combo: false,
+          allow_modifiers: false,
+          recipe_base_ids: [],
+          ingredients: [resaleRecipeRow(item.ingredient)],
+          tenant_id: currentTenant.value?.id || '',
+        },
+      }).then(() => undefined),
+  }))
+
+  const updates: MenuSequentialRequest[] = toUpdate.value.map((item) => {
+    const existingRecipe = item.existingProduct?.ingredients?.[0]
+    const body: Record<string, unknown> = {
+      price: item.price,
+      is_available: item.isAvailable,
+    }
+    if (existingRecipe?.unit === 'u' && item.ingredient?.id) {
+      body.ingredients = [resaleRecipeRow(item.ingredient, Number(existingRecipe.quantity) || 1)]
+    }
+    return {
+      key: `update-${item.existingProduct.id}`,
+      run: () =>
+        $fetch(`/api/menu/products/${item.existingProduct.id}`, {
+          method: 'PUT',
+          body,
+        }).then(() => undefined),
+    }
+  })
+
+  const deletes: MenuSequentialRequest[] = toDeleteList.value.map((item) => ({
+    key: `delete-${item.existingProduct.id}`,
+    run: () =>
+      $fetch(`/api/menu/products/${item.existingProduct.id}`, {
+        method: 'DELETE',
+      }).then(() => undefined),
+  }))
+
+  return { creates, updates, deletes }
+}
+
 async function saveChanges() {
   if (isSubmitting.value || !hasChanges.value || !canSubmit.value) return
 
   isSubmitting.value = true
 
   try {
-    const results = { created: 0, updated: 0, deleted: 0, errors: 0 }
+    const { creates, updates, deletes } = buildResaleSaveRequests()
 
-    // Create new products
-    for (const item of toCreate.value) {
-      try {
-        await $fetch('/api/menu/products', {
-          method: 'POST',
-          body: {
-            name: item.ingredient.name,
-            description: '',
-            price: item.price,
-            category_id: defaultCategoryId.value,
-            is_available: item.isAvailable,
-            is_resale: true,
-            controla_stock: true,
-            is_combo: false,
-            allow_modifiers: false,
-            recipe_base_ids: [],
-            ingredients: [resaleRecipeRow(item.ingredient)],
-            tenant_id: currentTenant.value?.id || ''
-          }
-        })
-        results.created++
-      } catch (error) {
-        console.error('Error creating product:', error)
-        results.errors++
-      }
-    }
+    const createResult = creates.length ? await runConcurrentRequests(creates) : { ok: 0, fail: 0 }
+    const updateResult = updates.length ? await runConcurrentRequests(updates) : { ok: 0, fail: 0 }
+    const deleteResult = deletes.length ? await runConcurrentRequests(deletes) : { ok: 0, fail: 0 }
 
-    // Update existing products
-    for (const item of toUpdate.value) {
-      try {
-        const existingRecipe = item.existingProduct?.ingredients?.[0]
-        const body: Record<string, unknown> = {
-          price: item.price,
-          is_available: item.isAvailable,
-        }
-        // Normalize legacy recipe unit `u` → `und` when user saves from Gestionar
-        if (existingRecipe?.unit === 'u' && item.ingredient?.id) {
-          body.ingredients = [resaleRecipeRow(item.ingredient, Number(existingRecipe.quantity) || 1)]
-        }
-        await $fetch(`/api/menu/products/${item.existingProduct.id}`, {
-          method: 'PUT',
-          body,
-        })
-        results.updated++
-      } catch (error) {
-        console.error('Error updating product:', error)
-        results.errors++
-      }
-    }
+    const created = createResult.ok
+    const updated = updateResult.ok
+    const deleted = deleteResult.ok
+    const errors = createResult.fail + updateResult.fail + deleteResult.fail
 
-    // Delete products
-    for (const item of toDeleteList.value) {
-      try {
-        await $fetch(`/api/menu/products/${item.existingProduct.id}`, {
-          method: 'DELETE'
-        })
-        results.deleted++
-      } catch (error) {
-        console.error('Error deleting product:', error)
-        results.errors++
-      }
-    }
+    const messages: string[] = []
+    if (created > 0) messages.push(`${created} creado(s)`)
+    if (updated > 0) messages.push(`${updated} actualizado(s)`)
+    if (deleted > 0) messages.push(`${deleted} eliminado(s)`)
+    if (errors > 0) messages.push(`${errors} error(es)`)
 
-    // Show summary
-    const messages = []
-    if (results.created > 0) messages.push(`${results.created} creado(s)`)
-    if (results.updated > 0) messages.push(`${results.updated} actualizado(s)`)
-    if (results.deleted > 0) messages.push(`${results.deleted} eliminado(s)`)
-    if (results.errors > 0) messages.push(`${results.errors} error(es)`)
-
-    cache.invalidateQueries()
+    cache.invalidateQueries({ key: ['menu', 'products'] })
     await refreshProducts()
 
-    if (results.errors > 0) {
+    if (errors > 0) {
       toast.warning(`Cambios guardados con errores: ${messages.join(', ')}`, { title: 'Guardado parcial' })
     } else if (messages.length > 0) {
       toast.success(messages.join(', '), { title: 'Guardado' })
     } else {
       toast.success('Sin cambios pendientes', { title: 'Guardado' })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error saving changes:', error)
-    alert(`Error al guardar: ${error.message || 'Por favor intenta de nuevo.'}`)
+    const message = error instanceof Error ? error.message : 'Por favor intenta de nuevo.'
+    toast.error(`Error al guardar: ${message}`, { title: 'Error' })
   } finally {
     isSubmitting.value = false
   }
