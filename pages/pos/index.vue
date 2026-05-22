@@ -223,21 +223,6 @@ watch(
   { immediate: true },
 )
 
-// ── Unfired items count — items in the tab not yet sent to the KDS ──────────
-// In counter mode (no mesa session), all cart items are "new" — none have been fired yet.
-// In mesa mode, count tab items with fulfillmentStatus === 'new'.
-const unfiredCount = computed(() => {
-  if (!comandasEnabled.value) return 0
-  if (!posStore.activeTableSession) {
-    return posStore.cart.length
-  }
-  if (isKitchenServiceMode.value) {
-    const tabUnfired = storeTabItems.value.filter((i: TabItem) => i.fulfillmentStatus === 'new').length
-    return tabUnfired + posStore.cart.length
-  }
-  return 0
-})
-
 // ── Kitchen service mode (mesa + barra with comandas) ─────────────────────
 // Bar without comandas stays cart-only (“venta directa”). #799
 const isKitchenServiceMode = computed(
@@ -247,6 +232,32 @@ const isKitchenServiceMode = computed(
 )
 const isMesaMode = computed(
   () => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar,
+)
+
+// ── Unfired counts — tab vs cart (#807) ───────────────────────────────────
+// Banner uses tab + cart; manual fire only when cart is empty (tab/add auto-fires).
+const tabUnfiredCount = computed(() => {
+  if (!isKitchenServiceMode.value) return 0
+  return storeTabItems.value.filter((i: TabItem) => i.fulfillmentStatus === 'new').length
+})
+
+const unfiredCount = computed(() => {
+  if (!comandasEnabled.value) return 0
+  if (!posStore.activeTableSession) {
+    return posStore.cart.length
+  }
+  if (isKitchenServiceMode.value) {
+    return tabUnfiredCount.value + posStore.cart.length
+  }
+  return 0
+})
+
+const showFireToKitchen = computed(
+  () =>
+    comandasEnabled.value
+    && isKitchenServiceMode.value
+    && tabUnfiredCount.value > 0
+    && posStore.cart.length === 0,
 )
 
 const openSaleModalOpen = ref(false)
@@ -1345,6 +1356,7 @@ onUnmounted(() => {
         :tab-items-loading="tabItemsLoading"
         :comandas-enabled="comandasEnabled"
         :unfired-count="unfiredCount"
+        :show-fire-to-kitchen="showFireToKitchen"
         :is-firing-to-kitchen="isFiringToKitchen"
         :can-print-comandas="canPrintComandas"
         :selected-tab-item-ids="selectedTabItemIds"
