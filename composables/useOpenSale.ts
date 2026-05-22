@@ -6,10 +6,15 @@ export interface OpenSaleProduct {
   name: string
 }
 
+export interface OpenSaleSettings {
+  open_sale_enabled?: boolean
+  open_sale_product?: OpenSaleProduct | null
+}
+
 const MAX_OPEN_SALE_AMOUNT = 99_999_999
 
 export function useOpenSale(options: {
-  settingsData: Ref<{ success?: boolean; data?: { open_sale_product?: OpenSaleProduct | null } } | undefined>
+  settingsData: Ref<{ success?: boolean; data?: OpenSaleSettings } | undefined>
   isMesaMode: Ref<boolean> | ComputedRef<boolean>
   activeTableSession: Ref<ActiveTableSession | null>
 }) {
@@ -17,8 +22,19 @@ export function useOpenSale(options: {
     () => options.settingsData.value?.data?.open_sale_product ?? null,
   )
 
+  /** Master switch from Operaciones → Personalizar (#805). */
+  const openSaleFeatureOn = computed(
+    () => options.settingsData.value?.data?.open_sale_enabled === true,
+  )
+
+  /** Visible only when toggle ON and shell product is active. */
+  const openSaleVisible = computed(
+    () => openSaleFeatureOn.value && !!openSaleProduct.value,
+  )
+
   /** Counter, or bar session — excludes real mesa tab mode (#797). */
   const showOpenSaleButton = computed(() => {
+    if (!openSaleVisible.value) return false
     if (options.isMesaMode.value) {
       return !!options.activeTableSession.value?.isBar
     }
@@ -26,14 +42,13 @@ export function useOpenSale(options: {
   })
 
   /** Real table session only (not bar) — warocol.com#797. */
-  const showOpenSaleOnMesa = computed(() => options.isMesaMode.value)
+  const showOpenSaleOnMesa = computed(
+    () => openSaleVisible.value && options.isMesaMode.value,
+  )
 
-  const openSaleEnabled = computed(() => !!openSaleProduct.value)
+  const openSaleEnabled = computed(() => openSaleVisible.value)
 
-  const openSaleDisabledReason = computed(() => {
-    if (openSaleProduct.value) return null
-    return 'Configura un producto de venta libre en el menú (marca open_priced en un producto).'
-  })
+  const openSaleDisabledReason = computed(() => null)
 
   const validateOpenSaleAmount = (raw: string | number): number => {
     const amount = Math.round(Number(raw))
@@ -91,6 +106,7 @@ export function useOpenSale(options: {
 
   return {
     openSaleProduct,
+    openSaleFeatureOn,
     showOpenSaleButton,
     showOpenSaleOnMesa,
     openSaleEnabled,
