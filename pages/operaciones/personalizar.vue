@@ -130,23 +130,25 @@ onMounted(() => {
   void migrateLocalStorageIfPresent()
 })
 
-// ── Toggle: auto-select Genérico at /pos/checkout open ──────────────────────
-const isToggling = ref(false)
+// ── Toggles (Operaciones → Personalizar) ────────────────────────────────────
+const isTogglingGeneric = ref(false)
+const isTogglingOpenSale = ref(false)
+
+const invalidateRestaurantContext = async () => {
+  await cache.invalidateQueries({ key: ['operaciones', 'restaurant-context'] })
+  await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
+}
 
 const toggleAutoSelectGeneric = async () => {
-  if (!businessProfile.value || isToggling.value) return
-  isToggling.value = true
+  if (!businessProfile.value || isTogglingGeneric.value) return
+  isTogglingGeneric.value = true
   const newState = !businessProfile.value.auto_select_generic_enabled
   try {
     await $fetch('/api/operaciones/toggles/auto-select-generic', {
       method: 'PATCH',
       body: { enabled: newState },
     })
-    // Cross-audience invalidation: operaciones (this page + mesas/comandas)
-    // AND pos (read in /pos/index + /pos/checkout). The previous broad
-    // ['tenant'] invalidation no longer matches the audience-scoped keys.
-    await cache.invalidateQueries({ key: ['operaciones', 'restaurant-context'] })
-    await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
+    await invalidateRestaurantContext()
     toast.success(
       newState
         ? 'El cobro abrirá con cliente Genérico ya seleccionado'
@@ -156,7 +158,31 @@ const toggleAutoSelectGeneric = async () => {
   } catch (error: any) {
     toast.error(error.data?.detail || 'Error al cambiar la configuración', { title: 'Error' })
   } finally {
-    isToggling.value = false
+    isTogglingGeneric.value = false
+  }
+}
+
+const toggleOpenSale = async () => {
+  if (!businessProfile.value || isTogglingOpenSale.value) return
+  isTogglingOpenSale.value = true
+  const newState = !businessProfile.value.open_sale_enabled
+  try {
+    await $fetch('/api/operaciones/toggles/open-sale', {
+      method: 'PATCH',
+      body: { enabled: newState },
+    })
+    await invalidateRestaurantContext()
+    toast.success(
+      newState
+        ? 'Venta libre visible en el POS para los cajeros'
+        : 'Venta libre oculta en el POS',
+      { title: newState ? 'Venta libre activada' : 'Venta libre desactivada' }
+    )
+  } catch (error: any) {
+    const detail = error?.data?.detail ?? error?.data?.message
+    toast.error(detail || 'Error al cambiar venta libre', { title: 'Error' })
+  } finally {
+    isTogglingOpenSale.value = false
   }
 }
 </script>
@@ -170,6 +196,39 @@ const toggleAutoSelectGeneric = async () => {
 
     <!-- Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
+      <!-- ══════ VENTA LIBRE EN POS (#805) ══════ -->
+      <div
+        v-if="businessProfile"
+        class="flex items-center justify-between gap-4 rounded-xl border-2 border-border bg-surface px-4 py-3"
+      >
+        <div class="min-w-0">
+          <p class="text-sm font-semibold leading-snug text-text-primary">
+            {{ businessProfile.open_sale_enabled
+              ? 'Venta libre en POS activa'
+              : 'Venta libre en POS desactivada' }}
+          </p>
+          <p class="text-xs mt-0.5 leading-snug text-text-secondary">
+            Cuando está activa, los cajeros ven el botón Venta libre para cobrar montos que no están en el menú. Se crea un producto contenedor automáticamente.
+          </p>
+        </div>
+        <label
+          class="relative inline-flex items-center cursor-pointer flex-shrink-0"
+          :class="isTogglingOpenSale ? 'opacity-50 pointer-events-none' : ''"
+          :aria-label="businessProfile.open_sale_enabled
+            ? 'Desactivar venta libre en el POS'
+            : 'Activar venta libre en el POS'"
+        >
+          <input
+            type="checkbox"
+            class="sr-only peer"
+            :checked="!!businessProfile.open_sale_enabled"
+            :disabled="isTogglingOpenSale"
+            @change="toggleOpenSale"
+          />
+          <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+        </label>
+      </div>
+
       <!-- ══════ AUTO-SELECT GENÉRICO TOGGLE (Issue #529) ══════ -->
       <div
         v-if="businessProfile"
@@ -187,7 +246,7 @@ const toggleAutoSelectGeneric = async () => {
         </div>
         <label
           class="relative inline-flex items-center cursor-pointer flex-shrink-0"
-          :class="isToggling ? 'opacity-50 pointer-events-none' : ''"
+          :class="isTogglingGeneric ? 'opacity-50 pointer-events-none' : ''"
           :aria-label="businessProfile.auto_select_generic_enabled
             ? 'Desactivar pre-selección de cliente Genérico'
             : 'Activar pre-selección de cliente Genérico'"
@@ -196,7 +255,7 @@ const toggleAutoSelectGeneric = async () => {
             type="checkbox"
             class="sr-only peer"
             :checked="businessProfile.auto_select_generic_enabled"
-            :disabled="isToggling"
+            :disabled="isTogglingGeneric"
             @change="toggleAutoSelectGeneric"
           />
           <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />

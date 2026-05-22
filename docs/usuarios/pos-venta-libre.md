@@ -2,7 +2,7 @@
 
 **Venta libre** te permite cobrar un **monto en pesos** que no está fijado en el menú: servicios especiales, cargos varios, ajustes puntuales, etc. El cajero ingresa el valor en el momento; no hace falta crear un producto nuevo en el menú por cada venta.
 
-> Esta función requiere una versión de WARO con venta libre activa en tu negocio. Si no ves el botón **Venta libre** en el POS, contacta a soporte.
+> El botón **Venta libre** solo aparece en el POS cuando un administrador lo activa en **Operaciones → Personalizar**.
 
 ---
 
@@ -21,20 +21,23 @@ No creas productos en el menú por cada monto distinto: reutilizas siempre el mi
 
 ## Configuración inicial (administrador)
 
-La activación la hace el equipo de **soporte WARO** o un administrador con acceso técnico. En el menú de productos **aún no hay un interruptor visible** para marcar un producto como venta libre.
+1. Entra a **Operaciones → Personalizar** (requiere permiso de Operaciones).
+2. Activa el interruptor **Venta libre en POS**.
+3. WARO crea o reactiva automáticamente el producto contenedor (por defecto «Venta libre») en la primera categoría de tu menú.
 
-Requisitos del producto contenedor:
+**Requisito:** debe existir al menos **una categoría** en el menú. Si no hay categorías, la activación falla con un mensaje para que crees una categoría primero.
 
-| Aspecto | Recomendación |
+Con el interruptor **desactivado**, el botón **Venta libre no aparece** en el POS (los cajeros no lo ven).
+
+Detalles del producto contenedor (automático):
+
+| Aspecto | Comportamiento |
 |---------|----------------|
 | **Cantidad** | Solo **uno** por negocio |
-| **Nombre** | Claro para el equipo, ej. «Varios» o «Venta libre» |
-| **Precio en menú** | Puede ser simbólico (ej. $1); en el POS el cajero define el monto real |
-| **Receta / ingredientes** | Sin receta ni ingredientes (no descuenta inventario por composición) |
+| **Precio en menú** | Simbólico ($1); en el POS el cajero define el monto real |
+| **Receta / ingredientes** | Sin receta (no descuenta inventario por composición) |
 | **Modificadores** | No aplican en venta libre |
-| **Categoría fiscal** | La que corresponda a ese tipo de ingreso (estándar, licores o exento) |
-
-Si el producto contenedor no está configurado, el botón **Venta libre** aparece deshabilitado y el POS indica que falta configurar el producto de venta libre.
+| **Categoría fiscal** | Estándar (INC/IVA según tu configuración) |
 
 ---
 
