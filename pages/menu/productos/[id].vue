@@ -799,6 +799,10 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import { fetchResaleLinkedIngredient } from '@/composables/useResaleLinkedIngredient'
+import {
+  normalizeResaleProductName,
+  patchResaleLinkedIngredient,
+} from '@/composables/useResaleIngredientSync'
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
@@ -1384,15 +1388,44 @@ const handleSubmit = async () => {
       const gr = resaleUnitWeightGr.value
       const unit = resaleUnitWeightUnit.value
       const snap = resaleWeightSnapshot.value
+      const trimmedName = normalizeResaleProductName(form.value.name)
+      const linkedName = linkedResaleIngredient.value.name != null
+        ? normalizeResaleProductName(String(linkedResaleIngredient.value.name))
+        : ''
+      const patchBody: {
+        name?: string
+        unit_weight_gr?: number
+        unit_weight_unit?: 'gr' | 'ml'
+      } = {}
+      if (trimmedName && trimmedName !== linkedName) {
+        patchBody.name = trimmedName
+      }
       if (gr != null && gr > 0 && (gr !== snap.gr || unit !== snap.unit)) {
-        await $fetch(`/api/suppliers/ingredients/${ingId}`, {
-          method: 'PATCH',
-          body: {
-            unit_weight_gr: gr,
-            unit_weight_unit: unit,
-          },
-        })
-        resaleWeightSnapshot.value = { gr, unit }
+        patchBody.unit_weight_gr = gr
+        patchBody.unit_weight_unit = unit
+      }
+      if (Object.keys(patchBody).length > 0) {
+        try {
+          await patchResaleLinkedIngredient(ingId, patchBody)
+          if (patchBody.unit_weight_gr != null) {
+            resaleWeightSnapshot.value = { gr, unit }
+          }
+          if (patchBody.name) {
+            linkedResaleIngredient.value = {
+              ...linkedResaleIngredient.value,
+              name: patchBody.name,
+            }
+          }
+        } catch (ingErr: unknown) {
+          const e = ingErr as { data?: { detail?: string }; message?: string }
+          const detail = e?.data?.detail ?? e?.message
+          toast.error(
+            detail
+              ? `Producto guardado, pero el insumo no se actualizó: ${detail}`
+              : 'Producto guardado, pero no se pudo actualizar el insumo vinculado',
+            { title: 'Insumo no sincronizado' },
+          )
+        }
       }
     }
 

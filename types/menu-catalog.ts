@@ -38,6 +38,7 @@ export type ProductDraft = {
 export type ProductDraftSource = {
   id: string
   name: string
+  is_resale?: boolean
   category_id?: string
   category_name?: string
   price: number
