@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 /** Shared catalog filters (Menú → Productos / Reventa). */
+export type ProductTypeFilter = 'menu' | 'resale' | 'all'
+
 export interface MenuCatalogFiltersState {
   localSearchTerm: string
   appliedSearch: string
@@ -10,6 +12,7 @@ export interface MenuCatalogFiltersState {
   statusFilter: string
   stationFilter: string
   sortFilter: string
+  productTypeFilter: ProductTypeFilter
   onlineOnly: boolean
   qrOnly: boolean
   noRecipeOnly: boolean
@@ -36,6 +39,7 @@ function defaultCatalog(): MenuCatalogFiltersState {
     statusFilter: '',
     stationFilter: '',
     sortFilter: 'created_at_desc',
+    productTypeFilter: 'menu',
     onlineOnly: false,
     qrOnly: false,
     noRecipeOnly: false,

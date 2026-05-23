@@ -3,6 +3,7 @@ import { computed, watch } from 'vue'
 import { filterChipClass } from '@/composables/useFilterSelectClass'
 import { useMenuCatalogFilters } from '@/composables/useMenuCatalogFilters'
 import { useTenantReactive } from '@/composables/useTenantReactive'
+import type { ProductTypeFilter } from '@/stores/menuFilters'
 
 const props = withDefaults(
   defineProps<{
@@ -12,6 +13,7 @@ const props = withDefaults(
     showOnline?: boolean
     showNoRecipe?: boolean
     showCostDrift?: boolean
+    showProductTypeFilter?: boolean
   }>(),
   {
     searchPlaceholder: 'Buscar productos...',
@@ -20,6 +22,7 @@ const props = withDefaults(
     showOnline: false,
     showNoRecipe: true,
     showCostDrift: false,
+    showProductTypeFilter: false,
   },
 )
 
@@ -39,6 +42,7 @@ const {
   statusFilter,
   stationFilter,
   sortFilter,
+  productTypeFilter,
   onlineOnly,
   qrOnly,
   noRecipeOnly,
@@ -70,6 +74,16 @@ const sortOptions = [
   { label: 'Margen menor', value: 'margin_asc' },
   { label: 'Margen mayor', value: 'margin_desc' },
 ]
+
+const productTypeOptions: { label: string; value: ProductTypeFilter }[] = [
+  { label: 'Todos', value: 'all' },
+  { label: 'Menú', value: 'menu' },
+  { label: 'Reventa', value: 'resale' },
+]
+
+function productTypeChipClass(value: ProductTypeFilter): string {
+  return filterChipClass(productTypeFilter.value === value)
+}
 
 const { data: categoriesData } = useQuery({
   key: () => ['menu', 'categories', currentTenant.value?.id],
@@ -103,6 +117,7 @@ watch(
     statusFilter,
     stationFilter,
     sortFilter,
+    productTypeFilter,
     onlineOnly,
     qrOnly,
     noRecipeOnly,
@@ -127,6 +142,24 @@ watch(
     @clear="onClear"
   >
     <template #additional-filters>
+      <div
+        v-if="showProductTypeFilter"
+        role="group"
+        aria-label="Tipo de producto"
+        class="flex flex-wrap items-center gap-2 flex-shrink-0"
+      >
+        <button
+          v-for="opt in productTypeOptions"
+          :key="opt.value"
+          type="button"
+          :class="productTypeChipClass(opt.value)"
+          :aria-pressed="productTypeFilter === opt.value"
+          @click="productTypeFilter = opt.value"
+        >
+          <span class="text-sm font-semibold">{{ opt.label }}</span>
+        </button>
+      </div>
+
       <UiFilterSelect
         v-model="categoryFilter"
         placeholder="Categoría"
