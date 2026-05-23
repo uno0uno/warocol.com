@@ -10,7 +10,6 @@
       <!-- Stats Cards -->
       <UiStats>
         <UiStatsCard label="Total ingredientes" :value="stats.total" icon="beaker" />
-        <UiStatsCard label="En reventa" :value="stats.resale" icon="shopping-cart" />
         <UiStatsCard label="Con costo" :value="stats.withCost" icon="currency-dollar" />
       </UiStats>
 
@@ -81,7 +80,6 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
-                <span v-if="item.is_resale" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">Reventa</span>
                 <span v-if="item.is_active === false" class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">Archivado</span>
               </div>
               <div class="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -106,15 +104,6 @@
 
         <template #cell-unit="{ value }">
           <span class="text-sm font-mono text-text-secondary">{{ value }}</span>
-        </template>
-
-        <template #cell-is_resale="{ value }">
-          <UiStatusBadge
-            :value="value ? 'Reventa' : 'No'"
-            format="text"
-            :variant="value ? 'success' : 'secondary'"
-            size="sm"
-          />
         </template>
 
         <template #cell-unit_weight_gr="{ value, row }">
@@ -184,6 +173,7 @@
     <IngredientesIngredientePropioPanel
       v-model="showPanel"
       :ingredient="panelIngredient"
+      hide-resale-toggle
       @saved="onSaved"
       @archived="onArchived"
       @restored="onRestored"
@@ -278,14 +268,18 @@ const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && ingr
 
 const ingredients = computed(() => (ingredientsData.value as any)?.data || [])
 
+/** Manual supply ingredients only — resale stock rows are managed from Menú → productos (#869). */
+const supplyIngredients = computed(() =>
+  ingredients.value.filter((i: any) => !i.is_resale),
+)
+
 const stats = computed(() => ({
-  total: ingredients.value.length,
-  resale: ingredients.value.filter((i: any) => i.is_resale).length,
-  withCost: ingredients.value.filter((i: any) => i.costo_unitario != null).length,
+  total: supplyIngredients.value.length,
+  withCost: supplyIngredients.value.filter((i: any) => i.costo_unitario != null).length,
 }))
 
 const filteredIngredients = computed(() => {
-  return ingredients.value.filter((item: any) => {
+  return supplyIngredients.value.filter((item: any) => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
     const matchesType = typeFilter.value === 'all' || item.type === typeFilter.value
     return matchesSearch && matchesType
@@ -354,7 +348,6 @@ const clearFilters = () => {
 const tableColumns = [
   { key: 'name',         title: 'Nombre',   sortable: true,  format: 'custom', align: 'left' },
   { key: 'unit',         title: 'Unidad',   sortable: false, format: 'custom', align: 'left' },
-  { key: 'is_resale',    title: 'Reventa',  sortable: false, format: 'custom', align: 'left' },
   { key: 'unit_weight_gr',title: 'Gr/und',  sortable: false, format: 'custom', align: 'left' },
   { key: 'type',                       title: 'Tipo',          sortable: false, format: 'custom', align: 'left' },
   { key: 'costo_unitario',             title: 'Costo',         sortable: true,  format: 'custom', align: 'left' },
