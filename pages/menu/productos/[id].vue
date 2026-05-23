@@ -697,6 +697,7 @@
       ref="inlineCreateShell"
       context="product"
       @saved="onCustomIngredientCreated"
+      @product-saved="onInlineProductCreated"
     />
 
     <CategoriasCategoriaPanel
@@ -883,6 +884,31 @@ function onCustomIngredientCreated(ingredient: any) {
   if (index < 0 || index >= form.value.ingredients.length) return
   selectIngredient(ingredient, index)
   customIngModalIndex.value = -1
+}
+
+async function onInlineProductCreated(product: Record<string, unknown>) {
+  const index = customIngModalIndex.value
+  customIngModalIndex.value = -1
+
+  await cache.invalidateQueries({ key: ['menu-ingredients', currentTenant.value?.id ?? 'default'] })
+
+  const ingredientId = product.resale_ingredient_id as string | undefined
+  if (!ingredientId || index < 0 || index >= form.value.ingredients.length) return
+
+  let ingredient: Record<string, unknown>
+  try {
+    const res = await $fetch<{ data?: Record<string, unknown> }>(`/api/suppliers/ingredients/${ingredientId}`)
+    ingredient = res?.data ?? (res as Record<string, unknown>)
+  } catch {
+    ingredient = {
+      id: ingredientId,
+      name: product.name,
+      unit: 'und',
+      unit_weight_gr: product.resale_unit_weight_gr,
+      unit_weight_unit: product.resale_unit_weight_unit,
+    }
+  }
+  selectIngredient(ingredient, index)
 }
 
 // ── Category search + create flow (issue #458) ────────────────────────────

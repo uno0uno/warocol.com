@@ -905,12 +905,6 @@ function routeQueryTipoFromProductType(filter: ProductTypeFilter): string | unde
   return 'all'
 }
 
-function routeQueryTipoFromProductType(filter: ProductTypeFilter): string | undefined {
-  if (filter === 'menu') return undefined
-  if (filter === 'resale') return 'reventa'
-  return 'all'
-}
-
 const cache = useQueryCache()
 const toast = useToast()
 

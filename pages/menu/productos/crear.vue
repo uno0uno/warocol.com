@@ -913,6 +913,7 @@
       ref="inlineCreateShell"
       context="product"
       @saved="onCustomIngredientCreated"
+      @product-saved="onInlineProductCreated"
     />
 
     <CategoriasCategoriaPanel
@@ -937,7 +938,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
@@ -1048,6 +1049,21 @@ if (typeof queryName === 'string' && queryName.trim()) {
   form.value.name = queryName.trim()
 }
 
+watch(
+  () => route.query.modo,
+  (modo) => {
+    if (modo === 'venta-directa') setProductCreateMode('resale-direct')
+    else if (modo === undefined || modo === '') setProductCreateMode('recipe')
+  },
+)
+
+watch(
+  () => route.query.nombre,
+  (nombre) => {
+    if (typeof nombre === 'string' && nombre.trim()) form.value.name = nombre.trim()
+  },
+)
+
 // Fetch categories
 const { data: categoriesData } = useAsyncData(
   `categories-${currentTenant.value?.id || 'default'}`,
@@ -1086,7 +1102,12 @@ const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
 // Tracks which ingredient IDs are currently fetching their purchase units
 const loadingUnits = ref<Set<string>>(new Set())
 
-const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient } = useIngredientUnitOptions()
+const {
+  getIngredientUnitOptions: buildUnitOptions,
+  defaultUnitForIngredient,
+  mergeIngredientUnitFields,
+  rehydrateIngredientCaches,
+} = useIngredientUnitOptions()
 
 function getIngredientUnitOptions(ingredientId: string) {
   return buildUnitOptions(ingredientId, {
@@ -1095,28 +1116,46 @@ function getIngredientUnitOptions(ingredientId: string) {
   })
 }
 
-async function onIngredientChange(index: number, ingredientId: string) {
-  if (!ingredientId) return
-  const ingredient = ingredientCache.value[ingredientId]
-  form.value.ingredients[index].unit = defaultUnitForIngredient(ingredient)
-  if (!purchaseUnitsCache.value.has(ingredientId)) {
-    loadingUnits.value = new Set([...loadingUnits.value, ingredientId])
-    try {
-      const res = await $fetch<any>(`/api/suppliers/ingredient-purchase-units/ingredient/${ingredientId}`)
-      const updated = new Map(purchaseUnitsCache.value)
-      updated.set(ingredientId, res.data || [])
-      purchaseUnitsCache.value = updated
-    } catch {
-      const updated = new Map(purchaseUnitsCache.value)
-      updated.set(ingredientId, [])
-      purchaseUnitsCache.value = updated
-    } finally {
-      const next = new Set(loadingUnits.value)
-      next.delete(ingredientId)
-      loadingUnits.value = next
-    }
+function cacheIngredientForUnits(ing: any) {
+  const catalogRow = availableIngredients.value.find((i: any) => i.id === ing.id)
+  ingredientCache.value[ing.id] = mergeIngredientUnitFields(ing, catalogRow)
+}
+
+async function loadPurchaseUnits(ingredientId: string) {
+  if (!ingredientId || purchaseUnitsCache.value.has(ingredientId)) return
+  loadingUnits.value = new Set([...loadingUnits.value, ingredientId])
+  try {
+    const res = await $fetch<any>(`/api/suppliers/ingredient-purchase-units/ingredient/${ingredientId}`)
+    const updated = new Map(purchaseUnitsCache.value)
+    updated.set(ingredientId, res.data || [])
+    purchaseUnitsCache.value = updated
+  } catch {
+    const updated = new Map(purchaseUnitsCache.value)
+    updated.set(ingredientId, [])
+    purchaseUnitsCache.value = updated
+  } finally {
+    const next = new Set(loadingUnits.value)
+    next.delete(ingredientId)
+    loadingUnits.value = next
   }
 }
+
+function rehydrateProductIngredientCaches() {
+  if (!availableIngredients.value.length) return
+  const entries = form.value.ingredients
+    .filter(ing => ing.ingredient_id)
+    .map(ing => ({
+      id: ing.ingredient_id,
+      ...ingredientCache.value[ing.ingredient_id],
+    }))
+  rehydrateIngredientCaches(entries, availableIngredients.value, ingredientCache.value)
+}
+
+watch(availableIngredients, (list) => {
+  if (list.length && form.value.ingredients.some(ing => ing.ingredient_id)) {
+    rehydrateProductIngredientCaches()
+  }
+})
 
 // Fetch recipe bases
 const { data: recipeBasesData } = useAsyncData(
@@ -1258,8 +1297,9 @@ function getIngredientCost(ingredient: any) {
 
 function selectIngredient(ing: any, index: number) {
   form.value.ingredients[index].ingredient_id = ing.id
-  ingredientCache.value[ing.id] = ing
-  onIngredientChange(index, ing.id)
+  cacheIngredientForUnits(ing)
+  form.value.ingredients[index].unit = defaultUnitForIngredient(ingredientCache.value[ing.id])
+  loadPurchaseUnits(ing.id)
   form.value.ingredients = [...form.value.ingredients]
 }
 
@@ -1276,6 +1316,31 @@ function onCustomIngredientCreated(ingredient: any) {
   if (index < 0 || index >= form.value.ingredients.length) return
   selectIngredient(ingredient, index)
   customIngModalIndex.value = -1
+}
+
+async function onInlineProductCreated(product: Record<string, unknown>) {
+  const index = customIngModalIndex.value
+  customIngModalIndex.value = -1
+
+  await cache.invalidateQueries({ key: ['menu-ingredients', currentTenant.value?.id ?? 'default'] })
+
+  const ingredientId = product.resale_ingredient_id as string | undefined
+  if (!ingredientId || index < 0 || index >= form.value.ingredients.length) return
+
+  let ingredient: Record<string, unknown>
+  try {
+    const res = await $fetch<{ data?: Record<string, unknown> }>(`/api/suppliers/ingredients/${ingredientId}`)
+    ingredient = res?.data ?? (res as Record<string, unknown>)
+  } catch {
+    ingredient = {
+      id: ingredientId,
+      name: product.name,
+      unit: 'und',
+      unit_weight_gr: product.resale_unit_weight_gr,
+      unit_weight_unit: product.resale_unit_weight_unit,
+    }
+  }
+  selectIngredient(ingredient, index)
 }
 
 // ── Category search + create flow (issue #458) ────────────────────────────

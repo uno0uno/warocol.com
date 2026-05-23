@@ -13,6 +13,11 @@
     :hide-resale-toggle="hideResaleToggle"
     @saved="onPanelSaved"
   />
+  <MenuProductQuickCreatePanel
+    v-model="showProductPanel"
+    :initial-name="pendingName"
+    @saved="onProductPanelSaved"
+  />
 </template>
 
 <script setup lang="ts">
@@ -26,11 +31,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   saved: [ingredient: Record<string, unknown>]
+  'product-saved': [product: Record<string, unknown>]
 }>()
 
 const {
   showChooser,
   showPanel,
+  showProductPanel,
   pendingName,
   hideResaleToggle,
   panelInitialType,
@@ -38,10 +45,12 @@ const {
   onChooserIntent,
   onChooserCancel,
   onPanelSaved,
+  onProductPanelSaved,
 } = useCatalogInlineCreate({
   context: props.context,
   initialType: toRef(props, 'initialType'),
   onIngredientSaved: ingredient => emit('saved', ingredient),
+  onProductSaved: product => emit('product-saved', product),
 })
 
 defineExpose({ openFromSearch })
