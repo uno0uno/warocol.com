@@ -74,35 +74,31 @@
           </p>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" aria-label="Tipo de ítem">
-            <button
-              type="button"
-              :class="optionCardClass('supply')"
-              :aria-pressed="selectedIntent === 'supply'"
+            <UiSelectionOptionCard
+              title="Ingrediente"
+              description="Abastecimiento y recetas · gr, ml, und"
+              :selected="selectedIntent === 'supply'"
               @click="selectAndConfirm('supply')"
             >
-              <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-              <span class="text-sm font-bold tracking-wide">Ingrediente</span>
-              <span :class="optionDescClass('supply')">
-                Abastecimiento y recetas · gr, ml, und
-              </span>
-            </button>
+              <template #icon>
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+              </template>
+            </UiSelectionOptionCard>
 
-            <button
-              type="button"
-              :class="optionCardClass('menu-product')"
-              :aria-pressed="selectedIntent === 'menu-product'"
+            <UiSelectionOptionCard
+              title="Producto de menú"
+              description="Venta en menú y POS · precio, categoría"
+              :selected="selectedIntent === 'menu-product'"
               @click="selectAndConfirm('menu-product')"
             >
-              <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
-              <span class="text-sm font-bold tracking-wide">Producto de menú</span>
-              <span :class="optionDescClass('menu-product')">
-                Venta en menú y POS · precio, categoría
-              </span>
-            </button>
+              <template #icon>
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              </template>
+            </UiSelectionOptionCard>
           </div>
         </div>
 
@@ -156,24 +152,6 @@ const emit = defineEmits<{
 
 const selectedIntent = ref<CatalogCreationIntent | null>(null)
 const showChooserUi = computed(() => shouldShowCreationChooser(props.context))
-
-function optionCardClass(intent: CatalogCreationIntent): string {
-  const selected = selectedIntent.value === intent
-  return [
-    'flex flex-col items-start gap-2 min-h-[44px] py-4 px-3 rounded-2xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 text-left w-full',
-    selected
-      ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-      : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60',
-  ].join(' ')
-}
-
-function optionDescClass(intent: CatalogCreationIntent): string {
-  const selected = selectedIntent.value === intent
-  return [
-    'text-xs leading-snug',
-    selected ? 'text-primary/80' : 'text-text-tertiary',
-  ].join(' ')
-}
 
 function close() {
   emit('update:modelValue', false)

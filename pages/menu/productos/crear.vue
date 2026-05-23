@@ -134,30 +134,34 @@
         <div v-if="currentStep === STEP.TIPO" key="step-tipo" class="bg-surface border-border border rounded-lg">
           <div class="p-4 sm:p-6">
             <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">¿Cómo se prepara este producto?</h3>
-            <p class="text-sm text-text-secondary mb-4 sm:mb-6">Elige si lleva receta en cocina o se vende tal cual (reventa).</p>
+            <p class="text-sm text-text-secondary leading-relaxed mb-5 sm:mb-6">
+              Elige si lleva receta en cocina o se vende tal cual (reventa).
+            </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" aria-label="Tipo de creación de producto">
-              <button
-                type="button"
-                :class="createModeCardClass('recipe')"
-                :aria-pressed="productCreateMode === 'recipe'"
+              <UiSelectionOptionCard
+                title="Con receta"
+                description="Cocina con ingredientes y recetas base. Cada venta descuenta inventario."
+                :selected="productCreateMode === 'recipe'"
                 @click="setProductCreateMode('recipe')"
               >
-                <span class="text-sm font-bold">Con receta</span>
-                <span :class="createModeDescClass('recipe')">
-                  Cocina · ingredientes y recetas base
-                </span>
-              </button>
-              <button
-                type="button"
-                :class="createModeCardClass('resale-direct')"
-                :aria-pressed="productCreateMode === 'resale-direct'"
+                <template #icon>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </template>
+              </UiSelectionOptionCard>
+              <UiSelectionOptionCard
+                title="Venta directa"
+                description="Reventa por pieza (und). Equivalencia en gr o ml para stock."
+                :selected="productCreateMode === 'resale-direct'"
                 @click="setProductCreateMode('resale-direct')"
               >
-                <span class="text-sm font-bold">Venta directa</span>
-                <span :class="createModeDescClass('resale-direct')">
-                  Reventa · pieza (und) con equivalencia gr/ml
-                </span>
-              </button>
+                <template #icon>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </template>
+              </UiSelectionOptionCard>
             </div>
           </div>
         </div>
@@ -1000,24 +1004,6 @@ function clampStepAfterModeChange() {
 const resaleUnitWeightGr = ref<number | null>(null)
 const resaleUnitWeightUnit = ref<'gr' | 'ml'>('gr')
 const resaleWeightError = ref(false)
-
-function createModeCardClass(mode: ProductCreateMode): string {
-  const selected = productCreateMode.value === mode
-  return [
-    'flex flex-col items-start gap-2 min-h-[44px] py-4 px-3 rounded-2xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 text-left w-full',
-    selected
-      ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-      : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60',
-  ].join(' ')
-}
-
-function createModeDescClass(mode: ProductCreateMode): string {
-  const selected = productCreateMode.value === mode
-  return [
-    'text-xs leading-snug',
-    selected ? 'text-primary/80' : 'text-text-tertiary',
-  ].join(' ')
-}
 
 function setProductCreateMode(mode: ProductCreateMode) {
   if (productCreateMode.value === mode) return
