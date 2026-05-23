@@ -537,6 +537,9 @@ const {
   resolveProductIdForIngredient,
   linkExistingProductOnItem,
   refreshProductLinksForBulk,
+  collectProductIdsForBulkApply,
+  commitBulkCategoryToItems,
+  markBulkCategorySaved,
   buildBulkCreateRequests,
   buildItemsWithStatus,
   itemsWithStatus,
@@ -827,17 +830,8 @@ function buildBulkPatchBody(): Record<string, string | boolean> {
   return body
 }
 
-/** Product ids on server for selected ingredient rows (recipe link or name match). */
 function selectedProductIdsForBulkPatch() {
-  const seen = new Set<string>()
-  const ids: string[] = []
-  for (const ingredientId of selectedIds.value) {
-    const productId = resolveProductIdForIngredient(ingredientId)
-    if (!productId || seen.has(productId)) continue
-    seen.add(productId)
-    ids.push(productId)
-  }
-  return ids
+  return collectProductIdsForBulkApply(selectedIds.value)
 }
 
 function bulkPatchSelectionDebug() {
@@ -889,14 +883,17 @@ async function executeBulkCatalogApply() {
   try {
     applyBulkInCatalogToSelection()
     applyBulkDraftToSelection()
+    if (bulkCategoryId.value) {
+      commitBulkCategoryToItems(selectedIngredientIds, bulkCategoryId.value)
+    }
 
     const body = buildBulkPatchBody()
     const hasApiPatch = Object.keys(body).length > 0
-    let productIds = hasApiPatch ? selectedProductIdsForBulkPatch() : []
+    let productIds = hasApiPatch ? collectProductIdsForBulkApply(selectedIngredientIds) : []
 
     if (hasApiPatch && productIds.length === 0) {
       await refreshProductLinksForBulk(selectedIngredientIds)
-      productIds = selectedProductIdsForBulkPatch()
+      productIds = collectProductIdsForBulkApply(selectedIngredientIds)
       logBulkApplyState('retry-resolve', { productIds, body })
     }
 
@@ -911,7 +908,11 @@ async function executeBulkCatalogApply() {
       try {
         const result = await runSequentialProductPatches(productIds, () => body)
         logBulkApplyState('patch-done', { result, productIds })
+        markBulkCategorySaved(selectedIngredientIds)
         await refetchCatalog()
+        if (bulkCategoryId.value) {
+          commitBulkCategoryToItems(selectedIngredientIds, bulkCategoryId.value)
+        }
         clearSelection()
         toastCatalogBulkResult(result, toast, {
           title: 'Listo',
@@ -931,7 +932,11 @@ async function executeBulkCatalogApply() {
         logBulkApplyState('will-create', { createCount: createRequests.length, body })
         const result = await runSequentialRequests(createRequests)
         logBulkApplyState('create-done', { result })
+        markBulkCategorySaved(selectedIngredientIds)
         await refetchCatalog()
+        if (bulkCategoryId.value) {
+          commitBulkCategoryToItems(selectedIngredientIds, bulkCategoryId.value)
+        }
         clearSelection()
         toastCatalogBulkResult(result, toast, {
           title: 'Listo',
@@ -942,11 +947,15 @@ async function executeBulkCatalogApply() {
       }
     }
 
+    if (bulkCategoryId.value) {
+      commitBulkCategoryToItems(selectedIngredientIds, bulkCategoryId.value)
+    }
+
     clearSelection()
 
     if (hasApiPatch && productIds.length === 0) {
       toast.success(
-        'Categoría o estado guardados en la selección. Falta precio > 0 o producto en servidor — usa Modo edición y Guardar.',
+        'Categoría aplicada en la lista. Para guardar en servidor: precio > 0 y producto creado (Modo edición → Guardar).',
         { title: 'Listo' },
       )
     } else if (bulkInCatalog.value !== '') {

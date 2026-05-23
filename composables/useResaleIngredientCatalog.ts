@@ -273,6 +273,12 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
       if (item.categoryId === item.originalCategoryId) {
         item.categoryId = serverCategoryId
         item.originalCategoryId = serverCategoryId
+      } else if (item.existingProduct && item.categoryId) {
+        item.existingProduct.category_id = item.categoryId
+        const cat = (categories.value as { id: string, name: string }[]).find(
+          c => c.id === item.categoryId,
+        )
+        if (cat) item.existingProduct.category_name = cat.name
       }
 
       if (!item.isNew && !item.toDelete) {
@@ -344,9 +350,16 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     return resaleCategory?.id ?? (categories.value as { id: string }[])[0]?.id ?? ''
   })
 
+  function productIdFromRow(product: ResaleProductRow | null | undefined): string | null {
+    if (!product) return null
+    const raw = product.id ?? (product as { product_id?: string }).product_id
+    return raw != null && String(raw) !== '' ? String(raw) : null
+  }
+
   function resolveProductIdForIngredient(ingredientId: string): string | null {
     const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
-    if (item?.existingProduct?.id) return String(item.existingProduct.id)
+    const onItem = productIdFromRow(item?.existingProduct ?? null)
+    if (onItem) return onItem
 
     const ingredient = item?.ingredient
       ?? (resaleIngredients.value as ResaleIngredientItemState['ingredient'][]).find(
@@ -356,7 +369,53 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
 
     const products = (existingProducts.value || []) as ResaleProductRow[]
     const product = findProductForIngredient(products, ingredient)
-    return product?.id ? String(product.id) : null
+    return productIdFromRow(product)
+  }
+
+  function collectProductIdsForBulkApply(ingredientIds: string[]) {
+    const seen = new Set<string>()
+    const ids: string[] = []
+    const debug: { ingredientId: string, fromItem: string | null, fromResolve: string | null }[] = []
+
+    for (const ingredientId of ingredientIds) {
+      linkExistingProductOnItem(ingredientId)
+      const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
+      const fromItem = productIdFromRow(item?.existingProduct ?? null)
+      const fromResolve = resolveProductIdForIngredient(ingredientId)
+      const productId = fromItem ?? fromResolve
+      debug.push({ ingredientId, fromItem, fromResolve })
+      if (!productId || seen.has(productId)) continue
+      seen.add(productId)
+      ids.push(productId)
+    }
+
+    logReventaCatalog('catalog', 'collect-bulk-product-ids', { ids, debug })
+    return ids
+  }
+
+  function commitBulkCategoryToItems(ingredientIds: string[], categoryId: string) {
+    if (!categoryId) return
+    const cat = (categories.value as { id: string, name: string }[]).find(c => c.id === categoryId)
+    for (const ingredientId of ingredientIds) {
+      const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
+      if (!item) continue
+      item.categoryId = categoryId
+      if (item.existingProduct) {
+        item.existingProduct.category_id = categoryId
+        if (cat) item.existingProduct.category_name = cat.name
+      }
+    }
+    itemsWithStatus.value = [...itemsWithStatus.value]
+  }
+
+  function markBulkCategorySaved(ingredientIds: string[]) {
+    for (const ingredientId of ingredientIds) {
+      const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
+      if (!item) continue
+      item.originalCategoryId = item.categoryId
+      item.originalAvailable = item.isAvailable
+      item.originalPrice = item.price
+    }
   }
 
   function linkExistingProductOnItem(ingredientId: string) {
@@ -438,7 +497,8 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
   function itemToTableRow(item: ResaleIngredientItemState): ResaleIngredientTableRow {
     const p = item.existingProduct
     const cats = categories.value as { id: string, name: string }[]
-    const cat = cats.find(c => c.id === item.categoryId)
+    const effectiveCategoryId = item.categoryId || (p?.category_id ? String(p.category_id) : '')
+    const cat = cats.find(c => c.id === effectiveCategoryId)
     return {
       id: item.ingredient.id,
       _item: item,
@@ -703,6 +763,9 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     resolveProductIdForIngredient,
     linkExistingProductOnItem,
     refreshProductLinksForBulk,
+    collectProductIdsForBulkApply,
+    commitBulkCategoryToItems,
+    markBulkCategorySaved,
     buildBulkCreateRequests,
     buildItemsWithStatus,
   }
