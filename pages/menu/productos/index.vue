@@ -791,6 +791,7 @@ import { useQueryCache } from '@pinia/colada'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { runSequentialProductPatches, runSequentialRequests, toastCatalogBulkResult, toastCatalogDeleteResult } from '@/composables/useMenuCatalogBulkSave'
+import { syncResaleIngredientName } from '@/composables/useResaleIngredientSync'
 import { useMenuCatalogEditMode } from '@/composables/useMenuCatalogEditMode'
 import { useMenuCatalogSelection } from '@/composables/useMenuCatalogSelection'
 import { useTenantReactive } from '@/composables/useTenantReactive'
@@ -1277,6 +1278,26 @@ async function saveChanges() {
       if (!draft) return null
       return buildSavePatchBody(draft)
     })
+
+    const syncWarnings: string[] = []
+    for (const id of idsToSave) {
+      const row = products.value.find((p: { id: string }) => p.id === id)
+      const draft = productDrafts.value[id]
+      if (!row?.is_resale || !draft || draft.name === draft.originalName) continue
+      const sync = await syncResaleIngredientName(id, draft.name, draft.originalName)
+      if (sync.warning) {
+        syncWarnings.push(`${draft.name.trim()}: ${sync.warning}`)
+      }
+    }
+    if (syncWarnings.length > 0) {
+      toast.error(syncWarnings.slice(0, 3).join('\n'), {
+        title:
+          syncWarnings.length > 1
+            ? 'Algunos insumos no se renombraron'
+            : 'Insumo no sincronizado',
+        duration: 6000,
+      })
+    }
 
     cache.invalidateQueries({ key: ['menu', 'products'] })
     cache.invalidateQueries({ key: ['menu', 'products-resale'] })
