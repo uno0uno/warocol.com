@@ -96,6 +96,7 @@
           </template>
 
           <UiResponsiveDataView
+            :key="tableRefreshKey"
             :columns="productosTableColumns"
             :data="displayTableRows"
             :row-class="getRowClass"
@@ -458,7 +459,8 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onUnmounted, watch } from 'vue'
+import { definePageMeta, useHead } from '#imports'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
@@ -513,6 +515,14 @@ const {
 const showBulkDeleteModal = ref(false)
 const bulkDeleteError = ref('')
 const bannerDismissed = ref(false)
+const tableRefreshKey = ref(0)
+
+function finalizeBulkUiAfterApply(categoryId: string) {
+  if (categoryId && categoryFilter.value && categoryFilter.value !== categoryId) {
+    categoryFilter.value = ''
+  }
+  tableRefreshKey.value += 1
+}
 
 const {
   categories,
@@ -536,9 +546,11 @@ const {
   rollbackProductsResaleCache,
   resolveProductIdForIngredient,
   linkExistingProductOnItem,
-  refreshProductLinksForBulk,
+  linkProductsForBulkFromCache,
   collectProductIdsForBulkApply,
   commitBulkCategoryToItems,
+  commitBulkAvailabilityToItems,
+  applyBulkCatalogToSelection,
   markBulkCategorySaved,
   buildBulkCreateRequests,
   buildItemsWithStatus,
@@ -800,12 +812,7 @@ const selectedProductIds = computed(() =>
 
 function applyBulkInCatalogToSelection() {
   if (bulkInCatalog.value === '') return
-  const wantInCatalog = bulkInCatalog.value === 'true'
-  for (const ingredientId of selectedIds.value) {
-    const item = findItemByIngredientId(ingredientId)
-    if (!item || isInCatalog(item) === wantInCatalog) continue
-    onToggleCatalog(item)
-  }
+  applyBulkCatalogToSelection(selectedIds.value, bulkInCatalog.value === 'true')
 }
 
 function applyBulkDraftToSelection() {
@@ -883,18 +890,25 @@ async function executeBulkCatalogApply() {
   try {
     applyBulkInCatalogToSelection()
     applyBulkDraftToSelection()
-    if (bulkCategoryId.value) {
-      commitBulkCategoryToItems(selectedIngredientIds, bulkCategoryId.value)
-    }
+    const appliedCategoryId = bulkCategoryId.value
+    const appliedAvailability = bulkAvailability.value
+    const appliedInCatalog = bulkInCatalog.value
 
     const body = buildBulkPatchBody()
     const hasApiPatch = Object.keys(body).length > 0
     let productIds = hasApiPatch ? collectProductIdsForBulkApply(selectedIngredientIds) : []
 
     if (hasApiPatch && productIds.length === 0) {
-      await refreshProductLinksForBulk(selectedIngredientIds)
+      linkProductsForBulkFromCache(selectedIngredientIds)
       productIds = collectProductIdsForBulkApply(selectedIngredientIds)
       logBulkApplyState('retry-resolve', { productIds, body })
+    }
+
+    if (appliedCategoryId) {
+      commitBulkCategoryToItems(selectedIngredientIds, appliedCategoryId)
+    }
+    if (appliedAvailability !== '') {
+      commitBulkAvailabilityToItems(selectedIngredientIds, appliedAvailability === 'true')
     }
 
     logBulkApplyState('post-apply', { hasApiPatch, productIds, body })
@@ -910,8 +924,9 @@ async function executeBulkCatalogApply() {
         logBulkApplyState('patch-done', { result, productIds })
         markBulkCategorySaved(selectedIngredientIds)
         await refetchCatalog()
-        if (bulkCategoryId.value) {
-          commitBulkCategoryToItems(selectedIngredientIds, bulkCategoryId.value)
+        if (appliedCategoryId) {
+          commitBulkCategoryToItems(selectedIngredientIds, appliedCategoryId)
+          finalizeBulkUiAfterApply(appliedCategoryId)
         }
         clearSelection()
         toastCatalogBulkResult(result, toast, {
@@ -934,8 +949,9 @@ async function executeBulkCatalogApply() {
         logBulkApplyState('create-done', { result })
         markBulkCategorySaved(selectedIngredientIds)
         await refetchCatalog()
-        if (bulkCategoryId.value) {
-          commitBulkCategoryToItems(selectedIngredientIds, bulkCategoryId.value)
+        if (appliedCategoryId) {
+          commitBulkCategoryToItems(selectedIngredientIds, appliedCategoryId)
+          finalizeBulkUiAfterApply(appliedCategoryId)
         }
         clearSelection()
         toastCatalogBulkResult(result, toast, {
@@ -947,20 +963,26 @@ async function executeBulkCatalogApply() {
       }
     }
 
-    if (bulkCategoryId.value) {
-      commitBulkCategoryToItems(selectedIngredientIds, bulkCategoryId.value)
+    if (appliedCategoryId) {
+      commitBulkCategoryToItems(selectedIngredientIds, appliedCategoryId)
+      finalizeBulkUiAfterApply(appliedCategoryId)
+    } else if (appliedAvailability !== '' || appliedInCatalog !== '') {
+      tableRefreshKey.value += 1
     }
-
-    clearSelection()
 
     if (hasApiPatch && productIds.length === 0) {
       toast.success(
-        'Categoría aplicada en la lista. Para guardar en servidor: precio > 0 y producto creado (Modo edición → Guardar).',
+        'Cambios aplicados en la lista. Para guardar en servidor: precio > 0 y producto creado (Modo edición → Guardar).',
         { title: 'Listo' },
       )
-    } else if (bulkInCatalog.value !== '') {
+    } else if (appliedInCatalog !== '') {
       toast.success(
         'En catálogo actualizado en la selección. Usa Modo edición y Guardar para persistir productos nuevos o eliminados.',
+        { title: 'Listo' },
+      )
+    } else if (appliedAvailability !== '') {
+      toast.success(
+        'Estado actualizado en la selección. Usa Modo edición y Guardar si el producto aún no está en el servidor.',
         { title: 'Listo' },
       )
     } else {
@@ -969,6 +991,8 @@ async function executeBulkCatalogApply() {
         { title: 'Listo' },
       )
     }
+
+    clearSelection()
   } catch (error: unknown) {
     rollbackProductsResaleCache(cacheSnapshot)
     const message = error instanceof Error ? error.message : 'Por favor intenta de nuevo.'
