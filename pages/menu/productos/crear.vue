@@ -473,8 +473,22 @@
         </div>
 
         <!-- Step 2: Receta / Ingredientes -->
-        <div v-else-if="currentStep === 2 && !isResaleDirectMode" key="step-2" class="bg-surface border border-border rounded-lg">
-          <div class="p-4 sm:p-6">
+        <div v-else-if="currentStep === 2 && !isResaleDirectMode" key="step-2" class="bg-surface border border-border rounded-lg relative">
+          <div
+            v-if="inlineCatalogBusy"
+            class="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-surface/85 backdrop-blur-[2px]"
+            aria-live="polite"
+            aria-busy="true"
+          >
+            <div class="flex items-center gap-3 px-5 py-3.5 rounded-xl border border-border bg-surface shadow-md mx-4">
+              <UiLoadingDots size="10px" color="var(--color-primary)" />
+              <div>
+                <p class="text-sm font-medium text-text-primary">{{ inlineCatalogBusyLabel || 'Procesando...' }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">Espera mientras se crea y vincula el catálogo</p>
+              </div>
+            </div>
+          </div>
+          <div class="p-4 sm:p-6" :class="{ 'pointer-events-none opacity-50': inlineCatalogBusy }">
             <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Receta / Ingredientes</h3>
 
             <!-- Toggle: ¿Este producto controla inventario? -->
@@ -631,6 +645,8 @@
                   <div class="md:col-span-5">
                     <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente</label>
                     <UiIngredientSearchInput
+                      :key="ingredient.ingredient_id || `new-${index}`"
+                      :initial-value="getIngredientSearchLabel(ingredient)"
                       :allow-create="true"
                       @select="(ing) => selectIngredient(ing, index)"
                       @create="(name) => openCustomIngModal(name, index)"
@@ -661,6 +677,9 @@
                         class="w-full py-2 pr-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface disabled:opacity-50"
                         :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
                       >
+                        <option v-if="!ingredient.ingredient_id" value="" disabled>
+                          Selecciona ingrediente
+                        </option>
                         <option
                           v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
                           :key="opt.value"
@@ -911,9 +930,11 @@
 
     <MenuInlineCatalogCreateShell
       ref="inlineCreateShell"
+      v-model:busy="inlineCatalogBusy"
+      v-model:busy-label="inlineCatalogBusyLabel"
       context="product"
-      @saved="onCustomIngredientCreated"
-      @product-saved="onInlineProductCreated"
+      :on-ingredient-saved="onCustomIngredientCreated"
+      :on-product-saved="onInlineProductCreated"
     />
 
     <CategoriasCategoriaPanel
@@ -941,6 +962,7 @@
 import { ref, computed, watch } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
+import { fetchResaleLinkedIngredient } from '@/composables/useResaleLinkedIngredient'
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
@@ -1037,6 +1059,7 @@ const form = ref({
   tax_category: 'standard' as 'standard' | 'liquor' | 'exempt',
   ingredients: [] as Array<{
     ingredient_id: string
+    ingredient_name?: string
     quantity: number
     unit: string
   }>,
@@ -1116,9 +1139,27 @@ function getIngredientUnitOptions(ingredientId: string) {
   })
 }
 
-function cacheIngredientForUnits(ing: any) {
+function cacheIngredientForUnits(ing: any, productFallback?: Record<string, unknown>) {
   const catalogRow = availableIngredients.value.find((i: any) => i.id === ing.id)
-  ingredientCache.value[ing.id] = mergeIngredientUnitFields(ing, catalogRow)
+  let merged = mergeIngredientUnitFields(ing, catalogRow)
+  if (productFallback) {
+    merged = mergeIngredientUnitFields(merged, {
+      unit_weight_gr: productFallback.resale_unit_weight_gr,
+      unit_weight_unit: productFallback.resale_unit_weight_unit,
+    })
+  }
+  if (merged.unit === 'und' && merged.unit_weight_gr && !merged.unit_weight_unit) {
+    merged.unit_weight_unit = 'ml'
+  }
+  ingredientCache.value[ing.id] = merged
+}
+
+function getIngredientSearchLabel(ingredient: { ingredient_id: string; ingredient_name?: string }) {
+  if (ingredient.ingredient_name) return ingredient.ingredient_name
+  const cached = ingredientCache.value[ingredient.ingredient_id]
+  if (cached?.name) return cached.name
+  const fromCatalog = availableIngredients.value.find((i: any) => i.id === ingredient.ingredient_id)
+  return fromCatalog?.name ?? ''
 }
 
 async function loadPurchaseUnits(ingredientId: string) {
@@ -1295,52 +1336,43 @@ function getIngredientCost(ingredient: any) {
   return ingredient.quantity * (ing.price || 0)
 }
 
-function selectIngredient(ing: any, index: number) {
+function selectIngredient(ing: any, index: number, productFallback?: Record<string, unknown>) {
   form.value.ingredients[index].ingredient_id = ing.id
-  cacheIngredientForUnits(ing)
+  form.value.ingredients[index].ingredient_name = ing.name
+  cacheIngredientForUnits(ing, productFallback)
   form.value.ingredients[index].unit = defaultUnitForIngredient(ingredientCache.value[ing.id])
-  loadPurchaseUnits(ing.id)
   form.value.ingredients = [...form.value.ingredients]
+  return loadPurchaseUnits(ing.id)
 }
 
 const inlineCreateShell = ref<{ openFromSearch: (name: string) => void } | null>(null)
 const customIngModalIndex = ref(-1)
+const inlineCatalogBusy = ref(false)
+const inlineCatalogBusyLabel = ref('')
 
 function openCustomIngModal(name: string, index: number) {
   customIngModalIndex.value = index
   inlineCreateShell.value?.openFromSearch(name)
 }
 
-function onCustomIngredientCreated(ingredient: any) {
+async function onCustomIngredientCreated(ingredient: any) {
   const index = customIngModalIndex.value
   if (index < 0 || index >= form.value.ingredients.length) return
-  selectIngredient(ingredient, index)
+  await selectIngredient(ingredient, index)
   customIngModalIndex.value = -1
 }
 
 async function onInlineProductCreated(product: Record<string, unknown>) {
   const index = customIngModalIndex.value
-  customIngModalIndex.value = -1
+  if (index < 0 || index >= form.value.ingredients.length) return
 
   await cache.invalidateQueries({ key: ['menu-ingredients', currentTenant.value?.id ?? 'default'] })
 
-  const ingredientId = product.resale_ingredient_id as string | undefined
-  if (!ingredientId || index < 0 || index >= form.value.ingredients.length) return
+  const ingredient = await fetchResaleLinkedIngredient(product)
+  if (!ingredient) return
 
-  let ingredient: Record<string, unknown>
-  try {
-    const res = await $fetch<{ data?: Record<string, unknown> }>(`/api/suppliers/ingredients/${ingredientId}`)
-    ingredient = res?.data ?? (res as Record<string, unknown>)
-  } catch {
-    ingredient = {
-      id: ingredientId,
-      name: product.name,
-      unit: 'und',
-      unit_weight_gr: product.resale_unit_weight_gr,
-      unit_weight_unit: product.resale_unit_weight_unit,
-    }
-  }
-  selectIngredient(ingredient, index)
+  await selectIngredient(ingredient, index, product)
+  customIngModalIndex.value = -1
 }
 
 // ── Category search + create flow (issue #458) ────────────────────────────
@@ -1388,8 +1420,9 @@ function addIngredient() {
   tracksInventory.value = true
   form.value.ingredients.push({
     ingredient_id: '',
+    ingredient_name: '',
     quantity: 0,
-    unit: 'g'
+    unit: 'g',
   })
 }
 

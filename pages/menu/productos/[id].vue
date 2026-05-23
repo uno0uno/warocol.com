@@ -314,7 +314,23 @@
           </div>
 
           <!-- Toggle: ¿Controla inventario? -->
-          <div class="mt-8 flex items-start gap-3 p-4 bg-surface-secondary border border-border rounded-lg">
+          <div class="relative mt-8">
+            <div
+              v-if="inlineCatalogBusy"
+              class="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-surface/85 backdrop-blur-[2px]"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <div class="flex items-center gap-3 px-5 py-3.5 rounded-xl border border-border bg-surface shadow-md mx-4">
+                <UiLoadingDots size="10px" color="var(--color-primary)" />
+                <div>
+                  <p class="text-sm font-medium text-text-primary">{{ inlineCatalogBusyLabel || 'Procesando...' }}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">Espera mientras se crea y vincula el catálogo</p>
+                </div>
+              </div>
+            </div>
+            <div :class="{ 'pointer-events-none opacity-50': inlineCatalogBusy }">
+          <div class="flex items-start gap-3 p-4 bg-surface-secondary border border-border rounded-lg">
             <button
               type="button"
               role="switch"
@@ -455,7 +471,8 @@
                 <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <UiIngredientSearchInput
-                      :initialValue="ingredient.ingredient_name"
+                      :key="ingredient.ingredient_id || `new-${index}`"
+                      :initial-value="ingredient.ingredient_name || ingredientCache[ingredient.ingredient_id]?.name || ''"
                       :allow-create="true"
                       @select="(ing) => selectIngredient(ing, index)"
                       @create="(name) => openCustomIngModal(name, index)"
@@ -479,6 +496,9 @@
                       class="input-base w-full py-2 pr-3 text-sm disabled:opacity-50"
                       :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
                     >
+                      <option v-if="!ingredient.ingredient_id" value="" disabled>
+                        Selecciona ingrediente
+                      </option>
                       <option
                         v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
                         :key="opt.value"
@@ -517,6 +537,8 @@
             </UiButton>
           </div>
           </template>
+            </div>
+          </div>
 
           <!-- Configuración -->
           <div class="mt-8">
@@ -695,9 +717,11 @@
 
     <MenuInlineCatalogCreateShell
       ref="inlineCreateShell"
+      v-model:busy="inlineCatalogBusy"
+      v-model:busy-label="inlineCatalogBusyLabel"
       context="product"
-      @saved="onCustomIngredientCreated"
-      @product-saved="onInlineProductCreated"
+      :on-ingredient-saved="onCustomIngredientCreated"
+      :on-product-saved="onInlineProductCreated"
     />
 
     <CategoriasCategoriaPanel
@@ -725,6 +749,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
+import { fetchResaleLinkedIngredient } from '@/composables/useResaleLinkedIngredient'
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
@@ -825,9 +850,19 @@ function getIngredientUnitOptions(ingredientId: string) {
   })
 }
 
-function cacheIngredientForUnits(ing: any) {
+function cacheIngredientForUnits(ing: any, productFallback?: Record<string, unknown>) {
   const catalogRow = ingredients.value.find((i: any) => i.id === ing.id)
-  ingredientCache.value[ing.id] = mergeIngredientUnitFields(ing, catalogRow)
+  let merged = mergeIngredientUnitFields(ing, catalogRow)
+  if (productFallback) {
+    merged = mergeIngredientUnitFields(merged, {
+      unit_weight_gr: productFallback.resale_unit_weight_gr,
+      unit_weight_unit: productFallback.resale_unit_weight_unit,
+    })
+  }
+  if (merged.unit === 'und' && merged.unit_weight_gr && !merged.unit_weight_unit) {
+    merged.unit_weight_unit = 'ml'
+  }
+  ingredientCache.value[ing.id] = merged
 }
 
 function rehydrateProductIngredientCaches() {
@@ -862,53 +897,43 @@ async function loadPurchaseUnits(ingredientId: string) {
   }
 }
 
-function selectIngredient(ing: any, index: number) {
+function selectIngredient(ing: any, index: number, productFallback?: Record<string, unknown>) {
   form.value.ingredients[index].ingredient_id = ing.id
   form.value.ingredients[index].ingredient_name = ing.name
-  cacheIngredientForUnits(ing)
+  cacheIngredientForUnits(ing, productFallback)
   form.value.ingredients[index].unit = defaultUnitForIngredient(ingredientCache.value[ing.id])
-  loadPurchaseUnits(ing.id)
   form.value.ingredients = [...form.value.ingredients]
+  return loadPurchaseUnits(ing.id)
 }
 
 const inlineCreateShell = ref<{ openFromSearch: (name: string) => void } | null>(null)
 const customIngModalIndex = ref(-1)
+const inlineCatalogBusy = ref(false)
+const inlineCatalogBusyLabel = ref('')
 
 function openCustomIngModal(name: string, index: number) {
   customIngModalIndex.value = index
   inlineCreateShell.value?.openFromSearch(name)
 }
 
-function onCustomIngredientCreated(ingredient: any) {
+async function onCustomIngredientCreated(ingredient: any) {
   const index = customIngModalIndex.value
   if (index < 0 || index >= form.value.ingredients.length) return
-  selectIngredient(ingredient, index)
+  await selectIngredient(ingredient, index)
   customIngModalIndex.value = -1
 }
 
 async function onInlineProductCreated(product: Record<string, unknown>) {
   const index = customIngModalIndex.value
-  customIngModalIndex.value = -1
+  if (index < 0 || index >= form.value.ingredients.length) return
 
   await cache.invalidateQueries({ key: ['menu-ingredients', currentTenant.value?.id ?? 'default'] })
 
-  const ingredientId = product.resale_ingredient_id as string | undefined
-  if (!ingredientId || index < 0 || index >= form.value.ingredients.length) return
+  const ingredient = await fetchResaleLinkedIngredient(product)
+  if (!ingredient) return
 
-  let ingredient: Record<string, unknown>
-  try {
-    const res = await $fetch<{ data?: Record<string, unknown> }>(`/api/suppliers/ingredients/${ingredientId}`)
-    ingredient = res?.data ?? (res as Record<string, unknown>)
-  } catch {
-    ingredient = {
-      id: ingredientId,
-      name: product.name,
-      unit: 'und',
-      unit_weight_gr: product.resale_unit_weight_gr,
-      unit_weight_unit: product.resale_unit_weight_unit,
-    }
-  }
-  selectIngredient(ingredient, index)
+  await selectIngredient(ingredient, index, product)
+  customIngModalIndex.value = -1
 }
 
 // ── Category search + create flow (issue #458) ────────────────────────────

@@ -166,6 +166,7 @@ interface Props {
 interface Emits {
   (e: 'update:modelValue', v: boolean): void
   (e: 'saved', product: Record<string, unknown>): void
+  (e: 'busy-change', busy: boolean): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -180,6 +181,7 @@ const { currentTenant } = useTenantReactive()
 const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 
 const saving = ref(false)
+watch(saving, value => emit('busy-change', value))
 const errors = ref<Record<string, string>>({})
 const resaleWeightError = ref(false)
 const unitWeightGr = ref<number | null>(null)
@@ -299,15 +301,21 @@ async function submit() {
       recipe_base_ids: [],
     }
 
-    const result = await $fetch<{ data: Record<string, unknown> }>('/api/menu/products', {
+    const res = await $fetch<any>('/api/menu/products', {
       method: 'POST',
       body: payload,
     })
 
+    const productData = (res?.data ?? res) as Record<string, unknown>
+
     cache.invalidateQueries({ key: ['menu-ingredients', currentTenant.value?.id ?? 'default'] })
     cache.invalidateQueries()
     toast.success('Producto creado')
-    emit('saved', result.data)
+    emit('saved', {
+      ...productData,
+      resale_unit_weight_gr: productData.resale_unit_weight_gr ?? weight,
+      resale_unit_weight_unit: productData.resale_unit_weight_unit ?? unitWeightUnit.value,
+    })
     close()
   } catch (err: any) {
     const detail = err?.data?.detail ?? err?.message ?? 'Error al crear el producto'

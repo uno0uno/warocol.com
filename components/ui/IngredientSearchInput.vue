@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 interface Ingredient {
   id: string
@@ -118,6 +118,14 @@ const searchTerm = ref(props.initialValue)
 const showResults = ref(false)
 
 const { query, groupedResults, loading } = useIngredientSearch({ baseOnly: props.baseOnly })
+
+watch(() => props.initialValue, (val) => {
+  searchTerm.value = val ?? ''
+  if (val) {
+    query.value = ''
+    showResults.value = false
+  }
+})
 
 function onInput(e: Event) {
   const val = (e.target as HTMLInputElement).value

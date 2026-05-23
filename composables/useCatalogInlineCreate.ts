@@ -7,14 +7,27 @@ import {
 
 export function useCatalogInlineCreate(options: {
   context: CatalogCreationContext
-  onIngredientSaved: (ingredient: Record<string, unknown>) => void
-  onProductSaved: (product: Record<string, unknown>) => void
+  onIngredientSaved: (ingredient: Record<string, unknown>) => void | Promise<void>
+  onProductSaved: (product: Record<string, unknown>) => void | Promise<void>
   initialType?: MaybeRef<string>
 }) {
   const showChooser = ref(false)
   const showPanel = ref(false)
   const showProductPanel = ref(false)
   const pendingName = ref('')
+
+  const productPanelBusy = ref(false)
+  const supplyPanelBusy = ref(false)
+  const linkingBusy = ref(false)
+
+  const isBusy = computed(() => productPanelBusy.value || supplyPanelBusy.value || linkingBusy.value)
+
+  const busyMessage = computed(() => {
+    if (linkingBusy.value) return 'Vinculando ingrediente creado...'
+    if (productPanelBusy.value) return 'Creando producto...'
+    if (supplyPanelBusy.value) return 'Creando ingrediente...'
+    return ''
+  })
 
   const hideResaleToggle = computed(
     () =>
@@ -48,14 +61,32 @@ export function useCatalogInlineCreate(options: {
     pendingName.value = ''
   }
 
-  function onPanelSaved(ingredient: Record<string, unknown>) {
-    options.onIngredientSaved(ingredient)
-    pendingName.value = ''
+  async function onPanelSaved(ingredient: Record<string, unknown>) {
+    linkingBusy.value = true
+    try {
+      await options.onIngredientSaved(ingredient)
+    } finally {
+      pendingName.value = ''
+      linkingBusy.value = false
+    }
   }
 
-  function onProductPanelSaved(product: Record<string, unknown>) {
-    options.onProductSaved(product)
-    pendingName.value = ''
+  async function onProductPanelSaved(product: Record<string, unknown>) {
+    linkingBusy.value = true
+    try {
+      await options.onProductSaved(product)
+    } finally {
+      pendingName.value = ''
+      linkingBusy.value = false
+    }
+  }
+
+  function onProductPanelBusy(busy: boolean) {
+    productPanelBusy.value = busy
+  }
+
+  function onSupplyPanelBusy(busy: boolean) {
+    supplyPanelBusy.value = busy
   }
 
   return {
@@ -64,6 +95,8 @@ export function useCatalogInlineCreate(options: {
     showPanel,
     showProductPanel,
     pendingName,
+    isBusy,
+    busyMessage,
     hideResaleToggle,
     panelInitialType,
     openFromSearch,
@@ -71,5 +104,7 @@ export function useCatalogInlineCreate(options: {
     onChooserCancel,
     onPanelSaved,
     onProductPanelSaved,
+    onProductPanelBusy,
+    onSupplyPanelBusy,
   }
 }

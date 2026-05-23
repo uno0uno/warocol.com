@@ -83,6 +83,40 @@
           @cancel="() => cancelEditOperation(clearSelection)"
         />
 
+        <div
+          v-if="showComandasStations && stations.length"
+          class="flex flex-wrap items-center gap-2"
+          role="group"
+          aria-label="Filtrar por estación de cocina"
+        >
+          <button
+            v-for="(st, idx) in stations"
+            :key="st.id"
+            type="button"
+            class="inline-flex items-center gap-1.5 min-h-[36px] px-2.5 py-1 rounded-full border-2 text-xs font-semibold transition-all"
+            :class="stationFilter === st.id ? 'shadow-sm scale-[1.02]' : 'opacity-90 hover:opacity-100'"
+            :style="stationChipStyle(st, idx, stationFilter === st.id)"
+            :aria-pressed="stationFilter === st.id"
+            :title="`Filtrar por ${st.name}`"
+            @click="toggleStationLegendFilter(st.id)"
+          >
+            <span
+              class="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-1 ring-black/10"
+              :style="{ backgroundColor: stationDotColor(st, idx) }"
+              aria-hidden="true"
+            />
+            {{ st.name }}
+          </button>
+          <button
+            v-if="stationFilter"
+            type="button"
+            class="text-xs font-medium text-text-tertiary hover:text-text-primary underline-offset-2 hover:underline min-h-[36px] px-1"
+            @click="clearStationFilter"
+          >
+            Ver todas
+          </button>
+        </div>
+
         <HealthSemaphore :is-unlocked="true" :title="catalogTitle">
           <template #header-actions>
             <div class="flex flex-wrap items-center gap-2 justify-end">
@@ -247,15 +281,6 @@
                 <template v-else>
                   <div class="flex flex-wrap items-center gap-1.5">
                     <span class="text-sm font-bold text-text-primary">{{ toTitleCase(item.name) }}</span>
-                    <span
-                      v-if="showTipoColumn && !isOpenSaleShell(item)"
-                      class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                      :class="isResaleProduct(item)
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-surface-secondary text-text-secondary'"
-                    >
-                      {{ productTipoLabel(item) }}
-                    </span>
                   </div>
                   <UiStatusBadge
                     v-if="isOpenSaleShell(item)"
@@ -287,10 +312,14 @@
               <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
                 <span
                   v-if="!isOpenSaleShell(item) && businessProfile?.comandas_enabled && resolveProductStation(item)"
-                  class="flex items-center gap-1 text-xs text-text-secondary whitespace-nowrap"
+                  class="inline-flex items-center justify-center min-h-[44px] min-w-[44px]"
+                  :title="resolveProductStation(item)!.name"
+                  :aria-label="`Cocina: ${resolveProductStation(item)!.name}`"
                 >
-                  <span class="inline-block w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: resolveProductStation(item)!.color }" />
-                  <span class="whitespace-nowrap">{{ resolveProductStation(item)!.name }}</span>
+                  <span
+                    class="inline-block w-3 h-3 rounded-full ring-2 ring-surface shadow-sm flex-shrink-0"
+                    :style="{ backgroundColor: resolveProductStation(item)!.color }"
+                  />
                 </span>
                 <UiStatusBadge
                   v-if="!isOpenSaleShell(item) && marginRealPct(item) !== null"
@@ -370,26 +399,6 @@
                 />
               </template>
             </div>
-          </template>
-
-          <template #cell-tipo="{ item }">
-            <span
-              v-if="!isOpenSaleShell(item)"
-              class="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
-              :class="isResaleProduct(item)
-                ? 'bg-primary/10 text-primary'
-                : 'bg-surface-secondary text-text-secondary'"
-            >
-              {{ productTipoLabel(item) }}
-            </span>
-            <UiStatusBadge
-              v-else
-              value="Sistema"
-              title="Producto contenedor de venta libre en el POS"
-              format="text"
-              variant="secondary"
-              size="sm"
-            />
           </template>
 
           <template #cell-category_name="{ value, item }">
@@ -557,31 +566,6 @@
           </template>
 
           <!-- REMOVED: cell-controla_stock - ALL products now control inventory automatically -->
-
-          <template v-if="businessProfile?.comandas_enabled" #cell-station="{ item }">
-            <UiStatusBadge
-              v-if="isOpenSaleShell(item)"
-              value="N/A"
-              title="Sin estación de cocina"
-              format="text"
-              variant="secondary"
-              size="sm"
-              class="whitespace-nowrap"
-            />
-            <div v-else-if="resolveProductStation(item)" class="flex items-center gap-1.5 whitespace-nowrap">
-              <span class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: resolveProductStation(item)!.color }" />
-              <span class="text-sm text-text-secondary whitespace-nowrap">{{ resolveProductStation(item)!.name }}</span>
-            </div>
-            <UiStatusBadge
-              v-else
-              value="N/A"
-              title="Sin estación"
-              format="text"
-              variant="secondary"
-              size="sm"
-              class="whitespace-nowrap"
-            />
-          </template>
 
           <template #cell-is_available="{ value, item }">
             <div class="flex justify-center">
@@ -929,8 +913,6 @@ useHead(computed(() => ({
   title: productTypeFilter.value === 'resale' ? 'Reventa' : 'Productos',
 })))
 
-const showTipoColumn = computed(() => productTypeFilter.value !== 'resale')
-
 const catalogTitle = computed(() =>
   productTypeFilter.value === 'resale'
     ? 'Catálogo comercial de productos de reventa'
@@ -1067,25 +1049,76 @@ const showComandasStations = computed(() => !!businessProfile.value?.comandas_en
 
 const { data: stationsData } = useQuery({
   key: () => ['tenant', 'stations', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: { id: string; name: string }[] }>('/api/api/stations'),
+  query: () => $fetch<{ success: boolean; data: { id: string; name: string; color?: string }[] }>('/api/api/stations'),
   enabled: () => !!currentTenant.value && showComandasStations.value,
   staleTime: 30_000,
 })
 const stations = computed(() => stationsData.value?.data ?? [])
+
+const STATION_FALLBACK_COLORS = [
+  '#6366f1',
+  '#f59e0b',
+  '#10b981',
+  '#ef4444',
+  '#8b5cf6',
+  '#06b6d4',
+  '#ec4899',
+  '#84cc16',
+] as const
+
+function stationDotColor(st: { color?: string | null; id?: string }, index = 0) {
+  if (st.color) return st.color
+  if (st.id) {
+    const idx = stations.value.findIndex(s => s.id === st.id)
+    if (idx >= 0) return STATION_FALLBACK_COLORS[idx % STATION_FALLBACK_COLORS.length]
+  }
+  return STATION_FALLBACK_COLORS[index % STATION_FALLBACK_COLORS.length]
+}
+
+function stationChipStyle(
+  st: { color?: string | null; id?: string },
+  index: number,
+  active: boolean,
+) {
+  const color = stationDotColor(st, index)
+  return {
+    backgroundColor: active ? `${color}22` : `${color}12`,
+    color,
+    borderColor: active ? color : `${color}55`,
+  }
+}
+
+function toggleStationLegendFilter(stationId: string) {
+  stationFilter.value = stationFilter.value === stationId ? '' : stationId
+  currentPage.value = 1
+}
+
+function clearStationFilter() {
+  stationFilter.value = ''
+  currentPage.value = 1
+}
 
 /** Product override station_id, else category default from API `station` object. */
 const resolveProductStation = (item: {
   station?: { id: string; name: string; color?: string } | null
   station_id?: string | null
 }) => {
-  if (item.station) return item.station
+  if (item.station) {
+    const idx = stations.value.findIndex(s => s.id === item.station!.id)
+    const catalogSt = idx >= 0 ? stations.value[idx] : item.station
+    return {
+      ...item.station,
+      color: item.station.color || stationDotColor(catalogSt, idx >= 0 ? idx : 0),
+    }
+  }
   if (!item.station_id) return null
   const st = stations.value.find(s => s.id === item.station_id)
   if (!st) return null
+  const idx = stations.value.findIndex(s => s.id === st.id)
   return {
     id: st.id,
     name: st.name,
-    color: (st as { color?: string }).color ?? '#6366f1',
+    color: stationDotColor(st, idx >= 0 ? idx : 0),
   }
 }
 
@@ -1171,11 +1204,6 @@ const products = computed(() => productsData.value?.data || [])
 
 /** Shell product for POS venta libre (#805) — not a normal catalog item. */
 const isOpenSaleShell = (row: { open_priced?: boolean }) => !!row.open_priced
-
-const isResaleProduct = (row: { is_resale?: boolean }) => !!row.is_resale
-
-const productTipoLabel = (row: { is_resale?: boolean }) =>
-  isResaleProduct(row) ? 'Reventa' : 'Menú'
 
 const isSubmitting = ref(false)
 
@@ -1457,16 +1485,6 @@ const productosTableColumns = computed(() => {
     },
   ]
 
-  if (showTipoColumn.value) {
-    cols.push({
-      key: 'tipo',
-      title: 'Tipo',
-      sortable: false,
-      format: 'custom',
-      align: 'left'
-    })
-  }
-
   cols.push(
     {
       key: 'category_name',
@@ -1539,16 +1557,6 @@ const productosTableColumns = computed(() => {
         }]
       : []),
   ]
-
-  if (businessProfile.value?.comandas_enabled) {
-    tailCols.push({
-      key: 'station',
-      title: 'Cocina',
-      sortable: false,
-      format: 'text',
-      align: 'left'
-    })
-  }
 
   if (!editMode.value) {
     tailCols.push({

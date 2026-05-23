@@ -599,6 +599,7 @@ interface Emits {
   (e: 'saved', ingredient: any): void
   (e: 'archived', ingredient: any): void
   (e: 'restored', ingredient: any): void
+  (e: 'busy-change', busy: boolean): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -695,6 +696,7 @@ const unitWeightUnit = ref<'gr' | 'ml'>('gr')
 const form = ref({ name: '', unit: '', category: '', parentId: null as string | null, parentName: '', isResale: false, type: 'food', unitWeightGr: null as number | null })
 const errors = ref<Record<string, string>>({})
 const saving = ref(false)
+watch(saving, value => emit('busy-change', value))
 const existingPurchaseUnits = ref<any[]>([])
 const loadingExistingUnits = ref(false)
 const savingUnit = ref(false)
