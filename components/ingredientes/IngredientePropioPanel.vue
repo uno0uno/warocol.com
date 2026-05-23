@@ -273,7 +273,7 @@
           </div>
 
           <!-- Reventa -->
-          <div class="flex items-center justify-between rounded-xl border border-border px-4 py-3 bg-surface-secondary/30">
+          <div v-if="!hideResaleToggle" class="flex items-center justify-between rounded-xl border border-border px-4 py-3 bg-surface-secondary/30">
             <div class="flex flex-col gap-0.5">
               <span class="text-sm font-medium text-text-primary">Vender como reventa</span>
               <span v-if="form.unit && form.unit !== 'und'" class="text-xs text-amber-600">Solo disponible para ingredientes de tipo Pieza (und)</span>
@@ -591,6 +591,7 @@ interface Props {
   ingredient?: any    // null/undefined = create mode, object = edit mode
   initialName?: string  // pre-fill name when creating from search box
   initialType?: string  // pre-select ingredient type when context is known (e.g. active tab in Compras Directas)
+  hideResaleToggle?: boolean
 }
 
 interface Emits {
@@ -600,7 +601,12 @@ interface Emits {
   (e: 'restored', ingredient: any): void
 }
 
-const props = withDefaults(defineProps<Props>(), { ingredient: null, initialName: '', initialType: 'food' })
+const props = withDefaults(defineProps<Props>(), {
+  ingredient: null,
+  initialName: '',
+  initialType: 'food',
+  hideResaleToggle: false,
+})
 const emit = defineEmits<Emits>()
 
 // Archive / restore state
