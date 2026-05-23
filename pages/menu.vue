@@ -30,29 +30,9 @@ watch(
   }
 )
 
-function isResaleProductosQuery(tipo: unknown): boolean {
-  return tipo === 'reventa' || tipo === 'resale'
-}
-
-// Navigation configuration based on conceptual document
 const navigationItems = [
   { to: '/menu/recetas', label: 'Recetas', matchPath: '/menu/recetas' },
-  {
-    to: '/menu/productos',
-    label: 'Productos',
-    isActive: (r) => {
-      if (r.path.startsWith('/menu/productos/')) return true
-      if (r.path !== '/menu/productos') return false
-      return !isResaleProductosQuery(r.query.tipo)
-    },
-  },
-  {
-    to: '/menu/productos?tipo=reventa',
-    label: 'Reventa',
-    isActive: (r) =>
-      (r.path === '/menu/productos' && isResaleProductosQuery(r.query.tipo))
-      || r.path === '/menu/reventa',
-  },
+  { to: '/menu/productos', label: 'Productos', matchPath: '/menu/productos' },
   { to: '/menu/modificadores', label: 'Modificadores', matchPath: '/menu/modificadores' },
   { to: '/menu/categorias', label: 'Categorías', matchPath: '/menu/categorias' },
 ]

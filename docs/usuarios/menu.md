@@ -183,22 +183,14 @@ El ingrediente debe estar marcado como `is_resale = true` en el catálogo. Si un
 
 ### Cómo gestionar productos de reventa
 
-Ve a **Menú → Reventa → Gestionar**.
+Ve a **Menú → Productos** y usa el filtro **Reventa** (o **Todos** para ver menú y reventa juntos).
 
-1. **Selecciona** los ingredientes que quieres vender — actívalos con la casilla
-2. **Asigna el precio de venta** — escribe el valor en pesos (obligatorio para guardar)
-3. **Disponibilidad** — activa o desactiva cada ítem con el toggle
-4. Presiona **Guardar Cambios**
+1. **Crea o edita** el producto desde el catálogo — en creación elige el modo *Reventa · pieza (und)* o filtra la lista por Reventa
+2. **Asigna el precio de venta** y la categoría
+3. **Disponibilidad** — activa o desactiva con el toggle de estado o en modo edición masiva
+4. Guarda los cambios
 
-Cada producto creado desde esta pantalla usa **1 unidad** (`und`) del ingrediente en receta — es decir, al vender una unidad del producto se descuenta una unidad del ingrediente en inventario. Para cantidades fraccionadas (por ejemplo vender medio envase en mililitros), configura la receta desde **Menú → Productos** (edición individual).
-
-### Estados de cada ítem
-
-| Badge | Significado |
-|-------|-------------|
-| **Nuevo** | Se creará el producto en este guardado |
-| **Existe** | Ya hay un producto activo para este ingrediente |
-| **A eliminar** | Se eliminará el producto al guardar |
+Cada producto de reventa usa **1 unidad** (`und`) del ingrediente vinculado — al vender una unidad del producto se descuenta una unidad del ingrediente en inventario. Para cantidades fraccionadas (por ejemplo vender medio envase en mililitros), configura la equivalencia gr/ml en la edición del producto.
 
 ### Preguntas frecuentes — Reventa
 
@@ -206,7 +198,7 @@ Cada producto creado desde esta pantalla usa **1 unidad** (`und`) del ingredient
 Sí. Cada vez que se vende una unidad del producto de reventa, se descuenta una unidad del ingrediente correspondiente en inventario.
 
 **¿Puedo cambiar el precio después?**
-Sí. Vuelve a **Menú → Reventa → Gestionar**, edita el precio y guarda.
+Sí. Ve a **Menú → Productos**, filtra por **Reventa**, abre el producto y edita el precio.
 
 **¿Qué pasa si desactivo un ítem que ya tiene ventas?**
 Las ventas anteriores no se modifican. Solo deja de aparecer disponible en el POS y domicilios.

@@ -879,14 +879,14 @@ const QUERY_TO_PRODUCT_TYPE: Record<string, ProductTypeFilter> = {
 }
 
 function productTypeFromRouteQuery(tipo: unknown): ProductTypeFilter {
-  if (typeof tipo !== 'string') return 'menu'
-  return QUERY_TO_PRODUCT_TYPE[tipo] ?? 'menu'
+  if (typeof tipo !== 'string') return 'all'
+  return QUERY_TO_PRODUCT_TYPE[tipo] ?? 'all'
 }
 
 function routeQueryTipoFromProductType(filter: ProductTypeFilter): string | undefined {
-  if (filter === 'menu') return undefined
+  if (filter === 'all') return undefined
   if (filter === 'resale') return 'reventa'
-  return 'all'
+  return 'menu'
 }
 
 const cache = useQueryCache()
@@ -909,15 +909,14 @@ const {
   hasActiveFilters,
 } = useMenuCatalogFilters()
 
-useHead(computed(() => ({
-  title: productTypeFilter.value === 'resale' ? 'Reventa' : 'Productos',
-})))
+useHead({ title: 'Productos' })
 
-const catalogTitle = computed(() =>
-  productTypeFilter.value === 'resale'
-    ? 'Catálogo comercial de productos de reventa'
-    : 'Catálogo y rentabilidad de productos',
-)
+const catalogTitle = computed(() => {
+  const base = 'Catálogo y rentabilidad de productos'
+  if (productTypeFilter.value === 'resale') return `${base} — reventa`
+  if (productTypeFilter.value === 'menu') return `${base} — menú`
+  return base
+})
 
 let syncingProductTypeRoute = false
 
