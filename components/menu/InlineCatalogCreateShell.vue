@@ -31,6 +31,7 @@ const props = defineProps<{
   initialType?: string
   busy?: boolean
   busyLabel?: string
+  busyHint?: string
   onIngredientSaved?: (ingredient: Record<string, unknown>) => void | Promise<void>
   onProductSaved?: (product: Record<string, unknown>) => void | Promise<void>
 }>()
@@ -40,6 +41,7 @@ const emit = defineEmits<{
   'product-saved': [product: Record<string, unknown>]
   'update:busy': [value: boolean]
   'update:busyLabel': [value: string]
+  'update:busyHint': [value: string]
 }>()
 
 async function handleIngredientSaved(ingredient: Record<string, unknown>) {
@@ -65,6 +67,7 @@ const {
   pendingName,
   isBusy,
   busyMessage,
+  busyHint,
   hideResaleToggle,
   panelInitialType,
   openFromSearch,
@@ -89,5 +92,9 @@ watch(busyMessage, (value) => {
   emit('update:busyLabel', value)
 }, { immediate: true })
 
-defineExpose({ openFromSearch, isBusy, busyMessage })
+watch(busyHint, (value) => {
+  emit('update:busyHint', value)
+}, { immediate: true })
+
+defineExpose({ openFromSearch, isBusy, busyMessage, busyHint })
 </script>

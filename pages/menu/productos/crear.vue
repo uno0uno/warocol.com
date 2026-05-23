@@ -473,22 +473,13 @@
         </div>
 
         <!-- Step 2: Receta / Ingredientes -->
-        <div v-else-if="currentStep === 2 && !isResaleDirectMode" key="step-2" class="bg-surface border border-border rounded-lg relative">
-          <div
-            v-if="inlineCatalogBusy"
-            class="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-surface/85 backdrop-blur-[2px]"
-            aria-live="polite"
-            aria-busy="true"
+        <div v-else-if="currentStep === 2 && !isResaleDirectMode" key="step-2" class="bg-surface border border-border rounded-lg">
+          <MenuCatalogInlineCreateBusyOverlay
+            :busy="inlineCatalogBusy"
+            :label="inlineCatalogBusyLabel"
+            :hint="inlineCatalogBusyHint"
           >
-            <div class="flex items-center gap-3 px-5 py-3.5 rounded-xl border border-border bg-surface shadow-md mx-4">
-              <UiLoadingDots size="10px" color="var(--color-primary)" />
-              <div>
-                <p class="text-sm font-medium text-text-primary">{{ inlineCatalogBusyLabel || 'Procesando...' }}</p>
-                <p class="text-xs text-text-secondary mt-0.5">Espera mientras se crea y vincula el catálogo</p>
-              </div>
-            </div>
-          </div>
-          <div class="p-4 sm:p-6" :class="{ 'pointer-events-none opacity-50': inlineCatalogBusy }">
+          <div class="p-4 sm:p-6">
             <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Receta e inventario</h3>
 
             <!-- Toggle: ¿Este producto controla inventario? -->
@@ -715,6 +706,7 @@
             </div>
             </template>
           </div>
+          </MenuCatalogInlineCreateBusyOverlay>
         </div>
 
         <!-- Step 3: Review - Product Summary -->
@@ -933,6 +925,7 @@
       ref="inlineCreateShell"
       v-model:busy="inlineCatalogBusy"
       v-model:busy-label="inlineCatalogBusyLabel"
+      v-model:busy-hint="inlineCatalogBusyHint"
       context="product"
       :on-ingredient-saved="onCustomIngredientCreated"
       :on-product-saved="onInlineProductCreated"
@@ -1349,6 +1342,7 @@ const inlineCreateShell = ref<{ openFromSearch: (name: string) => void } | null>
 const customIngModalIndex = ref(-1)
 const inlineCatalogBusy = ref(false)
 const inlineCatalogBusyLabel = ref('')
+const inlineCatalogBusyHint = ref('')
 
 function openCustomIngModal(name: string, index: number) {
   customIngModalIndex.value = index

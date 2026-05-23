@@ -221,6 +221,11 @@
 
         <!-- Step 2: Ingredientes -->
         <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border border-border rounded-lg">
+          <MenuCatalogInlineCreateBusyOverlay
+            :busy="inlineCatalogBusy"
+            :label="inlineCatalogBusyLabel"
+            :hint="inlineCatalogBusyHint"
+          >
           <div class="p-4 sm:p-6">
             <MenuIngredientProductHint class="mb-4" />
             <div class="flex justify-between items-center mb-4 sm:mb-6">
@@ -348,6 +353,7 @@
 
               </div>
           </div>
+          </MenuCatalogInlineCreateBusyOverlay>
         </div>
 
         <!-- Step 3: Review -->
@@ -515,6 +521,9 @@
 
     <MenuInlineCatalogCreateShell
       ref="inlineCreateShell"
+      v-model:busy="inlineCatalogBusy"
+      v-model:busy-label="inlineCatalogBusyLabel"
+      v-model:busy-hint="inlineCatalogBusyHint"
       context="recipe"
       :on-ingredient-saved="onCustomIngredientCreated"
       :on-product-saved="onInlineProductCreated"
@@ -606,6 +615,9 @@ function selectIngredient(ingredient: any, index: number) {
 
 const inlineCreateShell = ref<{ openFromSearch: (name: string) => void } | null>(null)
 const customIngModalIndex = ref(-1)
+const inlineCatalogBusy = ref(false)
+const inlineCatalogBusyLabel = ref('')
+const inlineCatalogBusyHint = ref('')
 
 function openCustomIngModal(name: string, index: number) {
   customIngModalIndex.value = index

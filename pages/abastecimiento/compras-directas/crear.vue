@@ -346,7 +346,11 @@
               </button>
             </div>
 
-          <div class="relative">
+          <MenuCatalogInlineCreateBusyOverlay
+            :busy="inlineCatalogBusy"
+            :label="inlineCatalogBusyLabel"
+            :hint="inlineCatalogBusyHint"
+          >
              <!-- AI Loading Overlay -->
             <div v-if="isScanning" class="w-full py-4 flex flex-col items-center justify-center gap-2 bg-surface rounded-lg border border-dashed border-border">
               <UiLoadingDots size="9px" />
@@ -882,7 +886,7 @@
 
             </div>
 
-          </div>
+          </MenuCatalogInlineCreateBusyOverlay>
           </div>
         </div>
 
@@ -1255,6 +1259,9 @@
   <!-- Create Ingredient Panel -->
   <MenuInlineCatalogCreateShell
     ref="inlineCreateShell"
+    v-model:busy="inlineCatalogBusy"
+    v-model:busy-label="inlineCatalogBusyLabel"
+    v-model:busy-hint="inlineCatalogBusyHint"
     context="purchase"
     :initial-type="selectedIngredientType"
     @saved="onIngredientCreated"
@@ -1993,6 +2000,9 @@ const handleScanFileSelect = async (event: Event) => {
 // --- Create Ingredient Modal ---
 const inlineCreateShell = ref<{ openFromSearch: (name: string) => void } | null>(null)
 const createModalItemIndex = ref(-1)
+const inlineCatalogBusy = ref(false)
+const inlineCatalogBusyLabel = ref('')
+const inlineCatalogBusyHint = ref('')
 
 function openCreateModal(index: number, name: string) {
   createModalItemIndex.value = index
