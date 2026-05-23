@@ -4,6 +4,21 @@ Desde el módulo de Menú configuras todo lo que le ofreces a tus clientes: las 
 
 ---
 
+## Ingrediente vs producto de menú
+
+Al buscar en un formulario de receta o producto verás **ingredientes** (y a veces filas marcadas **Reventa**). Si lo que buscas no existe, el sistema te pregunta qué quieres crear:
+
+| Opción | Qué es | Cuándo usarla |
+|--------|--------|---------------|
+| **Ingrediente** | Materia prima en bodega (harina, queso, aceite) | Lo compras y usas en recetas o compras |
+| **Producto de menú** | Lo que cobras en POS / domicilios | Platos preparados o **reventa** (gaseosa, snack vendido tal cual) |
+
+**Reventa:** al crear un **producto de menú** de venta directa, el sistema crea solo el ingrediente de stock (1 unidad vendida = 1 und descontada). No hace falta crear primero un ingrediente suelto con el mismo nombre.
+
+En **compras directas** (factura), “Crear…” solo abre ingrediente — no producto de menú.
+
+---
+
 ## Recetas
 
 Una receta es una **composición reutilizable de ingredientes** que puedes asignar a uno o varios productos. Sirve para evitar repetir la misma lista de ingredientes en cada producto.
@@ -37,7 +52,7 @@ Ve a **Menú → Recetas → Nueva receta**. El formulario tiene 3 pasos:
 
 **Paso 2 — Ingredientes**
 
-Busca el ingrediente por nombre, escribe la cantidad y la unidad. Repite para cada ingrediente. Si el ingrediente no existe, haz clic en **+ Crear ingrediente** para crearlo ahí mismo sin salir del formulario.
+Busca el ingrediente por nombre, escribe la cantidad y la unidad. Repite para cada ingrediente. Si no aparece en la búsqueda, usa **Crear "…"** y elige **Ingrediente** o **Producto de menú** según corresponda.
 
 **Paso 3 — Revisión y confirmación**
 
@@ -176,10 +191,6 @@ No. El botón de agregar al carrito no se activa hasta que el cliente elija.
 ## Productos de reventa
 
 Los **productos de reventa** son ítems que vendes tal como los compras, sin preparación: una lata de gaseosa, un paquete de papas, una botella de agua. Se comportan como productos normales en el POS y en domicilios, pero su stock se controla directamente sobre el ingrediente.
-
-### Requisito previo
-
-El ingrediente debe estar marcado como `is_resale = true` en el catálogo. Si un ingrediente no aparece en la lista de reventa, contacta al administrador para activar esa propiedad.
 
 ### Cómo gestionar productos de reventa
 

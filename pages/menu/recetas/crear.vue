@@ -222,8 +222,9 @@
         <!-- Step 2: Ingredientes -->
         <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border border-border rounded-lg">
           <div class="p-4 sm:p-6">
+            <MenuIngredientProductHint class="mb-4" />
             <div class="flex justify-between items-center mb-4 sm:mb-6">
-              <h3 class="text-base sm:text-lg font-semibold text-text-primary">Ingredientes de la Receta Base</h3>
+              <h3 class="text-base sm:text-lg font-semibold text-text-primary">Ingredientes y reventa de la receta</h3>
               <button
                 type="button"
                 @click="addIngredient"
@@ -244,8 +245,8 @@
               <svg class="w-16 h-16 mx-auto mb-4 text-titan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <p class="text-base font-medium mb-1">No hay ingredientes agregados</p>
-              <p class="text-sm">Agrega los ingredientes que componen esta receta base</p>
+              <p class="text-base font-medium mb-1">No hay líneas en la receta</p>
+              <p class="text-sm">Agrega ingredientes o productos de reventa que componen esta receta base</p>
             </div>
 
             <!-- Ingredients List -->
@@ -258,7 +259,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
                   <!-- Ingredient -->
                   <div class="md:col-span-4">
-                    <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente *</label>
+                    <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
                     <UiIngredientSearchInput
                       :allow-create="true"
                       @select="(ing) => selectIngredient(ing, index)"
@@ -515,7 +516,8 @@
     <MenuInlineCatalogCreateShell
       ref="inlineCreateShell"
       context="recipe"
-      @saved="onCustomIngredientCreated"
+      :on-ingredient-saved="onCustomIngredientCreated"
+      :on-product-saved="onInlineProductCreated"
     />
   </div>
 </template>
@@ -615,6 +617,17 @@ function onCustomIngredientCreated(ingredient: any) {
   if (index < 0 || index >= form.value.ingredients.length) return
   selectIngredient(ingredient, index)
   customIngModalIndex.value = -1
+}
+
+const { linkCreatedProductToRow } = useInlineCatalogProductLink()
+
+async function onInlineProductCreated(product: Record<string, unknown>) {
+  const index = customIngModalIndex.value
+  if (index < 0 || index >= form.value.ingredients.length) return
+  await linkCreatedProductToRow(product, async (ingredient) => {
+    selectIngredient(ingredient, index)
+    customIngModalIndex.value = -1
+  })
 }
 
 const isLoadingData = ref(false)

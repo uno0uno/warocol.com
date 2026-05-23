@@ -289,6 +289,7 @@
         <!-- Step 2: Modificadores -->
         <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border border-border rounded-lg">
           <div class="p-4 sm:p-6">
+            <MenuIngredientProductHint class="mb-4" />
             <div class="flex justify-between items-center mb-4 sm:mb-6">
               <h3 class="text-base sm:text-lg font-semibold text-text-primary">Modificadores</h3>
               <button
@@ -319,7 +320,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-3">
                   <!-- Ingredient Selector -->
                   <div class="md:col-span-4">
-                    <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente *</label>
+                    <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
                     <UiIngredientSearchInput
                       :allow-create="true"
                       @select="(ing) => selectIngredient(modifier, ing)"
@@ -667,7 +668,8 @@
     <MenuInlineCatalogCreateShell
       ref="inlineCreateShell"
       context="modifier"
-      @saved="onCustomIngredientCreated"
+      :on-ingredient-saved="onCustomIngredientCreated"
+      :on-product-saved="onInlineProductCreated"
     />
   </div>
 </template>
@@ -833,6 +835,17 @@ function onCustomIngredientCreated(ingredient: any) {
   if (index < 0 || index >= form.value.modifiers.length) return
   selectIngredient(form.value.modifiers[index], ingredient)
   customIngModalModIndex.value = -1
+}
+
+const { linkCreatedProductToRow } = useInlineCatalogProductLink()
+
+async function onInlineProductCreated(product: Record<string, unknown>) {
+  const index = customIngModalModIndex.value
+  if (index < 0 || index >= form.value.modifiers.length) return
+  await linkCreatedProductToRow(product, async (ingredient) => {
+    selectIngredient(form.value.modifiers[index], ingredient)
+    customIngModalModIndex.value = -1
+  })
 }
 
 function removeModifier(index: number) {

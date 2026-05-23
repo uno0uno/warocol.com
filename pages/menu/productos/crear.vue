@@ -158,7 +158,7 @@
                 <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">
                   Receta
                 </p>
-                <p class="text-xs text-text-secondary hidden sm:block">Ingredientes y costos</p>
+                <p class="text-xs text-text-secondary hidden sm:block">Receta e inventario</p>
               </div>
               <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'"></div>
             </div>
@@ -489,7 +489,7 @@
             </div>
           </div>
           <div class="p-4 sm:p-6" :class="{ 'pointer-events-none opacity-50': inlineCatalogBusy }">
-            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Receta / Ingredientes</h3>
+            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Receta e inventario</h3>
 
             <!-- Toggle: ¿Este producto controla inventario? -->
             <div class="flex items-start gap-3 p-4 mb-6 bg-surface-secondary border border-border rounded-lg">
@@ -612,15 +612,16 @@
               </div>
             </div>
 
-            <!-- Ingredientes Adicionales -->
+            <!-- Líneas adicionales: ingrediente o reventa -->
+            <MenuIngredientProductHint class="mb-4" />
             <div class="flex justify-between items-center mb-4">
-              <h4 class="text-sm font-semibold text-text-primary">Ingredientes Adicionales</h4>
+              <h4 class="text-sm font-semibold text-text-primary">Ingredientes y reventa (adicionales)</h4>
               <button
                 type="button"
                 @click="addIngredient"
                 class="btn-secondary px-3 sm:px-4 py-2 rounded-lg text-sm"
               >
-                + Agregar Ingrediente
+                + Agregar
               </button>
             </div>
 
@@ -629,8 +630,8 @@
               <svg class="w-16 h-16 mx-auto mb-4 text-titan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <p class="text-base font-medium mb-1">No hay ingredientes agregados</p>
-              <p class="text-sm">Agrega ingredientes para calcular el costo del producto</p>
+              <p class="text-base font-medium mb-1">No hay líneas adicionales</p>
+              <p class="text-sm">Agrega ingredientes o productos de reventa para calcular el costo</p>
             </div>
 
             <!-- Ingredients List -->
@@ -643,7 +644,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
                   <!-- Ingredient -->
                   <div class="md:col-span-5">
-                    <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente</label>
+                    <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa</label>
                     <UiIngredientSearchInput
                       :key="ingredient.ingredient_id || `new-${index}`"
                       :initial-value="getIngredientSearchLabel(ingredient)"
@@ -787,10 +788,10 @@
               <!-- Ingredientes adicionales -->
               <div class="bg-surface border border-border rounded-lg p-4">
                 <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
-                  Ingredientes Adicionales ({{ form.ingredients.length }})
+                  Adicionales ({{ form.ingredients.length }})
                 </p>
                 <div v-if="form.ingredients.length === 0" class="text-sm text-text-secondary">
-                  Sin ingredientes adicionales
+                  Sin líneas adicionales
                 </div>
                 <div v-else class="space-y-2">
                   <div
@@ -962,7 +963,6 @@
 import { ref, computed, watch } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
-import { fetchResaleLinkedIngredient } from '@/composables/useResaleLinkedIngredient'
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
@@ -1362,17 +1362,15 @@ async function onCustomIngredientCreated(ingredient: any) {
   customIngModalIndex.value = -1
 }
 
+const { linkCreatedProductToRow } = useInlineCatalogProductLink()
+
 async function onInlineProductCreated(product: Record<string, unknown>) {
   const index = customIngModalIndex.value
   if (index < 0 || index >= form.value.ingredients.length) return
-
-  await cache.invalidateQueries({ key: ['menu-ingredients', currentTenant.value?.id ?? 'default'] })
-
-  const ingredient = await fetchResaleLinkedIngredient(product)
-  if (!ingredient) return
-
-  await selectIngredient(ingredient, index, product)
-  customIngModalIndex.value = -1
+  await linkCreatedProductToRow(product, async (ingredient) => {
+    await selectIngredient(ingredient, index, product)
+    customIngModalIndex.value = -1
+  })
 }
 
 // ── Category search + create flow (issue #458) ────────────────────────────
