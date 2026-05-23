@@ -320,7 +320,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-3">
                   <!-- Ingredient Selector -->
                   <div class="md:col-span-4">
-                    <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente *</label>
+                    <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
                     <UiIngredientSearchInput
                       :allow-create="true"
                       @select="(ing) => selectIngredient(modifier, ing)"

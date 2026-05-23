@@ -64,22 +64,22 @@
           <div class="mt-8">
             <MenuIngredientProductHint class="mb-4" />
             <div class="flex justify-between items-center mb-6">
-              <h3 class="text-lg font-semibold text-text-primary">Ingredientes de la Receta Base</h3>
+              <h3 class="text-lg font-semibold text-text-primary">Ingredientes y reventa de la receta</h3>
               <UiButton
                 type="button"
                 variant="outline"
                 size="sm"
                 @click="addIngredient"
               >
-                + Agregar Ingrediente
+                + Agregar
               </UiButton>
             </div>
 
             <!-- Empty State -->
             <div v-if="form.ingredients.length === 0" class="text-center py-12 text-text-secondary border border-border rounded-lg">
               <Icon name="heroicons:cube" class="h-16 w-16 mx-auto mb-4 text-titan-300" />
-              <p class="text-base font-medium mb-1">No hay ingredientes agregados</p>
-              <p class="text-sm">Agrega los ingredientes que componen esta receta base</p>
+              <p class="text-base font-medium mb-1">No hay líneas en la receta</p>
+              <p class="text-sm">Agrega ingredientes o productos de reventa que componen esta receta base</p>
             </div>
 
             <!-- Lista de ingredientes -->
@@ -92,7 +92,7 @@
                 <div class="flex-1 grid grid-cols-1 md:grid-cols-12 gap-3">
                   <!-- Ingrediente -->
                   <div class="md:col-span-5">
-                    <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente *</label>
+                    <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
                     <UiIngredientSearchInput
                       :initialValue="ingredient.ingredient_name"
                       :allow-create="true"

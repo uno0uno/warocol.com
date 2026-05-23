@@ -492,12 +492,12 @@
             </div>
           </div>
 
-          <!-- Ingredientes Adicionales -->
+          <!-- Ingredientes y reventa adicionales -->
           <div class="mt-8">
             <MenuIngredientProductHint class="mb-4" />
-            <h3 class="text-lg font-semibold text-text-primary mb-2">Ingredientes Adicionales</h3>
+            <h3 class="text-lg font-semibold text-text-primary mb-2">Ingredientes y reventa (adicionales)</h3>
             <p class="text-sm text-text-secondary mb-4">
-              Agrega ingredientes adicionales específicos para este producto
+              Materias primas o productos de reventa que descuentan inventario al vender este plato
             </p>
             <p v-if="quantityError" class="text-sm text-destructive flex items-center gap-1 mb-3">
               <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
@@ -576,7 +576,7 @@
               @click="addIngredient"
             >
               <Icon name="heroicons:plus" class="h-5 w-5 mr-2" />
-              Agregar Ingrediente
+              Agregar línea
             </UiButton>
           </div>
           </template>
@@ -679,7 +679,7 @@
             </div>
 
             <div class="flex justify-between text-sm gap-2">
-              <span class="text-text-secondary flex-shrink-0">{{ isResaleProduct ? 'Insumo:' : 'Ingredientes:' }}</span>
+              <span class="text-text-secondary flex-shrink-0">{{ isResaleProduct ? 'Insumo:' : 'Líneas receta:' }}</span>
               <span class="font-semibold text-text-primary text-right truncate">
                 <template v-if="isResaleProduct">
                   {{ linkedResaleIngredient?.name ?? '—' }}
