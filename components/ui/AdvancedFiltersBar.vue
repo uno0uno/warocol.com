@@ -1,7 +1,10 @@
 <template>
-  <div class="flex flex-wrap items-center gap-2 w-full">
+  <div class="advanced-filters-bar flex flex-wrap items-center gap-2 w-full">
     <!-- Search -->
-    <div v-if="showSearch" class="relative w-full min-w-[12rem] max-w-[16rem] sm:flex-1 sm:max-w-xs">
+    <div
+      v-if="showSearch"
+      class="relative w-full min-w-[12rem] max-w-full sm:w-auto sm:max-w-xs shrink-0"
+    >
       <button
         type="button"
         class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
@@ -33,25 +36,29 @@
       @update:model-value="emit('update:searchField', $event)"
     />
 
-    <!-- Date range -->
-    <VueDatePicker
+    <!-- Date range — fixed width so flex-wrap does not stretch to full row -->
+    <div
       v-if="showDateRange"
-      class="flex-shrink-0 max-w-full"
-      :model-value="dateRange"
-      range
-      :preset-dates="presetDates"
-      :enable-time-picker="false"
-      :locale="es"
-      placeholder="Rango de fechas"
-      auto-apply
-      :teleport="true"
-      :max-date="new Date()"
-      :format="formatDateRange"
-      input-class-name="dp-custom-input"
-      menu-class-name="dp-custom-menu"
-      calendar-cell-class-name="dp-custom-cell"
-      @update:model-value="emit('update:dateRange', $event)"
-    />
+      class="advanced-filters-bar__date shrink-0 w-[12.5rem] sm:w-[13.5rem]"
+    >
+      <VueDatePicker
+        class="advanced-filters-bar__date-picker"
+        :model-value="dateRange"
+        range
+        :preset-dates="presetDates"
+        :enable-time-picker="false"
+        :locale="es"
+        placeholder="Rango de fechas"
+        auto-apply
+        :teleport="true"
+        :max-date="new Date()"
+        :format="formatDateRange"
+        input-class-name="dp-custom-input"
+        menu-class-name="dp-custom-menu"
+        calendar-cell-class-name="dp-custom-cell"
+        @update:model-value="emit('update:dateRange', $event)"
+      />
+    </div>
 
     <slot name="additional-filters" />
 
@@ -115,24 +122,44 @@ const emit = defineEmits<{
 }>()
 </script>
 
+<style scoped>
+.advanced-filters-bar__date-picker :deep(.dp__main),
+.advanced-filters-bar__date-picker :deep(.dp__input_wrap) {
+  width: 100%;
+  max-width: 100%;
+}
+
+.advanced-filters-bar__date-picker :deep(.dp__input) {
+  width: 100%;
+  max-width: 100%;
+}
+</style>
+
 <style>
-.dp-custom-input {
+.advanced-filters-bar .dp-custom-input {
+  box-sizing: border-box;
   height: 40px !important;
+  width: 100% !important;
+  max-width: 100% !important;
   border: 2px solid hsl(var(--border)) !important;
   border-radius: 0.5rem !important;
   background: hsl(var(--background)) !important;
   font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
   color: hsl(var(--foreground)) !important;
   padding-left: 0.75rem !important;
   padding-right: 0.75rem !important;
-  min-width: 150px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.dp-custom-input:focus {
+.advanced-filters-bar .dp-custom-input:focus {
   outline: none !important;
   border-color: hsl(var(--primary)) !important;
   box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2) !important;
 }
-.dp-custom-input::placeholder {
+.advanced-filters-bar .dp-custom-input::placeholder {
   color: hsl(var(--muted-foreground)) !important;
 }
 .dp__theme_light {

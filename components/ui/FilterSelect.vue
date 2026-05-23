@@ -44,11 +44,11 @@ watch(() => props.options, remeasure, { deep: true })
 </script>
 
 <template>
-  <div class="relative inline-flex max-w-full min-w-0">
+  <div class="relative inline-flex shrink-0 max-w-full">
     <select
       :value="modelValue"
       :class="filterSelectClassFor(modelValue, { active: alwaysActive || undefined })"
-      :style="widthPx ? { width: `${widthPx}px` } : undefined"
+      :style="widthPx ? { width: `${widthPx}px`, minWidth: `${widthPx}px` } : undefined"
       :aria-label="ariaLabel ?? placeholder"
       @change="emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
     >
@@ -65,8 +65,7 @@ watch(() => props.options, remeasure, { deep: true })
     </select>
     <span
       ref="measureRef"
-      class="pointer-events-none invisible absolute top-0 left-0 z-[-1] whitespace-nowrap text-sm h-10 inline-flex items-center pl-3 pr-8"
-      :class="isActive ? 'font-medium' : ''"
+      class="pointer-events-none invisible absolute top-0 left-0 z-[-1] whitespace-nowrap text-sm h-10 inline-flex items-center pl-3 pr-8 font-medium"
       aria-hidden="true"
     >{{ displayLabel }}</span>
   </div>
