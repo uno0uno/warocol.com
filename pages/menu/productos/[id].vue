@@ -47,7 +47,17 @@
         <div class="bg-surface border-2 border-border rounded-xl p-6 md:p-8 shadow-sm">
           <!-- Información Básica -->
           <div>
-            <h3 class="text-lg font-semibold text-text-primary mb-6">Información Básica</h3>
+            <div class="flex flex-wrap items-center gap-3 mb-6">
+              <h3 class="text-lg font-semibold text-text-primary">Información Básica</h3>
+              <UiStatusBadge
+                v-if="isResaleProduct"
+                value="Reventa"
+                format="text"
+                variant="primary"
+                size="sm"
+                class="flex-shrink-0"
+              />
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div class="sm:col-span-2">
                 <label class="block text-sm font-medium text-text-primary mb-2">
@@ -184,7 +194,7 @@
                 </div>
               </div>
 
-              <div v-if="tracksInventory">
+              <div v-if="tracksInventory || isResaleProduct">
                 <label class="block text-sm font-medium text-text-secondary mb-2">
                   Costo real (sistema)
                 </label>
@@ -313,8 +323,40 @@
             </div>
           </div>
 
-          <!-- Toggle: ¿Controla inventario? -->
-          <div class="relative mt-8">
+          <!-- Reventa: equivalencia gr/ml + insumo vinculado (sin receta libre) -->
+          <div v-if="isResaleProduct" class="mt-8 space-y-4">
+            <MenuProductResaleCreateForm
+              v-model:unit-weight-gr="resaleUnitWeightGr"
+              v-model:unit-weight-unit="resaleUnitWeightUnit"
+              :show-error="resaleWeightError"
+              @clear-error="resaleWeightError = false"
+            />
+            <div class="p-4 rounded-xl border border-border bg-surface-secondary/40 space-y-2">
+              <p class="text-sm font-medium text-text-primary">Inventario y compras</p>
+              <p class="text-xs text-text-secondary">
+                Este producto descuenta stock del insumo vinculado (1 und por venta). El costo real se calcula desde compras de ese insumo, no desde una receta editable aquí.
+              </p>
+              <div v-if="resaleLinkedLoading" class="text-xs text-text-tertiary flex items-center gap-2">
+                <UiLoadingDots size="8px" color="var(--color-primary)" />
+                Cargando insumo vinculado…
+              </div>
+              <NuxtLink
+                v-else-if="linkedResaleIngredient"
+                to="/abastecimiento/ingredientes-propios"
+                class="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded"
+              >
+                <Icon name="heroicons:cube" class="h-4 w-4" />
+                {{ linkedResaleIngredient.name }}
+                <Icon name="heroicons:arrow-top-right-on-square" class="h-3.5 w-3.5" />
+              </NuxtLink>
+              <p v-else class="text-xs text-text-tertiary">
+                No se encontró el insumo vinculado. Revísalo en Abastecimiento → Ingredientes propios.
+              </p>
+            </div>
+          </div>
+
+          <!-- Toggle: ¿Controla inventario? (solo productos de menú con receta) -->
+          <div v-if="!isResaleProduct" class="relative mt-8">
             <div
               v-if="inlineCatalogBusy"
               class="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-surface/85 backdrop-blur-[2px]"
@@ -635,9 +677,16 @@
               </span>
             </div>
 
-            <div class="flex justify-between text-sm">
-              <span class="text-text-secondary">Ingredientes:</span>
-              <span class="font-semibold text-text-primary">{{ form.ingredients.length }}</span>
+            <div class="flex justify-between text-sm gap-2">
+              <span class="text-text-secondary flex-shrink-0">{{ isResaleProduct ? 'Insumo:' : 'Ingredientes:' }}</span>
+              <span class="font-semibold text-text-primary text-right truncate">
+                <template v-if="isResaleProduct">
+                  {{ linkedResaleIngredient?.name ?? '—' }}
+                </template>
+                <template v-else>
+                  {{ form.ingredients.length }}
+                </template>
+              </span>
             </div>
           </div>
 
@@ -800,6 +849,51 @@ const { data: productData, pending: isLoading, error: fetchError, refresh } = us
 )
 
 const isOpenSaleShell = computed(() => !!productData.value?.data?.open_priced)
+const isResaleProduct = computed(() => !!productData.value?.data?.is_resale)
+
+const linkedResaleIngredient = ref<Record<string, unknown> | null>(null)
+const resaleUnitWeightGr = ref<number | null>(null)
+const resaleUnitWeightUnit = ref<'gr' | 'ml'>('gr')
+const resaleWeightError = ref(false)
+const resaleLinkedLoading = ref(false)
+const resaleWeightSnapshot = ref<{ gr: number | null; unit: 'gr' | 'ml' }>({ gr: null, unit: 'gr' })
+
+async function loadResaleLinkedIngredient(product: Record<string, unknown>) {
+  resaleLinkedLoading.value = true
+  try {
+    let ing = await fetchResaleLinkedIngredient(product)
+    if (!ing) {
+      const rows = Array.isArray(product.ingredients) ? product.ingredients : []
+      const sole = rows.length === 1 ? rows[0] as Record<string, unknown> : null
+      if (sole?.ingredient_id) {
+        try {
+          const res = await $fetch<{ data?: Record<string, unknown> }>(
+            `/api/suppliers/ingredients/${sole.ingredient_id}`,
+          )
+          ing = res?.data ?? null
+        } catch {
+          ing = {
+            id: sole.ingredient_id,
+            name: sole.ingredient_name ?? product.name,
+            unit: sole.unit ?? 'und',
+          }
+        }
+      }
+    }
+    linkedResaleIngredient.value = ing
+    if (ing) {
+      const gr = ing.unit_weight_gr != null ? Number(ing.unit_weight_gr) : null
+      const unit = (ing.unit_weight_unit === 'gr' || ing.unit_weight_unit === 'ml')
+        ? ing.unit_weight_unit
+        : 'gr'
+      resaleUnitWeightGr.value = gr
+      resaleUnitWeightUnit.value = unit
+      resaleWeightSnapshot.value = { gr, unit }
+    }
+  } finally {
+    resaleLinkedLoading.value = false
+  }
+}
 
 const goToOpenSaleSettings = () => {
   router.push('/operaciones/personalizar')
@@ -1069,11 +1163,19 @@ watch(productData, (data) => {
       }),
       costo_percibido: product.costo_percibido != null ? Number(product.costo_percibido) : null,
     }
-    // Derive toggle from existing data — product without any recipe row → OFF
-    tracksInventory.value = (
-      (product.recipe_bases?.length ?? product.recipe_base_ids?.length ?? 0) > 0 ||
-      (product.ingredients?.length ?? 0) > 0
-    )
+    if (product.is_resale) {
+      void loadResaleLinkedIngredient(product as Record<string, unknown>)
+    } else {
+      linkedResaleIngredient.value = null
+      resaleUnitWeightGr.value = null
+      resaleUnitWeightUnit.value = 'gr'
+      resaleWeightSnapshot.value = { gr: null, unit: 'gr' }
+      // Derive toggle from existing data — product without any recipe row → OFF
+      tracksInventory.value = (
+        (product.recipe_bases?.length ?? product.recipe_base_ids?.length ?? 0) > 0 ||
+        (product.ingredients?.length ?? 0) > 0
+      )
+    }
     // Pre-fill the category search input with the product's current category name
     selectedCategoryName.value = product.category_name || ''
   }
@@ -1205,9 +1307,17 @@ const handleSubmit = async () => {
   submitError.value = ''
   duplicateRecipeBaseError.value = ''
   quantityError.value = ''
+  resaleWeightError.value = false
+
+  if (isResaleProduct.value) {
+    if (!resaleUnitWeightGr.value || resaleUnitWeightGr.value <= 0) {
+      resaleWeightError.value = true
+      return
+    }
+  }
 
   // Validate ingredient quantities > 0 (only when tracking inventory)
-  if (tracksInventory.value) {
+  if (!isResaleProduct.value && tracksInventory.value) {
     const hasZeroQuantity = form.value.ingredients.some(ing => !ing.quantity || ing.quantity <= 0)
     if (hasZeroQuantity) {
       quantityError.value = 'Todos los ingredientes deben tener una cantidad mayor a 0.'
@@ -1235,25 +1345,56 @@ const handleSubmit = async () => {
       seenIds.add(link.recipe_base_id)
     }
 
-    // When toggle is OFF, force empty recipe arrays — product won't track inventory.
-    // Normalise image_url empty string → null so backend stores NULL (issue #465).
-    // recipe_bases is the new shape (Issue #517); recipe_base_ids is sent as
-    // a derived list for backwards compat.
-    const cleanedRecipeBases = tracksInventory.value
-      ? validLinks.map(l => ({ recipe_base_id: l.recipe_base_id, quantity: Number(l.quantity) }))
-      : []
-    const cleanedForm = {
-      ...form.value,
-      recipe_bases: cleanedRecipeBases,
-      recipe_base_ids: cleanedRecipeBases.map(l => l.recipe_base_id),
-      ingredients: tracksInventory.value ? form.value.ingredients : [],
-      image_url: form.value.image_url || null,
-      costo_percibido: form.value.costo_percibido ?? null,
+    // Resale: never send ingredients/recipe_bases — empty arrays DELETE product_recipes (#861).
+    const {
+      ingredients: _ingredients,
+      recipe_bases: _recipeBases,
+      ...formScalars
+    } = form.value
+
+    let cleanedForm: Record<string, unknown>
+    if (isResaleProduct.value) {
+      cleanedForm = {
+        ...formScalars,
+        allow_modifiers: false,
+        image_url: form.value.image_url || null,
+        costo_percibido: form.value.costo_percibido ?? null,
+      }
+    } else {
+      const cleanedRecipeBases = tracksInventory.value
+        ? validLinks.map(l => ({ recipe_base_id: l.recipe_base_id, quantity: Number(l.quantity) }))
+        : []
+      cleanedForm = {
+        ...formScalars,
+        recipe_bases: cleanedRecipeBases,
+        recipe_base_ids: cleanedRecipeBases.map(l => l.recipe_base_id),
+        ingredients: tracksInventory.value ? form.value.ingredients : [],
+        image_url: form.value.image_url || null,
+        costo_percibido: form.value.costo_percibido ?? null,
+      }
     }
+
     await $fetch(`/api/menu/products/${productId}`, {
       method: 'PUT',
-      body: cleanedForm
+      body: cleanedForm,
     })
+
+    if (isResaleProduct.value && linkedResaleIngredient.value?.id) {
+      const ingId = String(linkedResaleIngredient.value.id)
+      const gr = resaleUnitWeightGr.value
+      const unit = resaleUnitWeightUnit.value
+      const snap = resaleWeightSnapshot.value
+      if (gr != null && gr > 0 && (gr !== snap.gr || unit !== snap.unit)) {
+        await $fetch(`/api/suppliers/ingredients/${ingId}`, {
+          method: 'PATCH',
+          body: {
+            unit_weight_gr: gr,
+            unit_weight_unit: unit,
+          },
+        })
+        resaleWeightSnapshot.value = { gr, unit }
+      }
+    }
 
     cache.invalidateQueries()
     await refresh()
