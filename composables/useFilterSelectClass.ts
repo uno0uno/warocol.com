@@ -37,12 +37,22 @@ export function filterPillClass(
   return `${base} ${activeTone} cursor-pointer`
 }
 
-/** Toggle chip in filter bars. Active = success (like Disponible). */
+/** Shared filter-bar control chrome (matches UiFilterSelect / h-10 selects). */
+const filterBarControlBase =
+  'inline-flex items-center justify-center min-h-[44px] h-10 px-3 rounded-lg border-2 text-sm font-semibold transition-colors flex-shrink-0 cursor-pointer'
+
+/** Toggle chip in filter bars — same surface as selects, primary when active. */
 export function filterChipClass(active: boolean, _compact = false): string {
-  return `flex items-center cursor-pointer min-h-[44px] ${filterPillClass(active, active ? 'success' : 'secondary')}`
+  if (active) {
+    return `${filterBarControlBase} border-primary bg-primary/10 text-primary`
+  }
+  return `${filterBarControlBase} border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary`
 }
 
-/** Product type chips (Todos / Menú / Reventa). Active = primary. */
+/** Product type chips (Todos / Menú / Reventa). */
 export function productTypeChipClass(active: boolean): string {
-  return `inline-flex items-center cursor-pointer min-h-[44px] ${filterPillClass(active, 'primary')}`
+  if (active) {
+    return `${filterBarControlBase} border-primary bg-primary/10 text-primary font-medium`
+  }
+  return `${filterBarControlBase} border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary`
 }
