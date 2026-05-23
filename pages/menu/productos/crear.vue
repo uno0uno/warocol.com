@@ -78,6 +78,38 @@
         </div>
       </div>
 
+      <!-- Tipo de producto (Flujo B — #845) -->
+      <div class="bg-surface border-border border rounded-lg mb-4 sm:mb-6">
+        <div class="p-4 sm:p-6">
+          <p class="text-sm font-medium text-text-primary mb-1">¿Cómo se prepara este producto?</p>
+          <p class="text-xs text-text-secondary mb-4">Elige si lleva receta en cocina o se vende tal cual (reventa).</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" aria-label="Tipo de creación de producto">
+            <button
+              type="button"
+              :class="createModeCardClass('recipe')"
+              :aria-pressed="productCreateMode === 'recipe'"
+              @click="setProductCreateMode('recipe')"
+            >
+              <span class="text-sm font-bold">Con receta</span>
+              <span :class="createModeDescClass('recipe')">
+                Cocina · ingredientes y recetas base
+              </span>
+            </button>
+            <button
+              type="button"
+              :class="createModeCardClass('resale-direct')"
+              :aria-pressed="productCreateMode === 'resale-direct'"
+              @click="setProductCreateMode('resale-direct')"
+            >
+              <span class="text-sm font-bold">Venta directa</span>
+              <span :class="createModeDescClass('resale-direct')">
+                Reventa · pieza (und) con equivalencia gr/ml
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Progress Steps -->
       <div class="bg-surface border-border border rounded-lg mb-4 sm:mb-6">
         <div class="p-3 sm:p-6">
@@ -107,8 +139,8 @@
               <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 1 ? 'bg-secondary' : 'bg-border'"></div>
             </div>
 
-            <!-- Step 2 -->
-            <div class="flex items-center flex-1">
+            <!-- Step 2 (solo con receta) -->
+            <div v-if="!isResaleDirectMode" class="flex items-center flex-1">
               <div
                 class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
                 :class="{
@@ -131,17 +163,18 @@
               <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'"></div>
             </div>
 
-            <!-- Step 3 -->
+            <div v-else class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep >= 3 ? 'bg-secondary' : 'bg-border'"></div>
+
+            <!-- Step 3 / 2 (revisión) -->
             <div class="flex items-center">
               <div
                 class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
                 :class="{
                   'bg-primary text-primary-foreground border-primary': currentStep === 3,
-                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 3,
                   'border-border text-text-secondary bg-transparent': currentStep < 3
                 }"
               >
-                <span class="font-semibold text-sm sm:text-base">3</span>
+                <span class="font-semibold text-sm sm:text-base">{{ isResaleDirectMode ? 2 : 3 }}</span>
               </div>
               <div class="ml-1 sm:ml-3 min-w-0">
                 <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">
@@ -272,7 +305,7 @@
               </div>
 
               <!-- Preparation Time -->
-              <div>
+              <div v-if="!isResaleDirectMode">
                 <label class="block text-sm font-medium text-text-primary mb-2">
                   Tiempo de Preparación (min)
                 </label>
@@ -305,7 +338,7 @@
               </div>
 
               <!-- Costo real (preview) -->
-              <div v-if="tracksInventory">
+              <div v-if="!isResaleDirectMode && tracksInventory">
                 <label class="block text-sm font-medium text-text-secondary mb-2">
                   Costo real (sistema)
                 </label>
@@ -378,6 +411,14 @@
                 <!-- REMOVED: Controlar stock - Now ALL products control inventory automatically -->
                 <!-- REMOVED: Es combo - Combos are now managed through product_base_recipes -->
               </div>
+
+              <MenuProductResaleCreateForm
+                v-if="isResaleDirectMode"
+                v-model:unit-weight-gr="resaleUnitWeightGr"
+                v-model:unit-weight-unit="resaleUnitWeightUnit"
+                :show-error="resaleWeightError"
+                @clear-error="resaleWeightError = false"
+              />
             </div>
 
             <!-- Categoría de Impuesto — solo visible cuando el tenant tiene impuestos activos -->
@@ -432,7 +473,7 @@
         </div>
 
         <!-- Step 2: Receta / Ingredientes -->
-        <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border border-border rounded-lg">
+        <div v-else-if="currentStep === 2 && !isResaleDirectMode" key="step-2" class="bg-surface border border-border rounded-lg">
           <div class="p-4 sm:p-6">
             <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Receta / Ingredientes</h3>
 
@@ -670,9 +711,29 @@
           <!-- Layout dos columnas -->
           <div class="flex flex-col lg:flex-row gap-4 items-start">
 
-            <!-- Columna izquierda: recetas + ingredientes -->
+            <!-- Columna izquierda: recetas + ingredientes / reventa -->
             <div class="w-full lg:flex-1 space-y-4">
 
+              <!-- Venta directa: stock -->
+              <div v-if="isResaleDirectMode" class="bg-surface border border-border rounded-lg p-4">
+                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
+                  Venta directa
+                </p>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-text-secondary">Unidad de venta</span>
+                    <span class="font-semibold text-text-primary font-mono">und</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-text-secondary">Equivalencia</span>
+                    <span class="font-semibold text-text-primary">
+                      {{ resaleUnitWeightGr }} {{ resaleUnitWeightUnit }} / und
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <template v-if="!isResaleDirectMode">
               <!-- Recetas Base -->
               <div v-if="form.recipe_bases.length > 0" class="bg-surface border border-border rounded-lg p-4">
                 <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
@@ -726,6 +787,7 @@
                   </div>
                 </div>
               </div>
+              </template>
             </div>
 
             <!-- Columna derecha: info + precios -->
@@ -887,6 +949,7 @@ definePageMeta({
 
 useHead({ title: 'Crear Producto' })
 
+const route = useRoute()
 const router = useRouter()
 const cache = useQueryCache()
 const toast = useToast()
@@ -909,6 +972,48 @@ const currentStep = ref(1)
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
 const nameError = ref('')
+
+type ProductCreateMode = 'recipe' | 'resale-direct'
+
+const productCreateMode = ref<ProductCreateMode>(
+  route.query.modo === 'venta-directa' ? 'resale-direct' : 'recipe',
+)
+const isResaleDirectMode = computed(() => productCreateMode.value === 'resale-direct')
+
+const resaleUnitWeightGr = ref<number | null>(null)
+const resaleUnitWeightUnit = ref<'gr' | 'ml'>('gr')
+const resaleWeightError = ref(false)
+
+function createModeCardClass(mode: ProductCreateMode): string {
+  const selected = productCreateMode.value === mode
+  return [
+    'flex flex-col items-start gap-2 min-h-[44px] py-4 px-3 rounded-2xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 text-left w-full',
+    selected
+      ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+      : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60',
+  ].join(' ')
+}
+
+function createModeDescClass(mode: ProductCreateMode): string {
+  const selected = productCreateMode.value === mode
+  return [
+    'text-xs leading-snug',
+    selected ? 'text-primary/80' : 'text-text-tertiary',
+  ].join(' ')
+}
+
+function setProductCreateMode(mode: ProductCreateMode) {
+  if (productCreateMode.value === mode) return
+  productCreateMode.value = mode
+  resaleWeightError.value = false
+  if (mode === 'resale-direct') {
+    if (currentStep.value === 2) currentStep.value = 1
+  } else {
+    resaleUnitWeightGr.value = null
+    resaleUnitWeightUnit.value = 'gr'
+  }
+}
+
 // Toggle for "this product tracks inventory". Default ON (backward compatible).
 // When OFF, Step 2 is skipped at submit (recipe_base_ids and ingredients sent empty).
 const tracksInventory = ref(true)
@@ -1108,7 +1213,13 @@ const formatMarginOperativoPercent = computed(() => {
 
 const canProceed = computed(() => {
   if (currentStep.value === 1) {
-    return form.value.name && form.value.category_id && form.value.price > 0
+    const base = form.value.name && form.value.category_id && form.value.price > 0
+    if (!base) return false
+    if (isResaleDirectMode.value) {
+      const w = resaleUnitWeightGr.value
+      return w != null && Number(w) > 0
+    }
+    return true
   }
   if (currentStep.value === 2) {
     // Toggle off → no recipe required, can always proceed
@@ -1254,11 +1365,24 @@ async function handleNext() {
       nameError.value = 'Ya existe un producto con ese nombre.'
       return
     }
+    if (isResaleDirectMode.value) {
+      const w = resaleUnitWeightGr.value
+      if (w == null || Number(w) <= 0) {
+        resaleWeightError.value = true
+        return
+      }
+      currentStep.value = 3
+      return
+    }
   }
   currentStep.value++
 }
 
 function previousStep() {
+  if (currentStep.value === 3 && isResaleDirectMode.value) {
+    currentStep.value = 1
+    return
+  }
   if (currentStep.value > 1) {
     currentStep.value--
   }
@@ -1289,6 +1413,49 @@ async function submitProduct() {
     }
 
     form.value.tenant_id = currentTenant.value?.id || ''
+
+    if (isResaleDirectMode.value) {
+      const weight = Number(resaleUnitWeightGr.value)
+      if (!Number.isFinite(weight) || weight <= 0) {
+        resaleWeightError.value = true
+        submitError.value = 'Indica la equivalencia en gr o ml por unidad vendida.'
+        isSubmitting.value = false
+        return
+      }
+
+      const resalePayload = {
+        name: form.value.name,
+        description: form.value.description,
+        image_url: form.value.image_url || null,
+        price: form.value.price,
+        category_id: form.value.category_id,
+        preparation_time: form.value.preparation_time,
+        is_available: form.value.is_available,
+        is_available_online: form.value.is_available_online,
+        is_available_table_qr: form.value.is_available_table_qr,
+        allow_modifiers: false,
+        tax_category: form.value.tax_category,
+        costo_percibido: form.value.costo_percibido ?? null,
+        tenant_id: form.value.tenant_id,
+        is_resale: true,
+        auto_resale_ingredient: true,
+        resale_unit_weight_gr: weight,
+        resale_unit_weight_unit: resaleUnitWeightUnit.value,
+        ingredients: [] as typeof form.value.ingredients,
+        recipe_bases: [] as typeof form.value.recipe_bases,
+        recipe_base_ids: [] as string[],
+      }
+
+      await $fetch('/api/menu/products', {
+        method: 'POST',
+        body: resalePayload,
+      })
+
+      cache.invalidateQueries()
+      toast.success('Producto de venta directa creado')
+      await router.push('/menu/productos')
+      return
+    }
 
     // When toggle is OFF, force empty recipe arrays — product won't track inventory.
     // Normalise image_url empty string → null so backend stores NULL (issue #465).
