@@ -551,7 +551,8 @@ const {
   commitBulkCategoryToItems,
   commitBulkAvailabilityToItems,
   applyBulkCatalogToSelection,
-  markBulkCategorySaved,
+  markBulkFieldsSaved,
+  saveBulkCatalogSelection,
   buildBulkCreateRequests,
   buildItemsWithStatus,
   itemsWithStatus,
@@ -837,10 +838,6 @@ function buildBulkPatchBody(): Record<string, string | boolean> {
   return body
 }
 
-function selectedProductIdsForBulkPatch() {
-  return collectProductIdsForBulkApply(selectedIds.value)
-}
-
 function bulkPatchSelectionDebug() {
   return selectedIds.value.map((ingredientId) => {
     const item = findItemByIngredientId(ingredientId)
@@ -867,6 +864,26 @@ function logBulkApplyState(phase: string, extra: Record<string, unknown> = {}) {
   })
 }
 
+async function persistBulkCatalogSelection(
+  ingredientIds: string[],
+): Promise<'saved' | 'blocked' | 'empty'> {
+  const result = await saveBulkCatalogSelection(ingredientIds)
+  if (result && 'blocked' in result && result.blocked) {
+    toast.warning(result.message, { title: 'En catálogo no guardado' })
+    return 'blocked'
+  }
+  if (result && 'empty' in result && result.empty) return 'empty'
+  if (result && result.ok + result.fail > 0) {
+    toastCatalogBulkResult(result, toast, {
+      title: 'Listo',
+      successLabel: 'Catálogo actualizado',
+      errorMessage: 'No se pudo guardar el catálogo en el servidor',
+    })
+    return 'saved'
+  }
+  return 'empty'
+}
+
 async function executeBulkCatalogApply() {
   if (!canBulkApply.value || isBulkBarSubmitting.value) return
 
@@ -880,12 +897,12 @@ async function executeBulkCatalogApply() {
 
   logBulkApplyState('pre-apply', {
     hasApiPatchPreview,
-    productIdsForPatch: hasApiPatchPreview ? selectedProductIdsForBulkPatch() : [],
     body: bodyPreview,
     selection: bulkPatchSelectionDebug(),
   })
 
   let cacheSnapshot: ReturnType<typeof optimisticPatchProductsResale> | undefined
+  let serverWriteDone = false
 
   try {
     applyBulkInCatalogToSelection()
@@ -896,12 +913,15 @@ async function executeBulkCatalogApply() {
 
     const body = buildBulkPatchBody()
     const hasApiPatch = Object.keys(body).length > 0
-    let productIds = hasApiPatch ? collectProductIdsForBulkApply(selectedIngredientIds) : []
+    let productIds: string[] = []
 
-    if (hasApiPatch && productIds.length === 0) {
-      linkProductsForBulkFromCache(selectedIngredientIds)
-      productIds = collectProductIdsForBulkApply(selectedIngredientIds)
-      logBulkApplyState('retry-resolve', { productIds, body })
+    if (hasApiPatch) {
+      productIds = await collectProductIdsForBulkApply(selectedIngredientIds)
+      if (productIds.length === 0) {
+        linkProductsForBulkFromCache(selectedIngredientIds)
+        productIds = await collectProductIdsForBulkApply(selectedIngredientIds)
+        logBulkApplyState('retry-resolve', { productIds, body })
+      }
     }
 
     if (appliedCategoryId) {
@@ -922,17 +942,21 @@ async function executeBulkCatalogApply() {
       try {
         const result = await runSequentialProductPatches(productIds, () => body)
         logBulkApplyState('patch-done', { result, productIds })
-        markBulkCategorySaved(selectedIngredientIds)
+        markBulkFieldsSaved(selectedIngredientIds)
         await refetchCatalog()
         if (appliedCategoryId) {
           commitBulkCategoryToItems(selectedIngredientIds, appliedCategoryId)
           finalizeBulkUiAfterApply(appliedCategoryId)
         }
-        clearSelection()
+        serverWriteDone = result.ok > 0
         toastCatalogBulkResult(result, toast, {
           title: 'Listo',
           errorMessage: 'No se pudo actualizar ningún producto',
         })
+        if (appliedInCatalog !== '') {
+          await persistBulkCatalogSelection(selectedIngredientIds)
+        }
+        clearSelection()
       } catch (error) {
         rollbackProductsResaleCache(cacheSnapshot)
         throw error
@@ -947,18 +971,38 @@ async function executeBulkCatalogApply() {
         logBulkApplyState('will-create', { createCount: createRequests.length, body })
         const result = await runSequentialRequests(createRequests)
         logBulkApplyState('create-done', { result })
-        markBulkCategorySaved(selectedIngredientIds)
+        markBulkFieldsSaved(selectedIngredientIds)
         await refetchCatalog()
         if (appliedCategoryId) {
           commitBulkCategoryToItems(selectedIngredientIds, appliedCategoryId)
           finalizeBulkUiAfterApply(appliedCategoryId)
         }
-        clearSelection()
+        serverWriteDone = result.ok > 0
         toastCatalogBulkResult(result, toast, {
           title: 'Listo',
           successLabel: 'Productos creados/actualizados',
           errorMessage: 'No se pudo crear ningún producto en el servidor',
         })
+        if (appliedInCatalog !== '') {
+          await persistBulkCatalogSelection(selectedIngredientIds)
+        }
+        clearSelection()
+        return
+      }
+    }
+
+    if (appliedInCatalog !== '') {
+      const catalogStatus = await persistBulkCatalogSelection(selectedIngredientIds)
+      if (catalogStatus === 'saved') {
+        if (appliedCategoryId) {
+          finalizeBulkUiAfterApply(appliedCategoryId)
+        }
+        clearSelection()
+        return
+      }
+      if (catalogStatus === 'blocked') {
+        tableRefreshKey.value += 1
+        clearSelection()
         return
       }
     }
@@ -970,26 +1014,24 @@ async function executeBulkCatalogApply() {
       tableRefreshKey.value += 1
     }
 
-    if (hasApiPatch && productIds.length === 0) {
-      toast.success(
-        'Cambios aplicados en la lista. Para guardar en servidor: precio > 0 y producto creado (Modo edición → Guardar).',
-        { title: 'Listo' },
+    if (hasApiPatch && productIds.length === 0 && !serverWriteDone) {
+      const outOfCatalog = selectedIngredientIds.filter((id) => {
+        const item = findItemByIngredientId(id)
+        return item && !isInCatalog(item)
+      }).length
+      toast.warning(
+        outOfCatalog > 0
+          ? 'Sin producto en servidor para estas filas. Activa «En catálogo», precio > 0 y categoría, o vincula el producto de reventa.'
+          : 'Sin producto vinculado en servidor. Los cambios quedaron solo en la lista (precio > 0 y en catálogo para crear producto).',
+        { title: 'No guardado en servidor' },
       )
-    } else if (appliedInCatalog !== '') {
-      toast.success(
-        'En catálogo actualizado en la selección. Usa Modo edición y Guardar para persistir productos nuevos o eliminados.',
-        { title: 'Listo' },
+    } else if (appliedAvailability !== '' && !serverWriteDone) {
+      toast.warning(
+        'Estado aplicado en la lista. Para guardar en servidor el producto debe existir (en catálogo con precio > 0).',
+        { title: 'No guardado en servidor' },
       )
-    } else if (appliedAvailability !== '') {
-      toast.success(
-        'Estado actualizado en la selección. Usa Modo edición y Guardar si el producto aún no está en el servidor.',
-        { title: 'Listo' },
-      )
-    } else {
-      toast.success(
-        'Cambios aplicados en la selección.',
-        { title: 'Listo' },
-      )
+    } else if (!serverWriteDone && appliedInCatalog === '') {
+      toast.success('Cambios aplicados en la selección.', { title: 'Listo' })
     }
 
     clearSelection()

@@ -19,7 +19,14 @@ export function logReventaCatalog(
   if (!isReventaCatalogDebugEnabled()) return
   console.log(`[reventa/${scope}]`, phase, payload ?? '')
 
-  if (scope === 'bulk' || (scope === 'catalog' && phase === 'collect-bulk-product-ids')) {
+  if (
+    scope === 'bulk'
+    || (scope === 'catalog' && (
+      phase === 'collect-bulk-product-ids'
+      || phase === 'will-save-catalog'
+      || phase === 'save-catalog-done'
+    ))
+  ) {
     const summary = {
       phase,
       productIds: payload?.productIds ?? payload?.productIdsForPatch,
