@@ -1024,15 +1024,11 @@ function setProductCreateMode(mode: ProductCreateMode) {
   productCreateMode.value = mode
   resaleWeightError.value = false
   if (mode === 'recipe') {
-    tracksInventory.value = true
     resaleUnitWeightGr.value = null
     resaleUnitWeightUnit.value = 'gr'
   }
   clampStepAfterModeChange()
 }
-
-// Con receta always tracks inventory (#874 — derived from step 1, no toggle).
-const tracksInventory = ref(true)
 
 // Form data
 const form = ref({
@@ -1236,10 +1232,9 @@ const isLoadingData = computed(() => {
   return !categoriesData.value
 })
 
-// Returns null when the product has no recipe (toggle off or empty lists).
+// Returns null when the product has no recipe lines yet (empty lists).
 // null is rendered as "—" in the UI and means "no aplica" in cost reports.
 const calculatedCost = computed<number | null>(() => {
-  if (!tracksInventory.value) return null
   if (
     selectedRecipeBaseIngredients.value.length === 0 &&
     form.value.ingredients.length === 0
@@ -1407,8 +1402,6 @@ function onStationCreated(station: { id: string; name: string }) {
 }
 
 function addIngredient() {
-  // Adding an ingredient implies the product tracks inventory.
-  tracksInventory.value = true
   form.value.ingredients.push({
     ingredient_id: '',
     ingredient_name: '',
@@ -1423,8 +1416,6 @@ function removeIngredient(index: number) {
 
 
 function addRecipeBase() {
-  // Adding a recipe base implies the product tracks inventory.
-  tracksInventory.value = true
   form.value.recipe_bases.push({ recipe_base_id: '', quantity: 1 })
 }
 
@@ -1543,18 +1534,19 @@ async function submitProduct() {
       return
     }
 
-    // When toggle is OFF, force empty recipe arrays — product won't track inventory.
+    // Con receta: always send recipe data (#874 — inventory derived from step 1 tipo).
     // Normalise image_url empty string → null so backend stores NULL (issue #465).
     // recipe_bases is the new shape (Issue #517); recipe_base_ids is kept for
     // backwards compat with any older backend / proxy that still expects it.
-    const cleanedRecipeBases = tracksInventory.value
-      ? validLinks.map(l => ({ recipe_base_id: l.recipe_base_id, quantity: Number(l.quantity) }))
-      : []
+    const cleanedRecipeBases = validLinks.map(l => ({
+      recipe_base_id: l.recipe_base_id,
+      quantity: Number(l.quantity),
+    }))
     const cleanedForm = {
       ...form.value,
       recipe_bases: cleanedRecipeBases,
       recipe_base_ids: cleanedRecipeBases.map(l => l.recipe_base_id),
-      ingredients: tracksInventory.value ? form.value.ingredients : [],
+      ingredients: form.value.ingredients,
       image_url: form.value.image_url || null,
       costo_percibido: form.value.costo_percibido ?? null,
     }
