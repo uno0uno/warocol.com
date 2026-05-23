@@ -622,9 +622,9 @@
       </form>
     </div>
 
-    <IngredientesIngredientePropioPanel
-      v-model="showCustomIngModal"
-      :initial-name="customIngModalName"
+    <MenuInlineCatalogCreateShell
+      ref="inlineCreateShell"
+      context="modifier"
       @saved="onCustomIngredientCreated"
     />
   </div>
@@ -765,14 +765,12 @@ function selectIngredient(modifier: any, ing: any) {
   loadPurchaseUnits(ing.id)
 }
 
-const showCustomIngModal = ref(false)
-const customIngModalName = ref('')
+const inlineCreateShell = ref<{ openFromSearch: (name: string) => void } | null>(null)
 const customIngModalModIndex = ref(-1)
 
 function openCustomIngModal(name: string, index: number) {
   customIngModalModIndex.value = index
-  customIngModalName.value = name
-  showCustomIngModal.value = true
+  inlineCreateShell.value?.openFromSearch(name)
 }
 
 function onCustomIngredientCreated(ingredient: any) {

@@ -1253,9 +1253,9 @@
   </div>
 
   <!-- Create Ingredient Panel -->
-  <IngredientesIngredientePropioPanel
-    v-model="showCreateModal"
-    :initial-name="createModalName"
+  <MenuInlineCatalogCreateShell
+    ref="inlineCreateShell"
+    context="purchase"
     :initial-type="selectedIngredientType"
     @saved="onIngredientCreated"
   />
@@ -1991,14 +1991,12 @@ const handleScanFileSelect = async (event: Event) => {
 }
 
 // --- Create Ingredient Modal ---
-const showCreateModal = ref(false)
-const createModalName = ref('')
+const inlineCreateShell = ref<{ openFromSearch: (name: string) => void } | null>(null)
 const createModalItemIndex = ref(-1)
 
 function openCreateModal(index: number, name: string) {
   createModalItemIndex.value = index
-  createModalName.value = name || ''
-  showCreateModal.value = true
+  inlineCreateShell.value?.openFromSearch(name || '')
 }
 
 async function onIngredientCreated(ingredient: any) {
