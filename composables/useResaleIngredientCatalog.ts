@@ -200,40 +200,61 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
   )
   const fetchError = computed(() => ingredientsError.value || productsError.value)
 
+  function buildItemStateFromIngredient(
+    ingredient: ResaleIngredientItemState['ingredient'],
+    products: NonNullable<ResaleIngredientItemState['existingProduct']>[],
+  ): ResaleIngredientItemState {
+    const existingProduct = findProductForIngredient(products, ingredient)
+
+    const price = existingProduct ? Number(existingProduct.price) : 0
+    const isAvailable = existingProduct
+      ? normalizeCatalogBoolean(existingProduct.is_available)
+      : true
+    const costoPercibido =
+      existingProduct?.costo_percibido != null && existingProduct.costo_percibido !== ''
+        ? Number(existingProduct.costo_percibido)
+        : null
+    const categoryId = existingProduct?.category_id
+      ? String(existingProduct.category_id)
+      : ''
+
+    return {
+      ingredient,
+      existingProduct,
+      price,
+      costoPercibido,
+      categoryId,
+      isAvailable,
+      isActive: !!existingProduct,
+      isNew: false,
+      toDelete: false,
+      originalPrice: price,
+      originalAvailable: isAvailable,
+      originalCostoPercibido: costoPercibido,
+      originalCategoryId: categoryId,
+    }
+  }
+
   function buildItemsWithStatus() {
     const products = (existingProducts.value || []) as NonNullable<ResaleIngredientItemState['existingProduct']>[]
+    itemsWithStatus.value = (resaleIngredients.value as ResaleIngredientItemState['ingredient'][]).map(
+      ingredient => buildItemStateFromIngredient(ingredient, products),
+    )
+  }
 
-    itemsWithStatus.value = (resaleIngredients.value as ResaleIngredientItemState['ingredient'][]).map((ingredient) => {
-      const existingProduct = findProductForIngredient(products, ingredient)
+  function appendNewIngredientsFromServer() {
+    const products = (existingProducts.value || []) as NonNullable<ResaleIngredientItemState['existingProduct']>[]
+    const known = new Set(itemsWithStatus.value.map(i => i.ingredient.id))
+    const added: ResaleIngredientItemState[] = []
 
-      const price = existingProduct ? Number(existingProduct.price) : 0
-      const isAvailable = existingProduct
-        ? normalizeCatalogBoolean(existingProduct.is_available)
-        : true
-      const costoPercibido =
-        existingProduct?.costo_percibido != null && existingProduct.costo_percibido !== ''
-          ? Number(existingProduct.costo_percibido)
-          : null
-      const categoryId = existingProduct?.category_id
-        ? String(existingProduct.category_id)
-        : ''
+    for (const ingredient of resaleIngredients.value as ResaleIngredientItemState['ingredient'][]) {
+      if (known.has(ingredient.id)) continue
+      added.push(buildItemStateFromIngredient(ingredient, products))
+    }
 
-      return {
-        ingredient,
-        existingProduct,
-        price,
-        costoPercibido,
-        categoryId,
-        isAvailable,
-        isActive: !!existingProduct,
-        isNew: false,
-        toDelete: false,
-        originalPrice: price,
-        originalAvailable: isAvailable,
-        originalCostoPercibido: costoPercibido,
-        originalCategoryId: categoryId,
-      }
-    })
+    if (added.length > 0) {
+      itemsWithStatus.value = [...itemsWithStatus.value, ...added]
+    }
   }
 
   function mergeServerIntoLocalItems() {
@@ -326,11 +347,12 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
 
   function syncItemsFromServer() {
     if (!catalogReady.value) return
-    if (hasChanges.value) {
-      mergeServerIntoLocalItems()
-    } else {
+    if (itemsWithStatus.value.length === 0) {
       buildItemsWithStatus()
+      return
     }
+    mergeServerIntoLocalItems()
+    appendNewIngredientsFromServer()
   }
 
   watch([resaleIngredients, existingProducts, catalogReady], () => {
@@ -356,7 +378,25 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     return raw != null && String(raw) !== '' ? String(raw) : null
   }
 
+  /** Precomputed map: resale ingredient id → server product id */
+  const ingredientToProductId = computed(() => {
+    const map = new Map<string, string>()
+    const products = (existingProducts.value || []) as ResaleProductRow[]
+    const ingredients = resaleIngredients.value as ResaleIngredientItemState['ingredient'][]
+
+    for (const ingredient of ingredients) {
+      const product = findProductForIngredient(products, ingredient)
+      const pid = productIdFromRow(product)
+      if (pid) map.set(normalizeEntityId(ingredient.id), pid)
+    }
+
+    return map
+  })
+
   function resolveProductIdForIngredient(ingredientId: string): string | null {
+    const mapped = ingredientToProductId.value.get(normalizeEntityId(ingredientId))
+    if (mapped) return mapped
+
     const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
     const onItem = productIdFromRow(item?.existingProduct ?? null)
     if (onItem) return onItem
@@ -380,10 +420,11 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     for (const ingredientId of ingredientIds) {
       linkExistingProductOnItem(ingredientId)
       const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
+      const fromMap = ingredientToProductId.value.get(normalizeEntityId(ingredientId)) ?? null
       const fromItem = productIdFromRow(item?.existingProduct ?? null)
       const fromResolve = resolveProductIdForIngredient(ingredientId)
-      const productId = fromItem ?? fromResolve
-      debug.push({ ingredientId, fromItem, fromResolve })
+      const productId = fromMap ?? fromItem ?? fromResolve
+      debug.push({ ingredientId, fromMap, fromItem, fromResolve, productId })
       if (!productId || seen.has(productId)) continue
       seen.add(productId)
       ids.push(productId)
@@ -408,6 +449,41 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     itemsWithStatus.value = [...itemsWithStatus.value]
   }
 
+  function commitBulkAvailabilityToItems(ingredientIds: string[], isAvailable: boolean) {
+    for (const ingredientId of ingredientIds) {
+      const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
+      if (!item) continue
+      item.isAvailable = isAvailable
+      if (item.existingProduct) {
+        item.existingProduct.is_available = isAvailable
+      }
+    }
+    itemsWithStatus.value = [...itemsWithStatus.value]
+  }
+
+  function applyBulkCatalogToSelection(ingredientIds: string[], wantInCatalog: boolean) {
+    for (const ingredientId of ingredientIds) {
+      const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
+      if (!item || isInCatalog(item) === wantInCatalog) continue
+
+      if (wantInCatalog) {
+        item.isActive = true
+        item.toDelete = false
+        if (!item.existingProduct) {
+          item.isNew = true
+          if (!item.categoryId) item.categoryId = defaultCategoryId.value
+        }
+      } else if (item.existingProduct) {
+        item.toDelete = true
+        item.isActive = false
+      } else {
+        item.isActive = false
+        item.isNew = false
+      }
+    }
+    itemsWithStatus.value = [...itemsWithStatus.value]
+  }
+
   function markBulkCategorySaved(ingredientIds: string[]) {
     for (const ingredientId of ingredientIds) {
       const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
@@ -420,24 +496,23 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
 
   function linkExistingProductOnItem(ingredientId: string) {
     const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
-    if (!item || item.existingProduct?.id) return
+    if (!item) return
+    if (productIdFromRow(item.existingProduct)) return
     const products = (existingProducts.value || []) as ResaleProductRow[]
     const product = findProductForIngredient(products, item.ingredient)
     if (product) item.existingProduct = product
   }
 
-  async function refreshProductLinksForBulk(ingredientIds: string[]) {
-    logReventaCatalog('catalog', 'bulk-refresh-products-start', {
+  /** Link from cache only — no refetch (refetch was wiping bulk catalog/availability toggles). */
+  function linkProductsForBulkFromCache(ingredientIds: string[]) {
+    logReventaCatalog('catalog', 'bulk-link-from-cache', {
       ingredientIds,
       productsInCache: (existingProducts.value as unknown[])?.length ?? 0,
     })
-    cache.invalidateQueries({ key: ['menu', 'products-resale', tenantId.value] })
-    await refetchProducts()
     for (const ingredientId of ingredientIds) {
       linkExistingProductOnItem(ingredientId)
     }
-    logReventaCatalog('catalog', 'bulk-refresh-products-done', {
-      productsInCache: (existingProducts.value as unknown[])?.length ?? 0,
+    logReventaCatalog('catalog', 'bulk-link-from-cache-done', {
       resolved: ingredientIds.map(id => ({
         ingredientId: id,
         productId: resolveProductIdForIngredient(id),
@@ -460,7 +535,7 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
       const categoryId = patchBody.category_id != null
         ? String(patchBody.category_id)
         : (item.categoryId || defaultCategoryId.value)
-      const price = Number(item.price)
+      const price = Number(item.price) || Number(item.existingProduct?.price) || 0
       if (!(price > 0 && categoryId)) continue
 
       const isAvailable = patchBody.is_available !== undefined
@@ -762,9 +837,11 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     rollbackProductsResaleCache,
     resolveProductIdForIngredient,
     linkExistingProductOnItem,
-    refreshProductLinksForBulk,
+    linkProductsForBulkFromCache,
     collectProductIdsForBulkApply,
     commitBulkCategoryToItems,
+    commitBulkAvailabilityToItems,
+    applyBulkCatalogToSelection,
     markBulkCategorySaved,
     buildBulkCreateRequests,
     buildItemsWithStatus,
