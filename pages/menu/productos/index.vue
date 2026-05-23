@@ -83,7 +83,7 @@
           @cancel="() => cancelEditOperation(clearSelection)"
         />
 
-        <HealthSemaphore :is-unlocked="true" title="Catálogo y rentabilidad de productos">
+        <HealthSemaphore :is-unlocked="true" :title="catalogTitle">
           <template #header-actions>
             <div class="flex flex-wrap items-center gap-2 justify-end">
               <button
@@ -248,7 +248,7 @@
                   <div class="flex flex-wrap items-center gap-1.5">
                     <span class="text-sm font-bold text-text-primary">{{ toTitleCase(item.name) }}</span>
                     <span
-                      v-if="!isOpenSaleShell(item)"
+                      v-if="showTipoColumn && !isOpenSaleShell(item)"
                       class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
                       :class="isResaleProduct(item)
                         ? 'bg-primary/10 text-primary'
@@ -870,6 +870,7 @@
 
 <script setup lang="ts">
 import { onUnmounted, watch } from 'vue'
+import type { ProductTypeFilter } from '@/stores/menuFilters'
 import { useQueryCache } from '@pinia/colada'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
@@ -883,9 +884,33 @@ definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
 })
 
-useHead({ title: 'Productos' })
-
+const route = useRoute()
 const router = useRouter()
+
+const QUERY_TO_PRODUCT_TYPE: Record<string, ProductTypeFilter> = {
+  menu: 'menu',
+  reventa: 'resale',
+  resale: 'resale',
+  all: 'all',
+}
+
+function productTypeFromRouteQuery(tipo: unknown): ProductTypeFilter {
+  if (typeof tipo !== 'string') return 'menu'
+  return QUERY_TO_PRODUCT_TYPE[tipo] ?? 'menu'
+}
+
+function routeQueryTipoFromProductType(filter: ProductTypeFilter): string | undefined {
+  if (filter === 'menu') return undefined
+  if (filter === 'resale') return 'reventa'
+  return 'all'
+}
+
+function routeQueryTipoFromProductType(filter: ProductTypeFilter): string | undefined {
+  if (filter === 'menu') return undefined
+  if (filter === 'resale') return 'reventa'
+  return 'all'
+}
+
 const cache = useQueryCache()
 const toast = useToast()
 
@@ -905,6 +930,52 @@ const {
   performSearch: applyCatalogSearch,
   hasActiveFilters,
 } = useMenuCatalogFilters()
+
+useHead(computed(() => ({
+  title: productTypeFilter.value === 'resale' ? 'Reventa' : 'Productos',
+})))
+
+const showTipoColumn = computed(() => productTypeFilter.value !== 'resale')
+
+const catalogTitle = computed(() =>
+  productTypeFilter.value === 'resale'
+    ? 'Catálogo comercial de productos de reventa'
+    : 'Catálogo y rentabilidad de productos',
+)
+
+let syncingProductTypeRoute = false
+
+watch(
+  () => route.query.tipo,
+  () => {
+    if (syncingProductTypeRoute) return
+    syncingProductTypeRoute = true
+    const next = productTypeFromRouteQuery(route.query.tipo)
+    if (productTypeFilter.value !== next) {
+      productTypeFilter.value = next
+      currentPage.value = 1
+    }
+    syncingProductTypeRoute = false
+  },
+  { immediate: true },
+)
+
+watch(productTypeFilter, (filter) => {
+  if (syncingProductTypeRoute || route.path !== '/menu/productos') return
+  const expectedTipo = routeQueryTipoFromProductType(filter)
+  const currentTipo = typeof route.query.tipo === 'string' ? route.query.tipo : undefined
+  if (currentTipo === expectedTipo) return
+
+  syncingProductTypeRoute = true
+  const nextQuery = { ...route.query }
+  if (expectedTipo) {
+    nextQuery.tipo = expectedTipo
+  } else {
+    delete nextQuery.tipo
+  }
+  void router.replace({ path: '/menu/productos', query: nextQuery })
+  syncingProductTypeRoute = false
+})
 
 const currentPage = ref(1)
 const itemsPerPage = ref(20)
@@ -1390,13 +1461,19 @@ const productosTableColumns = computed(() => {
       format: 'text',
       align: 'left'
     },
-    {
+  ]
+
+  if (showTipoColumn.value) {
+    cols.push({
       key: 'tipo',
       title: 'Tipo',
       sortable: false,
       format: 'custom',
       align: 'left'
-    },
+    })
+  }
+
+  cols.push(
     {
       key: 'category_name',
       title: 'Categoría',
@@ -1439,7 +1516,7 @@ const productosTableColumns = computed(() => {
       format: 'text',
       align: 'center'
     },
-  ]
+  )
 
   const tailCols: typeof cols = [
     {

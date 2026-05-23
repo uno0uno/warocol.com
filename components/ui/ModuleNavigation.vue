@@ -29,11 +29,14 @@
 </template>
 
 <script setup lang="ts">
+import type { RouteLocationNormalizedLoaded } from 'vue-router'
+
 interface NavigationItem {
   to: string
   label: string
   exact?: boolean    // exact match only — no startsWith children
   matchPath?: string // Optional custom path matching
+  isActive?: (route: RouteLocationNormalizedLoaded) => boolean
 }
 
 interface Props {
@@ -48,10 +51,14 @@ const props = withDefaults(defineProps<Props>(), {
 const route = useRoute()
 
 function getNavLinkClasses(item: NavigationItem): string[] {
-  const matchPath = item.matchPath ?? item.to
-  const isActive = item.exact
-    ? route.path === matchPath
-    : route.path === matchPath || route.path.startsWith(matchPath + '/')
+  const isActive = item.isActive
+    ? item.isActive(route)
+    : (() => {
+        const matchPath = item.matchPath ?? item.to.split('?')[0]
+        return item.exact
+          ? route.path === matchPath
+          : route.path === matchPath || route.path.startsWith(matchPath + '/')
+      })()
 
   return [
     isActive
