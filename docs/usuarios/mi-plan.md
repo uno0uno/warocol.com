@@ -21,7 +21,7 @@ Tarjeta en la parte superior con:
 
 - **Nombre del plan** (ej: Plan Profesional)
 - **Estado** — badge con color
-- **Ciclo de facturación** — Mensual o Anual
+- **Ciclo de facturación** — Anual (suscripciones nuevas). Si tu cuenta es anterior, puede mostrar **Mensual** hasta que renueves.
 - **Próxima renovación** — fecha en la que se cobrará el siguiente período
 - **Uso de escaneos del período** — barra de progreso `X de Y escaneos`. Cambia de color según el consumo:
   - **Verde** — bajo consumo
@@ -51,8 +51,7 @@ El botón principal cambia según el estado:
 #### Wizard de suscripción (2 pasos)
 
 **Paso 1 — elige el plan:**
-- Toggle **Mensual / Anual** (anual usualmente tiene descuento)
-- Tarjetas con los planes disponibles: precio, límite de escaneos, features incluidas, ahorro anual
+- Tarjetas con los planes disponibles: precio **anual**, límite de escaneos, features incluidas y ahorro vs. pago mensual
 
 **Paso 2 — datos y pago:**
 - Confirma tu email
@@ -116,8 +115,8 @@ Te sirve para entender tu patrón de consumo y decidir si necesitas un plan más
 **¿Qué pasa si se me pasa el período de gracia?**
 Tu plan queda en estado **Expirado** y pierdes acceso a las funciones de tu suscripción hasta reactivar.
 
-**¿Puedo cambiar de mensual a anual?**
-Sí, abre el wizard de suscripción y elige el ciclo anual. El cambio se aplica al confirmar el pago.
+**¿Puedo pagar mes a mes?**
+Las suscripciones nuevas son solo **anual** (un pago por 12 meses). Si ya tienes plan mensual activo, sigue vigente hasta su fecha de renovación; al reactivar o suscribir de nuevo aplica el ciclo anual.
 
 **¿Dónde veo el comprobante de un pago?**
 Abre el detalle del evento de pago — el botón **Abrir checkout** te lleva al recibo de Wompi.
