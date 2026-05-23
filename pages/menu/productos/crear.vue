@@ -613,6 +613,7 @@
             </div>
 
             <!-- Ingredientes Adicionales -->
+            <MenuIngredientProductHint class="mb-4" />
             <div class="flex justify-between items-center mb-4">
               <h4 class="text-sm font-semibold text-text-primary">Ingredientes Adicionales</h4>
               <button
@@ -962,7 +963,6 @@
 import { ref, computed, watch } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
-import { fetchResaleLinkedIngredient } from '@/composables/useResaleLinkedIngredient'
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
@@ -1362,17 +1362,15 @@ async function onCustomIngredientCreated(ingredient: any) {
   customIngModalIndex.value = -1
 }
 
+const { linkCreatedProductToRow } = useInlineCatalogProductLink()
+
 async function onInlineProductCreated(product: Record<string, unknown>) {
   const index = customIngModalIndex.value
   if (index < 0 || index >= form.value.ingredients.length) return
-
-  await cache.invalidateQueries({ key: ['menu-ingredients', currentTenant.value?.id ?? 'default'] })
-
-  const ingredient = await fetchResaleLinkedIngredient(product)
-  if (!ingredient) return
-
-  await selectIngredient(ingredient, index, product)
-  customIngModalIndex.value = -1
+  await linkCreatedProductToRow(product, async (ingredient) => {
+    await selectIngredient(ingredient, index, product)
+    customIngModalIndex.value = -1
+  })
 }
 
 // ── Category search + create flow (issue #458) ────────────────────────────

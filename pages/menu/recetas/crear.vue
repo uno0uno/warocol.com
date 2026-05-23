@@ -222,6 +222,7 @@
         <!-- Step 2: Ingredientes -->
         <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border border-border rounded-lg">
           <div class="p-4 sm:p-6">
+            <MenuIngredientProductHint class="mb-4" />
             <div class="flex justify-between items-center mb-4 sm:mb-6">
               <h3 class="text-base sm:text-lg font-semibold text-text-primary">Ingredientes de la Receta Base</h3>
               <button
@@ -515,7 +516,8 @@
     <MenuInlineCatalogCreateShell
       ref="inlineCreateShell"
       context="recipe"
-      @saved="onCustomIngredientCreated"
+      :on-ingredient-saved="onCustomIngredientCreated"
+      :on-product-saved="onInlineProductCreated"
     />
   </div>
 </template>
@@ -615,6 +617,17 @@ function onCustomIngredientCreated(ingredient: any) {
   if (index < 0 || index >= form.value.ingredients.length) return
   selectIngredient(ingredient, index)
   customIngModalIndex.value = -1
+}
+
+const { linkCreatedProductToRow } = useInlineCatalogProductLink()
+
+async function onInlineProductCreated(product: Record<string, unknown>) {
+  const index = customIngModalIndex.value
+  if (index < 0 || index >= form.value.ingredients.length) return
+  await linkCreatedProductToRow(product, async (ingredient) => {
+    selectIngredient(ingredient, index)
+    customIngModalIndex.value = -1
+  })
 }
 
 const isLoadingData = ref(false)

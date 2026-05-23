@@ -494,6 +494,7 @@
 
           <!-- Ingredientes Adicionales -->
           <div class="mt-8">
+            <MenuIngredientProductHint class="mb-4" />
             <h3 class="text-lg font-semibold text-text-primary mb-2">Ingredientes Adicionales</h3>
             <p class="text-sm text-text-secondary mb-4">
               Agrega ingredientes adicionales específicos para este producto
@@ -1021,17 +1022,15 @@ async function onCustomIngredientCreated(ingredient: any) {
   customIngModalIndex.value = -1
 }
 
+const { linkCreatedProductToRow } = useInlineCatalogProductLink()
+
 async function onInlineProductCreated(product: Record<string, unknown>) {
   const index = customIngModalIndex.value
   if (index < 0 || index >= form.value.ingredients.length) return
-
-  await cache.invalidateQueries({ key: ['menu-ingredients', currentTenant.value?.id ?? 'default'] })
-
-  const ingredient = await fetchResaleLinkedIngredient(product)
-  if (!ingredient) return
-
-  await selectIngredient(ingredient, index, product)
-  customIngModalIndex.value = -1
+  await linkCreatedProductToRow(product, async (ingredient) => {
+    await selectIngredient(ingredient, index, product)
+    customIngModalIndex.value = -1
+  })
 }
 
 // ── Category search + create flow (issue #458) ────────────────────────────

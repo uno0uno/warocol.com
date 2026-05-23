@@ -54,8 +54,14 @@
             row.parent_id ? 'pl-6' : ''
           ]"
         >
-          <span>{{ row.name }} <span class="text-text-secondary">({{ row.unit }})</span></span>
-          <span v-if="row.is_custom" class="text-xs bg-primary/10 text-primary rounded px-1 flex-shrink-0">Personalizado</span>
+          <span class="min-w-0 flex-1 flex flex-wrap items-center gap-1.5">
+            <span class="truncate">{{ row.name }} <span class="text-text-secondary">({{ row.unit }})</span></span>
+            <span
+              v-if="row.is_resale"
+              class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0"
+            >Reventa</span>
+            <span v-else-if="row.is_custom" class="text-xs bg-surface-secondary text-text-secondary rounded px-1 flex-shrink-0">Personalizado</span>
+          </span>
         </li>
       </template>
       <!-- "No results" message when search ran but found nothing -->
@@ -106,7 +112,7 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: 'Buscar ingrediente...',
+  placeholder: 'Buscar ingrediente o reventa...',
   initialValue: '',
   allowCreate: false,
   baseOnly: false,

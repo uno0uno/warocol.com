@@ -21,7 +21,7 @@
         v-if="modelValue && showChooserUi"
         role="dialog"
         aria-modal="true"
-        aria-label="Elegir tipo de ítem a crear"
+        aria-label="Elegir ingrediente o producto de menú a crear"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -47,10 +47,10 @@
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
                   <template v-if="initialName.trim()">
-                    “{{ initialName.trim() }}” no está en tu catálogo
+                    “{{ initialName.trim() }}” no aparece en la búsqueda
                   </template>
                   <template v-else>
-                    Elige si es un insumo o un producto de menú
+                    Elige ingrediente (bodega) o producto de menú (venta)
                   </template>
                 </p>
               </div>
@@ -83,9 +83,9 @@
               <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
               </svg>
-              <span class="text-sm font-bold tracking-wide">Insumo</span>
+              <span class="text-sm font-bold tracking-wide">Ingrediente</span>
               <span :class="optionDescClass('supply')">
-                Recetas y compras · gr, ml, und
+                Abastecimiento y recetas · gr, ml, und
               </span>
             </button>
 
@@ -98,9 +98,9 @@
               <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
               </svg>
-              <span class="text-sm font-bold tracking-wide">Producto</span>
+              <span class="text-sm font-bold tracking-wide">Producto de menú</span>
               <span :class="optionDescClass('menu-product')">
-                Menú y POS · precio, categoría
+                Venta en menú y POS · precio, categoría
               </span>
             </button>
           </div>
