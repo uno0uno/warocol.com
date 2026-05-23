@@ -5,7 +5,7 @@ import { useTenantReactive } from '@/composables/useTenantReactive'
 const DEFAULT_SORT = 'created_at_desc'
 
 /**
- * Persisted catalog filters for Menú → Productos / Reventa (Pinia, per tenant).
+ * Persisted catalog filters for Menú → Productos (Pinia, per tenant).
  */
 export function useMenuCatalogFilters() {
   const store = useMenuFiltersStore()
@@ -102,7 +102,7 @@ export function useMenuCatalogFilters() {
       || !!categoryFilter.value
       || !!stationFilter.value
       || sortFilter.value !== DEFAULT_SORT
-      || productTypeFilter.value !== 'menu'
+      || productTypeFilter.value !== 'all'
       || onlineOnly.value
       || qrOnly.value
       || noRecipeOnly.value
