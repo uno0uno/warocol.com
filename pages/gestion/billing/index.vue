@@ -53,7 +53,6 @@ const barLabelClass = computed(() => {
 // ── Subscribe modal (2-step wizard) ─────────────────────────────
 const showModal       = ref(false)
 const wizardStep      = ref<1 | 2>(1)
-const isAnnual        = ref(false)
 const subscribing     = ref(false)
 const subscribeError  = ref<string | null>(null)
 const plansLoading    = ref(false)
@@ -89,7 +88,7 @@ const handleSubscribe = async () => {
   if (!selectedPlan.value) return
   subscribing.value = true
   subscribeError.value = null
-  const result = await subscribe(selectedPlan.value.id, isAnnual.value ? 'annual' : 'monthly', payerEmail.value)
+  const result = await subscribe(selectedPlan.value.id, 'annual', payerEmail.value)
   subscribing.value = false
   if (!result?.checkout_url) {
     subscribeError.value = 'No se pudo iniciar el pago. Intenta de nuevo.'
@@ -214,15 +213,6 @@ const eventStyle = (type: string) => {
 }
 
 const savings = (plan: BillingPlan) => plan.price_monthly * 12 - plan.price_annual
-
-// For the toggle badge — uses the first active plan
-const toggleSavingsLabel = computed(() => {
-  const plan = activePlans.value[0]
-  if (!plan) return 'Ahorra'
-  const s = savings(plan)
-  if (s <= 0) return 'Ahorra'
-  return `Ahorra ${formatCOP(s)}`
-})
 
 onMounted(() => {
   setRefreshHandler(loadAll)
@@ -508,28 +498,9 @@ watch(() => currentTenant.value?.id, loadAll)
 
           <!-- ── STEP 1: Plan selection ── -->
           <template v-if="wizardStep === 1">
-            <!-- Billing cycle toggle -->
-            <div class="flex justify-center">
-              <div class="bg-surface-secondary border border-border rounded-xl p-1 flex gap-1">
-                <button
-                  @click="isAnnual = false"
-                  :class="['px-5 py-2 rounded-lg text-sm font-medium transition-colors min-h-[40px]',
-                    !isAnnual ? 'bg-surface text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary']"
-                >
-                  Mensual
-                </button>
-                <button
-                  @click="isAnnual = true"
-                  :class="['px-5 py-2 rounded-lg text-sm font-medium transition-colors min-h-[40px] flex items-center gap-2',
-                    isAnnual ? 'bg-surface text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary']"
-                >
-                  Anual
-                  <span class="text-xs bg-status-success-bg text-status-success-text px-1.5 py-0.5 rounded-full font-semibold">
-                    {{ toggleSavingsLabel }}
-                  </span>
-                </button>
-              </div>
-            </div>
+            <p class="text-sm text-text-secondary text-center leading-relaxed">
+              Suscripción anual · Pago único por año
+            </p>
 
             <!-- Plans loading -->
             <div v-if="plansLoading" class="flex justify-center py-8">
@@ -551,12 +522,12 @@ watch(() => currentTenant.value?.id, loadAll)
                 <div>
                   <div class="flex items-end gap-1">
                     <span class="text-3xl font-bold text-text-primary">
-                      {{ formatCOP(isAnnual ? plan.price_annual : plan.price_monthly) }}
+                      {{ formatCOP(plan.price_annual) }}
                     </span>
-                    <span class="text-sm text-text-secondary mb-1">/ {{ isAnnual ? 'año' : 'mes' }}</span>
+                    <span class="text-sm text-text-secondary mb-1">/ año</span>
                   </div>
-                  <p v-if="isAnnual && savings(plan) > 0" class="text-sm text-status-success-text font-medium mt-0.5">
-                    Ahorras {{ formatCOP(savings(plan)) }} al año
+                  <p v-if="savings(plan) > 0" class="text-sm text-status-success-text font-medium mt-0.5">
+                    Ahorras {{ formatCOP(savings(plan)) }} vs. 12 meses al precio mensual
                   </p>
                 </div>
 
@@ -610,11 +581,11 @@ watch(() => currentTenant.value?.id, loadAll)
             <div class="bg-surface-secondary rounded-xl p-4">
               <div class="flex justify-between items-center">
                 <div>
-                  <p class="text-sm font-semibold text-text-primary">{{ selectedPlan.name }} · {{ isAnnual ? 'Anual' : 'Mensual' }}</p>
-                  <p class="text-xs text-text-secondary mt-0.5">{{ isAnnual ? 'Paga 10 meses, obtén 2 gratis' : 'Sin permanencia · Cancela cuando quieras' }}</p>
+                  <p class="text-sm font-semibold text-text-primary">{{ selectedPlan.name }} · Anual</p>
+                  <p class="text-xs text-text-secondary mt-0.5">Pago único · Vigencia 12 meses</p>
                 </div>
                 <p class="text-xl font-bold text-text-primary">
-                  {{ formatCOP(isAnnual ? selectedPlan.price_annual : selectedPlan.price_monthly) }}
+                  {{ formatCOP(selectedPlan.price_annual) }}
                 </p>
               </div>
             </div>

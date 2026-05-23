@@ -129,7 +129,7 @@ export const useBilling = () => {
   // ── Mutations ─────────────────────────────────────────────────────────────────
 
   const subscribeMutation = useMutation({
-    mutation: (payload: { plan_id: string; billing_cycle: 'monthly' | 'annual'; payer_email?: string }) =>
+    mutation: (payload: { plan_id: string; billing_cycle: 'annual'; payer_email?: string }) =>
       $fetch<SubscribeResult>('/api/billing/subscribe', { method: 'POST', body: payload }),
     onSettled: () => cache.invalidateQueries({ key: ['billing'] }),
   })
@@ -193,7 +193,7 @@ export const useBilling = () => {
 
   const subscribe = async (
     plan_id: string,
-    billing_cycle: 'monthly' | 'annual',
+    billing_cycle: 'annual',
     payer_email?: string
   ): Promise<SubscribeResult | null> => {
     try {
