@@ -18,7 +18,9 @@ Cada producto puede tener ingredientes asignados de tres formas — puedes usar 
 | **Solo recetas** | La preparación es una receta ya creada que se usa en varios productos |
 | **Recetas + ingredientes adicionales** | Tienes una base común (receta) más ingredientes propios de este plato |
 
-> Un producto puede funcionar sin ninguna composición. En ese caso WARO no calculará costos ni descontará inventario — útil para productos de reventa o que no controlas por ingrediente.
+> **Con receta** en el asistente: WARO descontará inventario según la receta al vender.
+>
+> **Venta directa** (reventa): se vende por pieza (`und`); el sistema crea el insumo de stock y la equivalencia en gr o ml.
 
 **¿Cuándo crear una receta primero?** Solo cuando esa preparación se reutiliza en varios productos. Si el plato es único, agrega los ingredientes directamente al producto. → [ver guía de recetas](./recetas.md)
 
@@ -28,9 +30,18 @@ Cada producto puede tener ingredientes asignados de tres formas — puedes usar 
 
 Ve a **Menú → Productos → Nuevo producto**.
 
-El formulario tiene 3 pasos:
+El asistente tiene **4 pasos** si eliges **Con receta**, o **3 pasos** si eliges **Venta directa** (sin paso de receta).
 
-### Paso 1 — Información general
+### Paso 1 — Tipo de producto
+
+Elige cómo se prepara o vende:
+
+| Opción | Significado |
+|--------|-------------|
+| **Con receta** | Cocina · ingredientes y recetas base; cada venta descuenta inventario |
+| **Venta directa** | Reventa · pieza (`und`) con equivalencia en gr o ml |
+
+### Paso 2 — Información general
 
 | Campo | Qué poner | Obligatorio |
 |-------|-----------|:-----------:|
@@ -38,7 +49,8 @@ El formulario tiene 3 pasos:
 | Descripción | Una descripción corta del plato | No |
 | Categoría | A qué grupo pertenece (Entradas, Platos fuertes, Bebidas...) | Sí |
 | Precio de venta | Precio en pesos colombianos | Sí |
-| Tiempo de preparación | Cuántos minutos tarda en prepararse | No |
+| Tiempo de preparación | Cuántos minutos tarda (solo **Con receta**) | No |
+| Equivalencia gr/ml | Peso o volumen por unidad vendida (solo **Venta directa**) | Sí |
 | Disponible para venta | Si está activo en tu menú | — |
 | Disponible para domicilios | Si aparece en pedidos online (delivery / pickup) | — |
 | Pedido en mesa (QR) | Si aparece en el menú QR de las mesas | — |
@@ -47,23 +59,23 @@ El formulario tiene 3 pasos:
 >
 > **Pedido en mesa (QR)** es independiente de domicilios.
 
-### Paso 2 — Recetas e ingredientes
+### Paso 3 — Receta (solo Con receta)
 
-Aquí defines de qué está hecho el producto. Tienes dos opciones independientes que puedes combinar:
+Aquí defines de qué está hecho el producto:
 
-**Agregar recetas** — haz clic en **+ Agregar Receta Base** y busca una receta ya creada. Útil cuando la preparación la comparten varios productos.
+**Agregar recetas** — haz clic en **+ Agregar Receta Base** y busca una receta ya creada.
 
-**Agregar ingredientes directos** — agrega ingredientes uno a uno con su cantidad, sin necesidad de una receta. Útil cuando el plato es único.
+**Agregar ingredientes directos** — agrega ingredientes uno a uno con su cantidad.
 
-**Si el ingrediente no existe:** en el buscador aparece la opción **+ Crear ingrediente**. Haz clic para abrirlo en un panel lateral sin salir del formulario. Necesitarás: Nombre, Tipo de medida (Peso/Volumen/Pieza) y Categoría — los tres obligatorios. La categoría del ingrediente es independiente de la categoría del producto.
+**Si el ingrediente no existe:** en el buscador aparece **+ Crear ingrediente** (panel lateral sin salir del formulario).
 
 → [Ver más sobre ingredientes propios](https://warocol.com/docs/usuarios/compras#ingredientes-propios)
 
-Puedes dejar este paso completamente vacío si no necesitas control de costos ni inventario para este producto.
+Puedes dejar recetas e ingredientes vacíos al crear; podrás completarlos después, pero el costo y el descuento de inventario serán más precisos con la receta definida.
 
-### Paso 3 — Revisión y confirmación
+### Paso 4 — Revisión y confirmación
 
-Revisa el resumen: nombre, categoría y estado. Si todo está bien, haz clic en **Crear producto**.
+Revisa el resumen: nombre, categoría, receta o datos de reventa, y estado. Si todo está bien, haz clic en **Crear producto**.
 
 ---
 
@@ -78,14 +90,14 @@ Sí, siempre que tengas marcada la opción **Disponible para domicilios**. Si no
 **¿Puedo cambiar el precio después?**
 Sí. Ve a **Menú → Productos**, abre el producto y edítalo.
 
-**¿Qué pasa si no le asigno recetas ni ingredientes?**
-El producto funciona para ventas, pero WARO no podrá calcular su costo ni descontar ingredientes del inventario automáticamente.
+**¿Qué pasa si no le asigno recetas ni ingredientes (Con receta)?**
+El producto funciona para ventas, pero WARO no podrá calcular su costo ni descontar ingredientes del inventario automáticamente hasta que definas la receta.
 
 **¿Puedo asignar varias recetas al mismo producto?**
-Sí. Puedes combinar múltiples recetas y además agregar ingredientes adicionales por fuera de ellas.
+Sí. Puedes combinar múltiples recetas y además agregar ingredientes adicionales.
 
 **¿Cómo agrego modificadores (tamaños, extras, salsas)?**
 Los modificadores se crean por separado y se asignan a uno o más productos. Ver [guía de modificadores](./modificadores.md).
 
 **¿Cómo agrego una foto al producto?**
-Desde la pantalla de edición del producto, después de crearlo.
+En el paso de información general, o desde la edición del producto después de crearlo.

@@ -78,121 +78,92 @@
         </div>
       </div>
 
-      <!-- Tipo de producto (Flujo B — #845) -->
-      <div class="bg-surface border-border border rounded-lg mb-4 sm:mb-6">
-        <div class="p-4 sm:p-6">
-          <p class="text-sm font-medium text-text-primary mb-1">¿Cómo se prepara este producto?</p>
-          <p class="text-xs text-text-secondary mb-4">Elige si lleva receta en cocina o se vende tal cual (reventa).</p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" aria-label="Tipo de creación de producto">
-            <button
-              type="button"
-              :class="createModeCardClass('recipe')"
-              :aria-pressed="productCreateMode === 'recipe'"
-              @click="setProductCreateMode('recipe')"
-            >
-              <span class="text-sm font-bold">Con receta</span>
-              <span :class="createModeDescClass('recipe')">
-                Cocina · ingredientes y recetas base
-              </span>
-            </button>
-            <button
-              type="button"
-              :class="createModeCardClass('resale-direct')"
-              :aria-pressed="productCreateMode === 'resale-direct'"
-              @click="setProductCreateMode('resale-direct')"
-            >
-              <span class="text-sm font-bold">Venta directa</span>
-              <span :class="createModeDescClass('resale-direct')">
-                Reventa · pieza (und) con equivalencia gr/ml
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-
       <!-- Progress Steps -->
       <div class="bg-surface border-border border rounded-lg mb-4 sm:mb-6">
         <div class="p-3 sm:p-6">
           <div class="flex items-center justify-between">
-            <!-- Step 1 -->
-            <div class="flex items-center flex-1">
+            <template v-for="(step, index) in wizardSteps" :key="step.id">
               <div
-                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-                :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 1,
-                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 1,
-                  'border-border text-text-secondary bg-transparent': currentStep < 1
-                }"
+                class="flex items-center min-w-0"
+                :class="index < wizardSteps.length - 1 ? 'flex-1' : ''"
               >
-                <svg v-if="currentStep > 1" class="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="font-semibold text-sm sm:text-base">1</span>
+                <div
+                  class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
+                  :class="{
+                    'bg-primary text-primary-foreground border-primary': currentStep === step.id,
+                    'bg-secondary text-secondary-foreground border-secondary': currentStep > step.id,
+                    'border-border text-text-secondary bg-transparent': currentStep < step.id,
+                  }"
+                >
+                  <svg
+                    v-if="currentStep > step.id"
+                    class="w-4 h-4 sm:w-6 sm:h-6"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                  >
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                  <span v-else class="font-semibold text-sm sm:text-base">{{ index + 1 }}</span>
+                </div>
+                <div class="ml-1 sm:ml-3 flex-1 min-w-0">
+                  <p
+                    class="text-xs sm:text-sm font-medium truncate"
+                    :class="currentStep >= step.id ? 'text-text-primary' : 'text-text-secondary'"
+                  >
+                    <span class="hidden sm:inline">{{ step.label }}</span>
+                    <span class="sm:hidden">{{ step.shortLabel }}</span>
+                  </p>
+                  <p class="text-xs text-text-secondary hidden sm:block">{{ step.subtitle }}</p>
+                </div>
+                <div
+                  v-if="index < wizardSteps.length - 1"
+                  class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4"
+                  :class="currentStep > step.id ? 'bg-secondary' : 'bg-border'"
+                />
               </div>
-              <div class="ml-1 sm:ml-3 flex-1 min-w-0">
-                <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 1 ? 'text-text-primary' : 'text-text-secondary'">
-                  <span class="hidden sm:inline">Información General</span>
-                  <span class="sm:hidden">Info</span>
-                </p>
-                <p class="text-xs text-text-secondary hidden sm:block">Datos básicos del producto</p>
-              </div>
-              <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 1 ? 'bg-secondary' : 'bg-border'"></div>
-            </div>
-
-            <!-- Step 2 (solo con receta) -->
-            <div v-if="!isResaleDirectMode" class="flex items-center flex-1">
-              <div
-                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-                :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 2,
-                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 2,
-                  'border-border text-text-secondary bg-transparent': currentStep < 2
-                }"
-              >
-                <svg v-if="currentStep > 2" class="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="font-semibold text-sm sm:text-base">2</span>
-              </div>
-              <div class="ml-1 sm:ml-3 flex-1 min-w-0">
-                <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">
-                  Receta
-                </p>
-                <p class="text-xs text-text-secondary hidden sm:block">Receta e inventario</p>
-              </div>
-              <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'"></div>
-            </div>
-
-            <div v-else class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep >= 3 ? 'bg-secondary' : 'bg-border'"></div>
-
-            <!-- Step 3 / 2 (revisión) -->
-            <div class="flex items-center">
-              <div
-                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-                :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 3,
-                  'border-border text-text-secondary bg-transparent': currentStep < 3
-                }"
-              >
-                <span class="font-semibold text-sm sm:text-base">{{ isResaleDirectMode ? 2 : 3 }}</span>
-              </div>
-              <div class="ml-1 sm:ml-3 min-w-0">
-                <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">
-                  <span class="hidden sm:inline">Revisión y Confirmación</span>
-                  <span class="sm:hidden">Revisar</span>
-                </p>
-                <p class="text-xs text-text-secondary hidden sm:block">Verificar y crear</p>
-              </div>
-            </div>
+            </template>
           </div>
         </div>
       </div>
 
       <!-- Form Content -->
       <form @submit.prevent="handleNext">
-        <!-- Step 1: Información General -->
+        <!-- Step 1: Tipo de producto (Flujo B — #845, wizard #873) -->
         <Transition name="fade" mode="out-in">
-        <div v-if="currentStep === 1" key="step-1" class="bg-surface border-border border rounded-lg">
+        <div v-if="currentStep === STEP.TIPO" key="step-tipo" class="bg-surface border-border border rounded-lg">
+          <div class="p-4 sm:p-6">
+            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">¿Cómo se prepara este producto?</h3>
+            <p class="text-sm text-text-secondary mb-4 sm:mb-6">Elige si lleva receta en cocina o se vende tal cual (reventa).</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" aria-label="Tipo de creación de producto">
+              <button
+                type="button"
+                :class="createModeCardClass('recipe')"
+                :aria-pressed="productCreateMode === 'recipe'"
+                @click="setProductCreateMode('recipe')"
+              >
+                <span class="text-sm font-bold">Con receta</span>
+                <span :class="createModeDescClass('recipe')">
+                  Cocina · ingredientes y recetas base
+                </span>
+              </button>
+              <button
+                type="button"
+                :class="createModeCardClass('resale-direct')"
+                :aria-pressed="productCreateMode === 'resale-direct'"
+                @click="setProductCreateMode('resale-direct')"
+              >
+                <span class="text-sm font-bold">Venta directa</span>
+                <span :class="createModeDescClass('resale-direct')">
+                  Reventa · pieza (und) con equivalencia gr/ml
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Información General -->
+        <div v-else-if="currentStep === STEP.INFO" key="step-info" class="bg-surface border-border border rounded-lg">
           <div class="p-4 sm:p-6">
             <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 sm:mb-6">Información General</h3>
 
@@ -338,7 +309,7 @@
               </div>
 
               <!-- Costo real (preview) -->
-              <div v-if="!isResaleDirectMode && tracksInventory">
+              <div v-if="!isResaleDirectMode">
                 <label class="block text-sm font-medium text-text-secondary mb-2">
                   Costo real (sistema)
                 </label>
@@ -472,51 +443,20 @@
           </div>
         </div>
 
-        <!-- Step 2: Receta / Ingredientes -->
-        <div v-else-if="currentStep === 2 && !isResaleDirectMode" key="step-2" class="bg-surface border border-border rounded-lg">
+        <!-- Step 3: Receta / Ingredientes -->
+        <div v-else-if="currentStep === STEP.RECETA && !isResaleDirectMode" key="step-receta" class="bg-surface border border-border rounded-lg">
           <MenuCatalogInlineCreateBusyOverlay
             :busy="inlineCatalogBusy"
             :label="inlineCatalogBusyLabel"
             :hint="inlineCatalogBusyHint"
           >
           <div class="p-4 sm:p-6">
-            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4">Receta e inventario</h3>
-
-            <!-- Toggle: ¿Este producto controla inventario? -->
-            <div class="flex items-start gap-3 p-4 mb-6 bg-surface-secondary border border-border rounded-lg">
-              <button
-                type="button"
-                role="switch"
-                :aria-checked="tracksInventory"
-                @click="tracksInventory = !tracksInventory"
-                :class="[
-                  'relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors',
-                  'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-                  tracksInventory ? 'bg-primary' : 'bg-border'
-                ]"
-              >
-                <span
-                  :class="[
-                    'inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform',
-                    tracksInventory ? 'translate-x-5' : 'translate-x-0.5'
-                  ]"
-                />
-              </button>
-              <div class="flex-1">
-                <p class="text-sm font-semibold text-text-primary">Este producto controla inventario</p>
-                <p class="text-xs text-text-secondary mt-1">
-                  <template v-if="tracksInventory">
-                    Define la receta del producto. Cada venta descontará los ingredientes del inventario.
-                  </template>
-                  <template v-else>
-                    No se descontará nada del inventario al venderlo. Útil para servicios (cargo de domicilio, propina), promos o productos sin trazabilidad de costo.
-                  </template>
-                </p>
-              </div>
-            </div>
+            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">Receta</h3>
+            <p class="text-sm text-text-secondary mb-4 sm:mb-6">
+              Agrega recetas base o ingredientes. Cada venta descontará stock del inventario automáticamente.
+            </p>
 
             <!-- Recetas Base (Opcional) -->
-            <template v-if="tracksInventory">
             <div class="mb-6">
               <div class="flex justify-between items-center mb-2">
                 <label class="block text-sm font-medium text-text-primary">
@@ -704,13 +644,12 @@
                 </div>
               </div>
             </div>
-            </template>
           </div>
           </MenuCatalogInlineCreateBusyOverlay>
         </div>
 
-        <!-- Step 3: Review - Product Summary -->
-        <div v-else-if="currentStep === 3" key="step-3">
+        <!-- Step 4: Review - Product Summary -->
+        <div v-else-if="currentStep === STEP.REVISION" key="step-revision">
           <!-- Header compacto -->
           <div class="bg-surface border border-border rounded-lg px-4 sm:px-6 py-3 mb-3 flex items-center justify-between">
             <div>
@@ -876,7 +815,7 @@
         <div class="px-4 sm:px-6 md:px-8 py-3 sm:py-4">
           <div class="flex justify-between items-center gap-3">
             <button
-              v-if="currentStep > 1"
+              v-if="currentStep > STEP.TIPO"
               type="button"
               @click="previousStep"
               class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
@@ -893,7 +832,7 @@
             </NuxtLink>
 
             <button
-              v-if="currentStep < 3"
+              v-if="currentStep < lastStep"
               type="button"
               @click="handleNext"
               :disabled="!canProceed"
@@ -983,8 +922,16 @@ const hasTaxes = computed(() =>
   !!(taxConfig.value?.inc_applicable || taxConfig.value?.iva_applicable || taxConfig.value?.liquor_tax_applicable)
 )
 
+// Wizard steps (#873)
+const STEP = {
+  TIPO: 1,
+  INFO: 2,
+  RECETA: 3,
+  REVISION: 4,
+} as const
+
 // State
-const currentStep = ref(1)
+const currentStep = ref(STEP.TIPO)
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
 const nameError = ref('')
@@ -995,6 +942,60 @@ const productCreateMode = ref<ProductCreateMode>(
   route.query.modo === 'venta-directa' ? 'resale-direct' : 'recipe',
 )
 const isResaleDirectMode = computed(() => productCreateMode.value === 'resale-direct')
+
+const wizardSteps = computed(() => {
+  const steps: { id: number; label: string; shortLabel: string; subtitle: string }[] = [
+    {
+      id: STEP.TIPO,
+      label: 'Tipo de producto',
+      shortLabel: 'Tipo',
+      subtitle: 'Receta o reventa',
+    },
+    {
+      id: STEP.INFO,
+      label: 'Información General',
+      shortLabel: 'Info',
+      subtitle: 'Datos básicos del producto',
+    },
+  ]
+  if (!isResaleDirectMode.value) {
+    steps.push({
+      id: STEP.RECETA,
+      label: 'Receta',
+      shortLabel: 'Receta',
+      subtitle: 'Receta e inventario',
+    })
+  }
+  steps.push({
+    id: STEP.REVISION,
+    label: 'Revisión y Confirmación',
+    shortLabel: 'Revisar',
+    subtitle: 'Verificar y crear',
+  })
+  return steps
+})
+
+const lastStep = STEP.REVISION
+
+function nextStepId(from: number): number {
+  if (from === STEP.TIPO) return STEP.INFO
+  if (from === STEP.INFO) return isResaleDirectMode.value ? STEP.REVISION : STEP.RECETA
+  if (from === STEP.RECETA) return STEP.REVISION
+  return from
+}
+
+function prevStepId(from: number): number {
+  if (from === STEP.REVISION) return isResaleDirectMode.value ? STEP.INFO : STEP.RECETA
+  if (from === STEP.RECETA) return STEP.INFO
+  if (from === STEP.INFO) return STEP.TIPO
+  return from
+}
+
+function clampStepAfterModeChange() {
+  if (isResaleDirectMode.value && currentStep.value === STEP.RECETA) {
+    currentStep.value = STEP.INFO
+  }
+}
 
 const resaleUnitWeightGr = ref<number | null>(null)
 const resaleUnitWeightUnit = ref<'gr' | 'ml'>('gr')
@@ -1022,16 +1023,15 @@ function setProductCreateMode(mode: ProductCreateMode) {
   if (productCreateMode.value === mode) return
   productCreateMode.value = mode
   resaleWeightError.value = false
-  if (mode === 'resale-direct') {
-    if (currentStep.value === 2) currentStep.value = 1
-  } else {
+  if (mode === 'recipe') {
+    tracksInventory.value = true
     resaleUnitWeightGr.value = null
     resaleUnitWeightUnit.value = 'gr'
   }
+  clampStepAfterModeChange()
 }
 
-// Toggle for "this product tracks inventory". Default ON (backward compatible).
-// When OFF, Step 2 is skipped at submit (recipe_base_ids and ingredients sent empty).
+// Con receta always tracks inventory (#874 — derived from step 1, no toggle).
 const tracksInventory = ref(true)
 
 // Form data
@@ -1290,7 +1290,8 @@ const formatMarginOperativoPercent = computed(() => {
 })
 
 const canProceed = computed(() => {
-  if (currentStep.value === 1) {
+  if (currentStep.value === STEP.TIPO) return true
+  if (currentStep.value === STEP.INFO) {
     const base = form.value.name && form.value.category_id && form.value.price > 0
     if (!base) return false
     if (isResaleDirectMode.value) {
@@ -1299,11 +1300,9 @@ const canProceed = computed(() => {
     }
     return true
   }
-  if (currentStep.value === 2) {
-    // Toggle off → no recipe required, can always proceed
-    if (!tracksInventory.value) return true
-    return form.value.ingredients.length === 0 ||
-           form.value.ingredients.every(i => i.ingredient_id && i.quantity > 0)
+  if (currentStep.value === STEP.RECETA) {
+    return form.value.ingredients.length === 0
+      || form.value.ingredients.every(i => i.ingredient_id && i.quantity > 0)
   }
   return true
 })
@@ -1451,8 +1450,8 @@ function onRecipeBaseChange() {
 }
 
 async function handleNext() {
-  if (!canProceed.value || currentStep.value >= 3) return
-  if (currentStep.value === 1) {
+  if (!canProceed.value || currentStep.value >= lastStep) return
+  if (currentStep.value === STEP.INFO) {
     const res = await $fetch<{ available: boolean }>(`/api/menu/check-name?entity=products&name=${encodeURIComponent(form.value.name.trim())}`)
     if (!res.available) {
       nameError.value = 'Ya existe un producto con ese nombre.'
@@ -1464,20 +1463,14 @@ async function handleNext() {
         resaleWeightError.value = true
         return
       }
-      currentStep.value = 3
-      return
     }
   }
-  currentStep.value++
+  currentStep.value = nextStepId(currentStep.value)
 }
 
 function previousStep() {
-  if (currentStep.value === 3 && isResaleDirectMode.value) {
-    currentStep.value = 1
-    return
-  }
-  if (currentStep.value > 1) {
-    currentStep.value--
+  if (currentStep.value > STEP.TIPO) {
+    currentStep.value = prevStepId(currentStep.value)
   }
 }
 
