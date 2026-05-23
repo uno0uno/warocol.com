@@ -246,15 +246,14 @@
                 <template v-else>
                   <div class="flex flex-wrap items-center gap-1.5">
                     <span class="text-sm font-bold text-text-primary">{{ toTitleCase(item.name) }}</span>
-                    <span
+                    <UiStatusBadge
                       v-if="!isOpenSaleShell(item)"
-                      class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                      :class="isResaleProduct(item)
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-surface-secondary text-text-secondary'"
-                    >
-                      {{ productTipoLabel(item) }}
-                    </span>
+                      :value="productTipoLabel(item)"
+                      format="text"
+                      :variant="isResaleProduct(item) ? 'primary' : 'secondary'"
+                      size="sm"
+                      class="flex-shrink-0"
+                    />
                   </div>
                   <UiStatusBadge
                     v-if="isOpenSaleShell(item)"
@@ -365,15 +364,13 @@
           </template>
 
           <template #cell-tipo="{ item }">
-            <span
+            <UiStatusBadge
               v-if="!isOpenSaleShell(item)"
-              class="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
-              :class="isResaleProduct(item)
-                ? 'bg-primary/10 text-primary'
-                : 'bg-surface-secondary text-text-secondary'"
-            >
-              {{ productTipoLabel(item) }}
-            </span>
+              :value="productTipoLabel(item)"
+              format="text"
+              :variant="isResaleProduct(item) ? 'primary' : 'secondary'"
+              size="sm"
+            />
             <UiStatusBadge
               v-else
               value="Sistema"
@@ -855,6 +852,9 @@ const catalogTitle = computed(() => {
 
 let syncingProductTypeRoute = false
 
+const currentPage = ref(1)
+const itemsPerPage = ref(20)
+
 watch(
   () => route.query.tipo,
   () => {
@@ -886,9 +886,6 @@ watch(productTypeFilter, (filter) => {
   void router.replace({ path: '/menu/productos', query: nextQuery })
   syncingProductTypeRoute = false
 })
-
-const currentPage = ref(1)
-const itemsPerPage = ref(20)
 
 const onCatalogSearch = () => applyCatalogSearch(() => { currentPage.value = 1 })
 const onCatalogClear = () => { currentPage.value = 1 }

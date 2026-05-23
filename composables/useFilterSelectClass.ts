@@ -19,13 +19,30 @@ export function filterSelectClassFor(
   ].join(' ')
 }
 
-/** Toggle chip in filter bars (Online, Sin receta, …). */
-export function filterChipClass(active: boolean, compact = false): string {
-  const sizing = compact ? 'h-10 px-2.5' : 'min-h-[44px] px-3'
-  return [
-    `flex items-center gap-2 cursor-pointer ${sizing} rounded-lg border-2 transition-colors flex-shrink-0`,
-    active
-      ? 'border-primary bg-primary/5 text-primary'
-      : 'border-border bg-background text-text-secondary hover:text-text-primary hover:border-primary/40',
-  ].join(' ')
+/** Pill chip matching UiStatusBadge size="sm" (e.g. Disponible). */
+export function filterPillClass(
+  active: boolean,
+  tone: 'primary' | 'secondary' | 'success' = 'primary',
+): string {
+  const base =
+    'inline-flex items-center font-semibold px-2 py-0.5 text-xs rounded-md transition-colors flex-shrink-0 border-0'
+  if (!active) {
+    return `${base} bg-secondary text-secondary-foreground`
+  }
+  const activeTone = {
+    primary: 'bg-primary/10 text-primary',
+    secondary: 'bg-secondary text-secondary-foreground',
+    success: 'bg-status-success-bg text-status-success-text',
+  }[tone]
+  return `${base} ${activeTone} cursor-pointer`
+}
+
+/** Toggle chip in filter bars. Active = success (like Disponible). */
+export function filterChipClass(active: boolean, _compact = false): string {
+  return `flex items-center cursor-pointer min-h-[44px] ${filterPillClass(active, active ? 'success' : 'secondary')}`
+}
+
+/** Product type chips (Todos / Menú / Reventa). Active = primary. */
+export function productTypeChipClass(active: boolean): string {
+  return `inline-flex items-center cursor-pointer min-h-[44px] ${filterPillClass(active, 'primary')}`
 }

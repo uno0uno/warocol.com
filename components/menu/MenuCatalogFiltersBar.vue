@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { filterChipClass } from '@/composables/useFilterSelectClass'
+import { filterChipClass, productTypeChipClass } from '@/composables/useFilterSelectClass'
 import { useMenuCatalogFilters } from '@/composables/useMenuCatalogFilters'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import type { ProductTypeFilter } from '@/stores/menuFilters'
@@ -81,8 +81,8 @@ const productTypeOptions: { label: string; value: ProductTypeFilter }[] = [
   { label: 'Reventa', value: 'resale' },
 ]
 
-function productTypeChipClass(value: ProductTypeFilter): string {
-  return filterChipClass(productTypeFilter.value === value, true)
+function productTypeChipClassFor(value: ProductTypeFilter): string {
+  return productTypeChipClass(productTypeFilter.value === value)
 }
 
 const { data: categoriesData } = useQuery({
@@ -152,11 +152,11 @@ watch(
           v-for="opt in productTypeOptions"
           :key="opt.value"
           type="button"
-          :class="productTypeChipClass(opt.value)"
+          :class="productTypeChipClassFor(opt.value)"
           :aria-pressed="productTypeFilter === opt.value"
           @click="productTypeFilter = opt.value"
         >
-          <span class="text-sm font-semibold">{{ opt.label }}</span>
+          {{ opt.label }}
         </button>
       </div>
 
@@ -191,29 +191,29 @@ watch(
         hide-placeholder
       />
 
-      <label v-if="showOnline" :class="filterChipClass(onlineOnly, true)">
+      <label v-if="showOnline" :class="filterChipClass(onlineOnly)">
         <input v-model="onlineOnly" type="checkbox" class="sr-only" aria-label="Solo visibles en domicilios" />
-        <span class="text-sm font-semibold">Domicilios</span>
+        <span class="font-semibold">Domicilios</span>
       </label>
 
-      <label v-if="showQr" :class="filterChipClass(qrOnly, true)">
+      <label v-if="showQr" :class="filterChipClass(qrOnly)">
         <input v-model="qrOnly" type="checkbox" class="sr-only" aria-label="Solo visibles en QR mesa" />
-        <span class="text-sm font-semibold">QR mesa</span>
+        <span class="font-semibold">QR mesa</span>
       </label>
 
-      <label v-if="showNoRecipe" :class="filterChipClass(noRecipeOnly, true)">
+      <label v-if="showNoRecipe" :class="filterChipClass(noRecipeOnly)">
         <input v-model="noRecipeOnly" type="checkbox" class="sr-only" aria-label="Solo productos sin receta" />
-        <span class="text-sm font-semibold">Sin receta</span>
+        <span class="font-semibold">Sin receta</span>
       </label>
 
-      <label :class="filterChipClass(marginNegativeOnly, true)">
+      <label :class="filterChipClass(marginNegativeOnly)">
         <input v-model="marginNegativeOnly" type="checkbox" class="sr-only" aria-label="Solo margen negativo" />
-        <span class="text-sm font-semibold">Margen negativo</span>
+        <span class="font-semibold">Margen negativo</span>
       </label>
 
-      <label v-if="showCostDrift" :class="filterChipClass(costDriftOnly, true)">
+      <label v-if="showCostDrift" :class="filterChipClass(costDriftOnly)">
         <input v-model="costDriftOnly" type="checkbox" class="sr-only" aria-label="Solo desfase de costo" />
-        <span class="text-sm font-semibold">Desfase costo</span>
+        <span class="font-semibold">Desfase costo</span>
       </label>
     </template>
   </UiAdvancedFiltersBar>
