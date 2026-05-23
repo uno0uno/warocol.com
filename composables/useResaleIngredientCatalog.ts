@@ -84,27 +84,52 @@ function normalizeResaleName(name: string): string {
     .trim()
 }
 
-/** Match resale product by recipe ingredient_id, then by normalized name. */
+function recipeIngredientIdFromRow(ing: {
+  ingredient_id?: string
+  ingredientId?: string
+  id?: string
+}): string | null {
+  const raw = ing.ingredient_id ?? ing.ingredientId ?? ing.id
+  return raw != null && String(raw) !== '' ? normalizeEntityId(raw) : null
+}
+
+function namesLooselyMatch(ingredientName: string, productName: string): boolean {
+  const a = normalizeResaleName(ingredientName)
+  const b = normalizeResaleName(productName)
+  if (!a || !b) return false
+  if (a === b) return true
+  if (a.length >= 4 && b.includes(a)) return true
+  if (b.length >= 4 && a.includes(b)) return true
+  const tokens = a.split(' ').filter(t => t.length > 2)
+  return tokens.length > 0 && tokens.every(t => b.includes(t))
+}
+
+/** Match resale product by recipe ingredient_id, then by normalized / loose name. */
 function findProductForIngredient(
   products: ResaleProductRow[],
   ingredient: { id: string, name: string },
 ): ResaleProductRow | null {
   const ingId = normalizeEntityId(ingredient.id)
-  const ingName = normalizeResaleName(ingredient.name)
+  const ingName = ingredient.name ?? ''
   let nameFallback: ResaleProductRow | null = null
+  let looseFallback: ResaleProductRow | null = null
 
   for (const p of products) {
     if (!p?.id) continue
-    if (p.ingredients?.some(ing => normalizeEntityId(ing.ingredient_id) === ingId)) {
+    if (p.ingredients?.some(ing => recipeIngredientIdFromRow(ing) === ingId)) {
       return p
     }
-    const productName = normalizeResaleName(p.name ?? '')
-    if (ingName && productName && productName === ingName && !nameFallback) {
-      nameFallback = p
+    const productName = p.name ?? ''
+    if (ingName && namesLooselyMatch(ingName, productName)) {
+      if (normalizeResaleName(ingName) === normalizeResaleName(productName)) {
+        nameFallback = p
+      } else if (!looseFallback) {
+        looseFallback = p
+      }
     }
   }
 
-  return nameFallback
+  return nameFallback ?? looseFallback
 }
 
 /** GET /menu/products caps limit at 250 — paginate to load full resale mapping. */
@@ -205,8 +230,9 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     products: NonNullable<ResaleIngredientItemState['existingProduct']>[],
   ): ResaleIngredientItemState {
     const existingProduct = findProductForIngredient(products, ingredient)
+    const listPrice = Number((ingredient as { price?: number }).price) || 0
 
-    const price = existingProduct ? Number(existingProduct.price) : 0
+    const price = existingProduct ? Number(existingProduct.price) : (listPrice > 0 ? listPrice : 0)
     const isAvailable = existingProduct
       ? normalizeCatalogBoolean(existingProduct.is_available)
       : true
@@ -412,10 +438,64 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     return productIdFromRow(product)
   }
 
-  function collectProductIdsForBulkApply(ingredientIds: string[]) {
+  function mergeProductIntoResaleCache(product: ResaleProductRow) {
+    const pid = productIdFromRow(product)
+    if (!pid) return
+    const key = productsResaleCacheKey()
+    const snapshot = cache.getQueryData<ProductsResaleCache>(key)
+    if (!snapshot?.data?.some(p => productIdFromRow(p) === pid)) {
+      cache.setQueryData(key, {
+        data: [...(snapshot?.data ?? []), product],
+        total: (snapshot?.total ?? snapshot?.data?.length ?? 0) + 1,
+      })
+    }
+    mergeServerIntoLocalItems()
+  }
+
+  async function searchProductIdForIngredient(
+    ingredient: ResaleIngredientItemState['ingredient'],
+  ): Promise<string | null> {
+    const name = (ingredient.name ?? '').trim()
+    if (!name) return null
+
+    try {
+      const res = await $fetch<{ data?: ResaleProductRow[], total?: number }>(
+        '/api/menu/products',
+        {
+          query: {
+            search: name,
+            is_resale: 'true',
+            include_ingredients: 'true',
+            limit: 10,
+          },
+        },
+      )
+      const chunk = res?.data ?? []
+      const matched = findProductForIngredient(chunk, ingredient)
+      const pid = productIdFromRow(matched)
+      if (pid && matched) {
+        mergeProductIntoResaleCache(matched)
+        linkExistingProductOnItem(ingredient.id)
+        return pid
+      }
+    } catch {
+      return null
+    }
+    return null
+  }
+
+  async function collectProductIdsForBulkApply(ingredientIds: string[]) {
     const seen = new Set<string>()
     const ids: string[] = []
-    const debug: { ingredientId: string, fromItem: string | null, fromResolve: string | null }[] = []
+    const debug: {
+      ingredientId: string
+      ingredientName: string | null
+      fromMap: string | null
+      fromItem: string | null
+      fromResolve: string | null
+      fromSearch: string | null
+      productId: string | null
+    }[] = []
 
     for (const ingredientId of ingredientIds) {
       linkExistingProductOnItem(ingredientId)
@@ -423,14 +503,39 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
       const fromMap = ingredientToProductId.value.get(normalizeEntityId(ingredientId)) ?? null
       const fromItem = productIdFromRow(item?.existingProduct ?? null)
       const fromResolve = resolveProductIdForIngredient(ingredientId)
-      const productId = fromMap ?? fromItem ?? fromResolve
-      debug.push({ ingredientId, fromMap, fromItem, fromResolve, productId })
+      let productId = fromMap ?? fromItem ?? fromResolve
+      let fromSearch: string | null = null
+
+      if (!productId && item?.ingredient) {
+        fromSearch = await searchProductIdForIngredient(item.ingredient)
+        productId = fromSearch
+      }
+
+      debug.push({
+        ingredientId,
+        ingredientName: item?.ingredient.name ?? null,
+        fromMap,
+        fromItem,
+        fromResolve,
+        fromSearch,
+        productId,
+      })
       if (!productId || seen.has(productId)) continue
       seen.add(productId)
       ids.push(productId)
     }
 
-    logReventaCatalog('catalog', 'collect-bulk-product-ids', { ids, debug })
+    const products = (existingProducts.value || []) as ResaleProductRow[]
+    logReventaCatalog('catalog', 'collect-bulk-product-ids', {
+      ids,
+      debug,
+      mapSize: ingredientToProductId.value.size,
+      productsInCache: products.map(p => ({
+        id: productIdFromRow(p),
+        name: p.name,
+        recipeIds: (p.ingredients ?? []).map(ing => recipeIngredientIdFromRow(ing)).filter(Boolean),
+      })),
+    })
     return ids
   }
 
@@ -484,14 +589,32 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     itemsWithStatus.value = [...itemsWithStatus.value]
   }
 
-  function markBulkCategorySaved(ingredientIds: string[]) {
+  function markBulkFieldsSaved(ingredientIds: string[]) {
     for (const ingredientId of ingredientIds) {
       const item = itemsWithStatus.value.find(i => i.ingredient.id === ingredientId)
       if (!item) continue
       item.originalCategoryId = item.categoryId
       item.originalAvailable = item.isAvailable
       item.originalPrice = item.price
+      item.isNew = false
+      item.toDelete = false
     }
+    itemsWithStatus.value = [...itemsWithStatus.value]
+  }
+
+  /** @deprecated alias — use markBulkFieldsSaved */
+  const markBulkCategorySaved = markBulkFieldsSaved
+
+  function selectionNeedsPriceForCreate(ingredientIds: string[]): string[] {
+    const names: string[] = []
+    const idSet = new Set(ingredientIds)
+    for (const item of itemsWithStatus.value) {
+      if (!idSet.has(item.ingredient.id) || !item.isNew || !isInCatalog(item)) continue
+      if (!(Number(item.price) > 0) || !item.categoryId) {
+        names.push(item.ingredient.name)
+      }
+    }
+    return names
   }
 
   function linkExistingProductOnItem(ingredientId: string) {
@@ -535,7 +658,8 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
       const categoryId = patchBody.category_id != null
         ? String(patchBody.category_id)
         : (item.categoryId || defaultCategoryId.value)
-      const price = Number(item.price) || Number(item.existingProduct?.price) || 0
+      const listPrice = Number((item.ingredient as { price?: number }).price) || 0
+      const price = Number(item.price) || Number(item.existingProduct?.price) || listPrice || 0
       if (!(price > 0 && categoryId)) continue
 
       const isAvailable = patchBody.is_available !== undefined
@@ -700,12 +824,16 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     buildItemsWithStatus()
   }
 
-  function buildResaleSaveRequests(): {
+  function buildResaleSaveRequests(ingredientIds?: string[]): {
     creates: MenuSequentialRequest[]
     updates: MenuSequentialRequest[]
     deletes: MenuSequentialRequest[]
   } {
-    const creates: MenuSequentialRequest[] = toCreate.value.map(item => ({
+    const idSet = ingredientIds ? new Set(ingredientIds) : null
+    const inScope = (item: ResaleIngredientItemState) =>
+      !idSet || idSet.has(item.ingredient.id)
+
+    const creates: MenuSequentialRequest[] = toCreate.value.filter(inScope).map(item => ({
       key: `create-${item.ingredient.id}`,
       run: () =>
         $fetch('/api/menu/products', {
@@ -728,7 +856,7 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
         }).then(() => undefined),
     }))
 
-    const updates: MenuSequentialRequest[] = toUpdate.value.map((item) => {
+    const updates: MenuSequentialRequest[] = toUpdate.value.filter(inScope).map((item) => {
       const existingRecipe = item.existingProduct?.ingredients?.[0]
       const body: Record<string, unknown> = {
         price: item.price,
@@ -749,7 +877,7 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
       }
     })
 
-    const deletes: MenuSequentialRequest[] = toDeleteList.value.map(item => ({
+    const deletes: MenuSequentialRequest[] = toDeleteList.value.filter(inScope).map(item => ({
       key: `delete-${item.existingProduct!.id}`,
       run: () =>
         $fetch(`/api/menu/products/${item.existingProduct!.id}`, {
@@ -758,6 +886,49 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     }))
 
     return { creates, updates, deletes }
+  }
+
+  async function saveBulkCatalogSelection(ingredientIds: string[]) {
+    const blockedNames = selectionNeedsPriceForCreate(ingredientIds)
+    if (blockedNames.length > 0) {
+      return {
+        ok: 0,
+        fail: 0,
+        blocked: true as const,
+        message: `Precio > 0 y categoría requeridos: ${blockedNames.slice(0, 3).join(', ')}${blockedNames.length > 3 ? '…' : ''}`,
+      }
+    }
+
+    const { creates, updates, deletes } = buildResaleSaveRequests(ingredientIds)
+    const total = creates.length + updates.length + deletes.length
+    if (total === 0) {
+      return { ok: 0, fail: 0, empty: true as const }
+    }
+
+    logReventaCatalog('catalog', 'will-save-catalog', {
+      ingredientIds,
+      createCount: creates.length,
+      updateCount: updates.length,
+      deleteCount: deletes.length,
+    })
+
+    const createResult = creates.length ? await runConcurrentRequests(creates) : { ok: 0, fail: 0 }
+    const updateResult = updates.length ? await runConcurrentRequests(updates) : { ok: 0, fail: 0 }
+    const deleteResult = deletes.length ? await runConcurrentRequests(deletes) : { ok: 0, fail: 0 }
+
+    logReventaCatalog('catalog', 'save-catalog-done', {
+      create: createResult,
+      update: updateResult,
+      delete: deleteResult,
+    })
+
+    markBulkFieldsSaved(ingredientIds)
+    await refetchCatalog()
+
+    return {
+      ok: createResult.ok + updateResult.ok + deleteResult.ok,
+      fail: createResult.fail + updateResult.fail + deleteResult.fail,
+    }
   }
 
   async function refetchCatalog() {
@@ -843,6 +1014,9 @@ export function useResaleIngredientCatalog(currentTenant: Ref<{ id: string } | n
     commitBulkAvailabilityToItems,
     applyBulkCatalogToSelection,
     markBulkCategorySaved,
+    markBulkFieldsSaved,
+    saveBulkCatalogSelection,
+    selectionNeedsPriceForCreate,
     buildBulkCreateRequests,
     buildItemsWithStatus,
   }
