@@ -103,6 +103,27 @@
             <p v-if="errors.price" class="text-xs text-destructive">{{ errors.price }}</p>
           </div>
 
+          <div class="flex flex-col gap-1.5">
+            <label for="product-quick-costo" class="text-sm font-medium text-text-primary">
+              Mi costo del plato
+            </label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+              <input
+                id="product-quick-costo"
+                v-model.number="form.costo_percibido"
+                type="number"
+                min="0"
+                step="100"
+                placeholder="Opcional"
+                class="h-10 w-full rounded-lg border-2 border-border bg-background pl-8 pr-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+              />
+            </div>
+            <p class="text-xs text-text-tertiary">
+              Costo operativo que tú defines; también se usa al crear el insumo de stock.
+            </p>
+          </div>
+
           <label class="flex items-center gap-3 cursor-pointer">
             <input
               v-model="form.is_available"
@@ -195,6 +216,7 @@ const form = ref({
   name: '',
   category_id: '',
   price: 0,
+  costo_percibido: null as number | null,
   is_available: true,
 })
 
@@ -203,6 +225,7 @@ function resetForm() {
     name: props.initialName.trim(),
     category_id: '',
     price: 0,
+    costo_percibido: null,
     is_available: true,
   }
   selectedCategoryName.value = ''
@@ -290,7 +313,7 @@ async function submit() {
       is_available_table_qr: form.value.is_available,
       allow_modifiers: false,
       tax_category: 'standard' as const,
-      costo_percibido: null,
+      costo_percibido: form.value.costo_percibido ?? null,
       tenant_id: currentTenant.value?.id || '',
       is_resale: true,
       auto_resale_ingredient: true,
