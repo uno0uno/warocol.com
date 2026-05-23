@@ -41,6 +41,7 @@
 
         <MenuCatalogFiltersBar
           show-station
+          show-product-type-filter
           :show-qr="showTableQrColumn"
           :show-online="showOnlineControls"
           @search="onCatalogSearch"
@@ -244,7 +245,18 @@
                   </div>
                 </template>
                 <template v-else>
-                  <span class="text-sm font-bold text-text-primary">{{ toTitleCase(item.name) }}</span>
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="text-sm font-bold text-text-primary">{{ toTitleCase(item.name) }}</span>
+                    <span
+                      v-if="!isOpenSaleShell(item)"
+                      class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                      :class="isResaleProduct(item)
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-surface-secondary text-text-secondary'"
+                    >
+                      {{ productTipoLabel(item) }}
+                    </span>
+                  </div>
                   <UiStatusBadge
                     v-if="isOpenSaleShell(item)"
                     value="POS"
@@ -358,6 +370,26 @@
                 />
               </template>
             </div>
+          </template>
+
+          <template #cell-tipo="{ item }">
+            <span
+              v-if="!isOpenSaleShell(item)"
+              class="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+              :class="isResaleProduct(item)
+                ? 'bg-primary/10 text-primary'
+                : 'bg-surface-secondary text-text-secondary'"
+            >
+              {{ productTipoLabel(item) }}
+            </span>
+            <UiStatusBadge
+              v-else
+              value="Sistema"
+              title="Producto contenedor de venta libre en el POS"
+              format="text"
+              variant="secondary"
+              size="sm"
+            />
           </template>
 
           <template #cell-category_name="{ value, item }">
@@ -869,6 +901,7 @@ const {
   qrOnly,
   noRecipeOnly,
   marginNegativeOnly,
+  productTypeFilter,
   performSearch: applyCatalogSearch,
   hasActiveFilters,
 } = useMenuCatalogFilters()
@@ -1015,6 +1048,7 @@ const { data: productsData, error: fetchError, asyncStatus: queryAsyncStatus, re
     qrOnly: qrOnly.value,
     noRecipeOnly: noRecipeOnly.value,
     marginNegativeOnly: marginNegativeOnly.value,
+    productType: productTypeFilter.value,
     sort: sortFilter.value,
   }],
   query: () => {
@@ -1022,6 +1056,13 @@ const { data: productsData, error: fetchError, asyncStatus: queryAsyncStatus, re
       page: currentPage.value,
       limit: itemsPerPage.value,
       sort: sortFilter.value,
+    }
+    if (productTypeFilter.value === 'menu') {
+      params.is_resale = false
+    } else if (productTypeFilter.value === 'resale') {
+      params.is_resale = true
+    } else if (productTypeFilter.value === 'all') {
+      params.include_all_types = true
     }
     if (appliedSearch.value) {
       params.search = appliedSearch.value
@@ -1065,6 +1106,11 @@ const products = computed(() => productsData.value?.data || [])
 
 /** Shell product for POS venta libre (#805) — not a normal catalog item. */
 const isOpenSaleShell = (row: { open_priced?: boolean }) => !!row.open_priced
+
+const isResaleProduct = (row: { is_resale?: boolean }) => !!row.is_resale
+
+const productTipoLabel = (row: { is_resale?: boolean }) =>
+  isResaleProduct(row) ? 'Reventa' : 'Menú'
 
 const isSubmitting = ref(false)
 
@@ -1162,6 +1208,7 @@ watch(
     qrOnly,
     noRecipeOnly,
     marginNegativeOnly,
+    productTypeFilter,
     appliedSearch,
   ],
   clearSelection,
@@ -1189,6 +1236,7 @@ async function executeBulkCatalogApply() {
       () => body,
     )
     cache.invalidateQueries({ key: ['menu', 'products'] })
+    cache.invalidateQueries({ key: ['menu', 'products-resale'] })
     await refetch()
     clearSelection()
     toastCatalogBulkResult(result, toast, {
@@ -1225,6 +1273,7 @@ async function saveChanges() {
     })
 
     cache.invalidateQueries({ key: ['menu', 'products'] })
+    cache.invalidateQueries({ key: ['menu', 'products-resale'] })
     await refetch()
     discardAllDrafts()
     clearSelection()
@@ -1339,6 +1388,13 @@ const productosTableColumns = computed(() => {
       title: 'Producto',
       sortable: false,
       format: 'text',
+      align: 'left'
+    },
+    {
+      key: 'tipo',
+      title: 'Tipo',
+      sortable: false,
+      format: 'custom',
       align: 'left'
     },
     {

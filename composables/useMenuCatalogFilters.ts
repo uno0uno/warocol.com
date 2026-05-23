@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { useMenuFiltersStore } from '@/stores/menuFilters'
+import { useMenuFiltersStore, type ProductTypeFilter } from '@/stores/menuFilters'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 const DEFAULT_SORT = 'created_at_desc'
@@ -47,6 +47,11 @@ export function useMenuCatalogFilters() {
   const sortFilter = computed({
     get: () => f.value.sortFilter,
     set: (v: string) => { f.value.sortFilter = v },
+  })
+
+  const productTypeFilter = computed({
+    get: () => f.value.productTypeFilter,
+    set: (v: ProductTypeFilter) => { f.value.productTypeFilter = v },
   })
 
   const onlineOnly = computed({
@@ -97,6 +102,7 @@ export function useMenuCatalogFilters() {
       || !!categoryFilter.value
       || !!stationFilter.value
       || sortFilter.value !== DEFAULT_SORT
+      || productTypeFilter.value !== 'menu'
       || onlineOnly.value
       || qrOnly.value
       || noRecipeOnly.value
@@ -112,6 +118,7 @@ export function useMenuCatalogFilters() {
     statusFilter,
     stationFilter,
     sortFilter,
+    productTypeFilter,
     onlineOnly,
     qrOnly,
     noRecipeOnly,
