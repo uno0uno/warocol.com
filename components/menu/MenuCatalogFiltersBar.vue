@@ -82,7 +82,7 @@ const productTypeOptions: { label: string; value: ProductTypeFilter }[] = [
 ]
 
 function productTypeChipClass(value: ProductTypeFilter): string {
-  return filterChipClass(productTypeFilter.value === value)
+  return filterChipClass(productTypeFilter.value === value, true)
 }
 
 const { data: categoriesData } = useQuery({
@@ -146,7 +146,7 @@ watch(
         v-if="showProductTypeFilter"
         role="group"
         aria-label="Tipo de producto"
-        class="flex flex-wrap items-center gap-2 flex-shrink-0"
+        class="flex flex-wrap items-center gap-2"
       >
         <button
           v-for="opt in productTypeOptions"
@@ -191,27 +191,27 @@ watch(
         hide-placeholder
       />
 
-      <label v-if="showOnline" :class="filterChipClass(onlineOnly)">
+      <label v-if="showOnline" :class="filterChipClass(onlineOnly, true)">
         <input v-model="onlineOnly" type="checkbox" class="sr-only" aria-label="Solo visibles en domicilios" />
         <span class="text-sm font-semibold">Domicilios</span>
       </label>
 
-      <label v-if="showQr" :class="filterChipClass(qrOnly)">
+      <label v-if="showQr" :class="filterChipClass(qrOnly, true)">
         <input v-model="qrOnly" type="checkbox" class="sr-only" aria-label="Solo visibles en QR mesa" />
         <span class="text-sm font-semibold">QR mesa</span>
       </label>
 
-      <label v-if="showNoRecipe" :class="filterChipClass(noRecipeOnly)">
+      <label v-if="showNoRecipe" :class="filterChipClass(noRecipeOnly, true)">
         <input v-model="noRecipeOnly" type="checkbox" class="sr-only" aria-label="Solo productos sin receta" />
         <span class="text-sm font-semibold">Sin receta</span>
       </label>
 
-      <label :class="filterChipClass(marginNegativeOnly)">
+      <label :class="filterChipClass(marginNegativeOnly, true)">
         <input v-model="marginNegativeOnly" type="checkbox" class="sr-only" aria-label="Solo margen negativo" />
         <span class="text-sm font-semibold">Margen negativo</span>
       </label>
 
-      <label v-if="showCostDrift" :class="filterChipClass(costDriftOnly)">
+      <label v-if="showCostDrift" :class="filterChipClass(costDriftOnly, true)">
         <input v-model="costDriftOnly" type="checkbox" class="sr-only" aria-label="Solo desfase de costo" />
         <span class="text-sm font-semibold">Desfase costo</span>
       </label>

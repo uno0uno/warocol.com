@@ -40,7 +40,6 @@
         </div>
 
         <MenuCatalogFiltersBar
-          show-station
           show-product-type-filter
           :show-qr="showTableQrColumn"
           :show-online="showOnlineControls"
@@ -82,40 +81,6 @@
           @apply="saveChanges"
           @cancel="() => cancelEditOperation(clearSelection)"
         />
-
-        <div
-          v-if="showComandasStations && stations.length"
-          class="flex flex-wrap items-center gap-2"
-          role="group"
-          aria-label="Filtrar por estación de cocina"
-        >
-          <button
-            v-for="(st, idx) in stations"
-            :key="st.id"
-            type="button"
-            class="inline-flex items-center gap-1.5 min-h-[36px] px-2.5 py-1 rounded-full border-2 text-xs font-semibold transition-all"
-            :class="stationFilter === st.id ? 'shadow-sm scale-[1.02]' : 'opacity-90 hover:opacity-100'"
-            :style="stationChipStyle(st, idx, stationFilter === st.id)"
-            :aria-pressed="stationFilter === st.id"
-            :title="`Filtrar por ${st.name}`"
-            @click="toggleStationLegendFilter(st.id)"
-          >
-            <span
-              class="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-1 ring-black/10"
-              :style="{ backgroundColor: stationDotColor(st, idx) }"
-              aria-hidden="true"
-            />
-            {{ st.name }}
-          </button>
-          <button
-            v-if="stationFilter"
-            type="button"
-            class="text-xs font-medium text-text-tertiary hover:text-text-primary underline-offset-2 hover:underline min-h-[36px] px-1"
-            @click="clearStationFilter"
-          >
-            Ver todas
-          </button>
-        </div>
 
         <HealthSemaphore :is-unlocked="true" :title="catalogTitle">
           <template #header-actions>
@@ -281,6 +246,15 @@
                 <template v-else>
                   <div class="flex flex-wrap items-center gap-1.5">
                     <span class="text-sm font-bold text-text-primary">{{ toTitleCase(item.name) }}</span>
+                    <span
+                      v-if="!isOpenSaleShell(item)"
+                      class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                      :class="isResaleProduct(item)
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-surface-secondary text-text-secondary'"
+                    >
+                      {{ productTipoLabel(item) }}
+                    </span>
                   </div>
                   <UiStatusBadge
                     v-if="isOpenSaleShell(item)"
@@ -300,10 +274,7 @@
                     </template>
                   </p>
                   <p class="text-xs text-text-tertiary flex flex-wrap items-center gap-1">
-                    <span>Real:</span>
-                    <span v-if="hasCostValue(item.costo_calculado)">{{ formatCostCell(item.costo_calculado) }}</span>
-                    <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
-                    <span>· Mi costo:</span>
+                    <span>Mi costo:</span>
                     <span v-if="hasCostValue(item.costo_percibido)">{{ formatCostCell(item.costo_percibido) }}</span>
                     <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
                   </p>
@@ -321,14 +292,6 @@
                     :style="{ backgroundColor: resolveProductStation(item)!.color }"
                   />
                 </span>
-                <UiStatusBadge
-                  v-if="!isOpenSaleShell(item) && marginRealPct(item) !== null"
-                  :value="marginRealPct(item)!"
-                  format="percentage"
-                  :variant="(marginRealPct(item) ?? 0) >= 0 ? 'success' : 'secondary'"
-                  size="sm"
-                  title="Margen real"
-                />
                 <UiStatusBadge
                   v-if="!isOpenSaleShell(item) && marginOperativoPct(item) !== null"
                   :value="marginOperativoPct(item)!"
@@ -401,6 +364,26 @@
             </div>
           </template>
 
+          <template #cell-tipo="{ item }">
+            <span
+              v-if="!isOpenSaleShell(item)"
+              class="text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+              :class="isResaleProduct(item)
+                ? 'bg-primary/10 text-primary'
+                : 'bg-surface-secondary text-text-secondary'"
+            >
+              {{ productTipoLabel(item) }}
+            </span>
+            <UiStatusBadge
+              v-else
+              value="Sistema"
+              title="Producto contenedor de venta libre en el POS"
+              format="text"
+              variant="secondary"
+              size="sm"
+            />
+          </template>
+
           <template #cell-category_name="{ value, item }">
             <UiFilterSelect
               v-if="editMode && !isOpenSaleShell(item)"
@@ -453,24 +436,6 @@
             <span v-else class="text-sm font-semibold text-text-primary">{{ formatCurrency(value) }}</span>
           </template>
 
-          <template #cell-costo_calculado="{ value, item }">
-            <div class="flex justify-end">
-              <UiStatusBadge
-                v-if="isOpenSaleShell(item)"
-                value="N/A"
-                title="No aplica al contenedor de venta libre"
-                format="text"
-                variant="secondary"
-                size="sm"
-                class="whitespace-nowrap"
-              />
-              <span v-else-if="hasCostValue(value)" class="text-sm text-text-primary tabular-nums">
-                {{ formatCostCell(value) }}
-              </span>
-              <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
-            </div>
-          </template>
-
           <template #cell-costo_percibido="{ value, item }">
             <div class="flex justify-end">
               <div
@@ -502,36 +467,6 @@
                 {{ formatCostCell(value) }}
               </span>
               <UiStatusBadge v-else value="N/A" title="Sin costo" format="text" variant="secondary" size="sm" class="whitespace-nowrap" />
-            </div>
-          </template>
-
-          <template #cell-margen_real="{ row }">
-            <div class="flex justify-end">
-              <UiStatusBadge
-                v-if="isOpenSaleShell(row)"
-                value="N/A"
-                title="No aplica al contenedor de venta libre"
-                format="text"
-                variant="secondary"
-                size="sm"
-                class="whitespace-nowrap"
-              />
-              <UiStatusBadge
-                v-else-if="marginRealPct(row) !== null"
-                :value="marginRealPct(row)!"
-                format="percentage"
-                :variant="(marginRealPct(row) ?? 0) >= 0 ? 'success' : 'secondary'"
-                size="sm"
-              />
-              <UiStatusBadge
-                v-else
-                value="N/A"
-                title="Sin margen"
-                format="text"
-                variant="secondary"
-                size="sm"
-                class="whitespace-nowrap"
-              />
             </div>
           </template>
 
@@ -1074,29 +1009,6 @@ function stationDotColor(st: { color?: string | null; id?: string }, index = 0) 
   return STATION_FALLBACK_COLORS[index % STATION_FALLBACK_COLORS.length]
 }
 
-function stationChipStyle(
-  st: { color?: string | null; id?: string },
-  index: number,
-  active: boolean,
-) {
-  const color = stationDotColor(st, index)
-  return {
-    backgroundColor: active ? `${color}22` : `${color}12`,
-    color,
-    borderColor: active ? color : `${color}55`,
-  }
-}
-
-function toggleStationLegendFilter(stationId: string) {
-  stationFilter.value = stationFilter.value === stationId ? '' : stationId
-  currentPage.value = 1
-}
-
-function clearStationFilter() {
-  stationFilter.value = ''
-  currentPage.value = 1
-}
-
 /** Product override station_id, else category default from API `station` object. */
 const resolveProductStation = (item: {
   station?: { id: string; name: string; color?: string } | null
@@ -1203,6 +1115,11 @@ const products = computed(() => productsData.value?.data || [])
 
 /** Shell product for POS venta libre (#805) — not a normal catalog item. */
 const isOpenSaleShell = (row: { open_priced?: boolean }) => !!row.open_priced
+
+const isResaleProduct = (row: { is_resale?: boolean }) => !!row.is_resale
+
+const productTipoLabel = (row: { is_resale?: boolean }) =>
+  isResaleProduct(row) ? 'Reventa' : 'Menú'
 
 const isSubmitting = ref(false)
 
@@ -1482,6 +1399,14 @@ const productosTableColumns = computed(() => {
       format: 'text',
       align: 'left'
     },
+    {
+      key: 'tipo',
+      title: 'Tipo',
+      sortable: false,
+      align: 'left',
+      width: '5.5rem',
+      class: 'whitespace-nowrap',
+    },
   ]
 
   cols.push(
@@ -1500,25 +1425,11 @@ const productosTableColumns = computed(() => {
       align: 'right'
     },
     {
-      key: 'costo_calculado',
-      title: 'Costo real',
-      sortable: false,
-      format: 'currency',
-      align: 'right'
-    },
-    {
       key: 'costo_percibido',
       title: 'Mi costo',
       sortable: false,
       format: 'currency',
       align: 'right'
-    },
-    {
-      key: 'margen_real',
-      title: 'Margen real',
-      sortable: false,
-      format: 'text',
-      align: 'center'
     },
     {
       key: 'margen_operativo',
@@ -1590,7 +1501,6 @@ const formatCurrency = (value: number) => {
 }
 
 const {
-  marginRealPct,
   marginOperativoPct,
   hasCostDrift,
   formatCostCell: formatCostCellValue,
@@ -1599,9 +1509,6 @@ const {
 const formatCostCell = (value: unknown) => formatCostCellValue(value, formatCurrency)
 
 const hasCostValue = (value: unknown) => value !== null && value !== undefined
-
-// Backward compat alias
-const getMarginValue = marginRealPct
 
 // True if the product has any recipe row (direct ingredients or recipe bases).
 // Null/zero costo_calculado is the proxy: the backend persists NULL when no recipe.

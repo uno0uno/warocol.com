@@ -1,7 +1,7 @@
 <template>
-  <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
+  <div class="flex flex-wrap items-center gap-2 w-full">
     <!-- Search -->
-    <div v-if="showSearch" class="relative flex-1 min-w-[200px]">
+    <div v-if="showSearch" class="relative w-full min-w-[12rem] max-w-[16rem] sm:flex-1 sm:max-w-xs">
       <button
         type="button"
         class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
@@ -22,20 +22,21 @@
     </div>
 
     <!-- Search field -->
-    <select
+    <UiFilterSelect
       v-if="showSearch && searchFields.length > 0"
-      :value="searchField"
-      :class="filterSelectClassFor(searchField, { active: true })"
-      @change="emit('update:searchField', ($event.target as HTMLSelectElement).value)"
-    >
-      <option v-for="field in searchFields" :key="field.value" :value="field.value">
-        {{ field.label }}
-      </option>
-    </select>
+      :model-value="searchField"
+      placeholder="Campo"
+      :options="searchFields"
+      always-active
+      hide-placeholder
+      aria-label="Campo de búsqueda"
+      @update:model-value="emit('update:searchField', $event)"
+    />
 
     <!-- Date range -->
     <VueDatePicker
       v-if="showDateRange"
+      class="flex-shrink-0 max-w-full"
       :model-value="dateRange"
       range
       :preset-dates="presetDates"
@@ -73,7 +74,6 @@
 
 <script setup lang="ts">
 import { es } from 'date-fns/locale'
-import { filterSelectClassFor } from '@/composables/useFilterSelectClass'
 
 export interface SearchFieldOption {
   label: string
