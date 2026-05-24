@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 // @ts-ignore
@@ -12,8 +12,31 @@ useHead({ title: 'Domicilios — WARO' })
 const { formatDateTime, formatCurrency } = useFormatters()
 const { currentTenant } = useTenantReactive()
 
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
+const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
+const statusFilter = ref<string | null>(null)
+const orderTypeFilter = ref<string | null>(null)
+
 const sortField = ref('order_date')
 const sortDirection = ref<'asc' | 'desc'>('desc')
+
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || !!dateRangeDates.value
+    || !!statusFilter.value
+    || !!orderTypeFilter.value,
+)
+
+const performSearch = () => applySearch()
+
+const clearFilters = () => {
+  clearSearch()
+  clearDateRange()
+  statusFilter.value = null
+  orderTypeFilter.value = null
+}
 
 const {
   data: ordersData,
@@ -25,12 +48,16 @@ const {
   key: () => ['online-orders', currentTenant.value?.id, {
     sortField: sortField.value,
     sortDirection: sortDirection.value,
+    status: statusFilter.value,
   }],
   query: () => $fetch('/api/online/orders', {
     params: {
+      limit: 200,
+      offset: 0,
       sort_field: sortField.value,
       sort_direction: sortDirection.value,
-    }
+      status: statusFilter.value || undefined,
+    },
   }),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
@@ -38,7 +65,25 @@ const {
 
 const isLoadingOrders = computed(() => ordersStatus.value === 'loading' || (!ordersData.value && !fetchError.value))
 const isRefreshingOrders = computed(() => ordersAsyncStatus.value === 'loading' && ordersData.value != null)
-const orders = computed(() => ordersData.value?.data ?? [])
+const ordersRaw = computed(() => ordersData.value?.data ?? [])
+
+const displayOrders = computed(() => {
+  const q = appliedSearch.value.trim().toLowerCase()
+  const from = dateRange.value.from
+  const to = dateRange.value.to
+
+  return ordersRaw.value.filter((order: any) => {
+    if (orderTypeFilter.value && order.order_type !== orderTypeFilter.value) return false
+    if (from && to) {
+      const day = String(order.order_date ?? '').slice(0, 10)
+      if (!day || day < from || day > to) return false
+    }
+    if (!q) return true
+    const num = String(order.order_number ?? '')
+    const email = String(order.verified_email ?? '').toLowerCase()
+    return num.includes(q) || email.includes(q)
+  })
+})
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 onMounted(() => { setRefreshHandler(refetchOrders) })
@@ -46,18 +91,18 @@ onUnmounted(() => { clearRefreshHandler(refetchOrders) })
 registerProgressiveLoading(isRefreshingOrders)
 
 const columns: Column[] = [
-  { key: 'order_number',   title: '# Pedido',  sortable: true },
-  { key: 'order_date',     title: 'Fecha',      sortable: true },
+  { key: 'order_number', title: '# Pedido', sortable: true },
+  { key: 'order_date', title: 'Fecha', sortable: true },
   { key: 'scheduled_time', title: 'Programado', sortable: true },
-  { key: 'order_type',     title: 'Tipo',       sortable: true },
-  { key: 'status',         title: 'Estado',     sortable: false },
-  { key: 'total_amount',   title: 'Total',      sortable: true },
-  { key: 'verified_email', title: 'Cliente',    sortable: true },
+  { key: 'order_type', title: 'Tipo', sortable: true },
+  { key: 'status', title: 'Estado', sortable: false },
+  { key: 'total_amount', title: 'Total', sortable: true },
+  { key: 'verified_email', title: 'Cliente', sortable: true },
 ]
 
 const ORDER_TYPE_LABELS: Record<string, string> = {
-  delivery:  'Domicilio',
-  pickup:    'Recogida',
+  delivery: 'Domicilio',
+  pickup: 'Recogida',
   'dine-in': 'En mesa',
 }
 
@@ -71,25 +116,61 @@ const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'd
 const viewOrder = (order: any) => {
   navigateTo(`/despacho/domicilios/${order.id}`)
 }
+
 </script>
 
 <template>
   <div class="flex flex-col gap-3 md:gap-4">
-    <!-- Loading State -->
     <div v-if="isLoadingOrders" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Error State -->
     <CommonsTheErrorState v-else-if="fetchError" />
 
-    <!-- Main Content -->
-    <div v-else>
+    <div v-else class="flex flex-col gap-3 md:gap-4">
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        v-model:date-range="dateRangeDates"
+        search-placeholder="Buscar # pedido o cliente..."
+        :search-fields="[]"
+        :preset-dates="presetDates"
+        :format-date-range="formatDateRange"
+        :show-clear="hasActiveFilters"
+        @search="performSearch"
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
+          <select
+            v-model="statusFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por estado"
+          >
+            <option :value="null">Estado</option>
+            <option value="pending">Pendiente</option>
+            <option value="confirmed">Confirmado</option>
+            <option value="preparing">En preparación</option>
+            <option value="delivered">Entregado</option>
+            <option value="completed">Completado</option>
+            <option value="cancelled">Cancelado</option>
+          </select>
+          <select
+            v-model="orderTypeFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por tipo de pedido"
+          >
+            <option :value="null">Tipo</option>
+            <option value="delivery">Domicilio</option>
+            <option value="pickup">Recogida</option>
+            <option value="dine-in">En mesa</option>
+          </select>
+        </template>
+      </UiAdvancedFiltersBar>
+
       <HealthSemaphore :is-unlocked="true" title="Pedidos Online">
         <UiResponsiveDataView
           row-size="sm"
           :columns="columns"
-          :data="orders"
+          :data="displayOrders"
           :sort-field="sortField"
           :sort-direction="sortDirection"
           empty-message="Aún no hay pedidos online."
@@ -98,7 +179,6 @@ const viewOrder = (order: any) => {
           @sort="handleSort"
           @row-click="viewOrder"
         >
-          <!-- Mobile Card -->
           <template #card="{ item, index }">
             <div
               class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
@@ -123,7 +203,6 @@ const viewOrder = (order: any) => {
             </div>
           </template>
 
-          <!-- Desktop Table Cells -->
           <template #cell-order_number="{ value }">
             <span class="text-sm font-bold text-text-primary">#{{ value }}</span>
           </template>
