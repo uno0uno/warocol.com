@@ -11,13 +11,14 @@
     <!-- Main Content -->
     <div v-else class="page-layout">
       <div class="flex flex-col gap-3 md:gap-4">
-        <!-- Filters Bar -->
-        <SharedFiltersBar
+        <UiAdvancedFiltersBar
           v-model:search="localSearchTerm"
+          :search-fields="[]"
           search-placeholder="Buscar recetas..."
-          :show-clear-button="hasActiveFilters"
+          :show-date-range="false"
+          :show-clear="hasActiveFilters"
           @search="performSearch"
-          @clear-filters="onClearRecetasFilters"
+          @clear="onClearRecetasFilters"
         />
 
         <HealthSemaphore :is-unlocked="true" title="Estructura y costo de recetas base">
@@ -290,7 +291,7 @@ const itemsPerPage = ref(20)
 const expandedRows = ref(new Set())
 
 // Fetch recipe bases from backend with ingredients
-const { data: productsData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
+const { data: productsData, status: queryStatus, asyncStatus: queryAsyncStatus, error: queryError, refetch } = useQuery({
   key: () => ['menu', 'recipe-bases', currentTenant.value?.id, {
     page: currentPage.value,
     limit: itemsPerPage.value,
@@ -311,7 +312,8 @@ const { data: productsData, status: queryStatus, asyncStatus: queryAsyncStatus, 
   staleTime: 30_000,
 })
 
-const isLoading = computed(() => !productsData.value)
+const isLoading = computed(() => !productsData.value && !queryError.value)
+const fetchError = computed(() => !!queryError.value)
 const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && productsData.value != null)
 
 // Reset page on tenant change — key change triggers automatic refetch
@@ -321,12 +323,6 @@ const performSearch = () => {
   apiSearchTerm.value = localSearchTerm.value.trim()
   currentPage.value = 1
 }
-
-let searchTimeout: ReturnType<typeof setTimeout>
-watch(localSearchTerm, () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(performSearch, 500)
-})
 
 const onClearRecetasFilters = () => {
   clearRecetasFilters()

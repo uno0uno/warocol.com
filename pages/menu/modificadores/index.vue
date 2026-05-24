@@ -7,12 +7,14 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-      <SharedFiltersBar
-        v-model:search="searchQuery"
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        :search-fields="[]"
         search-placeholder="Buscar grupo o producto..."
-        :show-clear-button="hasActiveFilters"
-        @search="() => {}"
-        @clear-filters="clearModificadoresFilters"
+        :show-date-range="false"
+        :show-clear="hasActiveFilters"
+        @search="performSearch"
+        @clear="onClearModificadoresFilters"
       />
       <HealthSemaphore :is-unlocked="true" title="Reglas y grupos de modificadores">
         <template #header-actions>
@@ -27,7 +29,7 @@
       <!-- Tabla de Grupos de Modificadores -->
       <UiResponsiveDataView
       :columns="gruposTableColumns"
-      :data="filteredGroups"
+      :data="modifierGroups"
       empty-message="No hay grupos de modificadores registrados"
       empty-sub-message="Crea un nuevo grupo para comenzar"
       variant="default"
@@ -135,9 +137,85 @@
       </template>
     </UiResponsiveDataView>
 
+    <div v-if="(groupsData?.total ?? 0) > itemsPerPage" class="mt-4 bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg">
+      <div class="flex-1 flex justify-between sm:hidden">
+        <button
+          @click="previousPage"
+          :disabled="!canGoPrevious"
+          :class="[
+            'relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md',
+            canGoPrevious ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed'
+          ]">
+          Anterior
+        </button>
+        <button
+          @click="nextPage"
+          :disabled="!canGoNext"
+          :class="[
+            'ml-3 relative inline-flex items-center px-4 py-2 border border-titan-300 text-sm font-medium rounded-md',
+            canGoNext ? 'text-titan-700 bg-white hover:bg-titan-50' : 'text-titan-400 bg-titan-50 cursor-not-allowed'
+          ]">
+          Siguiente
+        </button>
+      </div>
+      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-titan-700">
+            Mostrando
+            <span class="font-medium">{{ startItem }}</span>
+            a
+            <span class="font-medium">{{ endItem }}</span>
+            de
+            <span class="font-medium">{{ groupsData?.total ?? 0 }}</span>
+            grupos
+          </p>
+        </div>
+        <div>
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <button
+              @click="previousPage"
+              :disabled="!canGoPrevious"
+              :class="[
+                'relative inline-flex items-center px-2 py-2 rounded-l-md border border-titan-300 text-sm font-medium',
+                canGoPrevious ? 'bg-white text-titan-500 hover:bg-titan-50' : 'bg-titan-50 text-titan-400 cursor-not-allowed'
+              ]">
+              <span class="sr-only">Anterior</span>
+              <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            <button
+              v-for="page in visiblePages"
+              :key="page"
+              @click="goToPage(page)"
+              :class="[
+                'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
+                page === currentPage
+                  ? 'z-10 bg-crocus-50 border-crocus-500 text-crocus-600'
+                  : 'bg-white border-titan-300 text-titan-700 hover:bg-titan-50'
+              ]">
+              {{ page }}
+            </button>
+            <button
+              @click="nextPage"
+              :disabled="!canGoNext"
+              :class="[
+                'relative inline-flex items-center px-2 py-2 rounded-r-md border border-titan-300 text-sm font-medium',
+                canGoNext ? 'bg-white text-titan-500 hover:bg-titan-50' : 'bg-titan-50 text-titan-400 cursor-not-allowed'
+              ]">
+              <span class="sr-only">Siguiente</span>
+              <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+
     <!-- Detalles expandidos (solo desktop) -->
     <div
-      v-for="grupo in filteredGroups.filter(g => expandedRows.has(g.id))"
+      v-for="grupo in modifierGroups.filter(g => expandedRows.has(g.id))"
       :key="`expanded-${grupo.id}`"
       class="hidden md:block bg-surface border border-border rounded-lg p-4 -mt-3"
     >
@@ -207,7 +285,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import { useTenantReactive } from '@/composables/useTenantReactive'
@@ -221,15 +299,44 @@ useHead({ title: 'Modificadores' })
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
 
-const { searchQuery, clearFilters: clearModificadoresFilters, hasActiveFilters } = useMenuModificadoresFilters()
+const {
+  localSearchTerm,
+  appliedSearch,
+  clearFilters: clearModificadoresFilters,
+  hasActiveFilters,
+} = useMenuModificadoresFilters()
+
+const currentPage = ref(1)
+const itemsPerPage = ref(20)
 const expandedRows = ref(new Set())
 
+watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
+
+const performSearch = () => {
+  appliedSearch.value = localSearchTerm.value.trim()
+  currentPage.value = 1
+}
+
+const onClearModificadoresFilters = () => {
+  clearModificadoresFilters()
+  currentPage.value = 1
+}
+
 // Fetch modifier groups from API
-const { data: groupsData, status: groupsStatus, asyncStatus: groupsAsyncStatus, refetch: refetchGroups } = useQuery({
-  key: () => ['menu', 'modifier-groups', currentTenant.value?.id],
-  query: () => $fetch('/api/menu/modifier-groups', {
-    params: { limit: 250 }
-  }),
+const { data: groupsData, asyncStatus: groupsAsyncStatus, refetch: refetchGroups } = useQuery({
+  key: () => ['menu', 'modifier-groups', currentTenant.value?.id, {
+    page: currentPage.value,
+    limit: itemsPerPage.value,
+    search: appliedSearch.value || null,
+  }],
+  query: () => {
+    const params: Record<string, string | number> = {
+      page: currentPage.value,
+      limit: itemsPerPage.value,
+    }
+    if (appliedSearch.value) params.search = appliedSearch.value
+    return $fetch('/api/menu/modifier-groups', { params })
+  },
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
@@ -242,18 +349,53 @@ const { data: statsData, refetch: refetchStats } = useQuery({
   staleTime: 30_000,
 })
 
-const filteredGroups = computed(() => {
-  const groups = groupsData.value?.data || []
-  if (!searchQuery.value) return groups
+const modifierGroups = computed(() => groupsData.value?.data ?? [])
 
-  const search = searchQuery.value.toLowerCase()
-  return groups.filter((grupo: any) => {
-    const matchesName = grupo.name.toLowerCase().includes(search)
-    const matchesProducts = (grupo.products || []).some((p: any) =>
-      p.name.toLowerCase().includes(search)
-    )
-    return matchesName || matchesProducts
-  })
+const totalPages = computed(() =>
+  Math.ceil((groupsData.value?.total ?? 0) / itemsPerPage.value),
+)
+
+const canGoPrevious = computed(() => currentPage.value > 1)
+const canGoNext = computed(() => currentPage.value < totalPages.value)
+
+const goToPage = (page: number) => {
+  if (page >= 1 && page <= totalPages.value) currentPage.value = page
+}
+
+const previousPage = () => {
+  if (canGoPrevious.value) currentPage.value--
+}
+
+const nextPage = () => {
+  if (canGoNext.value) currentPage.value++
+}
+
+const startItem = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1)
+
+const endItem = computed(() =>
+  Math.min(currentPage.value * itemsPerPage.value, groupsData.value?.total ?? 0),
+)
+
+const visiblePages = computed(() => {
+  const total = totalPages.value
+  const current = currentPage.value
+  const pages: number[] = []
+
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else if (current <= 4) {
+    for (let i = 1; i <= 5; i++) pages.push(i)
+    pages.push(total)
+  } else if (current >= total - 3) {
+    pages.push(1)
+    for (let i = total - 4; i <= total; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    for (let i = current - 1; i <= current + 1; i++) pages.push(i)
+    pages.push(total)
+  }
+
+  return pages
 })
 
 const stats = computed(() => {
@@ -340,7 +482,7 @@ const toggleExpanded = (grupoId: string) => {
 }
 
 const getModificadoresByGrupo = (grupoId: string) => {
-  const grupo = filteredGroups.value.find((g: any) => g.id === grupoId)
+  const grupo = modifierGroups.value.find((g: any) => g.id === grupoId)
   return grupo?.modifiers || []
 }
 
