@@ -10,6 +10,30 @@
 
     <!-- Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
+    <UiAdvancedFiltersBar
+      v-model:search="localSearchTerm"
+      :search-fields="[]"
+      search-placeholder="Buscar por nombre o correo..."
+      :show-date-range="false"
+      :show-clear="hasActiveFilters"
+      @search="performSearch"
+      @clear="clearFilters"
+    >
+      <template #additional-filters>
+        <select
+          v-model="roleFilter"
+          :class="filterSelectClass"
+          aria-label="Filtrar por rol"
+        >
+          <option value="">Rol</option>
+          <option value="superuser">Superusuario</option>
+          <option value="admin">Administrador</option>
+          <option value="employee">Empleado</option>
+          <option value="member">Miembro</option>
+        </select>
+      </template>
+    </UiAdvancedFiltersBar>
+
     <!-- Responsive Data View -->
     <HealthSemaphore :is-unlocked="true" title="Miembros del equipo">
       <template #header-actions>
@@ -609,6 +633,20 @@ const { currentTenant } = useTenantReactive()
 const toast = useToast()
 const authStore = useAuthStore()
 
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
+const roleFilter = ref('')
+
+const performSearch = () => applySearch()
+
+const hasActiveFilters = computed(
+  () => !!localSearchTerm.value || !!appliedSearch.value || !!roleFilter.value,
+)
+
+const clearFilters = () => {
+  clearSearch()
+  roleFilter.value = ''
+}
+
 // Helper function to get initials from name
 const getInitials = (name, userName) => {
   if (name) {
@@ -686,8 +724,22 @@ const membersData = computed(() => normalizeMembersResponse(membersResponse.valu
 const isLoading = computed(() => !membersResponse.value && !fetchError?.value)
 const isRefreshing = computed(() => queryAsyncStatus?.value === 'loading' && membersResponse.value != null)
 
-// Team members computed from data
-const teamMembers = computed(() => membersData.value.members || [])
+// Team members — client-side filter (API has no search/role params; see #880)
+const teamMembers = computed(() => {
+  let list = membersData.value.members || []
+  const q = appliedSearch.value.trim().toLowerCase()
+  if (q) {
+    list = list.filter(
+      (m) =>
+        m.name?.toLowerCase().includes(q)
+        || m.email?.toLowerCase().includes(q),
+    )
+  }
+  if (roleFilter.value) {
+    list = list.filter((m) => m.role === roleFilter.value)
+  }
+  return list
+})
 
 // Pending invitations computed from data
 const pendingInvitations = computed(() => membersData.value.pendingInvitations || [])

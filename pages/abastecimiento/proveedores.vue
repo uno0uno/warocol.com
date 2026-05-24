@@ -10,16 +10,39 @@
 
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-      <!-- Filters Bar -->
-      <SharedFiltersBar
+      <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         v-model:search-field="apiSearchField"
         :search-fields="searchFields"
-        search-label="Buscar"
-        search-placeholder="Buscar..."
+        search-placeholder="Buscar proveedor..."
+        :show-date-range="false"
+        :show-clear="hasActiveFilters"
         @search="performSearch"
-        @clear-filters="clearFilters"
-      />
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
+          <select
+            v-model="statusFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por estado"
+            @change="onStatusFilterChange"
+          >
+            <option value="">Estado</option>
+            <option value="active">Activo</option>
+            <option value="inactive">Inactivo</option>
+          </select>
+
+          <select
+            v-model="paymentTermsFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por plazo de pago"
+            @change="onPaymentTermsChange"
+          >
+            <option value="">Plazo de pago</option>
+            <option v-for="term in paymentTermsOptions" :key="term" :value="term">{{ term }}</option>
+          </select>
+        </template>
+      </UiAdvancedFiltersBar>
 
       <!-- Responsive Data View -->
       <HealthSemaphore :is-unlocked="true" title="Directorio de proveedores">
@@ -209,31 +232,73 @@ const itemsPerPage = ref(20);
 const sortField = ref('')
 const sortDirection = ref('asc')
 
-const localSearchTerm = ref('');
-const apiSearchTerm = ref('');
-const apiSearchField = ref('name');
-
-const performSearch = () => {
-  apiSearchTerm.value = localSearchTerm.value;
-  currentPage.value = 1; // Reset to first page on search
-}
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
+const apiSearchField = ref('name')
+const statusFilter = ref('')
+const paymentTermsFilter = ref('')
 
 const searchFields = [
   { label: 'Proveedor', value: 'name' },
   { label: 'NIT', value: 'tax_id' },
   { label: 'Email', value: 'email' },
-  { label: 'Teléfono', value: 'phone' }
-];
+  { label: 'Teléfono', value: 'phone' },
+]
 
-const clearFilters = () => {
-  localSearchTerm.value = ''
-  apiSearchTerm.value = ''
-  apiSearchField.value = 'name'
+const apiIsActive = ref<boolean | null>(null)
+const apiPaymentTerms = ref<string | null>(null)
+
+const onStatusFilterChange = () => {
+  if (statusFilter.value === 'active') apiIsActive.value = true
+  else if (statusFilter.value === 'inactive') apiIsActive.value = false
+  else apiIsActive.value = null
+  currentPage.value = 1
 }
 
-const apiIsActive = ref(null);
+const onPaymentTermsChange = () => {
+  apiPaymentTerms.value = paymentTermsFilter.value || null
+  currentPage.value = 1
+}
 
-const apiPaymentTerms = ref(null);
+const performSearch = () => applySearch(() => { currentPage.value = 1 })
+
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || statusFilter.value !== ''
+    || !!paymentTermsFilter.value,
+)
+
+const clearFilters = () => {
+  clearSearch()
+  apiSearchField.value = 'name'
+  statusFilter.value = ''
+  paymentTermsFilter.value = ''
+  apiIsActive.value = null
+  apiPaymentTerms.value = null
+  currentPage.value = 1
+}
+
+const { data: suppliersLookupData } = useQuery({
+  key: () => ['suppliers', 'providers', 'payment-terms-options', currentTenant.value?.id],
+  query: async () => {
+    const response = await $fetch<{ data?: { payment_terms?: string | null }[] }>('/api/suppliers/providers', {
+      query: { limit: 250 },
+    })
+    return response.data ?? []
+  },
+  enabled: () => !!currentTenant.value,
+  staleTime: 60_000,
+})
+
+const paymentTermsOptions = computed(() => {
+  const terms = new Set(
+    (suppliersLookupData.value ?? [])
+      .map((s) => s.payment_terms)
+      .filter((t): t is string => !!t && t.trim().length > 0),
+  )
+  return [...terms].sort((a, b) => a.localeCompare(b))
+})
 
 
 
@@ -241,7 +306,7 @@ const { data: suppliersData, status: queryStatus, asyncStatus: queryAsyncStatus,
   key: () => ['suppliers', 'providers', currentTenant.value?.id, {
     page: currentPage.value,
     limit: itemsPerPage.value,
-    search: apiSearchTerm.value || null,
+    search: appliedSearch.value || null,
     search_field: apiSearchField.value || null,
     is_active: apiIsActive.value,
     payment_terms: apiPaymentTerms.value || null,
@@ -251,8 +316,8 @@ const { data: suppliersData, status: queryStatus, asyncStatus: queryAsyncStatus,
       page: currentPage.value,
       limit: itemsPerPage.value,
     }
-    if (apiSearchTerm.value) {
-      params.search = apiSearchTerm.value
+    if (appliedSearch.value) {
+      params.search = appliedSearch.value
       params.search_field = apiSearchField.value
     }
     if (apiIsActive.value !== null) params.is_active = apiIsActive.value
