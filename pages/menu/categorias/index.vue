@@ -26,6 +26,28 @@
           </button>
         </div>
 
+        <UiAdvancedFiltersBar
+          v-model:search="localSearchTerm"
+          :search-fields="[]"
+          search-placeholder="Buscar categoría..."
+          :show-date-range="false"
+          :show-clear="hasActiveFilters"
+          @search="performSearch"
+          @clear="clearFilters"
+        >
+          <template #additional-filters>
+            <select
+              v-model="tipoFilter"
+              :class="filterSelectClass"
+              aria-label="Filtrar por tipo"
+            >
+              <option value="">Tipo</option>
+              <option value="global">Global</option>
+              <option value="own">Propia</option>
+            </select>
+          </template>
+        </UiAdvancedFiltersBar>
+
         <!-- List -->
         <UiResponsiveDataView
           :columns="columns"
@@ -172,6 +194,20 @@ interface ErrorModalDependent {
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
 
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
+const tipoFilter = ref<'global' | 'own' | ''>('')
+
+const performSearch = () => applySearch()
+
+const hasActiveFilters = computed(
+  () => !!localSearchTerm.value || !!appliedSearch.value || !!tipoFilter.value,
+)
+
+const clearFilters = () => {
+  clearSearch()
+  tipoFilter.value = ''
+}
+
 const columns = [
   { key: 'name', title: 'Nombre' },
   { key: 'tipo', title: 'Tipo' },
@@ -185,13 +221,24 @@ const {
   error: queryError,
   refetch,
 } = useQuery({
-  key: () => ['tenant', 'menu-categories', currentTenant.value?.id ?? null],
-  query: () => $fetch<{ success: boolean; data: Category[] }>('/api/menu/categories'),
+  key: () => ['tenant', 'menu-categories', currentTenant.value?.id ?? null, {
+    search: appliedSearch.value || null,
+  }],
+  query: () => {
+    const query: Record<string, string | number> = { limit: 250 }
+    if (appliedSearch.value) query.search = appliedSearch.value
+    return $fetch<{ success: boolean; data: Category[] }>('/api/menu/categories', { query })
+  },
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
 
-const categories = computed<Category[]>(() => categoriesData.value?.data ?? [])
+const categories = computed<Category[]>(() => {
+  let list = categoriesData.value?.data ?? []
+  if (tipoFilter.value === 'global') list = list.filter((c) => c.tenant_id === null)
+  else if (tipoFilter.value === 'own') list = list.filter((c) => c.tenant_id !== null)
+  return list
+})
 // Matrix loader: only the very first load (no data yet). Subsequent refetches
 // surface as a progressive indicator in the header — see registerProgressiveLoading.
 const isLoading = computed(() => !categoriesData.value && !queryError.value)
