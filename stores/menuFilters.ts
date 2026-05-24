@@ -27,7 +27,8 @@ export interface MenuRecetasFiltersState {
 }
 
 export interface MenuModificadoresFiltersState {
-  searchQuery: string
+  localSearchTerm: string
+  appliedSearch: string
 }
 
 function defaultCatalog(): MenuCatalogFiltersState {
@@ -57,7 +58,7 @@ function defaultRecetas(): MenuRecetasFiltersState {
 }
 
 function defaultModificadores(): MenuModificadoresFiltersState {
-  return { searchQuery: '' }
+  return { localSearchTerm: '', appliedSearch: '' }
 }
 
 export const useMenuFiltersStore = defineStore('menuFilters', () => {

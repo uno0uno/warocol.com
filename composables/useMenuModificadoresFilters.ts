@@ -8,19 +8,27 @@ export function useMenuModificadoresFilters() {
   const tenantId = computed(() => currentTenant.value?.id ?? null)
   const f = computed(() => store.modificadoresFor(tenantId.value))
 
-  const searchQuery = computed({
-    get: () => f.value.searchQuery,
-    set: (v: string) => { f.value.searchQuery = v },
+  const localSearchTerm = computed({
+    get: () => f.value.localSearchTerm,
+    set: (v: string) => { f.value.localSearchTerm = v },
+  })
+
+  const appliedSearch = computed({
+    get: () => f.value.appliedSearch,
+    set: (v: string) => { f.value.appliedSearch = v },
   })
 
   const clearFilters = () => {
     if (tenantId.value) store.resetModificadores(tenantId.value)
   }
 
-  const hasActiveFilters = computed(() => !!searchQuery.value)
+  const hasActiveFilters = computed(
+    () => !!localSearchTerm.value || !!appliedSearch.value,
+  )
 
   return {
-    searchQuery,
+    localSearchTerm,
+    appliedSearch,
     clearFilters,
     hasActiveFilters,
   }
