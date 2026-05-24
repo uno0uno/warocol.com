@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 // @ts-ignore
@@ -38,8 +38,23 @@ interface TableGroup {
   requests: TableQrRequest[]
 }
 
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
+const tableFilterId = ref('')
+
 const sortField = ref('created_at')
 const sortDirection = ref<'asc' | 'desc'>('desc')
+
+const hasActiveFilters = computed(
+  () => !!localSearchTerm.value || !!appliedSearch.value || !!tableFilterId.value,
+)
+
+const performSearch = () => applySearch()
+
+const clearFilters = () => {
+  clearSearch()
+  tableFilterId.value = ''
+  syncTableQuery()
+}
 
 const {
   data: pendingData,
@@ -60,6 +75,13 @@ const {
 const isLoading = computed(() => pendingStatus.value === 'loading' || (!pendingData.value && !fetchError.value))
 const isRefreshing = computed(() => pendingAsyncStatus.value === 'loading' && pendingData.value != null)
 
+const tableOptions = computed(() =>
+  (pendingData.value?.data?.tables ?? []).map(t => ({
+    id: t.table_id,
+    name: t.table_name,
+  })),
+)
+
 const requests = computed<TableQrRequestRow[]>(() =>
   (pendingData.value?.data?.tables ?? []).flatMap(t =>
     t.requests.map(r => ({
@@ -69,16 +91,13 @@ const requests = computed<TableQrRequestRow[]>(() =>
   ),
 )
 
-const tableFilterId = computed(() => route.query.table as string | undefined)
-
-const filterTableName = computed(() => {
-  if (!tableFilterId.value) return null
-  return requests.value.find(r => r.table_id === tableFilterId.value)?.table_name ?? null
-})
-
 const filteredRequests = computed(() => {
-  if (!tableFilterId.value) return requests.value
-  return requests.value.filter(r => r.table_id === tableFilterId.value)
+  const q = appliedSearch.value.trim().toLowerCase()
+  return requests.value.filter((r) => {
+    if (tableFilterId.value && r.table_id !== tableFilterId.value) return false
+    if (!q) return true
+    return r.table_name.toLowerCase().includes(q)
+  })
 })
 
 const sortedRequests = computed(() => {
@@ -110,8 +129,26 @@ const columns: Column[] = [
   { key: 'total_amount', title: 'Total', sortable: true },
 ]
 
+function syncTableQuery() {
+  const query = { ...route.query }
+  if (tableFilterId.value) {
+    query.table = tableFilterId.value
+  } else {
+    delete query.table
+  }
+  router.replace({ query })
+}
+
+watch(tableFilterId, () => {
+  syncTableQuery()
+})
+
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
-onMounted(() => { setRefreshHandler(refetchPending) })
+onMounted(() => {
+  const fromRoute = route.query.table as string | undefined
+  if (fromRoute) tableFilterId.value = fromRoute
+  setRefreshHandler(refetchPending)
+})
 onUnmounted(() => { clearRefreshHandler(refetchPending) })
 registerProgressiveLoading(isRefreshing)
 
@@ -123,11 +160,6 @@ const handleSort = ({ field, direction }: { field: string; direction: 'asc' | 'd
 const viewRequest = (request: TableQrRequestRow) => {
   navigateTo(`/despacho/en-mesa/${request.id}`)
 }
-
-function clearTableFilter() {
-  const { table: _table, ...rest } = route.query
-  router.replace({ query: rest })
-}
 </script>
 
 <template>
@@ -138,22 +170,29 @@ function clearTableFilter() {
 
     <CommonsTheErrorState v-else-if="fetchError" />
 
-    <div v-else>
-      <div
-        v-if="tableFilterId && filterTableName"
-        class="flex flex-wrap items-center gap-2 mb-1"
+    <div v-else class="flex flex-col gap-3 md:gap-4">
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        :search-fields="[]"
+        :show-date-range="false"
+        search-placeholder="Buscar mesa..."
+        :show-clear="hasActiveFilters"
+        @search="performSearch"
+        @clear="clearFilters"
       >
-        <span class="text-sm text-text-secondary">
-          Filtrando: <span class="font-medium text-text-primary">{{ filterTableName }}</span>
-        </span>
-        <button
-          type="button"
-          class="text-sm text-primary hover:underline"
-          @click="clearTableFilter"
-        >
-          Ver todos
-        </button>
-      </div>
+        <template #additional-filters>
+          <select
+            v-model="tableFilterId"
+            :class="filterSelectClass"
+            aria-label="Filtrar por mesa"
+          >
+            <option value="">Mesa</option>
+            <option v-for="t in tableOptions" :key="t.id" :value="t.id">
+              {{ t.name }}
+            </option>
+          </select>
+        </template>
+      </UiAdvancedFiltersBar>
 
       <HealthSemaphore :is-unlocked="true" title="Pedidos en mesa (QR)">
         <UiResponsiveDataView

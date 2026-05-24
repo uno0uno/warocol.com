@@ -11,6 +11,35 @@ useHead({ title: 'Comandas — WARO' })
 
 const { currentTenant } = useTenantReactive()
 const { singular: tableSingular } = useTableLabel()
+const { activeStations } = useActiveStationsQuery()
+
+const selectedSourceType = ref('')
+const selectedStationId = ref('')
+const selectedStatus = ref('pending,preparing,ready')
+const selectedDate = ref('')
+
+const filters = computed(() => ({
+  source_type: selectedSourceType.value || undefined,
+  station_id: selectedStationId.value || undefined,
+  status: selectedStatus.value || undefined,
+  date: selectedDate.value || undefined,
+}))
+
+const hasActiveFilters = computed(
+  () =>
+    !!selectedSourceType.value
+    || !!selectedStationId.value
+    || selectedStatus.value !== 'pending,preparing,ready'
+    || !!selectedDate.value,
+)
+
+const clearFilters = () => {
+  selectedSourceType.value = ''
+  selectedStationId.value = ''
+  selectedStatus.value = 'pending,preparing,ready'
+  selectedDate.value = ''
+  clearSelection()
+}
 
 const SOURCE_LABELS = computed<Record<string, string>>(() => ({
   table:    tableSingular.value,
@@ -117,13 +146,15 @@ const {
   asyncStatus: comandasAsyncStatus,
   refetch: refetchComandas,
 } = useQuery({
-  key: () => ['comandas-monitor', currentTenant.value?.id],
+  key: () => ['comandas-monitor', currentTenant.value?.id, filters.value],
   query: () => $fetch<{ success: boolean; data: any[] }>('/api/api/comandas', {
-    params: { status: 'pending,preparing,ready' },
+    params: filters.value,
   }),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
+
+watch(filters, () => { clearSelection() })
 
 const comandas = computed(() => comandasData.value?.data ?? [])
 const isLoadingComandas = computed(() => comandasStatus.value === 'loading' || (!comandasData.value && comandasStatus.value !== 'error'))
@@ -180,6 +211,57 @@ const getComandaStatusVariant = (status: string): string => {
 
     <!-- Main content -->
     <div v-else class="flex flex-col gap-3">
+      <UiAdvancedFiltersBar
+        :search-fields="[]"
+        :show-search="false"
+        :show-date-range="false"
+        :show-clear="hasActiveFilters"
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
+          <select
+            v-model="selectedSourceType"
+            :class="filterSelectClass"
+            aria-label="Filtrar por origen"
+          >
+            <option value="">Origen</option>
+            <option value="table">{{ tableSingular }}</option>
+            <option value="pos">Mostrador</option>
+            <option value="delivery">Domicilio</option>
+            <option value="pickup">Recogida</option>
+          </select>
+          <select
+            v-model="selectedStationId"
+            :class="filterSelectClass"
+            aria-label="Filtrar por estación"
+          >
+            <option value="">Estación</option>
+            <option v-for="s in activeStations" :key="s.id" :value="s.id">
+              {{ s.kitchen_name || s.name }}
+            </option>
+          </select>
+          <select
+            v-model="selectedStatus"
+            :class="filterSelectClass"
+            aria-label="Filtrar por estado"
+          >
+            <option value="pending,preparing,ready">Activas</option>
+            <option value="ready">Listas</option>
+            <option value="pending">Pendientes</option>
+            <option value="preparing">En preparación</option>
+            <option value="delivered">Entregadas</option>
+            <option value="cancelled">Canceladas</option>
+            <option value="pending,preparing,ready,delivered,cancelled">Todas</option>
+          </select>
+          <input
+            v-model="selectedDate"
+            type="date"
+            :class="filterSelectClass"
+            class="min-w-[9rem] cursor-pointer"
+            aria-label="Filtrar por fecha"
+          >
+        </template>
+      </UiAdvancedFiltersBar>
 
       <!-- Bulk action bar -->
       <Transition
