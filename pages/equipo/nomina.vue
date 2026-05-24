@@ -15,9 +15,9 @@ const { formatCurrency } = useFormatters()
 // ── Filters ───────────────────────────────────────────────────────────────
 const currentYear = new Date().getFullYear()
 const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - i)
-const selectedYear  = ref(currentYear)
+const selectedYear = ref(currentYear)
 const selectedMonth = ref<number | null>(null)
-const searchTerm    = ref('')
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 
 const monthOptions = [
   { label: 'Enero',      value: 1  },
@@ -35,11 +35,16 @@ const monthOptions = [
 ]
 
 const hasActiveFilters = computed(
-  () => searchTerm.value !== '' || selectedMonth.value !== null
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || selectedMonth.value !== null,
 )
 
+const performSearch = () => applySearch()
+
 const clearFilters = () => {
-  searchTerm.value    = ''
+  clearSearch()
   selectedMonth.value = null
 }
 
@@ -174,8 +179,9 @@ function getHorasExtrasTotal(id: string): number | null {
 const tableData = computed(() => {
   let list = allEmployeesRaw.value
 
-  if (searchTerm.value) {
-    const term = searchTerm.value.toLowerCase()
+  const q = appliedSearch.value.trim().toLowerCase()
+  if (q) {
+    const term = q
     list = list.filter((e: any) =>
       e.name?.toLowerCase().includes(term) || e.email?.toLowerCase().includes(term)
     )
@@ -631,52 +637,33 @@ onUnmounted(() => { clearRefreshHandler(loadData) })
     <!-- Main content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
-      <!-- Filters Bar -->
-      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
-
-        <!-- Search -->
-        <div class="relative flex-1 min-w-[200px]">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-          </span>
-          <input
-            v-model="searchTerm"
-            placeholder="Buscar empleado..."
-            class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        <!-- Year -->
-        <select
-          v-model="selectedYear"
-          class="h-10 py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
-        >
-          <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}</option>
-        </select>
-
-        <!-- Month -->
-        <select
-          v-model="selectedMonth"
-          class="h-10 py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
-        >
-          <option :value="null">Todos los meses</option>
-          <option v-for="m in monthOptions" :key="m.value" :value="m.value">{{ m.label }}</option>
-        </select>
-
-        <!-- Clear -->
-        <button
-          v-if="hasActiveFilters"
-          @click="clearFilters"
-          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-          aria-label="Limpiar filtros"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        :search-fields="[]"
+        :show-date-range="false"
+        search-placeholder="Buscar empleado..."
+        :show-clear="hasActiveFilters"
+        @search="performSearch"
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
+          <select
+            v-model="selectedYear"
+            :class="filterSelectClass"
+            aria-label="Filtrar por año"
+          >
+            <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}</option>
+          </select>
+          <select
+            v-model="selectedMonth"
+            :class="filterSelectClass"
+            aria-label="Filtrar por mes"
+          >
+            <option :value="null">Mes</option>
+            <option v-for="m in monthOptions" :key="m.value" :value="m.value">{{ m.label }}</option>
+          </select>
+        </template>
+      </UiAdvancedFiltersBar>
 
       <!-- Bulk action bar -->
       <Transition name="slide-down">

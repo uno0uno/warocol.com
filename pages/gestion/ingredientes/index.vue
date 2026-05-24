@@ -12,42 +12,54 @@
     <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
 
-      <!-- Filters -->
-      <SharedFiltersBar
-        v-model:search="searchQuery"
-        search-label="Buscar"
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        :search-fields="[]"
+        :show-date-range="false"
         search-placeholder="Buscar ingredientes..."
-        @search="handleSearch"
-        @clear-filters="clearFilters"
+        :show-clear="hasActiveFilters"
+        @search="performSearch"
+        @clear="clearFilters"
       >
         <template #additional-filters>
           <select
             v-model="typeFilter"
-            class="px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-surface focus:outline-none focus:ring-2 focus:ring-primary"
+            :class="filterSelectClass"
             aria-label="Filtrar por tipo"
           >
-            <option value="">Todos los tipos</option>
+            <option value="">Tipo</option>
             <option value="food">Alimentos</option>
             <option value="service">Servicios</option>
             <option value="supply">Insumos</option>
           </select>
-          <!-- Hierarchy filter toggle -->
-          <div class="flex rounded-lg border border-border overflow-hidden text-sm" role="group" aria-label="Filtrar por jerarquía de ingredientes">
+          <div class="flex rounded-lg border border-border overflow-hidden text-sm shrink-0" role="group" aria-label="Filtrar por jerarquía de ingredientes">
             <button
+              type="button"
+              class="px-3 py-2 min-h-[44px] transition-colors"
+              :class="hierarchyFilter === '' ? 'bg-primary text-white' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
               @click="hierarchyFilter = ''"
-              :class="['px-3 py-2 min-h-[44px] transition-colors', hierarchyFilter === '' ? 'bg-primary text-white' : 'bg-surface text-text-secondary hover:bg-surface-secondary']"
-            >Ver todas</button>
+            >
+              Todas
+            </button>
             <button
+              type="button"
+              class="px-3 py-2 min-h-[44px] border-l border-border transition-colors"
+              :class="hierarchyFilter === 'bases' ? 'bg-primary text-white' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
               @click="hierarchyFilter = 'bases'"
-              :class="['px-3 py-2 min-h-[44px] border-l border-border transition-colors', hierarchyFilter === 'bases' ? 'bg-primary text-white' : 'bg-surface text-text-secondary hover:bg-surface-secondary']"
-            >Solo bases</button>
+            >
+              Bases
+            </button>
             <button
+              type="button"
+              class="px-3 py-2 min-h-[44px] border-l border-border transition-colors"
+              :class="hierarchyFilter === 'variantes' ? 'bg-primary text-white' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
               @click="hierarchyFilter = 'variantes'"
-              :class="['px-3 py-2 min-h-[44px] border-l border-border transition-colors', hierarchyFilter === 'variantes' ? 'bg-primary text-white' : 'bg-surface text-text-secondary hover:bg-surface-secondary']"
-            >Solo variantes</button>
+            >
+              Variantes
+            </button>
           </div>
         </template>
-      </SharedFiltersBar>
+      </UiAdvancedFiltersBar>
 
       <!-- Table -->
       <UiResponsiveDataView
@@ -450,15 +462,26 @@ definePageMeta({
 useHead({ title: 'Catálogo Global — WaRo Admin' })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const { currentTenant } = useTenantReactive()
 
 // ── Constants ───────────────────────────────────────────────────────────────
 const PAGE_SIZE = 50
 
 // ── Filters & pagination ────────────────────────────────────────────────────
-const searchQuery = ref('')
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const typeFilter = ref('')
 const hierarchyFilter = ref<'' | 'bases' | 'variantes'>('bases')
 const currentPage = ref(1)
+
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || !!typeFilter.value
+    || hierarchyFilter.value !== 'bases',
+)
+
+const performSearch = () => applySearch(() => { currentPage.value = 1 })
 
 // ── Data fetch ──────────────────────────────────────────────────────────────
 const {
@@ -468,15 +491,20 @@ const {
   error: fetchError,
   refetch: refresh
 } = useQuery({
-  key: () => ['admin-ingredients', currentPage.value, PAGE_SIZE, searchQuery.value, hierarchyFilter.value],
+  key: () => ['admin-ingredients', currentTenant.value?.id, {
+    page: currentPage.value,
+    search: appliedSearch.value || null,
+    hierarchy: hierarchyFilter.value,
+  }],
   query: () => $fetch('/api/admin/ingredients', {
     params: {
       page: currentPage.value,
       limit: PAGE_SIZE,
-      search: searchQuery.value || undefined,
+      search: appliedSearch.value || undefined,
       bases_only: hierarchyFilter.value === 'bases' ? true : undefined,
-    }
+    },
   }),
+  enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
 const isLoading = computed(() => !listData.value && queryStatus.value === 'loading')
@@ -497,14 +525,10 @@ const filteredBases = computed(() => {
   return rows
 })
 
-function handleSearch() {
-  currentPage.value = 1
-}
-
 function clearFilters() {
-  searchQuery.value = ''
+  clearSearch()
   typeFilter.value = ''
-  hierarchyFilter.value = ''
+  hierarchyFilter.value = 'bases'
   currentPage.value = 1
 }
 

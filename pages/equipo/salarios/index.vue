@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, inject, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
@@ -13,8 +13,15 @@ useHead({ title: 'Salarios' })
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
 
-// State
-const localSearchTerm = ref('')
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
+
+const hasActiveFilters = computed(
+  () => !!localSearchTerm.value || !!appliedSearch.value,
+)
+
+const performSearch = () => applySearch()
+
+const clearFilters = () => clearSearch()
 
 // Fetch employees with salary data
 const { data: employeesData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
@@ -31,9 +38,9 @@ const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && empl
 const employees = computed(() => {
   let data = employeesData.value?.data || []
 
-  // Filter by search
-  if (localSearchTerm.value) {
-    const term = localSearchTerm.value.toLowerCase()
+  const q = appliedSearch.value.trim().toLowerCase()
+  if (q) {
+    const term = q
     data = data.filter(e =>
       (e.name && e.name.toLowerCase().includes(term)) ||
       (e.email && e.email.toLowerCase().includes(term)) ||
@@ -55,15 +62,6 @@ const stats = computed(() => {
     employeesWithSalary: data.filter(e => e.salary_type).length
   }
 })
-
-// Methods
-const performSearch = () => {
-  // Trigger reactivity by keeping the search term
-}
-
-const clearFilters = () => {
-  localSearchTerm.value = ''
-}
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('es-CO', {
@@ -154,38 +152,15 @@ onUnmounted(() => {
         />
       </div>
 
-      <!-- Filters Bar -->
-      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
-        <!-- Search Input -->
-        <div class="relative flex-1 min-w-[200px]">
-          <button
-            @click="performSearch"
-            class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-          </button>
-          <input
-            v-model="localSearchTerm"
-            @keydown.enter="performSearch"
-            placeholder="Buscar empleados..."
-            class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        <!-- Clear Filters Button -->
-        <button
-          v-if="localSearchTerm"
-          @click="clearFilters"
-          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-          title="Limpiar filtros"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        :search-fields="[]"
+        :show-date-range="false"
+        search-placeholder="Buscar empleados..."
+        :show-clear="hasActiveFilters"
+        @search="performSearch"
+        @clear="clearFilters"
+      />
 
       <!-- Responsive Data View -->
       <HealthSemaphore :is-unlocked="true" title="Gestión de Salarios">
