@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { es } from 'date-fns/locale'
-import { format as fnsFormat } from 'date-fns'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import MetricCard from '~/components/shared/MetricCard.vue'
@@ -52,40 +50,9 @@ interface JournalEntryWithLines extends JournalEntry {
   lines: JournalLine[]
 }
 
-// ── Filters ─────────────────────────────────────────────────────────────────
 const statusFilter = ref<string>('')
 const sourceModuleFilter = ref<string>('')
-const dateRangeDates = ref<Date[] | null>(null)
-
-const presetDates = ref([
-  { label: 'Hoy', value: [new Date(), new Date()] },
-  {
-    label: 'Ayer',
-    value: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return [d, d] })()
-  },
-  { label: 'Última semana', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
-  { label: 'Últimos 15 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 15); return d })(), new Date()] },
-  { label: 'Último mes', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
-  { label: 'Últimos 90 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d })(), new Date()] },
-])
-
-const formatDateRange = (dates: Date[]) => {
-  if (!dates || !dates[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
-  if (!dates[1]) return from
-  const to = fnsFormat(dates[1], 'dd/MM/yy', { locale: es })
-  return `${from} - ${to}`
-}
-
-const dateRange = computed(() => {
-  if (!dateRangeDates.value || dateRangeDates.value.length < 2) return { from: null, to: null }
-  const [from, to] = dateRangeDates.value
-  if (!from || !to) return { from: null, to: null }
-  return {
-    from: fnsFormat(from, 'yyyy-MM-dd'),
-    to: fnsFormat(to, 'yyyy-MM-dd'),
-  }
-})
+const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
 
 // ── Pagination ───────────────────────────────────────────────────────────────
 const PAGE_SIZE = 25
@@ -157,14 +124,14 @@ const goToPage = (page: number) => {
 }
 
 // ── Filter helpers ───────────────────────────────────────────────────────────
-const hasActiveFilters = computed(() =>
-  !!statusFilter.value || !!sourceModuleFilter.value || !!dateRangeDates.value
+const hasActiveFilters = computed(
+  () => !!statusFilter.value || !!sourceModuleFilter.value || !!dateRangeDates.value,
 )
 
 const clearFilters = () => {
   statusFilter.value = ''
   sourceModuleFilter.value = ''
-  dateRangeDates.value = null
+  clearDateRange()
   currentPage.value = 1
 }
 
@@ -360,79 +327,54 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
         />
       </div>
 
-      <!-- Filter Bar -->
-      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
-        <!-- Status filter -->
-        <select
-          v-model="statusFilter"
-          class="h-9 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-          aria-label="Filtrar por estado"
-        >
-          <option value="">Todos los estados</option>
-          <option value="draft">Borrador</option>
-          <option value="posted">Publicado</option>
-          <option value="voided">Anulado</option>
-        </select>
-
-        <!-- Source module filter -->
-        <select
-          v-model="sourceModuleFilter"
-          class="h-9 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-          aria-label="Filtrar por módulo"
-        >
-          <option value="">Todos los módulos</option>
-          <option value="manual">Manual</option>
-          <option value="gastos">Gastos</option>
-          <option value="ventas">Ventas</option>
-          <option value="nomina">Nómina</option>
-          <option value="inventario">Inventario</option>
-          <option value="arqueo">Arqueo</option>
-          <option value="system">Sistema</option>
-        </select>
-
-        <!-- Date range picker -->
-        <VueDatePicker
-          v-model="dateRangeDates"
-          range
-          :preset-dates="presetDates"
-          :enable-time-picker="false"
-          :locale="es"
-          placeholder="Rango de fechas"
-          auto-apply
-          :teleport="true"
-          :max-date="new Date()"
-          :format="formatDateRange"
-          input-class-name="dp-custom-input"
-          menu-class-name="dp-custom-menu"
-        />
-
-        <!-- Clear filters -->
-        <button
-          v-if="hasActiveFilters"
-          type="button"
-          class="h-9 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-          aria-label="Limpiar filtros"
-          @click="clearFilters"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-
-        <div class="flex-1" />
-
-        <!-- New entry button -->
-        <NuxtLink
-          to="/finanzas/contabilidad/asientos/crear"
-          class="h-9 px-3 flex items-center gap-1.5 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors whitespace-nowrap shrink-0"
-          aria-label="Crear nuevo asiento contable"
-        >
-          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          <span>Nuevo asiento</span>
-        </NuxtLink>
-      </div>
+      <UiAdvancedFiltersBar
+        v-model:date-range="dateRangeDates"
+        :search-fields="[]"
+        :show-search="false"
+        :preset-dates="presetDates"
+        :format-date-range="formatDateRange"
+        :show-clear="hasActiveFilters"
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
+          <select
+            v-model="statusFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por estado"
+          >
+            <option value="">Estado</option>
+            <option value="draft">Borrador</option>
+            <option value="posted">Publicado</option>
+            <option value="voided">Anulado</option>
+          </select>
+          <select
+            v-model="sourceModuleFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por módulo"
+          >
+            <option value="">Módulo</option>
+            <option value="manual">Manual</option>
+            <option value="gastos">Gastos</option>
+            <option value="ventas">Ventas</option>
+            <option value="nomina">Nómina</option>
+            <option value="inventario">Inventario</option>
+            <option value="arqueo">Arqueo</option>
+            <option value="system">Sistema</option>
+          </select>
+        </template>
+        <template #trailing>
+          <NuxtLink
+            to="/finanzas/contabilidad/asientos/crear"
+            class="h-10 px-3 flex items-center gap-1.5 rounded-lg border border-primary text-primary text-sm font-medium hover:bg-primary/10 transition-colors whitespace-nowrap shrink-0"
+            aria-label="Crear nuevo asiento contable"
+          >
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span class="hidden sm:inline">Nuevo asiento</span>
+          </NuxtLink>
+        </template>
+      </UiAdvancedFiltersBar>
 
       <!-- Table loading (filter change) -->
       <div v-if="isRefreshing && entries.length === 0" class="flex items-center justify-center min-h-[200px]">

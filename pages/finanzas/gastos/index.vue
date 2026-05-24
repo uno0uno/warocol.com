@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import MetricCard from '~/components/shared/MetricCard.vue'
 // @ts-ignore
@@ -14,12 +14,22 @@ useHead({ title: 'Gastos' })
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
 
-// State
-const currentMonth = ref(new Date().toISOString().slice(0, 7)) // YYYY-MM
-const localSearchTerm = ref('')
-const apiSearchTerm = ref('')
+const defaultMonth = () => new Date().toISOString().slice(0, 7)
+const currentMonth = ref(defaultMonth())
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const categoryFilter = ref<string | null>(null)
 const expenseTypeFilter = ref<string | null>(null)
+
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || !!categoryFilter.value
+    || !!expenseTypeFilter.value
+    || currentMonth.value !== defaultMonth(),
+)
+
+const performSearch = () => applySearch()
 
 const EXPENSE_TYPE_LABELS: Record<string, string> = {
   cogs: 'Costo de ventas',
@@ -44,14 +54,14 @@ const { data: expensesData, status: queryStatus, asyncStatus: queryAsyncStatus, 
   key: () => ['finance', 'expenses', currentTenant.value?.id, {
     month: currentMonth.value,
     category: categoryFilter.value || null,
-    search: apiSearchTerm.value || null,
+    search: appliedSearch.value || null,
     expenseType: expenseTypeFilter.value || null,
   }],
   query: () => $fetch('/api/finance/expenses', {
     params: {
       month_year: currentMonth.value,
       category_id: categoryFilter.value || undefined,
-      search: apiSearchTerm.value || undefined,
+      search: appliedSearch.value || undefined,
       expense_type: expenseTypeFilter.value || undefined,
     }
   }),
@@ -66,17 +76,11 @@ const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && expe
 const expenses = computed(() => expensesData.value?.data || [])
 const stats = computed(() => expensesData.value?.stats || null)
 
-// Methods
-const performSearch = () => {
-  apiSearchTerm.value = localSearchTerm.value
-}
-
 const clearFilters = () => {
-  localSearchTerm.value = ''
-  apiSearchTerm.value = ''
+  clearSearch()
   categoryFilter.value = null
   expenseTypeFilter.value = null
-  currentMonth.value = new Date().toISOString().slice(0, 7)
+  currentMonth.value = defaultMonth()
 }
 
 const formatCurrency = (value: number) => {
@@ -153,69 +157,47 @@ onUnmounted(() => { clearRefreshHandler(refetch)
         />
       </div>
 
-      <!-- Filters Bar -->
-      <div class="flex flex-wrap items-center gap-2 w-full">
-        <!-- Search Input -->
-        <div class="relative flex-1 min-w-[200px]">
-          <button
-            @click="performSearch"
-            class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary hover:text-primary transition-colors cursor-pointer"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-          </button>
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        search-placeholder="Buscar gastos..."
+        :search-fields="[]"
+        :show-date-range="false"
+        :show-clear="hasActiveFilters"
+        @search="performSearch"
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
           <input
-            v-model="localSearchTerm"
-            @keydown.enter="performSearch"
-            placeholder="Buscar gastos..."
-            class="w-full h-10 pl-9 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        <!-- Month Picker -->
-        <input 
-          type="month" 
-          v-model="currentMonth"
-          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[140px]"
-        />
-
-        <!-- Category Filter -->
-        <select
-          v-model="categoryFilter"
-          class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[150px]"
-        >
-          <option :value="null">Todas las categorías</option>
-          <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-            {{ cat.categoryName }}
-          </option>
-        </select>
-
-        <!-- Expense Type Filter -->
-        <select
-          v-model="expenseTypeFilter"
-          class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer min-w-[170px]"
-        >
-          <option :value="null">Todos los tipos</option>
-          <option value="cogs">Costo de ventas</option>
-          <option value="admin_expense">Gasto administrativo</option>
-          <option value="sales_expense">Gasto de ventas</option>
-          <option value="financial_expense">Gasto financiero</option>
-          <option value="other_expense">Otro gasto</option>
-        </select>
-
-        <!-- Clear Filters Button -->
-        <button
-          v-if="localSearchTerm || categoryFilter || expenseTypeFilter || currentMonth !== new Date().toISOString().slice(0, 7)"
-          @click="clearFilters"
-          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-          title="Limpiar filtros"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+            v-model="currentMonth"
+            type="month"
+            :class="filterSelectClass"
+            class="min-w-[9rem] cursor-pointer"
+            aria-label="Filtrar por mes"
+          >
+          <select
+            v-model="categoryFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por categoría"
+          >
+            <option :value="null">Categoría</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+              {{ cat.categoryName }}
+            </option>
+          </select>
+          <select
+            v-model="expenseTypeFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por tipo de gasto"
+          >
+            <option :value="null">Tipo</option>
+            <option value="cogs">Costo de ventas</option>
+            <option value="admin_expense">Gasto administrativo</option>
+            <option value="sales_expense">Gasto de ventas</option>
+            <option value="financial_expense">Gasto financiero</option>
+            <option value="other_expense">Otro gasto</option>
+          </select>
+        </template>
+      </UiAdvancedFiltersBar>
 
       <!-- Responsive Data View -->
       <HealthSemaphore :is-unlocked="true" title="Control de Gastos">

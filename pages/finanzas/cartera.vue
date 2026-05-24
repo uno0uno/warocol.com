@@ -31,6 +31,15 @@ const selectAgingBucket = (label: string) => {
 
 watch(statusFilter, () => { agingFilter.value = null })
 
+const hasActiveFilters = computed(
+  () => statusFilter.value !== 'all' || !!agingFilter.value,
+)
+
+const clearFilters = () => {
+  statusFilter.value = 'all'
+  agingFilter.value = null
+}
+
 // ── Summary ───────────────────────────────────────────────────────────────
 const { data: summaryData, error: summaryError, refetch: refetchSummary } = useQuery({
   key: () => ['cartera', 'summary', currentTenant.value?.id],
@@ -226,28 +235,25 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Filters Bar -->
-      <div class="flex items-center gap-2 w-full overflow-x-auto scrollbar-hide">
-        <select
-          v-model="statusFilter"
-          class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer flex-shrink-0"
-          aria-label="Filtrar por estado"
-        >
-          <option value="all">Todas</option>
-          <option value="overdue">Vencidas</option>
-          <option value="current">Al día</option>
-        </select>
-        <button
-          v-if="statusFilter !== 'all'"
-          @click="statusFilter = 'all'"
-          class="h-10 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-secondary hover:text-text-primary hover:border-primary transition-colors"
-          aria-label="Limpiar filtros"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+      <UiAdvancedFiltersBar
+        :search-fields="[]"
+        :show-search="false"
+        :show-date-range="false"
+        :show-clear="hasActiveFilters"
+        @clear="clearFilters"
+      >
+        <template #additional-filters>
+          <select
+            v-model="statusFilter"
+            :class="filterSelectClass"
+            aria-label="Filtrar por estado"
+          >
+            <option value="all">Estado</option>
+            <option value="overdue">Vencidas</option>
+            <option value="current">Al día</option>
+          </select>
+        </template>
+      </UiAdvancedFiltersBar>
 
       <!-- Debtors Table -->
       <UiResponsiveDataView
