@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
-import { es } from 'date-fns/locale'
-import { format as fnsFormat } from 'date-fns'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 
 definePageMeta({ layout: 'dashboard' })
@@ -13,35 +11,21 @@ const router = useRouter()
 const { formatDate } = useFormatters()
 const cache = useQueryCache()
 
-// Filters
 const statusFilter = ref<string | null>(null)
-const dateRangeDates = ref<Date[] | null>(null)
+const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
 
-const presetDates = ref([
-  { label: 'Hoy', value: [new Date(), new Date()] },
-  { label: 'Ayer', value: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return [d, d] })() },
-  { label: 'Última semana', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 7); return d })(), new Date()] },
-  { label: 'Último mes', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 30); return d })(), new Date()] },
-  { label: 'Últimos 90 días', value: [(() => { const d = new Date(); d.setDate(d.getDate() - 90); return d })(), new Date()] },
-])
-
-const formatDateRange = (dates: Date[]) => {
-  if (!dates || !dates[0]) return ''
-  const from = fnsFormat(dates[0], 'dd/MM/yy', { locale: es })
-  if (!dates[1]) return from
-  return `${from} - ${fnsFormat(dates[1], 'dd/MM/yy', { locale: es })}`
-}
-
-const dateRange = computed(() => {
-  if (!dateRangeDates.value || dateRangeDates.value.length < 2) return { from: null, to: null }
-  const [from, to] = dateRangeDates.value
-  if (!from || !to) return { from: null, to: null }
-  return { from: fnsFormat(from, 'yyyy-MM-dd'), to: fnsFormat(to, 'yyyy-MM-dd') }
-})
-
-// Pagination
 const PAGE_SIZE = 50
 const currentPage = ref(1)
+
+const hasActiveFilters = computed(
+  () => !!statusFilter.value || !!dateRangeDates.value,
+)
+
+const clearFilters = () => {
+  statusFilter.value = null
+  clearDateRange()
+  currentPage.value = 1
+}
 
 // Reset page on filter change
 watch([statusFilter, dateRangeDates], () => { currentPage.value = 1 })
@@ -126,38 +110,34 @@ const formatCurrency = (value: number) =>
 
 <template>
   <div class="space-y-4">
-    <!-- Filters -->
-    <div class="flex flex-wrap items-center gap-3">
-      <VueDatePicker
-        v-model="dateRangeDates"
-        range
-        :preset-dates="presetDates"
-        :enable-time-picker="false"
-        :locale="es"
-        placeholder="Rango de fechas"
-        auto-apply
-        :teleport="true"
-        :max-date="new Date()"
-        :format="formatDateRange"
-        input-class-name="dp-custom-input"
-        menu-class-name="dp-custom-menu"
-        calendar-cell-class-name="dp-custom-cell"
-      />
-
-      <select
-        v-model="statusFilter"
-        class="py-2 pl-3 pr-8 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-      >
-        <option :value="null">Todos los estados</option>
-        <option value="accepted">Aceptada</option>
-        <option value="pending">Pendiente</option>
-        <option value="rejected">Rechazada</option>
-      </select>
-
-      <span class="text-sm text-text-secondary ml-auto">
-        {{ invoicesTotal }} {{ invoicesTotal === 1 ? 'factura' : 'facturas' }}
-      </span>
-    </div>
+    <UiAdvancedFiltersBar
+      v-model:date-range="dateRangeDates"
+      :search-fields="[]"
+      :show-search="false"
+      :preset-dates="presetDates"
+      :format-date-range="formatDateRange"
+      :show-clear="hasActiveFilters"
+      @clear="clearFilters"
+    >
+      <template #additional-filters>
+        <select
+          v-model="statusFilter"
+          :class="filterSelectClass"
+          aria-label="Filtrar por estado"
+          @change="currentPage = 1"
+        >
+          <option :value="null">Estado</option>
+          <option value="accepted">Aceptada</option>
+          <option value="pending">Pendiente</option>
+          <option value="rejected">Rechazada</option>
+        </select>
+      </template>
+      <template #trailing>
+        <span class="text-sm text-text-secondary whitespace-nowrap">
+          {{ invoicesTotal }} {{ invoicesTotal === 1 ? 'factura' : 'facturas' }}
+        </span>
+      </template>
+    </UiAdvancedFiltersBar>
 
     <!-- Loading -->
     <div v-if="isLoading" class="flex justify-center py-16">
