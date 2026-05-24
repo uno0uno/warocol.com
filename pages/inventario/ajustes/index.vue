@@ -34,41 +34,40 @@
         />
       </UiStats>
 
-      <!-- Filters Bar -->
-      <SharedFiltersBar
-        v-model:search="searchQuery"
-        v-model:date-filter="dateFilter"
-        search-label="Buscar"
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        v-model:date-range="dateRangeDates"
+        :search-fields="[]"
         search-placeholder="Buscar por ingrediente o motivo..."
-        show-date-filter
-        @search="handleSearch"
-        @clear-filters="clearFilters"
+        :preset-dates="presetDates"
+        :format-date-range="formatDateRange"
+        :show-clear="hasActiveFilters"
+        @search="performSearch"
+        @clear="clearFilters"
       >
         <template #additional-filters>
-          <!-- Ingredient Filter -->
           <select
             v-model="ingredientFilter"
-            class="px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
-            @change="applyFilters"
+            :class="filterSelectClass"
+            aria-label="Filtrar por ingrediente"
           >
-            <option value="">Todos los ingredientes</option>
+            <option value="">Ingrediente</option>
             <option v-for="ingredient in ingredients" :key="ingredient.id" :value="ingredient.id">
               {{ ingredient.name }}
             </option>
           </select>
 
-          <!-- Adjustment Type Filter -->
           <select
             v-model="adjustmentTypeFilter"
-            class="px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
-            @change="applyFilters"
+            :class="filterSelectClass"
+            aria-label="Filtrar por tipo de ajuste"
           >
-            <option value="">Todos los ajustes</option>
+            <option value="">Tipo ajuste</option>
             <option value="positive">Incrementos</option>
             <option value="negative">Decrementos</option>
           </select>
         </template>
-      </SharedFiltersBar>
+      </UiAdvancedFiltersBar>
 
       <!-- Responsive Data View -->
       <UiResponsiveDataView
@@ -184,28 +183,37 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 
 useHead({ title: 'Ajustes de Inventario' })
 
-// Tenant reactivity
 const { currentTenant } = useTenantReactive()
 
-// State
-const searchQuery = ref('')
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
+const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
 const ingredientFilter = ref('')
 const adjustmentTypeFilter = ref('')
-const dateFilter = ref('')
 
-// Sorting state
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || !!dateRangeDates.value
+    || !!ingredientFilter.value
+    || !!adjustmentTypeFilter.value,
+)
+
+const performSearch = () => applySearch()
+
 const sortField = ref('created_at')
 const sortDirection = ref('desc')
 
 // Load ingredients for filter
 const { data: ingredientsData } = useQuery({
   key: () => ['inventory', 'ingredients-lookup', currentTenant.value?.id],
-  query: () => $fetch('/api/suppliers/ingredients', { params: { limit: 10000 } }),
+  query: () => $fetch('/api/suppliers/ingredients', { params: { limit: INGREDIENTS_FETCH_LIMIT } }),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
@@ -218,21 +226,16 @@ const ingredients = computed(() => {
   })).sort((a: any, b: any) => a.name.localeCompare(b.name))
 })
 
-// Compute date parts from filter string
 const dateParts = computed(() => {
-  if (!dateFilter.value) return {}
-  if (dateFilter.value.includes(' to ')) {
-    const [start, end] = dateFilter.value.split(' to ')
-    return { start_date: start, end_date: end }
-  }
-  return { start_date: dateFilter.value, end_date: dateFilter.value }
+  if (!dateRange.value.from || !dateRange.value.to) return {}
+  return { start_date: dateRange.value.from, end_date: dateRange.value.to }
 })
 
-// Load adjustments data from API
-const { data: adjustmentsData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
+const { data: adjustmentsData, asyncStatus: queryAsyncStatus, refetch } = useQuery({
   key: () => ['inventory', 'adjustments', currentTenant.value?.id, {
     ingredient: ingredientFilter.value || null,
-    date: dateFilter.value || null,
+    from: dateRange.value.from,
+    to: dateRange.value.to,
   }],
   query: () => $fetch('/api/inventory/movements', {
     params: {
@@ -240,7 +243,7 @@ const { data: adjustmentsData, status: queryStatus, asyncStatus: queryAsyncStatu
       movement_type: 'adjustment',
       ingredient_id: ingredientFilter.value || undefined,
       ...dateParts.value,
-    }
+    },
   }),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
@@ -284,15 +287,14 @@ const uniqueIngredientsAdjusted = computed(() => {
 })
 
 const filteredAdjustments = computed(() => {
-  return adjustments.value.filter(adjustment => {
-    const matchesSearch = adjustment.ingredient_name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                         (adjustment.reason && adjustment.reason.toLowerCase().includes(searchQuery.value.toLowerCase()))
-
-    // Filter by adjustment type (positive/negative)
-    const matchesType = adjustmentTypeFilter.value === '' ||
-                       (adjustmentTypeFilter.value === 'positive' && adjustment.quantity_change >= 0) ||
-                       (adjustmentTypeFilter.value === 'negative' && adjustment.quantity_change < 0)
-
+  const q = appliedSearch.value.trim().toLowerCase()
+  return adjustments.value.filter((adjustment) => {
+    const matchesSearch = !q
+      || adjustment.ingredient_name.toLowerCase().includes(q)
+      || (adjustment.reason && adjustment.reason.toLowerCase().includes(q))
+    const matchesType = adjustmentTypeFilter.value === ''
+      || (adjustmentTypeFilter.value === 'positive' && adjustment.quantity_change >= 0)
+      || (adjustmentTypeFilter.value === 'negative' && adjustment.quantity_change < 0)
     return matchesSearch && matchesType
   })
 })
@@ -330,20 +332,11 @@ const handleSort = (field) => {
   }
 }
 
-// Handle search
-const handleSearch = () => {
-  // Search is handled by computed filteredAdjustments
-}
-
-// Apply filters — reactive key triggers refetch automatically
-const applyFilters = () => {}
-
-// Clear filters
 const clearFilters = () => {
-  searchQuery.value = ''
+  clearSearch()
+  clearDateRange()
   ingredientFilter.value = ''
   adjustmentTypeFilter.value = ''
-  dateFilter.value = ''
 }
 
 // Table columns configuration

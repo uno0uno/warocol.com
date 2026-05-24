@@ -31,56 +31,58 @@
         />
       </UiStats>
 
-      <!-- Filters Bar -->
-      <SharedFiltersBar
-        v-model:search="searchQuery"
-        search-label="Buscar"
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        :search-fields="[]"
         search-placeholder="Buscar ingredientes..."
-        @search="() => {}"
-        @clear-filters="clearFilters"
+        :show-date-range="false"
+        :show-clear="hasActiveFilters"
+        @search="performSearch"
+        @clear="clearFilters"
       >
         <template #additional-filters>
-          <!-- Category Filter -->
           <select
             v-model="categoryFilter"
-            class="px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            :class="filterSelectClass"
+            aria-label="Filtrar por categoría"
           >
-            <option value="">Todas las categorías</option>
+            <option value="">Categoría</option>
             <option v-for="category in categories" :key="category" :value="category">
               {{ category }}
             </option>
           </select>
 
-          <!-- Status Filter -->
           <select
             v-model="statusFilter"
-            class="px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            :class="filterSelectClass"
+            aria-label="Filtrar por estado"
+            @change="currentPage = 1"
           >
-            <option value="all">Todos los estados</option>
+            <option value="all">Estado</option>
             <option value="critical">Crítico</option>
             <option value="low">Bajo</option>
             <option value="ok">Normal</option>
           </select>
 
-          <!-- Unit Filter -->
           <select
             v-model="unitFilter"
-            class="px-4 py-2 border border-border rounded-lg bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            :class="filterSelectClass"
+            aria-label="Filtrar por unidad"
           >
-            <option value="">Todas las unidades</option>
+            <option value="">Unidad</option>
             <option v-for="unit in units" :key="unit" :value="unit">
               {{ unit }}
             </option>
           </select>
         </template>
-      </SharedFiltersBar>
+      </UiAdvancedFiltersBar>
 
       <!-- Responsive Data View -->
       <HealthSemaphore :is-unlocked="true" title="Stock de Inventario">
       <UiResponsiveDataView
         row-size="sm"
         :columns="stockTableColumns"
-        :data="filteredInventory"
+        :data="displayInventory"
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
@@ -186,13 +188,42 @@
           </div>
         </template>
       </UiResponsiveDataView>
+
+      <div
+        v-if="(inventoryData?.total ?? 0) > itemsPerPage"
+        class="mt-4 bg-white px-4 py-3 flex items-center justify-between border border-titan-200 rounded-lg"
+      >
+        <p class="text-sm text-titan-700">
+          Mostrando <span class="font-medium">{{ startItem }}</span> a
+          <span class="font-medium">{{ endItem }}</span> de
+          <span class="font-medium">{{ inventoryData?.total ?? 0 }}</span>
+        </p>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            :disabled="!canGoPrevious"
+            class="px-4 py-2 border border-titan-300 text-sm rounded-md disabled:opacity-50"
+            @click="previousPage"
+          >
+            Anterior
+          </button>
+          <button
+            type="button"
+            :disabled="!canGoNext"
+            class="px-4 py-2 border border-titan-300 text-sm rounded-md disabled:opacity-50"
+            @click="nextPage"
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
     </HealthSemaphore>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
@@ -201,26 +232,51 @@ useHead({ title: 'Stock' })
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
 
-// State
-const searchQuery = ref('')
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const categoryFilter = ref('')
 const statusFilter = ref('all')
 const unitFilter = ref('')
+const currentPage = ref(1)
+const itemsPerPage = ref(50)
 
-// Sorting state
-const sortField = ref('')
-const sortDirection = ref('asc')
+const currentOffset = computed(() => (currentPage.value - 1) * itemsPerPage.value)
 
-// Load inventory data from API
-const { data: inventoryData, status: queryStatus, asyncStatus: queryAsyncStatus, refetch } = useQuery({
-  key: () => ['inventory', 'stock', currentTenant.value?.id],
-  query: () => $fetch('/api/inventory/stock', {
-    params: {
-      limit: 250,
-      sort_field: 'current_stock',
-      sort_direction: 'desc'
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || statusFilter.value !== 'all'
+    || !!categoryFilter.value
+    || !!unitFilter.value,
+)
+
+const performSearch = () => applySearch(() => { currentPage.value = 1 })
+
+watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
+
+const sortField = ref('current_stock')
+const sortDirection = ref('desc')
+
+const { data: inventoryData, asyncStatus: queryAsyncStatus, refetch } = useQuery({
+  key: () => ['inventory', 'stock', currentTenant.value?.id, {
+    search: appliedSearch.value || null,
+    status: statusFilter.value,
+    sort_field: sortField.value,
+    sort_direction: sortDirection.value,
+    page: currentPage.value,
+    limit: itemsPerPage.value,
+  }],
+  query: () => {
+    const params: Record<string, string | number> = {
+      limit: itemsPerPage.value,
+      offset: currentOffset.value,
+      sort_field: sortField.value,
+      sort_direction: sortDirection.value,
+      status_filter: statusFilter.value,
     }
-  }),
+    if (appliedSearch.value) params.search = appliedSearch.value
+    return $fetch('/api/inventory/stock', { params })
+  },
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
@@ -259,55 +315,49 @@ const units = computed(() => {
   return Array.from(unitsSet).sort()
 })
 
-const filteredInventory = computed(() => {
-  return inventory.value.filter(item => {
-    const matchesSearch = item.ingredient_name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesStatus = statusFilter.value === 'all' || item.status === statusFilter.value
+const displayInventory = computed(() =>
+  inventory.value.filter((item) => {
     const matchesCategory = !categoryFilter.value || item.category === categoryFilter.value
     const matchesUnit = !unitFilter.value || item.unit === unitFilter.value
-    return matchesSearch && matchesStatus && matchesCategory && matchesUnit
-  })
-})
+    return matchesCategory && matchesUnit
+  }),
+)
 
-// Sorted inventory
-const sortedInventory = computed(() => {
-  if (!sortField.value) return filteredInventory.value
+const totalPages = computed(() =>
+  Math.ceil((inventoryData.value?.total ?? 0) / itemsPerPage.value),
+)
+const canGoPrevious = computed(() => currentPage.value > 1)
+const canGoNext = computed(() => currentPage.value < totalPages.value)
+const startItem = computed(() =>
+  inventoryData.value?.total ? (currentPage.value - 1) * itemsPerPage.value + 1 : 0,
+)
+const endItem = computed(() =>
+  Math.min(currentPage.value * itemsPerPage.value, inventoryData.value?.total ?? 0),
+)
 
-  const sorted = [...filteredInventory.value].sort((a, b) => {
-    const aValue = a[sortField.value]
-    const bValue = b[sortField.value]
+const previousPage = () => {
+  if (canGoPrevious.value) currentPage.value--
+}
+const nextPage = () => {
+  if (canGoNext.value) currentPage.value++
+}
 
-    if (aValue === null || aValue === undefined) return 1
-    if (bValue === null || bValue === undefined) return -1
-
-    if (typeof aValue === 'number' && typeof bValue === 'number') {
-      return sortDirection.value === 'asc' ? aValue - bValue : bValue - aValue
-    }
-
-    const strA = String(aValue).toLowerCase()
-    const strB = String(bValue).toLowerCase()
-    return sortDirection.value === 'asc' ? strA.localeCompare(strB) : strB.localeCompare(strA)
-  })
-
-  return sorted
-})
-
-// Handle sort
-const handleSort = (field) => {
+const handleSort = (field: string) => {
   if (sortField.value === field) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
     sortField.value = field
     sortDirection.value = 'asc'
   }
+  currentPage.value = 1
 }
 
-// Clear filters
 const clearFilters = () => {
-  searchQuery.value = ''
+  clearSearch()
   categoryFilter.value = ''
   statusFilter.value = 'all'
   unitFilter.value = ''
+  currentPage.value = 1
 }
 
 // Table columns configuration

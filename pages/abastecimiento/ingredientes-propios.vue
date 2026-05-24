@@ -13,27 +13,30 @@
         <UiStatsCard label="Con costo" :value="stats.withCost" icon="currency-dollar" />
       </UiStats>
 
-      <!-- Filters Bar -->
-      <SharedFiltersBar
-        v-model:search="searchQuery"
-        search-label="Buscar"
+      <UiAdvancedFiltersBar
+        v-model:search="localSearchTerm"
+        :search-fields="[]"
         search-placeholder="Buscar ingredientes..."
-        @search="() => {}"
-        @clear-filters="clearFilters"
+        :show-date-range="false"
+        :show-clear="hasActiveFilters"
+        @search="performSearch"
+        @clear="clearFilters"
       >
         <template #additional-filters>
           <select
             v-model="typeFilter"
-            class="h-10 pl-3 pr-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer flex-shrink-0"
+            :class="filterSelectClass"
+            aria-label="Filtrar por tipo"
+            @change="currentPage = 1"
           >
-            <option value="all">Todos los tipos</option>
+            <option value="">Tipo</option>
             <option value="food">Alimento</option>
             <option value="supply">Insumo</option>
             <option value="service">Servicio</option>
           </select>
           <button
             type="button"
-            @click="showArchived = !showArchived"
+            @click="toggleArchived"
             :class="[
               'h-10 px-3 rounded-lg border-2 text-sm font-medium transition-colors flex-shrink-0 flex items-center gap-1.5',
               showArchived
@@ -47,7 +50,7 @@
             Archivados
           </button>
         </template>
-      </SharedFiltersBar>
+      </UiAdvancedFiltersBar>
 
       <!-- Data View -->
       <HealthSemaphore :is-unlocked="true" title="Ingredientes Personalizados">
@@ -61,7 +64,7 @@
         </template>
       <UiResponsiveDataView
         :columns="tableColumns"
-        :data="filteredIngredients"
+        :data="sortedIngredients"
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
@@ -232,7 +235,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
 useHead({ title: 'Ingredientes Personalizados' })
@@ -241,9 +244,10 @@ const { currentTenant } = useTenantReactive()
 
 const TYPE_LABELS: Record<string, string> = { food: 'Alimento', supply: 'Insumo', service: 'Servicio' }
 
-// State
-const searchQuery = ref('')
-const typeFilter = ref('all')
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
+const typeFilter = ref('')
+const currentPage = ref(1)
+const itemsPerPage = ref(50)
 const sortField = ref('')
 const sortDirection = ref('asc')
 const showPanel = ref(false)
@@ -253,12 +257,41 @@ const showArchiveModal = ref(false)
 const archiveTarget = ref<any>(null)
 const archiving = ref(false)
 
-// Data
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || !!typeFilter.value
+    || showArchived.value,
+)
+
+const performSearch = () => applySearch(() => { currentPage.value = 1 })
+
+const toggleArchived = () => {
+  showArchived.value = !showArchived.value
+  currentPage.value = 1
+}
+
+watch(() => currentTenant.value?.id, () => { currentPage.value = 1 })
+
 const { data: ingredientsData, asyncStatus: queryAsyncStatus, refetch } = useQuery({
-  key: () => ['ingredients', 'custom', currentTenant.value?.id, showArchived.value],
-  query: () => $fetch('/api/suppliers/ingredients', {
-    params: { tenant_only: true, limit: 500, ...(showArchived.value && { show_archived: true }) }
-  }),
+  key: () => ['ingredients', 'custom', currentTenant.value?.id, {
+    archived: showArchived.value,
+    search: appliedSearch.value || null,
+    type: typeFilter.value || null,
+    page: currentPage.value,
+  }],
+  query: () => {
+    const params: Record<string, string | number | boolean> = {
+      tenant_only: true,
+      limit: itemsPerPage.value,
+      page: currentPage.value,
+    }
+    if (appliedSearch.value) params.search = appliedSearch.value
+    if (typeFilter.value) params.type = typeFilter.value
+    if (showArchived.value) params.show_archived = true
+    return $fetch('/api/suppliers/ingredients', { params })
+  },
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
@@ -278,11 +311,21 @@ const stats = computed(() => ({
   withCost: supplyIngredients.value.filter((i: any) => i.costo_unitario != null).length,
 }))
 
-const filteredIngredients = computed(() => {
-  return supplyIngredients.value.filter((item: any) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesType = typeFilter.value === 'all' || item.type === typeFilter.value
-    return matchesSearch && matchesType
+const sortedIngredients = computed(() => {
+  const list = supplyIngredients.value
+  if (!sortField.value) return list
+
+  return [...list].sort((a: any, b: any) => {
+    const aValue = a[sortField.value]
+    const bValue = b[sortField.value]
+    if (aValue === null || aValue === undefined) return 1
+    if (bValue === null || bValue === undefined) return -1
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortDirection.value === 'asc' ? aValue - bValue : bValue - aValue
+    }
+    const strA = String(aValue).toLowerCase()
+    const strB = String(bValue).toLowerCase()
+    return sortDirection.value === 'asc' ? strA.localeCompare(strB) : strB.localeCompare(strA)
   })
 })
 
@@ -341,8 +384,10 @@ const handleSort = (field: string) => {
 }
 
 const clearFilters = () => {
-  searchQuery.value = ''
-  typeFilter.value = 'all'
+  clearSearch()
+  typeFilter.value = ''
+  showArchived.value = false
+  currentPage.value = 1
 }
 
 const tableColumns = [
