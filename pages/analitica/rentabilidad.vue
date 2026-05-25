@@ -3,6 +3,7 @@ import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceToNow } from 'date-fns'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import MetricCard from '~/components/shared/MetricCard.vue'
 
 const { setRefreshHandler, clearRefreshHandler, setLastUpdateText, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
@@ -68,6 +69,66 @@ const isRefreshing = computed(() =>
 )
 
 const isUnlocked = computed(() => !!(foodCostData.value?.data || menuAnalysisData.value?.data))
+
+const foodCostCurrent = computed(() => foodCostData.value?.data?.current_period ?? null)
+const foodCostPrevious = computed(() => foodCostData.value?.data?.previous_period ?? null)
+const foodCostComparison = computed(() => foodCostData.value?.data?.comparison ?? null)
+const foodCostBenchmark = computed(() => foodCostData.value?.data?.benchmark ?? null)
+const menuSummary = computed(() => menuAnalysisData.value?.data?.summary ?? {
+  total_items: 0,
+  stars: 0,
+  plowhorses: 0,
+  puzzles: 0,
+  dogs: 0,
+  avg_profit_margin_pct: 0,
+})
+
+const hasOperativeFoodCost = computed(() => foodCostCurrent.value?.food_cost_operativo_pct != null)
+
+const foodCostVariant = computed(() =>
+  foodCostBenchmark.value?.status === 'good' ? 'success' : 'warning'
+)
+
+const avgMarginVariant = computed(() => {
+  const margin = menuSummary.value.avg_profit_margin_pct ?? 0
+  if (margin >= 40) return 'success'
+  if (margin >= 25) return 'warning'
+  return 'destructive'
+})
+
+const foodCostSubtitle = computed(() => {
+  const previous = foodCostPrevious.value?.food_cost_pct
+  const change = foodCostComparison.value?.change_pct
+  if (previous == null || change == null) return 'Rango saludable: 28%-35%'
+
+  const direction = change > 0 ? '+' : change < 0 ? '-' : ''
+  return `Anterior: ${previous.toFixed(1)}% · ${direction}${Math.abs(change).toFixed(1)} pp`
+})
+
+const operativeFoodCostSubtitle = computed(() => {
+  const operative = foodCostCurrent.value?.food_cost_operativo_pct
+  if (operative == null) return ''
+  return `Mi costo vs ventas netas: ${operative.toFixed(1)}%`
+})
+
+const totalItemsSubtitle = computed(() => {
+  const total = menuSummary.value.total_items ?? 0
+  return total === 1 ? '1 producto con ventas' : `${total} productos con ventas`
+})
+
+const starsSubtitle = computed(() => {
+  const total = menuSummary.value.total_items ?? 0
+  const stars = menuSummary.value.stars ?? 0
+  if (!total) return 'Sin datos del período'
+  return `${Math.round((stars / total) * 100)}% del menú analizado`
+})
+
+const dogsSubtitle = computed(() => {
+  const total = menuSummary.value.total_items ?? 0
+  const dogs = menuSummary.value.dogs ?? 0
+  if (!total) return 'Sin datos del período'
+  return `${Math.round((dogs / total) * 100)}% del menú analizado`
+})
 
 const handleRefresh = async () => {
   await Promise.all([refetchFoodCost(), refetchMenuAnalysis()])
@@ -139,12 +200,58 @@ onUnmounted(() => {
       </div>
       </ClientOnly>
 
-      <!-- Rentabilidad Real -->
-      <HealthSemaphore
-        :isUnlocked="isUnlocked"
-        :foodCostData="foodCostData?.data"
-        :menuData="menuAnalysisData?.data"
-      />
+      <section>
+        <div :class="['grid grid-cols-2 gap-3 md:gap-4 mb-6', hasOperativeFoodCost ? 'md:grid-cols-5' : 'md:grid-cols-4']">
+          <MetricCard
+            title="Food Cost Real"
+            :value="foodCostCurrent?.food_cost_pct ?? 0"
+            format="percentage"
+            :precision="1"
+            :variant="foodCostVariant"
+            :subtitle="foodCostSubtitle"
+          />
+          <MetricCard
+            v-if="hasOperativeFoodCost"
+            title="Food Cost Operativo"
+            :value="foodCostCurrent?.food_cost_operativo_pct ?? 0"
+            format="percentage"
+            :precision="1"
+            variant="primary"
+            :subtitle="operativeFoodCostSubtitle"
+          />
+          <MetricCard
+            title="Margen Promedio"
+            :value="menuSummary.avg_profit_margin_pct ?? 0"
+            format="percentage"
+            :precision="1"
+            :variant="avgMarginVariant"
+            :subtitle="totalItemsSubtitle"
+          />
+          <MetricCard
+            title="Productos Estrella"
+            :value="menuSummary.stars ?? 0"
+            format="number"
+            variant="success"
+            :subtitle="starsSubtitle"
+          />
+          <MetricCard
+            title="Productos Críticos"
+            :value="menuSummary.dogs ?? 0"
+            format="number"
+            variant="destructive"
+            :subtitle="dogsSubtitle"
+          />
+        </div>
+
+        <!-- Rentabilidad Real -->
+        <HealthSemaphore
+          :isUnlocked="isUnlocked"
+          :foodCostData="foodCostData?.data"
+          :menuData="menuAnalysisData?.data"
+          hide-header
+          hide-food-cost-summary
+        />
+      </section>
     </template>
   </div>
 </template>

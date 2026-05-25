@@ -23,12 +23,6 @@ const props = defineProps<{
 
 <template>
   <div>
-    <p
-      v-if="props.menuData?.summary"
-      class="text-xs text-text-tertiary mb-2"
-    >
-      Margen de clasificación (BCG): basado en mi costo cuando está configurado; si no, costo real.
-    </p>
     <MenuProfitabilityTable :items="props.menuData?.menu_items || []" />
   </div>
 </template>

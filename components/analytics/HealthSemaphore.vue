@@ -3,12 +3,17 @@ import { computed } from 'vue';
 import { Lock, Camera } from 'lucide-vue-next';
 import MenuMatrix from './MenuMatrix.vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   isUnlocked: boolean;
   title?: string;
   menuData?: any;
   foodCostData?: any;
-}>();
+  hideHeader?: boolean;
+  hideFoodCostSummary?: boolean;
+}>(), {
+  hideHeader: false,
+  hideFoodCostSummary: false,
+});
 
 const periodLabel = computed(() => {
   if (!props.menuData?.period) return null
@@ -32,12 +37,12 @@ const emit = defineEmits<{
 
     <div :class="['transition-all duration-700', !isUnlocked ? 'filter blur-sm grayscale pointer-events-none opacity-50' : '']">
       <div class="bg-slate-50 md:bg-white p-3 md:p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <div class="flex items-center justify-between mb-3 md:mb-6">
+        <div v-if="!hideHeader" class="flex items-center justify-between mb-3 md:mb-6">
           <h4 class="text-slate-600 font-medium">{{ title || 'Análisis de Menú (Rentabilidad)' }}</h4>
           <slot name="header-actions" />
         </div>
         <div
-          v-if="foodCostData?.current_period"
+          v-if="!hideFoodCostSummary && foodCostData?.current_period"
           class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-sm"
         >
           <div class="rounded-lg border border-slate-200 bg-white px-3 py-2">
