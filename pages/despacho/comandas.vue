@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
+import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
