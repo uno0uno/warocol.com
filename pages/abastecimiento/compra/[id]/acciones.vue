@@ -1,14 +1,12 @@
 <template>
   <div>
-    <!-- Loading overlay during submit -->
-    <div v-if="isSubmitting || isApproving" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-8 flex flex-col items-center">
-        <CommonsTheCustomLoader size="large" />
-        <p class="mt-4 text-lg font-semibold text-text-primary">
-          Procesando acción...
-        </p>
-      </div>
-    </div>
+    <UiSubmitBusyOverlay
+      :busy="isSubmitting || isApproving"
+      :label="isApproving ? 'Aprobando orden...' : 'Procesando acción...'"
+      :hint="isApproving ? 'Estamos aprobando la orden y preparando la siguiente transición.' : 'Estamos ejecutando la acción seleccionada sobre la compra.'"
+      variant="glass"
+      indicator="matrix"
+    />
 
     <!-- Loading State for initial data -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">

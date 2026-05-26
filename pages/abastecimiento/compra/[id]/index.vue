@@ -1,15 +1,12 @@
 <template>
   <div>
-    <!-- Loading overlay during submit/delete (always on top) -->
-    <div v-if="isSubmitting || isDeleting"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-8 flex flex-col items-center">
-        <CommonsTheCustomLoader size="large" />
-        <p class="mt-4 text-lg font-semibold text-text-primary">
-          {{ isSubmitting ? 'Guardando cambios...' : 'Eliminando orden...' }}
-        </p>
-      </div>
-    </div>
+    <UiSubmitBusyOverlay
+      :busy="isSubmitting || isDeleting"
+      :label="isSubmitting ? 'Guardando cambios...' : 'Eliminando orden...'"
+      :hint="isSubmitting ? 'Estamos actualizando la orden de compra.' : 'Estamos eliminando la orden y cerrando su flujo.'"
+      variant="glass"
+      indicator="matrix"
+    />
 
     <!-- Loading State for initial data -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
