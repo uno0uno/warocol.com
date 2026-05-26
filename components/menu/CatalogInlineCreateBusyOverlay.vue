@@ -15,25 +15,19 @@
         :aria-busy="busy"
       >
         <div
-          class="catalog-inline-panel relative mx-2 w-full max-w-md overflow-hidden rounded-[26px] border border-white/60 px-5 py-5 shadow-2xl backdrop-blur-xl sm:px-6"
+          class="catalog-inline-panel relative mx-2 w-full max-w-md overflow-hidden rounded-[26px] border border-border px-5 pb-6 pt-7 sm:px-6"
           role="status"
           :aria-labelledby="labelId"
           :aria-describedby="hintId"
         >
-          <div class="relative flex flex-col items-center gap-4 text-center">
-            <div
-              class="inline-flex items-center gap-2 rounded-full border border-crocus-200 bg-crocus-100/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-crocus-700"
-            >
-              Inline busy
-            </div>
-
+          <div class="relative flex flex-col items-center gap-[18px] text-center">
             <CommonsTheCustomLoader
               size="medium"
               :show-phrase="false"
             />
 
             <div class="space-y-1">
-              <p :id="labelId" class="text-sm font-semibold text-text-primary sm:text-base">
+              <p :id="labelId" class="text-[0.92rem] font-semibold leading-snug text-text-primary sm:text-base">
                 {{ resolvedLabel }}
               </p>
               <p
@@ -83,19 +77,7 @@ const hintId = computed(() => props.hint ? `${labelId.value}-hint` : undefined)
 }
 
 .catalog-inline-panel {
-  background:
-    linear-gradient(180deg, hsl(var(--surface) / 0.84), hsl(var(--surface) / 0.62)),
-    hsl(var(--surface) / 0.42);
-  box-shadow:
-    inset 0 1px 0 hsl(var(--titan-50) / 0.76),
-    0 20px 48px hsl(var(--ebony-900) / 0.16);
-}
-
-.catalog-inline-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at top, hsl(var(--crocus-200) / 0.9), transparent 56%);
-  pointer-events: none;
+  background: hsl(var(--surface));
+  box-shadow: 0 16px 32px hsl(var(--ebony-900) / 0.12);
 }
 </style>
