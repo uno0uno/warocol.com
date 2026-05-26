@@ -147,13 +147,13 @@ watch(expenseData, (data) => {
 
 <template>
   <div class="page-layout">
-    <!-- Loading overlay during submit -->
-    <div v-if="isSubmitting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-8 flex flex-col items-center">
-        <CommonsTheCustomLoader size="large" />
-        <p class="mt-4 text-lg font-semibold text-text-primary">Creando instancia...</p>
-      </div>
-    </div>
+    <UiSubmitBusyOverlay
+      :busy="isSubmitting"
+      label="Creando instancia..."
+      hint="Estamos registrando la instancia del gasto y consolidando sus datos."
+      variant="glass"
+      indicator="matrix"
+    />
 
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
