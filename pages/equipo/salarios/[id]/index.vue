@@ -281,13 +281,13 @@ watch(employeeData, (data) => {
 
 <template>
   <div class="page-layout">
-    <!-- Loading overlay during submit -->
-    <div v-if="isSubmitting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-8 flex flex-col items-center">
-        <CommonsTheCustomLoader size="large" />
-        <p class="mt-4 text-lg font-semibold text-text-primary">{{ isDeleting ? 'Eliminando empleado...' : 'Guardando cambios...' }}</p>
-      </div>
-    </div>
+    <UiSubmitBusyOverlay
+      :busy="isSubmitting"
+      :label="isDeleting ? 'Eliminando empleado...' : 'Guardando cambios...'"
+      :hint="isDeleting ? 'Estamos eliminando el empleado y cerrando su registro.' : 'Estamos actualizando el empleado y guardando los cambios.'"
+      variant="glass"
+      indicator="matrix"
+    />
 
     <!-- Loading State -->
     <div v-if="isLoadingEmployee" class="flex items-center justify-center min-h-[400px]">
