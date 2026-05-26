@@ -188,10 +188,10 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <!-- Ventas -->
             <div class="bg-surface border-2 border-border rounded-lg">
-              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Ventas del día</h3></div>
+              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Ventas a cerrar</h3></div>
               <div class="divide-y divide-border">
                 <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Total ventas</span><span class="font-bold text-text-primary">{{ formatCurrency(xPreviewData.totalSales) }}</span></div>
-                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Órdenes</span><span class="font-medium">{{ xPreviewData.itemsSold }}</span></div>
+                <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Órdenes a cerrar</span><span class="font-medium">{{ xPreviewData.itemsSold }}</span></div>
               </div>
             </div>
             <!-- Caja -->
@@ -203,9 +203,9 @@
                 <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Esperado en caja</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
               </div>
             </div>
-            <!-- Métodos de pago -->
+            <!-- Desglose -->
             <div v-if="xPreviewData.totalSales > 0" class="sm:col-span-2 bg-surface border-2 border-border rounded-lg">
-              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Métodos de pago</h3></div>
+              <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Desglose del cierre</h3></div>
               <div class="divide-y divide-border">
                 <div v-for="row in (xPreviewData.breakdown ?? [])" :key="row.group_slug + row.method_name" class="flex justify-between px-4 py-2.5 text-sm">
                   <span class="text-text-secondary">{{ row.method_name }}</span>
@@ -791,11 +791,11 @@ const formatSingleDate = (date: Date) =>
 const periodStart = computed(() => bogotaISOFromDate(selectedDate.value))
 const periodEnd   = computed(() => periodStart.value)
 
-// X preview (paso 0 — all orders, not completed_only)
+// Step 0 preview — aligned with the same completed-order semantics used by the close.
 const { data: rawXPreview, status: xPreviewStatus, error: xPreviewError, refetch: refetchXPreview } = useQuery({
   key: () => ['cierre', 'preview-x0', currentTenant.value?.id, periodStart.value],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
-    params: { period_start: periodStart.value, period_end: periodEnd.value },
+    params: { period_start: periodStart.value, period_end: periodEnd.value, completed_only: true },
   }),
   enabled: () => !!currentTenant.value,
   staleTime: 60_000,
@@ -873,6 +873,7 @@ const GROUP_COLORS: Record<string, { dot: string; badge: string }> = {
 
 interface BreakdownRowRaw { group_slug: string; method_name: string; total: number }
 interface BreakdownGroup  { slug: string; label: string; total: number }
+const NON_COUNTABLE_BREAKDOWN_GROUPS = new Set(['untracked'])
 
 const breakdownGroups = computed<BreakdownGroup[]>(() => {
   const rows: BreakdownRowRaw[] = previewData.value?.breakdown ?? []
@@ -890,7 +891,9 @@ const breakdownGroups = computed<BreakdownGroup[]>(() => {
   return Array.from(map.values()).sort((a, b) => b.total - a.total)
 })
 
-const nonCashGroups = computed(() => breakdownGroups.value.filter(g => g.slug !== 'cash'))
+const nonCashGroups = computed(() =>
+  breakdownGroups.value.filter(g => g.slug !== 'cash' && !NON_COUNTABLE_BREAKDOWN_GROUPS.has(g.slug)),
+)
 
 interface BreakdownMethod {
   key: string
@@ -902,7 +905,7 @@ interface BreakdownMethod {
 
 const nonCashMethods = computed<BreakdownMethod[]>(() => {
   const rows: BreakdownRowRaw[] = previewData.value?.breakdown ?? []
-  const nonCashRows = rows.filter(r => r.group_slug !== 'cash')
+  const nonCashRows = rows.filter(r => r.group_slug !== 'cash' && !NON_COUNTABLE_BREAKDOWN_GROUPS.has(r.group_slug))
   if (nonCashRows.length > 0) {
     return [...nonCashRows]
       .sort((a, b) => b.total - a.total)
