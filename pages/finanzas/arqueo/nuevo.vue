@@ -1,15 +1,12 @@
 <template>
   <div class="page-layout">
-
-    <!-- Loading overlay durante submit -->
-    <Transition enter-active-class="transition-opacity duration-150" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-opacity duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
-      <div v-if="isSubmitting" class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-        <div class="flex flex-col items-center gap-4">
-          <CommonsTheCustomLoader size="large" />
-          <p class="text-sm font-medium text-text-secondary">Registrando arqueo...</p>
-        </div>
-      </div>
-    </Transition>
+    <UiSubmitBusyOverlay
+      :busy="isSubmitting"
+      label="Registrando arqueo..."
+      hint="Estamos guardando el cierre y consolidando el resumen del periodo."
+      variant="glass"
+      indicator="matrix"
+    />
 
     <!-- ── SUCCESS ────────────────────────────────────────────────────────── -->
     <div v-if="cierreSuccess" class="flex flex-col items-center justify-center py-16 gap-6 text-center">
