@@ -1,15 +1,12 @@
 <template>
   <div class="page-layout">
-    <!-- Loading overlay during save/upload -->
-    <div v-if="isSaving || isUploading"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-8 flex flex-col items-center">
-        <CommonsTheCustomLoader size="large" />
-        <p class="mt-4 text-lg font-semibold text-text-primary">
-          {{ isSaving ? 'Guardando cambios...' : 'Subiendo archivo...' }}
-        </p>
-      </div>
-    </div>
+    <UiSubmitBusyOverlay
+      :busy="isSaving || isUploading"
+      :label="isSaving ? 'Guardando cambios...' : 'Subiendo archivo...'"
+      :hint="isSaving ? 'Estamos actualizando la compra directa.' : 'Estamos subiendo el archivo y asociandolo a la compra.'"
+      variant="glass"
+      indicator="matrix"
+    />
 
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
