@@ -2,7 +2,12 @@
 import { onMounted, onUnmounted } from 'vue'
 import { useLoadingPhrases } from '~/composables/useLoadingPhrases'
 
-defineProps<{ size?: 'small' | 'medium' | 'large' }>()
+withDefaults(defineProps<{
+  size?: 'small' | 'medium' | 'large'
+  showPhrase?: boolean
+}>(), {
+  showPhrase: true,
+})
 
 const dotValues = [1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1]
 const dotDelays = dotValues.map(() => `${(Math.random() * 2).toFixed(2)}s`)
@@ -34,7 +39,7 @@ onUnmounted(() => stop())
         :style="{ animationDelay: dotDelays[i] }"
       >{{ val }}</div>
     </div>
-    <p class="phrase-text">{{ currentPhrase }}</p>
+    <p v-if="showPhrase" class="phrase-text">{{ currentPhrase }}</p>
   </div>
 </template>
 
