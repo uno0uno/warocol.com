@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { MapPinIcon } from '@heroicons/vue/24/outline'
-import { useCityCatalog } from '~/composables/useCityCatalog'
+import { useCityCatalog, type PublicCity } from '~/composables/useCityCatalog'
 
 /**
  * Directory hub (warocol.com#619). Lists every city in the curated
@@ -21,6 +21,24 @@ const config = useRuntimeConfig()
 const siteUrl = (config.public as Record<string, unknown>).siteUrl as string || 'https://warocol.com'
 
 const { cities } = useCityCatalog()
+
+const CITY_VISUALS: Record<string, { displayName: string; imageUrl: string }> = {
+  bogota: {
+    displayName: 'Bogotá',
+    imageUrl: 'https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/city-images/bogota.webp',
+  },
+  cali: {
+    displayName: 'Cali',
+    imageUrl: 'https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/city-images/cali.webp',
+  },
+  mosquera: {
+    displayName: 'Mosquera',
+    imageUrl: 'https://pub-bc8bb06ab87643fb88805fdddf1cab70.r2.dev/city-images/mosquera.webp',
+  },
+}
+
+const cityDisplayName = (city: PublicCity) => CITY_VISUALS[city.city_slug]?.displayName ?? city.city
+const cityImageUrl = (city: PublicCity) => CITY_VISUALS[city.city_slug]?.imageUrl ?? null
 
 // The SSR plugin already prefetches with include_empty=true, so the
 // catalog is populated by the time this page renders. Sort: active first,
@@ -69,12 +87,16 @@ useHead({
           :to="`/${city.city_slug}`"
           class="city-card"
         >
-          <!-- Header image / illustration: gradient placeholder with the
-               city name typeset large. Will be swapped for per-city hero
-               photos as we acquire them. -->
           <div class="city-card__image">
             <div class="city-card__gradient">
-              <span class="city-card__overlay-name">{{ city.city }}</span>
+              <img
+                v-if="cityImageUrl(city)"
+                :src="cityImageUrl(city) || undefined"
+                alt=""
+                aria-hidden="true"
+                class="city-card__photo"
+              >
+              <span class="city-card__overlay-name">{{ cityDisplayName(city) }}</span>
             </div>
             <div class="city-card__count-pill" aria-label="restaurantes activos">
               <span>{{ city.tenant_count }}</span>
@@ -85,7 +107,7 @@ useHead({
           </div>
           <div class="city-card__meta">
             <MapPinIcon class="city-card__meta-icon" aria-hidden="true" />
-            <span class="city-card__meta-text">{{ city.city }}, {{ city.country }}</span>
+            <span class="city-card__meta-text">{{ cityDisplayName(city) }}, {{ city.country }}</span>
           </div>
         </NuxtLink>
       </div>
@@ -105,14 +127,26 @@ useHead({
           class="city-card city-card--upcoming"
         >
           <div class="city-card__image">
-            <div class="city-card__gradient city-card__gradient--upcoming">
-              <span class="city-card__overlay-name">{{ city.city }}</span>
+            <div
+              :class="[
+                'city-card__gradient',
+                cityImageUrl(city) ? '' : 'city-card__gradient--upcoming',
+              ]"
+            >
+              <img
+                v-if="cityImageUrl(city)"
+                :src="cityImageUrl(city) || undefined"
+                alt=""
+                aria-hidden="true"
+                class="city-card__photo"
+              >
+              <span class="city-card__overlay-name">{{ cityDisplayName(city) }}</span>
             </div>
             <span class="city-card__badge">Próximamente</span>
           </div>
           <div class="city-card__meta">
             <MapPinIcon class="city-card__meta-icon" aria-hidden="true" />
-            <span class="city-card__meta-text">{{ city.city }}, {{ city.country }}</span>
+            <span class="city-card__meta-text">{{ cityDisplayName(city) }}, {{ city.country }}</span>
           </div>
         </NuxtLink>
       </div>
@@ -239,8 +273,8 @@ useHead({
   opacity: 1;
 }
 
-/* Image area inside the card. Currently a gradient placeholder; will be
-   swapped for per-city hero photos when available. */
+/* Image area inside the card. Uses uploaded city artwork when available,
+   otherwise falls back to the previous gradient placeholder. */
 .city-card__image {
   position: relative;
   width: 100%;
@@ -258,11 +292,20 @@ useHead({
   background:
     linear-gradient(160deg, hsl(262, 83%, 62%) 0%, hsl(252, 83%, 48%) 100%);
 }
+.city-card__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .city-card__gradient::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 70% 110%, rgba(255,255,255,0.18), transparent 55%);
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.04) 0%, rgba(15, 23, 42, 0.42) 100%),
+    radial-gradient(circle at 70% 110%, rgba(255,255,255,0.18), transparent 55%);
   pointer-events: none;
 }
 .city-card__gradient--upcoming {
