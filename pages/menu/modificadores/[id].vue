@@ -1,12 +1,12 @@
 <template>
   <div class="w-full">
-    <!-- Loading overlay during submit -->
-    <div v-if="isSubmitting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-8 flex flex-col items-center">
-        <CommonsTheCustomLoader size="large" />
-        <p class="mt-4 text-lg font-semibold text-text-primary">Actualizando grupo de modificadores...</p>
-      </div>
-    </div>
+    <UiSubmitBusyOverlay
+      :busy="isSubmitting"
+      label="Actualizando grupo de modificadores..."
+      hint="Estamos guardando los cambios del grupo y sincronizando sus opciones."
+      variant="glass"
+      indicator="matrix"
+    />
 
     <!-- Loading State -->
     <div v-if="isLoadingData" class="flex items-center justify-center min-h-[400px]">
