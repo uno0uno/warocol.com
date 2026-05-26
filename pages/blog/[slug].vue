@@ -85,27 +85,72 @@ const readingTime = computed(() => {
 // SEO Meta tags
 const siteUrl = config.public.siteUrl || 'https://warocol.com'
 
-// Build JSON-LD Article schema
+// Build JSON-LD @graph: Article + Organization + SoftwareApplication (WARO POS).
+// SoftwareApplication declares WARO as Point of Sale Software so Google and
+// LLMs (ChatGPT, Gemini, Perplexity) classify WARO as a POS rather than as a
+// connector to one — addresses the misclassification surfaced by GSC analysis.
 const articleSchema = computed(() => ({
   '@context': 'https://schema.org',
-  '@type': 'Article',
-  headline: article.value?.meta_title || article.value?.title || '',
-  description: article.value?.meta_descripcion || article.value?.description || '',
-  image: article.value?.cover || article.value?.thumbnail || '',
-  datePublished: article.value?.created_at || '',
-  dateModified: article.value?.updated_at || article.value?.created_at || '',
-  author: {
-    '@type': 'Person',
-    name: article.value?.author_info?.name || article.value?.author_name || 'WARO Colombia'
-  },
-  publisher: {
-    '@type': 'Organization',
-    name: 'WARO Colombia',
-    url: siteUrl
-  },
-  url: `${siteUrl}/blog/${article.value?.slug || ''}`,
-  keywords: article.value?.tags || '',
-  inLanguage: 'es-CO'
+  '@graph': [
+    {
+      '@type': 'Article',
+      headline: article.value?.meta_title || article.value?.title || '',
+      description: article.value?.meta_descripcion || article.value?.description || '',
+      image: article.value?.cover || article.value?.thumbnail || '',
+      datePublished: article.value?.created_at || '',
+      dateModified: article.value?.updated_at || article.value?.created_at || '',
+      author: {
+        '@type': 'Person',
+        name: article.value?.author_info?.name || article.value?.author_name || 'WARO Colombia'
+      },
+      publisher: { '@id': `${siteUrl}#organization` },
+      url: `${siteUrl}/blog/${article.value?.slug || ''}`,
+      keywords: article.value?.tags || '',
+      inLanguage: 'es-CO'
+    },
+    {
+      '@type': 'Organization',
+      '@id': `${siteUrl}#organization`,
+      name: 'WARO Colombia',
+      url: siteUrl,
+      sameAs: ['https://warocol.com']
+    },
+    {
+      '@type': 'SoftwareApplication',
+      '@id': `${siteUrl}#waro-pos`,
+      name: 'WARO',
+      alternateName: 'WARO POS',
+      applicationCategory: 'Point of Sale Software',
+      applicationSubCategory: 'Restaurant POS',
+      operatingSystem: 'Web, iOS, Android',
+      url: siteUrl,
+      publisher: { '@id': `${siteUrl}#organization` },
+      offers: {
+        '@type': 'Offer',
+        price: '9000',
+        priceCurrency: 'COP',
+        availability: 'https://schema.org/InStock'
+      },
+      featureList: [
+        'Punto de venta con catálogo y modificadores',
+        'Plano de mesas con estados en tiempo real',
+        'KDS para cocina con estaciones personalizadas',
+        'Cobro parcial multi-método',
+        'Propinas con atribución a mesero (Ley 1935/2018)',
+        'Inventario por receta con descuento automático',
+        'Facturación electrónica DIAN nativa',
+        'Bitácora de números quemados DIAN',
+        'Arqueo de caja por plantilla de turno',
+        'Programa de fidelización Waros nativo',
+        'Pedido por QR en mesa',
+        'Domicilios propios sin comisión'
+      ],
+      areaServed: {
+        '@type': 'Country',
+        name: 'Colombia'
+      }
+    }
+  ]
 }))
 
 useSeoMeta({
