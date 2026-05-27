@@ -1374,8 +1374,9 @@ const prefacturaDocumentLabel = computed(() => {
 
 const receiptDocumentLabel = computed(() => {
   const label = (receiptPrintSettings.value.document_label || '').trim()
+  // Prefactura-like labels first — /factura/i matches the "factura" substring in "Prefactura" (#942).
+  if (!label || /prefactura|pre-cuenta|pre cuenta|precuenta|pre-factura|pre factura/i.test(label)) return 'Factura'
   if (/factura/i.test(label)) return label
-  if (!label || /prefactura|pre-cuenta|pre cuenta|precuenta/i.test(label)) return 'Factura'
   return label
 })
 
