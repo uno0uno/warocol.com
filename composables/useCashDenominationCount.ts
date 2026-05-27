@@ -40,6 +40,11 @@ export function useCashDenominationCount() {
     denomRefs.value[idx + 1]?.focus()
   }
 
+  const setFromAmount = (amount: number) => {
+    for (const d of CASH_DENOMINATIONS) counts.value[d] = '0'
+    monedasAmount.value = String(Math.max(0, Math.round(amount)))
+  }
+
   return {
     denominations: CASH_DENOMINATIONS,
     counts,
@@ -51,5 +56,6 @@ export function useCashDenominationCount() {
     totalCounted,
     toBreakdown,
     focusNext,
+    setFromAmount,
   }
 }

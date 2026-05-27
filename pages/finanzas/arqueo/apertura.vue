@@ -110,6 +110,20 @@
         <h2 class="text-sm font-semibold text-text-primary mb-1">Fondo de caja</h2>
         <p class="text-xs text-text-secondary mb-3">Cuenta billetes y monedas que hay en el cajón al iniciar:</p>
 
+        <div
+          v-if="suggestedOpeningCash > 0"
+          class="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm text-text-primary mb-3 flex flex-wrap items-center gap-2"
+        >
+          Sugerido del cierre anterior: {{ formatCurrency(suggestedOpeningCash) }}
+          <button
+            type="button"
+            class="text-xs font-semibold text-primary hover:underline"
+            @click="applySuggestedOpening"
+          >
+            Usar sugerido
+          </button>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div class="bg-background rounded-lg border border-border overflow-hidden">
             <div class="px-3 py-2 bg-surface border-b border-border">
@@ -215,7 +229,7 @@ const dateOnlyFormats = { input: 'dd/MM/yyyy', preview: 'dd/MM/yyyy' }
 
 const {
   denominations, counts, monedasAmount, setDenomRef,
-  sanitizeInt, sanitizeIntStr, totalCounted, toBreakdown, focusNext,
+  sanitizeInt, sanitizeIntStr, totalCounted, toBreakdown, focusNext, setFromAmount,
 } = useCashDenominationCount()
 
 const periodStart = computed(() => bogotaISOFromDate(anchorDate.value))
@@ -258,6 +272,16 @@ const { data: rawShiftStatus, refetch: refetchShiftStatus } = useQuery({
 
 const existingShift = computed(() => rawShiftStatus.value?.data ?? null)
 
+const suggestedOpeningCash = computed(() => {
+  const data = existingShift.value
+  if (!data || isShiftOpen(data)) return 0
+  return Number(data.suggestedOpeningCash ?? 0)
+})
+
+const applySuggestedOpening = () => {
+  if (suggestedOpeningCash.value > 0) setFromAmount(suggestedOpeningCash.value)
+}
+
 const formatTemplateDateOnly = () => fnsFormat(anchorDate.value, 'dd/MM/yyyy', { locale: es })
 
 const templateHoursLabel = computed(() => {
@@ -284,6 +308,9 @@ const goToCount = () => {
     return
   }
   currentStep.value = 2
+  if (suggestedOpeningCash.value > 0 && totalCounted.value === 0) {
+    applySuggestedOpening()
+  }
 }
 
 const submitOpening = async () => {

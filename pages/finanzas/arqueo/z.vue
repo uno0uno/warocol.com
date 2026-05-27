@@ -850,6 +850,23 @@
           </div>
         </div>
 
+        <!-- Efectivo que queda en caja -->
+        <div class="bg-background rounded-lg border border-border p-3 mb-3">
+          <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">
+            Efectivo que queda en caja
+          </label>
+          <p class="text-xs text-text-secondary mt-0.5 mb-2">
+            Declara cuánto efectivo dejas en el cajón para el próximo turno (fondo para cambio).
+          </p>
+          <input
+            v-model="cashLeftInDrawer"
+            type="text"
+            inputmode="numeric"
+            class="w-full max-w-xs h-10 px-3 rounded-lg border-2 border-border bg-surface text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+            @input="cashLeftInDrawer = sanitizeDrawerAmount($event)"
+          />
+        </div>
+
         <!-- Banner de advertencia irreversible -->
         <div class="flex items-start gap-3 p-3 rounded-lg border mb-3 transition-colors"
           :class="confirmArmed
@@ -1296,6 +1313,7 @@ const counts = ref<Record<number, string>>(
 const monedasAmount  = ref('0')
 const methodAmounts  = ref<Record<string, string>>({})
 const notes          = ref('')
+const cashLeftInDrawer = ref('0')
 const denomRefs     = ref<HTMLInputElement[]>([])
 
 const setDenomRef = (el: any, idx: number) => {
@@ -1426,6 +1444,7 @@ const submitCierre = async () => {
       periodStart: periodStart.value,
       periodEnd: periodEnd.value,
       cashCounted: totalCounted.value,
+      cashLeftInDrawer: parseInt(cashLeftInDrawer.value) || totalCounted.value,
       notes: notes.value || null,
     }
     if (arqueoWindowMode.value === 'template' && selectedTemplateId.value) {
@@ -1459,6 +1478,12 @@ const sanitizeInt = (e: Event): string => {
   return v
 }
 const sanitizeIntStr = (e: Event): string => sanitizeInt(e)
+
+const sanitizeDrawerAmount = (e: Event): string => {
+  const v = (e.target as HTMLInputElement).value.replace(/\D/g, '').replace(/^0+(?=\d)/, '') || '0'
+  ;(e.target as HTMLInputElement).value = v
+  return v
+}
 
 const focusNext = (idx: number) => {
   nextTick(() => {
@@ -1519,6 +1544,12 @@ watch(previewData, (data) => {
     currentStep.value = 2
   }
 }, { immediate: true })
+
+watch(currentStep, (step) => {
+  if (step === 5) {
+    cashLeftInDrawer.value = String(totalCounted.value || 0)
+  }
+})
 
 onMounted(() => {
   if (typeof window === 'undefined') return
