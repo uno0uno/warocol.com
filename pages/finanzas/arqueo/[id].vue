@@ -73,6 +73,18 @@
               <span class="text-text-secondary">Total ventas</span>
               <span class="font-bold text-text-primary">{{ formatCurrency(cierre.totalSales) }}</span>
             </div>
+            <div v-if="hasCapturedTips(cierre)" class="flex justify-between px-4 py-2.5 text-sm">
+              <span class="text-text-secondary">Propinas</span>
+              <span class="font-medium">{{ formatCurrency(cierre.totalTips) }}</span>
+            </div>
+            <div v-if="(cierre.totalTipTax ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm">
+              <span class="text-text-secondary">Impuesto propina</span>
+              <span class="font-medium">{{ formatCurrency(cierre.totalTipTax) }}</span>
+            </div>
+            <div v-if="hasCapturedTips(cierre)" class="flex justify-between px-4 py-2.5 text-sm font-semibold">
+              <span class="text-text-primary">Total cobrado</span>
+              <span>{{ formatCurrency(cierre.totalCharged) }}</span>
+            </div>
             <div class="flex justify-between px-4 py-2.5 text-sm">
               <span class="text-text-secondary">Órdenes al cerrar</span>
               <span class="font-medium">{{ cierre.itemsSold }}</span>
@@ -105,6 +117,10 @@
             <div class="flex justify-between px-4 py-2.5 text-sm">
               <span class="text-text-secondary">Gastos en efectivo</span>
               <span class="font-medium">{{ formatCurrency(cierre.gastosEfectivo) }}</span>
+            </div>
+            <div v-if="(cierre.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm">
+              <span class="text-text-secondary">Propinas en efectivo</span>
+              <span class="font-medium">+ {{ formatCurrency(cierre.cashTips) }}</span>
             </div>
             <div class="flex justify-between px-4 py-2.5 text-sm">
               <span class="text-text-secondary">Esperado en caja</span>
@@ -218,6 +234,9 @@ useHead(() => ({
 
 const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
+
+const hasCapturedTips = (data?: Record<string, any> | null) =>
+  Number(data?.totalTips ?? 0) > 0 || Number(data?.totalTipTax ?? 0) > 0
 
 const { formatDateTime: _fmtDateTime } = useFormatters()
 const { formatPeriodDates, formatPeriodTimes, periodTypeLabel, periodBadgeClass } = useCierrePeriod()

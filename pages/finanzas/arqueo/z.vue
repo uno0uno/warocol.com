@@ -25,6 +25,18 @@
           <span class="text-text-secondary">Total ventas</span>
           <span class="font-medium">{{ formatCurrency(successData?.totalSales) }}</span>
         </div>
+        <div v-if="hasCapturedTips(successData)" class="flex justify-between px-4 py-2.5 text-sm">
+          <span class="text-text-secondary">Propinas</span>
+          <span class="font-medium">{{ formatCurrency(successData?.totalTips) }}</span>
+        </div>
+        <div v-if="(successData?.totalTipTax ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm">
+          <span class="text-text-secondary">Impuesto propina</span>
+          <span class="font-medium">{{ formatCurrency(successData?.totalTipTax) }}</span>
+        </div>
+        <div v-if="hasCapturedTips(successData)" class="flex justify-between px-4 py-2.5 text-sm">
+          <span class="text-text-secondary">Total cobrado</span>
+          <span class="font-medium">{{ formatCurrency(successData?.totalCharged) }}</span>
+        </div>
         <div class="flex justify-between px-4 py-2.5 text-sm">
           <span class="text-text-secondary">Efectivo esperado</span>
           <span class="font-medium">{{ formatCurrency(successData?.cashExpected) }}</span>
@@ -227,6 +239,9 @@
             <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Ventas del período</h3></div>
             <div class="divide-y divide-border">
               <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Total ventas</span><span class="font-bold text-text-primary">{{ formatCurrency(xPreviewData.totalSales) }}</span></div>
+              <div v-if="hasCapturedTips(xPreviewData)" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Propinas</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalTips) }}</span></div>
+              <div v-if="(xPreviewData.totalTipTax ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Impuesto propina</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalTipTax) }}</span></div>
+              <div v-if="hasCapturedTips(xPreviewData)" class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Total cobrado</span><span>{{ formatCurrency(xPreviewData.totalCharged) }}</span></div>
               <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Órdenes</span><span class="font-medium">{{ xPreviewData.itemsSold }}</span></div>
             </div>
           </div>
@@ -235,6 +250,7 @@
             <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Estado de caja</h3></div>
             <div class="divide-y divide-border">
               <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Efectivo recibido</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
+              <div v-if="(xPreviewData.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Propinas en efectivo</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.cashTips) }}</span></div>
               <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Gastos en efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
               <div class="flex justify-between px-4 py-2.5 text-sm font-semibold"><span class="text-text-primary">Esperado en caja</span><span>{{ formatCurrency(xPreviewData.cashExpected) }}</span></div>
               <div class="flex justify-between px-4 py-2.5 text-sm">
@@ -663,6 +679,18 @@
                 <span class="text-xs text-text-secondary">Total ventas</span>
                 <span class="text-base font-bold text-text-primary">{{ formatCurrency(previewData?.totalSales) }}</span>
               </div>
+              <div v-if="hasCapturedTips(previewData)" class="flex justify-between items-center px-3 py-2.5">
+                <span class="text-xs text-text-secondary">Propinas</span>
+                <span class="text-sm font-medium text-text-primary">{{ formatCurrency(previewData?.totalTips) }}</span>
+              </div>
+              <div v-if="(previewData?.totalTipTax ?? 0) > 0" class="flex justify-between items-center px-3 py-2.5">
+                <span class="text-xs text-text-secondary">Impuesto propina</span>
+                <span class="text-sm font-medium text-text-primary">{{ formatCurrency(previewData?.totalTipTax) }}</span>
+              </div>
+              <div v-if="hasCapturedTips(previewData)" class="flex justify-between items-center px-3 py-2.5">
+                <span class="text-xs font-semibold text-text-primary">Total cobrado</span>
+                <span class="text-sm font-bold text-text-primary">{{ formatCurrency(previewData?.totalCharged) }}</span>
+              </div>
             </div>
           </div>
 
@@ -675,6 +703,10 @@
               <div class="flex justify-between px-3 py-2 text-xs">
                 <span class="text-text-secondary">Recibido</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.totalCash) }}</span>
+              </div>
+              <div v-if="(previewData?.cashTips ?? 0) > 0" class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Propinas en efectivo</span>
+                <span class="font-medium text-text-primary">+ {{ formatCurrency(previewData?.cashTips) }}</span>
               </div>
               <div class="flex justify-between px-3 py-2 text-xs">
                 <span class="text-text-secondary">Gastos</span>
@@ -1438,6 +1470,9 @@ onMounted(() => {
 // ── Formatters ────────────────────────────────────────────────────────────
 const formatCurrency = (value?: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value ?? 0)
+
+const hasCapturedTips = (data?: Record<string, any> | null) =>
+  Number(data?.totalTips ?? 0) > 0 || Number(data?.totalTipTax ?? 0) > 0
 
 const { formatDate: _fmtDate } = useFormatters()
 const formatPeriod = (start: string, end: string) => {
