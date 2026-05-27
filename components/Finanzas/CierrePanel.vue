@@ -93,6 +93,10 @@
                 <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Caja</span>
               </div>
               <div class="divide-y divide-border">
+                <div v-if="(detail.openingCash ?? 0) > 0" class="flex justify-between px-6 py-2.5 text-sm">
+                  <span class="text-text-secondary">Fondo inicial</span>
+                  <span class="font-medium text-text-primary">+ {{ formatCurrency(detail.openingCash) }}</span>
+                </div>
                 <div class="flex justify-between px-6 py-2.5 text-sm">
                   <span class="text-text-secondary">Efectivo recibido</span>
                   <span class="font-medium text-text-primary">{{ formatCurrency(detail.totalCash) }}</span>
