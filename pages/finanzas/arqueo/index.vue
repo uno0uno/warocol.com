@@ -79,20 +79,26 @@
             Mes actual
           </button>
 
+          <NuxtLink
+            to="/finanzas/arqueo/apertura"
+            class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center flex-shrink-0"
+          >
+            Abrir turno
+          </NuxtLink>
+
+          <NuxtLink
+            :to="`/finanzas/arqueo/x?start=${periodStart}&end=${periodEnd}`"
+            class="h-10 px-4 rounded-lg border-2 border-border bg-background text-sm font-medium text-text-secondary hover:text-text-primary hover:border-primary transition-colors flex items-center flex-shrink-0"
+          >
+            Corte X
+          </NuxtLink>
+
         </div>
       </div>
 
       <!-- ── Turnos de hoy ─────────────────────────────────────────────────── -->
       <div v-if="shiftTemplates.length > 0">
-        <div class="flex items-center justify-between gap-2 mb-2">
-          <h2 class="text-sm font-semibold text-text-primary">Turnos de hoy</h2>
-          <NuxtLink
-            to="/finanzas/arqueo/apertura"
-            class="text-xs font-medium text-primary hover:underline whitespace-nowrap"
-          >
-            Abrir turno
-          </NuxtLink>
-        </div>
+        <h2 class="text-sm font-semibold text-text-primary mb-2">Turnos de hoy</h2>
         <div v-if="todayShiftsLoading" class="text-xs text-text-secondary py-2">Cargando turnos…</div>
         <div v-else class="flex flex-wrap gap-2">
           <div
@@ -125,29 +131,6 @@
             </NuxtLink>
           </div>
         </div>
-      </div>
-
-      <!-- ── Fondo por defecto ─────────────────────────────────────────────── -->
-      <div class="flex flex-wrap items-end gap-2 p-3 rounded-lg border-2 border-border bg-surface">
-        <div class="flex-1 min-w-[12rem]">
-          <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Fondo por defecto</label>
-          <p class="text-xs text-text-secondary mt-0.5">Se usa al abrir turno si no hay cierre anterior.</p>
-        </div>
-        <input
-          v-model="defaultOpeningInput"
-          type="text"
-          inputmode="numeric"
-          class="h-10 w-36 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
-          @input="defaultOpeningInput = sanitizeDefaultOpening($event)"
-        />
-        <button
-          type="button"
-          class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
-          :disabled="isSavingDefault"
-          @click="saveDefaultOpening"
-        >
-          {{ isSavingDefault ? 'Guardando…' : 'Guardar' }}
-        </button>
       </div>
 
       <!-- ── Nuevo arqueo (hub) ─────────────────────────────────────────────── -->
@@ -198,10 +181,6 @@
           </NuxtLink>
         </div>
       </div>
-      <p class="text-xs text-text-secondary">
-        ¿Solo quieres revisar sin cerrar?
-        <NuxtLink :to="`/finanzas/arqueo/x?start=${today}&end=${today}`" class="text-primary font-medium hover:underline">Vista previa (Corte X)</NuxtLink>
-      </p>
 
       <!-- ── Historial ─────────────────────────────────────────────────────── -->
       <HealthSemaphore :is-unlocked="true" title="Historial de arqueos">
@@ -345,7 +324,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
@@ -448,42 +427,6 @@ const { data: todayShiftRows, status: todayShiftsStatus } = useQuery({
   staleTime: 30_000,
 })
 const todayShiftsLoading = computed(() => todayShiftsStatus.value === 'pending' && !todayShiftRows.value)
-
-const { data: rawCashSettings, refetch: refetchCashSettings } = useQuery({
-  key: () => ['cierre', 'cash-settings', currentTenant.value?.id],
-  query: () => $fetch<{ success: boolean; data: { defaultOpeningCash: number } }>('/api/cierre/cash-settings'),
-  enabled: () => !!currentTenant.value,
-  staleTime: 60_000,
-})
-
-const defaultOpeningInput = ref('0')
-const isSavingDefault = ref(false)
-
-watch(rawCashSettings, (res) => {
-  if (res?.data != null) {
-    defaultOpeningInput.value = String(Math.round(res.data.defaultOpeningCash ?? 0))
-  }
-}, { immediate: true })
-
-const sanitizeDefaultOpening = (e: Event): string => {
-  const el = e.target as HTMLInputElement
-  const v = el.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '') || '0'
-  el.value = v
-  return v
-}
-
-const saveDefaultOpening = async () => {
-  isSavingDefault.value = true
-  try {
-    await $fetch('/api/cierre/cash-settings', {
-      method: 'PATCH',
-      body: { defaultOpeningCash: parseInt(defaultOpeningInput.value) || 0 },
-    })
-    await refetchCashSettings()
-  } finally {
-    isSavingDefault.value = false
-  }
-}
 
 const { data: rawHistorial, status, asyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['cierre', 'list', currentTenant.value?.id, activeStart.value, activeEnd.value],
