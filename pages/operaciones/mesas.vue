@@ -79,12 +79,15 @@ const inactiveTables = computed(() => {
   return result
 })
 
+const { displayTableCode } = useTableDisplayCode()
+
 // ── Table columns ──────────────────────────────────────────────────────────
 // "Mesero" column only shows when waiter-attribution is on; the cell is
 // read-only — clicking "Editar" is the only way to change the assignment.
 const tableColumns = computed(() => {
   const cols: Array<{ key: string; title: string; sortable?: boolean }> = [
     { key: 'name', title: singular.value, sortable: false },
+    { key: 'code', title: 'Código POS', sortable: false },
     { key: 'capacity', title: 'Capacidad' },
   ]
   if (businessProfile.value?.waiter_attribution_enabled) {
@@ -446,7 +449,15 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
           <template #card="{ item }">
             <div class="flex items-center gap-3 py-2 px-3 border-b border-border transition-colors hover:bg-surface-secondary">
               <div class="flex-1 min-w-0">
-                <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
+                  <span
+                    v-if="!item.is_bar"
+                    class="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-secondary text-text-secondary tabular-nums"
+                  >
+                    {{ displayTableCode(item) }}
+                  </span>
+                </div>
                 <p class="text-xs text-text-secondary mt-0.5">
                   {{ item.capacity ? `${item.capacity} persona${item.capacity !== 1 ? 's' : ''}` : 'Sin capacidad definida' }}
                 </p>
@@ -488,6 +499,12 @@ const tenantMembers = computed<Array<{ id: string; name: string; role: string }>
           <!-- Desktop: name -->
           <template #cell-name="{ value }">
             <span class="text-sm font-medium text-text-primary">{{ value }}</span>
+          </template>
+
+          <!-- Desktop: POS code -->
+          <template #cell-code="{ row }">
+            <span v-if="row.is_bar" class="text-xs text-text-tertiary">—</span>
+            <span v-else class="text-sm font-semibold text-text-secondary tabular-nums">{{ displayTableCode(row) }}</span>
           </template>
 
           <!-- Desktop: capacity -->

@@ -165,11 +165,8 @@ const badgeLabel = (status: string) => {
   return 'Libre'
 }
 
-// Extract number from name ("Mesa 3" → "3"), else first 3 chars
-const tableShortId = (name: string) => {
-  const match = name.match(/\d+/)
-  return match ? match[0] : name.slice(0, 3).toUpperCase()
-}
+
+const { displayTableCode } = useTableDisplayCode()
 
 const cardClass = (status: string) => {
   if (status === 'open') return 'border-green-500 bg-green-50 hover:shadow-md'
@@ -319,21 +316,24 @@ onUnmounted(() => {
             @click="handleTableClick(table)"
           >
             <!-- Top: table graphic -->
-            <div class="flex items-center justify-center py-7">
+            <div class="flex flex-col items-center justify-center py-5 px-2 gap-2">
               <div class="relative">
                 <!-- Chairs -->
                 <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-3 rounded-t-sm transition-colors duration-200" :class="chairClass(table.status)" />
                 <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-3 rounded-b-sm transition-colors duration-200" :class="chairClass(table.status)" />
                 <div class="absolute -left-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-l-sm transition-colors duration-200" :class="chairClass(table.status)" />
                 <div class="absolute -right-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-r-sm transition-colors duration-200" :class="chairClass(table.status)" />
-                <!-- Table square with number -->
+                <!-- Table square with short code -->
                 <div
-                  class="w-20 h-20 flex items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95"
+                  class="w-20 h-20 flex items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95 px-1"
                   :class="squareClass(table.status)"
                 >
-                  <span class="text-4xl font-black leading-none tabular-nums">{{ tableShortId(table.name) }}</span>
+                  <span class="text-2xl sm:text-3xl font-black leading-none tabular-nums text-center">{{ displayTableCode(table) }}</span>
                 </div>
               </div>
+              <span class="text-xs sm:text-sm font-semibold text-text-primary text-center leading-tight line-clamp-2 w-full px-1">
+                {{ table.name }}
+              </span>
             </div>
 
             <!-- Bottom strip: occupied → time + amount / reabrir → single action / libre → label -->
