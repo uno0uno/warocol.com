@@ -249,6 +249,7 @@
           <div class="bg-surface border-2 border-border rounded-lg">
             <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Estado de caja</h3></div>
             <div class="divide-y divide-border">
+              <div v-if="(xPreviewData.openingCash ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Fondo inicial</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.openingCash) }}</span></div>
               <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Efectivo recibido</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
               <div v-if="(xPreviewData.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Propinas en efectivo</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.cashTips) }}</span></div>
               <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Gastos en efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
@@ -271,11 +272,20 @@
           </div>
         </div>
 
+        <div
+          v-if="requiresShiftOpen && !shiftOpenForWindow"
+          class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+        >
+          Debes abrir el turno y declarar el fondo de caja antes de cerrar.
+          <NuxtLink :to="aperturaLink" class="font-semibold underline ml-1">Abrir turno</NuxtLink>
+        </div>
+
         <!-- CTA — always visible once not loading -->
         <div class="flex gap-3">
           <button
             @click="goToStep1"
-            class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+            :disabled="requiresShiftOpen && !shiftOpenForWindow"
           >
             Continuar al cierre →
           </button>
@@ -700,6 +710,10 @@
               <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Efectivo</span>
             </div>
             <div class="divide-y divide-border">
+              <div v-if="(previewData?.openingCash ?? 0) > 0" class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Fondo inicial</span>
+                <span class="font-medium text-text-primary">+ {{ formatCurrency(previewData?.openingCash) }}</span>
+              </div>
               <div class="flex justify-between px-3 py-2 text-xs">
                 <span class="text-text-secondary">Recibido</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.totalCash) }}</span>
@@ -907,6 +921,7 @@ import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from
 import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat, formatDistanceStrict } from 'date-fns'
+import { buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
 import {
   addDaysBogotaISO,
   bogotaDateAtNoon,
@@ -936,7 +951,8 @@ interface ShiftTemplateOption {
 const arqueoWindowMode = ref<ArqueoWindowMode>(
   (route.query.mode as string) === 'template' ? 'template' : 'custom',
 )
-const selectedTemplateId = ref<string>('')
+const initTemplate = (route.query.template as string) || ''
+const selectedTemplateId = ref<string>(initTemplate)
 const suggestedLoading = ref(false)
 
 const today = todayBogotaISO()
@@ -1174,6 +1190,40 @@ const buildPreviewParams = (completedOnly: boolean) => {
   return base
 }
 
+const shiftWindowParams = computed(() =>
+  buildCierreWindowParams({
+    periodStart: periodStart.value,
+    periodEnd: periodEnd.value,
+    shiftTemplateId: previewShiftTemplateId.value,
+    periodStartTime: periodStartTime.value,
+    periodEndTime: periodEndTime.value,
+  }),
+)
+
+const requiresShiftOpen = computed(() => arqueoWindowMode.value === 'template' || arqueoWindowMode.value === 'custom')
+
+const { data: rawShiftStatus } = useQuery({
+  key: () => ['cierre', 'shift-status', currentTenant.value?.id, arqueoWindowMode.value, JSON.stringify(shiftWindowParams.value)],
+  query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/shift-status', {
+    params: shiftWindowParams.value,
+  }),
+  enabled: () =>
+    !!currentTenant.value
+    && requiresShiftOpen.value
+    && (arqueoWindowMode.value !== 'template' || !!selectedTemplateId.value),
+  staleTime: 0,
+})
+
+const shiftOpenForWindow = computed(() => isShiftOpen(rawShiftStatus.value?.data))
+
+const aperturaLink = computed(() => {
+  const q = new URLSearchParams({ start: periodStart.value })
+  if (arqueoWindowMode.value === 'template' && selectedTemplateId.value) {
+    q.set('template', selectedTemplateId.value)
+  }
+  return `/finanzas/arqueo/apertura?${q.toString()}`
+})
+
 const shiftLabel = computed(() => {
   if (!enableTimePicker.value) return null
   const startIso = periodStartTime.value
@@ -1211,6 +1261,10 @@ const goToStep1 = () => {
     }
   } else if (isMultiDay.value && (!startTimeInput.value || !endTimeInput.value)) {
     timeError.value = 'Para períodos de varios días debes especificar hora de inicio y fin'
+    return
+  }
+  if (requiresShiftOpen.value && !shiftOpenForWindow.value) {
+    timeError.value = 'Abre el turno y declara el fondo de caja antes de continuar'
     return
   }
   currentStep.value = 1
@@ -1361,6 +1415,10 @@ const handleConfirmButton = async () => {
 
 // ── Submit ────────────────────────────────────────────────────────────────
 const submitCierre = async () => {
+  if (requiresShiftOpen.value && !shiftOpenForWindow.value) {
+    submitError.value = 'Abre el turno y declara el fondo de caja antes de cerrar.'
+    return
+  }
   isSubmitting.value = true
   submitError.value  = null
   try {

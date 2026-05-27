@@ -82,6 +82,51 @@
         </div>
       </div>
 
+      <!-- ── Turnos de hoy ─────────────────────────────────────────────────── -->
+      <div v-if="shiftTemplates.length > 0">
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <h2 class="text-sm font-semibold text-text-primary">Turnos de hoy</h2>
+          <NuxtLink
+            to="/finanzas/arqueo/apertura"
+            class="text-xs font-medium text-primary hover:underline whitespace-nowrap"
+          >
+            Abrir turno
+          </NuxtLink>
+        </div>
+        <div v-if="todayShiftsLoading" class="text-xs text-text-secondary py-2">Cargando turnos…</div>
+        <div v-else class="flex flex-wrap gap-2">
+          <div
+            v-for="row in todayShiftRows"
+            :key="row.template.id"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg border-2 min-h-[44px]"
+            :class="row.isOpen ? 'border-emerald-200 bg-emerald-50/60' : 'border-border bg-surface'"
+          >
+            <span class="text-sm font-medium text-text-primary">{{ row.template.name }}</span>
+            <span class="text-xs text-text-secondary font-mono">{{ row.template.startTime }}–{{ row.template.endTime }}</span>
+            <span
+              v-if="row.isOpen"
+              class="text-xs font-semibold text-emerald-700 px-1.5 py-0.5 rounded bg-emerald-100"
+            >
+              Abierto · {{ formatCurrency(row.openingCash) }}
+            </span>
+            <NuxtLink
+              v-else
+              :to="`/finanzas/arqueo/apertura?template=${row.template.id}&start=${today}`"
+              class="text-xs font-semibold text-primary hover:underline ml-auto"
+            >
+              Abrir →
+            </NuxtLink>
+            <NuxtLink
+              v-if="row.isOpen"
+              :to="`/finanzas/arqueo/z?mode=template&start=${today}&end=${today}&template=${row.template.id}`"
+              class="text-xs font-medium text-text-secondary hover:text-primary ml-auto"
+            >
+              Cerrar →
+            </NuxtLink>
+          </div>
+        </div>
+      </div>
+
       <!-- ── Nuevo arqueo (hub) ─────────────────────────────────────────────── -->
       <div>
         <h2 class="text-sm font-semibold text-text-primary mb-2">Nuevo arqueo</h2>
@@ -289,6 +334,7 @@ import {
   bogotaMonthBounds,
   todayBogotaISO,
 } from '~/utils/bogotaDate'
+import { buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
 import MetricCard from '~/components/shared/MetricCard.vue'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
@@ -339,6 +385,46 @@ const { data: todayPreview } = useQuery({
   staleTime: 60_000,
 })
 const openTablesCount = computed(() => todayPreview.value?.data?.openTablesCount ?? 0)
+
+interface ShiftTemplateOption {
+  id: string
+  name: string
+  startTime: string
+  endTime: string
+}
+
+const { data: rawShiftTemplates } = useQuery({
+  key: () => ['cierre', 'shift-templates', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: ShiftTemplateOption[] }>('/api/cierre/shift-templates'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 120_000,
+})
+const shiftTemplates = computed(() => rawShiftTemplates.value?.data ?? [])
+
+const { data: todayShiftRows, status: todayShiftsStatus } = useQuery({
+  key: () => ['cierre', 'shift-status-today', currentTenant.value?.id, today, shiftTemplates.value.map(t => t.id).join(',')],
+  query: async () => {
+    const templates = shiftTemplates.value
+    const rows = await Promise.all(templates.map(async (template) => {
+      const params = buildCierreWindowParams({
+        periodStart: today,
+        periodEnd: today,
+        shiftTemplateId: template.id,
+      })
+      const res = await $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/shift-status', { params })
+      const data = res.data
+      return {
+        template,
+        isOpen: isShiftOpen(data),
+        openingCash: data?.openingCash ?? 0,
+      }
+    }))
+    return rows
+  },
+  enabled: () => !!currentTenant.value && shiftTemplates.value.length > 0,
+  staleTime: 30_000,
+})
+const todayShiftsLoading = computed(() => todayShiftsStatus.value === 'pending' && !todayShiftRows.value)
 
 const { data: rawHistorial, status, asyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['cierre', 'list', currentTenant.value?.id, activeStart.value, activeEnd.value],

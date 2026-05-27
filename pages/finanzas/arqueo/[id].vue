@@ -114,6 +114,10 @@
             <h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Caja</h3>
           </div>
           <div class="divide-y divide-border">
+            <div v-if="(cierre.openingCash ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm">
+              <span class="text-text-secondary">Fondo inicial</span>
+              <span class="font-medium">+ {{ formatCurrency(cierre.openingCash) }}</span>
+            </div>
             <div class="flex justify-between px-4 py-2.5 text-sm">
               <span class="text-text-secondary">Gastos en efectivo</span>
               <span class="font-medium">{{ formatCurrency(cierre.gastosEfectivo) }}</span>
