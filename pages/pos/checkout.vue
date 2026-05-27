@@ -1355,6 +1355,68 @@ const receiptLogoUrl = computed(() => {
   return url && String(url).startsWith('http') ? url : null
 })
 
+// warocol.com#939 — prefactura title must not reuse post-payment invoice-like labels.
+const prefacturaDocumentLabel = computed(() => {
+  const label = (receiptPrintSettings.value.document_label || 'Prefactura').trim()
+  if (/factura/i.test(label)) return 'Prefactura'
+  return label || 'Prefactura'
+})
+
+const prefacturaTaxTotal = computed(() => {
+  if (!taxPreview.value) return 0
+  return (taxPreview.value.standard_tax || 0) + (taxPreview.value.liquor_tax || 0)
+})
+
+// Mesa runningTotal already includes session taxes; counter cartTotal is pre-tax.
+const prefacturaOrderTotal = computed(() => {
+  if (isKitchenServiceMode.value) return discountedTotal.value
+  return discountedTotal.value + prefacturaTaxTotal.value
+})
+
+const prefacturaAmountDue = computed(() =>
+  prefacturaOrderTotal.value + tipSettlementTotal(tipAmount.value, tipTaxAmount.value),
+)
+
+type PrefacturaPrintSnapshot = {
+  orderTotal: number
+  tipAmount: number
+  tipTaxAmount: number
+  tipTaxLabel: string
+  amountDue: number
+  splitPayments: ReceiptPaymentLine[]
+  splitRemaining: number
+  splitIsComplete: boolean
+}
+
+const prefacturaPrintSnapshot = ref<PrefacturaPrintSnapshot | null>(null)
+
+const prefacturaPrintData = computed(() => {
+  if (prefacturaPrintSnapshot.value) return prefacturaPrintSnapshot.value
+  return {
+    orderTotal: prefacturaOrderTotal.value,
+    tipAmount: tipAmount.value,
+    tipTaxAmount: tipTaxAmount.value,
+    tipTaxLabel: tipTaxLabel.value,
+    amountDue: prefacturaAmountDue.value,
+    splitPayments: splitPayments.value,
+    splitRemaining: splitRemaining.value,
+    splitIsComplete: splitIsComplete.value,
+  }
+})
+
+function capturePrefacturaPrintSnapshot() {
+  prefacturaPrintSnapshot.value = {
+    orderTotal: prefacturaOrderTotal.value,
+    tipAmount: tipAmount.value,
+    tipTaxAmount: tipTaxAmount.value,
+    tipTaxLabel: tipTaxLabel.value,
+    amountDue: prefacturaAmountDue.value,
+    splitPayments: splitPayments.value.map(p => ({ ...p })),
+    splitRemaining: splitRemaining.value,
+    splitIsComplete: splitIsComplete.value,
+  }
+}
+
 const prefacturaDocNumber = computed(() => {
   if (isKitchenServiceMode.value) {
     const orders = mesaCurrentData.value?.data?.orders as Array<{ order_number?: number }> | undefined
@@ -1422,10 +1484,11 @@ const prefacturaDateTime = computed(() =>
 )
 // Prefactura is purely visual — never block on tax preview state. If taxes
 // haven't loaded (or the tenant has no taxes configured), the prefactura
-// just omits those lines. The disclaimer "ESTA NO ES UNA FACTURA" makes the
-// document non-fiscal, so printing without taxes is acceptable.
+// just omits those lines. The prefactura footer disclaimer makes the document
+// non-fiscal, so printing without taxes is acceptable.
 const prefacturaDisabled = computed(() => false)
 const printPrefactura = async () => {
+  capturePrefacturaPrintSnapshot()
   document.body.classList.add('printing-prefactura')
 
   const cleanup = () => {
@@ -3316,8 +3379,8 @@ onUnmounted(() => {
 
   <!-- Issue #535 — Hidden prefactura for printing.
        Only visible via @media print + body class .printing-prefactura.
-       The disclaimer "ESTA NO ES UNA FACTURA" is legally relevant — never
-       remove it or make it visually less prominent. -->
+       The prefactura footer disclaimer is legally relevant — never remove it
+       or make it visually less prominent. -->
   <div id="pos-prefactura" aria-hidden="true">
     <PosReceiptPrintHeader
       :fiscal-data="fiscalData"
@@ -3329,7 +3392,7 @@ onUnmounted(() => {
     />
     <div class="receipt-divider">================================</div>
     <div class="receipt-row receipt-small" style="font-weight:bold;">
-      {{ receiptPrintSettings.document_label }}<span v-if="prefacturaDocNumber"> #{{ prefacturaDocNumber }}</span>
+      {{ prefacturaDocumentLabel }}<span v-if="prefacturaDocNumber"> #{{ prefacturaDocNumber }}</span>
     </div>
     <div class="receipt-row receipt-small">{{ prefacturaDateTime }}</div>
     <div v-if="isKitchenServiceMode && posStore.activeTableSession?.tableName" class="receipt-row receipt-small">
@@ -3388,34 +3451,34 @@ onUnmounted(() => {
       <span>Impuesto licores</span>
       <span>{{ formatCurrency(taxPreview.liquor_tax) }}</span>
     </div>
-    <!-- warocol.com#739 — pre-bill totals include tip and split settlement when applicable -->
-    <template v-if="tipAmount > 0">
+    <!-- warocol.com#739 + #939 — pre-bill totals include tip and split settlement when applicable -->
+    <template v-if="prefacturaPrintData.tipAmount > 0">
       <div class="receipt-item">
         <span>Total orden</span>
-        <span>{{ formatCurrency(discountedTotal) }}</span>
+        <span>{{ formatCurrency(prefacturaPrintData.orderTotal) }}</span>
       </div>
       <div class="receipt-item">
         <span>Propina</span>
-        <span>{{ formatCurrency(tipAmount) }}</span>
+        <span>{{ formatCurrency(prefacturaPrintData.tipAmount) }}</span>
       </div>
-      <div v-if="tipTaxAmount > 0" class="receipt-item">
-        <span>{{ tipTaxLabel }}</span>
-        <span>{{ formatCurrency(tipTaxAmount) }}</span>
+      <div v-if="prefacturaPrintData.tipTaxAmount > 0" class="receipt-item">
+        <span>{{ prefacturaPrintData.tipTaxLabel }}</span>
+        <span>{{ formatCurrency(prefacturaPrintData.tipTaxAmount) }}</span>
       </div>
       <div class="receipt-total">
         <span>TOTAL A COBRAR</span>
-        <span>{{ formatCurrency(splitAmountDue) }}</span>
+        <span>{{ formatCurrency(prefacturaPrintData.amountDue) }}</span>
       </div>
     </template>
     <div v-else class="receipt-total">
       <span>TOTAL</span>
-      <span>{{ formatCurrency(discountedTotal) }}</span>
+      <span>{{ formatCurrency(prefacturaPrintData.orderTotal) }}</span>
     </div>
-    <template v-if="splitPayments.length > 0">
+    <template v-if="prefacturaPrintData.splitPayments.length > 0">
       <div class="receipt-divider">--------------------------------</div>
       <div class="receipt-row receipt-small" style="font-weight:bold;">Pagos registrados</div>
       <div
-        v-for="(p, idx) in splitPayments"
+        v-for="(p, idx) in prefacturaPrintData.splitPayments"
         :key="p.id"
         class="receipt-item receipt-small"
       >
@@ -3423,8 +3486,8 @@ onUnmounted(() => {
         <span>{{ formatCurrency(p.amount) }}</span>
       </div>
       <div class="receipt-item">
-        <span>{{ splitIsComplete ? 'Cobro completo' : 'Saldo pendiente' }}</span>
-        <span>{{ formatCurrency(splitRemaining) }}</span>
+        <span>{{ prefacturaPrintData.splitIsComplete ? 'Cobro completo' : 'Saldo pendiente' }}</span>
+        <span>{{ formatCurrency(prefacturaPrintData.splitRemaining) }}</span>
       </div>
     </template>
 
@@ -3434,8 +3497,8 @@ onUnmounted(() => {
 
     <div class="receipt-divider">================================</div>
     <!-- Issue #535 — Legal disclaimer: do NOT remove. -->
-    <div class="receipt-footer receipt-small" style="font-weight:bold;">ESTA NO ES UNA FACTURA</div>
-    <div class="receipt-footer receipt-small">Documento informativo — no apto para fines tributarios</div>
+    <div class="receipt-footer receipt-small" style="font-weight:bold;">PREFACTURA — DOCUMENTO INFORMATIVO</div>
+    <div class="receipt-footer receipt-small">No es comprobante fiscal ni factura electrónica DIAN</div>
   </div>
 
   <!-- Hidden receipt for printing — only visible via @media print -->
