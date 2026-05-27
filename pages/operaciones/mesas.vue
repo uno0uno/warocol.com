@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import { displayTableCode } from '~/composables/useTableDisplayCode'
 
 definePageMeta({
   layout: 'dashboard'
@@ -78,8 +79,6 @@ const inactiveTables = computed(() => {
   if (q) result = result.filter((t: any) => t.name.toLowerCase().includes(q))
   return result
 })
-
-const { displayTableCode } = useTableDisplayCode()
 
 // ── Table columns ──────────────────────────────────────────────────────────
 // "Mesero" column only shows when waiter-attribution is on; the cell is

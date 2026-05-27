@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
+import { displayTableCode } from '~/composables/useTableDisplayCode'
 
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
@@ -165,8 +166,6 @@ const badgeLabel = (status: string) => {
   return 'Libre'
 }
 
-
-const { displayTableCode } = useTableDisplayCode()
 
 const cardClass = (status: string) => {
   if (status === 'open') return 'border-green-500 bg-green-50 hover:shadow-md'

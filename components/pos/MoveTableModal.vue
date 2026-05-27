@@ -6,6 +6,7 @@
  */
 import { ref, computed } from 'vue'
 import { useMoveTable } from '~/composables/useMoveTable'
+import { displayTableCode } from '~/composables/useTableDisplayCode'
 
 const { singular: tableSingular, plural: tablePlural } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
@@ -54,8 +55,6 @@ const handleClose = () => {
   selectedTableId.value = null
   emit('close')
 }
-
-const { displayTableCode } = useTableDisplayCode()
 </script>
 
 <template>
