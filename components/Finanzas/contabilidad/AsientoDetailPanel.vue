@@ -16,6 +16,7 @@ interface JournalEntryWithLines {
   description: string
   reference: string | null
   sourceModule: string | null
+  sourceId: string | null
   status: string
   totalDebit: number
   totalCredit: number
@@ -31,14 +32,19 @@ interface AccountLookup {
   name: string
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: boolean
   entryId: string | null
   allAccounts: AccountLookup[]
-}>()
+  allowActions?: boolean
+}>(), {
+  allowActions: false,
+})
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
+  'updated': []
+  'void-request': []
 }>()
 
 const close = () => emit('update:modelValue', false)
@@ -105,6 +111,35 @@ const accountById = computed<Record<string, AccountLookup>>(() => {
   for (const a of props.allAccounts) map[a.id] = a
   return map
 })
+
+const entryLink = computed((): string | null => {
+  if (!entry.value?.sourceId) return null
+  if (entry.value.sourceModule === 'orden' || entry.value.sourceModule === 'orden_cogs') {
+    return `/ventas/${entry.value.sourceId}`
+  }
+  if (entry.value.sourceModule === 'inventario') {
+    return `/abastecimiento/compras-directas/${entry.value.sourceId}`
+  }
+  return null
+})
+
+const posting = ref(false)
+const postError = ref('')
+
+const handlePost = async () => {
+  if (!entry.value) return
+  posting.value = true
+  postError.value = ''
+  try {
+    await $fetch(`/api/accounting/journal-entries/${entry.value.id}/post`, { method: 'POST' })
+    await fetchEntry(entry.value.id)
+    emit('updated')
+  } catch (err: any) {
+    postError.value = err?.data?.detail || err?.data?.message || 'Error al publicar el asiento'
+  } finally {
+    posting.value = false
+  }
+}
 
 const fetchEntry = async (id: string) => {
   loading.value = true
@@ -240,7 +275,14 @@ watch(
               <p class="text-xs uppercase tracking-wider text-text-secondary font-medium mb-1">
                 Descripción
               </p>
-              <p class="text-sm text-text-primary leading-relaxed">{{ entry.description }}</p>
+              <NuxtLink
+                v-if="entryLink"
+                :to="entryLink"
+                class="text-sm text-primary hover:underline leading-relaxed"
+              >
+                {{ entry.description }}
+              </NuxtLink>
+              <p v-else class="text-sm text-text-primary leading-relaxed">{{ entry.description }}</p>
             </div>
 
             <!-- Reference -->
@@ -302,12 +344,48 @@ watch(
                 <span class="font-medium text-destructive">Anulado:</span> {{ new Date(entry.voidedAt).toLocaleString('es-CO') }}
               </p>
             </div>
+
+            <div v-if="postError" class="rounded-xl border border-destructive/40 bg-destructive/8 px-4 py-3">
+              <p class="text-sm text-destructive font-medium">{{ postError }}</p>
+            </div>
           </template>
         </div>
 
         <!-- Sticky footer -->
         <div class="flex-shrink-0 border-t border-border bg-surface px-6 py-4">
+          <div v-if="allowActions && entry && !loading && !error" class="flex items-center gap-3">
+            <button
+              type="button"
+              class="min-h-[44px] px-4 py-2 rounded-lg border border-border text-sm font-semibold text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              @click="close"
+            >
+              Cerrar
+            </button>
+            <div class="flex-1" />
+            <button
+              v-if="entry.status === 'draft'"
+              type="button"
+              :disabled="posting"
+              class="min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              @click="handlePost"
+            >
+              <svg v-if="posting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              <span>{{ posting ? 'Publicando...' : 'Publicar' }}</span>
+            </button>
+            <button
+              v-if="entry.status === 'posted'"
+              type="button"
+              class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-destructive/50 text-destructive text-sm font-semibold hover:bg-destructive/10 transition-colors"
+              @click="emit('void-request')"
+            >
+              Anular
+            </button>
+          </div>
           <button
+            v-else
             type="button"
             class="w-full min-h-[44px] rounded-lg border border-border text-sm font-semibold text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             @click="close"
