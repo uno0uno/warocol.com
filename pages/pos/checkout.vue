@@ -1288,6 +1288,14 @@ const printReceipt = async () => {
 // /api/api/tenant/fiscal-data directly with its richer write surface.
 const fiscalData = computed(() => settingsData.value?.data?.fiscal_data ?? null)
 
+const receiptLogoUrl = computed(() => {
+  const settings = settingsData.value?.data?.receipt_print_settings
+  const showLogo = settings?.show_logo ?? true
+  if (!showLogo) return null
+  const url = settingsData.value?.data?.logo_url ?? businessProfile.value?.logo_url ?? null
+  return url && String(url).startsWith('http') ? url : null
+})
+
 // Issue #535 — print pre-bill (prefactura) before payment.
 // Toggles a body class so @media print rules switch which printable div is
 // exposed (#pos-prefactura instead of the default #pos-receipt). The post-
@@ -3194,21 +3202,14 @@ onUnmounted(() => {
        The disclaimer "ESTA NO ES UNA FACTURA" is legally relevant — never
        remove it or make it visually less prominent. -->
   <div id="pos-prefactura" aria-hidden="true">
-    <!-- Header — datos públicos del negocio (de /negocio) -->
-    <div class="receipt-header">{{ fiscalData?.business_name || businessProfile?.display_name || 'WARO' }}</div>
-    <!-- Datos fiscales (de /facturacion) — mejoran la profesionalidad de la pre-cuenta -->
-    <div v-if="fiscalData?.nit" class="receipt-row receipt-small">
-      NIT: {{ fiscalData.nit }}
-    </div>
-    <div v-if="fiscalData?.fiscal_address || businessProfile?.address" class="receipt-row receipt-small">
-      {{ fiscalData?.fiscal_address || businessProfile?.address }}<span v-if="fiscalData?.city || businessProfile?.city">, {{ fiscalData?.city || businessProfile?.city }}</span>
-    </div>
-    <div v-if="fiscalData?.phone || businessProfile?.phone_number" class="receipt-row receipt-small">
-      Tel: {{ fiscalData?.phone || businessProfile?.phone_number }}
-    </div>
-    <div v-if="fiscalData?.email" class="receipt-row receipt-small">
-      {{ fiscalData.email }}
-    </div>
+    <PosReceiptPrintHeader
+      :fiscal-data="fiscalData"
+      :display-name="businessProfile?.display_name"
+      :address="businessProfile?.address"
+      :city="businessProfile?.city"
+      :phone="businessProfile?.phone_number"
+      :logo-url="receiptLogoUrl"
+    />
     <div class="receipt-divider">================================</div>
     <div class="receipt-row" style="font-weight:bold;">*** PRE-CUENTA ***</div>
     <div class="receipt-row receipt-small">{{ prefacturaDateTime }}</div>
@@ -3298,16 +3299,14 @@ onUnmounted(() => {
 
   <!-- Hidden receipt for printing — only visible via @media print -->
   <div id="pos-receipt" aria-hidden="true">
-    <!-- Header — prefer fiscal business name (from /facturacion) over public display name (from /negocio) -->
-    <div class="receipt-header">{{ fiscalData?.business_name || businessProfile?.display_name || 'WARO' }}</div>
-    <div v-if="fiscalData?.nit" class="receipt-row receipt-small">NIT: {{ fiscalData.nit }}</div>
-    <div v-if="fiscalData?.fiscal_address || businessProfile?.address" class="receipt-row receipt-small">
-      {{ fiscalData?.fiscal_address || businessProfile?.address }}<span v-if="fiscalData?.city || businessProfile?.city">, {{ fiscalData?.city || businessProfile?.city }}</span>
-    </div>
-    <div v-if="fiscalData?.phone || businessProfile?.phone_number" class="receipt-row receipt-small">
-      Tel: {{ fiscalData?.phone || businessProfile?.phone_number }}
-    </div>
-    <div v-if="fiscalData?.email" class="receipt-row receipt-small">{{ fiscalData.email }}</div>
+    <PosReceiptPrintHeader
+      :fiscal-data="fiscalData"
+      :display-name="businessProfile?.display_name"
+      :address="businessProfile?.address"
+      :city="businessProfile?.city"
+      :phone="businessProfile?.phone_number"
+      :logo-url="receiptLogoUrl"
+    />
     <div class="receipt-divider">================================</div>
     <div v-if="(orderResult?.order_number ?? 0) > 0" class="receipt-row">Orden #{{ orderResult?.order_number ?? '' }}</div>
     <div class="receipt-divider">--------------------------------</div>
@@ -3390,6 +3389,7 @@ onUnmounted(() => {
 }
 
 /* Modifier/utility classes used by the receipt div */
+.receipt-logo { max-width: 40mm; max-height: 20mm; display: block; margin: 0 auto 4px; object-fit: contain; }
 .receipt-header { font-size: 1.1em; font-weight: bold; text-align: center; margin-bottom: 4px; }
 .receipt-row { text-align: center; margin: 2px 0; }
 .receipt-divider { letter-spacing: 0; margin: 4px 0; }
