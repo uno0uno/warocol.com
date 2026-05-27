@@ -10,6 +10,7 @@ import { useAddressStore, type AddressCreate } from '~/stores/address'
 import { PAYMENT_DEFAULTS, type PosPaymentGroup, type PosPaymentMethod } from '~/utils/paymentDefaults'
 import DeliveryAddressPicker from '~/components/pos/checkout/DeliveryAddressPicker.vue'
 import DeliveryAddressForm from '~/components/pos/checkout/DeliveryAddressForm.vue'
+import { displayTableCode } from '~/composables/useTableDisplayCode'
 
 interface TopProduct {
   name: string
@@ -850,6 +851,11 @@ const getItemTotal = (item: any) => {
   return (basePrice + modifiersPrice) * (Number(item.quantity) || 1)
 }
 
+const getItemUnitPrice = (item: any) => {
+  const qty = Number(item.quantity) || 1
+  return getItemTotal(item) / qty
+}
+
 const processOrder = async () => {
   // Mesa mode: close the table session as payment
   if (!selectedCustomer.value) {
@@ -1288,12 +1294,49 @@ const printReceipt = async () => {
 // /api/api/tenant/fiscal-data directly with its richer write surface.
 const fiscalData = computed(() => settingsData.value?.data?.fiscal_data ?? null)
 
+const receiptPrintSettings = computed(() =>
+  settingsData.value?.data?.receipt_print_settings ?? { document_label: 'Prefactura', show_logo: true },
+)
+
 const receiptLogoUrl = computed(() => {
-  const settings = settingsData.value?.data?.receipt_print_settings
-  const showLogo = settings?.show_logo ?? true
-  if (!showLogo) return null
+  if (!receiptPrintSettings.value.show_logo) return null
   const url = settingsData.value?.data?.logo_url ?? businessProfile.value?.logo_url ?? null
   return url && String(url).startsWith('http') ? url : null
+})
+
+const prefacturaDocNumber = computed(() => {
+  if (isKitchenServiceMode.value) {
+    const orders = mesaCurrentData.value?.data?.orders as Array<{ order_number?: number }> | undefined
+    if (orders?.length) {
+      const maxNum = Math.max(...orders.map(o => Number(o.order_number) || 0))
+      if (maxNum > 0) return String(maxNum)
+    }
+    const sessionId = mesaCurrentData.value?.data?.session?.id ?? posStore.activeTableSession?.sessionId
+    if (sessionId) return sessionId.replace(/-/g, '').slice(-5).toUpperCase()
+    return null
+  }
+  const cartId = posStore.cartId
+  if (cartId) return cartId.replace(/-/g, '').slice(-5).toUpperCase()
+  return null
+})
+
+const prefacturaTableCode = computed(() => {
+  const name = posStore.activeTableSession?.tableName
+  if (!name) return null
+  return displayTableCode({ name })
+})
+
+const prefacturaWaiterName = computed(() => {
+  const memberId = posStore.cartServedByMemberId
+    ?? mesaCurrentData.value?.data?.session?.effective_waiter_member_id
+    ?? posStore.activeTableSession?.effectiveWaiterMemberId
+  if (memberId) {
+    const member = tenantMembers.value.find((m: { id: string }) => m.id === memberId)
+    if (member?.name) return member.name
+  }
+  return posStore.activeTableSession?.effectiveWaiterMemberName
+    ?? mesaCurrentData.value?.data?.session?.effective_waiter_member_name
+    ?? null
 })
 
 // Issue #535 — print pre-bill (prefactura) before payment.
@@ -3211,23 +3254,47 @@ onUnmounted(() => {
       :logo-url="receiptLogoUrl"
     />
     <div class="receipt-divider">================================</div>
-    <div class="receipt-row" style="font-weight:bold;">*** PRE-CUENTA ***</div>
+    <div class="receipt-row receipt-small" style="font-weight:bold;">
+      {{ receiptPrintSettings.document_label }}<span v-if="prefacturaDocNumber"> #{{ prefacturaDocNumber }}</span>
+    </div>
     <div class="receipt-row receipt-small">{{ prefacturaDateTime }}</div>
     <div v-if="isKitchenServiceMode && posStore.activeTableSession?.tableName" class="receipt-row receipt-small">
-      {{ tableSingular }}: {{ posStore.activeTableSession.tableName }}
+      {{ tableSingular }} {{ prefacturaTableCode }} — {{ posStore.activeTableSession.tableName }}
     </div>
     <div v-else-if="posStore.activeTableSession?.isBar" class="receipt-row receipt-small">Barra</div>
     <div v-else class="receipt-row receipt-small">Mostrador</div>
-    <div v-if="selectedCustomer && !isAnonymousCustomer" class="receipt-row receipt-small">
-      Cliente: {{ selectedCustomer.name || selectedCustomer.phone_number }}
+    <div v-if="prefacturaWaiterName" class="receipt-row receipt-small">
+      Mesero: {{ prefacturaWaiterName }}
     </div>
+    <template v-if="selectedCustomer && !isAnonymousCustomer">
+      <div class="receipt-divider receipt-small">--------------------------------</div>
+      <div class="receipt-row receipt-small" style="font-weight:bold;">Datos cliente</div>
+      <div class="receipt-row receipt-small">
+        {{ selectedCustomer.fiscal_business_name || selectedCustomer.name || selectedCustomer.phone_number }}
+      </div>
+      <div v-if="selectedCustomer.fiscal_id" class="receipt-row receipt-small">
+        {{ selectedCustomer.fiscal_id_type }}: {{ selectedCustomer.fiscal_id }}
+      </div>
+    </template>
     <div class="receipt-divider">--------------------------------</div>
 
-    <div v-for="item in cartItems" :key="item.id" class="receipt-item">
-      <span>
-        {{ item.quantity }}x {{ item.product?.name || item.name }}<span v-if="isKitchenServiceMode && item.fired === false"> *</span>
+    <div class="receipt-grid-header receipt-small">
+      <span class="receipt-col-desc">Descripción</span>
+      <span class="receipt-col-qty">Cant</span>
+      <span class="receipt-col-price">Precio</span>
+      <span class="receipt-col-total">Total</span>
+    </div>
+    <div
+      v-for="item in cartItems"
+      :key="item.id"
+      class="receipt-grid-row receipt-small"
+    >
+      <span class="receipt-col-desc">
+        {{ item.product?.name || item.name }}<span v-if="isKitchenServiceMode && item.fired === false"> *</span>
       </span>
-      <span>{{ formatCurrency(getItemTotal(item)) }}</span>
+      <span class="receipt-col-qty">{{ item.quantity }}</span>
+      <span class="receipt-col-price">{{ formatCurrency(getItemUnitPrice(item)) }}</span>
+      <span class="receipt-col-total">{{ formatCurrency(getItemTotal(item)) }}</span>
     </div>
     <div class="receipt-divider">--------------------------------</div>
 
@@ -3400,6 +3467,19 @@ onUnmounted(() => {
 .receipt-qr { width: 30mm; height: 30mm; margin: 4px auto; display: block; }
 .receipt-footer { text-align: center; margin-top: 8px; }
 .receipt-small { font-size: 0.85em; }
+.receipt-grid-header,
+.receipt-grid-row {
+  display: grid;
+  grid-template-columns: 1fr 7mm 14mm 16mm;
+  gap: 1mm;
+  align-items: start;
+  margin: 2px 0;
+}
+.receipt-col-desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.receipt-col-qty,
+.receipt-col-price,
+.receipt-col-total { text-align: right; white-space: nowrap; }
+.receipt-grid-header { font-weight: bold; border-bottom: 1px dashed #000; padding-bottom: 2px; margin-bottom: 4px; }
 </style>
 
 <style>
@@ -3442,6 +3522,10 @@ onUnmounted(() => {
   #pos-prefactura { display: none !important; }
   body.printing-prefactura #pos-receipt { display: none !important; }
   body.printing-prefactura #pos-prefactura { display: block !important; }
+
+  body.printing-prefactura #pos-prefactura {
+    width: 72mm;
+  }
 
   /* Prevent item rows from splitting across pages */
   .receipt-item {
