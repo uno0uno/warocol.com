@@ -140,6 +140,10 @@
                 {{ cierre.cashDifference >= 0 ? '+' : '' }}{{ formatCurrency(cierre.cashDifference) }}
               </span>
             </div>
+            <div v-if="(cierre.cashLeftInDrawer ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm">
+              <span class="text-text-secondary">Dejó en caja</span>
+              <span class="font-medium text-text-primary">{{ formatCurrency(cierre.cashLeftInDrawer) }}</span>
+            </div>
           </div>
         </div>
 

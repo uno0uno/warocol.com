@@ -127,6 +127,29 @@
         </div>
       </div>
 
+      <!-- ── Fondo por defecto ─────────────────────────────────────────────── -->
+      <div class="flex flex-wrap items-end gap-2 p-3 rounded-lg border-2 border-border bg-surface">
+        <div class="flex-1 min-w-[12rem]">
+          <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Fondo por defecto</label>
+          <p class="text-xs text-text-secondary mt-0.5">Se usa al abrir turno si no hay cierre anterior.</p>
+        </div>
+        <input
+          v-model="defaultOpeningInput"
+          type="text"
+          inputmode="numeric"
+          class="h-10 w-36 px-3 rounded-lg border-2 border-border bg-background text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+          @input="defaultOpeningInput = sanitizeDefaultOpening($event)"
+        />
+        <button
+          type="button"
+          class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
+          :disabled="isSavingDefault"
+          @click="saveDefaultOpening"
+        >
+          {{ isSavingDefault ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+
       <!-- ── Nuevo arqueo (hub) ─────────────────────────────────────────────── -->
       <div>
         <h2 class="text-sm font-semibold text-text-primary mb-2">Nuevo arqueo</h2>
@@ -322,7 +345,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
@@ -425,6 +448,42 @@ const { data: todayShiftRows, status: todayShiftsStatus } = useQuery({
   staleTime: 30_000,
 })
 const todayShiftsLoading = computed(() => todayShiftsStatus.value === 'pending' && !todayShiftRows.value)
+
+const { data: rawCashSettings, refetch: refetchCashSettings } = useQuery({
+  key: () => ['cierre', 'cash-settings', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: { defaultOpeningCash: number } }>('/api/cierre/cash-settings'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 60_000,
+})
+
+const defaultOpeningInput = ref('0')
+const isSavingDefault = ref(false)
+
+watch(rawCashSettings, (res) => {
+  if (res?.data != null) {
+    defaultOpeningInput.value = String(Math.round(res.data.defaultOpeningCash ?? 0))
+  }
+}, { immediate: true })
+
+const sanitizeDefaultOpening = (e: Event): string => {
+  const el = e.target as HTMLInputElement
+  const v = el.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '') || '0'
+  el.value = v
+  return v
+}
+
+const saveDefaultOpening = async () => {
+  isSavingDefault.value = true
+  try {
+    await $fetch('/api/cierre/cash-settings', {
+      method: 'PATCH',
+      body: { defaultOpeningCash: parseInt(defaultOpeningInput.value) || 0 },
+    })
+    await refetchCashSettings()
+  } finally {
+    isSavingDefault.value = false
+  }
+}
 
 const { data: rawHistorial, status, asyncStatus, error: fetchError, refetch } = useQuery({
   key: () => ['cierre', 'list', currentTenant.value?.id, activeStart.value, activeEnd.value],

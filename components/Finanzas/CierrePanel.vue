@@ -119,6 +119,10 @@
                     {{ detail.cashDifference >= 0 ? '+' : '' }}{{ formatCurrency(detail.cashDifference) }}
                   </span>
                 </div>
+                <div v-if="(detail.cashLeftInDrawer ?? 0) > 0" class="flex justify-between px-6 py-2.5 text-sm">
+                  <span class="text-text-secondary">Dejó en caja</span>
+                  <span class="font-medium text-text-primary">{{ formatCurrency(detail.cashLeftInDrawer) }}</span>
+                </div>
               </div>
             </div>
 
