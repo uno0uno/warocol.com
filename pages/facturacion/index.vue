@@ -292,6 +292,8 @@ const fiscalForm = reactive({
   city_id: 149,
   phone: '',
   email: '',
+  receipt_document_label: 'Prefactura',
+  show_logo_on_receipts: true,
 })
 const isSavingFiscal = ref(false)
 
@@ -307,7 +309,29 @@ watch(fiscal, (f) => {
   fiscalForm.city_id = f.city_id ?? 149
   fiscalForm.phone = f.phone || ''
   fiscalForm.email = f.email || ''
+  fiscalForm.receipt_document_label = f.receipt_document_label || 'Prefactura'
+  fiscalForm.show_logo_on_receipts = f.show_logo_on_receipts !== false
 }, { immediate: true })
+
+const savePrintSettings = async () => {
+  isSavingFiscal.value = true
+  try {
+    await $fetch('/api/api/tenant/fiscal-data', {
+      method: 'PUT',
+      body: {
+        ...fiscalForm,
+        receipt_document_label: fiscalForm.receipt_document_label.trim() || 'Prefactura',
+      },
+    })
+    await refreshFiscal()
+    await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
+    toast.success('Personalización de tickets guardada', { title: 'Guardado' })
+  } catch (error: any) {
+    toast.error(error.data?.detail || 'Error al guardar personalización', { title: 'Error' })
+  } finally {
+    isSavingFiscal.value = false
+  }
+}
 
 const saveFiscalData = async () => {
   isSavingFiscal.value = true
@@ -315,6 +339,7 @@ const saveFiscalData = async () => {
     await $fetch('/api/api/tenant/fiscal-data', { method: 'PUT', body: { ...fiscalForm } })
     await refreshFiscal()
     invalidateReadiness()
+    await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
     toast.success('Datos fiscales guardados correctamente', { title: 'Guardado' })
   } catch (error: any) {
     toast.error(error.data?.detail || 'Error al guardar datos fiscales', { title: 'Error' })
@@ -813,6 +838,60 @@ const taxLevels = [
         >
           <CheckIcon v-if="!isSavingFiscal" class="w-4 h-4" aria-hidden="true" />
           <span>{{ isSavingFiscal ? 'Guardando...' : 'Guardar datos fiscales' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════ PERSONALIZAR TICKETS POS ══════ -->
+    <div class="bg-surface border-2 border-border rounded-xl p-4 sm:p-6">
+      <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1 flex items-center gap-2">
+        <DocumentTextIcon class="w-5 h-5 text-primary flex-shrink-0" />
+        Personalizar tickets POS
+      </h3>
+      <p class="text-xs text-text-secondary mb-4">
+        Afecta prefactura y recibo impreso en el POS. El logo se configura en
+        <NuxtLink to="/negocio" class="text-primary font-medium hover:underline">Mi negocio</NuxtLink>.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1 sm:col-span-2">
+          <label for="receipt-document-label" class="text-sm font-medium text-text-primary">
+            Etiqueta del documento
+          </label>
+          <input
+            id="receipt-document-label"
+            v-model="fiscalForm.receipt_document_label"
+            type="text"
+            maxlength="40"
+            placeholder="Prefactura, Orden de compra, Factura #…"
+            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+          <p class="text-[11px] text-text-tertiary leading-snug">
+            Texto que encabeza el ticket (máx. 40 caracteres). Ej: <span class="font-medium">Prefactura</span>, <span class="font-medium">Pedido N°</span>.
+          </p>
+        </div>
+
+        <div class="flex items-center justify-between py-2 sm:col-span-2">
+          <div>
+            <p class="text-sm font-medium text-text-primary">Mostrar logo en tickets</p>
+            <p class="text-xs text-text-secondary mt-0.5">Usa el logo de Mi negocio en prefactura y factura impresa</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 ml-4">
+            <input v-model="fiscalForm.show_logo_on_receipts" type="checkbox" class="sr-only peer" />
+            <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          </label>
+        </div>
+      </div>
+
+      <div class="mt-5 flex justify-end">
+        <button
+          type="button"
+          @click="savePrintSettings"
+          :disabled="isSavingFiscal"
+          class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px]"
+        >
+          <CheckIcon v-if="!isSavingFiscal" class="w-4 h-4" aria-hidden="true" />
+          <span>{{ isSavingFiscal ? 'Guardando...' : 'Guardar personalización' }}</span>
         </button>
       </div>
     </div>
