@@ -701,6 +701,8 @@ const addSplitPayment = async () => {
       splitMode.value = false
       posStore.clearAll()
       showSuccessModal.value = true
+      document.body.classList.remove('printing-prefactura')
+      prefacturaPrintSnapshot.value = null
     }
   } catch (e: any) {
     processingError.value = e.data?.message || 'Error al registrar el pago parcial'
@@ -978,6 +980,8 @@ const processOrder = async () => {
         posStore.exitSession()
       }
       showSuccessModal.value = true
+      document.body.classList.remove('printing-prefactura')
+      prefacturaPrintSnapshot.value = null
     } catch (error: any) {
       processingError.value = error.data?.message || error.message || `Error al cerrar la ${tableSingularLower.value}`
     } finally {
@@ -1102,6 +1106,8 @@ const processOrder = async () => {
         posStore.exitSession()
       }
       showSuccessModal.value = true
+      document.body.classList.remove('printing-prefactura')
+      prefacturaPrintSnapshot.value = null
     }
   } catch (error: any) {
     processingError.value = error.data?.message || error.message || 'Error processing order'
@@ -1335,6 +1341,8 @@ const generateInvoice = async () => {
 }
 
 const printReceipt = async () => {
+  // Ensure post-payment receipt wins over a prior prefactura print (#939).
+  document.body.classList.remove('printing-prefactura')
   await nextTick()
   window.print()
 }
@@ -1355,11 +1363,20 @@ const receiptLogoUrl = computed(() => {
   return url && String(url).startsWith('http') ? url : null
 })
 
-// warocol.com#939 — prefactura title must not reuse post-payment invoice-like labels.
+// warocol.com#939 — pre-bill always reads as prefactura; post-payment uses receiptDocumentLabel.
 const prefacturaDocumentLabel = computed(() => {
-  const label = (receiptPrintSettings.value.document_label || 'Prefactura').trim()
-  if (/factura/i.test(label)) return 'Prefactura'
-  return label || 'Prefactura'
+  const label = (receiptPrintSettings.value.document_label || '').trim()
+  if (!label || /factura/i.test(label) || /prefactura|pre-cuenta|pre cuenta|precuenta/i.test(label)) {
+    return 'Prefactura'
+  }
+  return label
+})
+
+const receiptDocumentLabel = computed(() => {
+  const label = (receiptPrintSettings.value.document_label || '').trim()
+  if (/factura/i.test(label)) return label
+  if (!label || /prefactura|pre-cuenta|pre cuenta|precuenta/i.test(label)) return 'Factura'
+  return label
 })
 
 const prefacturaTaxTotal = computed(() => {
@@ -3513,7 +3530,7 @@ onUnmounted(() => {
     />
     <div class="receipt-divider">================================</div>
     <div class="receipt-row receipt-small" style="font-weight:bold;">
-      {{ receiptPrintSettings.document_label }}<span v-if="(orderResult?.order_number ?? 0) > 0"> #{{ orderResult?.order_number }}</span>
+      {{ receiptDocumentLabel }}<span v-if="(orderResult?.order_number ?? 0) > 0"> #{{ orderResult?.order_number }}</span>
     </div>
     <div v-if="receiptPrintContext?.soldAt" class="receipt-row receipt-small">{{ receiptPrintContext.soldAt }}</div>
     <div v-if="receiptPrintContext?.wasMesa && receiptPrintContext.tableName" class="receipt-row receipt-small">
