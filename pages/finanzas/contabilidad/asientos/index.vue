@@ -36,20 +36,6 @@ interface JournalEntry {
   createdAt: string
 }
 
-interface JournalLine {
-  id: string
-  journalEntryId: string
-  accountId: string
-  debit: number
-  credit: number
-  description: string | null
-  lineOrder: number
-}
-
-interface JournalEntryWithLines extends JournalEntry {
-  lines: JournalLine[]
-}
-
 const statusFilter = ref<string>('')
 const sourceModuleFilter = ref<string>('')
 const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
@@ -75,13 +61,9 @@ const { data: accountsData } = useQuery({
   staleTime: 300_000,
 })
 
-const accountsMap = computed<Map<string, { code: string; name: string }>>(() => {
-  const m = new Map<string, { code: string; name: string }>()
-  for (const a of accountsData.value?.data ?? []) {
-    m.set(a.id, { code: a.code, name: a.name })
-  }
-  return m
-})
+const allAccountsForPanel = computed(() =>
+  (accountsData.value?.data ?? []).map(a => ({ id: a.id, code: a.code, name: a.name })),
+)
 
 // ── Data: journal entries (paginated) ───────────────────────────────────────
 const { data: entriesData, asyncStatus, error: fetchError, refetch } = useQuery({
@@ -145,11 +127,6 @@ const formatDate = (iso: string) => {
   return d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-const formatDateTime = (iso: string) => {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-}
-
 const SOURCE_MODULE_LABELS: Record<string, string> = {
   gastos: 'Gastos',
   ventas: 'Ventas',
@@ -189,56 +166,22 @@ const entryLink = (entry: JournalEntry): string | null => {
   return null
 }
 
-// ── Detail modal ─────────────────────────────────────────────────────────────
-const showDetailModal = ref(false)
+// ── Detail slide-over (#916 — reuse AsientoDetailPanel from #531) ─────────────
+const showDetailPanel = ref(false)
 const selectedEntryId = ref<string | null>(null)
-const selectedEntryDetail = ref<JournalEntryWithLines | null>(null)
-const detailLoading = ref(false)
-const detailError = ref<string | null>(null)
 
-const openDetail = async (entry: JournalEntry) => {
+const openDetail = (entry: JournalEntry) => {
   selectedEntryId.value = entry.id
-  selectedEntryDetail.value = null
-  detailError.value = null
-  detailLoading.value = true
-  showDetailModal.value = true
-  try {
-    const res = await $fetch<{ success: boolean; data: JournalEntryWithLines }>(
-      `/api/accounting/journal-entries/${entry.id}`
-    )
-    selectedEntryDetail.value = res.data
-  } catch (err: any) {
-    detailError.value = err?.data?.detail || err?.data?.message || 'Error al cargar el asiento'
-  } finally {
-    detailLoading.value = false
-  }
+  showDetailPanel.value = true
 }
 
 const closeDetail = () => {
-  showDetailModal.value = false
+  showDetailPanel.value = false
   selectedEntryId.value = null
-  selectedEntryDetail.value = null
-  detailError.value = null
-  postError.value = null
 }
 
-// ── Post action ──────────────────────────────────────────────────────────────
-const posting = ref(false)
-const postError = ref<string | null>(null)
-
-const handlePost = async () => {
-  if (!selectedEntryId.value) return
-  posting.value = true
-  postError.value = null
-  try {
-    await $fetch(`/api/accounting/journal-entries/${selectedEntryId.value}/post`, { method: 'POST' })
-    closeDetail()
-    await refetch()
-  } catch (err: any) {
-    postError.value = err?.data?.detail || err?.data?.message || 'Error al publicar el asiento'
-  } finally {
-    posting.value = false
-  }
+const onDetailUpdated = async () => {
+  await refetch()
 }
 
 // ── Void action ──────────────────────────────────────────────────────────────
@@ -277,23 +220,6 @@ const handleVoid = async () => {
     voiding.value = false
   }
 }
-
-// ── Lines columns ────────────────────────────────────────────────────────────
-const linesColumns = [
-  { key: 'lineOrder',   title: '#',          sortable: false },
-  { key: 'account',     title: 'Cuenta',     sortable: false },
-  { key: 'debit',       title: 'Débito',     sortable: false },
-  { key: 'credit',      title: 'Crédito',    sortable: false },
-  { key: 'description', title: 'Descripción', sortable: false },
-]
-
-const resolvedLines = computed(() => {
-  if (!selectedEntryDetail.value?.lines) return []
-  return selectedEntryDetail.value.lines.map(line => ({
-    ...line,
-    accountResolved: accountsMap.value.get(line.accountId),
-  }))
-})
 
 // ── Layout integration ───────────────────────────────────────────────────────
 registerProgressiveLoading(isRefreshing)
@@ -516,302 +442,14 @@ onUnmounted(() => { clearRefreshHandler(refetch) })
 
     </div>
 
-    <!-- ── Entry detail modal (desktop) ───────────────────────────────────── -->
-    <UiModal v-model="showDetailModal" title="Detalle del asiento" max-height="xl">
-      <div class="overflow-y-auto max-h-[70vh]">
-        <!-- Loading detail -->
-        <div v-if="detailLoading" class="flex items-center justify-center py-12">
-          <CommonsTheCustomLoader size="medium" />
-        </div>
-
-        <!-- Error detail -->
-        <div v-else-if="detailError" class="p-6">
-          <div class="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-            {{ detailError }}
-          </div>
-        </div>
-
-        <!-- Entry detail content -->
-        <div v-else-if="selectedEntryDetail" class="p-6 flex flex-col gap-4">
-          <!-- Header fields -->
-          <div class="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <span class="text-xs font-medium text-text-secondary uppercase tracking-wide">Fecha</span>
-              <p class="mt-0.5 text-text-primary">{{ formatDate(selectedEntryDetail.entryDate) }}</p>
-            </div>
-            <div>
-              <span class="text-xs font-medium text-text-secondary uppercase tracking-wide">Estado</span>
-              <div class="mt-0.5">
-                <UiStatusBadge
-                  :value="STATUS_LABELS[selectedEntryDetail.status] || selectedEntryDetail.status"
-                  format="text"
-                  :variant="selectedEntryDetail.status === 'posted' ? 'success' : selectedEntryDetail.status === 'voided' ? 'destructive' : 'secondary'"
-                  size="sm"
-                />
-              </div>
-            </div>
-            <div class="col-span-2">
-              <span class="text-xs font-medium text-text-secondary uppercase tracking-wide">Descripción</span>
-              <p class="mt-0.5 text-text-primary">
-                <NuxtLink
-                  v-if="entryLink(selectedEntryDetail)"
-                  :to="entryLink(selectedEntryDetail) || ''"
-                  class="text-primary hover:underline"
-                >{{ selectedEntryDetail.description }}</NuxtLink>
-                <span v-else>{{ selectedEntryDetail.description }}</span>
-              </p>
-            </div>
-            <div>
-              <span class="text-xs font-medium text-text-secondary uppercase tracking-wide">Módulo</span>
-              <p class="mt-0.5 text-text-primary">{{ SOURCE_MODULE_LABELS[selectedEntryDetail.sourceModule] || selectedEntryDetail.sourceModule }}</p>
-            </div>
-            <div v-if="selectedEntryDetail.postedAt">
-              <span class="text-xs font-medium text-text-secondary uppercase tracking-wide">Publicado</span>
-              <p class="mt-0.5 text-text-primary">{{ formatDateTime(selectedEntryDetail.postedAt) }}</p>
-            </div>
-            <div v-if="selectedEntryDetail.voidedAt">
-              <span class="text-xs font-medium text-text-secondary uppercase tracking-wide">Anulado</span>
-              <p class="mt-0.5 text-text-primary">{{ formatDateTime(selectedEntryDetail.voidedAt) }}</p>
-            </div>
-          </div>
-
-          <!-- Totals -->
-          <div class="flex items-center gap-4 p-3 rounded-lg bg-surface-secondary text-sm">
-            <div>
-              <span class="text-xs text-text-secondary">Total débito</span>
-              <p class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(selectedEntryDetail.totalDebit) }}</p>
-            </div>
-            <div>
-              <span class="text-xs text-text-secondary">Total crédito</span>
-              <p class="font-semibold text-text-primary tabular-nums">{{ formatCurrency(selectedEntryDetail.totalCredit) }}</p>
-            </div>
-          </div>
-
-          <!-- Lines table -->
-          <div>
-            <h4 class="text-xs font-bold text-text-secondary uppercase tracking-wide mb-2">Líneas del asiento</h4>
-            <UiResponsiveDataView
-              row-size="sm"
-              :columns="linesColumns"
-              :data="resolvedLines"
-              empty-message="Sin líneas"
-              variant="default"
-            >
-              <template #card="{ item, index }">
-                <div
-                  class="flex items-start gap-2 py-2 px-3 border-b border-border"
-                  :class="index % 2 === 0 ? 'bg-surface' : 'bg-surface-secondary/30'"
-                >
-                  <div class="flex-1 min-w-0">
-                    <p class="text-xs font-mono text-text-secondary">
-                      {{ item.accountResolved ? `${item.accountResolved.code} · ${item.accountResolved.name}` : item.accountId }}
-                    </p>
-                    <p v-if="item.description" class="text-xs text-text-secondary mt-0.5">{{ item.description }}</p>
-                  </div>
-                  <div class="text-right flex-shrink-0">
-                    <p v-if="item.debit > 0" class="text-xs tabular-nums text-text-primary">D: {{ formatCurrency(item.debit) }}</p>
-                    <p v-if="item.credit > 0" class="text-xs tabular-nums text-text-primary">C: {{ formatCurrency(item.credit) }}</p>
-                  </div>
-                </div>
-              </template>
-
-              <template #cell-lineOrder="{ value }">
-                <span class="text-xs text-text-secondary tabular-nums">{{ value + 1 }}</span>
-              </template>
-
-              <template #cell-account="{ row }">
-                <div>
-                  <span v-if="row.accountResolved" class="text-sm text-text-primary">
-                    <span class="font-mono text-xs text-text-secondary">{{ row.accountResolved.code }}</span>
-                    {{ ' ' }}{{ row.accountResolved.name }}
-                  </span>
-                  <span v-else class="text-xs font-mono text-text-secondary">{{ row.accountId }}</span>
-                </div>
-              </template>
-
-              <template #cell-debit="{ row }">
-                <span v-if="row.debit > 0" class="text-sm tabular-nums text-text-primary">{{ formatCurrency(row.debit) }}</span>
-                <span v-else class="text-sm text-text-secondary">—</span>
-              </template>
-
-              <template #cell-credit="{ row }">
-                <span v-if="row.credit > 0" class="text-sm tabular-nums text-text-primary">{{ formatCurrency(row.credit) }}</span>
-                <span v-else class="text-sm text-text-secondary">—</span>
-              </template>
-
-              <template #cell-description="{ value }">
-                <span class="text-sm text-text-secondary">{{ value || '—' }}</span>
-              </template>
-            </UiResponsiveDataView>
-          </div>
-
-          <!-- Post error -->
-          <div v-if="postError" class="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-            {{ postError }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer actions -->
-      <template #footer>
-        <div v-if="selectedEntryDetail" class="flex items-center gap-3 p-4">
-          <button
-            type="button"
-            class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary transition-colors"
-            @click="closeDetail"
-          >
-            Cerrar
-          </button>
-          <div class="flex-1" />
-          <!-- Publish draft -->
-          <button
-            v-if="selectedEntryDetail.status === 'draft'"
-            type="button"
-            :disabled="posting"
-            class="min-h-[44px] px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            @click="handlePost"
-          >
-            <svg v-if="posting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-            </svg>
-            <span>{{ posting ? 'Publicando...' : 'Publicar' }}</span>
-          </button>
-          <!-- Void posted -->
-          <button
-            v-if="selectedEntryDetail.status === 'posted'"
-            type="button"
-            class="min-h-[44px] px-4 py-2 rounded-lg border-2 border-destructive/50 text-destructive text-sm font-semibold hover:bg-destructive/10 transition-colors"
-            @click="openVoidModal"
-          >
-            Anular
-          </button>
-        </div>
-      </template>
-    </UiModal>
-
-    <!-- ── Entry detail modal (mobile bottom sheet) ───────────────────────── -->
-    <UiBottomSheetModal v-model="showDetailModal" title="Detalle del asiento">
-      <div class="overflow-y-auto max-h-[65vh]">
-        <!-- Loading -->
-        <div v-if="detailLoading" class="flex items-center justify-center py-12">
-          <CommonsTheCustomLoader size="medium" />
-        </div>
-
-        <!-- Error -->
-        <div v-else-if="detailError" class="p-4">
-          <div class="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-            {{ detailError }}
-          </div>
-        </div>
-
-        <!-- Content -->
-        <div v-else-if="selectedEntryDetail" class="p-4 flex flex-col gap-3">
-          <!-- Header fields -->
-          <div class="grid grid-cols-2 gap-2 text-sm">
-            <div>
-              <span class="text-xs font-medium text-text-secondary">Fecha</span>
-              <p class="text-text-primary">{{ formatDate(selectedEntryDetail.entryDate) }}</p>
-            </div>
-            <div>
-              <span class="text-xs font-medium text-text-secondary">Estado</span>
-              <div class="mt-0.5">
-                <UiStatusBadge
-                  :value="STATUS_LABELS[selectedEntryDetail.status] || selectedEntryDetail.status"
-                  format="text"
-                  :variant="selectedEntryDetail.status === 'posted' ? 'success' : selectedEntryDetail.status === 'voided' ? 'destructive' : 'secondary'"
-                  size="sm"
-                />
-              </div>
-            </div>
-            <div class="col-span-2">
-              <span class="text-xs font-medium text-text-secondary">Descripción</span>
-              <p class="text-text-primary">
-                <NuxtLink
-                  v-if="entryLink(selectedEntryDetail)"
-                  :to="entryLink(selectedEntryDetail) || ''"
-                  class="text-primary hover:underline"
-                >{{ selectedEntryDetail.description }}</NuxtLink>
-                <span v-else>{{ selectedEntryDetail.description }}</span>
-              </p>
-            </div>
-            <div>
-              <span class="text-xs font-medium text-text-secondary">Módulo</span>
-              <p class="text-text-primary">{{ SOURCE_MODULE_LABELS[selectedEntryDetail.sourceModule] || selectedEntryDetail.sourceModule }}</p>
-            </div>
-          </div>
-
-          <!-- Totals -->
-          <div class="flex items-center gap-4 p-3 rounded-lg bg-surface-secondary text-sm">
-            <div>
-              <span class="text-xs text-text-secondary">Débito</span>
-              <p class="font-semibold tabular-nums">{{ formatCurrency(selectedEntryDetail.totalDebit) }}</p>
-            </div>
-            <div>
-              <span class="text-xs text-text-secondary">Crédito</span>
-              <p class="font-semibold tabular-nums">{{ formatCurrency(selectedEntryDetail.totalCredit) }}</p>
-            </div>
-          </div>
-
-          <!-- Lines list -->
-          <div>
-            <h4 class="text-xs font-bold text-text-secondary uppercase tracking-wide mb-2">Líneas</h4>
-            <div
-              v-for="(line, idx) in resolvedLines"
-              :key="line.id"
-              class="flex items-start gap-2 py-2 border-b border-border last:border-0"
-              :class="idx % 2 === 0 ? '' : 'bg-surface-secondary/30 px-1 rounded'"
-            >
-              <div class="flex-1 min-w-0">
-                <p class="text-xs font-mono text-text-secondary">
-                  {{ line.accountResolved ? `${line.accountResolved.code} · ${line.accountResolved.name}` : line.accountId }}
-                </p>
-                <p v-if="line.description" class="text-xs text-text-secondary mt-0.5">{{ line.description }}</p>
-              </div>
-              <div class="text-right flex-shrink-0 text-xs tabular-nums">
-                <p v-if="line.debit > 0">D: {{ formatCurrency(line.debit) }}</p>
-                <p v-if="line.credit > 0">C: {{ formatCurrency(line.credit) }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Post error -->
-          <div v-if="postError" class="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-            {{ postError }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer actions -->
-      <template #footer>
-        <div v-if="selectedEntryDetail" class="flex items-center gap-3 p-4">
-          <button
-            type="button"
-            class="min-h-[44px] flex-1 px-4 py-2 rounded-lg border-2 border-border text-sm text-text-secondary hover:text-text-primary transition-colors"
-            @click="closeDetail"
-          >
-            Cerrar
-          </button>
-          <button
-            v-if="selectedEntryDetail.status === 'draft'"
-            type="button"
-            :disabled="posting"
-            class="min-h-[44px] flex-1 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            @click="handlePost"
-          >
-            {{ posting ? 'Publicando...' : 'Publicar' }}
-          </button>
-          <button
-            v-if="selectedEntryDetail.status === 'posted'"
-            type="button"
-            class="min-h-[44px] flex-1 px-4 py-2 rounded-lg border-2 border-destructive/50 text-destructive text-sm font-semibold hover:bg-destructive/10 transition-colors"
-            @click="openVoidModal"
-          >
-            Anular
-          </button>
-        </div>
-      </template>
-    </UiBottomSheetModal>
+    <FinanzasContabilidadAsientoDetailPanel
+      v-model="showDetailPanel"
+      :entry-id="selectedEntryId"
+      :all-accounts="allAccountsForPanel"
+      allow-actions
+      @updated="onDetailUpdated"
+      @void-request="openVoidModal"
+    />
 
     <!-- ── Void reason modal ───────────────────────────────────────────────── -->
     <Teleport to="body">
