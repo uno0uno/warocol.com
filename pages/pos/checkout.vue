@@ -61,13 +61,42 @@ const discountInput = ref('')
 
 // Success modal state
 const showSuccessModal = ref(false)
-const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string; discount_amount?: number; subtotal?: number; standard_tax?: number; liquor_tax?: number; standard_tax_label?: string; order_id?: string; order_ids?: string[]; tip_amount?: number; charged_amount?: number } | null>(null)
+const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string; discount_amount?: number; subtotal?: number; standard_tax?: number; liquor_tax?: number; standard_tax_label?: string; order_id?: string; order_ids?: string[]; tip_amount?: number; charged_amount?: number; cash_received?: number; change?: number } | null>(null)
 const wasMesaMode = ref(false)
 const receiptEmail = ref('')
 const emailSent = ref(false)
 const emailFromProfile = ref(false)
 const isSendingEmail = ref(false)
 const cartItemsSnapshot = ref<any[]>([])
+
+type FiscalIdType = 'CC' | 'NIT' | 'CE' | 'PA' | 'TI'
+
+interface ReceiptPaymentLine {
+  id: string
+  amount: number
+  payment_method: string
+  payment_method_name: string
+  cash_received?: number | null
+  change?: number | null
+}
+
+interface ReceiptPrintContext {
+  soldAt: string
+  wasMesa: boolean
+  isBar: boolean
+  tableName: string | null
+  tableCode: string | null
+  waiterName: string | null
+  customerName: string | null
+  customerFiscalIdType: FiscalIdType | null
+  customerFiscalId: string | null
+  customerFiscalBusinessName: string | null
+  singlePaymentCashReceived: number | null
+  singlePaymentChange: number | null
+}
+
+const receiptPrintContext = ref<ReceiptPrintContext | null>(null)
+const splitPaymentsSnapshot = ref<ReceiptPaymentLine[]>([])
 
 // Invoicing readiness gate (issue #450) — derived from the POS restaurant
 // context aggregator (`settingsData` below). Backend gates the rich
@@ -86,7 +115,6 @@ const invoiceResults = ref<{ order_id: string; prefix: string; invoice_number: n
 
 // Customer identification via modal
 const showCustomerModal = ref(false)
-type FiscalIdType = 'CC' | 'NIT' | 'CE' | 'PA' | 'TI'
 interface PosCustomer {
   id: string
   name: string | null
@@ -447,7 +475,7 @@ const splitMode = ref(false)
 const showCheckoutTipSelector = computed(
   () => tipEnabled.value && !!posStore.cartServedByMemberId && splitPayments.value.length === 0,
 )
-const splitPayments = ref<Array<{ id: string; amount: number; payment_method: string; payment_method_name: string }>>([])
+const splitPayments = ref<ReceiptPaymentLine[]>([])
 const splitPaidTotal = ref(0)
 // Issue warocol.com#649 — void partial payment state: modal + per-row spinner.
 // The reason is optional (audit-only); empty string is accepted by the backend.
@@ -622,11 +650,18 @@ const addSplitPayment = async () => {
     const subMethodName = selectedPaymentMethodId.value
       ? selectedGroup.value?.methods.find(m => m.id === selectedPaymentMethodId.value)?.name
       : undefined
+    const cashReceived = isCashMethod.value && cashReceivedInput.value > 0
+      ? Number(cashReceivedInput.value)
+      : null
+    const paymentChange = cashReceived !== null
+      ? Math.max(0, cashReceived - amountToCharge)
+      : null
     splitPayments.value.push({
       id: paymentId,
       amount: amountToCharge,
       payment_method: selectedPaymentMethod.value,
       payment_method_name: subMethodName ?? getPaymentMethodLabel(selectedPaymentMethod.value),
+      ...(cashReceived !== null ? { cash_received: cashReceived, change: paymentChange } : {}),
     })
     splitPaidTotal.value = paidTotal
     cashReceivedInput.value = 0
@@ -641,6 +676,7 @@ const addSplitPayment = async () => {
     })
 
     if (isComplete) {
+      captureReceiptPrintContext()
       orderResult.value = {
         order_number: 0,
         total_amount: discountedTotal.value,
@@ -648,6 +684,9 @@ const addSplitPayment = async () => {
         ...(discountEnabled.value && discountAmount.value > 0
           ? { discount_amount: discountAmount.value, subtotal: cartTotal.value }
           : {}),
+        standard_tax: taxPreview.value?.standard_tax ?? 0,
+        liquor_tax: taxPreview.value?.liquor_tax ?? 0,
+        standard_tax_label: taxPreview.value?.standard_tax_label ?? 'Impuesto',
         ...(tipAmount.value > 0
           ? {
               tip_amount: tipAmount.value,
@@ -925,6 +964,12 @@ const processOrder = async () => {
       }
       wasMesaMode.value = true
       cartItemsSnapshot.value = [...cartItems.value]
+      captureReceiptPrintContext({
+        singleCashReceived: isCashMethod.value && cashReceivedInput.value > 0
+          ? Number(cashReceivedInput.value)
+          : null,
+        singleCashChange: isCashMethod.value ? cashChange.value : null,
+      })
       const customerEmail = selectedCustomer.value?.email ?? ''
       receiptEmail.value = customerEmail && !customerEmail.endsWith('@customer.temp') ? customerEmail : ''
       emailSent.value = false
@@ -1039,6 +1084,12 @@ const processOrder = async () => {
           : {}),
       }
       cartItemsSnapshot.value = [...cartItems.value]
+      captureReceiptPrintContext({
+        singleCashReceived: isCashMethod.value && cashReceivedInput.value > 0
+          ? Number(cashReceivedInput.value)
+          : null,
+        singleCashChange: isCashMethod.value ? cashChange.value : null,
+      })
       receiptEmail.value = emailForReceipt ?? ''
       emailSent.value = false
       emailFromProfile.value = !!emailForReceipt
@@ -1338,6 +1389,29 @@ const prefacturaWaiterName = computed(() => {
     ?? mesaCurrentData.value?.data?.session?.effective_waiter_member_name
     ?? null
 })
+
+function captureReceiptPrintContext(opts?: { singleCashReceived?: number | null; singleCashChange?: number | null }) {
+  const session = posStore.activeTableSession
+  const customer = selectedCustomer.value
+  const tableName = session?.tableName ?? null
+  receiptPrintContext.value = {
+    soldAt: new Date().toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }),
+    wasMesa: wasMesaMode.value || isMesaMode.value,
+    isBar: session?.isBar ?? false,
+    tableName,
+    tableCode: tableName ? displayTableCode({ name: tableName }) : null,
+    waiterName: prefacturaWaiterName.value,
+    customerName: customer && customer.phone_number !== '0000000000'
+      ? (customer.fiscal_business_name || customer.name || customer.phone_number)
+      : null,
+    customerFiscalIdType: customer?.fiscal_id_type ?? null,
+    customerFiscalId: customer?.fiscal_id ?? null,
+    customerFiscalBusinessName: customer?.fiscal_business_name ?? null,
+    singlePaymentCashReceived: opts?.singleCashReceived ?? null,
+    singlePaymentChange: opts?.singleCashChange ?? null,
+  }
+  splitPaymentsSnapshot.value = splitPayments.value.map(p => ({ ...p }))
+}
 
 // Issue #535 — print pre-bill (prefactura) before payment.
 // Toggles a body class so @media print rules switch which printable div is
@@ -3375,13 +3449,46 @@ onUnmounted(() => {
       :logo-url="receiptLogoUrl"
     />
     <div class="receipt-divider">================================</div>
-    <div v-if="(orderResult?.order_number ?? 0) > 0" class="receipt-row">Orden #{{ orderResult?.order_number ?? '' }}</div>
+    <div class="receipt-row receipt-small" style="font-weight:bold;">
+      {{ receiptPrintSettings.document_label }}<span v-if="(orderResult?.order_number ?? 0) > 0"> #{{ orderResult?.order_number }}</span>
+    </div>
+    <div v-if="receiptPrintContext?.soldAt" class="receipt-row receipt-small">{{ receiptPrintContext.soldAt }}</div>
+    <div v-if="receiptPrintContext?.wasMesa && receiptPrintContext.tableName" class="receipt-row receipt-small">
+      {{ tableSingular }} {{ receiptPrintContext.tableCode }} — {{ receiptPrintContext.tableName }}
+    </div>
+    <div v-else-if="receiptPrintContext?.isBar" class="receipt-row receipt-small">Barra</div>
+    <div v-else-if="receiptPrintContext" class="receipt-row receipt-small">Mostrador</div>
+    <div v-if="receiptPrintContext?.waiterName" class="receipt-row receipt-small">
+      Mesero: {{ receiptPrintContext.waiterName }}
+    </div>
+    <template v-if="receiptPrintContext?.customerName">
+      <div class="receipt-divider receipt-small">--------------------------------</div>
+      <div class="receipt-row receipt-small" style="font-weight:bold;">Datos cliente</div>
+      <div class="receipt-row receipt-small">{{ receiptPrintContext.customerName }}</div>
+      <div v-if="receiptPrintContext.customerFiscalId" class="receipt-row receipt-small">
+        {{ receiptPrintContext.customerFiscalIdType }}: {{ receiptPrintContext.customerFiscalId }}
+      </div>
+    </template>
     <div class="receipt-divider">--------------------------------</div>
-    <div v-for="item in cartItemsSnapshot" :key="item.id" class="receipt-item">
-      <span>{{ item.quantity }}x {{ item.product?.name }}</span>
-      <span>{{ formatCurrency(getItemTotal(item)) }}</span>
+
+    <div class="receipt-grid-header receipt-small">
+      <span class="receipt-col-desc">Descripción</span>
+      <span class="receipt-col-qty">Cant</span>
+      <span class="receipt-col-price">Precio</span>
+      <span class="receipt-col-total">Total</span>
+    </div>
+    <div
+      v-for="item in cartItemsSnapshot"
+      :key="item.id"
+      class="receipt-grid-row receipt-small"
+    >
+      <span class="receipt-col-desc">{{ item.product?.name || item.name }}</span>
+      <span class="receipt-col-qty">{{ item.quantity }}</span>
+      <span class="receipt-col-price">{{ formatCurrency(getItemUnitPrice(item)) }}</span>
+      <span class="receipt-col-total">{{ formatCurrency(getItemTotal(item)) }}</span>
     </div>
     <div class="receipt-divider">--------------------------------</div>
+
     <div v-if="orderResult?.discount_amount && orderResult?.subtotal" class="receipt-item">
       <span>Subtotal</span>
       <span>{{ formatCurrency(orderResult.subtotal) }}</span>
@@ -3390,6 +3497,17 @@ onUnmounted(() => {
       <span>Descuento</span>
       <span>-{{ formatCurrency(orderResult.discount_amount) }}</span>
     </div>
+    <template v-if="orderResult?.standard_tax && orderResult.standard_tax > 0 || orderResult?.liquor_tax && orderResult.liquor_tax > 0">
+      <div class="receipt-row receipt-small" style="font-weight:bold;">Detalle de impuestos</div>
+      <div v-if="orderResult?.standard_tax && orderResult.standard_tax > 0" class="receipt-item receipt-small">
+        <span>{{ orderResult.standard_tax_label || 'Impuesto' }}</span>
+        <span>{{ formatCurrency(orderResult.standard_tax) }}</span>
+      </div>
+      <div v-if="orderResult?.liquor_tax && orderResult.liquor_tax > 0" class="receipt-item receipt-small">
+        <span>Impuesto licores</span>
+        <span>{{ formatCurrency(orderResult.liquor_tax) }}</span>
+      </div>
+    </template>
     <!-- warocol.com#739 — printed receipt mirrors success modal + split payments -->
     <template v-if="orderResult?.tip_amount && orderResult.tip_amount > 0">
       <div class="receipt-item">
@@ -3409,19 +3527,37 @@ onUnmounted(() => {
       <span>TOTAL</span>
       <span>{{ formatCurrency(orderResult?.total_amount ?? 0) }}</span>
     </div>
-    <template v-if="splitPayments.length > 0">
-      <div class="receipt-divider">--------------------------------</div>
-      <div class="receipt-row receipt-small" style="font-weight:bold;">Pagos</div>
+    <div class="receipt-divider">--------------------------------</div>
+    <div class="receipt-row receipt-small" style="font-weight:bold;">Detalle de pago</div>
+    <template v-if="splitPaymentsSnapshot.length > 0">
+      <template v-for="(p, idx) in splitPaymentsSnapshot" :key="p.id">
+        <div class="receipt-item receipt-small">
+          <span>#{{ idx + 1 }} · {{ p.payment_method_name }}</span>
+          <span>{{ formatCurrency(p.amount) }}</span>
+        </div>
+        <div v-if="p.change && p.change > 0" class="receipt-item receipt-small">
+          <span>Cambio (#{{ idx + 1 }})</span>
+          <span>{{ formatCurrency(p.change) }}</span>
+        </div>
+      </template>
+    </template>
+    <template v-else>
+      <div class="receipt-item receipt-small">
+        <span>{{
+          orderResult?.payment_method_name
+            ? `${getPaymentMethodLabel(orderResult.payment_method)} · ${orderResult.payment_method_name}`
+            : getPaymentMethodLabel(orderResult?.payment_method ?? '')
+        }}</span>
+        <span>{{ formatCurrency(orderResult?.charged_amount ?? orderResult?.total_amount ?? 0) }}</span>
+      </div>
       <div
-        v-for="(p, idx) in splitPayments"
-        :key="p.id"
+        v-if="receiptPrintContext?.singlePaymentChange && receiptPrintContext.singlePaymentChange > 0"
         class="receipt-item receipt-small"
       >
-        <span>#{{ idx + 1 }} · {{ p.payment_method_name }}</span>
-        <span>{{ formatCurrency(p.amount) }}</span>
+        <span>Cambio</span>
+        <span>{{ formatCurrency(receiptPrintContext.singlePaymentChange) }}</span>
       </div>
     </template>
-    <div v-else class="receipt-row">{{ getPaymentMethodLabel(orderResult?.payment_method ?? '') }}</div>
     <div class="receipt-divider">================================</div>
     <div class="receipt-footer">¡Gracias por tu compra!</div>
     <!-- DIAN invoice section on printed receipt -->
@@ -3509,7 +3645,7 @@ onUnmounted(() => {
     font-size: 9pt;
     line-height: 1.2;
     letter-spacing: 0;
-    width: 54mm;
+    width: 72mm;
     color: #000;
     background: #fff;
     padding: 2mm;
@@ -3523,17 +3659,13 @@ onUnmounted(() => {
   body.printing-prefactura #pos-receipt { display: none !important; }
   body.printing-prefactura #pos-prefactura { display: block !important; }
 
-  body.printing-prefactura #pos-prefactura {
-    width: 72mm;
-  }
-
   /* Prevent item rows from splitting across pages */
   .receipt-item {
     page-break-inside: avoid;
   }
 
   @page {
-    size: 58mm auto;
+    size: 80mm auto;
     margin: 2mm;
   }
 }
