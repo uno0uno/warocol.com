@@ -3592,7 +3592,7 @@ onUnmounted(() => {
 }
 
 /* Modifier/utility classes used by the receipt div */
-.receipt-logo { max-width: 40mm; max-height: 20mm; display: block; margin: 0 auto 4px; object-fit: contain; }
+.receipt-logo { max-width: 22mm; max-height: 11mm; display: block; margin: 0 auto 4px; object-fit: contain; filter: grayscale(100%); -webkit-filter: grayscale(100%); }
 .receipt-header { font-size: 1.1em; font-weight: bold; text-align: center; margin-bottom: 4px; }
 .receipt-row { text-align: center; margin: 2px 0; }
 .receipt-divider { letter-spacing: 0; margin: 4px 0; }
@@ -3658,6 +3658,12 @@ onUnmounted(() => {
   #pos-prefactura { display: none !important; }
   body.printing-prefactura #pos-receipt { display: none !important; }
   body.printing-prefactura #pos-prefactura { display: block !important; }
+
+  #pos-receipt .receipt-logo,
+  #pos-prefactura .receipt-logo {
+    filter: grayscale(100%) !important;
+    -webkit-filter: grayscale(100%) !important;
+  }
 
   /* Prevent item rows from splitting across pages */
   .receipt-item {
