@@ -154,9 +154,10 @@ Cuando confirmas el pago aparece una pantalla de éxito con dos opciones para en
 
 ### Imprimir prefactura (pre-cuenta)
 
-Antes de cobrar, usa **Imprimir prefactura** para que el cliente revise el consumo. No es factura electrónica (lleva el aviso *ESTA NO ES UNA FACTURA*).
+Antes de cobrar, usa **Imprimir prefactura** para que el cliente revise el consumo. No es factura electrónica (lleva el aviso *PREFACTURA — DOCUMENTO INFORMATIVO*).
 
-- Si hay **propina** seleccionada: muestra **Total orden**, **Propina** y **TOTAL A COBRAR** (orden + propina).
+- El título del documento usa la etiqueta configurada en Facturación, salvo que diga «Factura» — en ese caso la prefactura muestra **Prefactura**.
+- Si hay **propina** seleccionada: muestra **Total orden**, **Propina** y **TOTAL A COBRAR** (orden + impuestos + propina).
 - Si hay **cobro parcial** en curso: lista los pagos registrados y el **saldo pendiente** (incluye propina cuando aplica).
 
 ### Enviar recibo por correo
