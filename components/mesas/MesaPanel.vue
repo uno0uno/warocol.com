@@ -70,12 +70,33 @@
               id="mesa-name"
               v-model="form.name"
               type="text"
-              :placeholder="`Ej: ${tableSingular} 1, Barra 2, Terraza 3`"
+              :placeholder="`Ej: ${tableSingular} 1, Terraza VIP`"
               maxlength="50"
               :class="inputClass"
               @input="clearError('name')"
             />
             <p v-if="errors.name" class="text-xs text-destructive">{{ errors.name }}</p>
+          </div>
+
+          <!-- Código POS -->
+          <div v-if="!table?.is_bar" class="flex flex-col gap-1.5">
+            <label for="mesa-code" class="text-sm font-medium text-text-primary">
+              Código POS
+              <span class="text-xs font-normal text-text-tertiary ml-1">(opcional, máx. 4 — ej. 12, T1)</span>
+            </label>
+            <input
+              id="mesa-code"
+              v-model="form.code"
+              type="text"
+              maxlength="4"
+              placeholder="Si vacío, se infiere del nombre"
+              :class="inputClass"
+              @input="clearError('code')"
+            />
+            <p v-if="errors.code" class="text-xs text-destructive">{{ errors.code }}</p>
+            <p v-else class="text-[11px] text-text-tertiary leading-snug">
+              Se muestra en el plano del POS. Si no lo defines, usamos el número o iniciales del nombre.
+            </p>
           </div>
 
           <!-- Capacidad -->
@@ -198,6 +219,7 @@ const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background 
 
 const form = ref({
   name: '',
+  code: '',
   capacity: null as number | null,
   assignedMemberId: null as string | null,
 })
@@ -210,12 +232,13 @@ watch(() => props.table, (t) => {
   if (t) {
     form.value = {
       name: t.name ?? '',
+      code: t.code ?? '',
       capacity: t.capacity ?? null,
       assignedMemberId: t.assigned_member_id ?? null,
     }
     initialAssignedMemberId.value = t.assigned_member_id ?? null
   } else {
-    form.value = { name: '', capacity: null, assignedMemberId: null }
+    form.value = { name: '', code: '', capacity: null, assignedMemberId: null }
     initialAssignedMemberId.value = null
   }
   errors.value = {}
@@ -225,7 +248,7 @@ watch(() => props.table, (t) => {
 watch(() => props.modelValue, (open) => {
   if (!open) return
   if (!props.table) {
-    form.value = { name: '', capacity: null, assignedMemberId: null }
+    form.value = { name: '', code: '', capacity: null, assignedMemberId: null }
     initialAssignedMemberId.value = null
     errors.value = {}
   }
@@ -238,6 +261,10 @@ const clearError = (field: string) => {
 function validate() {
   const e: Record<string, string> = {}
   if (!form.value.name.trim()) e.name = 'El nombre es obligatorio'
+  const code = form.value.code.trim()
+  if (code && !/^[A-Za-z0-9]{1,4}$/.test(code)) {
+    e.code = 'El código debe ser 1–4 caracteres alfanuméricos'
+  }
   if (form.value.capacity !== null && form.value.capacity !== undefined && (form.value.capacity as number) < 1) {
     e.capacity = 'La capacidad debe ser mayor a 0'
   }
@@ -253,6 +280,19 @@ async function submit() {
   try {
     const body: Record<string, any> = { name: form.value.name.trim() }
     if (form.value.capacity) body.capacity = form.value.capacity
+
+    if (!props.table?.is_bar) {
+      const trimmedCode = form.value.code.trim()
+      const storedCode = (props.table?.code ?? '').trim().toUpperCase()
+      const nextCode = trimmedCode.toUpperCase()
+      if (isEdit.value) {
+        if (nextCode !== storedCode) {
+          body.code = trimmedCode ? nextCode : ''
+        }
+      } else if (trimmedCode) {
+        body.code = nextCode
+      }
+    }
 
     let result: any
     if (isEdit.value) {

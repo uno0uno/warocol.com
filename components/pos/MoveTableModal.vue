@@ -55,11 +55,7 @@ const handleClose = () => {
   emit('close')
 }
 
-// Extract display number from table name ("Mesa 3" → "3"), else first 3 chars
-const tableShortId = (name: string) => {
-  const match = name.match(/\d+/)
-  return match ? match[0] : name.slice(0, 3).toUpperCase()
-}
+const { displayTableCode } = useTableDisplayCode()
 </script>
 
 <template>
@@ -136,7 +132,7 @@ const tableShortId = (name: string) => {
             >
               <!-- Table square -->
               <div
-                class="w-10 h-10 flex items-center justify-center rounded-lg font-black text-xl tabular-nums mb-1.5"
+                class="w-10 h-10 flex items-center justify-center rounded-lg font-black text-sm tabular-nums mb-1 px-0.5"
                 :class="
                   table.status !== 'free'
                     ? 'bg-surface-secondary text-text-secondary'
@@ -145,9 +141,9 @@ const tableShortId = (name: string) => {
                       : 'bg-surface-secondary text-text-primary'
                 "
               >
-                {{ tableShortId(table.name) }}
+                {{ displayTableCode(table) }}
               </div>
-              <span class="text-[10px] font-semibold text-text-secondary text-center leading-tight truncate w-full text-center">
+              <span class="text-[10px] font-semibold text-text-secondary text-center leading-tight line-clamp-2 w-full text-center">
                 {{ table.name }}
               </span>
               <span
