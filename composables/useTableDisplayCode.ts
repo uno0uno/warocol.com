@@ -14,3 +14,7 @@ export function displayTableCode(table: { code?: string | null; name: string }):
   if (code) return code
   return inferTableCode(table.name)
 }
+
+export function useTableDisplayCode() {
+  return { displayTableCode, inferTableCode }
+}
