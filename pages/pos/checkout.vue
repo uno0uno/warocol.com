@@ -1219,17 +1219,25 @@ const paymentGridClass = computed(() => {
   return 'grid-cols-2 md:grid-cols-4'
 })
 
-const cancelOrder = async () => {
+// Issue #956 — checkout Cancelar is navigation-only; partial payments stay intact.
+const showAbandonCheckoutModal = ref(false)
+
+const goBackToPos = () => {
+  sessionStorage.setItem('posNavigation', 'true')
+  router.push('/pos')
+}
+
+const cancelOrder = () => {
   if (splitPayments.value.length > 0) {
-    if (!window.confirm('Ya hay pagos parciales registrados. ¿Seguro que quieres cancelar?')) return
+    showAbandonCheckoutModal.value = true
+    return
   }
-  if (posStore.activeTableSession?.isBar) {
-    // Bar session — clear local cart but keep session alive (it's permanent)
-    posStore.clearCart()
-    router.push('/pos')
-  } else {
-    router.push('/pos')
-  }
+  goBackToPos()
+}
+
+const confirmAbandonCheckout = () => {
+  showAbandonCheckoutModal.value = false
+  goBackToPos()
 }
 
 const closeSuccessModal = () => {
@@ -3096,6 +3104,16 @@ onUnmounted(() => {
         </div>
       </div>
     </Teleport>
+
+    <!-- Issue #956 — abandon checkout with partial payments (no void, navigation only) -->
+    <UiConfirmActionModal
+      v-model="showAbandonCheckoutModal"
+      title="¿Volver al POS?"
+      message="Ya hay pagos parciales registrados. Si sales ahora, los pagos se mantienen y podrás retomar el cobro después."
+      confirm-label="Sí, volver al POS"
+      variant="primary"
+      @confirm="confirmAbandonCheckout"
+    />
 
     <Teleport to="body">
       <div
