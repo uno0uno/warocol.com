@@ -308,6 +308,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path === '/abastecimiento/movimientos') {
+    return {
+      pageTitle: 'Movimientos',
+      pageSubtitle: undefined,
+      searchPlaceholder: 'Buscar movimientos...',
+      activePage: 'abastecimiento' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path === '/abastecimiento/ingredientes-propios') {
     return {
       pageTitle: 'Ingredientes Personalizados',
