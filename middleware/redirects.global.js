@@ -1,4 +1,18 @@
+const BLOG_SEO_REDIRECTS = {
+  '/blog/software-pos-restaurantes-colombia': '/blog/mejores-software-restaurantes-colombia',
+  '/blog/sistema-pos-colombia': '/blog/mejores-software-restaurantes-colombia',
+  '/blog/software-para-restaurante': '/blog/mejores-software-restaurantes-colombia',
+  '/blog/software-restaurantes-gratis-colombia': '/blog/software-para-restaurante-gratis',
+  '/blog/software-open-source-restaurantes': '/blog/software-para-restaurante-gratis',
+  '/blog/software-contable-restaurantes-gratis': '/blog/software-para-restaurante-gratis'
+}
+
 export default defineNuxtRouteMiddleware((to) => {
+  const blogTarget = BLOG_SEO_REDIRECTS[to.path]
+  if (blogTarget) {
+    return navigateTo(blogTarget, { redirectCode: 301 })
+  }
+
   // /inventario/* → /abastecimiento/*
   if (to.path === '/inventario' || to.path === '/inventario/stock') {
     return navigateTo('/abastecimiento/stock', { redirectCode: 301 })
