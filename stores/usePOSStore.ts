@@ -127,11 +127,12 @@ export const usePOSStore = defineStore('pos', () => {
         return `?${params.toString()}`
     }
 
-    const deleteSyncedCartLine = async (item: PosCartItem): Promise<boolean> => {
+    const deleteSyncedCartLine = async (item: PosCartItem, reason?: string): Promise<boolean> => {
         if (!cartId.value || !item.id || isSyncing.value) return false
         const qs = buildCartAuditQuery()
         await $fetch(`/api/pos/cart/${cartId.value}/items/${item.id}${qs}`, {
             method: 'DELETE',
+            body: { reason: reason?.trim() || null },
         })
         return true
     }
@@ -165,20 +166,15 @@ export const usePOSStore = defineStore('pos', () => {
         invalidateSyncedCart()
     }
 
-    const removeFromCart = async (index: number) => {
+    const removeFromCart = async (index: number, reason?: string) => {
         isDeleting.value = true
         try {
             if (index < 0 || index >= cart.value.length) return
             const item = cart.value[index]
             const isSynced = Boolean(cartId.value && item.id && !isSyncing.value)
             if (isSynced) {
-                try {
-                    await deleteSyncedCartLine(item)
-                    cart.value.splice(index, 1)
-                } catch {
-                    cart.value.splice(index, 1)
-                    invalidateSyncedCart()
-                }
+                await deleteSyncedCartLine(item, reason)
+                cart.value.splice(index, 1)
             } else {
                 cart.value.splice(index, 1)
                 invalidateSyncedCart()
@@ -227,17 +223,21 @@ export const usePOSStore = defineStore('pos', () => {
 
     // ── Backend cart operations ────────────────────────────────────────────────
 
-    const clearCart = async () => {
+    const clearCart = async (reason?: string) => {
         const oldCartId = cartId.value
+        const previousCart = [...cart.value]
         cart.value = []
         cartId.value = null
         if (oldCartId && !isSyncing.value) {
             try {
                 await $fetch(`/api/pos/cart/${oldCartId}${buildCartAuditQuery()}`, {
                     method: 'DELETE',
+                    body: { reason: reason?.trim() || null },
                 })
             } catch {
-                // Non-critical — local state already cleared
+                cart.value = previousCart
+                cartId.value = oldCartId
+                throw new Error('Error al limpiar el carrito')
             }
         }
     }
