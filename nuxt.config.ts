@@ -3,6 +3,25 @@ export default defineNuxtConfig({
   routeRules: {
     // Blog — prerender estático en build time para SEO óptimo
     '/blog': { prerender: true },
+    // SEO: consolidate cannibalized blog slugs (warocol.com#953)
+    '/blog/software-pos-restaurantes-colombia': {
+      redirect: { to: '/blog/mejores-software-restaurantes-colombia', statusCode: 301 }
+    },
+    '/blog/sistema-pos-colombia': {
+      redirect: { to: '/blog/mejores-software-restaurantes-colombia', statusCode: 301 }
+    },
+    '/blog/software-para-restaurante': {
+      redirect: { to: '/blog/mejores-software-restaurantes-colombia', statusCode: 301 }
+    },
+    '/blog/software-restaurantes-gratis-colombia': {
+      redirect: { to: '/blog/software-para-restaurante-gratis', statusCode: 301 }
+    },
+    '/blog/software-open-source-restaurantes': {
+      redirect: { to: '/blog/software-para-restaurante-gratis', statusCode: 301 }
+    },
+    '/blog/software-contable-restaurantes-gratis': {
+      redirect: { to: '/blog/software-para-restaurante-gratis', statusCode: 301 }
+    },
     '/blog/**': { prerender: true },
     // Homepage pública
     '/': { prerender: true },
