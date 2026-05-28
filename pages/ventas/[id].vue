@@ -181,6 +181,9 @@ const orderChargedTotal = computed(() => {
 
 const items = computed(() => itemsData.value || [])
 
+const modifierLineTotal = (mod: { price: number; quantity?: number }) =>
+  Number(mod.price) * (Number(mod.quantity) || 1)
+
 // Filtered items (excluding deleted ones in edit mode)
 const visibleItems = computed(() => {
   if (!isEditMode.value) return items.value
@@ -197,7 +200,7 @@ const adjustedTotal = computed(() => {
     const deletedMods = modifiersToDelete.value.get(item.id) || new Set()
     for (const mod of (item.modifiers || [])) {
       if (!deletedMods.has(mod.id)) {
-        itemTotal += Number(mod.price) * Number(item.quantity)
+        itemTotal += modifierLineTotal(mod)
       }
     }
     total += itemTotal
@@ -1064,13 +1067,13 @@ onUnmounted(() => {
                       </div>
                     </td>
                     <td class="px-6 py-2 text-center">
-                      <span class="text-xs text-text-tertiary">x{{ item.quantity }}</span>
+                      <span class="text-xs text-text-tertiary">x{{ modifier.quantity ?? 1 }}</span>
                     </td>
                     <td class="px-6 py-2 text-right">
                       <span class="text-xs text-text-secondary">{{ formatCurrency(modifier.price) }}</span>
                     </td>
                     <td class="px-6 py-2 text-right">
-                      <span class="text-xs text-primary/70">{{ formatCurrency(modifier.price * item.quantity) }}</span>
+                      <span class="text-xs text-primary/70">{{ formatCurrency(modifierLineTotal(modifier)) }}</span>
                     </td>
                   </tr>
                 </template>
