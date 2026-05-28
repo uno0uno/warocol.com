@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { usePOSStore } from '~/stores/usePOSStore'
+import type { CartModifier } from '~/stores/online_cart'
 import {
   ShoppingCartIcon,
   CheckIcon
@@ -62,7 +63,7 @@ const product = computed(() => {
 })
 
 // State
-const selectedModifiers = ref<Array<{ id: string; name: string; price: number }>>([])
+const selectedModifiers = ref<CartModifier[]>([])
 const notes = ref('')
 const isAdding = ref(false)
 
@@ -79,6 +80,7 @@ interface ModifierOption {
   id: string
   name: string
   price: number
+  max_limit: number
   icon?: string
 }
 
@@ -337,6 +339,7 @@ const modifierGroups = computed<ModifierGroup[]>(() => {
             id: mod.id,
             name: mod.name,
             price: Number(mod.price) || 0,
+            max_limit: Number(mod.max_limit) || 1,
             icon: getModifierIcon(mod.name)
           }))
           .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
@@ -347,49 +350,87 @@ const modifierGroups = computed<ModifierGroup[]>(() => {
   }
 })
 
+const modifierLineTotal = (mod: CartModifier) => Number(mod.price) * (mod.quantity ?? 1)
+
 // Computed
 const totalPrice = computed(() => {
   if (!product.value) return 0
   const basePrice = Number(product.value.price) || 0
-  const modifiersPrice = selectedModifiers.value.reduce((sum, mod) => sum + Number(mod.price), 0)
+  const modifiersPrice = selectedModifiers.value.reduce((sum, mod) => sum + modifierLineTotal(mod), 0)
   return basePrice + modifiersPrice // Always 1 item
 })
 
 // Methods
-const toggleModifier = (modifier: { id: string; name: string; price: number }, groupId: string) => {
+const getModifierQty = (modifierId: string) =>
+  selectedModifiers.value.find(m => m.id === modifierId)?.quantity ?? 0
+
+const isSingleSelectGroup = (group: ModifierGroup) => group.maxSelections === 1
+
+const selectRadioModifier = (modifier: ModifierOption, groupId: string) => {
   const group = modifierGroups.value.find(g => g.id === groupId)
   if (!group) return
 
-  const index = selectedModifiers.value.findIndex(m => m.id === modifier.id)
+  selectedModifiers.value = selectedModifiers.value.filter(m =>
+    !group.options.some(opt => opt.id === m.id)
+  )
+  selectedModifiers.value.push({ id: modifier.id, name: modifier.name, price: modifier.price, quantity: 1 })
+}
 
-  if (index !== -1) {
-    // Remove modifier
-    selectedModifiers.value.splice(index, 1)
-  } else {
-    // Check max selections for group
-    const groupModifiers = selectedModifiers.value.filter(m =>
-      group.options.some(opt => opt.id === m.id)
-    )
+const canIncrementModifier = (option: ModifierOption, groupId: string) => {
+  const group = modifierGroups.value.find(g => g.id === groupId)
+  if (!group) return false
 
-    if (groupModifiers.length >= group.maxSelections) {
-      // Remove oldest modifier from this group
-      const oldestInGroup = selectedModifiers.value.find(m =>
-        group.options.some(opt => opt.id === m.id)
-      )
-      if (oldestInGroup) {
-        const oldIndex = selectedModifiers.value.indexOf(oldestInGroup)
-        selectedModifiers.value.splice(oldIndex, 1)
-      }
-    }
+  const index = selectedModifiers.value.findIndex(m => m.id === option.id)
+  const currentQty = index === -1 ? 0 : (selectedModifiers.value[index].quantity ?? 1)
+  if (currentQty >= option.max_limit) return false
 
-    // Add new modifier
-    selectedModifiers.value.push(modifier)
+  if (index === -1) {
+    const distinctInGroup = selectedModifiers.value.filter(m =>
+      group.options.some(opt => opt.id === m.id) && (m.quantity ?? 0) > 0
+    ).length
+    if (distinctInGroup >= group.maxSelections) return false
+  }
+
+  return true
+}
+
+const incrementModifier = (option: ModifierOption, groupId: string) => {
+  if (!canIncrementModifier(option, groupId)) return
+
+  const index = selectedModifiers.value.findIndex(m => m.id === option.id)
+  if (index === -1) {
+    selectedModifiers.value.push({
+      id: option.id,
+      name: option.name,
+      price: option.price,
+      quantity: 1,
+    })
+    return
+  }
+
+  const currentQty = selectedModifiers.value[index].quantity ?? 1
+  selectedModifiers.value[index] = {
+    ...selectedModifiers.value[index],
+    quantity: currentQty + 1,
   }
 }
 
-const isModifierSelected = (modifierId: string) => {
-  return selectedModifiers.value.some(m => m.id === modifierId)
+const decrementModifier = (option: ModifierOption, groupId: string) => {
+  const index = selectedModifiers.value.findIndex(m => m.id === option.id)
+  if (index === -1) return
+
+  const currentQty = selectedModifiers.value[index].quantity ?? 1
+  if (currentQty <= 1) {
+    selectedModifiers.value.splice(index, 1)
+  } else {
+    selectedModifiers.value[index] = {
+      ...selectedModifiers.value[index],
+      quantity: currentQty - 1,
+    }
+  }
 }
+
+const isModifierSelected = (modifierId: string) => getModifierQty(modifierId) > 0
 
 const addToCart = async () => {
   if (!product.value || isAdding.value) return
@@ -453,7 +494,10 @@ watch(product, (newProduct) => {
     const cartItem = posStore.getCartItem(editCartIndex.value)
     if (cartItem) {
       // Don't load quantity - always work with quantity 1
-      selectedModifiers.value = [...cartItem.modifiers]
+      selectedModifiers.value = cartItem.modifiers.map(m => ({
+        ...m,
+        quantity: m.quantity ?? 1,
+      }))
       notes.value = cartItem.notes || ''
     }
   }
@@ -535,8 +579,8 @@ onUnmounted(() => {
             </span>
           </div>
 
-          <!-- Size Options (Radio style) -->
-          <div v-if="group.name === 'Tamaño'" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <!-- Single-select groups (radio style) -->
+          <div v-if="isSingleSelectGroup(group)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <label
               v-for="option in group.options"
               :key="option.id"
@@ -547,7 +591,7 @@ onUnmounted(() => {
                 :name="'group-' + group.id"
                 class="sr-only"
                 :checked="isModifierSelected(option.id)"
-                @change="toggleModifier(option, group.id)"
+                @change="selectRadioModifier(option, group.id)"
               />
               <div
                 class="border-2 rounded-xl p-3 md:p-4 transition-all duration-200 bg-surface h-full flex flex-col justify-between"
@@ -585,49 +629,49 @@ onUnmounted(() => {
             </label>
           </div>
 
-          <!-- Extras Options (Checkbox style) -->
+          <!-- Multi-select adiciones (stepper style) -->
           <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            <label
+            <div
               v-for="option in group.options"
               :key="option.id"
-              class="cursor-pointer relative"
+              class="border rounded-xl p-2 md:p-3 flex items-center justify-between gap-2 transition-all bg-surface"
+              :class="getModifierQty(option.id) > 0
+                ? 'border-primary bg-primary/5'
+                : 'border-border'"
             >
-              <input
-                type="checkbox"
-                class="sr-only"
-                :checked="isModifierSelected(option.id)"
-                @change="toggleModifier(option, group.id)"
-              />
-              <div
-                class="border rounded-xl p-2 md:p-3 flex items-center justify-between transition-all bg-surface"
-                :class="isModifierSelected(option.id)
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:bg-surface-secondary'"
-              >
-                <div class="flex items-center gap-2 md:gap-3">
-                  <div class="bg-surface-secondary p-1.5 md:p-2 rounded-lg text-text-secondary">
-                    <svg class="h-4 md:h-5 w-4 md:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div class="font-medium text-text-primary text-xs md:text-sm">{{ option.name }}</div>
-                    <div class="text-xs text-primary font-semibold">+ {{ formatCurrency(option.price) }}</div>
-                  </div>
+              <div class="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                <div class="bg-surface-secondary p-1.5 md:p-2 rounded-lg text-text-secondary flex-shrink-0">
+                  <svg class="h-4 md:h-5 w-4 md:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
                 </div>
-                <div
-                  class="w-4 md:w-5 h-4 md:h-5 rounded border flex items-center justify-center transition-all flex-shrink-0"
-                  :class="isModifierSelected(option.id)
-                    ? 'border-primary bg-primary'
-                    : 'border-border bg-surface'"
-                >
-                  <CheckIcon
-                    v-if="isModifierSelected(option.id)"
-                    class="h-2.5 md:h-3 w-2.5 md:w-3 text-primary-foreground"
-                  />
+                <div class="min-w-0">
+                  <div class="font-medium text-text-primary text-xs md:text-sm truncate">{{ option.name }}</div>
+                  <div class="text-xs text-primary font-semibold">+ {{ formatCurrency(option.price) }}</div>
                 </div>
               </div>
-            </label>
+              <div class="flex items-center border border-border rounded-lg bg-surface flex-shrink-0">
+                <button
+                  type="button"
+                  class="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-secondary hover:bg-surface-secondary rounded-l-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                  :disabled="getModifierQty(option.id) <= 0"
+                  :aria-label="`Reducir ${option.name}`"
+                  @click="decrementModifier(option, group.id)"
+                >
+                  −
+                </button>
+                <span class="w-6 text-center text-xs font-medium text-text-primary tabular-nums">{{ getModifierQty(option.id) }}</span>
+                <button
+                  type="button"
+                  class="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-secondary hover:bg-surface-secondary rounded-r-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                  :disabled="!canIncrementModifier(option, group.id)"
+                  :aria-label="`Aumentar ${option.name}`"
+                  @click="incrementModifier(option, group.id)"
+                >
+                  +
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -657,8 +701,8 @@ onUnmounted(() => {
 
             <!-- Selected Modifiers -->
             <div v-for="modifier in selectedModifiers" :key="modifier.id" class="flex justify-between text-xs md:text-sm text-text-secondary">
-              <span>+ {{ modifier.name }}</span>
-              <span>{{ formatCurrency(modifier.price) }}</span>
+              <span>+ {{ modifier.name }}<template v-if="(modifier.quantity ?? 1) > 1"> ×{{ modifier.quantity }}</template></span>
+              <span>{{ formatCurrency(modifierLineTotal(modifier)) }}</span>
             </div>
           </div>
 
@@ -706,8 +750,8 @@ onUnmounted(() => {
 
           <!-- Selected Modifiers -->
           <div v-for="modifier in selectedModifiers" :key="modifier.id" class="flex justify-between text-xs md:text-sm text-text-secondary">
-            <span>+ {{ modifier.name }}</span>
-            <span>{{ formatCurrency(modifier.price) }}</span>
+            <span>+ {{ modifier.name }}<template v-if="(modifier.quantity ?? 1) > 1"> ×{{ modifier.quantity }}</template></span>
+            <span>{{ formatCurrency(modifierLineTotal(modifier)) }}</span>
           </div>
         </div>
 

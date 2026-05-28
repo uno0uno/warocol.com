@@ -19,13 +19,18 @@ let _recoveryPromise: Promise<void> | null = null
 // JSON.stringify is order-sensitive; sorting by id first ensures
 // [A, B] and [B, A] produce the same key and deduplicate correctly.
 function modifiersKey(mods: CartModifier[]): string {
-  return JSON.stringify([...mods].sort((a, b) => a.id.localeCompare(b.id)))
+  return JSON.stringify(
+    [...mods]
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map(m => ({ id: m.id, q: m.quantity ?? 1 }))
+  )
 }
 
 export interface CartModifier {
   id: string
   name: string
   price: number
+  quantity?: number
 }
 
 export interface OnlineCartItem {

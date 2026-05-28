@@ -412,6 +412,7 @@ function mapTabItemsFromApi(rows: any[]): TabItem[] {
       id: m.id ?? '',
       name: m.name,
       price: Number(m.price) || 0,
+      quantity: Number(m.quantity) || 1,
     })),
     notes: i.notes ?? null,
     fulfillmentStatus: i.fulfillmentStatus ?? 'new',
@@ -893,7 +894,10 @@ const formatCurrency = (value: number) => {
 
 const getItemTotal = (item: any) => {
   const basePrice = Number(item.product.price) || 0
-  const modifiersPrice = item.modifiers.reduce((sum: number, mod: any) => sum + (Number(mod.price) || 0), 0)
+  const modifiersPrice = item.modifiers.reduce(
+    (sum: number, mod: any) => sum + (Number(mod.price) || 0) * (Number(mod.quantity) || 1),
+    0
+  )
   return (basePrice + modifiersPrice) * (Number(item.quantity) || 1)
 }
 
@@ -1861,7 +1865,7 @@ onUnmounted(() => {
                 <!-- Modifiers -->
                 <div v-if="item.modifiers && item.modifiers.length > 0" class="mt-0.5 space-y-0">
                   <p v-for="mod in item.modifiers" :key="mod.id" class="text-text-tertiary text-xs">
-                    + {{ mod.name }} · {{ formatCurrency(mod.price) }}
+                    + {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity ?? 1 }}</template> · {{ formatCurrency((Number(mod.price) || 0) * (Number(mod.quantity) || 1)) }}
                   </p>
                 </div>
 

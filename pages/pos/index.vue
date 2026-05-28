@@ -389,6 +389,7 @@ const mapTabItemsFromApi = (rows: any[]): TabItem[] =>
       id: m.id ?? '',
       name: m.name,
       price: Number(m.price) || 0,
+      quantity: Number(m.quantity) || 1,
     })),
     notes: i.notes ?? null,
     fulfillmentStatus: i.fulfillmentStatus ?? 'new',
@@ -743,7 +744,12 @@ const addToTab = async () => {
       product_id: item.product.id,
       quantity: item.quantity,
       unit_price: Number(item.product.price),
-      modifiers: item.modifiers.map((m) => ({ id: m.id, name: m.name, price: m.price })),
+      modifiers: item.modifiers.map((m) => ({
+        id: m.id,
+        name: m.name,
+        price: m.price,
+        quantity: m.quantity ?? 1,
+      })),
       notes: item.notes ?? null,
     }))
     const addRes = await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/add`, {
