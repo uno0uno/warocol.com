@@ -67,7 +67,15 @@ El panel de detalle muestra: tipo de cierre (día completo o por horario), fecha
 
 ### Arqueo día completo
 
-Haz clic en **Día completo** (sección **Nuevo arqueo**). El proceso tiene 5 pasos.
+Haz clic en **Día completo** (sección **Nuevo arqueo**). Primero debes **abrir turno** y declarar el **fondo de caja** (efectivo inicial para cambio) del día; luego podrás registrar el cierre. El proceso de cierre tiene 5 pasos.
+
+**Antes del cierre — Abrir turno**
+
+1. En la tarjeta **Día completo**, el sistema te lleva a **Abrir turno**.
+2. Elige el **día** y cuenta el efectivo que hay en el cajón al iniciar (fondo para cambio).
+3. Al confirmar, podrás ir al cierre del mismo día.
+
+Si intentas cerrar sin haber abierto turno, verás un aviso y el botón para continuar estará deshabilitado hasta que declares el fondo.
 
 **Paso 1 — Período**
 
@@ -79,6 +87,7 @@ Una vez seleccionado, el sistema muestra automáticamente el resumen del períod
 |------|-------------|
 | Total ventas | Suma de órdenes completadas |
 | Efectivo recibido | Ventas pagadas en efectivo |
+| Fondo inicial | Efectivo declarado al abrir turno (si aplica) |
 | Gastos en efectivo | Gastos registrados ese día |
 | Efectivo esperado | Efectivo recibido menos gastos |
 | Métodos de pago | Desglose por grupo (tarjeta, digital, etc.) |

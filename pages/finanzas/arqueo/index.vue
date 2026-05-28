@@ -101,7 +101,7 @@
         <h2 class="text-sm font-semibold text-text-primary mb-2">Nuevo arqueo</h2>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <NuxtLink
-            :to="`/finanzas/arqueo/nuevo?start=${today}&end=${today}`"
+            :to="`/finanzas/arqueo/apertura?mode=day&start=${today}&end=${today}`"
             class="flex items-start gap-3 p-4 rounded-lg border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors min-h-[44px]"
           >
             <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center text-primary" aria-hidden="true">

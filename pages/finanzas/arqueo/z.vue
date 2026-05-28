@@ -1029,9 +1029,11 @@ const formatDateRange = (dates: Date[]) => {
 }
 
 // Time inputs
-const enableTimePicker = ref(!!(route.query.startTime))
-const startTimeInput   = ref<string>('')
-const endTimeInput     = ref<string>('')
+const initStartTimeQ = (route.query.startTime as string) || ''
+const initEndTimeQ = (route.query.endTime as string) || ''
+const enableTimePicker = ref(!!initStartTimeQ || !!(route.query.startTime))
+const startTimeInput   = ref<string>(initStartTimeQ)
+const endTimeInput     = ref<string>(initEndTimeQ)
 const timeError        = ref<string | null>(null)
 
 const timeOptions = Array.from({ length: 48 }, (_, i) => {
@@ -1234,10 +1236,18 @@ const { data: rawShiftStatus } = useQuery({
 const shiftOpenForWindow = computed(() => isShiftOpen(rawShiftStatus.value?.data))
 
 const aperturaLink = computed(() => {
-  const q = new URLSearchParams({ start: periodStart.value })
-  if (arqueoWindowMode.value === 'template' && selectedTemplateId.value) {
-    q.set('template', selectedTemplateId.value)
+  if (arqueoWindowMode.value === 'template') {
+    const q = new URLSearchParams({ start: periodStart.value })
+    if (selectedTemplateId.value) q.set('template', selectedTemplateId.value)
+    return `/finanzas/arqueo/apertura?${q.toString()}`
   }
+  const q = new URLSearchParams({
+    mode: 'custom',
+    start: periodStart.value,
+    end: periodEnd.value,
+  })
+  if (enableTimePicker.value && startTimeInput.value) q.set('startTime', startTimeInput.value)
+  if (enableTimePicker.value && endTimeInput.value) q.set('endTime', endTimeInput.value)
   return `/finanzas/arqueo/apertura?${q.toString()}`
 })
 

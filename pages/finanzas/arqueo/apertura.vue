@@ -24,7 +24,7 @@
           :to="closeLink"
           class="min-h-[44px] px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center"
         >
-          Ir al cierre Z
+          {{ closeLinkLabel }}
         </NuxtLink>
         <NuxtLink
           to="/finanzas/arqueo"
@@ -44,7 +44,7 @@
       </div>
 
       <div v-if="currentStep === 1" class="bg-surface border-2 border-border rounded-lg p-3 sm:p-4 flex flex-col gap-4">
-        <div>
+        <div v-if="aperturaMode === 'template'">
           <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Turno</label>
           <select
             v-model="selectedTemplateId"
@@ -57,7 +57,7 @@
           </select>
         </div>
 
-        <div>
+        <div v-if="aperturaMode === 'day'">
           <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Día</label>
           <VueDatePicker
             v-model="anchorDate"
@@ -74,9 +74,33 @@
           />
         </div>
 
-        <p v-if="templateHoursLabel" class="text-sm font-mono text-text-secondary">
-          Ventana: {{ formatTemplateDateOnly() }} · {{ templateHoursLabel }}
-        </p>
+        <div v-else-if="aperturaMode === 'custom'" class="rounded-lg border border-border bg-background px-3 py-2.5">
+          <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Ventana personalizada</p>
+          <p class="text-sm font-mono text-text-primary mt-1">{{ customWindowLabel }}</p>
+        </div>
+
+        <template v-if="aperturaMode === 'template'">
+          <div>
+            <label class="text-xs font-medium text-text-secondary uppercase tracking-wide">Día</label>
+            <VueDatePicker
+              v-model="anchorDate"
+              :teleport="true"
+              :enable-time-picker="false"
+              :formats="dateOnlyFormats"
+              :locale="es"
+              auto-apply
+              :max-date="new Date()"
+              :clearable="false"
+              menu-class-name="dp-custom-menu"
+              calendar-cell-class-name="dp-custom-cell"
+              class="mt-1.5"
+            />
+          </div>
+
+          <p v-if="templateHoursLabel" class="text-sm font-mono text-text-secondary">
+            Ventana: {{ formatTemplateDateOnly() }} · {{ templateHoursLabel }}
+          </p>
+        </template>
 
         <div
           v-if="isShiftOpen(existingShift)"
@@ -98,7 +122,7 @@
           <button
             type="button"
             class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-            :disabled="!selectedTemplateId || isShiftOpen(existingShift)"
+            :disabled="!canProceedToCount"
             @click="goToCount"
           >
             Contar efectivo →
@@ -196,10 +220,12 @@ import { format as fnsFormat } from 'date-fns'
 import { useFormatters } from '~/composables/useFormatters'
 import { useCashDenominationCount } from '~/composables/useCashDenominationCount'
 import { buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
-import { bogotaDateAtNoon, bogotaISOFromDate, todayBogotaISO } from '~/utils/bogotaDate'
+import { bogotaDateAtNoon, bogotaISOFromDate, combineBogotaDateAndTimeISO, todayBogotaISO } from '~/utils/bogotaDate'
 
 definePageMeta({ layout: 'dashboard', module: 'finanzas' })
 useHead({ title: 'Abrir turno — Arqueo - Warocol' })
+
+type AperturaMode = 'template' | 'day' | 'custom'
 
 interface ShiftTemplateOption {
   id: string
@@ -214,7 +240,17 @@ const { formatCurrency } = useFormatters()
 
 const today = todayBogotaISO()
 const initStart = (route.query.start as string) || today
+const initEnd = (route.query.end as string) || initStart
 const initTemplate = (route.query.template as string) || ''
+const initStartTime = (route.query.startTime as string) || ''
+const initEndTime = (route.query.endTime as string) || ''
+
+const aperturaMode = computed<AperturaMode>(() => {
+  const mode = route.query.mode as string | undefined
+  if (mode === 'day') return 'day'
+  if (mode === 'custom') return 'custom'
+  return 'template'
+})
 
 const currentStep = ref(1)
 const selectedTemplateId = ref(initTemplate)
@@ -232,13 +268,28 @@ const {
   sanitizeInt, sanitizeIntStr, totalCounted, toBreakdown, focusNext, setFromAmount,
 } = useCashDenominationCount()
 
-const periodStart = computed(() => bogotaISOFromDate(anchorDate.value))
-const periodEnd = computed(() => periodStart.value)
+const periodStart = computed(() => {
+  if (aperturaMode.value === 'custom') return initStart
+  return bogotaISOFromDate(anchorDate.value)
+})
+const periodEnd = computed(() => {
+  if (aperturaMode.value === 'custom') return initEnd
+  return periodStart.value
+})
 
-const { data: rawShiftTemplates, status: templatesStatus } = useQuery({
+const periodStartTime = computed(() => {
+  if (aperturaMode.value !== 'custom' || !initStartTime) return null
+  return combineBogotaDateAndTimeISO(periodStart.value, initStartTime)
+})
+const periodEndTime = computed(() => {
+  if (aperturaMode.value !== 'custom' || !initEndTime) return null
+  return combineBogotaDateAndTimeISO(periodEnd.value, initEndTime)
+})
+
+const { data: rawShiftTemplates } = useQuery({
   key: () => ['cierre', 'shift-templates', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: ShiftTemplateOption[] }>('/api/cierre/shift-templates'),
-  enabled: () => !!currentTenant.value,
+  enabled: () => !!currentTenant.value && aperturaMode.value === 'template',
   staleTime: 120_000,
 })
 const shiftTemplates = computed(() => rawShiftTemplates.value?.data ?? [])
@@ -249,7 +300,7 @@ const { data: rawTemplateWindow } = useQuery({
     '/api/cierre/shift-window',
     { params: { shift_template_id: selectedTemplateId.value, date: periodStart.value } },
   ),
-  enabled: () => !!currentTenant.value && !!selectedTemplateId.value,
+  enabled: () => !!currentTenant.value && aperturaMode.value === 'template' && !!selectedTemplateId.value,
   staleTime: 30_000,
 })
 
@@ -257,16 +308,22 @@ const windowParams = computed(() =>
   buildCierreWindowParams({
     periodStart: periodStart.value,
     periodEnd: periodEnd.value,
-    shiftTemplateId: selectedTemplateId.value || null,
+    shiftTemplateId: aperturaMode.value === 'template' ? (selectedTemplateId.value || null) : null,
+    periodStartTime: periodStartTime.value,
+    periodEndTime: periodEndTime.value,
   }),
 )
 
 const { data: rawShiftStatus, refetch: refetchShiftStatus } = useQuery({
-  key: () => ['cierre', 'shift-status', currentTenant.value?.id, selectedTemplateId.value, periodStart.value],
+  key: () => ['cierre', 'shift-status', currentTenant.value?.id, aperturaMode.value, JSON.stringify(windowParams.value)],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/shift-status', {
     params: windowParams.value,
   }),
-  enabled: () => !!currentTenant.value && !!selectedTemplateId.value,
+  enabled: () => {
+    if (!currentTenant.value) return false
+    if (aperturaMode.value === 'template') return !!selectedTemplateId.value
+    return true
+  },
   staleTime: 0,
 })
 
@@ -290,16 +347,44 @@ const templateHoursLabel = computed(() => {
   return `${fnsFormat(new Date(w.periodStartTime), 'HH:mm')} – ${fnsFormat(new Date(w.periodEndTime), 'HH:mm')}`
 })
 
+const customWindowLabel = computed(() => {
+  const fmt = (iso: string) => fnsFormat(bogotaDateAtNoon(iso), 'dd/MM/yyyy', { locale: es })
+  const datePart = periodStart.value === periodEnd.value
+    ? fmt(periodStart.value)
+    : `${fmt(periodStart.value)} – ${fmt(periodEnd.value)}`
+  if (initStartTime && initEndTime) return `${datePart} · ${initStartTime} – ${initEndTime}`
+  return datePart
+})
+
 const closeLink = computed(() => {
+  if (aperturaMode.value === 'day') {
+    return `/finanzas/arqueo/nuevo?start=${periodStart.value}&end=${periodEnd.value}`
+  }
+  if (aperturaMode.value === 'custom') {
+    const q = new URLSearchParams({ mode: 'custom', start: periodStart.value, end: periodEnd.value })
+    if (initStartTime) q.set('startTime', initStartTime)
+    if (initEndTime) q.set('endTime', initEndTime)
+    return `/finanzas/arqueo/z?${q.toString()}`
+  }
   if (!selectedTemplateId.value) return null
   return `/finanzas/arqueo/z?mode=template&start=${periodStart.value}&end=${periodEnd.value}&template=${selectedTemplateId.value}`
+})
+
+const closeLinkLabel = computed(() =>
+  aperturaMode.value === 'day' ? 'Ir al cierre del día' : 'Ir al cierre Z',
+)
+
+const canProceedToCount = computed(() => {
+  if (isShiftOpen(existingShift.value)) return false
+  if (aperturaMode.value === 'template') return !!selectedTemplateId.value
+  return true
 })
 
 watch(selectedTemplateId, () => { stepError.value = null })
 
 const goToCount = () => {
   stepError.value = null
-  if (!selectedTemplateId.value) {
+  if (aperturaMode.value === 'template' && !selectedTemplateId.value) {
     stepError.value = 'Selecciona un turno'
     return
   }
@@ -322,16 +407,20 @@ const submitOpening = async () => {
   isSubmitting.value = true
   try {
     const breakdown = toBreakdown()
-    await $fetch('/api/cierre/open-shift', {
-      method: 'POST',
-      body: {
-        periodStart: periodStart.value,
-        periodEnd: periodEnd.value,
-        shiftTemplateId: selectedTemplateId.value,
-        openingCash: totalCounted.value,
-        openingBreakdown: Object.keys(breakdown).length ? breakdown : undefined,
-      },
-    })
+    const body: Record<string, unknown> = {
+      periodStart: periodStart.value,
+      periodEnd: periodEnd.value,
+      openingCash: totalCounted.value,
+      openingBreakdown: Object.keys(breakdown).length ? breakdown : undefined,
+    }
+    if (aperturaMode.value === 'template' && selectedTemplateId.value) {
+      body.shiftTemplateId = selectedTemplateId.value
+    }
+    if (aperturaMode.value === 'custom') {
+      if (periodStartTime.value) body.periodStartTime = periodStartTime.value
+      if (periodEndTime.value) body.periodEndTime = periodEndTime.value
+    }
+    await $fetch('/api/cierre/open-shift', { method: 'POST', body })
     successOpeningCash.value = totalCounted.value
     openSuccess.value = true
     await refetchShiftStatus()

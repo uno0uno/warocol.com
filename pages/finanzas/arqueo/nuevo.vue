@@ -213,6 +213,7 @@
             <div class="bg-surface border-2 border-border rounded-lg">
               <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Estado de caja</h3></div>
               <div class="divide-y divide-border">
+                <div v-if="(xPreviewData.openingCash ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Fondo inicial</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.openingCash) }}</span></div>
                 <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Efectivo recibido</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
                 <div v-if="(xPreviewData.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Propinas en efectivo</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.cashTips) }}</span></div>
                 <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Gastos en efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
@@ -253,8 +254,19 @@
               </div>
             </div>
           </div>
-          <div v-else class="flex gap-3">
-            <button @click="currentStep = 2" class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+          <div
+            v-if="!shiftOpenForWindow"
+            class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 mb-3"
+          >
+            Debes abrir el turno y declarar el fondo de caja antes de cerrar.
+            <NuxtLink :to="aperturaLink" class="font-semibold underline ml-1">Abrir turno</NuxtLink>
+          </div>
+          <div v-if="xPreviewData.openTablesCount === 0" class="flex gap-3">
+            <button
+              @click="currentStep = 2"
+              class="min-h-[44px] px-6 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+              :disabled="!shiftOpenForWindow"
+            >
               Siguiente →
             </button>
           </div>
@@ -530,6 +542,10 @@
               <span class="text-xs font-semibold uppercase tracking-wide text-text-secondary">Efectivo</span>
             </div>
             <div class="divide-y divide-border">
+              <div v-if="(previewData?.openingCash ?? 0) > 0" class="flex justify-between px-3 py-2 text-xs">
+                <span class="text-text-secondary">Fondo inicial</span>
+                <span class="font-medium text-text-primary">+ {{ formatCurrency(previewData?.openingCash) }}</span>
+              </div>
               <div class="flex justify-between px-3 py-2 text-xs">
                 <span class="text-text-secondary">Recibido</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(previewData?.totalCash) }}</span>
@@ -705,7 +721,7 @@
           </button>
           <button
             @click="handleConfirmButton"
-            :disabled="isSubmitting"
+            :disabled="isSubmitting || !shiftOpenForWindow"
             class="min-h-[44px] px-6 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             :class="confirmArmed
               ? 'bg-destructive text-white hover:bg-destructive/90 ring-2 ring-destructive/30'
@@ -738,6 +754,7 @@ import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useQueryCache } from '@pinia/colada'
+import { buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
 import {
   addDaysBogotaISO,
   bogotaDateAtNoon,
@@ -822,6 +839,24 @@ const formatSingleDate = (date: Date) =>
 // Period — siempre un solo día
 const periodStart = computed(() => bogotaISOFromDate(selectedDate.value))
 const periodEnd   = computed(() => periodStart.value)
+
+const shiftWindowParams = computed(() =>
+  buildCierreWindowParams({ periodStart: periodStart.value, periodEnd: periodEnd.value }),
+)
+
+const { data: rawShiftStatus } = useQuery({
+  key: () => ['cierre', 'shift-status', currentTenant.value?.id, periodStart.value],
+  query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/shift-status', {
+    params: shiftWindowParams.value,
+  }),
+  enabled: () => !!currentTenant.value,
+  staleTime: 0,
+})
+
+const shiftOpenForWindow = computed(() => isShiftOpen(rawShiftStatus.value?.data))
+const aperturaLink = computed(() =>
+  `/finanzas/arqueo/apertura?mode=day&start=${periodStart.value}&end=${periodEnd.value}`,
+)
 
 // Step 0 preview — aligned with the same completed-order semantics used by the close.
 const { data: rawXPreview, status: xPreviewStatus, error: xPreviewError, refetch: refetchXPreview } = useQuery({
@@ -973,6 +1008,7 @@ let armTimeout: ReturnType<typeof setTimeout> | null = null
 
 const handleConfirmButton = async () => {
   if (isSubmitting.value) return
+  if (!shiftOpenForWindow.value) return
   if (!confirmArmed.value) {
     armTimeout = setTimeout(() => { confirmArmed.value = true }, 500)
     return
