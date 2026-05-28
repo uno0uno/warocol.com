@@ -43,16 +43,7 @@
         @clear="clearFilters"
       >
         <template #additional-filters>
-          <select
-            v-model="ingredientFilter"
-            :class="filterSelectClass"
-            aria-label="Filtrar por ingrediente"
-          >
-            <option value="">Ingrediente</option>
-            <option v-for="ingredient in ingredients" :key="ingredient.id" :value="ingredient.id">
-              {{ ingredient.name }}
-            </option>
-          </select>
+          <UiIngredientFilterSearch v-model="ingredientFilter" />
 
           <select
             v-model="adjustmentTypeFilter"
@@ -67,7 +58,7 @@
       </UiAdvancedFiltersBar>
 
       <!-- Responsive Data View -->
-      <HealthSemaphore :is-unlocked="true" title="Historial de Ajustes">
+      <HealthSemaphore :is-unlocked="true" title="Historial de ajustes">
       <UiResponsiveDataView
         :columns="adjustmentsTableColumns"
         :data="sortedAdjustments"
@@ -75,7 +66,7 @@
         :sort-direction="sortDirection"
         @sort="handleSort"
         empty-message="No hay ajustes registrados"
-        empty-sub-message="Los ajustes se realizan desde la página de Stock de Inventario"
+        empty-sub-message="Para registrar un ajuste manual, ve a Stock → Ajustar stock"
         variant="default"
         row-size="sm"
       >
@@ -158,10 +149,9 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
-import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 
-useHead({ title: 'Ajustes de Inventario' })
+useHead({ title: 'Historial de ajustes' })
 
 // Tenant reactivity
 const { currentTenant } = useTenantReactive()
@@ -184,22 +174,6 @@ const performSearch = () => applySearch()
 
 const sortField = ref('created_at')
 const sortDirection = ref('desc')
-
-// Load ingredients for filter
-const { data: ingredientsData } = useQuery({
-  key: () => ['inventory', 'ingredients-lookup', currentTenant.value?.id],
-  query: () => $fetch('/api/suppliers/ingredients', { params: { limit: INGREDIENTS_FETCH_LIMIT } }),
-  enabled: () => !!currentTenant.value,
-  staleTime: 30_000,
-})
-
-const ingredients = computed(() => {
-  if (!(ingredientsData.value as any)?.data) return []
-  return (ingredientsData.value as any).data.map((item: any) => ({
-    id: item.id,
-    name: item.name
-  })).sort((a: any, b: any) => a.name.localeCompare(b.name))
-})
 
 const dateParts = computed(() => {
   if (!dateRange.value.from || !dateRange.value.to) return {}
