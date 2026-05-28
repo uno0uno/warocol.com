@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { $fetch } from 'ofetch'
-import { displayTableCode } from '~/composables/useTableDisplayCode'
+import { displayTableCode, tableCodeTypographyClass } from '~/composables/useTableDisplayCode'
 
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
@@ -168,45 +168,45 @@ const badgeLabel = (status: string) => {
 
 
 const cardClass = (status: string) => {
-  if (status === 'open') return 'border-green-500 bg-green-50 hover:shadow-md'
-  if (status === 'bill_requested') return 'border-amber-500 bg-amber-50 hover:shadow-md'
-  return 'border-slate-300 bg-white hover:shadow-md hover:border-slate-400'
+  if (status === 'open') return 'border-status-success-text/50 bg-status-success-bg hover:shadow-md'
+  if (status === 'bill_requested') return 'border-status-warning-text/50 bg-status-warning-bg hover:shadow-md'
+  return 'border-border bg-surface hover:shadow-md hover:border-border/80'
 }
 
 const squareClass = (status: string) => {
-  if (status === 'open') return 'bg-green-100 border-green-500 text-green-900'
-  if (status === 'bill_requested') return 'bg-amber-100 border-amber-500 text-amber-900'
-  return 'bg-white border-slate-400 text-slate-700'
+  if (status === 'open') return 'bg-status-success-bg border-status-success-text text-status-success-text'
+  if (status === 'bill_requested') return 'bg-status-warning-bg border-status-warning-text text-status-warning-text'
+  return 'bg-surface border-border text-text-primary'
 }
 
 const chairClass = (status: string) => {
-  if (status === 'open') return 'bg-green-400'
-  if (status === 'bill_requested') return 'bg-amber-400'
-  return 'bg-slate-300'
+  if (status === 'open') return 'bg-status-success-text/70'
+  if (status === 'bill_requested') return 'bg-status-warning-text/70'
+  return 'bg-border'
 }
 
 const stripClass = (status: string) => {
-  if (status === 'open') return 'bg-green-100 border-green-300'
-  if (status === 'bill_requested') return 'bg-amber-100 border-amber-300'
-  return 'bg-slate-50 border-slate-200'
+  if (status === 'open') return 'bg-status-success-bg border-status-success-text/30'
+  if (status === 'bill_requested') return 'bg-status-warning-bg border-status-warning-text/30'
+  return 'bg-surface-secondary border-border'
 }
 
 const stripTextClass = (status: string) => {
-  if (status === 'open') return 'text-green-800'
-  if (status === 'bill_requested') return 'text-amber-800'
-  return 'text-slate-600'
+  if (status === 'open') return 'text-status-success-text'
+  if (status === 'bill_requested') return 'text-status-warning-text'
+  return 'text-text-secondary'
 }
 
 const stripDividerClass = (status: string) => {
-  if (status === 'open') return 'bg-green-300'
-  if (status === 'bill_requested') return 'bg-amber-300'
-  return 'bg-slate-300'
+  if (status === 'open') return 'bg-status-success-text/25'
+  if (status === 'bill_requested') return 'bg-status-warning-text/25'
+  return 'bg-border'
 }
 
 const dotClass = (status: string) => {
-  if (status === 'open') return 'bg-green-500'
-  if (status === 'bill_requested') return 'bg-amber-500'
-  return 'bg-slate-400'
+  if (status === 'open') return 'bg-status-success-text'
+  if (status === 'bill_requested') return 'bg-status-warning-text'
+  return 'bg-text-tertiary'
 }
 
 const freeCount = computed(() => regularTables.value.filter((t: any) => t.status === 'free').length)
@@ -251,15 +251,15 @@ onUnmounted(() => {
             <span class="text-xs font-medium text-text-secondary">Barra</span>
           </div>
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-            <div class="w-3 h-3 rounded-sm bg-green-400" />
+            <div class="w-3 h-3 rounded-sm bg-status-success-text" />
             <span class="text-xs font-medium text-text-secondary">Ocupada</span>
           </div>
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-            <div class="w-3 h-3 rounded-sm bg-amber-400" />
+            <div class="w-3 h-3 rounded-sm bg-status-warning-text" />
             <span class="text-xs font-medium text-text-secondary">Cuenta</span>
           </div>
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-            <div class="w-3 h-3 rounded-sm bg-surface border-2 border-slate-400" />
+            <div class="w-3 h-3 rounded-sm bg-surface border-2 border-border" />
             <span class="text-xs font-medium text-text-secondary">Libre</span>
           </div>
         </div>
@@ -315,7 +315,7 @@ onUnmounted(() => {
             @click="handleTableClick(table)"
           >
             <!-- Top: table graphic -->
-            <div class="flex flex-col items-center justify-center py-5 px-2 gap-2">
+            <div class="flex flex-col items-center justify-center py-4 px-3 gap-3">
               <div class="relative">
                 <!-- Chairs -->
                 <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-3 rounded-t-sm transition-colors duration-200" :class="chairClass(table.status)" />
@@ -324,20 +324,20 @@ onUnmounted(() => {
                 <div class="absolute -right-3 top-1/2 -translate-y-1/2 w-3 h-8 rounded-r-sm transition-colors duration-200" :class="chairClass(table.status)" />
                 <!-- Table square with short code -->
                 <div
-                  class="w-20 h-20 flex items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95 px-1"
+                  class="w-20 h-20 min-w-[5rem] flex items-center justify-center rounded-xl border-2 transition-colors duration-150 group-hover:brightness-95 px-1.5 overflow-hidden"
                   :class="squareClass(table.status)"
                 >
-                  <span class="text-2xl sm:text-3xl font-black leading-none tabular-nums text-center">{{ displayTableCode(table) }}</span>
+                  <span :class="tableCodeTypographyClass(displayTableCode(table))">{{ displayTableCode(table) }}</span>
                 </div>
               </div>
-              <span class="text-xs sm:text-sm font-semibold text-text-primary text-center leading-tight line-clamp-2 w-full px-1">
+              <span class="text-xs sm:text-sm font-medium text-text-secondary text-center leading-snug line-clamp-2 w-full min-h-[2.5rem]">
                 {{ table.name }}
               </span>
             </div>
 
             <!-- Bottom strip: occupied → time + amount / reabrir → single action / libre → label -->
             <template v-if="table.status !== 'free'">
-              <div class="flex items-center justify-around px-2 h-11 border-t" :class="stripClass(table.status)">
+              <div class="flex items-center justify-around px-1 min-h-11 border-t" :class="stripClass(table.status)">
                 <!-- Cell 1: dot + time + unfired indicator -->
                 <div class="flex items-center gap-1.5">
                   <span class="w-2 h-2 rounded-full flex-shrink-0" :class="dotClass(table.status)" />
@@ -361,7 +361,7 @@ onUnmounted(() => {
                 <!-- Cell 3: move/transfer button -->
                 <button
                   type="button"
-                  class="w-7 h-7 flex items-center justify-center rounded hover:bg-black/10 transition-colors focus:outline-none"
+                  class="min-h-11 min-w-11 flex items-center justify-center rounded hover:bg-black/10 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40"
                   :class="stripTextClass(table.status)"
                   :aria-label="`Mover ${table.name} a otra ${tableSingularLower}`"
                   @click.stop="handleMoveTable(table, $event)"
@@ -374,8 +374,8 @@ onUnmounted(() => {
             </template>
             <template v-else>
               <!-- Free table — "Libre" label (Reabrir UI removed; endpoint /session/reopen still exists) -->
-              <div class="flex items-center justify-center px-2 h-11 border-t border-slate-200 bg-slate-50">
-                <span class="text-xs font-semibold text-slate-400">Libre</span>
+              <div class="flex items-center justify-center px-3 min-h-11 border-t border-border bg-surface-secondary">
+                <span class="text-xs font-semibold text-text-secondary">Libre</span>
               </div>
             </template>
 
@@ -385,11 +385,11 @@ onUnmounted(() => {
                  table default) or a "Sin asignar" placeholder when null. -->
             <div
               v-if="waiterAttributionEnabled"
-              class="flex items-center justify-center px-2 h-6 border-t border-slate-100 bg-slate-50/60"
+              class="flex items-center justify-center px-3 h-7 border-t border-border bg-surface-secondary/80"
             >
               <span
-                class="text-[10px] font-medium truncate text-center"
-                :class="table.effective_waiter_member_name ? 'text-slate-500' : 'text-slate-400 italic'"
+                class="text-xs font-medium truncate text-center"
+                :class="table.effective_waiter_member_name ? 'text-text-secondary' : 'text-text-tertiary italic'"
               >
                 {{ table.effective_waiter_member_name || 'Sin asignar' }}
               </span>
