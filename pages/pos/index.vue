@@ -607,6 +607,15 @@ const removeTabItem = (orderItemId: string) => {
   void executeRemoveTabItem(orderItemId)
 }
 
+const destructiveFetchError = (e: unknown, fallback: string): string => {
+  const err = e as { data?: { message?: string; detail?: string | unknown } }
+  const detail = err?.data?.detail
+  return err?.data?.message
+    ?? (typeof detail === 'string' ? detail : null)
+    ?? (typeof detail === 'object' && detail ? String(detail) : null)
+    ?? fallback
+}
+
 const cancelDestructiveFlow = () => {
   if (destructiveLoading.value) return
   destructiveFlow.value = null
@@ -814,31 +823,38 @@ const handleBannerCerrar = () => {
   destructiveFlow.value = { kind: 'release-table' }
 }
 
-const executeBannerClose = async (_reason: string) => {
+const executeBannerClose = async (reason: string) => {
   const session = posStore.activeTableSession
   if (!session) return
   try {
-    await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
-  } catch {
-    // Non-critical
+    await $fetch(`/api/tables/${session.tableId}/close`, {
+      method: 'POST',
+      body: { reason: reason.trim() || null },
+    })
+  } catch (e: unknown) {
+    destructiveError.value = destructiveFetchError(e, `Error al liberar la ${tableSingularLower.value}`)
+    return
   }
   posStore.clearAll()
   cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
 }
 
-const executeClearBarTab = async (_reason: string) => {
+const executeClearBarTab = async (reason: string) => {
   const session = posStore.activeTableSession
   if (!session || posStore.isCancellingMesa) return
   posStore.isCancellingMesa = true
   try {
-    await $fetch(`/api/tables/${session.tableId}/tab`, { method: 'DELETE' })
-  } catch {
-    // Non-critical — clear local state regardless
+    await $fetch(`/api/tables/${session.tableId}/tab`, {
+      method: 'DELETE',
+      body: { reason: reason.trim() || null },
+    })
+    posStore.clearAll()
+    cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
+  } catch (e: unknown) {
+    destructiveError.value = destructiveFetchError(e, 'Error al limpiar la barra')
   } finally {
     posStore.isCancellingMesa = false
   }
-  posStore.clearAll()
-  cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
 }
 
 const handleReleaseMesa = () => {
@@ -1041,8 +1057,8 @@ const removeFromCart = async (index: number) => {
   await posStore.removeFromCart(index)
 }
 
-const executeRemoveFromCart = async (index: number, _reason: string) => {
-  await posStore.removeFromCart(index)
+const executeRemoveFromCart = async (index: number, reason: string) => {
+  await posStore.removeFromCart(index, reason)
 }
 
 const incrementCartItem = async (index: number) => {
@@ -1067,24 +1083,41 @@ const clearCart = () => {
   destructiveFlow.value = { kind: 'clear-cart' }
 }
 
-const executeClearCart = async (_reason: string) => {
+const executeClearCart = async (reason: string) => {
   const session = posStore.activeTableSession
   if (session) {
     bumpTableSessionFetchGen()
     isClearingTab.value = true
     try {
-      await $fetch(`/api/tables/${session.tableId}/tab`, { method: 'DELETE' })
-    } catch {
-      // Non-critical
+      await $fetch(`/api/tables/${session.tableId}/tab`, {
+        method: 'DELETE',
+        body: { reason: reason.trim() || null },
+      })
+      posStore.setTabItems([])
+      if (posStore.activeTableSession) {
+        posStore.setTableSession({
+          ...posStore.activeTableSession,
+          runningTotal: 0,
+          isBar: posStore.activeTableSession.isBar,
+        })
+      }
+    } catch (e: unknown) {
+      destructiveError.value = destructiveFetchError(
+        e,
+        posStore.activeTableSession
+          ? `Error al limpiar la ${tableSingularLower.value}`
+          : 'Error al limpiar la cuenta',
+      )
+      return
     } finally {
       isClearingTab.value = false
     }
-    posStore.setTabItems([])
-    if (posStore.activeTableSession) {
-      posStore.setTableSession({ ...posStore.activeTableSession, runningTotal: 0, isBar: posStore.activeTableSession.isBar })
-    }
   }
-  await posStore.clearCart()
+  try {
+    await posStore.clearCart(reason)
+  } catch (e: unknown) {
+    destructiveError.value = destructiveFetchError(e, 'Error al limpiar el carrito')
+  }
 }
 
 const processOrder = async () => {
