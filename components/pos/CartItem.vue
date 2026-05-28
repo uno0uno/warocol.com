@@ -43,8 +43,8 @@
     <div class="mt-1.5 pl-[2.125rem] space-y-0.5">
       <p class="text-xs text-slate-500">{{ formatCurrency(Number(item.product.price)) }} c/u</p>
       <div v-for="mod in item.modifiers" :key="mod.id" class="flex justify-between text-xs gap-2">
-        <span class="text-slate-400">+ {{ mod.name }}</span>
-        <span class="text-slate-500 tabular-nums flex-shrink-0">{{ formatCurrency(Number(mod.price)) }}</span>
+        <span class="text-slate-400">+ {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template></span>
+        <span class="text-slate-500 tabular-nums flex-shrink-0">{{ formatCurrency(Number(mod.price) * (mod.quantity ?? 1)) }}</span>
       </div>
       <p v-if="item.notes" class="text-xs text-slate-400 italic">Nota: {{ item.notes }}</p>
     </div>
@@ -126,7 +126,7 @@ interface CartItem {
     image: string
     category: string
   }
-  modifiers: Array<{ id: string; name: string; price: number }>
+  modifiers: Array<{ id: string; name: string; price: number; quantity?: number }>
   quantity: number
   notes?: string
   is_resale?: boolean
@@ -154,7 +154,10 @@ defineEmits<Emits>()
 
 const itemTotal = computed(() => {
   const basePrice = Number(props.item.product.price) || 0
-  const modifiersPrice = props.item.modifiers.reduce((sum, mod) => sum + Number(mod.price), 0)
+  const modifiersPrice = props.item.modifiers.reduce(
+    (sum, mod) => sum + Number(mod.price) * (mod.quantity ?? 1),
+    0
+  )
   return (basePrice + modifiersPrice) * Number(props.item.quantity)
 })
 

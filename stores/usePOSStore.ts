@@ -2,6 +2,15 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { CartModifier } from '~/stores/online_cart'
 
+const modifierLineTotal = (mod: CartModifier) => Number(mod.price) * (mod.quantity ?? 1)
+
+const modifiersSignature = (mods: CartModifier[]) =>
+    JSON.stringify(
+        [...mods]
+            .sort((a, b) => a.id.localeCompare(b.id))
+            .map(m => ({ id: m.id, q: m.quantity ?? 1 }))
+    )
+
 export interface PosCartItem {
     id?: string // ID del item en la BD (para poder eliminarlo/actualizarlo)
     product: {
@@ -45,6 +54,7 @@ export interface TabItemModifier {
     id: string
     name: string
     price: number
+    quantity?: number
 }
 
 export interface TabItem {
@@ -107,7 +117,7 @@ export const usePOSStore = defineStore('pos', () => {
     const cartTotal = computed(() => {
         return cart.value.reduce((sum, item) => {
             const productTotal = Number(item.product.price) * Number(item.quantity)
-            const modifiersTotal = item.modifiers.reduce((modSum, mod) => modSum + Number(mod.price), 0) * Number(item.quantity)
+            const modifiersTotal = item.modifiers.reduce((modSum, mod) => modSum + modifierLineTotal(mod), 0) * Number(item.quantity)
             return sum + productTotal + modifiersTotal
         }, 0)
     })
@@ -161,8 +171,7 @@ export const usePOSStore = defineStore('pos', () => {
             return (
                 c.product.id === item.product.id &&
                 c.notes === (item.notes ?? undefined) &&
-                c.modifiers.length === (item.modifiers?.length ?? 0) &&
-                c.modifiers.every((m, i) => m.id === item.modifiers?.[i]?.id)
+                modifiersSignature(c.modifiers) === modifiersSignature(item.modifiers ?? [])
             )
         })
         if (existingIndex !== -1) {
@@ -324,7 +333,8 @@ export const usePOSStore = defineStore('pos', () => {
                     modifiers: (item.modifiers || []).map((mod: any) => ({
                         id: mod.id,
                         name: mod.name,
-                        price: Number(mod.price) || 0
+                        price: Number(mod.price) || 0,
+                        quantity: Number(mod.quantity) || 1,
                     })),
                     notes: item.notes,
                     is_resale: item.is_resale || false
@@ -420,7 +430,8 @@ export const usePOSStore = defineStore('pos', () => {
                 modifiers: item.modifiers.map(mod => ({
                     id: mod.id,
                     name: mod.name,
-                    price: mod.price
+                    price: mod.price,
+                    quantity: mod.quantity ?? 1,
                 })),
                 notes: item.notes || null
             }))
