@@ -5,22 +5,28 @@ export default defineNuxtConfig({
     '/blog': { prerender: true },
     // SEO: consolidate cannibalized blog slugs (warocol.com#953)
     '/blog/software-pos-restaurantes-colombia': {
-      redirect: { to: '/blog/mejores-software-restaurantes-colombia', statusCode: 301 }
+      redirect: { to: '/blog/mejores-software-restaurantes-colombia', statusCode: 301 },
+      prerender: false
     },
     '/blog/sistema-pos-colombia': {
-      redirect: { to: '/blog/mejores-software-restaurantes-colombia', statusCode: 301 }
+      redirect: { to: '/blog/mejores-software-restaurantes-colombia', statusCode: 301 },
+      prerender: false
     },
     '/blog/software-para-restaurante': {
-      redirect: { to: '/blog/mejores-software-restaurantes-colombia', statusCode: 301 }
+      redirect: { to: '/blog/mejores-software-restaurantes-colombia', statusCode: 301 },
+      prerender: false
     },
     '/blog/software-restaurantes-gratis-colombia': {
-      redirect: { to: '/blog/software-para-restaurante-gratis', statusCode: 301 }
+      redirect: { to: '/blog/software-para-restaurante-gratis', statusCode: 301 },
+      prerender: false
     },
     '/blog/software-open-source-restaurantes': {
-      redirect: { to: '/blog/software-para-restaurante-gratis', statusCode: 301 }
+      redirect: { to: '/blog/software-para-restaurante-gratis', statusCode: 301 },
+      prerender: false
     },
     '/blog/software-contable-restaurantes-gratis': {
-      redirect: { to: '/blog/software-para-restaurante-gratis', statusCode: 301 }
+      redirect: { to: '/blog/software-para-restaurante-gratis', statusCode: 301 },
+      prerender: false
     },
     '/blog/**': { prerender: true },
     // Homepage pública
@@ -259,6 +265,15 @@ export default defineNuxtConfig({
     enabled: false
   },
   vite: {
+    server: {
+      // Node walks up to ~/node_modules (home package.json); vite-node 403s without this in dev
+      fs: {
+        allow: [
+          process.cwd(),
+          `${process.env.HOME}/node_modules`
+        ]
+      }
+    },
     vue: {
       script: {
         defineModel: true,
