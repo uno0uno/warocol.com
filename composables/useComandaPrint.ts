@@ -2,11 +2,37 @@
  * Kitchen comanda ticket printing (#753) — browser print via hidden DOM + body class.
  */
 
+export type ComandaModifierSnapshot = {
+  name: string
+  price?: number
+  quantity?: number
+}
+
 export type ComandaPrintItem = {
   kitchen_name: string
   quantity: number
-  modifiers_snapshot?: Array<{ name: string; price?: number }> | null
+  modifiers_snapshot?: ComandaModifierSnapshot[] | null
   notes?: string | null
+}
+
+const comandaPrintCurrency = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
+  minimumFractionDigits: 0,
+})
+
+export function formatComandaModifierLabel(
+  mod: ComandaModifierSnapshot,
+  options?: { includePrice?: boolean },
+): string {
+  const qty = Number(mod.quantity) || 1
+  let label = mod.name
+  if (qty > 1) label += ` ×${qty}`
+  if (options?.includePrice && mod.price != null) {
+    const lineTotal = Number(mod.price) * qty
+    label += ` · ${comandaPrintCurrency.format(lineTotal)}`
+  }
+  return label
 }
 
 export type ComandaPrintPayload = {

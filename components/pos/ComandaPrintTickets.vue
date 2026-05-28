@@ -1,16 +1,14 @@
 <script setup lang="ts">
 import type { ComandaPrintPayload } from '~/composables/useComandaPrint'
-import { formatComandaPrintTime } from '~/composables/useComandaPrint'
+import { formatComandaModifierLabel, formatComandaPrintTime } from '~/composables/useComandaPrint'
 
 const props = defineProps<{
   comandas: ComandaPrintPayload[]
   businessName?: string
 }>()
 
-function formatModifiers(item: ComandaPrintPayload['items'][0]): string {
-  const mods = item.modifiers_snapshot
-  if (!mods?.length) return ''
-  return mods.map(m => m.name).join(', ')
+function modifierLines(item: ComandaPrintPayload['items'][0]) {
+  return item.modifiers_snapshot ?? []
 }
 </script>
 
@@ -38,8 +36,13 @@ function formatModifiers(item: ComandaPrintPayload['items'][0]): string {
         <span>{{ item.quantity }}× {{ item.kitchen_name }}</span>
       </div>
       <template v-for="(item, i) in c.items" :key="`mod-${i}`">
-        <div v-if="formatModifiers(item)" class="receipt-row receipt-small" style="padding-left: 8px;">
-          ↳ {{ formatModifiers(item) }}
+        <div
+          v-for="(mod, mi) in modifierLines(item)"
+          :key="`${i}-${mi}`"
+          class="receipt-row receipt-small"
+          style="padding-left: 8px;"
+        >
+          ↳ {{ formatComandaModifierLabel(mod, { includePrice: true }) }}
         </div>
         <div v-if="item.notes" class="receipt-row receipt-small" style="padding-left: 8px;">
           Notas Especiales: {{ item.notes }}
