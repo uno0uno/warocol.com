@@ -288,9 +288,9 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: { label: 'Volver' }
     }
-  } else if (path.startsWith('/abastecimiento/ajustes')) {
+  } else if (path === '/abastecimiento/ajustes' || path.startsWith('/abastecimiento/ajustes/')) {
     return {
-      pageTitle: 'Ajustes de Abastecimiento',
+      pageTitle: path.includes('/crear') ? 'Ajustar stock' : 'Historial de ajustes',
       pageSubtitle: undefined,
       searchPlaceholder: undefined,
       activePage: 'abastecimiento' as const,

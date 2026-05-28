@@ -17,16 +17,7 @@
         @clear="clearFilters"
       >
         <template #additional-filters>
-          <select
-            v-model="ingredientFilter"
-            :class="filterSelectClass"
-            aria-label="Filtrar por ingrediente"
-          >
-            <option value="">Ingrediente</option>
-            <option v-for="ingredient in ingredients" :key="ingredient.id" :value="ingredient.id">
-              {{ ingredient.name }}
-            </option>
-          </select>
+          <UiIngredientFilterSearch v-model="ingredientFilter" />
 
           <select
             v-model="movementTypeFilter"
@@ -140,7 +131,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
@@ -168,21 +158,6 @@ const performSearch = () => applySearch()
 
 const sortField = ref('')
 const sortDirection = ref('desc')
-
-const { data: ingredientsData } = useQuery({
-  key: () => ['inventory', 'ingredients-lookup', currentTenant.value?.id],
-  query: () => $fetch('/api/suppliers/ingredients', { params: { limit: INGREDIENTS_FETCH_LIMIT } }),
-  enabled: () => !!currentTenant.value,
-  staleTime: 30_000,
-})
-
-const ingredients = computed(() => {
-  if (!(ingredientsData.value as any)?.data) return []
-  return (ingredientsData.value as any).data.map((item: any) => ({
-    id: item.id,
-    name: item.name
-  })).sort((a: any, b: any) => a.name.localeCompare(b.name))
-})
 
 const dateParts = computed(() => {
   if (!dateRange.value.from || !dateRange.value.to) return {}
