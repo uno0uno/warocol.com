@@ -484,6 +484,7 @@ registerTableSessionRefresh(
 // Issue #956 — unified destructive-action confirmation with required motivo
 type DestructiveFlow =
   | { kind: 'remove-tab-item'; orderItemId: string }
+  | { kind: 'decrease-tab-item'; orderItemId: string; quantity: number }
   | { kind: 'clear-cart' }
   | { kind: 'remove-cart-item'; index: number }
   | { kind: 'release-table' }
@@ -514,6 +515,8 @@ const destructiveModalTitle = computed(() => {
   switch (flow.kind) {
     case 'remove-tab-item':
       return '¿Eliminar producto?'
+    case 'decrease-tab-item':
+      return '¿Reducir cantidad?'
     case 'clear-cart':
       return posStore.activeTableSession ? '¿Limpiar la cuenta?' : '¿Limpiar carrito?'
     case 'remove-cart-item':
@@ -538,6 +541,11 @@ const destructiveModalMessage = computed(() => {
         return `${name} ya fue enviado a cocina. Se notificará al cocinero que lo anule.`
       }
       return `Se eliminará ${name} de la cuenta.`
+    }
+    case 'decrease-tab-item': {
+      const item = storeTabItems.value.find((i: TabItem) => i.orderItemId === flow.orderItemId)
+      const name = item?.productName ?? 'Este producto'
+      return `${name} ya fue enviado a cocina. Se notificará al cocinero del cambio de cantidad.`
     }
     case 'clear-cart':
       return posStore.activeTableSession
@@ -568,6 +576,8 @@ const destructiveModalConfirmLabel = computed(() => {
     case 'remove-tab-item':
     case 'remove-cart-item':
       return 'Sí, eliminar'
+    case 'decrease-tab-item':
+      return 'Sí, reducir'
     case 'clear-cart':
       return 'Sí, limpiar'
     case 'release-table':
@@ -589,8 +599,12 @@ const pendingRemoveItemId = computed(() =>
 
 const removeTabItem = (orderItemId: string) => {
   if (!posStore.activeTableSession) return
-  destructiveError.value = ''
-  destructiveFlow.value = { kind: 'remove-tab-item', orderItemId }
+  if (comandasEnabled.value && isTabItemFired(orderItemId)) {
+    destructiveError.value = ''
+    destructiveFlow.value = { kind: 'remove-tab-item', orderItemId }
+    return
+  }
+  void executeRemoveTabItem(orderItemId)
 }
 
 const cancelDestructiveFlow = () => {
@@ -608,6 +622,9 @@ const confirmDestructiveFlow = async (reason: string) => {
     switch (flow.kind) {
       case 'remove-tab-item':
         await executeRemoveTabItem(flow.orderItemId, reason)
+        break
+      case 'decrease-tab-item':
+        await updateTabItemQuantity(flow.orderItemId, flow.quantity, reason)
         break
       case 'clear-cart':
         await executeClearCart(reason)
@@ -661,18 +678,23 @@ const executeRemoveTabItem = async (orderItemId: string, reason?: string) => {
   }
 }
 
-const updateTabItemQuantity = async (orderItemId: string, quantity: number) => {
+const updateTabItemQuantity = async (orderItemId: string, quantity: number, reason?: string) => {
   if (!posStore.activeTableSession) return
   bumpTableSessionFetchGen()
   tabItemsLoading.value = new Set([...tabItemsLoading.value, orderItemId])
   try {
     await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/items/${orderItemId}`, {
       method: 'PATCH',
-      body: { quantity },
+      body: reason ? { quantity, reason } : { quantity },
     })
     await refreshTableSession()
   } catch (e: any) {
-    tabError.value = e?.data?.detail ?? 'Error al actualizar la cantidad'
+    const errText = e?.data?.detail ?? 'Error al actualizar la cantidad'
+    if (destructiveFlow.value?.kind === 'decrease-tab-item') {
+      destructiveError.value = errText
+    } else {
+      tabError.value = errText
+    }
   } finally {
     const next = new Set(tabItemsLoading.value)
     next.delete(orderItemId)
@@ -687,7 +709,14 @@ const incrementTabItem = (orderItemId: string) => {
 
 const decrementTabItem = (orderItemId: string) => {
   const item = storeTabItems.value.find(t => t.orderItemId === orderItemId)
-  if (item && item.quantity > 1) updateTabItemQuantity(orderItemId, item.quantity - 1)
+  if (!item || item.quantity <= 1) return
+  const newQuantity = item.quantity - 1
+  if (comandasEnabled.value && isTabItemFired(orderItemId)) {
+    destructiveError.value = ''
+    destructiveFlow.value = { kind: 'decrease-tab-item', orderItemId, quantity: newQuantity }
+    return
+  }
+  void updateTabItemQuantity(orderItemId, newQuantity)
 }
 
 const addToTab = async () => {
@@ -1008,9 +1037,8 @@ const handleOpenSaleConfirm = async (payload: { amount: number; description?: st
   }
 }
 
-const removeFromCart = (index: number) => {
-  destructiveError.value = ''
-  destructiveFlow.value = { kind: 'remove-cart-item', index }
+const removeFromCart = async (index: number) => {
+  await posStore.removeFromCart(index)
 }
 
 const executeRemoveFromCart = async (index: number, _reason: string) => {
@@ -1024,7 +1052,7 @@ const incrementCartItem = async (index: number) => {
 const decrementCartItem = async (index: number) => {
   const item = posStore.cart[index]
   if (item && item.quantity <= 1) {
-    removeFromCart(index)
+    await removeFromCart(index)
     return
   }
   await posStore.updateQuantity(index, -1)
