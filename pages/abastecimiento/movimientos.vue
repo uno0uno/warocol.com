@@ -1,41 +1,15 @@
 <template>
   <div class="page-layout">
-    <!-- Loading State (only show if no data yet) -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Main Content -->
     <div v-else class="flex flex-col gap-3 md:gap-4">
-      <!-- Stats Cards -->
-      <UiStats>
-        <UiStatsCard
-          label="Total Ajustes"
-          :value="adjustments.length"
-          icon="adjustments-horizontal"
-        />
-        <UiStatsCard
-          label="Ingredientes Ajustados"
-          :value="uniqueIngredientsAdjusted"
-          icon="beaker"
-        />
-        <UiStatsCard
-          label="Stock Crítico"
-          :value="stockStats.critical_count || 0"
-          icon="exclamation-circle"
-        />
-        <UiStatsCard
-          label="Stock Bajo"
-          :value="stockStats.low_stock_count || 0"
-          icon="exclamation"
-        />
-      </UiStats>
-
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         v-model:date-range="dateRangeDates"
+        search-placeholder="Buscar por ingrediente o referencia..."
         :search-fields="[]"
-        search-placeholder="Buscar por ingrediente o motivo..."
         :preset-dates="presetDates"
         :format-date-range="formatDateRange"
         :show-clear="hasActiveFilters"
@@ -55,31 +29,32 @@
           </select>
 
           <select
-            v-model="adjustmentTypeFilter"
+            v-model="movementTypeFilter"
             :class="filterSelectClass"
-            aria-label="Filtrar por tipo de ajuste"
+            aria-label="Filtrar por tipo de movimiento"
           >
-            <option value="">Tipo ajuste</option>
-            <option value="positive">Incrementos</option>
-            <option value="negative">Decrementos</option>
+            <option value="">Tipo</option>
+            <option value="purchase">Compras</option>
+            <option value="consumption">Consumo</option>
+            <option value="adjustment">Ajustes</option>
+            <option value="return">Devoluciones</option>
+            <option value="loss">Pérdidas</option>
           </select>
         </template>
       </UiAdvancedFiltersBar>
 
-      <!-- Responsive Data View -->
-      <HealthSemaphore :is-unlocked="true" title="Historial de Ajustes">
+      <HealthSemaphore :is-unlocked="true" title="Movimientos de Inventario">
       <UiResponsiveDataView
-        :columns="adjustmentsTableColumns"
-        :data="sortedAdjustments"
+        row-size="sm"
+        :columns="movementsTableColumns"
+        :data="sortedMovements"
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
-        empty-message="No hay ajustes registrados"
-        empty-sub-message="Los ajustes se realizan desde la página de Stock de Inventario"
+        empty-message="No hay movimientos registrados"
+        empty-sub-message="Los movimientos aparecerán cuando se registren compras o ventas"
         variant="default"
-        row-size="sm"
       >
-        <!-- Mobile Card -->
         <template #card="{ item, index }">
           <div
             class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors hover:bg-surface-secondary"
@@ -87,28 +62,27 @@
           >
             <div class="flex-1 min-w-0">
               <span class="text-sm font-bold text-text-primary">{{ item.ingredient_name }}</span>
-              <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.created_at) }}</p>
+              <p class="text-xs text-text-secondary mt-0.5">{{ formatDate(item.created_at) }}{{ item.reference_number ? ` · ${item.reference_number}` : '' }}</p>
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
-              <p
+              <span
                 class="text-sm font-bold tabular-nums"
                 :class="item.quantity_change >= 0 ? 'text-success' : 'text-destructive'"
               >
                 {{ item.quantity_change >= 0 ? '+' : '' }}{{ formatNumber(item.quantity_change) }}
-              </p>
+              </span>
               <UiStatusBadge
-                :value="item.quantity_change >= 0 ? 'Incremento' : 'Decremento'"
+                :value="getMovementTypeLabel(item.movement_type)"
                 format="text"
-                :variant="item.quantity_change >= 0 ? 'success' : 'destructive'"
+                :variant="getMovementTypeVariant(item.movement_type)"
                 size="sm"
               />
             </div>
           </div>
         </template>
 
-        <!-- Desktop Table Cells -->
         <template #cell-created_at="{ value }">
-          <span class="text-sm text-text-primary whitespace-nowrap">{{ formatDate(value) }}</span>
+          <span class="text-sm text-text-secondary">{{ formatDate(value) }}</span>
         </template>
 
         <template #cell-ingredient_name="{ value }">
@@ -119,11 +93,11 @@
           <span class="text-xs text-text-secondary">{{ value }}</span>
         </template>
 
-        <template #cell-adjustment_type="{ row }">
+        <template #cell-movement_type="{ value }">
           <UiStatusBadge
-            :value="row.quantity_change >= 0 ? 'Incremento' : 'Decremento'"
+            :value="getMovementTypeLabel(value)"
             format="text"
-            :variant="row.quantity_change >= 0 ? 'success' : 'destructive'"
+            :variant="getMovementTypeVariant(value)"
             size="sm"
           />
         </template>
@@ -142,7 +116,17 @@
         </template>
 
         <template #cell-new_stock="{ value }">
-          <span class="text-sm font-medium text-text-primary">{{ formatNumber(value) }}</span>
+          <span
+            class="text-sm font-medium tabular-nums"
+            :class="value < 0 ? 'text-destructive' : 'text-text-primary'"
+          >
+            {{ formatNumber(value) }}
+          </span>
+        </template>
+
+        <template #cell-reference_number="{ value }">
+          <span v-if="value" class="text-sm text-primary font-medium">{{ value }}</span>
+          <span v-else class="text-sm text-text-secondary">-</span>
         </template>
 
         <template #cell-created_by_name="{ value }">
@@ -156,20 +140,20 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useFormatters } from '~/composables/useFormatters'
-import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
+import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
+import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 
-useHead({ title: 'Ajustes de Inventario' })
+useHead({ title: 'Movimientos' })
 
-// Tenant reactivity
+const route = useRoute()
 const { currentTenant } = useTenantReactive()
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const { dateRangeDates, presetDates, formatDateRange, dateRange, clearDateRange } = useDateRangePresets()
 const ingredientFilter = ref('')
-const adjustmentTypeFilter = ref('')
+const movementTypeFilter = ref('')
 
 const hasActiveFilters = computed(
   () =>
@@ -177,15 +161,14 @@ const hasActiveFilters = computed(
     || !!appliedSearch.value
     || !!dateRangeDates.value
     || !!ingredientFilter.value
-    || !!adjustmentTypeFilter.value,
+    || !!movementTypeFilter.value,
 )
 
 const performSearch = () => applySearch()
 
-const sortField = ref('created_at')
+const sortField = ref('')
 const sortDirection = ref('desc')
 
-// Load ingredients for filter
 const { data: ingredientsData } = useQuery({
   key: () => ['inventory', 'ingredients-lookup', currentTenant.value?.id],
   query: () => $fetch('/api/suppliers/ingredients', { params: { limit: INGREDIENTS_FETCH_LIMIT } }),
@@ -206,8 +189,9 @@ const dateParts = computed(() => {
   return { start_date: dateRange.value.from, end_date: dateRange.value.to }
 })
 
-const { data: adjustmentsData, asyncStatus: adjustmentsAsyncStatus, refetch } = useQuery({
-  key: () => ['inventory', 'adjustments', currentTenant.value?.id, {
+const { data: movementsData, asyncStatus: queryAsyncStatus, refetch } = useQuery({
+  key: () => ['inventory', 'movements', currentTenant.value?.id, {
+    type: movementTypeFilter.value || null,
     ingredient: ingredientFilter.value || null,
     from: dateRange.value.from,
     to: dateRange.value.to,
@@ -215,70 +199,33 @@ const { data: adjustmentsData, asyncStatus: adjustmentsAsyncStatus, refetch } = 
   query: () => $fetch('/api/inventory/movements', {
     params: {
       limit: 500,
-      movement_type: 'adjustment',
+      movement_type: movementTypeFilter.value || undefined,
       ingredient_id: ingredientFilter.value || undefined,
       ...dateParts.value,
-    },
-  }),
-  enabled: () => !!currentTenant.value,
-  staleTime: 30_000,
-})
-
-const isLoading = computed(() => !adjustmentsData.value)
-const isRefreshing = computed(() => adjustmentsAsyncStatus.value === 'loading' && adjustmentsData.value != null)
-const adjustments = computed(() => adjustmentsData.value?.data || [])
-
-// Load stock data for suggestions
-const { data: stockData } = useQuery({
-  key: () => ['inventory', 'stock', currentTenant.value?.id],
-  query: () => $fetch('/api/inventory/stock', {
-    params: {
-      limit: 250,
-      status_filter: 'all'
     }
   }),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
 })
 
-const stockStats = computed(() => stockData.value?.stats || {
-  total_ingredients: 0,
-  critical_count: 0,
-  low_stock_count: 0,
-  ok_count: 0,
-  total_inventory_value: 0
-})
+const isLoading = computed(() => !movementsData.value)
+const isRefreshing = computed(() => queryAsyncStatus.value === 'loading' && movementsData.value != null)
 
-// Suggested adjustments (items with critical or low stock)
-const suggestedAdjustments = computed(() => {
-  const stock = stockData.value?.data || []
-  return stock.filter(item => item.status === 'negative' || item.status === 'low')
-})
+const movements = computed(() => movementsData.value?.data || [])
 
-// Unique ingredients adjusted
-const uniqueIngredientsAdjusted = computed(() => {
-  const uniqueIds = new Set(adjustments.value.map(adj => adj.ingredient_id))
-  return uniqueIds.size
-})
-
-const filteredAdjustments = computed(() => {
-  const q = appliedSearch.value.trim().toLowerCase()
-  return adjustments.value.filter((adjustment) => {
-    const matchesSearch = !q
-      || adjustment.ingredient_name.toLowerCase().includes(q)
-      || (adjustment.reason && adjustment.reason.toLowerCase().includes(q))
-    const matchesType = adjustmentTypeFilter.value === ''
-      || (adjustmentTypeFilter.value === 'positive' && adjustment.quantity_change >= 0)
-      || (adjustmentTypeFilter.value === 'negative' && adjustment.quantity_change < 0)
-    return matchesSearch && matchesType
+const filteredMovements = computed(() => {
+  const q = appliedSearch.value.toLowerCase()
+  if (!q) return movements.value
+  return movements.value.filter((movement) => {
+    return movement.ingredient_name.toLowerCase().includes(q)
+      || (movement.reference_number && movement.reference_number.toLowerCase().includes(q))
   })
 })
 
-// Sorted adjustments
-const sortedAdjustments = computed(() => {
-  if (!sortField.value) return filteredAdjustments.value
+const sortedMovements = computed(() => {
+  if (!sortField.value) return filteredMovements.value
 
-  const sorted = [...filteredAdjustments.value].sort((a, b) => {
+  const sorted = [...filteredMovements.value].sort((a, b) => {
     const aValue = a[sortField.value]
     const bValue = b[sortField.value]
 
@@ -297,8 +244,7 @@ const sortedAdjustments = computed(() => {
   return sorted
 })
 
-// Handle sort
-const handleSort = (field) => {
+const handleSort = (field: string) => {
   if (sortField.value === field) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
@@ -311,68 +257,44 @@ const clearFilters = () => {
   clearSearch()
   clearDateRange()
   ingredientFilter.value = ''
-  adjustmentTypeFilter.value = ''
+  movementTypeFilter.value = ''
 }
 
-// Table columns configuration
-const adjustmentsTableColumns = [
-  {
-    key: 'created_at',
-    title: 'Fecha',
-    sortable: true,
-    format: 'date',
-    align: 'left'
-  },
-  {
-    key: 'ingredient_name',
-    title: 'Ingrediente',
-    sortable: true,
-    format: 'text',
-    align: 'left'
-  },
-  {
-    key: 'unit',
-    title: 'Unidad',
-    sortable: false,
-    format: 'text',
-    align: 'left'
-  },
-  {
-    key: 'adjustment_type',
-    title: 'Tipo',
-    sortable: false,
-    format: 'badge',
-    align: 'center'
-  },
-  {
-    key: 'quantity_change',
-    title: 'Cantidad',
-    sortable: true,
-    format: 'number',
-    align: 'right'
-  },
-  {
-    key: 'previous_stock',
-    title: 'Stock Ant.',
-    sortable: true,
-    format: 'number',
-    align: 'right'
-  },
-  {
-    key: 'new_stock',
-    title: 'Stock Nuevo',
-    sortable: true,
-    format: 'number',
-    align: 'right'
-  },
-  {
-    key: 'created_by_name',
-    title: 'Usuario',
-    sortable: true,
-    format: 'text',
-    align: 'left'
-  }
+const movementsTableColumns = [
+  { key: 'created_at', title: 'Fecha', sortable: true, format: 'date', align: 'left' },
+  { key: 'ingredient_name', title: 'Ingrediente', sortable: true, format: 'text', align: 'left' },
+  { key: 'unit', title: 'Unidad', sortable: false, format: 'text', align: 'left' },
+  { key: 'movement_type', title: 'Tipo', sortable: true, format: 'badge', align: 'center' },
+  { key: 'quantity_change', title: 'Cantidad', sortable: true, format: 'number', align: 'right' },
+  { key: 'previous_stock', title: 'Stock Ant.', sortable: true, format: 'number', align: 'right' },
+  { key: 'new_stock', title: 'Stock Nuevo', sortable: true, format: 'number', align: 'right' },
+  { key: 'reference_number', title: 'Referencia', sortable: true, format: 'text', align: 'left' },
+  { key: 'created_by_name', title: 'Usuario', sortable: true, format: 'text', align: 'left' },
 ]
+
+const getMovementTypeLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    purchase: 'Compra',
+    consumption: 'Consumo',
+    adjustment: 'Ajuste',
+    loss: 'Pérdida',
+    transfer: 'Transferencia',
+    return: 'Devolución',
+  }
+  return labels[type] || type
+}
+
+const getMovementTypeVariant = (type: string) => {
+  const variants: Record<string, string> = {
+    purchase: 'success',
+    consumption: 'info',
+    adjustment: 'warning',
+    loss: 'destructive',
+    transfer: 'secondary',
+    return: 'secondary',
+  }
+  return variants[type] || 'default'
+}
 
 const formatNumber = (value: number) => {
   return new Intl.NumberFormat('es-CO', {
@@ -381,18 +303,21 @@ const formatNumber = (value: number) => {
   }).format(value)
 }
 
-const { formatDateTime: formatDate } = useFormatters()
+const { formatDate } = useFormatters()
 
-// Set refresh handler for layout
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 onMounted(() => {
+  const ingredientId = route.query.ingredient_id
+  if (typeof ingredientId === 'string' && ingredientId) {
+    ingredientFilter.value = ingredientId
+  }
   setRefreshHandler(refetch)
 })
 useMenuReturnRefresh(
-  '/abastecimiento/ajustes',
+  '/abastecimiento/movimientos',
   refetch,
   'abastecimiento-last-path',
-  ['/abastecimiento/ajustes/']
+  ['/abastecimiento/stock', '/abastecimiento/movimientos']
 )
 registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {

@@ -59,7 +59,7 @@
             @change="currentPage = 1"
           >
             <option value="all">Estado</option>
-            <option value="critical">Crítico</option>
+            <option value="negative">Crítico</option>
             <option value="low">Bajo</option>
             <option value="ok">Normal</option>
           </select>
@@ -114,7 +114,12 @@
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
               <div class="flex flex-col items-end gap-1.5">
-                <p class="text-sm font-bold tabular-nums text-text-primary">{{ formatNumber(item.current_stock) }}</p>
+                <p
+                  class="text-sm font-bold tabular-nums"
+                  :class="item.current_stock < 0 ? 'text-destructive' : 'text-text-primary'"
+                >
+                  {{ formatNumber(item.current_stock) }}
+                </p>
                 <UiStatusBadge
                   :value="getStatusLabel(item.status)"
                   :variant="getStockVariant(item.status)"
@@ -145,7 +150,12 @@
         </template>
 
         <template #cell-current_stock="{ value }">
-          <span class="text-sm font-bold text-text-primary">{{ formatNumber(value) }}</span>
+          <span
+            class="text-sm font-bold tabular-nums"
+            :class="value < 0 ? 'text-destructive' : 'text-text-primary'"
+          >
+            {{ formatNumber(value) }}
+          </span>
         </template>
 
         <template #cell-minimum_stock="{ value }">
@@ -161,7 +171,7 @@
             <div
               class="h-2 rounded-full transition-all"
               :class="{
-                'bg-destructive': row.status === 'critical',
+                'bg-destructive': row.status === 'negative',
                 'bg-warning': row.status === 'low',
                 'bg-success': row.status === 'ok'
               }"
@@ -187,10 +197,21 @@
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex justify-center">
+          <div class="flex justify-center gap-1">
+            <button
+              @click="navigateTo(`/abastecimiento/movimientos?ingredient_id=${row.ingredient_id}`)"
+              title="Ver movimientos"
+              aria-label="Ver movimientos"
+              class="p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-text-secondary hover:text-primary"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </button>
             <button
               @click="navigateTo(`/abastecimiento/ajustes/crear?ingredientId=${row.ingredient_id}`)"
               title="Ajustar stock"
+              aria-label="Ajustar stock"
               class="p-1.5 rounded-md hover:bg-surface-secondary transition-colors text-primary"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -470,19 +491,19 @@ const getStockPercentage = (current: number, min: number, max: number) => {
 }
 
 const getStockVariant = (status: string) => {
-  const variants = {
-    critical: 'destructive',
+  const variants: Record<string, string> = {
+    negative: 'destructive',
     low: 'warning',
-    ok: 'success'
+    ok: 'success',
   }
   return variants[status] || 'default'
 }
 
 const getStatusLabel = (status: string) => {
-  const labels = {
-    critical: 'Crítico',
+  const labels: Record<string, string> = {
+    negative: 'Crítico',
     low: 'Bajo',
-    ok: 'Normal'
+    ok: 'Normal',
   }
   return labels[status] || status
 }
@@ -511,7 +532,7 @@ useMenuReturnRefresh(
   '/abastecimiento/stock',
   refetch,
   'abastecimiento-last-path',
-  ['/abastecimiento/stock/', '/abastecimiento/ajustes/']
+  ['/abastecimiento/stock/', '/abastecimiento/ajustes/', '/abastecimiento/movimientos']
 )
 registerProgressiveLoading(isRefreshing)
 onUnmounted(() => {
