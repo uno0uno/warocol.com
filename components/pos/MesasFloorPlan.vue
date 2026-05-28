@@ -167,47 +167,68 @@ const badgeLabel = (status: string) => {
 }
 
 
-const cardClass = (status: string) => {
-  if (status === 'open') return 'border-status-success-text/50 bg-status-success-bg hover:shadow-md'
-  if (status === 'bill_requested') return 'border-status-warning-text/50 bg-status-warning-bg hover:shadow-md'
-  return 'border-border bg-surface hover:shadow-md hover:border-border/80'
+/** Una sola familia de color por card (sin mezclar verde + gris/morado en el mismo bloque). */
+const tableStatusTheme = (status: string) => {
+  if (status === 'open') {
+    return {
+      card: 'border-2 border-status-success-text/45 bg-status-success-bg hover:shadow-md',
+      focus: 'focus-visible:ring-status-success-text/50 focus-visible:ring-offset-status-success-bg',
+      square: 'bg-status-success-text/12 border-status-success-text text-status-success-text',
+      chair: 'bg-status-success-text/55',
+      strip: 'border-t border-status-success-text/30',
+      footer: 'border-t border-status-success-text/30',
+      text: 'text-status-success-text',
+      footerText: 'text-status-success-text',
+      name: 'text-status-success-text/75',
+      divider: 'bg-status-success-text/22',
+      dot: 'bg-status-success-text',
+      moveHover: 'hover:bg-status-success-text/10 focus-visible:ring-status-success-text/40',
+    }
+  }
+  if (status === 'bill_requested') {
+    return {
+      card: 'border-2 border-status-warning-text/45 bg-status-warning-bg hover:shadow-md',
+      focus: 'focus-visible:ring-status-warning-text/50 focus-visible:ring-offset-status-warning-bg',
+      square: 'bg-status-warning-text/12 border-status-warning-text text-status-warning-text',
+      chair: 'bg-status-warning-text/55',
+      strip: 'border-t border-status-warning-text/30',
+      footer: 'border-t border-status-warning-text/30',
+      text: 'text-status-warning-text',
+      footerText: 'text-status-warning-text',
+      name: 'text-status-warning-text/75',
+      divider: 'bg-status-warning-text/22',
+      dot: 'bg-status-warning-text',
+      moveHover: 'hover:bg-status-warning-text/10 focus-visible:ring-status-warning-text/40',
+    }
+  }
+  return {
+    card: 'border-2 border-border bg-surface hover:shadow-md hover:border-border/80',
+    focus: 'focus-visible:ring-border focus-visible:ring-offset-surface',
+    square: 'bg-surface border-border text-text-primary',
+    chair: 'bg-border',
+    strip: 'border-t border-border',
+    footer: 'border-t border-border',
+    text: 'text-text-secondary',
+    footerText: 'text-text-secondary',
+    name: 'text-text-secondary',
+    divider: 'bg-border',
+    dot: 'bg-text-tertiary',
+    moveHover: 'hover:bg-black/5 focus-visible:ring-border/60',
+  }
 }
 
-const squareClass = (status: string) => {
-  if (status === 'open') return 'bg-status-success-bg border-status-success-text text-status-success-text'
-  if (status === 'bill_requested') return 'bg-status-warning-bg border-status-warning-text text-status-warning-text'
-  return 'bg-surface border-border text-text-primary'
-}
-
-const chairClass = (status: string) => {
-  if (status === 'open') return 'bg-status-success-text/70'
-  if (status === 'bill_requested') return 'bg-status-warning-text/70'
-  return 'bg-border'
-}
-
-const stripClass = (status: string) => {
-  if (status === 'open') return 'bg-status-success-bg border-status-success-text/30'
-  if (status === 'bill_requested') return 'bg-status-warning-bg border-status-warning-text/30'
-  return 'bg-surface-secondary border-border'
-}
-
-const stripTextClass = (status: string) => {
-  if (status === 'open') return 'text-status-success-text'
-  if (status === 'bill_requested') return 'text-status-warning-text'
-  return 'text-text-secondary'
-}
-
-const stripDividerClass = (status: string) => {
-  if (status === 'open') return 'bg-status-success-text/25'
-  if (status === 'bill_requested') return 'bg-status-warning-text/25'
-  return 'bg-border'
-}
-
-const dotClass = (status: string) => {
-  if (status === 'open') return 'bg-status-success-text'
-  if (status === 'bill_requested') return 'bg-status-warning-text'
-  return 'bg-text-tertiary'
-}
+const cardClass = (status: string) => tableStatusTheme(status).card
+const focusRingClass = (status: string) => tableStatusTheme(status).focus
+const squareClass = (status: string) => tableStatusTheme(status).square
+const chairClass = (status: string) => tableStatusTheme(status).chair
+const stripClass = (status: string) => tableStatusTheme(status).strip
+const stripTextClass = (status: string) => tableStatusTheme(status).text
+const stripDividerClass = (status: string) => tableStatusTheme(status).divider
+const dotClass = (status: string) => tableStatusTheme(status).dot
+const tableNameClass = (status: string) => tableStatusTheme(status).name
+const footerClass = (status: string) => tableStatusTheme(status).footer
+const footerTextClass = (status: string) => tableStatusTheme(status).footerText ?? tableStatusTheme(status).text
+const moveButtonClass = (status: string) => tableStatusTheme(status).moveHover
 
 const freeCount = computed(() => regularTables.value.filter((t: any) => t.status === 'free').length)
 const openCount = computed(() => regularTables.value.filter((t: any) => t.status === 'open').length)
@@ -247,15 +268,15 @@ onUnmounted(() => {
         <p class="text-sm text-text-secondary">Vista de planta principal</p>
         <div class="flex gap-2 flex-wrap">
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-            <div class="w-3 h-3 rounded-sm bg-amber-300" />
+            <div class="w-3 h-3 rounded-sm bg-status-warning-bg border border-status-warning-text/40" />
             <span class="text-xs font-medium text-text-secondary">Barra</span>
           </div>
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-            <div class="w-3 h-3 rounded-sm bg-status-success-text" />
+            <div class="w-3 h-3 rounded-sm bg-status-success-bg border border-status-success-text/40" />
             <span class="text-xs font-medium text-text-secondary">Ocupada</span>
           </div>
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
-            <div class="w-3 h-3 rounded-sm bg-status-warning-text" />
+            <div class="w-3 h-3 rounded-sm bg-status-warning-bg border border-status-warning-text/40" />
             <span class="text-xs font-medium text-text-secondary">Cuenta</span>
           </div>
           <div class="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-lg border border-border shadow-sm">
@@ -268,24 +289,24 @@ onUnmounted(() => {
       <!-- Barra tile — always visible, pinned before regular tables -->
       <div v-if="barTable" class="mb-4">
         <button
-          class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 border-amber-500 bg-amber-50 text-amber-800 focus:outline-none hover:brightness-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          class="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 border-status-warning-text bg-status-warning-bg text-status-warning-text focus:outline-none focus-visible:ring-2 focus-visible:ring-status-warning-text/45 focus-visible:ring-offset-2 hover:brightness-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           :disabled="isEnteringBar"
           aria-label="Barra — siempre abierta"
           @click="handleBarClick"
         >
           <!-- Bar icon -->
-          <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-amber-100 border border-amber-200">
-            <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-status-warning-text/12 border border-status-warning-text/30">
+            <svg class="w-6 h-6 text-status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3h18v2l-7 9v7l-4-2v-5L3 5V3z" />
             </svg>
           </div>
           <!-- Info -->
           <div class="flex-1 min-w-0 text-left">
             <div class="flex items-center gap-2">
-              <span class="text-base font-black text-amber-900 uppercase tracking-wide">Barra</span>
-              <span class="text-[10px] font-bold bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full uppercase tracking-widest">Siempre abierta</span>
+              <span class="text-base font-black uppercase tracking-wide">Barra</span>
+              <span class="text-[10px] font-bold bg-status-warning-text/12 text-status-warning-text px-2 py-0.5 rounded-full uppercase tracking-widest">Siempre abierta</span>
             </div>
-            <p class="text-xs text-amber-700 mt-0.5 tabular-nums">
+            <p class="text-xs opacity-90 mt-0.5 tabular-nums">
               <template v-if="barTable.session?.running_total > 0">
                 ${{ Math.round(barTable.session.running_total).toLocaleString('es-CO') }} acumulado ·
                 {{ formatDuration(barTable.session.opened_at) }}
@@ -296,7 +317,7 @@ onUnmounted(() => {
             </p>
           </div>
           <!-- Arrow -->
-          <svg class="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="w-5 h-5 opacity-50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </button>
@@ -308,8 +329,8 @@ onUnmounted(() => {
 
           <!-- Card -->
           <button
-            class="group w-full flex flex-col rounded-2xl border-2 overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
-            :class="cardClass(table.status)"
+            class="group w-full flex flex-col rounded-2xl overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+            :class="[cardClass(table.status), focusRingClass(table.status)]"
             :disabled="openingTableId === table.id"
             :aria-label="`${table.name} — ${badgeLabel(table.status)}`"
             @click="handleTableClick(table)"
@@ -330,7 +351,7 @@ onUnmounted(() => {
                   <span :class="tableCodeTypographyClass(displayTableCode(table))">{{ displayTableCode(table) }}</span>
                 </div>
               </div>
-              <span class="text-xs sm:text-sm font-medium text-text-secondary text-center leading-snug line-clamp-2 w-full min-h-[2.5rem]">
+              <span class="text-xs sm:text-sm font-medium text-center leading-snug line-clamp-2 w-full min-h-[2.5rem]" :class="tableNameClass(table.status)">
                 {{ table.name }}
               </span>
             </div>
@@ -361,8 +382,8 @@ onUnmounted(() => {
                 <!-- Cell 3: move/transfer button -->
                 <button
                   type="button"
-                  class="min-h-11 min-w-11 flex items-center justify-center rounded hover:bg-black/10 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40"
-                  :class="stripTextClass(table.status)"
+                  class="min-h-11 min-w-11 flex items-center justify-center rounded transition-colors focus:outline-none focus-visible:ring-2"
+                  :class="[stripTextClass(table.status), moveButtonClass(table.status)]"
                   :aria-label="`Mover ${table.name} a otra ${tableSingularLower}`"
                   @click.stop="handleMoveTable(table, $event)"
                 >
@@ -374,8 +395,8 @@ onUnmounted(() => {
             </template>
             <template v-else>
               <!-- Free table — "Libre" label (Reabrir UI removed; endpoint /session/reopen still exists) -->
-              <div class="flex items-center justify-center px-3 min-h-11 border-t border-border bg-surface-secondary">
-                <span class="text-xs font-semibold text-text-secondary">Libre</span>
+              <div class="flex items-center justify-center px-3 min-h-11" :class="footerClass(table.status)">
+                <span class="text-xs font-semibold" :class="stripTextClass(table.status)">Libre</span>
               </div>
             </template>
 
@@ -385,11 +406,12 @@ onUnmounted(() => {
                  table default) or a "Sin asignar" placeholder when null. -->
             <div
               v-if="waiterAttributionEnabled"
-              class="flex items-center justify-center px-3 h-7 border-t border-border bg-surface-secondary/80"
+              class="flex items-center justify-center px-3 h-7"
+              :class="footerClass(table.status)"
             >
               <span
                 class="text-xs font-medium truncate text-center"
-                :class="table.effective_waiter_member_name ? 'text-text-secondary' : 'text-text-tertiary italic'"
+                :class="[footerTextClass(table.status), !table.effective_waiter_member_name && 'italic']"
               >
                 {{ table.effective_waiter_member_name || 'Sin asignar' }}
               </span>

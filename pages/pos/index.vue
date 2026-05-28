@@ -1185,7 +1185,7 @@ onUnmounted(() => {
                  as the dashboard header progressive-load indicator. -->
             <div
               v-if="waiterAttributionEnabled && isChangingSessionWaiter"
-              class="h-9 inline-flex items-center gap-2 px-3 rounded-lg border border-primary/30 bg-primary/5 text-primary text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+              class="h-9 inline-flex items-center gap-2 px-3 rounded-lg border border-border bg-surface-secondary text-text-secondary text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
               aria-live="polite"
             >
               <UiLoadingDots size="7px" color="currentColor" />
@@ -1196,11 +1196,9 @@ onUnmounted(() => {
               <select
                 :value="bannerEffectiveWaiterId || ''"
                 aria-label="Cambiar mesero de la sesión activa"
-                class="h-9 inline-flex items-center leading-none pl-7 pr-7 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 appearance-none bg-none cursor-pointer [&::-ms-expand]:hidden"
+                class="h-9 inline-flex items-center leading-none pl-7 pr-7 rounded-lg border border-border bg-surface-secondary text-[10px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-1 appearance-none bg-none cursor-pointer [&::-ms-expand]:hidden"
                 style="background-image: none; -webkit-appearance: none; -moz-appearance: none; text-align-last: center;"
-                :class="bannerEffectiveWaiterId
-                  ? 'border-primary/30 bg-primary/5 text-primary'
-                  : 'border-border bg-surface text-text-tertiary hover:text-text-secondary'"
+                :class="bannerEffectiveWaiterId ? 'text-text-primary' : 'text-text-secondary italic'"
                 @change="handleChangeSessionWaiter"
               >
                 <option value="">Sin mesero</option>
@@ -1214,9 +1212,8 @@ onUnmounted(() => {
               </select>
               <!-- User icon (overlapping left) -->
               <svg
-                class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 flex-shrink-0"
+                class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 flex-shrink-0 text-text-secondary"
                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                :class="bannerEffectiveWaiterId ? 'text-primary' : 'text-text-tertiary'"
                 stroke="currentColor" aria-hidden="true"
               >
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
