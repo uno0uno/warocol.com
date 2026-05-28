@@ -385,6 +385,11 @@ const mapTabItemsFromApi = (rows: any[]): TabItem[] =>
     quantity: i.quantity,
     unitPrice: i.unitPrice,
     subtotal: i.subtotal,
+    modifiers: (i.modifiers ?? []).map((m: any) => ({
+      id: m.id ?? '',
+      name: m.name,
+      price: Number(m.price) || 0,
+    })),
     notes: i.notes ?? null,
     fulfillmentStatus: i.fulfillmentStatus ?? 'new',
     sentAt: i.sentAt ?? null,
