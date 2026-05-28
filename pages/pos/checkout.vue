@@ -298,6 +298,7 @@ const addressFormLoading = ref(false)
 const cartItems = computed(() => {
   if (isKitchenServiceMode.value) {
     return storeTabItems.value.map(item => ({
+      orderItemId: item.orderItemId,
       product: { id: '', name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
       modifiers: item.modifiers ?? [],
       quantity: item.quantity,
@@ -906,6 +907,16 @@ const getItemUnitPrice = (item: any) => {
   return getItemTotal(item) / qty
 }
 
+type PrintModifier = { id?: string; name: string; price?: number; quantity?: number }
+
+const getModifierLineTotal = (mod: PrintModifier) =>
+  (Number(mod.price) || 0) * (Number(mod.quantity) || 1)
+
+const formatModifierPrintDesc = (mod: PrintModifier) => {
+  const qty = Number(mod.quantity) || 1
+  return qty > 1 ? `+ ${mod.name} ×${qty}` : `+ ${mod.name}`
+}
+
 const processOrder = async () => {
   // Mesa mode: close the table session as payment
   if (!selectedCustomer.value) {
@@ -1228,25 +1239,17 @@ const paymentGridClass = computed(() => {
   return 'grid-cols-2 md:grid-cols-4'
 })
 
-// Issue #956 — checkout Cancelar is navigation-only; partial payments stay intact.
-const showAbandonCheckoutModal = ref(false)
-
-const goBackToPos = () => {
-  sessionStorage.setItem('posNavigation', 'true')
-  router.push('/pos')
-}
-
-const cancelOrder = () => {
+const cancelOrder = async () => {
   if (splitPayments.value.length > 0) {
-    showAbandonCheckoutModal.value = true
-    return
+    if (!window.confirm('Ya hay pagos parciales registrados. ¿Seguro que quieres cancelar?')) return
   }
-  goBackToPos()
-}
-
-const confirmAbandonCheckout = () => {
-  showAbandonCheckoutModal.value = false
-  goBackToPos()
+  if (posStore.activeTableSession?.isBar) {
+    // Bar session — clear local cart but keep session alive (it's permanent)
+    posStore.clearCart()
+    router.push('/pos')
+  } else {
+    router.push('/pos')
+  }
 }
 
 const closeSuccessModal = () => {
@@ -3114,16 +3117,6 @@ onUnmounted(() => {
       </div>
     </Teleport>
 
-    <!-- Issue #956 — abandon checkout with partial payments (no void, navigation only) -->
-    <UiConfirmActionModal
-      v-model="showAbandonCheckoutModal"
-      title="¿Volver al POS?"
-      message="Ya hay pagos parciales registrados. Si sales ahora, los pagos se mantienen y podrás retomar el cobro después."
-      confirm-label="Sí, volver al POS"
-      variant="primary"
-      @confirm="confirmAbandonCheckout"
-    />
-
     <Teleport to="body">
       <div
         v-if="showSuccessModal"
@@ -3466,18 +3459,26 @@ onUnmounted(() => {
       <span class="receipt-col-price">Precio</span>
       <span class="receipt-col-total">Total</span>
     </div>
-    <div
-      v-for="item in cartItems"
-      :key="item.id"
-      class="receipt-grid-row receipt-small"
-    >
-      <span class="receipt-col-desc">
-        {{ item.product?.name || item.name }}<span v-if="isKitchenServiceMode && item.fired === false"> *</span>
-      </span>
-      <span class="receipt-col-qty">{{ item.quantity }}</span>
-      <span class="receipt-col-price">{{ formatCurrency(getItemUnitPrice(item)) }}</span>
-      <span class="receipt-col-total">{{ formatCurrency(getItemTotal(item)) }}</span>
-    </div>
+    <template v-for="item in cartItems" :key="item.id ?? item.orderItemId">
+      <div class="receipt-grid-row receipt-small">
+        <span class="receipt-col-desc">
+          {{ item.product?.name || item.name }}<span v-if="isKitchenServiceMode && item.fired === false"> *</span>
+        </span>
+        <span class="receipt-col-qty">{{ item.quantity }}</span>
+        <span class="receipt-col-price">{{ formatCurrency(getItemUnitPrice(item)) }}</span>
+        <span class="receipt-col-total">{{ formatCurrency(getItemTotal(item)) }}</span>
+      </div>
+      <div
+        v-for="mod in (item.modifiers ?? [])"
+        :key="`${item.id ?? item.orderItemId}-${mod.id}`"
+        class="receipt-grid-row receipt-small receipt-modifier-row"
+      >
+        <span class="receipt-col-desc">{{ formatModifierPrintDesc(mod) }}</span>
+        <span class="receipt-col-qty">{{ (Number(mod.quantity) || 1) > 1 ? mod.quantity : '' }}</span>
+        <span class="receipt-col-price">{{ formatCurrency(Number(mod.price) || 0) }}</span>
+        <span class="receipt-col-total">{{ formatCurrency(getModifierLineTotal(mod)) }}</span>
+      </div>
+    </template>
     <div class="receipt-divider">--------------------------------</div>
 
     <div v-if="discountAmount > 0" class="receipt-item">
@@ -3585,16 +3586,24 @@ onUnmounted(() => {
       <span class="receipt-col-price">Precio</span>
       <span class="receipt-col-total">Total</span>
     </div>
-    <div
-      v-for="item in cartItemsSnapshot"
-      :key="item.id"
-      class="receipt-grid-row receipt-small"
-    >
-      <span class="receipt-col-desc">{{ item.product?.name || item.name }}</span>
-      <span class="receipt-col-qty">{{ item.quantity }}</span>
-      <span class="receipt-col-price">{{ formatCurrency(getItemUnitPrice(item)) }}</span>
-      <span class="receipt-col-total">{{ formatCurrency(getItemTotal(item)) }}</span>
-    </div>
+    <template v-for="item in cartItemsSnapshot" :key="item.id ?? item.orderItemId">
+      <div class="receipt-grid-row receipt-small">
+        <span class="receipt-col-desc">{{ item.product?.name || item.name }}</span>
+        <span class="receipt-col-qty">{{ item.quantity }}</span>
+        <span class="receipt-col-price">{{ formatCurrency(getItemUnitPrice(item)) }}</span>
+        <span class="receipt-col-total">{{ formatCurrency(getItemTotal(item)) }}</span>
+      </div>
+      <div
+        v-for="mod in (item.modifiers ?? [])"
+        :key="`${item.id ?? item.orderItemId}-${mod.id}`"
+        class="receipt-grid-row receipt-small receipt-modifier-row"
+      >
+        <span class="receipt-col-desc">{{ formatModifierPrintDesc(mod) }}</span>
+        <span class="receipt-col-qty">{{ (Number(mod.quantity) || 1) > 1 ? mod.quantity : '' }}</span>
+        <span class="receipt-col-price">{{ formatCurrency(Number(mod.price) || 0) }}</span>
+        <span class="receipt-col-total">{{ formatCurrency(getModifierLineTotal(mod)) }}</span>
+      </div>
+    </template>
     <div class="receipt-divider">--------------------------------</div>
 
     <div v-if="orderResult?.discount_amount && orderResult?.subtotal" class="receipt-item">
@@ -3724,6 +3733,7 @@ onUnmounted(() => {
 .receipt-col-price,
 .receipt-col-total { text-align: right; white-space: nowrap; }
 .receipt-grid-header { font-weight: bold; border-bottom: 1px dashed #000; padding-bottom: 2px; margin-bottom: 4px; }
+.receipt-modifier-row .receipt-col-desc { padding-left: 8px; font-size: 0.92em; }
 </style>
 
 <style>
