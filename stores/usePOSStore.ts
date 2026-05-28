@@ -41,12 +41,19 @@ export interface ActiveTableSession {
     effectiveWaiterMemberName?: string | null
 }
 
+export interface TabItemModifier {
+    id: string
+    name: string
+    price: number
+}
+
 export interface TabItem {
     orderItemId: string
     productName: string
     quantity: number
     unitPrice: number
     subtotal: number
+    modifiers: TabItemModifier[]
     notes?: string | null
     fulfillmentStatus: 'new' | 'sent' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
     sentAt: string | null

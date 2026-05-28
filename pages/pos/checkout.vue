@@ -299,9 +299,9 @@ const cartItems = computed(() => {
   if (isKitchenServiceMode.value) {
     return storeTabItems.value.map(item => ({
       product: { id: '', name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
-      modifiers: [] as Array<{ id: string; name: string; price: number }>,
+      modifiers: item.modifiers ?? [],
       quantity: item.quantity,
-      notes: undefined as string | undefined
+      notes: item.notes ?? undefined
     }))
   }
   return posStore.cart
@@ -408,6 +408,11 @@ function mapTabItemsFromApi(rows: any[]): TabItem[] {
     quantity: i.quantity,
     unitPrice: i.unitPrice,
     subtotal: i.subtotal,
+    modifiers: (i.modifiers ?? []).map((m: any) => ({
+      id: m.id ?? '',
+      name: m.name,
+      price: Number(m.price) || 0,
+    })),
     notes: i.notes ?? null,
     fulfillmentStatus: i.fulfillmentStatus ?? 'new',
     sentAt: i.sentAt ?? null,

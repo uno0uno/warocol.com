@@ -100,7 +100,7 @@
         <PosCartItem
           :item="{
             product: { id: item.orderItemId, name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
-            modifiers: [],
+            modifiers: item.modifiers ?? [],
             quantity: item.quantity,
             notes: item.notes ?? undefined,
             fulfillmentStatus: item.fulfillmentStatus,
