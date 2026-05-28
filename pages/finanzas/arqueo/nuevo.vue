@@ -213,7 +213,7 @@
             <div class="bg-surface border-2 border-border rounded-lg">
               <div class="p-3 border-b border-border"><h3 class="text-sm font-semibold text-text-primary uppercase tracking-wide">Estado de caja</h3></div>
               <div class="divide-y divide-border">
-                <div v-if="(xPreviewData.openingCash ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Fondo inicial</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.openingCash) }}</span></div>
+                <div v-if="step1OpeningCash > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Fondo inicial</span><span class="font-medium">+ {{ formatCurrency(step1OpeningCash) }}</span></div>
                 <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Efectivo recibido</span><span class="font-medium">{{ formatCurrency(xPreviewData.totalCash) }}</span></div>
                 <div v-if="(xPreviewData.cashTips ?? 0) > 0" class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Propinas en efectivo</span><span class="font-medium">+ {{ formatCurrency(xPreviewData.cashTips) }}</span></div>
                 <div class="flex justify-between px-4 py-2.5 text-sm"><span class="text-text-secondary">Gastos en efectivo</span><span class="font-medium text-destructive">− {{ formatCurrency(xPreviewData.gastosEfectivo) }}</span></div>
@@ -877,9 +877,26 @@ const { data: rawXPreview, status: xPreviewStatus, error: xPreviewError, refetch
 const xPreviewData    = computed(() => rawXPreview.value?.data ?? null)
 const xPreviewLoading = computed(() => xPreviewStatus.value === 'pending' && !xPreviewData.value)
 
+/** Preview or shift-status (Mañana/custom) when cached preview omits openingCash. */
+const step1OpeningCash = computed(() => {
+  const fromPreview = Number(xPreviewData.value?.openingCash ?? 0)
+  if (fromPreview > 0) return fromPreview
+  return Number(rawShiftStatus.value?.data?.openingCash ?? 0)
+})
+
 watch(shiftOpenForWindow, (isOpen, wasOpen) => {
   if (isOpen && !wasOpen) void refetchXPreview()
 })
+
+watch(
+  () => [rawShiftStatus.value?.data?.openingCash, xPreviewData.value?.openingCash],
+  () => {
+    if (!shiftOpenForWindow.value) return
+    if (Number(xPreviewData.value?.openingCash ?? 0) > 0) return
+    if (Number(rawShiftStatus.value?.data?.openingCash ?? 0) <= 0) return
+    void refetchXPreview()
+  },
+)
 
 // Navigate to step 1
 const isPastPeriod = computed(() => periodEnd.value < today)
