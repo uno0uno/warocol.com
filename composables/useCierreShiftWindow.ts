@@ -22,3 +22,9 @@ export function buildCierreWindowParams(opts: {
 export function isShiftOpen(data: Record<string, any> | null | undefined): boolean {
   return data?.status === 'open' || !!data?.openingCash
 }
+
+/** Pinia Colada segment so preview refetches when shift opens or fondo changes. */
+export function cierrePreviewShiftCacheKey(data: Record<string, any> | null | undefined): string {
+  if (!isShiftOpen(data)) return 'closed'
+  return `open-${data?.openingCash ?? 0}`
+}

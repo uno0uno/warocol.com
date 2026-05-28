@@ -754,7 +754,7 @@ import { useFormatters } from '~/composables/useFormatters'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useQueryCache } from '@pinia/colada'
-import { buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
+import { buildCierreWindowParams, cierrePreviewShiftCacheKey, isShiftOpen } from '~/composables/useCierreShiftWindow'
 import {
   addDaysBogotaISO,
   bogotaDateAtNoon,
@@ -860,15 +860,26 @@ const aperturaLink = computed(() =>
 
 // Step 0 preview — aligned with the same completed-order semantics used by the close.
 const { data: rawXPreview, status: xPreviewStatus, error: xPreviewError, refetch: refetchXPreview } = useQuery({
-  key: () => ['cierre', 'preview-x0', currentTenant.value?.id, periodStart.value],
+  key: () => [
+    'cierre',
+    'preview-x0',
+    currentTenant.value?.id,
+    periodStart.value,
+    periodEnd.value,
+    cierrePreviewShiftCacheKey(rawShiftStatus.value?.data),
+  ],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
     params: { period_start: periodStart.value, period_end: periodEnd.value, completed_only: true },
   }),
   enabled: () => !!currentTenant.value,
-  staleTime: 60_000,
+  staleTime: 0,
 })
 const xPreviewData    = computed(() => rawXPreview.value?.data ?? null)
 const xPreviewLoading = computed(() => xPreviewStatus.value === 'pending' && !xPreviewData.value)
+
+watch(shiftOpenForWindow, (isOpen, wasOpen) => {
+  if (isOpen && !wasOpen) void refetchXPreview()
+})
 
 // Navigate to step 1
 const isPastPeriod = computed(() => periodEnd.value < today)
@@ -910,7 +921,14 @@ const totalCounted = computed(() =>
 
 // ── Preview API (completed orders only — cash already in drawer) ───────────
 const { data: rawPreview, status: previewStatus, asyncStatus: previewAsyncStatus, refetch: refetchPreview } = useQuery({
-  key: () => ['cierre', 'preview', currentTenant.value?.id, periodStart.value],
+  key: () => [
+    'cierre',
+    'preview',
+    currentTenant.value?.id,
+    periodStart.value,
+    periodEnd.value,
+    cierrePreviewShiftCacheKey(rawShiftStatus.value?.data),
+  ],
   query: () => $fetch<{ success: boolean; data: Record<string, any> }>('/api/cierre/preview', {
     params: { period_start: periodStart.value, period_end: periodEnd.value, completed_only: true },
   }),

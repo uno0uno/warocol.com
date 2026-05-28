@@ -219,6 +219,7 @@ import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useFormatters } from '~/composables/useFormatters'
 import { useCashDenominationCount } from '~/composables/useCashDenominationCount'
+import { useQueryCache } from '@pinia/colada'
 import { buildCierreWindowParams, isShiftOpen } from '~/composables/useCierreShiftWindow'
 import { bogotaDateAtNoon, bogotaISOFromDate, combineBogotaDateAndTimeISO, todayBogotaISO } from '~/utils/bogotaDate'
 
@@ -236,6 +237,7 @@ interface ShiftTemplateOption {
 
 const route = useRoute()
 const { currentTenant } = useTenantReactive()
+const cache = useQueryCache()
 const { formatCurrency } = useFormatters()
 
 const today = todayBogotaISO()
@@ -424,6 +426,8 @@ const submitOpening = async () => {
     successOpeningCash.value = totalCounted.value
     openSuccess.value = true
     await refetchShiftStatus()
+    cache.invalidateQueries({ key: ['cierre', 'preview-x0'] })
+    cache.invalidateQueries({ key: ['cierre', 'preview'] })
   } catch (err: any) {
     submitError.value = err?.data?.detail ?? err?.data?.message ?? 'No se pudo abrir el turno'
   } finally {
