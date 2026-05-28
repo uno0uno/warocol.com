@@ -629,41 +629,49 @@ onUnmounted(() => {
             </label>
           </div>
 
-          <!-- Multi-select adiciones (stepper style) -->
+          <!-- Multi-select adiciones (stepper below label) -->
           <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <div
               v-for="option in group.options"
               :key="option.id"
-              class="border rounded-xl p-2 md:p-3 flex items-center justify-between gap-2 transition-all bg-surface"
+              class="border rounded-xl p-3 md:p-4 flex flex-col gap-3 transition-all bg-surface"
               :class="getModifierQty(option.id) > 0
-                ? 'border-primary bg-primary/5'
+                ? 'border-primary bg-primary/5 shadow-sm'
                 : 'border-border'"
             >
-              <div class="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+              <div class="flex items-start gap-2.5 min-w-0">
                 <div class="bg-surface-secondary p-1.5 md:p-2 rounded-lg text-text-secondary flex-shrink-0">
                   <svg class="h-4 md:h-5 w-4 md:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                   </svg>
                 </div>
-                <div class="min-w-0">
-                  <div class="font-medium text-text-primary text-xs md:text-sm truncate">{{ option.name }}</div>
-                  <div class="text-xs text-primary font-semibold">+ {{ formatCurrency(option.price) }}</div>
+                <div class="min-w-0 flex-1">
+                  <div class="font-medium text-text-primary text-sm leading-snug">{{ option.name }}</div>
+                  <div class="text-xs text-primary font-semibold mt-0.5">+ {{ formatCurrency(option.price) }}</div>
                 </div>
               </div>
-              <div class="flex items-center border border-border rounded-lg bg-surface flex-shrink-0">
+              <div
+                class="flex items-center justify-between w-full rounded-xl border border-border/80 bg-surface-secondary/40 p-0.5"
+                :class="getModifierQty(option.id) > 0 ? 'border-primary/30' : ''"
+              >
                 <button
                   type="button"
-                  class="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-secondary hover:bg-surface-secondary rounded-l-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                  class="flex-1 min-h-[40px] flex items-center justify-center text-lg font-medium text-text-secondary hover:bg-surface hover:text-text-primary rounded-lg transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
                   :disabled="getModifierQty(option.id) <= 0"
                   :aria-label="`Reducir ${option.name}`"
                   @click="decrementModifier(option, group.id)"
                 >
                   −
                 </button>
-                <span class="w-6 text-center text-xs font-medium text-text-primary tabular-nums">{{ getModifierQty(option.id) }}</span>
+                <span
+                  class="min-w-[2rem] px-1 text-center text-sm font-semibold text-text-primary tabular-nums"
+                  :class="getModifierQty(option.id) > 0 ? 'text-primary' : ''"
+                >
+                  {{ getModifierQty(option.id) }}
+                </span>
                 <button
                   type="button"
-                  class="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-secondary hover:bg-surface-secondary rounded-r-lg disabled:opacity-40 disabled:cursor-not-allowed"
+                  class="flex-1 min-h-[40px] flex items-center justify-center text-lg font-medium text-text-secondary hover:bg-surface hover:text-primary rounded-lg transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
                   :disabled="!canIncrementModifier(option, group.id)"
                   :aria-label="`Aumentar ${option.name}`"
                   @click="incrementModifier(option, group.id)"
