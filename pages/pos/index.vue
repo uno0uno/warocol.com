@@ -13,6 +13,7 @@ import {
   parseFireTableResponse,
   printComandaTickets,
 } from '~/composables/useComandaPrint'
+import { promoBadgeForProduct } from '~/utils/promoProductMatch'
 
 definePageMeta({
   layout: 'dashboard',
@@ -32,7 +33,7 @@ const toast = useToast()
 const posStore = usePOSStore()
 const { tabItems: storeTabItems, tabTotal: storeTabTotal, activeTableSession } = storeToRefs(posStore)
 
-const { hasActivePromos, activePromoHint } = useActivePromotions()
+const { activePromos, hasActivePromos, activePromoHint } = useActivePromotions()
 
 // Clear session at setup time (before first render) so showFloorPlan is correct immediately.
 // If navigating from a POS sub-page (checkout, producto), posNavigation flag preserves the session.
@@ -950,11 +951,23 @@ const products = computed(() => {
     name: p.name,
     price: p.price,
     category: p.category_name || p.category?.name || 'Sin categoría',
+    category_id: p.category_id ?? null,
     image: '🍽️',
     image_url: p.image_url || null,
     available: p.is_available,
     is_resale: p.is_resale || false
   }))
+})
+
+const promoBadgesByProductId = computed(() => {
+  const map = new Map<string, ReturnType<typeof promoBadgeForProduct>>()
+  const promos = activePromos.value
+  if (promos.length === 0) return map
+  for (const product of products.value) {
+    const badge = promoBadgeForProduct(promos, product.id, product.category_id)
+    if (badge) map.set(product.id, badge)
+  }
+  return map
 })
 
 const categories = computed(() => {
@@ -1539,6 +1552,7 @@ onUnmounted(() => {
               v-for="product in filteredProducts"
               :key="product.id"
               :product="product"
+              :promo-badge="promoBadgesByProductId.get(product.id) ?? null"
               @select="selectProduct"
             />
           </div>
