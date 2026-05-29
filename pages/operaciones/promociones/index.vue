@@ -7,6 +7,35 @@
     <CommonsTheErrorState v-else-if="fetchError" />
 
     <div v-else class="flex flex-col gap-3 md:gap-4">
+      <div
+        v-if="opsProfile"
+        class="flex items-center justify-between gap-4 rounded-xl border-2 border-border bg-surface px-4 py-3"
+        :class="opsContextAsyncStatus === 'loading' && !opsContextData ? 'opacity-60' : ''"
+      >
+        <div class="min-w-0">
+          <p class="text-sm font-semibold leading-snug text-text-primary">
+            {{ opsProfile.allow_promo_line_opt_out ? 'Exclusión por ítem activada' : 'Exclusión por ítem desactivada' }}
+          </p>
+          <p class="text-xs mt-0.5 leading-snug text-text-secondary">
+            Permitir excluir promoción por ítem en checkout — el cajero puede desactivar la promoción en una línea sin quitar el producto.
+          </p>
+        </div>
+        <label
+          class="relative inline-flex items-center cursor-pointer flex-shrink-0 min-h-[44px]"
+          :class="isTogglingPromoLineOptOut ? 'opacity-50 pointer-events-none' : ''"
+          :aria-label="opsProfile.allow_promo_line_opt_out ? 'Desactivar exclusión por ítem' : 'Activar exclusión por ítem'"
+        >
+          <input
+            type="checkbox"
+            class="sr-only peer"
+            :checked="opsProfile.allow_promo_line_opt_out === true"
+            :disabled="isTogglingPromoLineOptOut"
+            @change="togglePromoLineOptOutSetting"
+          />
+          <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+        </label>
+      </div>
+
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         :search-fields="[]"
@@ -191,7 +220,7 @@
 
 <script setup lang="ts">
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
-import { useQueryCache } from '@pinia/colada'
+import { useQuery, useQueryCache } from '@pinia/colada'
 import { PencilSquareIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
@@ -227,6 +256,43 @@ const route = useRoute()
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
 const cache = useQueryCache()
+const toast = useToast()
+
+const {
+  data: opsContextData,
+  asyncStatus: opsContextAsyncStatus,
+} = useQuery({
+  key: () => ['operaciones', 'restaurant-context', currentTenant.value?.id],
+  query: () => $fetch<{ success: boolean; data: any }>('/api/operaciones/restaurant-context'),
+  enabled: () => !!currentTenant.value,
+  staleTime: 30_000,
+})
+const opsProfile = computed(() => opsContextData.value?.data ?? null)
+const isTogglingPromoLineOptOut = ref(false)
+
+const togglePromoLineOptOutSetting = async () => {
+  if (!opsProfile.value || isTogglingPromoLineOptOut.value) return
+  const enabled = !opsProfile.value.allow_promo_line_opt_out
+  isTogglingPromoLineOptOut.value = true
+  try {
+    await $fetch('/api/operaciones/toggles/promo-line-opt-out', {
+      method: 'PATCH',
+      body: { enabled },
+    })
+    await cache.invalidateQueries({ key: ['operaciones', 'restaurant-context'] })
+    await cache.invalidateQueries({ key: ['pos', 'restaurant-context'] })
+    toast.success(
+      enabled
+        ? 'Los cajeros pueden excluir promociones por ítem en checkout'
+        : 'Exclusión de promoción por ítem desactivada',
+      { title: enabled ? 'Opción activada' : 'Opción desactivada' },
+    )
+  } catch (error: any) {
+    toast.error(error?.data?.detail || 'Error al guardar la configuración', { title: 'Error' })
+  } finally {
+    isTogglingPromoLineOptOut.value = false
+  }
+}
 
 const showPanel = ref(false)
 const panelPromotionId = ref<string | null>(null)
