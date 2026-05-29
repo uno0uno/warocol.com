@@ -1,0 +1,31 @@
+issue: 1000
+title: "feat(promociones): bulk product scope modal in promotion panel"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1000-bulk-scope-modal
+
+paths:
+  - components/promociones/PromocionPanel.vue
+  - components/promociones/PromotionScopePickerModal.vue
+
+ac:
+  - Threshold 15 — below shows chips, above shows summary + modal
+  - Modal lists selected products with search, remove-one, clear all
+  - ProductSearchInput remains for adding products
+  - Save payload unchanged (product_ids array)
+  - Preview text uses formatScopeLabel with list threshold (5)
+
+out_of_scope:
+  - POS badge (#1001)
+  - hydrateProductNames N+1 optimization
+  - Category bulk modal
+
+hints:
+  entry: "PromocionPanel.vue — products scope section"
+  pattern: "PromotionScopePopover.vue — UiModal + UiBottomSheetModal shell"
+  tests: "manual — /operaciones/promociones panel with 16+ products"
+
+skip:
+  audits: [ux, color, typography]
