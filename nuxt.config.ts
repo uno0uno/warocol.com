@@ -51,6 +51,8 @@ export default defineNuxtConfig({
     '/gestion/**': { ssr: false },
     '/domicilios/**': { ssr: false },
     '/finanzas/**': { ssr: false },
+    '/facturacion': { ssr: false },
+    '/facturacion/**': { ssr: false },
     '/negocio': { ssr: false },
     '/cocina': { ssr: false },
     '/cocina/**': { ssr: false },
