@@ -175,26 +175,12 @@
 
             <div v-if="form.scope_type === 'products'" class="space-y-2">
               <label for="promo-product-search" class="text-sm font-medium text-text-primary">Productos</label>
-              <input
-                id="promo-product-search"
-                v-model="productSearch"
-                type="search"
+              <UiProductSearchInput
+                input-id="promo-product-search"
                 placeholder="Buscar producto…"
-                :class="inputClass"
+                :exclude-ids="selectedProducts.map((p) => p.id)"
+                @select="onProductSelect"
               />
-              <ul
-                v-if="productResults.length && productSearch.trim()"
-                class="border border-border rounded-lg max-h-40 overflow-y-auto"
-              >
-                <li
-                  v-for="p in productResults"
-                  :key="p.id"
-                  class="px-3 py-2 text-sm hover:bg-surface-secondary cursor-pointer min-h-[44px] flex items-center"
-                  @click="addProduct(p)"
-                >
-                  {{ p.name }}
-                </li>
-              </ul>
               <ul v-if="selectedProducts.length" class="flex flex-wrap gap-2">
                 <li
                   v-for="p in selectedProducts"
@@ -330,7 +316,6 @@
 </template>
 
 <script setup lang="ts">
-import { useDebounceFn } from '@vueuse/core'
 import { useQueryCache } from '@pinia/colada'
 import type { FunctionalComponent } from 'vue'
 import {
@@ -339,6 +324,7 @@ import {
   ReceiptPercentIcon,
 } from '@heroicons/vue/24/outline'
 import type { CategoryRow } from '~/composables/useCategorySearch'
+import type { ProductRow } from '~/composables/useProductSearch'
 import {
   buildPromotionPreview,
   findOverlappingScheduleIndices,
@@ -428,8 +414,6 @@ const form = reactive({
 
 const selectedCategories = ref<CategoryRow[]>([])
 const selectedProducts = ref<{ id: string; name: string }[]>([])
-const productSearch = ref('')
-const productResults = ref<{ id: string; name: string }[]>([])
 const validationErrors = ref<string[]>([])
 const isSaving = ref(false)
 const loadError = ref(false)
@@ -449,8 +433,6 @@ function resetForm() {
   form.endsAtDate = ''
   selectedCategories.value = []
   selectedProducts.value = []
-  productSearch.value = ''
-  productResults.value = []
   validationErrors.value = []
   loadError.value = false
 }
@@ -555,35 +537,15 @@ function removeCategory(id: string) {
   selectedCategories.value = selectedCategories.value.filter((c) => c.id !== id)
 }
 
-function addProduct(p: { id: string; name: string }) {
+function onProductSelect(p: ProductRow) {
   if (!selectedProducts.value.some((x) => x.id === p.id)) {
     selectedProducts.value.push(p)
   }
-  productSearch.value = ''
-  productResults.value = []
 }
 
 function removeProduct(id: string) {
   selectedProducts.value = selectedProducts.value.filter((p) => p.id !== id)
 }
-
-const searchProducts = useDebounceFn(async (q: string) => {
-  if (!q.trim()) {
-    productResults.value = []
-    return
-  }
-  try {
-    const res = await $fetch<{ success: boolean; data: any[] }>('/api/menu/products', {
-      query: { search: q.trim(), limit: 20, page: 1 },
-    })
-    const items = Array.isArray(res.data) ? res.data : []
-    productResults.value = items.map((p) => ({ id: p.id, name: p.name }))
-  } catch {
-    productResults.value = []
-  }
-}, 300)
-
-watch(productSearch, (q) => searchProducts(q))
 
 async function hydrateProductNames(ids: string[]) {
   try {
