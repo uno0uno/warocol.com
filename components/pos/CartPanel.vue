@@ -99,7 +99,7 @@
         </label>
         <PosCartItem
           :item="{
-            product: { id: item.orderItemId, name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
+            product: { id: item.productId, name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
             modifiers: item.modifiers ?? [],
             quantity: item.quantity,
             notes: item.notes ?? undefined,
@@ -108,6 +108,10 @@
           }"
           :order-number="idx + 1"
           :show-fulfillment-status="comandasEnabled"
+          :promo-label="linePromoBadge(item.productId, item.categoryId)?.label ?? null"
+          :promo-title="linePromoBadge(item.productId, item.categoryId)?.title ?? null"
+          :promo-savings="tabLinePromoSavings(item)"
+          :gross-total="item.subtotal"
           :class="[
             pendingRemoveItemId === item.orderItemId ? 'opacity-40 pointer-events-none' : '',
             showPrintItemSelection && printableOrderItemIds.includes(item.orderItemId) ? 'pl-8' : '',
@@ -140,6 +144,9 @@
         :key="index"
         :item="item"
         :order-number="tabItems.length + index + 1"
+        :promo-label="linePromoBadge(item.product.id, categoryForProduct(item.product.id))?.label ?? null"
+        :promo-title="linePromoBadge(item.product.id, categoryForProduct(item.product.id))?.title ?? null"
+        :promo-savings="cartLinePromoSavings(item)"
         @edit="$emit('edit-item', index, item.product.id)"
         @remove="$emit('remove-item', index)"
         @increment="$emit('increment-item', index)"
@@ -345,6 +352,12 @@
 <script setup lang="ts">
 import { usePOSStore } from '~/stores/usePOSStore'
 import { storeToRefs } from 'pinia'
+import {
+  linePromoSavingsForProduct,
+  promoBadgeForProduct,
+} from '~/utils/promoProductMatch'
+
+const { activePromos } = useActivePromotions()
 
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
@@ -357,18 +370,24 @@ interface CartItem {
     image: string
     category: string
   }
-  modifiers: Array<{ id: string; name: string; price: number }>
+  modifiers: Array<{ id: string; name: string; price: number; quantity?: number }>
   quantity: number
   notes?: string
   is_resale?: boolean
+  promo_opt_out?: boolean
 }
 
 interface TabItem {
   orderItemId: string
+  productId: string
+  categoryId?: string | null
   productName: string
   quantity: number
   unitPrice: number
   subtotal: number
+  promoSavings?: number
+  promoOptOut?: boolean
+  modifiers?: Array<{ id: string; name: string; price: number; quantity?: number }>
   notes?: string | null
   fulfillmentStatus?: string
   sentAt?: string | null
@@ -466,6 +485,69 @@ const printComandaLabel = computed(() => {
 })
 const emit = defineEmits<Emits>()
 
+const posStore = usePOSStore()
+const { isDeleting } = storeToRefs(posStore)
+
+function linePromoBadge(productId: string, categoryId?: string | null) {
+  return promoBadgeForProduct(activePromos.value, productId, categoryId)
+}
+
+function categoryForProduct(productId: string): string | null {
+  return posStore.getProduct(productId)?.category_id ?? null
+}
+
+function cartLineGross(item: CartItem): number {
+  const basePrice = Number(item.product.price) || 0
+  const modifiersPrice = (item.modifiers ?? []).reduce(
+    (sum, mod) => sum + Number(mod.price) * (mod.quantity ?? 1),
+    0,
+  )
+  return (basePrice + modifiersPrice) * Number(item.quantity)
+}
+
+function cartLinePromoSavings(item: CartItem): number {
+  if (item.promo_opt_out) return 0
+  const gross = cartLineGross(item)
+  return linePromoSavingsForProduct(
+    activePromos.value,
+    item.product.id,
+    { subtotal: gross, quantity: item.quantity },
+    categoryForProduct(item.product.id),
+  )
+}
+
+function tabLinePromoSavings(item: TabItem): number {
+  if (item.promoOptOut) return 0
+  const fromApi = Number(item.promoSavings) || 0
+  if (fromApi > 0) return fromApi
+  const categoryId = item.categoryId ?? categoryForProduct(item.productId)
+  return linePromoSavingsForProduct(
+    activePromos.value,
+    item.productId,
+    { subtotal: item.subtotal, quantity: item.quantity },
+    categoryId,
+  )
+}
+
+const grossOrderTotal = computed(() =>
+  props.mesaMode ? props.tabTotal + props.total : props.total,
+)
+
+const orderPromoSavings = computed(() => {
+  let savings = 0
+  for (const item of props.tabItems ?? []) {
+    savings += tabLinePromoSavings(item)
+  }
+  for (const item of props.items) {
+    savings += cartLinePromoSavings(item)
+  }
+  return savings
+})
+
+const netOrderTotal = computed(() =>
+  Math.max(0, grossOrderTotal.value - orderPromoSavings.value),
+)
+
 // Issue warocol.com#708 — mesa tab lines live outside posStore.cart; count both buckets.
 const displayItemCount = computed(() =>
   props.mesaMode ? props.tabItems.length + props.items.length : props.items.length
@@ -476,10 +558,6 @@ const onServedByChange = (event: Event) => {
   const target = event.target as HTMLSelectElement
   emit('update:served-by', target.value || null)
 }
-
-// Obtener isDeleting directamente del store
-const posStore = usePOSStore()
-const { isDeleting } = storeToRefs(posStore)
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('es-CO', {

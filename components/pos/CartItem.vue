@@ -33,15 +33,40 @@
               item.fulfillmentStatus === 'delivered' ? 'Entregado' : item.fulfillmentStatus
             }}
           </span>
+          <span
+            v-if="promoLabel"
+            class="px-1.5 py-0.5 text-[9px] font-semibold rounded-full bg-emerald-500/90 text-white flex-shrink-0"
+            :title="promoTitle || promoLabel"
+          >{{ promoLabel }}</span>
         </div>
         <p v-if="item.sentAt" class="text-[9px] text-slate-400 mt-0.5">Fuego: {{ formatTime(item.sentAt) }}</p>
       </div>
-      <p class="text-sm font-bold text-violet-700 tabular-nums flex-shrink-0 ml-1">{{ formatCurrency(itemTotal) }}</p>
+      <div class="flex flex-col items-end flex-shrink-0 ml-1">
+        <p
+          v-if="promoSavings > 0"
+          class="text-xs text-slate-400 line-through tabular-nums"
+        >{{ formatCurrency(displayGrossTotal) }}</p>
+        <p
+          class="text-sm font-bold tabular-nums"
+          :class="promoSavings > 0 ? 'text-emerald-700' : 'text-violet-700'"
+        >{{ formatCurrency(netTotal) }}</p>
+        <p
+          v-if="promoSavings > 0"
+          class="text-[10px] font-medium text-emerald-600 tabular-nums"
+        >-{{ formatCurrency(promoSavings) }}</p>
+      </div>
     </div>
 
     <!-- Fila 2: precio c/u + modificadores -->
     <div class="mt-1.5 pl-[2.125rem] space-y-0.5">
-      <p class="text-xs text-slate-500">{{ formatCurrency(Number(item.product.price)) }} c/u</p>
+      <p class="text-xs text-slate-500">
+        <template v-if="promoSavings > 0 && item.quantity > 0">
+          <span class="line-through text-slate-400 mr-1">{{ formatCurrency(unitGross) }}</span>
+          <span class="text-emerald-700 font-medium">{{ formatCurrency(unitNet) }}</span>
+        </template>
+        <template v-else>{{ formatCurrency(Number(item.product.price)) }}</template>
+        c/u
+      </p>
       <div v-for="mod in item.modifiers" :key="mod.id" class="flex justify-between text-xs gap-2">
         <span class="text-slate-400">+ {{ mod.name }}<template v-if="(mod.quantity ?? 1) > 1"> ×{{ mod.quantity }}</template></span>
         <span class="text-slate-500 tabular-nums flex-shrink-0">{{ formatCurrency(Number(mod.price) * (mod.quantity ?? 1)) }}</span>
@@ -139,6 +164,12 @@ interface Props {
   item: CartItem
   orderNumber: number
   showFulfillmentStatus?: boolean
+  promoLabel?: string | null
+  promoTitle?: string | null
+  /** COP discount for this line (from API preview or client eval). */
+  promoSavings?: number
+  /** When set, overrides computed gross (e.g. mesa tab subtotal). */
+  grossTotal?: number | null
 }
 
 interface Emits {
@@ -149,7 +180,11 @@ interface Emits {
   (e: 'duplicate'): void
 }
 
-const props = withDefaults(defineProps<Props>(), { showFulfillmentStatus: false })
+const props = withDefaults(defineProps<Props>(), {
+  showFulfillmentStatus: false,
+  promoSavings: 0,
+  grossTotal: null,
+})
 defineEmits<Emits>()
 
 const itemTotal = computed(() => {
@@ -159,6 +194,26 @@ const itemTotal = computed(() => {
     0
   )
   return (basePrice + modifiersPrice) * Number(props.item.quantity)
+})
+
+const displayGrossTotal = computed(() =>
+  props.grossTotal != null && props.grossTotal > 0 ? props.grossTotal : itemTotal.value,
+)
+
+const promoSavings = computed(() => Math.max(0, Number(props.promoSavings) || 0))
+
+const netTotal = computed(() =>
+  Math.max(0, displayGrossTotal.value - promoSavings.value),
+)
+
+const unitGross = computed(() => {
+  const qty = Number(props.item.quantity) || 1
+  return displayGrossTotal.value / qty
+})
+
+const unitNet = computed(() => {
+  const qty = Number(props.item.quantity) || 1
+  return netTotal.value / qty
 })
 
 const formatCurrency = (value: number) => {

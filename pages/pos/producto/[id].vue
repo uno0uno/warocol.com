@@ -7,6 +7,9 @@ import {
   CheckIcon
 } from '@heroicons/vue/24/outline'
 
+import { formatPromoTypeLabel } from '~/utils/promotionPreview'
+import { linePromoSavingsForProduct, promoBadgeForProduct } from '~/utils/promoProductMatch'
+
 definePageMeta({
   layout: 'dashboard',
   module: 'pos',
@@ -20,6 +23,7 @@ const { currentTenant } = useTenantReactive()
 const route = useRoute()
 const router = useRouter()
 const posStore = usePOSStore()
+const { activePromos } = useActivePromotions()
 
 // Inject subtitle setter from layout
 const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle', () => {})
@@ -55,11 +59,21 @@ const product = computed(() => {
     description: p.description || '',
     price: Number(p.price) || 0,
     category: p.category,
+    category_id: p.category_id ?? null,
     image: p.image,
     image_url: p.image_url || null,
     available: p.is_available,
     modifier_groups: p.modifier_groups || []
   }
+})
+
+const productPromoBadge = computed(() => {
+  if (!product.value) return null
+  return promoBadgeForProduct(
+    activePromos.value,
+    product.value.id,
+    product.value.category_id,
+  )
 })
 
 // State
@@ -360,6 +374,18 @@ const totalPrice = computed(() => {
   return basePrice + modifiersPrice // Always 1 item
 })
 
+const promoSavings = computed(() => {
+  if (!product.value || activePromos.value.length === 0) return 0
+  return linePromoSavingsForProduct(
+    activePromos.value,
+    product.value.id,
+    { subtotal: totalPrice.value, quantity: 1 },
+    product.value.category_id,
+  )
+})
+
+const netTotalPrice = computed(() => Math.max(0, totalPrice.value - promoSavings.value))
+
 // Methods
 const getModifierQty = (modifierId: string) =>
   selectedModifiers.value.find(m => m.id === modifierId)?.quantity ?? 0
@@ -551,9 +577,16 @@ onUnmounted(() => {
 
             <!-- Product Info -->
             <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1">
+              <div class="flex items-center gap-2 mb-1 flex-wrap">
                 <span class="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wide">
                   {{ product.category }}
+                </span>
+                <span
+                  v-if="productPromoBadge"
+                  class="text-xs font-semibold bg-emerald-500/90 text-white px-2 py-0.5 rounded-full"
+                  :title="productPromoBadge.title || productPromoBadge.label"
+                >
+                  {{ productPromoBadge.label }}
                 </span>
               </div>
               <h2 class="text-xl md:text-2xl font-bold text-text-primary mb-2">{{ product.name }}</h2>
@@ -712,14 +745,28 @@ onUnmounted(() => {
               <span>+ {{ modifier.name }}<template v-if="(modifier.quantity ?? 1) > 1"> ×{{ modifier.quantity }}</template></span>
               <span>{{ formatCurrency(modifierLineTotal(modifier)) }}</span>
             </div>
+            <div
+              v-if="promoSavings > 0 && productPromoBadge"
+              class="flex justify-between text-xs md:text-sm text-emerald-700"
+            >
+              <span>{{ productPromoBadge.title || productPromoBadge.label }}</span>
+              <span class="font-medium">- {{ formatCurrency(promoSavings) }}</span>
+            </div>
           </div>
 
           <!-- Total -->
           <div class="flex justify-between items-center mb-6">
             <span class="text-text-secondary font-medium text-sm md:text-base">Total</span>
-            <span class="text-xl md:text-2xl font-bold text-text-primary">
-              {{ formatCurrency(totalPrice) }}
-            </span>
+            <div class="flex flex-col items-end">
+              <span
+                v-if="promoSavings > 0"
+                class="text-sm text-text-tertiary line-through tabular-nums"
+              >{{ formatCurrency(totalPrice) }}</span>
+              <span
+                class="text-xl md:text-2xl font-bold tabular-nums"
+                :class="promoSavings > 0 ? 'text-emerald-700' : 'text-text-primary'"
+              >{{ formatCurrency(netTotalPrice) }}</span>
+            </div>
           </div>
 
           <!-- Add to Cart Button -->
@@ -761,14 +808,28 @@ onUnmounted(() => {
             <span>+ {{ modifier.name }}<template v-if="(modifier.quantity ?? 1) > 1"> ×{{ modifier.quantity }}</template></span>
             <span>{{ formatCurrency(modifierLineTotal(modifier)) }}</span>
           </div>
+          <div
+            v-if="promoSavings > 0 && productPromoBadge"
+            class="flex justify-between text-xs md:text-sm text-emerald-700"
+          >
+            <span>{{ productPromoBadge.title || productPromoBadge.label }}</span>
+            <span class="font-medium">- {{ formatCurrency(promoSavings) }}</span>
+          </div>
         </div>
 
         <!-- Total -->
         <div class="flex justify-between items-center mb-4 md:mb-6">
           <span class="text-text-secondary font-medium text-sm md:text-base">Total</span>
-          <span class="text-xl md:text-2xl font-bold text-text-primary">
-            {{ formatCurrency(totalPrice) }}
-          </span>
+          <div class="flex flex-col items-end">
+            <span
+              v-if="promoSavings > 0"
+              class="text-sm text-text-tertiary line-through tabular-nums"
+            >{{ formatCurrency(totalPrice) }}</span>
+            <span
+              class="text-xl md:text-2xl font-bold tabular-nums"
+              :class="promoSavings > 0 ? 'text-emerald-700' : 'text-text-primary'"
+            >{{ formatCurrency(netTotalPrice) }}</span>
+          </div>
         </div>
 
         <!-- Add to Cart Button -->

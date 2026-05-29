@@ -61,6 +61,8 @@ export interface TabItemModifier {
 
 export interface TabItem {
     orderItemId: string
+    productId: string
+    categoryId?: string | null
     productName: string
     quantity: number
     unitPrice: number
@@ -84,6 +86,7 @@ export interface CachedProduct {
     image: string
     image_url?: string | null  // Issue #465: real image when uploaded; emoji fallback otherwise
     category: string
+    category_id?: string | null
     is_available: boolean
     is_resale: boolean
     modifier_groups: any[] // Grupos de modificadores con todas sus opciones

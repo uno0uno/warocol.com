@@ -84,3 +84,57 @@ export function promoBadgeForProduct(
 
   return { label, title }
 }
+
+export type LinePromoInput = {
+  subtotal: number
+  quantity?: number
+}
+
+/** Client mirror of api promotions_service._compute_line_promo_savings. */
+export function computeLinePromoSavings(
+  line: LinePromoInput,
+  promo: Pick<ActivePromotionRow, 'promo_type' | 'value_json'>,
+): number {
+  const subtotal = Number(line.subtotal) || 0
+  const quantity = Math.max(1, Number(line.quantity) || 1)
+  if (subtotal <= 0) return 0
+
+  const valueJson = (promo.value_json ?? {}) as Record<string, unknown>
+
+  if (promo.promo_type === 'percent_off') {
+    const pct = Number(valueJson.percent) || 0
+    if (pct <= 0) return 0
+    return Math.min(Math.round(subtotal * pct / 100), Math.round(subtotal))
+  }
+
+  if (promo.promo_type === 'fixed_off') {
+    const amount = Number(valueJson.amount_cop) || 0
+    if (amount <= 0) return 0
+    return Math.min(Math.round(amount), Math.round(subtotal))
+  }
+
+  if (promo.promo_type === 'bogo') {
+    const buyQty = Number(valueJson.buy_qty) || 0
+    const getQty = Number(valueJson.get_qty) || 0
+    if (buyQty < 1 || getQty < 1) return 0
+    const bundle = buyQty + getQty
+    const sets = Math.floor(quantity / bundle)
+    if (sets <= 0) return 0
+    const unitPrice = subtotal / quantity
+    const freeUnits = sets * getQty
+    return Math.min(Math.round(freeUnits * unitPrice), Math.round(subtotal))
+  }
+
+  return 0
+}
+
+export function linePromoSavingsForProduct(
+  promos: ActivePromotionRow[],
+  productId: string,
+  line: LinePromoInput,
+  categoryId?: string | null,
+): number {
+  const promo = pickBestPromotionForProduct(promos, productId, categoryId)
+  if (!promo) return 0
+  return computeLinePromoSavings(line, promo)
+}
