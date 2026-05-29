@@ -55,8 +55,10 @@ export const useTenantsStore = defineStore('tenants', () => {
   const error = ref<string | null>(null)
 
   // ── User tenants query ────────────────────────────────────────────────────────
+  // Client-only: SSR has no session cookie → /api/tenants/user-tenants 401 (#977).
   const { data: tenantData, status } = useQuery({
     key: ['tenants', 'user'],
+    enabled: () => import.meta.client,
     query: async () => {
       const [tenantsRes, sessionRes] = await Promise.all([
         $fetch<{ success: boolean; data: Tenant[] }>('/api/tenants/user-tenants'),
@@ -86,7 +88,7 @@ export const useTenantsStore = defineStore('tenants', () => {
     query: () => $fetch<{ success: boolean; data: TenantBusinessProfile }>(
       '/api/api/tenant/public-profile'
     ).then(r => r?.data ?? null),
-    enabled: () => !!selectedTenant.value,
+    enabled: () => import.meta.client && !!selectedTenant.value,
   })
 
   // ── selectTenant mutation ─────────────────────────────────────────────────────
