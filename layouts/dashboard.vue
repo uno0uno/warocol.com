@@ -912,7 +912,7 @@ const getPageConfig = () => {
       pageTitle: 'Promociones',
       pageSubtitle: 'Descuentos y reglas para el menú',
       searchPlaceholder: undefined,
-      activePage: 'negocio' as const,
+      activePage: 'gestion' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: undefined

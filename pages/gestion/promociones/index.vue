@@ -8,31 +8,112 @@
 
     <div v-else class="page-layout">
       <div class="flex flex-col gap-3 md:gap-4">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <p class="text-sm text-text-secondary">
-            Configura descuentos y promociones con horario y alcance en el menú.
-          </p>
-          <NuxtLink
-            to="/gestion/promociones/nuevo"
-            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium text-center whitespace-nowrap min-h-[44px] inline-flex items-center justify-center"
-          >
-            + Nueva promoción
-          </NuxtLink>
-        </div>
+        <p class="text-sm text-text-secondary">
+          Configura descuentos y promociones con horario y alcance en el menú.
+        </p>
 
-        <label class="flex items-center gap-2 text-sm text-text-secondary min-h-[44px]">
-          <input v-model="showInactive" type="checkbox" class="rounded border-border" />
-          Mostrar promociones desactivadas
-        </label>
+        <UiAdvancedFiltersBar
+          v-model:search="localSearchTerm"
+          :search-fields="[]"
+          :show-date-range="false"
+          search-placeholder="Buscar promociones..."
+          :show-clear="hasActiveFilters"
+          @search="performSearch"
+          @clear="clearFilters"
+        >
+          <template #additional-filters>
+            <div
+              class="flex rounded-lg border border-border overflow-hidden text-sm shrink-0"
+              role="group"
+              aria-label="Filtrar por estado"
+            >
+              <button
+                type="button"
+                class="px-3 py-2 min-h-[44px] transition-colors"
+                :class="statusFilter === '' ? 'bg-primary text-white' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
+                @click="statusFilter = ''"
+              >
+                Todas
+              </button>
+              <button
+                type="button"
+                class="px-3 py-2 min-h-[44px] border-l border-border transition-colors"
+                :class="statusFilter === 'active' ? 'bg-status-success-bg text-status-success-text' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
+                @click="statusFilter = 'active'"
+              >
+                Activas
+              </button>
+              <button
+                type="button"
+                class="px-3 py-2 min-h-[44px] border-l border-border transition-colors"
+                :class="statusFilter === 'inactive' ? 'bg-text-secondary/20 text-text-secondary' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
+                @click="statusFilter = 'inactive'"
+              >
+                Inactivas
+              </button>
+            </div>
+
+            <div
+              class="flex rounded-lg border border-border overflow-hidden text-sm shrink-0"
+              role="group"
+              aria-label="Filtrar por tipo de promoción"
+            >
+              <button
+                type="button"
+                class="px-3 py-2 min-h-[44px] transition-colors"
+                :class="promoTypeFilter === '' ? 'bg-primary text-white' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
+                @click="promoTypeFilter = ''"
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                class="px-3 py-2 min-h-[44px] border-l border-border transition-colors whitespace-nowrap"
+                :class="promoTypeFilter === 'percent_off' ? 'bg-primary/90 text-white' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
+                @click="promoTypeFilter = 'percent_off'"
+              >
+                % desc.
+              </button>
+              <button
+                type="button"
+                class="px-3 py-2 min-h-[44px] border-l border-border transition-colors whitespace-nowrap"
+                :class="promoTypeFilter === 'fixed_off' ? 'bg-primary/90 text-white' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
+                @click="promoTypeFilter = 'fixed_off'"
+              >
+                Fijo
+              </button>
+              <button
+                type="button"
+                class="px-3 py-2 min-h-[44px] border-l border-border transition-colors whitespace-nowrap"
+                :class="promoTypeFilter === 'bogo' ? 'bg-primary/90 text-white' : 'bg-surface text-text-secondary hover:bg-surface-secondary'"
+                @click="promoTypeFilter = 'bogo'"
+              >
+                2×1
+              </button>
+            </div>
+          </template>
+        </UiAdvancedFiltersBar>
 
         <UiResponsiveDataView
           :columns="columns"
-          :data="promotions"
+          :data="filteredPromotions"
           empty-message="No hay promociones"
           empty-sub-message="Crea la primera para aplicarla en el POS (batch siguiente)."
           variant="default"
           row-size="sm"
         >
+          <template #header-actions>
+            <NuxtLink
+              to="/gestion/promociones/nuevo"
+              class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium min-h-[44px] whitespace-nowrap"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Nueva promoción
+            </NuxtLink>
+          </template>
+
           <template #card="{ item }">
             <NuxtLink
               :to="`/gestion/promociones/${item.id}`"
@@ -107,7 +188,26 @@ interface PromotionRow {
 }
 
 const { currentTenant } = useTenantReactive()
-const showInactive = ref(true)
+
+const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
+const statusFilter = ref<'' | 'active' | 'inactive'>('')
+const promoTypeFilter = ref<'' | 'percent_off' | 'fixed_off' | 'bogo'>('')
+
+const hasActiveFilters = computed(
+  () =>
+    !!localSearchTerm.value
+    || !!appliedSearch.value
+    || !!statusFilter.value
+    || !!promoTypeFilter.value,
+)
+
+const performSearch = () => applySearch()
+
+function clearFilters() {
+  clearSearch()
+  statusFilter.value = ''
+  promoTypeFilter.value = ''
+}
 
 const columns: Column[] = [
   { key: 'name', title: 'Nombre' },
@@ -121,11 +221,11 @@ const {
   error: fetchError,
   asyncStatus: queryAsyncStatus,
 } = useQuery({
-  key: () => ['tenant', 'promotions', currentTenant.value?.id, { inactive: showInactive.value }],
+  key: () => ['tenant', 'promotions', currentTenant.value?.id, { inactive: true }],
   query: () =>
     $fetch<{ success: boolean; total: number; data: PromotionRow[] }>('/api/api/promotions', {
       query: {
-        include_inactive: showInactive.value,
+        include_inactive: true,
         at: new Date().toISOString(),
       },
     }),
@@ -137,6 +237,23 @@ const promotions = computed(() => listData.value?.data ?? [])
 const isLoading = computed(
   () => queryAsyncStatus.value === 'loading' && !listData.value,
 )
+
+const filteredPromotions = computed(() => {
+  let rows = promotions.value
+  const term = appliedSearch.value.trim().toLowerCase()
+  if (term) {
+    rows = rows.filter((row) => row.name.toLowerCase().includes(term))
+  }
+  if (statusFilter.value === 'active') {
+    rows = rows.filter((row) => row.is_active)
+  } else if (statusFilter.value === 'inactive') {
+    rows = rows.filter((row) => !row.is_active)
+  }
+  if (promoTypeFilter.value) {
+    rows = rows.filter((row) => row.promo_type === promoTypeFilter.value)
+  }
+  return rows
+})
 
 const rowPreview = (item: PromotionRow) =>
   buildPromotionPreview({
