@@ -21,7 +21,7 @@
           </p>
         </div>
         <label
-          class="relative inline-flex items-center cursor-pointer flex-shrink-0 min-h-[44px]"
+          class="inline-flex items-center cursor-pointer flex-shrink-0 min-h-[44px] min-w-[2.5rem]"
           :class="isTogglingPromoLineOptOut ? 'opacity-50 pointer-events-none' : ''"
           :aria-label="opsProfile.allow_promo_line_opt_out ? 'Desactivar exclusión por ítem' : 'Activar exclusión por ítem'"
         >
@@ -32,7 +32,9 @@
             :disabled="isTogglingPromoLineOptOut"
             @change="togglePromoLineOptOutSetting"
           />
-          <div class="w-10 h-6 bg-border rounded-full peer peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+          <div
+            class="relative h-6 w-10 shrink-0 overflow-hidden rounded-full bg-border peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-4"
+          />
         </label>
       </div>
 
