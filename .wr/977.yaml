@@ -1,0 +1,38 @@
+# Machine contract for wr-fast / wr-ship — warocol.com#977
+issue: 977
+title: "feat(facturacion): customizable tip label on POS tickets"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: both
+branch: wr-977-tip-label
+
+paths:
+  - pages/facturacion/index.vue
+  - composables/useReceiptPrintSettings.ts
+  - pages/pos/checkout.vue
+  - ../api_warocol.com/sql/20260529_add_receipt_tip_label.sql
+  - ../api_warocol.com/app/routers/tenant_config.py
+  - ../api_warocol.com/app/services/pos_context_service.py
+  - ../api_warocol.com/app/templates/pos_receipt_template.py
+  - ../api_warocol.com/app/services/email_helpers.py
+
+ac:
+  - Tip label field on /facturacion Personalizar tickets POS (default Propina, max 40)
+  - Persist receipt_tip_label in tenant_fiscal_data; expose as receipt_print_settings.tip_label
+  - Prefactura + final receipt print use custom label
+  - POS receipt email uses custom label via tenant_id lookup
+
+out_of_scope:
+  - Dashboard/arqueo/ventas UI labels
+  - Checkout on-screen modal labels
+
+hints:
+  entry: "tenant_config._normalize_receipt_document_label — mirror for tip label"
+  pattern: "receipt_document_label flow (#930) — same column/API/context pattern"
+  tests: "pytest tests/test_pos_receipt_template.py -v"
+  api_branch: wr-977-tip-label
+  api_remote: uno0uno/api-warolabs
+
+skip:
+  audits: [ux, color, typography]

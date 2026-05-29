@@ -14,7 +14,7 @@ export function useReceiptPrintSettings() {
   })
 
   const receiptPrintSettings = computed(() =>
-    settingsData.value?.data?.receipt_print_settings ?? { document_label: 'Prefactura', show_logo: true },
+    settingsData.value?.data?.receipt_print_settings ?? { document_label: 'Prefactura', tip_label: 'Propina', show_logo: true },
   )
 
   const receiptLogoUrl = computed(() => {

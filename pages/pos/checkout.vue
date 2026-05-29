@@ -1374,8 +1374,13 @@ const printReceipt = async () => {
 const fiscalData = computed(() => settingsData.value?.data?.fiscal_data ?? null)
 
 const receiptPrintSettings = computed(() =>
-  settingsData.value?.data?.receipt_print_settings ?? { document_label: 'Prefactura', show_logo: true },
+  settingsData.value?.data?.receipt_print_settings ?? { document_label: 'Prefactura', tip_label: 'Propina', show_logo: true },
 )
+
+const receiptTipLabel = computed(() => {
+  const label = (receiptPrintSettings.value.tip_label || 'Propina').trim()
+  return label || 'Propina'
+})
 
 const receiptLogoUrl = computed(() => {
   if (!receiptPrintSettings.value.show_logo) return null
@@ -3504,7 +3509,7 @@ onUnmounted(() => {
         <span>{{ formatCurrency(prefacturaPrintData.orderTotal) }}</span>
       </div>
       <div class="receipt-item">
-        <span>Propina</span>
+        <span>{{ receiptTipLabel }}</span>
         <span>{{ formatCurrency(prefacturaPrintData.tipAmount) }}</span>
       </div>
       <div v-if="prefacturaPrintData.tipTaxAmount > 0" class="receipt-item">
@@ -3632,7 +3637,7 @@ onUnmounted(() => {
         <span>{{ formatCurrency(orderResult?.total_amount ?? 0) }}</span>
       </div>
       <div class="receipt-item">
-        <span>Propina</span>
+        <span>{{ receiptTipLabel }}</span>
         <span>{{ formatCurrency(orderResult.tip_amount) }}</span>
       </div>
       <div class="receipt-total">

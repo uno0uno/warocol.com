@@ -293,6 +293,7 @@ const fiscalForm = reactive({
   phone: '',
   email: '',
   receipt_document_label: 'Prefactura',
+  receipt_tip_label: 'Propina',
   show_logo_on_receipts: true,
 })
 const isSavingFiscal = ref(false)
@@ -310,6 +311,7 @@ watch(fiscal, (f) => {
   fiscalForm.phone = f.phone || ''
   fiscalForm.email = f.email || ''
   fiscalForm.receipt_document_label = f.receipt_document_label || 'Prefactura'
+  fiscalForm.receipt_tip_label = f.receipt_tip_label || 'Propina'
   fiscalForm.show_logo_on_receipts = f.show_logo_on_receipts !== false
 }, { immediate: true })
 
@@ -321,6 +323,7 @@ const savePrintSettings = async () => {
       body: {
         ...fiscalForm,
         receipt_document_label: fiscalForm.receipt_document_label.trim() || 'Prefactura',
+        receipt_tip_label: fiscalForm.receipt_tip_label.trim() || 'Propina',
       },
     })
     await refreshFiscal()
@@ -868,6 +871,23 @@ const taxLevels = [
           />
           <p class="text-[11px] text-text-tertiary leading-snug">
             Texto que encabeza el ticket (máx. 40 caracteres). Ej: <span class="font-medium">Prefactura</span>, <span class="font-medium">Pedido N°</span>.
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-1 sm:col-span-2">
+          <label for="receipt-tip-label" class="text-sm font-medium text-text-primary">
+            Etiqueta de propina / servicio
+          </label>
+          <input
+            id="receipt-tip-label"
+            v-model="fiscalForm.receipt_tip_label"
+            type="text"
+            maxlength="40"
+            placeholder="Propina, Servicio, Cargo por servicio…"
+            class="min-h-[44px] px-3 py-2 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+          <p class="text-[11px] text-text-tertiary leading-snug">
+            Texto de la línea de propina en prefactura, recibo impreso y email (máx. 40 caracteres). Ej: <span class="font-medium">Servicio</span>.
           </p>
         </div>
 
