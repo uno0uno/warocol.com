@@ -104,7 +104,7 @@
         >
           <template #header-actions>
             <NuxtLink
-              to="/gestion/promociones/nuevo"
+              to="/operaciones/promociones/nuevo"
               class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium min-h-[44px] whitespace-nowrap"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -116,7 +116,7 @@
 
           <template #card="{ item }">
             <NuxtLink
-              :to="`/gestion/promociones/${item.id}`"
+              :to="`/operaciones/promociones/${item.id}`"
               class="flex flex-col gap-1 py-3 px-3 border-b border-border hover:bg-surface-secondary transition-colors"
             >
               <div class="flex items-center justify-between gap-2">
@@ -152,7 +152,7 @@
 
           <template #cell-actions="{ item }">
             <NuxtLink
-              :to="`/gestion/promociones/${item.id}`"
+              :to="`/operaciones/promociones/${item.id}`"
               class="text-sm font-medium text-primary hover:underline min-h-[44px] inline-flex items-center"
             >
               Editar
