@@ -11,6 +11,7 @@ import { PAYMENT_DEFAULTS, type PosPaymentGroup, type PosPaymentMethod } from '~
 import DeliveryAddressPicker from '~/components/pos/checkout/DeliveryAddressPicker.vue'
 import DeliveryAddressForm from '~/components/pos/checkout/DeliveryAddressForm.vue'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
+import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 
 interface TopProduct {
   name: string
@@ -171,6 +172,22 @@ type TaxPreview = {
   liquor_tax: number
   standard_tax_label: string
 }
+
+type PromoPreviewLine = {
+  id: string
+  promo_savings?: number
+  promotion_name?: string | null
+  promo_type?: string | null
+  subtotal_after_promo?: number
+}
+
+type CheckoutPromoPreview = {
+  subtotal?: number
+  promo_savings?: number
+  subtotal_after_promos?: number
+  promo_breakdown?: Array<{ promotion_name: string; promo_type: string; savings: number }>
+  lines?: PromoPreviewLine[]
+}
 // taxPreview is now a computed derived from the mesa/POS useQuery results
 // (declared further down, after discountedTotal). The legacy refreshTaxPreview
 // function + manual debounced watcher were removed in the parallel-loading
@@ -299,6 +316,9 @@ const cartItems = computed(() => {
   if (isKitchenServiceMode.value) {
     return storeTabItems.value.map(item => ({
       orderItemId: item.orderItemId,
+      promotionName: item.promotionName ?? null,
+      promoType: item.promoType ?? null,
+      promoSavings: item.promoSavings ?? 0,
       product: { id: '', name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
       modifiers: item.modifiers ?? [],
       quantity: item.quantity,
@@ -311,14 +331,43 @@ const cartTotal = computed(() => {
   if (isKitchenServiceMode.value) return posStore.activeTableSession?.runningTotal ?? 0
   return posStore.cartTotal
 })
+const checkoutPromoPreview = computed<CheckoutPromoPreview | null>(() => {
+  if (isKitchenServiceMode.value) {
+    const session = mesaCurrentData.value?.data?.session
+    if (!session) return null
+    return {
+      subtotal: Number(session.running_total) || 0,
+      promo_savings: Number(session.promo_savings) || 0,
+      subtotal_after_promos: Number(session.subtotal_after_promos ?? session.running_total) || 0,
+      promo_breakdown: session.promo_breakdown ?? [],
+    }
+  }
+  return posTaxPreviewData.value as CheckoutPromoPreview | null
+})
+const promoSavings = computed(() => Number(checkoutPromoPreview.value?.promo_savings) || 0)
+const subtotalAfterPromos = computed(() => {
+  const preview = checkoutPromoPreview.value
+  if (preview?.subtotal_after_promos != null) return Number(preview.subtotal_after_promos)
+  return Math.max(0, cartTotal.value - promoSavings.value)
+})
+const promoBreakdown = computed(() => checkoutPromoPreview.value?.promo_breakdown ?? [])
+const promoLineById = computed(() => {
+  const map = new Map<string, PromoPreviewLine>()
+  for (const line of checkoutPromoPreview.value?.lines ?? []) {
+    map.set(String(line.id), line)
+  }
+  return map
+})
 const discountAmount = computed(() => {
   if (!discountEnabled.value || !discountInput.value) return 0
   const val = Number(discountInput.value)
   if (isNaN(val) || val <= 0) return 0
-  if (discountType.value === 'percent') return Math.min(Math.round(cartTotal.value * val / 100), Math.round(cartTotal.value))
-  return Math.min(Math.round(val), Math.round(cartTotal.value))
+  if (discountType.value === 'percent') {
+    return Math.min(Math.round(subtotalAfterPromos.value * val / 100), Math.round(subtotalAfterPromos.value))
+  }
+  return Math.min(Math.round(val), Math.round(subtotalAfterPromos.value))
 })
-const discountedTotal = computed(() => cartTotal.value - discountAmount.value)
+const discountedTotal = computed(() => subtotalAfterPromos.value - discountAmount.value)
 // warocol.com#639 — final amount charged to the customer when tipping is enabled.
 // total_amount on orders never includes tip (tax-base invariant from migration 079);
 // charged_amount = total_amount + tip_amount lives at the payment layer only.
@@ -367,7 +416,16 @@ const { data: posTaxPreviewData } = useQuery({
     const params = new URLSearchParams()
     if (discountAmount.value > 0) params.set('discount_amount', String(discountAmount.value))
     const qs = params.toString() ? `?${params.toString()}` : ''
-    return $fetch<{ standard_tax: number; liquor_tax: number; standard_tax_label: string }>(
+    return $fetch<{
+      standard_tax: number
+      liquor_tax: number
+      standard_tax_label: string
+      subtotal?: number
+      promo_savings?: number
+      subtotal_after_promos?: number
+      promo_breakdown?: CheckoutPromoPreview['promo_breakdown']
+      lines?: PromoPreviewLine[]
+    }>(
       `/api/pos/cart/${posStore.cartId}/tax-preview${qs}`
     )
   },
@@ -409,6 +467,9 @@ function mapTabItemsFromApi(rows: any[]): TabItem[] {
     quantity: i.quantity,
     unitPrice: i.unitPrice,
     subtotal: i.subtotal,
+    promotionName: i.promotionName ?? null,
+    promoType: i.promoType ?? null,
+    promoSavings: Number(i.promoSavings) || 0,
     modifiers: (i.modifiers ?? []).map((m: any) => ({
       id: m.id ?? '',
       name: m.name,
@@ -900,6 +961,25 @@ const getItemTotal = (item: any) => {
     0
   )
   return (basePrice + modifiersPrice) * (Number(item.quantity) || 1)
+}
+
+const getLinePromoLabel = (item: any) => {
+  if (item.promotionName) return item.promotionName
+  if (item.orderItemId) {
+    const preview = promoLineById.value.get(String(item.orderItemId))
+    if (preview?.promotion_name) return preview.promotion_name
+  }
+  if (item.id) {
+    const preview = promoLineById.value.get(String(item.id))
+    if (preview?.promotion_name) return preview.promotion_name
+  }
+  return null
+}
+
+const getLinePromoTypeLabel = (item: any) => {
+  const promoType = item.promoType
+    ?? promoLineById.value.get(String(item.orderItemId ?? item.id ?? ''))?.promo_type
+  return promoType ? formatPromoTypeLabel(promoType) : null
 }
 
 const getItemUnitPrice = (item: any) => {
@@ -1861,6 +1941,13 @@ onUnmounted(() => {
                 <div class="flex justify-between items-start gap-2">
                   <div class="flex items-center gap-1.5 min-w-0">
                     <h3 class="font-semibold text-text-primary text-sm leading-tight truncate">{{ item.product.name }}</h3>
+                    <span
+                      v-if="getLinePromoLabel(item)"
+                      class="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0"
+                      :title="getLinePromoTypeLabel(item) || undefined"
+                    >
+                      {{ getLinePromoLabel(item) }}
+                    </span>
                     <span v-if="item.quantity > 1" class="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">
                       ×{{ item.quantity }}
                     </span>
@@ -2418,6 +2505,10 @@ onUnmounted(() => {
                   {{ formatCurrency(taxPreview ? (taxPreview.standard_tax + taxPreview.liquor_tax) : 0) }}
                 </span>
               </div>
+              <div v-if="promoSavings > 0" class="flex justify-between text-sm text-emerald-700 dark:text-emerald-400">
+                <span>Promoción</span>
+                <span class="font-medium">- {{ formatCurrency(promoSavings) }}</span>
+              </div>
               <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-primary">
                 <span>Descuento</span>
                 <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
@@ -2921,6 +3012,10 @@ onUnmounted(() => {
               <span class="font-medium text-text-primary">
                 {{ formatCurrency(taxPreview ? (taxPreview.standard_tax + taxPreview.liquor_tax) : 0) }}
               </span>
+            </div>
+            <div v-if="promoSavings > 0" class="flex justify-between text-sm text-emerald-700 dark:text-emerald-400">
+              <span>Promoción</span>
+              <span class="font-medium">- {{ formatCurrency(promoSavings) }}</span>
             </div>
             <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-green-600 dark:text-green-400">
               <span>Descuento</span>

@@ -67,6 +67,9 @@ export interface TabItem {
     notes?: string | null
     fulfillmentStatus: 'new' | 'sent' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
     sentAt: string | null
+    promotionName?: string | null
+    promoType?: string | null
+    promoSavings?: number
 }
 
 // Producto cacheado con modificadores completos
