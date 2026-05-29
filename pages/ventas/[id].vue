@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 
 definePageMeta({
   layout: 'dashboard'
@@ -524,11 +525,20 @@ onUnmounted(() => {
         <div class="bg-surface border-2 border-primary rounded-xl p-4">
           <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Total</p>
           <!-- Discount indicator: crossed-out gross + badge -->
-          <div v-if="order.discount_amount > 0 && !isEditMode" class="flex items-center gap-2 mb-1">
+          <div v-if="(order.promo_savings > 0 || order.discount_amount > 0) && !isEditMode" class="flex items-center gap-2 mb-1">
             <span class="text-sm text-text-tertiary line-through tabular-nums">{{ formatCurrency(grossSubtotal)
             }}</span>
-            <span class="text-xs font-bold bg-destructive/10 text-destructive rounded-full px-2 py-0.5 leading-tight">
-              {{ order.discount_type === 'percent' ? `-${order.discount_value}%` : 'Descuento' }}
+            <span
+              v-if="order.promo_savings > 0"
+              class="text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-full px-2 py-0.5 leading-tight"
+            >
+              Promoción
+            </span>
+            <span
+              v-if="order.discount_amount > 0"
+              class="text-xs font-bold bg-destructive/10 text-destructive rounded-full px-2 py-0.5 leading-tight"
+            >
+              {{ order.discount_type === 'percent' ? `-${order.discount_value}%` : 'Descuento manual' }}
             </span>
           </div>
           <p class="text-2xl font-bold text-primary tabular-nums">
@@ -1095,16 +1105,29 @@ onUnmounted(() => {
           </table>
 
           <!-- Totals summary — shown when discount or taxes apply -->
-          <div v-if="order.discount_amount > 0 || order.standard_tax > 0 || order.liquor_tax > 0"
+          <div v-if="order.promo_savings > 0 || order.discount_amount > 0 || order.standard_tax > 0 || order.liquor_tax > 0"
             class="flex justify-end px-6 py-4 border-t border-border">
             <div class="flex flex-col gap-2 min-w-[220px]">
               <div class="flex items-center justify-between gap-10">
                 <span class="text-sm text-text-secondary">Subtotal</span>
                 <span class="text-sm text-text-secondary tabular-nums">{{ formatCurrency(grossSubtotal) }}</span>
               </div>
+              <div
+                v-for="promo in (order.promo_breakdown ?? [])"
+                :key="promo.promotion_id"
+                class="flex items-center justify-between gap-10"
+              >
+                <span class="text-sm text-emerald-700 dark:text-emerald-400">
+                  {{ promo.promotion_name }}
+                  <span class="text-xs text-text-tertiary">({{ formatPromoTypeLabel(promo.promo_type) }})</span>
+                </span>
+                <span class="text-sm font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums">
+                  -{{ formatCurrency(promo.savings) }}
+                </span>
+              </div>
               <div v-if="order.discount_amount > 0" class="flex items-center justify-between gap-10">
                 <span class="flex items-center gap-1.5 text-sm text-destructive">
-                  Descuento
+                  Descuento manual
                   <span
                     class="text-xs font-bold bg-destructive/10 text-destructive rounded-full px-1.5 py-0.5 leading-tight">
                     {{ order.discount_type === 'percent' ? `${order.discount_value}%` : 'Fijo' }}
