@@ -41,6 +41,17 @@ const { currentTenant, businessProfile } = useTenantReactive()
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
 
+function invalidateCheckoutPromoPreview() {
+  cache.invalidateQueries({ key: ['pos', 'cart', posStore.cartId ?? null, 'tax-preview'] })
+  if (isKitchenServiceMode.value && posStore.activeTableSession?.tableId) {
+    cache.invalidateQueries({ key: ['tables', posStore.activeTableSession.tableId, 'current'] })
+  }
+}
+
+const { hasActivePromos, activePromoHint } = useActivePromotions({
+  onActivePromosChanged: invalidateCheckoutPromoPreview,
+})
+
 // Inject subtitle setter from layout
 const setPageSubtitle = inject<(subtitle: string | undefined) => void>('setPageSubtitle', () => {})
 
@@ -1904,6 +1915,22 @@ onUnmounted(() => {
     <!-- Main Grid (cart has items and sync completed) -->
     <div v-else class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
+      <!-- Live promotion hint — checkout header (warocol.com#983) -->
+      <div
+        v-if="hasActivePromos"
+        role="status"
+        class="lg:col-span-12 flex items-center gap-3 min-h-[44px] px-4 py-3 bg-status-success-bg border border-status-success-text/25 rounded-xl"
+      >
+        <div class="flex-shrink-0 bg-status-success-text/15 p-1.5 rounded-lg">
+          <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+          </svg>
+        </div>
+        <p class="text-sm text-status-success-text font-medium">
+          Promo activa: {{ activePromoHint }}
+        </p>
+      </div>
+
       <!-- LEFT COLUMN: Order Items & Payment Method -->
       <div class="lg:col-span-8 space-y-6">
 
@@ -2947,6 +2974,21 @@ onUnmounted(() => {
       v-if="cartItems.length > 0 && !isSyncingCart && !syncError"
       class="lg:hidden mt-6 pb-4 space-y-3"
     >
+      <!-- Live promotion hint — checkout footer (warocol.com#983) -->
+      <div
+        v-if="hasActivePromos"
+        role="status"
+        class="flex items-center gap-3 min-h-[44px] px-4 py-3 bg-status-success-bg border border-status-success-text/25 rounded-xl"
+      >
+        <div class="flex-shrink-0 bg-status-success-text/15 p-1.5 rounded-lg">
+          <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+          </svg>
+        </div>
+        <p class="text-sm text-status-success-text font-medium">
+          Promo activa: {{ activePromoHint }}
+        </p>
+      </div>
 
       <!-- ACCORDION: Customer Insights (same as desktop) -->
       <div
