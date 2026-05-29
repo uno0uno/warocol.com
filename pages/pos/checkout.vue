@@ -264,6 +264,9 @@ const acceptsOnlineOrders = computed(() => settingsData.value?.data?.accepts_onl
 
 // warocol.com#639 — tipping config (gated by tenant; defaults keep selector hidden)
 const tipEnabled = computed(() => settingsData.value?.data?.tip_enabled === true)
+const allowPromoLineOptOut = computed(
+  () => settingsData.value?.data?.allow_promo_line_opt_out === true,
+)
 const tipPresets = computed<number[]>(() => settingsData.value?.data?.tip_default_percentages ?? [10])
 const tipModel = ref<{ amount: number; source: 'preset' | 'custom' | 'none' }>({ amount: 0, source: 'none' })
 const tipAmount = computed(() => tipModel.value.amount)
@@ -356,6 +359,7 @@ const cartItems = computed(() => {
       promotionName: item.promotionName ?? null,
       promoType: item.promoType ?? null,
       promoSavings: item.promoSavings ?? 0,
+      promoOptOut: item.promoOptOut ?? false,
       product: { id: '', name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
       modifiers: item.modifiers ?? [],
       quantity: item.quantity,
@@ -363,6 +367,16 @@ const cartItems = computed(() => {
     }))
   }
   return posStore.cart
+})
+const promoOptOutSignature = computed(() => {
+  if (isKitchenServiceMode.value) {
+    return storeTabItems.value
+      .map(item => `${item.orderItemId}:${item.promoOptOut ? 1 : 0}`)
+      .join(',')
+  }
+  return posStore.cart
+    .map(item => `${item.id ?? ''}:${item.promo_opt_out ? 1 : 0}`)
+    .join(',')
 })
 const cartTotal = computed(() => {
   if (isKitchenServiceMode.value) return posStore.activeTableSession?.runningTotal ?? 0
@@ -422,7 +436,7 @@ const {
   asyncStatus: mesaCurrentAsyncStatus,
   error: mesaCurrentError,
 } = useQuery({
-  key: () => ['tables', posStore.activeTableSession?.tableId ?? null, 'current'],
+  key: () => ['tables', posStore.activeTableSession?.tableId ?? null, 'current', promoOptOutSignature.value],
   query: () => $fetch<{ success: boolean; data: any }>(
     `/api/tables/${posStore.activeTableSession!.tableId}/current`
   ),
@@ -448,7 +462,7 @@ const {
 // POS tax preview — only when in counter/bar mode. discountAmount is part of
 // the key so a discount change re-fetches automatically.
 const { data: posTaxPreviewData } = useQuery({
-  key: () => ['pos', 'cart', posStore.cartId ?? null, 'tax-preview', discountAmount.value],
+  key: () => ['pos', 'cart', posStore.cartId ?? null, 'tax-preview', discountAmount.value, promoOptOutSignature.value],
   query: () => {
     const params = new URLSearchParams()
     if (discountAmount.value > 0) params.set('discount_amount', String(discountAmount.value))
@@ -507,6 +521,7 @@ function mapTabItemsFromApi(rows: any[]): TabItem[] {
     promotionName: i.promotionName ?? null,
     promoType: i.promoType ?? null,
     promoSavings: Number(i.promoSavings) || 0,
+    promoOptOut: Boolean(i.promoOptOut),
     modifiers: (i.modifiers ?? []).map((m: any) => ({
       id: m.id ?? '',
       name: m.name,
@@ -1008,6 +1023,7 @@ const getItemTotal = (item: any) => {
 }
 
 const getLinePromoLabel = (item: any) => {
+  if (isLinePromoOptedOut(item)) return null
   if (item.promotionName) return item.promotionName
   if (item.orderItemId) {
     const preview = promoLineById.value.get(String(item.orderItemId))
@@ -1032,8 +1048,61 @@ const getLinePromoPreview = (item: any): PromoPreviewLine | undefined => {
 }
 
 const getLinePromoSavings = (item: any): number => {
+  if (isLinePromoOptedOut(item)) return 0
   if (isKitchenServiceMode.value) return Number(item.promoSavings) || 0
   return Number(getLinePromoPreview(item)?.promo_savings) || 0
+}
+
+const isLinePromoOptedOut = (item: any): boolean =>
+  Boolean(item.promo_opt_out ?? item.promoOptOut)
+
+const lineShowsPromoToggle = (item: any): boolean => {
+  if (!allowPromoLineOptOut.value) return false
+  if (isLinePromoOptedOut(item)) return true
+  return getLinePromoSavings(item) > 0 || !!getLinePromoLabel(item)
+}
+
+const togglingPromoLineId = ref<string | null>(null)
+
+const toggleLinePromoApply = async (item: any, apply: boolean) => {
+  const lineId = String(item.orderItemId ?? item.id ?? '')
+  if (!lineId || togglingPromoLineId.value) return
+
+  togglingPromoLineId.value = lineId
+  const promoOptOut = !apply
+  try {
+    if (isKitchenServiceMode.value) {
+      const tableId = posStore.activeTableSession?.tableId
+      if (!tableId) return
+      await $fetch(`/api/tables/${tableId}/tab/items/${lineId}/promo-opt-out`, {
+        method: 'PATCH',
+        body: { promo_opt_out: promoOptOut },
+      })
+      posStore.setTabItems(
+        storeTabItems.value.map(tabItem =>
+          tabItem.orderItemId === lineId
+            ? { ...tabItem, promoOptOut: promoOptOut }
+            : tabItem,
+        ),
+      )
+    } else {
+      if (!posStore.cartId) return
+      await $fetch(`/api/pos/cart/${posStore.cartId}/items/${lineId}/promo-opt-out`, {
+        method: 'PATCH',
+        body: { promo_opt_out: promoOptOut },
+      })
+      const cartItem = posStore.cart.find(cartLine => cartLine.id === lineId)
+      if (cartItem) cartItem.promo_opt_out = promoOptOut
+    }
+    invalidateCheckoutPromoPreview()
+  } catch (error: any) {
+    toast.error(
+      error?.data?.detail || error?.data?.message || 'No se pudo actualizar la promoción del ítem',
+      { title: 'Error' },
+    )
+  } finally {
+    togglingPromoLineId.value = null
+  }
 }
 
 const getLineNetTotal = (item: any): number => {
@@ -2096,6 +2165,24 @@ onUnmounted(() => {
 
                 <!-- Notes -->
                 <p v-if="item.notes" class="text-xs text-text-tertiary italic mt-0.5">{{ item.notes }}</p>
+
+                <label
+                  v-if="lineShowsPromoToggle(item)"
+                  class="mt-2 flex items-center justify-between gap-3 min-h-[44px] rounded-lg border border-border bg-surface-secondary/40 px-3 py-2 cursor-pointer"
+                  :class="togglingPromoLineId === String(item.orderItemId ?? item.id ?? '') ? 'opacity-60 pointer-events-none' : ''"
+                >
+                  <span class="text-xs font-medium text-text-primary">Aplicar promoción</span>
+                  <span class="relative inline-flex items-center flex-shrink-0">
+                    <input
+                      type="checkbox"
+                      class="sr-only peer"
+                      :checked="!isLinePromoOptedOut(item)"
+                      :disabled="togglingPromoLineId === String(item.orderItemId ?? item.id ?? '')"
+                      @change="toggleLinePromoApply(item, ($event.target as HTMLInputElement).checked)"
+                    />
+                    <span class="block w-10 h-6 bg-border rounded-full peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                  </span>
+                </label>
               </div>
             </div>
           </div>

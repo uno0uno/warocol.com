@@ -26,6 +26,8 @@ export interface PosCartItem {
     is_resale?: boolean // Productos de reventa no permiten modificadores
     /** Venta libre (#796): custom unit price; do not merge with catalog lines */
     is_open_sale?: boolean
+    /** warocol.com#1003 — cashier opted out of automatic promotion for this line */
+    promo_opt_out?: boolean
 }
 
 export interface Customer {
@@ -70,6 +72,7 @@ export interface TabItem {
     promotionName?: string | null
     promoType?: string | null
     promoSavings?: number
+    promoOptOut?: boolean
 }
 
 // Producto cacheado con modificadores completos
@@ -340,7 +343,8 @@ export const usePOSStore = defineStore('pos', () => {
                         quantity: Number(mod.quantity) || 1,
                     })),
                     notes: item.notes,
-                    is_resale: item.is_resale || false
+                    is_resale: item.is_resale || false,
+                    promo_opt_out: Boolean(item.promo_opt_out),
                 }))
             }
         } catch {
