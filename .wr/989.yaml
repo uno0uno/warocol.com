@@ -1,0 +1,32 @@
+issue: 989
+title: "feat(gestion): promociones hub at /gestion/promociones with submenu and mobile filters"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-989-gestion-promociones-hub
+
+paths:
+  - components/DashboardSidebar.vue
+  - layouts/dashboard.vue
+  - pages/gestion/promociones/index.vue
+  - pages/gestion/promociones.vue
+
+ac:
+  - /gestion/promociones renders in place (no redirect)
+  - Gestión sidebar section with Promociones (mi_negocio gate)
+  - UiModuleNavigation submenu in promociones.vue wrapper
+  - UiAdvancedFiltersBar with search, status/type toggles, clear
+  - Mobile min-h-[44px], UiResponsiveDataView cards, CTA in header-actions
+
+out_of_scope:
+  - promotion engine/API, POS apply, new promo types
+  - moving Mi Plan to Gestión section
+
+hints:
+  entry: "pages/gestion/promociones/index.vue"
+  pattern: "pages/gestion/ingredientes/index.vue — UiAdvancedFiltersBar + colored toggles"
+  tests: "Manual: phone-width filter, edit promo, return to list"
+
+skip:
+  audits: [ux, color, typography]
