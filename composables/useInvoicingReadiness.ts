@@ -33,7 +33,7 @@ export const useInvoicingReadiness = () => {
   const { data, asyncStatus, refetch } = useQuery({
     key:       () => ['tenant', 'invoicing-readiness', currentTenant.value?.id],
     query:     () => $fetch<InvoicingReadinessResponse>('/api/api/tenant/invoicing-readiness'),
-    enabled:   () => !!currentTenant.value,
+    enabled:   () => import.meta.client && !!currentTenant.value,
     staleTime: 60_000,
   })
 
