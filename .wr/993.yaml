@@ -1,0 +1,29 @@
+issue: 993
+title: "feat(pos): Show promotion savings on printed and emailed POS receipts"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-993-pos-receipt-promo
+
+paths:
+  - pages/pos/checkout.vue
+
+ac:
+  - sendReceiptEmail sends promo_savings, promo_breakdown, and net-aware tax from orderResult
+  - Printed #pos-receipt shows promo breakdown when only promos apply
+  - Receipt tax uses orderResult.standard_tax from API (net-based after batch #337)
+  - Split-payment completion populates promo fields on orderResult
+
+out_of_scope:
+  - DIAN FE PDF/XML (batch 3)
+  - ventas/[id].vue order detail
+  - Per-line net pricing on print grid (optional AC deferred)
+
+hints:
+  entry: "sendReceiptEmail — pages/pos/checkout.vue:1751"
+  pattern: "orderResult promo spread — same as 1219-1238 POS complete path"
+  tests: "manual POS checkout with promo-only order"
+
+skip:
+  audits: [ux, color, typography]
