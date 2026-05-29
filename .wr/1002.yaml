@@ -1,0 +1,31 @@
+# Machine contract for wr-fast / wr-ship — keep ≤80 lines. LLM reads once; humans use issue summary + PR.
+issue: 1002
+title: "feat(pos): checkout line promo savings in Items and order summary"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1002-checkout-promo-savings
+
+paths:
+  - pages/pos/checkout.vue
+
+ac:
+  - Items row shows promo badge + savings (- $X) when promo_savings > 0
+  - Line total shows net (subtotal_after_promo) with optional strikethrough gross
+  - Resumen keeps aggregate Promoción row + per-promo breakdown when promoBreakdown.length > 1
+  - Counter uses promoLineById; mesa uses item.promoSavings from tab items
+  - No savings UI when savings === 0
+
+out_of_scope:
+  - Per-line opt-out (#1003)
+  - Receipt/prefactura print blocks
+  - Post-checkout orderResult panel changes
+
+hints:
+  entry: "getLinePromoLabel — checkout.vue:1010"
+  pattern: "orderResult promo_breakdown v-for — checkout.vue:3386"
+  tests: none (front-only UI)
+
+skip:
+  audits: [ux, color, typography]
