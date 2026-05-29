@@ -137,6 +137,7 @@
 
 <script setup lang="ts">
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
+import { useQueryCache } from '@pinia/colada'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import {
@@ -163,6 +164,7 @@ interface PromotionRow {
 const route = useRoute()
 const router = useRouter()
 const { currentTenant } = useTenantReactive()
+const cache = useQueryCache()
 
 const showPanel = ref(false)
 const panelPromotionId = ref<string | null>(null)
@@ -198,6 +200,7 @@ const {
   data: listData,
   error: fetchError,
   asyncStatus: queryAsyncStatus,
+  refetch: refetchPromotions,
 } = useQuery({
   key: () => ['tenant', 'promotions', currentTenant.value?.id, { inactive: true }],
   query: () =>
@@ -255,8 +258,17 @@ function openPanel(item: PromotionRow | null) {
   showPanel.value = true
 }
 
-function onPanelSaved() {
+async function onPanelSaved() {
+  showPanel.value = false
+  panelPromotionId.value = null
   clearPanelQuery()
+  const tenantId = currentTenant.value?.id
+  if (tenantId) {
+    await cache.invalidateQueries({ key: ['tenant', 'promotions', tenantId] })
+  } else {
+    await cache.invalidateQueries({ key: ['tenant', 'promotions'] })
+  }
+  await refetchPromotions()
 }
 
 watch(showPanel, (open) => {

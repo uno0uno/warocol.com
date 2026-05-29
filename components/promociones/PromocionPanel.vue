@@ -350,6 +350,7 @@ const emit = defineEmits<Emits>()
 
 const toast = useToast()
 const cache = useQueryCache()
+const { currentTenant } = useTenantReactive()
 
 const isEdit = computed(() => !!props.promotionId)
 const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
@@ -625,6 +626,19 @@ function validate(): boolean {
   return errors.length === 0
 }
 
+async function invalidatePromotionCaches() {
+  const tenantId = currentTenant.value?.id
+  if (tenantId) {
+    await cache.invalidateQueries({ key: ['tenant', 'promotions', tenantId] })
+    await cache.invalidateQueries({ key: ['pos', 'active-promotions', tenantId] })
+  } else {
+    await cache.invalidateQueries({ key: ['tenant', 'promotions'] })
+  }
+  if (props.promotionId) {
+    await cache.invalidateQueries({ key: ['tenant', 'promotion', props.promotionId] })
+  }
+}
+
 async function onSubmit() {
   if (!validate()) return
   isSaving.value = true
@@ -637,12 +651,9 @@ async function onSubmit() {
       await $fetch(`/api/api/promotions/${props.promotionId}`, { method: 'PATCH', body })
       toast.add({ title: 'Promoción actualizada', color: 'success' })
     }
-    cache.invalidateQueries({ key: ['tenant', 'promotions'] })
-    if (props.promotionId) {
-      cache.invalidateQueries({ key: ['tenant', 'promotion', props.promotionId] })
-    }
-    emit('saved')
+    await invalidatePromotionCaches()
     close()
+    emit('saved')
   } catch (e: any) {
     const detail = e?.data?.detail ?? e?.message ?? 'Error al guardar'
     validationErrors.value = [typeof detail === 'string' ? detail : JSON.stringify(detail)]
@@ -657,9 +668,9 @@ async function onDelete() {
   try {
     await $fetch(`/api/api/promotions/${props.promotionId}`, { method: 'DELETE' })
     toast.add({ title: 'Promoción eliminada', color: 'success' })
-    cache.invalidateQueries({ key: ['tenant', 'promotions'] })
-    emit('deleted')
+    await invalidatePromotionCaches()
     close()
+    emit('deleted')
   } catch (e: any) {
     toast.add({ title: e?.data?.detail ?? 'No se pudo eliminar', color: 'error' })
   } finally {
