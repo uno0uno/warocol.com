@@ -177,7 +177,20 @@ const orderTipPercent = computed(() => {
 const orderChargedTotal = computed(() => {
   const o = order.value
   if (!o?.tip_amount || o.tip_amount <= 0) return null
-  return Number(o.total_amount) + Number(o.tip_amount)
+  const tipTax = Number(o.tip_tax_amount) || 0
+  return Number(o.total_amount) + Number(o.tip_amount) + tipTax
+})
+
+const hasOrderTotalsBreakdown = computed(() => {
+  const o = order.value
+  if (!o) return false
+  return (
+    (o.promo_savings ?? 0) > 0
+    || (o.discount_amount ?? 0) > 0
+    || (o.standard_tax ?? 0) > 0
+    || (o.liquor_tax ?? 0) > 0
+    || (o.tip_amount ?? 0) > 0
+  )
 })
 
 const items = computed(() => itemsData.value || [])
@@ -1104,9 +1117,11 @@ onUnmounted(() => {
             </tfoot>
           </table>
 
-          <!-- Totals summary — shown when discount or taxes apply -->
-          <div v-if="order.promo_savings > 0 || order.discount_amount > 0 || order.standard_tax > 0 || order.liquor_tax > 0"
-            class="flex justify-end px-6 py-4 border-t border-border">
+          <!-- Totals summary — promos, discounts, taxes, tip -->
+          <div
+            v-if="hasOrderTotalsBreakdown"
+            class="flex justify-end px-6 py-4 border-t border-border"
+          >
             <div class="flex flex-col gap-2 min-w-[220px]">
               <div class="flex items-center justify-between gap-10">
                 <span class="text-sm text-text-secondary">Subtotal</span>
@@ -1145,10 +1160,44 @@ onUnmounted(() => {
                 <span class="text-sm text-text-secondary">IVA licores 5%</span>
                 <span class="text-sm tabular-nums text-text-secondary">{{ formatCurrency(order.liquor_tax) }}</span>
               </div>
+              <div
+                v-if="order.tip_amount && order.tip_amount > 0"
+                class="flex items-center justify-between gap-10"
+              >
+                <span class="text-sm text-text-secondary">
+                  Propina
+                  <span v-if="orderTipPercent != null" class="text-xs text-text-tertiary">
+                    ({{ orderTipPercent }}%)
+                  </span>
+                </span>
+                <span class="text-sm font-medium text-primary tabular-nums">
+                  +{{ formatCurrency(order.tip_amount) }}
+                </span>
+              </div>
+              <div
+                v-if="order.tip_tax_amount && order.tip_tax_amount > 0"
+                class="flex items-center justify-between gap-10"
+              >
+                <span class="text-sm text-text-secondary">Impuesto propina</span>
+                <span class="text-sm tabular-nums text-text-secondary">
+                  +{{ formatCurrency(order.tip_tax_amount) }}
+                </span>
+              </div>
               <div class="flex items-center justify-between gap-10 pt-2 border-t border-border">
-                <span class="text-sm font-bold text-text-primary">Total</span>
+                <span class="text-sm font-bold text-text-primary">
+                  {{ order.tip_amount && order.tip_amount > 0 ? 'Total orden' : 'Total' }}
+                </span>
                 <span class="text-base font-bold text-primary tabular-nums">{{ formatCurrency(order.total_amount)
                 }}</span>
+              </div>
+              <div
+                v-if="orderChargedTotal != null"
+                class="flex items-center justify-between gap-10"
+              >
+                <span class="text-sm font-bold text-text-primary">Total cobrado</span>
+                <span class="text-base font-bold text-primary tabular-nums">
+                  {{ formatCurrency(orderChargedTotal) }}
+                </span>
               </div>
             </div>
           </div>

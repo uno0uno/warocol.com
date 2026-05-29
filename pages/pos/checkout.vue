@@ -1730,6 +1730,10 @@ const prefacturaAmountDue = computed(() =>
   prefacturaOrderTotal.value + tipSettlementTotal(tipAmount.value, tipTaxAmount.value),
 )
 
+/** Resumen de la Orden — order total incl. taxes; amount due adds tip settlement (#737). */
+const checkoutSummaryOrderTotal = computed(() => prefacturaOrderTotal.value)
+const checkoutSummaryAmountDue = computed(() => prefacturaAmountDue.value)
+
 type PrefacturaPrintSnapshot = {
   orderTotal: number
   tipAmount: number
@@ -2825,12 +2829,33 @@ onUnmounted(() => {
                 <span>Descuento</span>
                 <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
               </div>
+              <div
+                v-if="tipAmount > 0"
+                class="flex justify-between text-sm text-text-secondary"
+              >
+                <span>{{ receiptTipLabel }}</span>
+                <span class="font-medium text-text-primary tabular-nums">{{ formatCurrency(tipAmount) }}</span>
+              </div>
+              <div
+                v-if="tipAmount > 0 && tipTaxAmount > 0"
+                class="flex justify-between text-sm text-text-secondary"
+              >
+                <span>{{ tipTaxLabel }}</span>
+                <span class="font-medium text-text-primary tabular-nums">{{ formatCurrency(tipTaxAmount) }}</span>
+              </div>
             </div>
 
             <div class="border-t border-dashed border-border pt-4">
+              <div
+                v-if="tipAmount > 0"
+                class="flex justify-between text-sm text-text-secondary mb-2"
+              >
+                <span>Total orden</span>
+                <span class="font-medium text-text-primary tabular-nums">{{ formatCurrency(checkoutSummaryOrderTotal) }}</span>
+              </div>
               <div class="flex justify-between items-end mb-1">
                 <span class="text-text-secondary font-medium">Total a Pagar</span>
-                <span class="text-3xl font-bold text-primary">{{ formatCurrency(discountedTotal) }}</span>
+                <span class="text-3xl font-bold text-primary tabular-nums">{{ formatCurrency(checkoutSummaryAmountDue) }}</span>
               </div>
               <p class="text-right text-xs text-text-tertiary">COP</p>
             </div>
@@ -3364,11 +3389,32 @@ onUnmounted(() => {
               <span>Descuento</span>
               <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
             </div>
+            <div
+              v-if="tipAmount > 0"
+              class="flex justify-between text-sm text-text-secondary"
+            >
+              <span>{{ receiptTipLabel }}</span>
+              <span class="font-medium text-text-primary tabular-nums">{{ formatCurrency(tipAmount) }}</span>
+            </div>
+            <div
+              v-if="tipAmount > 0 && tipTaxAmount > 0"
+              class="flex justify-between text-sm text-text-secondary"
+            >
+              <span>{{ tipTaxLabel }}</span>
+              <span class="font-medium text-text-primary tabular-nums">{{ formatCurrency(tipTaxAmount) }}</span>
+            </div>
           </div>
           <div class="border-t border-dashed border-border pt-4">
+            <div
+              v-if="tipAmount > 0"
+              class="flex justify-between text-sm text-text-secondary mb-2"
+            >
+              <span>Total orden</span>
+              <span class="font-medium text-text-primary tabular-nums">{{ formatCurrency(checkoutSummaryOrderTotal) }}</span>
+            </div>
             <div class="flex justify-between items-end mb-1">
               <span class="text-text-secondary font-medium">Total a Pagar</span>
-              <span class="text-3xl font-bold text-primary">{{ formatCurrency(discountedTotal) }}</span>
+              <span class="text-3xl font-bold text-primary tabular-nums">{{ formatCurrency(checkoutSummaryAmountDue) }}</span>
             </div>
             <p class="text-right text-xs text-text-tertiary">COP</p>
           </div>
