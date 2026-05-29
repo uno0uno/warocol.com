@@ -106,6 +106,13 @@
                     variant="secondary"
                     size="sm"
                   />
+                  <UiStatusBadge
+                    v-if="(item.priority ?? 0) > 0"
+                    :value="`Prioridad ${item.priority}`"
+                    format="text"
+                    variant="warning"
+                    size="sm"
+                  />
                 </div>
                 <p class="text-xs text-text-secondary mt-0.5">
                   <span class="font-medium text-text-primary">{{ rowValue(item) }}</span>
@@ -187,6 +194,17 @@
             />
           </template>
 
+          <template #cell-priority="{ item }">
+            <UiStatusBadge
+              v-if="item && (item.priority ?? 0) > 0"
+              :value="String(item.priority)"
+              format="text"
+              variant="warning"
+              size="sm"
+            />
+            <span v-else-if="item" class="text-sm text-text-tertiary">—</span>
+          </template>
+
           <template #cell-actions="{ item }">
             <div v-if="item" class="flex items-center justify-end gap-0.5">
               <button
@@ -242,6 +260,7 @@ interface PromotionRow {
   name: string
   promo_type: string
   scope_type: string
+  priority?: number
   value_json?: Record<string, unknown>
   is_active: boolean
   is_currently_active?: boolean | null
@@ -328,6 +347,7 @@ const columns: Column[] = [
   { key: 'schedule', title: 'Horario', sortable: false },
   { key: 'scope', title: 'Alcance', sortable: false },
   { key: 'status', title: 'Estado', sortable: false },
+  { key: 'priority', title: 'Prioridad', sortable: false },
   { key: 'actions', title: '', align: 'right' as const },
 ]
 
