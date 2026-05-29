@@ -38,4 +38,9 @@ export default defineNuxtRouteMiddleware((to) => {
   if (to.path === '/gastos' || to.path.startsWith('/gastos/')) {
     return navigateTo(to.path.replace('/gastos', '/finanzas/gastos'), { redirectCode: 301 })
   }
+
+  // /gestion/promociones/* → /operaciones/promociones/* (warocol.com#989)
+  if (to.path === '/gestion/promociones' || to.path.startsWith('/gestion/promociones/')) {
+    return navigateTo(to.path.replace('/gestion/promociones', '/operaciones/promociones'), { redirectCode: 301 })
+  }
 })

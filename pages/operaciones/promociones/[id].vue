@@ -9,7 +9,7 @@
     <div v-else class="page-layout max-w-2xl">
       <div class="flex flex-col gap-4">
         <NuxtLink
-          to="/gestion/promociones"
+          to="/operaciones/promociones"
           class="text-sm text-primary hover:underline inline-flex items-center min-h-[44px]"
         >
           ← Volver a promociones
@@ -542,7 +542,7 @@ async function onSubmit() {
       })
       toast.add({ title: 'Promoción creada', color: 'success' })
       cache.invalidateQueries({ key: ['tenant', 'promotions'] })
-      await router.replace(`/gestion/promociones/${res.data.id}`)
+      await router.replace(`/operaciones/promociones/${res.data.id}`)
     } else {
       await $fetch(`/api/api/promotions/${promotionId.value}`, { method: 'PATCH', body })
       toast.add({ title: 'Promoción actualizada', color: 'success' })
@@ -564,7 +564,7 @@ async function onDelete() {
     await $fetch(`/api/api/promotions/${promotionId.value}`, { method: 'DELETE' })
     toast.add({ title: 'Promoción eliminada', color: 'success' })
     cache.invalidateQueries({ key: ['tenant', 'promotions'] })
-    await router.push('/gestion/promociones')
+    await router.push('/operaciones/promociones')
   } catch (e: any) {
     toast.add({ title: e?.data?.detail ?? 'No se pudo eliminar', color: 'error' })
   } finally {

@@ -83,28 +83,6 @@
         </div>
       </template>
 
-      <!-- ── GESTIÓN (above Cuenta) ── -->
-      <template v-if="visibleGestionItems.length">
-        <div class="my-1.5 mx-1 border-t nav-divider" />
-        <div class="space-y-0.5">
-          <p v-if="!collapsed" class="nav-section-label">Gestión</p>
-          <NuxtLink
-            v-for="item in visibleGestionItems"
-            :key="item.to"
-            :to="item.to"
-            :title="item.label"
-            :class="[
-              'nav-item',
-              collapsed ? 'justify-center' : '',
-              activePage === item.page ? 'nav-item--active' : 'nav-item--idle',
-            ]"
-          >
-            <component :is="item.icon" class="nav-icon" />
-            <span class="nav-label-text" :class="collapsed ? 'nav-label-text--hidden' : ''">{{ item.label }}</span>
-          </NuxtLink>
-        </div>
-      </template>
-
       <!-- ── SPACER ── -->
       <div class="flex-1" style="min-height: 1rem;" />
 
@@ -173,7 +151,6 @@ import {
   MagnifyingGlassIcon,
   MapPinIcon,
   QueueListIcon,
-  ReceiptPercentIcon,
   ShoppingCartIcon,
   Squares2X2Icon,
   TruckIcon,
@@ -182,7 +159,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 interface Props {
-  activePage?: 'dashboard' | 'ventas' | 'propinas' | 'pos' | 'despacho' | 'comandas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'gestion' | 'operaciones' | 'finanzas' | 'facturacion'
+  activePage?: 'dashboard' | 'ventas' | 'propinas' | 'pos' | 'despacho' | 'comandas' | 'financiero' | 'abastecimiento' | 'inventario' | 'menu' | 'pagos' | 'equipo' | 'integraciones' | 'analytics' | 'reportes' | 'configuracion' | 'admin' | 'negocio' | 'operaciones' | 'finanzas' | 'facturacion'
 }
 const props = withDefaults(defineProps<Props>(), { activePage: 'financiero' })
 
@@ -225,10 +202,6 @@ const secondaryItems: SidebarItem[] = [
   { to: '/integraciones',                    page: 'integraciones',  label: 'Integraciones',    icon: KeyIcon,                   module: 'integraciones' },
 ]
 
-const gestionItems: SidebarItem[] = [
-  { to: '/gestion/promociones', page: 'gestion', label: 'Promociones', icon: ReceiptPercentIcon, module: 'mi_negocio' },
-]
-
 const cuentaItems: SidebarItem[] = [
   { to: '/negocio',         page: 'negocio', label: 'Mi Negocio', icon: BuildingStorefrontIcon, module: 'mi_negocio' },
   { to: '/gestion/billing', page: 'admin',   label: 'Mi Plan',    icon: CreditCardIcon,         module: 'mi_plan' },
@@ -243,9 +216,6 @@ const visiblePrimaryItems = computed(() =>
 )
 const visibleSecondaryItems = computed(() =>
   secondaryItems.filter((item) => can(item.module).value)
-)
-const visibleGestionItems = computed(() =>
-  gestionItems.filter((item) => can(item.module).value)
 )
 const visibleCuentaItems = computed(() =>
   cuentaItems.filter((item) => can(item.module).value)

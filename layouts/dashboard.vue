@@ -431,6 +431,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path.startsWith('/operaciones/promociones')) {
+    return {
+      pageTitle: 'Promociones',
+      pageSubtitle: 'Descuentos y reglas para el menú',
+      searchPlaceholder: undefined,
+      activePage: 'operaciones' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path.startsWith('/operaciones')) {
     return {
       pageTitle: 'Operaciones',
@@ -903,16 +913,6 @@ const getPageConfig = () => {
       pageSubtitle: 'Información y configuración de tu negocio',
       searchPlaceholder: 'Buscar en negocio...',
       activePage: 'negocio' as const,
-      showBreadcrumb: false,
-      breadcrumbPage: undefined,
-      backButton: undefined
-    }
-  } else if (path.startsWith('/gestion/promociones')) {
-    return {
-      pageTitle: 'Promociones',
-      pageSubtitle: 'Descuentos y reglas para el menú',
-      searchPlaceholder: undefined,
-      activePage: 'gestion' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,
       backButton: undefined
