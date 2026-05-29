@@ -181,7 +181,7 @@
                 :exclude-ids="selectedProducts.map((p) => p.id)"
                 @select="onProductSelect"
               />
-              <ul v-if="selectedProducts.length" class="flex flex-wrap gap-2">
+              <ul v-if="showProductChips" class="flex flex-wrap gap-2">
                 <li
                   v-for="p in selectedProducts"
                   :key="p.id"
@@ -191,6 +191,16 @@
                   <button type="button" class="hover:opacity-70 min-h-[24px] min-w-[24px]" :aria-label="`Quitar ${p.name}`" @click="removeProduct(p.id)">×</button>
                 </li>
               </ul>
+              <div v-else-if="showProductBulkSummary" class="flex flex-wrap items-center gap-2">
+                <p class="text-sm text-text-secondary">{{ productScopeSummary }}</p>
+                <button
+                  type="button"
+                  class="text-sm text-primary font-medium min-h-[44px] px-1"
+                  @click="scopePickerOpen = true"
+                >
+                  Ver / editar lista
+                </button>
+              </div>
             </div>
 
             <div class="space-y-3">
@@ -312,6 +322,13 @@
         </template>
       </div>
     </Transition>
+
+    <PromocionesPromotionScopePickerModal
+      v-model="scopePickerOpen"
+      :products="selectedProducts"
+      @remove="removeProduct"
+      @clear-all="clearAllProducts"
+    />
   </Teleport>
 </template>
 
@@ -328,8 +345,12 @@ import type { ProductRow } from '~/composables/useProductSearch'
 import {
   buildPromotionPreview,
   findOverlappingScheduleIndices,
+  formatScopeLabel,
   type PromotionScheduleRow,
 } from '~/utils/promotionPreview'
+
+/** Above this count, panel shows summary + modal instead of chips. */
+const PRODUCT_CHIP_THRESHOLD = 15
 import { bogotaDateAtNoon, combineBogotaDateAndTimeISO } from '~/utils/bogotaDate'
 
 interface Props {
@@ -415,6 +436,7 @@ const form = reactive({
 
 const selectedCategories = ref<CategoryRow[]>([])
 const selectedProducts = ref<{ id: string; name: string }[]>([])
+const scopePickerOpen = ref(false)
 const validationErrors = ref<string[]>([])
 const isSaving = ref(false)
 const loadError = ref(false)
@@ -434,6 +456,7 @@ function resetForm() {
   form.endsAtDate = ''
   selectedCategories.value = []
   selectedProducts.value = []
+  scopePickerOpen.value = false
   validationErrors.value = []
   loadError.value = false
 }
@@ -501,6 +524,19 @@ watch(
   },
 )
 
+const showProductChips = computed(
+  () => selectedProducts.value.length > 0 && selectedProducts.value.length <= PRODUCT_CHIP_THRESHOLD,
+)
+const showProductBulkSummary = computed(() => selectedProducts.value.length > PRODUCT_CHIP_THRESHOLD)
+const productScopeSummary = computed(() =>
+  formatScopeLabel(
+    'products',
+    [],
+    selectedProducts.value.map((p) => p.name),
+    { productCount: selectedProducts.value.length, countOnlyThreshold: PRODUCT_CHIP_THRESHOLD },
+  ),
+)
+
 const previewText = computed(() =>
   buildPromotionPreview({
     isActive: form.is_active,
@@ -508,6 +544,8 @@ const previewText = computed(() =>
     scopeType: form.scope_type,
     categoryNames: selectedCategories.value.map((c) => c.name),
     productNames: selectedProducts.value.map((p) => p.name),
+    categoryIds: selectedCategories.value.map((c) => c.id),
+    productIds: selectedProducts.value.map((p) => p.id),
   }),
 )
 
@@ -548,19 +586,26 @@ function removeProduct(id: string) {
   selectedProducts.value = selectedProducts.value.filter((p) => p.id !== id)
 }
 
+function clearAllProducts() {
+  selectedProducts.value = []
+  scopePickerOpen.value = false
+}
+
 async function hydrateProductNames(ids: string[]) {
-  try {
-    const res = await $fetch<{ success: boolean; data: any }>('/api/menu/products', {
-      query: { limit: 100, page: 1 },
-    })
-    const items = Array.isArray(res.data) ? res.data : []
-    selectedProducts.value = ids.map((id) => {
-      const found = items.find((p) => p.id === id)
-      return { id, name: found?.name ?? `Producto ${id.slice(0, 8)}…` }
-    })
-  } catch {
-    /* keep placeholders */
+  if (!ids.length) {
+    selectedProducts.value = []
+    return
   }
+  selectedProducts.value = await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const p = await $fetch<{ data?: { name?: string } }>(`/api/menu/products/${id}`)
+        return { id, name: p?.data?.name ?? `Producto ${id.slice(0, 8)}…` }
+      } catch {
+        return { id, name: `Producto ${id.slice(0, 8)}…` }
+      }
+    }),
+  )
 }
 
 function buildPayload() {
@@ -679,6 +724,7 @@ async function onDelete() {
 }
 
 function close() {
+  scopePickerOpen.value = false
   emit('update:modelValue', false)
 }
 </script>
