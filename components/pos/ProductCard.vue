@@ -7,7 +7,14 @@
     @click="$emit('select', product)"
   >
     <!-- Product icon: real image when uploaded, emoji as fallback (#465) -->
-    <div :style="iconSlotStyle" class="w-full aspect-[3/2] border border-border/30 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0 overflow-hidden">
+    <div :style="iconSlotStyle" class="relative w-full aspect-[3/2] border border-border/30 rounded-2xl shadow-sm flex items-center justify-center mb-1.5 md:mb-3 select-none flex-shrink-0 overflow-hidden">
+      <span
+        v-if="promoBadge"
+        class="absolute top-1 left-1 right-1 z-10 max-w-full text-[9px] md:text-[10px] bg-emerald-500/90 text-white px-1.5 py-0.5 rounded-full font-semibold truncate text-center shadow-sm pointer-events-none"
+        :title="promoBadge.title || promoBadge.label"
+      >
+        {{ promoBadge.label }}
+      </span>
       <img
         v-if="product.image_url && product.image_url.startsWith('http')"
         :src="product.image_url"
@@ -45,8 +52,14 @@ interface Product {
   available: boolean
 }
 
+interface PromoBadge {
+  label: string
+  title?: string
+}
+
 interface Props {
   product: Product
+  promoBadge?: PromoBadge | null
 }
 
 interface Emits {

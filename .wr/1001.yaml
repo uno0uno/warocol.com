@@ -1,0 +1,35 @@
+issue: 1001
+title: "feat(pos): product card badge when active promotion applies"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1001-pos-promo-badge
+
+paths:
+  - composables/useActivePromotions.ts
+  - utils/promoProductMatch.ts
+  - components/pos/ProductCard.vue
+  - pages/pos/index.vue
+
+ac:
+  - Product cards show badge when active promo matches scope
+  - Scope rules mirror checkout (all_products, categories, products; highest priority)
+  - only_current fetch gates schedule — no badge outside window
+  - Badge truncates on mobile with optional tooltip for name/other promos
+  - ActivePromotionRow includes scope IDs + value_json
+  - Client product_in_scope helper in promoProductMatch.ts
+
+out_of_scope:
+  - Checkout receipt/resumen changes
+  - New promotion types
+  - API changes
+  - PromocionPanel invalidation (already exists)
+
+hints:
+  entry: "pages/pos/index.vue — PosProductCard grid"
+  pattern: "checkout.vue:2039-2044 — emerald promo pill; promotions_service.py:91-105 product_in_scope"
+  tests: "none — front-only; manual verify on /pos"
+
+skip:
+  audits: [ux, color, typography]

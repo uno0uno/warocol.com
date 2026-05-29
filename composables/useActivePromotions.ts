@@ -10,6 +10,10 @@ export interface ActivePromotionRow {
   scope_type: string
   schedules: PromotionScheduleRow[]
   is_currently_active?: boolean
+  category_ids?: string[]
+  product_ids?: string[]
+  value_json?: Record<string, unknown>
+  priority?: number
 }
 
 const MIN_REFETCH_MS = 30_000
