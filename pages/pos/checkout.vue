@@ -786,6 +786,13 @@ const addSplitPayment = async () => {
         order_number: 0,
         total_amount: discountedTotal.value,
         payment_method: selectedPaymentMethod.value,
+        ...(promoBreakdown.value.length
+          ? {
+              promo_savings: promoSavings.value,
+              promo_breakdown: promoBreakdown.value,
+              subtotal: cartTotal.value,
+            }
+          : {}),
         ...(discountEnabled.value && discountAmount.value > 0
           ? { discount_amount: discountAmount.value, subtotal: cartTotal.value }
           : {}),
@@ -1774,6 +1781,8 @@ const sendReceiptEmail = async () => {
         standard_tax: orderResult.value.standard_tax ?? 0,
         liquor_tax: orderResult.value.liquor_tax ?? 0,
         standard_tax_label: orderResult.value.standard_tax_label ?? 'Impuesto',
+        promo_savings: orderResult.value.promo_savings ?? 0,
+        promo_breakdown: orderResult.value.promo_breakdown ?? [],
         invoice_prefix: invoiceResult.value?.prefix ?? null,
         invoice_number: invoiceResult.value?.invoice_number ?? null,
         invoice_cufe: invoiceResult.value?.cufe ?? null,
