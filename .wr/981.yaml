@@ -1,0 +1,33 @@
+issue: 981
+title: "feat(promotions): back-office UI to create and manage promotions"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-981-promotions-backoffice-ui
+
+paths:
+  - pages/gestion/promociones/index.vue
+  - pages/gestion/promociones/[id].vue
+  - pages/gestion/promociones.vue
+  - components/DashboardSidebar.vue
+  - layouts/dashboard.vue
+  - utils/promotionPreview.ts
+
+ac:
+  - Route /gestion/promociones list + create/edit; module mi_negocio
+  - CRUD via /api/api/promotions
+  - Form types, schedule bitmask, scope pickers, preview text
+  - Client validation empty scope + overlapping schedules
+
+out_of_scope:
+  - POS apply (#982-983)
+  - API changes
+
+hints:
+  entry: "pages/gestion/promociones/[id].vue"
+  pattern: "pages/facturacion/index.vue — useQuery; useCategorySearch for categories"
+  tests: "Manual: create BOGO 2x1 on two products"
+
+skip:
+  audits: [ux, color, typography]
