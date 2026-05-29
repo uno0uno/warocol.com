@@ -40,11 +40,7 @@
         </template>
       </UiAdvancedFiltersBar>
 
-      <div v-if="isRefreshing && filteredPromotions.length === 0" class="flex items-center justify-center min-h-[200px]">
-        <CommonsTheCustomLoader size="medium" />
-      </div>
-
-      <HealthSemaphore v-else :is-unlocked="true" title="Promociones">
+      <HealthSemaphore :is-unlocked="true" title="Promociones">
         <template #header-actions>
           <button
             type="button"
@@ -215,12 +211,32 @@ const {
 })
 
 const promotions = computed(() => listData.value?.data ?? [])
-const isLoading = computed(
-  () => queryAsyncStatus.value === 'loading' && !listData.value,
-)
+// Full-page loader only on first fetch; refetches show matrix in header (optimistic).
+const isLoading = computed(() => !listData.value && !fetchError.value)
 const isRefreshing = computed(
   () => queryAsyncStatus.value === 'loading' && !!listData.value,
 )
+
+const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
+const refreshHandler = async () => {
+  const tenantId = currentTenant.value?.id
+  if (tenantId) {
+    await cache.invalidateQueries({ key: ['tenant', 'promotions', tenantId] })
+  } else {
+    await cache.invalidateQueries({ key: ['tenant', 'promotions'] })
+  }
+  await refetchPromotions()
+}
+
+onMounted(() => {
+  openFromQuery()
+  setRefreshHandler(refreshHandler)
+  registerProgressiveLoading(isRefreshing)
+})
+
+onUnmounted(() => {
+  clearRefreshHandler(refreshHandler)
+})
 
 const filteredPromotions = computed(() => {
   let rows = promotions.value
@@ -262,21 +278,8 @@ async function onPanelSaved() {
   showPanel.value = false
   panelPromotionId.value = null
   clearPanelQuery()
-  const tenantId = currentTenant.value?.id
-  if (tenantId) {
-    await cache.invalidateQueries({ key: ['tenant', 'promotions', tenantId] })
-  } else {
-    await cache.invalidateQueries({ key: ['tenant', 'promotions'] })
-  }
-  await refetchPromotions()
+  await refreshHandler()
 }
-
-watch(showPanel, (open) => {
-  if (!open) {
-    panelPromotionId.value = null
-    clearPanelQuery()
-  }
-})
 
 function openFromQuery() {
   if (route.query.nuevo === '1') {
@@ -289,7 +292,13 @@ function openFromQuery() {
   }
 }
 
-onMounted(openFromQuery)
+watch(showPanel, (open) => {
+  if (!open) {
+    panelPromotionId.value = null
+    clearPanelQuery()
+  }
+})
+
 watch(() => route.query, openFromQuery)
 
 const rowPreview = (item: PromotionRow) =>
