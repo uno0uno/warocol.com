@@ -1,0 +1,34 @@
+issue: 999
+title: "feat(promociones): alcance popover with paginated scope on list"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-999-promo-scope-popover
+
+paths:
+  - pages/operaciones/promociones/index.vue
+  - components/promociones/PromotionScopePopover.vue
+  - utils/promotionPreview.ts
+
+ac:
+  - Alcance clickable when scope has products/categories
+  - Popover loads scope on demand via GET /promotions/{id}/scope
+  - Search + pagination for 50+ items
+  - Promo name + scope type header; loading/error/empty states
+  - Esc closes; Modal/BottomSheet responsive
+
+out_of_scope:
+  - PromocionPanel bulk modal (#1000)
+  - POS badge (#1001)
+
+hints:
+  entry: "index.vue isScopeClickable + openScopePopover"
+  pattern: "Modal + BottomSheetModal responsive; useQuery enabled on open"
+  tests: "manual — /operaciones/promociones click Alcance on scoped promo"
+
+skip:
+  audits: [ux, color, typography]
+
+companion:
+  api_pr: "api-warolabs wr-999-promo-scope-endpoint (merge first)"

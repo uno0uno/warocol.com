@@ -80,7 +80,16 @@
                   <span class="font-medium text-text-primary">{{ rowValue(item) }}</span>
                   · {{ rowSchedule(item) }}
                 </p>
-                <p class="text-xs text-text-tertiary mt-0.5 truncate">{{ rowScope(item) }}</p>
+                <button
+                  v-if="isScopeClickable(item)"
+                  type="button"
+                  class="text-xs text-left text-primary hover:underline truncate max-w-full min-h-[44px]"
+                  :aria-label="`Ver alcance de ${item.name}`"
+                  @click="openScopePopover(item)"
+                >
+                  {{ rowScope(item) }}
+                </button>
+                <p v-else class="text-xs text-text-tertiary mt-0.5 truncate">{{ rowScope(item) }}</p>
               </div>
               <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
                 <UiStatusBadge
@@ -125,7 +134,16 @@
           </template>
 
           <template #cell-scope="{ item }">
-            <span class="text-sm text-text-secondary">{{ item ? rowScope(item) : '' }}</span>
+            <button
+              v-if="item && isScopeClickable(item)"
+              type="button"
+              class="text-sm text-left text-primary hover:underline min-h-[44px]"
+              :aria-label="`Ver alcance de ${item.name}`"
+              @click="openScopePopover(item)"
+            >
+              {{ rowScope(item) }}
+            </button>
+            <span v-else-if="item" class="text-sm text-text-secondary">{{ rowScope(item) }}</span>
           </template>
 
           <template #cell-status="{ item }">
@@ -160,6 +178,13 @@
       :promotion-id="panelPromotionId"
       @saved="onPanelSaved"
       @deleted="onPanelSaved"
+    />
+
+    <PromocionesPromotionScopePopover
+      v-model="scopePopoverOpen"
+      :promotion-id="scopePopoverPromo?.id ?? null"
+      :promotion-name="scopePopoverPromo?.name ?? ''"
+      :scope-type="scopePopoverPromo?.scope_type ?? ''"
     />
   </div>
 </template>
@@ -205,6 +230,8 @@ const cache = useQueryCache()
 
 const showPanel = ref(false)
 const panelPromotionId = ref<string | null>(null)
+const scopePopoverOpen = ref(false)
+const scopePopoverPromo = ref<PromotionRow | null>(null)
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const statusFilter = ref<'' | 'active' | 'inactive'>('')
@@ -293,6 +320,17 @@ const rowScope = (item: PromotionRow) => {
     productCount,
     countOnlyThreshold: 5,
   })
+}
+
+function isScopeClickable(item: PromotionRow): boolean {
+  if (item.scope_type === 'all_products') return false
+  const { categoryCount, productCount } = scopeLabelsFor(item)
+  return categoryCount > 0 || productCount > 0
+}
+
+function openScopePopover(item: PromotionRow) {
+  scopePopoverPromo.value = item
+  scopePopoverOpen.value = true
 }
 
 // Full-page loader only on first fetch; refetches show matrix in header (optimistic).
