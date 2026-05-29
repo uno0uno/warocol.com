@@ -94,6 +94,19 @@ export type ScopeLabelCounts = {
   countOnlyThreshold?: number
 }
 
+export function formatScopeTypeLabel(scopeType: string): string {
+  switch (scopeType) {
+    case 'categories':
+      return 'Categorías'
+    case 'products':
+      return 'Productos'
+    case 'all_products':
+      return 'Todos los productos'
+    default:
+      return scopeType
+  }
+}
+
 export function formatScopeLabel(
   scopeType: string,
   categoryNames: string[],
