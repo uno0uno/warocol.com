@@ -2,19 +2,13 @@ import { computed, onUnmounted, ref, watch, type ComputedRef, type Ref } from 'v
 import { $fetch } from 'ofetch'
 import type { PromotionScheduleRow } from '~/utils/promotionPreview'
 import { BOGOTA_TZ } from '~/utils/bogotaDate'
+import {
+  normalizePromoTypeBlockMap,
+  type ActivePromotionRow,
+  type PromoTypeBlockMap,
+} from '~/utils/promoProductMatch'
 
-export interface ActivePromotionRow {
-  id: string
-  name: string
-  promo_type: string
-  scope_type: string
-  schedules: PromotionScheduleRow[]
-  is_currently_active?: boolean
-  category_ids?: string[]
-  product_ids?: string[]
-  value_json?: Record<string, unknown>
-  priority?: number
-}
+export type { ActivePromotionRow }
 
 const MIN_REFETCH_MS = 30_000
 const MAX_REFETCH_MS = 5 * 60_000
@@ -106,7 +100,20 @@ export function useActivePromotions(options?: {
     staleTime: 30_000,
   })
 
+  const { data: restaurantContextData } = useQuery({
+    key: () => ['pos', 'restaurant-context', currentTenant.value?.id],
+    query: () => $fetch<{ success: boolean; data: { promo_type_block_map?: PromoTypeBlockMap } }>(
+      '/api/pos/restaurant-context',
+    ),
+    enabled: () => !!currentTenant.value && (options?.enabled?.value ?? true),
+    staleTime: 30_000,
+  })
+
   const activePromos = computed(() => data.value?.data ?? [])
+  const promoTypeBlockMap = computed(() =>
+    normalizePromoTypeBlockMap(restaurantContextData.value?.data?.promo_type_block_map),
+  )
+  const promoPickOptions = computed(() => ({ promoTypeBlockMap: promoTypeBlockMap.value }))
   const hasActivePromos = computed(() => activePromos.value.length > 0)
 
   const activePromoHint = computed(() => {
@@ -150,5 +157,7 @@ export function useActivePromotions(options?: {
     activePromoHint,
     activePromosStatus: asyncStatus,
     refetchActivePromos: refetch,
+    promoTypeBlockMap,
+    promoPickOptions,
   }
 }

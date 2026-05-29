@@ -1,9 +1,56 @@
-import type { ActivePromotionRow } from '~/composables/useActivePromotions'
-import { formatPromoValue } from '~/utils/promotionPreview'
+import type { PromotionScheduleRow } from './promotionPreview.ts'
+import { formatPromoValue } from './promotionPreview.ts'
+
+export interface ActivePromotionRow {
+  id: string
+  name: string
+  promo_type: string
+  scope_type: string
+  schedules: PromotionScheduleRow[]
+  is_currently_active?: boolean
+  category_ids?: string[]
+  product_ids?: string[]
+  value_json?: Record<string, unknown>
+  priority?: number
+}
 
 export type PromoBadgeDisplay = {
   label: string
   title?: string
+}
+
+export type PromoTypeBlockMap = Record<string, string[]>
+
+export type PromoPickOptions = {
+  promoTypeBlockMap?: PromoTypeBlockMap | null
+}
+
+const VALID_PROMO_TYPES = new Set(['percent_off', 'fixed_off', 'bogo'])
+
+/** Client mirror of api promotions_service.DEFAULT_PROMO_TYPE_BLOCK_MAP. */
+export const DEFAULT_PROMO_TYPE_BLOCK_MAP: PromoTypeBlockMap = {
+  bogo: ['percent_off', 'fixed_off'],
+}
+
+/** Client mirror of api promotions_service.normalize_promo_type_block_map. */
+export function normalizePromoTypeBlockMap(
+  raw?: PromoTypeBlockMap | null,
+): PromoTypeBlockMap {
+  if (!raw || Object.keys(raw).length === 0) {
+    return { ...DEFAULT_PROMO_TYPE_BLOCK_MAP }
+  }
+  const normalized: PromoTypeBlockMap = {}
+  for (const [winner, blocked] of Object.entries(raw)) {
+    if (!VALID_PROMO_TYPES.has(winner)) continue
+    if (!Array.isArray(blocked)) continue
+    const cleaned = blocked.filter(
+      (promoType) => typeof promoType === 'string' && VALID_PROMO_TYPES.has(promoType),
+    )
+    if (cleaned.length > 0) normalized[winner] = cleaned
+  }
+  return Object.keys(normalized).length > 0
+    ? normalized
+    : { ...DEFAULT_PROMO_TYPE_BLOCK_MAP }
 }
 
 function toIdSet(ids: Set<string> | readonly string[]): Set<string> {
@@ -42,32 +89,89 @@ export function promosMatchingProduct(
   )
 }
 
-/** Highest priority wins; tie-break by name (matches server _pick_best_promotion_for_line). */
+function scopeSpecificityRank(scopeType: string): number {
+  if (scopeType === 'products') return 2
+  if (scopeType === 'categories') return 1
+  return 0
+}
+
+function promoRankKey(promo: ActivePromotionRow): [number, number, string] {
+  return [
+    promo.priority ?? 0,
+    scopeSpecificityRank(promo.scope_type),
+    promo.name ?? '',
+  ]
+}
+
+function promoBlockRankKey(promo: ActivePromotionRow): [number, number] {
+  return [promo.priority ?? 0, scopeSpecificityRank(promo.scope_type)]
+}
+
+/** Client mirror of api promotions_service._filter_type_blocked_candidates. */
+export function filterTypeBlockedCandidates(
+  matches: ActivePromotionRow[],
+  typeBlockMap: PromoTypeBlockMap,
+): ActivePromotionRow[] {
+  if (matches.length === 0) return []
+  const eligible: ActivePromotionRow[] = []
+  for (const candidate of matches) {
+    const candidateType = candidate.promo_type ?? ''
+    const candidateRank = promoBlockRankKey(candidate)
+    let blocked = false
+    for (const other of matches) {
+      if (other === candidate) continue
+      const blockedTypes = typeBlockMap[other.promo_type ?? ''] ?? []
+      if (!blockedTypes.includes(candidateType)) continue
+      const otherRank = promoBlockRankKey(other)
+      if (otherRank[0] > candidateRank[0] || otherRank[1] > candidateRank[1]) {
+        blocked = true
+        break
+      }
+      if (otherRank[0] === candidateRank[0] && otherRank[1] === candidateRank[1]) {
+        blocked = true
+        break
+      }
+    }
+    if (!blocked) eligible.push(candidate)
+  }
+  return eligible
+}
+
+function comparePromoRank(a: ActivePromotionRow, b: ActivePromotionRow): number {
+  const [aPriority, aScope, aName] = promoRankKey(a)
+  const [bPriority, bScope, bName] = promoRankKey(b)
+  if (aPriority !== bPriority) return aPriority - bPriority
+  if (aScope !== bScope) return aScope - bScope
+  return aName.localeCompare(bName)
+}
+
+/** Client mirror of api promotions_service._pick_best_promotion_for_line. */
 export function pickBestPromotionForProduct(
   promos: ActivePromotionRow[],
   productId: string,
   categoryId?: string | null,
+  options?: PromoPickOptions,
 ): ActivePromotionRow | null {
   const matches = promosMatchingProduct(promos, productId, categoryId)
   if (matches.length === 0) return null
-  return matches.reduce((best, promo) => {
-    const bestPriority = best.priority ?? 0
-    const promoPriority = promo.priority ?? 0
-    if (promoPriority > bestPriority) return promo
-    if (promoPriority < bestPriority) return best
-    return (promo.name ?? '') >= (best.name ?? '') ? promo : best
-  })
+  const blockMap = normalizePromoTypeBlockMap(options?.promoTypeBlockMap)
+  const eligible = filterTypeBlockedCandidates(matches, blockMap)
+  if (eligible.length === 0) return null
+  return eligible.reduce((best, promo) =>
+    comparePromoRank(promo, best) >= 0 ? promo : best,
+  )
 }
 
 export function promoBadgeForProduct(
   promos: ActivePromotionRow[],
   productId: string,
   categoryId?: string | null,
+  options?: PromoPickOptions,
 ): PromoBadgeDisplay | null {
   const matches = promosMatchingProduct(promos, productId, categoryId)
   if (matches.length === 0) return null
 
-  const best = pickBestPromotionForProduct(promos, productId, categoryId)
+  const best = pickBestPromotionForProduct(promos, productId, categoryId, options)
   if (!best) return null
 
   const valueLabel = formatPromoValue(best.promo_type, best.value_json)
@@ -133,8 +237,9 @@ export function linePromoSavingsForProduct(
   productId: string,
   line: LinePromoInput,
   categoryId?: string | null,
+  options?: PromoPickOptions,
 ): number {
-  const promo = pickBestPromotionForProduct(promos, productId, categoryId)
+  const promo = pickBestPromotionForProduct(promos, productId, categoryId, options)
   if (!promo) return 0
   return computeLinePromoSavings(line, promo)
 }

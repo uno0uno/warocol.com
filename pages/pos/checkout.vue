@@ -49,7 +49,7 @@ function invalidateCheckoutPromoPreview() {
   }
 }
 
-const { activePromos, hasActivePromos, activePromoHint } = useActivePromotions({
+const { activePromos, hasActivePromos, activePromoHint, promoPickOptions } = useActivePromotions({
   onActivePromosChanged: invalidateCheckoutPromoPreview,
 })
 
@@ -451,6 +451,7 @@ const clientPromoSavings = computed(() => {
       productId,
       { subtotal: checkoutLineGross(item), quantity: item.quantity },
       checkoutLineCategoryId(item),
+      promoPickOptions.value,
     )
   }
   return total
@@ -1129,6 +1130,7 @@ const getLinePromoSavings = (item: any): number => {
     productId,
     { subtotal: checkoutLineGross(item), quantity: item.quantity },
     checkoutLineCategoryId(item),
+    promoPickOptions.value,
   )
 }
 

@@ -357,7 +357,7 @@ import {
   promoBadgeForProduct,
 } from '~/utils/promoProductMatch'
 
-const { activePromos } = useActivePromotions()
+const { activePromos, promoPickOptions } = useActivePromotions()
 
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
@@ -489,7 +489,7 @@ const posStore = usePOSStore()
 const { isDeleting } = storeToRefs(posStore)
 
 function linePromoBadge(productId: string, categoryId?: string | null) {
-  return promoBadgeForProduct(activePromos.value, productId, categoryId)
+  return promoBadgeForProduct(activePromos.value, productId, categoryId, promoPickOptions.value)
 }
 
 function categoryForProduct(productId: string): string | null {
@@ -513,6 +513,7 @@ function cartLinePromoSavings(item: CartItem): number {
     item.product.id,
     { subtotal: gross, quantity: item.quantity },
     categoryForProduct(item.product.id),
+    promoPickOptions.value,
   )
 }
 
@@ -526,6 +527,7 @@ function tabLinePromoSavings(item: TabItem): number {
     item.productId,
     { subtotal: item.subtotal, quantity: item.quantity },
     categoryId,
+    promoPickOptions.value,
   )
 }
 
