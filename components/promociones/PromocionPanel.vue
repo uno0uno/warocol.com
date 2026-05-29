@@ -80,37 +80,6 @@
               <p v-for="(err, i) in validationErrors" :key="i">{{ err }}</p>
             </div>
 
-            <div
-              v-if="overlapWarnings.length"
-              role="status"
-              class="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-3 space-y-2"
-            >
-              <p class="font-medium">
-                {{ requiresAcknowledgment
-                  ? 'Esta promoción se superpone con otras activas (misma prioridad). Confirma o sube la prioridad para guardar.'
-                  : 'Esta promoción se superpone con otras activas:' }}
-              </p>
-              <ul class="list-disc pl-4 space-y-1">
-                <li v-for="w in overlapWarnings" :key="w.promotion_id">
-                  <span class="font-medium">{{ w.promotion_name }}</span>
-                  — prioridad {{ w.priority }},
-                  {{ w.shared_product_count }} producto(s) en común
-                  <span v-if="w.risk === 'high'" class="text-amber-700">(conflicto de prioridad)</span>
-                </li>
-              </ul>
-              <label
-                v-if="requiresAcknowledgment"
-                class="flex items-start gap-2 pt-1 cursor-pointer"
-              >
-                <input
-                  v-model="overlapAcknowledged"
-                  type="checkbox"
-                  class="mt-0.5 rounded border-amber-400 text-primary focus:ring-primary/30"
-                />
-                <span>Entiendo que en checkout gana la promoción de mayor prioridad (empate por nombre).</span>
-              </label>
-            </div>
-
             <div class="flex flex-col gap-1.5">
               <label for="promo-name" class="text-sm font-medium text-text-primary">
                 Nombre <span class="text-destructive">*</span>
@@ -503,9 +472,6 @@ const selectedCategories = ref<CategoryRow[]>([])
 const selectedProducts = ref<{ id: string; name: string }[]>([])
 const scopePickerOpen = ref(false)
 const validationErrors = ref<string[]>([])
-const overlapWarnings = ref<OverlapWarning[]>([])
-const requiresAcknowledgment = ref(false)
-const overlapAcknowledged = ref(false)
 const isSaving = ref(false)
 const loadError = ref(false)
 const loadingPromotion = ref(false)
@@ -527,9 +493,6 @@ function resetForm() {
   selectedProducts.value = []
   scopePickerOpen.value = false
   validationErrors.value = []
-  overlapWarnings.value = []
-  requiresAcknowledgment.value = false
-  overlapAcknowledged.value = false
   loadError.value = false
 }
 
@@ -720,8 +683,17 @@ function buildPayload() {
     ends_at,
     priority: Math.min(32767, Math.max(0, Math.round(Number(form.priority) || 0))),
     stackable: false,
-    overlap_acknowledged: overlapAcknowledged.value,
+    overlap_acknowledged: true,
   }
+}
+
+function overlapToastDescription(warnings: OverlapWarning[]): string {
+  const names = warnings.map((w) => w.promotion_name).filter(Boolean).slice(0, 2)
+  if (names.length === 0) {
+    return 'Comparte productos con otras promos activas. En checkout gana la de mayor prioridad.'
+  }
+  const suffix = warnings.length > 2 ? ' y otras' : ''
+  return `Comparte productos con: ${names.join(', ')}${suffix}. En checkout gana la de mayor prioridad.`
 }
 
 function validate(): boolean {
@@ -762,12 +734,17 @@ async function invalidatePromotionCaches() {
   }
 }
 
+function extractFetchDetail(e: any): string {
+  const detail = e?.data?.detail ?? e?.response?._data?.detail ?? e?.message
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail)) {
+    return detail.map((item) => item?.msg ?? JSON.stringify(item)).join('; ')
+  }
+  return 'Error al guardar'
+}
+
 async function onSubmit() {
   if (!validate()) return
-  if (requiresAcknowledgment.value && !overlapAcknowledged.value && Number(form.priority) === 0) {
-    validationErrors.value = ['Marca la casilla de confirmación o sube la prioridad por encima de 0.']
-    return
-  }
   isSaving.value = true
   validationErrors.value = []
   try {
@@ -778,22 +755,25 @@ async function onSubmit() {
     } else {
       res = await $fetch<PromotionSaveResponse>(`/api/api/promotions/${props.promotionId}`, { method: 'PATCH', body })
     }
-    overlapWarnings.value = res.overlap_warnings ?? []
-    requiresAcknowledgment.value = Boolean(res.requires_acknowledgment)
-    if (requiresAcknowledgment.value) {
-      overlapAcknowledged.value = false
+
+    if (res.requires_acknowledgment && !res.data) {
+      validationErrors.value = [
+        'No se pudo guardar la promoción. Sube la prioridad por encima de 0 o revisa el formulario.',
+      ]
       return
     }
-    toast.add({
-      title: isEdit.value ? 'Promoción actualizada' : 'Promoción creada',
-      color: 'success',
-    })
-    await invalidatePromotionCaches()
+
+    const warnings = res.overlap_warnings ?? []
+    toast.success(isEdit.value ? 'Promoción actualizada' : 'Promoción creada')
+    if (warnings.length > 0) {
+      toast.warning(overlapToastDescription(warnings), { title: 'Superposición detectada' })
+    }
     close()
     emit('saved')
   } catch (e: any) {
-    const detail = e?.data?.detail ?? e?.message ?? 'Error al guardar'
-    validationErrors.value = [typeof detail === 'string' ? detail : JSON.stringify(detail)]
+    const detail = extractFetchDetail(e)
+    validationErrors.value = [detail]
+    toast.error(detail, { title: 'No se pudo guardar' })
   } finally {
     isSaving.value = false
   }
@@ -804,12 +784,12 @@ async function onDelete() {
   isSaving.value = true
   try {
     await $fetch(`/api/api/promotions/${props.promotionId}`, { method: 'DELETE' })
-    toast.add({ title: 'Promoción eliminada', color: 'success' })
+    toast.success('Promoción eliminada')
     await invalidatePromotionCaches()
     close()
     emit('deleted')
   } catch (e: any) {
-    toast.add({ title: e?.data?.detail ?? 'No se pudo eliminar', color: 'error' })
+    toast.error(e?.data?.detail ?? 'No se pudo eliminar', { title: 'Error' })
   } finally {
     isSaving.value = false
   }
@@ -817,18 +797,8 @@ async function onDelete() {
 
 function close() {
   scopePickerOpen.value = false
-  overlapWarnings.value = []
-  requiresAcknowledgment.value = false
-  overlapAcknowledged.value = false
   emit('update:modelValue', false)
 }
-
-watch(() => form.priority, (value) => {
-  if (Number(value) > 0) {
-    requiresAcknowledgment.value = false
-    overlapAcknowledged.value = false
-  }
-})
 </script>
 
 <style scoped>

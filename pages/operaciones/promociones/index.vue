@@ -317,6 +317,7 @@ const togglePromoLineOptOutSetting = async () => {
 
 const showPanel = ref(false)
 const panelPromotionId = ref<string | null>(null)
+const skipOpenFromQuery = ref(false)
 const scopePopoverOpen = ref(false)
 const scopePopoverPromo = ref<PromotionRow | null>(null)
 
@@ -473,9 +474,9 @@ const getRowClass = (row: PromotionRow) => {
   return promoRowClass(row, index >= 0 ? index : 0)
 }
 
-function clearPanelQuery() {
+async function clearPanelQuery() {
   if (route.query.nuevo || route.query.id) {
-    router.replace({ path: '/operaciones/promociones' })
+    await router.replace({ path: '/operaciones/promociones', query: {} })
   }
 }
 
@@ -489,13 +490,16 @@ function openEdit(item: PromotionRow) {
 }
 
 async function onPanelSaved() {
+  skipOpenFromQuery.value = true
   showPanel.value = false
   panelPromotionId.value = null
-  clearPanelQuery()
+  await clearPanelQuery()
   await refreshHandler()
+  skipOpenFromQuery.value = false
 }
 
 function openFromQuery() {
+  if (skipOpenFromQuery.value) return
   if (route.query.nuevo === '1') {
     openPanel(null)
     return
@@ -509,7 +513,7 @@ function openFromQuery() {
 watch(showPanel, (open) => {
   if (!open) {
     panelPromotionId.value = null
-    clearPanelQuery()
+    void clearPanelQuery()
   }
 })
 
