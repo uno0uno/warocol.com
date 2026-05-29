@@ -151,6 +151,7 @@ import {
   MagnifyingGlassIcon,
   MapPinIcon,
   QueueListIcon,
+  ReceiptPercentIcon,
   ShoppingCartIcon,
   Squares2X2Icon,
   TruckIcon,
@@ -203,8 +204,9 @@ const secondaryItems: SidebarItem[] = [
 ]
 
 const cuentaItems: SidebarItem[] = [
-  { to: '/negocio',         page: 'negocio', label: 'Mi Negocio', icon: BuildingStorefrontIcon, module: 'mi_negocio' },
-  { to: '/gestion/billing', page: 'admin',   label: 'Mi Plan',    icon: CreditCardIcon,         module: 'mi_plan' },
+  { to: '/negocio',              page: 'negocio', label: 'Mi Negocio',   icon: BuildingStorefrontIcon, module: 'mi_negocio' },
+  { to: '/gestion/promociones',  page: 'negocio', label: 'Promociones',  icon: ReceiptPercentIcon,     module: 'mi_negocio' },
+  { to: '/gestion/billing',      page: 'admin',   label: 'Mi Plan',      icon: CreditCardIcon,         module: 'mi_plan' },
 ]
 
 // ── Module-based filtering (#559) ──────────────────────────────

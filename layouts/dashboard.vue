@@ -907,6 +907,16 @@ const getPageConfig = () => {
       breadcrumbPage: undefined,
       backButton: undefined
     }
+  } else if (path.startsWith('/gestion/promociones')) {
+    return {
+      pageTitle: 'Promociones',
+      pageSubtitle: 'Descuentos y reglas para el menú',
+      searchPlaceholder: undefined,
+      activePage: 'negocio' as const,
+      showBreadcrumb: false,
+      breadcrumbPage: undefined,
+      backButton: undefined
+    }
   } else if (path === '/operaciones/bitacora' || path === '/operaciones/bitacora/') {
     return {
       pageTitle: 'Bitácora de operaciones',
