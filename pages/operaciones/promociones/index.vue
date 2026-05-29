@@ -59,14 +59,12 @@
           empty-sub-message="Crea la primera para aplicarla en el POS."
           variant="default"
           row-size="sm"
-          @row-click="openPanel"
         >
           <template #card="{ item, index }">
             <div
               v-if="item"
-              class="flex items-center gap-3 py-3 px-3 border-b border-border cursor-pointer transition-colors hover:bg-surface-secondary"
+              class="flex items-center gap-3 py-3 px-3 border-b border-border transition-colors"
               :class="promoRowClass(item, index)"
-              @click="openPanel(item)"
             >
               <div class="flex-1 min-w-0">
                 <div class="flex items-baseline gap-2 flex-wrap">
@@ -88,6 +86,15 @@
                   size="sm"
                 />
               </div>
+              <button
+                type="button"
+                :aria-label="`Editar ${item.name}`"
+                title="Editar"
+                class="flex-shrink-0 min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                @click="openEdit(item)"
+              >
+                <PencilSquareIcon class="w-4 h-4" />
+              </button>
             </div>
           </template>
 
@@ -118,6 +125,20 @@
               size="sm"
             />
           </template>
+
+          <template #cell-actions="{ item }">
+            <div v-if="item" class="flex items-center justify-end gap-0.5">
+              <button
+                type="button"
+                :aria-label="`Editar ${item.name}`"
+                title="Editar"
+                class="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+                @click="openEdit(item)"
+              >
+                <PencilSquareIcon class="w-4 h-4" />
+              </button>
+            </div>
+          </template>
         </UiResponsiveDataView>
       </HealthSemaphore>
     </div>
@@ -134,6 +155,7 @@
 <script setup lang="ts">
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
 import { useQueryCache } from '@pinia/colada'
+import { PencilSquareIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import {
@@ -190,6 +212,7 @@ const columns: Column[] = [
   { key: 'promo_type', title: 'Tipo', sortable: false },
   { key: 'preview', title: 'Vista previa', sortable: false },
   { key: 'status', title: 'Estado', sortable: false },
+  { key: 'actions', title: '', align: 'right' as const },
 ]
 
 const {
@@ -272,6 +295,10 @@ function clearPanelQuery() {
 function openPanel(item: PromotionRow | null) {
   panelPromotionId.value = item?.id ?? null
   showPanel.value = true
+}
+
+function openEdit(item: PromotionRow) {
+  openPanel(item)
 }
 
 async function onPanelSaved() {
