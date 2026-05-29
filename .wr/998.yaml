@@ -1,0 +1,31 @@
+issue: 998
+title: "feat(promociones): list alcance uses scope summary, drop N+1 hydration"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-998-promo-list-scope-summary
+
+paths:
+  - pages/operaciones/promociones/index.vue
+  - utils/promotionPreview.ts
+
+ac:
+  - PromotionRow uses API product_count, category_count, *_names_preview
+  - Remove per-ID /api/menu/products hydration on list page
+  - formatScopeLabel count-only when scope > 5
+  - Mobile card shows valor, horario, alcance (rowValue/rowSchedule/rowScope)
+  - Legacy fallback uses ID counts only when summary fields absent
+
+out_of_scope:
+  - PromocionPanel.vue hydration
+  - Alcance popover (#999)
+  - POS badge
+
+hints:
+  entry: "index.vue rowScope — scopeLabelsFor + formatScopeLabel"
+  pattern: "promotionPreview.ts formatScopeLabel countOnlyThreshold: 5"
+  tests: "manual — /operaciones/promociones with large product scope promo"
+
+skip:
+  audits: [ux, color, typography]

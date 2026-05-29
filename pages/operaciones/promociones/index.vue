@@ -76,7 +76,11 @@
                     size="sm"
                   />
                 </div>
-                <p class="text-xs text-text-secondary mt-0.5 truncate">{{ rowPreview(item) }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">
+                  <span class="font-medium text-text-primary">{{ rowValue(item) }}</span>
+                  · {{ rowSchedule(item) }}
+                </p>
+                <p class="text-xs text-text-tertiary mt-0.5 truncate">{{ rowScope(item) }}</p>
               </div>
               <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
                 <UiStatusBadge
@@ -112,8 +116,16 @@
             />
           </template>
 
-          <template #cell-preview="{ item }">
-            <span class="text-sm text-text-secondary">{{ item ? rowPreview(item) : '' }}</span>
+          <template #cell-value="{ item }">
+            <span class="text-sm font-medium text-text-primary">{{ item ? rowValue(item) : '' }}</span>
+          </template>
+
+          <template #cell-schedule="{ item }">
+            <span class="text-sm text-text-secondary">{{ item ? rowSchedule(item) : '' }}</span>
+          </template>
+
+          <template #cell-scope="{ item }">
+            <span class="text-sm text-text-secondary">{{ item ? rowScope(item) : '' }}</span>
           </template>
 
           <template #cell-status="{ item }">
@@ -159,8 +171,10 @@ import { PencilSquareIcon } from '@heroicons/vue/24/outline'
 // @ts-ignore
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import {
-  buildPromotionPreview,
   formatPromoTypeLabel,
+  formatPromoValue,
+  formatScheduleWindows,
+  formatScopeLabel,
   type PromotionScheduleRow,
 } from '~/utils/promotionPreview'
 
@@ -172,11 +186,16 @@ interface PromotionRow {
   name: string
   promo_type: string
   scope_type: string
+  value_json?: Record<string, unknown>
   is_active: boolean
   is_currently_active?: boolean | null
   schedules: PromotionScheduleRow[]
   category_ids: string[]
   product_ids: string[]
+  category_count?: number
+  product_count?: number
+  category_names_preview?: string[]
+  product_names_preview?: string[]
 }
 
 const route = useRoute()
@@ -210,7 +229,9 @@ function clearFilters() {
 const columns: Column[] = [
   { key: 'name', title: 'Nombre', sortable: false },
   { key: 'promo_type', title: 'Tipo', sortable: false },
-  { key: 'preview', title: 'Vista previa', sortable: false },
+  { key: 'value', title: 'Valor', sortable: false },
+  { key: 'schedule', title: 'Horario', sortable: false },
+  { key: 'scope', title: 'Alcance', sortable: false },
   { key: 'status', title: 'Estado', sortable: false },
   { key: 'actions', title: '', align: 'right' as const },
 ]
@@ -234,6 +255,46 @@ const {
 })
 
 const promotions = computed(() => listData.value?.data ?? [])
+
+function hasScopeSummary(item: PromotionRow): boolean {
+  return (
+    typeof item.product_count === 'number'
+    || typeof item.category_count === 'number'
+    || Array.isArray(item.product_names_preview)
+    || Array.isArray(item.category_names_preview)
+  )
+}
+
+function scopeLabelsFor(item: PromotionRow) {
+  if (hasScopeSummary(item)) {
+    return {
+      categoryNames: item.category_names_preview ?? [],
+      productNames: item.product_names_preview ?? [],
+      categoryCount: item.category_count ?? item.category_ids?.length ?? 0,
+      productCount: item.product_count ?? item.product_ids?.length ?? 0,
+    }
+  }
+  return {
+    categoryNames: [] as string[],
+    productNames: [] as string[],
+    categoryCount: item.category_ids?.length ?? 0,
+    productCount: item.product_ids?.length ?? 0,
+  }
+}
+
+const rowValue = (item: PromotionRow) => formatPromoValue(item.promo_type, item.value_json)
+
+const rowSchedule = (item: PromotionRow) => formatScheduleWindows(item.schedules ?? [])
+
+const rowScope = (item: PromotionRow) => {
+  const { categoryNames, productNames, categoryCount, productCount } = scopeLabelsFor(item)
+  return formatScopeLabel(item.scope_type, categoryNames, productNames, {
+    categoryCount,
+    productCount,
+    countOnlyThreshold: 5,
+  })
+}
+
 // Full-page loader only on first fetch; refetches show matrix in header (optimistic).
 const isLoading = computed(() => !listData.value && !fetchError.value)
 const isRefreshing = computed(
@@ -327,14 +388,6 @@ watch(showPanel, (open) => {
 })
 
 watch(() => route.query, openFromQuery)
-
-const rowPreview = (item: PromotionRow) =>
-  buildPromotionPreview({
-    isActive: item.is_active,
-    isCurrentlyActive: item.is_currently_active,
-    schedules: item.schedules ?? [],
-    scopeType: item.scope_type,
-  })
 
 const statusBadgeLabel = (item: PromotionRow) => {
   if (!item.is_active) return 'Desactivada'

@@ -56,23 +56,77 @@ export function formatPromoTypeLabel(promoType: string): string {
   }
 }
 
+/** Discount amount copy for list columns (percent, COP, BOGO qty). */
+export function formatPromoValue(
+  promoType: string,
+  valueJson?: Record<string, unknown> | null,
+): string {
+  const v = valueJson ?? {}
+  switch (promoType) {
+    case 'percent_off': {
+      const pct = Number(v.percent)
+      return Number.isFinite(pct) ? `${pct}%` : '—'
+    }
+    case 'fixed_off': {
+      const amount = Number(v.amount_cop)
+      if (!Number.isFinite(amount)) return '—'
+      return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        maximumFractionDigits: 0,
+      }).format(amount)
+    }
+    case 'bogo': {
+      const buy = Number(v.buy_qty)
+      const get = Number(v.get_qty)
+      if (!Number.isFinite(buy) || !Number.isFinite(get)) return '—'
+      return `Compra ${buy} · lleva ${get}`
+    }
+    default:
+      return '—'
+  }
+}
+
+export type ScopeLabelCounts = {
+  categoryCount?: number
+  productCount?: number
+  /** Above this count, show "N productos/categorías" only (list page default: 5). */
+  countOnlyThreshold?: number
+}
+
 export function formatScopeLabel(
   scopeType: string,
   categoryNames: string[],
   productNames: string[],
+  counts?: ScopeLabelCounts,
 ): string {
-  if (scopeType === 'all_products') return 'todos los productos'
+  const threshold = counts?.countOnlyThreshold ?? 5
+  if (scopeType === 'all_products') return 'Todos los productos'
   if (scopeType === 'categories') {
-    if (!categoryNames.length) return 'categorías (sin seleccionar)'
-    return categoryNames.length === 1
-      ? categoryNames[0]
-      : `${categoryNames.length} categorías`
+    const n = counts?.categoryCount ?? categoryNames.length
+    if (n > threshold) return `${n} categorías`
+    if (categoryNames.length === 1) return categoryNames[0]
+    if (categoryNames.length > 1) {
+      const head = categoryNames.slice(0, 2).join(', ')
+      const extra = categoryNames.length - 2
+      return extra > 0 ? `${head} +${extra}` : head
+    }
+    if (n === 1) return '1 categoría'
+    if (n > 1) return `${n} categorías`
+    return 'Categorías (sin seleccionar)'
   }
   if (scopeType === 'products') {
-    if (!productNames.length) return 'productos (sin seleccionar)'
-    return productNames.length === 1
-      ? productNames[0]
-      : `${productNames.length} productos`
+    const n = counts?.productCount ?? productNames.length
+    if (n > threshold) return `${n} productos`
+    if (productNames.length === 1) return productNames[0]
+    if (productNames.length > 1) {
+      const head = productNames.slice(0, 2).join(', ')
+      const extra = productNames.length - 2
+      return extra > 0 ? `${head} +${extra}` : head
+    }
+    if (n === 1) return '1 producto'
+    if (n > 1) return `${n} productos`
+    return 'Productos (sin seleccionar)'
   }
   return scopeType
 }
@@ -84,6 +138,8 @@ export function buildPromotionPreview(opts: {
   scopeType: string
   categoryNames?: string[]
   productNames?: string[]
+  categoryIds?: string[]
+  productIds?: string[]
 }): string {
   const activeWord =
     opts.isCurrentlyActive === true
@@ -98,6 +154,10 @@ export function buildPromotionPreview(opts: {
     opts.scopeType,
     opts.categoryNames ?? [],
     opts.productNames ?? [],
+    {
+      categoryCount: opts.categoryIds?.length,
+      productCount: opts.productIds?.length,
+    },
   )
   return `${activeWord} ${schedPart} en ${scopePart}`
 }
