@@ -1,0 +1,35 @@
+issue: 1015
+title: "feat(pos): align client promo preview with server conflict rules"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1015-client-promo-parity
+extends_epic: 1010
+depends_on: 1012
+
+paths:
+  - utils/promoProductMatch.ts
+  - utils/promoProductMatch.test.ts
+  - components/pos/CartPanel.vue
+  - pages/pos/checkout.vue
+  - composables/useActivePromotions.ts
+
+ac:
+  - pickBestPromotionForProduct mirrors api _pick_best_promotion_for_line (type blocks + scope rank + name tie-break)
+  - Orden Actual badges/savings and checkout clientPromoSavings fallback match tax-preview winner when API omits line savings
+  - node:test parity cases for BOGO vs percent vs fixed on same SKU
+
+out_of_scope:
+  - tenant settings UI for promo_type_block_map
+  - overlap advisory on save (#1014)
+  - pages/pos/producto/[id].vue and pages/pos/index.vue (default block map when map not passed)
+
+hints:
+  entry: pickBestPromotionForProduct — utils/promoProductMatch.ts
+  pattern: filterTypeBlockedCandidates + scopeSpecificityRank from promotions_service.py:1111-1180
+  wire_block_map: useActivePromotions reads cached restaurant-context promo_type_block_map
+  tests: node --test utils/promoProductMatch.test.ts
+
+skip:
+  audits: [ux, color, typography, python-compat, db]
