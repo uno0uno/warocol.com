@@ -71,9 +71,35 @@ const discountEnabled = ref(false)
 const discountType = ref<'percent' | 'fixed'>('percent')
 const discountInput = ref('')
 
+type PromoBreakdownLine = {
+  promotion_id?: string
+  promotion_name: string
+  promo_type: string
+  savings: number
+}
+
 // Success modal state
 const showSuccessModal = ref(false)
-const orderResult = ref<{ order_number: number; total_amount: number; payment_method: string; payment_method_name?: string; customer_id?: string; discount_amount?: number; subtotal?: number; standard_tax?: number; liquor_tax?: number; standard_tax_label?: string; order_id?: string; order_ids?: string[]; tip_amount?: number; charged_amount?: number; cash_received?: number; change?: number } | null>(null)
+const orderResult = ref<{
+  order_number: number
+  total_amount: number
+  payment_method: string
+  payment_method_name?: string
+  customer_id?: string
+  discount_amount?: number
+  subtotal?: number
+  promo_savings?: number
+  promo_breakdown?: Array<{ promotion_id?: string; promotion_name: string; promo_type: string; savings: number }>
+  standard_tax?: number
+  liquor_tax?: number
+  standard_tax_label?: string
+  order_id?: string
+  order_ids?: string[]
+  tip_amount?: number
+  charged_amount?: number
+  cash_received?: number
+  change?: number
+} | null>(null)
 const wasMesaMode = ref(false)
 const receiptEmail = ref('')
 const emailSent = ref(false)
@@ -1066,6 +1092,13 @@ const processOrder = async () => {
         standard_tax: Number(closeResponse?.data?.standard_tax) || 0,
         liquor_tax: Number(closeResponse?.data?.liquor_tax) || 0,
         standard_tax_label: closeResponse?.data?.standard_tax_label || 'Impuesto',
+        ...(closeResponse.data?.promo_breakdown?.length
+          ? {
+              promo_savings: Number(closeResponse.data.promo_savings) || 0,
+              promo_breakdown: closeResponse.data.promo_breakdown,
+              subtotal: _subtotal,
+            }
+          : {}),
         ...(discountEnabled.value && _discountAmt > 0
           ? { discount_amount: _discountAmt, subtotal: _subtotal }
           : {}),
@@ -1173,6 +1206,9 @@ const processOrder = async () => {
         liquor_tax?: number
         standard_tax_label?: string
         next_table_session_id?: string | null
+        subtotal?: number
+        promo_savings?: number
+        promo_breakdown?: PromoBreakdownLine[]
       }
     }
 
@@ -1190,6 +1226,13 @@ const processOrder = async () => {
         standard_tax: response.data.standard_tax ?? 0,
         liquor_tax: response.data.liquor_tax ?? 0,
         standard_tax_label: response.data.standard_tax_label ?? 'Impuesto',
+        ...(response.data.promo_breakdown?.length
+          ? {
+              promo_savings: Number(response.data.promo_savings) || 0,
+              promo_breakdown: response.data.promo_breakdown,
+              subtotal: Number(response.data.subtotal) || _subtotalPos,
+            }
+          : {}),
         ...(discountEnabled.value && _discountAmtPos > 0
           ? { discount_amount: _discountAmtPos, subtotal: _subtotalPos }
           : {}),
@@ -1520,6 +1563,10 @@ type PrefacturaPrintSnapshot = {
   splitPayments: ReceiptPaymentLine[]
   splitRemaining: number
   splitIsComplete: boolean
+  promoSavings: number
+  promoBreakdown: PromoBreakdownLine[]
+  cartSubtotal: number
+  manualDiscountAmount: number
 }
 
 const prefacturaPrintSnapshot = ref<PrefacturaPrintSnapshot | null>(null)
@@ -1535,8 +1582,16 @@ const prefacturaPrintData = computed(() => {
     splitPayments: splitPayments.value,
     splitRemaining: splitRemaining.value,
     splitIsComplete: splitIsComplete.value,
+    promoSavings: promoSavings.value,
+    promoBreakdown: promoBreakdown.value,
+    cartSubtotal: cartTotal.value,
+    manualDiscountAmount: discountAmount.value,
   }
 })
+
+const receiptPromoBreakdown = computed(
+  () => orderResult.value?.promo_breakdown ?? [],
+)
 
 function capturePrefacturaPrintSnapshot() {
   prefacturaPrintSnapshot.value = {
@@ -1548,6 +1603,10 @@ function capturePrefacturaPrintSnapshot() {
     splitPayments: splitPayments.value.map(p => ({ ...p })),
     splitRemaining: splitRemaining.value,
     splitIsComplete: splitIsComplete.value,
+    promoSavings: promoSavings.value,
+    promoBreakdown: promoBreakdown.value.map(p => ({ ...p })),
+    cartSubtotal: cartTotal.value,
+    manualDiscountAmount: discountAmount.value,
   }
 }
 
@@ -3307,12 +3366,23 @@ onUnmounted(() => {
               <span class="text-sm text-text-secondary">Nº Orden</span>
               <span class="text-lg font-bold text-primary">#{{ orderResult?.order_number ?? '' }}</span>
             </div>
-            <div v-if="orderResult.discount_amount && orderResult.subtotal" class="flex items-center justify-between">
+            <div
+              v-if="orderResult && (orderResult.promo_savings || orderResult.discount_amount) && orderResult.subtotal"
+              class="flex items-center justify-between"
+            >
               <span class="text-sm text-text-secondary">Subtotal</span>
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.subtotal) }}</span>
             </div>
+            <div
+              v-for="promo in (orderResult.promo_breakdown ?? [])"
+              :key="promo.promotion_id ?? promo.promotion_name"
+              class="flex items-center justify-between"
+            >
+              <span class="text-sm text-emerald-700 dark:text-emerald-400">{{ promo.promotion_name }}</span>
+              <span class="text-sm font-medium text-emerald-700 dark:text-emerald-400">-{{ formatCurrency(promo.savings) }}</span>
+            </div>
             <div v-if="orderResult.discount_amount" class="flex items-center justify-between">
-              <span class="text-sm text-primary">Descuento</span>
+              <span class="text-sm text-primary">Descuento manual</span>
               <span class="text-sm font-medium text-primary">-{{ formatCurrency(orderResult.discount_amount) }}</span>
             </div>
             <div v-if="orderResult.standard_tax && orderResult.standard_tax > 0" class="flex items-center justify-between">
@@ -3623,13 +3693,21 @@ onUnmounted(() => {
     </template>
     <div class="receipt-divider">--------------------------------</div>
 
-    <div v-if="discountAmount > 0" class="receipt-item">
+    <div v-if="prefacturaPrintData.promoSavings > 0 || prefacturaPrintData.manualDiscountAmount > 0" class="receipt-item">
       <span>Subtotal</span>
-      <span>{{ formatCurrency(cartTotal) }}</span>
+      <span>{{ formatCurrency(prefacturaPrintData.cartSubtotal) }}</span>
     </div>
-    <div v-if="discountAmount > 0" class="receipt-item">
-      <span>Descuento</span>
-      <span>-{{ formatCurrency(discountAmount) }}</span>
+    <div
+      v-for="promo in prefacturaPrintData.promoBreakdown"
+      :key="promo.promotion_id ?? promo.promotion_name"
+      class="receipt-item"
+    >
+      <span>{{ promo.promotion_name }}</span>
+      <span>-{{ formatCurrency(promo.savings) }}</span>
+    </div>
+    <div v-if="prefacturaPrintData.manualDiscountAmount > 0" class="receipt-item">
+      <span>Descuento manual</span>
+      <span>-{{ formatCurrency(prefacturaPrintData.manualDiscountAmount) }}</span>
     </div>
     <div v-if="taxPreview && taxPreview.standard_tax > 0" class="receipt-item">
       <span>{{ taxPreview.standard_tax_label || 'Impuesto' }}</span>
@@ -3748,12 +3826,23 @@ onUnmounted(() => {
     </template>
     <div class="receipt-divider">--------------------------------</div>
 
-    <div v-if="orderResult?.discount_amount && orderResult?.subtotal" class="receipt-item">
+    <div
+      v-if="orderResult && (orderResult.promo_savings || orderResult.discount_amount) && orderResult.subtotal"
+      class="receipt-item"
+    >
       <span>Subtotal</span>
       <span>{{ formatCurrency(orderResult.subtotal) }}</span>
     </div>
+    <div
+      v-for="promo in receiptPromoBreakdown"
+      :key="promo.promotion_id ?? promo.promotion_name"
+      class="receipt-item"
+    >
+      <span>{{ promo.promotion_name }}</span>
+      <span>-{{ formatCurrency(promo.savings) }}</span>
+    </div>
     <div v-if="orderResult?.discount_amount" class="receipt-item">
-      <span>Descuento</span>
+      <span>Descuento manual</span>
       <span>-{{ formatCurrency(orderResult.discount_amount) }}</span>
     </div>
     <template v-if="orderResult?.standard_tax && orderResult.standard_tax > 0 || orderResult?.liquor_tax && orderResult.liquor_tax > 0">
