@@ -1026,6 +1026,27 @@ const getLinePromoTypeLabel = (item: any) => {
   return promoType ? formatPromoTypeLabel(promoType) : null
 }
 
+const getLinePromoPreview = (item: any): PromoPreviewLine | undefined => {
+  const key = String(item.orderItemId ?? item.id ?? '')
+  return key ? promoLineById.value.get(key) : undefined
+}
+
+const getLinePromoSavings = (item: any): number => {
+  if (isKitchenServiceMode.value) return Number(item.promoSavings) || 0
+  return Number(getLinePromoPreview(item)?.promo_savings) || 0
+}
+
+const getLineNetTotal = (item: any): number => {
+  const gross = getItemTotal(item)
+  const savings = getLinePromoSavings(item)
+  if (savings <= 0) return gross
+  if (!isKitchenServiceMode.value) {
+    const afterPromo = getLinePromoPreview(item)?.subtotal_after_promo
+    if (afterPromo != null) return Number(afterPromo)
+  }
+  return Math.max(0, gross - savings)
+}
+
 const getItemUnitPrice = (item: any) => {
   const qty = Number(item.quantity) || 1
   return getItemTotal(item) / qty
@@ -2034,7 +2055,7 @@ onUnmounted(() => {
               <!-- Product Info -->
               <div class="flex-1 min-w-0">
                 <div class="flex justify-between items-start gap-2">
-                  <div class="flex items-center gap-1.5 min-w-0">
+                  <div class="flex items-center gap-1.5 min-w-0 flex-wrap">
                     <h3 class="font-semibold text-text-primary text-sm leading-tight truncate">{{ item.product.name }}</h3>
                     <span
                       v-if="getLinePromoLabel(item)"
@@ -2043,11 +2064,25 @@ onUnmounted(() => {
                     >
                       {{ getLinePromoLabel(item) }}
                     </span>
+                    <span
+                      v-if="getLinePromoSavings(item) > 0"
+                      class="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium flex-shrink-0"
+                    >
+                      - {{ formatCurrency(getLinePromoSavings(item)) }}
+                    </span>
                     <span v-if="item.quantity > 1" class="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">
                       ×{{ item.quantity }}
                     </span>
                   </div>
-                  <span class="font-bold text-text-primary text-sm flex-shrink-0">{{ formatCurrency(getItemTotal(item)) }}</span>
+                  <div class="flex flex-col items-end flex-shrink-0">
+                    <span
+                      v-if="getLinePromoSavings(item) > 0"
+                      class="text-xs text-text-tertiary line-through"
+                    >
+                      {{ formatCurrency(getItemTotal(item)) }}
+                    </span>
+                    <span class="font-bold text-text-primary text-sm">{{ formatCurrency(getLineNetTotal(item)) }}</span>
+                  </div>
                 </div>
 
                 <p class="text-xs text-text-tertiary mt-0.5">{{ formatCurrency(item.product.price) }} c/u</p>
@@ -2604,6 +2639,15 @@ onUnmounted(() => {
                 <span>Promoción</span>
                 <span class="font-medium">- {{ formatCurrency(promoSavings) }}</span>
               </div>
+              <div
+                v-for="(promo, promoIdx) in promoBreakdown"
+                v-show="promoBreakdown.length > 1"
+                :key="promo.promotion_id ?? promo.promotion_name ?? promoIdx"
+                class="flex justify-between text-xs text-emerald-700/90 dark:text-emerald-400/90 pl-3"
+              >
+                <span>{{ promo.promotion_name }}</span>
+                <span class="font-medium">- {{ formatCurrency(promo.savings) }}</span>
+              </div>
               <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-primary">
                 <span>Descuento</span>
                 <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
@@ -3126,6 +3170,15 @@ onUnmounted(() => {
             <div v-if="promoSavings > 0" class="flex justify-between text-sm text-emerald-700 dark:text-emerald-400">
               <span>Promoción</span>
               <span class="font-medium">- {{ formatCurrency(promoSavings) }}</span>
+            </div>
+            <div
+              v-for="(promo, promoIdx) in promoBreakdown"
+              v-show="promoBreakdown.length > 1"
+              :key="promo.promotion_id ?? promo.promotion_name ?? promoIdx"
+              class="flex justify-between text-xs text-emerald-700/90 dark:text-emerald-400/90 pl-3"
+            >
+              <span>{{ promo.promotion_name }}</span>
+              <span class="font-medium">- {{ formatCurrency(promo.savings) }}</span>
             </div>
             <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-green-600 dark:text-green-400">
               <span>Descuento</span>
