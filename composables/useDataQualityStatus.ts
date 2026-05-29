@@ -38,7 +38,7 @@ export const useDataQualityStatus = defineQuery(() => {
       return (res?.data?.critical ?? res?.critical ?? 0) as number
     },
     refetchInterval: 5 * 60_000, // 5 minutes — replaces setInterval
-    enabled: () => !!currentTenant.value && hasAnaliticaAccess.value,
+    enabled: () => import.meta.client && !!currentTenant.value && hasAnaliticaAccess.value,
   })
 
   const hasCritical = computed(() => (data.value ?? 0) > 0)

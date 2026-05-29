@@ -29,6 +29,7 @@ export const useNotifications = () => {
 
   const { data } = useQuery({
     key: ['notifications'],
+    enabled: () => import.meta.client,
     query: async () => {
       const response = await $fetch<{ success: boolean; data: Omit<Notification, 'read_at'>[] }>(
         '/api/notifications'
