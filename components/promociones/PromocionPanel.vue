@@ -265,6 +265,24 @@
               </div>
             </div>
 
+            <div class="rounded-xl border border-border px-4 py-3 bg-surface-secondary/30">
+              <div class="flex flex-col gap-1.5">
+                <label for="promo-priority" class="text-sm font-medium text-text-primary">Prioridad</label>
+                <input
+                  id="promo-priority"
+                  v-model.number="form.priority"
+                  type="number"
+                  min="0"
+                  max="32767"
+                  step="1"
+                  :class="inputClass"
+                />
+                <p class="text-xs text-text-tertiary leading-snug">
+                  Si varias promociones aplican a la misma línea en checkout, gana la de mayor prioridad (0 = normal).
+                </p>
+              </div>
+            </div>
+
             <div class="flex items-center justify-between rounded-xl border border-border px-4 py-3 bg-surface-secondary/30">
               <div class="flex flex-col gap-0.5">
                 <span class="text-sm font-medium text-text-primary">Promoción activa</span>
@@ -430,6 +448,7 @@ const form = reactive({
   scope_type: 'all_products' as 'all_products' | 'categories' | 'products',
   schedules: [defaultSchedule()] as ScheduleFormRow[],
   is_active: true,
+  priority: 0,
   startsAtDate: '',
   endsAtDate: '',
 })
@@ -452,6 +471,7 @@ function resetForm() {
   form.scope_type = 'all_products'
   form.schedules = [defaultSchedule()]
   form.is_active = true
+  form.priority = 0
   form.startsAtDate = ''
   form.endsAtDate = ''
   selectedCategories.value = []
@@ -480,6 +500,7 @@ async function loadPromotion(id: string) {
     form.promo_type = p.promo_type
     form.scope_type = p.scope_type
     form.is_active = p.is_active
+    form.priority = Number(p.priority ?? 0)
     if (p.promo_type === 'percent_off') form.percent = Number(p.value_json?.percent ?? 10)
     if (p.promo_type === 'fixed_off') form.amountCop = Number(p.value_json?.amount_cop ?? 0)
     if (p.promo_type === 'bogo') {
@@ -645,7 +666,7 @@ function buildPayload() {
     is_active: form.is_active,
     starts_at,
     ends_at,
-    priority: 0,
+    priority: Math.min(32767, Math.max(0, Math.round(Number(form.priority) || 0))),
     stackable: false,
   }
 }
@@ -653,6 +674,10 @@ function buildPayload() {
 function validate(): boolean {
   const errors: string[] = []
   if (!form.name.trim()) errors.push('El nombre es obligatorio.')
+  const priority = Number(form.priority)
+  if (!Number.isFinite(priority) || priority < 0 || priority > 32767 || !Number.isInteger(priority)) {
+    errors.push('La prioridad debe ser un entero entre 0 y 32767.')
+  }
   if (form.scope_type === 'categories' && !selectedCategories.value.length) {
     errors.push('Selecciona al menos una categoría.')
   }
