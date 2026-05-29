@@ -1,0 +1,30 @@
+# wr-fast contract — issue #995
+issue: 995
+title: "fix(promotions): Match product scope search UX to category search input"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-995-product-search-input
+
+paths:
+  - composables/useProductSearch.ts
+  - components/ui/ProductSearchInput.vue
+  - components/promociones/PromocionPanel.vue
+
+ac:
+  - Dropdown on focus with initial product list
+  - Debounced /api/menu/products search with loading + Sin resultados
+  - Select adds chip, clears input; exclude already-selected from dropdown
+
+out_of_scope:
+  - /menu/productos MenuCatalogFiltersBar
+  - API changes
+
+hints:
+  entry: "PromocionPanel scope products — mirror UiCategorySearchInput"
+  pattern: "composables/useCategorySearch.ts + components/ui/CategorySearchInput.vue"
+  tests: "manual — promotions panel product scope picker"
+
+skip:
+  audits: [ux, color, typography]
