@@ -37,6 +37,12 @@ export function formatScheduleWindow(sched: PromotionScheduleRow): string {
   return `${days} ${start}–${end}`
 }
 
+/** Join all schedule rows for list/preview copy (warocol.com#983). */
+export function formatScheduleWindows(schedules: PromotionScheduleRow[]): string {
+  if (schedules.length === 0) return 'sin horario'
+  return schedules.map(formatScheduleWindow).join('; ')
+}
+
 export function formatPromoTypeLabel(promoType: string): string {
   switch (promoType) {
     case 'percent_off':
@@ -87,10 +93,7 @@ export function buildPromotionPreview(opts: {
         : opts.isActive
           ? 'Activa'
           : 'Desactivada'
-  const schedPart =
-    opts.schedules.length > 0
-      ? formatScheduleWindow(opts.schedules[0])
-      : 'sin horario'
+  const schedPart = formatScheduleWindows(opts.schedules)
   const scopePart = formatScopeLabel(
     opts.scopeType,
     opts.categoryNames ?? [],
