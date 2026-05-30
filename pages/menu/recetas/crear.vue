@@ -106,7 +106,7 @@
                     class="border border-border rounded-lg p-3 sm:p-4 bg-background"
                   >
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                      <div class="md:col-span-4">
+                      <div class="md:col-span-5">
                         <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
                         <UiIngredientSearchInput
                           :allow-create="true"
@@ -128,7 +128,7 @@
                         />
                       </div>
 
-                      <div class="md:col-span-2">
+                      <div class="md:col-span-3">
                         <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
                         <div class="relative">
                           <select
@@ -152,18 +152,6 @@
                             </svg>
                           </span>
                         </div>
-                      </div>
-
-                      <div class="md:col-span-2">
-                        <label class="block text-xs font-medium text-text-secondary mb-1">Requerido</label>
-                        <label class="flex items-center gap-2 h-[38px] cursor-pointer">
-                          <input
-                            v-model="ingredient.is_required"
-                            type="checkbox"
-                            class="h-4 w-4 text-primary border-border rounded focus:ring-primary"
-                          />
-                          <span class="text-xs font-medium text-text-primary">Sí</span>
-                        </label>
                       </div>
 
                       <div class="md:col-span-1">
@@ -210,13 +198,6 @@
               <div class="flex justify-between text-sm">
                 <span class="text-text-secondary">Ingredientes:</span>
                 <span class="font-semibold text-text-primary">{{ form.ingredients.length }}</span>
-              </div>
-
-              <div class="flex justify-between text-sm">
-                <span class="text-text-secondary">Requeridos:</span>
-                <span class="font-semibold text-text-primary">
-                  {{ form.ingredients.filter(i => i.is_required).length }}
-                </span>
               </div>
 
               <div class="flex justify-between text-sm items-center gap-2">
@@ -301,7 +282,6 @@ const form = ref({
     ingredient_id: string
     base_quantity: number
     unit: string
-    is_required: boolean
     notes: string
   }>,
   tenant_id: currentTenant.value?.id || ''
@@ -385,7 +365,6 @@ function addIngredient() {
     ingredient_id: '',
     base_quantity: 0,
     unit: 'g',
-    is_required: true,
     notes: ''
   })
 }
@@ -458,7 +437,7 @@ async function submitRecipe() {
           ingredient_id: ing.ingredient_id,
           base_quantity: ing.base_quantity,
           unit: ing.unit,
-          is_required: ing.is_required,
+          is_required: true,
           notes: ing.notes
         })),
         tenant_id: form.value.tenant_id

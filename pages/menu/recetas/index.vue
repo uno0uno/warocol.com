@@ -347,7 +347,6 @@ const recetas = computed(() => {
         ingrediente_name: ing.ingredient_name,
         cantidad: cantidad,
         unidad: ing.unit,
-        is_required: ing.is_required,
         notes: ing.notes,
         costo_unitario: costoUnitario,
         costo_total: costoUnitario * cantidad,
