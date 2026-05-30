@@ -1,0 +1,27 @@
+issue: 1049
+title: "fix(menu): remove Requerido toggle from recipe ingredient rows"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1049-remove-recipe-required
+base_branch: wr-1046-recetas-single-page
+
+paths:
+  - pages/menu/recetas/crear.vue
+  - pages/menu/recetas/[id].vue
+  - pages/menu/recetas/index.vue
+
+ac:
+  - No Requerido checkbox in ingredient rows (crear + edit)
+  - No Requeridos count in Resumen sidebar
+  - Submit payloads send is_required: true for every line (API compat)
+  - Form state omits is_required field
+
+out_of_scope:
+  - API/DB column removal
+  - Modificadores is_required
+
+hints:
+  grid: "5+3+3+1 cols after removing Requerido column"
+  tests: none
