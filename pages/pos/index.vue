@@ -992,6 +992,21 @@ const filteredProducts = computed(() => {
 const cartItemsCount = computed(() => posStore.cartItemsCount)
 const cartTotal = computed(() => posStore.cartTotal)
 
+// warocol.com#1032 — fixed cart bar + bottom sheet on mobile/tablet (< lg)
+const showMobileCartSheet = ref(false)
+const mobileCartItemCount = computed(() =>
+  isKitchenServiceMode.value
+    ? storeTabItems.value.length + posStore.cart.length
+    : posStore.cart.length,
+)
+const mobileCartDisplayTotal = computed(() =>
+  isKitchenServiceMode.value
+    ? (storeTabTotal.value ?? 0) + cartTotal.value
+    : cartTotal.value,
+)
+const mobileCartFormattedTotal = computed(() => formatCurrencyPOS(mobileCartDisplayTotal.value))
+const showMobileCartBar = computed(() => mobileCartItemCount.value > 0)
+
 // Navigate to product customization page or add directly to cart
 const selectProduct = async (product: any) => {
   // Resale products don't need modifiers - add directly to cart
@@ -1155,6 +1170,8 @@ const processOrder = async () => {
   // Esperar a que todas las operaciones pendientes terminen (duplicar, agregar, etc.)
   await posStore.waitForPendingOperations()
 
+  showMobileCartSheet.value = false
+
   // Mark that we're navigating within POS
   sessionStorage.setItem('posNavigation', 'true')
 
@@ -1311,7 +1328,7 @@ onUnmounted(() => {
     <CommonsTheErrorState v-else-if="productsError" />
 
     <!-- POS Content (shown always after loading) -->
-    <div v-else>
+    <div v-else :class="showMobileCartBar ? 'pb-36 lg:pb-0' : ''">
       <!-- Live promotion hint (warocol.com#983) -->
       <div
         v-if="hasActivePromos"
@@ -1374,31 +1391,36 @@ onUnmounted(() => {
 
       <!-- Mesa Banner (when arriving from a table session) -->
       <div v-else-if="posStore.activeTableSession" class="bg-surface border border-border rounded-2xl mb-4 p-3.5 shadow-sm">
-        <div class="flex items-center gap-3 flex-wrap">
-          <div class="bg-status-success-bg p-2.5 rounded-xl flex-shrink-0">
-            <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-            <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest flex-shrink-0">{{ tableSingular }} Activa</span>
-            <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
-            <span class="text-sm font-bold text-text-primary flex-shrink-0">{{ posStore.activeTableSession.tableName }}</span>
-            <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
-            <span class="text-xs text-text-secondary tabular-nums truncate">{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado · {{ formatDuration(posStore.activeTableSession.openedAt) }}</span>
-            <template v-if="comandasEnabled && unfiredCount > 0">
-              <span class="w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
-              <span class="flex items-center gap-1 text-xs font-semibold text-red-600 flex-shrink-0">
+        <div class="flex flex-col gap-3">
+          <div class="flex items-start gap-3 min-w-0">
+            <div class="bg-status-success-bg p-2.5 rounded-xl flex-shrink-0">
+              <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span class="text-[10px] font-bold text-status-success-text uppercase tracking-widest">{{ tableSingular }} Activa</span>
+                <span class="hidden sm:inline w-px h-3 bg-border flex-shrink-0" aria-hidden="true" />
+                <span class="text-sm font-bold text-text-primary">{{ posStore.activeTableSession.tableName }}</span>
+              </div>
+              <p class="text-xs text-text-secondary tabular-nums mt-1">
+                {{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }} acumulado · {{ formatDuration(posStore.activeTableSession.openedAt) }}
+              </p>
+              <p
+                v-if="comandasEnabled && unfiredCount > 0"
+                class="flex items-center gap-1 text-xs font-semibold text-red-600 mt-1.5"
+              >
                 <span class="relative flex h-2 w-2">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                   <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                 </span>
                 {{ unfiredCount }} {{ unfiredCount === 1 ? 'ítem' : 'ítems' }} sin enviar
-              </span>
-            </template>
+              </p>
+            </div>
           </div>
-          <!-- Action buttons: [Mesero ▾ (#574)] · Volver (back to floor plan, keeps session) · Liberar (destructive) -->
-          <div class="flex items-center gap-1.5 flex-shrink-0">
+          <!-- Row 2: mesero + actions — wraps cleanly on tablet (~490px) -->
+          <div class="flex flex-wrap items-center gap-2 sm:justify-end">
             <!-- Issue #574 — Waiter loading chip — width adapts to the rotating
                  phrase so it doesn't overflow the original chip. Same pattern
                  as the dashboard header progressive-load indicator. -->
@@ -1514,7 +1536,7 @@ onUnmounted(() => {
       <!-- Main POS Container -->
     <div class="flex flex-col lg:flex-row gap-4 md:gap-6 lg:max-h-[calc(100vh-10rem)]">
       <!-- Products Panel (Left) -->
-      <div class="flex-1 flex flex-col space-y-4 lg:overflow-hidden">
+      <div class="flex-1 flex flex-col space-y-4 min-h-0 lg:overflow-hidden">
         <!-- Search and Filters -->
         <div class="flex flex-col sm:flex-row gap-3">
           <div class="flex-1">
@@ -1540,8 +1562,8 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <!-- Products Grid -->
-        <div class="flex-1 overflow-y-auto">
+        <!-- Products Grid — page scroll on mobile; inner scroll on desktop (#1032) -->
+        <div class="lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
           <!-- Empty State -->
           <div v-if="filteredProducts.length === 0" class="flex flex-col items-center justify-center h-64 text-text-secondary">
             <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1564,8 +1586,9 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Cart Panel (Right on Desktop, Below on Mobile/Tablet) -->
+      <!-- Cart Panel — desktop sidebar only; mobile uses bottom bar + sheet (#1032) -->
       <PosCartPanel
+        class="hidden lg:flex"
         :items="posStore.cart"
         :total="cartTotal"
         :mesa-mode="isKitchenServiceMode"
@@ -1684,5 +1707,58 @@ onUnmounted(() => {
     :comandas="comandasForPrintDisplay"
     :business-name="posBusinessName"
   />
+
+  <!-- warocol.com#1032 — mobile/tablet cart bar + sheet (storefront parity) -->
+  <PosCartBottomBar
+    :visible="showMobileCartBar"
+    :item-count="mobileCartItemCount"
+    :formatted-total="mobileCartFormattedTotal"
+    @open-cart="showMobileCartSheet = true"
+  />
+  <UiBottomSheetModal v-model="showMobileCartSheet" title="Orden actual" max-height="xl">
+    <PosCartPanel
+      class="border-0 shadow-none rounded-none max-h-[70vh]"
+      :items="posStore.cart"
+      :total="cartTotal"
+      :mesa-mode="isKitchenServiceMode"
+      :show-open-sale="showOpenSaleInPanel"
+      :open-sale-enabled="openSaleEnabled"
+      :open-sale-primary-idle="openSalePrimaryIdle"
+      :open-sale-tooltip="openSaleDisabledReason"
+      :show-bar-process-order="showBarProcessOrder"
+      :is-adding-to-tab="isAddingToTab"
+      :is-loading-tab-items="isLoadingTabItems"
+      :is-clearing-tab="isClearingTab"
+      :tab-items="storeTabItems"
+      :tab-total="storeTabTotal"
+      :tab-items-loading="tabItemsLoading"
+      :comandas-enabled="comandasEnabled"
+      :unfired-count="unfiredCount"
+      :show-print-item-selection="showPrintItemSelection"
+      :printable-order-item-ids="[...printableOrderItemIds]"
+      :can-print-comandas="canPrintComandas"
+      :selected-tab-item-ids="selectedTabItemIds"
+      :pending-remove-item-id="pendingRemoveItemId"
+      :show-served-by-chip="showServedByChip"
+      :served-by-member-id="posStore.cartServedByMemberId"
+      :members="tenantMembers"
+      @edit-item="editCartItem"
+      @remove-item="removeFromCart"
+      @increment-item="incrementCartItem"
+      @decrement-item="decrementCartItem"
+      @duplicate-item="duplicateCartItem"
+      @process-order="processOrder"
+      @open-sale="handleOpenSaleClick"
+      @clear-cart="clearCart"
+      @add-to-tab="addToTab"
+      @request-bill="requestBill"
+      @remove-tab-item="removeTabItem"
+      @increment-tab-item="incrementTabItem"
+      @decrement-tab-item="decrementTabItem"
+      @print-comandas="handlePrintComandas"
+      @toggle-tab-selection="toggleTabItemSelection"
+      @update:served-by="(id) => posStore.setCartServedBy(id)"
+    />
+  </UiBottomSheetModal>
 
 </template>
