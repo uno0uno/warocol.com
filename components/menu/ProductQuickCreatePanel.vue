@@ -136,6 +136,7 @@
           <MenuProductResaleCreateForm
             v-model:unit-weight-gr="unitWeightGr"
             v-model:unit-weight-unit="unitWeightUnit"
+            v-model:draft-units="resalePurchaseUnits"
             :show-error="resaleWeightError"
             @clear-error="resaleWeightError = false"
           />
@@ -187,6 +188,12 @@
 import { ref, watch } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useTenantReactive } from '@/composables/useTenantReactive'
+import {
+  defaultUndPurchaseUnitsDraft,
+  syncResalePurchaseUnitsDraft,
+  type DraftPurchaseUnit,
+} from '@/composables/useIngredientPurchaseUnitsDraft'
+import { resolveResaleIngredientId } from '@/composables/useResaleLinkedIngredient'
 
 interface Props {
   modelValue: boolean
@@ -219,6 +226,7 @@ const errors = ref<Record<string, string>>({})
 const resaleWeightError = ref(false)
 const unitWeightGr = ref<number | null>(null)
 const unitWeightUnit = ref<'gr' | 'ml'>('ml')
+const resalePurchaseUnits = ref<DraftPurchaseUnit[]>(defaultUndPurchaseUnitsDraft())
 
 const selectedCategoryName = ref('')
 const showNewCategoryModal = ref(false)
@@ -243,6 +251,7 @@ function resetForm() {
   selectedCategoryName.value = ''
   unitWeightGr.value = null
   unitWeightUnit.value = 'ml'
+  resalePurchaseUnits.value = defaultUndPurchaseUnitsDraft()
   errors.value = {}
   resaleWeightError.value = false
 }
@@ -342,6 +351,11 @@ async function submit() {
     })
 
     const productData = (res?.data ?? res) as Record<string, unknown>
+
+    const ingredientId = await resolveResaleIngredientId(productData)
+    if (ingredientId) {
+      await syncResalePurchaseUnitsDraft(ingredientId, resalePurchaseUnits.value)
+    }
 
     cache.invalidateQueries({ key: ['menu-ingredients', currentTenant.value?.id ?? 'default'] })
     cache.invalidateQueries()

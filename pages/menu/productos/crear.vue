@@ -396,6 +396,7 @@
                 v-if="isResaleDirectMode"
                 v-model:unit-weight-gr="resaleUnitWeightGr"
                 v-model:unit-weight-unit="resaleUnitWeightUnit"
+                v-model:draft-units="resalePurchaseUnits"
                 :show-error="resaleWeightError"
                 @clear-error="resaleWeightError = false"
               />
@@ -906,6 +907,12 @@ import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import { useActiveStationsQuery } from '@/composables/queries/useActiveStations'
 import { useTenantReactive } from '@/composables/useTenantReactive'
+import {
+  defaultUndPurchaseUnitsDraft,
+  syncResalePurchaseUnitsDraft,
+  type DraftPurchaseUnit,
+} from '@/composables/useIngredientPurchaseUnitsDraft'
+import { resolveResaleIngredientId } from '@/composables/useResaleLinkedIngredient'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -1009,6 +1016,7 @@ function clampStepAfterModeChange() {
 const resaleUnitWeightGr = ref<number | null>(null)
 const resaleUnitWeightUnit = ref<'gr' | 'ml'>('gr')
 const resaleWeightError = ref(false)
+const resalePurchaseUnits = ref<DraftPurchaseUnit[]>(defaultUndPurchaseUnitsDraft())
 
 function setProductCreateMode(mode: ProductCreateMode) {
   if (productCreateMode.value === mode) return
@@ -1017,6 +1025,7 @@ function setProductCreateMode(mode: ProductCreateMode) {
   if (mode === 'recipe') {
     resaleUnitWeightGr.value = null
     resaleUnitWeightUnit.value = 'gr'
+    resalePurchaseUnits.value = defaultUndPurchaseUnitsDraft()
   }
   clampStepAfterModeChange()
 }
@@ -1553,10 +1562,16 @@ async function submitProduct() {
         recipe_base_ids: [] as string[],
       }
 
-      await $fetch('/api/menu/products', {
+      const created = await $fetch<{ data?: Record<string, unknown> }>('/api/menu/products', {
         method: 'POST',
         body: resalePayload,
       })
+
+      const productData = (created?.data ?? created) as Record<string, unknown>
+      const ingredientId = await resolveResaleIngredientId(productData)
+      if (ingredientId) {
+        await syncResalePurchaseUnitsDraft(ingredientId, resalePurchaseUnits.value)
+      }
 
       cache.invalidateQueries()
       toast.success('Producto de venta directa creado')

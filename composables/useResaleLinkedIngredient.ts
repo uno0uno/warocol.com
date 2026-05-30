@@ -49,3 +49,15 @@ export async function fetchResaleLinkedIngredient(
     return null
   }
 }
+
+export async function resolveResaleIngredientId(
+  product: Record<string, unknown>,
+): Promise<string | null> {
+  const rawId = product.resale_ingredient_id
+  if (rawId != null && String(rawId).length > 0) {
+    return String(rawId)
+  }
+  const linked = await fetchResaleLinkedIngredient(product)
+  const id = linked?.id
+  return id != null && String(id).length > 0 ? String(id) : null
+}
