@@ -1,10 +1,13 @@
 <template>
-  <div class="border-2 border-border rounded-lg p-4 bg-background/50">
-    <h3 class="text-sm font-semibold text-text-primary mb-3 flex items-center space-x-2">
+  <div :class="embedded ? '' : 'border-2 border-border rounded-lg p-4 bg-background/50'">
+    <h3
+      v-if="!embedded"
+      class="text-sm font-semibold text-text-primary mb-3 flex items-center space-x-2"
+    >
       <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
       </svg>
-      <span>Documentos Adjuntos</span>
+      <span>{{ title }}</span>
     </h3>
 
     <!-- File Upload -->
@@ -63,9 +66,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: File[]
-}>()
+  title?: string
+  embedded?: boolean
+}>(), {
+  title: 'Documentos Adjuntos',
+  embedded: false
+})
 
 const emit = defineEmits<{
   'update:modelValue': [files: File[]]
