@@ -1,4 +1,4 @@
-# Machine contract — issue #1041 PR 1
+# Machine contract — issue #1041 PR 1 (revised)
 issue: 1041
 title: "feat(menu): custom purchase units in resale slide-over create and edit"
 repo: front_nuxt
@@ -14,19 +14,19 @@ paths:
   - composables/useIngredientPurchaseUnitsDraft.ts
 
 ac:
-  - Shared purchase-units editor for create (draft) and edit (API CRUD)
-  - IngredientePropioPanel create und/pieza supports custom units before save
+  - Ingredient create slide-over: food only (no Insumo/Servicio selector)
+  - Ingredient create: Peso and Volumen only (no Pieza/und)
+  - Custom purchase units on create for peso/volumen (editable draft seeded from catalog)
   - Edit slide-over CRUD unchanged via extracted component
-  - Peso/volumen create still uses catalog auto-suggestions
+  - No custom units on ingredient path for und/reventa (menu product = PR 2)
 
 out_of_scope:
-  - ProductQuickCreatePanel (PR 2)
-  - ProductResaleCreateForm (PR 2)
-  - API auto_resale_ingredient payload (PR 2)
+  - ProductQuickCreatePanel custom units (PR 2)
+  - Pieza/und on ingredient create
 
 hints:
-  entry: "IngredientePropioPanel submit — persistDraftPurchaseUnits after POST when custom und draft"
-  pattern: "IngredientPurchaseUnitsField.vue — mode create|edit"
+  entry: "IngredientePropioPanel setUnitType — suggestionsToDraftUnits"
+  pattern: "usesCustomPurchaseUnitsDraft(draft, currentSuggestions)"
   tests: none
 
 skip:

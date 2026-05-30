@@ -94,69 +94,7 @@
             <p v-if="errors.name" class="text-xs text-destructive">{{ errors.name }}</p>
           </div>
 
-          <!-- CREACIÓN: selector de tipo de ingrediente -->
-          <div v-if="!isEdit" class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium text-text-primary">
-              Tipo <span class="text-destructive">*</span>
-            </label>
-            <div class="grid grid-cols-3 gap-2" role="group" aria-label="Tipo de ingrediente">
-              <!-- Alimento -->
-              <button
-                type="button"
-                @click="form.type = 'food'"
-                :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
-                  form.type === 'food'
-                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-                ]"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a9 9 0 019 9c0 4.97-4.03 9-9 9S3 15.97 3 11a9 9 0 019-9z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 11c0-2.21 1.79-4 4-4s4 1.79 4 4" />
-                </svg>
-                <span class="text-xs font-bold leading-tight">Alimento</span>
-                <span :class="['text-[10px] leading-snug', form.type === 'food' ? 'text-primary/80' : 'text-text-tertiary']">Recetas y costos de platos. Ej: carne, leche</span>
-              </button>
-
-              <!-- Insumo -->
-              <button
-                type="button"
-                @click="form.type = 'supply'"
-                :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
-                  form.type === 'supply'
-                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-                ]"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
-                </svg>
-                <span class="text-xs font-bold leading-tight">Insumo</span>
-                <span :class="['text-[10px] leading-snug', form.type === 'supply' ? 'text-primary/80' : 'text-text-tertiary']">Empaques o materiales. Ej: bolsas, cajas</span>
-              </button>
-
-              <!-- Servicio -->
-              <button
-                type="button"
-                @click="form.type = 'service'"
-                :class="[
-                  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left',
-                  form.type === 'service'
-                    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-                ]"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span class="text-xs font-bold leading-tight">Servicio</span>
-                <span :class="['text-[10px] leading-snug', form.type === 'service' ? 'text-primary/80' : 'text-text-tertiary']">Costo sin producto físico. Ej: gas, mano de obra</span>
-              </button>
-            </div>
-          </div>
+          <!-- CREACIÓN: alimento (único tipo en slide-over) -->
 
           <!-- EDICIÓN: tipo de solo lectura -->
           <div v-if="isEdit" class="flex flex-col gap-1.5">
@@ -192,7 +130,7 @@
             <label class="text-sm font-medium text-text-primary">
               Tipo de medida <span class="text-destructive">*</span>
             </label>
-            <div class="grid grid-cols-3 gap-2" role="group" aria-label="Tipo de medida">
+            <div class="grid grid-cols-2 gap-2" role="group" aria-label="Tipo de medida">
               <!-- Peso -->
               <button
                 type="button"
@@ -222,54 +160,16 @@
                 <span class="text-xs font-bold">Volumen</span>
                 <span :class="['text-[10px] font-mono', unitType === 'volumen' ? 'text-primary' : 'text-text-tertiary']">ml / lt</span>
               </button>
-
-              <!-- Pieza -->
-              <button
-                type="button"
-                @click="setUnitType('pieza')"
-                :class="[
-                  'flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-xl border-2 transition-all focus:outline-none',
-                  unitType === 'pieza'
-                    ? 'border-primary bg-primary/8 text-primary shadow-sm shadow-primary/10'
-                    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60'
-                ]"
-              >
-                <span class="text-xs font-bold">Pieza</span>
-                <span :class="['text-[10px] font-mono', unitType === 'pieza' ? 'text-primary' : 'text-text-tertiary']">und</span>
-              </button>
             </div>
             <p v-if="errors.unit" class="text-xs text-destructive">{{ errors.unit }}</p>
           </div>
 
-          <!-- CREACIÓN: unidades de compra informativas (Peso / Volumen) -->
-          <div v-if="!isEdit && unitType && unitType !== 'pieza' && currentSuggestions.length > 0" class="flex flex-col gap-1.5">
-            <p class="text-xs font-medium text-text-secondary">Unidades de compra que se crearán automáticamente</p>
-            <div class="rounded-xl border border-border divide-y divide-border overflow-hidden bg-surface-secondary/30">
-              <div
-                v-for="(s, i) in currentSuggestions"
-                :key="i"
-                class="flex items-center justify-between px-3 py-2"
-              >
-                <div class="flex items-center gap-2 min-w-0">
-                  <svg class="w-3.5 h-3.5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span class="text-sm text-text-primary">{{ s.label }}</span>
-                  <span v-if="i === 0" class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
-                </div>
-                <span class="text-xs text-text-tertiary font-mono flex-shrink-0 ml-2">
-                  {{ s.conversion_factor.toLocaleString('es-CO') }} {{ form.unit }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- CREACIÓN: pieza — unidades de compra personalizables -->
+          <!-- CREACIÓN: unidades de compra (peso / volumen) -->
           <IngredientesIngredientPurchaseUnitsField
-            v-if="!isEdit && unitType === 'pieza'"
+            v-if="!isEdit && (unitType === 'peso' || unitType === 'volumen')"
             v-model:draft-units="createPurchaseUnits"
             mode="create"
-            base-unit="und"
+            :base-unit="form.unit"
           />
 
           <!-- EDICIÓN: unidad de solo lectura -->
@@ -280,29 +180,26 @@
             </div>
           </div>
 
-          <!-- Reventa -->
-          <div v-if="!hideResaleToggle" class="flex items-center justify-between rounded-xl border border-border px-4 py-3 bg-surface-secondary/30">
+          <!-- Reventa (solo edición de ingredientes und existentes) -->
+          <div v-if="!hideResaleToggle && isEdit && form.unit === 'und'" class="flex items-center justify-between rounded-xl border border-border px-4 py-3 bg-surface-secondary/30">
             <div class="flex flex-col gap-0.5">
               <span class="text-sm font-medium text-text-primary">Vender como reventa</span>
-              <span v-if="form.unit && form.unit !== 'und'" class="text-xs text-amber-600">Solo disponible para ingredientes de tipo Pieza (und)</span>
-              <span v-else class="text-xs text-text-tertiary">Aparece en POS y domicilios con precio directo</span>
+              <span class="text-xs text-text-tertiary">Aparece en POS y domicilios con precio directo</span>
             </div>
             <button
               type="button"
               role="switch"
-              :disabled="form.unit !== 'und' && form.unit !== ''"
               :aria-checked="form.isResale"
-              @click="form.unit === 'und' && (form.isResale = !form.isResale)"
+              @click="form.isResale = !form.isResale"
               :class="[
                 'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-                form.isResale && form.unit === 'und' ? 'bg-primary' : 'bg-border',
-                form.unit !== 'und' && form.unit !== '' ? 'opacity-40 cursor-not-allowed' : ''
+                form.isResale ? 'bg-primary' : 'bg-border',
               ]"
             >
               <span
                 :class="[
                   'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform',
-                  form.isResale && form.unit === 'und' ? 'translate-x-5' : 'translate-x-0'
+                  form.isResale ? 'translate-x-5' : 'translate-x-0'
                 ]"
               />
             </button>
@@ -507,8 +404,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import {
-  defaultUndDraftUnits,
   persistDraftPurchaseUnits,
+  suggestionsToDraftUnits,
   usesCustomPurchaseUnitsDraft,
   type DraftPurchaseUnit,
 } from '@/composables/useIngredientPurchaseUnitsDraft'
@@ -641,18 +538,19 @@ const editSuggestions = computed(() =>
 
 // --- Unit type selection ---
 const setUnitType = (key: UnitTypeKey) => {
+  if (key === 'pieza') return
   unitType.value = key
   const t = UNIT_TYPES.find(u => u.key === key)
-  if (t) form.value.unit = t.unit
-  if (key === 'pieza' && createPurchaseUnits.value.length === 0) {
-    createPurchaseUnits.value = defaultUndDraftUnits()
+  if (t) {
+    form.value.unit = t.unit
+    createPurchaseUnits.value = suggestionsToDraftUnits(t.suggestions)
   }
   clearError('unit')
 }
 
 // --- Form reset helpers ---
 const resetCreate = () => {
-  form.value = { name: props.initialName ?? '', unit: '', category: '', parentId: null, parentName: '', isResale: false, type: props.initialType ?? 'food', unitWeightGr: null }
+  form.value = { name: props.initialName ?? '', unit: '', category: '', parentId: null, parentName: '', isResale: false, type: 'food', unitWeightGr: null }
   unitType.value = ''
   unitWeightUnit.value = 'gr'
   createPurchaseUnits.value = []
@@ -751,10 +649,9 @@ async function submit() {
       }
       result = await $fetch(`/api/suppliers/ingredients/${props.ingredient.id}`, { method: 'PATCH', body })
     } else {
-      body.type = form.value.type
-      const useCustomUndUnits = form.value.unit === 'und'
-        && usesCustomPurchaseUnitsDraft(createPurchaseUnits.value)
-      if (!useCustomUndUnits) {
+      body.type = 'food'
+      const useCustomUnits = usesCustomPurchaseUnitsDraft(createPurchaseUnits.value, currentSuggestions.value)
+      if (!useCustomUnits) {
         body.purchase_units = currentSuggestions.value.map((s, i) => ({
           purchase_unit: s.purchase_unit,
           is_default: i === 0,
@@ -762,7 +659,7 @@ async function submit() {
       }
       result = await $fetch('/api/suppliers/ingredients', { method: 'POST', body })
       const ingredientId = result?.data?.id ?? result?.id
-      if (useCustomUndUnits && ingredientId) {
+      if (useCustomUnits && ingredientId && createPurchaseUnits.value.length > 0) {
         await persistDraftPurchaseUnits(String(ingredientId), createPurchaseUnits.value)
       }
     }

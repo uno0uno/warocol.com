@@ -11,22 +11,34 @@ export interface PurchaseUnitSuggestion {
   conversion_factor: number
 }
 
-export function defaultUndDraftUnits(): DraftPurchaseUnit[] {
-  return [{
-    purchase_unit_label: 'Unidad',
-    purchase_unit: 'und',
-    conversion_factor: 1,
-    is_default: true,
-  }]
+export function suggestionsToDraftUnits(suggestions: PurchaseUnitSuggestion[]): DraftPurchaseUnit[] {
+  return suggestions.map((s, i) => ({
+    purchase_unit_label: s.label,
+    purchase_unit: s.purchase_unit,
+    conversion_factor: s.conversion_factor,
+    is_default: i === 0,
+  }))
 }
 
-export function usesCustomPurchaseUnitsDraft(units: DraftPurchaseUnit[]): boolean {
-  if (units.length === 0) return false
-  if (units.length > 1) return true
-  const only = units[0]
-  return only.purchase_unit !== 'und'
-    || only.purchase_unit_label !== 'Unidad'
-    || only.conversion_factor !== 1
+export function draftMatchesCatalogSuggestions(
+  draft: DraftPurchaseUnit[],
+  suggestions: PurchaseUnitSuggestion[],
+): boolean {
+  if (draft.length !== suggestions.length) return false
+  return draft.every((unit, index) => {
+    const suggestion = suggestions[index]
+    return unit.purchase_unit === suggestion.purchase_unit
+      && unit.conversion_factor === suggestion.conversion_factor
+      && unit.is_default === (index === 0)
+  })
+}
+
+export function usesCustomPurchaseUnitsDraft(
+  draft: DraftPurchaseUnit[],
+  suggestions: PurchaseUnitSuggestion[],
+): boolean {
+  if (draft.length === 0) return false
+  return !draftMatchesCatalogSuggestions(draft, suggestions)
 }
 
 export async function persistDraftPurchaseUnits(ingredientId: string, units: DraftPurchaseUnit[]) {
