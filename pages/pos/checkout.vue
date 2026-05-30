@@ -1482,19 +1482,6 @@ const cashIsValid = computed(() =>
   !isCashMethod.value || (cashReceivedInput.value > 0 && cashShortfall.value <= 0.01)
 )
 
-// Issue #524 — quick-tap presets. "Sin vuelto" is the friendly equivalent of
-// the industry term "exact tender" — it tells the cashier what happens
-// (no change to give) instead of generic POS jargon. The four +amount
-// shortcuts cover the most common Colombian bill denominations the customer
-// hands over above the total. Issue #646: presets add cumulatively to the
-// tender — tapping "+ $1.000" then "+ $5.000" lands at $6.000.
-const cashPresetsExtra = [
-  { label: '+ $1.000',  offset: 1000 },
-  { label: '+ $5.000',  offset: 5000 },
-  { label: '+ $10.000', offset: 10000 },
-  { label: '+ $20.000', offset: 20000 },
-] as const
-
 // Issue #524 — input starts at 0 and stays at 0 until the cashier either
 // taps a preset or types. Auto-prefilling with the amount made it look like
 // "Sin vuelto" was already chosen, which was confusing. Reset to 0 only when
@@ -1506,18 +1493,7 @@ watch(
   },
 )
 
-// Issue #524 — thousand-separator formatting (Colombian style: "145.000").
-// Cajero ve el valor con puntos pero la lógica trabaja con un número limpio.
-const cashReceivedDisplay = computed(() =>
-  cashReceivedInput.value > 0 ? cashReceivedInput.value.toLocaleString('es-CO') : ''
-)
-const onCashReceivedInput = (e: Event) => {
-  const input = e.target as HTMLInputElement
-  const raw = Number(input.value.replace(/\./g, '').replace(/\D/g, ''))
-  cashReceivedInput.value = Number.isFinite(raw) ? raw : 0
-  // Reflect the formatted value back into the field so the user sees dots.
-  input.value = raw ? raw.toLocaleString('es-CO') : ''
-}
+// Issue #524 — thousand-separator formatting lives in CheckoutCashTenderPanel.
 
 const filteredMethods = computed(() => {
   const methods = selectedGroup.value?.methods ?? []
@@ -3053,64 +3029,13 @@ onUnmounted(() => {
             </div>
 
             <!-- Issue #524 — Cash tender + change calculation (split mode) -->
-            <div v-if="isCashMethod && !splitIsComplete" class="flex flex-col gap-3 p-4 rounded-xl bg-surface border border-border">
-              <label for="cash-received-input" class="text-sm font-medium text-text-primary">
-                Efectivo recibido
-              </label>
-              <!-- Big input with $ on the right (matches mockup) -->
-              <div class="relative">
-                <input
-                  id="cash-received-input"
-                  type="text"
-                  inputmode="numeric"
-                  :value="cashReceivedDisplay"
-                  @input="onCashReceivedInput"
-                  :aria-label="`Efectivo recibido por el cliente, monto a cobrar ${formatCurrency(cashAmountToCharge)}`"
-                  placeholder="0"
-                  class="w-full min-h-[60px] pl-4 pr-10 py-3 bg-white dark:bg-surface border-2 border-green-500 rounded-xl text-3xl font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500 tabular-nums placeholder:text-text-tertiary placeholder:font-normal"
-                />
-                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-green-600 pointer-events-none">$</span>
-              </div>
-              <!-- "Sin vuelto" full-width on top, then 4 amount presets in 2×2 — all neutral gray -->
-              <button
-                type="button"
-                @click="cashReceivedInput = cashAmountToCharge"
-                aria-label="Pagar exacto, sin vuelto"
-                class="w-full min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                Sin vuelto
-              </button>
-              <div class="grid grid-cols-2 gap-3">
-                <button
-                  v-for="preset in cashPresetsExtra"
-                  :key="preset.label"
-                  type="button"
-                  @click="cashReceivedInput = (cashReceivedInput || 0) + preset.offset"
-                  class="min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  {{ preset.label }}
-                </button>
-              </div>
-              <!-- Vuelto card — only when the cashier has typed/picked something -->
-              <div
-                v-if="cashReceivedInput > 0 && cashShortfall <= 0.01"
-                class="flex items-center justify-between p-4 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40"
-                role="status"
-                aria-live="polite"
-              >
-                <span class="text-base font-medium text-green-700 dark:text-green-400">Vuelto</span>
-                <span class="text-3xl font-bold text-green-700 dark:text-green-400 tabular-nums">
-                  {{ formatCurrency(cashChange) }}
-                </span>
-              </div>
-              <!-- Inline shortfall error — only when the cashier typed an insufficient amount -->
-              <p v-else-if="cashReceivedInput > 0" class="flex items-center gap-2 text-sm text-destructive">
-                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                Falta cobrar {{ formatCurrency(cashShortfall) }}
-              </p>
-            </div>
+            <CheckoutCashTenderPanel
+              v-if="isCashMethod && !splitIsComplete"
+              v-model="cashReceivedInput"
+              input-id="cash-received-input"
+              :amount-to-charge="cashAmountToCharge"
+              require-input-for-feedback
+            />
 
             <!-- Add payment button -->
             <button
@@ -3135,62 +3060,12 @@ onUnmounted(() => {
         </div>
 
         <!-- Issue #524 — Cash tender + change calculation (single-payment mode) -->
-        <div v-if="!splitMode && isCashMethod && selectedCustomer" class="flex flex-col gap-3 p-4 rounded-xl bg-surface border border-border">
-          <label for="cash-received-input-single" class="text-sm font-medium text-text-primary">
-            Efectivo recibido
-          </label>
-          <div class="relative">
-            <input
-              id="cash-received-input-single"
-              type="text"
-              inputmode="numeric"
-              :value="cashReceivedDisplay"
-              @input="onCashReceivedInput"
-              :aria-label="`Efectivo recibido por el cliente, monto a cobrar ${formatCurrency(cashAmountToCharge)}`"
-              placeholder="0"
-              class="w-full min-h-[60px] pl-4 pr-10 py-3 bg-white dark:bg-surface border-2 border-green-500 rounded-xl text-3xl font-bold text-text-primary focus:outline-none focus:ring-2 focus:ring-green-500 tabular-nums placeholder:text-text-tertiary placeholder:font-normal"
-            />
-            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-green-600 pointer-events-none">$</span>
-          </div>
-          <!-- 2×2 grid of presets -->
-          <div class="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              @click="cashReceivedInput = cashAmountToCharge"
-              aria-label="Pagar exacto, sin vuelto"
-              class="min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              Sin vuelto
-            </button>
-            <button
-              v-for="preset in cashPresetsExtra"
-              :key="preset.label"
-              type="button"
-              @click="cashReceivedInput = (cashReceivedInput || 0) + preset.offset"
-              class="min-h-[56px] px-4 py-3 rounded-lg bg-surface-secondary dark:bg-surface text-text-primary text-base font-semibold hover:bg-border/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              {{ preset.label }}
-            </button>
-          </div>
-          <!-- Vuelto card -->
-          <div
-            v-if="cashShortfall <= 0.01"
-            class="flex items-center justify-between p-4 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40"
-            role="status"
-            aria-live="polite"
-          >
-            <span class="text-base font-medium text-green-700 dark:text-green-400">Vuelto</span>
-            <span class="text-3xl font-bold text-green-700 dark:text-green-400 tabular-nums">
-              {{ formatCurrency(cashChange) }}
-            </span>
-          </div>
-          <p v-else class="flex items-center gap-2 text-sm text-destructive">
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            Falta cobrar {{ formatCurrency(cashShortfall) }}
-          </p>
-        </div>
+        <CheckoutCashTenderPanel
+          v-if="!splitMode && isCashMethod && selectedCustomer"
+          v-model="cashReceivedInput"
+          input-id="cash-received-input-single"
+          :amount-to-charge="cashAmountToCharge"
+        />
 
         <!-- Pre-checkout banner: items will fire to kitchen on checkout (counter mode only) -->
         <div
@@ -3484,12 +3359,20 @@ onUnmounted(() => {
         <p class="text-sm text-amber-800 font-medium">Los ítems serán enviados a cocina al cobrar</p>
       </div>
 
+      <!-- Issue #524 — Cash tender (mobile / tablet; desktop uses right column) -->
+      <CheckoutCashTenderPanel
+        v-if="!splitMode && isCashMethod && selectedCustomer"
+        v-model="cashReceivedInput"
+        input-id="cash-received-input-mobile"
+        :amount-to-charge="cashAmountToCharge"
+      />
+
       <!-- Action Buttons -->
       <div class="flex flex-col gap-2">
         <button
           @click="processOrder"
           v-if="!splitMode"
-            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection"
+            :disabled="isProcessing || !selectedCustomer || isLoadingEstimate || requiresMethodSelection || !cashIsValid"
           class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <UiLoadingDots v-if="isProcessing" size="9px" />
