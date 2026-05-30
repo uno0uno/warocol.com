@@ -1,0 +1,28 @@
+issue: 1038
+title: "fix(menu): auto-assign new kitchen station to selected category on product create"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1038-station-category-assign
+
+paths:
+  - pages/menu/productos/crear.vue
+
+ac:
+  - Create station with category selected assigns category via POST /api/api/stations/categories/{id}
+  - Cocina heredada updates immediately after create
+  - No category selected shows helpful toast without assign attempt
+  - Active stations + category mappings refresh correctly
+
+out_of_scope:
+  - productos/[id].vue same handler
+  - Backend API changes
+
+hints:
+  entry: "onStationCreated — crear.vue"
+  pattern: "operaciones/comandas.vue handleAssignCategory"
+  tests: "manual — productos/crear with category de prueba 30 mayo"
+
+skip:
+  audits: [ux, color, typography]

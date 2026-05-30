@@ -1077,8 +1077,8 @@ const { data: categoriesData } = useAsyncData(
 const { availableIngredients } = useMenuIngredientsQuery()
 
 // Read-only: which station the selected category maps to
-const { activeStations } = useActiveStationsQuery()
-const { data: categoryStationsData } = useAsyncData(
+const { activeStations, refetch: refetchActiveStations } = useActiveStationsQuery()
+const { data: categoryStationsData, refresh: refreshCategoryStations } = useAsyncData(
   'category-stations',
   () => $fetch<{ success: boolean; data: any[] }>('/api/api/stations/categories'),
   { server: false, watch: [currentTenant] }
@@ -1088,7 +1088,16 @@ const inheritedStation = computed(() => {
   if (!form.value.category_id) return null
   const mapping = categoryStations.value.find((m: any) => m.category_id === form.value.category_id)
   if (!mapping?.station_id) return null
-  return activeStations.value.find((s: any) => s.id === mapping.station_id) ?? null
+  const fromActive = activeStations.value.find((s: any) => s.id === mapping.station_id)
+  if (fromActive) return fromActive
+  if (mapping.station_name) {
+    return {
+      id: mapping.station_id,
+      name: mapping.station_name,
+      color: mapping.station_color ?? '#94a3b8',
+    }
+  }
+  return null
 })
 
 // Cache populated when user selects an ingredient via UiIngredientSearchInput
@@ -1378,13 +1387,39 @@ function onImageUploaded(url: string) {
 // ── Kitchen station inline create flow (issue #463) ───────────────────────
 const showNewStationModal = ref(false)
 
-function onStationCreated(station: { id: string; name: string }) {
-  toast.success(
-    `Estación "${station.name}" creada. Asígnala a una categoría desde Operaciones › Comandas.`,
-    { title: 'Estación creada' }
-  )
+async function onStationCreated(station: { id: string; name: string }) {
+  const categoryId = form.value.category_id
+  const categoryName = categoryId ? getCategoryName(categoryId) : null
+
+  cache.invalidateQueries({ key: ['tenant', 'stations', 'active', currentTenant.value?.id] })
   cache.invalidateQueries({ key: ['tenant', 'stations', currentTenant.value?.id] })
-  cache.invalidateQueries({ key: ['tenant', 'category-stations', currentTenant.value?.id] })
+
+  if (!categoryId) {
+    toast.success(
+      `Estación "${station.name}" creada. Selecciona una categoría para asignarla, o hazlo en Operaciones › Comandas.`,
+      { title: 'Estación creada' },
+    )
+    await refetchActiveStations()
+    return
+  }
+
+  try {
+    await $fetch(`/api/api/stations/categories/${categoryId}`, {
+      method: 'POST',
+      body: { station_id: station.id },
+    })
+    await Promise.all([refreshCategoryStations(), refetchActiveStations()])
+    toast.success(
+      `Estación "${station.name}" asignada a ${categoryName || 'la categoría'}.`,
+      { title: 'Estación lista' },
+    )
+  } catch (e: any) {
+    await refetchActiveStations()
+    toast.error(
+      e?.data?.detail || e?.message || 'No se pudo asignar la estación a la categoría',
+      { title: 'Estación creada sin asignar' },
+    )
+  }
 }
 
 function addIngredient() {
