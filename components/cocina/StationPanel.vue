@@ -270,7 +270,7 @@ async function submit() {
   loading.value = true
   errorMsg.value = null
   try {
-    const res = await $fetch<{ success: boolean; data: Station }>('/api/stations', {
+    const res = await $fetch<{ success: boolean; data: Station }>('/api/api/stations', {
       method: 'POST',
       body: {
         name: trimmedName,
