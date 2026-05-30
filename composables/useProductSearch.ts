@@ -11,7 +11,12 @@ export interface ProductRow {
   name: string
 }
 
-export const useProductSearch = () => {
+export interface UseProductSearchOptions {
+  /** Include resale products (API default excludes them unless include_all_types=true). */
+  includeAllTypes?: boolean
+}
+
+export const useProductSearch = (options: UseProductSearchOptions = {}) => {
   const results = ref<ProductRow[]>([])
   const loading = ref(false)
   const error = ref<Error | null>(null)
@@ -21,10 +26,18 @@ export const useProductSearch = () => {
     loading.value = true
     error.value = null
     try {
+      const baseQuery: Record<string, string | number | boolean> = {
+        limit: 50,
+        page: 1,
+      }
+      if (q && q.trim().length > 0) {
+        baseQuery.search = q.trim()
+      }
+      if (options.includeAllTypes) {
+        baseQuery.include_all_types = true
+      }
       const res = await $fetch<{ success?: boolean; data?: ProductRow[] }>('/api/menu/products', {
-        query: q && q.trim().length > 0
-          ? { search: q.trim(), limit: 50, page: 1 }
-          : { limit: 50, page: 1 },
+        query: baseQuery,
       })
       const items = Array.isArray(res?.data) ? res.data : []
       results.value = items.map((p) => ({ id: p.id, name: p.name }))

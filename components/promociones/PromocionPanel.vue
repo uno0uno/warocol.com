@@ -178,6 +178,7 @@
               <UiProductSearchInput
                 input-id="promo-product-search"
                 placeholder="Buscar producto…"
+                include-all-types
                 :exclude-ids="selectedProducts.map((p) => p.id)"
                 @select="onProductSelect"
               />
