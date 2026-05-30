@@ -1,0 +1,33 @@
+# Machine contract — issue #1046
+issue: 1046
+title: "feat(menu): recetas single-page form UX (crear + edit)"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1046-recetas-single-page
+parent_epic: 1045
+
+paths:
+  - pages/menu/recetas/crear.vue
+  - pages/menu/recetas/[id].vue
+
+ac:
+  - crear.vue — no wizard; grid xl:grid-cols-3; UiFormSection Datos + Ingredientes; sticky Resumen sidebar
+  - crear.vue — validateForm at submit (name, duplicate check, ingredients, duplicates)
+  - [id].vue — divide-y UiFormSection card; Resumen sidebar; sentence-case microcopy
+  - [id].vue — submitError inline instead of alert for validation errors
+  - API payloads unchanged
+
+out_of_scope:
+  - modificadores (batch #1047)
+  - recetas/index.vue
+  - API changes
+
+hints:
+  entry: "pages/menu/recetas/crear.vue — mirror productos/crear.vue"
+  pattern: "UiFormSection + sticky Resumen sidebar"
+  depends_on: "#1043 FormSection.vue (branch wr-1043 or merged main)"
+
+skip:
+  audits: [ux, color, typography]

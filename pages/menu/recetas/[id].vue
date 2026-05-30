@@ -1,47 +1,42 @@
 <template>
   <div>
-    <!-- Loading State -->
     <div v-if="isPageLoading" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Error State -->
     <CommonsTheErrorState v-else-if="fetchError || !recipeData" />
 
     <form v-else @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
-      <!-- Left Column: Form Content -->
       <div class="xl:col-span-2 space-y-6">
-        <div class="bg-surface border-2 border-border rounded-xl p-6 md:p-8 shadow-sm">
-          <!-- Información Básica -->
-          <div>
-            <h3 class="text-lg font-semibold text-text-primary mb-6">Información General</h3>
-            <div class="grid grid-cols-1 gap-6">
+        <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
+          <UiFormSection title="Datos de la receta">
+            <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Nombre del Tipo Base *
+                <label class="block text-sm font-medium text-text-primary mb-1">
+                  Nombre *
                 </label>
                 <input
                   v-model="form.name"
                   type="text"
                   required
                   class="input-base w-full px-4 py-2"
-                  placeholder="Ej: Pizza Italiana Clásica"
+                  placeholder="Ej. pizza italiana clásica"
                 />
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Descripción
+                <label class="block text-sm font-medium text-text-primary mb-1">
+                  Descripción <span class="text-text-tertiary font-normal">(opcional)</span>
                 </label>
                 <textarea
                   v-model="form.description"
                   rows="3"
-                  class="input-base w-full px-4 py-2"
-                  placeholder="Describe la receta base..."
-                ></textarea>
+                  class="input-base w-full px-4 py-2 resize-y min-h-[5.5rem]"
+                  placeholder="Breve descripción de la receta base"
+                />
               </div>
 
-              <div class="flex items-start space-x-3">
+              <div class="flex items-start gap-3">
                 <input
                   v-model="form.is_active"
                   type="checkbox"
@@ -52,24 +47,16 @@
                   <label for="is_active" class="text-sm font-medium text-text-primary cursor-pointer">
                     Receta activa
                   </label>
-                  <p class="text-xs text-text-secondary mt-1">
-                    Las recetas activas pueden ser asignadas a nuevos productos
+                  <p class="text-xs text-text-tertiary mt-0.5">
+                    Disponible para asignar a productos nuevos
                   </p>
                 </div>
               </div>
             </div>
-          </div>
+          </UiFormSection>
 
-          <!-- Ingredientes -->
-          <MenuCatalogInlineCreateBusyOverlay
-            class="mt-8 block"
-            :busy="inlineCatalogBusy"
-            :label="inlineCatalogBusyLabel"
-            :hint="inlineCatalogBusyHint"
-          >
-            <MenuIngredientProductHint class="mb-4" />
-            <div class="flex justify-between items-center mb-6">
-              <h3 class="text-lg font-semibold text-text-primary">Ingredientes y reventa de la receta</h3>
+          <UiFormSection title="Ingredientes">
+            <template #actions>
               <UiButton
                 type="button"
                 variant="outline"
@@ -78,176 +65,177 @@
               >
                 + Agregar
               </UiButton>
-            </div>
+            </template>
 
-            <!-- Empty State -->
-            <div v-if="form.ingredients.length === 0" class="text-center py-12 text-text-secondary border border-border rounded-lg">
-              <Icon name="heroicons:cube" class="h-16 w-16 mx-auto mb-4 text-titan-300" />
-              <p class="text-base font-medium mb-1">No hay líneas en la receta</p>
-              <p class="text-sm">Agrega ingredientes o productos de reventa que componen esta receta base</p>
-            </div>
+            <MenuCatalogInlineCreateBusyOverlay
+              :busy="inlineCatalogBusy"
+              :label="inlineCatalogBusyLabel"
+              :hint="inlineCatalogBusyHint"
+            >
+              <MenuIngredientProductHint class="mb-4" />
 
-            <!-- Lista de ingredientes -->
-            <div class="space-y-3 mb-4">
-              <div
-                v-for="(ingredient, index) in form.ingredients"
-                :key="index"
-                class="flex items-start gap-3 p-4 bg-surface-secondary rounded-lg border border-border"
-              >
-                <div class="flex-1 grid grid-cols-1 md:grid-cols-12 gap-3">
-                  <!-- Ingrediente -->
-                  <div class="md:col-span-5">
-                    <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
-                    <UiIngredientSearchInput
-                      :initialValue="ingredient.ingredient_name"
-                      :allow-create="true"
-                      @select="(ing) => selectIngredient(ing, index)"
-                      @create="(name) => openCustomIngModal(name, index)"
-                    />
-                  </div>
+              <div v-if="form.ingredients.length === 0" class="text-center py-10 text-text-secondary border border-dashed border-border rounded-lg">
+                <Icon name="heroicons:cube" class="h-12 w-12 mx-auto mb-3 text-text-tertiary/50" />
+                <p class="text-sm font-medium mb-0.5">Sin líneas en la receta</p>
+                <p class="text-xs text-text-tertiary">Agrega ingredientes o productos de reventa</p>
+              </div>
 
-                  <!-- Cantidad -->
-                  <div class="md:col-span-3">
-                    <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad *</label>
-                    <input
-                      v-model.number="ingredient.base_quantity"
-                      type="number"
-                      required
-                      min="0.01"
-                      step="any"
-                      class="input-base w-full px-3 py-2 text-sm"
-                      placeholder="0"
-                    />
-                  </div>
+              <div v-else class="space-y-3">
+                <div
+                  v-for="(ingredient, index) in form.ingredients"
+                  :key="index"
+                  class="flex items-start gap-3 p-4 bg-background rounded-lg border border-border"
+                >
+                  <div class="flex-1 grid grid-cols-1 md:grid-cols-12 gap-3">
+                    <div class="md:col-span-5">
+                      <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
+                      <UiIngredientSearchInput
+                        :initialValue="ingredient.ingredient_name"
+                        :allow-create="true"
+                        @select="(ing) => selectIngredient(ing, index)"
+                        @create="(name) => openCustomIngModal(name, index)"
+                      />
+                    </div>
 
-                  <!-- Unidad -->
-                  <div class="md:col-span-3">
-                    <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
-                    <div class="relative">
-                      <select
-                        v-model="ingredient.unit"
-                        :disabled="loadingUnits.has(ingredient.ingredient_id)"
-                        class="input-base w-full py-2 pr-3 text-sm disabled:opacity-50"
-                        :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
-                      >
-                        <option
-                          v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
-                          :key="opt.value"
-                          :value="opt.value"
-                        >{{ opt.label }}</option>
-                      </select>
-                      <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
-                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                        </svg>
-                      </span>
+                    <div class="md:col-span-3">
+                      <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad *</label>
+                      <input
+                        v-model.number="ingredient.base_quantity"
+                        type="number"
+                        required
+                        min="0.01"
+                        step="any"
+                        class="input-base w-full px-3 py-2 text-sm"
+                        placeholder="0"
+                      />
+                    </div>
+
+                    <div class="md:col-span-3">
+                      <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
+                      <div class="relative">
+                        <select
+                          v-model="ingredient.unit"
+                          :disabled="loadingUnits.has(ingredient.ingredient_id)"
+                          class="input-base w-full py-2 pr-3 text-sm disabled:opacity-50"
+                          :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
+                        >
+                          <option
+                            v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
+                            :key="opt.value"
+                            :value="opt.value"
+                          >{{ opt.label }}</option>
+                        </select>
+                        <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
+                          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                          </svg>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="md:col-span-1 flex items-end">
+                      <label class="flex items-center gap-2 cursor-pointer">
+                        <input
+                          v-model="ingredient.is_required"
+                          type="checkbox"
+                          class="h-4 w-4 text-primary border-border rounded focus:ring-primary"
+                        />
+                        <span class="text-xs font-medium text-text-primary whitespace-nowrap">Requerido</span>
+                      </label>
+                    </div>
+
+                    <div class="md:col-span-12">
+                      <label class="block text-xs font-medium text-text-secondary mb-1">Notas <span class="font-normal">(opcional)</span></label>
+                      <input
+                        v-model="ingredient.notes"
+                        type="text"
+                        class="input-base w-full px-3 py-2 text-sm"
+                        placeholder="Ej. mozzarella de búfala"
+                      />
                     </div>
                   </div>
 
-                  <!-- Requerido -->
-                  <div class="md:col-span-1 flex items-end">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        v-model="ingredient.is_required"
-                        class="h-4 w-4 text-primary border-border rounded focus:ring-primary"
-                      />
-                      <span class="text-xs font-medium text-text-primary whitespace-nowrap">Requerido</span>
-                    </label>
-                  </div>
-
-                  <!-- Notas -->
-                  <div class="md:col-span-12">
-                    <label class="block text-xs font-medium text-text-secondary mb-1">Notas (opcional)</label>
-                    <input
-                      v-model="ingredient.notes"
-                      type="text"
-                      class="input-base w-full px-3 py-2 text-sm"
-                      placeholder="Ej: Usar mozzarella de búfala, temperatura ambiente..."
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    @click="removeIngredient(index)"
+                    class="px-3 py-2 text-destructive hover:bg-destructive/5 rounded-lg transition-colors flex-shrink-0"
+                    title="Eliminar línea"
+                  >
+                    <Icon name="heroicons:trash" class="h-5 w-5" />
+                  </button>
                 </div>
-
-                <!-- Delete Button -->
-                <button
-                  type="button"
-                  @click="removeIngredient(index)"
-                  class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
-                  title="Eliminar ingrediente"
-                >
-                  <Icon name="heroicons:trash" class="h-5 w-5" />
-                </button>
               </div>
-            </div>
-          </MenuCatalogInlineCreateBusyOverlay>
+            </MenuCatalogInlineCreateBusyOverlay>
+          </UiFormSection>
         </div>
       </div>
 
-      <!-- Right Column: Actions Card -->
-      <div class="xl:col-span-1">
-        <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm sticky top-6 space-y-4">
-          <h3 class="text-lg font-semibold text-text-primary mb-4">Acciones</h3>
+      <div class="xl:col-span-1 space-y-6">
+        <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm sticky top-6">
+          <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen</h3>
 
-          <UiButton
-            type="submit"
-            variant="default"
-            size="lg"
-            class="w-full"
-            :disabled="isSubmitting"
-          >
-            <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
-            <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
-            {{ isSubmitting ? 'Guardando...' : 'Actualizar Receta' }}
-          </UiButton>
-
-          <UiButton
-            type="button"
-            variant="outline"
-            size="default"
-            class="w-full"
-            @click="cancel"
-            :disabled="isSubmitting"
-          >
-            Cancelar
-          </UiButton>
-
-          <UiButton
-            type="button"
-            variant="destructive"
-            size="default"
-            class="w-full"
-            @click="deleteRecipe"
-            :disabled="isSubmitting"
-          >
-            <Icon name="heroicons:trash" class="h-5 w-5 mr-2" />
-            Eliminar Receta
-          </UiButton>
-
-          <!-- Info Card -->
-          <div class="mt-6 p-4 bg-background rounded-lg border border-border">
-            <h4 class="text-sm font-semibold text-text-primary mb-3">Información</h4>
-            <div class="space-y-2 text-xs text-text-secondary">
-              <div class="flex justify-between">
-                <span>Total Ingredientes:</span>
-                <span class="font-semibold text-text-primary">{{ form.ingredients.length }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span>Ingredientes Requeridos:</span>
-                <span class="font-semibold text-text-primary">
-                  {{ form.ingredients.filter(i => i.is_required).length }}
-                </span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span>Estado:</span>
-                <UiStatusBadge
-                  :value="form.is_active ? 'Activa' : 'Inactiva'"
-                  format="text"
-                  :variant="form.is_active ? 'success' : 'secondary'"
-                  size="sm"
-                />
-              </div>
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm">
+              <span class="text-text-secondary">Ingredientes:</span>
+              <span class="font-semibold text-text-primary">{{ form.ingredients.length }}</span>
             </div>
+
+            <div class="flex justify-between text-sm">
+              <span class="text-text-secondary">Requeridos:</span>
+              <span class="font-semibold text-text-primary">
+                {{ form.ingredients.filter(i => i.is_required).length }}
+              </span>
+            </div>
+
+            <div class="flex justify-between text-sm items-center gap-2">
+              <span class="text-text-secondary">Estado:</span>
+              <UiStatusBadge
+                :value="form.is_active ? 'Activa' : 'Inactiva'"
+                format="text"
+                :variant="form.is_active ? 'success' : 'secondary'"
+                size="sm"
+              />
+            </div>
+          </div>
+
+          <div class="mt-6 pt-6 border-t border-border space-y-3">
+            <p v-if="submitError" role="alert" class="text-sm text-destructive">{{ submitError }}</p>
+
+            <UiButton
+              type="submit"
+              variant="default"
+              size="lg"
+              class="w-full"
+              :disabled="isSubmitting"
+            >
+              <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
+              <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
+              {{ isSubmitting ? 'Guardando...' : 'Guardar receta' }}
+            </UiButton>
+
+            <UiButton
+              type="button"
+              variant="outline"
+              size="default"
+              class="w-full"
+              :disabled="isSubmitting"
+              @click="cancel"
+            >
+              Cancelar
+            </UiButton>
+
+            <UiButton
+              type="button"
+              variant="destructive"
+              size="default"
+              class="w-full"
+              :disabled="isSubmitting"
+              @click="deleteRecipe"
+            >
+              <Icon name="heroicons:trash" class="h-5 w-5 mr-2" />
+              Eliminar receta
+            </UiButton>
           </div>
         </div>
       </div>
@@ -268,11 +256,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
-import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 
 definePageMeta({
-  // layout: 'dashboard' - Inherited from parent menu.vue
   pageTransition: {
     name: 'fade',
     mode: 'out-in'
@@ -291,12 +277,9 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const cache = useQueryCache()
-const { currentTenant } = useTenantReactive()
 
-// Get recipe base ID from route
 const recipeId = route.params.id as string
 
-// Fetch recipe base data from backend
 const { data: recipeData, pending: isLoading, error: fetchError, refresh } = useAsyncData(
   `recipe-base-${recipeId}`,
   () => $fetch(`/api/menu/recipe-bases/${recipeId}`),
@@ -310,13 +293,8 @@ const isPageLoading = computed(() => isLoading.value)
 
 const { availableIngredients } = useMenuIngredientsQuery()
 
-// Ingredient cache: populated from API response on load or when user selects via UiIngredientSearchInput
 const ingredientCache = ref<Record<string, any>>({})
-
-// Purchase units cache for dynamic unit options
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
-
-// Tracks which ingredient IDs are currently fetching purchase units
 const loadingUnits = ref<Set<string>>(new Set())
 
 const { getIngredientUnitOptions: buildUnitOptions, defaultUnitForIngredient, mergeIngredientUnitFields, rehydrateIngredientCaches } = useIngredientUnitOptions()
@@ -403,7 +381,6 @@ async function onInlineProductCreated(product: Record<string, unknown>) {
   })
 }
 
-// Form state
 const form = ref({
   name: '',
   description: '',
@@ -419,8 +396,8 @@ const form = ref({
 })
 
 const isSubmitting = ref(false)
+const submitError = ref('')
 
-// Watch recipe data and populate form
 watch(recipeData, (data) => {
   if (data?.data) {
     const recipe = data.data
@@ -452,7 +429,6 @@ watch(availableIngredients, (list) => {
   }
 })
 
-// Methods
 const addIngredient = () => {
   form.value.ingredients.push({
     ingredient_id: '',
@@ -470,22 +446,21 @@ const removeIngredient = (index: number) => {
 
 const handleSubmit = async () => {
   if (isSubmitting.value) return
+  submitError.value = ''
 
-  // Validate quantities > 0
   const hasZeroQuantity = form.value.ingredients.some(ing => !ing.base_quantity || ing.base_quantity <= 0)
   if (hasZeroQuantity) {
-    alert('Error: Todos los ingredientes deben tener una cantidad mayor a 0.')
+    submitError.value = 'Todos los ingredientes deben tener cantidad mayor a 0.'
     return
   }
 
-  // Validate no duplicate ingredients
   const ingredientIds = form.value.ingredients
     .map(ing => ing.ingredient_id)
-    .filter(id => id !== '') // Ignore empty selections
+    .filter(id => id !== '')
 
   const uniqueIds = new Set(ingredientIds)
   if (ingredientIds.length !== uniqueIds.size) {
-    alert('Error: No puedes agregar el mismo ingrediente más de una vez en la misma receta.')
+    submitError.value = 'No puedes agregar el mismo ingrediente más de una vez.'
     return
   }
 
@@ -507,14 +482,13 @@ const handleSubmit = async () => {
     toast.success('Receta actualizada correctamente', { title: 'Guardado' })
   } catch (error: any) {
     console.error('Error updating recipe base:', error)
-    alert(`Error al actualizar la receta: ${error.data?.detail || error.message || 'Por favor intenta de nuevo.'}`)
+    submitError.value = error.data?.detail || error.message || 'Error al actualizar. Intenta de nuevo.'
   } finally {
     isSubmitting.value = false
   }
 }
 
 const cancel = () => {
-  // clearNuxtData()
   router.push('/menu/recetas')
 }
 
@@ -530,11 +504,10 @@ const deleteRecipe = async () => {
       method: 'DELETE'
     })
 
-    // clearNuxtData()
     await router.push('/menu/recetas')
   } catch (error: any) {
     console.error('Error deleting recipe base:', error)
-    alert(`Error al eliminar la receta: ${error.data?.detail || error.message || 'Por favor intenta de nuevo.'}`)
+    submitError.value = error.data?.detail || error.message || 'Error al eliminar. Intenta de nuevo.'
   } finally {
     isSubmitting.value = false
   }
