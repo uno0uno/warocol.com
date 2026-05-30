@@ -12,23 +12,24 @@ paths:
 
 ac:
   - Tip selectable after identifying a real customer (not only generic 0000000000)
-  - Partial payments rehydrate only when by-customer cart id matches posStore.cartId
-  - Tip UI resets when parent clears tipModel on customer change
+  - Works with split toggle on or off (before first partial payment)
+  - Customer change does not full-page block checkout or wipe tip
+  - Tip UI resets when parent clears tipModel on cart change
 
 out_of_scope:
-  - Backend cart/customer association changes
-  - Split-payment tip rules (#737)
+  - Backend GET cart-by-id for partial rehydration (#656 counter re-entry)
+  - Split-payment tip rules after first partial (#737)
 
 hints:
-  entry: "hydratePosCartPartials — checkout.vue ~2083"
-  pattern: "checkout.vue — guard pos cart partial rehydration by cart id"
-  tests: "manual — counter checkout, generic then real customer, set tip"
+  entry: "isLoading + pos cart by-customer query — checkout.vue"
+  pattern: "counter checkout uses posStore.cartId from batch sync, not customer cart row"
+  tests: "manual — generic then real customer, split on/off, set tip"
 
 skip:
   audits: [ux, color, typography]
 
 root_cause: |
-  GET /pos/cart/{customer_id} returns that customer's active cart, not the
-  batch-synced session cart. Real customers often had stale partial_payments
-  on a different cart → splitMode → showCheckoutTipSelector false. Generic
-  customer rarely had partials.
+  GET /pos/cart/{customer_id} ran on every customer identify and gated the page
+  behind isLoading (full-page loader). Generic worked because it was pre-selected
+  before the user touched propina; real customers triggered a new fetch mid-flow.
+  Tip also reset on customer id change. Split vs non-split was a red herring.

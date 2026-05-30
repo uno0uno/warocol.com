@@ -293,9 +293,9 @@ const checkoutTipBody = computed(() =>
     ? { tip_amount: tipAmount.value, tip_source: tipSource.value, tip_taxable: tipTaxable.value }
     : {},
 )
-// Reset whenever the cart is cleared / customer changes so a previous tip
-// doesn't bleed into the next sale.
-watch([() => posStore.cartId, () => selectedCustomer.value?.id], () => {
+// Reset when the session cart changes so a previous tip doesn't bleed into the next sale.
+// Customer identity is attached at payment time — changing cliente must not wipe propina (#1030).
+watch(() => posStore.cartId, () => {
   tipModel.value = { amount: 0, source: 'none' }
   tipTaxable.value = false
 })
@@ -520,21 +520,6 @@ const {
   ),
   enabled: () => isKitchenServiceMode.value && !!posStore.activeTableSession?.tableId,
   staleTime: 5_000,  // short — running_total changes when items are added
-})
-
-// POS cart (counter / bar) — covers the #656 partial_payments rehydration.
-// The endpoint is keyed by customer_id but returns the active cart's order.
-const {
-  data: posCartData,
-  asyncStatus: posCartAsyncStatus,
-  error: posCartError,
-} = useQuery({
-  key: () => ['pos', 'cart', 'by-customer', selectedCustomer.value?.id ?? null],
-  query: () => $fetch<{ success: boolean; data: any }>(
-    `/api/pos/cart/${selectedCustomer.value!.id}`
-  ),
-  enabled: () => !isKitchenServiceMode.value && !!posStore.cartId && !!selectedCustomer.value?.id,
-  staleTime: 5_000,
 })
 
 // POS tax preview — only when in counter/bar mode. discountAmount is part of
@@ -867,13 +852,11 @@ const addSplitPayment = async () => {
     cashReceivedInput.value = 0
     // Issue warocol.com#649 — reset partial so next iteration starts at 0.
     splitPartialAmount.value = null
-    // Invalidate the read query so future reloads see the new partial.
-    // Triggers a background refetch — header shows "Actualizando pagos".
-    cache.invalidateQueries({
-      key: isKitchenServiceMode.value
-        ? ['tables', posStore.activeTableSession?.tableId ?? null, 'current']
-        : ['pos', 'cart', 'by-customer', selectedCustomer.value?.id ?? null],
-    })
+    if (isKitchenServiceMode.value) {
+      cache.invalidateQueries({
+        key: ['tables', posStore.activeTableSession?.tableId ?? null, 'current'],
+      })
+    }
 
     if (isComplete) {
       captureReceiptPrintContext()
@@ -947,12 +930,11 @@ const confirmVoidPayment = async () => {
     splitPayments.value = splitPayments.value.filter(row => !voidedIds.includes(row.id))
     splitPaidTotal.value = Number(res.data?.paid_total ?? 0)
     splitPartialAmount.value = null
-    // Invalidate the read query so background refetch syncs the new state.
-    cache.invalidateQueries({
-      key: isKitchenServiceMode.value
-        ? ['tables', posStore.activeTableSession?.tableId ?? null, 'current']
-        : ['pos', 'cart', 'by-customer', selectedCustomer.value?.id ?? null],
-    })
+    if (isKitchenServiceMode.value) {
+      cache.invalidateQueries({
+        key: ['tables', posStore.activeTableSession?.tableId ?? null, 'current'],
+      })
+    }
     voidPaymentTarget.value = null
     voidPaymentReason.value = ''
   } catch (e: any) {
@@ -2037,21 +2019,17 @@ const isLoading = computed(() => {
   if (isKitchenServiceMode.value) {
     return !mesaCurrentData.value && !mesaCurrentError.value && mesaCurrentAsyncStatus.value === 'loading'
   }
-  if (posStore.cartId && selectedCustomer.value?.id) {
-    return !posCartData.value && !posCartError.value && posCartAsyncStatus.value === 'loading'
-  }
+  // Counter/bar: session cart sync on mount is the only full-page gate (#1030).
+  // Do not block checkout when the cashier identifies a real customer.
   return false
 })
 const isRefreshing = computed(() => {
   if (isKitchenServiceMode.value) {
     return mesaCurrentAsyncStatus.value === 'loading' && mesaCurrentData.value != null
   }
-  if (selectedCustomer.value?.id) {
-    return posCartAsyncStatus.value === 'loading' && posCartData.value != null
-  }
   return false
 })
-const checkoutError = computed(() => isKitchenServiceMode.value ? mesaCurrentError.value : posCartError.value)
+const checkoutError = computed(() => (isKitchenServiceMode.value ? mesaCurrentError.value : null))
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const refreshAll = async () => {
@@ -2059,7 +2037,7 @@ const refreshAll = async () => {
     cache.invalidateQueries({ key: ['pos', 'payment-methods'] }),
     isKitchenServiceMode.value
       ? cache.invalidateQueries({ key: ['tables', posStore.activeTableSession?.tableId ?? null, 'current'] })
-      : cache.invalidateQueries({ key: ['pos', 'cart', 'by-customer', selectedCustomer.value?.id ?? null] }),
+      : cache.invalidateQueries({ key: ['pos', 'cart', posStore.cartId ?? null, 'tax-preview'] }),
   ])
 }
 registerProgressiveLoading(isRefreshing, 'Actualizando pagos')
@@ -2084,15 +2062,7 @@ const resetSplitPayments = () => {
   splitPaidTotal.value = 0
   splitMode.value = false
 }
-// warocol.com#1030 — batch-synced checkout cart is often not the customer's active
-// cart row; rehydrating partials from the wrong cart hid the tip block (split mode).
-const hydratePosCartPartials = () => {
-  const cartData = posCartData.value?.data
-  if (!cartData?.id || cartData.id !== posStore.cartId) return
-  hydratePartialsFrom(cartData.partial_payments)
-}
 watch(() => mesaCurrentData.value?.data?.session?.partial_payments, hydratePartialsFrom)
-watch(() => [posCartData.value?.data?.id, posCartData.value?.data?.partial_payments], hydratePosCartPartials)
 watch(() => selectedCustomer.value?.id, () => {
   resetSplitPayments()
 })
