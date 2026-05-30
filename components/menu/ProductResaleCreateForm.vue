@@ -69,13 +69,13 @@
     </div>
 
     <IngredientesIngredientPurchaseUnitsField
-      v-if="draftUnits != null"
+      v-if="!linkedIngredientId"
       v-model:draft-units="draftUnits"
       mode="create"
       base-unit="und"
     />
     <IngredientesIngredientPurchaseUnitsField
-      v-else-if="linkedIngredientId"
+      v-else
       mode="edit"
       :ingredient-id="linkedIngredientId"
       base-unit="und"
