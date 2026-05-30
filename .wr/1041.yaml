@@ -1,0 +1,33 @@
+# Machine contract — issue #1041 PR 1
+issue: 1041
+title: "feat(menu): custom purchase units in resale slide-over create and edit"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1041-purchase-units-pr1
+pr: 1
+
+paths:
+  - components/ingredientes/IngredientPurchaseUnitsField.vue
+  - components/ingredientes/IngredientePropioPanel.vue
+  - composables/useIngredientPurchaseUnitsDraft.ts
+
+ac:
+  - Shared purchase-units editor for create (draft) and edit (API CRUD)
+  - IngredientePropioPanel create und/pieza supports custom units before save
+  - Edit slide-over CRUD unchanged via extracted component
+  - Peso/volumen create still uses catalog auto-suggestions
+
+out_of_scope:
+  - ProductQuickCreatePanel (PR 2)
+  - ProductResaleCreateForm (PR 2)
+  - API auto_resale_ingredient payload (PR 2)
+
+hints:
+  entry: "IngredientePropioPanel submit — persistDraftPurchaseUnits after POST when custom und draft"
+  pattern: "IngredientPurchaseUnitsField.vue — mode create|edit"
+  tests: none
+
+skip:
+  audits: [ux, color, typography]

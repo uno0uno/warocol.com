@@ -242,7 +242,7 @@
           </div>
 
           <!-- CREACIÓN: unidades de compra informativas (Peso / Volumen) -->
-          <div v-if="!isEdit && unitType && currentSuggestions.length > 0" class="flex flex-col gap-1.5">
+          <div v-if="!isEdit && unitType && unitType !== 'pieza' && currentSuggestions.length > 0" class="flex flex-col gap-1.5">
             <p class="text-xs font-medium text-text-secondary">Unidades de compra que se crearán automáticamente</p>
             <div class="rounded-xl border border-border divide-y divide-border overflow-hidden bg-surface-secondary/30">
               <div
@@ -263,6 +263,14 @@
               </div>
             </div>
           </div>
+
+          <!-- CREACIÓN: pieza — unidades de compra personalizables -->
+          <IngredientesIngredientPurchaseUnitsField
+            v-if="!isEdit && unitType === 'pieza'"
+            v-model:draft-units="createPurchaseUnits"
+            mode="create"
+            base-unit="und"
+          />
 
           <!-- EDICIÓN: unidad de solo lectura -->
           <div v-if="isEdit" class="flex flex-col gap-1.5">
@@ -358,109 +366,13 @@
           </div>
 
           <!-- EDICIÓN: unidades de compra con CRUD -->
-          <div v-if="isEdit" class="flex flex-col gap-1.5">
-            <p class="text-xs font-medium text-text-secondary">Unidades de compra</p>
-
-            <!-- Skeleton mientras carga -->
-            <div v-if="loadingExistingUnits" class="rounded-xl border border-border divide-y divide-border overflow-hidden bg-surface-secondary/30 animate-pulse">
-              <div v-for="i in 2" :key="i" class="flex items-center justify-between px-3 py-2 gap-2">
-                <div class="h-4 bg-border/60 rounded w-28" />
-                <div class="h-4 bg-border/60 rounded w-16" />
-              </div>
-            </div>
-
-            <!-- Lista existente -->
-            <div v-else-if="existingPurchaseUnits.length > 0" class="rounded-xl border border-border divide-y divide-border overflow-hidden bg-surface-secondary/30">
-              <div v-for="u in existingPurchaseUnits" :key="u.id" class="flex items-center justify-between px-3 py-2 gap-2">
-                <div class="flex items-center gap-2 min-w-0 flex-1">
-                  <span class="text-sm text-text-primary truncate">{{ u.purchase_unit_label }}</span>
-                  <button
-                    v-if="!u.is_default"
-                    type="button"
-                    class="text-[10px] text-text-tertiary border border-border rounded px-1.5 py-0.5 hover:text-primary hover:border-primary transition-colors flex-shrink-0"
-                    @click="setDefaultUnit(u.id)"
-                  >
-                    usar como predeterminado
-                  </button>
-                  <span v-else class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
-                </div>
-                <span class="text-xs text-text-tertiary font-mono flex-shrink-0">{{ Number(u.conversion_factor).toLocaleString('es-CO') }} {{ form.unit }}</span>
-                <button
-                  type="button"
-                  :disabled="deletingUnitId === u.id"
-                  :aria-label="`Eliminar unidad ${u.purchase_unit_label}`"
-                  class="text-text-tertiary hover:text-destructive transition-colors disabled:opacity-40 flex-shrink-0"
-                  @click="deleteUnit(u.id)"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Sin unidades: mostrar sugerencias que se crearán al guardar -->
-            <div v-else-if="existingPurchaseUnits.length === 0 && editSuggestions.length > 0" class="rounded-xl border border-primary/30 divide-y divide-border overflow-hidden bg-primary/5">
-              <div v-for="(s, i) in editSuggestions" :key="i" class="flex items-center justify-between px-3 py-2">
-                <div class="flex items-center gap-2 min-w-0">
-                  <span class="text-sm text-text-primary">{{ s.label }}</span>
-                  <span v-if="i === 0" class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
-                </div>
-                <span class="text-xs text-text-tertiary font-mono flex-shrink-0 ml-2">{{ s.conversion_factor.toLocaleString('es-CO') }} {{ form.unit }}</span>
-              </div>
-            </div>
-
-            <!-- Añadir nueva unidad -->
-            <div class="flex flex-col gap-2 mt-1 rounded-xl border border-border px-3 py-3 bg-surface-secondary/20">
-              <p class="text-xs font-medium text-text-secondary">Nueva unidad de compra</p>
-              <div class="flex gap-2">
-                <div class="flex flex-col gap-1 flex-1">
-                  <label class="text-[10px] text-text-tertiary font-medium uppercase tracking-wide">Nombre</label>
-                  <input
-                    v-model="newUnit.purchase_unit_label"
-                    type="text"
-                    placeholder="Ej: Caja, Docena..."
-                    :class="inputClass"
-                    @keyup.enter="addPurchaseUnit"
-                  />
-                </div>
-                <div class="flex flex-col gap-1 w-32">
-                  <label class="text-[10px] text-text-tertiary font-medium uppercase tracking-wide">Cantidad en {{ form.unit || 'base' }}</label>
-                  <input
-                    v-model.number="newUnit.conversion_factor"
-                    type="number"
-                    min="0.001"
-                    step="0.001"
-                    placeholder="Ej: 12"
-                    :class="inputClass"
-                    @keyup.enter="addPurchaseUnit"
-                  />
-                </div>
-              </div>
-              <div class="flex items-center justify-between gap-2">
-                <p class="text-xs text-text-tertiary">
-                  <template v-if="newUnit.purchase_unit_label && newUnit.conversion_factor">
-                    1 <strong class="text-text-secondary">{{ newUnit.purchase_unit_label }}</strong> = {{ newUnit.conversion_factor }} {{ form.unit || 'base' }}
-                  </template>
-                  <template v-else>
-                    Cuántas {{ form.unit || 'unidades base' }} trae 1 unidad de compra
-                  </template>
-                </p>
-                <button
-                  type="button"
-                  :disabled="savingUnit"
-                  class="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors flex-shrink-0"
-                  @click="addPurchaseUnit"
-                >
-                  {{ savingUnit ? 'Guardando...' : 'Agregar unidad' }}
-                </button>
-              </div>
-              <p v-if="unitFormError" class="text-xs text-destructive">{{ unitFormError }}</p>
-            </div>
-          </div>
-
-          <!-- EDICIÓN: sin unidades → muestra las que se crearán al guardar (para tipos sin sugerencias) -->
-          <!-- (handled above in the CRUD block) -->
+          <IngredientesIngredientPurchaseUnitsField
+            v-if="isEdit"
+            mode="edit"
+            :ingredient-id="ingredient.id"
+            :base-unit="form.unit"
+            :pending-suggestions="editSuggestions"
+          />
 
           <!-- Categoría -->
           <div class="flex flex-col gap-1.5">
@@ -594,6 +506,12 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import {
+  defaultUndDraftUnits,
+  persistDraftPurchaseUnits,
+  usesCustomPurchaseUnitsDraft,
+  type DraftPurchaseUnit,
+} from '@/composables/useIngredientPurchaseUnitsDraft'
 
 interface Props {
   modelValue: boolean
@@ -709,12 +627,7 @@ const form = ref({ name: '', unit: '', category: '', parentId: null as string | 
 const errors = ref<Record<string, string>>({})
 const saving = ref(false)
 watch(saving, value => emit('busy-change', value))
-const existingPurchaseUnits = ref<any[]>([])
-const loadingExistingUnits = ref(false)
-const savingUnit = ref(false)
-const unitFormError = ref('')
-const newUnit = ref({ purchase_unit_label: '', purchase_unit: '', conversion_factor: null as number | null })
-const deletingUnitId = ref<string | null>(null)
+const createPurchaseUnits = ref<DraftPurchaseUnit[]>([])
 
 // --- Computed ---
 const currentSuggestions = computed(() =>
@@ -731,6 +644,9 @@ const setUnitType = (key: UnitTypeKey) => {
   unitType.value = key
   const t = UNIT_TYPES.find(u => u.key === key)
   if (t) form.value.unit = t.unit
+  if (key === 'pieza' && createPurchaseUnits.value.length === 0) {
+    createPurchaseUnits.value = defaultUndDraftUnits()
+  }
   clearError('unit')
 }
 
@@ -739,6 +655,7 @@ const resetCreate = () => {
   form.value = { name: props.initialName ?? '', unit: '', category: '', parentId: null, parentName: '', isResale: false, type: props.initialType ?? 'food', unitWeightGr: null }
   unitType.value = ''
   unitWeightUnit.value = 'gr'
+  createPurchaseUnits.value = []
   errors.value = {}
 }
 
@@ -757,30 +674,16 @@ watch(() => props.ingredient, (ing) => {
     }
     unitWeightUnit.value = (ing.unit_weight_unit as 'gr' | 'ml') ?? 'gr'
     unitType.value = ''
-    existingPurchaseUnits.value = []
   } else {
     resetCreate()
   }
   errors.value = {}
 }, { immediate: true })
 
-// Reset when panel opens; fetch existing purchase units in edit mode
-watch(() => props.modelValue, async (open) => {
-  if (!open) return
-  if (!props.ingredient) {
-    resetCreate()
-    return
-  }
-  existingPurchaseUnits.value = []
-  loadingExistingUnits.value = true
-  try {
-    const res: any = await $fetch(`/api/suppliers/ingredient-purchase-units/ingredient/${props.ingredient.id}`)
-    existingPurchaseUnits.value = res?.data ?? []
-  } catch {
-    existingPurchaseUnits.value = []
-  } finally {
-    loadingExistingUnits.value = false
-  }
+// Reset when panel opens in create mode
+watch(() => props.modelValue, (open) => {
+  if (!open || props.ingredient) return
+  resetCreate()
 })
 
 // --- Parent ingredient ---
@@ -835,7 +738,12 @@ async function submit() {
 
     if (isEdit.value) {
       // type is immutable — never include it in PATCH
-      if (existingPurchaseUnits.value.length === 0 && editSuggestions.value.length > 0) {
+      let existingCount = 0
+      try {
+        const unitsRes: any = await $fetch(`/api/suppliers/ingredient-purchase-units/ingredient/${props.ingredient.id}`)
+        existingCount = (unitsRes?.data ?? []).length
+      } catch { /* ignore */ }
+      if (existingCount === 0 && editSuggestions.value.length > 0) {
         body.purchase_units = editSuggestions.value.map((s, i) => ({
           purchase_unit: s.purchase_unit,
           is_default: i === 0,
@@ -844,11 +752,19 @@ async function submit() {
       result = await $fetch(`/api/suppliers/ingredients/${props.ingredient.id}`, { method: 'PATCH', body })
     } else {
       body.type = form.value.type
-      body.purchase_units = currentSuggestions.value.map((s, i) => ({
-        purchase_unit: s.purchase_unit,
-        is_default: i === 0,
-      }))
+      const useCustomUndUnits = form.value.unit === 'und'
+        && usesCustomPurchaseUnitsDraft(createPurchaseUnits.value)
+      if (!useCustomUndUnits) {
+        body.purchase_units = currentSuggestions.value.map((s, i) => ({
+          purchase_unit: s.purchase_unit,
+          is_default: i === 0,
+        }))
+      }
       result = await $fetch('/api/suppliers/ingredients', { method: 'POST', body })
+      const ingredientId = result?.data?.id ?? result?.id
+      if (useCustomUndUnits && ingredientId) {
+        await persistDraftPurchaseUnits(String(ingredientId), createPurchaseUnits.value)
+      }
     }
 
     emit('saved', result.data)
@@ -862,66 +778,6 @@ async function submit() {
     }
   } finally {
     saving.value = false
-  }
-}
-
-// --- Purchase unit CRUD ---
-async function refreshPurchaseUnits() {
-  if (!props.ingredient?.id) return
-  try {
-    const res: any = await $fetch(`/api/suppliers/ingredient-purchase-units/ingredient/${props.ingredient.id}`)
-    existingPurchaseUnits.value = res?.data ?? []
-  } catch {
-    // keep existing
-  }
-}
-
-async function addPurchaseUnit() {
-  unitFormError.value = ''
-  const label = newUnit.value.purchase_unit_label.trim()
-  if (!label) { unitFormError.value = 'Escribe una etiqueta'; return }
-  if (!newUnit.value.conversion_factor || newUnit.value.conversion_factor <= 0) {
-    unitFormError.value = 'El factor debe ser mayor que 0'; return
-  }
-  savingUnit.value = true
-  try {
-    await $fetch('/api/suppliers/ingredient-purchase-units/', {
-      method: 'POST',
-      body: {
-        ingredient_id: props.ingredient!.id,
-        purchase_unit_label: label,
-        purchase_unit: label.toLowerCase().replace(/\s+/g, '_'),
-        conversion_factor: newUnit.value.conversion_factor,
-        is_default: existingPurchaseUnits.value.length === 0,
-        is_active: true,
-      },
-    })
-    newUnit.value = { purchase_unit_label: '', purchase_unit: '', conversion_factor: null }
-    await refreshPurchaseUnits()
-  } catch (err: any) {
-    unitFormError.value = err?.data?.detail ?? 'Error al guardar'
-  } finally {
-    savingUnit.value = false
-  }
-}
-
-async function setDefaultUnit(unitId: string) {
-  try {
-    await $fetch(`/api/suppliers/ingredient-purchase-units/${unitId}`, {
-      method: 'PUT',
-      body: { is_default: true },
-    })
-    await refreshPurchaseUnits()
-  } catch { /* ignore */ }
-}
-
-async function deleteUnit(unitId: string) {
-  deletingUnitId.value = unitId
-  try {
-    await $fetch(`/api/suppliers/ingredient-purchase-units/${unitId}`, { method: 'DELETE' })
-    await refreshPurchaseUnits()
-  } catch { /* ignore */ } finally {
-    deletingUnitId.value = null
   }
 }
 
