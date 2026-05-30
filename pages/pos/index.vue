@@ -35,10 +35,12 @@ const { tabItems: storeTabItems, tabTotal: storeTabTotal, activeTableSession } =
 
 const { activePromos, hasActivePromos, activePromoHint } = useActivePromotions()
 
-// Clear session at setup time (before first render) so showFloorPlan is correct immediately.
-// If navigating from a POS sub-page (checkout, producto), posNavigation flag preserves the session.
+// Preserve table session when returning to POS (e.g. from another module).
+// Only reset on a true fresh entry — sub-page returns use posNavigation flag.
 if (typeof window !== 'undefined' && sessionStorage.getItem('posNavigation') !== 'true') {
-  posStore.exitSession()
+  if (!posStore.activeTableSession) {
+    posStore.exitSession()
+  }
 }
 
 // ── POS restaurant context (BFF aggregator) ────────────────────────────────

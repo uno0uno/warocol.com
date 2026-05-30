@@ -4,7 +4,7 @@
     <DashboardSidebar :active-page="activePage" class="hidden lg:flex" />
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col min-w-0 h-screen md:h-auto">
+    <main class="flex-1 flex flex-col min-w-0 min-h-0 h-screen lg:h-auto">
       <!-- Main Content Header -->
       <header class="bg-surface border-b border-border px-4 py-3 md:px-8 md:py-4 flex-shrink-0">
         <div class="flex items-center justify-between gap-3">
@@ -110,7 +110,7 @@
       />
 
       <!-- Content Area with Overflow -->
-      <div :class="['flex-1 overflow-y-auto lg:pb-0', mobileContentBottomPadding]">
+      <div :class="['flex-1 min-h-0 overflow-y-auto lg:pb-0', mobileContentBottomPadding]">
         <div class="p-4 sm:p-6 md:p-8">
           <!-- Breadcrumb (if provided) -->
           <nav v-if="showBreadcrumb" class="flex mb-6" aria-label="Breadcrumb">
@@ -187,6 +187,7 @@ const router = useRouter()
 const goBack = () => {
   // Special handling for POS sub-pages - always go back to POS
   if (route.path.startsWith('/pos/producto/') || route.path.startsWith('/pos/checkout')) {
+    sessionStorage.setItem('posNavigation', 'true')
     router.push('/pos')
   } else {
     // Default: browser back (includes /pos main page)

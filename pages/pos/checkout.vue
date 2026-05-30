@@ -1528,8 +1528,10 @@ const cancelOrder = async () => {
   if (posStore.activeTableSession?.isBar) {
     // Bar session — clear local cart but keep session alive (it's permanent)
     posStore.clearCart()
+    sessionStorage.setItem('posNavigation', 'true')
     router.push('/pos')
   } else {
+    sessionStorage.setItem('posNavigation', 'true')
     router.push('/pos')
   }
 }
@@ -2127,7 +2129,7 @@ onUnmounted(() => {
       </svg>
       <h2 class="text-xl font-semibold text-text-primary mb-2">Carrito Vacío</h2>
       <p class="text-text-secondary mb-6">No hay productos en tu orden</p>
-      <UiButton variant="default" @click="router.push('/pos')">
+      <UiButton variant="default" @click="sessionStorage.setItem('posNavigation', 'true'); router.push('/pos')">
         Volver al POS
       </UiButton>
     </div>
