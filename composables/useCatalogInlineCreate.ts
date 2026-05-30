@@ -1,6 +1,7 @@
 import type { MaybeRef } from 'vue'
 import {
   resolveCreationIntent,
+  shouldShowCreationChooser,
   type CatalogCreationContext,
   type CatalogCreationIntent,
 } from '@/composables/useCatalogEntityCreation'
@@ -22,7 +23,11 @@ export function useCatalogInlineCreate(options: {
   const showPanel = ref(false)
   const showProductPanel = ref(false)
   const pendingName = ref('')
+  const openedFromChooser = ref(false)
 
+  const canReturnToChooser = computed(
+    () => openedFromChooser.value && shouldShowCreationChooser(options.context),
+  )
   const productPanelBusy = ref(false)
   const supplyPanelBusy = ref(false)
   const linkingBusy = ref(false)
@@ -90,6 +95,7 @@ export function useCatalogInlineCreate(options: {
   }
 
   function onChooserIntent(intent: CatalogCreationIntent) {
+    openedFromChooser.value = true
     if (intent === 'supply') {
       showPanel.value = true
       return
@@ -97,8 +103,15 @@ export function useCatalogInlineCreate(options: {
     showProductPanel.value = true
   }
 
+  function returnToChooser() {
+    showPanel.value = false
+    showProductPanel.value = false
+    showChooser.value = true
+  }
+
   function onChooserCancel() {
     pendingName.value = ''
+    openedFromChooser.value = false
   }
 
   async function onPanelSaved(ingredient: Record<string, unknown>) {
@@ -110,6 +123,7 @@ export function useCatalogInlineCreate(options: {
       pendingName.value = ''
       linkingBusy.value = false
       lastSavedKind.value = null
+      openedFromChooser.value = false
     }
   }
 
@@ -122,6 +136,7 @@ export function useCatalogInlineCreate(options: {
       pendingName.value = ''
       linkingBusy.value = false
       lastSavedKind.value = null
+      openedFromChooser.value = false
     }
   }
 
@@ -145,9 +160,11 @@ export function useCatalogInlineCreate(options: {
     busyHint,
     hideResaleToggle,
     panelInitialType,
+    canReturnToChooser,
     openFromSearch,
     onChooserIntent,
     onChooserCancel,
+    returnToChooser,
     onPanelSaved,
     onProductPanelSaved,
     onProductPanelBusy,

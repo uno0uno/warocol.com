@@ -1,0 +1,36 @@
+# Machine contract for wr-fast — issue #1039
+issue: 1039
+title: "fix(menu): add back navigation from inline create panels to entity chooser"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1039-inline-create-back
+
+paths:
+  - composables/useCatalogInlineCreate.ts
+  - components/menu/InlineCatalogCreateShell.vue
+  - components/menu/CreateCatalogEntityChooser.vue
+  - components/ingredientes/IngredientePropioPanel.vue
+  - components/menu/ProductQuickCreatePanel.vue
+
+ac:
+  - Back control on ingredient/product panels returns to CreateCatalogEntityChooser
+  - pendingName preserved when navigating back
+  - Back shown only when opened from chooser (recipe/modifier/product contexts)
+  - Chooser Cancel still dismisses full flow
+  - Card click confirms intent immediately (no Continuar step on chooser)
+  - Back button in panel footer beside Cancelar and primary action
+
+out_of_scope:
+  - API changes
+  - resale unit assignment
+  - chooser vertical layout (142c90b)
+
+hints:
+  entry: "useCatalogInlineCreate.openFromSearch — opens chooser or direct supply panel"
+  pattern: "useCatalogInlineCreate.ts — openedFromChooser + returnToChooser()"
+  tests: none
+
+skip:
+  audits: [ux, color, typography]

@@ -145,10 +145,19 @@
           </p>
         </div>
 
-        <div class="flex-shrink-0 bg-surface-secondary/40 border-t border-border px-6 py-4 flex gap-3">
+        <div class="flex-shrink-0 bg-surface-secondary/40 border-t border-border px-6 py-4 flex gap-2">
+          <button
+            v-if="showBackToChooser"
+            type="button"
+            aria-label="Volver al selector de tipo"
+            class="h-11 px-4 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+            @click="emit('back-to-chooser')"
+          >
+            Atrás
+          </button>
           <button
             type="button"
-            class="h-11 px-5 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+            class="h-11 px-4 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
             @click="close"
           >
             Cancelar
@@ -182,16 +191,19 @@ import { useTenantReactive } from '@/composables/useTenantReactive'
 interface Props {
   modelValue: boolean
   initialName?: string
+  showBackToChooser?: boolean
 }
 
 interface Emits {
   (e: 'update:modelValue', v: boolean): void
   (e: 'saved', product: Record<string, unknown>): void
   (e: 'busy-change', busy: boolean): void
+  (e: 'back-to-chooser'): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   initialName: '',
+  showBackToChooser: false,
 })
 const emit = defineEmits<Emits>()
 

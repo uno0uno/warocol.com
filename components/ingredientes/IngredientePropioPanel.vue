@@ -513,11 +513,20 @@
 
         <!-- Footer -->
         <div class="flex-shrink-0 bg-surface-secondary/40 border-t border-border px-6 py-4 flex flex-col gap-2">
-          <div class="flex gap-3">
+          <div class="flex gap-2">
+            <button
+              v-if="showBackToChooser && !isEdit"
+              type="button"
+              aria-label="Volver al selector de tipo"
+              class="h-11 px-4 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+              @click="emit('back-to-chooser')"
+            >
+              Atrás
+            </button>
             <button
               type="button"
               @click="close"
-              class="h-11 px-5 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+              class="h-11 px-4 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               Cancelar
             </button>
@@ -592,6 +601,7 @@ interface Props {
   initialName?: string  // pre-fill name when creating from search box
   initialType?: string  // pre-select ingredient type when context is known (e.g. active tab in Compras Directas)
   hideResaleToggle?: boolean
+  showBackToChooser?: boolean
 }
 
 interface Emits {
@@ -600,6 +610,7 @@ interface Emits {
   (e: 'archived', ingredient: any): void
   (e: 'restored', ingredient: any): void
   (e: 'busy-change', busy: boolean): void
+  (e: 'back-to-chooser'): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -607,6 +618,7 @@ const props = withDefaults(defineProps<Props>(), {
   initialName: '',
   initialType: 'food',
   hideResaleToggle: false,
+  showBackToChooser: false,
 })
 const emit = defineEmits<Emits>()
 

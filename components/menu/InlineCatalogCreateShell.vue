@@ -11,12 +11,16 @@
     :initial-name="pendingName"
     :initial-type="panelInitialType"
     :hide-resale-toggle="hideResaleToggle"
+    :show-back-to-chooser="canReturnToChooser"
+    @back-to-chooser="returnToChooser"
     @saved="onPanelSaved"
     @busy-change="onSupplyPanelBusy"
   />
   <MenuProductQuickCreatePanel
     v-model="showProductPanel"
     :initial-name="pendingName"
+    :show-back-to-chooser="canReturnToChooser"
+    @back-to-chooser="returnToChooser"
     @saved="onProductPanelSaved"
     @busy-change="onProductPanelBusy"
   />
@@ -70,9 +74,11 @@ const {
   busyHint,
   hideResaleToggle,
   panelInitialType,
+  canReturnToChooser,
   openFromSearch,
   onChooserIntent,
   onChooserCancel,
+  returnToChooser,
   onPanelSaved,
   onProductPanelSaved,
   onProductPanelBusy,
