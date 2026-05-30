@@ -1,6 +1,5 @@
 <template>
-  <!-- Bottom Navigation - Mobile & Tablet -->
-  <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-titan-300 shadow-lg z-50 safe-area-bottom">
+  <div>
     <div class="flex items-center justify-between px-4 py-2">
 
       <!-- User Profile -->
@@ -69,7 +68,6 @@
           <Cog6ToothIcon class="w-5 h-5 text-titan-500" />
         </button>
       </div>
-
     </div>
 
     <!-- Menu Modal (grid of icons) -->
@@ -218,7 +216,7 @@
         </div>
       </div>
     </UiBottomSheetModal>
-  </nav>
+  </div>
 </template>
 
 <script setup lang="ts">

@@ -136,11 +136,23 @@
       </div>
     </main>
 
-    <!-- Bottom Navigation - Mobile Only -->
+  <!-- Bottom Navigation - Mobile Only -->
+  <div
+    class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-titan-300 shadow-lg"
+    style="padding-bottom: env(safe-area-inset-bottom, 0px)"
+  >
+    <PosCartBottomBar
+      v-if="showPosMobileCartBar"
+      :visible="posMobileCartItemCount > 0"
+      :item-count="posMobileCartItemCount"
+      :formatted-total="posMobileCartFormattedTotal"
+      @open-cart="openPosMobileCart"
+    />
     <DashboardBottomNav
       :active-page="activePage"
       :notifications-count="notificationsUnreadCount"
     />
+  </div>
 
     <!-- Mobile Order Toast — client-only to avoid SSR/Teleport hydration mismatch -->
     <ClientOnly>
@@ -1172,10 +1184,14 @@ watch(displayTitle, (nextTitle, previousTitle) => {
 }, { immediate: true })
 
 // Inject cart data from POS page
-const { itemCount: posMobileCartItemCount } = usePosMobileCart()
+const { itemCount: posMobileCartItemCount, formattedTotal: posMobileCartFormattedTotal, openCart: openPosMobileCart } = usePosMobileCart()
+
+const showPosMobileCartBar = computed(() =>
+  route.path === '/pos' && posMobileCartItemCount.value > 0,
+)
 
 const mobileContentBottomPadding = computed(() => {
-  if (route.path === '/pos' && posMobileCartItemCount.value > 0) {
+  if (showPosMobileCartBar.value) {
     return 'pb-36'
   }
   return 'pb-20'

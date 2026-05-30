@@ -1004,7 +1004,6 @@ const mobileCartDisplayTotal = computed(() =>
     : cartTotal.value,
 )
 const mobileCartFormattedTotal = computed(() => formatCurrencyPOS(mobileCartDisplayTotal.value))
-const showMobileCartBar = computed(() => mobileCartItemCount.value > 0)
 
 const { setMobileCart, setOpenCartHandler, clearMobileCart } = usePosMobileCart()
 
@@ -1715,13 +1714,7 @@ onUnmounted(() => {
     :business-name="posBusinessName"
   />
 
-  <!-- warocol.com#1032 — sticky cart bar + bottom sheet on mobile/tablet -->
-  <PosCartBottomBar
-    :visible="showMobileCartBar"
-    :item-count="mobileCartItemCount"
-    :formatted-total="mobileCartFormattedTotal"
-    @open-cart="showMobileCartSheet = true"
-  />
+  <!-- warocol.com#1032 — mobile/tablet cart sheet (bar lives in dashboard layout) -->
   <UiBottomSheetModal v-model="showMobileCartSheet" title="Orden actual" max-height="xl">
     <PosCartPanel
       class="border-0 shadow-none rounded-none max-h-[70vh]"
