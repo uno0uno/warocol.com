@@ -170,10 +170,23 @@
 
     <!-- Cart Footer -->
     <div class="px-4 py-4 border-t border-border space-y-3 bg-surface-secondary/40">
-      <!-- Total -->
+      <!-- Total — net after line promos (#1022) -->
+      <div
+        v-if="orderPromoSavings > 0"
+        class="flex items-center justify-between text-xs"
+      >
+        <span class="font-medium text-text-tertiary">Descuentos promoción</span>
+        <span class="font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums">-{{ formatCurrency(orderPromoSavings) }}</span>
+      </div>
       <div class="flex items-center justify-between">
         <span class="text-xs font-semibold text-text-tertiary uppercase tracking-widest">Total</span>
-        <span class="text-3xl font-black text-text-primary tabular-nums">{{ formatCurrency(mesaMode ? (tabTotal + total) : total) }}</span>
+        <div class="flex flex-col items-end">
+          <span
+            v-if="orderPromoSavings > 0"
+            class="text-sm text-text-tertiary line-through tabular-nums"
+          >{{ formatCurrency(grossOrderTotal) }}</span>
+          <span class="text-3xl font-black text-text-primary tabular-nums">{{ formatCurrency(netOrderTotal) }}</span>
+        </div>
       </div>
 
       <!-- Actions — Mostrador / barra sin comandas -->
