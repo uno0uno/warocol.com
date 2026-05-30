@@ -496,41 +496,182 @@ registerTableSessionRefresh(
   { isMutationActive: isTableSessionMutationActive },
 )
 
-// ID of a tab item pending confirmation before removal (already fired to kitchen)
-const pendingRemoveItemId = ref<string | null>(null)
-const removeTabReason = ref('')
-const removeTabError = ref('')
+const formatCurrencyPOS = (amount: number): string =>
+  `$${Math.round(amount).toLocaleString('es-CO')}`
+
+// Issue #956 — unified destructive-action confirmation with required motivo
+type DestructiveFlow =
+  | { kind: 'remove-tab-item'; orderItemId: string }
+  | { kind: 'decrease-tab-item'; orderItemId: string; quantity: number }
+  | { kind: 'clear-cart' }
+  | { kind: 'remove-cart-item'; index: number }
+  | { kind: 'release-table' }
+  | { kind: 'clear-bar-tab' }
+
+const destructiveFlow = ref<DestructiveFlow | null>(null)
+const destructiveLoading = ref(false)
+const destructiveError = ref('')
+
+const destructiveModalOpen = computed({
+  get: () => destructiveFlow.value !== null,
+  set: (open: boolean) => {
+    if (!open && !destructiveLoading.value) {
+      destructiveFlow.value = null
+      destructiveError.value = ''
+    }
+  },
+})
+
+const isTabItemFired = (orderItemId: string) => {
+  const item = storeTabItems.value.find((i: TabItem) => i.orderItemId === orderItemId)
+  return !!(item && item.fulfillmentStatus && item.fulfillmentStatus !== 'new')
+}
+
+const destructiveModalTitle = computed(() => {
+  const flow = destructiveFlow.value
+  if (!flow) return ''
+  switch (flow.kind) {
+    case 'remove-tab-item':
+      return '¿Eliminar producto?'
+    case 'decrease-tab-item':
+      return '¿Reducir cantidad?'
+    case 'clear-cart':
+      return posStore.activeTableSession ? '¿Limpiar la cuenta?' : '¿Limpiar carrito?'
+    case 'remove-cart-item':
+      return '¿Eliminar producto?'
+    case 'release-table':
+      return `¿Liberar la ${tableSingularLower.value}?`
+    case 'clear-bar-tab':
+      return '¿Limpiar la barra?'
+    default:
+      return '¿Confirmar acción?'
+  }
+})
+
+const destructiveModalMessage = computed(() => {
+  const flow = destructiveFlow.value
+  if (!flow) return ''
+  switch (flow.kind) {
+    case 'remove-tab-item': {
+      const item = storeTabItems.value.find((i: TabItem) => i.orderItemId === flow.orderItemId)
+      const name = item?.productName ?? 'Este producto'
+      if (comandasEnabled.value && isTabItemFired(flow.orderItemId)) {
+        return `${name} ya fue enviado a cocina. Se notificará al cocinero que lo anule.`
+      }
+      return `Se eliminará ${name} de la cuenta.`
+    }
+    case 'decrease-tab-item': {
+      const item = storeTabItems.value.find((i: TabItem) => i.orderItemId === flow.orderItemId)
+      const name = item?.productName ?? 'Este producto'
+      return `${name} ya fue enviado a cocina. Se notificará al cocinero del cambio de cantidad.`
+    }
+    case 'clear-cart':
+      return posStore.activeTableSession
+        ? `Se borrarán todos los ítems pendientes de la ${tableSingularLower.value} y del carrito.`
+        : 'Se borrarán todos los productos del carrito actual.'
+    case 'remove-cart-item': {
+      const item = posStore.cart[flow.index]
+      return item ? `Se eliminará ${item.product.name} del carrito.` : 'Se eliminará este producto del carrito.'
+    }
+    case 'release-table': {
+      const session = posStore.activeTableSession
+      if (session && session.runningTotal > 0) {
+        return `Esta ${tableSingularLower.value} tiene ${formatCurrencyPOS(session.runningTotal)} en consumo. Si la liberas ahora, se cerrará sin cobrar.`
+      }
+      return `Se cerrará la ${tableSingularLower.value} sin cobrar.`
+    }
+    case 'clear-bar-tab':
+      return 'Se borrarán todos los ítems pendientes de la barra. La sesión permanece abierta.'
+    default:
+      return ''
+  }
+})
+
+const destructiveModalConfirmLabel = computed(() => {
+  const flow = destructiveFlow.value
+  if (!flow) return 'Confirmar'
+  switch (flow.kind) {
+    case 'remove-tab-item':
+    case 'remove-cart-item':
+      return 'Sí, eliminar'
+    case 'decrease-tab-item':
+      return 'Sí, reducir'
+    case 'clear-cart':
+      return 'Sí, limpiar'
+    case 'release-table':
+      return `Sí, liberar ${tableSingularLower.value}`
+    case 'clear-bar-tab':
+      return 'Sí, limpiar'
+    default:
+      return 'Confirmar'
+  }
+})
+
+const destructiveModalVariant = computed(() =>
+  destructiveFlow.value?.kind === 'release-table' ? 'warning' as const : 'destructive' as const,
+)
+
+const pendingRemoveItemId = computed(() =>
+  destructiveFlow.value?.kind === 'remove-tab-item' ? destructiveFlow.value.orderItemId : null,
+)
+
+const destructiveFetchError = (e: unknown, fallback: string): string => {
+  const err = e as { data?: { message?: string; detail?: string | unknown } }
+  const detail = err?.data?.detail
+  return err?.data?.message
+    ?? (typeof detail === 'string' ? detail : null)
+    ?? (typeof detail === 'object' && detail ? String(detail) : null)
+    ?? fallback
+}
+
+const cancelDestructiveFlow = () => {
+  if (destructiveLoading.value) return
+  destructiveFlow.value = null
+  destructiveError.value = ''
+}
+
+const confirmDestructiveFlow = async (reason: string) => {
+  const flow = destructiveFlow.value
+  if (!flow) return
+  destructiveLoading.value = true
+  destructiveError.value = ''
+  try {
+    switch (flow.kind) {
+      case 'remove-tab-item':
+        await executeRemoveTabItem(flow.orderItemId, reason)
+        break
+      case 'decrease-tab-item':
+        await updateTabItemQuantity(flow.orderItemId, flow.quantity, reason)
+        break
+      case 'clear-cart':
+        await executeClearCart(reason)
+        break
+      case 'remove-cart-item':
+        await executeRemoveFromCart(flow.index, reason)
+        break
+      case 'release-table':
+        await executeBannerClose(reason)
+        break
+      case 'clear-bar-tab':
+        await executeClearBarTab(reason)
+        break
+    }
+    if (!destructiveError.value) {
+      destructiveFlow.value = null
+    }
+  } finally {
+    destructiveLoading.value = false
+  }
+}
 
 const removeTabItem = (orderItemId: string) => {
   if (!posStore.activeTableSession) return
-  // If comandas is enabled and the item is already in the kitchen, ask for confirmation
-  if (comandasEnabled.value) {
-    const item = storeTabItems.value.find((i: TabItem) => i.orderItemId === orderItemId)
-    const isFired = item && item.fulfillmentStatus && item.fulfillmentStatus !== 'new'
-    if (isFired) {
-      pendingRemoveItemId.value = orderItemId
-      removeTabReason.value = ''
-      removeTabError.value = ''
-      return
-    }
-  }
-  executeRemoveTabItem(orderItemId)
-}
-
-const confirmRemoveTabItem = () => {
-  if (!pendingRemoveItemId.value) return
-  if (!removeTabReason.value.trim()) {
-    removeTabError.value = 'Indica el motivo de eliminación'
+  if (comandasEnabled.value && isTabItemFired(orderItemId)) {
+    destructiveError.value = ''
+    destructiveFlow.value = { kind: 'remove-tab-item', orderItemId }
     return
   }
-  removeTabError.value = ''
-  executeRemoveTabItem(pendingRemoveItemId.value, removeTabReason.value.trim())
-}
-
-const cancelPendingRemove = () => {
-  pendingRemoveItemId.value = null
-  removeTabReason.value = ''
-  removeTabError.value = ''
+  void executeRemoveTabItem(orderItemId)
 }
 
 const executeRemoveTabItem = async (orderItemId: string, reason?: string) => {
@@ -544,19 +685,13 @@ const executeRemoveTabItem = async (orderItemId: string, reason?: string) => {
       method: 'DELETE',
       body: { reason: reason ?? null },
     })
-    pendingRemoveItemId.value = null
-    removeTabReason.value = ''
-    removeTabError.value = ''
     await refreshTableSession()
-  } catch (e: any) {
+  } catch (e: unknown) {
     bumpTableSessionFetchGen()
     posStore.setTabItems(previousTabItems)
-    const beMessage = e?.data?.message
-      ?? (typeof e?.data?.detail === 'string' ? e.data.detail : null)
-      ?? e?.data?.detail
-    const errText = beMessage ?? 'Error al eliminar el producto'
-    if (reason) {
-      removeTabError.value = errText
+    const errText = destructiveFetchError(e, 'Error al eliminar el producto')
+    if (destructiveFlow.value?.kind === 'remove-tab-item') {
+      destructiveError.value = errText
     } else {
       tabError.value = errText
     }
@@ -567,18 +702,23 @@ const executeRemoveTabItem = async (orderItemId: string, reason?: string) => {
   }
 }
 
-const updateTabItemQuantity = async (orderItemId: string, quantity: number) => {
+const updateTabItemQuantity = async (orderItemId: string, quantity: number, reason?: string) => {
   if (!posStore.activeTableSession) return
   bumpTableSessionFetchGen()
   tabItemsLoading.value = new Set([...tabItemsLoading.value, orderItemId])
   try {
     await $fetch(`/api/tables/${posStore.activeTableSession.tableId}/tab/items/${orderItemId}`, {
       method: 'PATCH',
-      body: { quantity },
+      body: reason ? { quantity, reason } : { quantity },
     })
     await refreshTableSession()
-  } catch (e: any) {
-    tabError.value = e?.data?.detail ?? 'Error al actualizar la cantidad'
+  } catch (e: unknown) {
+    const errText = destructiveFetchError(e, 'Error al actualizar la cantidad')
+    if (destructiveFlow.value?.kind === 'decrease-tab-item') {
+      destructiveError.value = errText
+    } else {
+      tabError.value = errText
+    }
   } finally {
     const next = new Set(tabItemsLoading.value)
     next.delete(orderItemId)
@@ -593,7 +733,14 @@ const incrementTabItem = (orderItemId: string) => {
 
 const decrementTabItem = (orderItemId: string) => {
   const item = storeTabItems.value.find(t => t.orderItemId === orderItemId)
-  if (item && item.quantity > 1) updateTabItemQuantity(orderItemId, item.quantity - 1)
+  if (!item || item.quantity <= 1) return
+  const newQuantity = item.quantity - 1
+  if (comandasEnabled.value && isTabItemFired(orderItemId)) {
+    destructiveError.value = ''
+    destructiveFlow.value = { kind: 'decrease-tab-item', orderItemId, quantity: newQuantity }
+    return
+  }
+  void updateTabItemQuantity(orderItemId, newQuantity)
 }
 
 const addToTab = async () => {
@@ -686,63 +833,58 @@ const handleMoveDone = async (result: { targetTableId: string; targetSessionId: 
 }
 
 // ── Liberar mesa from the active-mesa banner ───────────────────────────────
-const confirmBannerClose = ref(false)
-const isBannerClosing = ref(false)
+const isBannerClosing = computed(() =>
+  destructiveLoading.value
+  && (destructiveFlow.value?.kind === 'release-table' || destructiveFlow.value?.kind === 'clear-bar-tab'),
+)
 
 const handleBannerCerrar = () => {
-  const session = posStore.activeTableSession
-  if (!session) return
-  if (session.runningTotal > 0) {
-    confirmBannerClose.value = true
-  } else {
-    executeBannerClose()
-  }
+  if (!posStore.activeTableSession) return
+  destructiveError.value = ''
+  destructiveFlow.value = { kind: 'release-table' }
 }
 
-const executeBannerClose = async () => {
+const executeBannerClose = async (reason: string) => {
   const session = posStore.activeTableSession
   if (!session) return
-  // Keep modal open while loading; close it only after the request settles
-  // so the button can show its inline loading dots.
-  isBannerClosing.value = true
   try {
-    await $fetch(`/api/tables/${session.tableId}/close`, { method: 'POST' })
-  } catch {
-    // Non-critical
-  } finally {
-    isBannerClosing.value = false
-    confirmBannerClose.value = false
+    await $fetch(`/api/tables/${session.tableId}/close`, {
+      method: 'POST',
+      body: { reason: reason.trim() || null },
+    })
+  } catch (e: unknown) {
+    destructiveError.value = destructiveFetchError(e, `Error al liberar la ${tableSingularLower.value}`)
+    return
   }
   posStore.clearAll()
   cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
 }
 
-// Bar branch: clear pending tab items, never close the (permanent) session.
-const clearBarTab = async () => {
+const executeClearBarTab = async (reason: string) => {
   const session = posStore.activeTableSession
   if (!session || posStore.isCancellingMesa) return
   posStore.isCancellingMesa = true
   try {
-    await $fetch(`/api/tables/${session.tableId}/tab`, { method: 'DELETE' })
-  } catch {
-    // Non-critical — clear local state regardless
+    await $fetch(`/api/tables/${session.tableId}/tab`, {
+      method: 'DELETE',
+      body: { reason: reason.trim() || null },
+    })
+    posStore.clearAll()
+    cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
+  } catch (e: unknown) {
+    destructiveError.value = destructiveFetchError(e, 'Error al limpiar la barra')
   } finally {
     posStore.isCancellingMesa = false
   }
-  posStore.clearAll()
-  cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
 }
 
-// Cart-panel "Liberar mesa" — bar clears the tab; table reuses the existing
-// banner-confirmation flow (skips confirm when runningTotal = 0).
 const handleReleaseMesa = () => {
   const session = posStore.activeTableSession
   if (!session) return
-  if (session.isBar) {
-    clearBarTab()
-  } else {
-    handleBannerCerrar()
-  }
+  destructiveError.value = ''
+  destructiveFlow.value = session.isBar
+    ? { kind: 'clear-bar-tab' }
+    : { kind: 'release-table' }
 }
 
 const formatDuration = (openedAt: string): string => {
@@ -753,9 +895,6 @@ const formatDuration = (openedAt: string): string => {
   const m = totalMins % 60
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
-
-const formatCurrencyPOS = (amount: number): string =>
-  `$${Math.round(amount).toLocaleString('es-CO')}`
 
 // State
 const searchQuery = ref('')
@@ -949,6 +1088,10 @@ const removeFromCart = async (index: number) => {
   await posStore.removeFromCart(index)
 }
 
+const executeRemoveFromCart = async (index: number, reason: string) => {
+  await posStore.removeFromCart(index, reason)
+}
+
 const incrementCartItem = async (index: number) => {
   const item = posStore.cart[index]
   if (item?.modifiers?.length) {
@@ -966,24 +1109,46 @@ const duplicateCartItem = async (index: number) => {
   await posStore.duplicateCartItem(index)
 }
 
-const clearCart = async () => {
+const clearCart = () => {
+  destructiveError.value = ''
+  destructiveFlow.value = { kind: 'clear-cart' }
+}
+
+const executeClearCart = async (reason: string) => {
   const session = posStore.activeTableSession
   if (session) {
     bumpTableSessionFetchGen()
     isClearingTab.value = true
     try {
-      await $fetch(`/api/tables/${session.tableId}/tab`, { method: 'DELETE' })
-    } catch {
-      // Non-critical
+      await $fetch(`/api/tables/${session.tableId}/tab`, {
+        method: 'DELETE',
+        body: { reason: reason.trim() || null },
+      })
+      posStore.setTabItems([])
+      if (posStore.activeTableSession) {
+        posStore.setTableSession({
+          ...posStore.activeTableSession,
+          runningTotal: 0,
+          isBar: posStore.activeTableSession.isBar,
+        })
+      }
+    } catch (e: unknown) {
+      destructiveError.value = destructiveFetchError(
+        e,
+        posStore.activeTableSession
+          ? `Error al limpiar la ${tableSingularLower.value}`
+          : 'Error al limpiar la cuenta',
+      )
+      return
     } finally {
       isClearingTab.value = false
     }
-    posStore.setTabItems([])
-    if (posStore.activeTableSession) {
-      posStore.setTableSession({ ...posStore.activeTableSession, runningTotal: 0, isBar: posStore.activeTableSession.isBar })
-    }
   }
-  await posStore.clearCart()
+  try {
+    await posStore.clearCart(reason)
+  } catch (e: unknown) {
+    destructiveError.value = destructiveFetchError(e, 'Error al limpiar el carrito')
+  }
 }
 
 const processOrder = async () => {
@@ -1446,129 +1611,18 @@ onUnmounted(() => {
     </div>
   </div>
 
-  <!-- Liberar mesa confirmation modal — shown by handleBannerCerrar when runningTotal > 0 -->
-  <Teleport to="body">
-    <Transition
-      enter-active-class="transition-opacity duration-150"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-150"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="confirmBannerClose && posStore.activeTableSession"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-        @click.self="!isBannerClosing && (confirmBannerClose = false)"
-      >
-        <div class="w-full max-w-sm bg-surface rounded-2xl shadow-2xl overflow-hidden">
-          <div class="px-5 pt-5 pb-4">
-            <div class="flex items-start gap-3">
-              <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-status-warning-bg flex items-center justify-center">
-                <svg class="w-5 h-5 text-status-warning-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <h3 class="text-base font-bold text-text-primary leading-tight">{{ `¿Liberar la ${tableSingularLower}?` }}</h3>
-                <p class="text-sm text-text-secondary mt-1 leading-snug">
-                  {{ `Esta ${tableSingularLower} tiene` }} <strong class="text-text-primary">{{ formatCurrencyPOS(posStore.activeTableSession.runningTotal) }}</strong> en consumo. Si la liberas ahora, se cerrará sin cobrar.
-                </p>
-              </div>
-            </div>
-          </div>
-          <div class="px-5 pb-5 flex gap-2">
-            <button
-              type="button"
-              :disabled="isBannerClosing"
-              class="flex-1 min-h-[44px] rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 disabled:opacity-40 disabled:cursor-not-allowed"
-              @click="confirmBannerClose = false"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              :disabled="isBannerClosing"
-              class="flex-1 min-h-[44px] rounded-xl bg-slate-700 text-white text-sm font-semibold hover:bg-slate-800 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-1 disabled:opacity-70 disabled:cursor-not-allowed"
-              @click="executeBannerClose"
-            >
-              <UiLoadingDots v-if="isBannerClosing" size="9px" color="white" aria-hidden="true" />
-              <span v-else>{{ `Sí, liberar ${tableSingularLower}` }}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
-
-  <!-- Remove item confirmation modal -->
-  <Teleport to="body">
-    <Transition
-      enter-active-class="transition-opacity duration-150"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-150"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="pendingRemoveItemId"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-        @click.self="cancelPendingRemove"
-      >
-        <div class="w-full max-w-sm bg-surface rounded-2xl shadow-2xl overflow-hidden">
-          <!-- Header -->
-          <div class="px-5 pt-5 pb-4">
-            <div class="flex items-start gap-3">
-              <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
-                <svg class="w-5 h-5 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                </svg>
-              </div>
-              <div>
-                <h3 class="text-base font-bold text-text-primary leading-tight">¿Eliminar producto?</h3>
-                <p class="text-sm text-text-secondary mt-0.5 leading-snug">
-                  <span class="font-semibold text-text-primary">{{ storeTabItems.find(i => i.orderItemId === pendingRemoveItemId)?.productName ?? 'Este producto' }}</span>
-                  ya fue enviado a cocina. Se notificará al cocinero que lo anule.
-                </p>
-              </div>
-            </div>
-            <label for="remove-tab-reason" class="block text-xs font-medium text-text-secondary uppercase tracking-wide mt-4 mb-1.5">
-              Motivo de eliminación <span class="text-destructive">*</span>
-            </label>
-            <textarea
-              id="remove-tab-reason"
-              v-model="removeTabReason"
-              rows="2"
-              placeholder="Ej: cliente cambió de opinión"
-              class="w-full px-3 py-2 bg-surface-secondary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <p v-if="removeTabError" class="mt-2 text-sm text-destructive">
-              {{ removeTabError }}
-            </p>
-          </div>
-          <!-- Actions -->
-          <div class="px-5 pb-5 flex gap-2">
-            <button
-              type="button"
-              class="flex-1 h-11 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-secondary transition-colors"
-              @click="cancelPendingRemove"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              :disabled="!removeTabReason.trim()"
-              class="flex-1 h-11 rounded-xl bg-destructive text-white text-sm font-semibold hover:bg-destructive/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              @click="confirmRemoveTabItem"
-            >
-              Sí, eliminar
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
+  <!-- Issue #956 — destructive POS actions (motivo required) -->
+  <PosDestructiveReasonModal
+    v-model="destructiveModalOpen"
+    :title="destructiveModalTitle"
+    :message="destructiveModalMessage"
+    :confirm-label="destructiveModalConfirmLabel"
+    :variant="destructiveModalVariant"
+    :loading="destructiveLoading"
+    :error="destructiveError"
+    @confirm="confirmDestructiveFlow"
+    @cancel="cancelDestructiveFlow"
+  />
 
   <PosOpenSaleModal
     ref="openSaleModalRef"
