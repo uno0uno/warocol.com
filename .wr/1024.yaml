@@ -1,0 +1,32 @@
+# Machine contract for wr-fast / wr-ship — keep ≤80 lines. LLM reads once; humans use issue summary + PR.
+issue: 1024
+title: "feat(pos): reflect promotions on checkout, prefactura, and payment receipts"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1024-checkout-promo-receipts
+
+paths:
+  - pages/pos/checkout.vue
+
+ac:
+  - Checkout summary uses API promo_savings + promo_breakdown when present; client fallback only when API omits
+  - prefacturaPrintSnapshot shows promo lines and net total matching on-screen checkout summary
+  - Post-payment receipt (#pos-receipt) includes promo breakdown
+  - Mesa close propagates session promo fields into checkout (tables/current session → checkoutPromoPreview)
+
+out_of_scope:
+  - DIAN fiscal invoice (batch #1025)
+  - API evaluator changes (batch #1020 closed)
+
+hints:
+  entry: "displayPromoBreakdown + promoFieldsForReceipt — pages/pos/checkout.vue"
+  pattern: "Unify prefactura snapshot, orderResult (split/mesa/cart complete), receipt on displayPromoBreakdown"
+  tests: "Manual: mesa BOGO → checkout → prefactura print → pay → receipt"
+
+skip:
+  audits: [ux, color, typography]
+
+epic: 1019
+depends: "#1020 (closed)"
