@@ -260,8 +260,12 @@
                 <label class="block text-sm font-medium text-text-primary mb-2">
                   Cocina heredada
                 </label>
-                <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-secondary border border-border text-sm">
-                  <template v-if="inheritedStation">
+                <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-secondary border border-border text-sm min-h-[38px]">
+                  <template v-if="isAssigningInheritedStation">
+                    <UiLoadingDots size="8px" color="var(--color-primary)" />
+                    <span class="text-text-secondary">Asignando cocina…</span>
+                  </template>
+                  <template v-else-if="inheritedStation">
                     <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: inheritedStation.color ?? '#94a3b8' }" />
                     <span class="font-semibold text-text-primary">{{ inheritedStation.name }}</span>
                     <span class="text-text-tertiary text-xs ml-1">(vía categoría)</span>
@@ -270,8 +274,9 @@
                     <span class="text-text-tertiary">Sin comanda — asigna una estación a la categoría</span>
                     <button
                       type="button"
+                      :disabled="isAssigningInheritedStation"
                       @click="showNewStationModal = true"
-                      class="ml-auto text-xs font-medium text-primary hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded px-2 py-1"
+                      class="ml-auto text-xs font-medium text-primary hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       + Crear estación
                     </button>
@@ -1386,6 +1391,7 @@ function onImageUploaded(url: string) {
 
 // ── Kitchen station inline create flow (issue #463) ───────────────────────
 const showNewStationModal = ref(false)
+const isAssigningInheritedStation = ref(false)
 
 async function onStationCreated(station: { id: string; name: string }) {
   const categoryId = form.value.category_id
@@ -1403,6 +1409,7 @@ async function onStationCreated(station: { id: string; name: string }) {
     return
   }
 
+  isAssigningInheritedStation.value = true
   try {
     await $fetch(`/api/api/stations/categories/${categoryId}`, {
       method: 'POST',
@@ -1419,6 +1426,8 @@ async function onStationCreated(station: { id: string; name: string }) {
       e?.data?.detail || e?.message || 'No se pudo asignar la estación a la categoría',
       { title: 'Estación creada sin asignar' },
     )
+  } finally {
+    isAssigningInheritedStation.value = false
   }
 }
 

@@ -73,7 +73,7 @@
             ¿Qué quieres crear?
           </p>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" aria-label="Tipo de ítem">
+          <div class="flex flex-col gap-3" role="group" aria-label="Tipo de ítem">
             <UiSelectionOptionCard
               title="Ingrediente"
               description="Abastecimiento y recetas · gr, ml, und"
