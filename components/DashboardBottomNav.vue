@@ -1,6 +1,14 @@
 <template>
   <!-- Bottom Navigation - Mobile & Tablet -->
   <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-titan-300 shadow-lg z-50 safe-area-bottom">
+    <PosCartBottomBar
+      v-if="showCartButton"
+      :visible="cartItemsCount > 0"
+      :item-count="cartItemsCount"
+      :formatted-total="cartFormattedTotal"
+      @open-cart="emit('open-cart')"
+    />
+
     <div class="flex items-center justify-between px-4 py-2">
 
       <!-- User Profile -->
@@ -265,12 +273,22 @@ type ActivePage =
 interface Props {
   activePage?: ActivePage
   notificationsCount?: number
+  showCartButton?: boolean
+  cartItemsCount?: number
+  cartFormattedTotal?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   activePage: 'financiero',
   notificationsCount: 0,
+  showCartButton: false,
+  cartItemsCount: 0,
+  cartFormattedTotal: '$0',
 })
+
+const emit = defineEmits<{
+  (e: 'open-cart'): void
+}>()
 
 // Epic 4 (#560): each grid item declares the backend module it requires.
 // useModuleAccess().can() fails open while enforcementMode !== 'enforce',

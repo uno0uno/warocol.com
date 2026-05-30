@@ -110,7 +110,7 @@
       />
 
       <!-- Content Area with Overflow -->
-      <div class="flex-1 overflow-y-auto pb-20 lg:pb-0">
+      <div :class="['flex-1 overflow-y-auto lg:pb-0', mobileContentBottomPadding]">
         <div class="p-4 sm:p-6 md:p-8">
           <!-- Breadcrumb (if provided) -->
           <nav v-if="showBreadcrumb" class="flex mb-6" aria-label="Breadcrumb">
@@ -140,7 +140,8 @@
     <DashboardBottomNav
       :active-page="activePage"
       :show-cart-button="route.path === '/pos'"
-      :cart-items-count="posCartItemsCount"
+      :cart-items-count="posCartItemsCountValue"
+      :cart-formatted-total="posCartFormattedTotalValue"
       :notifications-count="notificationsUnreadCount"
       @open-cart="posOpenCartModal"
     />
@@ -156,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { provide, inject, ref, computed, watch, onMounted, onUnmounted, type Ref, type ComputedRef } from 'vue'
+import { provide, inject, ref, computed, watch, onMounted, onUnmounted, unref, type Ref, type ComputedRef } from 'vue'
 import {
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
@@ -1175,7 +1176,18 @@ watch(displayTitle, (nextTitle, previousTitle) => {
 
 // Inject cart data from POS page
 const posCartItemsCount = inject<ComputedRef<number> | Ref<number>>('posCartItemsCount', ref(0))
+const posCartFormattedTotal = inject<ComputedRef<string> | Ref<string>>('posCartFormattedTotal', ref('$0'))
 const posOpenCartModal = inject<() => void>('posOpenCartModal', () => {})
+
+const posCartItemsCountValue = computed(() => unref(posCartItemsCount))
+const posCartFormattedTotalValue = computed(() => unref(posCartFormattedTotal))
+
+const mobileContentBottomPadding = computed(() => {
+  if (route.path === '/pos' && posCartItemsCountValue.value > 0) {
+    return 'pb-36'
+  }
+  return 'pb-20'
+})
 
 const navigateToPOS = () => navigateTo('/pos')
 

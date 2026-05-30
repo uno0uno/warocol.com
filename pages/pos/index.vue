@@ -989,7 +989,6 @@ const filteredProducts = computed(() => {
 })
 
 // Use store for cart data
-const cartItemsCount = computed(() => posStore.cartItemsCount)
 const cartTotal = computed(() => posStore.cartTotal)
 
 // warocol.com#1032 — fixed cart bar + bottom sheet on mobile/tablet (< lg)
@@ -1005,7 +1004,12 @@ const mobileCartDisplayTotal = computed(() =>
     : cartTotal.value,
 )
 const mobileCartFormattedTotal = computed(() => formatCurrencyPOS(mobileCartDisplayTotal.value))
-const showMobileCartBar = computed(() => mobileCartItemCount.value > 0)
+
+provide('posCartItemsCount', mobileCartItemCount)
+provide('posCartFormattedTotal', mobileCartFormattedTotal)
+provide('posOpenCartModal', () => {
+  showMobileCartSheet.value = true
+})
 
 // Navigate to product customization page or add directly to cart
 const selectProduct = async (product: any) => {
@@ -1256,10 +1260,9 @@ watch(
   { immediate: true }
 )
 
-// Provide cart data to layout
-onMounted(async () => {
-  provide('posCartItemsCount', cartItemsCount)
+// Provide cart data to layout (registered at setup so layout can read before mount)
 
+onMounted(async () => {
   // Start polling if already in a comandas-enabled session on mount
   if (comandasEnabled.value && posStore.activeTableSession) {
     startFulfillmentPolling()
@@ -1328,7 +1331,7 @@ onUnmounted(() => {
     <CommonsTheErrorState v-else-if="productsError" />
 
     <!-- POS Content (shown always after loading) -->
-    <div v-else :class="showMobileCartBar ? 'pb-36 lg:pb-0' : ''">
+    <div v-else>
       <!-- Live promotion hint (warocol.com#983) -->
       <div
         v-if="hasActivePromos"
@@ -1708,13 +1711,7 @@ onUnmounted(() => {
     :business-name="posBusinessName"
   />
 
-  <!-- warocol.com#1032 — mobile/tablet cart bar + sheet (storefront parity) -->
-  <PosCartBottomBar
-    :visible="showMobileCartBar"
-    :item-count="mobileCartItemCount"
-    :formatted-total="mobileCartFormattedTotal"
-    @open-cart="showMobileCartSheet = true"
-  />
+  <!-- warocol.com#1032 — mobile/tablet cart sheet (bar docked in DashboardBottomNav) -->
   <UiBottomSheetModal v-model="showMobileCartSheet" title="Orden actual" max-height="xl">
     <PosCartPanel
       class="border-0 shadow-none rounded-none max-h-[70vh]"
