@@ -61,6 +61,8 @@ interface Props {
   placeholder?: string
   inputId?: string
   excludeIds?: string[]
+  /** Include resale products in search results (promotions scope picker). */
+  includeAllTypes?: boolean
 }
 
 interface Emits {
@@ -71,6 +73,7 @@ const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Buscar producto…',
   inputId: 'product-search-input',
   excludeIds: () => [],
+  includeAllTypes: false,
 })
 
 const emit = defineEmits<Emits>()
@@ -78,7 +81,9 @@ const emit = defineEmits<Emits>()
 const searchTerm = ref('')
 const showResults = ref(false)
 
-const { query, results, loading } = useProductSearch()
+const { query, results, loading } = useProductSearch({
+  includeAllTypes: props.includeAllTypes,
+})
 
 const excludeSet = computed(() => new Set(props.excludeIds))
 
