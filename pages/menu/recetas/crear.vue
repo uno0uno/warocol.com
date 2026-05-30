@@ -154,25 +154,27 @@
                         </div>
                       </div>
 
-                      <div class="md:col-span-2 flex items-end">
-                        <label class="flex items-center gap-2 cursor-pointer">
+                      <div class="md:col-span-2">
+                        <label class="block text-xs font-medium text-text-secondary mb-1">Requerido</label>
+                        <label class="flex items-center gap-2 h-[38px] cursor-pointer">
                           <input
                             v-model="ingredient.is_required"
                             type="checkbox"
                             class="h-4 w-4 text-primary border-border rounded focus:ring-primary"
                           />
-                          <span class="text-xs font-medium text-text-primary">Requerido</span>
+                          <span class="text-xs font-medium text-text-primary">Sí</span>
                         </label>
                       </div>
 
-                      <div class="md:col-span-1 flex items-end">
+                      <div class="md:col-span-1">
+                        <label class="block text-xs font-medium text-text-secondary mb-1 invisible select-none" aria-hidden="true">&nbsp;</label>
                         <button
                           type="button"
                           @click="removeIngredient(index)"
-                          class="w-full md:w-auto px-3 py-2 text-destructive hover:bg-destructive/5 rounded-lg transition-colors"
+                          class="flex items-center justify-center w-full h-[38px] text-destructive hover:bg-destructive/5 rounded-lg transition-colors"
                           title="Eliminar línea"
                         >
-                          <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                         </button>

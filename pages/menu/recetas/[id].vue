@@ -84,10 +84,10 @@
                 <div
                   v-for="(ingredient, index) in form.ingredients"
                   :key="index"
-                  class="flex items-start gap-3 p-4 bg-background rounded-lg border border-border"
+                  class="border border-border rounded-lg p-3 sm:p-4 bg-background"
                 >
-                  <div class="flex-1 grid grid-cols-1 md:grid-cols-12 gap-3">
-                    <div class="md:col-span-5">
+                  <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                    <div class="md:col-span-4">
                       <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
                       <UiIngredientSearchInput
                         :initialValue="ingredient.ingredient_name"
@@ -110,7 +110,7 @@
                       />
                     </div>
 
-                    <div class="md:col-span-3">
+                    <div class="md:col-span-2">
                       <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
                       <div class="relative">
                         <select
@@ -134,36 +134,40 @@
                       </div>
                     </div>
 
-                    <div class="md:col-span-1 flex items-end">
-                      <label class="flex items-center gap-2 cursor-pointer">
+                    <div class="md:col-span-2">
+                      <label class="block text-xs font-medium text-text-secondary mb-1">Requerido</label>
+                      <label class="flex items-center gap-2 h-[38px] cursor-pointer">
                         <input
                           v-model="ingredient.is_required"
                           type="checkbox"
                           class="h-4 w-4 text-primary border-border rounded focus:ring-primary"
                         />
-                        <span class="text-xs font-medium text-text-primary whitespace-nowrap">Requerido</span>
+                        <span class="text-xs font-medium text-text-primary">Sí</span>
                       </label>
                     </div>
 
-                    <div class="md:col-span-12">
-                      <label class="block text-xs font-medium text-text-secondary mb-1">Notas <span class="font-normal">(opcional)</span></label>
-                      <input
-                        v-model="ingredient.notes"
-                        type="text"
-                        class="input-base w-full px-3 py-2 text-sm"
-                        placeholder="Ej. mozzarella de búfala"
-                      />
+                    <div class="md:col-span-1">
+                      <label class="block text-xs font-medium text-text-secondary mb-1 invisible select-none" aria-hidden="true">&nbsp;</label>
+                      <button
+                        type="button"
+                        @click="removeIngredient(index)"
+                        class="flex items-center justify-center w-full h-[38px] text-destructive hover:bg-destructive/5 rounded-lg transition-colors"
+                        title="Eliminar línea"
+                      >
+                        <Icon name="heroicons:trash" class="h-5 w-5" />
+                      </button>
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    @click="removeIngredient(index)"
-                    class="px-3 py-2 text-destructive hover:bg-destructive/5 rounded-lg transition-colors flex-shrink-0"
-                    title="Eliminar línea"
-                  >
-                    <Icon name="heroicons:trash" class="h-5 w-5" />
-                  </button>
+                  <div class="mt-3">
+                    <label class="block text-xs font-medium text-text-secondary mb-1">Notas <span class="font-normal">(opcional)</span></label>
+                    <input
+                      v-model="ingredient.notes"
+                      type="text"
+                      class="input-base w-full px-3 py-2 text-sm"
+                      placeholder="Ej. mozzarella de búfala"
+                    />
+                  </div>
                 </div>
               </div>
             </MenuCatalogInlineCreateBusyOverlay>
