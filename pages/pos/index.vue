@@ -1399,8 +1399,8 @@ onUnmounted(() => {
 
       <!-- Mesa Banner (when arriving from a table session) -->
       <div v-else-if="posStore.activeTableSession" class="bg-surface border border-border rounded-2xl mb-4 p-3.5 shadow-sm">
-        <div class="flex flex-col gap-3">
-          <div class="flex items-start gap-3 min-w-0">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div class="flex items-start gap-3 min-w-0 flex-1">
             <div class="bg-status-success-bg p-2.5 rounded-xl flex-shrink-0">
               <svg class="w-4 h-4 text-status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 10h18M3 14h18M10 10V6m4 4V6m-9 8v4m14-4v4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
@@ -1427,8 +1427,8 @@ onUnmounted(() => {
               </p>
             </div>
           </div>
-          <!-- Row 2: mesero + actions — wraps cleanly on tablet (~490px) -->
-          <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+          <!-- Mesero + actions — stacked on mobile/tablet; inline on desktop -->
+          <div class="flex flex-wrap items-center gap-2 lg:flex-shrink-0 lg:justify-end">
             <!-- Issue #574 — Waiter loading chip — width adapts to the rotating
                  phrase so it doesn't overflow the original chip. Same pattern
                  as the dashboard header progressive-load indicator. -->
