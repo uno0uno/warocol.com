@@ -403,10 +403,6 @@
                       />
                     </div>
                   </div>
-                </div>
-              </div>
-
-
             </div>
 
           </MenuCatalogInlineCreateBusyOverlay>
