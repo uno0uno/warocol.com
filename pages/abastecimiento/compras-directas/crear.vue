@@ -213,29 +213,25 @@
                   + Agregar ítem
                 </button>
               </template>
-            <!-- OCR banner -->
-            <div v-if="ocrItemsLoaded" class="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg flex items-start gap-2 text-sm text-primary">
-              <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span class="font-medium">Items cargados. La IA puede cometer errores, por favor verifica todos los datos.</span>
-            </div>
 
+              <div v-if="ocrItemsLoaded" class="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg flex items-start gap-2 text-sm text-primary">
+                <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="font-medium">Items cargados. La IA puede cometer errores, por favor verifica todos los datos.</span>
+              </div>
 
+              <MenuCatalogInlineCreateBusyOverlay
+                :busy="inlineCatalogBusy"
+                :label="inlineCatalogBusyLabel"
+                :hint="inlineCatalogBusyHint"
+              >
+                <div v-if="isScanning" class="w-full py-4 flex flex-col items-center justify-center gap-2 bg-surface rounded-lg border border-dashed border-border">
+                  <UiLoadingDots size="9px" />
+                  <p class="text-xs font-medium text-text-secondary animate-pulse">{{ currentPhrase }}</p>
+                </div>
 
-          <MenuCatalogInlineCreateBusyOverlay
-            :busy="inlineCatalogBusy"
-            :label="inlineCatalogBusyLabel"
-            :hint="inlineCatalogBusyHint"
-          >
-             <!-- AI Loading Overlay -->
-            <div v-if="isScanning" class="w-full py-4 flex flex-col items-center justify-center gap-2 bg-surface rounded-lg border border-dashed border-border">
-              <UiLoadingDots size="9px" />
-              <p class="text-xs font-medium text-text-secondary animate-pulse">{{ currentPhrase }}</p>
-            </div>
-
-            <!-- Items List -->
-            <div v-else class="space-y-2">
+                <div v-else class="space-y-2">
                   <div
                     v-for="(item, index) in form.items"
                     :key="index"
@@ -403,10 +399,8 @@
                       />
                     </div>
                   </div>
-            </div>
-
-          </MenuCatalogInlineCreateBusyOverlay>
-
+                </div>
+              </MenuCatalogInlineCreateBusyOverlay>
             </UiFormSection>
 
             <UiFormSection
