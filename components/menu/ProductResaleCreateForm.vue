@@ -67,19 +67,45 @@
         Ejemplo: una gaseosa de 400 ml → 400 ml por unidad. Cada venta descuenta 1 und del inventario.
       </p>
     </div>
+
+    <IngredientesIngredientPurchaseUnitsField
+      v-if="draftUnits != null"
+      v-model:draft-units="draftUnits"
+      mode="create"
+      base-unit="und"
+    />
+    <IngredientesIngredientPurchaseUnitsField
+      v-else-if="linkedIngredientId"
+      mode="edit"
+      :ingredient-id="linkedIngredientId"
+      base-unit="und"
+      :pending-suggestions="undPurchaseUnitSuggestions"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import {
+  UND_PURCHASE_UNIT_SUGGESTIONS,
+  type DraftPurchaseUnit,
+} from '@/composables/useIngredientPurchaseUnitsDraft'
+
 const unitWeightGr = defineModel<number | null>('unitWeightGr', { default: null })
 const unitWeightUnit = defineModel<'gr' | 'ml'>('unitWeightUnit', { default: 'gr' })
+const draftUnits = defineModel<DraftPurchaseUnit[]>('draftUnits')
 
 const props = withDefaults(
   defineProps<{
     showError?: boolean
+    linkedIngredientId?: string
   }>(),
-  { showError: false },
+  {
+    showError: false,
+    linkedIngredientId: '',
+  },
 )
+
+const undPurchaseUnitSuggestions = UND_PURCHASE_UNIT_SUGGESTIONS
 
 const uid = useId()
 const weightInputId = `resale-weight-${uid}`

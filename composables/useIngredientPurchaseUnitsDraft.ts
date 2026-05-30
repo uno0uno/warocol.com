@@ -11,6 +11,14 @@ export interface PurchaseUnitSuggestion {
   conversion_factor: number
 }
 
+export const UND_PURCHASE_UNIT_SUGGESTIONS: PurchaseUnitSuggestion[] = [
+  { purchase_unit: 'und', label: 'Unidad', conversion_factor: 1 },
+]
+
+export function defaultUndPurchaseUnitsDraft(): DraftPurchaseUnit[] {
+  return suggestionsToDraftUnits(UND_PURCHASE_UNIT_SUGGESTIONS)
+}
+
 export function suggestionsToDraftUnits(suggestions: PurchaseUnitSuggestion[]): DraftPurchaseUnit[] {
   return suggestions.map((s, i) => ({
     purchase_unit_label: s.label,
@@ -54,5 +62,28 @@ export async function persistDraftPurchaseUnits(ingredientId: string, units: Dra
         is_active: true,
       },
     })
+  }
+}
+
+export async function syncResalePurchaseUnitsDraft(
+  ingredientId: string,
+  draft: DraftPurchaseUnit[],
+) {
+  if (!usesCustomPurchaseUnitsDraft(draft, UND_PURCHASE_UNIT_SUGGESTIONS)) {
+    return
+  }
+
+  try {
+    const res: any = await $fetch(`/api/suppliers/ingredient-purchase-units/ingredient/${ingredientId}`)
+    const existing = res?.data ?? []
+    for (const unit of existing) {
+      await $fetch(`/api/suppliers/ingredient-purchase-units/${unit.id}`, { method: 'DELETE' })
+    }
+  } catch {
+    // Ingredient may not have units yet — continue with insert.
+  }
+
+  if (draft.length > 0) {
+    await persistDraftPurchaseUnits(ingredientId, draft)
   }
 }

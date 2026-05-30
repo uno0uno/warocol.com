@@ -328,6 +328,7 @@
             <MenuProductResaleCreateForm
               v-model:unit-weight-gr="resaleUnitWeightGr"
               v-model:unit-weight-unit="resaleUnitWeightUnit"
+              :linked-ingredient-id="linkedResaleIngredientId"
               :show-error="resaleWeightError"
               @clear-error="resaleWeightError = false"
             />
@@ -848,6 +849,10 @@ const isOpenSaleShell = computed(() => !!productData.value?.data?.open_priced)
 const isResaleProduct = computed(() => !!productData.value?.data?.is_resale)
 
 const linkedResaleIngredient = ref<Record<string, unknown> | null>(null)
+const linkedResaleIngredientId = computed(() => {
+  const id = linkedResaleIngredient.value?.id
+  return id != null ? String(id) : ''
+})
 const resaleUnitWeightGr = ref<number | null>(null)
 const resaleUnitWeightUnit = ref<'gr' | 'ml'>('gr')
 const resaleWeightError = ref(false)
