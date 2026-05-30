@@ -477,6 +477,16 @@ const displayPromoBreakdown = computed(() => {
   const name = activePromoHint.value || 'Promoción'
   return [{ promotion_name: name, promo_type: '', savings: promoSavings.value }]
 })
+
+/** Promo lines for prefactura snapshot, orderResult, and printed receipt — mirrors checkout summary. */
+function promoFieldsForReceipt(subtotal: number) {
+  if (promoSavings.value <= 0) return {}
+  return {
+    promo_savings: promoSavings.value,
+    promo_breakdown: displayPromoBreakdown.value.map(p => ({ ...p })),
+    subtotal,
+  }
+}
 const discountAmount = computed(() => {
   if (!discountEnabled.value || !discountInput.value) return 0
   const val = Number(discountInput.value)
@@ -871,13 +881,7 @@ const addSplitPayment = async () => {
         order_number: 0,
         total_amount: discountedTotal.value,
         payment_method: selectedPaymentMethod.value,
-        ...(promoBreakdown.value.length
-          ? {
-              promo_savings: promoSavings.value,
-              promo_breakdown: promoBreakdown.value,
-              subtotal: cartTotal.value,
-            }
-          : {}),
+        ...promoFieldsForReceipt(cartTotal.value),
         ...(discountEnabled.value && discountAmount.value > 0
           ? { discount_amount: discountAmount.value, subtotal: cartTotal.value }
           : {}),
@@ -1270,13 +1274,15 @@ const processOrder = async () => {
         standard_tax: Number(closeResponse?.data?.standard_tax) || 0,
         liquor_tax: Number(closeResponse?.data?.liquor_tax) || 0,
         standard_tax_label: closeResponse?.data?.standard_tax_label || 'Impuesto',
-        ...(closeResponse.data?.promo_breakdown?.length
-          ? {
-              promo_savings: Number(closeResponse.data.promo_savings) || 0,
-              promo_breakdown: closeResponse.data.promo_breakdown,
-              subtotal: _subtotal,
-            }
-          : {}),
+        ...(() => {
+          const fromApi = Number(closeResponse.data?.promo_savings) || 0
+          const savings = fromApi > 0 ? fromApi : promoSavings.value
+          if (savings <= 0) return {}
+          const breakdown = closeResponse.data?.promo_breakdown?.length
+            ? closeResponse.data.promo_breakdown
+            : displayPromoBreakdown.value.map(p => ({ ...p }))
+          return { promo_savings: savings, promo_breakdown: breakdown, subtotal: _subtotal }
+        })(),
         ...(discountEnabled.value && _discountAmt > 0
           ? { discount_amount: _discountAmt, subtotal: _subtotal }
           : {}),
@@ -1404,13 +1410,19 @@ const processOrder = async () => {
         standard_tax: response.data.standard_tax ?? 0,
         liquor_tax: response.data.liquor_tax ?? 0,
         standard_tax_label: response.data.standard_tax_label ?? 'Impuesto',
-        ...(response.data.promo_breakdown?.length
-          ? {
-              promo_savings: Number(response.data.promo_savings) || 0,
-              promo_breakdown: response.data.promo_breakdown,
-              subtotal: Number(response.data.subtotal) || _subtotalPos,
-            }
-          : {}),
+        ...(() => {
+          const fromApi = Number(response.data.promo_savings) || 0
+          const savings = fromApi > 0 ? fromApi : promoSavings.value
+          if (savings <= 0) return {}
+          const breakdown = response.data.promo_breakdown?.length
+            ? response.data.promo_breakdown
+            : displayPromoBreakdown.value.map(p => ({ ...p }))
+          return {
+            promo_savings: savings,
+            promo_breakdown: breakdown,
+            subtotal: Number(response.data.subtotal) || _subtotalPos,
+          }
+        })(),
         ...(discountEnabled.value && _discountAmtPos > 0
           ? { discount_amount: _discountAmtPos, subtotal: _subtotalPos }
           : {}),
@@ -1765,15 +1777,19 @@ const prefacturaPrintData = computed(() => {
     splitRemaining: splitRemaining.value,
     splitIsComplete: splitIsComplete.value,
     promoSavings: promoSavings.value,
-    promoBreakdown: promoBreakdown.value,
+    promoBreakdown: displayPromoBreakdown.value,
     cartSubtotal: cartTotal.value,
     manualDiscountAmount: discountAmount.value,
   }
 })
 
-const receiptPromoBreakdown = computed(
-  () => orderResult.value?.promo_breakdown ?? [],
-)
+const receiptPromoBreakdown = computed(() => {
+  const breakdown = orderResult.value?.promo_breakdown ?? []
+  if (breakdown.length > 0) return breakdown
+  const savings = Number(orderResult.value?.promo_savings) || 0
+  if (savings <= 0) return []
+  return [{ promotion_name: 'Promoción', promo_type: '', savings }]
+})
 
 function capturePrefacturaPrintSnapshot() {
   prefacturaPrintSnapshot.value = {
@@ -1786,7 +1802,7 @@ function capturePrefacturaPrintSnapshot() {
     splitRemaining: splitRemaining.value,
     splitIsComplete: splitIsComplete.value,
     promoSavings: promoSavings.value,
-    promoBreakdown: promoBreakdown.value.map(p => ({ ...p })),
+    promoBreakdown: displayPromoBreakdown.value.map(p => ({ ...p })),
     cartSubtotal: cartTotal.value,
     manualDiscountAmount: discountAmount.value,
   }
