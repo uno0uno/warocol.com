@@ -1,14 +1,19 @@
 <template>
-  <div class="md:col-span-2 flex flex-col gap-4 p-4 rounded-xl border border-border bg-surface-secondary/30">
-    <div>
-      <h4 class="text-sm font-semibold text-text-primary">Stock de reventa</h4>
-      <p class="text-xs text-text-secondary mt-1">
-        Se vende por pieza (<span class="font-mono">und</span>). El sistema crea el insumo de abastecimiento y lo vincula al producto.
+  <div
+    class="flex flex-col gap-4"
+    :class="embedded
+      ? ''
+      : 'md:col-span-2 p-4 rounded-xl border border-border bg-surface-secondary/30'"
+  >
+    <div v-if="!embedded">
+      <h4 class="text-sm font-semibold text-text-primary">Inventario</h4>
+      <p class="text-xs text-text-secondary mt-1 leading-relaxed">
+        Venta por pieza (<span class="font-mono">und</span>).
       </p>
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <span class="text-sm font-medium text-text-primary">Unidad de venta</span>
+      <span class="text-sm font-medium text-text-primary">Venta</span>
       <div
         class="h-10 flex items-center px-3 rounded-lg border border-border bg-surface-secondary/60 text-sm text-text-secondary select-none"
         aria-readonly="true"
@@ -19,9 +24,7 @@
 
     <div class="flex flex-col gap-1.5">
       <label :for="weightInputId" class="text-sm font-medium text-text-primary">
-        {{ unitWeightUnit }} por unidad
-        <span class="text-destructive">*</span>
-        <span class="text-xs text-text-tertiary font-normal">— equivalencia para inventario</span>
+        Equivalencia <span class="text-destructive">*</span>
       </label>
       <div class="flex gap-2">
         <div class="flex rounded-lg border border-border overflow-hidden flex-shrink-0" role="group" aria-label="Unidad de equivalencia">
@@ -54,17 +57,17 @@
           type="number"
           min="0"
           step="0.1"
-          :placeholder="`Ej: 400 (1 und = 400 ${unitWeightUnit})`"
+          :placeholder="`Ej. 400`"
           class="input-base flex-1 min-h-[44px] px-4 py-2"
           :class="showError ? 'border-destructive focus:ring-destructive' : ''"
           @input="emit('clear-error')"
         />
       </div>
       <p v-if="showError" role="alert" class="text-xs text-destructive">
-        Indica cuántos {{ unitWeightUnit }} equivale cada unidad vendida.
+        Indica cuántos {{ unitWeightUnit }} equivale 1 und.
       </p>
       <p v-else class="text-xs text-text-tertiary">
-        Ejemplo: una gaseosa de 400 ml → 400 ml por unidad. Cada venta descuenta 1 und del inventario.
+        1 venta = 1 und en inventario.
       </p>
     </div>
 
@@ -87,21 +90,26 @@
 <script setup lang="ts">
 import {
   UND_PURCHASE_UNIT_SUGGESTIONS,
+  defaultUndPurchaseUnitsDraft,
   type DraftPurchaseUnit,
 } from '@/composables/useIngredientPurchaseUnitsDraft'
 
 const unitWeightGr = defineModel<number | null>('unitWeightGr', { default: null })
 const unitWeightUnit = defineModel<'gr' | 'ml'>('unitWeightUnit', { default: 'gr' })
-const draftUnits = defineModel<DraftPurchaseUnit[]>('draftUnits')
+const draftUnits = defineModel<DraftPurchaseUnit[]>('draftUnits', {
+  default: () => defaultUndPurchaseUnitsDraft(),
+})
 
 const props = withDefaults(
   defineProps<{
     showError?: boolean
     linkedIngredientId?: string
+    embedded?: boolean
   }>(),
   {
     showError: false,
     linkedIngredientId: '',
+    embedded: false,
   },
 )
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="page-layout">
+  <div>
     <UiSubmitBusyOverlay
       :busy="isSubmitting"
       label="Creando producto..."
@@ -8,406 +8,291 @@
       indicator="matrix"
     />
 
-    <!-- Loading State -->
     <div v-if="isLoadingData" class="flex items-center justify-center min-h-[400px]">
       <CommonsTheCustomLoader size="large" />
     </div>
 
-    <!-- Main Content -->
-    <div v-else>
-      <!-- Product Information Card -->
-      <div class="bg-surface border-2 border-border rounded-lg mb-4 sm:mb-6">
-        <div class="p-4 sm:p-6">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            <!-- Product Name -->
-            <div class="flex items-center space-x-2 sm:space-x-3">
-              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  Nuevo Producto
-                </p>
-                <p class="text-lg font-semibold text-text-primary">
-                  {{ form.name || 'Sin nombre' }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Category -->
-            <div class="flex items-center space-x-2 sm:space-x-3">
-              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  Categoría
-                </p>
-                <p class="text-sm sm:text-lg font-semibold text-text-primary">
-                  {{ getCategoryName(form.category_id) || 'Sin categoría' }}
-                </p>
-              </div>
-            </div>
-
-            <!-- Status Badge -->
-            <div class="flex items-center space-x-2 sm:space-x-3">
-              <div class="bg-background p-2 sm:p-3 rounded-lg border border-border flex-shrink-0">
-                <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">
-                  Estado
-                </p>
-                <div class="pt-1">
-                  <UiStatusBadge
-                    :value="form.is_available ? 'Disponible' : 'No disponible'"
-                    format="text"
-                    :variant="form.is_available ? 'success' : 'default'"
-                    size="lg"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Progress Steps -->
-      <div class="bg-surface border-border border rounded-lg mb-4 sm:mb-6">
-        <div class="p-3 sm:p-6">
-          <div class="flex items-center justify-between">
-            <template v-for="(step, index) in wizardSteps" :key="step.id">
-              <div
-                class="flex items-center min-w-0"
-                :class="index < wizardSteps.length - 1 ? 'flex-1' : ''"
-              >
-                <div
-                  class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-                  :class="{
-                    'bg-primary text-primary-foreground border-primary': currentStep === step.id,
-                    'bg-secondary text-secondary-foreground border-secondary': currentStep > step.id,
-                    'border-border text-text-secondary bg-transparent': currentStep < step.id,
-                  }"
-                >
-                  <svg
-                    v-if="currentStep > step.id"
-                    class="w-4 h-4 sm:w-6 sm:h-6"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    aria-hidden="true"
-                  >
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                  </svg>
-                  <span v-else class="font-semibold text-sm sm:text-base">{{ index + 1 }}</span>
-                </div>
-                <div class="ml-1 sm:ml-3 flex-1 min-w-0">
-                  <p
-                    class="text-xs sm:text-sm font-medium truncate"
-                    :class="currentStep >= step.id ? 'text-text-primary' : 'text-text-secondary'"
-                  >
-                    <span class="hidden sm:inline">{{ step.label }}</span>
-                    <span class="sm:hidden">{{ step.shortLabel }}</span>
-                  </p>
-                  <p class="text-xs text-text-secondary hidden sm:block">{{ step.subtitle }}</p>
-                </div>
-                <div
-                  v-if="index < wizardSteps.length - 1"
-                  class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4"
-                  :class="currentStep > step.id ? 'bg-secondary' : 'bg-border'"
-                />
-              </div>
+    <div v-else class="space-y-6">
+      <!-- Tipo de producto — siempre visible -->
+      <div class="bg-surface border-2 border-border rounded-xl shadow-sm p-4 sm:p-6">
+        <h2 class="text-base sm:text-lg font-semibold text-text-primary mb-1">
+          ¿Cómo se prepara este producto?
+        </h2>
+        <p class="text-sm text-text-secondary leading-relaxed mb-4 sm:mb-5">
+          Elige si lleva receta en cocina o se vende tal cual (reventa).
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" aria-label="Tipo de creación de producto">
+          <UiSelectionOptionCard
+            title="Con receta"
+            description="Cocina con ingredientes y recetas base. Cada venta descuenta inventario."
+            :selected="productCreateMode === 'recipe'"
+            @click="setProductCreateMode('recipe')"
+          >
+            <template #icon>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
             </template>
-          </div>
+          </UiSelectionOptionCard>
+          <UiSelectionOptionCard
+            title="Venta directa"
+            description="Reventa por pieza (und). Equivalencia en gr o ml para stock."
+            :selected="productCreateMode === 'resale-direct'"
+            @click="setProductCreateMode('resale-direct')"
+          >
+            <template #icon>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </template>
+          </UiSelectionOptionCard>
         </div>
       </div>
 
-      <!-- Form Content -->
-      <form @submit.prevent="handleNext">
-        <!-- Step 1: Tipo de producto (Flujo B — #845, wizard #873) -->
-        <Transition name="fade" mode="out-in">
-        <div v-if="currentStep === STEP.TIPO" key="step-tipo" class="bg-surface border-border border rounded-lg">
-          <div class="p-4 sm:p-6">
-            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">¿Cómo se prepara este producto?</h3>
-            <p class="text-sm text-text-secondary leading-relaxed mb-5 sm:mb-6">
-              Elige si lleva receta en cocina o se vende tal cual (reventa).
-            </p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" aria-label="Tipo de creación de producto">
-              <UiSelectionOptionCard
-                title="Con receta"
-                description="Cocina con ingredientes y recetas base. Cada venta descuenta inventario."
-                :selected="productCreateMode === 'recipe'"
-                @click="setProductCreateMode('recipe')"
-              >
-                <template #icon>
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                </template>
-              </UiSelectionOptionCard>
-              <UiSelectionOptionCard
-                title="Venta directa"
-                description="Reventa por pieza (und). Equivalencia en gr o ml para stock."
-                :selected="productCreateMode === 'resale-direct'"
-                @click="setProductCreateMode('resale-direct')"
-              >
-                <template #icon>
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                  </svg>
-                </template>
-              </UiSelectionOptionCard>
-            </div>
-          </div>
-        </div>
-
-        <!-- Step 2: Información General -->
-        <div v-else-if="currentStep === STEP.INFO" key="step-info" class="bg-surface border-border border rounded-lg">
-          <div class="p-4 sm:p-6">
-            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-4 sm:mb-6">Información General</h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <!-- Product Name -->
-              <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Nombre del Producto *
-                </label>
-                <input
-                  type="text"
-                  v-model="form.name"
-                  placeholder="Ej: Pizza Margarita"
-                  class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary"
-                  :class="nameError ? 'border-destructive focus:ring-destructive' : 'border-border'"
-                  required
-                  @input="nameError = ''"
+      <form @submit.prevent="submitProduct" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
+        <div class="xl:col-span-2 space-y-6">
+          <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
+            <UiFormSection title="Datos del producto">
+              <template #badge>
+                <UiStatusBadge
+                  v-if="isResaleDirectMode"
+                  value="Reventa"
+                  format="text"
+                  variant="primary"
+                  size="sm"
+                  class="flex-shrink-0"
                 />
-                <p v-if="nameError" role="alert" class="text-xs text-destructive mt-1 flex items-center gap-1">
-                  <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                  {{ nameError }}
-                </p>
-              </div>
+              </template>
 
-              <!-- Description -->
-              <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Descripción
-                </label>
-                <textarea
-                  v-model="form.description"
-                  placeholder="Describe tu producto..."
-                  rows="3"
-                  class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary resize-none"
-                />
-              </div>
+              <div class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-[1fr_7.5rem] gap-4 sm:gap-5 items-start">
+                  <div class="space-y-4 min-w-0">
+                    <div>
+                      <label class="block text-sm font-medium text-text-primary mb-1">
+                        Nombre *
+                      </label>
+                      <input
+                        v-model="form.name"
+                        type="text"
+                        required
+                        class="input-base w-full px-4 py-2"
+                        :class="nameError ? 'border-destructive focus:ring-destructive' : ''"
+                        placeholder="Ej. hamburguesa clásica"
+                        @input="nameError = ''"
+                      />
+                      <p v-if="nameError" role="alert" class="text-xs text-destructive mt-1 flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                        {{ nameError }}
+                      </p>
+                    </div>
 
-              <!-- Image (issue #465) -->
-              <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-text-primary mb-2">Imagen</label>
-                <div class="flex items-center gap-4">
-                  <div class="w-24 h-24 rounded-lg border-2 border-dashed border-border bg-surface-secondary overflow-hidden flex items-center justify-center flex-shrink-0">
-                    <img
-                      v-if="form.image_url"
-                      :src="form.image_url"
-                      :alt="form.name || 'Imagen del producto'"
-                      class="w-full h-full object-cover"
-                      loading="lazy"
+                    <div>
+                      <label class="block text-sm font-medium text-text-primary mb-1">
+                        Descripción <span class="text-text-tertiary font-normal">(opcional)</span>
+                      </label>
+                      <textarea
+                        v-model="form.description"
+                        rows="3"
+                        class="input-base w-full px-4 py-2 resize-y min-h-[5.5rem] sm:min-h-[6.5rem]"
+                        placeholder="Breve descripción para el menú"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="flex flex-col gap-2 sm:w-[7.5rem] flex-shrink-0">
+                    <label class="text-sm font-medium text-text-primary">
+                      Foto
+                    </label>
+                    <div class="w-[5.5rem] h-[5.5rem] sm:w-full sm:aspect-square rounded-lg border border-dashed border-border/80 bg-surface-secondary/50 overflow-hidden flex items-center justify-center">
+                      <img
+                        v-if="form.image_url"
+                        :src="form.image_url"
+                        :alt="form.name || 'Imagen del producto'"
+                        class="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                      <svg v-else class="w-7 h-7 text-text-tertiary/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                      <button
+                        type="button"
+                        @click="showImageModal = true"
+                        class="min-h-[40px] px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 whitespace-nowrap"
+                      >
+                        {{ form.image_url ? 'Cambiar' : 'Subir foto' }}
+                      </button>
+                      <button
+                        v-if="form.image_url"
+                        type="button"
+                        @click="form.image_url = ''"
+                        class="min-h-[40px] px-3 py-1.5 text-sm border border-destructive/60 text-destructive rounded-lg hover:bg-destructive/5 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/30 whitespace-nowrap"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div :class="businessProfile?.comandas_enabled ? 'sm:col-span-2' : ''">
+                    <label class="block text-sm font-medium text-text-primary mb-1">
+                      Categoría *
+                    </label>
+                    <UiCategorySearchInput
+                      :allow-create="true"
+                      :initial-value="selectedCategoryName"
+                      placeholder="Buscar categoría..."
+                      @select="onCategorySelected"
+                      @create="onCategoryCreateRequested"
                     />
-                    <svg v-else class="w-8 h-8 text-text-secondary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
                   </div>
-                  <div class="flex flex-col gap-2">
-                    <button
-                      type="button"
-                      @click="showImageModal = true"
-                      class="min-h-[44px] px-3 py-2 text-sm border border-border rounded-lg hover:bg-surface-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    >
-                      {{ form.image_url ? 'Cambiar imagen' : 'Subir imagen' }}
-                    </button>
-                    <button
-                      v-if="form.image_url"
-                      type="button"
-                      @click="form.image_url = ''"
-                      class="text-xs text-destructive hover:underline"
-                    >
-                      Eliminar
-                    </button>
+
+                  <div v-if="businessProfile?.comandas_enabled">
+                    <label class="block text-sm font-medium text-text-primary mb-1">
+                      Cocina
+                    </label>
+                    <div class="flex items-center gap-2 min-h-[42px] px-3 py-2 rounded-lg bg-surface-secondary/60 border border-border/60 text-sm">
+                      <template v-if="isAssigningInheritedStation">
+                        <UiLoadingDots size="8px" color="var(--color-primary)" />
+                        <span class="text-text-secondary">Asignando…</span>
+                      </template>
+                      <template v-else-if="inheritedStation">
+                        <span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ backgroundColor: inheritedStation.color ?? '#94a3b8' }" />
+                        <span class="font-medium text-text-primary truncate">{{ inheritedStation.name }}</span>
+                        <span class="text-text-tertiary text-xs flex-shrink-0">desde categoría</span>
+                      </template>
+                      <template v-else>
+                        <span class="text-text-tertiary text-xs leading-snug flex-1">Sin comanda en categoría</span>
+                        <button
+                          type="button"
+                          :disabled="isAssigningInheritedStation"
+                          @click="showNewStationModal = true"
+                          class="text-xs font-medium text-primary hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded px-2 py-1 flex-shrink-0 disabled:opacity-50"
+                        >
+                          Crear estación
+                        </button>
+                      </template>
+                    </div>
+                  </div>
+
+                  <div v-if="!isResaleDirectMode">
+                    <label class="block text-sm font-medium text-text-primary mb-1">
+                      Preparación (min)
+                    </label>
+                    <input
+                      v-model.number="form.preparation_time"
+                      type="number"
+                      min="0"
+                      class="input-base w-full px-4 py-2"
+                      placeholder="15"
+                    />
                   </div>
                 </div>
               </div>
+            </UiFormSection>
 
-              <!-- Category — search + inline create (issue #458) -->
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Categoría *
-                </label>
-                <UiCategorySearchInput
-                  :allow-create="true"
-                  :initial-value="selectedCategoryName"
-                  placeholder="Buscar o crear categoría..."
-                  @select="onCategorySelected"
-                  @create="onCategoryCreateRequested"
-                />
-              </div>
-
-              <!-- Inherited kitchen station (read-only, comandas only) -->
-              <div v-if="businessProfile?.comandas_enabled">
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Cocina heredada
-                </label>
-                <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-secondary border border-border text-sm min-h-[38px]">
-                  <template v-if="isAssigningInheritedStation">
-                    <UiLoadingDots size="8px" color="var(--color-primary)" />
-                    <span class="text-text-secondary">Asignando cocina…</span>
-                  </template>
-                  <template v-else-if="inheritedStation">
-                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ backgroundColor: inheritedStation.color ?? '#94a3b8' }" />
-                    <span class="font-semibold text-text-primary">{{ inheritedStation.name }}</span>
-                    <span class="text-text-tertiary text-xs ml-1">(vía categoría)</span>
-                  </template>
-                  <template v-else>
-                    <span class="text-text-tertiary">Sin comanda — asigna una estación a la categoría</span>
-                    <button
-                      type="button"
-                      :disabled="isAssigningInheritedStation"
-                      @click="showNewStationModal = true"
-                      class="ml-auto text-xs font-medium text-primary hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      + Crear estación
-                    </button>
-                  </template>
-                </div>
-              </div>
-
-              <!-- Preparation Time -->
-              <div v-if="!isResaleDirectMode">
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Tiempo de Preparación (min)
-                </label>
-                <input
-                  type="number"
-                  v-model.number="form.preparation_time"
-                  placeholder="15"
-                  min="0"
-                  class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary"
-                />
-              </div>
-
-              <!-- Price -->
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Precio de Venta *
-                </label>
-                <div class="relative">
-                  <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary">$</span>
-                  <input
-                    type="number"
-                    v-model.number="form.price"
-                    placeholder="25000"
-                    min="0"
-                    step="100"
-                    class="w-full pl-8 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary"
-                    required
-                  />
-                </div>
-              </div>
-
-              <!-- Costo real (preview) -->
-              <div v-if="!isResaleDirectMode">
-                <label class="block text-sm font-medium text-text-secondary mb-2">
-                  Costo real (sistema)
-                </label>
-                <div class="relative">
-                  <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary">$</span>
-                  <input
-                    type="text"
-                    readonly
-                    :value="calculatedCost === null ? '—' : formatCurrency(calculatedCost)"
-                    class="w-full pl-8 pr-4 py-2 border border-border rounded-lg bg-surface-secondary text-text-primary cursor-not-allowed"
-                  />
-                </div>
-                <p class="text-xs text-text-tertiary mt-1">Estimado hasta guardar; se calcula desde la receta y compras.</p>
-              </div>
-
-              <!-- Mi costo del plato -->
-              <div>
-                <label class="block text-sm font-medium text-text-primary mb-2">
-                  Mi costo del plato
-                </label>
-                <div class="relative">
-                  <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary">$</span>
-                  <input
-                    type="number"
-                    v-model.number="form.costo_percibido"
-                    placeholder="Opcional"
-                    min="0"
-                    step="100"
-                    class="w-full pl-8 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-text-primary"
-                  />
-                </div>
-                <p class="text-xs text-text-tertiary mt-1">Costo operativo que tú defines; no lo cambia el sistema.</p>
-              </div>
-
-              <!-- Checkboxes -->
-              <div class="space-y-3">
-                <label class="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    v-model="form.is_available"
-                    class="w-5 h-5 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <span class="text-sm font-medium text-text-primary">Disponible para venta</span>
-                </label>
-
-                <label class="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    v-model="form.is_available_online"
-                    class="w-5 h-5 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <div>
-                    <span class="text-sm font-medium text-text-primary">Disponible para domicilios</span>
-                    <p class="text-xs text-text-secondary mt-0.5">Aparece en el menú de pedidos online (delivery/pickup)</p>
+            <UiFormSection title="Precio">
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-1">
+                    Precio *
+                  </label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                    <input
+                      v-model.number="form.price"
+                      type="number"
+                      required
+                      min="0"
+                      step="100"
+                      class="input-base w-full pl-8 pr-4 py-2"
+                      placeholder="15000"
+                    />
                   </div>
-                </label>
+                </div>
 
-                <label class="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    v-model="form.is_available_table_qr"
-                    class="w-5 h-5 text-primary border-border rounded focus:ring-primary"
-                  />
-                  <div>
-                    <span class="text-sm font-medium text-text-primary">Pedido en mesa (QR)</span>
-                    <p class="text-xs text-text-secondary mt-0.5">Independiente de domicilios. Solo aparece en el menú QR de la mesa.</p>
+                <div v-if="!isResaleDirectMode">
+                  <label class="block text-sm font-medium text-text-primary mb-1">
+                    Costo calculado
+                  </label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                    <input
+                      :value="calculatedCost === null ? '—' : formatCurrency(calculatedCost)"
+                      type="text"
+                      disabled
+                      class="input-base w-full pl-8 pr-4 py-2 bg-surface-secondary cursor-not-allowed"
+                      placeholder="0"
+                    />
                   </div>
-                </label>
+                  <p class="text-xs text-text-tertiary mt-1">
+                    Estimado al guardar; desde receta y compras.
+                  </p>
+                </div>
 
-                <!-- REMOVED: Controlar stock - Now ALL products control inventory automatically -->
-                <!-- REMOVED: Es combo - Combos are now managed through product_base_recipes -->
+                <div>
+                  <label class="block text-sm font-medium text-text-primary mb-1">
+                    Tu costo <span class="text-text-tertiary font-normal">(opcional)</span>
+                  </label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
+                    <input
+                      v-model.number="form.costo_percibido"
+                      type="number"
+                      min="0"
+                      step="100"
+                      class="input-base w-full pl-8 pr-4 py-2"
+                      placeholder="Referencia interna"
+                    />
+                  </div>
+                  <p class="text-xs text-text-tertiary mt-1">
+                    No modifica el costo calculado.
+                  </p>
+                </div>
               </div>
 
-              <MenuProductResaleCreateForm
-                v-if="isResaleDirectMode"
-                v-model:unit-weight-gr="resaleUnitWeightGr"
-                v-model:unit-weight-unit="resaleUnitWeightUnit"
-                v-model:draft-units="resalePurchaseUnits"
-                :show-error="resaleWeightError"
-                @clear-error="resaleWeightError = false"
-              />
-            </div>
+              <div
+                v-if="form.price > 0 && calculatedCost !== null"
+                class="mt-4 p-3.5 bg-surface-secondary/70 rounded-lg border border-border/60 space-y-2.5"
+              >
+                <div v-if="calculatedCost > 0" class="flex items-center justify-between gap-3">
+                  <span class="text-sm font-medium text-text-primary">Margen real</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-text-primary tabular-nums">
+                      {{ marginRealValue === null ? '—' : formatCurrency(marginRealValue) }}
+                    </span>
+                    <UiStatusBadge
+                      v-if="marginRealPct(marginPreview) !== null"
+                      :label="`${marginRealPct(marginPreview)!.toFixed(1)}%`"
+                      :variant="(marginRealPct(marginPreview) ?? 0) > 50 ? 'success' : 'warning'"
+                    />
+                  </div>
+                </div>
+                <div
+                  v-if="form.costo_percibido != null && form.costo_percibido > 0"
+                  class="flex items-center justify-between gap-3"
+                >
+                  <span class="text-sm font-medium text-text-primary">Margen operativo</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-text-primary tabular-nums">
+                      {{ marginOperativoValue === null ? '—' : formatCurrency(marginOperativoValue) }}
+                    </span>
+                    <UiStatusBadge
+                      v-if="marginOperativoPct(marginPreview) !== null"
+                      :label="`${marginOperativoPct(marginPreview)!.toFixed(1)}%`"
+                      variant="secondary"
+                    />
+                  </div>
+                </div>
+              </div>
+            </UiFormSection>
 
-            <!-- Categoría de Impuesto — solo visible cuando el tenant tiene impuestos activos -->
-            <div v-if="hasTaxes" class="mt-6">
-              <h4 class="text-sm font-semibold text-text-primary mb-1">Categoría de Impuesto</h4>
-              <p class="text-sm text-text-secondary mb-3">
-                Define cómo se aplica el impuesto a este producto según la configuración del negocio.
-              </p>
+            <UiFormSection
+              v-if="hasTaxes"
+              title="Impuesto"
+            >
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="group" aria-label="Categoría de impuesto">
                 <button
                   type="button"
@@ -420,7 +305,7 @@
                   ]"
                 >
                   <span class="text-sm font-semibold">Alimento / Bebida</span>
-                  <span class="text-xs leading-snug">INC 8% o IVA 19% según configuración del negocio</span>
+                  <span class="text-xs leading-snug">INC 8% o IVA 19%</span>
                 </button>
                 <button
                   type="button"
@@ -433,7 +318,7 @@
                   ]"
                 >
                   <span class="text-sm font-semibold">Licor para llevar</span>
-                  <span class="text-xs leading-snug">IVA licores 5% — botellas o licores para llevar</span>
+                  <span class="text-xs leading-snug">IVA licores 5%</span>
                 </button>
                 <button
                   type="button"
@@ -446,428 +331,339 @@
                   ]"
                 >
                   <span class="text-sm font-semibold">Exento</span>
-                  <span class="text-xs leading-snug">Sin impuesto — alimentos básicos sin transformación</span>
+                  <span class="text-xs leading-snug">Sin impuesto</span>
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
+            </UiFormSection>
 
-        <!-- Step 3: Receta / Ingredientes -->
-        <div v-else-if="currentStep === STEP.RECETA && !isResaleDirectMode" key="step-receta" class="bg-surface border border-border rounded-lg">
-          <MenuCatalogInlineCreateBusyOverlay
-            :busy="inlineCatalogBusy"
-            :label="inlineCatalogBusyLabel"
-            :hint="inlineCatalogBusyHint"
-          >
-          <div class="p-4 sm:p-6">
-            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">Receta</h3>
-            <p class="text-sm text-text-secondary mb-4 sm:mb-6">
-              Agrega recetas base o ingredientes. Cada venta descontará stock del inventario automáticamente.
-            </p>
+            <UiFormSection
+              v-if="isResaleDirectMode"
+              title="Inventario"
+            >
+              <MenuProductResaleCreateForm
+                v-model:unit-weight-gr="resaleUnitWeightGr"
+                v-model:unit-weight-unit="resaleUnitWeightUnit"
+                v-model:draft-units="resalePurchaseUnits"
+                :show-error="resaleWeightError"
+                embedded
+                @clear-error="resaleWeightError = false"
+              />
+            </UiFormSection>
 
-            <!-- Recetas Base (Opcional) -->
-            <div class="mb-6">
-              <div class="flex justify-between items-center mb-2">
-                <label class="block text-sm font-medium text-text-primary">
-                  Recetas Base (Opcional)
-                </label>
-                <button
-                  type="button"
-                  @click="addRecipeBase"
-                  class="btn-secondary px-3 py-1.5 rounded-lg text-xs flex items-center gap-1"
-                >
-                  + Agregar Receta Base
-                </button>
-              </div>
-              <p class="text-xs text-text-secondary mb-3">
-                Selecciona una o más recetas base para usar sus ingredientes predefinidos.
-              </p>
+            <MenuCatalogInlineCreateBusyOverlay
+              v-if="!isResaleDirectMode"
+              :busy="inlineCatalogBusy"
+              :label="inlineCatalogBusyLabel"
+              :hint="inlineCatalogBusyHint"
+            >
+              <UiFormSection title="Recetas base">
+                <template #actions>
+                  <button
+                    type="button"
+                    @click="addRecipeBase"
+                    class="btn-secondary px-3 py-1.5 rounded-lg text-xs flex items-center gap-1"
+                  >
+                    + Agregar
+                  </button>
+                </template>
 
-              <!-- Lista de recetas base seleccionadas -->
-              <div v-if="form.recipe_bases.length > 0" class="space-y-3 mb-4">
-                <div
-                  v-for="(link, index) in form.recipe_bases"
-                  :key="index"
-                  class="flex items-start gap-3 p-3 bg-surface-secondary rounded-lg border border-border"
-                >
-                  <div class="flex-1">
-                    <div class="flex flex-col sm:flex-row gap-2">
-                      <select
-                        v-model="link.recipe_base_id"
-                        class="flex-1 min-h-[44px] px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
-                        @change="onRecipeBaseChange"
-                        :aria-label="`Receta base ${index + 1}`"
-                      >
-                        <option value="">Seleccionar receta base...</option>
-                        <option v-for="recipe in recipeBases" :key="recipe.id" :value="recipe.id">
-                          {{ recipe.name }}
-                        </option>
-                      </select>
-                      <div class="flex items-center gap-1.5 sm:w-32">
-                        <input
-                          v-model.number="link.quantity"
-                          type="number"
-                          min="0"
-                          step="any"
-                          inputmode="decimal"
-                          class="w-full min-h-[44px] px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface"
-                          :aria-label="`Cantidad de la receta ${index + 1}`"
-                          :title="'Cuántas unidades de esta receta consume el producto (ej. 2× = doble del rendimiento)'"
-                        />
-                        <span class="text-xs text-text-secondary whitespace-nowrap">× receta</span>
-                      </div>
-                    </div>
-
-                    <!-- Ingredientes de esta receta base -->
-                    <div v-if="link.recipe_base_id && getRecipeBaseIngredients(link.recipe_base_id).length > 0" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
-                      <div class="text-xs space-y-1">
-                        <div
-                          v-for="ing in getRecipeBaseIngredients(link.recipe_base_id)"
-                          :key="ing.id"
-                          class="flex justify-between text-text-secondary"
+                <div v-if="form.recipe_bases.length > 0" class="space-y-3">
+                  <div
+                    v-for="(link, index) in form.recipe_bases"
+                    :key="index"
+                    class="flex items-start gap-3 p-3 bg-surface-secondary rounded-lg border border-border"
+                  >
+                    <div class="flex-1">
+                      <div class="flex flex-col sm:flex-row gap-2">
+                        <select
+                          v-model="link.recipe_base_id"
+                          class="input-base flex-1 min-h-[44px] px-3 py-2 text-sm"
+                          @change="onRecipeBaseChange"
+                          :aria-label="`Receta base ${index + 1}`"
                         >
-                          <span>{{ ing.ingredient_name }}</span>
-                          <span>{{ (Number(ing.base_quantity) * (Number(link.quantity) || 1)).toFixed(2) }} {{ ing.unit }}</span>
+                          <option value="">Elegir receta…</option>
+                          <option v-for="recipe in recipeBases" :key="recipe.id" :value="recipe.id">
+                            {{ recipe.name }}
+                          </option>
+                        </select>
+                        <div class="flex items-center gap-1.5 sm:w-32">
+                          <input
+                            v-model.number="link.quantity"
+                            type="number"
+                            min="0"
+                            step="any"
+                            inputmode="decimal"
+                            class="input-base w-full min-h-[44px] px-3 py-2 text-sm"
+                            :aria-label="`Cantidad de la receta ${index + 1}`"
+                            :title="'Cuántas unidades de esta receta consume el producto (ej. 2× = doble del rendimiento)'"
+                          />
+                          <span class="text-xs text-text-secondary whitespace-nowrap">× receta</span>
+                        </div>
+                      </div>
+
+                      <div v-if="link.recipe_base_id && getRecipeBaseIngredients(link.recipe_base_id).length > 0" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                        <div class="text-xs space-y-1">
+                          <div
+                            v-for="ing in getRecipeBaseIngredients(link.recipe_base_id)"
+                            :key="ing.id"
+                            class="flex justify-between text-text-secondary"
+                          >
+                            <span>{{ ing.ingredient_name }}</span>
+                            <span>{{ (Number(ing.base_quantity) * (Number(link.quantity) || 1)).toFixed(2) }} {{ ing.unit }}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <button
-                    type="button"
-                    @click="removeRecipeBase(index)"
-                    class="min-h-[44px] min-w-[44px] p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                    :aria-label="`Eliminar receta base ${index + 1}`"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Empty state -->
-              <div v-else class="text-center py-6 text-text-secondary border border-dashed border-border rounded-lg">
-                <p class="text-sm">No hay recetas base agregadas</p>
-                <p class="text-xs mt-1">Haz clic en "+ Agregar Receta Base" para comenzar</p>
-              </div>
-            </div>
-
-            <!-- Líneas adicionales: ingrediente o reventa -->
-            <MenuIngredientProductHint class="mb-4" />
-            <div class="flex justify-between items-center mb-4">
-              <h4 class="text-sm font-semibold text-text-primary">Ingredientes y reventa (adicionales)</h4>
-              <button
-                type="button"
-                @click="addIngredient"
-                class="btn-secondary px-3 sm:px-4 py-2 rounded-lg text-sm"
-              >
-                + Agregar
-              </button>
-            </div>
-
-            <!-- Empty State -->
-            <div v-if="form.ingredients.length === 0" class="text-center py-12 text-text-secondary">
-              <svg class="w-16 h-16 mx-auto mb-4 text-titan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              <p class="text-base font-medium mb-1">No hay líneas adicionales</p>
-              <p class="text-sm">Agrega ingredientes o productos de reventa para calcular el costo</p>
-            </div>
-
-            <!-- Ingredients List -->
-            <div v-else class="space-y-3">
-              <div
-                v-for="(ingredient, index) in form.ingredients"
-                :key="index"
-                class="border border-border rounded-lg p-3 sm:p-4 bg-background"
-              >
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                  <!-- Ingredient -->
-                  <div class="md:col-span-5">
-                    <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa</label>
-                    <UiIngredientSearchInput
-                      :key="ingredient.ingredient_id || `new-${index}`"
-                      :initial-value="getIngredientSearchLabel(ingredient)"
-                      :allow-create="true"
-                      @select="(ing) => selectIngredient(ing, index)"
-                      @create="(name) => openCustomIngModal(name, index)"
-                    />
-                  </div>
-
-                  <!-- Quantity -->
-                  <div class="md:col-span-3">
-                    <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad</label>
-                    <input
-                      type="number"
-                      v-model.number="ingredient.quantity"
-                      @input="updateIngredientCost(index)"
-                      placeholder="0"
-                      min="0.01"
-                      step="any"
-                      class="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary"
-                    />
-                  </div>
-
-                  <!-- Unit -->
-                  <div class="md:col-span-3">
-                    <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
-                    <div class="relative">
-                      <select
-                        v-model="ingredient.unit"
-                        :disabled="loadingUnits.has(ingredient.ingredient_id)"
-                        class="w-full py-2 pr-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text-primary bg-surface disabled:opacity-50"
-                        :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
-                      >
-                        <option v-if="!ingredient.ingredient_id" value="" disabled>
-                          Selecciona ingrediente
-                        </option>
-                        <option
-                          v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
-                          :key="opt.value"
-                          :value="opt.value"
-                        >
-                          {{ opt.label }}
-                        </option>
-                      </select>
-                      <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
-                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                        </svg>
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Delete Button -->
-                  <div class="md:col-span-1 flex items-end">
                     <button
                       type="button"
-                      @click="removeIngredient(index)"
-                      class="w-full md:w-auto px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      @click="removeRecipeBase(index)"
+                      class="min-h-[44px] min-w-[44px] p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      :aria-label="`Eliminar receta base ${index + 1}`"
                     >
-                      <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-          </MenuCatalogInlineCreateBusyOverlay>
-        </div>
 
-        <!-- Step 4: Review - Product Summary -->
-        <div v-else-if="currentStep === STEP.REVISION" key="step-revision">
-          <!-- Header compacto -->
-          <div class="bg-surface border border-border rounded-lg px-4 sm:px-6 py-3 mb-3 flex items-center justify-between">
-            <div>
-              <p class="text-xs text-text-secondary uppercase tracking-wide font-semibold">Nuevo Producto · Resumen</p>
-              <p class="text-base font-bold text-text-primary">{{ form.name }}</p>
-            </div>
-            <p class="text-xs text-text-secondary">{{ new Date().toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'numeric' }) }}</p>
-          </div>
-
-          <!-- Layout dos columnas -->
-          <div class="flex flex-col lg:flex-row gap-4 items-start">
-
-            <!-- Columna izquierda: recetas + ingredientes / reventa -->
-            <div class="w-full lg:flex-1 space-y-4">
-
-              <!-- Venta directa: stock -->
-              <div v-if="isResaleDirectMode" class="bg-surface border border-border rounded-lg p-4">
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
-                  Venta directa
-                </p>
-                <div class="space-y-2 text-sm">
-                  <div class="flex justify-between">
-                    <span class="text-text-secondary">Unidad de venta</span>
-                    <span class="font-semibold text-text-primary font-mono">und</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-text-secondary">Equivalencia</span>
-                    <span class="font-semibold text-text-primary">
-                      {{ resaleUnitWeightGr }} {{ resaleUnitWeightUnit }} / und
-                    </span>
-                  </div>
+                <div v-else class="text-center py-5 text-text-secondary border border-dashed border-border/80 rounded-lg">
+                  <p class="text-sm">Sin recetas base</p>
+                  <p class="text-xs mt-1">Usa + Agregar para vincular una</p>
                 </div>
-              </div>
+              </UiFormSection>
 
-              <template v-if="!isResaleDirectMode">
-              <!-- Recetas Base -->
-              <div v-if="form.recipe_bases.length > 0" class="bg-surface border border-border rounded-lg p-4">
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
-                  Recetas Base ({{ form.recipe_bases.length }})
-                </p>
-                <div class="space-y-3">
-                  <div
-                    v-for="(link, index) in form.recipe_bases"
-                    :key="index"
-                    class="border border-border rounded-lg p-3 bg-background"
-                  >
-                    <h4 class="font-semibold text-text-primary mb-2 flex items-center gap-2 text-sm">
-                      📋 {{ getRecipeBaseName(link.recipe_base_id) }}
-                      <span v-if="Number(link.quantity) !== 1" class="text-xs font-normal text-text-secondary">
-                        × {{ Number(link.quantity) }}
-                      </span>
-                    </h4>
-                    <div class="space-y-1">
-                      <div
-                        v-for="ing in getRecipeBaseIngredients(link.recipe_base_id)"
-                        :key="ing.id"
-                        class="flex justify-between text-xs py-1 border-b border-border last:border-0"
-                      >
-                        <span class="text-text-primary">{{ ing.ingredient_name }}</span>
-                        <span class="text-text-secondary">{{ (Number(ing.base_quantity) * (Number(link.quantity) || 1)).toFixed(2) }} {{ ing.unit }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <UiFormSection title="Ingredientes extra">
+                <MenuIngredientProductHint class="mb-3" />
 
-              <!-- Ingredientes adicionales -->
-              <div class="bg-surface border border-border rounded-lg p-4">
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
-                  Adicionales ({{ form.ingredients.length }})
-                </p>
-                <div v-if="form.ingredients.length === 0" class="text-sm text-text-secondary">
-                  Sin líneas adicionales
+                <div v-if="form.ingredients.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
+                  <p class="text-sm font-medium">Sin líneas adicionales</p>
+                  <p class="text-xs mt-1">Agrega ingredientes o productos de reventa para calcular el costo</p>
                 </div>
-                <div v-else class="space-y-2">
+
+                <div v-else class="space-y-3 mb-4">
                   <div
                     v-for="(ingredient, index) in form.ingredients"
                     :key="index"
-                    class="flex items-center justify-between p-2 rounded-lg border border-border bg-background text-sm"
+                    class="flex items-start gap-3 p-4 bg-surface-secondary rounded-lg border border-border"
                   >
-                    <span class="font-medium text-text-primary">{{ getIngredientName(ingredient.ingredient_id) }}</span>
-                    <div class="flex items-center gap-4 text-text-secondary">
-                      <span>{{ ingredient.quantity }} {{ ingredient.unit }}</span>
-                      <span class="font-semibold text-text-primary">{{ formatCurrency(getIngredientCost(ingredient)) }}</span>
+                    <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <UiIngredientSearchInput
+                          :key="ingredient.ingredient_id || `new-${index}`"
+                          :initial-value="getIngredientSearchLabel(ingredient)"
+                          :allow-create="true"
+                          @select="(ing) => selectIngredient(ing, index)"
+                          @create="(name) => openCustomIngModal(name, index)"
+                        />
+                      </div>
+                      <div>
+                        <input
+                          v-model.number="ingredient.quantity"
+                          type="number"
+                          min="0.01"
+                          step="any"
+                          placeholder="Cantidad"
+                          class="input-base w-full px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div class="relative">
+                        <select
+                          v-model="ingredient.unit"
+                          :disabled="loadingUnits.has(ingredient.ingredient_id)"
+                          class="input-base w-full py-2 pr-3 text-sm disabled:opacity-50"
+                          :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
+                        >
+                          <option v-if="!ingredient.ingredient_id" value="" disabled>
+                            Selecciona ingrediente
+                          </option>
+                          <option
+                            v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
+                            :key="opt.value"
+                            :value="opt.value"
+                          >{{ opt.label }}</option>
+                        </select>
+                        <span v-if="loadingUnits.has(ingredient.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
+                          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                          </svg>
+                        </span>
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      @click="removeIngredient(index)"
+                      class="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      title="Eliminar ingrediente"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <UiButton
+                  type="button"
+                  variant="outline"
+                  size="default"
+                  class="w-full"
+                  @click="addIngredient"
+                >
+                  <Icon name="heroicons:plus" class="h-5 w-5 mr-2" />
+                  Agregar línea
+                </UiButton>
+              </UiFormSection>
+            </MenuCatalogInlineCreateBusyOverlay>
+
+            <UiFormSection title="Configuración">
+              <div class="space-y-3">
+                <div class="flex items-start space-x-3">
+                  <input
+                    v-model="form.is_available"
+                    type="checkbox"
+                    id="is_available"
+                    class="h-4 w-4 mt-0.5 text-primary focus:ring-primary border-border rounded"
+                  />
+                  <div>
+                    <label for="is_available" class="text-sm font-medium text-text-primary block">
+                      Disponible
+                    </label>
+                    <p class="text-xs text-text-secondary mt-1">
+                      Visible en menú y POS
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex items-start space-x-3">
+                  <input
+                    v-model="form.is_available_online"
+                    type="checkbox"
+                    id="is_available_online"
+                    class="h-4 w-4 mt-0.5 text-primary focus:ring-primary border-border rounded"
+                  />
+                  <div>
+                    <label for="is_available_online" class="text-sm font-medium text-text-primary block">
+                      Domicilios
+                    </label>
+                    <p class="text-xs text-text-secondary mt-1">
+                      Pedidos online
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex items-start space-x-3">
+                  <input
+                    v-model="form.is_available_table_qr"
+                    type="checkbox"
+                    id="is_available_table_qr"
+                    class="h-4 w-4 mt-0.5 text-primary focus:ring-primary border-border rounded"
+                  />
+                  <div>
+                    <label for="is_available_table_qr" class="text-sm font-medium text-text-primary block">
+                      QR en mesa
+                    </label>
+                    <p class="text-xs text-text-secondary mt-1">
+                      Menú de mesa, aparte de domicilios
+                    </p>
                   </div>
                 </div>
               </div>
-              </template>
-            </div>
-
-            <!-- Columna derecha: info + precios -->
-            <div class="w-full lg:w-72 xl:w-80 space-y-4 lg:sticky lg:top-4">
-
-              <!-- Producto -->
-              <div class="bg-surface border border-border rounded-lg p-4">
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">Producto</p>
-                <div class="space-y-2">
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-text-secondary">Categoría</span>
-                    <span class="text-sm font-semibold text-text-primary">{{ getCategoryName(form.category_id) }}</span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-text-secondary">Disponible</span>
-                    <UiStatusBadge
-                      :value="form.is_available ? 'Disponible' : 'No disponible'"
-                      format="text"
-                      :variant="form.is_available ? 'success' : 'default'"
-                      size="sm"
-                    />
-                  </div>
-                  <div v-if="form.description" class="pt-2 border-t border-border">
-                    <p class="text-xs text-text-secondary">{{ form.description }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Precios -->
-              <div class="bg-surface border border-border rounded-lg p-4">
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">Información de Precios</p>
-                <div class="space-y-2">
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-text-secondary">Precio de Venta</span>
-                    <span class="text-sm font-bold text-text-primary">{{ formatCurrency(form.price) }}</span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-text-secondary">Costo real (estimado)</span>
-                    <span class="text-sm font-semibold text-text-primary">
-                      {{ calculatedCost === null ? '—' : formatCurrency(calculatedCost) }}
-                    </span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-text-secondary">Mi costo del plato</span>
-                    <span class="text-sm font-semibold text-text-primary">
-                      {{ form.costo_percibido != null && form.costo_percibido > 0 ? formatCurrency(form.costo_percibido) : '—' }}
-                    </span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-text-secondary">Margen real</span>
-                    <span class="text-sm font-semibold text-crocus-600">{{ formatMarginRealPercent }}</span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-sm text-text-secondary">Margen operativo</span>
-                    <span class="text-sm font-semibold text-crocus-600">{{ formatMarginOperativoPercent }}</span>
-                  </div>
-                  <div class="flex justify-between items-center pt-2 border-t border-border">
-                    <span class="text-sm font-semibold text-text-primary">Ganancia (real)</span>
-                    <span class="text-base font-bold text-crocus-600">
-                      {{ marginRealValue === null ? '—' : formatCurrency(marginRealValue) }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            </UiFormSection>
           </div>
         </div>
-        </Transition>
 
-      </form>
+        <div class="xl:col-span-1 space-y-6">
+          <div class="bg-surface border-2 border-border rounded-xl p-6 shadow-sm sticky top-6">
+            <h3 class="text-lg font-semibold text-text-primary mb-4">Resumen</h3>
 
-      <!-- Navigation Buttons -->
-      <div class="bg-surface border-t border-border shadow-lg mt-6">
-        <div class="px-4 sm:px-6 md:px-8 py-3 sm:py-4">
-          <div class="flex justify-between items-center gap-3">
-            <button
-              v-if="currentStep > STEP.TIPO"
-              type="button"
-              @click="previousStep"
-              class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
-            >
-              <span class="hidden sm:inline">← Anterior</span>
-              <span class="sm:hidden">←</span>
-            </button>
-            <NuxtLink
-              v-else
-              to="/menu/productos"
-              class="btn-secondary px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base"
-            >
-              Cancelar
-            </NuxtLink>
+            <div class="space-y-3">
+              <div class="flex justify-between text-sm gap-2">
+                <span class="text-text-secondary flex-shrink-0">Tipo:</span>
+                <UiStatusBadge
+                  :value="productTypeLabel"
+                  format="text"
+                  :variant="isResaleDirectMode ? 'primary' : 'secondary'"
+                  size="sm"
+                />
+              </div>
 
-            <button
-              v-if="currentStep < lastStep"
-              type="button"
-              @click="handleNext"
-              :disabled="!canProceed"
-              class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
-              :class="{ 'opacity-50 cursor-not-allowed': !canProceed }"
-            >
-              <span class="hidden sm:inline">Siguiente →</span>
-              <span class="sm:hidden">→</span>
-            </button>
-            <div v-else class="flex flex-col items-end gap-2">
-              <p v-if="submitError" role="alert" class="text-sm text-destructive">{{ submitError }}</p>
-              <button
-                type="button"
-                @click="submitProduct"
-                :disabled="isSubmitting"
-                class="btn-primary px-4 sm:px-6 py-2 rounded-lg transition-opacity text-sm sm:text-base"
-                :class="{ 'opacity-50 cursor-not-allowed': isSubmitting }"
+              <div class="flex justify-between text-sm">
+                <span class="text-text-secondary">Precio:</span>
+                <span class="font-semibold text-text-primary">{{ formatCurrency(form.price) }}</span>
+              </div>
+
+              <div v-if="!isResaleDirectMode" class="flex justify-between text-sm">
+                <span class="text-text-secondary">Costo real:</span>
+                <span class="font-semibold text-text-primary">
+                  {{ calculatedCost === null ? '—' : formatCurrency(calculatedCost) }}
+                </span>
+              </div>
+
+              <div class="flex justify-between text-sm">
+                <span class="text-text-secondary">Mi costo:</span>
+                <span class="font-semibold text-text-primary">
+                  {{ form.costo_percibido != null && form.costo_percibido > 0 ? formatCurrency(form.costo_percibido) : '—' }}
+                </span>
+              </div>
+
+              <div
+                v-if="!isResaleDirectMode && form.price > 0 && calculatedCost !== null && calculatedCost > 0"
+                class="flex justify-between text-sm pt-3 border-t border-border"
               >
-                <span class="hidden sm:inline">{{ isSubmitting ? 'Creando...' : 'Crear Producto' }}</span>
-                <span class="sm:hidden">{{ isSubmitting ? '...' : 'Crear' }}</span>
-              </button>
+                <span class="text-text-secondary">Margen real:</span>
+                <span class="font-semibold text-primary">
+                  {{ marginRealValue === null ? '—' : formatCurrency(marginRealValue) }}
+                </span>
+              </div>
+
+              <div class="flex justify-between text-sm gap-2">
+                <span class="text-text-secondary flex-shrink-0">
+                  {{ isResaleDirectMode ? 'Equivalencia:' : 'Líneas receta:' }}
+                </span>
+                <span class="font-semibold text-text-primary text-right truncate">
+                  <template v-if="isResaleDirectMode">
+                    {{ resaleEquivalencySummary }}
+                  </template>
+                  <template v-else>
+                    {{ recipeLineCount }}
+                  </template>
+                </span>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-6 border-t border-border space-y-3">
+              <p v-if="submitError" role="alert" class="text-sm text-destructive flex items-center gap-1">
+                <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                {{ submitError }}
+              </p>
+              <UiButton
+                type="submit"
+                variant="default"
+                size="lg"
+                class="w-full"
+                :disabled="isSubmitting"
+              >
+                <Icon v-if="!isSubmitting" name="heroicons:check" class="h-5 w-5 mr-2" />
+                <Icon v-else name="heroicons:arrow-path" class="h-5 w-5 mr-2 animate-spin" />
+                {{ isSubmitting ? 'Creando...' : 'Crear producto' }}
+              </UiButton>
+
+              <UiButton
+                type="button"
+                variant="outline"
+                size="default"
+                class="w-full"
+                :disabled="isSubmitting"
+                @click="router.push('/menu/productos')"
+              >
+                Cancelar
+              </UiButton>
             </div>
           </div>
         </div>
-      </div>
+      </form>
     </div>
 
     <MenuInlineCatalogCreateShell
@@ -926,7 +722,6 @@ const cache = useQueryCache()
 const toast = useToast()
 const { currentTenant, businessProfile } = useTenantReactive()
 
-// Tax config — only show selector when tenant has taxes enabled
 const { data: taxConfigData } = useQuery({
   key: () => ['tenant', 'tax-config', currentTenant.value?.id],
   query: () => $fetch<{ success: boolean; data: any }>('/api/api/tenant/tax-config'),
@@ -938,16 +733,6 @@ const hasTaxes = computed(() =>
   !!(taxConfig.value?.inc_applicable || taxConfig.value?.iva_applicable || taxConfig.value?.liquor_tax_applicable)
 )
 
-// Wizard steps (#873)
-const STEP = {
-  TIPO: 1,
-  INFO: 2,
-  RECETA: 3,
-  REVISION: 4,
-} as const
-
-// State
-const currentStep = ref(STEP.TIPO)
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
 const nameError = ref('')
@@ -958,60 +743,9 @@ const productCreateMode = ref<ProductCreateMode>(
   route.query.modo === 'venta-directa' ? 'resale-direct' : 'recipe',
 )
 const isResaleDirectMode = computed(() => productCreateMode.value === 'resale-direct')
-
-const wizardSteps = computed(() => {
-  const steps: { id: number; label: string; shortLabel: string; subtitle: string }[] = [
-    {
-      id: STEP.TIPO,
-      label: 'Tipo de producto',
-      shortLabel: 'Tipo',
-      subtitle: 'Receta o reventa',
-    },
-    {
-      id: STEP.INFO,
-      label: 'Información General',
-      shortLabel: 'Info',
-      subtitle: 'Datos básicos del producto',
-    },
-  ]
-  if (!isResaleDirectMode.value) {
-    steps.push({
-      id: STEP.RECETA,
-      label: 'Receta',
-      shortLabel: 'Receta',
-      subtitle: 'Receta e inventario',
-    })
-  }
-  steps.push({
-    id: STEP.REVISION,
-    label: 'Revisión y Confirmación',
-    shortLabel: 'Revisar',
-    subtitle: 'Verificar y crear',
-  })
-  return steps
-})
-
-const lastStep = STEP.REVISION
-
-function nextStepId(from: number): number {
-  if (from === STEP.TIPO) return STEP.INFO
-  if (from === STEP.INFO) return isResaleDirectMode.value ? STEP.REVISION : STEP.RECETA
-  if (from === STEP.RECETA) return STEP.REVISION
-  return from
-}
-
-function prevStepId(from: number): number {
-  if (from === STEP.REVISION) return isResaleDirectMode.value ? STEP.INFO : STEP.RECETA
-  if (from === STEP.RECETA) return STEP.INFO
-  if (from === STEP.INFO) return STEP.TIPO
-  return from
-}
-
-function clampStepAfterModeChange() {
-  if (isResaleDirectMode.value && currentStep.value === STEP.RECETA) {
-    currentStep.value = STEP.INFO
-  }
-}
+const productTypeLabel = computed(() =>
+  isResaleDirectMode.value ? 'Venta directa' : 'Con receta',
+)
 
 const resaleUnitWeightGr = ref<number | null>(null)
 const resaleUnitWeightUnit = ref<'gr' | 'ml'>('gr')
@@ -1027,10 +761,8 @@ function setProductCreateMode(mode: ProductCreateMode) {
     resaleUnitWeightUnit.value = 'gr'
     resalePurchaseUnits.value = defaultUndPurchaseUnitsDraft()
   }
-  clampStepAfterModeChange()
 }
 
-// Form data
 const form = ref({
   name: '',
   description: '',
@@ -1038,7 +770,7 @@ const form = ref({
   price: 0,
   category_id: '',
   recipe_bases: [] as Array<{ recipe_base_id: string; quantity: number }>,
-  preparation_time: null,
+  preparation_time: null as number | null,
   controla_stock: true,
   is_available: true,
   is_available_online: true,
@@ -1076,7 +808,6 @@ watch(
   },
 )
 
-// Fetch categories
 const { data: categoriesData } = useAsyncData(
   `categories-${currentTenant.value?.id || 'default'}`,
   () => $fetch('/api/menu/categories'),
@@ -1087,10 +818,8 @@ const { data: categoriesData } = useAsyncData(
   }
 )
 
-// Shared ingredients — kept for recipe-base cost calculation only (loads in background)
 const { availableIngredients } = useMenuIngredientsQuery()
 
-// Read-only: which station the selected category maps to
 const { activeStations, refetch: refetchActiveStations } = useActiveStationsQuery()
 const { data: categoryStationsData, refresh: refreshCategoryStations } = useAsyncData(
   'category-stations',
@@ -1114,13 +843,8 @@ const inheritedStation = computed(() => {
   return null
 })
 
-// Cache populated when user selects an ingredient via UiIngredientSearchInput
 const ingredientCache = ref<Record<string, any>>({})
-
-// Purchase units cache per ingredient
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
-
-// Tracks which ingredient IDs are currently fetching their purchase units
 const loadingUnits = ref<Set<string>>(new Set())
 
 const {
@@ -1196,7 +920,6 @@ watch(availableIngredients, (list) => {
   }
 })
 
-// Fetch recipe bases
 const { data: recipeBasesData } = useAsyncData(
   `recipe-bases-${currentTenant.value?.id || 'default'}`,
   () => $fetch('/api/menu/recipe-bases', {
@@ -1213,13 +936,9 @@ const { data: recipeBasesData } = useAsyncData(
   }
 )
 
-// Computed
 const categories = computed(() => categoriesData.value?.data || [])
 const recipeBases = computed(() => recipeBasesData.value?.data || [])
 
-// Computed: Get all ingredients from all selected recipe bases
-// Issue #517: each ingredient quantity is multiplied by the per-product
-// recipe quantity so the cost preview matches what the backend computes.
 const selectedRecipeBaseIngredients = computed(() => {
   const allIngredients: any[] = []
   form.value.recipe_bases.forEach(link => {
@@ -1237,12 +956,8 @@ const selectedRecipeBaseIngredients = computed(() => {
   return allIngredients
 })
 
-const isLoadingData = computed(() => {
-  return !categoriesData.value
-})
+const isLoadingData = computed(() => !categoriesData.value)
 
-// Returns null when the product has no recipe lines yet (empty lists).
-// null is rendered as "—" in the UI and means "no aplica" in cost reports.
 const calculatedCost = computed<number | null>(() => {
   if (
     selectedRecipeBaseIngredients.value.length === 0 &&
@@ -1283,53 +998,70 @@ const marginRealValue = computed<number | null>(() => {
   return form.value.price - calculatedCost.value
 })
 
-const formatMarginRealPercent = computed(() => {
-  const pct = marginRealPct(marginPreview.value)
-  return pct === null ? '—' : `${pct.toFixed(1)}%`
+const marginOperativoValue = computed<number | null>(() => {
+  const perceived = form.value.costo_percibido
+  if (perceived == null || perceived <= 0) return null
+  return form.value.price - perceived
 })
 
-const formatMarginOperativoPercent = computed(() => {
-  const pct = marginOperativoPct(marginPreview.value)
-  return pct === null ? '—' : `${pct.toFixed(1)}%`
+const recipeLineCount = computed(() => {
+  const bases = form.value.recipe_bases.filter(l => l.recipe_base_id).length
+  return bases + form.value.ingredients.length
 })
 
-const canProceed = computed(() => {
-  if (currentStep.value === STEP.TIPO) return true
-  if (currentStep.value === STEP.INFO) {
-    const base = form.value.name && form.value.category_id && form.value.price > 0
-    if (!base) return false
-    if (isResaleDirectMode.value) {
-      const w = resaleUnitWeightGr.value
-      return w != null && Number(w) > 0
+const resaleEquivalencySummary = computed(() => {
+  const w = resaleUnitWeightGr.value
+  if (w == null || Number(w) <= 0) return '—'
+  return `${w} ${resaleUnitWeightUnit.value} / und`
+})
+
+async function validateForm(): Promise<boolean> {
+  submitError.value = null
+  nameError.value = ''
+  resaleWeightError.value = false
+
+  if (!form.value.name?.trim()) {
+    nameError.value = 'El nombre es obligatorio.'
+    return false
+  }
+  if (!form.value.category_id) {
+    submitError.value = 'Selecciona una categoría.'
+    return false
+  }
+  if (!form.value.price || form.value.price <= 0) {
+    submitError.value = 'Indica un precio de venta mayor a 0.'
+    return false
+  }
+
+  const res = await $fetch<{ available: boolean }>(
+    `/api/menu/check-name?entity=products&name=${encodeURIComponent(form.value.name.trim())}`,
+  )
+  if (!res.available) {
+    nameError.value = 'Ya existe un producto con ese nombre.'
+    return false
+  }
+
+  if (isResaleDirectMode.value) {
+    const w = resaleUnitWeightGr.value
+    if (w == null || Number(w) <= 0) {
+      resaleWeightError.value = true
+      submitError.value = 'Indica la equivalencia en gr o ml por unidad vendida.'
+      return false
     }
     return true
   }
-  if (currentStep.value === STEP.RECETA) {
-    return form.value.ingredients.length === 0
-      || form.value.ingredients.every(i => i.ingredient_id && i.quantity > 0)
+
+  if (form.value.ingredients.length > 0) {
+    const invalid = form.value.ingredients.some(
+      i => !i.ingredient_id || !i.quantity || i.quantity <= 0,
+    )
+    if (invalid) {
+      submitError.value = 'Completa todos los ingredientes con cantidad mayor a 0.'
+      return false
+    }
   }
+
   return true
-})
-
-// Methods
-function getCategoryName(categoryId: string) {
-  const category = categories.value.find((c: any) => c.id === categoryId)
-  return category?.name || ''
-}
-
-function getIngredientName(ingredientId: string) {
-  const cached = ingredientCache.value[ingredientId]
-  if (cached) return cached.name
-  const ing = availableIngredients.value.find((i: any) => i.id === ingredientId)
-  return ing?.name || 'Ingrediente desconocido'
-}
-
-function getIngredientCost(ingredient: any) {
-  const cached = ingredientCache.value[ingredient.ingredient_id]
-  if (cached) return ingredient.quantity * (cached.price || 0)
-  const ing = availableIngredients.value.find((i: any) => i.id === ingredient.ingredient_id)
-  if (!ing) return 0
-  return ingredient.quantity * (ing.price || 0)
 }
 
 function selectIngredient(ing: any, index: number, productFallback?: Record<string, unknown>) {
@@ -1370,7 +1102,6 @@ async function onInlineProductCreated(product: Record<string, unknown>) {
   })
 }
 
-// ── Category search + create flow (issue #458) ────────────────────────────
 const showNewCategoryModal = ref(false)
 const newCategoryName = ref('')
 const selectedCategoryName = ref('')
@@ -1390,7 +1121,6 @@ function onCategoryCreated(cat: { id: string; name: string }) {
   selectedCategoryName.value = cat.name
 }
 
-// ── Image upload (issue #465) ─────────────────────────────────────────────
 const showImageModal = ref(false)
 
 function onImageUploaded(url: string) {
@@ -1398,7 +1128,6 @@ function onImageUploaded(url: string) {
   showImageModal.value = false
 }
 
-// ── Kitchen station inline create flow (issue #463) ───────────────────────
 const showNewStationModal = ref(false)
 const isAssigningInheritedStation = ref(false)
 
@@ -1440,6 +1169,11 @@ async function onStationCreated(station: { id: string; name: string }) {
   }
 }
 
+function getCategoryName(categoryId: string) {
+  const category = categories.value.find((c: any) => c.id === categoryId)
+  return category?.name || ''
+}
+
 function addIngredient() {
   form.value.ingredients.push({
     ingredient_id: '',
@@ -1452,7 +1186,6 @@ function addIngredient() {
 function removeIngredient(index: number) {
   form.value.ingredients.splice(index, 1)
 }
-
 
 function addRecipeBase() {
   form.value.recipe_bases.push({ recipe_base_id: '', quantity: 1 })
@@ -1468,50 +1201,18 @@ function getRecipeBaseIngredients(recipeBaseId: string) {
   return recipe?.ingredients || []
 }
 
-function getRecipeBaseName(recipeBaseId: string) {
-  if (!recipeBaseId) return 'Receta sin nombre'
-  const recipe = recipeBases.value.find((r: any) => r.id === recipeBaseId)
-  return recipe?.name || 'Receta sin nombre'
-}
-
 function onRecipeBaseChange() {
-  // Trigger reactivity when recipe base changes
   console.log('Recipe bases:', form.value.recipe_bases)
-}
-
-async function handleNext() {
-  if (!canProceed.value || currentStep.value >= lastStep) return
-  if (currentStep.value === STEP.INFO) {
-    const res = await $fetch<{ available: boolean }>(`/api/menu/check-name?entity=products&name=${encodeURIComponent(form.value.name.trim())}`)
-    if (!res.available) {
-      nameError.value = 'Ya existe un producto con ese nombre.'
-      return
-    }
-    if (isResaleDirectMode.value) {
-      const w = resaleUnitWeightGr.value
-      if (w == null || Number(w) <= 0) {
-        resaleWeightError.value = true
-        return
-      }
-    }
-  }
-  currentStep.value = nextStepId(currentStep.value)
-}
-
-function previousStep() {
-  if (currentStep.value > STEP.TIPO) {
-    currentStep.value = prevStepId(currentStep.value)
-  }
 }
 
 async function submitProduct() {
   if (isSubmitting.value) return
+  if (!(await validateForm())) return
 
   isSubmitting.value = true
   submitError.value = null
 
   try {
-    // Validate no duplicate recipe bases and positive quantity
     const validLinks = form.value.recipe_bases.filter(l => l.recipe_base_id !== '')
     const seenIds = new Set<string>()
     for (const link of validLinks) {
@@ -1579,10 +1280,6 @@ async function submitProduct() {
       return
     }
 
-    // Con receta: always send recipe data (#874 — inventory derived from step 1 tipo).
-    // Normalise image_url empty string → null so backend stores NULL (issue #465).
-    // recipe_bases is the new shape (Issue #517); recipe_base_ids is kept for
-    // backwards compat with any older backend / proxy that still expects it.
     const cleanedRecipeBases = validLinks.map(l => ({
       recipe_base_id: l.recipe_base_id,
       quantity: Number(l.quantity),
@@ -1626,15 +1323,3 @@ function formatCurrency(value: number) {
   }).format(value)
 }
 </script>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>
