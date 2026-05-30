@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, provide, onMounted, onUnmounted, watch, watchEffect } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
 import { $fetch } from 'ofetch'
 import type { CachedProduct, TabItem } from '~/stores/usePOSStore'
@@ -1004,11 +1004,12 @@ const mobileCartDisplayTotal = computed(() =>
     : cartTotal.value,
 )
 const mobileCartFormattedTotal = computed(() => formatCurrencyPOS(mobileCartDisplayTotal.value))
+const showMobileCartBar = computed(() => mobileCartItemCount.value > 0)
 
-provide('posCartItemsCount', mobileCartItemCount)
-provide('posCartFormattedTotal', mobileCartFormattedTotal)
-provide('posOpenCartModal', () => {
-  showMobileCartSheet.value = true
+const { setMobileCart, setOpenCartHandler, clearMobileCart } = usePosMobileCart()
+
+watchEffect(() => {
+  setMobileCart(mobileCartItemCount.value, mobileCartFormattedTotal.value)
 })
 
 // Navigate to product customization page or add directly to cart
@@ -1260,9 +1261,11 @@ watch(
   { immediate: true }
 )
 
-// Provide cart data to layout (registered at setup so layout can read before mount)
-
 onMounted(async () => {
+  setOpenCartHandler(() => {
+    showMobileCartSheet.value = true
+  })
+
   // Start polling if already in a comandas-enabled session on mount
   if (comandasEnabled.value && posStore.activeTableSession) {
     startFulfillmentPolling()
@@ -1287,6 +1290,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  clearMobileCart()
   setRefreshHandler(undefined)
   stopSessionSyncPolling()
   stopFulfillmentPolling()
@@ -1711,7 +1715,13 @@ onUnmounted(() => {
     :business-name="posBusinessName"
   />
 
-  <!-- warocol.com#1032 — mobile/tablet cart sheet (bar docked in DashboardBottomNav) -->
+  <!-- warocol.com#1032 — sticky cart bar + bottom sheet on mobile/tablet -->
+  <PosCartBottomBar
+    :visible="showMobileCartBar"
+    :item-count="mobileCartItemCount"
+    :formatted-total="mobileCartFormattedTotal"
+    @open-cart="showMobileCartSheet = true"
+  />
   <UiBottomSheetModal v-model="showMobileCartSheet" title="Orden actual" max-height="xl">
     <PosCartPanel
       class="border-0 shadow-none rounded-none max-h-[70vh]"

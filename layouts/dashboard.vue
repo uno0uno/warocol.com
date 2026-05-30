@@ -139,11 +139,7 @@
     <!-- Bottom Navigation - Mobile Only -->
     <DashboardBottomNav
       :active-page="activePage"
-      :show-cart-button="route.path === '/pos'"
-      :cart-items-count="posCartItemsCountValue"
-      :cart-formatted-total="posCartFormattedTotalValue"
       :notifications-count="notificationsUnreadCount"
-      @open-cart="posOpenCartModal"
     />
 
     <!-- Mobile Order Toast — client-only to avoid SSR/Teleport hydration mismatch -->
@@ -157,12 +153,13 @@
 </template>
 
 <script setup lang="ts">
-import { provide, inject, ref, computed, watch, onMounted, onUnmounted, unref, type Ref, type ComputedRef } from 'vue'
+import { provide, inject, ref, computed, watch, onMounted, onUnmounted, type Ref, type ComputedRef } from 'vue'
 import {
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
 import { useNotifications } from '~/composables/useNotifications'
 import { useBilling } from '~/composables/useBilling'
+import { usePosMobileCart } from '~/composables/usePosMobileCart'
 
 // Notifications — init here so SSE starts on all screen sizes (not just when bell mounts)
 const { unreadCount: notificationsUnreadCount, init: initNotifications, disconnect: disconnectNotifications } = useNotifications()
@@ -1175,15 +1172,10 @@ watch(displayTitle, (nextTitle, previousTitle) => {
 }, { immediate: true })
 
 // Inject cart data from POS page
-const posCartItemsCount = inject<ComputedRef<number> | Ref<number>>('posCartItemsCount', ref(0))
-const posCartFormattedTotal = inject<ComputedRef<string> | Ref<string>>('posCartFormattedTotal', ref('$0'))
-const posOpenCartModal = inject<() => void>('posOpenCartModal', () => {})
-
-const posCartItemsCountValue = computed(() => unref(posCartItemsCount))
-const posCartFormattedTotalValue = computed(() => unref(posCartFormattedTotal))
+const { itemCount: posMobileCartItemCount } = usePosMobileCart()
 
 const mobileContentBottomPadding = computed(() => {
-  if (route.path === '/pos' && posCartItemsCountValue.value > 0) {
+  if (route.path === '/pos' && posMobileCartItemCount.value > 0) {
     return 'pb-36'
   }
   return 'pb-20'
