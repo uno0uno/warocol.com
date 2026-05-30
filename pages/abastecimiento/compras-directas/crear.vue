@@ -27,7 +27,7 @@
                 </svg>
               </div>
               <div>
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Numero de Compra</p>
+                <p class="text-xs font-medium text-text-secondary">Número de compra</p>
                 <p class="text-base font-semibold text-text-primary">{{ nextPurchaseNumber }}</p>
               </div>
             </div>
@@ -40,7 +40,7 @@
                 </svg>
               </div>
               <div>
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Fecha de Compra</p>
+                <p class="text-xs font-medium text-text-secondary">Fecha de compra</p>
                 <p class="text-base font-semibold text-text-primary">
                   {{ form.purchase_date ? fnsFormat(form.purchase_date, 'dd/MM/yy', { locale: es }) : 'Seleccionar fecha' }}
                 </p>
@@ -55,7 +55,7 @@
                 </svg>
               </div>
               <div>
-                <p class="text-xs font-medium text-text-secondary uppercase tracking-wide">Estado</p>
+                <p class="text-xs font-medium text-text-secondary">Estado</p>
                 <div class="mt-0.5">
                   <UiStatusBadge value="Stock Inmediato" format="text" variant="success" size="sm" />
                 </div>
@@ -65,133 +65,37 @@
         </div>
       </div>
 
-      <!-- Progress Steps -->
-      <div class="bg-surface border-border border rounded-lg mb-2 sm:mb-3">
-        <div class="p-3 sm:p-4">
-          <div class="flex items-center justify-between">
-            <!-- Step 1 -->
-            <div class="flex items-center flex-1">
-              <div
-                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-                :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 1,
-                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 1,
-                  'border-border text-text-secondary bg-transparent': currentStep < 1
-                }"
-              >
-                <svg v-if="currentStep > 1" class="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="font-semibold text-sm sm:text-base">1</span>
-              </div>
-              <div class="hidden sm:block ml-3 flex-1 min-w-0">
-                <p class="text-sm font-medium truncate" :class="currentStep >= 1 ? 'text-text-primary' : 'text-text-secondary'">Proveedor</p>
-                <p class="text-xs text-text-secondary">Seleccionar proveedor</p>
-              </div>
-              <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 1 ? 'bg-secondary' : 'bg-border'"></div>
-            </div>
+      <form @submit.prevent="handleSubmit" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
+        <div class="xl:col-span-2 space-y-6">
+          <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
+            <UiFormSection title="Proveedor y fecha">
+              <template #actions>
+                <div>
+                  <input
+                    ref="scanFileInput"
+                    type="file"
+                    class="hidden"
+                    accept="image/*"
+                    capture="environment"
+                    @change="handleScanFileSelect"
+                  />
+                  <button
+                    type="button"
+                    :disabled="isScanning || isQuotaExceeded || isScanBlocked"
+                    @click="scanFileInput?.click()"
+                    class="px-2.5 py-2 sm:px-3 bg-primary/10 text-primary border-2 border-primary/20 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 flex-shrink-0 min-h-[44px]"
+                    :aria-label="isScanBlocked ? 'Escaneo deshabilitado — suscripción inactiva' : isQuotaExceeded ? 'Escaneo deshabilitado — cuota agotada' : isScanning ? currentPhrase : 'Leer factura con IA'"
+                    :title="isScanBlocked ? 'Suscripción inactiva — renueva tu plan para escanear' : isQuotaExceeded ? 'Cuota de escaneos agotada — actualiza tu plan' : undefined"
+                  >
+                    <svg v-if="!isScanning" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <UiLoadingDots v-else size="9px" />
+                    <span class="hidden sm:inline">{{ isScanning ? currentPhrase : 'Leer factura con IA' }}</span>
+                  </button>
+                </div>
+              </template>
 
-            <!-- Step 2 -->
-            <div class="flex items-center flex-1">
-              <div
-                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-                :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 2,
-                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 2,
-                  'border-border text-text-secondary bg-transparent': currentStep < 2
-                }"
-              >
-                <svg v-if="currentStep > 2" class="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="font-semibold text-sm sm:text-base">2</span>
-              </div>
-              <div class="hidden sm:block ml-3 flex-1 min-w-0">
-                <p class="text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">Items</p>
-                <p class="text-xs text-text-secondary">Productos y precios</p>
-              </div>
-              <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'"></div>
-            </div>
-
-            <!-- Step 3 -->
-            <div class="flex items-center flex-1">
-              <div
-                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-                :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 3,
-                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 3,
-                  'border-border text-text-secondary bg-transparent': currentStep < 3
-                }"
-              >
-                <svg v-if="currentStep > 3" class="w-4 h-4 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-                <span v-else class="font-semibold text-sm sm:text-base">3</span>
-              </div>
-              <div class="hidden sm:block ml-3 flex-1 min-w-0">
-                <p class="text-sm font-medium truncate" :class="currentStep >= 3 ? 'text-text-primary' : 'text-text-secondary'">Documentos</p>
-                <p class="text-xs text-text-secondary">Factura y pago (opcional)</p>
-              </div>
-              <div class="flex-1 h-0.5 sm:h-1 mx-2 sm:mx-4" :class="currentStep > 3 ? 'bg-secondary' : 'bg-border'"></div>
-            </div>
-
-            <!-- Step 4 -->
-            <div class="flex items-center">
-              <div
-                class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-colors border-2 flex-shrink-0"
-                :class="{
-                  'bg-primary text-primary-foreground border-primary': currentStep === 4,
-                  'bg-secondary text-secondary-foreground border-secondary': currentStep > 4,
-                  'border-border text-text-secondary bg-transparent': currentStep < 4
-                }"
-              >
-                <span class="font-semibold text-sm sm:text-base">4</span>
-              </div>
-              <div class="hidden sm:block ml-3 min-w-0">
-                <p class="text-sm font-medium truncate" :class="currentStep >= 4 ? 'text-text-primary' : 'text-text-secondary'">Confirmar</p>
-                <p class="text-xs text-text-secondary">Revisar y guardar</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Form Content -->
-      <form @submit.prevent="handleNext">
-        <!-- Step 1: Proveedor -->
-        <Transition name="fade" mode="out-in">
-        <div v-if="currentStep === 1" key="step-1" class="bg-surface border-border border rounded-lg">
-          <div class="p-3 sm:p-4">
-            <div class="flex items-center justify-between mb-2 sm:mb-3">
-              <h3 class="text-base sm:text-lg font-semibold text-text-primary">Seleccionar Proveedor</h3>
-              <div>
-                <!-- Hidden scan input (moved here from Step 2) -->
-                <input
-                  ref="scanFileInput"
-                  type="file"
-                  class="hidden"
-                  accept="image/*"
-                  capture="environment"
-                  @change="handleScanFileSelect"
-                />
-                <button
-                  type="button"
-                  :disabled="isScanning || isQuotaExceeded || isScanBlocked"
-                  @click="scanFileInput?.click()"
-                  class="px-2.5 py-2 sm:px-3 bg-primary/10 text-primary border-2 border-primary/20 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 flex-shrink-0"
-                  :aria-label="isScanBlocked ? 'Escaneo deshabilitado — suscripción inactiva' : isQuotaExceeded ? 'Escaneo deshabilitado — cuota agotada' : isScanning ? currentPhrase : 'Leer Factura con IA'"
-                  :title="isScanBlocked ? 'Suscripción inactiva — renueva tu plan para escanear' : isQuotaExceeded ? 'Cuota de escaneos agotada — actualiza tu plan' : undefined"
-                >
-                  <svg v-if="!isScanning" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                  <UiLoadingDots v-else size="9px" />
-                  <span class="hidden sm:inline">{{ isScanning ? currentPhrase : 'Leer Factura con IA' }}</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Scan usage bar -->
             <UiScanUsageBar
               v-if="quota"
               :quota="quota"
@@ -208,8 +112,13 @@
                   :options="supplierOptions"
                   placeholder="Buscar proveedor..."
                   required
-                  @update:model-value="onSupplierChange"
+                  :class="supplierError ? 'ring-2 ring-destructive rounded-lg' : ''"
+                  @update:model-value="onSupplierChange; supplierError = ''"
                 />
+                <p v-if="supplierError" role="alert" class="text-xs text-destructive mt-1 flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                  {{ supplierError }}
+                </p>
                 <div v-if="supplierScanStatus === 'matched'" class="mt-2 flex items-center gap-1.5 text-xs text-success bg-success/10 border border-success/20 px-2.5 py-1.5 rounded-lg">
                   <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
@@ -246,7 +155,7 @@
 
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Tipo de Pago
+                  Tipo de pago
                 </label>
                 <select
                   v-model="form.payment_type"
@@ -281,7 +190,7 @@
 
               <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Notas Generales
+                  Notas generales
                 </label>
                 <textarea
                   v-model="form.notes"
@@ -291,25 +200,19 @@
                 ></textarea>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Step 2: Items -->
-        <div v-else-if="currentStep === 2" key="step-2" class="bg-surface border-border border rounded-lg">
-          <div class="p-3 sm:p-4">
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-2 sm:mb-3">
-              <h3 class="text-base sm:text-lg font-semibold text-text-primary">Items de la Compra</h3>
-              <div class="flex items-center gap-2">
+            </UiFormSection>
+
+            <UiFormSection title="Ítems">
+              <template #actions>
                 <button
                   type="button"
                   @click="addItem"
-                  class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm"
+                  class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm min-h-[44px]"
                 >
-                  + Agregar Item
+                  + Agregar ítem
                 </button>
-              </div>
-            </div>
-
+              </template>
             <!-- OCR banner -->
             <div v-if="ocrItemsLoaded" class="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg flex items-start gap-2 text-sm text-primary">
               <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -318,33 +221,7 @@
               <span class="font-medium">Items cargados. La IA puede cometer errores, por favor verifica todos los datos.</span>
             </div>
 
-            <!-- Tabs de Filtro por Tipo de Ingrediente -->
-            <div class="flex gap-1.5 mb-2 sm:mb-3 p-1 bg-background rounded-lg border border-border">
-              <button
-                v-for="typeOption in ingredientTypeOptions"
-                :key="typeOption.value"
-                type="button"
-                @click="selectedIngredientType = typeOption.value"
-                class="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium rounded-md transition-all"
-                :class="selectedIngredientType === typeOption.value
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-surface'"
-              >
-                <!-- Alimentos -->
-                <svg v-if="typeOption.value === 'food'" class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                <!-- Servicios -->
-                <svg v-else-if="typeOption.value === 'service'" class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                <!-- Insumos -->
-                <svg v-else class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                </svg>
-                <span class="hidden sm:inline">{{ typeOption.label }}</span>
-              </button>
-            </div>
+
 
           <MenuCatalogInlineCreateBusyOverlay
             :busy="inlineCatalogBusy"
@@ -357,27 +234,18 @@
               <p class="text-xs font-medium text-text-secondary animate-pulse">{{ currentPhrase }}</p>
             </div>
 
-            <!-- Items List (grouped by type) -->
-            <div v-else class="space-y-4">
-
-              <!-- Section: Alimentos -->
-              <div v-if="itemsByType.food.length > 0 || selectedIngredientType === 'food'">
-                <div class="flex items-center gap-2 mb-2">
-                  <svg class="w-3.5 h-3.5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                  <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Alimentos</span>
-                  <span class="text-xs text-text-secondary bg-background px-1.5 py-0.5 rounded border border-border">{{ itemsByType.food.length }}</span>
-                </div>
-                <div class="space-y-2">
+            <!-- Items List -->
+            <div v-else class="space-y-2">
                   <div
-                    v-for="item in itemsByType.food"
-                    :key="form.items.indexOf(item)"
+                    v-for="(item, index) in form.items"
+                    :key="index"
                     class="border-2 border-border rounded-lg p-3 bg-background relative z-10"
                   >
                     <div class="flex justify-between items-center mb-2">
-                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">{{ form.items.indexOf(item) + 1 }}</span>
+                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">{{ index + 1 }}</span>
                       <button
                         type="button"
-                        @click="removeItem(form.items.indexOf(item))"
+                        @click="removeItem(index)"
                         :disabled="form.items.length === 1"
                         class="text-destructive hover:text-destructive/80 hover:bg-destructive/10 disabled:opacity-30 p-1.5 rounded-md transition-colors"
                         aria-label="Eliminar item"
@@ -396,8 +264,8 @@
                           :initial-value="item.searchTerm ?? ''"
                           :allow-create="true"
                           placeholder="Buscar ingrediente..."
-                          @select="(ing) => selectIngredient(ing, form.items.indexOf(item))"
-                          @create="(name) => openCreateModal(form.items.indexOf(item), name)"
+                          @select="(ing) => selectIngredient(ing, index)"
+                          @create="(name) => openCreateModal(index, name)"
                         />
                         <!-- OCR hint -->
                         <div v-if="item.ocr_description" class="mt-1 flex items-center gap-1 flex-wrap">
@@ -411,7 +279,7 @@
                           <button
                             v-if="!item.ingredient_id"
                             type="button"
-                            @click="openCreateModal(form.items.indexOf(item), item.searchTerm || item.ocr_description)"
+                            @click="openCreateModal(index, item.searchTerm || item.ocr_description)"
                             class="text-xs text-primary hover:underline font-medium whitespace-nowrap flex-shrink-0 min-h-[28px] flex items-center"
                           >
                             Crear ingrediente
@@ -433,7 +301,7 @@
                               step="0.01"
                               required
                               class="input-base w-full px-2 py-1.5 text-sm"
-                              @input="() => updateItemTotal(form.items.indexOf(item))"
+                              @input="() => updateItemTotal(index)"
                               placeholder="0"
                             />
                           </div>
@@ -444,7 +312,7 @@
                               <span
                                 v-if="item.suggested_price"
                                 class="text-[10px] text-success cursor-pointer ml-0.5"
-                                @click="item.unit_cost = item.suggested_price; updateItemTotal(form.items.indexOf(item))"
+                                @click="item.unit_cost = item.suggested_price; updateItemTotal(index)"
                                 title="Usar precio sugerido"
                               >
                                 (Sug: {{ formatPrice(item.suggested_price) }})
@@ -459,7 +327,7 @@
                                 step="0.01"
                                 required
                                 class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
-                                @input="() => updateItemTotal(form.items.indexOf(item))"
+                                @input="() => updateItemTotal(index)"
                                 placeholder="0"
                               />
                             </div>
@@ -488,7 +356,7 @@
                                     { 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingUnitsFor.has(item.ingredient_id) },
                                     loadingUnitsFor.has(item.ingredient_id) ? 'pl-7' : 'pl-2'
                                   ]"
-                                  @change="() => onUnitChange(form.items.indexOf(item))"
+                                  @change="() => onUnitChange(index)"
                                 >
                                   <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
                                   <option
@@ -507,7 +375,7 @@
                                 </span>
                               </div>
                               <p v-if="item.ingredient_id && item.purchase_unit" class="text-[10px] text-text-secondary mt-0.5">
-                                = {{ getConvertedQuantity(form.items.indexOf(item)) }} {{ getIngredientUnit(item.ingredient_id) }}
+                                = {{ getConvertedQuantity(index) }} {{ getIngredientUnit(item.ingredient_id) }}
                               </p>
                             </div>
                             <!-- Peso por unidad -->
@@ -538,364 +406,17 @@
                 </div>
               </div>
 
-              <!-- Section: Servicios -->
-              <div v-if="itemsByType.service.length > 0 || selectedIngredientType === 'service'">
-                <div class="flex items-center gap-2 mb-2">
-                  <svg class="w-3.5 h-3.5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                  <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Servicios</span>
-                  <span class="text-xs text-text-secondary bg-background px-1.5 py-0.5 rounded border border-border">{{ itemsByType.service.length }}</span>
-                </div>
-                <div class="space-y-2">
-                  <div
-                    v-for="item in itemsByType.service"
-                    :key="form.items.indexOf(item)"
-                    class="border-2 border-border rounded-lg p-3 bg-background relative z-10"
-                  >
-                    <div class="flex justify-between items-center mb-2">
-                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">{{ form.items.indexOf(item) + 1 }}</span>
-                      <button
-                        type="button"
-                        @click="removeItem(form.items.indexOf(item))"
-                        :disabled="form.items.length === 1"
-                        class="text-destructive hover:text-destructive/80 hover:bg-destructive/10 disabled:opacity-30 p-1.5 rounded-md transition-colors"
-                        aria-label="Eliminar item"
-                      >
-                        <TrashIcon class="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
-                      <!-- Ingredient Search (lg: 4 cols) -->
-                      <div class="sm:col-span-12 lg:col-span-4 relative z-10">
-                        <label class="block text-xs font-medium text-text-primary mb-1">
-                          Ítem / Ingrediente *
-                        </label>
-                        <UiIngredientSearchInput
-                          :initial-value="item.searchTerm ?? ''"
-                          :allow-create="true"
-                          placeholder="Buscar ingrediente..."
-                          @select="(ing) => selectIngredient(ing, form.items.indexOf(item))"
-                          @create="(name) => openCreateModal(form.items.indexOf(item), name)"
-                        />
-                        <!-- OCR hint -->
-                        <div v-if="item.ocr_description" class="mt-1 flex items-center gap-1 flex-wrap">
-                          <p class="text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-warning'">
-                            <svg class="w-3 h-3 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span class="truncate">Fac: "{{ item.ocr_description }}"</span>
-                          </p>
-                          <button
-                            v-if="!item.ingredient_id"
-                            type="button"
-                            @click="openCreateModal(form.items.indexOf(item), item.searchTerm || item.ocr_description)"
-                            class="text-xs text-primary hover:underline font-medium whitespace-nowrap flex-shrink-0 min-h-[28px] flex items-center"
-                          >
-                            Crear ingrediente
-                          </button>
-                        </div>
-                      </div>
-
-                      <!-- Wrapper for Unit and Financials (lg: 8 cols) -->
-                      <div class="sm:col-span-12 lg:col-span-8 flex flex-col gap-2">
-                        <!-- Top Row: Financials -->
-                        <div class="grid grid-cols-3 gap-3">
-                          <div>
-                            <label class="block text-xs font-medium text-text-primary mb-1">Cant. *</label>
-                            <input
-                              v-model.number="item.purchase_quantity"
-                              type="number"
-                              min="0.01"
-                              step="0.01"
-                              required
-                              class="input-base w-full px-2 py-1.5 text-sm"
-                              @input="() => updateItemTotal(form.items.indexOf(item))"
-                              placeholder="0"
-                            />
-                          </div>
-                          <div>
-                            <label class="block text-xs font-medium text-text-primary mb-1 whitespace-nowrap">
-                              P. Unit *
-                              <span
-                                v-if="item.suggested_price"
-                                class="text-[10px] text-success cursor-pointer ml-0.5"
-                                @click="item.unit_cost = item.suggested_price; updateItemTotal(form.items.indexOf(item))"
-                                title="Usar precio sugerido"
-                              >
-                                (Sug: {{ formatPrice(item.suggested_price) }})
-                              </span>
-                            </label>
-                            <div class="relative">
-                              <span class="absolute left-2 top-1.5 text-text-secondary text-xs">$</span>
-                              <input
-                                v-model.number="item.unit_cost"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                required
-                                class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
-                                @input="() => updateItemTotal(form.items.indexOf(item))"
-                                placeholder="0"
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <label class="block text-xs font-medium text-text-primary mb-1">Total</label>
-                            <div class="input-base w-full px-2 py-1.5 text-sm bg-surface-secondary font-medium text-text-primary flex items-center h-[34px]">
-                              ${{ formatPrice(item.total_cost) }}
-                            </div>
-                          </div>
-                        </div>
-                        <!-- Bottom Row: Unit Section -->
-                        <div class="w-full">
-                          <label class="text-xs font-medium text-text-primary mb-1 block">Unidad *</label>
-                          <div class="flex items-start gap-2">
-                            <div class="flex-1 min-w-[120px]">
-                              <div class="relative">
-                                <select
-                                  v-model="item.purchase_unit"
-                                  required
-                                  :disabled="!item.ingredient_id || loadingUnitsFor.has(item.ingredient_id)"
-                                  class="input-base w-full pr-2 py-1.5 text-sm h-[34px]"
-                                  :class="[
-                                    { 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingUnitsFor.has(item.ingredient_id) },
-                                    loadingUnitsFor.has(item.ingredient_id) ? 'pl-7' : 'pl-2'
-                                  ]"
-                                  @change="() => onUnitChange(form.items.indexOf(item))"
-                                >
-                                  <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
-                                  <option
-                                    v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
-                                    :key="unitOpt.value"
-                                    :value="unitOpt.value"
-                                  >
-                                    {{ unitOpt.label }}
-                                  </option>
-                                </select>
-                                <span v-if="loadingUnitsFor.has(item.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
-                                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                                  </svg>
-                                </span>
-                              </div>
-                              <p v-if="item.ingredient_id && item.purchase_unit" class="text-[10px] text-text-secondary mt-0.5">
-                                = {{ getConvertedQuantity(form.items.indexOf(item)) }} {{ getIngredientUnit(item.ingredient_id) }}
-                              </p>
-                            </div>
-                            <div
-                              v-if="item.ingredient_id && getPurchaseUnitOptions(item.ingredient_id).length === 0"
-                              class="flex items-start gap-1.5 px-2.5 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex-1"
-                            >
-                              <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                              </svg>
-                              <span>Sin unidades de compra. <a :href="`/abastecimiento/ingredientes?highlight=${item.ingredient_id}`" class="underline font-medium">Configúralas en el panel de ingrediente.</a></span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Notes Row (Full width) -->
-                    <div class="mt-2">
-                      <input
-                        v-model="item.notes"
-                        type="text"
-                        class="input-base w-full px-2 py-1.5 text-xs text-text-secondary border-dashed bg-transparent focus:bg-background focus:border-solid transition-colors"
-                        placeholder="+ Agregar notas u observaciones del item (opcional)"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Section: Insumos -->
-              <div v-if="itemsByType.supply.length > 0 || selectedIngredientType === 'supply'">
-                <div class="flex items-center gap-2 mb-2">
-                  <svg class="w-3.5 h-3.5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                  <span class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Insumos</span>
-                  <span class="text-xs text-text-secondary bg-background px-1.5 py-0.5 rounded border border-border">{{ itemsByType.supply.length }}</span>
-                </div>
-                <div class="space-y-2">
-                  <div
-                    v-for="item in itemsByType.supply"
-                    :key="form.items.indexOf(item)"
-                    class="border-2 border-border rounded-lg p-3 bg-background relative z-10"
-                  >
-                    <div class="flex justify-between items-center mb-2">
-                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">{{ form.items.indexOf(item) + 1 }}</span>
-                      <button
-                        type="button"
-                        @click="removeItem(form.items.indexOf(item))"
-                        :disabled="form.items.length === 1"
-                        class="text-destructive hover:text-destructive/80 hover:bg-destructive/10 disabled:opacity-30 p-1.5 rounded-md transition-colors"
-                        aria-label="Eliminar item"
-                      >
-                        <TrashIcon class="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
-                      <!-- Ingredient Search (lg: 4 cols) -->
-                      <div class="sm:col-span-12 lg:col-span-4 relative z-10">
-                        <label class="block text-xs font-medium text-text-primary mb-1">
-                          Ítem / Ingrediente *
-                        </label>
-                        <UiIngredientSearchInput
-                          :initial-value="item.searchTerm ?? ''"
-                          :allow-create="true"
-                          placeholder="Buscar ingrediente..."
-                          @select="(ing) => selectIngredient(ing, form.items.indexOf(item))"
-                          @create="(name) => openCreateModal(form.items.indexOf(item), name)"
-                        />
-                        <!-- OCR hint -->
-                        <div v-if="item.ocr_description" class="mt-1 flex items-center gap-1 flex-wrap">
-                          <p class="text-xs leading-tight flex items-center gap-1" :class="item.ingredient_id ? 'text-success' : 'text-warning'">
-                            <svg class="w-3 h-3 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path v-if="item.ingredient_id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span class="truncate">Fac: "{{ item.ocr_description }}"</span>
-                          </p>
-                          <button
-                            v-if="!item.ingredient_id"
-                            type="button"
-                            @click="openCreateModal(form.items.indexOf(item), item.searchTerm || item.ocr_description)"
-                            class="text-xs text-primary hover:underline font-medium whitespace-nowrap flex-shrink-0 min-h-[28px] flex items-center"
-                          >
-                            Crear ingrediente
-                          </button>
-                        </div>
-                      </div>
-
-                      <!-- Wrapper for Unit and Financials (lg: 8 cols) -->
-                      <div class="sm:col-span-12 lg:col-span-8 flex flex-col gap-2">
-                        <!-- Top Row: Financials -->
-                        <div class="grid grid-cols-3 gap-3">
-                          <div>
-                            <label class="block text-xs font-medium text-text-primary mb-1">Cant. *</label>
-                            <input
-                              v-model.number="item.purchase_quantity"
-                              type="number"
-                              min="0.01"
-                              step="0.01"
-                              required
-                              class="input-base w-full px-2 py-1.5 text-sm"
-                              @input="() => updateItemTotal(form.items.indexOf(item))"
-                              placeholder="0"
-                            />
-                          </div>
-                          <div>
-                            <label class="block text-xs font-medium text-text-primary mb-1 whitespace-nowrap">
-                              P. Unit *
-                              <span
-                                v-if="item.suggested_price"
-                                class="text-[10px] text-success cursor-pointer ml-0.5"
-                                @click="item.unit_cost = item.suggested_price; updateItemTotal(form.items.indexOf(item))"
-                                title="Usar precio sugerido"
-                              >
-                                (Sug: {{ formatPrice(item.suggested_price) }})
-                              </span>
-                            </label>
-                            <div class="relative">
-                              <span class="absolute left-2 top-1.5 text-text-secondary text-xs">$</span>
-                              <input
-                                v-model.number="item.unit_cost"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                required
-                                class="input-base w-full pl-5 pr-2 py-1.5 text-sm"
-                                @input="() => updateItemTotal(form.items.indexOf(item))"
-                                placeholder="0"
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <label class="block text-xs font-medium text-text-primary mb-1">Total</label>
-                            <div class="input-base w-full px-2 py-1.5 text-sm bg-surface-secondary font-medium text-text-primary flex items-center h-[34px]">
-                              ${{ formatPrice(item.total_cost) }}
-                            </div>
-                          </div>
-                        </div>
-                        <!-- Bottom Row: Unit Section -->
-                        <div class="w-full">
-                          <label class="text-xs font-medium text-text-primary mb-1 block">Unidad *</label>
-                          <div class="flex items-start gap-2">
-                            <div class="flex-1 min-w-[120px]">
-                              <div class="relative">
-                                <select
-                                  v-model="item.purchase_unit"
-                                  required
-                                  :disabled="!item.ingredient_id || loadingUnitsFor.has(item.ingredient_id)"
-                                  class="input-base w-full pr-2 py-1.5 text-sm h-[34px]"
-                                  :class="[
-                                    { 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id || loadingUnitsFor.has(item.ingredient_id) },
-                                    loadingUnitsFor.has(item.ingredient_id) ? 'pl-7' : 'pl-2'
-                                  ]"
-                                  @change="() => onUnitChange(form.items.indexOf(item))"
-                                >
-                                  <option value="">{{ item.ingredient_id ? 'Seleccionar' : '...' }}</option>
-                                  <option
-                                    v-for="unitOpt in getPurchaseUnitOptions(item.ingredient_id)"
-                                    :key="unitOpt.value"
-                                    :value="unitOpt.value"
-                                  >
-                                    {{ unitOpt.label }}
-                                  </option>
-                                </select>
-                                <span v-if="loadingUnitsFor.has(item.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
-                                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                                  </svg>
-                                </span>
-                              </div>
-                              <p v-if="item.ingredient_id && item.purchase_unit" class="text-[10px] text-text-secondary mt-0.5">
-                                = {{ getConvertedQuantity(form.items.indexOf(item)) }} {{ getIngredientUnit(item.ingredient_id) }}
-                              </p>
-                            </div>
-                            <div
-                              v-if="item.ingredient_id && getPurchaseUnitOptions(item.ingredient_id).length === 0"
-                              class="flex items-start gap-1.5 px-2.5 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex-1"
-                            >
-                              <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                              </svg>
-                              <span>Sin unidades de compra. <a :href="`/abastecimiento/ingredientes?highlight=${item.ingredient_id}`" class="underline font-medium">Configúralas en el panel de ingrediente.</a></span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Notes Row (Full width) -->
-                    <div class="mt-2">
-                      <input
-                        v-model="item.notes"
-                        type="text"
-                        class="input-base w-full px-2 py-1.5 text-xs text-text-secondary border-dashed bg-transparent focus:bg-background focus:border-solid transition-colors"
-                        placeholder="+ Agregar notas u observaciones del item (opcional)"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
 
             </div>
 
           </MenuCatalogInlineCreateBusyOverlay>
-          </div>
-        </div>
 
-        <!-- Step 3: Documentos -->
-        <div v-else-if="currentStep === 3" key="step-3" class="bg-surface border-border border rounded-lg">
-          <div class="p-4">
-            <h3 class="text-base sm:text-lg font-semibold text-text-primary mb-1">Documentos (Opcional)</h3>
-            <p class="text-sm text-text-secondary mb-4">Puedes agregar la factura y comprobante de pago ahora o despues</p>
+            </UiFormSection>
 
+            <UiFormSection
+              title="Documentos"
+              description="Opcional — puedes agregar la factura y comprobante ahora o después"
+            >
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <!-- Factura Section -->
               <div class="border-2 border-border rounded-lg p-4 bg-background space-y-4">
@@ -905,7 +426,7 @@
                 </h4>
 
                 <div>
-                  <label class="block text-sm font-medium text-text-primary mb-1.5">Numero de Factura</label>
+                  <label class="block text-sm font-medium text-text-primary mb-1.5">Número de factura</label>
                   <input
                     v-model="form.invoice_number"
                     type="text"
@@ -914,43 +435,9 @@
                   />
                 </div>
 
-                <!-- Attachment Uploader -->
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-1.5">Adjuntar Factura</label>
-                  <input
-                    ref="invoiceFileInput"
-                    type="file"
-                    class="hidden"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    @change="handleInvoiceFileSelect"
-                  />
-                  <button
-                    type="button"
-                    @click="($refs.invoiceFileInput as HTMLInputElement).click()"
-                    class="w-full px-4 py-2.5 bg-primary/10 text-primary border-2 border-primary/30 border-dashed rounded-lg hover:bg-primary/20 active:scale-[0.99] transition-all text-sm font-medium flex items-center justify-center gap-2 whitespace-nowrap"
-                  >
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Seleccionar Archivo
-                  </button>
-                  <p class="text-xs text-text-secondary mt-1.5">PDF o imagen · máx. 10MB</p>
-
-                  <!-- Selected File Preview -->
-                  <div v-if="form.invoice_file" class="mt-2 flex items-center justify-between p-2.5 bg-surface border border-border rounded-lg">
-                    <div class="flex items-center gap-2 flex-1 min-w-0">
-                      <svg class="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
-                      <span class="text-xs text-text-primary truncate">{{ form.invoice_file.name }}</span>
-                      <span class="text-xs text-text-secondary flex-shrink-0">{{ formatFileSize(form.invoice_file.size) }}</span>
-                    </div>
-                    <button type="button" @click="form.invoice_file = null" class="text-destructive hover:bg-destructive/10 p-1 rounded ml-1 flex-shrink-0">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
+                  <PurchasesAttachmentUploader v-model="form.invoice_files" embedded />
                 </div>
               </div>
 
@@ -962,7 +449,7 @@
                 </h4>
 
                 <div>
-                  <label class="block text-sm font-medium text-text-primary mb-1.5">Metodo de Pago</label>
+                  <label class="block text-sm font-medium text-text-primary mb-1.5">Método de pago</label>
                   <select v-model="form.payment_method" class="input-base w-full px-4 py-2">
                     <option value="">Sin pago aun</option>
                     <template v-for="group in paymentGroups">
@@ -975,7 +462,7 @@
                 </div>
 
                 <div v-if="form.payment_method">
-                  <label class="block text-sm font-medium text-text-primary mb-1.5">Referencia de Pago</label>
+                  <label class="block text-sm font-medium text-text-primary mb-1.5">Referencia de pago</label>
                   <input
                     v-model="form.payment_reference"
                     type="text"
@@ -984,60 +471,24 @@
                   />
                 </div>
 
-                <!-- Attachment Uploader -->
                 <div v-if="form.payment_method">
                   <label class="block text-sm font-medium text-text-primary mb-1.5">Adjuntar Comprobante</label>
-                  <div>
-                    <input
-                      ref="paymentFileInput"
-                      type="file"
-                      class="hidden"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      @change="handlePaymentFileSelect"
-                    />
-                    <button
-                      type="button"
-                      @click="($refs.paymentFileInput as HTMLInputElement).click()"
-                      class="w-full px-4 py-2.5 bg-primary/10 text-primary border-2 border-primary/30 border-dashed rounded-lg hover:bg-primary/20 active:scale-[0.99] transition-all text-sm font-medium flex items-center justify-center gap-2 whitespace-nowrap"
-                    >
-                      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                      </svg>
-                      Seleccionar Archivo
-                    </button>
-                    <p class="text-xs text-text-secondary mt-1.5">PDF o imagen · máx. 10MB</p>
-
-                    <!-- Selected File Preview -->
-                    <div v-if="form.payment_file" class="mt-2 flex items-center justify-between p-2.5 bg-surface border border-border rounded-lg">
-                      <div class="flex items-center gap-2 flex-1 min-w-0">
-                        <svg class="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                        <span class="text-xs text-text-primary truncate">{{ form.payment_file.name }}</span>
-                        <span class="text-xs text-text-secondary flex-shrink-0">{{ formatFileSize(form.payment_file.size) }}</span>
-                      </div>
-                      <button type="button" @click="form.payment_file = null" class="text-destructive hover:bg-destructive/10 p-1 rounded ml-1 flex-shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
+                  <PurchasesAttachmentUploader v-model="form.payment_files" embedded />
                 </div>
               </div>
             </div>
+
+            </UiFormSection>
           </div>
         </div>
 
-        <!-- Step 4: Revision -->
-        <div v-else-if="currentStep === 4" key="step-4">
-          <!-- Layout: items (izq) + panel resumen (der) -->
-          <!-- En mobile: panel primero (CTA visible sin scroll), items después -->
-          <div class="flex flex-col lg:flex-row gap-4 items-start">
-
+        <div class="xl:col-span-1">
             <!-- ── Columna derecha: panel sticky (primero en mobile) ── -->
-            <div class="w-full lg:w-72 xl:w-80 lg:sticky lg:top-4 order-first lg:order-last">
-              <div class="bg-surface border-2 border-border rounded-lg divide-y divide-border overflow-hidden">
+            <div class="w-full xl:sticky xl:top-6 ">
+              <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
+              <div class="p-4 border-b border-border">
+                <h3 class="text-lg font-semibold text-text-primary">Resumen</h3>
+              </div>
 
                 <!-- Proveedor + pago -->
                 <div class="p-4 space-y-3">
@@ -1062,21 +513,21 @@
                 </div>
 
                 <!-- Documentos -->
-                <div v-if="form.invoice_number || form.invoice_file || form.payment_file" class="p-4 space-y-2">
-                  <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Documentos</p>
+                <div v-if="form.invoice_number || form.invoice_files.length || form.payment_files.length" class="p-4 space-y-2">
+                  <p class="text-xs font-semibold text-text-secondary mb-2">Documentos</p>
                   <div v-if="form.invoice_number" class="flex items-center gap-2 text-xs">
                     <svg class="w-3.5 h-3.5 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     <span class="text-text-primary font-medium">{{ form.invoice_number }}</span>
-                    <span v-if="form.invoice_file" class="text-success">· PDF adjunto</span>
+                    <span v-if="form.invoice_files.length" class="text-success">· {{ form.invoice_files.length }} archivo(s)</span>
                   </div>
                   <div v-if="form.payment_reference" class="flex items-center gap-2 text-xs">
                     <svg class="w-3.5 h-3.5 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                     </svg>
                     <span class="text-text-primary font-medium">Ref: {{ form.payment_reference }}</span>
-                    <span v-if="form.payment_file" class="text-success">· Comprobante</span>
+                    <span v-if="form.payment_files.length" class="text-success">· {{ form.payment_files.length }} comprobante(s)</span>
                   </div>
                   <div v-if="form.notes" class="flex items-start gap-2 text-xs">
                     <span class="text-text-secondary flex-shrink-0">Nota:</span>
@@ -1102,9 +553,12 @@
                     <CheckCircleIcon class="w-4 h-4 flex-shrink-0" />
                     <span>El stock se actualizará al instante</span>
                   </div>
+                  <p v-if="submitError" role="alert" class="text-sm text-destructive flex items-center gap-1">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    {{ submitError }}
+                  </p>
                   <button
-                    type="button"
-                    @click="handleSubmit"
+                    type="submit"
                     :disabled="isSubmitting"
                     class="w-full min-h-[48px] rounded-lg font-semibold text-base bg-success text-white hover:bg-success/90 active:scale-[0.98] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                   >
@@ -1112,96 +566,21 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
                     <UiLoadingDots v-else size="9px" class="opacity-80" />
-                    <span>{{ isSubmitting ? 'Guardando...' : 'Confirmar y Guardar' }}</span>
+                    <span>{{ isSubmitting ? 'Guardando...' : 'Registrar compra' }}</span>
                   </button>
-                  <button
-                    type="button"
-                    @click="previousStep"
-                    class="w-full min-h-[44px] rounded-lg text-xs font-medium text-text-secondary border border-border hover:text-text-primary hover:bg-surface-secondary active:scale-[0.99] transition-all"
+                  <NuxtLink
+                    to="/abastecimiento/compras-directas"
+                    class="w-full min-h-[44px] rounded-lg text-sm font-medium text-text-secondary border border-border hover:text-text-primary hover:bg-surface-secondary active:scale-[0.99] transition-all flex items-center justify-center"
                   >
-                    ← Editar compra
-                  </button>
+                    Cancelar
+                  </NuxtLink>
                 </div>
               </div>
             </div>
 
-            <!-- ── Columna izquierda: items (segundo en mobile) ── -->
-            <div class="w-full lg:flex-1 order-last lg:order-first">
-              <div class="bg-surface border-2 border-border rounded-lg p-4">
-                <!-- Header con conteo -->
-                <div class="flex items-center gap-2 mb-3">
-                  <span class="text-xs font-bold text-white bg-primary rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">{{ form.items.length }}</span>
-                  <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ form.items.length === 1 ? 'producto' : 'productos' }}</p>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div
-                    v-for="(item, index) in form.items"
-                    :key="index"
-                    class="flex items-start gap-3 p-3.5 rounded-lg border-2 border-border bg-background"
-                  >
-                    <!-- Avatar inicial -->
-                    <div class="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 text-primary text-sm font-bold">
-                      {{ getIngredientName(item.ingredient_id).charAt(0) }}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <!-- Nombre + precio: siempre en la misma fila -->
-                      <div class="flex items-start justify-between gap-2">
-                        <p class="font-semibold text-text-primary text-sm leading-snug min-w-0 truncate">{{ getIngredientName(item.ingredient_id) }}</p>
-                        <span class="text-base font-bold text-primary flex-shrink-0 leading-snug">${{ formatPrice(item.total_cost) }}</span>
-                      </div>
-                      <!-- Cantidad + gr: siempre abajo, sin conflicto con precio -->
-                      <div class="mt-1.5 flex items-center gap-1.5 flex-wrap">
-                        <span class="text-xs bg-surface-secondary border border-border px-2 py-0.5 rounded-md font-medium text-text-secondary">
-                          {{ item.purchase_quantity }} × {{ getItemUnitLabel(item) }}
-                        </span>
-                      </div>
-                      <p v-if="item.notes" class="text-xs text-text-secondary truncate mt-1">{{ item.notes }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-          </div>
         </div>
-        </Transition>
       </form>
-
-      <!-- Navigation Buttons -->
-      <div class="bg-surface border-t border-border shadow-lg mt-4">
-        <div class="px-4 sm:px-6 md:px-8 py-3 sm:py-4">
-          <div class="flex justify-between items-center gap-3">
-            <button
-              v-if="currentStep > 1"
-              type="button"
-              @click="previousStep"
-              class="btn-secondary px-4 sm:px-6 py-2 min-h-[44px] rounded-lg text-sm sm:text-base"
-            >
-              <span class="hidden sm:inline">← Anterior</span>
-              <span class="sm:hidden">←</span>
-            </button>
-            <NuxtLink
-              v-else
-              to="/abastecimiento/compras-directas"
-              class="btn-secondary px-4 sm:px-6 py-2 min-h-[44px] rounded-lg text-sm sm:text-base"
-            >
-              Cancelar
-            </NuxtLink>
-
-            <button
-              v-if="currentStep < 4"
-              type="button"
-              @click="handleNext"
-              :disabled="!isStepValid"
-              class="btn-primary px-4 sm:px-6 py-2 min-h-[44px] rounded-lg transition-opacity text-sm sm:text-base"
-              :class="{ 'opacity-50 cursor-not-allowed': !isStepValid }"
-            >
-              <span class="hidden sm:inline">Siguiente →</span>
-              <span class="sm:hidden">→</span>
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -1263,7 +642,7 @@
     v-model:busy-label="inlineCatalogBusyLabel"
     v-model:busy-hint="inlineCatalogBusyHint"
     context="purchase"
-    :initial-type="selectedIngredientType"
+    :initial-type="'food'"
     @saved="onIngredientCreated"
   />
 </template>
@@ -1304,11 +683,10 @@ interface NewUnitForm {
   saving: boolean
 }
 
-// Wizard state
-const currentStep = ref(1)
-
 // State
 const isSubmitting = ref(false)
+const submitError = ref<string | null>(null)
+const supplierError = ref('')
 const supplierCatalog = ref<any[]>([])
 const newUnitForms = ref<Record<number, NewUnitForm>>({})
 
@@ -1327,10 +705,10 @@ const form = ref({
   purchase_date: new Date() as Date | null,
   notes: '',
   invoice_number: '',
-  invoice_file: null as File | null,
+  invoice_files: [] as File[],
   payment_method: '',
   payment_reference: '',
-  payment_file: null as File | null,
+  payment_files: [] as File[],
   items: [createEmptyItem()] as PurchaseItem[]
 })
 
@@ -1387,16 +765,6 @@ const cacheIngredient = (ing: any) => {
   }
 }
 
-// Estado para filtro de tipo de ingrediente
-const selectedIngredientType = ref('food')
-
-// Opciones de tipo de ingrediente
-const ingredientTypeOptions = [
-  { value: 'food', label: 'Alimentos' },
-  { value: 'service', label: 'Servicios' },
-  { value: 'supply', label: 'Insumos' }
-]
-
 // Conversiones legacy (fallback cuando no hay unidades configuradas)
 const unitConversions: Record<string, number> = {
   'gr-gr': 1,
@@ -1408,13 +776,6 @@ const unitConversions: Record<string, number> = {
   'gal-ml': 3785.41,
   'und-und': 1
 }
-
-// Items agrupados por tipo
-const itemsByType = computed(() => ({
-  food: form.value.items.filter(item => (item.item_type || 'food') === 'food'),
-  service: form.value.items.filter(item => item.item_type === 'service'),
-  supply: form.value.items.filter(item => item.item_type === 'supply')
-}))
 
 // Per-ingredient purchase units cache (fetched on demand)
 const purchaseUnitsCache = ref<Map<string, any[]>>(new Map())
@@ -1433,22 +794,34 @@ const totalAmount = computed(() => {
   return form.value.items.reduce((sum, item) => sum + (item.total_cost || 0), 0)
 })
 
-// Step validation
-const isStepValid = computed(() => {
-  if (currentStep.value === 1) {
-    return !!form.value.supplier_id
+function validateForm(): boolean {
+  submitError.value = null
+  supplierError.value = ''
+
+  if (!form.value.supplier_id) {
+    supplierError.value = 'Selecciona un proveedor.'
+    submitError.value = 'Completa la sección Proveedor y fecha.'
+    return false
   }
-  if (currentStep.value === 2) {
-    return form.value.items.length > 0 && form.value.items.every(item =>
-      item.ingredient_id &&
-      item.purchase_quantity > 0 &&
-      item.purchase_unit &&
-      item.unit_cost >= 0
-    )
+
+  if (form.value.items.length === 0) {
+    submitError.value = 'Agrega al menos un ítem a la compra.'
+    return false
   }
-  // Step 3 (documents) is always valid (optional)
+
+  const invalidItem = form.value.items.find(item =>
+    !item.ingredient_id ||
+    item.purchase_quantity <= 0 ||
+    !item.purchase_unit ||
+    item.unit_cost < 0
+  )
+  if (invalidItem) {
+    submitError.value = 'Completa todos los ítems con ingrediente, cantidad, unidad y costo.'
+    return false
+  }
+
   return true
-})
+}
 
 // Methods
 const formatPrice = (price: number) => {
@@ -1456,17 +829,10 @@ const formatPrice = (price: number) => {
   return price.toLocaleString('es-CO', { minimumFractionDigits: 0 })
 }
 
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
-}
 
 const getSupplierName = (id: string) => {
   const supplier = suppliers.value.find((s: any) => s.id === id)
-  return supplier?.name || ''
+  return supplier?.name || '—'
 }
 
 const getIngredientName = (id: string) => {
@@ -1671,7 +1037,7 @@ const updateItemTotal = (index: number) => {
 }
 
 const addItem = () => {
-  form.value.items.push(createEmptyItem(selectedIngredientType.value))
+  form.value.items.push(createEmptyItem('food'))
 }
 
 const removeItem = (index: number) => {
@@ -1680,27 +1046,6 @@ const removeItem = (index: number) => {
   }
 }
 
-const handleInvoiceFileSelect = (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0] || null
-  if (file && file.size > 10 * 1024 * 1024) {
-    alert('El archivo excede el tamaño máximo de 10MB')
-    return
-  }
-  form.value.invoice_file = file
-  input.value = ''
-}
-
-const handlePaymentFileSelect = (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0] || null
-  if (file && file.size > 10 * 1024 * 1024) {
-    alert('El archivo excede el tamaño máximo de 10MB')
-    return
-  }
-  form.value.payment_file = file
-  input.value = ''
-}
 
 // --- Scan quota ---
 const { quota, isQuotaExceeded, warningLevel, scansRemaining, refetch: refetchQuota } = useScanQuotaQuery()
@@ -1968,7 +1313,7 @@ const handleScanFileSelect = async (event: Event) => {
       }
       // Pre-fill invoice fields for Step 3
       if (data.numero_factura) form.value.invoice_number = data.numero_factura
-      form.value.invoice_file = optimizedFile
+      form.value.invoice_files = [optimizedFile]
     }
   } catch (e) {
     const err = e as { data?: { detail?: { error?: string; scans_used?: number; scans_limit?: number; period_end?: string } }; status?: number }
@@ -2022,26 +1367,14 @@ async function onIngredientCreated(ingredient: any) {
   await onIngredientChange(index)
 }
 
-// Wizard navigation
-const handleNext = () => {
-  if (!isStepValid.value) return
-
-  if (currentStep.value < 4) {
-    currentStep.value++
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-}
-
-const previousStep = () => {
-  if (currentStep.value > 1) {
-    currentStep.value--
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-}
-
 // Submit
 const handleSubmit = async () => {
-  if (!isStepValid.value) return
+  if (!validateForm()) {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    return
+  }
+
+  submitError.value = null
 
   isSubmitting.value = true
 
@@ -2077,11 +1410,11 @@ const handleSubmit = async () => {
 
     if (response.success) {
       // Upload files if present
-      if ((form.value.invoice_file || form.value.payment_file) && response.data?.id) {
+      if ((form.value.invoice_files.length || form.value.payment_files.length) && response.data?.id) {
         try {
           const formData = new FormData()
-          if (form.value.invoice_file) formData.append('invoice_files', form.value.invoice_file)
-          if (form.value.payment_file) formData.append('payment_files', form.value.payment_file)
+          form.value.invoice_files.forEach(file => formData.append('invoice_files', file))
+          form.value.payment_files.forEach(file => formData.append('payment_files', file))
 
           await $fetch(`/api/suppliers/purchases/direct/${response.data.id}/attachments`, {
             method: 'POST',
@@ -2105,26 +1438,3 @@ const handleSubmit = async () => {
 }
 </script>
 
-<style scoped>
-/* Fade transition for wizard steps */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.fade-enter-from {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.fade-enter-to,
-.fade-leave-from {
-  opacity: 1;
-  transform: translateY(0);
-}
-</style>
