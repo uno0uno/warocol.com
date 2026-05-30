@@ -78,7 +78,7 @@
               title="Ingrediente"
               description="Abastecimiento y recetas · gr, ml, und"
               :selected="selectedIntent === 'supply'"
-              @click="selectAndConfirm('supply')"
+              @click="selectIntent('supply')"
             >
               <template #icon>
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -91,7 +91,7 @@
               title="Producto de menú"
               description="Venta en menú y POS · precio, categoría"
               :selected="selectedIntent === 'menu-product'"
-              @click="selectAndConfirm('menu-product')"
+              @click="selectIntent('menu-product')"
             >
               <template #icon>
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -172,9 +172,8 @@ function confirmSelection() {
   emitIntent(selectedIntent.value)
 }
 
-function selectAndConfirm(intent: CatalogCreationIntent) {
+function selectIntent(intent: CatalogCreationIntent) {
   selectedIntent.value = intent
-  emitIntent(intent)
 }
 
 function tryAutoResolve() {
