@@ -18,42 +18,13 @@
           <UiFormSection title="Datos del grupo">
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-text-primary mb-1">
-                  Productos * <span class="text-text-tertiary font-normal">(selecciona uno o más)</span>
+                <label :for="productSearchInputId" class="block text-sm font-medium text-text-primary mb-1">
+                  Productos *
                 </label>
-                <div class="input-base max-h-60 overflow-y-auto p-3">
-                  <div v-if="loadingProducts" class="flex items-center justify-center py-8">
-                    <div class="inline-flex items-center gap-2 text-text-secondary">
-                      <UiLoadingDots size="10px" />
-                      <span class="text-sm">Cargando productos...</span>
-                    </div>
-                  </div>
-                  <div v-else-if="products.length === 0" class="text-center py-4 text-text-secondary text-sm">
-                    No hay productos disponibles
-                  </div>
-                  <div v-else class="space-y-2">
-                    <label
-                      v-for="product in products"
-                      :key="product.id"
-                      class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-secondary cursor-pointer transition-colors"
-                      :class="{ 'bg-primary/5 border border-primary/20': form.product_ids.includes(product.id) }"
-                    >
-                      <input
-                        v-model="form.product_ids"
-                        type="checkbox"
-                        :value="product.id"
-                        class="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                      />
-                      <span class="text-sm text-text-primary">{{ product.name }}</span>
-                      <span v-if="product.category?.name" class="text-xs text-text-secondary ml-auto">
-                        {{ product.category.name }}
-                      </span>
-                    </label>
-                  </div>
-                </div>
-                <p class="text-xs text-text-tertiary mt-1">
-                  {{ form.product_ids.length }} producto(s) seleccionado(s)
-                </p>
+                <UiProductMultiSelect
+                  v-model="selectedProducts"
+                  :input-id="productSearchInputId"
+                />
               </div>
 
               <div>
@@ -388,6 +359,8 @@ const { currentTenant } = useTenantReactive()
 
 const isSubmitting = ref(false)
 const submitError = ref('')
+const productSearchInputId = 'modifier-edit-product-search'
+const selectedProducts = ref<{ id: string; name: string }[]>([])
 
 const form = ref({
   product_ids: [] as string[],
@@ -418,18 +391,6 @@ const { data: groupData, pending: isLoadingGroup, refresh: refreshGroup } = useA
   () => $fetch(`/api/menu/modifier-groups/${groupId}`),
   {
     server: false
-  }
-)
-
-const { data: productsData, pending: loadingProducts } = useAsyncData(
-  `products-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/menu/products', {
-    query: { limit: 250 }
-  }),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ data: [] })
   }
 )
 
@@ -527,11 +488,11 @@ async function onInlineProductCreated(product: Record<string, unknown>) {
   })
 }
 
-const products = computed(() => productsData.value?.data || [])
+const isLoadingData = computed(() => isLoadingGroup.value)
 
-const isLoadingData = computed(() => {
-  return isLoadingGroup.value || !productsData.value
-})
+watch(selectedProducts, (list) => {
+  form.value.product_ids = list.map((p) => p.id)
+}, { deep: true })
 
 watch(groupData, (data) => {
   if (data?.data) {
@@ -568,6 +529,10 @@ watch(groupData, (data) => {
       }),
       tenant_id: currentTenant.value?.id || ''
     }
+    selectedProducts.value = (group.products || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+    }))
   }
 }, { immediate: true })
 
@@ -577,17 +542,12 @@ watch(availableIngredients, (list) => {
   }
 })
 
-function getProductName(productId: string) {
-  const product = products.value.find((p: any) => p.id === productId)
-  return product?.name || ''
-}
-
 function getSelectedProductsText() {
-  if (form.value.product_ids.length === 0) return 'Ninguno'
-  if (form.value.product_ids.length === 1) {
-    return getProductName(form.value.product_ids[0])
+  if (selectedProducts.value.length === 0) return 'Ninguno'
+  if (selectedProducts.value.length === 1) {
+    return selectedProducts.value[0].name
   }
-  return `${form.value.product_ids.length} productos`
+  return `${selectedProducts.value.length} productos`
 }
 
 function addModifier() {
@@ -612,7 +572,7 @@ function removeModifier(index: number) {
 function validateForm(): boolean {
   submitError.value = ''
 
-  if (form.value.product_ids.length === 0) {
+  if (selectedProducts.value.length === 0) {
     submitError.value = 'Selecciona al menos un producto.'
     return false
   }

@@ -8,53 +8,20 @@
       indicator="matrix"
     />
 
-    <div v-if="isLoadingData" class="flex items-center justify-center min-h-[400px]">
-      <CommonsTheCustomLoader size="large" />
-    </div>
-
-    <div v-else class="space-y-6">
+    <div class="space-y-6">
       <form @submit.prevent="submitGroup" class="grid grid-cols-1 xl:grid-cols-3 gap-6 xl:gap-8">
         <div class="xl:col-span-2 space-y-6">
           <div class="bg-surface border-2 border-border rounded-xl shadow-sm divide-y divide-border overflow-hidden">
             <UiFormSection title="Datos del grupo">
               <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-text-primary mb-1">
+                  <label :for="productSearchInputId" class="block text-sm font-medium text-text-primary mb-1">
                     Productos *
                   </label>
-                  <div class="border border-border rounded-lg p-3 max-h-60 overflow-y-auto bg-surface">
-                    <div v-if="loadingProducts" class="flex items-center justify-center py-8">
-                      <div class="inline-flex items-center gap-2 text-text-secondary">
-                        <UiLoadingDots size="10px" />
-                        <span class="text-sm">Cargando productos...</span>
-                      </div>
-                    </div>
-                    <div v-else-if="products.length === 0" class="text-center py-4 text-text-secondary text-sm">
-                      No hay productos disponibles
-                    </div>
-                    <div v-else class="space-y-2">
-                      <label
-                        v-for="product in products"
-                        :key="product.id"
-                        class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-secondary cursor-pointer transition-colors"
-                        :class="{ 'bg-primary/5 border border-primary/20': form.product_ids.includes(product.id) }"
-                      >
-                        <input
-                          type="checkbox"
-                          :value="product.id"
-                          v-model="form.product_ids"
-                          class="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                        />
-                        <span class="text-sm text-text-primary">{{ product.name }}</span>
-                        <span v-if="product.category?.name" class="text-xs text-text-secondary ml-auto">
-                          {{ product.category.name }}
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                  <p class="text-xs text-text-tertiary mt-1">
-                    {{ form.product_ids.length }} producto(s) seleccionado(s)
-                  </p>
+                  <UiProductMultiSelect
+                    v-model="selectedProducts"
+                    :input-id="productSearchInputId"
+                  />
                 </div>
 
                 <div>
@@ -326,7 +293,7 @@
 
               <div class="flex justify-between text-sm">
                 <span class="text-text-secondary">Productos:</span>
-                <span class="font-semibold text-text-primary">{{ form.product_ids.length }}</span>
+                <span class="font-semibold text-text-primary">{{ selectedProducts.length }}</span>
               </div>
 
               <div class="flex justify-between text-sm">
@@ -391,7 +358,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
 definePageMeta({
@@ -406,6 +373,8 @@ const { currentTenant } = useTenantReactive()
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
 const nameError = ref('')
+const productSearchInputId = 'modifier-create-product-search'
+const selectedProducts = ref<{ id: string; name: string }[]>([])
 
 const form = ref({
   product_ids: [] as string[],
@@ -428,23 +397,9 @@ const form = ref({
   tenant_id: currentTenant.value?.id || ''
 })
 
-const { data: productsData, pending: loadingProducts } = useAsyncData(
-  `products-${currentTenant.value?.id || 'default'}`,
-  () => $fetch('/api/menu/products', {
-    query: { limit: 250 }
-  }),
-  {
-    server: false,
-    watch: [currentTenant],
-    default: () => ({ data: [] })
-  }
-)
-
-const products = computed(() => productsData.value?.data || [])
-
-const isLoadingData = computed(() => {
-  return !productsData.value
-})
+watch(selectedProducts, (list) => {
+  form.value.product_ids = list.map((p) => p.id)
+}, { deep: true })
 
 function addModifier() {
   form.value.modifiers.push({
@@ -541,7 +496,7 @@ async function validateForm(): Promise<boolean> {
   submitError.value = null
   nameError.value = ''
 
-  if (form.value.product_ids.length === 0) {
+  if (selectedProducts.value.length === 0) {
     submitError.value = 'Selecciona al menos un producto.'
     return false
   }
