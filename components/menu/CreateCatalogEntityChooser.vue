@@ -78,7 +78,7 @@
               title="Ingrediente"
               description="Abastecimiento y recetas · gr, ml, und"
               :selected="selectedIntent === 'supply'"
-              @click="selectIntent('supply')"
+              @click="selectAndConfirm('supply')"
             >
               <template #icon>
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -91,7 +91,7 @@
               title="Producto de menú"
               description="Venta en menú y POS · precio, categoría"
               :selected="selectedIntent === 'menu-product'"
-              @click="selectIntent('menu-product')"
+              @click="selectAndConfirm('menu-product')"
             >
               <template #icon>
                 <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -103,23 +103,13 @@
         </div>
 
         <div class="flex-shrink-0 border-t border-border bg-surface px-6 py-4">
-          <div class="flex flex-col-reverse sm:flex-row gap-2">
-            <button
-              type="button"
-              class="flex-1 min-h-[44px] py-3 px-4 border-2 border-border rounded-lg text-text-primary font-medium hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-95 transition-all"
-              @click="onCancel"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              :disabled="!selectedIntent"
-              class="flex-1 min-h-[44px] py-3 px-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed active:scale-95 transition-all"
-              @click="confirmSelection"
-            >
-              Continuar
-            </button>
-          </div>
+          <button
+            type="button"
+            class="w-full min-h-[44px] py-3 px-4 border-2 border-border rounded-lg text-text-primary font-medium hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-95 transition-all"
+            @click="onCancel"
+          >
+            Cancelar
+          </button>
         </div>
       </div>
     </Transition>
@@ -167,13 +157,9 @@ function emitIntent(intent: CatalogCreationIntent) {
   close()
 }
 
-function confirmSelection() {
-  if (!selectedIntent.value) return
-  emitIntent(selectedIntent.value)
-}
-
-function selectIntent(intent: CatalogCreationIntent) {
+function selectAndConfirm(intent: CatalogCreationIntent) {
   selectedIntent.value = intent
+  emitIntent(intent)
 }
 
 function tryAutoResolve() {

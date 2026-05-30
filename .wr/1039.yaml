@@ -19,7 +19,8 @@ ac:
   - pendingName preserved when navigating back
   - Back shown only when opened from chooser (recipe/modifier/product contexts)
   - Chooser Cancel still dismisses full flow
-  - Card click selects only; Continuar confirms intent
+  - Card click confirms intent immediately (no Continuar step on chooser)
+  - Back button in panel footer beside Cancelar and primary action
 
 out_of_scope:
   - API changes

@@ -26,18 +26,6 @@
         </div>
 
         <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
-          <button
-            v-if="showBackToChooser"
-            type="button"
-            aria-label="Volver al selector de tipo"
-            class="mb-3 flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-lg px-1 -ml-1"
-            @click="emit('back-to-chooser')"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            Atrás
-          </button>
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0 flex-1">
               <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary" aria-hidden="true">
@@ -157,10 +145,19 @@
           </p>
         </div>
 
-        <div class="flex-shrink-0 bg-surface-secondary/40 border-t border-border px-6 py-4 flex gap-3">
+        <div class="flex-shrink-0 bg-surface-secondary/40 border-t border-border px-6 py-4 flex gap-2">
+          <button
+            v-if="showBackToChooser"
+            type="button"
+            aria-label="Volver al selector de tipo"
+            class="h-11 px-4 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+            @click="emit('back-to-chooser')"
+          >
+            Atrás
+          </button>
           <button
             type="button"
-            class="h-11 px-5 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+            class="h-11 px-4 rounded-lg border border-border bg-surface text-sm font-medium text-text-secondary hover:bg-surface-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
             @click="close"
           >
             Cancelar
