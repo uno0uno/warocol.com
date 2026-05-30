@@ -80,6 +80,16 @@ watch([tipAmount, tipSource], () => {
   emit('update:modelValue', { amount: tipAmount.value, source: tipSource.value })
 }, { immediate: true })
 
+// warocol.com#1030 — parent resets tip on customer/cart change; keep chips in sync
+watch(
+  () => props.modelValue,
+  (val) => {
+    if (val.source !== 'none' || val.amount !== 0) return
+    activeMode.value = { kind: 'none' }
+    customAmount.value = 0
+  },
+)
+
 const formatCurrency = (value: number): string =>
   new Intl.NumberFormat('es-CO', {
     style: 'currency',

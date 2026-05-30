@@ -1,0 +1,34 @@
+issue: 1030
+title: "fix(pos): tip not selectable after customer identification at checkout"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1030-checkout-tip-customer
+
+paths:
+  - pages/pos/checkout.vue
+  - components/checkout/TipSelector.vue
+
+ac:
+  - Tip selectable after identifying a real customer (not only generic 0000000000)
+  - Partial payments rehydrate only when by-customer cart id matches posStore.cartId
+  - Tip UI resets when parent clears tipModel on customer change
+
+out_of_scope:
+  - Backend cart/customer association changes
+  - Split-payment tip rules (#737)
+
+hints:
+  entry: "hydratePosCartPartials — checkout.vue ~2083"
+  pattern: "checkout.vue — guard pos cart partial rehydration by cart id"
+  tests: "manual — counter checkout, generic then real customer, set tip"
+
+skip:
+  audits: [ux, color, typography]
+
+root_cause: |
+  GET /pos/cart/{customer_id} returns that customer's active cart, not the
+  batch-synced session cart. Real customers often had stale partial_payments
+  on a different cart → splitMode → showCheckoutTipSelector false. Generic
+  customer rarely had partials.

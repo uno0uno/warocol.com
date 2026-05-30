@@ -2079,8 +2079,23 @@ const hydratePartialsFrom = (partials: any[] | undefined) => {
   splitPaidTotal.value = splitPayments.value.reduce((acc, p) => acc + p.amount, 0)
   if (!splitMode.value) splitMode.value = true
 }
+const resetSplitPayments = () => {
+  splitPayments.value = []
+  splitPaidTotal.value = 0
+  splitMode.value = false
+}
+// warocol.com#1030 — batch-synced checkout cart is often not the customer's active
+// cart row; rehydrating partials from the wrong cart hid the tip block (split mode).
+const hydratePosCartPartials = () => {
+  const cartData = posCartData.value?.data
+  if (!cartData?.id || cartData.id !== posStore.cartId) return
+  hydratePartialsFrom(cartData.partial_payments)
+}
 watch(() => mesaCurrentData.value?.data?.session?.partial_payments, hydratePartialsFrom)
-watch(() => posCartData.value?.data?.partial_payments, hydratePartialsFrom)
+watch(() => [posCartData.value?.data?.id, posCartData.value?.data?.partial_payments], hydratePosCartPartials)
+watch(() => selectedCustomer.value?.id, () => {
+  resetSplitPayments()
+})
 
 // Set page subtitle and sync cart on mount. payment-methods, mesa /current
 // and pos cart queries are already in flight (declared above as useQuery —
