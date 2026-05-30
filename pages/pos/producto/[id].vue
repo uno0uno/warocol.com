@@ -79,7 +79,86 @@ const productPromoBadge = computed(() => {
 // State
 const selectedModifiers = ref<CartModifier[]>([])
 const notes = ref('')
+const quantity = ref(1)
 const isAdding = ref(false)
+
+interface WizardUnit {
+  modifiers: CartModifier[]
+  notes: string
+}
+
+const wizardMode = ref(false)
+const wizardPending = ref(false)
+const wizardStep = ref(0)
+const wizardUnits = ref<WizardUnit[]>([])
+
+const activeStepModifiers = computed<CartModifier[]>({
+  get() {
+    if (wizardMode.value && wizardUnits.value[wizardStep.value]) {
+      return wizardUnits.value[wizardStep.value].modifiers
+    }
+    return selectedModifiers.value
+  },
+  set(val) {
+    if (wizardMode.value && wizardUnits.value[wizardStep.value]) {
+      wizardUnits.value[wizardStep.value].modifiers = val
+    } else {
+      selectedModifiers.value = val
+    }
+  },
+})
+
+const activeNotes = computed<string>({
+  get() {
+    if (wizardMode.value && wizardUnits.value[wizardStep.value]) {
+      return wizardUnits.value[wizardStep.value].notes
+    }
+    return notes.value
+  },
+  set(val) {
+    if (wizardMode.value && wizardUnits.value[wizardStep.value]) {
+      wizardUnits.value[wizardStep.value].notes = val
+    } else {
+      notes.value = val
+    }
+  },
+})
+
+watch(quantity, (newQty) => {
+  if (!wizardMode.value) return
+  if (newQty > wizardUnits.value.length) {
+    while (wizardUnits.value.length < newQty) {
+      wizardUnits.value.push({ modifiers: [], notes: '' })
+    }
+  } else {
+    wizardUnits.value = wizardUnits.value.slice(0, newQty)
+    if (wizardStep.value >= newQty) wizardStep.value = Math.max(0, newQty - 1)
+  }
+})
+
+const enableWizard = () => {
+  wizardPending.value = !wizardPending.value
+  if (wizardPending.value) {
+    wizardUnits.value = Array.from({ length: quantity.value }, (_, i) => ({
+      modifiers: i === 0 ? [...selectedModifiers.value] : [],
+      notes: i === 0 ? notes.value : '',
+    }))
+    wizardStep.value = 0
+    wizardMode.value = true
+  } else {
+    if (wizardUnits.value[0]) {
+      selectedModifiers.value = [...wizardUnits.value[0].modifiers]
+      notes.value = wizardUnits.value[0].notes
+    }
+    wizardMode.value = false
+    wizardUnits.value = []
+    wizardStep.value = 0
+  }
+}
+
+const goToNextStep = () => {
+  wizardStep.value++
+}
 
 // Edit mode detection
 const editCartIndex = computed(() => {
@@ -370,25 +449,47 @@ const modifierLineTotal = (mod: CartModifier) => Number(mod.price) * (mod.quanti
 const totalPrice = computed(() => {
   if (!product.value) return 0
   const basePrice = Number(product.value.price) || 0
+  if (wizardMode.value) {
+    return wizardUnits.value.reduce((sum, unit) => {
+      const modifiersPrice = unit.modifiers.reduce((modSum, mod) => modSum + modifierLineTotal(mod), 0)
+      return sum + basePrice + modifiersPrice
+    }, 0)
+  }
   const modifiersPrice = selectedModifiers.value.reduce((sum, mod) => sum + modifierLineTotal(mod), 0)
-  return basePrice + modifiersPrice // Always 1 item
+  return (basePrice + modifiersPrice) * quantity.value
 })
 
 const promoSavings = computed(() => {
   if (!product.value || activePromos.value.length === 0) return 0
+  if (wizardMode.value) {
+    const basePrice = Number(product.value.price) || 0
+    return wizardUnits.value.reduce((sum, unit) => {
+      const modifiersPrice = unit.modifiers.reduce((modSum, mod) => modSum + modifierLineTotal(mod), 0)
+      return sum + linePromoSavingsForProduct(
+        activePromos.value,
+        product.value!.id,
+        { subtotal: basePrice + modifiersPrice, quantity: 1 },
+        product.value!.category_id,
+      )
+    }, 0)
+  }
+  const modifiersPrice = selectedModifiers.value.reduce((sum, mod) => sum + modifierLineTotal(mod), 0)
+  const unitSubtotal = basePriceFromProduct() + modifiersPrice
   return linePromoSavingsForProduct(
     activePromos.value,
     product.value.id,
-    { subtotal: totalPrice.value, quantity: 1 },
+    { subtotal: unitSubtotal * quantity.value, quantity: quantity.value },
     product.value.category_id,
   )
 })
+
+const basePriceFromProduct = () => Number(product.value?.price) || 0
 
 const netTotalPrice = computed(() => Math.max(0, totalPrice.value - promoSavings.value))
 
 // Methods
 const getModifierQty = (modifierId: string) =>
-  selectedModifiers.value.find(m => m.id === modifierId)?.quantity ?? 0
+  activeStepModifiers.value.find(m => m.id === modifierId)?.quantity ?? 0
 
 const isSingleSelectGroup = (group: ModifierGroup) => group.maxSelections === 1
 
@@ -396,22 +497,25 @@ const selectRadioModifier = (modifier: ModifierOption, groupId: string) => {
   const group = modifierGroups.value.find(g => g.id === groupId)
   if (!group) return
 
-  selectedModifiers.value = selectedModifiers.value.filter(m =>
+  activeStepModifiers.value = activeStepModifiers.value.filter(m =>
     !group.options.some(opt => opt.id === m.id)
   )
-  selectedModifiers.value.push({ id: modifier.id, name: modifier.name, price: modifier.price, quantity: 1 })
+  activeStepModifiers.value = [
+    ...activeStepModifiers.value,
+    { id: modifier.id, name: modifier.name, price: modifier.price, quantity: 1 },
+  ]
 }
 
 const canIncrementModifier = (option: ModifierOption, groupId: string) => {
   const group = modifierGroups.value.find(g => g.id === groupId)
   if (!group) return false
 
-  const index = selectedModifiers.value.findIndex(m => m.id === option.id)
-  const currentQty = index === -1 ? 0 : (selectedModifiers.value[index].quantity ?? 1)
+  const index = activeStepModifiers.value.findIndex(m => m.id === option.id)
+  const currentQty = index === -1 ? 0 : (activeStepModifiers.value[index].quantity ?? 1)
   if (currentQty >= option.max_limit) return false
 
   if (index === -1) {
-    const distinctInGroup = selectedModifiers.value.filter(m =>
+    const distinctInGroup = activeStepModifiers.value.filter(m =>
       group.options.some(opt => opt.id === m.id) && (m.quantity ?? 0) > 0
     ).length
     if (distinctInGroup >= group.maxSelections) return false
@@ -423,36 +527,43 @@ const canIncrementModifier = (option: ModifierOption, groupId: string) => {
 const incrementModifier = (option: ModifierOption, groupId: string) => {
   if (!canIncrementModifier(option, groupId)) return
 
-  const index = selectedModifiers.value.findIndex(m => m.id === option.id)
+  const index = activeStepModifiers.value.findIndex(m => m.id === option.id)
   if (index === -1) {
-    selectedModifiers.value.push({
-      id: option.id,
-      name: option.name,
-      price: option.price,
-      quantity: 1,
-    })
+    activeStepModifiers.value = [
+      ...activeStepModifiers.value,
+      {
+        id: option.id,
+        name: option.name,
+        price: option.price,
+        quantity: 1,
+      },
+    ]
     return
   }
 
-  const currentQty = selectedModifiers.value[index].quantity ?? 1
-  selectedModifiers.value[index] = {
-    ...selectedModifiers.value[index],
+  const currentQty = activeStepModifiers.value[index].quantity ?? 1
+  const next = [...activeStepModifiers.value]
+  next[index] = {
+    ...next[index],
     quantity: currentQty + 1,
   }
+  activeStepModifiers.value = next
 }
 
 const decrementModifier = (option: ModifierOption, groupId: string) => {
-  const index = selectedModifiers.value.findIndex(m => m.id === option.id)
+  const index = activeStepModifiers.value.findIndex(m => m.id === option.id)
   if (index === -1) return
 
-  const currentQty = selectedModifiers.value[index].quantity ?? 1
+  const currentQty = activeStepModifiers.value[index].quantity ?? 1
   if (currentQty <= 1) {
-    selectedModifiers.value.splice(index, 1)
+    activeStepModifiers.value = activeStepModifiers.value.filter(m => m.id !== option.id)
   } else {
-    selectedModifiers.value[index] = {
-      ...selectedModifiers.value[index],
+    const next = [...activeStepModifiers.value]
+    next[index] = {
+      ...next[index],
       quantity: currentQty - 1,
     }
+    activeStepModifiers.value = next
   }
 }
 
@@ -464,28 +575,38 @@ const addToCart = async () => {
   isAdding.value = true
 
   try {
-    const cartItemData = {
-      product: {
-        id: product.value.id,
-        name: product.value.name,
-        price: product.value.price,
-        image: product.value.image,
-        category: product.value.category
-      },
-      modifiers: selectedModifiers.value,
-      quantity: 1, // Always 1 for individual personalization
-      notes: notes.value || undefined
+    const productPayload = {
+      id: product.value.id,
+      name: product.value.name,
+      price: product.value.price,
+      image: product.value.image,
+      category: product.value.category,
     }
 
     if (isEditMode.value && editCartIndex.value !== null) {
-      // Update existing cart item
-      await posStore.updateCartItem(editCartIndex.value, cartItemData)
+      await posStore.updateCartItem(editCartIndex.value, {
+        product: productPayload,
+        modifiers: [...selectedModifiers.value],
+        notes: notes.value || undefined,
+        quantity: 1,
+      })
+    } else if (wizardMode.value) {
+      await posStore.addCartItemsBatch(
+        productPayload,
+        wizardUnits.value.map(unit => ({
+          modifiers: unit.modifiers.map(m => ({ ...m, quantity: m.quantity ?? 1 })),
+          notes: unit.notes || undefined,
+        })),
+      )
     } else {
-      // Add new cart item
-      await posStore.addToCart(cartItemData)
+      await posStore.addToCart({
+        product: productPayload,
+        modifiers: selectedModifiers.value,
+        quantity: quantity.value,
+        notes: notes.value || undefined,
+      })
     }
 
-    // Navigate back to POS
     router.push('/pos')
   } finally {
     isAdding.value = false
@@ -603,6 +724,54 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- Quantity + per-unit wizard (online cart parity #1023) -->
+        <section v-if="!isEditMode" class="bg-surface rounded-2xl p-4 md:p-6 border border-border space-y-4">
+          <div v-if="wizardMode" class="flex items-center justify-between">
+            <h3 class="text-base md:text-lg font-bold text-text-primary">
+              Ítem {{ wizardStep + 1 }} de {{ quantity }}
+            </h3>
+            <span class="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-full">
+              Personalización individual
+            </span>
+          </div>
+
+          <div v-if="!wizardMode" class="flex items-center justify-between">
+            <span class="text-sm font-semibold text-text-primary">Cantidad</span>
+            <div class="flex items-center gap-3">
+              <button
+                type="button"
+                class="w-9 h-9 rounded-lg border border-border text-text-secondary hover:bg-surface-secondary disabled:opacity-40"
+                :disabled="quantity <= 1"
+                @click="quantity = Math.max(1, quantity - 1)"
+              >−</button>
+              <span class="min-w-[2rem] text-center font-bold tabular-nums">{{ quantity }}</span>
+              <button
+                type="button"
+                class="w-9 h-9 rounded-lg border border-border text-text-secondary hover:bg-surface-secondary"
+                @click="quantity++"
+              >+</button>
+            </div>
+          </div>
+
+          <div
+            v-if="quantity > 1 && modifierGroups.length > 0 && !wizardMode"
+            class="rounded-xl border border-dashed border-primary/30 bg-primary/5 p-3"
+          >
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                class="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                :checked="wizardPending"
+                @change="enableWizard"
+              />
+              <span>
+                <span class="block text-sm font-semibold text-text-primary">Personalizar cada uno individualmente</span>
+                <span class="block text-xs text-text-secondary mt-0.5">Ideal para promos 2×1 / 3×1 con extras distintos por unidad</span>
+              </span>
+            </label>
+          </div>
+        </section>
+
         <!-- Modifier Groups -->
         <section v-for="group in modifierGroups" :key="group.id">
           <div class="flex items-center justify-between mb-3 md:mb-4">
@@ -718,9 +887,11 @@ onUnmounted(() => {
 
         <!-- Notes Section -->
         <section>
-          <h3 class="text-base md:text-lg font-bold text-text-primary mb-3">Notas Especiales</h3>
+          <h3 class="text-base md:text-lg font-bold text-text-primary mb-3">
+            {{ wizardMode ? `Notas — ítem ${wizardStep + 1}` : 'Notas Especiales' }}
+          </h3>
           <textarea
-            v-model="notes"
+            v-model="activeNotes"
             placeholder="Ej: Sin cebolla, término medio, cortar en cuadros..."
             class="w-full border border-border rounded-xl p-3 md:p-4 text-xs md:text-sm text-text-primary focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none shadow-sm placeholder:text-muted-foreground bg-surface"
             rows="3"
@@ -741,7 +912,7 @@ onUnmounted(() => {
             </div>
 
             <!-- Selected Modifiers -->
-            <div v-for="modifier in selectedModifiers" :key="modifier.id" class="flex justify-between text-xs md:text-sm text-text-secondary">
+            <div v-for="modifier in (wizardMode ? activeStepModifiers : selectedModifiers)" :key="modifier.id" class="flex justify-between text-xs md:text-sm text-text-secondary">
               <span>+ {{ modifier.name }}<template v-if="(modifier.quantity ?? 1) > 1"> ×{{ modifier.quantity }}</template></span>
               <span>{{ formatCurrency(modifierLineTotal(modifier)) }}</span>
             </div>
@@ -770,7 +941,36 @@ onUnmounted(() => {
           </div>
 
           <!-- Add to Cart Button -->
+          <template v-if="wizardMode && !isEditMode">
+            <div class="flex gap-2">
+              <button
+                type="button"
+                class="flex-1 border border-border text-text-primary font-semibold py-3 rounded-xl disabled:opacity-40"
+                :disabled="wizardStep === 0"
+                @click="wizardStep--"
+              >
+                ← Anterior
+              </button>
+              <button
+                v-if="wizardStep < quantity - 1"
+                type="button"
+                class="flex-[2] bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-xl"
+                @click="goToNextStep"
+              >
+                Siguiente →
+              </button>
+              <button
+                v-else
+                @click="addToCart"
+                :disabled="isAdding"
+                class="flex-[2] bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-xl disabled:opacity-50"
+              >
+                Agregar {{ quantity }} ítems
+              </button>
+            </div>
+          </template>
           <button
+            v-else
             @click="addToCart"
             :disabled="isAdding"
             class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
@@ -784,7 +984,7 @@ onUnmounted(() => {
             </template>
             <template v-else>
               <ShoppingCartIcon class="h-4 md:h-5 w-4 md:w-5" />
-              {{ isEditMode ? 'Guardar Cambios' : 'Agregar al Carrito' }}
+              {{ isEditMode ? 'Guardar Cambios' : (quantity > 1 ? `Agregar ${quantity} al carrito` : 'Agregar al Carrito') }}
             </template>
           </button>
         </div>
@@ -804,7 +1004,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Selected Modifiers -->
-          <div v-for="modifier in selectedModifiers" :key="modifier.id" class="flex justify-between text-xs md:text-sm text-text-secondary">
+          <div v-for="modifier in (wizardMode ? activeStepModifiers : selectedModifiers)" :key="modifier.id" class="flex justify-between text-xs md:text-sm text-text-secondary">
             <span>+ {{ modifier.name }}<template v-if="(modifier.quantity ?? 1) > 1"> ×{{ modifier.quantity }}</template></span>
             <span>{{ formatCurrency(modifierLineTotal(modifier)) }}</span>
           </div>
@@ -833,7 +1033,36 @@ onUnmounted(() => {
         </div>
 
         <!-- Add to Cart Button -->
+        <template v-if="wizardMode && !isEditMode">
+          <div class="flex gap-2">
+            <button
+              type="button"
+              class="flex-1 border border-border text-text-primary font-semibold py-3 rounded-xl disabled:opacity-40"
+              :disabled="wizardStep === 0"
+              @click="wizardStep--"
+            >
+              ← Anterior
+            </button>
+            <button
+              v-if="wizardStep < quantity - 1"
+              type="button"
+              class="flex-[2] bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-xl"
+              @click="goToNextStep"
+            >
+              Siguiente →
+            </button>
+            <button
+              v-else
+              @click="addToCart"
+              :disabled="isAdding"
+              class="flex-[2] bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-xl disabled:opacity-50"
+            >
+              Agregar {{ quantity }} ítems
+            </button>
+          </div>
+        </template>
         <button
+          v-else
           @click="addToCart"
           :disabled="isAdding"
           class="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 md:py-4 px-4 md:px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
@@ -847,7 +1076,7 @@ onUnmounted(() => {
           </template>
           <template v-else>
             <ShoppingCartIcon class="h-4 md:h-5 w-4 md:w-5" />
-            {{ isEditMode ? 'Guardar Cambios' : 'Agregar al Carrito' }}
+            {{ isEditMode ? 'Guardar Cambios' : (quantity > 1 ? `Agregar ${quantity} al carrito` : 'Agregar al Carrito') }}
           </template>
         </button>
       </div>

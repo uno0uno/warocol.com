@@ -46,7 +46,7 @@ if (typeof window !== 'undefined' && sessionStorage.getItem('posNavigation') !==
 // `tables_enabled` lives on tenant_public_profiles and is included in the
 // aggregator payload. /api/api/tenant/public-profile is now owner-only (MI_NEGOCIO).
 const { data: settingsData, asyncStatus: settingsAsyncStatus } = useQuery({
-  key: () => ['pos', 'restaurant-context', currentTenant.value?.id],
+  key: () => ['pos', 'restaurant-context', currentTenant.value?.id ?? null],
   query: () => $fetch<{ success: boolean; data: any }>('/api/pos/restaurant-context'),
   enabled: () => !!currentTenant.value,
   staleTime: 30_000,
@@ -108,9 +108,9 @@ const showFloorPlan = computed(() =>
 const isResolvingSettings = computed(() => {
   if (!currentTenant.value) return false
   if (posStore.tablesEnabled === null) return true
-  // While settings are still fetching we don't know the final value of tablesEnabled —
-  // show loader instead of the products grid to avoid a flash of the wrong view
-  if (settingsAsyncStatus.value === 'loading') return true
+  // Initial fetch only — background refetches must not unmount POS (that retriggers
+  // restaurant-context from CartPanel/useActivePromotions and loops forever).
+  if (settingsAsyncStatus.value === 'loading' && !settingsData.value) return true
   if (posStore.tablesEnabled === true && tablesStatus.value === 'pending' && !posStore.activeTableSession) return true
   return false
 })
@@ -950,6 +950,11 @@ const removeFromCart = async (index: number) => {
 }
 
 const incrementCartItem = async (index: number) => {
+  const item = posStore.cart[index]
+  if (item?.modifiers?.length) {
+    await posStore.duplicateCartItem(index)
+    return
+  }
   await posStore.updateQuantity(index, 1)
 }
 
