@@ -5,6 +5,7 @@ import type { CartModifier } from '~/stores/online_cart'
 const modifierLineTotal = (mod: CartModifier) => Number(mod.price) * (mod.quantity ?? 1)
 
 const modifiersSignature = (mods: CartModifier[]) =>
+    // Parity with online_cart.ts modifiersKey — separate cart rows per modifier config (#1023)
     JSON.stringify(
         [...mods]
             .sort((a, b) => a.id.localeCompare(b.id))
@@ -189,6 +190,23 @@ export const usePOSStore = defineStore('pos', () => {
             cart.value.push({ ...item, quantity })
         }
         invalidateSyncedCart()
+    }
+
+    /** Add qty=1 lines per unit — mirrors online_cart.addItemsBatch (#1023). */
+    const addCartItemsBatch = async (
+        product: PosCartItem['product'],
+        units: Array<{ modifiers: CartModifier[]; notes?: string }>,
+        extra?: Pick<PosCartItem, 'is_resale' | 'is_open_sale' | 'promo_opt_out'>,
+    ) => {
+        for (const unit of units) {
+            await addToCart({
+                product,
+                modifiers: [...unit.modifiers],
+                notes: unit.notes,
+                quantity: 1,
+                ...extra,
+            })
+        }
     }
 
     const removeFromCart = async (index: number, reason?: string) => {
@@ -508,6 +526,7 @@ export const usePOSStore = defineStore('pos', () => {
         setTableSession,
         setTabItems,
         addToCart,
+        addCartItemsBatch,
         removeFromCart,
         updateQuantity,
         updateCartItem,
