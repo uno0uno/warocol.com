@@ -1,12 +1,12 @@
 <template>
   <div class="page-layout">
-    <!-- Loading overlay during submit -->
-    <div v-if="isSubmitting" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-background rounded-xl p-6 flex flex-col items-center gap-3 shadow-xl">
-        <CommonsTheCustomLoader size="large" />
-        <p class="text-base font-semibold text-text-primary">Registrando compra directa...</p>
-      </div>
-    </div>
+    <UiSubmitBusyOverlay
+      :busy="isSubmitting"
+      label="Registrando compra directa..."
+      hint="Estamos guardando la compra, actualizando inventario y adjuntando documentos."
+      variant="glass"
+      indicator="matrix"
+    />
 
     <!-- Loading State -->
     <div v-if="isLoadingData" class="flex items-center justify-center min-h-[300px]">
@@ -92,6 +92,7 @@
                     </svg>
                     <UiLoadingDots v-else size="9px" />
                     <span class="hidden sm:inline">{{ isScanning ? currentPhrase : 'Leer factura con IA' }}</span>
+                    <span class="inline sm:hidden">{{ isScanning ? '...' : 'IA' }}</span>
                   </button>
                 </div>
               </template>
@@ -103,6 +104,25 @@
               :scans-remaining="scansRemaining"
               class="mb-3 sm:mb-4"
             />
+
+            <div
+              v-if="isScanBlocked"
+              role="alert"
+              class="mb-3 sm:mb-4 p-3 rounded-lg border border-warning/30 bg-warning/10 text-sm"
+            >
+              <p class="font-medium text-warning">Escaneo IA suspendido por suscripción</p>
+              <p class="text-text-secondary mt-1 text-xs leading-relaxed">
+                {{ accessStatus?.message || 'Tu suscripción requiere atención.' }}
+                La cuota de escaneos (p. ej. {{ quota?.scans_used ?? 0 }} / {{ quota?.scans_limit ?? 0 }}) es independiente: puedes tener escaneos disponibles y aun así estar bloqueado por pago pendiente.
+              </p>
+              <NuxtLink to="/gestion/billing" class="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-primary hover:underline">
+                Ir a Mi plan
+              </NuxtLink>
+            </div>
+
+            <p class="text-xs text-text-secondary mb-3 sm:mb-4">
+              Sube una <strong>foto o imagen</strong> de la factura de compra (OCR). No importa archivos XML/ZIP de factura electrónica DIAN.
+            </p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <div class="md:col-span-2">
