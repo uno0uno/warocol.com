@@ -1,12 +1,12 @@
 <template>
   <div class="page-layout">
-    <!-- Loading overlay during submit -->
-    <div v-if="isSubmitting" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-background rounded-xl p-6 flex flex-col items-center gap-3 shadow-xl">
-        <CommonsTheCustomLoader size="large" />
-        <p class="text-base font-semibold text-text-primary">Registrando compra directa...</p>
-      </div>
-    </div>
+    <UiSubmitBusyOverlay
+      :busy="isSubmitting"
+      label="Registrando compra directa..."
+      hint="Estamos guardando la compra, actualizando inventario y adjuntando documentos."
+      variant="glass"
+      indicator="matrix"
+    />
 
     <!-- Loading State -->
     <div v-if="isLoadingData" class="flex items-center justify-center min-h-[300px]">
