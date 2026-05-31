@@ -12,7 +12,7 @@
 
     <!-- File Upload -->
     <div class="space-y-3">
-      <div class="flex items-center space-x-2">
+      <div :class="embedded ? 'space-y-2' : 'flex items-center space-x-2'">
         <input
           ref="fileInput"
           type="file"
@@ -24,14 +24,21 @@
         <button
           type="button"
           @click="$refs.fileInput.click()"
-          class="px-4 py-2 bg-primary/10 text-primary border-2 border-primary/30 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium"
+          :class="[
+            'bg-primary/10 text-primary border-2 border-primary/30 rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium',
+            embedded
+              ? 'w-full flex items-center justify-center gap-2 px-4 py-3 border-dashed border-primary/25 bg-primary/5'
+              : 'px-4 py-2'
+          ]"
         >
-          <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          Adjuntar Archivo
+          Adjuntar archivo
         </button>
-        <span class="text-xs text-text-secondary">PDF, imágenes, documentos (máx. 10MB)</span>
+        <span :class="embedded ? 'block text-xs text-text-secondary leading-relaxed' : 'text-xs text-text-secondary'">
+          PDF, imágenes, documentos (máx. 10MB)
+        </span>
       </div>
 
       <!-- Selected Files Preview -->

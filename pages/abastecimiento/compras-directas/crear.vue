@@ -407,41 +407,41 @@
               title="Documentos"
               description="Opcional — puedes agregar la factura y comprobante ahora o después"
             >
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6">
               <!-- Factura Section -->
-              <div class="border-2 border-border rounded-lg p-4 bg-background space-y-4">
-                <h4 class="text-base font-semibold text-text-primary flex items-center gap-2">
+              <div class="border border-border rounded-xl p-5 sm:p-6 bg-background flex flex-col gap-5">
+                <h4 class="text-base font-semibold text-text-primary flex items-center gap-2 pb-3 border-b border-border/60">
                   <DocumentTextIcon class="w-5 h-5 text-primary flex-shrink-0" />
                   Factura
                 </h4>
 
-                <div>
-                  <label class="block text-sm font-medium text-text-primary mb-1.5">Número de factura</label>
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-text-primary">Número de factura</label>
                   <input
                     v-model="form.invoice_number"
                     type="text"
-                    class="input-base w-full px-4 py-2"
+                    class="input-base w-full px-4 py-2.5"
                     placeholder="Ej: FV-12345"
                   />
                 </div>
 
-                <div>
-                  <label class="block text-sm font-medium text-text-primary mb-1.5">Adjuntar Factura</label>
+                <div class="space-y-2 pt-1">
+                  <p class="text-sm font-medium text-text-primary">Archivo adjunto</p>
                   <PurchasesAttachmentUploader v-model="form.invoice_files" embedded />
                 </div>
               </div>
 
               <!-- Comprobante de Pago Section -->
-              <div class="border-2 border-border rounded-lg p-4 bg-background space-y-4">
-                <h4 class="text-base font-semibold text-text-primary flex items-center gap-2">
+              <div class="border border-border rounded-xl p-5 sm:p-6 bg-background flex flex-col gap-5">
+                <h4 class="text-base font-semibold text-text-primary flex items-center gap-2 pb-3 border-b border-border/60">
                   <CreditCardIcon class="w-5 h-5 text-primary flex-shrink-0" />
-                  Comprobante de Pago
+                  Comprobante de pago
                 </h4>
 
-                <div>
-                  <label class="block text-sm font-medium text-text-primary mb-1.5">Método de pago</label>
-                  <select v-model="form.payment_method" class="input-base w-full px-4 py-2">
-                    <option value="">Sin pago aun</option>
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-text-primary">Método de pago</label>
+                  <select v-model="form.payment_method" class="input-base w-full px-4 py-2.5">
+                    <option value="">Sin pago aún</option>
                     <template v-for="group in paymentGroups">
                       <option v-if="!group.methods.length" :key="group.slug" :value="group.slug">{{ group.name }}</option>
                       <optgroup v-else :key="group.slug" :label="group.name">
@@ -451,20 +451,26 @@
                   </select>
                 </div>
 
-                <div v-if="form.payment_method">
-                  <label class="block text-sm font-medium text-text-primary mb-1.5">Referencia de pago</label>
-                  <input
-                    v-model="form.payment_reference"
-                    type="text"
-                    class="input-base w-full px-4 py-2"
-                    placeholder="Numero de transferencia, etc."
-                  />
-                </div>
+                <template v-if="form.payment_method">
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-text-primary">Referencia de pago</label>
+                    <input
+                      v-model="form.payment_reference"
+                      type="text"
+                      class="input-base w-full px-4 py-2.5"
+                      placeholder="Número de transferencia, etc."
+                    />
+                  </div>
 
-                <div v-if="form.payment_method">
-                  <label class="block text-sm font-medium text-text-primary mb-1.5">Adjuntar Comprobante</label>
-                  <PurchasesAttachmentUploader v-model="form.payment_files" embedded />
-                </div>
+                  <div class="space-y-2 pt-1 border-t border-border/60">
+                    <p class="text-sm font-medium text-text-primary pt-4">Archivo adjunto</p>
+                    <PurchasesAttachmentUploader v-model="form.payment_files" embedded />
+                  </div>
+                </template>
+
+                <p v-else class="text-sm text-text-secondary leading-relaxed">
+                  Selecciona un método de pago para adjuntar el comprobante.
+                </p>
               </div>
             </div>
 
