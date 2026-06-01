@@ -81,6 +81,20 @@ type PromoBreakdownLine = {
   savings: number
 }
 
+type WaroRedemptionBreakdownLine = {
+  redemption_type?: string
+  waros_spent?: number
+  cop_discount?: number
+  waro_reward_id?: string | null
+  reward_name?: string | null
+}
+
+type WaroRedemptionSummary = {
+  waro_discount_cop: number
+  waros_spent?: number
+  waro_breakdown?: WaroRedemptionBreakdownLine[]
+}
+
 // Success modal state
 const showSuccessModal = ref(false)
 const orderResult = ref<{
@@ -93,6 +107,9 @@ const orderResult = ref<{
   subtotal?: number
   promo_savings?: number
   promo_breakdown?: Array<{ promotion_id?: string; promotion_name: string; promo_type: string; savings: number }>
+  waro_discount_cop?: number
+  waro_reward_name?: string | null
+  waro_redemption_summary?: WaroRedemptionSummary
   standard_tax?: number
   liquor_tax?: number
   standard_tax_label?: string
@@ -893,6 +910,7 @@ const addSplitPayment = async () => {
               charged_amount: splitAmountDue.value,
             }
           : {}),
+        ...waroOrderResultFields(undefined, cartTotal.value),
       }
       cartItemsSnapshot.value = [...cartItems.value]
       receiptEmail.value = ''
@@ -996,6 +1014,65 @@ const waroRewardLabel = computed(() => {
   if (selectedWaroReward.value) return selectedWaroReward.value.name
   return waroPreview.value?.reward_name ?? null
 })
+
+function waroFieldsFromSummary(summary: WaroRedemptionSummary | null | undefined) {
+  if (!summary) return {}
+  const waro_discount_cop = Number(summary.waro_discount_cop) || 0
+  const breakdown = summary.waro_breakdown ?? []
+  if (waro_discount_cop <= 0 && breakdown.length === 0) return {}
+  const reward_name = breakdown.find(b => b.reward_name)?.reward_name ?? null
+  return {
+    waro_discount_cop,
+    waro_reward_name: reward_name,
+    waro_redemption_summary: {
+      waro_discount_cop,
+      waros_spent: summary.waros_spent ?? breakdown.reduce((sum, row) => sum + (Number(row.waros_spent) || 0), 0),
+      waro_breakdown: breakdown,
+    },
+  }
+}
+
+function waroFieldsFromPreview() {
+  const waro_discount_cop = waroDiscountCop.value
+  if (waro_discount_cop <= 0) return {}
+  const preview = waroPreview.value
+  const reward_name = waroRewardLabel.value
+  const waro_breakdown: WaroRedemptionBreakdownLine[] = []
+  if (preview?.reward_name || preview?.waro_reward_id) {
+    waro_breakdown.push({
+      redemption_type: preview.reward_type ?? 'reward_fixed_cop',
+      waros_spent: preview.total_waros_cost ?? undefined,
+      cop_discount: waro_discount_cop,
+      waro_reward_id: preview.waro_reward_id,
+      reward_name: preview.reward_name ?? reward_name,
+    })
+  }
+  return {
+    waro_discount_cop,
+    waro_reward_name: reward_name,
+    waro_redemption_summary: {
+      waro_discount_cop,
+      waros_spent: preview?.total_waros_cost ?? 0,
+      waro_breakdown,
+    },
+  }
+}
+
+function waroFieldsFromApiOrPreview(summary?: WaroRedemptionSummary | null) {
+  const fromApi = waroFieldsFromSummary(summary)
+  if (fromApi.waro_discount_cop) return fromApi
+  return waroFieldsFromPreview()
+}
+
+function waroOrderResultFields(
+  summary: WaroRedemptionSummary | null | undefined,
+  fallbackSubtotal?: number,
+) {
+  const waro = waroFieldsFromApiOrPreview(summary)
+  if (!waro.waro_discount_cop) return waro
+  return { ...waro, subtotal: fallbackSubtotal }
+}
+
 const waroRedemptionEnabled = computed(() => {
   const cfg = redemptionConfig.value
   if (!cfg?.is_enabled) return false
@@ -1440,7 +1517,8 @@ const processOrder = async () => {
         // returned a tip_amount (server-side validated against tenant.tip_enabled).
         ...(closeResponse.data?.tip_amount && closeResponse.data.tip_amount > 0
           ? { tip_amount: closeResponse.data.tip_amount, charged_amount: closeResponse.data.charged_amount }
-          : {})
+          : {}),
+        ...waroOrderResultFields(closeResponse.data?.waro_redemption_summary, _subtotal),
       }
       wasMesaMode.value = true
       cartItemsSnapshot.value = [...cartItems.value]
@@ -1544,6 +1622,7 @@ const processOrder = async () => {
         subtotal?: number
         promo_savings?: number
         promo_breakdown?: PromoBreakdownLine[]
+        waro_redemption_summary?: WaroRedemptionSummary
       }
     }
 
@@ -1581,6 +1660,10 @@ const processOrder = async () => {
         ...(response.data.tip_amount && response.data.tip_amount > 0
           ? { tip_amount: response.data.tip_amount, charged_amount: response.data.charged_amount }
           : {}),
+        ...waroOrderResultFields(
+          response.data.waro_redemption_summary,
+          Number(response.data.subtotal) || _subtotalPos,
+        ),
       }
       cartItemsSnapshot.value = [...cartItems.value]
       captureReceiptPrintContext({
@@ -1897,6 +1980,7 @@ const prefacturaPrintSnapshot = ref<PrefacturaPrintSnapshot | null>(null)
 
 const prefacturaPrintData = computed(() => {
   if (prefacturaPrintSnapshot.value) return prefacturaPrintSnapshot.value
+  const postCheckoutWaro = showSuccessModal.value && (Number(orderResult.value?.waro_discount_cop) || 0) > 0
   return {
     orderTotal: prefacturaOrderTotal.value,
     tipAmount: tipAmount.value,
@@ -1910,9 +1994,19 @@ const prefacturaPrintData = computed(() => {
     promoBreakdown: displayPromoBreakdown.value,
     cartSubtotal: cartTotal.value,
     manualDiscountAmount: discountAmount.value,
-    waroDiscountCop: waroDiscountCop.value,
-    waroRewardName: waroRewardLabel.value,
+    waroDiscountCop: postCheckoutWaro
+      ? Number(orderResult.value!.waro_discount_cop)
+      : waroDiscountCop.value,
+    waroRewardName: postCheckoutWaro
+      ? (orderResult.value!.waro_reward_name ?? null)
+      : waroRewardLabel.value,
   }
+})
+
+const orderResultWaroDiscountCop = computed(() => Number(orderResult.value?.waro_discount_cop) || 0)
+const orderResultWaroLineLabel = computed(() => {
+  const name = orderResult.value?.waro_reward_name
+  return name ? `WaRo: ${name}` : 'Canje WaRo'
 })
 
 const receiptPromoBreakdown = computed(() => {
@@ -2108,6 +2202,7 @@ const sendReceiptEmail = async () => {
         standard_tax_label: orderResult.value.standard_tax_label ?? 'Impuesto',
         promo_savings: orderResult.value.promo_savings ?? 0,
         promo_breakdown: orderResult.value.promo_breakdown ?? [],
+        waro_redemption_summary: orderResult.value.waro_redemption_summary ?? null,
         invoice_prefix: invoiceResult.value?.prefix ?? null,
         invoice_number: invoiceResult.value?.invoice_number ?? null,
         invoice_cufe: invoiceResult.value?.cufe ?? null,
@@ -3837,7 +3932,7 @@ onUnmounted(() => {
               <span class="text-lg font-bold text-primary">#{{ orderResult?.order_number ?? '' }}</span>
             </div>
             <div
-              v-if="orderResult && (orderResult.promo_savings || orderResult.discount_amount) && orderResult.subtotal"
+              v-if="orderResult && (orderResult.promo_savings || orderResult.discount_amount || orderResult.waro_discount_cop) && orderResult.subtotal"
               class="flex items-center justify-between"
             >
               <span class="text-sm text-text-secondary">Subtotal</span>
@@ -3855,6 +3950,10 @@ onUnmounted(() => {
               <span class="text-sm text-primary">Descuento manual</span>
               <span class="text-sm font-medium text-primary">-{{ formatCurrency(orderResult.discount_amount) }}</span>
             </div>
+            <div v-if="orderResultWaroDiscountCop > 0" class="flex items-center justify-between">
+              <span class="text-sm text-amber-700">{{ orderResultWaroLineLabel }}</span>
+              <span class="text-sm font-medium text-amber-700">-{{ formatCurrency(orderResultWaroDiscountCop) }}</span>
+            </div>
             <div v-if="orderResult.standard_tax && orderResult.standard_tax > 0" class="flex items-center justify-between">
               <span class="text-sm text-text-secondary">{{ orderResult.standard_tax_label ?? 'Impuesto' }}</span>
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.standard_tax) }}</span>
@@ -3863,7 +3962,7 @@ onUnmounted(() => {
               <span class="text-sm text-text-secondary">IVA licores 5%</span>
               <span class="text-sm font-medium text-text-primary">{{ formatCurrency(orderResult.liquor_tax) }}</span>
             </div>
-            <div class="flex items-center justify-between" :class="(orderResult.discount_amount || orderResult.standard_tax || orderResult.liquor_tax) ? 'border-t border-border pt-3' : ''">
+            <div class="flex items-center justify-between" :class="(orderResult.discount_amount || orderResult.waro_discount_cop || orderResult.standard_tax || orderResult.liquor_tax) ? 'border-t border-border pt-3' : ''">
               <span class="text-sm text-text-secondary">Total</span>
               <span class="text-lg font-bold text-text-primary">{{ formatCurrency(orderResult.total_amount) }}</span>
             </div>
@@ -4153,7 +4252,7 @@ onUnmounted(() => {
     </template>
     <div class="receipt-divider">--------------------------------</div>
 
-    <div v-if="prefacturaPrintData.promoSavings > 0 || prefacturaPrintData.manualDiscountAmount > 0" class="receipt-item">
+    <div v-if="prefacturaPrintData.promoSavings > 0 || prefacturaPrintData.manualDiscountAmount > 0 || prefacturaPrintData.waroDiscountCop > 0" class="receipt-item">
       <span>Subtotal</span>
       <span>{{ formatCurrency(prefacturaPrintData.cartSubtotal) }}</span>
     </div>
@@ -4291,7 +4390,7 @@ onUnmounted(() => {
     <div class="receipt-divider">--------------------------------</div>
 
     <div
-      v-if="orderResult && (orderResult.promo_savings || orderResult.discount_amount) && orderResult.subtotal"
+      v-if="orderResult && (orderResult.promo_savings || orderResult.discount_amount || orderResult.waro_discount_cop) && orderResult.subtotal"
       class="receipt-item"
     >
       <span>Subtotal</span>
@@ -4308,6 +4407,10 @@ onUnmounted(() => {
     <div v-if="orderResult?.discount_amount" class="receipt-item">
       <span>Descuento manual</span>
       <span>-{{ formatCurrency(orderResult.discount_amount) }}</span>
+    </div>
+    <div v-if="orderResultWaroDiscountCop > 0" class="receipt-item">
+      <span>{{ orderResultWaroLineLabel }}</span>
+      <span>-{{ formatCurrency(orderResultWaroDiscountCop) }}</span>
     </div>
     <template v-if="orderResult?.standard_tax && orderResult.standard_tax > 0 || orderResult?.liquor_tax && orderResult.liquor_tax > 0">
       <div class="receipt-row receipt-small" style="font-weight:bold;">Detalle de impuestos</div>
