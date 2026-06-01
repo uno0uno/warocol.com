@@ -251,12 +251,11 @@ watch(expenseData, (data) => {
                   Monto (Opcional)
                 </label>
                 <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
-                  <input
-                    type="number"
-                    v-model.number="instanceForm.amount"
-                    step="0.01"
-                    min="0"
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none">$</span>
+                  <UiDecimalInput
+                    v-model="instanceForm.amount"
+                    :min="0"
+                    :precision="2"
                     :placeholder="`Predeterminado: ${expense ? formatCurrency(expense.amount) : ''}`"
                     class="input-base w-full pl-8 pr-4 py-2"
                   />
