@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-1.5">
-    <p class="text-xs font-medium text-text-secondary">Unidades de compra</p>
+    <p class="text-sm font-medium text-text-primary">Unidades de compra</p>
 
     <!-- Create: draft list -->
     <template v-if="mode === 'create'">
@@ -21,7 +21,7 @@
               class="text-[10px] text-text-tertiary border border-border rounded px-1.5 py-0.5 hover:text-primary hover:border-primary transition-colors flex-shrink-0"
               @click="setDraftDefault(index)"
             >
-              usar como predeterminado
+              Predeterminar
             </button>
             <span v-else class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
           </div>
@@ -43,25 +43,24 @@
       </div>
 
       <div class="flex flex-col gap-2 mt-1 rounded-xl border border-border px-3 py-3 bg-surface-secondary/20">
-        <p class="text-xs font-medium text-text-secondary">Nueva unidad de compra</p>
+        <p class="text-xs font-medium text-text-secondary">Agregar unidad</p>
         <div class="flex gap-2">
           <div class="flex flex-col gap-1 flex-1">
-            <label class="text-[10px] text-text-tertiary font-medium uppercase tracking-wide">Nombre</label>
+            <label class="text-xs text-text-tertiary font-medium">Nombre</label>
             <input
               v-model="newUnit.purchase_unit_label"
               type="text"
-              placeholder="Ej: Paquete × 6, Caja..."
+              placeholder="Ej. paquete × 6"
               :class="inputClass"
               @keyup.enter="addDraftUnit"
             />
           </div>
           <div class="flex flex-col gap-1 w-32">
-            <label class="text-[10px] text-text-tertiary font-medium uppercase tracking-wide">Cantidad en {{ baseUnit }}</label>
-            <input
-              v-model.number="newUnit.conversion_factor"
-              type="number"
-              min="0.001"
-              step="0.001"
+            <label class="text-xs text-text-tertiary font-medium">Cant. ({{ baseUnit }})</label>
+            <UiDecimalInput
+              v-model="newUnit.conversion_factor"
+              :min="0.001"
+              :precision="3"
               placeholder="Ej: 6"
               :class="inputClass"
               @keyup.enter="addDraftUnit"
@@ -74,7 +73,7 @@
               1 <strong class="text-text-secondary">{{ newUnit.purchase_unit_label }}</strong> = {{ newUnit.conversion_factor }} {{ baseUnit }}
             </template>
             <template v-else>
-              Cuántas {{ baseUnit }} trae 1 unidad de compra
+              Und por empaque
             </template>
           </p>
           <button
@@ -82,7 +81,7 @@
             class="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors flex-shrink-0"
             @click="addDraftUnit"
           >
-            Agregar unidad
+            Agregar
           </button>
         </div>
         <p v-if="formError" class="text-xs text-destructive">{{ formError }}</p>
@@ -108,7 +107,7 @@
               class="text-[10px] text-text-tertiary border border-border rounded px-1.5 py-0.5 hover:text-primary hover:border-primary transition-colors flex-shrink-0"
               @click="setDefaultUnit(u.id)"
             >
-              usar como predeterminado
+              Predeterminar
             </button>
             <span v-else class="text-[10px] text-primary bg-primary/10 rounded px-1.5 py-0.5 flex-shrink-0">predeterminado</span>
           </div>
@@ -141,7 +140,7 @@
         <p class="text-xs font-medium text-text-secondary">Nueva unidad de compra</p>
         <div class="flex gap-2">
           <div class="flex flex-col gap-1 flex-1">
-            <label class="text-[10px] text-text-tertiary font-medium uppercase tracking-wide">Nombre</label>
+            <label class="text-xs text-text-tertiary font-medium">Nombre</label>
             <input
               v-model="newUnit.purchase_unit_label"
               type="text"
@@ -151,12 +150,11 @@
             />
           </div>
           <div class="flex flex-col gap-1 w-32">
-            <label class="text-[10px] text-text-tertiary font-medium uppercase tracking-wide">Cantidad en {{ baseUnit }}</label>
-            <input
-              v-model.number="newUnit.conversion_factor"
-              type="number"
-              min="0.001"
-              step="0.001"
+            <label class="text-xs text-text-tertiary font-medium">Cant. ({{ baseUnit }})</label>
+            <UiDecimalInput
+              v-model="newUnit.conversion_factor"
+              :min="0.001"
+              :precision="3"
               placeholder="Ej: 12"
               :class="inputClass"
               @keyup.enter="addPurchaseUnit"
@@ -169,7 +167,7 @@
               1 <strong class="text-text-secondary">{{ newUnit.purchase_unit_label }}</strong> = {{ newUnit.conversion_factor }} {{ baseUnit }}
             </template>
             <template v-else>
-              Cuántas {{ baseUnit }} trae 1 unidad de compra
+              Und por empaque
             </template>
           </p>
           <button
@@ -178,7 +176,7 @@
             class="px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors flex-shrink-0"
             @click="addPurchaseUnit"
           >
-            {{ savingUnit ? 'Guardando...' : 'Agregar unidad' }}
+            {{ savingUnit ? 'Guardando…' : 'Agregar' }}
           </button>
         </div>
         <p v-if="formError" class="text-xs text-destructive">{{ formError }}</p>
@@ -282,7 +280,7 @@ async function addPurchaseUnit() {
 
   savingUnit.value = true
   try {
-    await $fetch('/api/suppliers/ingredient-purchase-units/', {
+    await $fetch('/api/suppliers/ingredient-purchase-units', {
       method: 'POST',
       body: {
         ingredient_id: props.ingredientId,

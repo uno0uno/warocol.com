@@ -190,10 +190,11 @@
             </div>
             <div class="flex flex-col gap-1 flex-1">
               <label :for="`tier-mult-${i}`" class="text-xs font-medium text-text-secondary">Multiplicador</label>
-              <input
+              <UiDecimalInput
                 :id="`tier-mult-${i}`"
-                v-model.number="tier.multiplier"
-                type="number" min="0.1" step="0.1"
+                v-model="tier.multiplier"
+                :min="0.1"
+                :precision="1"
                 placeholder="1.0"
                 :class="inputClass"
               />

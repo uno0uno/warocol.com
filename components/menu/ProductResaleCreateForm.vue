@@ -51,15 +51,16 @@
             ml
           </button>
         </div>
-        <input
+        <UiDecimalInput
           :id="weightInputId"
-          v-model.number="unitWeightGr"
-          type="number"
-          min="0"
-          step="0.1"
+          v-model="unitWeightGr"
+          :min="0"
+          :precision="1"
           :placeholder="`Ej. 400`"
-          class="input-base flex-1 min-h-[44px] px-4 py-2"
-          :class="showError ? 'border-destructive focus:ring-destructive' : ''"
+          :class="[
+            'input-base flex-1 min-h-[44px] px-4 py-2',
+            showError ? 'border-destructive focus:ring-destructive' : '',
+          ]"
           @input="emit('clear-error')"
         />
       </div>

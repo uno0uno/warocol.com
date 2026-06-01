@@ -233,25 +233,23 @@
                   ]"
                 >ml</button>
               </div>
-              <input
+              <UiDecimalInput
                 id="ing-weight"
-                v-model.number="form.unitWeightGr"
-                type="number"
-                min="0"
-                step="0.1"
+                v-model="form.unitWeightGr"
+                :min="0"
+                :precision="1"
                 :placeholder="`Ej: 400 (1 und = 400 ${unitWeightUnit})`"
                 :class="inputClass + ' flex-1'"
               />
             </div>
 
             <!-- Para gr / ml: solo input -->
-            <input
+            <UiDecimalInput
               v-else
               id="ing-weight"
-              v-model.number="form.unitWeightGr"
-              type="number"
-              min="0"
-              step="0.1"
+              v-model="form.unitWeightGr"
+              :min="0"
+              :precision="1"
               :placeholder="`Ej: 750 (1 und vendida = 750 ${form.unit})`"
               :class="inputClass"
             />
