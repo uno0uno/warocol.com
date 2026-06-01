@@ -135,6 +135,10 @@ onUnmounted(() => {
         />
       </div>
 
+      <!-- Redemption + rewards admin -->
+      <PuntosRedemptionConfigSection />
+      <PuntosWaroRewardsSection />
+
       <!-- Empty state -->
       <div
         v-if="rules.length === 0"

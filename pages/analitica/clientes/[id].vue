@@ -219,6 +219,51 @@ const saveEdit = async () => {
 const showWarosModal = ref(false)
 const showManualPanel = ref(false)
 
+// ── Wallet COP ────────────────────────────────────────────────────────────
+const showWalletRechargeModal = ref(false)
+const {
+  wallet,
+  isLoading: isLoadingWallet,
+  recharge,
+  isRecharging,
+  rechargeError,
+  refetch: refetchWallet,
+} = useCustomerWallet(customerId)
+
+const walletBalance = computed(() => wallet.value?.balance_cop ?? 0)
+const walletMovements = computed(() => wallet.value?.movements ?? [])
+
+const walletPaymentOptions = computed(() => {
+  const slugs = new Set(['credit', 'customer_wallet'])
+  const opts: { value: string; label: string }[] = []
+  for (const group of paymentGroups.value) {
+    for (const method of group.methods ?? []) {
+      const slug = (method as any).slug || group.slug
+      if (slugs.has(slug)) continue
+      opts.push({ value: slug, label: method.name || group.name })
+    }
+  }
+  if (!opts.length) {
+    opts.push(
+      { value: 'cash', label: 'Efectivo' },
+      { value: 'card', label: 'Tarjeta' },
+      { value: 'digital', label: 'Digital' },
+    )
+  }
+  return opts
+})
+
+const walletMovementLabel = (type: string) => {
+  if (type === 'recharge') return 'Recarga'
+  if (type === 'redeem') return 'Uso en pedido'
+  if (type === 'refund') return 'Devolución'
+  return type
+}
+
+const onWalletRecharged = async () => {
+  await refetchWallet()
+}
+
 // Waros data comes from the main apiData response (no separate call)
 const warosSummary = computed(() => (apiData.value as any)?.waros_summary ?? null)
 const isLoadingWaros = computed(() => isLoading.value)
@@ -529,6 +574,45 @@ onUnmounted(() => {
             </div>
           </div>
         </div>
+
+        <!-- Wallet COP section -->
+        <div class="border-t border-border px-5 py-4">
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Billetera COP</p>
+              <p v-if="isLoadingWallet" class="text-sm font-semibold text-text-secondary">Cargando...</p>
+              <p v-else class="text-sm font-semibold text-primary">{{ formatCurrency(walletBalance) }}</p>
+            </div>
+            <button
+              type="button"
+              aria-label="Recargar billetera del cliente"
+              @click="showWalletRechargeModal = true"
+              class="min-h-[44px] px-4 text-sm font-semibold rounded-lg border-2 border-primary/30 text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+            >
+              + Recargar
+            </button>
+          </div>
+          <div v-if="walletMovements.length" class="mt-3 space-y-2 max-h-40 overflow-y-auto">
+            <div
+              v-for="mov in walletMovements.slice(0, 5)"
+              :key="mov.id"
+              class="flex items-center justify-between gap-3 text-sm py-1.5 border-b border-border/50 last:border-0"
+            >
+              <div class="min-w-0">
+                <p class="text-text-primary font-medium">{{ walletMovementLabel(mov.movement_type) }}</p>
+                <p class="text-xs text-text-secondary">{{ formatDate(mov.created_at) }}</p>
+              </div>
+              <span
+                :class="[
+                  'font-semibold flex-shrink-0',
+                  mov.amount_cop >= 0 ? 'text-green-700' : 'text-red-600',
+                ]"
+              >
+                {{ mov.amount_cop >= 0 ? '+' : '' }}{{ formatCurrency(Math.abs(mov.amount_cop)) }}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Stats -->
@@ -824,6 +908,19 @@ onUnmounted(() => {
       :customer-name="customer.name"
       :current-balance="warosBalance"
       @assigned="onWarosAssigned"
+    />
+
+    <AnaliticaWalletRechargeModal
+      v-if="customer"
+      v-model="showWalletRechargeModal"
+      :customer-id="customerId"
+      :customer-name="customer.name"
+      :current-balance="walletBalance"
+      :payment-options="walletPaymentOptions"
+      :recharge="recharge"
+      :is-recharging="isRecharging"
+      :recharge-error="rechargeError"
+      @recharged="onWalletRecharged"
     />
 
     <!-- Slide-over: asignaciones manuales -->
