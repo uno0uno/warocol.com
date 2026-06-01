@@ -51,13 +51,12 @@
           <div>
             <label class="block text-sm font-medium text-text-primary mb-2">Multiplicador</label>
             <div class="flex items-center gap-3">
-              <input
-                v-model.number="form.multiplier"
-                type="number"
-                step="0.1"
-                min="0.5"
-                max="10"
-                class="input-base w-24 px-3 py-2 text-center font-semibold"
+              <UiDecimalInput
+                v-model="form.multiplier"
+                :precision="1"
+                :min="0.5"
+                :max="10"
+                class="w-24 px-3 py-2 text-center font-semibold"
               />
               <span class="text-text-secondary">x SMMLV</span>
             </div>
@@ -81,12 +80,11 @@
           <label class="block text-sm font-medium text-text-primary mb-2">Monto Mensual</label>
           <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
-            <input
-              v-model.number="form.fixed_amount"
-              type="number"
-              min="0"
-              step="1000"
-              class="input-base w-full pl-7 pr-3 py-2 font-semibold"
+            <UiDecimalInput
+              v-model="form.fixed_amount"
+              :min="0"
+              :precision="2"
+              class="w-full pl-7 pr-3 py-2 font-semibold"
               placeholder="0"
             />
           </div>

@@ -105,12 +105,11 @@
               </div>
               <div v-else class="relative">
                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
-                <input
-                  v-model.number="form.payment_amount"
-                  type="number"
-                  min="0"
-                  step="any"
-                  class="input-base w-full pl-8 pr-4 py-2 text-lg font-semibold"
+                <UiDecimalInput
+                  v-model="form.payment_amount"
+                  :min="0"
+                  :precision="2"
+                  class="w-full pl-8 pr-4 py-2 text-lg font-semibold"
                   placeholder="0"
                 />
               </div>
@@ -183,25 +182,23 @@
               <div class="grid grid-cols-2 gap-3">
                 <div>
                   <label class="text-xs text-indigo-800 block mb-1">ARL % (clase riesgo)</label>
-                  <input
-                    v-model.number="form.arl_rate_pct"
-                    type="number"
-                    min="0"
-                    max="7"
-                    step="0.001"
-                    class="input-base w-full px-3 py-1.5 text-sm"
+                  <UiDecimalInput
+                    v-model="form.arl_rate_pct"
+                    :min="0"
+                    :max="7"
+                    :precision="3"
+                    class="w-full px-3 py-1.5 text-sm"
                     placeholder="0.522"
                   />
                 </div>
                 <div>
                   <label class="text-xs text-indigo-800 block mb-1">Caja Compensación %</label>
-                  <input
-                    v-model.number="form.caja_rate_pct"
-                    type="number"
-                    min="0"
-                    max="4"
-                    step="0.1"
-                    class="input-base w-full px-3 py-1.5 text-sm"
+                  <UiDecimalInput
+                    v-model="form.caja_rate_pct"
+                    :min="0"
+                    :max="4"
+                    :precision="1"
+                    class="w-full px-3 py-1.5 text-sm"
                     placeholder="4"
                   />
                 </div>
