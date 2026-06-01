@@ -1,0 +1,32 @@
+issue: 1072
+title: "fix(pos): show waro discount in checkout success modal, prefactura, and receipt"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1072-checkout-waro-receipt
+
+paths:
+  - pages/pos/checkout.vue
+
+ac:
+  - Success modal shows WaRo discount + reward name when B2 redeemed
+  - Prefactura print includes WaRo discount reliably pre- and post-payment
+  - Post-payment printed receipt includes WaRo discount line
+  - Post-checkout receipt email payload includes waro_redemption_summary
+  - Totals consistent with sidebar waroDiscountCop
+  - No regression for sales without WaRo redemption
+
+out_of_scope:
+  - pages/ventas/[id].vue (#1073)
+
+hints:
+  api_shape: "{ waro_discount_cop, waros_spent, waro_breakdown[] }"
+  map: "waroOrderResultFields() on complete/mesa/split orderResult builders"
+  ui: "amber WaRo line mirrors sidebar 3021-3023"
+  prefactura_post: "prefacturaPrintData reads orderResult when showSuccessModal"
+  email: "sendReceiptEmail passes waro_redemption_summary"
+  tests: "POS smoke: B2 reward → modal, prefactura post-pay, receipt print, email"
+
+skip:
+  audits: [ux, color, typography]
