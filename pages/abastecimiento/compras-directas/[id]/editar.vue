@@ -260,14 +260,13 @@
                     <label class="block text-sm font-medium text-text-primary mb-2">
                       Cantidad *
                     </label>
-                    <input
-                      v-model.number="item.purchase_quantity"
-                      type="number"
-                      min="0.01"
-                      step="0.01"
+                    <UiDecimalInput
+                      v-model="item.purchase_quantity"
+                      :min="0.01"
+                      :precision="2"
                       required
-                      class="input-base w-full px-4 py-2"
-                      @input="() => updateItemTotal(index)"
+                      class="w-full px-4 py-2"
+                      @update:model-value="updateItemTotal(index)"
                     />
                   </div>
 
@@ -278,14 +277,13 @@
                     </label>
                     <div class="relative">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
-                      <input
-                        v-model.number="item.unit_cost"
-                        type="number"
-                        min="0"
-                        step="0.01"
+                      <UiDecimalInput
+                        v-model="item.unit_cost"
+                        :min="0"
+                        :precision="2"
                         required
-                        class="input-base w-full pl-8 pr-4 py-2"
-                        @input="() => updateItemTotal(index)"
+                        class="w-full pl-8 pr-4 py-2"
+                        @update:model-value="updateItemTotal(index)"
                       />
                     </div>
                   </div>

@@ -176,13 +176,12 @@
                   <label class="block text-sm font-medium text-text-primary mb-2">
                     {{ form.adjustmentType === 'set' ? 'Nuevo Stock' : 'Cantidad' }} <span class="text-red-500">*</span>
                   </label>
-                  <input
-                    v-model.number="form.quantity"
-                    type="number"
-                    step="0.01"
-                    min="0"
+                  <UiDecimalInput
+                    v-model="form.quantity"
+                    :min="0"
+                    :precision="2"
                     required
-                    class="input-base w-full px-4 py-2"
+                    class="w-full px-4 py-2"
                     :placeholder="form.adjustmentType === 'set' ? 'Ingrese el stock correcto' : 'Ingrese la cantidad'"
                   />
                 </div>
@@ -224,12 +223,11 @@
                 </label>
                 <div class="relative">
                   <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-secondary">$</span>
-                  <input
-                    v-model.number="form.cost_per_unit"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    class="input-base w-full px-4 py-2 pl-8"
+                  <UiDecimalInput
+                    v-model="form.cost_per_unit"
+                    :min="0"
+                    :precision="2"
+                    class="w-full px-4 py-2 pl-8"
                     placeholder="Ingrese el costo unitario (opcional)"
                   />
                 </div>

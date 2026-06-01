@@ -181,14 +181,12 @@
                 {{ form.adjustmentType === 'set' ? 'Nuevo stock' : 'Cantidad' }}
                 <span class="text-destructive">*</span>
               </label>
-              <input
+              <UiDecimalInput
                 :id="qtyId"
-                v-model.number="form.quantity"
-                type="number"
-                step="0.01"
-                min="0"
-                inputmode="decimal"
-                class="input-base w-full px-3 py-2 min-h-[44px]"
+                v-model="form.quantity"
+                :min="0"
+                :precision="2"
+                class="w-full px-3 py-2 min-h-[44px]"
                 :placeholder="form.adjustmentType === 'set' ? 'Stock objetivo' : 'Cantidad'"
               />
             </div>
@@ -255,14 +253,12 @@
             </label>
             <div class="relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none">$</span>
-              <input
+              <UiDecimalInput
                 :id="costId"
-                v-model.number="form.cost_per_unit"
-                type="number"
-                step="0.01"
-                min="0"
-                inputmode="decimal"
-                class="input-base w-full pl-7 pr-3 py-2 min-h-[44px]"
+                v-model="form.cost_per_unit"
+                :min="0"
+                :precision="2"
+                class="w-full pl-7 pr-3 py-2 min-h-[44px]"
                 placeholder="0"
               />
             </div>
