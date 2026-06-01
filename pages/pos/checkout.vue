@@ -1056,10 +1056,13 @@ const checkoutWaroBody = computed(() => {
   return body
 })
 
-function toggleWaroReward(reward: WaroReward) {
+function setWaroRewardSelected(reward: WaroReward, selected: boolean) {
   if (warosBalance.value < reward.waros_cost) return
-  selectedWaroReward.value =
-    selectedWaroReward.value?.id === reward.id ? null : reward
+  if (selected) {
+    selectedWaroReward.value = reward
+  } else if (selectedWaroReward.value?.id === reward.id) {
+    selectedWaroReward.value = null
+  }
   refreshWaroPreview()
 }
 
@@ -3112,7 +3115,7 @@ onUnmounted(() => {
             </div>
 
             <template v-if="waroRedemptionEnabled">
-              <div class="space-y-3 pt-1 border-t border-border">
+              <div class="space-y-3">
                 <p
                   v-if="isLoadingWaroPreview && !waroPreview && selectedWaroReward"
                   class="text-xs text-text-tertiary animate-pulse"
@@ -3122,20 +3125,25 @@ onUnmounted(() => {
 
                 <ul v-if="activeWaroRewards.length" class="space-y-1.5">
                   <li v-for="reward in activeWaroRewards" :key="reward.id">
-                    <button
-                      type="button"
-                      class="w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 min-h-[44px] text-left transition-colors"
-                      :class="selectedWaroReward?.id === reward.id
-                        ? 'border-amber-400/80 bg-amber-50/80'
-                        : warosBalance >= reward.waros_cost
-                          ? 'border-border hover:bg-surface-secondary/60'
-                          : 'border-border opacity-45 cursor-not-allowed'"
-                      :disabled="warosBalance < reward.waros_cost"
-                      @click="toggleWaroReward(reward)"
+                    <label
+                      class="flex items-center justify-between gap-3 min-h-[44px] rounded-lg border border-border bg-surface-secondary/40 px-3 py-2"
+                      :class="warosBalance >= reward.waros_cost ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
                     >
-                      <span class="text-sm font-medium text-text-primary truncate">{{ reward.name }}</span>
-                      <span class="text-xs tabular-nums text-text-secondary flex-shrink-0">{{ waroRewardSubtitle(reward) }}</span>
-                    </button>
+                      <span class="text-xs font-medium text-text-primary truncate min-w-0">{{ reward.name }}</span>
+                      <span class="flex items-center gap-3 flex-shrink-0">
+                        <span class="text-xs tabular-nums text-text-secondary">{{ waroRewardSubtitle(reward) }}</span>
+                        <span class="relative inline-flex items-center">
+                          <input
+                            type="checkbox"
+                            class="sr-only peer"
+                            :checked="selectedWaroReward?.id === reward.id"
+                            :disabled="warosBalance < reward.waros_cost"
+                            @change="setWaroRewardSelected(reward, ($event.target as HTMLInputElement).checked)"
+                          />
+                          <span class="block w-10 h-6 bg-border rounded-full peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                        </span>
+                      </span>
+                    </label>
                   </li>
                 </ul>
 
@@ -3594,26 +3602,31 @@ onUnmounted(() => {
             </div>
           </div>
           <template v-if="waroRedemptionEnabled">
-            <div class="space-y-3 pt-1 border-t border-border">
+            <div class="space-y-3">
               <p v-if="isLoadingWaroPreview && !waroPreview && selectedWaroReward" class="text-xs text-text-tertiary animate-pulse">
                 Calculando canje…
               </p>
               <ul v-if="activeWaroRewards.length" class="space-y-1.5">
                 <li v-for="reward in activeWaroRewards" :key="reward.id">
-                  <button
-                    type="button"
-                    class="w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 min-h-[44px] text-left transition-colors"
-                    :class="selectedWaroReward?.id === reward.id
-                      ? 'border-amber-400/80 bg-amber-50/80'
-                      : warosBalance >= reward.waros_cost
-                        ? 'border-border hover:bg-surface-secondary/60'
-                        : 'border-border opacity-45 cursor-not-allowed'"
-                    :disabled="warosBalance < reward.waros_cost"
-                    @click="toggleWaroReward(reward)"
+                  <label
+                    class="flex items-center justify-between gap-3 min-h-[44px] rounded-lg border border-border bg-surface-secondary/40 px-3 py-2"
+                    :class="warosBalance >= reward.waros_cost ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
                   >
-                    <span class="text-sm font-medium text-text-primary truncate">{{ reward.name }}</span>
-                    <span class="text-xs tabular-nums text-text-secondary flex-shrink-0">{{ waroRewardSubtitle(reward) }}</span>
-                  </button>
+                    <span class="text-xs font-medium text-text-primary truncate min-w-0">{{ reward.name }}</span>
+                    <span class="flex items-center gap-3 flex-shrink-0">
+                      <span class="text-xs tabular-nums text-text-secondary">{{ waroRewardSubtitle(reward) }}</span>
+                      <span class="relative inline-flex items-center">
+                        <input
+                          type="checkbox"
+                          class="sr-only peer"
+                          :checked="selectedWaroReward?.id === reward.id"
+                          :disabled="warosBalance < reward.waros_cost"
+                          @change="setWaroRewardSelected(reward, ($event.target as HTMLInputElement).checked)"
+                        />
+                        <span class="block w-10 h-6 bg-border rounded-full peer-checked:bg-primary peer-focus:ring-2 peer-focus:ring-primary/30 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                      </span>
+                    </span>
+                  </label>
                 </li>
               </ul>
               <p v-if="waroDiscountCop > 0" class="text-sm font-semibold text-amber-800 tabular-nums">
