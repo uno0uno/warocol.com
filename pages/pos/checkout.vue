@@ -7,7 +7,9 @@ import QRCode from 'qrcode'
 import { usePOSStore, type TabItem } from '~/stores/usePOSStore'
 import { clearTableQrPaymentIntent, readTableQrPaymentIntent } from '~/composables/useTableSessionSync'
 import { useAddressStore, type AddressCreate } from '~/stores/address'
-import { PAYMENT_DEFAULTS, type PosPaymentGroup, type PosPaymentMethod } from '~/utils/paymentDefaults'
+import { PAYMENT_DEFAULTS, WALLET_PAYMENT_SLUG, type PosPaymentGroup, type PosPaymentMethod } from '~/utils/paymentDefaults'
+import type { WaroReward } from '~/composables/useWaroRewards'
+import type { PromoLineForRedemption } from '~/composables/useWaroRedemptionPreview'
 import DeliveryAddressPicker from '~/components/pos/checkout/DeliveryAddressPicker.vue'
 import DeliveryAddressForm from '~/components/pos/checkout/DeliveryAddressForm.vue'
 import { displayTableCode } from '~/composables/useTableDisplayCode'
@@ -496,7 +498,18 @@ const discountAmount = computed(() => {
   }
   return Math.min(Math.round(val), Math.round(subtotalAfterPromos.value))
 })
-const discountedTotal = computed(() => subtotalAfterPromos.value - discountAmount.value)
+const {
+  preview: waroPreview,
+  isLoading: isLoadingWaroPreview,
+  error: waroPreviewError,
+  schedulePreview,
+  resetPreview: resetWaroPreview,
+} = useWaroRedemptionPreview()
+const waroDiscountCop = computed(() => Number(waroPreview.value?.total_waro_discount_cop) || 0)
+const combinedDiscountForTax = computed(() => discountAmount.value + waroDiscountCop.value)
+const discountedTotal = computed(() =>
+  Math.max(0, subtotalAfterPromos.value - discountAmount.value - waroDiscountCop.value),
+)
 // warocol.com#639 — final amount charged to the customer when tipping is enabled.
 // total_amount on orders never includes tip (tax-base invariant from migration 079);
 // charged_amount = total_amount + tip_amount lives at the payment layer only.
@@ -522,13 +535,14 @@ const {
   staleTime: 5_000,  // short — running_total changes when items are added
 })
 
-// POS tax preview — only when in counter/bar mode. discountAmount is part of
-// the key so a discount change re-fetches automatically.
+// POS tax preview — manual + WaRo discounts are folded into discount_amount (#1063).
 const { data: posTaxPreviewData } = useQuery({
-  key: () => ['pos', 'cart', posStore.cartId ?? null, 'tax-preview', discountAmount.value, promoOptOutSignature.value],
+  key: () => ['pos', 'cart', posStore.cartId ?? null, 'tax-preview', combinedDiscountForTax.value, promoOptOutSignature.value],
   query: () => {
     const params = new URLSearchParams()
-    if (discountAmount.value > 0) params.set('discount_amount', String(discountAmount.value))
+    if (combinedDiscountForTax.value > 0) {
+      params.set('discount_amount', String(combinedDiscountForTax.value))
+    }
     const qs = params.toString() ? `?${params.toString()}` : ''
     return $fetch<{
       standard_tax: number
@@ -758,6 +772,7 @@ const addSplitPayment = async () => {
               : {}),
             ...checkoutServedByBody.value,
             ...checkoutTipBody.value,
+            ...checkoutWaroBody.value,
           }
         }) as any
         paidTotal = response.data.paid_total ?? amountToCharge
@@ -805,6 +820,7 @@ const addSplitPayment = async () => {
               : {}),
             ...checkoutServedByBody.value,
             ...checkoutTipBody.value,
+            ...checkoutWaroBody.value,
           }
         }) as any
         paidTotal = response.data.paid_total ?? amountToCharge
@@ -953,12 +969,123 @@ const confirmVoidPayment = async () => {
   }
 }
 
-// Waros
+// Waros + wallet (#1063)
 const { summary: warosSummary, isLoadingSummary: isLoadingWaros, fetchSummary: fetchWarosSummary, resetSummary } = useWarosCliente()
 const { estimatedWaros, isLoadingEstimate, systemEnabled: warosSystemEnabled, fetchEstimate, resetEstimate } = useWarosEstimate()
 const showWarosModal = ref(false)
+const showWaroRewardPicker = ref(false)
+const warosToRedeemInput = ref('')
+const selectedWaroReward = ref<WaroReward | null>(null)
 const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
 const isAnonymousCustomer = computed(() => selectedCustomer.value?.phone_number === '0000000000')
+const customerIdRef = computed(() => selectedCustomer.value?.id ?? '')
+const { wallet: customerWallet, isLoading: isLoadingWallet, refetch: refetchWallet } =
+  useCustomerWallet(customerIdRef)
+const walletBalanceCop = computed(() => customerWallet.value?.balance_cop ?? 0)
+const { config: redemptionConfig } = useRedemptionConfig()
+
+const warosToRedeem = computed(() => {
+  const n = parseInt(warosToRedeemInput.value, 10)
+  return Number.isFinite(n) && n > 0 ? n : 0
+})
+const waroRewardLabel = computed(() => {
+  if (selectedWaroReward.value) return selectedWaroReward.value.name
+  return waroPreview.value?.reward_name ?? null
+})
+const waroRedemptionEnabled = computed(
+  () => redemptionConfig.value?.redemption_enabled !== false && warosSystemEnabled.value,
+)
+
+function buildRedemptionPromoLines(): PromoLineForRedemption[] {
+  return cartItems.value
+    .map(item => ({
+      id: String(item.orderItemId ?? item.id ?? ''),
+      product_id: String(item.product?.id ?? ''),
+      category_id: checkoutLineCategoryId(item),
+      quantity: Number(item.quantity) || 1,
+      subtotal: checkoutLineGross(item),
+      promo_opt_out: Boolean(item.promo_opt_out ?? item.promoOptOut),
+    }))
+    .filter(line => line.id && line.product_id)
+}
+
+function refreshWaroPreview() {
+  if (!selectedCustomer.value || isAnonymousCustomer.value) {
+    resetWaroPreview()
+    return
+  }
+  if (!warosToRedeem.value && !selectedWaroReward.value) {
+    resetWaroPreview()
+    return
+  }
+  schedulePreview({
+    lines: buildRedemptionPromoLines(),
+    customerId: selectedCustomer.value.id,
+    manualDiscountAmount: discountAmount.value,
+    discountType: discountEnabled.value ? discountType.value : null,
+    discountValue:
+      discountEnabled.value && discountInput.value
+        ? Number(discountInput.value)
+        : null,
+    warosToRedeem: warosToRedeem.value || undefined,
+    waroRewardId: selectedWaroReward.value?.id ?? null,
+  })
+}
+
+const checkoutWaroBody = computed(() => {
+  const body: Record<string, number | string> = {}
+  if (warosToRedeem.value > 0) body.waros_to_redeem = warosToRedeem.value
+  if (selectedWaroReward.value?.id) body.waro_reward_id = selectedWaroReward.value.id
+  return body
+})
+
+function applyMaxWarosRedeem() {
+  const cap = waroPreview.value?.max_b1_cop_cap
+  const rate = redemptionConfig.value?.waros_per_1000_cop ?? 100
+  if (!cap || cap <= 0 || rate <= 0) return
+  const warosNeeded = Math.floor((cap * 1000) / rate)
+  const reserved = selectedWaroReward.value?.waros_cost ?? 0
+  warosToRedeemInput.value = String(Math.max(0, Math.min(warosNeeded, warosBalance.value - reserved)))
+}
+
+function onWaroRewardPicked(reward: WaroReward) {
+  selectedWaroReward.value = reward
+  refreshWaroPreview()
+}
+
+function clearWaroRedemption() {
+  warosToRedeemInput.value = ''
+  selectedWaroReward.value = null
+  resetWaroPreview()
+}
+
+function isPaymentGroupVisible(group: PosPaymentGroup) {
+  if (group.triggersCartera) {
+    return !!(selectedCustomer.value && !isAnonymousCustomer.value)
+  }
+  if (group.slug === WALLET_PAYMENT_SLUG || group.triggersWallet) {
+    return !!(selectedCustomer.value && !isAnonymousCustomer.value && walletBalanceCop.value > 0)
+  }
+  return true
+}
+
+const isWalletMethod = computed(() => selectedGroup.value?.slug === WALLET_PAYMENT_SLUG)
+
+watch(
+  [
+    () => selectedCustomer.value?.id,
+    discountAmount,
+    () => discountType.value,
+    () => discountInput.value,
+    () => warosToRedeemInput.value,
+    () => selectedWaroReward.value?.id,
+    cartItems,
+    promoOptOutSignature,
+    () => discountEnabled.value,
+  ],
+  () => refreshWaroPreview(),
+  { deep: true },
+)
 
 // Delivery eligibility — allowed for counter and bar (anything that's not a real mesa).
 // Mesa is dine-in by definition; bar is a permanent counter tab used as walk-in/mostrador.
@@ -1029,6 +1156,7 @@ watch(selectedCustomer, async (customer) => {
   // last left them — never auto-open on customer change.
   resetSummary()
   resetEstimate()
+  clearWaroRedemption()
   customerInsights.value = null
   insightsLoading.value = false
   if (!customer || customer.phone_number === '0000000000') return
@@ -1237,6 +1365,7 @@ const processOrder = async () => {
           // it on the first completed order of the session).
           ...checkoutTipBody.value,
           ...checkoutServedByBody.value,
+          ...checkoutWaroBody.value,
         },
       }) as any
 
@@ -1355,6 +1484,7 @@ const processOrder = async () => {
         ...checkoutServedByBody.value,
         // warocol.com#639 — tip capture (server validates against tenant.tip_enabled)
         ...checkoutTipBody.value,
+        ...checkoutWaroBody.value,
       }
     }) as {
       success: boolean
@@ -1442,9 +1572,10 @@ const processOrder = async () => {
   }
 }
 
-const onCustomerIdentified = (customer: { id: string; name: string | null; phone_number: string | null; email: string | null }) => {
+const onCustomerIdentified = async (customer: { id: string; name: string | null; phone_number: string | null; email: string | null }) => {
   selectedCustomer.value = customer
   processingError.value = ''
+  await posStore.setCustomer(customer as any)
 }
 
 // Derived from dynamic groups
@@ -1513,9 +1644,7 @@ const requiresMethodSelection = computed(() =>
 
 // Dynamic grid class based on group count (excluding hidden cartera groups)
 const paymentGridClass = computed(() => {
-  const visibleCount = posPaymentGroups.value.filter(
-    g => !g.triggersCartera || (selectedCustomer.value && !isAnonymousCustomer.value)
-  ).length
+  const visibleCount = posPaymentGroups.value.filter(g => isPaymentGroupVisible(g)).length
   if (visibleCount <= 2) return 'grid-cols-2'
   if (visibleCount === 3) return 'grid-cols-3'
   return 'grid-cols-2 md:grid-cols-4'
@@ -1721,6 +1850,8 @@ type PrefacturaPrintSnapshot = {
   promoBreakdown: PromoBreakdownLine[]
   cartSubtotal: number
   manualDiscountAmount: number
+  waroDiscountCop: number
+  waroRewardName: string | null
 }
 
 const prefacturaPrintSnapshot = ref<PrefacturaPrintSnapshot | null>(null)
@@ -1740,6 +1871,8 @@ const prefacturaPrintData = computed(() => {
     promoBreakdown: displayPromoBreakdown.value,
     cartSubtotal: cartTotal.value,
     manualDiscountAmount: discountAmount.value,
+    waroDiscountCop: waroDiscountCop.value,
+    waroRewardName: waroRewardLabel.value,
   }
 })
 
@@ -1765,6 +1898,8 @@ function capturePrefacturaPrintSnapshot() {
     promoBreakdown: displayPromoBreakdown.value.map(p => ({ ...p })),
     cartSubtotal: cartTotal.value,
     manualDiscountAmount: discountAmount.value,
+    waroDiscountCop: waroDiscountCop.value,
+    waroRewardName: waroRewardLabel.value,
   }
 }
 
@@ -2073,6 +2208,20 @@ onUnmounted(() => {
 // modes. Uses a watcher (not onMounted) because businessProfile is loaded
 // asynchronously by the tenants store and may still be undefined when
 // checkout mounts on a fresh page load.
+watch(
+  () => posStore.currentCustomer,
+  (customer) => {
+    if (!customer || selectedCustomer.value) return
+    selectedCustomer.value = {
+      id: customer.id,
+      name: customer.name ?? null,
+      phone_number: customer.phone_number ?? null,
+      email: customer.email ?? null,
+    }
+  },
+  { immediate: true },
+)
+
 const autoSelectAttempted = ref(false)
 watch(
   () => businessProfile.value,
@@ -2321,7 +2470,7 @@ onUnmounted(() => {
             <label
               v-for="group in posPaymentGroups"
               :key="group.slug"
-              v-show="!group.triggersCartera || (selectedCustomer && !isAnonymousCustomer)"
+              v-show="isPaymentGroupVisible(group)"
               class="cursor-pointer relative"
             >
               <input type="radio" name="payment" :value="group.slug" v-model="selectedPaymentMethod" class="sr-only">
@@ -2800,15 +2949,19 @@ onUnmounted(() => {
                 <span>Subtotal con promoción</span>
                 <span class="font-medium text-text-primary">{{ formatCurrency(subtotalAfterPromos) }}</span>
               </div>
+              <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-primary">
+                <span>Descuento manual</span>
+                <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
+              </div>
+              <div v-if="waroDiscountCop > 0" class="flex justify-between text-sm text-amber-700">
+                <span>{{ waroRewardLabel ? `WaRo: ${waroRewardLabel}` : 'Canje WaRo' }}</span>
+                <span class="font-medium">- {{ formatCurrency(waroDiscountCop) }}</span>
+              </div>
               <div class="flex justify-between text-sm text-text-secondary">
                 <span>{{ taxPreview ? taxPreview.standard_tax_label : 'Impuestos (0%)' }}</span>
                 <span class="font-medium text-text-primary">
                   {{ formatCurrency(taxPreview ? (taxPreview.standard_tax + taxPreview.liquor_tax) : 0) }}
                 </span>
-              </div>
-              <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-primary">
-                <span>Descuento</span>
-                <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
               </div>
               <div
                 v-if="tipAmount > 0"
@@ -2867,31 +3020,75 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
             </svg>
           </button>
-          <div v-show="activeAccordion === 'waros'" class="border-t border-border px-5 py-4">
-            <!-- Skeleton -->
-            <div v-if="isLoadingWaros" class="grid grid-cols-2 gap-3 mb-3">
-              <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14"></div>
-              <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14"></div>
+          <div v-show="activeAccordion === 'waros'" class="border-t border-border px-5 py-4 space-y-3">
+            <div v-if="isLoadingWaros" class="grid grid-cols-2 gap-3">
+              <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14" />
+              <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14" />
             </div>
-            <!-- Data -->
-            <div v-else class="grid grid-cols-2 gap-3 mb-3">
+            <div v-else class="grid grid-cols-2 gap-3">
               <div class="bg-amber-50 rounded-xl p-3">
-                <p class="text-xs text-text-secondary mb-0.5">Balance actual</p>
-                <p class="text-lg font-bold text-amber-700 leading-tight">{{ warosBalance.toLocaleString('es-CO') }}</p>
+                <p class="text-xs text-text-secondary mb-0.5">Balance WaRo</p>
+                <p class="text-lg font-bold text-amber-700 leading-tight tabular-nums">{{ warosBalance.toLocaleString('es-CO') }} pts</p>
               </div>
-              <div class="bg-green-50 rounded-xl p-3">
-                <p class="text-xs text-text-secondary mb-0.5">Ganarías esta compra</p>
-                <p class="text-lg font-bold text-green-700 leading-tight" aria-live="polite">
-                  <span v-if="isLoadingEstimate" class="inline-block h-5 w-16 rounded bg-green-200 animate-pulse"></span>
-                  <span v-else-if="estimatedWaros === null">—</span>
-                  <span v-else>+ {{ estimatedWaros.toLocaleString('es-CO') }}</span>
+              <div class="bg-emerald-50 rounded-xl p-3">
+                <p class="text-xs text-text-secondary mb-0.5">Saldo wallet</p>
+                <p class="text-lg font-bold text-emerald-700 leading-tight tabular-nums">
+                  {{ isLoadingWallet ? '…' : formatCurrency(walletBalanceCop) }}
                 </p>
               </div>
             </div>
+            <div v-if="!isLoadingWaros" class="bg-green-50 rounded-xl p-3">
+              <p class="text-xs text-text-secondary mb-0.5">Ganarías esta compra</p>
+              <p class="text-base font-bold text-green-700 leading-tight" aria-live="polite">
+                <span v-if="isLoadingEstimate" class="inline-block h-5 w-16 rounded bg-green-200 animate-pulse" />
+                <span v-else-if="estimatedWaros === null">—</span>
+                <span v-else>+ {{ estimatedWaros.toLocaleString('es-CO') }} pts</span>
+              </p>
+            </div>
+            <template v-if="waroRedemptionEnabled">
+              <div v-if="selectedWaroReward" class="flex items-center justify-between gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm">
+                <span class="font-medium text-amber-900 truncate">{{ selectedWaroReward.name }}</span>
+                <button type="button" class="text-xs text-amber-700 underline min-h-[44px] px-2" @click="selectedWaroReward = null; refreshWaroPreview()">
+                  Quitar
+                </button>
+              </div>
+              <div class="space-y-2">
+                <label class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Canjear puntos</label>
+                <div class="flex gap-2">
+                  <input
+                    v-model="warosToRedeemInput"
+                    type="number"
+                    min="0"
+                    inputmode="numeric"
+                    placeholder="Puntos"
+                    class="input-base flex-1 min-h-[44px] px-3 text-sm tabular-nums"
+                  />
+                  <button
+                    type="button"
+                    class="min-h-[44px] px-3 rounded-lg border border-amber-300 text-amber-800 text-xs font-semibold hover:bg-amber-50"
+                    @click="applyMaxWarosRedeem"
+                  >
+                    Máximo
+                  </button>
+                </div>
+                <p v-if="waroPreview?.b1_cop" class="text-xs text-amber-700 tabular-nums">
+                  ≈ {{ formatCurrency(waroPreview.b1_cop) }} · máx. {{ waroPreview.max_redeem_percent }}%
+                </p>
+              </div>
+              <button
+                type="button"
+                class="w-full min-h-[44px] px-4 py-2.5 text-sm font-semibold border border-amber-300 rounded-lg text-amber-800 hover:bg-amber-50"
+                @click="showWaroRewardPicker = true"
+              >
+                Canjear recompensa
+              </button>
+              <p v-if="waroPreviewError" class="text-xs text-destructive">{{ waroPreviewError }}</p>
+              <p v-if="isLoadingWaroPreview" class="text-xs text-text-tertiary">Calculando canje…</p>
+            </template>
             <button
               type="button"
               @click="showWarosModal = true"
-              class="w-full min-h-[44px] px-4 py-2.5 text-sm font-medium border border-border rounded-lg hover:bg-surface-secondary transition-colors text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              class="w-full min-h-[44px] px-4 py-2.5 text-sm font-medium border border-border rounded-lg hover:bg-surface-secondary transition-colors text-text-secondary"
             >
               Asignar manualmente
             </button>
@@ -3259,15 +3456,19 @@ onUnmounted(() => {
               <span>Subtotal con promoción</span>
               <span class="font-medium text-text-primary">{{ formatCurrency(subtotalAfterPromos) }}</span>
             </div>
+            <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-green-600 dark:text-green-400">
+              <span>Descuento manual</span>
+              <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
+            </div>
+            <div v-if="waroDiscountCop > 0" class="flex justify-between text-sm text-amber-700">
+              <span>{{ waroRewardLabel ? `WaRo: ${waroRewardLabel}` : 'Canje WaRo' }}</span>
+              <span class="font-medium">- {{ formatCurrency(waroDiscountCop) }}</span>
+            </div>
             <div class="flex justify-between text-sm text-text-secondary">
               <span>{{ taxPreview ? taxPreview.standard_tax_label : 'Impuestos (0%)' }}</span>
               <span class="font-medium text-text-primary">
                 {{ formatCurrency(taxPreview ? (taxPreview.standard_tax + taxPreview.liquor_tax) : 0) }}
               </span>
-            </div>
-            <div v-if="discountEnabled && discountAmount > 0" class="flex justify-between text-sm text-green-600 dark:text-green-400">
-              <span>Descuento</span>
-              <span class="font-medium">- {{ formatCurrency(discountAmount) }}</span>
             </div>
             <div
               v-if="tipAmount > 0"
@@ -3306,32 +3507,46 @@ onUnmounted(() => {
         v-if="selectedCustomer && !isAnonymousCustomer && warosSystemEnabled"
         class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
       >
-        <div class="px-5 py-4">
-          <h3 class="font-bold text-text-primary text-sm mb-3">Puntos Waros</h3>
-          <div v-if="isLoadingWaros" class="grid grid-cols-2 gap-3 mb-3">
-            <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14"></div>
-            <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14"></div>
+        <div class="px-5 py-4 space-y-3">
+          <h3 class="font-bold text-text-primary text-sm">Puntos Waros</h3>
+          <div v-if="isLoadingWaros" class="grid grid-cols-2 gap-3">
+            <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14" />
+            <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14" />
           </div>
-          <div v-else class="grid grid-cols-2 gap-3 mb-3">
+          <div v-else class="grid grid-cols-2 gap-3">
             <div class="bg-amber-50 rounded-xl p-3">
-              <p class="text-xs text-text-secondary mb-0.5">Balance actual</p>
-              <p class="text-lg font-bold text-amber-700 leading-tight">
-                {{ warosBalance.toLocaleString('es-CO') }}
-              </p>
+              <p class="text-xs text-text-secondary mb-0.5">Balance WaRo</p>
+              <p class="text-lg font-bold text-amber-700 leading-tight tabular-nums">{{ warosBalance.toLocaleString('es-CO') }} pts</p>
             </div>
-            <div class="bg-green-50 rounded-xl p-3">
-              <p class="text-xs text-text-secondary mb-0.5">Ganarías esta compra</p>
-              <p class="text-lg font-bold text-green-700 leading-tight" aria-live="polite">
-                <span v-if="isLoadingEstimate" class="inline-block h-5 w-16 rounded bg-green-200 animate-pulse"></span>
-                <span v-else-if="estimatedWaros === null">—</span>
-                <span v-else>+ {{ estimatedWaros.toLocaleString('es-CO') }}</span>
+            <div class="bg-emerald-50 rounded-xl p-3">
+              <p class="text-xs text-text-secondary mb-0.5">Saldo wallet</p>
+              <p class="text-lg font-bold text-emerald-700 leading-tight tabular-nums">
+                {{ isLoadingWallet ? '…' : formatCurrency(walletBalanceCop) }}
               </p>
             </div>
           </div>
+          <template v-if="waroRedemptionEnabled">
+            <div class="flex gap-2">
+              <input
+                v-model="warosToRedeemInput"
+                type="number"
+                min="0"
+                inputmode="numeric"
+                placeholder="Puntos a canjear"
+                class="input-base flex-1 min-h-[44px] px-3 text-sm"
+              />
+              <button type="button" class="min-h-[44px] px-3 rounded-lg border border-amber-300 text-xs font-semibold text-amber-800" @click="applyMaxWarosRedeem">
+                Máximo
+              </button>
+            </div>
+            <button type="button" class="w-full min-h-[44px] border border-amber-300 rounded-lg text-sm font-semibold text-amber-800" @click="showWaroRewardPicker = true">
+              Canjear recompensa
+            </button>
+          </template>
           <button
             type="button"
             @click="showWarosModal = true"
-            class="w-full min-h-[44px] px-4 py-2.5 text-sm font-medium border border-border rounded-lg hover:bg-surface-secondary transition-colors text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/30"
+            class="w-full min-h-[44px] px-4 py-2.5 text-sm font-medium border border-border rounded-lg hover:bg-surface-secondary text-text-secondary"
           >
             Asignar manualmente
           </button>
@@ -3793,6 +4008,13 @@ onUnmounted(() => {
       </div>
     </Teleport>
 
+    <!-- WaRo reward picker (B2) -->
+    <PosWaroRewardPickerModal
+      v-model="showWaroRewardPicker"
+      :waros-balance="warosBalance"
+      @select="onWaroRewardPicked"
+    />
+
     <!-- Waros Manual Assignment Modal -->
     <PuntosAsignarWarosModal
       v-if="selectedCustomer"
@@ -3884,6 +4106,10 @@ onUnmounted(() => {
     <div v-if="prefacturaPrintData.manualDiscountAmount > 0" class="receipt-item">
       <span>Descuento manual</span>
       <span>-{{ formatCurrency(prefacturaPrintData.manualDiscountAmount) }}</span>
+    </div>
+    <div v-if="prefacturaPrintData.waroDiscountCop > 0" class="receipt-item">
+      <span>{{ prefacturaPrintData.waroRewardName ? `WaRo: ${prefacturaPrintData.waroRewardName}` : 'Canje WaRo' }}</span>
+      <span>-{{ formatCurrency(prefacturaPrintData.waroDiscountCop) }}</span>
     </div>
     <div v-if="taxPreview && taxPreview.standard_tax > 0" class="receipt-item">
       <span>{{ taxPreview.standard_tax_label || 'Impuesto' }}</span>

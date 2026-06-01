@@ -239,6 +239,42 @@ const isMesaMode = computed(
   () => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar,
 )
 
+// Customer identification on POS main screen (#1063)
+const showCustomerModal = ref(false)
+const posCustomerId = computed(() => posStore.currentCustomer?.id ?? '')
+const isAnonymousPosCustomer = computed(
+  () => posStore.currentCustomer?.phone_number === '0000000000',
+)
+const { wallet: posCustomerWallet, isLoading: isLoadingPosWallet, refetch: refetchPosWallet } =
+  useCustomerWallet(posCustomerId)
+const {
+  summary: posWarosSummary,
+  isLoadingSummary: isLoadingPosWaros,
+  fetchSummary: fetchPosWarosSummary,
+  resetSummary: resetPosWarosSummary,
+} = useWarosCliente()
+
+watch(posCustomerId, (id) => {
+  if (!id || isAnonymousPosCustomer.value) {
+    resetPosWarosSummary()
+    return
+  }
+  void fetchPosWarosSummary(id)
+  void refetchPosWallet()
+}, { immediate: true })
+
+const onPosCustomerIdentified = async (customer: {
+  id: string
+  name: string | null
+  phone_number: string | null
+  email: string | null
+}) => {
+  await posStore.setCustomer(customer as any)
+}
+
+const posWarosBalance = computed(() => posWarosSummary.value?.current_balance ?? 0)
+const posWalletBalance = computed(() => posCustomerWallet.value?.balance_cop ?? 0)
+
 // ── Unfired counts — tab vs cart (#807) ───────────────────────────────────
 // Banner uses tab + cart; kitchen send is only via Agregar y enviar (tab/add auto-fires).
 const tabUnfiredCount = computed(() => {
@@ -1520,24 +1556,58 @@ onUnmounted(() => {
 
       <!-- Customer Header (when customer is identified and no mesa mode) -->
       <div v-else-if="posStore.currentCustomer" class="bg-crocus-600/5 border border-crocus-500/25 rounded-xl mb-4 p-4">
-        <div class="flex items-center gap-3">
-          <div class="bg-crocus-600/10 p-3 rounded-xl border border-crocus-500/20 flex-shrink-0">
-            <svg class="w-5 h-5 text-crocus-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="bg-crocus-600/10 p-3 rounded-xl border border-crocus-500/20 flex-shrink-0">
+              <svg class="w-5 h-5 text-crocus-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[10px] font-bold text-crocus-600 uppercase tracking-widest">
+                Cliente Actual
+              </p>
+              <p class="text-base font-bold text-text-primary leading-tight truncate">
+                {{ posStore.currentCustomer.name || 'Sin nombre' }}
+              </p>
+              <p class="text-xs text-text-secondary mt-0.5">
+                📱 {{ posStore.currentCustomer.phone_number }}
+              </p>
+              <div
+                v-if="!isAnonymousPosCustomer"
+                class="flex flex-wrap gap-2 mt-2"
+              >
+                <span class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Wallet: {{ isLoadingPosWallet ? '…' : formatCurrency(posWalletBalance) }}
+                </span>
+                <span class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                  WaRos: {{ isLoadingPosWaros ? '…' : posWarosBalance.toLocaleString('es-CO') }} pts
+                </span>
+              </div>
+            </div>
           </div>
-          <div>
-            <p class="text-[10px] font-bold text-crocus-600 uppercase tracking-widest">
-              Cliente Actual
-            </p>
-            <p class="text-base font-bold text-text-primary leading-tight">
-              {{ posStore.currentCustomer.name || 'Sin nombre' }}
-            </p>
-            <p class="text-xs text-text-secondary mt-0.5">
-              📱 {{ posStore.currentCustomer.phone_number }}
-            </p>
-          </div>
+          <button
+            type="button"
+            class="flex-shrink-0 text-xs font-semibold text-crocus-700 hover:text-crocus-800 px-3 py-2 rounded-lg border border-crocus-500/30 hover:bg-crocus-600/10 transition-colors min-h-[44px]"
+            @click="showCustomerModal = true"
+          >
+            Cambiar
+          </button>
         </div>
+      </div>
+
+      <!-- Identify customer CTA (counter/bar, no table session) -->
+      <div v-else class="mb-4">
+        <button
+          type="button"
+          class="w-full flex items-center justify-center gap-2 min-h-[44px] px-4 py-3 rounded-xl border-2 border-dashed border-crocus-500/40 text-crocus-700 font-semibold text-sm hover:bg-crocus-600/5 transition-colors"
+          @click="showCustomerModal = true"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          Identificar cliente
+        </button>
       </div>
 
 
@@ -1762,5 +1832,11 @@ onUnmounted(() => {
       @update:served-by="(id) => posStore.setCartServedBy(id)"
     />
   </UiBottomSheetModal>
+
+  <PosCustomerIdentificationModal
+    v-model="showCustomerModal"
+    @customer-identified="onPosCustomerIdentified"
+    @fiscal-updated="onPosCustomerIdentified"
+  />
 
 </template>
