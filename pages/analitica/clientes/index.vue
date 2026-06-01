@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useDebounceFn } from '@vueuse/core'
 import { es } from 'date-fns/locale';
 import { format as fnsFormat, formatDistanceToNow } from 'date-fns';
@@ -243,8 +244,21 @@ onUnmounted(() => {
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
+        <button
+          type="button"
+          @click="showCreateModal = true"
+          class="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors flex-shrink-0 whitespace-nowrap"
+          aria-label="Crear nuevo cliente"
+        >
+          + Nuevo cliente
+        </button>
       </div>
     </ClientOnly>
+
+    <AnaliticaCreateCustomerModal
+      v-model="showCreateModal"
+      @created="onCustomerCreated"
+    />
 
     <!-- Loading -->
     <div v-if="isLoading" class="flex items-center justify-center min-h-[400px]">
