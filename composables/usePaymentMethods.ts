@@ -1,5 +1,5 @@
 import { ref, readonly } from 'vue'
-import { PAYMENT_DEFAULTS, type PosPaymentGroup } from '~/utils/paymentDefaults'
+import { PAYMENT_DEFAULTS, mergePosPaymentGroupsFromApi, type PosPaymentGroup } from '~/utils/paymentDefaults'
 
 export function usePaymentMethods() {
   const paymentGroups = ref<PosPaymentGroup[]>([...PAYMENT_DEFAULTS])
@@ -11,7 +11,7 @@ export function usePaymentMethods() {
       const res = await $fetch<{ success: boolean; data: PosPaymentGroup[] }>('/api/pos/payment-methods')
       const groups = res?.data
       if (Array.isArray(groups) && groups.length > 0) {
-        paymentGroups.value = groups
+        paymentGroups.value = mergePosPaymentGroupsFromApi(groups)
       }
     } catch {
       // Keep defaults on error — user can still operate

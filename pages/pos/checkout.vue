@@ -7,7 +7,7 @@ import QRCode from 'qrcode'
 import { usePOSStore, type TabItem } from '~/stores/usePOSStore'
 import { clearTableQrPaymentIntent, readTableQrPaymentIntent } from '~/composables/useTableSessionSync'
 import { useAddressStore, type AddressCreate } from '~/stores/address'
-import { PAYMENT_DEFAULTS, WALLET_PAYMENT_SLUG, type PosPaymentGroup, type PosPaymentMethod } from '~/utils/paymentDefaults'
+import { PAYMENT_DEFAULTS, WALLET_PAYMENT_SLUG, mergePosPaymentGroupsFromApi, type PosPaymentGroup, type PosPaymentMethod } from '~/utils/paymentDefaults'
 import type { WaroReward } from '~/composables/useWaroRewards'
 import type { PromoLineForRedemption } from '~/composables/useWaroRedemptionPreview'
 import DeliveryAddressPicker from '~/components/pos/checkout/DeliveryAddressPicker.vue'
@@ -256,7 +256,7 @@ const {
 })
 watch(paymentMethodsData, (data) => {
   if (data?.success && data.data?.length) {
-    posPaymentGroups.value = data.data
+    posPaymentGroups.value = mergePosPaymentGroupsFromApi(data.data)
   }
 }, { immediate: true })
 const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
@@ -971,7 +971,7 @@ const confirmVoidPayment = async () => {
 
 // Waros + wallet (#1063)
 const { summary: warosSummary, isLoadingSummary: isLoadingWaros, fetchSummary: fetchWarosSummary, resetSummary } = useWarosCliente()
-const { estimatedWaros, isLoadingEstimate, systemEnabled: warosSystemEnabled, fetchEstimate, resetEstimate } = useWarosEstimate()
+const { estimatedWaros, earnEligible: warosEarnEligible, isLoadingEstimate, systemEnabled: warosSystemEnabled, fetchEstimate, resetEstimate } = useWarosEstimate()
 const showWarosModal = ref(false)
 const showWaroRewardPicker = ref(false)
 const warosToRedeemInput = ref('')
@@ -979,9 +979,10 @@ const selectedWaroReward = ref<WaroReward | null>(null)
 const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
 const isAnonymousCustomer = computed(() => selectedCustomer.value?.phone_number === '0000000000')
 const customerIdRef = computed(() => selectedCustomer.value?.id ?? '')
-const { wallet: customerWallet, isLoading: isLoadingWallet, refetch: refetchWallet } =
+const { wallet: customerWallet, isLoading: isLoadingWallet, isRefreshing: isRefreshingWallet, refetch: refetchWallet } =
   useCustomerWallet(customerIdRef)
 const walletBalanceCop = computed(() => customerWallet.value?.balance_cop ?? 0)
+const isWalletPending = computed(() => isLoadingWallet.value || isRefreshingWallet.value)
 const { config: redemptionConfig } = useRedemptionConfig()
 
 const warosToRedeem = computed(() => {
@@ -1138,13 +1139,24 @@ const handleSaveAddress = async (payload: AddressCreate) => {
 
 let estimateTimer: ReturnType<typeof setTimeout> | null = null
 
+function refreshWarosEstimate() {
+  if (!selectedCustomer.value || isAnonymousCustomer.value) return
+  const total = discountedTotal.value
+  if (total <= 0) return
+  fetchEstimate(total, selectedCustomer.value.id, selectedPaymentMethod.value)
+}
+
 watch(discountedTotal, (total) => {
   if (!selectedCustomer.value || isAnonymousCustomer.value) return
   if (total <= 0) return
   if (estimateTimer) clearTimeout(estimateTimer)
-  estimateTimer = setTimeout(() => {
-    fetchEstimate(total, selectedCustomer.value!.id)
-  }, 400)
+  estimateTimer = setTimeout(refreshWarosEstimate, 400)
+})
+
+watch(selectedPaymentMethod, () => {
+  if (!selectedCustomer.value || isAnonymousCustomer.value) return
+  if (discountedTotal.value <= 0) return
+  refreshWarosEstimate()
 })
 
 const onWarosAssigned = async (_payload: { newBalance: number }) => {
@@ -1160,6 +1172,7 @@ watch(selectedCustomer, async (customer) => {
   customerInsights.value = null
   insightsLoading.value = false
   if (!customer || customer.phone_number === '0000000000') return
+  void refetchWallet()
   insightsLoading.value = true
 
   // Fetch insights + Waros in parallel so the right column doesn't fill in step by step.
@@ -1176,7 +1189,7 @@ watch(selectedCustomer, async (customer) => {
 
   const warosPromise = Promise.allSettled([
     fetchWarosSummary(customer.id),
-    fetchEstimate(Math.max(cartTotal.value, 1), customer.id)
+    fetchEstimate(Math.max(cartTotal.value, 1), customer.id, selectedPaymentMethod.value),
   ])
 
   try {
@@ -2422,6 +2435,23 @@ onUnmounted(() => {
                 <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
                 Factura: {{ selectedCustomer.fiscal_id_type }} {{ selectedCustomer.fiscal_id }}
               </p>
+              <div
+                v-if="!isAnonymousCustomer"
+                class="flex flex-wrap gap-2 mt-2"
+                aria-live="polite"
+              >
+                <div
+                  v-if="isWalletPending"
+                  class="h-5 w-[6.5rem] rounded-full bg-surface-secondary animate-pulse"
+                  aria-label="Cargando saldo wallet"
+                />
+                <span
+                  v-else
+                  class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"
+                >
+                  Wallet: {{ formatCurrency(walletBalanceCop) }}
+                </span>
+              </div>
             </div>
             <button
               @click="showCustomerModal = true"
@@ -2507,6 +2537,15 @@ onUnmounted(() => {
                     <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z" />
+                    </svg>
+                  </div>
+                  <!-- Icon — wallet anticipo -->
+                  <div
+                    v-else-if="group.slug === WALLET_PAYMENT_SLUG || group.triggersWallet"
+                    class="bg-emerald-100 text-emerald-700 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                  >
+                    <svg class="h-4 w-4 md:h-6 md:w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 0 0-2.25-2.25H15a3 3 0 1 1-6 0H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 9m18 0V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v3" />
                     </svg>
                   </div>
                   <!-- Icon — credit / triggersCartera -->
@@ -3021,7 +3060,7 @@ onUnmounted(() => {
             </svg>
           </button>
           <div v-show="activeAccordion === 'waros'" class="border-t border-border px-5 py-4 space-y-3">
-            <div v-if="isLoadingWaros" class="grid grid-cols-2 gap-3">
+            <div v-if="isLoadingWaros || isWalletPending" class="grid grid-cols-2 gap-3">
               <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14" />
               <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14" />
             </div>
@@ -3033,13 +3072,23 @@ onUnmounted(() => {
               <div class="bg-emerald-50 rounded-xl p-3">
                 <p class="text-xs text-text-secondary mb-0.5">Saldo wallet</p>
                 <p class="text-lg font-bold text-emerald-700 leading-tight tabular-nums">
-                  {{ isLoadingWallet ? '…' : formatCurrency(walletBalanceCop) }}
+                  {{ formatCurrency(walletBalanceCop) }}
                 </p>
               </div>
             </div>
-            <div v-if="!isLoadingWaros" class="bg-green-50 rounded-xl p-3">
+            <div
+              v-if="!isLoadingWaros"
+              class="rounded-xl p-3"
+              :class="warosEarnEligible ? 'bg-green-50' : 'bg-surface-secondary'"
+            >
               <p class="text-xs text-text-secondary mb-0.5">Ganarías esta compra</p>
-              <p class="text-base font-bold text-green-700 leading-tight" aria-live="polite">
+              <p
+                v-if="!warosEarnEligible"
+                class="text-sm text-text-secondary leading-snug"
+              >
+                No acumula pagando con saldo wallet
+              </p>
+              <p v-else class="text-base font-bold text-green-700 leading-tight" aria-live="polite">
                 <span v-if="isLoadingEstimate" class="inline-block h-5 w-16 rounded bg-green-200 animate-pulse" />
                 <span v-else-if="estimatedWaros === null">—</span>
                 <span v-else>+ {{ estimatedWaros.toLocaleString('es-CO') }} pts</span>
@@ -3509,7 +3558,7 @@ onUnmounted(() => {
       >
         <div class="px-5 py-4 space-y-3">
           <h3 class="font-bold text-text-primary text-sm">Puntos Waros</h3>
-          <div v-if="isLoadingWaros" class="grid grid-cols-2 gap-3">
+          <div v-if="isLoadingWaros || isWalletPending" class="grid grid-cols-2 gap-3">
             <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14" />
             <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14" />
           </div>
@@ -3521,7 +3570,7 @@ onUnmounted(() => {
             <div class="bg-emerald-50 rounded-xl p-3">
               <p class="text-xs text-text-secondary mb-0.5">Saldo wallet</p>
               <p class="text-lg font-bold text-emerald-700 leading-tight tabular-nums">
-                {{ isLoadingWallet ? '…' : formatCurrency(walletBalanceCop) }}
+                {{ formatCurrency(walletBalanceCop) }}
               </p>
             </div>
           </div>

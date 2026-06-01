@@ -30,7 +30,7 @@ export const useCustomerWallet = (customerId: Ref<string> | string) => {
   const idRef = isRef(customerId) ? customerId : ref(customerId)
   const cache = useQueryCache()
 
-  const { data, status, asyncStatus, error, refetch } = useQuery({
+  const { data, asyncStatus, error, refetch } = useQuery({
     key: () => ['customer-wallet', idRef.value],
     query: () =>
       $fetch<WalletResponse>(`/api/customers/${idRef.value}/wallet`),
@@ -39,7 +39,9 @@ export const useCustomerWallet = (customerId: Ref<string> | string) => {
   })
 
   const wallet = computed(() => data.value?.data ?? null)
-  const isLoading = computed(() => status.value === 'pending')
+  const isLoading = computed(
+    () => asyncStatus.value === 'loading' && data.value == null,
+  )
   const isRefreshing = computed(
     () => asyncStatus.value === 'loading' && data.value != null
   )
@@ -52,6 +54,7 @@ export const useCustomerWallet = (customerId: Ref<string> | string) => {
     mutation: (vars: {
       amount_cop: number
       payment_method: string
+      payment_method_id?: string
       notes?: string
     }) =>
       $fetch<WalletResponse>(`/api/customers/${idRef.value}/wallet/recharge`, {
@@ -62,8 +65,22 @@ export const useCustomerWallet = (customerId: Ref<string> | string) => {
       cache.invalidateQueries({ key: ['customer-wallet', idRef.value] }),
   })
 
-  const recharge = (amount_cop: number, payment_method: string, notes?: string) =>
-    rechargeMutation.mutateAsync({ amount_cop, payment_method, notes })
+  const recharge = (
+    amount_cop: number,
+    payment_method: string,
+    notes?: string,
+    payment_method_id?: string,
+  ) =>
+    rechargeMutation.mutateAsync({
+      amount_cop,
+      payment_method,
+      notes,
+      ...(payment_method_id ? { payment_method_id } : {}),
+    })
+
+  const resetRecharge = () => {
+    rechargeMutation.reset()
+  }
 
   return {
     wallet,
@@ -72,7 +89,7 @@ export const useCustomerWallet = (customerId: Ref<string> | string) => {
     walletError,
     refetch,
     recharge,
-    isRecharging: rechargeMutation.isLoading,
+    resetRecharge,
     rechargeError: computed(() => {
       const e = rechargeMutation.error.value as any
       return e?.data?.detail || e?.message || null

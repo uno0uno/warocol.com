@@ -245,7 +245,7 @@ const posCustomerId = computed(() => posStore.currentCustomer?.id ?? '')
 const isAnonymousPosCustomer = computed(
   () => posStore.currentCustomer?.phone_number === '0000000000',
 )
-const { wallet: posCustomerWallet, isLoading: isLoadingPosWallet, refetch: refetchPosWallet } =
+const { wallet: posCustomerWallet, isLoading: isLoadingPosWallet, isRefreshing: isRefreshingPosWallet, refetch: refetchPosWallet } =
   useCustomerWallet(posCustomerId)
 const {
   summary: posWarosSummary,
@@ -274,6 +274,7 @@ const onPosCustomerIdentified = async (customer: {
 
 const posWarosBalance = computed(() => posWarosSummary.value?.current_balance ?? 0)
 const posWalletBalance = computed(() => posCustomerWallet.value?.balance_cop ?? 0)
+const isPosWalletPending = computed(() => isLoadingPosWallet.value || isRefreshingPosWallet.value)
 
 // ── Unfired counts — tab vs cart (#807) ───────────────────────────────────
 // Banner uses tab + cart; kitchen send is only via Agregar y enviar (tab/add auto-fires).
@@ -1576,12 +1577,29 @@ onUnmounted(() => {
               <div
                 v-if="!isAnonymousPosCustomer"
                 class="flex flex-wrap gap-2 mt-2"
+                aria-live="polite"
               >
-                <span class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Wallet: {{ isLoadingPosWallet ? '…' : formatCurrency(posWalletBalance) }}
+                <div
+                  v-if="isPosWalletPending"
+                  class="h-5 w-[6.5rem] rounded-full bg-surface-secondary animate-pulse"
+                  aria-label="Cargando saldo wallet"
+                />
+                <span
+                  v-else
+                  class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"
+                >
+                  Wallet: {{ formatCurrency(posWalletBalance) }}
                 </span>
-                <span class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                  WaRos: {{ isLoadingPosWaros ? '…' : posWarosBalance.toLocaleString('es-CO') }} pts
+                <div
+                  v-if="isLoadingPosWaros"
+                  class="h-5 w-[7.5rem] rounded-full bg-surface-secondary animate-pulse"
+                  aria-label="Cargando puntos WaRo"
+                />
+                <span
+                  v-else
+                  class="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"
+                >
+                  WaRos: {{ posWarosBalance.toLocaleString('es-CO') }} pts
                 </span>
               </div>
             </div>

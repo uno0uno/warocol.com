@@ -135,6 +135,8 @@ const SOURCE_MODULE_LABELS: Record<string, string> = {
   arqueo: 'Arqueo',
   manual: 'Manual',
   system: 'Sistema',
+  customer_wallet_recharge: 'Recarga billetera',
+  customer_wallet_refund: 'Devolución billetera',
 }
 
 const STATUS_LABELS: Record<string, string> = {

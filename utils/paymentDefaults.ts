@@ -32,6 +32,32 @@ export const PAYMENT_DEFAULTS: PosPaymentGroup[] = [
   { id: 'customer_wallet', slug: WALLET_PAYMENT_SLUG, name: 'Saldo wallet', triggersCartera: false, triggersWallet: true, methods: [] },
 ]
 
+/** Synthetic POS groups kept client-side (not stored in payment_method_groups). */
+export const SYNTHETIC_POS_PAYMENT_SLUGS = [WALLET_PAYMENT_SLUG] as const
+
+/**
+ * Merge tenant API payment groups with synthetic defaults (e.g. customer_wallet).
+ * The wallet tender is handled in checkout logic but is not a DB-configured group.
+ */
+export function mergePosPaymentGroupsFromApi(
+  apiGroups: PosPaymentGroup[],
+): PosPaymentGroup[] {
+  if (!apiGroups.length) return [...PAYMENT_DEFAULTS]
+  const merged = apiGroups.map(g => ({
+    ...g,
+    triggersWallet: g.triggersWallet ?? g.slug === WALLET_PAYMENT_SLUG,
+  }))
+  for (const fallback of PAYMENT_DEFAULTS) {
+    if (
+      SYNTHETIC_POS_PAYMENT_SLUGS.includes(fallback.slug as typeof SYNTHETIC_POS_PAYMENT_SLUGS[number])
+      && !merged.some(g => g.slug === fallback.slug)
+    ) {
+      merged.push({ ...fallback })
+    }
+  }
+  return merged
+}
+
 /** Map a payment group slug to a Heroicon component. Falls back to CurrencyDollarIcon. */
 export const SLUG_ICON_MAP: Record<string, typeof CurrencyDollarIcon> = {
   cash:    BanknotesIcon,

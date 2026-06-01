@@ -4,6 +4,7 @@ import { es } from 'date-fns/locale';
 import { format as fnsFormat } from 'date-fns';
 import MetricCard from '~/components/shared/MetricCard.vue';
 import type { WaroTransaction } from '~/composables/useWarosCliente';
+import { PAYMENT_DEFAULTS } from '~/utils/paymentDefaults';
 
 definePageMeta({ layout: 'dashboard' })
 
@@ -224,33 +225,23 @@ const showWalletRechargeModal = ref(false)
 const {
   wallet,
   isLoading: isLoadingWallet,
+  walletError: walletLoadError,
   recharge,
-  isRecharging,
-  rechargeError,
+  resetRecharge,
   refetch: refetchWallet,
 } = useCustomerWallet(customerId)
 
 const walletBalance = computed(() => wallet.value?.balance_cop ?? 0)
 const walletMovements = computed(() => wallet.value?.movements ?? [])
 
-const walletPaymentOptions = computed(() => {
-  const slugs = new Set(['credit', 'customer_wallet'])
-  const opts: { value: string; label: string }[] = []
-  for (const group of paymentGroups.value) {
-    for (const method of group.methods ?? []) {
-      const slug = (method as any).slug || group.slug
-      if (slugs.has(slug)) continue
-      opts.push({ value: slug, label: method.name || group.name })
-    }
-  }
-  if (!opts.length) {
-    opts.push(
-      { value: 'cash', label: 'Efectivo' },
-      { value: 'card', label: 'Tarjeta' },
-      { value: 'digital', label: 'Digital' },
-    )
-  }
-  return opts
+const walletPaymentGroups = computed(() => {
+  const groups = paymentGroups.value.filter(
+    g => g.slug !== 'credit' && g.slug !== 'customer_wallet',
+  )
+  if (groups.length) return groups
+  return PAYMENT_DEFAULTS.filter(
+    g => g.slug !== 'credit' && g.slug !== 'customer_wallet',
+  )
 })
 
 const walletMovementLabel = (type: string) => {
@@ -581,6 +572,7 @@ onUnmounted(() => {
             <div>
               <p class="text-xs text-text-secondary uppercase tracking-wider font-medium mb-0.5">Billetera COP</p>
               <p v-if="isLoadingWallet" class="text-sm font-semibold text-text-secondary">Cargando...</p>
+              <p v-else-if="walletLoadError" class="text-sm font-semibold text-red-600">No se pudo cargar</p>
               <p v-else class="text-sm font-semibold text-primary">{{ formatCurrency(walletBalance) }}</p>
             </div>
             <button
@@ -916,10 +908,9 @@ onUnmounted(() => {
       :customer-id="customerId"
       :customer-name="customer.name"
       :current-balance="walletBalance"
-      :payment-options="walletPaymentOptions"
+      :payment-groups="walletPaymentGroups"
       :recharge="recharge"
-      :is-recharging="isRecharging"
-      :recharge-error="rechargeError"
+      :on-open="resetRecharge"
       @recharged="onWalletRecharged"
     />
 
