@@ -523,12 +523,11 @@ watch(employeeData, (data) => {
                 </label>
                 <div class="relative">
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
-                  <input
-                    type="number"
-                    v-model.number="editForm.dailyRate"
-                    step="any"
-                    min="0"
-                    class="input-base w-full pl-8 pr-4 py-2.5"
+                  <UiDecimalInput
+                    v-model="editForm.dailyRate"
+                    :min="0"
+                    :precision="2"
+                    class="w-full pl-8 pr-4 py-2.5"
                   />
                 </div>
               </div>
@@ -555,12 +554,11 @@ watch(employeeData, (data) => {
                   <label class="block text-sm font-medium text-text-primary mb-2">
                     Multiplicador SMMLV *
                   </label>
-                  <input
-                    type="number"
-                    v-model.number="editForm.minimumWageMultiplier"
-                    step="0.1"
-                    min="0.5"
-                    class="input-base w-full px-4 py-2"
+                  <UiDecimalInput
+                    v-model="editForm.minimumWageMultiplier"
+                    :precision="1"
+                    :min="0.5"
+                    class="w-full px-4 py-2"
                   />
                 </div>
 
@@ -571,12 +569,11 @@ watch(employeeData, (data) => {
                   </label>
                   <div class="relative">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
-                    <input
-                      type="number"
-                      v-model.number="editForm.fixedAmount"
-                      step="any"
-                      min="0"
-                      class="input-base w-full pl-8 pr-4 py-2"
+                    <UiDecimalInput
+                      v-model="editForm.fixedAmount"
+                      :min="0"
+                      :precision="2"
+                      class="w-full pl-8 pr-4 py-2"
                     />
                   </div>
                 </div>
@@ -588,12 +585,11 @@ watch(employeeData, (data) => {
                   </label>
                   <div class="relative">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">$</span>
-                    <input
-                      type="number"
-                      v-model.number="editForm.hourlyRate"
-                      step="any"
-                      min="0"
-                      class="input-base w-full pl-8 pr-4 py-2"
+                    <UiDecimalInput
+                      v-model="editForm.hourlyRate"
+                      :min="0"
+                      :precision="2"
+                      class="w-full pl-8 pr-4 py-2"
                     />
                   </div>
                 </div>

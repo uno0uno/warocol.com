@@ -110,12 +110,11 @@
               </label>
               <div class="relative">
                 <span class="absolute left-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
-                <input
-                  v-model.number="form.daily_rate"
-                  type="number"
-                  min="0"
-                  step="any"
-                  class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
+                <UiDecimalInput
+                  v-model="form.daily_rate"
+                  :min="0"
+                  :precision="2"
+                  class="w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                   placeholder="0"
                 />
               </div>
@@ -282,13 +281,12 @@
                   Multiplicador *
                 </label>
                 <div class="flex items-center gap-4">
-                  <input
-                    v-model.number="form.multiplier"
-                    type="number"
-                    step="0.1"
-                    min="0.5"
-                    max="10"
-                    class="input-base w-40 px-5 py-3 text-center text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
+                  <UiDecimalInput
+                    v-model="form.multiplier"
+                    :precision="1"
+                    :min="0.5"
+                    :max="10"
+                    class="w-40 px-5 py-3 text-center text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                     placeholder="1.0"
                   />
                   <span class="text-text-secondary font-medium">× SMMLV</span>
@@ -332,12 +330,11 @@
                 </label>
                 <div class="relative">
                   <span class="absolute left-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
-                  <input
-                    v-model.number="form.fixed_amount"
-                    type="number"
-                    min="0"
-                    step="any"
-                    class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
+                  <UiDecimalInput
+                    v-model="form.fixed_amount"
+                    :min="0"
+                    :precision="2"
+                    class="w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                     placeholder="0"
                   />
                 </div>
@@ -377,12 +374,11 @@
                 </label>
                 <div class="relative">
                   <span class="absolute left-5 top-1/2 -translate-y-1/2 text-crocus-600 font-bold text-xl">$</span>
-                  <input
-                    v-model.number="form.hourly_rate"
-                    type="number"
-                    min="0"
-                    step="any"
-                    class="input-base w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
+                  <UiDecimalInput
+                    v-model="form.hourly_rate"
+                    :min="0"
+                    :precision="2"
+                    class="w-full pl-10 pr-5 py-3 text-xl font-bold rounded-xl focus:ring-2 focus:ring-crocus-500"
                     placeholder="0"
                   />
                 </div>
