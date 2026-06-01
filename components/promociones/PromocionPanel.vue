@@ -115,25 +115,23 @@
 
             <div v-if="form.promo_type === 'percent_off'" class="flex flex-col gap-1.5">
               <label for="promo-percent" class="text-sm font-medium text-text-primary">Porcentaje</label>
-              <input
+              <UiDecimalInput
                 id="promo-percent"
-                v-model.number="form.percent"
-                type="number"
-                min="0.01"
-                max="100"
-                step="0.01"
+                v-model="form.percent"
+                :min="0.01"
+                :max="100"
+                :precision="2"
                 :class="inputClass"
               />
             </div>
 
             <div v-else-if="form.promo_type === 'fixed_off'" class="flex flex-col gap-1.5">
               <label for="promo-amount" class="text-sm font-medium text-text-primary">Monto (COP)</label>
-              <input
+              <UiDecimalInput
                 id="promo-amount"
-                v-model.number="form.amountCop"
-                type="number"
-                min="1"
-                step="1"
+                v-model="form.amountCop"
+                :min="1"
+                :precision="2"
                 :class="inputClass"
               />
             </div>

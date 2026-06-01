@@ -60,13 +60,26 @@
       <!-- Invoice Amount -->
       <div>
         <label class="block text-sm font-medium text-text-primary mb-2">Monto de Factura *</label>
-        <input v-model.number="formData.invoice_amount" type="number" step="0.01" min="0.01" required class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary" placeholder="0.00" />
+        <UiDecimalInput
+          v-model="formData.invoice_amount"
+          :min="0.01"
+          :precision="2"
+          required
+          class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary"
+          placeholder="0.00"
+        />
       </div>
 
       <!-- Tax Amount -->
       <div>
         <label class="block text-sm font-medium text-text-primary mb-2">IVA</label>
-        <input v-model.number="formData.tax_amount" type="number" step="0.01" min="0" class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary" placeholder="0.00" />
+        <UiDecimalInput
+          v-model="formData.tax_amount"
+          :min="0"
+          :precision="2"
+          class="w-full px-4 py-2 bg-background border-2 border-border rounded-lg text-text-primary focus:border-primary"
+          placeholder="0.00"
+        />
       </div>
     </div>
 
