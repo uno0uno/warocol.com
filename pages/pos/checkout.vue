@@ -972,7 +972,6 @@ const confirmVoidPayment = async () => {
 // Waros + wallet (#1063)
 const { summary: warosSummary, isLoadingSummary: isLoadingWaros, fetchSummary: fetchWarosSummary, resetSummary } = useWarosCliente()
 const { estimatedWaros, earnEligible: warosEarnEligible, isLoadingEstimate, systemEnabled: warosSystemEnabled, fetchEstimate, resetEstimate } = useWarosEstimate()
-const showWarosModal = ref(false)
 const showWaroRewardPicker = ref(false)
 const warosToRedeemInput = ref('')
 const selectedWaroReward = ref<WaroReward | null>(null)
@@ -1158,10 +1157,6 @@ watch(selectedPaymentMethod, () => {
   if (discountedTotal.value <= 0) return
   refreshWarosEstimate()
 })
-
-const onWarosAssigned = async (_payload: { newBalance: number }) => {
-  await fetchWarosSummary(selectedCustomer.value!.id)
-}
 
 watch(selectedCustomer, async (customer) => {
   // Reset Waros state on customer change. Accordions stay where the user
@@ -3134,13 +3129,6 @@ onUnmounted(() => {
               <p v-if="waroPreviewError" class="text-xs text-destructive">{{ waroPreviewError }}</p>
               <p v-if="isLoadingWaroPreview" class="text-xs text-text-tertiary">Calculando canje…</p>
             </template>
-            <button
-              type="button"
-              @click="showWarosModal = true"
-              class="w-full min-h-[44px] px-4 py-2.5 text-sm font-medium border border-border rounded-lg hover:bg-surface-secondary transition-colors text-text-secondary"
-            >
-              Asignar manualmente
-            </button>
           </div>
         </div>
 
@@ -3592,13 +3580,6 @@ onUnmounted(() => {
               Canjear recompensa
             </button>
           </template>
-          <button
-            type="button"
-            @click="showWarosModal = true"
-            class="w-full min-h-[44px] px-4 py-2.5 text-sm font-medium border border-border rounded-lg hover:bg-surface-secondary text-text-secondary"
-          >
-            Asignar manualmente
-          </button>
         </div>
       </div>
 
@@ -4062,16 +4043,6 @@ onUnmounted(() => {
       v-model="showWaroRewardPicker"
       :waros-balance="warosBalance"
       @select="onWaroRewardPicked"
-    />
-
-    <!-- Waros Manual Assignment Modal -->
-    <PuntosAsignarWarosModal
-      v-if="selectedCustomer"
-      v-model="showWarosModal"
-      :profile-id="selectedCustomer.id"
-      :customer-name="selectedCustomer.name || selectedCustomer.phone_number || ''"
-      :current-balance="warosBalance"
-      @assigned="onWarosAssigned"
     />
 
   <!-- Issue #535 — Hidden prefactura for printing.
