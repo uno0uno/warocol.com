@@ -3147,9 +3147,6 @@ onUnmounted(() => {
                   </li>
                 </ul>
 
-                <p v-if="waroDiscountCop > 0" class="text-sm font-semibold text-amber-800 tabular-nums">
-                  − {{ formatCurrency(waroDiscountCop) }}
-                </p>
                 <p v-if="waroPreviewError" class="text-xs text-destructive">{{ waroPreviewError }}</p>
               </div>
             </template>
@@ -3629,9 +3626,6 @@ onUnmounted(() => {
                   </label>
                 </li>
               </ul>
-              <p v-if="waroDiscountCop > 0" class="text-sm font-semibold text-amber-800 tabular-nums">
-                − {{ formatCurrency(waroDiscountCop) }}
-              </p>
               <p v-if="waroPreviewError" class="text-xs text-destructive">{{ waroPreviewError }}</p>
             </div>
           </template>
