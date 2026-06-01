@@ -154,13 +154,12 @@
                 <!-- Quantity -->
                 <div>
                   <label class="block text-sm font-medium text-text-primary mb-2">Cantidad *</label>
-                  <input
-                    v-model.number="item.purchase_quantity"
-                    type="number"
-                    min="0.01"
-                    step="0.01"
+                  <UiDecimalInput
+                    v-model="item.purchase_quantity"
+                    :min="0.01"
+                    :precision="2"
                     required
-                    class="input-base w-full px-4 py-2"
+                    class="w-full px-4 py-2"
                   />
                 </div>
 

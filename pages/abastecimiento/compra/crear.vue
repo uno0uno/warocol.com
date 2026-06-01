@@ -395,14 +395,13 @@
                       {{ getQuantityLabel(index) }}
                     </label>
                     <div class="flex gap-2">
-                      <input
-                        v-model.number="item.quantity"
-                        type="number"
-                        min="0.01"
-                        step="0.01"
+                      <UiDecimalInput
+                        v-model="item.quantity"
+                        :min="0.01"
+                        :precision="2"
                         required
-                        class="input-base flex-1 px-4 py-2"
-                        @input="updateItemTotal(index)"
+                        class="flex-1 px-4 py-2"
+                        @update:model-value="updateItemTotal(index)"
                       />
                       <select
                         v-if="shouldShowWeightUnitSelector(index)"

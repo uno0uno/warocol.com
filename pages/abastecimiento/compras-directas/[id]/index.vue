@@ -232,13 +232,12 @@
               <!-- Quantity -->
               <div>
                 <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad</label>
-                <input
-                  v-model.number="item.purchase_quantity"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  class="input-base w-full px-3 py-2 text-sm"
-                  @input="updateItemTotal(index)"
+                <UiDecimalInput
+                  v-model="item.purchase_quantity"
+                  :min="0.01"
+                  :precision="2"
+                  class="w-full px-3 py-2 text-sm"
+                  @update:model-value="updateItemTotal(index)"
                 />
               </div>
 
@@ -264,13 +263,12 @@
               <!-- Unit Cost -->
               <div>
                 <label class="block text-xs font-medium text-text-secondary mb-1">Precio Unit.</label>
-                <input
-                  v-model.number="item.unit_cost"
-                  type="number"
-                  min="0"
-                  step="1"
-                  class="input-base w-full px-3 py-2 text-sm"
-                  @input="updateItemTotal(index)"
+                <UiDecimalInput
+                  v-model="item.unit_cost"
+                  :min="0"
+                  :precision="2"
+                  class="w-full px-3 py-2 text-sm"
+                  @update:model-value="updateItemTotal(index)"
                 />
               </div>
 
@@ -338,12 +336,11 @@
                 <!-- Quantity -->
                 <div>
                   <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad *</label>
-                  <input
-                    v-model.number="newItem.purchase_quantity"
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    class="input-base w-full px-3 py-2 text-sm"
+                  <UiDecimalInput
+                    v-model="newItem.purchase_quantity"
+                    :min="0.01"
+                    :precision="2"
+                    class="w-full px-3 py-2 text-sm"
                   />
                 </div>
 
@@ -370,12 +367,11 @@
                 <!-- Unit Cost -->
                 <div>
                   <label class="block text-xs font-medium text-text-secondary mb-1">Precio Unit. *</label>
-                  <input
-                    v-model.number="newItem.unit_cost"
-                    type="number"
-                    min="0"
-                    step="1"
-                    class="input-base w-full px-3 py-2 text-sm"
+                  <UiDecimalInput
+                    v-model="newItem.unit_cost"
+                    :min="0"
+                    :precision="2"
+                    class="w-full px-3 py-2 text-sm"
                   />
                 </div>
 
