@@ -96,7 +96,6 @@ export const useWaroRedemptionPreview = () => {
       return data
     } catch (e: any) {
       if (seq !== requestSeq) return null
-      preview.value = null
       const detail = e?.data?.detail
       error.value = Array.isArray(detail)
         ? detail.map((d: any) => d.msg ?? JSON.stringify(d)).join('; ')

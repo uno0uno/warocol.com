@@ -972,8 +972,6 @@ const confirmVoidPayment = async () => {
 // Waros + wallet (#1063)
 const { summary: warosSummary, isLoadingSummary: isLoadingWaros, fetchSummary: fetchWarosSummary, resetSummary } = useWarosCliente()
 const { estimatedWaros, earnEligible: warosEarnEligible, isLoadingEstimate, systemEnabled: warosSystemEnabled, fetchEstimate, resetEstimate } = useWarosEstimate()
-const showWaroRewardPicker = ref(false)
-const warosToRedeemInput = ref('')
 const selectedWaroReward = ref<WaroReward | null>(null)
 const warosBalance = computed(() => warosSummary.value?.current_balance ?? 0)
 const isAnonymousCustomer = computed(() => selectedCustomer.value?.phone_number === '0000000000')
@@ -983,17 +981,36 @@ const { wallet: customerWallet, isLoading: isLoadingWallet, isRefreshing: isRefr
 const walletBalanceCop = computed(() => customerWallet.value?.balance_cop ?? 0)
 const isWalletPending = computed(() => isLoadingWallet.value || isRefreshingWallet.value)
 const { config: redemptionConfig } = useRedemptionConfig()
+const {
+  rewards: waroRewardsCatalog,
+  isLoading: isLoadingWaroRewardsCatalog,
+  fetchRewards: fetchWaroRewardsCatalog,
+  refreshRewards: refreshWaroRewardsCatalog,
+} = useWaroRewards()
 
-const warosToRedeem = computed(() => {
-  const n = parseInt(warosToRedeemInput.value, 10)
-  return Number.isFinite(n) && n > 0 ? n : 0
-})
+const activeWaroRewards = computed(() =>
+  waroRewardsCatalog.value.filter(r => r.is_active),
+)
+
 const waroRewardLabel = computed(() => {
   if (selectedWaroReward.value) return selectedWaroReward.value.name
   return waroPreview.value?.reward_name ?? null
 })
-const waroRedemptionEnabled = computed(
-  () => redemptionConfig.value?.redemption_enabled !== false && warosSystemEnabled.value,
+const waroRedemptionEnabled = computed(() => {
+  const cfg = redemptionConfig.value
+  if (!cfg?.is_enabled) return false
+  return Boolean(cfg.redemption_enabled)
+})
+
+/** Stable gate for the WaRo accordion — do not tie to estimate mutation (it resets and flickers). */
+const warosPanelVisible = computed(() => {
+  if (!selectedCustomer.value || isAnonymousCustomer.value) return false
+  if (redemptionConfig.value == null) return true
+  return redemptionConfig.value.is_enabled
+})
+
+const warosEarnBlockVisible = computed(
+  () => warosPanelVisible.value && (warosSystemEnabled.value !== false),
 )
 
 function buildRedemptionPromoLines(): PromoLineForRedemption[] {
@@ -1014,12 +1031,14 @@ function refreshWaroPreview() {
     resetWaroPreview()
     return
   }
-  if (!warosToRedeem.value && !selectedWaroReward.value) {
+  if (!waroRedemptionEnabled.value) return
+  const lines = buildRedemptionPromoLines()
+  if (!lines.length) {
     resetWaroPreview()
     return
   }
   schedulePreview({
-    lines: buildRedemptionPromoLines(),
+    lines,
     customerId: selectedCustomer.value.id,
     manualDiscountAmount: discountAmount.value,
     discountType: discountEnabled.value ? discountType.value : null,
@@ -1027,34 +1046,31 @@ function refreshWaroPreview() {
       discountEnabled.value && discountInput.value
         ? Number(discountInput.value)
         : null,
-    warosToRedeem: warosToRedeem.value || undefined,
     waroRewardId: selectedWaroReward.value?.id ?? null,
   })
 }
 
 const checkoutWaroBody = computed(() => {
   const body: Record<string, number | string> = {}
-  if (warosToRedeem.value > 0) body.waros_to_redeem = warosToRedeem.value
   if (selectedWaroReward.value?.id) body.waro_reward_id = selectedWaroReward.value.id
   return body
 })
 
-function applyMaxWarosRedeem() {
-  const cap = waroPreview.value?.max_b1_cop_cap
-  const rate = redemptionConfig.value?.waros_per_1000_cop ?? 100
-  if (!cap || cap <= 0 || rate <= 0) return
-  const warosNeeded = Math.floor((cap * 1000) / rate)
-  const reserved = selectedWaroReward.value?.waros_cost ?? 0
-  warosToRedeemInput.value = String(Math.max(0, Math.min(warosNeeded, warosBalance.value - reserved)))
-}
-
-function onWaroRewardPicked(reward: WaroReward) {
-  selectedWaroReward.value = reward
+function toggleWaroReward(reward: WaroReward) {
+  if (warosBalance.value < reward.waros_cost) return
+  selectedWaroReward.value =
+    selectedWaroReward.value?.id === reward.id ? null : reward
   refreshWaroPreview()
 }
 
+function waroRewardSubtitle(reward: WaroReward) {
+  if (reward.reward_type === 'fixed_cop_off' && reward.fixed_cop_off) {
+    return `${reward.waros_cost.toLocaleString('es-CO')} pts · ${formatCurrency(reward.fixed_cop_off)}`
+  }
+  return `${reward.waros_cost.toLocaleString('es-CO')} pts`
+}
+
 function clearWaroRedemption() {
-  warosToRedeemInput.value = ''
   selectedWaroReward.value = null
   resetWaroPreview()
 }
@@ -1077,7 +1093,6 @@ watch(
     discountAmount,
     () => discountType.value,
     () => discountInput.value,
-    () => warosToRedeemInput.value,
     () => selectedWaroReward.value?.id,
     cartItems,
     promoOptOutSignature,
@@ -1085,6 +1100,19 @@ watch(
   ],
   () => refreshWaroPreview(),
   { deep: true },
+)
+
+watch(
+  [
+    () => selectedCustomer.value?.id,
+    waroRedemptionEnabled,
+  ],
+  ([customerId, enabled]) => {
+    if (!customerId || !enabled) return
+    refreshWaroRewardsCatalog()
+    refreshWaroPreview()
+  },
+  { immediate: true },
 )
 
 // Delivery eligibility — allowed for counter and bar (anything that's not a real mesa).
@@ -3032,102 +3060,90 @@ onUnmounted(() => {
 
         <!-- WAROS CARD (desktop) — accordion -->
         <div
-          v-if="selectedCustomer && !isAnonymousCustomer && warosSystemEnabled"
+          v-if="warosPanelVisible"
           class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
         >
           <button
             @click="activeAccordion = activeAccordion === 'waros' ? null : 'waros'"
-            class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-secondary/40 transition-colors"
+            class="w-full px-5 py-3.5 flex items-center gap-3 text-left hover:bg-surface-secondary/40 transition-colors min-h-[52px]"
           >
-            <div class="flex items-center gap-2">
-              <svg class="h-4 w-4 text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd" />
-              </svg>
-              <span class="font-bold text-text-primary text-sm">Puntos Waros</span>
-              <span v-if="!isLoadingWaros" class="text-xs text-amber-600 font-semibold tabular-nums">{{ warosBalance.toLocaleString('es-CO') }} pts</span>
-            </div>
+            <svg class="h-4 w-4 text-amber-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd" />
+            </svg>
+            <span class="font-semibold text-sm text-text-primary">Waros</span>
+            <span v-if="!isLoadingWaros" class="ml-auto text-sm font-bold tabular-nums text-amber-700">
+              {{ warosBalance.toLocaleString('es-CO') }}
+            </span>
             <svg
               class="h-4 w-4 text-text-tertiary flex-shrink-0 transition-transform duration-200"
               :class="activeAccordion === 'waros' ? 'rotate-0' : 'rotate-180'"
               xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+              aria-hidden="true"
             >
               <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
             </svg>
           </button>
-          <div v-show="activeAccordion === 'waros'" class="border-t border-border px-5 py-4 space-y-3">
-            <div v-if="isLoadingWaros || isWalletPending" class="grid grid-cols-2 gap-3">
-              <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14" />
-              <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14" />
+          <div v-show="activeAccordion === 'waros'" class="border-t border-border px-5 py-4 space-y-4">
+            <div v-if="isLoadingWaros || isWalletPending" class="grid grid-cols-3 gap-2">
+              <div v-for="i in 3" :key="i" class="animate-pulse bg-surface-secondary rounded-lg h-12" />
             </div>
-            <div v-else class="grid grid-cols-2 gap-3">
-              <div class="bg-amber-50 rounded-xl p-3">
-                <p class="text-xs text-text-secondary mb-0.5">Balance WaRo</p>
-                <p class="text-lg font-bold text-amber-700 leading-tight tabular-nums">{{ warosBalance.toLocaleString('es-CO') }} pts</p>
+            <div v-else class="grid grid-cols-3 gap-2">
+              <div class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
+                <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Puntos</p>
+                <p class="text-sm font-bold tabular-nums text-text-primary leading-tight mt-0.5">
+                  {{ warosBalance.toLocaleString('es-CO') }}
+                </p>
               </div>
-              <div class="bg-emerald-50 rounded-xl p-3">
-                <p class="text-xs text-text-secondary mb-0.5">Saldo wallet</p>
-                <p class="text-lg font-bold text-emerald-700 leading-tight tabular-nums">
+              <div class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
+                <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Wallet</p>
+                <p class="text-sm font-bold tabular-nums text-text-primary leading-tight mt-0.5">
                   {{ formatCurrency(walletBalanceCop) }}
                 </p>
               </div>
-            </div>
-            <div
-              v-if="!isLoadingWaros"
-              class="rounded-xl p-3"
-              :class="warosEarnEligible ? 'bg-green-50' : 'bg-surface-secondary'"
-            >
-              <p class="text-xs text-text-secondary mb-0.5">Ganarías esta compra</p>
-              <p
-                v-if="!warosEarnEligible"
-                class="text-sm text-text-secondary leading-snug"
-              >
-                No acumula pagando con saldo wallet
-              </p>
-              <p v-else class="text-base font-bold text-green-700 leading-tight" aria-live="polite">
-                <span v-if="isLoadingEstimate" class="inline-block h-5 w-16 rounded bg-green-200 animate-pulse" />
-                <span v-else-if="estimatedWaros === null">—</span>
-                <span v-else>+ {{ estimatedWaros.toLocaleString('es-CO') }} pts</span>
-              </p>
-            </div>
-            <template v-if="waroRedemptionEnabled">
-              <div v-if="selectedWaroReward" class="flex items-center justify-between gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm">
-                <span class="font-medium text-amber-900 truncate">{{ selectedWaroReward.name }}</span>
-                <button type="button" class="text-xs text-amber-700 underline min-h-[44px] px-2" @click="selectedWaroReward = null; refreshWaroPreview()">
-                  Quitar
-                </button>
-              </div>
-              <div class="space-y-2">
-                <label class="text-xs font-semibold text-text-secondary uppercase tracking-wide">Canjear puntos</label>
-                <div class="flex gap-2">
-                  <input
-                    v-model="warosToRedeemInput"
-                    type="number"
-                    min="0"
-                    inputmode="numeric"
-                    placeholder="Puntos"
-                    class="input-base flex-1 min-h-[44px] px-3 text-sm tabular-nums"
-                  />
-                  <button
-                    type="button"
-                    class="min-h-[44px] px-3 rounded-lg border border-amber-300 text-amber-800 text-xs font-semibold hover:bg-amber-50"
-                    @click="applyMaxWarosRedeem"
-                  >
-                    Máximo
-                  </button>
-                </div>
-                <p v-if="waroPreview?.b1_cop" class="text-xs text-amber-700 tabular-nums">
-                  ≈ {{ formatCurrency(waroPreview.b1_cop) }} · máx. {{ waroPreview.max_redeem_percent }}%
+              <div v-if="warosEarnBlockVisible" class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
+                <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Gana</p>
+                <p class="text-sm font-bold tabular-nums leading-tight mt-0.5" :class="warosEarnEligible ? 'text-emerald-700' : 'text-text-tertiary'">
+                  <span v-if="isLoadingEstimate" class="inline-block h-4 w-8 rounded bg-surface-secondary animate-pulse" />
+                  <span v-else-if="!warosEarnEligible">—</span>
+                  <span v-else-if="estimatedWaros === null">—</span>
+                  <span v-else>+{{ estimatedWaros.toLocaleString('es-CO') }}</span>
                 </p>
               </div>
-              <button
-                type="button"
-                class="w-full min-h-[44px] px-4 py-2.5 text-sm font-semibold border border-amber-300 rounded-lg text-amber-800 hover:bg-amber-50"
-                @click="showWaroRewardPicker = true"
-              >
-                Canjear recompensa
-              </button>
-              <p v-if="waroPreviewError" class="text-xs text-destructive">{{ waroPreviewError }}</p>
-              <p v-if="isLoadingWaroPreview" class="text-xs text-text-tertiary">Calculando canje…</p>
+            </div>
+
+            <template v-if="waroRedemptionEnabled">
+              <div class="space-y-3 pt-1 border-t border-border">
+                <p
+                  v-if="isLoadingWaroPreview && !waroPreview && selectedWaroReward"
+                  class="text-xs text-text-tertiary animate-pulse"
+                >
+                  Calculando canje…
+                </p>
+
+                <ul v-if="activeWaroRewards.length" class="space-y-1.5">
+                  <li v-for="reward in activeWaroRewards" :key="reward.id">
+                    <button
+                      type="button"
+                      class="w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 min-h-[44px] text-left transition-colors"
+                      :class="selectedWaroReward?.id === reward.id
+                        ? 'border-amber-400/80 bg-amber-50/80'
+                        : warosBalance >= reward.waros_cost
+                          ? 'border-border hover:bg-surface-secondary/60'
+                          : 'border-border opacity-45 cursor-not-allowed'"
+                      :disabled="warosBalance < reward.waros_cost"
+                      @click="toggleWaroReward(reward)"
+                    >
+                      <span class="text-sm font-medium text-text-primary truncate">{{ reward.name }}</span>
+                      <span class="text-xs tabular-nums text-text-secondary flex-shrink-0">{{ waroRewardSubtitle(reward) }}</span>
+                    </button>
+                  </li>
+                </ul>
+
+                <p v-if="waroDiscountCop > 0" class="text-sm font-semibold text-amber-800 tabular-nums">
+                  − {{ formatCurrency(waroDiscountCop) }}
+                </p>
+                <p v-if="waroPreviewError" class="text-xs text-destructive">{{ waroPreviewError }}</p>
+              </div>
             </template>
           </div>
         </div>
@@ -3541,44 +3557,70 @@ onUnmounted(() => {
 
       <!-- WAROS CARD (mobile) -->
       <div
-        v-if="selectedCustomer && !isAnonymousCustomer && warosSystemEnabled"
+        v-if="warosPanelVisible"
         class="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm"
       >
-        <div class="px-5 py-4 space-y-3">
-          <h3 class="font-bold text-text-primary text-sm">Puntos Waros</h3>
-          <div v-if="isLoadingWaros || isWalletPending" class="grid grid-cols-2 gap-3">
-            <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14" />
-            <div class="animate-pulse bg-surface-secondary rounded-xl p-3 h-14" />
+        <div class="px-5 py-4 space-y-4">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="font-semibold text-text-primary text-sm">Waros</h3>
+            <span v-if="!isLoadingWaros" class="text-sm font-bold tabular-nums text-amber-700">
+              {{ warosBalance.toLocaleString('es-CO') }}
+            </span>
           </div>
-          <div v-else class="grid grid-cols-2 gap-3">
-            <div class="bg-amber-50 rounded-xl p-3">
-              <p class="text-xs text-text-secondary mb-0.5">Balance WaRo</p>
-              <p class="text-lg font-bold text-amber-700 leading-tight tabular-nums">{{ warosBalance.toLocaleString('es-CO') }} pts</p>
+          <div v-if="isLoadingWaros || isWalletPending" class="grid grid-cols-3 gap-2">
+            <div v-for="i in 3" :key="i" class="animate-pulse bg-surface-secondary rounded-lg h-12" />
+          </div>
+          <div v-else class="grid grid-cols-3 gap-2">
+            <div class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
+              <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Puntos</p>
+              <p class="text-sm font-bold tabular-nums text-text-primary leading-tight mt-0.5">
+                {{ warosBalance.toLocaleString('es-CO') }}
+              </p>
             </div>
-            <div class="bg-emerald-50 rounded-xl p-3">
-              <p class="text-xs text-text-secondary mb-0.5">Saldo wallet</p>
-              <p class="text-lg font-bold text-emerald-700 leading-tight tabular-nums">
+            <div class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
+              <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Wallet</p>
+              <p class="text-sm font-bold tabular-nums text-text-primary leading-tight mt-0.5">
                 {{ formatCurrency(walletBalanceCop) }}
+              </p>
+            </div>
+            <div v-if="warosEarnBlockVisible" class="rounded-lg bg-surface-secondary/70 px-2 py-2 text-center">
+              <p class="text-[10px] font-medium uppercase tracking-wide text-text-tertiary">Gana</p>
+              <p class="text-sm font-bold tabular-nums leading-tight mt-0.5" :class="warosEarnEligible ? 'text-emerald-700' : 'text-text-tertiary'">
+                <span v-if="isLoadingEstimate" class="inline-block h-4 w-8 rounded bg-surface-secondary animate-pulse" />
+                <span v-else-if="!warosEarnEligible">—</span>
+                <span v-else-if="estimatedWaros === null">—</span>
+                <span v-else>+{{ estimatedWaros.toLocaleString('es-CO') }}</span>
               </p>
             </div>
           </div>
           <template v-if="waroRedemptionEnabled">
-            <div class="flex gap-2">
-              <input
-                v-model="warosToRedeemInput"
-                type="number"
-                min="0"
-                inputmode="numeric"
-                placeholder="Puntos a canjear"
-                class="input-base flex-1 min-h-[44px] px-3 text-sm"
-              />
-              <button type="button" class="min-h-[44px] px-3 rounded-lg border border-amber-300 text-xs font-semibold text-amber-800" @click="applyMaxWarosRedeem">
-                Máximo
-              </button>
+            <div class="space-y-3 pt-1 border-t border-border">
+              <p v-if="isLoadingWaroPreview && !waroPreview && selectedWaroReward" class="text-xs text-text-tertiary animate-pulse">
+                Calculando canje…
+              </p>
+              <ul v-if="activeWaroRewards.length" class="space-y-1.5">
+                <li v-for="reward in activeWaroRewards" :key="reward.id">
+                  <button
+                    type="button"
+                    class="w-full flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 min-h-[44px] text-left transition-colors"
+                    :class="selectedWaroReward?.id === reward.id
+                      ? 'border-amber-400/80 bg-amber-50/80'
+                      : warosBalance >= reward.waros_cost
+                        ? 'border-border hover:bg-surface-secondary/60'
+                        : 'border-border opacity-45 cursor-not-allowed'"
+                    :disabled="warosBalance < reward.waros_cost"
+                    @click="toggleWaroReward(reward)"
+                  >
+                    <span class="text-sm font-medium text-text-primary truncate">{{ reward.name }}</span>
+                    <span class="text-xs tabular-nums text-text-secondary flex-shrink-0">{{ waroRewardSubtitle(reward) }}</span>
+                  </button>
+                </li>
+              </ul>
+              <p v-if="waroDiscountCop > 0" class="text-sm font-semibold text-amber-800 tabular-nums">
+                − {{ formatCurrency(waroDiscountCop) }}
+              </p>
+              <p v-if="waroPreviewError" class="text-xs text-destructive">{{ waroPreviewError }}</p>
             </div>
-            <button type="button" class="w-full min-h-[44px] border border-amber-300 rounded-lg text-sm font-semibold text-amber-800" @click="showWaroRewardPicker = true">
-              Canjear recompensa
-            </button>
           </template>
         </div>
       </div>
@@ -4037,13 +4079,6 @@ onUnmounted(() => {
         </div>
       </div>
     </Teleport>
-
-    <!-- WaRo reward picker (B2) -->
-    <PosWaroRewardPickerModal
-      v-model="showWaroRewardPicker"
-      :waros-balance="warosBalance"
-      @select="onWaroRewardPicked"
-    />
 
   <!-- Issue #535 — Hidden prefactura for printing.
        Only visible via @media print + body class .printing-prefactura.
