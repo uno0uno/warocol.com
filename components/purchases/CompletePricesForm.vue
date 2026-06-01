@@ -32,15 +32,14 @@
                 Precio sugerido (último registrado)
               </span>
             </div>
-            <input
-              v-model.number="item.unit_cost"
-              type="number"
-              step="0.01"
-              min="0"
+            <UiDecimalInput
+              v-model="item.unit_cost"
+              :min="0"
+              :precision="2"
               required
               class="input-base w-full px-4 py-2"
               placeholder="0.00"
-              @input="calculateItemTotal(index)"
+              @update:model-value="calculateItemTotal(index)"
             />
             <p class="text-xs text-text-secondary mt-1">
               Por {{ item.unit }}
@@ -93,11 +92,10 @@
           <label class="block text-sm font-medium text-text-primary mb-2">
             IVA
           </label>
-          <input
-            v-model.number="taxAmount"
-            type="number"
-            step="0.01"
-            min="0"
+          <UiDecimalInput
+            v-model="taxAmount"
+            :min="0"
+            :precision="2"
             class="input-base w-full px-4 py-2"
             placeholder="0.00"
           />

@@ -27,12 +27,15 @@
               <label class="block text-xs font-medium text-text-secondary mb-1">
                 Cantidad Recibida *
               </label>
-              <input v-model.number="item.quantity_received" type="number" step="0.001" min="0" required
+              <UiDecimalInput
+                v-model="item.quantity_received"
+                :min="0"
+                :precision="3"
+                required
                 class="w-full px-3 py-2 rounded-lg text-text-primary transition-all border-2"
                 style="background-color: hsl(var(--surface)); border-color: hsl(var(--crocus-600) / 0.3);"
-                @focus="$event.target.style.borderColor = 'hsl(var(--crocus-600))'; $event.target.style.outline = '2px solid hsl(var(--crocus-600) / 0.2)'"
-                @blur="$event.target.style.borderColor = 'hsl(var(--crocus-600) / 0.3)'; $event.target.style.outline = 'none'"
-                :placeholder="item.quantity_ordered.toString()" />
+                :placeholder="item.quantity_ordered.toString()"
+              />
             </div>
 
             <!-- Item Condition -->
