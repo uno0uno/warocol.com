@@ -169,7 +169,15 @@ const formatDate = (isoDate: string) => {
   return fnsFormat(new Date(isoDate), 'dd/MM/yyyy', { locale: es })
 }
 
+const router = useRouter()
+const showCreateModal = ref(false)
+
 // ── Actions ───────────────────────────────────────────────────────────────
+const onCustomerCreated = async (customer: { id: string }) => {
+  await refetch()
+  await router.push(`/analitica/clientes/${customer.id}`)
+}
+
 const previousPage = () => { if (canGoPrevious.value) currentPage.value-- }
 const nextPage = () => { if (canGoNext.value) currentPage.value++ }
 
