@@ -134,6 +134,8 @@ const { data: salesFlowData, status: salesFlowStatus, asyncStatus: salesFlowAsyn
   staleTime: 30_000,
 })
 
+const salesFlowLoading = computed(() => salesFlowStatus.value === 'pending')
+
 const isRefreshing = computed(() =>
   (dashboardAsyncStatus.value === 'loading' && dashboardData.value != null) ||
   (filteredMetricsAsyncStatus.value === 'loading' && filteredMetricsData.value != null) ||

@@ -33,7 +33,7 @@ export interface WaroRewardPayload {
 export const useWaroRewards = () => {
   const cache = useQueryCache()
 
-  const { data, status, asyncStatus } = useQuery({
+  const { data, status, asyncStatus, refetch } = useQuery({
     key: ['waros', 'rewards'],
     query: () => $fetch<WaroRewardsResponse>('/api/admin/waros/rewards'),
   })
@@ -46,6 +46,15 @@ export const useWaroRewards = () => {
 
   const fetchRewards = () =>
     cache.invalidateQueries({ key: ['waros', 'rewards'] })
+
+  /** Refetch in background; keeps cached list visible (checkout). */
+  const refreshRewards = () => {
+    if (data.value?.rewards?.length) {
+      void refetch()
+      return
+    }
+    fetchRewards()
+  }
 
   const createMutation = useMutation({
     mutation: (payload: WaroRewardPayload) =>
@@ -78,6 +87,7 @@ export const useWaroRewards = () => {
     isLoading,
     isRefreshing,
     fetchRewards,
+    refreshRewards,
     createReward: (payload: WaroRewardPayload) =>
       createMutation.mutateAsync(payload),
     updateReward: (id: string, payload: Partial<WaroRewardPayload>) =>
