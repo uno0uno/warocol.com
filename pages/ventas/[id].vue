@@ -181,12 +181,28 @@ const orderChargedTotal = computed(() => {
   return Number(o.total_amount) + Number(o.tip_amount) + tipTax
 })
 
+const orderWaroRedemptionSummary = computed(() => order.value?.waro_redemption_summary ?? null)
+
+const orderWaroDiscountCop = computed(
+  () => Number(orderWaroRedemptionSummary.value?.waro_discount_cop) || 0,
+)
+
+const orderWaroBreakdown = computed(
+  () => orderWaroRedemptionSummary.value?.waro_breakdown ?? [],
+)
+
+const orderWaroLineLabel = (line: { reward_name?: string | null }) => {
+  const name = line.reward_name
+  return name ? `WaRo: ${name}` : 'Canje WaRo'
+}
+
 const hasOrderTotalsBreakdown = computed(() => {
   const o = order.value
   if (!o) return false
   return (
     (o.promo_savings ?? 0) > 0
     || (o.discount_amount ?? 0) > 0
+    || orderWaroDiscountCop.value > 0
     || (o.standard_tax ?? 0) > 0
     || (o.liquor_tax ?? 0) > 0
     || (o.tip_amount ?? 0) > 0
@@ -1151,6 +1167,28 @@ onUnmounted(() => {
                 <span class="text-sm font-semibold text-destructive tabular-nums">-{{
                   formatCurrency(order.discount_amount)
                 }}</span>
+              </div>
+              <div
+                v-for="(waroLine, waroIdx) in orderWaroBreakdown"
+                :key="waroLine.waro_reward_id ?? waroLine.redemption_type ?? waroIdx"
+                v-show="Number(waroLine.cop_discount) > 0"
+                class="flex items-center justify-between gap-10"
+              >
+                <span class="text-sm text-amber-700 dark:text-amber-400">
+                  {{ orderWaroLineLabel(waroLine) }}
+                </span>
+                <span class="text-sm font-semibold text-amber-700 dark:text-amber-400 tabular-nums">
+                  -{{ formatCurrency(Number(waroLine.cop_discount)) }}
+                </span>
+              </div>
+              <div
+                v-if="orderWaroBreakdown.length === 0 && orderWaroDiscountCop > 0"
+                class="flex items-center justify-between gap-10"
+              >
+                <span class="text-sm text-amber-700 dark:text-amber-400">Canje WaRo</span>
+                <span class="text-sm font-semibold text-amber-700 dark:text-amber-400 tabular-nums">
+                  -{{ formatCurrency(orderWaroDiscountCop) }}
+                </span>
               </div>
               <div v-if="order.standard_tax > 0" class="flex items-center justify-between gap-10">
                 <span class="text-sm text-text-secondary">{{ order.standard_tax_label }}</span>
