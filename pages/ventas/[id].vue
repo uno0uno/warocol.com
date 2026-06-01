@@ -191,6 +191,25 @@ const orderWaroBreakdown = computed(
   () => orderWaroRedemptionSummary.value?.waro_breakdown ?? [],
 )
 
+
+// Mesa legacy: discount on line net_total without order_waro_redemptions row
+const orderItemsLineDiscountCop = computed(() =>
+  items.value.reduce((sum: number, item: any) => {
+    const sub = Number(item.subtotal) || 0
+    const net = Number(item.net_total ?? item.subtotal) || 0
+    return sum + Math.max(0, sub - net)
+  }, 0),
+)
+
+const effectiveWaroDiscountCop = computed(() =>
+  orderWaroDiscountCop.value > 0 ? orderWaroDiscountCop.value : orderItemsLineDiscountCop.value,
+)
+
+const effectiveWaroBreakdown = computed(() => {
+  if (orderWaroBreakdown.value.length > 0) return orderWaroBreakdown.value
+  if (orderItemsLineDiscountCop.value <= 0) return []
+  return [{ cop_discount: orderItemsLineDiscountCop.value, reward_name: null, redemption_type: 'inferred' }]
+})
 const orderWaroLineLabel = (line: { reward_name?: string | null }) => {
   const name = line.reward_name
   return name ? `WaRo: ${name}` : 'Canje WaRo'
@@ -202,7 +221,7 @@ const hasOrderTotalsBreakdown = computed(() => {
   return (
     (o.promo_savings ?? 0) > 0
     || (o.discount_amount ?? 0) > 0
-    || orderWaroDiscountCop.value > 0
+    || effectiveWaroDiscountCop.value > 0
     || (o.standard_tax ?? 0) > 0
     || (o.liquor_tax ?? 0) > 0
     || (o.tip_amount ?? 0) > 0
@@ -1169,7 +1188,7 @@ onUnmounted(() => {
                 }}</span>
               </div>
               <div
-                v-for="(waroLine, waroIdx) in orderWaroBreakdown"
+                v-for="(waroLine, waroIdx) in effectiveWaroBreakdown"
                 :key="waroLine.waro_reward_id ?? waroLine.redemption_type ?? waroIdx"
                 v-show="Number(waroLine.cop_discount) > 0"
                 class="flex items-center justify-between gap-10"
@@ -1179,15 +1198,6 @@ onUnmounted(() => {
                 </span>
                 <span class="text-sm font-semibold text-amber-700 dark:text-amber-400 tabular-nums">
                   -{{ formatCurrency(Number(waroLine.cop_discount)) }}
-                </span>
-              </div>
-              <div
-                v-if="orderWaroBreakdown.length === 0 && orderWaroDiscountCop > 0"
-                class="flex items-center justify-between gap-10"
-              >
-                <span class="text-sm text-amber-700 dark:text-amber-400">Canje WaRo</span>
-                <span class="text-sm font-semibold text-amber-700 dark:text-amber-400 tabular-nums">
-                  -{{ formatCurrency(orderWaroDiscountCop) }}
                 </span>
               </div>
               <div v-if="order.standard_tax > 0" class="flex items-center justify-between gap-10">
