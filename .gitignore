@@ -12,6 +12,9 @@ node_modules
 logs
 *.log
 
+# WR workflow LLM contracts (local/branch only — see warocol.com#367 / api-warolabs#367)
+.wr/
+
 # Misc
 .DS_Store
 .fleet
