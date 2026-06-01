@@ -672,6 +672,7 @@ import { useBilling } from '@/composables/useBilling'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
+import { parseLocaleDecimal } from '~/utils/parseLocaleDecimal'
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
 
@@ -1279,10 +1280,10 @@ const handleScanFileSelect = async (event: Event) => {
           const item: PurchaseItem = {
             ingredient_id: matchedId,
             searchTerm: ingredientName,
-            purchase_quantity: ocrItem.cantidad || 1,
+            purchase_quantity: parseLocaleDecimal(ocrItem.cantidad) ?? 1,
             purchase_unit: '',
-            unit_cost: ocrItem.precio_unitario || 0,
-            total_cost: ocrItem.total || 0,
+            unit_cost: parseLocaleDecimal(ocrItem.precio_unitario) ?? 0,
+            total_cost: parseLocaleDecimal(ocrItem.total) ?? 0,
             notes: '',
             suggested_price: null,
             item_type: 'food',
