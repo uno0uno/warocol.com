@@ -94,8 +94,8 @@
             <p v-if="errors.name" class="text-xs text-destructive">{{ errors.name }}</p>
           </div>
 
-          <!-- CREACIÓN: tipo de ingrediente (bodega — no es reventa de menú) -->
-          <div v-if="!isEdit" class="flex flex-col gap-1.5">
+          <!-- CREACIÓN: selector de tipo (solo si no viene fijado del paso anterior) -->
+          <div v-if="!isEdit && !lockIngredientType" class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-text-primary">
               Tipo <span class="text-destructive">*</span>
             </label>
@@ -141,8 +141,8 @@
             </div>
           </div>
 
-          <!-- EDICIÓN: tipo de solo lectura -->
-          <div v-if="isEdit" class="flex flex-col gap-1.5">
+          <!-- EDICIÓN o creación con tipo fijado -->
+          <div v-if="isEdit || lockIngredientType" class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-text-primary">Tipo</label>
             <div class="h-10 flex items-center px-3 rounded-lg border border-border bg-surface-secondary/60 text-sm text-text-secondary select-none gap-2">
               <template v-if="form.type === 'food'">
@@ -166,7 +166,9 @@
                 Servicio
               </template>
               <template v-else>{{ form.type }}</template>
-              <span class="text-[10px] text-text-tertiary ml-auto">No se puede cambiar</span>
+              <span class="text-[10px] text-text-tertiary ml-auto">
+                {{ isEdit ? 'No se puede cambiar' : 'Elegido en el paso anterior' }}
+              </span>
             </div>
           </div>
 
@@ -482,6 +484,7 @@ interface Props {
   ingredient?: any    // null/undefined = create mode, object = edit mode
   initialName?: string  // pre-fill name when creating from search box
   initialType?: string  // pre-select ingredient type when context is known (e.g. active tab in Compras Directas)
+  lockIngredientType?: boolean  // hide type cards when type was chosen in a prior step
   hideResaleToggle?: boolean
   showBackToChooser?: boolean
 }
@@ -499,6 +502,7 @@ const props = withDefaults(defineProps<Props>(), {
   ingredient: null,
   initialName: '',
   initialType: 'food',
+  lockIngredientType: false,
   hideResaleToggle: false,
   showBackToChooser: false,
 })

@@ -16,6 +16,7 @@
     v-model="showPanel"
     :initial-name="pendingName"
     :initial-type="panelInitialType"
+    :lock-ingredient-type="lockPanelIngredientType"
     :hide-resale-toggle="hideResaleToggle"
     :show-back-to-chooser="canReturnToChooser"
     @back-to-chooser="onPanelBack"
@@ -81,6 +82,7 @@ const {
   busyHint,
   hideResaleToggle,
   panelInitialType,
+  lockPanelIngredientType,
   canReturnToChooser,
   openFromSearch,
   onChooserIntent,

@@ -79,19 +79,39 @@
               description="Peso o volumen · gr, ml, kg"
               :selected="selectedType === 'food'"
               @click="selectAndConfirm('food')"
-            />
+            >
+              <template #icon>
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a9 9 0 019 9c0 4.97-4.03 9-9 9S3 15.97 3 11a9 9 0 019-9z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 11c0-2.21 1.79-4 4-4s4 1.79 4 4" />
+                </svg>
+              </template>
+            </UiSelectionOptionCard>
             <UiSelectionOptionCard
               title="Insumo"
               description="Unidad fija · und (caja, paquete…)"
               :selected="selectedType === 'supply'"
               @click="selectAndConfirm('supply')"
-            />
+            >
+              <template #icon>
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+                </svg>
+              </template>
+            </UiSelectionOptionCard>
             <UiSelectionOptionCard
               title="Servicio"
               description="Horas · hr"
               :selected="selectedType === 'service'"
               @click="selectAndConfirm('service')"
-            />
+            >
+              <template #icon>
+                <svg fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </template>
+            </UiSelectionOptionCard>
           </div>
         </div>
 
