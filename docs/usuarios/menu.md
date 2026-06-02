@@ -133,58 +133,9 @@ Desde la pantalla de edición del producto, después de crearlo.
 
 ## Modificadores
 
-Un modificador es una opción adicional que el cliente puede elegir al pedir un producto. Se agrupa en un **grupo de modificadores**.
+Un modificador es una opción adicional al pedir un producto (tamaño, salsa, extras). Cada opción puede ser solo precio, un ingrediente, una **receta base** o un **producto del menú** — WARO descuenta inventario según el tipo que elijas.
 
-**Ejemplos:**
-- Grupo "Tamaño" → Personal, Mediana, Grande
-- Grupo "Salsa" → BBQ, Rosada, Picante
-- Grupo "Extras" → Queso extra (+$2.000), Tocineta (+$3.000)
-
-### Conceptos clave
-
-**Grupo:** la categoría de opciones (ej: "Tamaño").
-
-**Obligatorio vs. opcional:** si el grupo es obligatorio, el cliente no puede pedir el producto sin elegir al menos una opción.
-
-**Selección mínima y máxima:**
-- Mín 0, Máx 1 → puede elegir una o ninguna
-- Mín 1, Máx 1 → debe elegir exactamente una
-- Mín 0, Máx 3 → puede elegir hasta 3 (como extras)
-
-### Cómo crear un grupo de modificadores
-
-Ve a **Menú → Modificadores → Nuevo grupo**. El formulario tiene 3 pasos:
-
-**Paso 1 — Información del grupo**
-
-| Campo | Obligatorio |
-|-------|:-----------:|
-| Productos a los que aplica | Sí |
-| Nombre del grupo | Sí |
-| Selección mínima | Sí |
-| Selección máxima | Sí |
-| Es obligatorio | — |
-
-> Para un grupo de tamaños donde el cliente debe elegir uno: Mín 1, Máx 1, obligatorio.
-
-**Paso 2 — Opciones del grupo**
-
-Por cada opción defines nombre y precio adicional (0 si es gratis). Haz clic en **+ Agregar Modificador** para añadir más.
-
-**Paso 3 — Revisión**
-
-Revisa el resumen y haz clic en **Crear grupo**.
-
-### Preguntas frecuentes — Modificadores
-
-**¿Puedo asignar un grupo a varios productos?**
-Sí. Al crear el grupo seleccionas todos los productos que lo necesitan.
-
-**¿Puedo editar las opciones después?**
-Sí. Ve a **Menú → Modificadores**, abre el grupo y edítalo.
-
-**¿El cliente puede pedir un producto sin elegir un modificador obligatorio?**
-No. El botón de agregar al carrito no se activa hasta que el cliente elija.
+→ **[Guía completa de modificadores](./menu/modificadores.md)** (tipos de opción, inventario al vender y preguntas frecuentes)
 
 ---
 

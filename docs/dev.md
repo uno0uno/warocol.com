@@ -98,6 +98,46 @@ Construye tu propia tienda siguiendo este flujo:
 | `POST` | `/v1/menu/recipes` | Lista recetas con composición de ingredientes |
 | `POST` | `/v1/menu/modifiers` | Lista grupos de modificadores con sus opciones |
 
+#### Modificadores — `option_type`
+
+Cada opción de modificador tiene un tipo que define cómo el servidor descuenta inventario al confirmar la venta. El cliente **no** envía el tipo en el carrito: solo el `id` del modificador (y cantidad); la explosión de ingredientes ocurre en el servidor.
+
+| Valor | Significado |
+|-------|-------------|
+| `INGREDIENT` | Un artículo de bodega (cantidad/unidad en la opción) |
+| `RECIPE` | Receta base con multiplicador; puede incluir varios ingredientes |
+| `PRODUCT` | Producto del menú enlazado; descuenta su composición |
+| `NONE` | Solo precio de venta; sin movimiento de inventario |
+
+En `GET /v1/product/{product_id}`, cada opción dentro de `modifier_groups` incluye `option_type`:
+
+```json
+{
+  "modifier_groups": [
+    {
+      "id": "…",
+      "name": "Extras",
+      "modifiers": [
+        {
+          "id": "…",
+          "name": "Queso extra",
+          "price": 2000,
+          "option_type": "INGREDIENT"
+        },
+        {
+          "id": "…",
+          "name": "Porción salsa BBQ",
+          "price": 0,
+          "option_type": "RECIPE"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Al crear o actualizar el carrito (`POST /v1/cart/batch`, etc.), los modificadores siguen el mismo shape de siempre — por ejemplo `{ "id": "…", "name": "Queso extra", "price": 2000, "quantity": 1 }`. No envíes `option_type` ni composición desde el cliente.
+
 ### Clientes API (gestión)
 
 | Método | Endpoint | Descripción |

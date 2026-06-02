@@ -1,0 +1,29 @@
+issue: 1125
+title: "docs(menu): modifier options — recipes and products"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/warocol.com
+stack: nuxt
+branch: wr-1125-docs-modifier-options
+
+paths:
+  - docs/usuarios/menu/modificadores.md
+  - docs/dev.md
+  - docs/usuarios/menu.md
+
+ac:
+  - Document four option types and inventory behavior in user docs (Paso 2)
+  - Add dev API examples for option_type on product/modifiers responses
+  - QA regression checklist in PR test plan
+  - Hub links to deep guide in menu.md
+
+out_of_scope:
+  - Application code
+
+hints:
+  entry: "components/menu/MenuModifierOptionEditor.vue:11-14"
+  pattern: "public_restaurant_service option_type on GET /v1/product/{id}"
+  tests: "Manual QA per PR test plan"
+
+skip:
+  audits: [ux, color, typography]
