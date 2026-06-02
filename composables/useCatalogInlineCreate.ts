@@ -6,12 +6,20 @@ import {
   type CatalogCreationIntent,
 } from '@/composables/useCatalogEntityCreation'
 
+/** `ingredients.type` — not the same as CatalogCreationIntent `supply` (bodega path). */
+export type IngredientDbType = 'food' | 'supply' | 'service'
+
 export type CatalogInlineBusyPhase =
   | 'creating-ingredient'
   | 'creating-product'
   | 'linking-ingredient'
   | 'linking-product'
   | null
+
+function normalizeIngredientDbType(value?: string): IngredientDbType {
+  if (value === 'supply' || value === 'service') return value
+  return 'food'
+}
 
 export function useCatalogInlineCreate(options: {
   context: CatalogCreationContext
@@ -20,13 +28,17 @@ export function useCatalogInlineCreate(options: {
   initialType?: MaybeRef<string>
 }) {
   const showChooser = ref(false)
+  const showIngredientTypeStep = ref(false)
   const showPanel = ref(false)
   const showProductPanel = ref(false)
   const pendingName = ref('')
   const openedFromChooser = ref(false)
+  const selectedIngredientDbType = ref<IngredientDbType | null>(null)
+
+  const usesIngredientTypeStep = computed(() => shouldShowCreationChooser(options.context))
 
   const canReturnToChooser = computed(
-    () => openedFromChooser.value && shouldShowCreationChooser(options.context),
+    () => openedFromChooser.value && usesIngredientTypeStep.value,
   )
   const productPanelBusy = ref(false)
   const supplyPanelBusy = ref(false)
@@ -82,13 +94,27 @@ export function useCatalogInlineCreate(options: {
       || options.context === 'product',
   )
 
-  const panelInitialType = computed(() => unref(options.initialType) ?? 'food')
+  const panelInitialType = computed(() => {
+    if (selectedIngredientDbType.value) return selectedIngredientDbType.value
+    const external = unref(options.initialType)
+    if (external) return normalizeIngredientDbType(external)
+    return 'food'
+  })
+
+  function resetIngredientTypeSelection() {
+    selectedIngredientDbType.value = null
+  }
+
+  function openIngredientPanel() {
+    showPanel.value = true
+  }
 
   function openFromSearch(name: string) {
     pendingName.value = name.trim()
+    resetIngredientTypeSelection()
     const intent = resolveCreationIntent(options.context)
     if (intent === 'supply') {
-      showPanel.value = true
+      openIngredientPanel()
       return
     }
     showChooser.value = true
@@ -96,22 +122,50 @@ export function useCatalogInlineCreate(options: {
 
   function onChooserIntent(intent: CatalogCreationIntent) {
     openedFromChooser.value = true
+    resetIngredientTypeSelection()
     if (intent === 'supply') {
-      showPanel.value = true
+      if (usesIngredientTypeStep.value) {
+        showIngredientTypeStep.value = true
+      } else {
+        openIngredientPanel()
+      }
       return
     }
     showProductPanel.value = true
   }
 
+  function onIngredientTypeSelected(type: IngredientDbType) {
+    selectedIngredientDbType.value = type
+    openIngredientPanel()
+  }
+
+  function onIngredientTypeCancel() {
+    showIngredientTypeStep.value = false
+    resetIngredientTypeSelection()
+    showChooser.value = true
+  }
+
   function returnToChooser() {
     showPanel.value = false
     showProductPanel.value = false
+    showIngredientTypeStep.value = false
+    resetIngredientTypeSelection()
     showChooser.value = true
+  }
+
+  function onPanelBack() {
+    showPanel.value = false
+    if (openedFromChooser.value && usesIngredientTypeStep.value && selectedIngredientDbType.value) {
+      showIngredientTypeStep.value = true
+      return
+    }
+    returnToChooser()
   }
 
   function onChooserCancel() {
     pendingName.value = ''
     openedFromChooser.value = false
+    resetIngredientTypeSelection()
   }
 
   async function onPanelSaved(ingredient: Record<string, unknown>) {
@@ -124,6 +178,7 @@ export function useCatalogInlineCreate(options: {
       linkingBusy.value = false
       lastSavedKind.value = null
       openedFromChooser.value = false
+      resetIngredientTypeSelection()
     }
   }
 
@@ -137,6 +192,7 @@ export function useCatalogInlineCreate(options: {
       linkingBusy.value = false
       lastSavedKind.value = null
       openedFromChooser.value = false
+      resetIngredientTypeSelection()
     }
   }
 
@@ -151,6 +207,7 @@ export function useCatalogInlineCreate(options: {
   return {
     context: options.context,
     showChooser,
+    showIngredientTypeStep,
     showPanel,
     showProductPanel,
     pendingName,
@@ -164,7 +221,10 @@ export function useCatalogInlineCreate(options: {
     openFromSearch,
     onChooserIntent,
     onChooserCancel,
+    onIngredientTypeSelected,
+    onIngredientTypeCancel,
     returnToChooser,
+    onPanelBack,
     onPanelSaved,
     onProductPanelSaved,
     onProductPanelBusy,

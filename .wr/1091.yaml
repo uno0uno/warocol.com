@@ -1,0 +1,27 @@
+issue: 1091
+title: "feat(menu): type-aware ingredient create in inline catalog flow"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1091-inline-ingredient-type-create
+
+paths:
+  - components/menu/InlineCatalogCreateShell.vue
+  - components/menu/InlineCatalogIngredientTypeChooser.vue
+  - composables/useCatalogInlineCreate.ts
+  - composables/useCatalogEntityCreation.ts
+
+ac:
+  - Chooser Ingrediente path creates food, supply (und), service (hr)
+  - Producto de menú path unchanged
+  - panelInitialType from sub-step; intent supply ≠ ingredients.type supply
+  - Busy labels and back navigation (chooser ↔ type ↔ panel)
+
+hints:
+  flow: "chooser supply → InlineCatalogIngredientTypeChooser → panel initialType"
+  direct: "purchase|supply-hub skip type step; panel type cards still available"
+  back: "onPanelBack → type step when selectedIngredientDbType set"
+
+skip:
+  audits: [ux, color, typography]
