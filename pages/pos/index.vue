@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useQueryCache } from '@pinia/colada'
 import { $fetch } from 'ofetch'
 import type { CachedProduct, TabItem } from '~/stores/usePOSStore'
 import { usePOSStore } from '~/stores/usePOSStore'
@@ -31,6 +32,7 @@ const tablePluralLower = computed(() => tablePlural.value.toLowerCase())
 
 const router = useRouter()
 const toast = useToast()
+const queryCache = useQueryCache()
 const posStore = usePOSStore()
 const { tabItems: storeTabItems, tabTotal: storeTabTotal, activeTableSession } = storeToRefs(posStore)
 
@@ -238,6 +240,15 @@ const isKitchenServiceMode = computed(
 )
 const isMesaMode = computed(
   () => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar,
+)
+
+/** Backend confirmed open session (#1105) — avoids /current and tab/add 404 spam. */
+const tableSessionBackendReady = ref(false)
+const shouldPollTableSession = computed(
+  () =>
+    isKitchenServiceMode.value
+    && tableSessionBackendReady.value
+    && !!posStore.activeTableSession,
 )
 
 // Customer identification on POS main screen (#1063)
@@ -469,36 +480,79 @@ const applyTableSessionFromApi = (
   posStore.setTabItems(mapTabItemsFromApi(data.tab_items ?? []))
 }
 
+const httpStatus = (e: unknown) => {
+  const err = e as { status?: number; statusCode?: number }
+  return err?.status ?? err?.statusCode
+}
+
+const isNoOpenSessionError = (e: unknown) => httpStatus(e) === 404
+
+const recoverOpenTableSession = async (tableId: string, isBar: boolean) => {
+  if (isBar) {
+    await queryCache.invalidateQueries({ key: ['tables', currentTenant.value?.id ?? null] })
+    await $fetch<{ success: boolean; data: any[] }>('/api/tables')
+  }
+  try {
+    await $fetch(`/api/tables/${tableId}/open`, { method: 'POST', body: {} })
+  } catch (e: unknown) {
+    if (httpStatus(e) !== 409) throw e
+  }
+}
+
+const loadCurrentTableSession = async (
+  tableId: string,
+  fetchGen: number,
+  tableCtx?: { tableId: string; tableName: string; isBar?: boolean },
+): Promise<boolean> => {
+  try {
+    const session = await $fetch<{ success: boolean; data: any }>(`/api/tables/${tableId}/current`)
+    if (!session?.data?.session?.id) return false
+    applyTableSessionFromApi(session.data, fetchGen, tableCtx)
+    tableSessionBackendReady.value = true
+    return true
+  } catch (e: unknown) {
+    if (isNoOpenSessionError(e)) return false
+    throw e
+  }
+}
+
 // Handle enter-table event from floor plan component
 const handleEnterTable = async (ctx: { tableId: string; sessionId: string; tableName: string; isBar?: boolean; gotoCheckout?: boolean }) => {
   isEnteringTable.value = true
+  tableSessionBackendReady.value = false
   posStore.clearAll()
-  posStore.setTableSession({
-    tableId: ctx.tableId,
-    sessionId: ctx.sessionId,
-    tableName: ctx.tableName,
-    runningTotal: 0,
-    openedAt: '',
-    isBar: ctx.isBar ?? false,
-  })
   bumpTableSessionFetchGen()
   isLoadingTabItems.value = true
   const fetchGen = tableSessionFetchGen
+  const tableCtx = {
+    tableId: ctx.tableId,
+    tableName: ctx.tableName,
+    isBar: ctx.isBar ?? false,
+  }
   try {
-    const session = await $fetch<{ success: boolean; data: any }>(
-      `/api/tables/${ctx.tableId}/current`
-    )
-    applyTableSessionFromApi(session?.data, fetchGen, {
-      tableId: ctx.tableId,
-      tableName: ctx.tableName,
-      isBar: ctx.isBar ?? false,
-    })
-  } catch {
-    // Session may have closed — enter normal POS mode
+    let ok = await loadCurrentTableSession(ctx.tableId, fetchGen, tableCtx)
+    if (!ok) {
+      await recoverOpenTableSession(ctx.tableId, !!ctx.isBar)
+      ok = await loadCurrentTableSession(ctx.tableId, fetchGen, tableCtx)
+    }
+    if (!ok) {
+      posStore.exitSession()
+      toast.error(
+        ctx.isBar
+          ? 'No hay sesión abierta en barra. Intenta de nuevo desde el plano.'
+          : `No hay sesión abierta en esta ${tableSingularLower.value}.`,
+        { title: 'Sesión' },
+      )
+      return
+    }
+  } catch (e: unknown) {
+    posStore.exitSession()
+    const detail = (e as { data?: { detail?: string } })?.data?.detail
+    toast.error(typeof detail === 'string' ? detail : 'No se pudo cargar la sesión', { title: 'Sesión' })
   } finally {
     isEnteringTable.value = false
     isLoadingTabItems.value = false
-    if (ctx.gotoCheckout && posStore.activeTableSession) {
+    if (ctx.gotoCheckout && tableSessionBackendReady.value && posStore.activeTableSession) {
       sessionStorage.setItem('posNavigation', 'true')
       router.push('/pos/checkout')
     }
@@ -508,14 +562,18 @@ const handleEnterTable = async (ctx: { tableId: string; sessionId: string; table
 // Refresh session running total + tab items from the backend
 const isRefreshingSession = ref(false)
 const refreshTableSession = async () => {
-  if (!posStore.activeTableSession) return
+  if (!posStore.activeTableSession || !tableSessionBackendReady.value) return
   isRefreshingSession.value = true
   const fetchGen = tableSessionFetchGen
   try {
-    const session = await $fetch<{ success: boolean; data: any }>(
-      `/api/tables/${posStore.activeTableSession.tableId}/current`
+    const ok = await loadCurrentTableSession(
+      posStore.activeTableSession.tableId,
+      fetchGen,
     )
-    applyTableSessionFromApi(session?.data, fetchGen)
+    if (!ok) {
+      tableSessionBackendReady.value = false
+      posStore.exitSession()
+    }
   } catch {
     // Non-critical — banner will just show stale data
   } finally {
@@ -784,7 +842,13 @@ const decrementTabItem = (orderItemId: string) => {
 }
 
 const addToTab = async () => {
-  if (!posStore.activeTableSession || posStore.cart.length === 0 || isAddingToTab.value) return
+  if (
+    !posStore.activeTableSession
+    || !tableSessionBackendReady.value
+    || !isKitchenServiceMode.value
+    || posStore.cart.length === 0
+    || isAddingToTab.value
+  ) return
   bumpTableSessionFetchGen()
   isAddingToTab.value = true
   tabError.value = null
@@ -833,7 +897,6 @@ const requestBill = () => {
   router.push('/pos/checkout')
 }
 
-const cache = useQueryCache()
 
 
 // ── Move table ─────────────────────────────────────────────────────────────
@@ -869,7 +932,7 @@ const handleMoveDone = async (result: { targetTableId: string; targetSessionId: 
   }
   moveTableSource.value = null
   // Invalidate tables cache so floor plan reflects source → free, target → open
-  cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
+  queryCache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
 }
 
 // ── Liberar mesa from the active-mesa banner ───────────────────────────────
@@ -897,7 +960,7 @@ const executeBannerClose = async (reason: string) => {
     return
   }
   posStore.clearAll()
-  cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
+  queryCache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
 }
 
 const executeClearBarTab = async (reason: string) => {
@@ -910,7 +973,7 @@ const executeClearBarTab = async (reason: string) => {
       body: { reason: reason.trim() || null },
     })
     posStore.clearAll()
-    cache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
+    queryCache.invalidateQueries({ key: ['tables', currentTenant.value?.id] })
   } catch (e: unknown) {
     destructiveError.value = destructiveFetchError(e, 'Error al limpiar la barra')
   } finally {
@@ -1097,7 +1160,7 @@ const handleOpenSaleClick = () => {
 }
 
 const addOpenSaleToTab = async (amount: number, description?: string) => {
-  if (!posStore.activeTableSession || isAddingToTab.value) return
+  if (!posStore.activeTableSession || !tableSessionBackendReady.value || !isKitchenServiceMode.value || isAddingToTab.value) return
   bumpTableSessionFetchGen()
   isAddingToTab.value = true
   tabError.value = null
@@ -1249,12 +1312,19 @@ const stopSessionSyncPolling = () => {
 }
 
 watch(
-  () => !!posStore.activeTableSession,
+  shouldPollTableSession,
   (active) => {
     if (active) startSessionSyncPolling()
     else stopSessionSyncPolling()
   },
   { immediate: true },
+)
+
+watch(
+  () => posStore.activeTableSession,
+  (session) => {
+    if (!session) tableSessionBackendReady.value = false
+  },
 )
 
 // ── Fulfillment status polling ───────────────────────────────────────────────
@@ -1263,17 +1333,9 @@ let fulfillmentPollInterval: ReturnType<typeof setInterval> | null = null
 const startFulfillmentPolling = () => {
   if (fulfillmentPollInterval) return
   fulfillmentPollInterval = setInterval(async () => {
-    if (!comandasEnabled.value || !posStore.activeTableSession) return
+    if (!shouldPollTableSession.value) return
     if (isTableSessionMutationActive()) return
-    const fetchGen = tableSessionFetchGen
-    try {
-      const session = await $fetch<{ success: boolean; data: any }>(
-        `/api/tables/${posStore.activeTableSession.tableId}/current`
-      )
-      applyTableSessionFromApi(session?.data, fetchGen)
-    } catch {
-      // Non-critical — polling fails silently
-    }
+    await refreshTableSession()
   }, 10_000)
 }
 
@@ -1286,23 +1348,23 @@ const stopFulfillmentPolling = () => {
 
 // Start/stop polling when comandas session becomes active/inactive
 watch(
-  () => comandasEnabled.value && !!posStore.activeTableSession,
+  shouldPollTableSession,
   (active) => {
     if (active) startFulfillmentPolling()
     else stopFulfillmentPolling()
-  }
+  },
 )
 
 // Register contextual refresh handler:
 // - mesa active → refresh tab items from backend
 // - floor plan → MesasFloorPlan registers its own handler on mount
 watch(
-  () => posStore.activeTableSession,
-  (session) => {
-    if (session) setRefreshHandler(refreshTableSession)
+  shouldPollTableSession,
+  (active) => {
+    if (active) setRefreshHandler(refreshTableSession)
     // else: MesasFloorPlan will register when it mounts
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 onMounted(async () => {
@@ -1311,8 +1373,30 @@ onMounted(async () => {
   })
 
   // Start polling if already in a comandas-enabled session on mount
-  if (comandasEnabled.value && posStore.activeTableSession) {
+  if (shouldPollTableSession.value) {
     startFulfillmentPolling()
+  }
+
+  // Re-validate persisted bar/mesa session after checkout (#1105)
+  if (posStore.activeTableSession?.tableId && !tableSessionBackendReady.value) {
+    const s = posStore.activeTableSession
+    void (async () => {
+      const fetchGen = bumpTableSessionFetchGen()
+      let ok = await loadCurrentTableSession(s.tableId, fetchGen, {
+        tableId: s.tableId,
+        tableName: s.tableName,
+        isBar: s.isBar,
+      })
+      if (!ok) {
+        await recoverOpenTableSession(s.tableId, s.isBar)
+        ok = await loadCurrentTableSession(s.tableId, fetchGen, {
+          tableId: s.tableId,
+          tableName: s.tableName,
+          isBar: s.isBar,
+        })
+      }
+      if (!ok) posStore.exitSession()
+    })()
   }
 
   // posNavigation flag: set when navigating to POS sub-pages (checkout, producto)
