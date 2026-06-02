@@ -170,3 +170,17 @@ warocol.com/
 - [Warolabs Backend](https://github.com/uno0uno/warolabs.com)
 - [Inspiración Comunidad](https://www.indiehackers.com/)
 - [Deployment](https://nuxt.com/docs/getting-started/deployment)
+
+## License
+
+This repository is source-available proprietary software owned by WARO Colombia
+and/or its authorized owner(s). It is not open source.
+
+You may view, clone, and run the code privately for non-commercial evaluation,
+review, education, security research, or authorized contribution preparation.
+Commercial use, production deployment, hosted use, redistribution, sublicensing,
+white-label use, competing products, or public deployments require a separate
+written commercial license from WARO Colombia.
+
+See [`LICENSE.md`](LICENSE.md), [`NOTICE.md`](NOTICE.md), and
+[`CONTRIBUTING.md`](CONTRIBUTING.md).
