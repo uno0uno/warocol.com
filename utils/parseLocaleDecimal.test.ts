@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseLocaleDecimal, roundToPrecision } from './parseLocaleDecimal.ts'
+import { parseLocaleDecimal, parseReceiptDecimal, roundToPrecision } from './parseLocaleDecimal.ts'
 
 describe('parseLocaleDecimal', () => {
   it('parses comma decimal', () => {
@@ -32,6 +32,27 @@ describe('parseLocaleDecimal', () => {
     assert.equal(parseLocaleDecimal('abc'), null)
     assert.equal(parseLocaleDecimal(null), null)
     assert.equal(parseLocaleDecimal(Number.NaN), null)
+  })
+})
+
+describe('parseReceiptDecimal', () => {
+  it('parses FRUVAR-style COP amounts with comma or dot thousands', () => {
+    assert.equal(parseReceiptDecimal('2,000', 'amount'), 2000)
+    assert.equal(parseReceiptDecimal('2.000', 'amount'), 2000)
+    assert.equal(parseReceiptDecimal('8,900', 'amount'), 8900)
+    assert.equal(parseReceiptDecimal('8.900', 'amount'), 8900)
+    assert.equal(parseReceiptDecimal('12.900', 'amount'), 12900)
+  })
+
+  it('parses decimal produce quantities from POS receipts', () => {
+    assert.equal(parseReceiptDecimal('1.345', 'quantity'), 1.345)
+    assert.equal(parseReceiptDecimal('1,345', 'quantity'), 1.345)
+    assert.equal(parseReceiptDecimal(1, 'quantity'), 1)
+  })
+
+  it('does not collapse thousands into decimals for amount fields', () => {
+    assert.equal(parseLocaleDecimal('2,000'), 2)
+    assert.equal(parseReceiptDecimal('2,000', 'amount'), 2000)
   })
 })
 
