@@ -15,6 +15,7 @@ import DeliveryAddressForm from '~/components/pos/checkout/DeliveryAddressForm.v
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 import { linePromoSavingsForProduct } from '~/utils/promoProductMatch'
+import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
 
 interface TopProduct {
   name: string
@@ -1695,6 +1696,17 @@ const processOrder = async () => {
 }
 
 const onCustomerIdentified = async (customer: { id: string; name: string | null; phone_number: string | null; email: string | null }) => {
+  posDebugLog('checkout', 'onCustomerIdentified:start', {
+    customerId: customer.id,
+    phone: customer.phone_number,
+    isBar: !!posStore.activeTableSession?.isBar,
+    isKitchenServiceMode: isKitchenServiceMode.value,
+    comandasEnabled: comandasEnabled.value,
+    cartId: posStore.cartId,
+    cartItems: posStore.cart.length,
+    tabItems: storeTabItems.value.length,
+    cartItemsComputed: cartItems.value.length,
+  })
   selectedCustomer.value = customer
   processingError.value = ''
   // Bar / mesa tab / synced counter cart: do not load the new customer's empty backend cart (#1101).
@@ -1702,7 +1714,18 @@ const onCustomerIdentified = async (customer: { id: string; name: string | null;
     !!posStore.activeTableSession?.isBar
     || isKitchenServiceMode.value
     || (!!posStore.cartId && posStore.cart.length > 0)
-  await posStore.setCustomer(customer as any, { preserveCart })
+  posDebugLog('checkout', 'onCustomerIdentified:preserveCart', { preserveCart })
+  try {
+    await posStore.setCustomer(customer as any, { preserveCart })
+    posDebugLog('checkout', 'onCustomerIdentified:done', {
+      cartItems: posStore.cart.length,
+      cartItemsComputed: cartItems.value.length,
+      syncError: syncError.value || null,
+    })
+  } catch (error) {
+    posDebugLog('checkout', 'onCustomerIdentified:failed', posDebugSerializeError(error))
+    throw error
+  }
 }
 
 // Derived from dynamic groups
@@ -2243,6 +2266,10 @@ const isLoadingPaymentMethods = computed(() =>
 const syncCart = async () => {
   // Si no hay items, no hacer nada
   if (posStore.cart.length === 0) {
+    posDebugLog('checkout', 'syncCart:skipped-empty', {
+      isBar: !!posStore.activeTableSession?.isBar,
+      tabItems: storeTabItems.value.length,
+    })
     isSyncingCart.value = false
     return
   }
@@ -2250,13 +2277,18 @@ const syncCart = async () => {
   try {
     isSyncingCart.value = true
     syncError.value = ''
+    posDebugLog('checkout', 'syncCart:start', { cartId: posStore.cartId, items: posStore.cart.length })
 
     const success = await posStore.syncCartBatch()
     if (!success) {
       syncError.value = 'Error al sincronizar el carrito'
+      posDebugLog('checkout', 'syncCart:batch-failed', { cartId: posStore.cartId })
+    } else {
+      posDebugLog('checkout', 'syncCart:ok', { cartId: posStore.cartId })
     }
   } catch (error: any) {
     syncError.value = error.message || 'Error al sincronizar'
+    posDebugLog('checkout', 'syncCart:failed', posDebugSerializeError(error))
   } finally {
     isSyncingCart.value = false
   }
@@ -2324,6 +2356,14 @@ watch(() => selectedCustomer.value?.id, () => {
 // they fire from setup, in parallel with the mount).
 onMounted(async () => {
   setPageSubtitle('Checkout')
+  posDebugLog('checkout', 'mount', {
+    isBar: !!posStore.activeTableSession?.isBar,
+    isKitchenServiceMode: isKitchenServiceMode.value,
+    cartId: posStore.cartId,
+    cartItems: posStore.cart.length,
+    tabItems: storeTabItems.value.length,
+    route: useRoute().path,
+  })
 
   // Siempre regeneramos el carrito backend desde el estado local actual.
   if (posStore.cart.length > 0) {
@@ -2335,7 +2375,27 @@ onMounted(async () => {
   // Cart sync is the only operation that's genuinely sequential (mutation
   // local → backend). All read queries already kicked off from setup.
   await syncCart()
+  posDebugLog('checkout', 'mount:after-syncCart', {
+    cartItems: posStore.cart.length,
+    cartItemsComputed: cartItems.value.length,
+    syncError: syncError.value || null,
+  })
 })
+
+watch(
+  () => cartItems.value.length,
+  (count, prev) => {
+    if (count === 0 && (prev ?? 0) > 0) {
+      posDebugLog('checkout', 'cartItems:became-empty', {
+        isBar: !!posStore.activeTableSession?.isBar,
+        isKitchenServiceMode: isKitchenServiceMode.value,
+        storeCart: posStore.cart.length,
+        tabItems: storeTabItems.value.length,
+        selectedCustomerId: selectedCustomer.value?.id ?? null,
+      })
+    }
+  },
+)
 
 onUnmounted(() => {
   clearRefreshHandler(refreshAll)
