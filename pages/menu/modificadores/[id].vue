@@ -131,131 +131,21 @@
               </div>
 
               <div v-else class="space-y-3">
-                <div
+                <MenuModifierOptionEditor
                   v-for="(modifier, index) in form.modifiers"
                   :key="index"
-                  class="border border-border rounded-lg p-3 sm:p-4 bg-background"
-                >
-                  <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-3">
-                    <div class="md:col-span-4">
-                      <label class="block text-xs font-medium text-text-secondary mb-1">{{ WAREHOUSE_COPY.warehouseItemOrResaleRequired }}</label>
-                      <UiIngredientSearchInput
-                        :initialValue="modifier.ingredient_name || ''"
-                        :allow-create="true"
-                        @select="(ing) => selectIngredient(modifier, ing)"
-                        @create="(name) => openCustomIngModal(name, index)"
-                      />
-                      <p v-if="modifier.ingredient_id" class="text-xs text-text-secondary mt-1">
-                        Costo: {{ formatCurrency(getIngredientById(modifier.ingredient_id)?.costo_unitario || 0) }}/{{ getIngredientById(modifier.ingredient_id)?.unit }}
-                      </p>
-                    </div>
-
-                    <div class="md:col-span-1">
-                      <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad</label>
-                      <input
-                        v-model.number="modifier.ingredient_quantity"
-                        type="number"
-                        min="0.01"
-                        step="any"
-                        placeholder="50"
-                        class="input-base w-full px-3 py-2 text-sm"
-                      />
-                    </div>
-
-                    <div class="md:col-span-2">
-                      <label class="block text-xs font-medium text-text-secondary mb-1">Unidad</label>
-                      <div class="relative">
-                        <select
-                          v-model="modifier.ingredient_unit"
-                          :disabled="modifier.ingredient_id && loadingUnits.has(modifier.ingredient_id)"
-                          class="input-base w-full py-2 pr-3 text-sm disabled:opacity-50"
-                          :class="modifier.ingredient_id && loadingUnits.has(modifier.ingredient_id) ? 'pl-7' : 'pl-3'"
-                        >
-                          <option
-                            v-for="opt in getIngredientUnitOptions(modifier.ingredient_id)"
-                            :key="opt.value"
-                            :value="opt.value"
-                          >{{ opt.label }}</option>
-                        </select>
-                        <span v-if="modifier.ingredient_id && loadingUnits.has(modifier.ingredient_id)" class="absolute left-2 top-2.5 pointer-events-none text-text-secondary">
-                          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                          </svg>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div class="md:col-span-2">
-                      <label class="block text-xs font-medium text-text-secondary mb-1">Precio venta</label>
-                      <div class="relative">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                        <input
-                          v-model.number="modifier.price"
-                          type="number"
-                          step="100"
-                          placeholder="0"
-                          class="input-base w-full pl-8 pr-3 py-2 text-sm"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="md:col-span-1">
-                      <label class="block text-xs font-medium text-text-secondary mb-1">Máx</label>
-                      <input
-                        v-model.number="modifier.max_limit"
-                        type="number"
-                        min="1"
-                        placeholder="1"
-                        class="input-base w-full px-3 py-2 text-sm"
-                      />
-                    </div>
-
-                    <div class="md:col-span-1">
-                      <label class="block text-xs font-medium text-text-secondary mb-1">Orden</label>
-                      <input
-                        v-model.number="modifier.sort_order"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        class="input-base w-full px-3 py-2 text-sm"
-                      />
-                    </div>
-
-                    <div class="md:col-span-1">
-                      <label class="block text-xs font-medium text-text-secondary mb-1 invisible select-none" aria-hidden="true">&nbsp;</label>
-                      <button
-                        type="button"
-                        @click="removeModifier(index)"
-                        class="flex items-center justify-center w-full h-[38px] text-destructive hover:bg-destructive/5 rounded-lg transition-colors"
-                        title="Eliminar opción"
-                      >
-                        <Icon name="heroicons:trash" class="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="flex flex-wrap gap-4 text-sm">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input
-                        v-model="modifier.is_default"
-                        type="checkbox"
-                        class="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                      />
-                      <span class="text-text-primary">Predeterminado</span>
-                    </label>
-
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input
-                        v-model="modifier.is_available"
-                        type="checkbox"
-                        class="w-4 h-4 text-primary border-border rounded focus:ring-primary"
-                      />
-                      <span class="text-text-primary">Disponible</span>
-                    </label>
-                  </div>
-                </div>
+                  :modifier="modifier"
+                  :index="index"
+                  :recipe-bases="recipeBases"
+                  :loading-units="loadingUnits"
+                  :get-ingredient-unit-options="getIngredientUnitOptions"
+                  :get-ingredient-by-id="getIngredientById"
+                  @remove="removeModifier(index)"
+                  @select-ingredient="(ing) => selectIngredient(modifier, ing)"
+                  @create-ingredient="(name) => openCustomIngModal(name, index)"
+                />
               </div>
+            </MenuCatalogInlineCreateBusyOverlay>
             </MenuCatalogInlineCreateBusyOverlay>
           </UiFormSection>
         </div>
@@ -340,8 +230,14 @@
 </template>
 
 <script setup lang="ts">
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, watch } from 'vue'
+import {
+  createEmptyModifier,
+  mapModifierFromApi,
+  serializeModifierForApi,
+  validateModifierOption,
+  type ModifierFormRow,
+} from '~/composables/useModifierOptionForm'
 import { useQueryCache } from '@pinia/colada'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
@@ -370,20 +266,19 @@ const form = ref({
   max_qty: 1,
   is_required: false,
   sort_order: 0,
-  modifiers: [] as Array<{
-    name: string
-    price: number
-    max_limit: number
-    is_default: boolean
-    is_available: boolean
-    sort_order: number
-    ingredient_id: string | null
-    ingredient_name: string | null
-    ingredient_quantity: number | null
-    ingredient_unit: string | null
-  }>,
+  modifiers: [] as ModifierFormRow[],
   tenant_id: currentTenant.value?.id || ''
 })
+
+const { data: recipeBasesData } = useAsyncData(
+  `recipe-bases-modifiers-edit-${currentTenant.value?.id || 'default'}`,
+  () => $fetch('/api/menu/recipe-bases', {
+    query: { limit: 250, is_active: true, include_ingredients: true },
+  }),
+  { server: false, watch: [currentTenant], default: () => ({ data: [] }) },
+)
+
+const recipeBases = computed(() => recipeBasesData.value?.data || [])
 
 const groupId = route.params.id as string
 
@@ -451,9 +346,12 @@ async function loadPurchaseUnits(ingredientId: string) {
   }
 }
 
-function selectIngredient(modifier: any, ing: any) {
+function selectIngredient(modifier: ModifierFormRow, ing: any) {
+  modifier.option_type = 'INGREDIENT'
   modifier.ingredient_id = ing.id
+  modifier.ingredient_name = ing.name
   modifier.name = ing.name
+  modifier.unit_cost = null
   modifier.ingredient_name = ing.name
   cacheIngredientForUnits(ing)
   modifier.ingredient_unit = defaultUnitForIngredient(ingredientCache.value[ing.id])
@@ -506,27 +404,17 @@ watch(groupData, (data) => {
       is_required: group.is_required,
       sort_order: group.sort_order,
       modifiers: group.modifiers.map((m: any) => {
-        if (m.ingredient_id && m.ingredient) {
+        const row = mapModifierFromApi(m)
+        if (row.ingredient_id && m.ingredient) {
           cacheIngredientForUnits({
-            id: m.ingredient_id,
+            id: row.ingredient_id,
             name: m.ingredient.name,
             unit: m.ingredient.unit,
             costo_unitario: m.ingredient.costo_unitario,
           })
-          loadPurchaseUnits(m.ingredient_id)
+          loadPurchaseUnits(row.ingredient_id)
         }
-        return {
-          name: m.name,
-          price: Number(m.price),
-          max_limit: m.max_limit,
-          is_default: m.is_default,
-          is_available: m.is_available,
-          sort_order: m.sort_order,
-          ingredient_id: m.ingredient_id || null,
-          ingredient_name: m.ingredient?.name || null,
-          ingredient_quantity: m.ingredient_quantity ? Number(m.ingredient_quantity) : null,
-          ingredient_unit: m.ingredient_unit || null
-        }
+        return row
       }),
       tenant_id: currentTenant.value?.id || ''
     }
@@ -552,18 +440,7 @@ function getSelectedProductsText() {
 }
 
 function addModifier() {
-  form.value.modifiers.push({
-    name: '',
-    price: 0,
-    max_limit: 1,
-    is_default: false,
-    is_available: true,
-    sort_order: form.value.modifiers.length,
-    ingredient_id: null,
-    ingredient_name: null,
-    ingredient_quantity: null,
-    ingredient_unit: null
-  })
+  form.value.modifiers.push(createEmptyModifier(form.value.modifiers.length))
 }
 
 function removeModifier(index: number) {
@@ -593,10 +470,12 @@ function validateForm(): boolean {
     return false
   }
 
-  const missingIngredient = form.value.modifiers.some(m => !m.ingredient_id)
-  if (missingIngredient) {
-    submitError.value = WAREHOUSE_COPY.allOptionsNeedWarehouseItem
-    return false
+  for (const m of form.value.modifiers) {
+    const err = validateModifierOption(m)
+    if (err) {
+      submitError.value = err
+      return false
+    }
   }
 
   return true
@@ -614,7 +493,10 @@ async function handleSubmit() {
 
     await $fetch(`/api/menu/modifier-groups/${groupId}`, {
       method: 'PUT',
-      body: form.value
+      body: {
+        ...form.value,
+        modifiers: form.value.modifiers.map(serializeModifierForApi),
+      }
     })
 
     cache.invalidateQueries()
@@ -632,14 +514,6 @@ function cancel() {
   router.push('/menu/modificadores')
 }
 
-function formatCurrency(value: number) {
-  if (!value && value !== 0) return '$0'
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0
-  }).format(value)
-}
 </script>
 
 <style scoped>

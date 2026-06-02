@@ -66,9 +66,12 @@
       </template>
 
       <template #cell-opciones="{ row }">
-        <div class="flex justify-center">
+        <div class="flex flex-col items-center gap-0.5 max-w-[220px] mx-auto">
           <span class="text-sm font-semibold text-text-primary">
             {{ getModificadoresByGrupo(row.id).length }}
+          </span>
+          <span class="text-xs text-text-secondary text-center line-clamp-2" :title="formatGroupOptionsSummary(row.id)">
+            {{ formatGroupOptionsSummary(row.id) }}
           </span>
         </div>
       </template>
@@ -125,7 +128,10 @@
         >
           <div class="flex-1 min-w-0">
             <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
-            <p class="text-xs text-text-secondary mt-0.5">{{ getModificadoresByGrupo(item.id).length }} opciones · sel. {{ item.min_qty }}–{{ item.max_qty }}</p>
+            <p class="text-xs text-text-secondary mt-0.5 line-clamp-2">
+              {{ getModificadoresByGrupo(item.id).length }} opciones · sel. {{ item.min_qty }}–{{ item.max_qty }}
+              <span v-if="formatGroupOptionsSummary(item.id)"> · {{ formatGroupOptionsSummary(item.id) }}</span>
+            </p>
           </div>
           <UiStatusBadge
             :value="item.is_required ? 'Obligatorio' : 'Opcional'"
@@ -484,6 +490,21 @@ const toggleExpanded = (grupoId: string) => {
 const getModificadoresByGrupo = (grupoId: string) => {
   const grupo = modifierGroups.value.find((g: any) => g.id === grupoId)
   return grupo?.modifiers || []
+}
+
+
+function formatGroupOptionsSummary(grupoId: string) {
+  const mods = getModificadoresByGrupo(grupoId)
+  if (!mods.length) return ''
+  const labels = mods.slice(0, 3).map((m: any) => {
+    const type = (m.option_type || 'INGREDIENT').toUpperCase()
+    if (type === 'INGREDIENT') return m.ingredient?.name || m.name
+    if (type === 'RECIPE') return m.recipe_base?.name || m.name
+    if (type === 'PRODUCT') return m.linked_product?.name || m.name
+    return m.name
+  })
+  const suffix = mods.length > 3 ? ` +${mods.length - 3}` : ''
+  return labels.filter(Boolean).join(', ') + suffix
 }
 
 const goToCreateGroup = () => {
