@@ -175,16 +175,19 @@
 
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Tipo de pago
+                  Condición de pago
                 </label>
                 <select
                   v-model="form.payment_type"
                   class="input-base w-full px-4 py-2"
                 >
-                  <option value="contado">Contado - Pago Inmediato</option>
-                  <option value="credito">Credito - Pago Diferido</option>
+                  <option value="contado">Contado — pagas al recibir</option>
+                  <option value="credito">Crédito — pagas después</option>
                   <option value="contraentrega">Contraentrega</option>
                 </select>
+                <p class="text-xs text-text-secondary mt-1.5">
+                  Plazo con el proveedor. Si es contado, registra abajo cómo pagaste y el comprobante.
+                </p>
               </div>
 
               <div>
@@ -456,44 +459,50 @@
                   Comprobante de pago
                 </h4>
 
-                <div class="space-y-2">
-                  <label class="block text-sm font-medium text-text-primary">Método de pago</label>
-                  <select v-model="paymentSelectValue" class="input-base w-full px-4 py-2.5">
-                    <option value="">Sin pago aún</option>
-                    <template v-for="group in paymentGroups" :key="group.slug">
-                      <option :value="`${group.slug}:`">{{ group.name }}</option>
-                      <optgroup v-if="group.methods.length > 0" :label="group.name">
-                        <option
-                          v-for="method in group.methods"
-                          :key="method.id"
-                          :value="`${group.slug}:${method.id}`"
-                        >
-                          {{ group.name }} · {{ method.name }}
-                        </option>
-                      </optgroup>
-                    </template>
-                  </select>
-                </div>
-
-                <template v-if="hasPaymentSelected">
+                <template v-if="isContadoPayment">
                   <div class="space-y-2">
-                    <label class="block text-sm font-medium text-text-primary">Referencia de pago</label>
-                    <input
-                      v-model="form.payment_reference"
-                      type="text"
-                      class="input-base w-full px-4 py-2.5"
-                      placeholder="Número de transferencia, etc."
-                    />
+                    <label class="block text-sm font-medium text-text-primary">Forma de pago</label>
+                    <select v-model="paymentSelectValue" class="input-base w-full px-4 py-2.5">
+                      <option value="">Sin pago aún</option>
+                      <template v-for="group in paymentGroups" :key="group.slug">
+                        <option v-if="!(group.methods?.length)" :value="`${group.slug}:`">{{ group.name }}</option>
+                        <optgroup v-else :label="group.name">
+                          <option
+                            v-for="method in group.methods"
+                            :key="method.id"
+                            :value="`${group.slug}:${method.id}`"
+                          >
+                            {{ method.name }}
+                          </option>
+                        </optgroup>
+                      </template>
+                    </select>
                   </div>
 
-                  <div class="space-y-2 pt-1 border-t border-border/60">
-                    <p class="text-sm font-medium text-text-primary pt-4">Archivo adjunto</p>
-                    <PurchasesAttachmentUploader v-model="form.payment_files" embedded />
-                  </div>
+                  <template v-if="hasPaymentSelected">
+                    <div class="space-y-2">
+                      <label class="block text-sm font-medium text-text-primary">Referencia de pago</label>
+                      <input
+                        v-model="form.payment_reference"
+                        type="text"
+                        class="input-base w-full px-4 py-2.5"
+                        placeholder="Número de transferencia, etc."
+                      />
+                    </div>
+
+                    <div class="space-y-2 pt-1 border-t border-border/60">
+                      <p class="text-sm font-medium text-text-primary pt-4">Archivo adjunto</p>
+                      <PurchasesAttachmentUploader v-model="form.payment_files" embedded />
+                    </div>
+                  </template>
+
+                  <p v-else class="text-sm text-text-secondary leading-relaxed">
+                    Opcional: indica cómo pagaste para adjuntar el comprobante.
+                  </p>
                 </template>
 
                 <p v-else class="text-sm text-text-secondary leading-relaxed">
-                  Selecciona un método de pago para adjuntar el comprobante.
+                  Para crédito o contraentrega, el comprobante se registra cuando pagues al proveedor.
                 </p>
               </div>
             </div>
@@ -523,11 +532,11 @@
                     </p>
                   </div>
                   <div class="flex justify-between items-center">
-                    <p class="text-xs font-medium text-text-secondary">Pago</p>
+                    <p class="text-xs font-medium text-text-secondary">Condición</p>
                     <p class="text-xs font-semibold text-text-primary">{{ getPaymentTypeText(form.payment_type) }}</p>
                   </div>
-                  <div v-if="hasPaymentSelected" class="flex justify-between items-center">
-                    <p class="text-xs font-medium text-text-secondary">Método</p>
+                  <div v-if="isContadoPayment && hasPaymentSelected" class="flex justify-between items-center">
+                    <p class="text-xs font-medium text-text-secondary">Forma de pago</p>
                     <p class="text-xs font-semibold text-text-primary">{{ resolvePaymentLabel(form.payment_method, form.payment_method_id) }}</p>
                   </div>
                 </div>
@@ -668,7 +677,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { TrashIcon, DocumentTextIcon, CreditCardIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
@@ -759,6 +768,20 @@ const paymentGroups = computed(() =>
 )
 const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(paymentGroups)
 const { paymentSelectValue, hasPaymentSelected } = usePaymentSelectValue(form, paymentGroups)
+
+const isContadoPayment = computed(() => form.value.payment_type === 'contado')
+
+function clearPaymentProof() {
+  form.value.payment_method = ''
+  form.value.payment_method_id = null
+  form.value.payment_reference = ''
+  form.value.payment_files = []
+}
+
+watch(() => form.value.payment_type, (type) => {
+  if (type !== 'contado') clearPaymentProof()
+})
+
 
 // Fetch next purchase number
 const { data: nextNumberData } = useFetch('/api/suppliers/purchases/direct/next-number', {
@@ -870,9 +893,9 @@ const getIngredientName = (id: string) => {
 
 const getPaymentTypeText = (type: string) => {
   const types: Record<string, string> = {
-    'contado': 'Contado - Pago Inmediato',
-    'credito': 'Credito - Pago Diferido',
-    'contraentrega': 'Contraentrega'
+    contado: 'Contado — pagas al recibir',
+    credito: 'Crédito — pagas después',
+    contraentrega: 'Contraentrega',
   }
   return types[type] || type
 }
