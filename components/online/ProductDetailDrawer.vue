@@ -129,8 +129,20 @@
                       class="option-input"
                     />
                     <span class="option-name">{{ mod.name }}</span>
-                    <span class="option-price" :class="{ 'option-price-free': mod.price === 0 }">
-                      {{ mod.price === 0 ? 'Gratis' : `+${formatPrice(mod.price)}` }}
+                    <span class="option-meta">
+                      <span
+                        v-if="modifierTypeLabel(mod) !== 'Ingrediente'"
+                        class="option-type"
+                      >{{ modifierTypeLabel(mod) }}</span>
+                      <span
+                        class="option-price"
+                        :class="{
+                          'option-price-free': mod.price === 0,
+                          'option-price-discount': mod.price < 0,
+                        }"
+                      >
+                        {{ formatModifierPriceLabel(mod) }}
+                      </span>
                     </span>
                   </label>
                 </template>
@@ -152,8 +164,20 @@
                       class="option-input"
                     />
                     <span class="option-name">{{ mod.name }}</span>
-                    <span class="option-price" :class="{ 'option-price-free': mod.price === 0 }">
-                      {{ mod.price === 0 ? 'Gratis' : `+${formatPrice(mod.price)}` }}
+                    <span class="option-meta">
+                      <span
+                        v-if="modifierTypeLabel(mod) !== 'Ingrediente'"
+                        class="option-type"
+                      >{{ modifierTypeLabel(mod) }}</span>
+                      <span
+                        class="option-price"
+                        :class="{
+                          'option-price-free': mod.price === 0,
+                          'option-price-discount': mod.price < 0,
+                        }"
+                      >
+                        {{ formatModifierPriceLabel(mod) }}
+                      </span>
                     </span>
                   </label>
                 </template>
@@ -261,6 +285,12 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useOnlineCartStore, type CartModifier } from '~/stores/online_cart'
+import { formatModifierOptionTypeLabel } from '~/composables/useModifierOptionForm'
+import {
+  formatSaleModifierPriceLabel,
+  modifiersCartTotal,
+  normalizeModifierOptionType,
+} from '~/utils/saleModifierOption'
 
 interface Modifier {
   id: string
@@ -269,6 +299,7 @@ interface Modifier {
   is_available: boolean
   is_default: boolean
   max_limit: number
+  option_type?: string
 }
 
 interface ModifierGroup {
@@ -543,16 +574,23 @@ const isValid = computed(() => {
 const totalPrice = computed(() => {
   const base = Number(props.product?.price ?? productDetail.value?.price ?? 0)
   if (wizardMode.value) {
-    // Show total for all units
     const total = wizardUnits.value.reduce((sum, unit) => {
-      const modTotal = unit.modifiers.reduce((s, m) => s + m.price, 0)
-      return sum + base + modTotal
+      return sum + base + modifiersCartTotal(unit.modifiers)
     }, 0)
     return formatPrice(total)
   }
-  const modTotal = selectedModifiers.value.reduce((sum, m) => sum + m.price, 0)
+  const modTotal = modifiersCartTotal(selectedModifiers.value)
   return formatPrice((base + modTotal) * quantity.value)
 })
+
+function modifierTypeLabel(mod: Modifier): string {
+  return formatModifierOptionTypeLabel(normalizeModifierOptionType(mod.option_type))
+}
+
+function formatModifierPriceLabel(mod: Modifier): string {
+  if (mod.price === 0) return 'Gratis'
+  return formatSaleModifierPriceLabel(mod.price, formatPrice)
+}
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('es-CO', {
@@ -876,6 +914,24 @@ onMounted(() => {
 
 .option-price-free {
   color: hsl(var(--success));
+}
+
+.option-price-discount {
+  color: hsl(var(--success));
+}
+
+.option-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.option-type {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: hsl(var(--muted-foreground));
 }
 
 /* Quantity */

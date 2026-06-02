@@ -2,8 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { CartModifier } from '~/stores/online_cart'
 import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
-
-const modifierLineTotal = (mod: CartModifier) => Number(mod.price) * (mod.quantity ?? 1)
+import { modifierLineTotal } from '~/utils/saleModifierOption'
 
 const modifiersSignature = (mods: CartModifier[]) =>
     // Parity with online_cart.ts modifiersKey — separate cart rows per modifier config (#1023)

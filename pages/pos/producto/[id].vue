@@ -3,6 +3,13 @@ import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { usePOSStore } from '~/stores/usePOSStore'
 import type { CartModifier } from '~/stores/online_cart'
 import {
+  mapApiModifierToSaleOption,
+  modifierLineTotal,
+  formatSaleModifierPriceLabel,
+  saleModifierPriceClass,
+  type SaleModifierOption,
+} from '~/utils/saleModifierOption'
+import {
   ShoppingCartIcon,
   CheckIcon
 } from '@heroicons/vue/24/outline'
@@ -169,11 +176,7 @@ const editCartIndex = computed(() => {
 const isEditMode = computed(() => editCartIndex.value !== null)
 
 // Type definitions
-interface ModifierOption {
-  id: string
-  name: string
-  price: number
-  max_limit: number
+interface ModifierOption extends SaleModifierOption {
   icon?: string
 }
 
@@ -428,13 +431,13 @@ const modifierGroups = computed<ModifierGroup[]>(() => {
         maxSelections: group.max_qty || 1,
         options: (group.modifiers || [])
           .filter((mod: any) => mod && mod.is_available !== false)
-          .map((mod: any) => ({
-            id: mod.id,
-            name: mod.name,
-            price: Number(mod.price) || 0,
-            max_limit: Number(mod.max_limit) || 1,
-            icon: getModifierIcon(mod.name)
-          }))
+          .map((mod: any) => {
+            const mapped = mapApiModifierToSaleOption(mod as Record<string, unknown>)
+            return {
+              ...mapped,
+              icon: getModifierIcon(mapped.name),
+            }
+          })
           .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
       }))
       .sort((a, b) => (a.group_sort_order || 0) - (b.group_sort_order || 0))
@@ -442,8 +445,6 @@ const modifierGroups = computed<ModifierGroup[]>(() => {
     return []
   }
 })
-
-const modifierLineTotal = (mod: CartModifier) => Number(mod.price) * (mod.quantity ?? 1)
 
 // Computed
 const totalPrice = computed(() => {
@@ -820,13 +821,16 @@ onUnmounted(() => {
                 </div>
                 <div
                   class="mt-1.5 md:mt-2 text-xs md:text-sm font-medium"
-                  :class="option.price > 0 ? 'text-primary' : option.price < 0 ? 'text-success' : 'text-text-secondary'"
+                  :class="saleModifierPriceClass(option.price)"
                 >
-                  {{ option.price > 0 ? '+ ' : '' }}{{ option.price !== 0 ? formatCurrency(option.price) : 'Incluido' }}
+                  {{ formatSaleModifierPriceLabel(option.price, formatCurrency) }}
                 </div>
-                <div class="text-xs text-text-tertiary mt-0.5 md:mt-1">
-                  {{ option.name === 'Pequeño' ? '4 Porciones' : option.name === 'Mediano' ? '8 Porciones' : '12 Porciones' }}
-                </div>
+                <p
+                  v-if="option.option_type !== 'INGREDIENT'"
+                  class="text-xs text-text-tertiary mt-0.5 md:mt-1"
+                >
+                  {{ option.type_label }}
+                </p>
               </div>
             </label>
           </div>
@@ -849,7 +853,18 @@ onUnmounted(() => {
                 </div>
                 <div class="min-w-0 flex-1">
                   <div class="font-medium text-text-primary text-sm leading-snug">{{ option.name }}</div>
-                  <div class="text-xs text-primary font-semibold mt-0.5">+ {{ formatCurrency(option.price) }}</div>
+                  <div
+                    class="text-xs font-semibold mt-0.5"
+                    :class="saleModifierPriceClass(option.price)"
+                  >
+                    {{ formatSaleModifierPriceLabel(option.price, formatCurrency) }}
+                  </div>
+                  <p
+                    v-if="option.option_type !== 'INGREDIENT'"
+                    class="text-xs text-text-tertiary"
+                  >
+                    {{ option.type_label }}
+                  </p>
                 </div>
               </div>
               <div
