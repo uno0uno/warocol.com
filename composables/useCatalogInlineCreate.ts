@@ -1,4 +1,5 @@
 import type { MaybeRef } from 'vue'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import {
   resolveCreationIntent,
   shouldShowCreationChooser,
@@ -59,13 +60,13 @@ export function useCatalogInlineCreate(options: {
   const busyMessage = computed(() => {
     switch (busyPhase.value) {
       case 'linking-ingredient':
-        return 'Vinculando ingrediente…'
+        return WAREHOUSE_COPY.linkingWarehouseItem
       case 'linking-product':
         return 'Vinculando reventa al catálogo…'
       case 'creating-product':
         return 'Creando producto de menú…'
       case 'creating-ingredient':
-        return 'Creando ingrediente…'
+        return WAREHOUSE_COPY.creatingWarehouseItem
       default:
         return ''
     }
@@ -74,7 +75,7 @@ export function useCatalogInlineCreate(options: {
   const busyHint = computed(() => {
     switch (busyPhase.value) {
       case 'linking-ingredient':
-        return 'Se agregará a la fila y se actualizará la lista de ingredientes.'
+        return WAREHOUSE_COPY.linkingWarehouseItemHint
       case 'linking-product':
         return 'Buscando el insumo de reventa vinculado al producto.'
       case 'creating-product':

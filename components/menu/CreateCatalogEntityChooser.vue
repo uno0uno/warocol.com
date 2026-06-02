@@ -21,7 +21,7 @@
         v-if="modelValue && showChooserUi"
         role="dialog"
         aria-modal="true"
-        aria-label="Elegir ingrediente o producto de menú a crear"
+        :aria-label="WAREHOUSE_COPY.createChooserAria"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -50,7 +50,7 @@
                     “{{ initialName.trim() }}” no aparece en la búsqueda
                   </template>
                   <template v-else>
-                    Elige ingrediente (bodega) o producto de menú (venta)
+                    {{ WAREHOUSE_COPY.createChooserSubtitle }}
                   </template>
                 </p>
               </div>
@@ -75,7 +75,7 @@
 
           <div class="flex flex-col gap-3" role="group" aria-label="Tipo de ítem">
             <UiSelectionOptionCard
-              title="Ingrediente"
+              :title="WAREHOUSE_COPY.warehouseItem"
               description="Abastecimiento y recetas · gr, ml, und"
               :selected="selectedIntent === 'supply'"
               @click="selectAndConfirm('supply')"
@@ -88,7 +88,7 @@
             </UiSelectionOptionCard>
 
             <UiSelectionOptionCard
-              title="Producto de menú"
+              :title="WAREHOUSE_COPY.menuProduct"
               description="Venta en menú y POS · precio, categoría"
               :selected="selectedIntent === 'menu-product'"
               @click="selectAndConfirm('menu-product')"
@@ -117,6 +117,7 @@
 </template>
 
 <script setup lang="ts">
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import {
   resolveCreationIntent,
   shouldShowCreationChooser,
