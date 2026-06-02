@@ -6,13 +6,19 @@
     @intent="onChooserIntent"
     @cancel="onChooserCancel"
   />
+  <MenuInlineCatalogIngredientTypeChooser
+    v-model="showIngredientTypeStep"
+    :initial-name="pendingName"
+    @select="onIngredientTypeSelected"
+    @cancel="onIngredientTypeCancel"
+  />
   <IngredientesIngredientePropioPanel
     v-model="showPanel"
     :initial-name="pendingName"
     :initial-type="panelInitialType"
     :hide-resale-toggle="hideResaleToggle"
     :show-back-to-chooser="canReturnToChooser"
-    @back-to-chooser="returnToChooser"
+    @back-to-chooser="onPanelBack"
     @saved="onPanelSaved"
     @busy-change="onSupplyPanelBusy"
   />
@@ -66,6 +72,7 @@ async function handleProductSaved(product: Record<string, unknown>) {
 
 const {
   showChooser,
+  showIngredientTypeStep,
   showPanel,
   showProductPanel,
   pendingName,
@@ -78,7 +85,10 @@ const {
   openFromSearch,
   onChooserIntent,
   onChooserCancel,
+  onIngredientTypeSelected,
+  onIngredientTypeCancel,
   returnToChooser,
+  onPanelBack,
   onPanelSaved,
   onProductPanelSaved,
   onProductPanelBusy,

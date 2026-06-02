@@ -1,0 +1,178 @@
+<template>
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition-opacity duration-200"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="modelValue"
+        class="fixed inset-0 z-40 bg-black/40"
+        aria-hidden="true"
+        @click="onCancel"
+      />
+    </Transition>
+
+    <Transition name="panel">
+      <div
+        v-if="modelValue"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Elegir tipo de ingrediente de bodega"
+        class="fixed z-50 flex flex-col bg-surface shadow-2xl
+               inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
+               md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
+      >
+        <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+          <div class="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
+        </div>
+
+        <div class="flex-shrink-0 bg-surface-secondary/40 border-b border-border px-6 py-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <div
+                class="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
+                aria-hidden="true"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <h2 class="text-base font-bold text-text-primary leading-tight">
+                  Tipo de ingrediente
+                </h2>
+                <p class="text-xs text-text-secondary leading-snug mt-0.5">
+                  <template v-if="initialName.trim()">
+                    “{{ initialName.trim() }}” — bodega / recetas
+                  </template>
+                  <template v-else>
+                    Alimento, insumo o servicio para recetas y costos
+                  </template>
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              aria-label="Cerrar"
+              class="flex-shrink-0 flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-text-tertiary hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+              @click="onCancel"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          <p class="text-sm text-text-secondary">
+            ¿Qué tipo de ingrediente de bodega quieres crear?
+          </p>
+
+          <div class="flex flex-col gap-3" role="group" aria-label="Tipo de ingrediente de bodega">
+            <UiSelectionOptionCard
+              title="Alimento"
+              description="Peso o volumen · gr, ml, kg"
+              :selected="selectedType === 'food'"
+              @click="selectAndConfirm('food')"
+            />
+            <UiSelectionOptionCard
+              title="Insumo"
+              description="Unidad fija · und (caja, paquete…)"
+              :selected="selectedType === 'supply'"
+              @click="selectAndConfirm('supply')"
+            />
+            <UiSelectionOptionCard
+              title="Servicio"
+              description="Horas · hr"
+              :selected="selectedType === 'service'"
+              @click="selectAndConfirm('service')"
+            />
+          </div>
+        </div>
+
+        <div class="flex-shrink-0 border-t border-border bg-surface px-6 py-4">
+          <button
+            type="button"
+            class="w-full min-h-[44px] py-3 px-4 border-2 border-border rounded-lg text-text-primary font-medium hover:bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-95 transition-all"
+            @click="onCancel"
+          >
+            Volver
+          </button>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+</template>
+
+<script setup lang="ts">
+import type { IngredientDbType } from '@/composables/useCatalogInlineCreate'
+
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean
+    initialName?: string
+  }>(),
+  { initialName: '' },
+)
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: boolean): void
+  (e: 'select', value: IngredientDbType): void
+  (e: 'cancel'): void
+}>()
+
+const selectedType = ref<IngredientDbType | null>(null)
+
+function close() {
+  emit('update:modelValue', false)
+}
+
+function onCancel() {
+  close()
+  emit('cancel')
+}
+
+function selectAndConfirm(type: IngredientDbType) {
+  selectedType.value = type
+  emit('select', type)
+  close()
+}
+
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (!open) selectedType.value = null
+  },
+)
+</script>
+
+<style scoped>
+.panel-enter-active,
+.panel-leave-active {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.panel-enter-from,
+.panel-leave-to {
+  opacity: 0;
+}
+
+@media (max-width: 767px) {
+  .panel-enter-from,
+  .panel-leave-to {
+    transform: translateY(100%);
+  }
+}
+
+@media (min-width: 768px) {
+  .panel-enter-from,
+  .panel-leave-to {
+    transform: translateX(100%);
+  }
+}
+</style>

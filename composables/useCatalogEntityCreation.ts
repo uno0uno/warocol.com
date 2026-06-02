@@ -7,8 +7,8 @@ export type CatalogCreationContext =
   | 'supply-hub'
 
 /**
- * Flujo A (any custom ingredient) vs Flujo B (menu/POS product).
- * Not the same as IngredientePropioPanel `form.type === 'supply'`.
+ * Flujo A (bodega / custom ingredient panel) vs Flujo B (menu/POS product).
+ * Intent `supply` is the bodega path — not `ingredients.type === 'supply'`.
  */
 export type CatalogCreationIntent = 'supply' | 'menu-product'
 
