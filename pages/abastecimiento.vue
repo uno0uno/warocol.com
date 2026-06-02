@@ -13,6 +13,8 @@
 </template>
 
 <script setup lang="ts">
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
+
 const route = useRoute()
 const lastAbastecimientoPath = useState<string | null>('abastecimiento-last-path', () => null)
 
@@ -35,7 +37,7 @@ const navigationItems = [
   { to: '/abastecimiento/stock', label: 'Stock' },
   { to: '/abastecimiento/movimientos', label: 'Movimientos' },
   { to: '/abastecimiento/ajustes', label: 'Historial de ajustes', matchPath: '/abastecimiento/ajustes' },
-  { to: '/abastecimiento/ingredientes-propios', label: 'Ingredientes Propios' },
+  { to: '/abastecimiento/ingredientes-propios', label: WAREHOUSE_COPY.warehouseCatalog },
   { to: '/abastecimiento/calidad-datos', label: 'Calidad de Datos' }
 ]
 

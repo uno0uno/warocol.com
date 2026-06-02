@@ -9,14 +9,14 @@
     <div v-else class="flex flex-col gap-3 md:gap-4">
       <!-- Stats Cards -->
       <UiStats>
-        <UiStatsCard label="Total ingredientes" :value="stats.total" icon="beaker" />
+        <UiStatsCard :label="WAREHOUSE_COPY.catalogStatsTotal" :value="stats.total" icon="beaker" />
         <UiStatsCard label="Con costo" :value="stats.withCost" icon="currency-dollar" />
       </UiStats>
 
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         :search-fields="[]"
-        search-placeholder="Buscar ingredientes..."
+        :search-placeholder="WAREHOUSE_COPY.catalogSearchPlaceholder"
         :show-date-range="false"
         :show-clear="hasActiveFilters"
         @search="performSearch"
@@ -30,9 +30,9 @@
             @change="currentPage = 1"
           >
             <option value="">Tipo</option>
-            <option value="food">Alimento</option>
-            <option value="supply">Insumo</option>
-            <option value="service">Servicio</option>
+            <option value="food">{{ WAREHOUSE_COPY.typeFood }}</option>
+            <option value="supply">{{ WAREHOUSE_COPY.typeSupply }}</option>
+            <option value="service">{{ WAREHOUSE_COPY.typeService }}</option>
           </select>
           <button
             type="button"
@@ -53,7 +53,7 @@
       </UiAdvancedFiltersBar>
 
       <!-- Data View -->
-      <HealthSemaphore :is-unlocked="true" title="Ingredientes Personalizados">
+      <HealthSemaphore :is-unlocked="true" :title="WAREHOUSE_COPY.warehouseCatalog">
         <template #header-actions>
           <button
             @click="openPanel(null)"
@@ -68,8 +68,8 @@
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
-        empty-message="Aún no tienes ingredientes personalizados"
-        empty-sub-message="Crea tu primer ingrediente personalizado desde aquí o desde cualquier receta o modificador"
+        :empty-message="WAREHOUSE_COPY.catalogEmptyTitle"
+        :empty-sub-message="WAREHOUSE_COPY.catalogEmptySub"
         variant="default"
         row-size="xs"
       >
@@ -239,12 +239,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
-useHead({ title: 'Ingredientes Personalizados' })
+useHead({ title: WAREHOUSE_COPY.warehouseCatalog })
 
 const { currentTenant } = useTenantReactive()
 
-const TYPE_LABELS: Record<string, string> = { food: 'Alimento', supply: 'Insumo', service: 'Servicio' }
+const TYPE_LABELS: Record<string, string> = {
+  food: WAREHOUSE_COPY.typeFood,
+  supply: WAREHOUSE_COPY.typeSupply,
+  service: WAREHOUSE_COPY.typeService,
+}
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const typeFilter = ref('')
@@ -256,10 +261,10 @@ const panelInitialType = computed(() => {
 })
 
 const nuevoButtonLabel = computed(() => {
-  if (typeFilter.value === 'supply') return '+ Nuevo insumo'
-  if (typeFilter.value === 'service') return '+ Nuevo servicio'
-  if (typeFilter.value === 'food') return '+ Nuevo alimento'
-  return '+ Nuevo ingrediente'
+  if (typeFilter.value === 'supply') return WAREHOUSE_COPY.newSupply
+  if (typeFilter.value === 'service') return WAREHOUSE_COPY.newService
+  if (typeFilter.value === 'food') return WAREHOUSE_COPY.newFood
+  return WAREHOUSE_COPY.newWarehouseItemDefault
 })
 const currentPage = ref(1)
 const itemsPerPage = ref(50)

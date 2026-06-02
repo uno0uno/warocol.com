@@ -172,6 +172,7 @@ import {
 import { useNotifications } from '~/composables/useNotifications'
 import { useBilling } from '~/composables/useBilling'
 import { usePosMobileCart } from '~/composables/usePosMobileCart'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 // Notifications — init here so SSE starts on all screen sizes (not just when bell mounts)
 const { unreadCount: notificationsUnreadCount, init: initNotifications, disconnect: disconnectNotifications } = useNotifications()
@@ -331,9 +332,9 @@ const getPageConfig = () => {
     }
   } else if (path === '/abastecimiento/ingredientes-propios') {
     return {
-      pageTitle: 'Ingredientes Personalizados',
+      pageTitle: WAREHOUSE_COPY.warehouseCatalog,
       pageSubtitle: undefined,
-      searchPlaceholder: 'Buscar ingredientes...',
+      searchPlaceholder: WAREHOUSE_COPY.catalogSearchPlaceholder,
       activePage: 'abastecimiento' as const,
       showBreadcrumb: false,
       breadcrumbPage: undefined,

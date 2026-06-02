@@ -16,6 +16,17 @@ export const WAREHOUSE_COPY = {
   typeFood: 'Alimento',
   typeSupply: 'Insumo',
   typeService: 'Servicio',
+  catalogSearchPlaceholder: 'Buscar en catálogo de bodega...',
+  catalogStatsTotal: 'Total en catálogo',
+  catalogEmptyTitle: 'Aún no tienes artículos en tu catálogo de bodega',
+  catalogEmptySub:
+    'Crea tu primer artículo de bodega desde aquí o desde cualquier receta o modificador',
+  catalogHubDescription:
+    'Artículos de bodega de tu restaurante, creados para tus recetas específicas',
+  newWarehouseItemDefault: '+ Nuevo artículo de bodega',
+  newFood: '+ Nuevo alimento',
+  newSupply: '+ Nuevo insumo',
+  newService: '+ Nuevo servicio',
 } as const
 
 export type WarehouseCopyKey = keyof typeof WAREHOUSE_COPY

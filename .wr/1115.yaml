@@ -1,0 +1,32 @@
+issue: 1115
+title: "feat(copy): batch 2 — abastecimiento catalog and nav labels"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1115-abastecimiento-catalog-copy
+
+paths:
+  - pages/abastecimiento.vue
+  - pages/abastecimiento/ingredientes-propios.vue
+  - pages/abastecimiento/index.vue
+  - layouts/dashboard.vue
+  - constants/warehouseCopy.ts
+
+ac:
+  - No visible "Ingredientes Propios" vs "Personalizados" mismatch on same flow
+  - Search placeholder uses bodega wording (not "Buscar ingredientes")
+  - Manual test /abastecimiento/ingredientes-propios — create, filter by type, archive
+
+out_of_scope:
+  - Slide-overs (batch 3)
+  - Stock/movimientos/calidad-datos pages (batch 5)
+  - Archive modal copy on ingredientes-propios.vue
+
+hints:
+  entry: constants/warehouseCopy.ts — WAREHOUSE_COPY
+  pattern: Import WAREHOUSE_COPY in scoped pages; extend constants for catalog phrases
+  tests: Manual per AC
+
+skip:
+  audits: [ux, color, typography]
