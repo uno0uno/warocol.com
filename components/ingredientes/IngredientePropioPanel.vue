@@ -18,7 +18,7 @@
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        :aria-label="panelAriaLabel"
+        :aria-label="isEdit ? `Editar ingrediente: ${ingredient?.name}` : 'Crear ingrediente personalizado'"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -39,10 +39,10 @@
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">
-                  {{ isEdit ? WAREHOUSE_COPY.panelEditTitle : WAREHOUSE_COPY.panelNewTitle }}
+                  {{ isEdit ? 'Editar ingrediente' : 'Nuevo ingrediente' }}
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                  {{ isEdit ? ingredient?.name : WAREHOUSE_COPY.panelNewSubtitle }}
+                  {{ isEdit ? ingredient?.name : 'Ingrediente personalizado de tu restaurante' }}
                 </p>
               </div>
             </div>
@@ -71,7 +71,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M10 12v4m4-4v4" />
             </svg>
             <div>
-              <p class="text-sm font-semibold text-amber-800">{{ WAREHOUSE_COPY.panelArchived }}</p>
+              <p class="text-sm font-semibold text-amber-800">Ingrediente archivado</p>
               <p class="text-xs text-amber-700 mt-0.5 leading-relaxed">
                 No aparece en recetas ni pedidos nuevos. El historial de compras y ventas queda intacto.
               </p>
@@ -100,9 +100,9 @@
               Tipo <span class="text-destructive">*</span>
             </label>
             <p class="text-xs text-text-tertiary leading-snug">
-              {{ WAREHOUSE_COPY.panelTypeHelper }}
+              Ingrediente de bodega para recetas y costos. Distinto de producto de menú (reventa en POS).
             </p>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" role="group" :aria-label="WAREHOUSE_COPY.warehouseItemType">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" role="group" aria-label="Tipo de ingrediente">
               <button
                 type="button"
                 @click="setIngredientType('food')"
@@ -324,8 +324,8 @@
             />
 
             <p class="text-xs text-text-tertiary">
-              <template v-if="form.unit === 'und'">Si una receta usa este artículo de bodega en {{ unitWeightUnit }}, el sistema divide por este valor para descontar stock en und.</template>
-              <template v-else>Si una receta usa este artículo de bodega en und, el sistema multiplica por este valor para descontar stock en {{ form.unit }}.</template>
+              <template v-if="form.unit === 'und'">Si una receta usa este ingrediente en {{ unitWeightUnit }}, el sistema divide por este valor para descontar stock en und.</template>
+              <template v-else>Si una receta usa este ingrediente en und, el sistema multiplica por este valor para descontar stock en {{ form.unit }}.</template>
             </p>
           </div>
 
@@ -414,7 +414,7 @@
               class="flex-1 h-11 rounded-lg bg-primary text-sm font-semibold text-white transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-primary/30"
             >
               <span v-if="saving">Guardando...</span>
-              <span v-else>{{ isEdit ? 'Guardar cambios' : WAREHOUSE_COPY.createWarehouseItem }}</span>
+              <span v-else>{{ isEdit ? 'Guardar cambios' : 'Crear ingrediente' }}</span>
             </button>
           </div>
 
@@ -425,7 +425,7 @@
             @click="showArchiveConfirm = true"
             class="h-10 w-full rounded-lg border border-amber-300 text-sm font-medium text-amber-700 hover:bg-amber-50 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-300/40"
           >
-            {{ WAREHOUSE_COPY.archiveWarehouseItem }}
+            Archivar ingrediente
           </button>
           <button
             v-if="isEdit && ingredient?.is_active === false"
@@ -435,7 +435,7 @@
             class="h-10 w-full rounded-lg border border-primary/40 text-sm font-medium text-primary hover:bg-primary/5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
           >
             <span v-if="restoring">Restaurando...</span>
-            <span v-else>{{ WAREHOUSE_COPY.restoreWarehouseItem }}</span>
+            <span v-else>Restaurar ingrediente</span>
           </button>
         </div>
 
@@ -470,7 +470,6 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import {
   defaultUndPurchaseUnitsDraft,
   persistDraftPurchaseUnits,
@@ -509,14 +508,6 @@ const props = withDefaults(defineProps<Props>(), {
 })
 const emit = defineEmits<Emits>()
 
-const isEdit = computed(() => !!props.ingredient?.id)
-
-const panelAriaLabel = computed(() =>
-  isEdit.value
-    ? `${WAREHOUSE_COPY.panelEditTitle}: ${props.ingredient?.name ?? ''}`
-    : WAREHOUSE_COPY.panelCreateAria,
-)
-
 // Archive / restore state
 const showArchiveConfirm = ref(false)
 const archiving = ref(false)
@@ -550,6 +541,8 @@ async function restoreIngredient() {
     restoring.value = false
   }
 }
+
+const isEdit = computed(() => !!props.ingredient)
 
 const inputClass = 'h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors'
 
@@ -741,7 +734,7 @@ function validate() {
   }
   if (!form.value.category.trim()) e.category = 'La categoría es obligatoria'
   if (form.value.isResale && form.value.unit !== 'und') {
-    e.general = WAREHOUSE_COPY.resaleWarehouseItemMustBeUnd
+    e.general = 'Los ingredientes de reventa deben tener unidad "und" (pieza).'
   }
   errors.value = e
   return Object.keys(e).length === 0
@@ -813,9 +806,16 @@ async function submit() {
     emit('saved', result.data)
     close()
   } catch (err: any) {
+    const status = err?.status ?? err?.statusCode
+    if (status === 401) {
+      useAuthStore().clearAuth()
+      useAccessStore().clear()
+      await navigateTo('/auth/login')
+      return
+    }
     const detail = err?.data?.detail ?? err?.message ?? 'Error al guardar'
     if (detail.toLowerCase().includes('already exists') || detail.toLowerCase().includes('ya existe')) {
-      errors.value.name = WAREHOUSE_COPY.duplicateWarehouseItemName
+      errors.value.name = 'Ya existe un ingrediente con ese nombre'
     } else {
       errors.value.general = detail
     }
