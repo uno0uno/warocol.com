@@ -14,6 +14,7 @@ import {
   printComandaTickets,
 } from '~/composables/useComandaPrint'
 import { promoBadgeForProduct } from '~/utils/promoProductMatch'
+import { usePosOrderPromoTotals } from '~/composables/usePosOrderPromoTotals'
 
 definePageMeta({
   layout: 'dashboard',
@@ -1030,6 +1031,15 @@ const filteredProducts = computed(() => {
 // Use store for cart data
 const cartTotal = computed(() => posStore.cartTotal)
 
+const { netOrderTotal: mobileCartNetTotal } = usePosOrderPromoTotals(
+  () => posStore.cart,
+  () => storeTabItems.value,
+  () =>
+    isKitchenServiceMode.value
+      ? (storeTabTotal.value ?? 0) + cartTotal.value
+      : cartTotal.value,
+)
+
 // warocol.com#1032 — fixed cart bar + bottom sheet on mobile/tablet (< lg)
 const showMobileCartSheet = ref(false)
 const mobileCartItemCount = computed(() =>
@@ -1037,11 +1047,7 @@ const mobileCartItemCount = computed(() =>
     ? storeTabItems.value.length + posStore.cart.length
     : posStore.cart.length,
 )
-const mobileCartDisplayTotal = computed(() =>
-  isKitchenServiceMode.value
-    ? (storeTabTotal.value ?? 0) + cartTotal.value
-    : cartTotal.value,
-)
+const mobileCartDisplayTotal = computed(() => mobileCartNetTotal.value)
 const mobileCartFormattedTotal = computed(() => formatCurrencyPOS(mobileCartDisplayTotal.value))
 
 const { setMobileCart, setOpenCartHandler, clearMobileCart } = usePosMobileCart()

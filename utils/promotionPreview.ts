@@ -80,7 +80,8 @@ export function formatPromoValue(
       const buy = Number(v.buy_qty)
       const get = Number(v.get_qty)
       if (!Number.isFinite(buy) || !Number.isFinite(get)) return '—'
-      return `Compra ${buy} · lleva ${get}`
+      if (buy < 1 || get < 1) return '—'
+      return `Compra ${buy} · ${get} gratis (mín. ${buy + get})`
     }
     default:
       return '—'

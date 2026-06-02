@@ -108,8 +108,8 @@
           }"
           :order-number="idx + 1"
           :show-fulfillment-status="comandasEnabled"
-          :promo-label="linePromoBadge(item.productId, item.categoryId)?.label ?? null"
-          :promo-title="linePromoBadge(item.productId, item.categoryId)?.title ?? null"
+          :promo-label="linePromoBadgeWhenSaving(item.productId, item.categoryId, tabLinePromoSavings(item))?.label ?? null"
+          :promo-title="linePromoBadgeWhenSaving(item.productId, item.categoryId, tabLinePromoSavings(item))?.title ?? null"
           :promo-savings="tabLinePromoSavings(item)"
           :gross-total="item.subtotal"
           :class="[
@@ -144,8 +144,8 @@
         :key="index"
         :item="item"
         :order-number="tabItems.length + index + 1"
-        :promo-label="linePromoBadge(item.product.id, categoryForProduct(item.product.id))?.label ?? null"
-        :promo-title="linePromoBadge(item.product.id, categoryForProduct(item.product.id))?.title ?? null"
+        :promo-label="linePromoBadgeWhenSaving(item.product.id, categoryForProduct(item.product.id), cartLinePromoSavings(item))?.label ?? null"
+        :promo-title="linePromoBadgeWhenSaving(item.product.id, categoryForProduct(item.product.id), cartLinePromoSavings(item))?.title ?? null"
         :promo-savings="cartLinePromoSavings(item)"
         @edit="$emit('edit-item', index, item.product.id)"
         @remove="$emit('remove-item', index)"
@@ -365,12 +365,7 @@
 <script setup lang="ts">
 import { usePOSStore } from '~/stores/usePOSStore'
 import { storeToRefs } from 'pinia'
-import {
-  linePromoSavingsForProduct,
-  promoBadgeForProduct,
-} from '~/utils/promoProductMatch'
-
-const { activePromos, promoPickOptions } = useActivePromotions()
+import { usePosOrderPromoTotals } from '~/composables/usePosOrderPromoTotals'
 
 const { singular: tableSingular } = useTableLabel()
 const tableSingularLower = computed(() => tableSingular.value.toLowerCase())
@@ -501,66 +496,21 @@ const emit = defineEmits<Emits>()
 const posStore = usePOSStore()
 const { isDeleting } = storeToRefs(posStore)
 
-function linePromoBadge(productId: string, categoryId?: string | null) {
-  return promoBadgeForProduct(activePromos.value, productId, categoryId, promoPickOptions.value)
-}
-
 function categoryForProduct(productId: string): string | null {
   return posStore.getProduct(productId)?.category_id ?? null
 }
 
-function cartLineGross(item: CartItem): number {
-  const basePrice = Number(item.product.price) || 0
-  const modifiersPrice = (item.modifiers ?? []).reduce(
-    (sum, mod) => sum + Number(mod.price) * (mod.quantity ?? 1),
-    0,
-  )
-  return (basePrice + modifiersPrice) * Number(item.quantity)
-}
-
-function cartLinePromoSavings(item: CartItem): number {
-  if (item.promo_opt_out) return 0
-  const gross = cartLineGross(item)
-  return linePromoSavingsForProduct(
-    activePromos.value,
-    item.product.id,
-    { subtotal: gross, quantity: item.quantity },
-    categoryForProduct(item.product.id),
-    promoPickOptions.value,
-  )
-}
-
-function tabLinePromoSavings(item: TabItem): number {
-  if (item.promoOptOut) return 0
-  const fromApi = Number(item.promoSavings) || 0
-  if (fromApi > 0) return fromApi
-  const categoryId = item.categoryId ?? categoryForProduct(item.productId)
-  return linePromoSavingsForProduct(
-    activePromos.value,
-    item.productId,
-    { subtotal: item.subtotal, quantity: item.quantity },
-    categoryId,
-    promoPickOptions.value,
-  )
-}
-
-const grossOrderTotal = computed(() =>
-  props.mesaMode ? props.tabTotal + props.total : props.total,
-)
-
-const orderPromoSavings = computed(() => {
-  let savings = 0
-  for (const item of props.tabItems ?? []) {
-    savings += tabLinePromoSavings(item)
-  }
-  for (const item of props.items) {
-    savings += cartLinePromoSavings(item)
-  }
-  return savings
-})
-
-const netOrderTotal = computed(() =>
-  Math.max(0, grossOrderTotal.value - orderPromoSavings.value),
+const {
+  cartLinePromoSavings,
+  tabLinePromoSavings,
+  linePromoBadgeWhenSaving,
+  orderPromoSavings,
+  grossOrderTotal,
+  netOrderTotal,
+} = usePosOrderPromoTotals(
+  () => props.items,
+  () => props.tabItems ?? [],
+  () => (props.mesaMode ? props.tabTotal + props.total : props.total),
 )
 
 // Issue warocol.com#708 — mesa tab lines live outside posStore.cart; count both buckets.
