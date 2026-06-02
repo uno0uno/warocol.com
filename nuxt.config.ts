@@ -111,8 +111,6 @@ export default defineNuxtConfig({
           'Access-Control-Allow-Credentials': 'true'
         }
       },
-      // Invoice OCR — server/api/suppliers/purchases/extract-invoice.post.ts (240s proxy)
-      '/api/suppliers/purchases/extract-invoice': { proxy: false },
       '/api/**': {
         proxy: {
           to: process.env.NODE_ENV === 'development'
