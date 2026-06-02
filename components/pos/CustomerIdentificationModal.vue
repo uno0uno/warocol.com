@@ -436,7 +436,6 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { $fetch } from 'ofetch'
-import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
 
 type FiscalIdType = 'CC' | 'NIT' | 'CE' | 'PA' | 'TI' | ''
 
@@ -702,10 +701,6 @@ const handleCreate = async () => {
   if (!canSubmitCreate.value) return
   isCreating.value = true
   createError.value = ''
-  posDebugLog('customer-modal', 'handleCreate:start', {
-    phone: createForm.value.phone_number,
-    wantsInvoice: wantsInvoice.value,
-  })
   try {
     const fiscalPayload = wantsInvoice.value ? {
       fiscal_id_type: createForm.value.fiscal_id_type || null,
@@ -724,21 +719,11 @@ const handleCreate = async () => {
       }
     })
     if (response.success) {
-      posDebugLog('customer-modal', 'handleCreate:ok', {
-        customerId: response.data.id,
-        phone: response.data.phone_number,
-      })
       emit('customer-identified', toSelected(response.data))
       emit('update:modelValue', false)
-    } else {
-      posDebugLog('customer-modal', 'handleCreate:unexpected-response', { success: response.success })
     }
   } catch (e: any) {
     createError.value = e.data?.message || e.message || 'Error al guardar el cliente'
-    posDebugLog('customer-modal', 'handleCreate:failed', {
-      createError: createError.value,
-      ...posDebugSerializeError(e),
-    })
   } finally {
     isCreating.value = false
   }
