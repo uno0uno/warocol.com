@@ -94,7 +94,52 @@
             <p v-if="errors.name" class="text-xs text-destructive">{{ errors.name }}</p>
           </div>
 
-          <!-- CREACIÓN: alimento (único tipo en slide-over) -->
+          <!-- CREACIÓN: tipo de ingrediente (bodega — no es reventa de menú) -->
+          <div v-if="!isEdit" class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-text-primary">
+              Tipo <span class="text-destructive">*</span>
+            </label>
+            <p class="text-xs text-text-tertiary leading-snug">
+              Ingrediente de bodega para recetas y costos. Distinto de producto de menú (reventa en POS).
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" role="group" aria-label="Tipo de ingrediente">
+              <button
+                type="button"
+                @click="setIngredientType('food')"
+                :class="typeCardClass('food')"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a9 9 0 019 9c0 4.97-4.03 9-9 9S3 15.97 3 11a9 9 0 019-9z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 11c0-2.21 1.79-4 4-4s4 1.79 4 4" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">Alimento</span>
+                <span :class="['text-[10px] leading-snug', form.type === 'food' ? 'text-primary/80' : 'text-text-tertiary']">Peso o volumen. Ej: carne, aceite</span>
+              </button>
+              <button
+                type="button"
+                @click="setIngredientType('supply')"
+                :class="typeCardClass('supply')"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">Insumo</span>
+                <span :class="['text-[10px] leading-snug', form.type === 'supply' ? 'text-primary/80' : 'text-text-tertiary']">Siempre en und. Ej: icopor, bolsa</span>
+              </button>
+              <button
+                type="button"
+                @click="setIngredientType('service')"
+                :class="typeCardClass('service')"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span class="text-xs font-bold leading-tight">Servicio</span>
+                <span :class="['text-[10px] leading-snug', form.type === 'service' ? 'text-primary/80' : 'text-text-tertiary']">Siempre en horas. Ej: mano de obra</span>
+              </button>
+            </div>
+          </div>
 
           <!-- EDICIÓN: tipo de solo lectura -->
           <div v-if="isEdit" class="flex flex-col gap-1.5">
@@ -125,8 +170,22 @@
             </div>
           </div>
 
-          <!-- CREACIÓN: selector de tipo de medida -->
-          <div v-if="!isEdit" class="flex flex-col gap-1.5">
+          <!-- CREACIÓN: unidad fija (insumo / servicio) -->
+          <div v-if="!isEdit && form.type === 'supply'" class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-text-primary">Unidad base</label>
+            <div class="h-10 flex items-center px-3 rounded-lg border border-border bg-surface-secondary/60 text-sm text-text-secondary select-none">
+              und — unidades (fijo para insumos)
+            </div>
+          </div>
+          <div v-if="!isEdit && form.type === 'service'" class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-text-primary">Unidad base</label>
+            <div class="h-10 flex items-center px-3 rounded-lg border border-border bg-surface-secondary/60 text-sm text-text-secondary select-none">
+              hr — horas (fijo para servicios)
+            </div>
+          </div>
+
+          <!-- CREACIÓN: selector de tipo de medida (solo alimento) -->
+          <div v-if="!isEdit && form.type === 'food'" class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-text-primary">
               Tipo de medida <span class="text-destructive">*</span>
             </label>
@@ -164,12 +223,20 @@
             <p v-if="errors.unit" class="text-xs text-destructive">{{ errors.unit }}</p>
           </div>
 
-          <!-- CREACIÓN: unidades de compra (peso / volumen) -->
+          <!-- CREACIÓN: unidades de compra (alimento peso/volumen) -->
           <IngredientesIngredientPurchaseUnitsField
-            v-if="!isEdit && (unitType === 'peso' || unitType === 'volumen')"
+            v-if="!isEdit && form.type === 'food' && (unitType === 'peso' || unitType === 'volumen')"
             v-model:draft-units="createPurchaseUnits"
             mode="create"
             :base-unit="form.unit"
+          />
+
+          <!-- CREACIÓN: unidades de compra (insumo — und personalizable) -->
+          <IngredientesIngredientPurchaseUnitsField
+            v-if="!isEdit && form.type === 'supply'"
+            v-model:draft-units="createPurchaseUnits"
+            mode="create"
+            base-unit="und"
           />
 
           <!-- EDICIÓN: unidad de solo lectura -->
@@ -402,8 +469,10 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import {
+  defaultUndPurchaseUnitsDraft,
   persistDraftPurchaseUnits,
   suggestionsToDraftUnits,
+  UND_PURCHASE_UNIT_SUGGESTIONS,
   usesCustomPurchaseUnitsDraft,
   type DraftPurchaseUnit,
 } from '@/composables/useIngredientPurchaseUnitsDraft'
@@ -479,6 +548,14 @@ const UNIT_LABELS: Record<string, string> = {
   ml: 'ml — mililitros',
   lt: 'lt — litros',
   und: 'und — unidades',
+  hr: 'hr — horas',
+}
+
+type IngredientDbType = 'food' | 'supply' | 'service'
+
+function normalizeIngredientType(value?: string): IngredientDbType {
+  if (value === 'supply' || value === 'service') return value
+  return 'food'
 }
 
 const UNIT_TYPES = [
@@ -534,7 +611,37 @@ const editSuggestions = computed(() =>
   UNIT_TYPES.find(t => t.unit === form.value.unit)?.suggestions ?? []
 )
 
-// --- Unit type selection ---
+const typeCardClass = (type: IngredientDbType) => [
+  'flex flex-col items-start gap-1.5 py-3 px-3 rounded-xl border-2 transition-all focus:outline-none text-left min-h-[44px]',
+  form.value.type === type
+    ? 'border-primary bg-primary/8 text-primary shadow-md shadow-primary/10'
+    : 'border-border bg-background text-text-tertiary hover:border-primary/30 hover:text-text-secondary hover:bg-surface-secondary/60',
+]
+
+const applyTypeUnitDefaults = (type: IngredientDbType) => {
+  if (type === 'supply') {
+    form.value.unit = 'und'
+    if (createPurchaseUnits.value.length === 0) {
+      createPurchaseUnits.value = defaultUndPurchaseUnitsDraft()
+    }
+  } else if (type === 'service') {
+    form.value.unit = 'hr'
+    createPurchaseUnits.value = []
+  }
+}
+
+const setIngredientType = (type: IngredientDbType) => {
+  if (form.value.type === type) return
+  form.value.type = type
+  unitType.value = ''
+  form.value.unit = ''
+  form.value.unitWeightGr = null
+  createPurchaseUnits.value = []
+  applyTypeUnitDefaults(type)
+  clearError('unit')
+}
+
+// --- Unit type selection (alimento) ---
 const setUnitType = (key: UnitTypeKey) => {
   if (key === 'pieza') return
   unitType.value = key
@@ -548,11 +655,22 @@ const setUnitType = (key: UnitTypeKey) => {
 
 // --- Form reset helpers ---
 const resetCreate = () => {
-  form.value = { name: props.initialName ?? '', unit: '', category: '', parentId: null, parentName: '', isResale: false, type: 'food', unitWeightGr: null }
+  const type = normalizeIngredientType(props.initialType)
+  form.value = {
+    name: props.initialName ?? '',
+    unit: '',
+    category: '',
+    parentId: null,
+    parentName: '',
+    isResale: false,
+    type,
+    unitWeightGr: null,
+  }
   unitType.value = ''
   unitWeightUnit.value = 'gr'
   createPurchaseUnits.value = []
   errors.value = {}
+  applyTypeUnitDefaults(type)
 }
 
 // Populate form when ingredient changes
@@ -601,7 +719,15 @@ const clearError = (field: string) => {
 function validate() {
   const e: Record<string, string> = {}
   if (!form.value.name.trim()) e.name = 'El nombre es obligatorio'
-  if (!form.value.unit) e.unit = 'Selecciona un tipo de medida'
+  if (form.value.type === 'food' && !form.value.unit) {
+    e.unit = 'Selecciona un tipo de medida'
+  }
+  if (form.value.type === 'supply' && form.value.unit !== 'und') {
+    e.unit = 'Los insumos deben usar unidad und'
+  }
+  if (form.value.type === 'service' && form.value.unit !== 'hr') {
+    e.unit = 'Los servicios deben usar unidad hr'
+  }
   if (!form.value.category.trim()) e.category = 'La categoría es obligatoria'
   if (form.value.isResale && form.value.unit !== 'und') {
     e.general = 'Los ingredientes de reventa deben tener unidad "und" (pieza).'
@@ -647,13 +773,24 @@ async function submit() {
       }
       result = await $fetch(`/api/suppliers/ingredients/${props.ingredient.id}`, { method: 'PATCH', body })
     } else {
-      body.type = 'food'
-      const useCustomUnits = usesCustomPurchaseUnitsDraft(createPurchaseUnits.value, currentSuggestions.value)
-      if (!useCustomUnits) {
-        body.purchase_units = currentSuggestions.value.map((s, i) => ({
-          purchase_unit: s.purchase_unit,
-          is_default: i === 0,
-        }))
+      body.type = form.value.type
+      let useCustomUnits = false
+      if (form.value.type === 'food') {
+        useCustomUnits = usesCustomPurchaseUnitsDraft(createPurchaseUnits.value, currentSuggestions.value)
+        if (!useCustomUnits) {
+          body.purchase_units = currentSuggestions.value.map((s, i) => ({
+            purchase_unit: s.purchase_unit,
+            is_default: i === 0,
+          }))
+        }
+      } else if (form.value.type === 'supply') {
+        useCustomUnits = usesCustomPurchaseUnitsDraft(createPurchaseUnits.value, UND_PURCHASE_UNIT_SUGGESTIONS)
+        if (!useCustomUnits) {
+          body.purchase_units = UND_PURCHASE_UNIT_SUGGESTIONS.map((s, i) => ({
+            purchase_unit: s.purchase_unit,
+            is_default: i === 0,
+          }))
+        }
       }
       result = await $fetch('/api/suppliers/ingredients', { method: 'POST', body })
       const ingredientId = result?.data?.id ?? result?.id

@@ -59,7 +59,7 @@
             @click="openPanel(null)"
             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
           >
-            + Nuevo ingrediente
+            {{ nuevoButtonLabel }}
           </button>
         </template>
       <UiResponsiveDataView
@@ -176,6 +176,7 @@
     <IngredientesIngredientePropioPanel
       v-model="showPanel"
       :ingredient="panelIngredient"
+      :initial-type="panelInitialType"
       hide-resale-toggle
       @saved="onSaved"
       @archived="onArchived"
@@ -246,6 +247,19 @@ const TYPE_LABELS: Record<string, string> = { food: 'Alimento', supply: 'Insumo'
 
 const { localSearchTerm, appliedSearch, performSearch: applySearch, clearSearch } = useAppliedSearch()
 const typeFilter = ref('')
+
+const panelInitialType = computed(() => {
+  const t = typeFilter.value
+  if (t === 'food' || t === 'supply' || t === 'service') return t
+  return 'food'
+})
+
+const nuevoButtonLabel = computed(() => {
+  if (typeFilter.value === 'supply') return '+ Nuevo insumo'
+  if (typeFilter.value === 'service') return '+ Nuevo servicio'
+  if (typeFilter.value === 'food') return '+ Nuevo alimento'
+  return '+ Nuevo ingrediente'
+})
 const currentPage = ref(1)
 const itemsPerPage = ref(50)
 const sortField = ref('')
