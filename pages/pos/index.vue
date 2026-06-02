@@ -233,11 +233,14 @@ watch(
 
 // ── Kitchen service mode (mesa + barra with comandas) ─────────────────────
 // Bar without comandas stays cart-only (“venta directa”). #799
-const isKitchenServiceMode = computed(
-  () =>
-    !!posStore.activeTableSession
-    && (!posStore.activeTableSession?.isBar || comandasEnabled.value),
-)
+// Bar with tab lines is cuenta mode even before settings resolve (#1108).
+const isKitchenServiceMode = computed(() => {
+  const session = posStore.activeTableSession
+  if (!session) return false
+  if (!session.isBar) return true
+  if (storeTabItems.value.length > 0) return true
+  return comandasEnabled.value
+})
 const isMesaMode = computed(
   () => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar,
 )
