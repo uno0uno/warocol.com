@@ -146,7 +146,6 @@
                 />
               </div>
             </MenuCatalogInlineCreateBusyOverlay>
-            </MenuCatalogInlineCreateBusyOverlay>
           </UiFormSection>
         </div>
       </div>
