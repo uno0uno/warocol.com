@@ -186,7 +186,7 @@
                   <option value="contraentrega">Contraentrega</option>
                 </select>
                 <p class="text-xs text-text-secondary mt-1.5">
-                  Plazo con el proveedor. Si es contado, registra abajo cómo pagaste y el comprobante.
+                  Plazo acordado con el proveedor. La forma de pago (efectivo, transferencia…) se registra abajo solo si es contado.
                 </p>
               </div>
 
@@ -459,50 +459,38 @@
                   Comprobante de pago
                 </h4>
 
-                <template v-if="isContadoPayment">
+                <div class="space-y-2">
+                  <label class="block text-sm font-medium text-text-primary">Método de pago</label>
+                  <select v-model="form.payment_method" class="input-base w-full px-4 py-2.5">
+                    <option value="">Sin pago aún</option>
+                    <template v-for="group in paymentGroups">
+                      <option v-if="!group.methods.length" :key="group.slug" :value="group.slug">{{ group.name }}</option>
+                      <optgroup v-else :key="group.slug" :label="group.name">
+                        <option v-for="m in group.methods" :key="m.id" :value="m.id">{{ m.name }}</option>
+                      </optgroup>
+                    </template>
+                  </select>
+                </div>
+
+                <template v-if="form.payment_method">
                   <div class="space-y-2">
-                    <label class="block text-sm font-medium text-text-primary">Forma de pago</label>
-                    <select v-model="paymentSelectValue" class="input-base w-full px-4 py-2.5">
-                      <option value="">Sin pago aún</option>
-                      <template v-for="group in paymentGroups" :key="group.slug">
-                        <option v-if="!(group.methods?.length)" :value="`${group.slug}:`">{{ group.name }}</option>
-                        <optgroup v-else :label="group.name">
-                          <option
-                            v-for="method in group.methods"
-                            :key="method.id"
-                            :value="`${group.slug}:${method.id}`"
-                          >
-                            {{ method.name }}
-                          </option>
-                        </optgroup>
-                      </template>
-                    </select>
+                    <label class="block text-sm font-medium text-text-primary">Referencia de pago</label>
+                    <input
+                      v-model="form.payment_reference"
+                      type="text"
+                      class="input-base w-full px-4 py-2.5"
+                      placeholder="Número de transferencia, etc."
+                    />
                   </div>
 
-                  <template v-if="hasPaymentSelected">
-                    <div class="space-y-2">
-                      <label class="block text-sm font-medium text-text-primary">Referencia de pago</label>
-                      <input
-                        v-model="form.payment_reference"
-                        type="text"
-                        class="input-base w-full px-4 py-2.5"
-                        placeholder="Número de transferencia, etc."
-                      />
-                    </div>
-
-                    <div class="space-y-2 pt-1 border-t border-border/60">
-                      <p class="text-sm font-medium text-text-primary pt-4">Archivo adjunto</p>
-                      <PurchasesAttachmentUploader v-model="form.payment_files" embedded />
-                    </div>
-                  </template>
-
-                  <p v-else class="text-sm text-text-secondary leading-relaxed">
-                    Opcional: indica cómo pagaste para adjuntar el comprobante.
-                  </p>
+                  <div class="space-y-2 pt-1 border-t border-border/60">
+                    <p class="text-sm font-medium text-text-primary pt-4">Archivo adjunto</p>
+                    <PurchasesAttachmentUploader v-model="form.payment_files" embedded />
+                  </div>
                 </template>
 
                 <p v-else class="text-sm text-text-secondary leading-relaxed">
-                  Para crédito o contraentrega, el comprobante se registra cuando pagues al proveedor.
+                  Selecciona un método de pago para adjuntar el comprobante.
                 </p>
               </div>
             </div>
@@ -532,12 +520,12 @@
                     </p>
                   </div>
                   <div class="flex justify-between items-center">
-                    <p class="text-xs font-medium text-text-secondary">Condición</p>
+                    <p class="text-xs font-medium text-text-secondary">Pago</p>
                     <p class="text-xs font-semibold text-text-primary">{{ getPaymentTypeText(form.payment_type) }}</p>
                   </div>
-                  <div v-if="isContadoPayment && hasPaymentSelected" class="flex justify-between items-center">
-                    <p class="text-xs font-medium text-text-secondary">Forma de pago</p>
-                    <p class="text-xs font-semibold text-text-primary">{{ resolvePaymentLabel(form.payment_method, form.payment_method_id) }}</p>
+                  <div v-if="form.payment_method" class="flex justify-between items-center">
+                    <p class="text-xs font-medium text-text-secondary">Método</p>
+                    <p class="text-xs font-semibold text-text-primary">{{ resolvePaymentLabel(form.payment_method) }}</p>
                   </div>
                 </div>
 
@@ -683,10 +671,9 @@ import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useBilling } from '@/composables/useBilling'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
+import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
-import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
-import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
-import { parseLocaleDecimal } from '~/utils/parseLocaleDecimal'
+import { parseReceiptDecimal } from '~/utils/parseLocaleDecimal'
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
 
@@ -738,7 +725,6 @@ const form = ref({
   invoice_number: '',
   invoice_files: [] as File[],
   payment_method: '',
-  payment_method_id: null as string | null,
   payment_reference: '',
   payment_files: [] as File[],
   items: [createEmptyItem()] as PurchaseItem[]
@@ -759,29 +745,9 @@ function createEmptyItem(itemType: string = 'food'): PurchaseItem {
 }
 
 // Payment methods
-const { data: paymentMethodsData } = useFetch<{ success: boolean; data: import('~/utils/paymentDefaults').PosPaymentGroup[] }>(
-  '/api/pos/payment-methods',
-  { server: false },
-)
-const paymentGroups = computed(() =>
-  mergePosPaymentGroupsFromApi(paymentMethodsData.value?.data ?? []),
-)
-const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(paymentGroups)
-const { paymentSelectValue, hasPaymentSelected } = usePaymentSelectValue(form, paymentGroups)
-
-const isContadoPayment = computed(() => form.value.payment_type === 'contado')
-
-function clearPaymentProof() {
-  form.value.payment_method = ''
-  form.value.payment_method_id = null
-  form.value.payment_reference = ''
-  form.value.payment_files = []
-}
-
-watch(() => form.value.payment_type, (type) => {
-  if (type !== 'contado') clearPaymentProof()
-})
-
+const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
+const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(computed(() => [...paymentGroups.value]))
+fetchPaymentMethods()
 
 // Fetch next purchase number
 const { data: nextNumberData } = useFetch('/api/suppliers/purchases/direct/next-number', {
@@ -1315,10 +1281,10 @@ const handleScanFileSelect = async (event: Event) => {
           const item: PurchaseItem = {
             ingredient_id: matchedId,
             searchTerm: ingredientName,
-            purchase_quantity: parseLocaleDecimal(ocrItem.cantidad) ?? 1,
+            purchase_quantity: parseReceiptDecimal(ocrItem.cantidad, 'quantity') ?? 1,
             purchase_unit: '',
-            unit_cost: parseLocaleDecimal(ocrItem.precio_unitario) ?? 0,
-            total_cost: parseLocaleDecimal(ocrItem.total) ?? 0,
+            unit_cost: parseReceiptDecimal(ocrItem.precio_unitario, 'amount') ?? 0,
+            total_cost: parseReceiptDecimal(ocrItem.total, 'amount') ?? 0,
             notes: '',
             suggested_price: null,
             item_type: 'food',
@@ -1450,9 +1416,6 @@ const handleSubmit = async () => {
     if (form.value.invoice_number) payload.invoice_number = form.value.invoice_number
     if (form.value.payment_method) {
       payload.payment_method = form.value.payment_method
-      if (form.value.payment_method_id) {
-        payload.payment_method_id = form.value.payment_method_id
-      }
       payload.payment_amount = totalAmount.value
       payload.payment_date = new Date().toISOString()
     }
