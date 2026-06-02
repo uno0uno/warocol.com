@@ -276,8 +276,18 @@
                     <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
                       <!-- Ingredient Search (lg: 4 cols) -->
                       <div class="sm:col-span-12 lg:col-span-4 relative z-10">
-                        <label class="block text-xs font-medium text-text-primary mb-1">
-                          Ítem / Ingrediente *
+                        <label class="flex items-center gap-2 text-xs font-medium text-text-primary mb-1">
+                          <span>Ítem / Ingrediente *</span>
+                          <span
+                            v-if="item.item_type && item.item_type !== 'food'"
+                            class="px-1.5 py-0.5 text-[10px] font-medium rounded"
+                            :class="{
+                              'bg-blue-100 text-blue-700': item.item_type === 'service',
+                              'bg-amber-100 text-amber-700': item.item_type === 'supply',
+                            }"
+                          >
+                            {{ item.item_type === 'service' ? 'Servicio' : 'Insumo' }}
+                          </span>
                         </label>
                         <UiIngredientSearchInput
                           :initial-value="item.searchTerm ?? ''"
@@ -659,7 +669,7 @@
     v-model:busy-label="inlineCatalogBusyLabel"
     v-model:busy-hint="inlineCatalogBusyHint"
     context="purchase"
-    :initial-type="'food'"
+    :initial-type="inlineCreateInitialType"
     @saved="onIngredientCreated"
   />
 </template>
@@ -1287,7 +1297,7 @@ const handleScanFileSelect = async (event: Event) => {
             total_cost: parseReceiptDecimal(ocrItem.total, 'amount') ?? 0,
             notes: '',
             suggested_price: null,
-            item_type: 'food',
+            item_type: matched?.type === 'supply' || matched?.type === 'service' ? matched.type : 'food',
             ocr_description: ocrItem.descripcion || ''
           }
           return item
@@ -1367,6 +1377,17 @@ const inlineCatalogBusy = ref(false)
 const inlineCatalogBusyLabel = ref('')
 const inlineCatalogBusyHint = ref('')
 
+function normalizeItemType(type: unknown): 'food' | 'supply' | 'service' {
+  if (type === 'supply' || type === 'service') return type
+  return 'food'
+}
+
+const inlineCreateInitialType = computed(() => {
+  const index = createModalItemIndex.value
+  if (index < 0 || index >= form.value.items.length) return 'food'
+  return normalizeItemType(form.value.items[index].item_type)
+})
+
 function openCreateModal(index: number, name: string) {
   createModalItemIndex.value = index
   inlineCreateShell.value?.openFromSearch(name || '')
@@ -1378,6 +1399,7 @@ async function onIngredientCreated(ingredient: any) {
   const item = form.value.items[index]
   ingredientCache.value[ingredient.id] = ingredient
   item.ingredient_id = ingredient.id
+  if (ingredient.type) item.item_type = normalizeItemType(ingredient.type)
   // Clear cache so fresh units are fetched for the newly created ingredient
   const updated = new Map(purchaseUnitsCache.value)
   updated.delete(ingredient.id)

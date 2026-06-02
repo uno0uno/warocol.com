@@ -1,0 +1,28 @@
+issue: 1092
+title: "feat(abastecimiento): supply and service inline create in purchases"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1092-purchase-inline-type
+
+paths:
+  - pages/abastecimiento/compras-directas/crear.vue
+
+ac:
+  - Inline create passes row item_type as initialType to IngredientePropioPanel
+  - onIngredientCreated copies ingredient.type to line item_type
+  - OCR matched rows use matched_ingredient.type when supply/service
+  - Insumo/Servicio badge on non-food lines in create form
+
+out_of_scope:
+  - pages/abastecimiento/compra/crear.vue
+  - Stock/movimientos for services
+
+hints:
+  entry: "MenuInlineCatalogCreateShell context=purchase"
+  pattern: "ingredientes-propios.vue panelInitialType from filter"
+  tests: "manual compras-directas crear flow"
+
+skip:
+  audits: [ux, color, typography]
