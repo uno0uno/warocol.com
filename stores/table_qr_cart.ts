@@ -4,6 +4,7 @@
  */
 import { defineStore } from 'pinia'
 import type { OnlineCartItem, CartModifier } from '~/stores/online_cart'
+import { modifiersCartTotal } from '~/utils/saleModifierOption'
 
 function modifiersKey(mods: CartModifier[]): string {
   return JSON.stringify([...mods].sort((a, b) => a.id.localeCompare(b.id)))
@@ -43,7 +44,7 @@ export const useTableQrCartStore = defineStore('tableQrCart', () => {
     notes?: string,
   ) {
     const sortedModifiers = [...modifiers].sort((a, b) => a.id.localeCompare(b.id))
-    const modifiersTotal = modifiers.reduce((sum, mod) => sum + mod.price, 0)
+    const modifiersTotal = modifiersCartTotal(modifiers)
     const existingIndex = items.value.findIndex(
       item => item.product_id === product.id && modifiersKey(item.modifiers) === modifiersKey(modifiers),
     )
@@ -83,7 +84,7 @@ export const useTableQrCartStore = defineStore('tableQrCart', () => {
       return
     }
     const item = items.value[index]
-    const modifiersTotal = item.modifiers.reduce((sum, mod) => sum + mod.price, 0)
+    const modifiersTotal = modifiersCartTotal(item.modifiers)
     item.quantity = quantity
     item.total = (item.unit_price + modifiersTotal) * quantity
   }

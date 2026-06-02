@@ -5,12 +5,16 @@ definePageMeta({
 
 useHead({ title: 'Nueva Venta' })
 
+import { modifiersCartTotal, formatSaleModifierPriceLabel, normalizeModifierOptionType } from '~/utils/saleModifierOption'
+import { formatModifierOptionTypeLabel } from '~/composables/useModifierOptionForm'
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ModifierOption {
   id: string
   name: string
   price: number
+  option_type?: string
 }
 
 interface ModifierGroup {
@@ -168,10 +172,13 @@ function isModifierSelected(item: LineItem, modifierId: string) {
 
 // ─── Totals ───────────────────────────────────────────────────────────────────
 
+function modifierTypeLabel(option: ModifierOption): string {
+  return formatModifierOptionTypeLabel(normalizeModifierOptionType(option.option_type))
+}
+
 function itemTotal(item: LineItem) {
   const base = Number(item.quantity) * Number(item.unit_price)
-  const extras = item.selected_modifiers.reduce((s, m) => s + Number(m.price), 0)
-  return base + extras
+  return base + modifiersCartTotal(item.selected_modifiers)
 }
 
 const total = computed(() =>
@@ -392,10 +399,18 @@ async function submit() {
                     />
                   </svg>
                   {{ option.name }}
-                  <span v-if="option.price > 0" class="text-xs text-text-secondary">
-                    +{{ formatCurrency(option.price) }}
+                  <span
+                    v-if="modifierTypeLabel(option) !== 'Ingrediente'"
+                    class="text-[10px] uppercase tracking-wide text-text-tertiary"
+                  >
+                    {{ modifierTypeLabel(option) }}
                   </span>
-                  <span v-else class="text-xs text-text-secondary">Incluido</span>
+                  <span
+                    class="text-xs"
+                    :class="option.price < 0 ? 'text-success' : 'text-text-secondary'"
+                  >
+                    {{ formatSaleModifierPriceLabel(option.price, formatCurrency) }}
+                  </span>
                 </button>
               </div>
             </div>

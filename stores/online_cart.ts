@@ -10,6 +10,7 @@
  * Session state and pure helpers stay outside Pinia Colada.
  */
 import { defineStore } from 'pinia'
+import { modifiersCartTotal } from '~/utils/saleModifierOption'
 
 // Module-level lock: mutations await this before proceeding so they never
 // race with hydrateFromBackend() during the initial session recovery.
@@ -148,7 +149,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
     onMutate({ product, quantity, modifiers = [], notes }: AddItemVars) {
       const snapshot = [...items.value]
       const sortedModifiers = [...modifiers].sort((a, b) => a.id.localeCompare(b.id))
-      const modifiersTotal = modifiers.reduce((sum, mod) => sum + mod.price, 0)
+      const modifiersTotal = modifiersCartTotal(modifiers)
       const existingIndex = items.value.findIndex(
         item => item.product_id === product.id && modifiersKey(item.modifiers) === modifiersKey(modifiers)
       )
@@ -197,7 +198,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
       const snapshot = [...items.value]
       for (const unit of units) {
         const sortedModifiers = [...unit.modifiers].sort((a, b) => a.id.localeCompare(b.id))
-        const modifiersTotal = unit.modifiers.reduce((sum, mod) => sum + mod.price, 0)
+        const modifiersTotal = modifiersCartTotal(unit.modifiers)
         const existingIndex = items.value.findIndex(
           item => item.product_id === product.id && modifiersKey(item.modifiers) === modifiersKey(unit.modifiers)
         )
@@ -247,7 +248,7 @@ export const useOnlineCartStore = defineStore('onlineCart', () => {
     onMutate({ itemId, quantity }: { itemId: string; quantity: number }) {
       const item = items.value.find(i => i.id === itemId)
       if (!item) throw new Error('Item not found')
-      const modifiersTotal = item.modifiers.reduce((sum, mod) => sum + mod.price, 0)
+      const modifiersTotal = modifiersCartTotal(item.modifiers)
       const prevQty = item.quantity
       const prevTotal = item.total
       item.quantity = quantity
