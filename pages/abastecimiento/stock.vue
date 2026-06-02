@@ -10,7 +10,7 @@
       <!-- Stats Cards -->
       <UiStats>
         <UiStatsCard
-          label="Total Ingredientes"
+          :label="WAREHOUSE_COPY.stockStatsTotal"
           :value="stats.total_ingredients"
           icon="beaker"
         />
@@ -34,7 +34,7 @@
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         :search-fields="[]"
-        search-placeholder="Buscar ingredientes..."
+        :search-placeholder="WAREHOUSE_COPY.stockSearchPlaceholder"
         :show-date-range="false"
         :show-clear="hasActiveFilters"
         @search="performSearch"
@@ -97,7 +97,7 @@
         :sort-field="sortField"
         :sort-direction="sortDirection"
         @sort="handleSort"
-        empty-message="No hay ingredientes en inventario"
+        :empty-message="WAREHOUSE_COPY.stockEmptyMessage"
         empty-sub-message="Comienza recibiendo compras en Abastecimiento"
         variant="default"
         row-size="sm"
@@ -266,6 +266,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 useHead({ title: 'Stock' })
 
@@ -415,7 +416,7 @@ const clearFilters = () => {
 const stockTableColumns = [
   {
     key: 'ingredient_name',
-    title: 'Ingrediente',
+    title: WAREHOUSE_COPY.warehouseItemColumn,
     sortable: true,
     format: 'text',
     align: 'left'

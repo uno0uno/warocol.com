@@ -44,7 +44,7 @@
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">Ajustar stock</h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
-                  {{ selectedIngredient ? selectedIngredient.name : 'Selecciona un ingrediente' }}
+                  {{ selectedIngredient ? selectedIngredient.name : WAREHOUSE_COPY.stockAdjustmentSelectPrompt }}
                 </p>
               </div>
             </div>
@@ -80,11 +80,11 @@
           <!-- 1. Ingredient picker -->
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-text-primary">
-              Ingrediente <span class="text-destructive">*</span>
+              {{ WAREHOUSE_COPY.warehouseItemColumn }} <span class="text-destructive">*</span>
             </label>
             <UiIngredientSearchInput
               :allow-create="false"
-              placeholder="Buscar ingrediente..."
+              :placeholder="WAREHOUSE_COPY.purchaseSearchPlaceholder"
               @select="onIngredientSelect"
             />
           </div>
@@ -263,7 +263,7 @@
               />
             </div>
             <p class="text-[11px] text-text-secondary leading-snug">
-              Si lo especificas, actualiza el costo promedio ponderado del ingrediente.
+              {{ WAREHOUSE_COPY.stockAdjustmentWeightedCostHint }}
             </p>
           </div>
 
@@ -388,6 +388,7 @@ import {
 import {
   useIngredientPurchaseUnits,
 } from '~/composables/useIngredientPurchaseUnits'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import {
   useInventoryAdjustment,
   ADJUSTMENT_REASONS,

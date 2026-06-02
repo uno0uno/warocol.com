@@ -35,7 +35,7 @@ Detalles del producto contenedor (automático):
 |---------|----------------|
 | **Cantidad** | Solo **uno** por negocio |
 | **Precio en menú** | Simbólico ($1); en el POS el cajero define el monto real |
-| **Receta / ingredientes** | Sin receta (no descuenta inventario por composición) |
+| **Receta / artículos de bodega** | Sin receta (no descuenta inventario por composición) |
 | **Modificadores** | No aplican en venta libre |
 | **Categoría fiscal** | Estándar (INC/IVA según tu configuración) |
 
@@ -136,7 +136,7 @@ Puedes registrar un monto con descripción «Propina» si tu operación lo permi
 Falta el producto contenedor de venta libre en tu negocio. Contacta a soporte WARO para activarlo.
 
 **¿Afecta inventario?**
-Solo si el producto contenedor tiene receta o ingredientes asignados (no recomendado). Lo habitual es dejarlo sin composición.
+Solo si el producto contenedor tiene receta o artículos de bodega asignados (no recomendado). Lo habitual es dejarlo sin composición.
 
 **¿Puedo tener dos productos de venta libre?**
 No. El sistema permite **un solo** producto contenedor por negocio.

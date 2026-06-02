@@ -176,7 +176,7 @@
                 <tr>
                   <th
                     class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
-                    Ingrediente
+                    {{ WAREHOUSE_COPY.warehouseItemColumn }}
                   </th>
                   <th
                     class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
@@ -276,6 +276,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, inject } from 'vue'
 import { useRoute } from 'vue-router'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 definePageMeta({
   layout: 'supplier-portal'

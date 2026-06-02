@@ -8,7 +8,7 @@
       <UiAdvancedFiltersBar
         v-model:search="localSearchTerm"
         v-model:date-range="dateRangeDates"
-        search-placeholder="Buscar por ingrediente o referencia..."
+        :search-placeholder="WAREHOUSE_COPY.movementsSearchPlaceholder"
         :search-fields="[]"
         :preset-dates="presetDates"
         :format-date-range="formatDateRange"
@@ -134,6 +134,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 useHead({ title: 'Movimientos' })
 
@@ -237,7 +238,7 @@ const clearFilters = () => {
 
 const movementsTableColumns = [
   { key: 'created_at', title: 'Fecha', sortable: true, format: 'date', align: 'left' },
-  { key: 'ingredient_name', title: 'Ingrediente', sortable: true, format: 'text', align: 'left' },
+  { key: 'ingredient_name', title: WAREHOUSE_COPY.warehouseItemColumn, sortable: true, format: 'text', align: 'left' },
   { key: 'unit', title: 'Unidad', sortable: false, format: 'text', align: 'left' },
   { key: 'movement_type', title: 'Tipo', sortable: true, format: 'badge', align: 'center' },
   { key: 'quantity_change', title: 'Cantidad', sortable: true, format: 'number', align: 'right' },

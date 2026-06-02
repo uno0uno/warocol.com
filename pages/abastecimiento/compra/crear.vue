@@ -126,7 +126,7 @@
                 <p class="text-xs sm:text-sm font-medium truncate" :class="currentStep >= 2 ? 'text-text-primary' : 'text-text-secondary'">
                   Alimentos
                 </p>
-                <p class="text-xs text-text-secondary hidden sm:block">Productos e ingredientes</p>
+                <p class="text-xs text-text-secondary hidden sm:block">{{ WAREHOUSE_COPY.purchaseProductsAndItems }}</p>
               </div>
               <div class="flex-1 h-0.5 sm:h-1 mx-1 sm:mx-4" :class="currentStep > 2 ? 'bg-secondary' : 'bg-border'"></div>
             </div>
@@ -353,11 +353,11 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-3 sm:mb-4">
                   <div>
-                    <label class="block text-sm font-medium text-text-primary mb-2">Ingrediente *</label>
+                    <label class="block text-sm font-medium text-text-primary mb-2">{{ WAREHOUSE_COPY.purchaseLineRequired }}</label>
                     <UiSearchableSelect
                       v-model="item.ingredient_id"
                       :options="ingredientOptions"
-                      placeholder="Buscar ingrediente..."
+                      :placeholder="WAREHOUSE_COPY.purchaseSearchPlaceholder"
                       required
                       @update:model-value="onIngredientChange(index)"
                     />
@@ -373,7 +373,7 @@
                       :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id }"
                       @change="onPurchaseUnitChange(index)"
                     >
-                      <option value="">{{ item.ingredient_id ? 'Seleccionar unidad' : 'Seleccione ingrediente primero' }}</option>
+                      <option value="">{{ item.ingredient_id ? 'Seleccionar unidad' : WAREHOUSE_COPY.selectWarehouseItemFirst }}</option>
                       <option
                         v-for="option in getPurchaseUnitOptions(item.ingredient_id)"
                         :key="option.value"
@@ -673,6 +673,7 @@
 
 <script setup lang="ts">
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 useHead({
   title: 'Crear Cotización - Abastecimiento'
@@ -1195,7 +1196,7 @@ const validateStep2 = () => {
   for (let i = 0; i < form.value.items.length; i++) {
     const item = form.value.items[i]
     if (!item.ingredient_id) {
-      alert(`Por favor seleccione un ingrediente para el alimento #${i + 1}`)
+      alert(`Por favor seleccione un artículo de bodega para el alimento #${i + 1}`)
       return false
     }
     if (!item.quantity || item.quantity <= 0) {

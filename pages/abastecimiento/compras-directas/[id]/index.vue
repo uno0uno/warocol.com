@@ -160,7 +160,7 @@
               <thead>
                 <tr class="bg-surface-secondary border-b border-border">
                   <th class="w-8 px-4 py-3 text-center text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">#</th>
-                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">Ingrediente</th>
+                  <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">{{ WAREHOUSE_COPY.warehouseItemColumn }}</th>
                   <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">Ref. Factura</th>
                   <th class="px-4 py-3 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider w-20 border-r border-dashed border-border/60">Cant.</th>
                   <th class="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider border-r border-dashed border-border/60">Unidad</th>
@@ -323,11 +323,11 @@
 
               <!-- Ingredient Select -->
               <div class="mb-4">
-                <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente *</label>
+                <label class="block text-xs font-medium text-text-secondary mb-1">{{ WAREHOUSE_COPY.purchaseLineRequired }}</label>
                 <UiSearchableSelect
                   v-model="newItem.ingredient_id"
                   :options="ingredientOptions"
-                  placeholder="Buscar ingrediente..."
+                  :placeholder="WAREHOUSE_COPY.purchaseSearchPlaceholder"
                   @update:model-value="onNewIngredientChange"
                 />
               </div>
@@ -353,7 +353,7 @@
                     class="input-base w-full px-3 py-2 text-sm"
                     :class="{ 'bg-surface-secondary cursor-not-allowed': !newItem.ingredient_id }"
                   >
-                    <option value="">{{ newItem.ingredient_id ? 'Seleccionar' : 'Primero ingrediente' }}</option>
+                    <option value="">{{ newItem.ingredient_id ? 'Seleccionar' : WAREHOUSE_COPY.selectWarehouseItemShort }}</option>
                     <option
                       v-for="unitOpt in getPurchaseUnitOptions(newItem.ingredient_id)"
                       :key="unitOpt.value"
@@ -569,6 +569,7 @@ import { computed } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useQuery } from '@pinia/colada'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 

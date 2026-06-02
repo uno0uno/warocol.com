@@ -120,11 +120,11 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 <!-- Ingredient -->
                 <div>
-                  <label class="block text-sm font-medium text-text-primary mb-2">Ingrediente *</label>
+                  <label class="block text-sm font-medium text-text-primary mb-2">{{ WAREHOUSE_COPY.purchaseLineRequired }}</label>
                   <UiSearchableSelect
                     v-model="item.ingredient_id"
                     :options="ingredientOptions"
-                    placeholder="Buscar ingrediente..."
+                    :placeholder="WAREHOUSE_COPY.purchaseSearchPlaceholder"
                     required
                     @update:model-value="onEditIngredientChange(index)"
                   />
@@ -140,7 +140,7 @@
                     class="input-base w-full px-4 py-2"
                     :class="{ 'bg-surface-secondary cursor-not-allowed': !item.ingredient_id }"
                   >
-                    <option value="">{{ item.ingredient_id ? 'Seleccionar unidad' : 'Seleccione ingrediente' }}</option>
+                    <option value="">{{ item.ingredient_id ? 'Seleccionar unidad' : WAREHOUSE_COPY.selectWarehouseItemPrompt }}</option>
                     <option
                       v-for="option in getEditPurchaseUnitOptions(item.ingredient_id)"
                       :key="option.value"
@@ -374,7 +374,7 @@
                   <tr>
                     <th
                       class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
-                      Ingrediente
+                      {{ WAREHOUSE_COPY.warehouseItemColumn }}
                     </th>
                     <th
                       class="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider border-b-2 border-border">
@@ -672,6 +672,7 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { usePurchasesStore } from '~/stores/purchases'
 import { storeToRefs } from 'pinia'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
@@ -1130,7 +1131,7 @@ const currentSupplier = computed(() => {
 function getIngredientName(ingredientId) {
   if (!ingredientId) return 'No especificado'
   const ingredient = ingredients.value.find(ing => ing.id === ingredientId)
-  return ingredient?.name || 'Ingrediente desconocido'
+  return ingredient?.name || WAREHOUSE_COPY.warehouseItemUnknown
 }
 
 const { formatDate: _fmtDate } = useFormatters()
