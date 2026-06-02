@@ -24,7 +24,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="group" aria-label="Tipo de creación de producto">
           <UiSelectionOptionCard
             title="Con receta"
-            description="Cocina con ingredientes y recetas base. Cada venta descuenta inventario."
+            :description="WAREHOUSE_COPY.cookedWithWarehouseItemsDescription"
             :selected="productCreateMode === 'recipe'"
             @click="setProductCreateMode('recipe')"
           >
@@ -433,12 +433,12 @@
                 </div>
               </UiFormSection>
 
-              <UiFormSection title="Ingredientes extra">
+              <UiFormSection :title="WAREHOUSE_COPY.recipeCostLines">
                 <MenuIngredientProductHint class="mb-3" />
 
                 <div v-if="form.ingredients.length === 0" class="text-center py-8 text-text-secondary border border-dashed border-border/80 rounded-lg mb-4">
                   <p class="text-sm font-medium">Sin líneas adicionales</p>
-                  <p class="text-xs mt-1">Agrega ingredientes o productos de reventa para calcular el costo</p>
+                  <p class="text-xs mt-1">{{ WAREHOUSE_COPY.addRecipeCostLinesHelp }}</p>
                 </div>
 
                 <div v-else class="space-y-3 mb-4">
@@ -475,7 +475,7 @@
                           :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
                         >
                           <option v-if="!ingredient.ingredient_id" value="" disabled>
-                            Selecciona ingrediente
+                            {{ WAREHOUSE_COPY.selectWarehouseItem }}
                           </option>
                           <option
                             v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
@@ -495,7 +495,7 @@
                       type="button"
                       @click="removeIngredient(index)"
                       class="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                      title="Eliminar ingrediente"
+                      :title="WAREHOUSE_COPY.removeWarehouseItemLine"
                     >
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -698,6 +698,7 @@
 </template>
 
 <script setup lang="ts">
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, watch } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
@@ -1056,7 +1057,7 @@ async function validateForm(): Promise<boolean> {
       i => !i.ingredient_id || !i.quantity || i.quantity <= 0,
     )
     if (invalid) {
-      submitError.value = 'Completa todos los ingredientes con cantidad mayor a 0.'
+      submitError.value = WAREHOUSE_COPY.completeRecipeCostLinesError
       return false
     }
   }

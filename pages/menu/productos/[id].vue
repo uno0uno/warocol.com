@@ -335,11 +335,11 @@
             <div class="p-4 rounded-xl border border-border bg-surface-secondary/40 space-y-2">
               <p class="text-sm font-medium text-text-primary">Inventario y compras</p>
               <p class="text-xs text-text-secondary">
-                Este producto descuenta stock del insumo vinculado (1 und por venta). El costo real se calcula desde compras de ese insumo, no desde una receta editable aquí.
+                {{ WAREHOUSE_COPY.resaleLinkedStockHelp }}
               </p>
               <div v-if="resaleLinkedLoading" class="text-xs text-text-tertiary flex items-center gap-2">
                 <UiLoadingDots size="8px" color="var(--color-primary)" />
-                Cargando insumo vinculado…
+                {{ WAREHOUSE_COPY.linkedWarehouseItemLoading }}
               </div>
               <NuxtLink
                 v-else-if="linkedResaleIngredient"
@@ -351,7 +351,7 @@
                 <Icon name="heroicons:arrow-top-right-on-square" class="h-3.5 w-3.5" />
               </NuxtLink>
               <p v-else class="text-xs text-text-tertiary">
-                No se encontró el insumo vinculado. Revísalo en Abastecimiento → Ingredientes propios.
+                {{ WAREHOUSE_COPY.linkedWarehouseItemNotFoundCatalog }}
               </p>
             </div>
           </div>
@@ -386,7 +386,7 @@
               <p class="text-sm font-semibold text-text-primary">Este producto controla inventario</p>
               <p class="text-xs text-text-secondary mt-1">
                 <template v-if="tracksInventory">
-                  Define la receta del producto. Cada venta descontará los ingredientes del inventario.
+                  {{ WAREHOUSE_COPY.defineRecipeInventoryHelp }}
                 </template>
                 <template v-else>
                   No se descontará nada del inventario al venderlo. Útil para servicios, propinas, promos o productos sin trazabilidad de costo.
@@ -409,7 +409,7 @@
               </button>
             </div>
             <p class="text-sm text-text-secondary mb-4">
-              Selecciona una o más recetas base para usar sus ingredientes predefinidos.
+              {{ WAREHOUSE_COPY.recipeBaseLinesHelp }}
             </p>
             <p v-if="duplicateRecipeBaseError" class="text-sm text-destructive flex items-center gap-1 mb-3">
               <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
@@ -486,9 +486,9 @@
           <!-- Ingredientes y reventa adicionales -->
           <div class="mt-8">
             <MenuIngredientProductHint class="mb-4" />
-            <h3 class="text-lg font-semibold text-text-primary mb-2">Ingredientes y reventa (adicionales)</h3>
+            <h3 class="text-lg font-semibold text-text-primary mb-2">{{ WAREHOUSE_COPY.recipeCostLines }}</h3>
             <p class="text-sm text-text-secondary mb-4">
-              Materias primas o productos de reventa que descuentan inventario al vender este plato
+              {{ WAREHOUSE_COPY.recipeCostLinesSectionHelp }}
             </p>
             <p v-if="quantityError" class="text-sm text-destructive flex items-center gap-1 mb-3">
               <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
@@ -531,7 +531,7 @@
                       :class="loadingUnits.has(ingredient.ingredient_id) ? 'pl-7' : 'pl-3'"
                     >
                       <option v-if="!ingredient.ingredient_id" value="" disabled>
-                        Selecciona ingrediente
+                        {{ WAREHOUSE_COPY.selectWarehouseItem }}
                       </option>
                       <option
                         v-for="opt in getIngredientUnitOptions(ingredient.ingredient_id)"
@@ -551,7 +551,7 @@
                   type="button"
                   @click="removeIngredient(index)"
                   class="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                  title="Eliminar ingrediente"
+                  :title="WAREHOUSE_COPY.removeWarehouseItemLine"
                 >
                   <Icon name="heroicons:trash" class="h-5 w-5" />
                 </button>
@@ -670,7 +670,7 @@
             </div>
 
             <div class="flex justify-between text-sm gap-2">
-              <span class="text-text-secondary flex-shrink-0">{{ isResaleProduct ? 'Insumo:' : 'Líneas receta:' }}</span>
+              <span class="text-text-secondary flex-shrink-0">{{ isResaleProduct ? WAREHOUSE_COPY.resaleLineSummaryLabel : WAREHOUSE_COPY.recipeCompositionSummary }}</span>
               <span class="font-semibold text-text-primary text-right truncate">
                 <template v-if="isResaleProduct">
                   {{ linkedResaleIngredient?.name ?? '—' }}
@@ -788,6 +788,7 @@
 </template>
 
 <script setup lang="ts">
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQuery, useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
@@ -1296,7 +1297,7 @@ const removeIngredient = (index: number) => {
 
 const getIngredientName = (ingredientId: string) => {
   const ingredient = ingredientCache.value[ingredientId]
-  return ingredient?.name || 'Seleccione un ingrediente'
+  return ingredient?.name || WAREHOUSE_COPY.selectWarehouseItemPrompt
 }
 
 const handleSubmit = async () => {
@@ -1320,7 +1321,7 @@ const handleSubmit = async () => {
   if (!isResaleProduct.value && tracksInventory.value) {
     const hasZeroQuantity = form.value.ingredients.some(ing => !ing.quantity || ing.quantity <= 0)
     if (hasZeroQuantity) {
-      quantityError.value = 'Todos los ingredientes deben tener una cantidad mayor a 0.'
+      quantityError.value = WAREHOUSE_COPY.allRecipeCostLinesNeedQuantity
       return
     }
   }
@@ -1417,9 +1418,9 @@ const handleSubmit = async () => {
           const detail = e?.data?.detail ?? e?.message
           toast.error(
             detail
-              ? `Producto guardado, pero el insumo no se actualizó: ${detail}`
-              : 'Producto guardado, pero no se pudo actualizar el insumo vinculado',
-            { title: 'Insumo no sincronizado' },
+              ? `${WAREHOUSE_COPY.linkedWarehouseItemUpdateFailedDetail} ${detail}`
+              : WAREHOUSE_COPY.linkedWarehouseItemUpdateFailed,
+            { title: WAREHOUSE_COPY.linkedWarehouseItemNotSynced },
           )
         }
       }

@@ -91,7 +91,7 @@
             >
               <div class="flex-1 min-w-0">
                 <span class="text-sm font-bold text-text-primary">{{ item.producto_name }}</span>
-                <p class="text-xs text-text-secondary mt-0.5">{{ item.ingredientes.length }} ingredientes · {{ formatCurrency(item.costo_total) }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">{{ item.ingredientes.length }} {{ WAREHOUSE_COPY.recipeLinesCountSuffix }} · {{ formatCurrency(item.costo_total) }}</p>
               </div>
               <UiStatusBadge
                 :value="item.is_active ? 'Activa' : 'Inactiva'"
@@ -187,14 +187,14 @@
           class="hidden md:block bg-surface border border-border rounded-lg p-4 -mt-3"
         >
           <h4 class="text-sm font-semibold text-text-primary mb-3">
-            Ingredientes de {{ recipe.producto_name }}
+            Composición de {{ recipe.producto_name }}
           </h4>
           <div class="overflow-x-auto">
             <table class="w-full">
               <thead>
                 <tr class="border-b border-border">
                   <th class="text-left py-2 px-2 text-xs font-medium text-text-secondary">
-                    Ingrediente
+                    {{ WAREHOUSE_COPY.recipeCompositionTableHeader }}
                   </th>
                   <th class="text-center py-2 px-2 text-xs font-medium text-text-secondary">
                     Control Stock
@@ -266,6 +266,7 @@
 </template>
 
 <script setup lang="ts">
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
@@ -437,7 +438,7 @@ const recetasTableColumns = [
   },
   {
     key: 'ingredientes_count',
-    title: 'Ingredientes',
+    title: WAREHOUSE_COPY.recipeLinesColumn,
     sortable: true,
     format: 'number',
     align: 'center'

@@ -138,7 +138,7 @@
                 >
                   <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-3">
                     <div class="md:col-span-4">
-                      <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
+                      <label class="block text-xs font-medium text-text-secondary mb-1">{{ WAREHOUSE_COPY.warehouseItemOrResaleRequired }}</label>
                       <UiIngredientSearchInput
                         :initialValue="modifier.ingredient_name || ''"
                         :allow-create="true"
@@ -340,6 +340,7 @@
 </template>
 
 <script setup lang="ts">
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, watch } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useTenantReactive } from '@/composables/useTenantReactive'
@@ -594,7 +595,7 @@ function validateForm(): boolean {
 
   const missingIngredient = form.value.modifiers.some(m => !m.ingredient_id)
   if (missingIngredient) {
-    submitError.value = 'Todas las opciones deben tener un ingrediente o reventa.'
+    submitError.value = WAREHOUSE_COPY.allOptionsNeedWarehouseItem
     return false
   }
 

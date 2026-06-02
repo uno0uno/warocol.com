@@ -91,6 +91,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 interface Ingredient {
   id: string
@@ -112,7 +113,7 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: 'Buscar ingrediente o reventa...',
+  placeholder: WAREHOUSE_COPY.menuSearchPlaceholder,
   initialValue: '',
   allowCreate: false,
   baseOnly: false,

@@ -142,7 +142,7 @@
                   >
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-3">
                       <div class="md:col-span-4">
-                        <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
+                        <label class="block text-xs font-medium text-text-secondary mb-1">{{ WAREHOUSE_COPY.warehouseItemOrResaleRequired }}</label>
                         <UiIngredientSearchInput
                           :allow-create="true"
                           @select="(ing) => selectIngredient(modifier, ing)"
@@ -302,7 +302,7 @@
               </div>
 
               <div class="flex justify-between text-sm">
-                <span class="text-text-secondary">Con ingrediente:</span>
+                <span class="text-text-secondary">{{ WAREHOUSE_COPY.withWarehouseItem }}</span>
                 <span class="font-semibold text-text-primary">{{ form.modifiers.filter(m => m.ingredient_id).length }}</span>
               </div>
 
@@ -358,6 +358,7 @@
 </template>
 
 <script setup lang="ts">
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, watch } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
@@ -526,7 +527,7 @@ async function validateForm(): Promise<boolean> {
 
   const invalidModifiers = form.value.modifiers.some(m => !m.ingredient_id || !m.name)
   if (invalidModifiers) {
-    submitError.value = 'Completa todos los modificadores con ingrediente o reventa.'
+    submitError.value = WAREHOUSE_COPY.completeModifiersWarehouseItem
     return false
   }
 

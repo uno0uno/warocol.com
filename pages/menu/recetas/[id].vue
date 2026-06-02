@@ -55,7 +55,7 @@
             </div>
           </UiFormSection>
 
-          <UiFormSection title="Ingredientes">
+          <UiFormSection :title="WAREHOUSE_COPY.recipeCompositionSection">
             <template #actions>
               <UiButton
                 type="button"
@@ -77,7 +77,7 @@
               <div v-if="form.ingredients.length === 0" class="text-center py-10 text-text-secondary border border-dashed border-border rounded-lg">
                 <Icon name="heroicons:cube" class="h-12 w-12 mx-auto mb-3 text-text-tertiary/50" />
                 <p class="text-sm font-medium mb-0.5">Sin líneas en la receta</p>
-                <p class="text-xs text-text-tertiary">Agrega ingredientes o productos de reventa</p>
+                <p class="text-xs text-text-tertiary">{{ WAREHOUSE_COPY.recipeCompositionEmptyHelp }}</p>
               </div>
 
               <div v-else class="space-y-3">
@@ -88,7 +88,7 @@
                 >
                   <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
                     <div class="md:col-span-5">
-                      <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
+                      <label class="block text-xs font-medium text-text-secondary mb-1">{{ WAREHOUSE_COPY.warehouseItemOrResaleRequired }}</label>
                       <UiIngredientSearchInput
                         :initialValue="ingredient.ingredient_name"
                         :allow-create="true"
@@ -169,7 +169,7 @@
 
           <div class="space-y-3">
             <div class="flex justify-between text-sm">
-              <span class="text-text-secondary">Ingredientes:</span>
+              <span class="text-text-secondary">{{ WAREHOUSE_COPY.recipeCompositionSummary }}</span>
               <span class="font-semibold text-text-primary">{{ form.ingredients.length }}</span>
             </div>
 
@@ -239,6 +239,7 @@
 </template>
 
 <script setup lang="ts">
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useQueryCache } from '@pinia/colada'
 import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
@@ -432,7 +433,7 @@ const handleSubmit = async () => {
 
   const hasZeroQuantity = form.value.ingredients.some(ing => !ing.base_quantity || ing.base_quantity <= 0)
   if (hasZeroQuantity) {
-    submitError.value = 'Todos los ingredientes deben tener cantidad mayor a 0.'
+    submitError.value = WAREHOUSE_COPY.allRecipeCostLinesNeedQuantity
     return
   }
 
@@ -442,7 +443,7 @@ const handleSubmit = async () => {
 
   const uniqueIds = new Set(ingredientIds)
   if (ingredientIds.length !== uniqueIds.size) {
-    submitError.value = 'No puedes agregar el mismo ingrediente más de una vez.'
+    submitError.value = WAREHOUSE_COPY.duplicateWarehouseItemInList
     return
   }
 
