@@ -296,7 +296,7 @@ onUnmounted(() => {
           :columns="tableColumns"
           :data="customers"
           empty-message="No hay clientes para mostrar"
-          empty-sub-message="Registra ventas en el POS para ver tus clientes aquí"
+          empty-sub-message="Crea un cliente con + Nuevo cliente o registra ventas en el POS"
           variant="default"
         >
           <template #card="{ item, index }">
@@ -307,21 +307,28 @@ onUnmounted(() => {
             >
               <div class="flex-1 min-w-0">
                 <span class="text-sm font-bold text-text-primary">{{ item.name }}</span>
-                <p class="text-xs text-text-secondary mt-0.5">{{ item.phone || 'Sin teléfono' }} · {{ item.order_count }} pedidos · {{ formatDate(item.last_order_date) }}</p>
+                <p class="text-xs text-text-secondary mt-0.5">
+                  {{ item.phone || 'Sin teléfono' }} · {{ item.order_count }} pedidos<template v-if="item.last_order_date"> · {{ formatDate(item.last_order_date) }}</template>
+                </p>
               </div>
               <div class="flex flex-col items-end gap-1 flex-shrink-0">
                 <span class="text-sm font-bold text-text-primary">{{ formatCurrency(item.total_spent) }}</span>
-                <span v-if="!isLoadingBalances && (warosBalances[item.customer_id] ?? 0) > 0" class="text-xs font-medium text-primary">
+                <span v-if="!isLoadingBalances" class="text-xs font-medium text-primary tabular-nums">
                   {{ (warosBalances[item.customer_id] ?? 0).toLocaleString('es-CO') }} Waros
                 </span>
                 <span
-                  v-if="!isLoadingCreditBalances && (creditBalances[item.customer_id]?.amount ?? 0) > 0"
+                  v-if="!isLoadingCreditBalances"
                   :class="[
-                    'text-xs font-semibold',
-                    creditBalances[item.customer_id].status === 'overdue' ? 'text-destructive' : 'text-warning'
+                    'text-xs font-semibold tabular-nums',
+                    (creditBalances[item.customer_id]?.amount ?? 0) > 0
+                      ? (creditBalances[item.customer_id].status === 'overdue' ? 'text-destructive' : 'text-warning')
+                      : 'text-text-secondary',
                   ]"
                 >
-                  {{ formatCurrency(creditBalances[item.customer_id].amount) }} deuda
+                  <template v-if="(creditBalances[item.customer_id]?.amount ?? 0) > 0">
+                    {{ formatCurrency(creditBalances[item.customer_id].amount) }} deuda
+                  </template>
+                  <template v-else>Sin deuda</template>
                 </span>
               </div>
             </NuxtLink>
