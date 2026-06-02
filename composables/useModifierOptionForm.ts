@@ -76,7 +76,7 @@ export function mapModifierFromApi(m: Record<string, unknown>): ModifierFormRow 
     sort_order: Number(m.sort_order ?? 0),
     option_type: OPTION_TYPES.includes(optionType) ? optionType : 'INGREDIENT',
     ingredient_id: (m.ingredient_id as string) || ingredient?.id || null,
-    ingredient_name: ingredient?.name || null,
+    ingredient_name: ingredient?.name || (m.ingredient_name as string) || null,
     ingredient_quantity: m.ingredient_quantity != null ? Number(m.ingredient_quantity) : null,
     ingredient_unit: (m.ingredient_unit as string) || null,
     recipe_base_type_id: (m.recipe_base_type_id as string) || recipeBase?.id || null,

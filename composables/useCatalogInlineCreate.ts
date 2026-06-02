@@ -1,5 +1,4 @@
 import type { MaybeRef } from 'vue'
-import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import {
   resolveCreationIntent,
   shouldShowCreationChooser,
@@ -60,13 +59,13 @@ export function useCatalogInlineCreate(options: {
   const busyMessage = computed(() => {
     switch (busyPhase.value) {
       case 'linking-ingredient':
-        return WAREHOUSE_COPY.linkingWarehouseItem
+        return 'Vinculando ingrediente…'
       case 'linking-product':
         return 'Vinculando reventa al catálogo…'
       case 'creating-product':
         return 'Creando producto de menú…'
       case 'creating-ingredient':
-        return WAREHOUSE_COPY.creatingWarehouseItem
+        return 'Creando ingrediente…'
       default:
         return ''
     }
@@ -75,7 +74,7 @@ export function useCatalogInlineCreate(options: {
   const busyHint = computed(() => {
     switch (busyPhase.value) {
       case 'linking-ingredient':
-        return WAREHOUSE_COPY.linkingWarehouseItemHint
+        return 'Se agregará a la fila y se actualizará la lista de ingredientes.'
       case 'linking-product':
         return 'Buscando el insumo de reventa vinculado al producto.'
       case 'creating-product':
@@ -115,6 +114,13 @@ export function useCatalogInlineCreate(options: {
     selectedIngredientDbType.value = null
   }
 
+  function closeAllPanels() {
+    showChooser.value = false
+    showIngredientTypeStep.value = false
+    showPanel.value = false
+    showProductPanel.value = false
+  }
+
   function openIngredientPanel() {
     showPanel.value = true
   }
@@ -122,9 +128,16 @@ export function useCatalogInlineCreate(options: {
   function openFromSearch(name: string) {
     pendingName.value = name.trim()
     resetIngredientTypeSelection()
+    openedFromChooser.value = false
+    closeAllPanels()
+
     const intent = resolveCreationIntent(options.context)
     if (intent === 'supply') {
-      openIngredientPanel()
+      if (usesIngredientTypeStep.value) {
+        showIngredientTypeStep.value = true
+      } else {
+        openIngredientPanel()
+      }
       return
     }
     showChooser.value = true
@@ -176,6 +189,7 @@ export function useCatalogInlineCreate(options: {
     pendingName.value = ''
     openedFromChooser.value = false
     resetIngredientTypeSelection()
+    closeAllPanels()
   }
 
   async function onPanelSaved(ingredient: Record<string, unknown>) {

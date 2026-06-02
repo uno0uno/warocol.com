@@ -90,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 interface Ingredient {
@@ -105,6 +105,8 @@ interface Props {
   initialValue?: string
   allowCreate?: boolean
   baseOnly?: boolean
+  /** food | service | supply — filtra resultados del catálogo */
+  type?: string
 }
 
 interface Emits {
@@ -124,7 +126,11 @@ const emit = defineEmits<Emits>()
 const searchTerm = ref(props.initialValue)
 const showResults = ref(false)
 
-const { query, groupedResults, loading } = useIngredientSearch({ baseOnly: props.baseOnly })
+const ingredientType = computed(() => props.type)
+const { query, groupedResults, loading } = useIngredientSearch({
+  baseOnly: props.baseOnly,
+  type: ingredientType,
+})
 
 watch(() => props.initialValue, (val) => {
   searchTerm.value = val ?? ''
