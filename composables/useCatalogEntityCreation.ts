@@ -19,9 +19,10 @@ export function resolveCreationIntent(
   context: CatalogCreationContext,
 ): CatalogCreationIntent | null {
   switch (context) {
-    case 'purchase':
     case 'supply-hub':
       return 'supply'
+    case 'purchase':
+      return null
     case 'recipe':
     case 'modifier':
     case 'product':

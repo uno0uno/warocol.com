@@ -1,3 +1,4 @@
+import type { Ref } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 
 /**
@@ -15,7 +16,13 @@ import { useDebounceFn } from '@vueuse/core'
  *   // bind query to the search input v-model
  *   // bind groupedResults to the dropdown — skip rows where _isHeader === true
  */
-export const useIngredientSearch = ({ baseOnly = false } = {}) => {
+export const useIngredientSearch = ({
+  baseOnly = false,
+  type,
+}: {
+  baseOnly?: boolean
+  type?: Ref<string | undefined>
+} = {}) => {
   const results = ref<any[]>([])
   const loading = ref(false)
   const error = ref<Error | null>(null)
@@ -32,6 +39,8 @@ export const useIngredientSearch = ({ baseOnly = false } = {}) => {
     try {
       const fetchQuery: Record<string, any> = { search: q.trim(), limit: 50 }
       if (baseOnly) fetchQuery.base_only = true
+      const typeFilter = type?.value?.trim()
+      if (typeFilter) fetchQuery.type = typeFilter
       const data = await $fetch<any>('/api/suppliers/ingredients', {
         query: fetchQuery
       })

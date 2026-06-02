@@ -230,6 +230,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useQueryCache } from '@pinia/colada'
+import { useTenantReactive } from '@/composables/useTenantReactive'
+import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 import {
   createEmptyModifier,
   mapModifierFromApi,
@@ -237,9 +240,6 @@ import {
   validateModifierOption,
   type ModifierFormRow,
 } from '~/composables/useModifierOptionForm'
-import { useQueryCache } from '@pinia/colada'
-import { useTenantReactive } from '@/composables/useTenantReactive'
-import { useMenuIngredientsQuery } from '@/composables/queries/useMenuIngredients'
 
 definePageMeta({
   // layout: 'dashboard' - Inherited from parent menu.vue
@@ -311,6 +311,13 @@ function cacheIngredientForUnits(ing: any) {
 
 function rehydrateModifierIngredientCaches() {
   if (!availableIngredients.value.length) return
+  for (const m of form.value.modifiers) {
+    if (!m.ingredient_id) continue
+    const catalogRow = availableIngredients.value.find((i: any) => i.id === m.ingredient_id)
+    if (!m.ingredient_name && catalogRow?.name) {
+      m.ingredient_name = catalogRow.name
+    }
+  }
   const entries = form.value.modifiers
     .filter(m => m.ingredient_id)
     .map(m => ({
@@ -348,10 +355,9 @@ async function loadPurchaseUnits(ingredientId: string) {
 function selectIngredient(modifier: ModifierFormRow, ing: any) {
   modifier.option_type = 'INGREDIENT'
   modifier.ingredient_id = ing.id
-  modifier.ingredient_name = ing.name
   modifier.name = ing.name
-  modifier.unit_cost = null
   modifier.ingredient_name = ing.name
+  modifier.unit_cost = null
   cacheIngredientForUnits(ing)
   modifier.ingredient_unit = defaultUnitForIngredient(ingredientCache.value[ing.id])
   loadPurchaseUnits(ing.id)
@@ -495,7 +501,7 @@ async function handleSubmit() {
       body: {
         ...form.value,
         modifiers: form.value.modifiers.map(serializeModifierForApi),
-      }
+      },
     })
 
     cache.invalidateQueries()

@@ -54,12 +54,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useProductSearch, type ProductRow } from '~/composables/useProductSearch'
 
 interface Props {
   placeholder?: string
   inputId?: string
+  initialValue?: string
   excludeIds?: string[]
   /** Include resale products in search results (promotions scope picker). */
   includeAllTypes?: boolean
@@ -72,17 +73,26 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Buscar producto…',
   inputId: 'product-search-input',
+  initialValue: '',
   excludeIds: () => [],
   includeAllTypes: false,
 })
 
 const emit = defineEmits<Emits>()
 
-const searchTerm = ref('')
+const searchTerm = ref(props.initialValue)
 const showResults = ref(false)
 
 const { query, results, loading } = useProductSearch({
   includeAllTypes: props.includeAllTypes,
+})
+
+watch(() => props.initialValue, (val) => {
+  searchTerm.value = val ?? ''
+  if (val) {
+    query.value = ''
+    showResults.value = false
+  }
 })
 
 const excludeSet = computed(() => new Set(props.excludeIds))
@@ -107,7 +117,7 @@ function onBlur() {
 }
 
 function select(product: ProductRow) {
-  searchTerm.value = ''
+  searchTerm.value = product.name
   showResults.value = false
   query.value = ''
   emit('select', product)

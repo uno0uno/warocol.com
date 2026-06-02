@@ -76,13 +76,12 @@
       <div class="md:col-span-5">
         <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
         <UiIngredientSearchInput
+          :key="`modifier-ing-${modifier.ingredient_id ?? index}`"
+          :initial-value="ingredientSearchLabel"
           :allow-create="true"
           @select="(ing) => $emit('select-ingredient', ing)"
           @create="(name) => $emit('create-ingredient', name)"
         />
-        <p v-if="modifier.ingredient_id" class="text-xs text-text-secondary mt-1">
-          {{ modifier.ingredient_name || 'Seleccionado' }}
-        </p>
       </div>
       <div class="md:col-span-2">
         <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad</label>
@@ -163,13 +162,12 @@
       <div class="md:col-span-6">
         <label class="block text-xs font-medium text-text-secondary mb-1">Producto del menú *</label>
         <UiProductSearchInput
+          :key="`modifier-prod-${modifier.linked_product_id ?? index}`"
           :input-id="`modifier-option-product-${index}`"
+          :initial-value="productSearchLabel"
           include-all-types
           @select="onProductSelect"
         />
-        <p v-if="modifier.linked_product_id" class="text-xs text-text-secondary mt-1">
-          {{ modifier.linked_product_name }}
-        </p>
       </div>
       <div class="md:col-span-3">
         <label class="block text-xs font-medium text-text-secondary mb-1">Cantidad × producto</label>
@@ -221,6 +219,17 @@ const props = defineProps<{
   getIngredientUnitOptions: (id: string | null) => Array<{ value: string; label: string }>
   getIngredientById: (id: string) => Record<string, unknown> | undefined
 }>()
+
+const ingredientSearchLabel = computed(() => {
+  if (props.modifier.ingredient_name?.trim()) return props.modifier.ingredient_name.trim()
+  if (props.modifier.ingredient_id) {
+    const ing = props.getIngredientById(props.modifier.ingredient_id)
+    if (ing?.name) return String(ing.name)
+  }
+  return ''
+})
+
+const productSearchLabel = computed(() => props.modifier.linked_product_name?.trim() ?? '')
 
 defineEmits<{
   remove: []

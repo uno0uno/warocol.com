@@ -42,9 +42,9 @@
       </div>
 
       <!-- Selected Files Preview -->
-      <div v-if="modelValue.length > 0" class="space-y-2">
+      <div v-if="files.length > 0" class="space-y-2">
         <div
-          v-for="(file, index) in modelValue"
+          v-for="(file, index) in files"
           :key="index"
           class="flex items-center justify-between p-2 bg-surface border border-border rounded-lg"
         >
@@ -71,16 +71,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = withDefaults(defineProps<{
-  modelValue: File[]
+  modelValue?: File[]
   title?: string
   embedded?: boolean
 }>(), {
+  modelValue: () => [],
   title: 'Documentos Adjuntos',
   embedded: false
 })
+
+const files = computed(() => props.modelValue ?? [])
 
 const emit = defineEmits<{
   'update:modelValue': [files: File[]]
@@ -101,7 +104,7 @@ const handleFileSelect = (event: Event) => {
       }
       return true
     })
-    emit('update:modelValue', [...props.modelValue, ...validFiles])
+    emit('update:modelValue', [...files.value, ...validFiles])
   }
   // Reset input
   if (fileInput.value) {
@@ -110,7 +113,7 @@ const handleFileSelect = (event: Event) => {
 }
 
 const removeFile = (index: number) => {
-  const newFiles = [...props.modelValue]
+  const newFiles = [...files.value]
   newFiles.splice(index, 1)
   emit('update:modelValue', newFiles)
 }
