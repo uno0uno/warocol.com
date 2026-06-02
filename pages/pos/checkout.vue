@@ -15,6 +15,7 @@ import DeliveryAddressForm from '~/components/pos/checkout/DeliveryAddressForm.v
 import { displayTableCode } from '~/composables/useTableDisplayCode'
 import { formatPromoTypeLabel } from '~/utils/promotionPreview'
 import { linePromoSavingsForProduct } from '~/utils/promoProductMatch'
+import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
 
 interface TopProduct {
   name: string
@@ -208,15 +209,6 @@ const insightsLoading = ref(false)
 // auto-opened "summary" / "insights" on customer change — too noisy.
 const activeAccordion = ref<'insights' | 'summary' | 'waros' | null>(null)
 
-// Mesa vs barra kitchen service (#799)
-const isKitchenServiceMode = computed(
-  () =>
-    !!posStore.activeTableSession
-    && (!posStore.activeTableSession?.isBar || comandasEnabled.value),
-)
-const isMesaMode = computed(
-  () => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar,
-)
 const { tabItems: storeTabItems } = storeToRefs(posStore)
 
 // Issue #526 — tax preview for the cart sidebar.
@@ -252,7 +244,7 @@ type CheckoutPromoPreview = {
 
 // ── POS restaurant context (BFF aggregator) — reuses same cache key as index.vue (no extra network request)
 // Migrated from /api/api/tenant/public-profile (now owner-only MI_NEGOCIO).
-const { data: settingsData } = useQuery({
+const { data: settingsData, asyncStatus: settingsAsyncStatus } = useQuery({
   key: () => ['pos', 'restaurant-context', currentTenant.value?.id ?? null],
   query: () => $fetch<{ success: boolean; data: any }>('/api/pos/restaurant-context'),
   enabled: () => !!currentTenant.value,
@@ -277,6 +269,20 @@ watch(paymentMethodsData, (data) => {
   }
 }, { immediate: true })
 const comandasEnabled = computed(() => settingsData.value?.data?.comandas_enabled === true)
+
+// Mesa vs barra kitchen service (#799). Bar with tab lines stays cuenta mode even
+// before restaurant-context resolves — prevents false "Carrito vacío" (#1108).
+const isKitchenServiceMode = computed(() => {
+  const session = posStore.activeTableSession
+  if (!session) return false
+  if (!session.isBar) return true
+  if (storeTabItems.value.length > 0) return true
+  return comandasEnabled.value
+})
+const isMesaMode = computed(
+  () => !!posStore.activeTableSession && !posStore.activeTableSession?.isBar,
+)
+
 // Issue #537 — expediter mode (waiter advances comanda state from POS)
 const expediterEnabled = computed(() => settingsData.value?.data?.expediter_enabled === true)
 const showExpediterPanel = ref(false)
@@ -371,27 +377,71 @@ const showAddressForm = ref(false)
 const addressFormError = ref<string | null>(null)
 const addressFormLoading = ref(false)
 
+const mapTabItemToCheckoutLine = (item: (typeof storeTabItems.value)[number]) => ({
+  orderItemId: item.orderItemId,
+  promotionName: item.promotionName ?? null,
+  promoType: item.promoType ?? null,
+  promoSavings: item.promoSavings ?? 0,
+  promoOptOut: item.promoOptOut ?? false,
+  product: {
+    id: item.productId,
+    name: item.productName,
+    price: item.unitPrice,
+    image: '🍽️',
+    category: '',
+  },
+  modifiers: item.modifiers ?? [],
+  quantity: item.quantity,
+  notes: item.notes ?? undefined,
+})
+
 // Computed (must be before any watchers that reference cartTotal)
 const cartItems = computed(() => {
   if (isKitchenServiceMode.value) {
-    return storeTabItems.value.map(item => ({
-      orderItemId: item.orderItemId,
-      promotionName: item.promotionName ?? null,
-      promoType: item.promoType ?? null,
-      promoSavings: item.promoSavings ?? 0,
-      promoOptOut: item.promoOptOut ?? false,
-      product: { id: item.productId, name: item.productName, price: item.unitPrice, image: '🍽️', category: '' },
-      modifiers: item.modifiers ?? [],
-      quantity: item.quantity,
-      notes: item.notes ?? undefined
-    }))
+    const fromTab = storeTabItems.value.map(mapTabItemToCheckoutLine)
+    if (fromTab.length > 0) return fromTab
+    // Bar: cobrar con ítems aún en carrito (sin enviar a la cuenta)
+    if (posStore.activeTableSession?.isBar && posStore.cart.length > 0) {
+      return posStore.cart
+    }
+    return fromTab
   }
   return posStore.cart
 })
+const hasOrderLines = computed(
+  () =>
+    cartItems.value.length > 0
+    || (!!posStore.activeTableSession && storeTabItems.value.length > 0),
+)
+const showEmptyCheckout = computed(
+  () => !showSuccessModal.value && !isKitchenServiceMode.value && !hasOrderLines.value,
+)
+
+const checkoutDebugSnapshot = () => ({
+  isBar: !!posStore.activeTableSession?.isBar,
+  tableId: posStore.activeTableSession?.tableId ?? null,
+  isKitchenServiceMode: isKitchenServiceMode.value,
+  comandasEnabled: comandasEnabled.value,
+  settingsAsyncStatus: settingsAsyncStatus.value,
+  hasOrderLines: hasOrderLines.value,
+  showEmptyCheckout: showEmptyCheckout.value,
+  cartId: posStore.cartId,
+  cartItems: posStore.cart.length,
+  tabItems: storeTabItems.value.length,
+  cartItemsComputed: cartItems.value.length,
+  isLoading: isLoading.value,
+  isSyncingCart: isSyncingCart.value,
+  syncError: syncError.value || null,
+  mesaCurrentStatus: mesaCurrentAsyncStatus.value,
+})
 const promoOptOutSignature = computed(() => {
   if (isKitchenServiceMode.value) {
-    return storeTabItems.value
+    const tabSig = storeTabItems.value
       .map(item => `${item.orderItemId}:${item.promoOptOut ? 1 : 0}`)
+      .join(',')
+    if (tabSig) return tabSig
+    return posStore.cart
+      .map(item => `${item.id ?? ''}:${item.promo_opt_out ? 1 : 0}`)
       .join(',')
   }
   return posStore.cart
@@ -399,7 +449,15 @@ const promoOptOutSignature = computed(() => {
     .join(',')
 })
 const cartTotal = computed(() => {
-  if (isKitchenServiceMode.value) return posStore.activeTableSession?.runningTotal ?? 0
+  if (isKitchenServiceMode.value) {
+    if (storeTabItems.value.length > 0) {
+      return posStore.activeTableSession?.runningTotal ?? 0
+    }
+    if (posStore.activeTableSession?.isBar && posStore.cart.length > 0) {
+      return posStore.cartTotal
+    }
+    return posStore.activeTableSession?.runningTotal ?? 0
+  }
   return posStore.cartTotal
 })
 const checkoutPromoPreview = computed<CheckoutPromoPreview | null>(() => {
@@ -680,7 +738,7 @@ watch(
 watch(
   () => mesaCurrentData.value?.data?.tab_items,
   (rows) => {
-    if (!isMesaMode.value || !rows?.length) return
+    if (!isKitchenServiceMode.value || !rows?.length) return
     posStore.setTabItems(mapTabItemsFromApi(rows))
   },
 )
@@ -1695,6 +1753,11 @@ const processOrder = async () => {
 }
 
 const onCustomerIdentified = async (customer: { id: string; name: string | null; phone_number: string | null; email: string | null }) => {
+  posDebugLog('checkout', 'onCustomerIdentified:start', {
+    customerId: customer.id,
+    phone: customer.phone_number,
+    ...checkoutDebugSnapshot(),
+  })
   selectedCustomer.value = customer
   processingError.value = ''
   // Bar / mesa tab / synced counter cart: do not load the new customer's empty backend cart (#1101).
@@ -1702,7 +1765,14 @@ const onCustomerIdentified = async (customer: { id: string; name: string | null;
     !!posStore.activeTableSession?.isBar
     || isKitchenServiceMode.value
     || (!!posStore.cartId && posStore.cart.length > 0)
-  await posStore.setCustomer(customer as any, { preserveCart })
+  posDebugLog('checkout', 'onCustomerIdentified:preserveCart', { preserveCart })
+  try {
+    await posStore.setCustomer(customer as any, { preserveCart })
+    posDebugLog('checkout', 'onCustomerIdentified:done', checkoutDebugSnapshot())
+  } catch (error) {
+    posDebugLog('checkout', 'onCustomerIdentified:failed', posDebugSerializeError(error))
+    throw error
+  }
 }
 
 // Derived from dynamic groups
@@ -2243,6 +2313,10 @@ const isLoadingPaymentMethods = computed(() =>
 const syncCart = async () => {
   // Si no hay items, no hacer nada
   if (posStore.cart.length === 0) {
+    posDebugLog('checkout', 'syncCart:skipped-empty', {
+      isBar: !!posStore.activeTableSession?.isBar,
+      tabItems: storeTabItems.value.length,
+    })
     isSyncingCart.value = false
     return
   }
@@ -2250,13 +2324,18 @@ const syncCart = async () => {
   try {
     isSyncingCart.value = true
     syncError.value = ''
+    posDebugLog('checkout', 'syncCart:start', { cartId: posStore.cartId, items: posStore.cart.length })
 
     const success = await posStore.syncCartBatch()
     if (!success) {
       syncError.value = 'Error al sincronizar el carrito'
+      posDebugLog('checkout', 'syncCart:batch-failed', { cartId: posStore.cartId })
+    } else {
+      posDebugLog('checkout', 'syncCart:ok', { cartId: posStore.cartId })
     }
   } catch (error: any) {
     syncError.value = error.message || 'Error al sincronizar'
+    posDebugLog('checkout', 'syncCart:failed', posDebugSerializeError(error))
   } finally {
     isSyncingCart.value = false
   }
@@ -2268,6 +2347,14 @@ const syncCart = async () => {
 // isRefreshing: a refetch is in-flight while we already have data. Surfaced
 // in the layout header via registerProgressiveLoading — content stays visible.
 const isLoading = computed(() => {
+  if (
+    posStore.activeTableSession?.isBar
+    && settingsAsyncStatus.value === 'loading'
+    && !settingsData.value
+    && !hasOrderLines.value
+  ) {
+    return true
+  }
   if (isKitchenServiceMode.value) {
     return !mesaCurrentData.value && !mesaCurrentError.value && mesaCurrentAsyncStatus.value === 'loading'
   }
@@ -2324,6 +2411,11 @@ watch(() => selectedCustomer.value?.id, () => {
 // they fire from setup, in parallel with the mount).
 onMounted(async () => {
   setPageSubtitle('Checkout')
+  posDebugLog('checkout', 'mount', {
+    route: useRoute().path,
+    debugEnabled: true,
+    ...checkoutDebugSnapshot(),
+  })
 
   // Siempre regeneramos el carrito backend desde el estado local actual.
   if (posStore.cart.length > 0) {
@@ -2335,7 +2427,40 @@ onMounted(async () => {
   // Cart sync is the only operation that's genuinely sequential (mutation
   // local → backend). All read queries already kicked off from setup.
   await syncCart()
+  posDebugLog('checkout', 'mount:after-syncCart', checkoutDebugSnapshot())
 })
+
+watch(
+  () => cartItems.value.length,
+  (count, prev) => {
+    if (count === 0 && (prev ?? 0) > 0) {
+      posDebugLog('checkout', 'cartItems:became-empty', {
+        selectedCustomerId: selectedCustomer.value?.id ?? null,
+        ...checkoutDebugSnapshot(),
+      })
+    }
+  },
+)
+
+watch(showEmptyCheckout, (empty, wasEmpty) => {
+  if (empty && !wasEmpty) {
+    posDebugLog('checkout', 'ui:empty-cart-shown', checkoutDebugSnapshot())
+  }
+})
+
+watch(
+  () => [isKitchenServiceMode.value, comandasEnabled.value, storeTabItems.value.length] as const,
+  ([kitchen, comandas, tabCount], prev) => {
+    if (!prev) return
+    const [prevKitchen, prevComandas, prevTabCount] = prev
+    if (kitchen === prevKitchen && comandas === prevComandas && tabCount === prevTabCount) return
+    posDebugLog('checkout', 'mode:changed', {
+      from: { kitchen: prevKitchen, comandas: prevComandas, tabCount: prevTabCount },
+      to: { kitchen, comandas, tabCount },
+      ...checkoutDebugSnapshot(),
+    })
+  },
+)
 
 onUnmounted(() => {
   clearRefreshHandler(refreshAll)
@@ -2411,7 +2536,7 @@ onUnmounted(() => {
     <CommonsTheErrorState v-else-if="syncError || checkoutError" />
 
     <!-- Empty Cart State -->
-    <div v-else-if="cartItems.length === 0 && !isKitchenServiceMode && !showSuccessModal" class="text-center py-16">
+    <div v-else-if="showEmptyCheckout" class="text-center py-16">
       <svg class="h-24 w-24 mx-auto text-text-secondary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
       </svg>
