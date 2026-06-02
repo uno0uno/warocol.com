@@ -458,18 +458,24 @@
 
                 <div class="space-y-2">
                   <label class="block text-sm font-medium text-text-primary">Método de pago</label>
-                  <select v-model="form.payment_method" class="input-base w-full px-4 py-2.5">
+                  <select v-model="paymentSelectValue" class="input-base w-full px-4 py-2.5">
                     <option value="">Sin pago aún</option>
-                    <template v-for="group in paymentGroups">
-                      <option v-if="!group.methods.length" :key="group.slug" :value="group.slug">{{ group.name }}</option>
-                      <optgroup v-else :key="group.slug" :label="group.name">
-                        <option v-for="m in group.methods" :key="m.id" :value="m.id">{{ m.name }}</option>
+                    <template v-for="group in paymentGroups" :key="group.slug">
+                      <option :value="`${group.slug}:`">{{ group.name }}</option>
+                      <optgroup v-if="group.methods.length > 0" :label="group.name">
+                        <option
+                          v-for="method in group.methods"
+                          :key="method.id"
+                          :value="`${group.slug}:${method.id}`"
+                        >
+                          {{ group.name }} · {{ method.name }}
+                        </option>
                       </optgroup>
                     </template>
                   </select>
                 </div>
 
-                <template v-if="form.payment_method">
+                <template v-if="hasPaymentSelected">
                   <div class="space-y-2">
                     <label class="block text-sm font-medium text-text-primary">Referencia de pago</label>
                     <input
@@ -520,9 +526,9 @@
                     <p class="text-xs font-medium text-text-secondary">Pago</p>
                     <p class="text-xs font-semibold text-text-primary">{{ getPaymentTypeText(form.payment_type) }}</p>
                   </div>
-                  <div v-if="form.payment_method" class="flex justify-between items-center">
+                  <div v-if="hasPaymentSelected" class="flex justify-between items-center">
                     <p class="text-xs font-medium text-text-secondary">Método</p>
-                    <p class="text-xs font-semibold text-text-primary">{{ resolvePaymentLabel(form.payment_method) }}</p>
+                    <p class="text-xs font-semibold text-text-primary">{{ resolvePaymentLabel(form.payment_method, form.payment_method_id) }}</p>
                   </div>
                 </div>
 
@@ -668,8 +674,9 @@ import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { useBilling } from '@/composables/useBilling'
 import { useScanQuotaQuery } from '~/composables/queries/useScanQuota'
-import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
+import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
+import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
 import { parseLocaleDecimal } from '~/utils/parseLocaleDecimal'
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
@@ -722,6 +729,7 @@ const form = ref({
   invoice_number: '',
   invoice_files: [] as File[],
   payment_method: '',
+  payment_method_id: null as string | null,
   payment_reference: '',
   payment_files: [] as File[],
   items: [createEmptyItem()] as PurchaseItem[]
@@ -742,9 +750,15 @@ function createEmptyItem(itemType: string = 'food'): PurchaseItem {
 }
 
 // Payment methods
-const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
-const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(computed(() => [...paymentGroups.value]))
-fetchPaymentMethods()
+const { data: paymentMethodsData } = useFetch<{ success: boolean; data: import('~/utils/paymentDefaults').PosPaymentGroup[] }>(
+  '/api/pos/payment-methods',
+  { server: false },
+)
+const paymentGroups = computed(() =>
+  mergePosPaymentGroupsFromApi(paymentMethodsData.value?.data ?? []),
+)
+const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(paymentGroups)
+const { paymentSelectValue, hasPaymentSelected } = usePaymentSelectValue(form, paymentGroups)
 
 // Fetch next purchase number
 const { data: nextNumberData } = useFetch('/api/suppliers/purchases/direct/next-number', {
@@ -1413,6 +1427,9 @@ const handleSubmit = async () => {
     if (form.value.invoice_number) payload.invoice_number = form.value.invoice_number
     if (form.value.payment_method) {
       payload.payment_method = form.value.payment_method
+      if (form.value.payment_method_id) {
+        payload.payment_method_id = form.value.payment_method_id
+      }
       payload.payment_amount = totalAmount.value
       payload.payment_date = new Date().toISOString()
     }

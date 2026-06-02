@@ -435,20 +435,26 @@
                       Metodo de Pago
                     </label>
                     <select
-                      v-model="form.payment_method"
+                      v-model="paymentSelectValue"
                       class="input-base w-full px-4 py-2"
                     >
                       <option value="">Sin pago aun</option>
-                      <template v-for="group in paymentGroups">
-                        <option v-if="!group.methods.length" :key="group.slug" :value="group.slug">{{ group.name }}</option>
-                        <optgroup v-else :key="group.slug" :label="group.name">
-                          <option v-for="m in group.methods" :key="m.id" :value="m.id">{{ m.name }}</option>
+                      <template v-for="group in paymentGroups" :key="group.slug">
+                        <option :value="`${group.slug}:`">{{ group.name }}</option>
+                        <optgroup v-if="group.methods.length > 0" :label="group.name">
+                          <option
+                            v-for="method in group.methods"
+                            :key="method.id"
+                            :value="`${group.slug}:${method.id}`"
+                          >
+                            {{ group.name }} · {{ method.name }}
+                          </option>
                         </optgroup>
                       </template>
                     </select>
                   </div>
 
-                  <div v-if="form.payment_method">
+                  <div v-if="hasPaymentSelected">
                     <label class="block text-sm font-medium text-text-secondary mb-2">
                       Referencia de Pago
                     </label>
@@ -482,7 +488,7 @@
                   </div>
 
                   <!-- Attachment Uploader -->
-                  <div v-if="form.payment_method">
+                  <div v-if="hasPaymentSelected">
                     <label class="block text-sm font-medium text-text-secondary mb-2">
                       {{ existingPaymentAttachments.length > 0 ? 'Agregar Mas Comprobantes' : 'Adjuntar Comprobante' }}
                     </label>
@@ -666,7 +672,7 @@
           </div>
 
           <!-- Documents Summary -->
-          <div v-if="form.invoice_number || form.payment_method || form.invoice_files.length || form.payment_files.length" class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-t border-border bg-background/50">
+          <div v-if="form.invoice_number || hasPaymentSelected || form.invoice_files.length || form.payment_files.length" class="px-4 sm:px-6 md:px-8 py-4 sm:py-6 border-t border-border bg-background/50">
             <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">Documentos</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div v-if="form.invoice_number || form.invoice_files.length">
@@ -675,9 +681,9 @@
                 <p v-if="existingInvoiceAttachments.length" class="text-xs text-success mt-1">{{ existingInvoiceAttachments.length }} archivo(s) existente(s)</p>
                 <p v-if="form.invoice_files.length" class="text-xs text-primary mt-1">+ {{ form.invoice_files.length }} archivo(s) nuevo(s)</p>
               </div>
-              <div v-if="form.payment_method || form.payment_files.length">
+              <div v-if="hasPaymentSelected || form.payment_files.length">
                 <p class="text-sm text-text-secondary">Pago:</p>
-                <p v-if="form.payment_method" class="font-medium text-text-primary">{{ resolvePaymentLabel(form.payment_method) }}</p>
+                <p v-if="hasPaymentSelected" class="font-medium text-text-primary">{{ resolvePaymentLabel(form.payment_method, form.payment_method_id) }}</p>
                 <p v-if="form.payment_reference" class="text-xs text-text-secondary">Ref: {{ form.payment_reference }}</p>
                 <p v-if="existingPaymentAttachments.length" class="text-xs text-success mt-1">{{ existingPaymentAttachments.length }} comprobante(s) existente(s)</p>
                 <p v-if="form.payment_files.length" class="text-xs text-primary mt-1">+ {{ form.payment_files.length }} comprobante(s) nuevo(s)</p>
@@ -761,8 +767,9 @@ import { TrashIcon, DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon } 
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
-import { usePaymentMethods } from '~/composables/usePaymentMethods'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
+import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
+import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'
 
 const formatPurchaseDate = (date: Date) => fnsFormat(date, 'dd/MM/yy', { locale: es })
 
@@ -796,6 +803,7 @@ const form = ref({
   invoice_number: '',
   invoice_files: [] as File[],
   payment_method: '',
+  payment_method_id: null as string | null,
   payment_reference: '',
   payment_files: [] as File[],
   items: [] as PurchaseItem[]
@@ -803,9 +811,15 @@ const form = ref({
 
 // Fetch existing purchase
 // Payment methods
-const { paymentGroups, fetchPaymentMethods } = usePaymentMethods()
-const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(computed(() => [...paymentGroups.value]))
-fetchPaymentMethods()
+const { data: paymentMethodsData } = useFetch<{ success: boolean; data: import('~/utils/paymentDefaults').PosPaymentGroup[] }>(
+  '/api/pos/payment-methods',
+  { server: false },
+)
+const paymentGroups = computed(() =>
+  mergePosPaymentGroupsFromApi(paymentMethodsData.value?.data ?? []),
+)
+const { resolveLabel: resolvePaymentLabel } = usePaymentLabel(paymentGroups)
+const { paymentSelectValue, hasPaymentSelected } = usePaymentSelectValue(form, paymentGroups)
 
 const { data: purchaseResponse, pending: loadingPurchase, error: fetchError } = useFetch(`/api/suppliers/purchases/direct/${purchaseId}`, {
   server: false
@@ -828,6 +842,7 @@ watch(originalPurchase, (purchase) => {
     form.value.notes = purchase.notes || ''
     form.value.invoice_number = purchase.invoice_number || ''
     form.value.payment_method = purchase.payment_method || ''
+    form.value.payment_method_id = purchase.payment_method_id || null
     form.value.payment_reference = purchase.payment_reference || ''
     form.value.items = (purchase.items || []).map((item: any) => {
       const purchaseQty = item.purchase_quantity || item.quantity || 1
@@ -1060,6 +1075,7 @@ const handleSubmit = async () => {
       notes: form.value.notes,
       invoice_number: form.value.invoice_number,
       payment_method: form.value.payment_method || null,
+      payment_method_id: form.value.payment_method_id || null,
       payment_reference: form.value.payment_reference || null,
       payment_amount: form.value.payment_method ? Number(totalAmount.value) : null,
       payment_date: form.value.payment_method ? new Date().toISOString() : null
