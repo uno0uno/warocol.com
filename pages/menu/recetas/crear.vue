@@ -3,7 +3,7 @@
     <UiSubmitBusyOverlay
       :busy="isSubmitting"
       label="Creando receta base..."
-      hint="Estamos guardando la receta y consolidando sus ingredientes."
+      :hint="WAREHOUSE_COPY.recipeCompositionSavingHint"
       variant="glass"
       indicator="matrix"
     />
@@ -68,7 +68,7 @@
               </div>
             </UiFormSection>
 
-            <UiFormSection title="Ingredientes">
+            <UiFormSection :title="WAREHOUSE_COPY.recipeCompositionSection">
               <template #actions>
                 <button
                   type="button"
@@ -96,7 +96,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                   <p class="text-sm font-medium mb-0.5">Sin líneas en la receta</p>
-                  <p class="text-xs text-text-tertiary">Agrega ingredientes o productos de reventa</p>
+                  <p class="text-xs text-text-tertiary">{{ WAREHOUSE_COPY.recipeCompositionEmptyHelp }}</p>
                 </div>
 
                 <div v-else class="space-y-3">
@@ -107,7 +107,7 @@
                   >
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
                       <div class="md:col-span-5">
-                        <label class="block text-xs font-medium text-text-secondary mb-1">Ingrediente o reventa *</label>
+                        <label class="block text-xs font-medium text-text-secondary mb-1">{{ WAREHOUSE_COPY.warehouseItemOrResaleRequired }}</label>
                         <UiIngredientSearchInput
                           :allow-create="true"
                           @select="(ing) => selectIngredient(ing, index)"
@@ -196,7 +196,7 @@
               </div>
 
               <div class="flex justify-between text-sm">
-                <span class="text-text-secondary">Ingredientes:</span>
+                <span class="text-text-secondary">{{ WAREHOUSE_COPY.recipeCompositionSummary }}</span>
                 <span class="font-semibold text-text-primary">{{ form.ingredients.length }}</span>
               </div>
 
@@ -257,6 +257,7 @@
 </template>
 
 <script setup lang="ts">
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { ref } from 'vue'
 import { useTenantReactive } from '@/composables/useTenantReactive'
 
@@ -392,7 +393,7 @@ async function validateForm(): Promise<boolean> {
   }
 
   if (form.value.ingredients.length === 0) {
-    submitError.value = 'Agrega al menos un ingrediente a la receta.'
+    submitError.value = WAREHOUSE_COPY.addWarehouseItemToRecipe
     return false
   }
 
@@ -400,7 +401,7 @@ async function validateForm(): Promise<boolean> {
     i => !i.ingredient_id || !i.base_quantity || i.base_quantity <= 0,
   )
   if (invalid) {
-    submitError.value = 'Completa todos los ingredientes con cantidad mayor a 0.'
+    submitError.value = WAREHOUSE_COPY.completeRecipeCostLinesError
     return false
   }
 
@@ -410,7 +411,7 @@ async function validateForm(): Promise<boolean> {
 
   const uniqueIds = new Set(ingredientIds)
   if (ingredientIds.length !== uniqueIds.size) {
-    duplicateIngredientError.value = 'No puedes agregar el mismo ingrediente más de una vez.'
+    duplicateIngredientError.value = WAREHOUSE_COPY.duplicateWarehouseItemInList
     return false
   }
 

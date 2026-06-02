@@ -1,0 +1,36 @@
+issue: 1117
+title: "feat(copy): batch 4 — menú, recetas, productos, modificadores copy"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1117-menu-recipe-copy
+epic: 1113
+
+paths:
+  - constants/warehouseCopy.ts
+  - pages/menu/productos/crear.vue
+  - pages/menu/productos/[id].vue
+  - pages/menu/recetas/index.vue
+  - pages/menu/recetas/crear.vue
+  - pages/menu/recetas/[id].vue
+  - pages/menu/modificadores/crear.vue
+  - pages/menu/modificadores/[id].vue
+  - components/ui/IngredientSearchInput.vue
+  - components/ui/IngredientFilterSearch.vue
+
+ac:
+  - Section title Insumos de la receta on product create/edit
+  - Hint artículo de bodega vs producto de menú (MenuIngredientProductHint unchanged)
+  - Search placeholders/aria + reventa block use bodega glossary
+  - Manual test create product with extra lines + link to receta
+
+out_of_scope:
+  - abastecimiento list, compras/docs, inline-create choosers, URLs, API identifiers
+
+hints:
+  glossary: constants/warehouseCopy.ts — WAREHOUSE_COPY keys for batch 4 menu copy
+  verify: rg -i ingrediente pages/menu/productos pages/menu/recetas pages/menu/modificadores — allow code keys/comments only
+
+skip:
+  audits: [ux, color, typography]
