@@ -1250,7 +1250,8 @@ const handleScanFileSelect = async (event: Event) => {
     formData.append('file', optimizedFile)
     const response = await $fetch<any>('/api/suppliers/purchases/extract-invoice', {
       method: 'POST',
-      body: formData
+      body: formData,
+      timeout: 240_000, // 4 min — Gemini OCR; was timing out at ~120s
     })
     if (response.success && response.data) {
       const data = response.data
