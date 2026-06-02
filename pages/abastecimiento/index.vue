@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
+
 useHead({ title: 'Abastecimiento' })
 </script>
 
@@ -15,8 +17,8 @@ useHead({ title: 'Abastecimiento' })
           </svg>
         </div>
         <div class="min-w-0">
-          <p class="text-sm font-semibold text-text-primary">Ingredientes Personalizados</p>
-          <p class="text-xs text-text-secondary mt-0.5 leading-relaxed">Ingredientes propios de tu restaurante, creados para tus recetas específicas</p>
+          <p class="text-sm font-semibold text-text-primary">{{ WAREHOUSE_COPY.warehouseCatalog }}</p>
+          <p class="text-xs text-text-secondary mt-0.5 leading-relaxed">{{ WAREHOUSE_COPY.catalogHubDescription }}</p>
         </div>
       </NuxtLink>
     </div>
