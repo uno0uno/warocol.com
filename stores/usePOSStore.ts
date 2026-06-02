@@ -321,8 +321,14 @@ export const usePOSStore = defineStore('pos', () => {
         }
     }
 
-    const setCustomer = async (customer: Customer) => {
+    type SetCustomerOptions = {
+        /** Keep in-memory cart/session — checkout attaches customer at payment (#1101, #1030). */
+        preserveCart?: boolean
+    }
+
+    const setCustomer = async (customer: Customer, options?: SetCustomerOptions) => {
         currentCustomer.value = customer
+        if (options?.preserveCart) return
         if (cart.value.length > 0 && !cartId.value) {
             await syncLocalCartToBackend(customer.id)
         } else {
