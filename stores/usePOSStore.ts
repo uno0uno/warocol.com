@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { CartModifier } from '~/stores/online_cart'
-import { posDebugLog, posDebugSerializeError } from '~/utils/posDebugLog'
 
 const modifierLineTotal = (mod: CartModifier) => Number(mod.price) * (mod.quantity ?? 1)
 
@@ -328,38 +327,21 @@ export const usePOSStore = defineStore('pos', () => {
     }
 
     const setCustomer = async (customer: Customer, options?: SetCustomerOptions) => {
-        posDebugLog('pos-store', 'setCustomer', {
-            customerId: customer.id,
-            preserveCart: !!options?.preserveCart,
-            cartItems: cart.value.length,
-            cartId: cartId.value ?? null,
-            isBar: activeTableSession.value?.isBar ?? false,
-            tabItems: tabItems.value.length,
-        })
         currentCustomer.value = customer
-        if (options?.preserveCart) {
-            posDebugLog('pos-store', 'setCustomer:skipped-cart-load', { customerId: customer.id })
-            return
-        }
+        if (options?.preserveCart) return
         if (cart.value.length > 0 && !cartId.value) {
-            posDebugLog('pos-store', 'setCustomer:syncLocalCartToBackend', { customerId: customer.id })
             await syncLocalCartToBackend(customer.id)
         } else {
-            posDebugLog('pos-store', 'setCustomer:loadCartFromBackend', { customerId: customer.id })
             await loadCartFromBackend(customer.id)
         }
     }
 
     // Cargar carrito desde el backend
     const loadCartFromBackend = async (customerId: string) => {
-        if (isSyncing.value) {
-            posDebugLog('pos-store', 'loadCartFromBackend:skipped-already-syncing', { customerId })
-            return
-        }
+        if (isSyncing.value) return
 
         try {
             isSyncing.value = true
-            posDebugLog('pos-store', 'loadCartFromBackend:start', { customerId })
             const response = await $fetch(`/api/pos/cart/${customerId}`) as {
                 success: boolean
                 data: {
@@ -391,17 +373,8 @@ export const usePOSStore = defineStore('pos', () => {
                     is_resale: item.is_resale || false,
                     promo_opt_out: Boolean(item.promo_opt_out),
                 }))
-                posDebugLog('pos-store', 'loadCartFromBackend:ok', {
-                    customerId,
-                    cartId: cartId.value,
-                    itemCount: cart.value.length,
-                })
             }
-        } catch (error) {
-            posDebugLog('pos-store', 'loadCartFromBackend:failed', {
-                customerId,
-                ...posDebugSerializeError(error),
-            })
+        } catch {
             cart.value = []
         } finally {
             isSyncing.value = false
