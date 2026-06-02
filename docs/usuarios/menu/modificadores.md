@@ -59,9 +59,9 @@ Aquí agregas cada opción disponible. Por cada una defines:
 
 Haz clic en **+ Agregar Modificador** para agregar más opciones.
 
-Cada modificador puede tener ingredientes asociados para control de inventario. Si al buscar un ingrediente no aparece, encontrarás la opción **+ Crear ingrediente** para crearlo en un panel lateral sin salir del formulario. Necesitarás: Nombre, Tipo de medida y Categoría (los tres obligatorios).
+Cada modificador puede tener artículos de bodega asociados para control de inventario. Si al buscar un artículo de bodega no aparece, encontrarás la opción **+ Crear artículo de bodega** para crearlo en un panel lateral sin salir del formulario. Necesitarás: Nombre, Tipo de medida y Categoría (los tres obligatorios).
 
-→ [Ver más sobre ingredientes propios](https://warocol.com/docs/usuarios/compras#ingredientes-propios)
+→ [Ver más sobre artículos de bodega propios](https://warocol.com/docs/usuarios/compras#artículos de bodega-propios)
 
 ### Paso 3 — Revisión
 

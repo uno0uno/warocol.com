@@ -10,19 +10,19 @@ Un producto es lo que tus clientes ven y pueden pedir: tiene nombre, precio, des
 
 ## Cómo funciona la composición de un producto
 
-Cada producto puede tener ingredientes asignados de tres formas — puedes usar cualquiera de ellas o combinarlas:
+Cada producto puede tener artículos de bodega asignados de tres formas — puedes usar cualquiera de ellas o combinarlas:
 
 | Opción | Cuándo usarla |
 |--------|---------------|
-| **Solo ingredientes directos** | El producto es único, no comparte su preparación con otros platos |
+| **Solo artículos de bodega directos** | El producto es único, no comparte su preparación con otros platos |
 | **Solo recetas** | La preparación es una receta ya creada que se usa en varios productos |
-| **Recetas + ingredientes adicionales** | Tienes una base común (receta) más ingredientes propios de este plato |
+| **Recetas + artículos de bodega adicionales** | Tienes una base común (receta) más artículos de bodega propios de este plato |
 
 > **Con receta** en el asistente: WARO descontará inventario según la receta al vender.
 >
 > **Venta directa** (reventa): se vende por pieza (`und`); el sistema crea el insumo de stock y la equivalencia en gr o ml.
 
-**¿Cuándo crear una receta primero?** Solo cuando esa preparación se reutiliza en varios productos. Si el plato es único, agrega los ingredientes directamente al producto. → [ver guía de recetas](./recetas.md)
+**¿Cuándo crear una receta primero?** Solo cuando esa preparación se reutiliza en varios productos. Si el plato es único, agrega los artículos de bodega directamente al producto. → [ver guía de recetas](./recetas.md)
 
 ---
 
@@ -38,7 +38,7 @@ Elige cómo se prepara o vende:
 
 | Opción | Significado |
 |--------|-------------|
-| **Con receta** | Cocina · ingredientes y recetas base; cada venta descuenta inventario |
+| **Con receta** | Cocina · artículos de bodega y recetas base; cada venta descuenta inventario |
 | **Venta directa** | Reventa · pieza (`und`) con equivalencia en gr o ml |
 
 ### Paso 2 — Información general
@@ -65,13 +65,13 @@ Aquí defines de qué está hecho el producto:
 
 **Agregar recetas** — haz clic en **+ Agregar Receta Base** y busca una receta ya creada.
 
-**Agregar ingredientes directos** — agrega ingredientes uno a uno con su cantidad.
+**Agregar artículos de bodega directos** — agrega artículos de bodega uno a uno con su cantidad.
 
-**Si el ingrediente no existe:** en el buscador aparece **+ Crear ingrediente** (panel lateral sin salir del formulario).
+**Si el artículo de bodega no existe:** en el buscador aparece **+ Crear artículo de bodega** (panel lateral sin salir del formulario).
 
-→ [Ver más sobre ingredientes propios](https://warocol.com/docs/usuarios/compras#ingredientes-propios)
+→ [Ver más sobre artículos de bodega propios](https://warocol.com/docs/usuarios/compras#artículos de bodega-propios)
 
-Puedes dejar recetas e ingredientes vacíos al crear; podrás completarlos después, pero el costo y el descuento de inventario serán más precisos con la receta definida.
+Puedes dejar recetas e artículos de bodega vacíos al crear; podrás completarlos después, pero el costo y el descuento de inventario serán más precisos con la receta definida.
 
 ### Paso 4 — Revisión y confirmación
 
@@ -90,11 +90,11 @@ Sí, siempre que tengas marcada la opción **Disponible para domicilios**. Si no
 **¿Puedo cambiar el precio después?**
 Sí. Ve a **Menú → Productos**, abre el producto y edítalo.
 
-**¿Qué pasa si no le asigno recetas ni ingredientes (Con receta)?**
-El producto funciona para ventas, pero WARO no podrá calcular su costo ni descontar ingredientes del inventario automáticamente hasta que definas la receta.
+**¿Qué pasa si no le asigno recetas ni artículos de bodega (Con receta)?**
+El producto funciona para ventas, pero WARO no podrá calcular su costo ni descontar artículos de bodega del inventario automáticamente hasta que definas la receta.
 
 **¿Puedo asignar varias recetas al mismo producto?**
-Sí. Puedes combinar múltiples recetas y además agregar ingredientes adicionales.
+Sí. Puedes combinar múltiples recetas y además agregar artículos de bodega adicionales.
 
 **¿Cómo agrego modificadores (tamaños, extras, salsas)?**
 Los modificadores se crean por separado y se asignan a uno o más productos. Ver [guía de modificadores](./modificadores.md).

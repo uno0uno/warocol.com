@@ -36,7 +36,7 @@ Presiona **Registrar venta** para guardar. La venta quedará registrada con la f
 ## Preguntas frecuentes
 
 **¿Se descuenta el inventario?**
-Sí, igual que en el POS. Si el producto tiene una receta, los ingredientes se descuentan al registrar.
+Sí, igual que en el POS. Si el producto tiene una receta, los artículos de bodega se descuentan al registrar.
 
 **¿Puedo registrar una venta sin identificar al cliente?**
 Sí, el cliente es opcional en ventas manuales.

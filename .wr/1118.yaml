@@ -1,0 +1,51 @@
+issue: 1118
+title: "feat(copy): batch 5 — compras, stock, inventario, Waro admin, user docs"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1118-batch5-bodega-copy
+
+paths:
+  - constants/warehouseCopy.ts
+  - pages/abastecimiento/compra/crear.vue
+  - pages/abastecimiento/compra/[id]/index.vue
+  - pages/abastecimiento/compras-directas/crear.vue
+  - pages/abastecimiento/compras-directas/[id]/editar.vue
+  - pages/abastecimiento/compras-directas/[id]/index.vue
+  - pages/abastecimiento/stock.vue
+  - pages/abastecimiento/movimientos.vue
+  - pages/abastecimiento/ajustes/index.vue
+  - pages/abastecimiento/calidad-datos.vue
+  - pages/abastecimiento/ingredientes.vue.disabled
+  - components/abastecimiento/StockAdjustmentPanel.vue
+  - components/abastecimiento/AbastecimientoStockAdjustmentFullForm.vue
+  - pages/gestion/ingredientes.vue
+  - pages/gestion/ingredientes/index.vue
+  - pages/proveedor/[token]/[purchaseId]/index.vue
+  - docs/usuarios/abastecimiento.md
+  - docs/usuarios/menu.md
+  - docs/usuarios/menu/*.md
+  - docs/usuarios/ventas*.md
+  - docs/usuarios/analitica.md
+  - docs/usuarios/pos-venta-libre.md
+
+ac:
+  - Replace user-facing generic "ingrediente" in listed compras/stock/ajustes/calidad routes with Artículo de bodega (via WAREHOUSE_COPY)
+  - Rename Waro admin gestion/ingredientes to Plantillas Waro (nav, useHead, page title, CTAs)
+  - Align docs/usuarios/*.md with epic glossary (#1113 table)
+  - PR description includes rg audit allowlisting code identifiers and out-of-scope paths
+  - Manual smoke compra crear, stock list, gestión ingredientes admin
+
+out_of_scope:
+  - API/DB renames and route redirects (/ingredientes-propios URL unchanged)
+  - Vue/API identifiers (ingredient_id, IngredientSearchInput, etc.)
+  - Batches 2–4 files already shipped (ingredientes-propios, menu, inline create)
+
+hints:
+  entry: "import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'"
+  pattern: "Reuse warehouseItemColumn, waroTemplates*, purchase* keys from constants/warehouseCopy.ts"
+  verify: "rg -i ingrediente scoped paths — allowlist comments and /ingredientes URLs"
+
+skip:
+  audits: [ux, color, typography]

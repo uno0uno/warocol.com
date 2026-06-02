@@ -16,7 +16,7 @@
         v-model:search="localSearchTerm"
         :search-fields="[]"
         :show-date-range="false"
-        search-placeholder="Buscar ingredientes..."
+        :search-placeholder="WAREHOUSE_COPY.waroTemplatesSearchPlaceholder"
         :show-clear="hasActiveFilters"
         @search="performSearch"
         @clear="clearFilters"
@@ -32,7 +32,7 @@
             <option value="service">Servicios</option>
             <option value="supply">Insumos</option>
           </select>
-          <div class="flex rounded-lg border border-border overflow-hidden text-sm shrink-0" role="group" aria-label="Filtrar por jerarquía de ingredientes">
+          <div class="flex rounded-lg border border-border overflow-hidden text-sm shrink-0" role="group" :aria-label="WAREHOUSE_COPY.waroTemplatesHierarchyFilterAria">
             <button
               type="button"
               class="px-3 py-2 min-h-[44px] transition-colors"
@@ -66,8 +66,8 @@
         row-size="sm"
         :columns="tableColumns"
         :data="filteredBases"
-        title="Catálogo Global de Ingredientes"
-        empty-message="No hay ingredientes en el catálogo."
+        :title="WAREHOUSE_COPY.waroTemplatesCatalogTitle"
+        :empty-message="WAREHOUSE_COPY.waroTemplatesEmpty"
         :total="totalItems"
         :page="currentPage"
         :per-page="PAGE_SIZE"
@@ -81,7 +81,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            Nuevo ingrediente
+            {{ WAREHOUSE_COPY.newWaroTemplate }}
           </button>
         </template>
 
@@ -193,7 +193,7 @@
     >
       <div class="bg-surface rounded-xl shadow-xl w-full max-w-md p-6 flex flex-col gap-4">
         <h2 id="create-modal-title" class="text-lg font-semibold text-text-primary">
-          Nuevo ingrediente
+          {{ WAREHOUSE_COPY.newWaroTemplate }}
         </h2>
 
         <form @submit.prevent="() => submitCreate(false)" class="flex flex-col gap-4" novalidate>
@@ -221,7 +221,7 @@
                 <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                 </svg>
-                <span>Ingredientes similares encontrados:</span>
+                <span>{{ WAREHOUSE_COPY.similarWaroTemplatesFound }}</span>
               </div>
               <ul class="flex flex-col gap-0.5 pl-6">
                 <li
@@ -304,7 +304,7 @@
               class="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] transition-opacity"
             >
               <span v-if="isSubmitting">Creando...</span>
-              <span v-else>Crear ingrediente</span>
+              <span v-else>{{ WAREHOUSE_COPY.createWaroTemplate }}</span>
             </button>
           </div>
           <div v-else class="flex justify-start">
@@ -335,13 +335,13 @@
         </h2>
 
         <div class="flex flex-col gap-0.5 text-sm bg-surface-secondary rounded-lg p-3">
-          <span class="text-text-secondary">Unidad de este ingrediente: <strong class="text-text-primary">{{ assigningRow.unit ?? '—' }}</strong></span>
-          <span class="text-xs text-text-tertiary">La unidad del ingrediente base debe coincidir.</span>
+          <span class="text-text-secondary">{{ WAREHOUSE_COPY.waroTemplateUnitLabel }} <strong class="text-text-primary">{{ assigningRow.unit ?? '—' }}</strong></span>
+          <span class="text-xs text-text-tertiary">{{ WAREHOUSE_COPY.waroTemplateBaseUnitHint }}</span>
         </div>
 
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium text-text-primary">
-            Buscar ingrediente base <span class="text-status-critical-text" aria-hidden="true">*</span>
+            {{ WAREHOUSE_COPY.searchWaroTemplateBase }} <span class="text-status-critical-text" aria-hidden="true">*</span>
           </label>
           <UiIngredientSearchInput
             placeholder="Buscar base..."
@@ -425,7 +425,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
           </svg>
           <p class="text-sm text-text-secondary leading-relaxed">
-            Este ingrediente no tiene variantes asignadas en la jerarquía.
+            {{ WAREHOUSE_COPY.waroTemplateNoVariants }}
           </p>
         </div>
 
@@ -454,12 +454,13 @@
 
 <script setup lang="ts">
 import type { Column } from '~/components/ui/ResponsiveDataView.vue'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 definePageMeta({
   layout: 'dashboard',
 })
 
-useHead({ title: 'Catálogo Global — WaRo Admin' })
+useHead({ title: WAREHOUSE_COPY.waroTemplatesSubPageTitle })
 
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 const { currentTenant } = useTenantReactive()
@@ -598,14 +599,14 @@ async function submitCreate(force = false) {
     conflictSimilar.value = []
     closeCreateModal()
     await refresh()
-    useNuxtApp().$toast?.success('Ingrediente creado')
+    useNuxtApp().$toast?.success(WAREHOUSE_COPY.waroTemplateCreated)
   } catch (e: any) {
     const status = e?.response?.status ?? e?.status
     const detail = e?.data?.detail ?? e?.response?._data?.detail
     if (status === 409 && detail?.status === 'conflict') {
       conflictSimilar.value = detail.similar ?? []
     } else {
-      useNuxtApp().$toast?.error('Error al crear el ingrediente')
+      useNuxtApp().$toast?.error(WAREHOUSE_COPY.waroTemplateCreateError)
     }
   } finally {
     isSubmitting.value = false
@@ -642,7 +643,7 @@ function onSelectBase(ingredient: any) {
     ingredient.unit &&
     assigningRow.value.unit !== ingredient.unit
   ) {
-    assignError.value = `La unidad del base (${ingredient.unit}) no coincide con la de este ingrediente (${assigningRow.value.unit})`
+    assignError.value = `La unidad del base (${ingredient.unit}) no coincide con la de esta plantilla (${assigningRow.value.unit})`
   }
 }
 
@@ -663,7 +664,7 @@ async function submitAssign() {
     const status = e?.response?.status ?? e?.status
     const detail = e?.data?.detail ?? e?.response?._data?.detail
     if (status === 409) {
-      assignError.value = 'Este ingrediente ya tiene un base asignado. Quítalo primero.'
+      assignError.value = WAREHOUSE_COPY.waroTemplateBaseAlreadyAssigned
     } else if (status === 422) {
       assignError.value = typeof detail === 'string' ? detail : 'Error de validación al asignar base'
     } else {
@@ -676,7 +677,7 @@ async function submitAssign() {
 
 // ── Remove base ───────────────────────────────────────────────────────────────
 async function removeBase(row: any) {
-  if (!confirm(`¿Quitar base de "${row.name}"? El ingrediente quedará sin jerarquía asignada.`)) return
+  if (!confirm(`¿Quitar base de "${row.name}"? La plantilla quedará sin jerarquía asignada.`)) return
   try {
     await $fetch(`/api/admin/ingredients/${row.id}/set-base`, { method: 'DELETE' })
     await refresh()

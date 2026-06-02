@@ -57,7 +57,7 @@ Debajo de las métricas verás una gráfica que muestra la evolución de ventas 
 
 Ve a **Analítica → Rentabilidad** para ver el costo vs. precio de venta de cada producto.
 
-Esto es posible solo si tienes recetas con ingredientes y costos configurados. Sin recetas, este reporte no puede calcular márgenes.
+Esto es posible solo si tienes recetas con artículos de bodega y costos configurados. Sin recetas, este reporte no puede calcular márgenes.
 
 ---
 
@@ -99,7 +99,7 @@ Haz clic en **Guardar** para aplicar los cambios o en **Cancelar** para cerrar s
 Sí. Cada vez que se registra una venta, los datos se actualizan. Usa el botón de recarga si ves que algo no está al día.
 
 **¿Por qué no veo datos de rentabilidad?**
-Porque los productos vendidos no tienen recetas con ingredientes y costos asignados. Configura las recetas primero.
+Porque los productos vendidos no tienen recetas con artículos de bodega y costos asignados. Configura las recetas primero.
 
 **¿Puedo exportar los reportes?**
 Consulta con el administrador del sistema sobre las opciones disponibles.

@@ -15,7 +15,7 @@
           icon="adjustments-horizontal"
         />
         <UiStatsCard
-          label="Ingredientes Ajustados"
+          :label="WAREHOUSE_COPY.adjustmentsStatsLabel"
           :value="uniqueIngredientsAdjusted"
           icon="beaker"
         />
@@ -35,7 +35,7 @@
         v-model:search="localSearchTerm"
         v-model:date-range="dateRangeDates"
         :search-fields="[]"
-        search-placeholder="Buscar por ingrediente o motivo..."
+        :search-placeholder="WAREHOUSE_COPY.adjustmentsSearchPlaceholder"
         :preset-dates="presetDates"
         :format-date-range="formatDateRange"
         :show-clear="hasActiveFilters"
@@ -150,6 +150,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFormatters } from '~/composables/useFormatters'
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 useHead({ title: 'Historial de ajustes' })
 
@@ -299,7 +300,7 @@ const adjustmentsTableColumns = [
   },
   {
     key: 'ingredient_name',
-    title: 'Ingrediente',
+    title: WAREHOUSE_COPY.warehouseItemColumn,
     sortable: true,
     format: 'text',
     align: 'left'

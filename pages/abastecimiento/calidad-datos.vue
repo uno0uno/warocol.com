@@ -55,8 +55,8 @@
           <input
             v-model="searchIngredient"
             type="search"
-            placeholder="Buscar por ingrediente..."
-            aria-label="Buscar por ingrediente"
+            :placeholder="WAREHOUSE_COPY.calidadSearchPlaceholder"
+            :aria-label="WAREHOUSE_COPY.calidadSearchAria"
             class="h-10 w-full pl-9 pr-4 rounded-lg border-2 border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
           />
         </div>
@@ -110,7 +110,7 @@
                 <span class="text-xs text-text-secondary">{{ formatDate(item.purchase_date ?? item.date) }}</span>
               </div>
               <p class="text-xs text-text-secondary mt-0.5 truncate">
-                {{ item.supplier_name ?? 'Sin proveedor' }} · {{ item.alerts.length }} ingrediente{{ item.alerts.length !== 1 ? 's' : '' }}
+                {{ item.supplier_name ?? 'Sin proveedor' }} · {{ item.alerts.length }} {{ item.alerts.length !== 1 ? WAREHOUSE_COPY.warehouseItemPlural : WAREHOUSE_COPY.warehouseItemSingular }}
               </p>
             </div>
             <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
@@ -167,7 +167,7 @@
 
         <template #cell-alerts="{ value }">
           <UiStatusBadge
-            :value="`${value.length} ingrediente${value.length !== 1 ? 's' : ''}`"
+            :value="`${value.length} ${value.length !== 1 ? WAREHOUSE_COPY.warehouseItemPlural : WAREHOUSE_COPY.warehouseItemSingular}`"
             format="text"
             variant="secondary"
             size="sm"
@@ -202,6 +202,7 @@
 import HealthSemaphore from '~/components/analytics/HealthSemaphore.vue'
 import { useFormatters } from '~/composables/useFormatters'
 import { useMenuReturnRefresh } from '@/composables/useMenuReturnRefresh'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 const { currentTenant } = useTenantReactive()
 const { setRefreshHandler, clearRefreshHandler, registerProgressiveLoading } = useLayoutActions()
 
@@ -260,7 +261,7 @@ const tableColumns = [
   { key: 'purchase_date', title: 'Fecha', sortable: true },
   { key: 'critical', title: 'Críticos', sortable: true },
   { key: 'warning', title: 'Avisos', sortable: true },
-  { key: 'alerts', title: 'Ingredientes', sortable: false },
+  { key: 'alerts', title: WAREHOUSE_COPY.calidadAlertsColumn, sortable: false },
   { key: 'actions', title: '', sortable: false }
 ]
 

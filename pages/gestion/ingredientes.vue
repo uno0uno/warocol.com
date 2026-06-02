@@ -15,9 +15,11 @@ definePageMeta({
 
 const route = useRoute()
 
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
+
 const navigationItems = [
-  { to: '/gestion/ingredientes', label: 'Catálogo Global', exact: true },
+  { to: '/gestion/ingredientes', label: WAREHOUSE_COPY.waroTemplatesNavLabel, exact: true },
 ]
 
-useHead({ title: 'Ingredientes Globales — WaRo Admin' })
+useHead({ title: WAREHOUSE_COPY.waroTemplatesPageTitle })
 </script>

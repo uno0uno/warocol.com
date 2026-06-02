@@ -8,7 +8,7 @@
     <!-- Error State -->
     <div v-else-if="fetchError" class="flex items-center justify-center min-h-[400px]">
       <div class="text-center">
-        <p class="text-xl font-semibold text-text-primary mb-2">Error al cargar los ingredientes.</p>
+        <p class="text-xl font-semibold text-text-primary mb-2">{{ WAREHOUSE_COPY.legacyCatalogLoadError }}</p>
         <p class="text-sm text-text-secondary">{{ fetchError.message }}</p>
         <button @click="refresh" class="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90">
           Reintentar
@@ -50,7 +50,7 @@
       <SharedFiltersBar
         v-model:search="searchQuery"
         search-label="Buscar"
-        search-placeholder="Buscar ingredientes..."
+        :search-placeholder="WAREHOUSE_COPY.stockSearchPlaceholder"
         @search="handleSearch"
         @clear-filters="clearFilters"
       >
@@ -72,9 +72,9 @@
         :columns="tableColumns"
         :data="flatRows"
         :row-class="getRowClass"
-        title="Catálogo de Ingredientes"
-        empty-message="No hay ingredientes en el catálogo"
-        empty-sub-message="Los ingredientes aparecerán aquí"
+        :title="WAREHOUSE_COPY.legacyCatalogTitle"
+        :empty-message="WAREHOUSE_COPY.legacyCatalogEmpty"
+        :empty-sub-message="WAREHOUSE_COPY.legacyCatalogEmptySub"
         variant="default"
       >
         <!-- Mobile Card -->
@@ -158,7 +158,7 @@
         <!-- Desktop Header -->
         <template #header>
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <h3 class="text-base sm:text-lg font-bold text-text-primary">Catálogo de Ingredientes</h3>
+            <h3 class="text-base sm:text-lg font-bold text-text-primary">{{ WAREHOUSE_COPY.legacyCatalogTitle }}</h3>
           </div>
         </template>
 
@@ -351,11 +351,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useScanQuota } from '@/composables/useScanQuota'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 const { quota, warningLevel, scansRemaining, fetchQuota } = useScanQuota()
 onMounted(() => { fetchQuota() })
 
-useHead({ title: 'Ingredientes - Abastecimiento' })
+useHead({ title: `${WAREHOUSE_COPY.warehouseCatalog} - Abastecimiento` })
 
 const { onTenantChange, currentTenant } = useTenantReactive()
 const { setRefreshHandler } = useLayoutActions()
@@ -520,8 +521,8 @@ async function confirmDelete(variant: any) {
   } catch (err: any) {
     const status = err?.status || err?.statusCode
     if (status === 409) {
-      toast.error?.('Este ingrediente está en uso y no puede eliminarse') ||
-        alert('Este ingrediente está en uso y no puede eliminarse')
+      toast.error?.(WAREHOUSE_COPY.legacyCatalogInUseError) ||
+        alert(WAREHOUSE_COPY.legacyCatalogInUseError)
     } else {
       toast.error?.('Error al eliminar la variante') || alert('Error al eliminar la variante')
     }
@@ -553,7 +554,7 @@ function filterByBase(baseName: string) {
 
 // --- Table columns ---
 const tableColumns = [
-  { key: 'name', title: 'Ingrediente', sortable: false, format: 'text', align: 'left' as const },
+  { key: 'name', title: WAREHOUSE_COPY.warehouseItemColumn, sortable: false, format: 'text', align: 'left' as const },
   { key: 'unit', title: 'Unidad', sortable: false, format: 'text', align: 'left' as const },
   { key: 'type', title: 'Tipo', sortable: false, format: 'text', align: 'center' as const },
   { key: 'base_ref', title: 'Base', sortable: false, format: 'text', align: 'left' as const },

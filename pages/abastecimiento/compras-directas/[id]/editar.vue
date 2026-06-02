@@ -218,15 +218,15 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <!-- Ingrediente -->
+                  <!-- Artículo de bodega -->
                   <div class="sm:col-span-2">
                     <label class="block text-sm font-medium text-text-primary mb-2">
-                      Ingrediente *
+                      {{ WAREHOUSE_COPY.purchaseLineRequired }}
                     </label>
                     <UiSearchableSelect
                       v-model="item.ingredient_id"
                       :options="ingredientOptions"
-                      placeholder="Buscar ingrediente..."
+                      :placeholder="WAREHOUSE_COPY.purchaseSearchPlaceholder"
                       required
                       @update:model-value="() => onIngredientChange(index)"
                     />
@@ -627,7 +627,7 @@
             <table class="w-full hidden md:table">
               <thead>
                 <tr class="border-b border-border">
-                  <th class="text-left py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Ingrediente</th>
+                  <th class="text-left py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">{{ WAREHOUSE_COPY.warehouseItemColumn }}</th>
                   <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Cantidad</th>
                   <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Precio Unit.</th>
                   <th class="text-right py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">Total</th>
@@ -767,6 +767,7 @@ import { TrashIcon, DocumentTextIcon, CreditCardIcon, ExclamationTriangleIcon } 
 import { es } from 'date-fns/locale'
 import { format as fnsFormat } from 'date-fns'
 import { INGREDIENTS_FETCH_LIMIT } from '@/composables/useMenuIngredients'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import { usePaymentLabel } from '~/composables/usePaymentLabel'
 import { usePaymentSelectValue } from '~/composables/usePaymentSelectValue'
 import { mergePosPaymentGroupsFromApi } from '~/utils/paymentDefaults'

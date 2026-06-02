@@ -4,28 +4,28 @@ Desde el módulo de Menú configuras todo lo que le ofreces a tus clientes: las 
 
 ---
 
-## Ingrediente vs producto de menú
+## Artículo de bodega vs producto de menú
 
-Al buscar en un formulario de receta o producto verás **ingredientes** (y a veces filas marcadas **Reventa**). Si lo que buscas no existe, el sistema te pregunta qué quieres crear:
+Al buscar en un formulario de receta o producto verás **artículos de bodega** (y a veces filas marcadas **Reventa**). Si lo que buscas no existe, el sistema te pregunta qué quieres crear:
 
 | Opción | Qué es | Cuándo usarla |
 |--------|--------|---------------|
-| **Ingrediente** | Materia prima en bodega (harina, queso, aceite) | Lo compras y usas en recetas o compras |
+| **Artículo de bodega** | Materia prima en bodega (harina, queso, aceite) | Lo compras y usas en recetas o compras |
 | **Producto de menú** | Lo que cobras en POS / domicilios | Platos preparados o **reventa** (gaseosa, snack vendido tal cual) |
 
-**Reventa:** al crear un **producto de menú** de venta directa, el sistema crea solo el ingrediente de stock (1 unidad vendida = 1 und descontada). No hace falta crear primero un ingrediente suelto con el mismo nombre.
+**Reventa:** al crear un **producto de menú** de venta directa, el sistema crea solo el artículo de bodega de stock (1 unidad vendida = 1 und descontada). No hace falta crear primero un artículo de bodega suelto con el mismo nombre.
 
-En **compras directas** (factura), “Crear…” solo abre ingrediente — no producto de menú.
+En **compras directas** (factura), “Crear…” solo abre artículo de bodega — no producto de menú.
 
 ---
 
 ## Recetas
 
-Una receta es una **composición reutilizable de ingredientes** que puedes asignar a uno o varios productos. Sirve para evitar repetir la misma lista de ingredientes en cada producto.
+Una receta es una **composición reutilizable de artículos de bodega** que puedes asignar a uno o varios productos. Sirve para evitar repetir la misma lista de artículos de bodega en cada producto.
 
-**Ejemplo práctico:** Tienes una salsa de la casa que usas en 5 platos diferentes. En vez de agregar los mismos 6 ingredientes en cada producto, creas una receta "Salsa de la Casa" con esos ingredientes y la vinculas a los 5 productos. Si cambias la receta, el cambio aplica a todos.
+**Ejemplo práctico:** Tienes una salsa de la casa que usas en 5 platos diferentes. En vez de agregar los mismos 6 artículos de bodega en cada producto, creas una receta "Salsa de la Casa" con esos artículos de bodega y la vinculas a los 5 productos. Si cambias la receta, el cambio aplica a todos.
 
-Las recetas no las ven tus clientes. Son internas: sirven para controlar costos y descontar ingredientes del inventario automáticamente.
+Las recetas no las ven tus clientes. Son internas: sirven para controlar costos y descontar artículos de bodega del inventario automáticamente.
 
 ### ¿Cuándo usar recetas?
 
@@ -33,11 +33,11 @@ Las recetas son **opcionales**. Un producto puede tener:
 
 | Configuración | Cuándo usarla |
 |---------------|---------------|
-| Solo ingredientes directos | El producto es sencillo y único |
+| Solo artículos de bodega directos | El producto es sencillo y único |
 | Solo recetas | La preparación es compartida con otros productos |
-| Recetas + ingredientes adicionales | Tienes una base común más ingredientes propios del plato |
+| Recetas + artículos de bodega adicionales | Tienes una base común más artículos de bodega propios del plato |
 
-> Si un producto es único y simple, agrégale los ingredientes directamente. Las recetas tienen valor cuando se **reutilizan**.
+> Si un producto es único y simple, agrégale los artículos de bodega directamente. Las recetas tienen valor cuando se **reutilizan**.
 
 ### Cómo crear una receta
 
@@ -50,9 +50,9 @@ Ve a **Menú → Recetas → Nueva receta**. El formulario tiene 3 pasos:
 | Nombre | Nombre interno. Ej: `Salsa de la Casa`, `Base de Carne` |
 | Estado | Activa o Inactiva |
 
-**Paso 2 — Ingredientes**
+**Paso 2 — Artículos de bodega**
 
-Busca el ingrediente por nombre, escribe la cantidad y la unidad. Repite para cada ingrediente. Si no aparece en la búsqueda, usa **Crear "…"** y elige **Ingrediente** o **Producto de menú** según corresponda.
+Busca el artículo de bodega por nombre, escribe la cantidad y la unidad. Repite para cada artículo de bodega. Si no aparece en la búsqueda, usa **Crear "…"** y elige **Artículo de bodega** o **Producto de menú** según corresponda.
 
 **Paso 3 — Revisión y confirmación**
 
@@ -65,12 +65,12 @@ Ve a **Menú → Recetas**, busca la receta y haz clic en ella. El cambio aplica
 ### Preguntas frecuentes — Recetas
 
 **¿Una receta es obligatoria para crear un producto?**
-No. Puedes crear un producto con ingredientes directos, sin ninguna receta.
+No. Puedes crear un producto con artículos de bodega directos, sin ninguna receta.
 
 **¿Un producto puede tener varias recetas?**
-Sí. Puedes asignar más de una receta y además agregar ingredientes adicionales.
+Sí. Puedes asignar más de una receta y además agregar artículos de bodega adicionales.
 
-**¿Qué pasa si cambio los ingredientes de una receta?**
+**¿Qué pasa si cambio los artículos de bodega de una receta?**
 El cambio aplica hacia adelante. Las ventas ya registradas no cambian.
 
 ---
@@ -79,13 +79,13 @@ El cambio aplica hacia adelante. Las ventas ya registradas no cambian.
 
 Un producto es lo que tus clientes ven y pueden pedir: tiene nombre, precio, descripción y categoría.
 
-Cada producto puede tener ingredientes asignados de tres formas:
+Cada producto puede tener artículos de bodega asignados de tres formas:
 
 | Opción | Cuándo usarla |
 |--------|---------------|
-| **Solo ingredientes directos** | El producto es único, no comparte su preparación |
+| **Solo artículos de bodega directos** | El producto es único, no comparte su preparación |
 | **Solo recetas** | La preparación es una receta ya creada que usan varios productos |
-| **Recetas + ingredientes adicionales** | Base común más ingredientes propios del plato |
+| **Recetas + artículos de bodega adicionales** | Base común más artículos de bodega propios del plato |
 
 > Un producto puede funcionar sin ninguna composición. En ese caso WARO no calculará costos ni descontará inventario.
 
@@ -105,12 +105,12 @@ Ve a **Menú → Productos → Nuevo producto**. El formulario tiene 3 pasos:
 | Disponible para venta | — |
 | Disponible para domicilios | — |
 
-**Paso 2 — Recetas e ingredientes**
+**Paso 2 — Recetas e artículos de bodega**
 
 - **+ Agregar Receta Base** — busca una receta ya creada
-- **Ingredientes directos** — agrega ingredientes uno a uno con su cantidad
+- **Artículos de bodega directos** — agrega artículos de bodega uno a uno con su cantidad
 
-Si el ingrediente no existe, haz clic en **+ Crear ingrediente** para crearlo ahí mismo sin salir del formulario.
+Si el artículo de bodega no existe, haz clic en **+ Crear artículo de bodega** para crearlo ahí mismo sin salir del formulario.
 
 Puedes dejar este paso vacío si no necesitas control de costos.
 
@@ -123,7 +123,7 @@ Revisa el resumen y haz clic en **Crear producto**.
 **¿Puedo cambiar el precio después?**
 Sí. Ve a **Menú → Productos**, abre el producto y edítalo.
 
-**¿Qué pasa si no le asigno recetas ni ingredientes?**
+**¿Qué pasa si no le asigno recetas ni artículos de bodega?**
 El producto funciona para ventas, pero WARO no calculará su costo ni descontará inventario.
 
 **¿Cómo agrego una foto al producto?**
@@ -190,7 +190,7 @@ No. El botón de agregar al carrito no se activa hasta que el cliente elija.
 
 ## Productos de reventa
 
-Los **productos de reventa** son ítems que vendes tal como los compras, sin preparación: una lata de gaseosa, un paquete de papas, una botella de agua. Se comportan como productos normales en el POS y en domicilios, pero su stock se controla directamente sobre el ingrediente.
+Los **productos de reventa** son ítems que vendes tal como los compras, sin preparación: una lata de gaseosa, un paquete de papas, una botella de agua. Se comportan como productos normales en el POS y en domicilios, pero su stock se controla directamente sobre el artículo de bodega.
 
 ### Cómo gestionar productos de reventa
 
@@ -201,12 +201,12 @@ Ve a **Menú → Productos** y usa el filtro **Reventa** (o **Todos** para ver m
 3. **Disponibilidad** — activa o desactiva con el toggle de estado o en modo edición masiva
 4. Guarda los cambios
 
-Cada producto de reventa usa **1 unidad** (`und`) del ingrediente vinculado — al vender una unidad del producto se descuenta una unidad del ingrediente en inventario. Para cantidades fraccionadas (por ejemplo vender medio envase en mililitros), configura la equivalencia gr/ml en la edición del producto.
+Cada producto de reventa usa **1 unidad** (`und`) del artículo de bodega vinculado — al vender una unidad del producto se descuenta una unidad del artículo de bodega en inventario. Para cantidades fraccionadas (por ejemplo vender medio envase en mililitros), configura la equivalencia gr/ml en la edición del producto.
 
 ### Preguntas frecuentes — Reventa
 
 **¿El stock se descuenta automáticamente al vender?**
-Sí. Cada vez que se vende una unidad del producto de reventa, se descuenta una unidad del ingrediente correspondiente en inventario.
+Sí. Cada vez que se vende una unidad del producto de reventa, se descuenta una unidad del artículo de bodega correspondiente en inventario.
 
 **¿Puedo cambiar el precio después?**
 Sí. Ve a **Menú → Productos**, filtra por **Reventa**, abre el producto y edita el precio.

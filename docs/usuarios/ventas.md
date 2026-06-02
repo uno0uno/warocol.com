@@ -81,7 +81,7 @@ El inventario se descuenta automáticamente si los productos tienen recetas conf
 ### Preguntas frecuentes
 
 **¿Se descuenta el inventario?**
-Sí, igual que en el POS. Si el producto tiene receta, los ingredientes se descuentan al registrar.
+Sí, igual que en el POS. Si el producto tiene receta, los artículos de bodega se descuentan al registrar.
 
 **¿Puedo registrar una venta sin identificar al cliente?**
 Sí, el cliente es opcional.

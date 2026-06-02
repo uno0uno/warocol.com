@@ -10,7 +10,7 @@ Un producto es lo que tus clientes ven y pueden pedir: tiene nombre, precio, des
 
 ## Antes de crear un producto
 
-Cada producto puede estar vinculado a una receta base. La receta le dice a WARO qué ingredientes consume ese producto, lo que permite calcular costos y controlar inventario.
+Cada producto puede estar vinculado a una receta base. La receta le dice a WARO qué artículos de bodega consume ese producto, lo que permite calcular costos y controlar inventario.
 
 Si quieres ese control, crea primero la receta. Si por ahora solo necesitas registrar el producto, puedes crearlo sin receta y agregarla después.
 
@@ -32,7 +32,7 @@ El formulario tiene 3 pasos:
 | Descripción | Una descripción corta del plato | No |
 | Categoría | A qué grupo pertenece (Entradas, Platos fuertes, Bebidas...) | Sí |
 | Precio de venta | Precio en pesos colombianos | Sí |
-| Costo real (sistema) | Lo calcula WARO desde la receta y las compras de ingredientes (solo lectura) | — |
+| Costo real (sistema) | Lo calcula WARO desde la receta y las compras de artículos de bodega (solo lectura) | — |
 | Mi costo del plato | Costo operativo que tú defines para márgenes y reportes; el sistema no lo sobrescribe | No |
 | Tiempo de preparación | Cuántos minutos tarda en prepararse | No |
 | Disponible para venta | Si está activo en tu menú | — |
@@ -43,7 +43,7 @@ El formulario tiene 3 pasos:
 >
 > **Pedido en mesa (QR)** es independiente de domicilios: un producto puede estar en el QR de mesa sin estar en delivery, y viceversa.
 
-### Paso 2 — Receta / Ingredientes
+### Paso 2 — Receta / Artículos de bodega
 
 Aquí vinculas el producto a una o más recetas base que ya creaste.
 
@@ -63,7 +63,7 @@ WARO maneja dos costos por producto:
 
 | Concepto | Quién lo define | Para qué sirve |
 |----------|-----------------|----------------|
-| **Costo real (sistema)** | WARO, al guardar el producto con receta | Refleja ingredientes y precios de compra; se actualiza si cambian compras o receta |
+| **Costo real (sistema)** | WARO, al guardar el producto con receta | Refleja artículos de bodega y precios de compra; se actualiza si cambian compras o receta |
 | **Mi costo del plato** | Tú, opcional | Tu referencia operativa (mano de obra, merma, proveedor distinto, etc.) |
 
 En el listado verás **Margen real** (precio vs costo del sistema) y **Margen operativo** (precio vs tu costo), cuando hayas definido "Mi costo".
@@ -87,7 +87,7 @@ Si no marcas ninguna de las dos, el producto existe en el sistema pero no es vis
 Sí. Ve a **Menú → Productos**, abre el producto y edítalo.
 
 **¿Qué pasa si no le asigno una receta?**
-El producto funciona para ventas, pero WARO no podrá calcular su costo ni descontar ingredientes del inventario automáticamente.
+El producto funciona para ventas, pero WARO no podrá calcular su costo ni descontar artículos de bodega del inventario automáticamente.
 
 **¿Puedo tener el mismo producto en varias categorías?**
 No. Cada producto pertenece a una sola categoría. Si necesitas que aparezca en más de un lugar, considera crear variantes o usar modificadores.

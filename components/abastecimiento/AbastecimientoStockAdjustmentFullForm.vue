@@ -18,15 +18,15 @@
       <!-- Left Column: Form Content -->
       <div class="xl:col-span-2 space-y-6">
         <div class="bg-surface border-2 border-border rounded-xl p-6 md:p-8 shadow-sm">
-          <!-- Información del Ingrediente -->
+          <!-- Información del artículo de bodega -->
           <div>
-            <h3 class="text-lg font-semibold text-text-primary mb-6">Información del Ingrediente</h3>
+            <h3 class="text-lg font-semibold text-text-primary mb-6">{{ WAREHOUSE_COPY.stockAdjustmentSectionTitle }}</h3>
 
             <div class="space-y-6">
               <!-- Ingredient Selection -->
               <div>
                 <label class="block text-sm font-medium text-text-primary mb-2">
-                  Ingrediente <span class="text-red-500">*</span>
+                  {{ WAREHOUSE_COPY.warehouseItemColumn }} <span class="text-red-500">*</span>
                 </label>
                 <!-- If ingredient is pre-selected from URL, show it as read-only -->
                 <div v-if="route.query.ingredientId && selectedIngredient" class="w-full px-4 py-3 border-2 border-border rounded-lg bg-surface-secondary text-text-primary">
@@ -43,7 +43,7 @@
                   required
                   class="input-base w-full px-4 py-2"
                 >
-                  <option value="">Seleccionar ingrediente...</option>
+                  <option value="">{{ WAREHOUSE_COPY.selectWarehouseItemOption }}</option>
                   <option v-for="ingredient in ingredients" :key="ingredient.id" :value="ingredient.id">
                     {{ ingredient.name }} ({{ ingredient.unit }})
                   </option>
@@ -232,7 +232,7 @@
                   />
                 </div>
                 <p class="text-xs text-text-secondary mt-1">
-                  Si especificas un costo, se actualizará el costo promedio ponderado del ingrediente.
+                  {{ WAREHOUSE_COPY.stockAdjustmentWeightedCostHint }}
                 </p>
               </div>
 
@@ -314,7 +314,7 @@
           <div class="bg-background rounded-lg p-4 border border-border mb-6">
             <div class="space-y-3">
               <div>
-                <p class="text-sm text-text-secondary mb-1">Ingrediente</p>
+                <p class="text-sm text-text-secondary mb-1">{{ WAREHOUSE_COPY.warehouseItemColumn }}</p>
                 <p class="font-medium text-text-primary">{{ selectedIngredient?.name || 'Sin seleccionar' }}</p>
               </div>
               <div>
@@ -382,6 +382,7 @@ import {
   ADJUSTMENT_REASONS,
   useInventoryAdjustment,
 } from '~/composables/useInventoryAdjustment'
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 
 interface Props {
   cancelRedirectUrl: string
@@ -459,7 +460,7 @@ const pageDescription = computed(() => {
   if (selectedIngredient.value && stockLoaded.value) {
     return `Stock actual: ${formatNumber(currentStock.value)} ${selectedIngredient.value.unit}`
   }
-  return 'Selecciona un ingrediente para comenzar'
+  return WAREHOUSE_COPY.stockAdjustmentStartPrompt
 })
 
 useHead({
