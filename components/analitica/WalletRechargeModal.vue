@@ -91,9 +91,9 @@
             >
               <option value="" disabled>Seleccionar método</option>
               <template v-for="group in paymentGroups" :key="group.id">
-                <option v-if="!group.methods.length" :value="group.slug">{{ group.name }}</option>
+                <option v-if="!(group.methods?.length)" :value="group.slug">{{ group.name }}</option>
                 <optgroup v-else :label="group.name">
-                  <option v-for="m in group.methods" :key="m.id" :value="m.id">{{ m.name }}</option>
+                  <option v-for="m in group.methods ?? []" :key="m.id" :value="m.id">{{ m.name }}</option>
                 </optgroup>
               </template>
             </select>
@@ -163,7 +163,9 @@ interface Emits {
   (e: 'recharged'): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  paymentGroups: () => [],
+})
 const emit = defineEmits<Emits>()
 
 const { show: showToast } = useToast()
@@ -181,7 +183,8 @@ const isSubmitting = ref(false)
 
 function defaultPaymentSelection(groups: PosPaymentGroup[]): string {
   for (const group of groups) {
-    if (group.methods.length) return group.methods[0].id
+    const methods = group.methods ?? []
+    if (methods.length) return methods[0].id
     return group.slug
   }
   return ''
@@ -189,7 +192,7 @@ function defaultPaymentSelection(groups: PosPaymentGroup[]): string {
 
 function resolvePaymentSelection(value: string): { slug: string; payment_method_id?: string } {
   for (const group of props.paymentGroups) {
-    const method = group.methods.find(m => m.id === value)
+    const method = (group.methods ?? []).find(m => m.id === value)
     if (method) return { slug: group.slug, payment_method_id: method.id }
     if (group.slug === value) return { slug: group.slug }
   }
@@ -217,11 +220,13 @@ watch(() => props.modelValue, (v) => {
 watch(
   () => props.paymentGroups,
   (groups) => {
+    const safeGroups = groups ?? []
+    if (!safeGroups.length) return
     const valid =
-      groups.some(g => g.slug === paymentSelection.value)
-      || groups.some(g => g.methods.some(m => m.id === paymentSelection.value))
-    if (groups.length && !valid) {
-      paymentSelection.value = defaultPaymentSelection(groups)
+      safeGroups.some(g => g.slug === paymentSelection.value)
+      || safeGroups.some(g => (g.methods ?? []).some(m => m.id === paymentSelection.value))
+    if (!valid) {
+      paymentSelection.value = defaultPaymentSelection(safeGroups)
     }
   },
   { immediate: true },
