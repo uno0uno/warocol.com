@@ -1697,7 +1697,12 @@ const processOrder = async () => {
 const onCustomerIdentified = async (customer: { id: string; name: string | null; phone_number: string | null; email: string | null }) => {
   selectedCustomer.value = customer
   processingError.value = ''
-  await posStore.setCustomer(customer as any)
+  // Bar / mesa tab / synced counter cart: do not load the new customer's empty backend cart (#1101).
+  const preserveCart =
+    !!posStore.activeTableSession?.isBar
+    || isKitchenServiceMode.value
+    || (!!posStore.cartId && posStore.cart.length > 0)
+  await posStore.setCustomer(customer as any, { preserveCart })
 }
 
 // Derived from dynamic groups
