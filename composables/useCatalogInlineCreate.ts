@@ -101,6 +101,15 @@ export function useCatalogInlineCreate(options: {
     return 'food'
   })
 
+  const lockPanelIngredientType = computed(() => {
+    if (selectedIngredientDbType.value !== null) return true
+    if (!usesIngredientTypeStep.value) {
+      const external = unref(options.initialType)
+      return external === 'supply' || external === 'service'
+    }
+    return false
+  })
+
   function resetIngredientTypeSelection() {
     selectedIngredientDbType.value = null
   }
@@ -217,6 +226,7 @@ export function useCatalogInlineCreate(options: {
     busyHint,
     hideResaleToggle,
     panelInitialType,
+    lockPanelIngredientType,
     canReturnToChooser,
     openFromSearch,
     onChooserIntent,

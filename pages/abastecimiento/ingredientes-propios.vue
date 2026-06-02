@@ -177,6 +177,7 @@
       v-model="showPanel"
       :ingredient="panelIngredient"
       :initial-type="panelInitialType"
+      :lock-ingredient-type="!!typeFilter"
       hide-resale-toggle
       @saved="onSaved"
       @archived="onArchived"
