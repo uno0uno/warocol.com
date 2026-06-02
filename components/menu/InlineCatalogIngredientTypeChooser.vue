@@ -21,7 +21,7 @@
         v-if="modelValue"
         role="dialog"
         aria-modal="true"
-        aria-label="Elegir tipo de ingrediente de bodega"
+        :aria-label="WAREHOUSE_COPY.typeChooserAria"
         class="fixed z-50 flex flex-col bg-surface shadow-2xl
                inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
                md:inset-y-0 md:right-0 md:bottom-auto md:left-auto md:inset-x-auto md:rounded-none md:w-full md:max-w-md md:max-h-none md:h-full"
@@ -43,7 +43,7 @@
               </div>
               <div class="min-w-0">
                 <h2 class="text-base font-bold text-text-primary leading-tight">
-                  Tipo de ingrediente
+                  {{ WAREHOUSE_COPY.warehouseItemType }}
                 </h2>
                 <p class="text-xs text-text-secondary leading-snug mt-0.5">
                   <template v-if="initialName.trim()">
@@ -70,12 +70,12 @@
 
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <p class="text-sm text-text-secondary">
-            ¿Qué tipo de ingrediente de bodega quieres crear?
+            {{ WAREHOUSE_COPY.typeChooserPrompt }}
           </p>
 
-          <div class="flex flex-col gap-3" role="group" aria-label="Tipo de ingrediente de bodega">
+          <div class="flex flex-col gap-3" role="group" :aria-label="WAREHOUSE_COPY.typeChooserGroupAria">
             <UiSelectionOptionCard
-              title="Alimento"
+              :title="WAREHOUSE_COPY.typeFood"
               description="Peso o volumen · gr, ml, kg"
               :selected="selectedType === 'food'"
               @click="selectAndConfirm('food')"
@@ -88,7 +88,7 @@
               </template>
             </UiSelectionOptionCard>
             <UiSelectionOptionCard
-              title="Insumo"
+              :title="WAREHOUSE_COPY.typeSupply"
               description="Unidad fija · und (caja, paquete…)"
               :selected="selectedType === 'supply'"
               @click="selectAndConfirm('supply')"
@@ -101,7 +101,7 @@
               </template>
             </UiSelectionOptionCard>
             <UiSelectionOptionCard
-              title="Servicio"
+              :title="WAREHOUSE_COPY.typeService"
               description="Horas · hr"
               :selected="selectedType === 'service'"
               @click="selectAndConfirm('service')"
@@ -130,6 +130,7 @@
 </template>
 
 <script setup lang="ts">
+import { WAREHOUSE_COPY } from '~/constants/warehouseCopy'
 import type { IngredientDbType } from '@/composables/useCatalogInlineCreate'
 
 const props = withDefaults(

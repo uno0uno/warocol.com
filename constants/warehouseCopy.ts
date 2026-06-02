@@ -27,6 +27,29 @@ export const WAREHOUSE_COPY = {
   newFood: '+ Nuevo alimento',
   newSupply: '+ Nuevo insumo',
   newService: '+ Nuevo servicio',
+  warehouseItemType: 'Tipo de artículo',
+  createChooserAria: 'Elegir artículo de bodega o producto de menú a crear',
+  createChooserSubtitle: 'Elige artículo de bodega o producto de menú (venta)',
+  typeChooserAria: 'Elegir tipo de artículo de bodega',
+  typeChooserPrompt: '¿Qué tipo de artículo de bodega quieres crear?',
+  typeChooserGroupAria: 'Tipo de artículo de bodega',
+  panelNewTitle: 'Nuevo artículo de bodega',
+  panelEditTitle: 'Editar artículo de bodega',
+  panelCreateAria: 'Crear artículo de bodega personalizado',
+  panelNewSubtitle: 'Artículo de bodega de tu restaurante',
+  panelArchived: 'Artículo archivado',
+  panelTypeHelper:
+    'Para recetas y costos. Distinto de producto de menú (reventa en POS).',
+  createWarehouseItem: 'Crear artículo de bodega',
+  archiveWarehouseItem: 'Archivar artículo de bodega',
+  restoreWarehouseItem: 'Restaurar artículo de bodega',
+  linkingWarehouseItem: 'Vinculando artículo de bodega…',
+  creatingWarehouseItem: 'Creando artículo de bodega…',
+  linkingWarehouseItemHint:
+    'Se agregará a la fila y se actualizará el catálogo de bodega.',
+  duplicateWarehouseItemName: 'Ya existe un artículo de bodega con ese nombre',
+  resaleWarehouseItemMustBeUnd:
+    'Los artículos de bodega de reventa deben tener unidad "und" (pieza).',
 } as const
 
 export type WarehouseCopyKey = keyof typeof WAREHOUSE_COPY
