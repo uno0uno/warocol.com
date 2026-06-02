@@ -146,6 +146,14 @@ function comparePromoRank(a: ActivePromotionRow, b: ActivePromotionRow): number 
 }
 
 /** Client mirror of api promotions_service._pick_best_promotion_for_line. */
+/** Minimum cart quantity before BOGO savings apply (buy paid + get free units). */
+export function bogoMinQuantity(valueJson?: Record<string, unknown> | null): number {
+  const buy = Number(valueJson?.buy_qty) || 0
+  const get = Number(valueJson?.get_qty) || 0
+  if (buy < 1 || get < 1) return 0
+  return buy + get
+}
+
 export function pickBestPromotionForProduct(
   promos: ActivePromotionRow[],
   productId: string,
@@ -178,12 +186,16 @@ export function promoBadgeForProduct(
   const label = valueLabel && valueLabel !== '—' ? valueLabel : best.name
 
   let title = best.name
+  if (best.promo_type === 'bogo') {
+    const minQty = bogoMinQuantity(best.value_json)
+    if (minQty > 0) title = `${best.name} (mín. ${minQty} ud.)`
+  }
   if (matches.length > 1) {
     const others = matches
       .filter((p) => p.id !== best.id)
       .map((p) => p.name)
       .filter(Boolean)
-    if (others.length > 0) title = `${best.name} (+ ${others.join(', ')})`
+    if (others.length > 0) title = `${title} (+ ${others.join(', ')})`
   }
 
   return { label, title }

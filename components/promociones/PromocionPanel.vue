@@ -145,6 +145,9 @@
                 <label for="promo-get" class="text-sm font-medium text-text-primary">Lleva gratis</label>
                 <input id="promo-get" v-model.number="form.getQty" type="number" min="1" :class="inputClass" />
               </div>
+              <p class="col-span-2 text-xs text-text-tertiary">
+                Ej. 3×2: Compra 2, Lleva gratis 1 (mín. 3 en carrito). Para 6×5: Compra 5, Lleva gratis 1.
+              </p>
             </div>
 
             <div class="flex flex-col gap-1.5">

@@ -2,9 +2,11 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import type { ActivePromotionRow } from './promoProductMatch.ts'
 import {
+  bogoMinQuantity,
   computeLinePromoSavings,
   linePromoSavingsForProduct,
   pickBestPromotionForProduct,
+  promoBadgeForProduct,
 } from './promoProductMatch.ts'
 
 const productId = 'product-1'
@@ -124,5 +126,29 @@ describe('linePromoSavingsForProduct', () => {
       10000,
     )
     assert.equal(pickBestPromotionForProduct([bogo, percent], productId)?.name, 'BOGO')
+  })
+})
+
+describe('bogoMinQuantity', () => {
+  it('returns paid plus free units for bundle threshold', () => {
+    assert.equal(bogoMinQuantity({ buy_qty: 2, get_qty: 1 }), 3)
+    assert.equal(bogoMinQuantity({ buy_qty: 6, get_qty: 5 }), 11)
+    assert.equal(bogoMinQuantity({ buy_qty: 5, get_qty: 1 }), 6)
+  })
+})
+
+describe('promoBadgeForProduct', () => {
+  it('includes BOGO minimum quantity in title', () => {
+    const badge = promoBadgeForProduct(
+      [
+        promo({
+          name: 'Pizza promo',
+          promo_type: 'bogo',
+          value_json: { buy_qty: 5, get_qty: 1 },
+        }),
+      ],
+      productId,
+    )
+    assert.match(badge?.title ?? '', /mín\. 6 ud\./)
   })
 })
