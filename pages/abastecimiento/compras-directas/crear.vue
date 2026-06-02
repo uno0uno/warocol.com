@@ -805,7 +805,9 @@
                     </div>
                   </div>
                 </div>
-              </MenuCatalogInlineCreateBusyOverlay>
+              </div>
+            </div>
+          </MenuCatalogInlineCreateBusyOverlay>
             </UiFormSection>
 
             <UiFormSection
