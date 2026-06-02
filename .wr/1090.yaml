@@ -1,0 +1,35 @@
+issue: 1090
+title: "feat(ingredients): create supply (und) and service (hr) in IngredientePropioPanel"
+repo: front_nuxt
+repo_remote: uno0uno/warocol.com
+cwd: /Users/saifer/Documents/WEBS/WARO COLOMBIA/front_nuxt
+stack: nuxt
+branch: wr-1090-ingredient-supply-service-create
+
+paths:
+  - components/ingredientes/IngredientePropioPanel.vue
+  - pages/abastecimiento/ingredientes-propios.vue
+
+ac:
+  - Create mode: Alimento / Insumo / Servicio selector (copy distinct from reventa)
+  - Supply: lock unit und; custom purchase units; POST type supply
+  - Service: lock unit hr; POST type service
+  - Food: peso/volumen unchanged; POST type food
+  - Hub "+ Nuevo …" respects typeFilter or shows type choice
+  - Edit: type read-only; supply/service labels match list filters
+
+out_of_scope:
+  - InlineCatalogCreateShell (#1091)
+  - compras-directas (#1092)
+  - API (#380 shipped)
+
+depends_on:
+  - uno0uno/api-warolabs#380
+
+hints:
+  entry: "setIngredientType + submit body.type"
+  pattern: "pre-160e094 type grid; supply uses defaultUndPurchaseUnitsDraft"
+  tests: "manual on /abastecimiento/ingredientes-propios"
+
+skip:
+  audits: [ux, color, typography]
