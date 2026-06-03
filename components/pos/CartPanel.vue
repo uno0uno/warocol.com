@@ -1,10 +1,10 @@
 <template>
-  <div class="flex flex-col min-h-0 h-full lg:w-96 border border-border rounded-2xl bg-surface overflow-hidden shadow-sm">
+  <div class="flex flex-col min-h-0 h-full lg:w-96 border border-border rounded-3xl bg-surface overflow-hidden shadow-lg">
     <!-- Cart Header -->
-    <div class="px-4 py-3.5 border-b border-border bg-surface">
-      <div class="flex items-center justify-between">
-        <h2 class="text-sm font-bold text-text-primary tracking-wide">Orden Actual</h2>
-        <span class="px-2.5 py-0.5 text-xs rounded-full font-semibold bg-primary/10 text-primary border border-primary/20">
+    <div class="px-6 py-6 border-b border-border bg-surface">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-2xl font-bold text-text-primary tracking-tight sm:text-3xl">Orden Actual</h2>
+        <span class="rounded-full bg-violet-100 px-4 py-2 text-base font-semibold text-primary dark:bg-violet-900/30">
           {{ displayItemCount }} {{ displayItemCount === 1 ? 'ítem' : 'ítems' }}
         </span>
       </div>
@@ -56,24 +56,24 @@
     </div>
 
     <!-- Items list: tab items (committed) + current cart items -->
-    <div class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 space-y-2.5">
+    <div class="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-6 space-y-4">
 
       <!-- Skeleton while loading tab items, adding to tab, or clearing -->
       <template v-if="isLoadingTabItems || isAddingToTab || isClearingTab">
-        <div v-for="n in 3" :key="n" class="p-3 border border-border rounded-xl animate-pulse">
-          <div class="flex items-start gap-2.5">
-            <div class="w-6 h-6 rounded-full bg-surface-secondary flex-shrink-0" />
-            <div class="flex-1 space-y-1.5">
-              <div class="h-3 bg-surface-secondary rounded w-3/4" />
-              <div class="h-2.5 bg-surface-secondary rounded w-1/3" />
+        <div v-for="n in 3" :key="n" class="rounded-2xl border-2 border-violet-200 bg-violet-50/80 p-5 animate-pulse">
+          <div class="flex items-start gap-3">
+            <div class="size-10 rounded-full bg-surface-secondary shrink-0" />
+            <div class="flex-1 space-y-2">
+              <div class="h-5 bg-surface-secondary rounded w-3/4" />
+              <div class="h-4 bg-surface-secondary rounded w-1/3" />
             </div>
-            <div class="h-3 bg-surface-secondary rounded w-12 flex-shrink-0" />
+            <div class="h-7 bg-surface-secondary rounded w-16 shrink-0" />
           </div>
-          <div class="mt-3 pl-[2.125rem] flex items-center gap-2">
-            <div class="h-6 w-20 bg-surface-secondary rounded-lg" />
+          <div class="mt-3 flex items-center gap-2">
+            <div class="h-12 w-28 bg-surface-secondary rounded-[14px]" />
             <div class="flex-1" />
-            <div class="h-7 w-7 bg-surface-secondary rounded" />
-            <div class="h-7 w-7 bg-surface-secondary rounded" />
+            <div class="size-12 bg-surface-secondary rounded-[14px]" />
+            <div class="size-12 bg-surface-secondary rounded-[14px]" />
           </div>
         </div>
       </template>
@@ -128,7 +128,7 @@
         <!-- Loading overlay — only while that line is mutating -->
         <div
           v-if="tabItemsLoading.has(item.orderItemId)"
-          class="absolute inset-0 z-20 rounded-xl bg-surface/70 flex items-center justify-center backdrop-blur-[1px] pointer-events-auto"
+          class="absolute inset-0 z-20 rounded-2xl bg-surface/70 flex items-center justify-center backdrop-blur-[1px] pointer-events-auto"
           aria-hidden="true"
         >
           <UiLoadingDots size="9px" />
@@ -136,9 +136,9 @@
       </div>
 
       <!-- Divider when there are both tab items and new cart items -->
-      <div v-if="mesaMode && tabItems.length > 0 && items.length > 0" class="flex items-center gap-2 py-1">
+      <div v-if="mesaMode && tabItems.length > 0 && items.length > 0" class="flex items-center gap-4 py-2">
         <div class="flex-1 h-px bg-border" />
-        <span class="text-[10px] font-bold text-text-tertiary uppercase tracking-widest flex-shrink-0">Por agregar</span>
+        <span class="text-sm font-semibold text-text-secondary uppercase tracking-wide flex-shrink-0">Por agregar</span>
         <div class="flex-1 h-px bg-border" />
       </div>
 
@@ -173,23 +173,23 @@
     </div>
 
     <!-- Cart Footer -->
-    <div class="flex-shrink-0 px-4 py-4 border-t border-border space-y-3 bg-surface-secondary/40">
+    <div class="flex-shrink-0 border-t-2 border-border bg-surface-secondary/60 px-6 py-6 space-y-4">
       <!-- Total — net after line promos (#1022) -->
       <div
         v-if="orderPromoSavings > 0"
-        class="flex items-center justify-between text-xs"
+        class="flex items-center justify-between text-base"
       >
-        <span class="font-medium text-text-tertiary">Descuentos promoción</span>
-        <span class="font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums">-{{ formatCurrency(orderPromoSavings) }}</span>
+        <span class="font-medium text-text-secondary">Descuentos promoción</span>
+        <span class="font-semibold text-emerald-500 tabular-nums">-{{ formatCurrency(orderPromoSavings) }}</span>
       </div>
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-text-tertiary uppercase tracking-widest">Total</span>
+      <div class="flex items-center justify-between pt-1">
+        <span class="text-2xl font-bold uppercase tracking-tight text-text-secondary">Total</span>
         <div class="flex flex-col items-end">
           <span
             v-if="orderPromoSavings > 0"
-            class="text-sm text-text-tertiary line-through tabular-nums"
+            class="text-2xl line-through text-text-tertiary tabular-nums"
           >{{ formatCurrency(grossOrderTotal) }}</span>
-          <span class="text-3xl font-black text-text-primary tabular-nums">{{ formatCurrency(netOrderTotal) }}</span>
+          <span class="text-4xl font-black text-text-primary tabular-nums leading-none">{{ formatCurrency(netOrderTotal) }}</span>
         </div>
       </div>
 
